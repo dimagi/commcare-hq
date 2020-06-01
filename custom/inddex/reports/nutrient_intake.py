@@ -14,11 +14,12 @@ class NutrientIntakeReport(MultiTabularReport):
     slug = 'report_3_disaggr_intake_data_by_food_and_aggr_daily_intake_data_by_respondent'  # yup, really
     export_only = True
     description = mark_safe(textwrap.dedent("""
-        This output provides information on the total quantity and total
+        This report provides information on the total quantity and total
         nutrient content for each individual food or recipe reported by each
-        respondent in the recall.
+        respondent in the recall. It also provides total daily energy and
+        nutrient intakes for each respondent.
         <br/>
-        This output cannot be previewed. Users must download the data to access
+        This report cannot be previewed. Users must download the data to access
         the information.
     """))
 

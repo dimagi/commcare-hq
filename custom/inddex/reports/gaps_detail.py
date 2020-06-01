@@ -12,13 +12,13 @@ class GapsDetailReport(MultiTabularReport):
     slug = 'report_2b_detailed_information_on_gaps'
     is_released = False
     description = textwrap.dedent("""
-        This output assists researchers in identifying incomplete or missing
-        information in the recall data. Researchers can use this output to view the
-        specific items reported by respondents that are missing conversion factor or
-        food composition data. This output also includes the information collected from
-        the respondent during the recall. All gaps in this report should be addressed
-        before researchers conduct data analysis. Researchers therefore should not
-        download Outputs 3 and 4 unless all gaps in this report have been addressed.
+        This report assists researchers in identifying incomplete or missing
+        information in the recall data. Researchers can use this report to view
+        the specific items reported by respondents that are missing conversion
+        factor or food composition data. All gaps in this report should be
+        addressed before researchers conduct data analysis. Researchers
+        therefore should not download Reports 3 and 4 unless all gaps in this
+        report have been addressed.
     """)
 
     @property

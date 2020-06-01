@@ -19,10 +19,10 @@ class GapsSummaryReport(MultiTabularReport):
     name = 'Output 2a - Gaps Summary by Food Type'
     slug = 'report_2a_gaps_summary_by_food_type'
     description = textwrap.dedent("""
-        This output includes summaries of the existing conversion factor gaps
-        and FCT gaps in the recall data.It provides researchers with an
+        This report includes summaries of the existing conversion factor gaps
+        and FCT gaps in the recall data. It provides researchers with an
         overview of the number of data gaps that must be addressed before the
-        recall data can be analyzed. Information in this output is
+        recall data can be analyzed. Information in this report is
         disaggregated by food type.
     """)
 

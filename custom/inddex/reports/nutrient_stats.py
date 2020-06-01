@@ -13,8 +13,9 @@ class NutrientStatsReport(MultiTabularReport):
     name = 'Output 4 - Nutrient Intake Summary Statistics'
     slug = 'report_4_nutrient_intake_summary_statistics'
     description = textwrap.dedent("""
-        This output includes summary statistics for nutrient intakes reported
-        during the recall (mean, median, standard deviation, and percentiles).
+        This report includes summary statistics for energy and nutrient intakes
+        reported during the recall (mean, median, standard deviation, and
+        percentiles).
     """)
 
     @property
