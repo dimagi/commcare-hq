@@ -180,12 +180,20 @@ class DomainLinkView(BaseAdminProjectSettingsView):
 
     @property
     def page_context(self):
+        """
+        This view services both domains that are master domains and domains that are linked domains
+        (and legacy domains that are both).
+        """
         timezone = get_timezone_for_request()
         master_link = get_domain_master_link(self.domain)
         linked_domains = [self._link_context(link, timezone) for link in get_linked_domains(self.domain)]
         (master_apps, linked_apps) = self._get_apps()
         (master_reports, linked_reports) = self._get_reports()
+
+        # Models belonging to this domain's master domain, for the purpose of pulling
         model_status = self._get_model_status(master_link, linked_apps, linked_reports)
+
+        # Models belonging to this domain, for the purpose of pushing to linked domains
         master_model_status = self._get_master_model_status(master_apps, master_reports)
 
         return {
