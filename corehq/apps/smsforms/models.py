@@ -269,20 +269,21 @@ class SQLXFormsSession(models.Model):
 
 class XFormsSessionSynchronization:
     """
-    This class acts as a container for a set of functions
-    related to making sure each Channel(backend_id, phone_number)
-    only has one running session at a time.
+    This class acts as a container for a set of functions related to
+    making sure each Channel(backend_id, phone_number) only has one
+    running session at a time.
 
-    Currently the backend_id `None`,
-    which represents our inability to find a suitable backend given the configuration,
-    is treated as if it were an actual backend in terms of the one-session-per-channel semantics,
-    resulting in the behavior that a phone number with a broken channel (bad PhoneNumber/backend configuration)
-    can only have one running session at a time.
-    In practice this session will fail in other ways (since there's no good channel to interact on)
-    but we let that fail downstream like it would without the synchronization piece.
-    If there seem to be backups of sessions on phone numbers with broken channels,
-    it may be worth revisiting the choice to preserve one-session-per-channel semantics even for broken channels.
-
+    Currently the backend_id `None`, which represents our inability to
+    find a suitable backend given the configuration, is treated as if it
+    were an actual backend in terms of the one-session-per-channel
+    semantics, resulting in the behavior that a phone number with a
+    broken channel (bad PhoneNumber/backend configuration) can only have
+    one running session at a time. In practice this session will fail in
+    other ways (since there's no good channel to interact on) but we let
+    that fail downstream like it would without the synchronization
+    piece. If there seem to be backups of sessions on phone numbers with
+    broken channels, it may be worth revisiting the choice to preserve
+    one-session-per-channel semantics even for broken channels.
     """
 
     @classmethod
