@@ -13,7 +13,7 @@ from corehq.util.metrics import metrics_counter
 from dimagi.utils.logging import notify_error, notify_exception
 
 
-@no_result_task(serializer='pickle', queue='reminder_queue')
+@no_result_task(serializer='pickle', queue='background_queue')
 def send_first_message(domain, recipient, phone_entry_or_number, session, responses, logged_subevent, workflow):
     # This try/except section is just here (temporarily) to support future refactors
     # If any of these notify, they should be replaced with a comment as to why the two are different
