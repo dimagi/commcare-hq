@@ -628,7 +628,7 @@ def get_inbound_phone_entry(msg):
         backend = SQLMobileBackend.load(msg.backend_id, is_couch_id=True)
         if toggles.INBOUND_SMS_LENIENCY.enabled(backend.domain):
             p = None
-            if toggles.ONE_PHONE_NUMBER_MULTIPLE_CONTACTS:
+            if toggles.ONE_PHONE_NUMBER_MULTIPLE_CONTACTS.enabled(backend.domain):
                 running_session_info = XFormsSessionSynchronization.get_running_session_info_for_channel(
                     SMSChannel(backend_id=msg.backend_id, phone_number=msg.phone_number)
                 )
