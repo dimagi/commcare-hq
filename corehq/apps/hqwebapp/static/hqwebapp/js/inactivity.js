@@ -78,16 +78,14 @@ log("poll again in " + (millisLeft - 2 * 60 * 1000) / 1000 / 60 + " minutes");
         };
 
         var hideWarningModal = function (showLogin) {
-            $warningModal.one('hidden.bs.modal', function () {
-                if (showLogin) {
-                    $modal.modal({backdrop: 'static', keyboard: false});
-                }
-                // This flag should already have been turned off when the warning modal was shown,
-                // but just in case, make sure it's really off. Wait until the modal is fully hidden
-                // to avoid issues with code trying to re-show this popup just as we're closing it.
-                shouldShowWarning = false;
-            });
             $warningModal.modal('hide');
+            if (showLogin) {
+                $modal.modal({backdrop: 'static', keyboard: false});
+            }
+            // This flag should already have been turned off when the warning modal was shown,
+            // but just in case, make sure it's really off. Wait until the modal is fully hidden
+            // to avoid issues with code trying to re-show this popup just as we're closing it.
+            shouldShowWarning = false;
         };
 
         var pollToShowModal = function () {
