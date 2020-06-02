@@ -23,10 +23,12 @@ def send_first_message(domain, recipient, phone_entry_or_number, session, respon
             # see if we can eliminate the workflow arg
             notify_error('Exploratory: session.workflow != workflow', details={
                 'session.workflow': session.workflow, 'workflow': workflow})
-        if session.connection_id != recipient:
+        if session.connection_id != recipient.get_id:
             # see if we can eliminate the recipient arg
-            notify_error('Exploratory: session.connection_id != recipient', details={
-                'session.connection_id': session.connection_id, 'recipient': recipient})
+            notify_error('Exploratory: session.connection_id != recipient.get_id', details={
+                'session.connection_id': session.connection_id, 'recipient.get_id': recipient.get_id,
+                'recipient': recipient
+            })
         if session.related_subevent != logged_subevent:
             # see if we can eliminate the logged_subevent arg
             notify_error('Exploratory: session.related_subevent != logged_subevent', details={
