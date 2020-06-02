@@ -1926,8 +1926,14 @@ RESTRICT_LOGIN_AS = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description="""
-    Adds a permission that can be set on user roles to allow login as, but only as a limited set of users. Users with this enabled can "login as" other users that set custom user property "login_as_user" to the first user's username.
-    For example, if web user a@a.com has this permission set on their role, they can only login as mobile users who have the custom property "login_as_user" set to "a@a.com".
+    Adds a permission that can be set on user roles to allow login as, but only
+    as a limited set of users. Users with this enabled can "login as" other
+    users that set custom user property "login_as_user" to the first user's
+    username.
+
+    For example, if web user a@a.com has this permission set on their role,
+    they can only login as mobile users who have the custom property
+    "login_as_user" set to "a@a.com".
     """
 )
 
@@ -1947,4 +1953,11 @@ ONE_PHONE_NUMBER_MULTIPLE_CONTACTS = StaticToggle(
     Only use this feature if every form behind an SMS survey begins by identifying the contact.
     Otherwise the recipient has no way to know who they're supposed to be enter information about.
     """
+)
+
+LOGOUT_SENSITIVE_DOMAIN = StaticToggle(
+    'logout_sensitive_domain',
+    'Get details about clients that are not logged in',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
 )
