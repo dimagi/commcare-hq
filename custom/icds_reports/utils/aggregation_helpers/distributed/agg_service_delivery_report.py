@@ -185,7 +185,7 @@ class AggServiceDeliveryReportHelper(AggregationPartitionedHelper):
             thr_15_20_days = COALESCE(thr_15_20_days, 0) +  ut.mother_thr_15_20_days,
             thr_21_days = COALESCE(thr_21_days, 0) +  ut.mother_thr_21_days,
             thr_21_24_days = COALESCE(thr_21_24_days, 0) + ut.mother_thr_21_24_days,
-            thr_25_days = COALESCE(thr_25_days, 0) +  ut.mother_thr_25_days
+            thr_25_days = COALESCE(thr_25_days, 0) +  ut.mother_thr_25_days,
             pw_thr_eligible = ut.pw_thr_eligible,
             pw_thr_0_days = ut.pw_thr_0_days,
             pw_thr_1_7_days = ut.pw_thr_1_7_days,
@@ -240,7 +240,7 @@ class AggServiceDeliveryReportHelper(AggregationPartitionedHelper):
                 SUM(CASE WHEN thr_eligible=1 AND lactating=1 AND num_rations_distributed BETWEEN 21 AND 24
                     THEN 1 ELSE 0 END) as lw_thr_21_24_days,
                 SUM(CASE WHEN thr_eligible=1 AND lactating=1 AND num_rations_distributed>=25
-                    THEN 1 ELSE 0 END) as lw_thr_25_days
+                    THEN 1 ELSE 0 END) as lw_thr_25_days,
 
                 SUM(CASE WHEN thr_eligible=1 AND num_rations_distributed BETWEEN 1 AND 7 THEN 1 ELSE 0 END) as mother_thr_1_7_days,
                 SUM(CASE WHEN thr_eligible=1 AND num_rations_distributed BETWEEN 8 AND 14 THEN 1 ELSE 0 END) as mother_thr_8_14_days,
