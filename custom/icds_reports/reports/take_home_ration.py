@@ -18,7 +18,7 @@ class TakeHomeRationExport(object):
 
     def get_excel_data(self):
 
-        def _format_infrastructure_data(column, value, is_launched):
+        def _format_report_data(column, value, is_launched):
             location_names = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
             AWC_NOT_LAUNCHED = 'AWC Not Launched'
             if column in location_names:
@@ -56,7 +56,7 @@ class TakeHomeRationExport(object):
 
         for row in data:
             awc_is_launched = row.get('is_launched') == 'yes' or row.get('num_launched_awcs') == 1
-            row_data = [_format_infrastructure_data(column_name, col_values, awc_is_launched)
+            row_data = [_format_report_data(column_name, col_values, awc_is_launched)
                         for column_name, col_values in row.items() if column_name not in ('num_launched_awcs',
                                                                                           'is_launched')]
             excel_rows.append(row_data)
@@ -142,28 +142,28 @@ class TakeHomeRationExport(object):
 
     def get_beneficiary_and_days_wise_data(self, filters, order_by):
         headers = ['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name', 'AWW Phone No.',
-                       'Total No. of PW eligible for THR',
-                       'Total No. of LW eligible for THR',
-                       'Total No. of Children (0-3 years) eligible for THR',
-                       'Total No. of PW did not received THR in given month',
-                       'Total No. of LW did not received THR in given month',
-                       'Total No. of Children (0-3 years) did not received THR in given month',
-                       'Total No. of PW received THR for 1-7 days in given month',
-                       'Total No. of LW received THR for 1-7 days in given month',
-                       'Total No. of Children (0-3 years) received THR for 1-7 days in given month',
-                       'Total No. of PW received THR for 8-14 days in given month',
-                       'Total No. of LW received THR for 8-14 days in given month',
-                       'Total No. of Children (0-3 years) received THR for 8-14 days in given month',
-                       'Total No. of PW received THR for 15-20 days in given month',
-                       'Total No. of LW received THR for 15-20 days in given month',
-                       'Total No. of Children (0-3 years) received THR for 15-20 days in given month',
-                       'Total No. of PW received THR for 21-24 days in given month',
-                       'Total No. of LW received THR for 21-24 days in given month',
-                       'Total No. of Children (0-3 years) received THR for 21-24 days in given month',
-                       'Total No. of PW received THR>=25 days in given month',
-                       'Total No. of LW received THR>=25 days in given month',
-                       'Total No. of Children(0-3 years) received THR>=25 days in given month',
-                       'Total No of Pictures taken by AWW']
+                   'Total No. of PW eligible for THR',
+                   'Total No. of LW eligible for THR',
+                   'Total No. of Children (0-3 years) eligible for THR',
+                   'Total No. of PW did not received THR in given month',
+                   'Total No. of LW did not received THR in given month',
+                   'Total No. of Children (0-3 years) did not received THR in given month',
+                   'Total No. of PW received THR for 1-7 days in given month',
+                   'Total No. of LW received THR for 1-7 days in given month',
+                   'Total No. of Children (0-3 years) received THR for 1-7 days in given month',
+                   'Total No. of PW received THR for 8-14 days in given month',
+                   'Total No. of LW received THR for 8-14 days in given month',
+                   'Total No. of Children (0-3 years) received THR for 8-14 days in given month',
+                   'Total No. of PW received THR for 15-20 days in given month',
+                   'Total No. of LW received THR for 15-20 days in given month',
+                   'Total No. of Children (0-3 years) received THR for 15-20 days in given month',
+                   'Total No. of PW received THR for 21-24 days in given month',
+                   'Total No. of LW received THR for 21-24 days in given month',
+                   'Total No. of Children (0-3 years) received THR for 21-24 days in given month',
+                   'Total No. of PW received THR>=25 days in given month',
+                   'Total No. of LW received THR>=25 days in given month',
+                   'Total No. of Children(0-3 years) received THR>=25 days in given month',
+                   'Total No of Pictures taken by AWW']
 
         columns = ['state_name', 'district_name', 'block_name',
                    'supervisor_name', 'awc_name',
@@ -173,7 +173,8 @@ class TakeHomeRationExport(object):
                    'child_thr_eligible',
                    'pw_thr_0_days',
                    'lw_thr_0_days',
-                   'child_thr_0_days','pw_thr_1_7_days',
+                   'child_thr_0_days',
+                   'pw_thr_1_7_days',
                    'lw_thr_1_7_days',
                    'child_thr_1_7_days',
                    'pw_thr_8_14_days',

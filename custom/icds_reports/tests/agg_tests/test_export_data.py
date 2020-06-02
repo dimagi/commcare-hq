@@ -15,7 +15,6 @@ from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExpo
 from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
 from custom.icds_reports.reports.incentive import IncentiveReport
 from custom.icds_reports.reports.take_home_ration import TakeHomeRationExport
-from custom.icds_reports.reports.service_delivery_report import ServiceDeliveryReport
 from custom.icds_reports.models.aggregate import AggServiceDeliveryReport
 from custom.icds_reports.utils import india_now
 
@@ -4124,9 +4123,7 @@ class TestExportData(TestCase):
              ]
         )
 
-
-    def test_thr_report(self):
-        AggServiceDeliveryReport.aggregate(datetime(2017, 5, 1))
+    def test_thr_report_with_feature_flag(self):
         location = 'b1'
         data = TakeHomeRationExport(
             location=location,
@@ -4232,7 +4229,7 @@ class TestExportData(TestCase):
                     ],
                     [
                        'Bihar', 'Patna', 'Bihta', 's1', 'a49', 'Data Not Entered', 'Data Not Entered', 3,
-                        5, 3, 0, 0, 0, 0
+                       5, 3, 0, 0, 0, 0
                     ],
                     [
                        'Bihar', 'Patna', 'Bihta', 's1', 'a9', 'AWC Not Launched', 'AWC Not Launched',
@@ -4241,11 +4238,11 @@ class TestExportData(TestCase):
                     ],
                     [
                        'Bihar', 'Patna', 'Bihta', 's2', 'a10', 'Data Not Entered', 'Data Not Entered', 0,
-                        2, 8, 0, 0, 0, 0
+                       2, 8, 0, 0, 0, 0
                     ],
                     [
                        'Bihar', 'Patna', 'Bihta', 's2', 'a18', 'Data Not Entered', 'Data Not Entered', 5,
-                        6, 4, 1, 0, 0, 4
+                       6, 4, 1, 0, 0, 4
                     ],
                     [
                        'Bihar', 'Patna', 'Bihta', 's2', 'a2', 'AWC Not Launched', 'AWC Not Launched',
