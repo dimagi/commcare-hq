@@ -80,7 +80,7 @@ def get_service_delivery_report_data(domain, start, length, order, reversed_orde
     def update_total_row(first_dict, second_dict):
         for key, value in first_dict.items():
             # excluding location and percentage fields
-            if key not in location_fields + ['thr', 'pse', 'sn', 'gm', 'home_visits']:
+            if key not in location_fields + ['cbe', 'thr', 'pse', 'sn', 'gm', 'home_visits']:
                 first_dict[key] = format_data_not_entered_to_zero(first_dict[key]) +\
                                   format_data_not_entered_to_zero(second_dict[key])
         return first_dict
