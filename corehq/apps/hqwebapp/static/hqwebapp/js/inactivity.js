@@ -193,7 +193,7 @@ log("session successfully extended, hiding warning popup if it's open");
 
         // Send no-op request to server to extend session when there's client-side user activity on this page.
         // _.throttle will prevent this from happening too often.
-        var keepAliveTimeout = timeout / 5;
+        var keepAliveTimeout = 60 * 1000;
 log("page loaded, will send a keep-alive request to server every click/keypress, at most once every " + (keepAliveTimeout / 1000 / 60) + " minutes");
         $("body").on("keypress click", _.throttle(function () {
             extendSession();
