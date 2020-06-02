@@ -137,7 +137,6 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     ugettext_noop('Must correspond to the password format specified below.'),
     ugettext_noop('Native (International)'),
     ugettext_noop('Never'),
-    ugettext_noop('No'),
     ugettext_noop('No (NOT RECOMMENDED)'),
     ugettext_noop('No Users Mode'),
     ugettext_noop('No Validation'),
