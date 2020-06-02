@@ -143,6 +143,7 @@ hqDefine('app_manager/js/app_manager', function () {
         $('.js-add-new-item').popover({
             title: django.gettext("Add"),
             container: 'body',
+            sanitize: false,
             content: function () {
                 var slug = $(this).data("slug"),
                     template = $('.js-popover-template-add-item-content[data-slug="' + slug + '"]').text();
