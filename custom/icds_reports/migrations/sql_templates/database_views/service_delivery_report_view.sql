@@ -22,7 +22,7 @@ SELECT
 "awc_location_months"."aggregation_level" AS "aggregation_level",
 "awc_location_months"."aww_name" AS "aww_name",
 "awc_location_months"."contact_phone_number" AS "contact_phone_number",
-agg_awc.month as month,
+"awc_location_months"."month" as month,
 COALESCE(agg_awc.num_launched_awcs, 0) AS num_launched_awcs,
 COALESCE(agg_awc.valid_visits,0) AS valid_visits,
 COALESCE(agg_awc.expected_visits,0) AS expected_visits,
