@@ -231,7 +231,7 @@ def fixture_data_item_to_dict(
 
     """
     return {
-        key: field_list.field_list[0].field_value
+        key: field_list.field_list[0].field_value if field_list.field_list else None
         for key, field_list in data_item.fields.items()
     }
 
