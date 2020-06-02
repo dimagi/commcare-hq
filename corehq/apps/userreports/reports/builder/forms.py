@@ -27,7 +27,7 @@ from corehq.apps.userreports.app_manager.data_source_meta import (
     get_app_data_source_meta,
 )
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
-from corehq.apps.userreports.const import DATA_SOURCE_MISSING_APP_ERROR_MESSAGE
+from corehq.apps.userreports.const import DATA_SOURCE_MISSING_APP_ERROR_MESSAGE, LENIENT_MAXIMUM_EXPANSION
 from corehq.apps.userreports.exceptions import BadBuilderConfigError
 from corehq.apps.userreports.models import (
     DataSourceBuildInformation,
@@ -76,7 +76,11 @@ from corehq.apps.userreports.reports.builder.sources import (
 from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
 from corehq.apps.userreports.util import has_report_builder_access
-from corehq.toggles import SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER, SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER
+from corehq.toggles import (
+    SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER,
+    SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER,
+    OVERRIDE_EXPANDED_COLUMN_LIMIT_IN_REPORT_BUILDER,
+)
 
 # This dict maps filter types from the report builder frontend to UCR filter types
 REPORT_BUILDER_FILTER_TYPE_MAP = {
@@ -84,6 +88,9 @@ REPORT_BUILDER_FILTER_TYPE_MAP = {
     'Date': 'date',
     'Numeric': 'numeric',
     'Value': 'pre',
+    'Is Empty': 'is_empty',
+    'Exists': 'exists',
+    'Value Not Equal': 'value_not_equal',
 }
 
 STATIC_CASE_PROPS = [
@@ -237,6 +244,24 @@ class DataSourceProperty(object):
                 'type': 'pre',  # type could have been "date"
                 'pre_operator': configuration.get('pre_operator', None),
                 'pre_value': configuration.get('pre_value', []),
+            })
+        if configuration['format'] == 'Is Empty':
+            filter.update({
+                'type': 'pre',
+                'pre_operator': "",
+                'pre_value': "",  # for now assume strings - this may not always work but None crashes
+            })
+        if configuration['format'] == 'Exists':
+            filter.update({
+                'type': 'pre',
+                'pre_operator': "!=",
+                'pre_value': "",
+            })
+        if configuration['format'] == 'Value Not Equal':
+            filter.update({
+                'type': 'pre',
+                'pre_operator': "distinct from",
+                # pre_value already set by "pre" clause
             })
         return filter
 
@@ -912,7 +937,7 @@ class ConfigureNewReportBase(forms.Form):
     def update_report(self):
         self._update_data_source_if_necessary()
         self.existing_report.aggregation_columns = self._report_aggregation_cols
-        self.existing_report.columns = self._report_columns
+        self.existing_report.columns = self._get_report_columns()
         self.existing_report.filters = self._report_filters
         self.existing_report.configured_charts = self._report_charts
         self.existing_report.title = self.cleaned_data['report_title'] or _("Report Builder Report")
@@ -960,7 +985,7 @@ class ConfigureNewReportBase(forms.Form):
             config_id=data_source_config_id,
             title=self.cleaned_data['report_title'] or self.report_name,
             aggregation_columns=self._report_aggregation_cols,
-            columns=self._report_columns,
+            columns=self._get_report_columns(),
             filters=self._report_filters,
             configured_charts=self._report_charts,
             description=self.cleaned_data['report_description'],
@@ -991,7 +1016,7 @@ class ConfigureNewReportBase(forms.Form):
             config_id=data_source_id,
             title=self.report_name,
             aggregation_columns=self._report_aggregation_cols,
-            columns=self._report_columns,
+            columns=self._get_report_columns(),
             filters=self._report_filters,
             configured_charts=self._report_charts,
             data_source_type=guess_data_source_type(data_source_id),
@@ -1239,6 +1264,18 @@ class ConfigureNewReportBase(forms.Form):
     @property
     def _report_aggregation_cols(self):
         return ['doc_id']
+
+    def _get_report_columns(self):
+        """
+        Columns to be passed to the ReportConfiguration object.
+        You can add additional transformations that should apply to all report types here.
+        """
+        columns = self._report_columns
+        if OVERRIDE_EXPANDED_COLUMN_LIMIT_IN_REPORT_BUILDER.enabled(self.domain):
+            for column in columns:
+                if column['aggregation'] == UCR_AGG_EXPAND:
+                    column['max_expansion'] = LENIENT_MAXIMUM_EXPANSION
+        return columns
 
     @property
     def _report_columns(self):

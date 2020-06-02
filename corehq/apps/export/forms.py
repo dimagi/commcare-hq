@@ -11,6 +11,7 @@ from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from crispy_forms import layout as crispy
 
+from corehq import privileges
 from dimagi.utils.dates import DateSpan
 
 from corehq.motech.models import ConnectionSettings
@@ -327,10 +328,27 @@ class DashboardFeedFilterForm(forms.Form):
         widget=forms.DateInput(format="%Y-%m-%d", attrs={"placeholder": "YYYY-MM-DD"}),
         help_text="<small class='label label-default'>{}</small>".format(ugettext_lazy("YYYY-MM-DD")),
     )
+    update_location_restriction = forms.BooleanField(
+        label=ugettext_lazy("Update location restriction to match filters."),
+        required=False,
+    )
 
     def __init__(self, domain_object, *args, **kwargs):
         self.domain_object = domain_object
+        self.can_user_access_all_locations = True
+        if 'couch_user' in kwargs:
+            couch_user = kwargs.pop('couch_user')
+            self.can_user_access_all_locations = couch_user.has_permission(
+                domain_object.name, 'access_all_locations'
+            )
         super(DashboardFeedFilterForm, self).__init__(*args, **kwargs)
+
+        self.can_restrict_access_by_location = domain_object.has_privilege(
+            privileges.RESTRICT_ACCESS_BY_LOCATION
+        )
+
+        if not self.can_restrict_access_by_location or not self.can_user_access_all_locations:
+            del self.fields['update_location_restriction']
 
         self.fields['emwf_case_filter'].widget.set_url(
             reverse(CaseListFilter.options_url, args=(self.domain_object.name,))
@@ -341,6 +359,8 @@ class DashboardFeedFilterForm(forms.Form):
 
         self.helper = HQModalFormHelper()
         self.helper.form_tag = False
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-10 col-lg-10'
         self.helper.layout = crispy.Layout(*self.layout_fields)
 
     def clean(self):
@@ -375,7 +395,7 @@ class DashboardFeedFilterForm(forms.Form):
 
     @property
     def layout_fields(self):
-        return [
+        fields = [
             crispy.Div(
                 crispy.Field(
                     'emwf_case_filter',
@@ -409,8 +429,17 @@ class DashboardFeedFilterForm(forms.Form):
                     data_bind="value: endDate",
                 ),
                 data_bind="visible: showEndDate, css: {'has-error': endDateHasError}",
-            )
+            ),
         ]
+        if self.can_restrict_access_by_location and self.can_user_access_all_locations:
+            fields.append(crispy.Fieldset(
+                _("Location Management"),
+                crispy.Field(
+                    'update_location_restriction',
+                    data_bind='checked: updateLocationRestriction',
+                ),
+            ))
+        return fields
 
     def to_export_instance_filters(self, can_access_all_locations, accessible_location_ids, export_type):
         """
@@ -423,9 +452,16 @@ class DashboardFeedFilterForm(forms.Form):
         )
         assert(export_type == 'form' or export_type == 'case')
         if export_type == 'form':
-            return self._to_form_export_instance_filters(can_access_all_locations, accessible_location_ids)
+            filters = self._to_form_export_instance_filters(can_access_all_locations, accessible_location_ids)
         else:
-            return self._to_case_export_instance_filters(can_access_all_locations, accessible_location_ids)
+            filters = self._to_case_export_instance_filters(can_access_all_locations, accessible_location_ids)
+
+        if (self.can_user_access_all_locations
+                and self.can_restrict_access_by_location
+                and self.cleaned_data['update_location_restriction']):
+            filters.accessible_location_ids = filters.locations
+            filters.can_access_all_locations = not filters.locations
+        return filters
 
     def _to_case_export_instance_filters(self, can_access_all_locations, accessible_location_ids):
         emwf_selections = self.cleaned_data["emwf_case_filter"]

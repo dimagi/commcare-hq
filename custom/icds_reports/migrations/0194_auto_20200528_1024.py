@@ -8,7 +8,7 @@ from custom.icds_reports.utils.migrations import get_view_migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0188_rebuild_view_bihar_api'),
+        ('icds_reports', '0193_adding_fields_to_sdd'),
     ]
 
     operations = [
@@ -131,11 +131,6 @@ class Migration(migrations.Migration):
             model_name='aggservicedeliveryreport',
             name='pw_thr_eligible',
             field=models.IntegerField(null=True),
-        ),
-        migrations.AddField(
-            model_name='aggservicedeliveryreport',
-            name='thr_25_days',
-            field=models.IntegerField(null=True),
-        ),
+        )
     ]
     operations.extend(get_view_migrations())

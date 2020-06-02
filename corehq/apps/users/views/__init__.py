@@ -157,7 +157,7 @@ class DefaultProjectUserSettingsView(BaseUserSettingsView):
     def redirect(self):
         redirect = None
         has_project_access = has_privilege(self.request, privileges.PROJECT_ACCESS)
-        user = CouchUser.get_by_user_id(self.couch_user._id, self.domain)
+        user = CouchUser.get_by_user_id(self.couch_user._id)
         if user:
             if ((user.has_permission(self.domain, 'edit_commcare_users')
                     or user.has_permission(self.domain, 'view_commcare_users'))

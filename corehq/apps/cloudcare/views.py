@@ -5,10 +5,10 @@ from xml.etree import cElementTree as ElementTree
 
 import sentry_sdk
 from django.conf import settings
+from django.contrib import messages
 from django.http import (
     Http404,
     HttpResponse,
-    HttpResponseBadRequest,
     HttpResponseRedirect,
     JsonResponse,
 )
@@ -70,7 +70,8 @@ from corehq.apps.hqwebapp.decorators import (
     use_datatables,
     use_jquery_ui,
     use_legacy_jquery,
-)
+    waf_allow)
+from corehq.apps.hqwebapp.views import render_static
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.users.decorators import require_can_login_as
@@ -482,6 +483,7 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
         return json_response({'success': 1})
 
 
+@waf_allow('XSS_BODY')
 @login_and_domain_required
 def report_formplayer_error(request, domain):
     data = json.loads(request.body)

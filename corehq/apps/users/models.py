@@ -23,6 +23,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
 from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
 from corehq.apps.users.exceptions import IllegalAccountConfirmation
+from corehq.util.models import BouncedEmail
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateProperty,
@@ -145,6 +146,7 @@ class Permissions(DocumentSchema):
     manage_releases_list = StringListProperty(default=[])
 
     limited_login_as = BooleanProperty(default=False)
+    access_default_login_as_user = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -390,19 +392,8 @@ class UserRole(QuickCachedDocumentMixin, Document):
 
     @property
     def ids_of_assigned_users(self):
-        from corehq.apps.api.es import UserES
-        query = {"query": {"bool": {"must": [{"term": {"user.doc_type": "WebUser"}},
-                                             {"term": {"user.domain_memberships.role_id": self.get_id}},
-                                             {"term": {"user.domain_memberships.domain": self.domain}},
-                                             {"term": {"user.is_active": True}},
-                                             {"term": {"user.base_doc": "couchuser"}}],
-                                    }}, "fields": []}
-        query_results = UserES(self.domain).run_query(es_query=query, security_check=False)
-        assigned_user_ids = []
-        for user in query_results['hits'].get('hits', []):
-            assigned_user_ids.append(user['_id'])
-
-        return assigned_user_ids
+        from corehq.apps.es.users import UserES
+        return UserES().is_active().domain(self.domain).role_id(self._id).values_list('_id', flat=True)
 
     @classmethod
     def get_preset_permission_by_name(cls, name):
@@ -1592,7 +1583,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         ])
 
     def can_login_as(self, domain):
-        return self.has_permission(domain, 'edit_commcare_users') or self.has_permission(domain, 'limited_login_as')
+        return (
+            self.has_permission(domain, 'edit_commcare_users')
+            or self.has_permission(domain, 'limited_login_as')
+        )
 
     def is_current_web_user(self, request):
         return self.user_id == request.couch_user.user_id
@@ -2612,6 +2606,10 @@ class Invitation(models.Model):
     @property
     def is_expired(self):
         return self.invited_on.date() + relativedelta(months=1) < datetime.utcnow().date()
+
+    @property
+    def email_marked_as_bounced(self):
+        return BouncedEmail.get_hard_bounced_emails([self.email])
 
     def send_activation_email(self, remaining_days=30):
         inviter = CouchUser.get_by_user_id(self.invited_by)

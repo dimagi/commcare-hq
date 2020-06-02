@@ -122,7 +122,15 @@ class BiharApiDemographicsHelper(BaseICDSAggregationDistributedHelper):
             ('date_last_private_admit', 'person_list.date_last_private_admit '),
             ('date_return_private', 'person_list.date_return_private'),
             ('out_of_school_status', 'person_list.is_oos'),
-            ('last_class_attended_ever', 'person_list.last_class_attended_ever')
+            ('last_class_attended_ever', 'person_list.last_class_attended_ever'),
+            ('last_reported_fever_date', 'person_list.last_reported_fever_date'),
+            ('age_marriage', 'person_list.age_marriage'),
+            ('last_referral_date', 'person_list.last_referral_date'),
+            ('referral_health_problem', 'person_list.referral_health_problem'),
+            ('referral_reached_date', 'person_list.referral_reached_date'),
+            ('referral_reached_facility', 'person_list.referral_reached_facility'),
+            ('migrate_date', 'migration_tab.migration_date'),
+            ('was_oos_ever', 'person_list.was_oos_ever')
         )
         column_names = ", ".join([col[0] for col in columns])
         calculations = ", ".join([col[1] for col in columns])
