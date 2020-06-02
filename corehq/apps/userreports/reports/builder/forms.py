@@ -260,7 +260,7 @@ class DataSourceProperty(object):
         if configuration['format'] == 'Value Not Equal':
             filter.update({
                 'type': 'pre',
-                'pre_operator': "!=",
+                'pre_operator': "distinct from",
                 # pre_value already set by "pre" clause
             })
         return filter

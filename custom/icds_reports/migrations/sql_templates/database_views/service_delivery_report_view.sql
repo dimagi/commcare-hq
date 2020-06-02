@@ -80,4 +80,3 @@ LEFT JOIN agg_service_delivery_report agg_sdr on (
         ("agg_sdr"."aggregation_level" = "awc_location_months"."aggregation_level") AND
         ("agg_sdr"."awc_id" = "awc_location_months"."awc_id")
 )
-
