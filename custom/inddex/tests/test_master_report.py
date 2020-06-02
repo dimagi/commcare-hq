@@ -11,7 +11,7 @@ from mock import patch
 
 from dimagi.utils.dates import DateSpan
 
-import custom.inddex.reports.nutrient_stats
+import custom.inddex.reports.r4_nutrient_stats
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.fixtures.dbaccessors import (
@@ -28,11 +28,11 @@ from ..example_data.data import (
 )
 from ..fixtures import FixtureAccessor
 from ..food import INDICATORS, FoodData
-from ..reports.gaps_detail import GapsByItemSummaryData, GapsDetailsData
-from ..reports.gaps_summary import get_gaps_data
-from ..reports.master_data import MasterData
-from ..reports.nutrient_intake import DailyIntakeData
-from ..reports.nutrient_stats import NutrientStatsData
+from ..reports.r1_master_data import MasterData
+from ..reports.r2a_gaps_summary import get_gaps_data
+from ..reports.r2b_gaps_detail import GapsByItemSummaryData, GapsDetailsData
+from ..reports.r3_nutrient_intake import DailyIntakeData
+from ..reports.r4_nutrient_stats import NutrientStatsData
 from ..ucr_data import FoodCaseData
 
 DOMAIN = 'inddex-reports-test'
@@ -114,7 +114,7 @@ class TestSetupUtils(TestCase):
 class TestUcrAdapter(TestCase):
     def test_data_source(self):
         # Only the rows with case IDs will appear in the UCR
-        expected = [r for r in get_expected_report('master.csv') if r['caseid']]
+        expected = [r for r in get_expected_report('1_master.csv') if r['caseid']]
         ucr_data = FoodCaseData({
             'domain': DOMAIN,
             'startdate': date(2020, 1, 1).isoformat(),
@@ -124,7 +124,7 @@ class TestUcrAdapter(TestCase):
 
     def test_data_source_filter(self):
         # Only the rows with case IDs will appear in the UCR
-        expected = [r for r in get_expected_report('master.csv')
+        expected = [r for r in get_expected_report('1_master.csv')
                     if r['caseid'] and r['breastfeeding'] == 'breastfeeding_yes']
         ucr_data = FoodCaseData({
             'domain': DOMAIN,
@@ -171,7 +171,7 @@ class TestMasterReport(TestCase):
     maxDiff = None
 
     def test_master_report(self):
-        expected = sort_rows(get_expected_report('master.csv'))
+        expected = sort_rows(get_expected_report('1_master.csv'))
         actual = sort_rows(self.run_new_report())
         self.assertEqual(food_names(expected), food_names(actual))
 
@@ -229,27 +229,27 @@ class TestInddexReports(TestCase):
                 self.assertEqual(expected, actual, msg)
 
     def test_gaps_summary(self):
-        with patch('custom.inddex.reports.gaps_summary.FoodData.from_request', get_food_data):
+        with patch('custom.inddex.reports.r2a_gaps_summary.FoodData.from_request', get_food_data):
             cf_gaps_data, fct_gaps_data = get_gaps_data(DOMAIN, None)
 
-        self.assert_reports_match('conv_factor_gaps_summary.csv', cf_gaps_data)
-        self.assert_reports_match('fct_gaps_summary.csv', fct_gaps_data)
+        self.assert_reports_match('2a_conv_factor_gaps_summary.csv', cf_gaps_data)
+        self.assert_reports_match('2a_fct_gaps_summary.csv', fct_gaps_data)
 
     def test_gaps_by_item_summary(self):
         data = GapsByItemSummaryData(get_food_data())
-        self.assert_reports_match('gaps_by_item_summary.csv', data)
+        self.assert_reports_match('2b_gaps_by_item_summary.csv', data)
 
     def test_gaps_by_item_details(self):
         data = GapsDetailsData(get_food_data())
-        self.assert_reports_match('gaps_by_item_details.csv', data)
+        self.assert_reports_match('2b_gaps_by_item_details.csv', data)
 
     def test_daily_intake(self):
         data = DailyIntakeData(get_food_data())
-        self.assert_reports_match('aggr_daily_intake_by_rspndnt.csv', data)
+        self.assert_reports_match('3_aggr_daily_intake_by_rspndnt.csv', data)
 
     def test_nutrient_stats(self):
         data = NutrientStatsData(get_food_data())
-        self.assert_reports_match('nutr_intake_summary_stats.csv', data)
+        self.assert_reports_match('4_nutr_intake_summary_stats.csv', data)
 
     def test_sharing_filtered_food_data(self):
         # There should be no data with this filter selection
@@ -262,5 +262,5 @@ class TestInddexReports(TestCase):
 class DocTests(SimpleTestCase):
 
     def test_doctests(self):
-        results = doctest.testmod(custom.inddex.reports.nutrient_stats)
+        results = doctest.testmod(custom.inddex.reports.r4_nutrient_stats)
         self.assertEqual(results.failed, 0)
