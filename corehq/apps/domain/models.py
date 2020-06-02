@@ -438,12 +438,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     # when turned on, use settings.SECURE_TIMEOUT for sessions of users who are members of this domain
     secure_sessions = BooleanProperty(default=False)
 
-    @property
-    def secure_timeout(self):
-        if self.secure_sessions:
-            return settings.SECURE_TIMEOUT
-        return None
-
     two_factor_auth = BooleanProperty(default=False)
     strong_mobile_passwords = BooleanProperty(default=False)
 
