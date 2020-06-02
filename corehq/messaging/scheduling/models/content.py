@@ -59,7 +59,8 @@ class SMSContent(Content):
             case_id=self.case.case_id if self.case else None,
         )
 
-        phone_entry_or_number = phone_entry or self.get_two_way_entry_or_phone_number(recipient)
+        phone_entry_or_number = phone_entry or self.get_two_way_entry_or_phone_number(
+            recipient, domain_for_toggles=logged_event.domain)
         if not phone_entry_or_number:
             logged_subevent.error(MessagingEvent.ERROR_NO_PHONE_NUMBER)
             return
@@ -210,7 +211,8 @@ class SMSSurveyContent(Content):
         # not the user case contact.
         phone_entry_or_number = (
             phone_entry or
-            self.get_two_way_entry_or_phone_number(recipient, try_user_case=False)
+            self.get_two_way_entry_or_phone_number(
+                recipient, try_user_case=False, domain_for_toggles=logged_event.domain)
         )
 
         if phone_entry_or_number is None:
@@ -429,7 +431,8 @@ class CustomContent(Content):
             case_id=self.case.case_id if self.case else None,
         )
 
-        phone_entry_or_number = self.get_two_way_entry_or_phone_number(recipient)
+        phone_entry_or_number = self.get_two_way_entry_or_phone_number(
+            recipient, domain_for_toggles=logged_event.domain)
         if not phone_entry_or_number:
             logged_subevent.error(MessagingEvent.ERROR_NO_PHONE_NUMBER)
             return
