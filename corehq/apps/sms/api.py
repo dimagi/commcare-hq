@@ -626,7 +626,7 @@ def load_and_call(sms_handler_names, phone_number, text, sms):
 def get_inbound_phone_entry(msg):
     if msg.backend_id:
         backend = SQLMobileBackend.load(msg.backend_id, is_couch_id=True)
-        if not backend.is_global and toggles.INBOUND_SMS_LENIENCY.enabled(backend.domain):
+        if toggles.INBOUND_SMS_LENIENCY.enabled(backend.domain):
             p = None
             if toggles.ONE_PHONE_NUMBER_MULTIPLE_CONTACTS:
                 running_session_info = XFormsSessionSynchronization.get_running_session_info_for_channel(
@@ -635,7 +635,12 @@ def get_inbound_phone_entry(msg):
                 contact_id = running_session_info.contact_id
                 if contact_id:
                     p = PhoneNumber.get_phone_number_for_owner(contact_id, msg.phone_number)
-                if running_session_info.session_id and not p:
+                if p is not None:
+                    return (
+                        p,
+                        True
+                    )
+                elif running_session_info.session_id:
                     # This would be very unusual, as it would mean the supposedly running form session
                     # is linked to a phone number, contact pair that doesn't exist in the PhoneNumber table
                     notify_error(
@@ -647,12 +652,13 @@ def get_inbound_phone_entry(msg):
                             'running_session_info': running_session_info
                         }
                     )
-            if not p:
+
+            if not backend.is_global:
                 p = PhoneNumber.get_two_way_number_with_domain_scope(msg.phone_number, backend.domains_with_access)
-            return (
-                p,
-                p is not None
-            )
+                return (
+                    p,
+                    p is not None
+                )
 
     return (
         PhoneNumber.get_reserved_number(msg.phone_number),
