@@ -11,10 +11,26 @@ class InfobipBackendForm(BackendForm):
     auth_token = TrimmedCharField(
         label=_("Auth Token"),
     )
-
+    personalized_subdomain = TrimmedCharField(
+        label=_("Personalized Subdomain"),
+    )
     scenario_key = TrimmedCharField(
         label=_("Scenario Key"),
+        help_text=_("Enables sendimg messages via whatsapp, viber, line and voice channel with or "
+                    "without automatic failover to another channel according to the specific scenario."),
+        required=False
     )
+
+    def clean_scenario_key(self):
+        value = self.cleaned_data.get("scenario_key")
+        if value is None:
+            return None
+        else:
+            value = value.strip()
+            if value == "":
+                return None
+            else:
+                return value
 
     @property
     def gateway_specific_fields(self):
@@ -22,5 +38,6 @@ class InfobipBackendForm(BackendForm):
             _("Infobip Settings"),
             'account_sid',
             'auth_token',
+            'personalized_subdomain',
             'scenario_key'
         )
