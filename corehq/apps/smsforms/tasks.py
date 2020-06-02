@@ -9,10 +9,35 @@ from corehq.apps.smsforms.models import SQLXFormsSession, XFormsSessionSynchroni
 from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
 from corehq.messaging.scheduling.util import utcnow
 from corehq.util.celery_utils import no_result_task
+from corehq.util.metrics import metrics_counter
+from dimagi.utils.logging import notify_error, notify_exception
 
 
 @no_result_task(serializer='pickle', queue='reminder_queue')
 def send_first_message(domain, recipient, phone_entry_or_number, session, responses, logged_subevent, workflow):
+    # This try/except section is just here (temporarily) to support future refactors
+    # If any of these notify, they should be replaced with a comment as to why the two are different
+    # so that someone refactoring in the future will know that this or that param is necessary.
+    try:
+        if session.workflow != workflow:
+            # see if we can eliminate the workflow arg
+            notify_error('Exploratory: session.workflow != workflow', details={
+                'session.workflow': session.workflow, 'workflow': workflow})
+        if session.connection_id != recipient:
+            # see if we can eliminate the recipient arg
+            notify_error('Exploratory: session.connection_id != recipient', details={
+                'session.connection_id': session.connection_id, 'recipient': recipient})
+        if session.related_subevent != logged_subevent:
+            # see if we can eliminate the logged_subevent arg
+            notify_error('Exploratory: session.related_subevent != logged_subevent', details={
+                'session.connection_id': session.connection_id, 'logged_subevent': logged_subevent})
+    except Exception:
+        # The above running is not mission critical, so if it errors just leave a message in the log
+        # for us to follow up on.
+        # Absence of the message below and messages above ever notifying
+        # will indicate that we can remove these args.
+        notify_exception(None, "Error in section of code that's just supposed help inform future refactors")
+
     if toggles.ONE_PHONE_NUMBER_MULTIPLE_CONTACTS.enabled(domain):
         if not XFormsSessionSynchronization.claim_channel_for_session(session):
             send_first_message.apply_async(
