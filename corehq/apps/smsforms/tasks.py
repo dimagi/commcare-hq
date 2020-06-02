@@ -21,6 +21,8 @@ def send_first_message(domain, recipient, phone_entry_or_number, session, respon
             )
             return
 
+    metrics_counter('commcare.smsforms.session_started', 1, tags={'domain': domain, 'workflow': workflow})
+
     if len(responses) > 0:
         message = format_message_list(responses)
         metadata = MessageMetadata(

@@ -10,16 +10,17 @@ from django.utils.translation import ugettext_noop
 
 from couchdbkit import MultipleResultsFound
 
+from corehq import toggles
+from corehq.apps.sms.mixin import BadSMSConfigException
+from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.sms.util import strip_plus
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.messaging.scheduling.util import utcnow
+from corehq.util.metrics import metrics_counter
+from corehq.util.quickcache import quickcache
 from dimagi.utils.couch import CriticalSection
 
 from . import signals
-from ..sms.mixin import BadSMSConfigException
-from ..sms.models import PhoneNumber
-from ... import toggles
-from ...util.quickcache import quickcache
 
 XFORMS_SESSION_SMS = "SMS"
 XFORMS_SESSION_IVR = "IVR"
@@ -110,10 +111,13 @@ class SQLXFormsSession(models.Model):
         if not self.session_is_open:
             return
 
-        self.mark_completed(False)
-
-        if self.submit_partially_completed_forms:
-            submit_unfinished_form(self)
+        try:
+            if self.submit_partially_completed_forms:
+                submit_unfinished_form(self)
+        finally:
+            # this needs to be called after the submission, but regardless of whether it succeeded
+            # thus the try/finally
+            self.mark_completed(False)
 
     def mark_completed(self, completed):
         self.session_is_open = False
@@ -121,6 +125,18 @@ class SQLXFormsSession(models.Model):
         self.modified_time = self.end_time = utcnow()
         if toggles.ONE_PHONE_NUMBER_MULTIPLE_CONTACTS.enabled(self.domain):
             XFormsSessionSynchronization.release_channel_for_session(self)
+
+        metrics_counter('commcare.smsforms.session_ended', 1, tags={
+            'domain': self.domain,
+            'workflow': self.workflow,
+            'status': (
+                'success' if self.completed and self.submission_id else
+                'terminated_partial_submission' if not self.completed and self.submission_id else
+                'terminated_without_submission' if not self.completed and not self.submission_id else
+                # Not sure if/how this could ever happen, but worth tracking if it does
+                'completed_without_submission'
+            )
+        })
 
     @property
     def related_subevent(self):
