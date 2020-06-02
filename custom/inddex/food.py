@@ -319,6 +319,16 @@ class FoodRow:
         raise AttributeError(f"FoodRow has no definition for {name}")
 
 
+NSR_COLS_TO_COPY = [
+    'nsr_conv_method_code_post_cooking',
+    'nsr_conv_method_desc_post_cooking',
+    'nsr_conv_option_code_post_cooking',
+    'nsr_conv_option_desc_post_cooking',
+    'nsr_measurement_amount_post_cooking',
+    'nsr_consumed_cooked_fraction',
+]
+
+
 def enrich_rows(rows):
     """Insert data possibly dependent on other rows in a recipe"""
     recipe_possibilities = [row for row in rows if row.is_recipe]
@@ -336,12 +346,13 @@ def enrich_rows(rows):
         recipe.recipe_name = recipe.ucr_row['recipe_name']
         for row in [recipe] + ingredients:
             row.total_grams = total_grams[row.uuid]
-            if row.is_recipe:
-                row.recipe_num_ingredients = len(ingredients)
+            row.recipe_num_ingredients = len(ingredients)
             if row.is_ingredient == 'yes':
                 row.recipe_name = recipe.recipe_name
                 if recipe.food_type == STANDARD_RECIPE:
                     row.ingr_recipe_total_grams_consumed = total_grams[recipe.uuid]
+                for col in NSR_COLS_TO_COPY:  # Copy these values from the recipe case
+                    setattr(row, col, getattr(recipe, col))
             row.enrichment_complete = True
 
 
