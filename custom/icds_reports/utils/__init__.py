@@ -1112,12 +1112,25 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
     if report_type == 'days_beneficiary_wise':
         total_column_count = 30
         data_start_row_diff = 3
+        secondary_headers = ['Not provided',
+                             'Provided for 1-7 days',
+                             'Provided for 8-14 days',
+                             'Provided for 15-20 days',
+                             'Provided for 21-24 days',
+                             'Provided for at least 25 days (>=25 days)']
     elif report_type == 'beneficiary_wise':
         total_column_count = 15
         data_start_row_diff = 2
     else:
         total_column_count = 11
         data_start_row_diff = 1
+
+    if report_type != 'consolidated':
+        beneficiary_type_columns = [
+            'Pregnant women',
+            'Lactating women',
+            'Children (0-3 years)'
+        ]
 
     amount_of_columns = total_column_count - aggregation_level
     last_column = get_column_letter(amount_of_columns)
@@ -1169,21 +1182,7 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
                    'Total No. of beneficiaries received THR in given month',
                    'Total No of Pictures taken by AWW']
     headers.extend(main_headers[aggregation_level:])
-    beneficiary_type_columns = []
-    secondary_headers = []
-    if report_type != 'consolidated':
-        beneficiary_type_columns = [
-            'Pregnant women',
-            'Lactating women',
-            'Children (0-3 years)'
-        ]
-    if report_type == 'days_beneficiary_wise':
-        secondary_headers = ['Not provided',
-                             'Provided for 1-7 days',
-                             'Provided for 8-14 days',
-                             'Provided for 15-20 days',
-                             'Provided for 21-24 days',
-                             'Provided for at least 25 days (>=25 days)']
+
 
     def set_beneficiary_columns(start_column_index, end_column_index, row):
         for i in range(end_column_index - start_column_index + 1):
@@ -1206,9 +1205,11 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
             next_cell = "{}{}".format(columns[column_index+2], row)
             worksheet.merge_cells(f"{cell}:{next_cell}")
 
-    next_column_deviation = 0
+    next_deviated_column = 0
+    column_deviation_2 = 2
+    column_deviation_17 = 17
     for index, value in enumerate(headers):
-        column_index = index + next_column_deviation
+        column_index = index + next_deviated_column
         cell = "{}{}".format(columns[column_index], table_header_position_row)
 
         worksheet[cell].fill = grey_fill
@@ -1220,28 +1221,28 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
         if report_type == 'beneficiary_wise':
             if value in ('Total No. of Beneficiaries eligible for THR',
                          'Total No. of beneficiaries received THR in given month'):
-                next_column_deviation += 2
-                next_cell = "{}{}".format(columns[column_index + 2], table_header_position_row)
+                next_deviated_column += column_deviation_2
+                next_cell = "{}{}".format(columns[column_index + column_deviation_2], table_header_position_row + data_start_row_diff - 2)
                 worksheet.merge_cells(f'{cell}:{next_cell}')
-                set_beneficiary_columns(column_index, column_index + 2, table_header_position_row+1)
+                set_beneficiary_columns(column_index, column_index + column_deviation_2, table_header_position_row + data_start_row_diff - 1)
             else:
-                next_cell = "{}{}".format(columns[column_index], table_header_position_row+1)
+                next_cell = "{}{}".format(columns[column_index], table_header_position_row+ data_start_row_diff - 1)
                 worksheet.merge_cells(f'{cell}:{next_cell}')
 
         elif report_type == 'days_beneficiary_wise':
             if value == 'Total No. of Beneficiaries eligible for THR':
-                next_column_deviation += 2
-                next_cell = "{}{}".format(columns[column_index + 2], table_header_position_row + 1)
+                next_deviated_column += column_deviation_2
+                next_cell = "{}{}".format(columns[column_index + column_deviation_2], table_header_position_row +  data_start_row_diff - 2)
                 worksheet.merge_cells(f'{cell}:{next_cell}')
-                set_beneficiary_columns(column_index, column_index + 2, table_header_position_row+2)
+                set_beneficiary_columns(column_index, column_index + column_deviation_2, table_header_position_row + data_start_row_diff - 1)
             elif value =='Total No. of beneficiaries received THR in given month':
-                next_column_deviation += 17
-                next_cell = "{}{}".format(columns[column_index + 17], table_header_position_row)
+                next_deviated_column += column_deviation_17
+                next_cell = "{}{}".format(columns[column_index + column_deviation_17], table_header_position_row)
                 worksheet.merge_cells(f'{cell}:{next_cell}')
-                set_service_delivery_columns(column_index, table_header_position_row + 1)
-                set_beneficiary_columns(column_index,column_index + 17, table_header_position_row + 2)
+                set_service_delivery_columns(column_index, table_header_position_row +  data_start_row_diff - 2)
+                set_beneficiary_columns(column_index,column_index + column_deviation_17, table_header_position_row + data_start_row_diff - 1)
             else:
-                next_cell = "{}{}".format(columns[column_index], table_header_position_row+2)
+                next_cell = "{}{}".format(columns[column_index], table_header_position_row + data_start_row_diff - 1)
                 worksheet.merge_cells(f'{cell}:{next_cell}')
 
 

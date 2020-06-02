@@ -138,4 +138,4 @@ class Migration(migrations.Migration):
             field=models.IntegerField(null=True),
         ),
     ]
-    operations.extend(get_view_migrations)
+    operations.extend(get_view_migrations())

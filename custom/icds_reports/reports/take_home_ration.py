@@ -90,79 +90,52 @@ class TakeHomeRationExport(object):
                    'Total No of Pictures taken by AWW']
 
         if self.beta:
-            columns = [
-                'state_name', 'district_name', 'block_name',
-                'supervisor_name', 'awc_name', 'aww_name', 'contact_phone_number',
-                'num_launched_awcs']
-
-            if self.month <= datetime(2020, 3, 1):
-                thr_columns = [
-                    'thr_eligible',
-                    'thr_21_days',
-                    'thr_distribution_image_count'
-                ]
-
-            else:
-                thr_columns = [
-                    'thr_eligible',
-                    'thr_25_days',
-                    'thr_distribution_image_count'
-                ]
-            columns += thr_columns
-            query_set = ServiceDeliveryReportView.objects.filter(**filters).order_by(*order_by)
-            data = query_set.values(*columns)
+            thr_column = 'thr_21_days' if self.month <= datetime(2020, 3, 1).date() else 'thr_25_days'
+            launched_column = 'num_launched_awcs'
+            thr_eligible_column = 'thr_eligible'
+            class_model = ServiceDeliveryReportView
         else:
-            query_set = TakeHomeRationMonthly.objects.filter(**filters).order_by(*order_by)
+            thr_column = 'thr_given_21_days'
+            launched_column = 'is_launched'
+            thr_eligible_column = 'total_thr_candidates'
+            class_model = TakeHomeRationMonthly
 
-            data = query_set.values('state_name', 'district_name', 'block_name',
-                                    'supervisor_name', 'awc_name', 'aww_name', 'contact_phone_number',
-                                    'is_launched', 'total_thr_candidates', 'thr_given_21_days',
-                                    'thr_distribution_image_count')
+        columns = [
+            'state_name', 'district_name', 'block_name',
+            'supervisor_name', 'awc_name', 'aww_name', 'contact_phone_number',
+            launched_column,
+            thr_eligible_column,
+            thr_column,
+            'thr_distribution_image_count'
+        ]
+
+        query_set = class_model.objects.filter(**filters).order_by(*order_by)
+        data = query_set.values(*columns)
         return headers, data
 
     def get_beneficiary_wise_data(self, filters, order_by):
 
+        thr_days = '21' if self.month <= datetime(2020, 3, 1).date() else '25'
+
+        headers = ['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name', 'AWW Phone No.',
+                   'Total No. of PW eligible for THR',
+                   'Total No. of LW eligible for THR',
+                   'Total No. of Children(6-36 months) eligible for THR',
+                   f'Total No. of PW received THR>={thr_days} days in given month',
+                   f'Total No. of LW received THR>={thr_days} days in given month',
+                   f'Total No. of Children(6-36 months) received THR>={thr_days} days in given month',
+                   'Total No of Pictures taken by AWW']
+
         columns = ['state_name', 'district_name', 'block_name',
                    'supervisor_name', 'awc_name', 'aww_name', 'contact_phone_number',
-                   'num_launched_awcs']
-
-        if self.month <= datetime(2020, 3, 1):
-            headers = ['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name', 'AWW Phone No.',
-                       'Total No. of PW eligible for THR',
-                       'Total No. of LW eligible for THR',
-                       'Total No. of Children(6-36 months) eligible for THR',
-                       'Total No. of PW received THR>=21 days in given month',
-                       'Total No. of LW received THR>=21 days in given month',
-                       'Total No. of Children(6-36 months) received THR>=21 days in given month',
-                       'Total No of Pictures taken by AWW']
-            thr_columns = [
-                'pw_thr_eligible',
-                'lw_thr_eligible',
-                'child_thr_eligible',
-                'pw_thr_21_days',
-                'lw_thr_21_days',
-                'child_thr_21_days',
-                'thr_distribution_image_count'
-            ]
-        else:
-            headers = ['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name', 'AWW Phone No.',
-                       'Total No. of PW eligible for THR',
-                       'Total No. of LW eligible for THR',
-                       'Total No. of Children(6-36 months) eligible for THR',
-                       'Total No. of PW received THR>=25 days in given month',
-                       'Total No. of LW received THR>=25 days in given month',
-                       'Total No. of Children(6-36 months) received THR>=25 days in given month',
-                       'Total No of Pictures taken by AWW']
-            thr_columns = [
-                'pw_thr_eligible',
-                'lw_thr_eligible',
-                'child_thr_eligible'
-                'pw_thr_25_days',
-                'lw_thr_25_days',
-                'child_thr_25_days',
-                'thr_distribution_image_count'
-            ]
-        columns += thr_columns
+                   'num_launched_awcs',
+                   'pw_thr_eligible',
+                   'lw_thr_eligible',
+                   'child_thr_eligible',
+                   f'pw_thr_{thr_days}_days',
+                   f'lw_thr_{thr_days}_days',
+                   f'child_thr_{thr_days}_days',
+                   'thr_distribution_image_count']
         query_set = ServiceDeliveryReportView.objects.filter(**filters).order_by(*order_by)
         data = query_set.values(*columns)
         return headers, data
