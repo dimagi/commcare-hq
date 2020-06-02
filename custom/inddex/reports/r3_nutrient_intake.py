@@ -112,8 +112,8 @@ class IntakeData:
         'reference_food_code', 'caseid', 'food_name', 'recipe_name',
         'fao_who_gift_food_group_code', 'fao_who_gift_food_group_description',
         'user_food_group', 'food_type', 'include_in_analysis', 'is_ingredient',
-        'food_status', 'total_grams', 'conv_factor_gap_code',
-        'conv_factor_gap_desc', 'fct_gap_code', 'fct_gap_desc',
+        'total_grams', 'conv_factor_gap_code', 'conv_factor_gap_desc',
+        'fct_gap_code', 'fct_gap_desc',
     ]
 
     def __init__(self, food_data):
