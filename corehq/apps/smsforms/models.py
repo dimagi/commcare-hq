@@ -11,7 +11,6 @@ from couchdbkit import MultipleResultsFound
 from corehq.apps.sms.util import strip_plus
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.messaging.scheduling.util import utcnow
-from corehq.util.metrics import metrics_counter
 
 from . import signals
 
@@ -104,30 +103,15 @@ class SQLXFormsSession(models.Model):
         if not self.session_is_open:
             return
 
-        try:
-            if self.submit_partially_completed_forms:
-                submit_unfinished_form(self)
-        finally:
-            # this needs to be called after the submission, but regardless of whether it succeeded
-            # thus the try/finally
-            self.mark_completed(False)
+        self.mark_completed(False)
+
+        if self.submit_partially_completed_forms:
+            submit_unfinished_form(self)
 
     def mark_completed(self, completed):
         self.session_is_open = False
         self.completed = completed
         self.modified_time = self.end_time = utcnow()
-
-        metrics_counter('commcare.smsforms.session_ended', 1, tags={
-            'domain': self.domain,
-            'workflow': self.workflow,
-            'status': (
-                'success' if self.completed and self.submission_id else
-                'terminated_partial_submission' if not self.completed and self.submission_id else
-                'terminated_without_submission' if not self.completed and not self.submission_id else
-                # Not sure if/how this could ever happen, but worth tracking if it does
-                'completed_without_submission'
-            )
-        })
 
     @property
     def related_subevent(self):
