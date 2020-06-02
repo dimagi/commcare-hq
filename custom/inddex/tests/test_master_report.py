@@ -44,14 +44,27 @@ def get_expected_report(filename):
 
     # Swap out the external IDs in the test fixture for the real IDs
     case_ids_by_external_id = _get_case_ids_by_external_id()
+    return [{
+        key: case_ids_by_external_id[val] if val in case_ids_by_external_id else val
+        for key, val in row.items()
+    } for row in rows]
 
-    def substitute_real_ids(row):
-        return {
-            key: case_ids_by_external_id[val] if val in case_ids_by_external_id else val
-            for key, val in row.items()
-        }
 
-    return [substitute_real_ids(r) for r in rows]
+def _overwrite_report(filename, actual_report):
+    """For use when making changes - force overwrites test data"""
+    accessor = CaseAccessors(DOMAIN)
+    case_ids = accessor.get_case_ids_in_domain()
+    external_ids_by_case_id = {c.case_id: c.external_id for c in accessor.get_cases(case_ids)}
+    rows = [[
+        external_ids_by_case_id[val] if val in external_ids_by_case_id else val
+        for val in row
+    ] for row in actual_report.rows]
+
+    with open(os.path.join(os.path.dirname(__file__), 'data', filename), 'w') as f:
+        writer = csv.writer(f)
+        writer.writerow(actual_report.headers)
+        writer.writerows(rows)
+
 
 
 @require_db_context
@@ -189,6 +202,7 @@ class TestMasterReport(TestCase):
 
     def run_new_report(self):
         report = MasterData(get_food_data())
+        # _overwrite_report('1_master.csv', report); raise Exception
         return [dict(zip(report.headers, row)) for row in report.rows]
 
     def assert_columns_equal(self, expected_rows, actual_rows, column):
@@ -210,6 +224,8 @@ class TestInddexReports(TestCase):
     maxDiff = None
 
     def assert_reports_match(self, csv_filename, actual_report):
+        # _overwrite_report(csv_filename, actual_report); raise Exception
+
         def to_string(row):
             return ' | '.join(f'{v:<25}' for v in row)
 
