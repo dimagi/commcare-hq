@@ -15,7 +15,7 @@ hqDefine('hqwebapp/js/inactivity', [
 ) {
     var log = function (message) {
         console.log("[" + (new Date()).toLocaleTimeString() + "] " + message);  // eslint-disable-line no-console
-    }
+    };
 
     var calculateDelayAndWarning = function (timeout, lastRequest) {
         var millisLeft = timeout,
@@ -64,7 +64,7 @@ hqDefine('hqwebapp/js/inactivity', [
 
         log("page loaded, timeout length is " + timeout / 1000 / 60 + " minutes");
         if (timeout === undefined || !$modal.length) {
-            log("couldn't find popup or no timeout was set, therefore returning early")
+            log("couldn't find popup or no timeout was set, therefore returning early");
             return;
         }
 
