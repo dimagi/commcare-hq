@@ -8,7 +8,7 @@ from corehq.apps.userreports.models import (
 
 from django.db import connections
 from django.db.utils import ProgrammingError
-
+from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
 
 
@@ -33,11 +33,12 @@ class Command(BaseCommand):
         parser.add_argument('--only-missing', required=True, action='store_true',
             dest='only_missing', help='should build only missing')
 
-    def get_missing_tables(self, tables):
+    def get_missing_tables(self, domain, tables):
         missing_tables = []
 
         for table in tables:
-            query = f"select * from {table.table_id} limit 1"
+            table_name = get_table_name(domain, table.table_id)
+            query = f'select * from "{table_name}" limit 1'
             try:
                 _run_custom_sql_script(query)
             except ProgrammingError:
@@ -49,7 +50,7 @@ class Command(BaseCommand):
         tables.extend(DataSourceConfiguration.by_domain(domain))
 
         if options.get('only_missing'):
-            tables_to_build = self.get_missing_tables(tables)
+            tables_to_build = self.get_missing_tables(domain, tables)
         else:
             tables_to_build = tables
 
