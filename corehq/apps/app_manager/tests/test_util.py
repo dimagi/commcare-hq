@@ -126,10 +126,12 @@ class TestGlobalAppConfig(TestCase):
             )
 
     def test_app_prompt(self):
+        app_config = self.app.global_app_config
+        app_config.save()
         test_cases = [
-            ('off', None, {}),
-            ('on', None, {'value': self.v3_build.version, 'force': False}),
-            ('forced', None, {'value': self.v3_build.version, 'force': True}),
+            ('off', '', {}),
+            ('on', '', {'value': self.v3_build.version, 'force': False}),
+            ('forced', '', {'value': self.v3_build.version, 'force': True}),
             ('off', self.build_profile_id, {}),
             ('on', self.build_profile_id, {'value': self.v2_build.version, 'force': False}),
             ('forced', self.build_profile_id, {'value': self.v2_build.version, 'force': True}),
@@ -160,7 +162,7 @@ class TestGlobalAppConfig(TestCase):
             app_config.save()
             config = GlobalAppConfig.by_app_id(self.domain, self.app.master_id)
             self.assertEqual(
-                config.get_latest_app_version(),
+                config.get_latest_app_version(build_profile_id=''),
                 response
             )
 
@@ -168,8 +170,8 @@ class TestGlobalAppConfig(TestCase):
         with self.assertRaises(AssertionError):
             # should not be id of a copy
             config = GlobalAppConfig.by_app_id(self.domain, self.v3_build.id)
-            config.get_latest_app_version()
+            config.get_latest_app_version(build_profile_id='')
 
         with self.assertRaises(Http404):
             config = GlobalAppConfig.by_app_id(self.domain, 'wrong-id')
-            config.get_latest_app_version()
+            config.get_latest_app_version(build_profile_id='')
