@@ -21,6 +21,8 @@ from corehq.apps.sms.models import MessagingEvent, PhoneNumber, PhoneBlacklist
 from corehq.apps.sms.util import format_message_list, touchforms_error_is_config_error, get_formplayer_exception
 from corehq.apps.smsforms.models import SQLXFormsSession
 from memoized import memoized
+
+from corehq.util.metrics import metrics_counter
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
 from django.conf import settings
@@ -326,6 +328,8 @@ class SMSSurveyContent(Content):
 
     def send_first_message(self, domain, recipient, phone_entry_or_number, session, responses, logged_subevent,
             workflow):
+
+        metrics_counter('commcare.smsforms.session_started', 1, tags={'domain': domain, 'workflow': workflow})
         if len(responses) > 0:
             message = format_message_list(responses)
             metadata = MessageMetadata(
