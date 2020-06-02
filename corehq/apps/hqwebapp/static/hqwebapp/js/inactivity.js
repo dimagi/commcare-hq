@@ -13,6 +13,10 @@ hqDefine('hqwebapp/js/inactivity', [
     assertProperties,
     initialPageData
 ) {
+    var log = function (message) {
+        console.log("[" + (new Date()).toLocaleTimeString() + "] " + message);  // eslint-disable-line no-console
+    }
+
     var calculateDelayAndWarning = function (timeout, lastRequest) {
         var millisLeft = timeout,
             response = {show_warning: false};
@@ -20,19 +24,25 @@ hqDefine('hqwebapp/js/inactivity', [
         // Figure out when the session is going to expire
         if (lastRequest) {
             millisLeft = timeout - (new Date() - new Date(lastRequest));
+            log("last request was " + lastRequest + ", so there are " + (millisLeft / 1000 / 60) + " minutes left in the session");
+        } else {
+            log("no last request, so there are " + (millisLeft / 1000 / 60) + " minutes left in the session");
         }
 
         if (millisLeft < 30 * 1000) {
             // Last 30 seconds, ping every 3 seconds
             response.show_warning = true;
             response.delay = 3000;
+            log("show warning and poll again in 3 sec");
         } else if (millisLeft < 2 * 60 * 1000) {
             // Last 2 minutes, ping every ten seconds
             response.show_warning = true;
             response.delay = 10 * 1000;
+            log("show warning and poll again in 10 sec");
         } else {
             // We have time, ping when 2 minutes from expiring
             response.delay = millisLeft - 2 * 60 * 1000;
+            log("poll again in " + (millisLeft - 2 * 60 * 1000) / 1000 / 60 + " minutes");
         }
 
         assertProperties.assertRequired(response, ['delay', 'show_warning']);
@@ -52,7 +62,9 @@ hqDefine('hqwebapp/js/inactivity', [
         var keyboardOrMouseActive = false,
             shouldShowWarning = false;
 
+        log("page loaded, timeout length is " + timeout / 1000 / 60 + " minutes");
         if (timeout === undefined || !$modal.length) {
+            log("couldn't find popup or no timeout was set, therefore returning early")
             return;
         }
 
@@ -92,11 +104,13 @@ hqDefine('hqwebapp/js/inactivity', [
         };
 
         var pollToShowModal = function () {
+            log("polling HQ's ping_login to decide about showing login modal");
             $.ajax({
                 url: initialPageData.reverse('ping_login'),
                 type: 'GET',
                 success: function (data) {
                     if (!data.success) {
+                        log("ping_login failed, showing login modal");
                         var $body = $modal.find(".modal-body");
                         var src = initialPageData.reverse('iframe_login');
                         src += "?next=" + initialPageData.reverse('iframe_login_new_window');
@@ -113,6 +127,7 @@ hqDefine('hqwebapp/js/inactivity', [
                         $body.html('<h1 class="text-center"><i class="fa fa-spinner fa-spin"></i></h1>');
                         hideWarningModal(true);
                     } else {
+                        log("ping_login succeeded, time to re-calculate when the next poll should be, data was " + JSON.stringify(data));
                         _.delay(pollToShowModal, getDelayAndWarnIfNeeded(data.last_request));
                     }
                 },
@@ -151,6 +166,7 @@ hqDefine('hqwebapp/js/inactivity', [
         };
 
         var extendSession = function ($button) {
+            log("extending session");
             if ($button) {
                 $button.disableButton();
             }
@@ -162,6 +178,7 @@ hqDefine('hqwebapp/js/inactivity', [
                     if ($button) {
                         $button.enableButton();
                     }
+                    log("session successfully extended, hiding warning popup if it's open");
                     hideWarningModal();
                 },
             });
@@ -189,7 +206,7 @@ hqDefine('hqwebapp/js/inactivity', [
         // Send no-op request to server to extend session when there's client-side user activity on this page.
         // _.throttle will prevent this from happening too often.
         var keepAliveTimeout = 60 * 1000;
-log("page loaded, will send a keep-alive request to server every click/keypress, at most once every " + (keepAliveTimeout / 1000 / 60) + " minutes");
+        log("page loaded, will send a keep-alive request to server every click/keypress, at most once every " + (keepAliveTimeout / 1000 / 60) + " minutes");
         $("body").on("keypress click", _.throttle(function () {
             extendSession();
         }, keepAliveTimeout));
