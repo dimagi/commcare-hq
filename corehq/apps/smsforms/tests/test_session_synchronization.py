@@ -3,7 +3,8 @@ from uuid import uuid4
 
 import mock
 
-from corehq.apps.smsforms.models import XFormsSessionSynchronization, RunningSessionInfo, SMSChannel, SQLXFormsSession
+from corehq.apps.smsforms.models import XFormsSessionSynchronization, RunningSessionInfo, SMSChannel, \
+    SQLXFormsSession
 
 
 @mock.patch.object(SQLXFormsSession, 'by_session_id',
