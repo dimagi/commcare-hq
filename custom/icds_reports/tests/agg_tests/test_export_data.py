@@ -15,10 +15,10 @@ from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExpo
 from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
 from custom.icds_reports.reports.incentive import IncentiveReport
 from custom.icds_reports.reports.take_home_ration import TakeHomeRationExport
-from custom.icds_reports.const import  (
-THR_REPORT_CONSOLIDATED,
-THR_REPORT_BENEFICIARY_TYPE,
-THR_REPORT_DAY_BENEFICIARY_TYPE
+from custom.icds_reports.const import (
+    THR_REPORT_CONSOLIDATED,
+    THR_REPORT_BENEFICIARY_TYPE,
+    THR_REPORT_DAY_BENEFICIARY_TYPE
 )
 
 
@@ -105,7 +105,7 @@ class TestExportData(TestCase):
                                    ['st1', 'd1', 'b1', 's2', 'a50', 'AWC Not Launched', 'AWC Not Launched',
                                     'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched']]],
              ['Export Info', [
-                 ['Generated at', self..now],
+                 ['Generated at', self.now],
                  ['State', 'st1'],
                  ['District', 'd1'],
                  ['Block', 'b1'],
@@ -165,31 +165,31 @@ class TestExportData(TestCase):
                         0, 0, 0, 0, 0, 0
                     ],
                     [
-                       'st1', 'd1', 'b1', 's1', 'a49', 'Data Not Entered', 'Data Not Entered', 3,
-                       5, 3, 0, 0, 0, 0
+                        'st1', 'd1', 'b1', 's1', 'a49', 'Data Not Entered', 'Data Not Entered', 3,
+                        5, 3, 0, 0, 0, 0
                     ],
                     [
-                       'st1', 'd1', 'b1', 's1', 'a9', 'AWC Not Launched', 'AWC Not Launched',
-                       'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
-                       'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'
+                        'st1', 'd1', 'b1', 's1', 'a9', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'
                     ],
                     [
-                       'st1', 'd1', 'b1', 's2', 'a10', 'Data Not Entered', 'Data Not Entered', 0,
-                       2, 8, 0, 0, 0, 0
+                        'st1', 'd1', 'b1', 's2', 'a10', 'Data Not Entered', 'Data Not Entered', 0,
+                        2, 8, 0, 0, 0, 0
                     ],
                     [
-                       'st1', 'd1', 'b1', 's2', 'a18', 'Data Not Entered', 'Data Not Entered', 5,
-                       6, 4, 1, 0, 0, 4
+                        'st1', 'd1', 'b1', 's2', 'a18', 'Data Not Entered', 'Data Not Entered', 5,
+                        6, 4, 1, 0, 0, 4
                     ],
                     [
-                       'st1', 'd1', 'b1', 's2', 'a2', 'AWC Not Launched', 'AWC Not Launched',
-                       'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
-                       'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'
+                        'st1', 'd1', 'b1', 's2', 'a2', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'
                     ],
                     [
-                       'st1', 'd1', 'b1', 's2', 'a26', 'AWC Not Launched', 'AWC Not Launched',
-                       'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
-                       'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'
+                        'st1', 'd1', 'b1', 's2', 'a26', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'
                     ],
                     [
                         'st1', 'd1', 'b1', 's2', 'a34', 'Data Not Entered', 'Data Not Entered', 4,
@@ -205,7 +205,7 @@ class TestExportData(TestCase):
                         'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
                         'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'
                     ]]
-              ],
+            ],
                 ['Export Info',
                  [
                      ['Generated at', self.now],
@@ -326,9 +326,15 @@ class TestExportData(TestCase):
                                     'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
                                     'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
                                     'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
-                                    'AWC Not Launched', 'AWC Not Launched']]], ['Export Info', [
-                ['Generated at', self.now], ['State', 'st1'], ['District', 'd1'], ['Block', 'b1'],
-                ['Month', 'May'], ['Year', 2017]]]]
+                                    'AWC Not Launched', 'AWC Not Launched']]],
+             ['Export Info', [
+                 ['Generated at', self.now],
+                 ['State', 'st1'],
+                 ['District', 'd1'],
+                 ['Block', 'b1'],
+                 ['Month', 'May'],
+                 ['Year', 2017]
+             ]]]
         )
 
     def test_children_export_info(self):
@@ -4395,4 +4401,3 @@ class TestExportData(TestCase):
               ]
              ]
         )
-

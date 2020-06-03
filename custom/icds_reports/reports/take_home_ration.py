@@ -1,13 +1,11 @@
-from datetime import datetime
-
 from corehq.apps.locations.models import SQLLocation
 from custom.icds_reports.utils import india_now, DATA_NOT_ENTERED
 from custom.icds_reports.models.views import TakeHomeRationMonthly
 from custom.icds_reports.models.views import ServiceDeliveryReportView
 from custom.icds_reports.const import (
-THR_REPORT_BENEFICIARY_TYPE,
-THR_REPORT_DAY_BENEFICIARY_TYPE,
-THR_21_DAYS_THRESHOLD_DATE
+    THR_REPORT_BENEFICIARY_TYPE,
+    THR_REPORT_DAY_BENEFICIARY_TYPE,
+    THR_21_DAYS_THRESHOLD_DATE
 )
 
 class TakeHomeRationExport(object):
