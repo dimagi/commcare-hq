@@ -4252,7 +4252,7 @@ class TestExportData(TestCase):
             data,
             [['Take Home Ration', [['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name',
                                     'AWW Phone No.', 'Total No. of Beneficiaries eligible for THR',
-                                    'Total No. of Beneficiaries received THR>=21 days in given month',
+                                    'Total No. of beneficiaries received THR in given month',
                                     'Total No of Pictures taken by AWW'],
                                    ['st1', 'd1', 'b1', 's1', 'a1', 'AWC Not Launched', 'AWC Not Launched',
                                     'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
@@ -4307,7 +4307,7 @@ class TestExportData(TestCase):
             [['Take Home Ration', [
                 ['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name', 'AWW Phone No.',
                  'Total No. of Beneficiaries eligible for THR',
-                 'Total No. of Beneficiaries received THR>=21 days in given month',
+                 'Total No. of beneficiaries received THR in given month',
                  'Total No of Pictures taken by AWW'],
                 ['st1', 'd1', 'b1', 's1', 'a1', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
                  'AWC Not Launched', 'AWC Not Launched'],
