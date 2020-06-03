@@ -38,5 +38,19 @@ describe('inactivity', function () {
             tolerantAssert(response.delay, 3 * 1000);
             assert.isTrue(response.show_warning);
         });
+
+        it('should use absolute value in case session appears expired', function () {
+            // last request 15 minutes ago => -5 minutes left
+            var response = module.calculateDelayAndWarning(timeout, new Date() - 15 * 60 * 1000);
+            tolerantAssert(response.delay, 3 * 60 * 1000);
+            assert.isFalse(response.show_warning);
+        });
+
+        it('should use absolute value in case session is very expired', function () {
+            // last request 30 minutes ago => -20 minutes left
+            var response = module.calculateDelayAndWarning(timeout, new Date() - 30 * 60 * 1000);
+            tolerantAssert(response.delay, 18 * 60 * 1000);
+            assert.isFalse(response.show_warning);
+        });
     });
 });
