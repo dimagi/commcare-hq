@@ -1570,31 +1570,31 @@ class DataSourceSummaryView(BaseUserConfigReportsView):
 @domain_admin_required
 def copy_report(request, domain):
     from_domain = domain
-    to_domain = request.POST.get("domain")
+    to_domains = request.POST.getlist("to_domains")
     report_id = request.POST.get("report_id")
-    domain_link = DomainLink.objects.get(master_domain=from_domain, linked_domain=to_domain)
-    try:
-        link_info = create_linked_ucr(domain_link, report_id)
-        domain_link.update_last_pull(
-            'report',
-            request.couch_user._id,
-            model_details=ReportLinkDetail(report_id=link_info.report.get_id)
-        )
-        messages.success(request, _(f"Successfully linked and copied {link_info.report.title} to {to_domain}. "
-                                    "We've redirected you to the new report."))
-        url = reverse(
-            ConfigurableReportView.slug,
-            args=[
-                link_info.report.domain,
-                link_info.report.get_id,
-            ],
-        )
-        if domain_link.is_remote:
-            url = f'{domain_link.remote_base_url}{url}'
-        return HttpResponseRedirect(url)
-    except Exception as err:
-        messages.error(request, _("Something went wrong linking your report"))
-        notify_exception(request, message=str(err))
-        return HttpResponseRedirect(
-            reverse(ConfigurableReportView.slug, args=[from_domain, report_id])
-        )
+    successes = []
+    failures = []
+    for to_domain in to_domains:
+        domain_link = DomainLink.objects.get(master_domain=from_domain, linked_domain=to_domain)
+        try:
+            link_info = create_linked_ucr(domain_link, report_id)
+            domain_link.update_last_pull(
+                'report',
+                request.couch_user._id,
+                model_details=ReportLinkDetail(report_id=link_info.report.get_id)
+            )
+            successes.append(to_domain)
+        except Exception as err:
+            failures.append(to_domain)
+            notify_exception(request, message=str(err))
+
+    if successes:
+        messages.success(
+            request,
+            _(f"Successfully linked and copied {link_info.report.title} to {', '.join(successes)}. "))
+    if failures:
+        messages.error(request, _(f"Due to errors, the report was not copied to {', '.join(failures)}"))
+
+    return HttpResponseRedirect(
+        reverse(ConfigurableReportView.slug, args=[from_domain, report_id])
+    )
