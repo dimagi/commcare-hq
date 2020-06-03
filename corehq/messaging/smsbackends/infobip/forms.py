@@ -22,15 +22,8 @@ class InfobipBackendForm(BackendForm):
     )
 
     def clean_scenario_key(self):
-        value = self.cleaned_data.get("scenario_key")
-        if value is None:
-            return None
-        else:
-            value = value.strip()
-            if value == "":
-                return None
-            else:
-                return value
+        value = self.cleaned_data.get("scenario_key") or ""
+        return value.strip() or None
 
     @property
     def gateway_specific_fields(self):
