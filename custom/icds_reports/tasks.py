@@ -1035,10 +1035,6 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
         data_type = 'Child Growth Tracker Report__{}'.format(formatted_timestamp)
     elif indicator == AWW_ACTIVITY_REPORT:
         data_type = 'AWW_Activity_Report'
-        print(config)
-        print(aggregation_level)
-        print(beta)
-        print(location)
         excel_data = AwwActivityExport(
             config=config,
             loc_level=aggregation_level,
