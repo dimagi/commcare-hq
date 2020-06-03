@@ -4256,4 +4256,3 @@ class TestExportData(TestCase):
                ['Month', 'May'],
                ['Year', 2017]]]]
         )
-
