@@ -171,9 +171,7 @@ def get_cas_reach_data(domain, now_date, config, show_test=False, show_prereleas
         ]
     ]
 
-    display_lss_launched = current_month >= datetime(2020, 1, 1) and show_prerelease_features
-
-    if display_lss_launched:
+    if show_prerelease_features:
         ls_launched_data = get_data_for_ls_launched(current_month, config)
         number_of_lss_launched = {
             'label': _('LSs Launched'),

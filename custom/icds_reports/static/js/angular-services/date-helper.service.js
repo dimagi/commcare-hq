@@ -3,7 +3,6 @@
 window.angular.module('icdsApp').factory('dateHelperService', ['$location', function ($location) {
     var reportStartDates = {
         'sdd': new Date(2019, 1),
-        'ls_launched': new Date(2020, 0),
     };
 
     var defaultStartYear = 2017;
@@ -94,11 +93,9 @@ window.angular.module('icdsApp').factory('dateHelperService', ['$location', func
         }
         return defaultStartMonth;
     }
-    function getStartingYear(isSDD, isLSLaunched) {
+    function getStartingYear(isSDD) {
         if (isSDD) {
             return reportStartDates['sdd'].getFullYear();
-        } else if (isLSLaunched) {
-            return reportStartDates['ls_launched'].getFullYear();
         }
         return defaultStartYear;
     }

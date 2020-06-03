@@ -10,9 +10,8 @@ function MonthModalController($location, $uibModalInstance, dateHelperService) {
     var reportStartDates = dateHelperService.getReportStartDates();
 
     var isSDD =  $location.path().indexOf('service_delivery_dashboard') !== -1;
-    var isLSLaunched =  $location.path().indexOf('ls_launched') !== -1;
 
-    var startYear = dateHelperService.getStartingYear(isSDD, isLSLaunched);
+    var startYear = dateHelperService.getStartingYear(isSDD);
 
     var currentDate = new Date();
     var maxYear = dateHelperService.checkAndGetValidDate(currentDate).getFullYear();
@@ -82,8 +81,7 @@ function MonthFilterController($scope, $location, $uibModal, storageService, dat
 
     // used by mobile dashboard
     var isSDD =  $location.path().indexOf('service_delivery_dashboard') !== -1;
-    var isLSLaunched =  $location.path().indexOf('ls_launched') !== -1;
-    vm.startYear = dateHelperService.getStartingYear(isSDD, isLSLaunched);
+    vm.startYear = dateHelperService.getStartingYear(isSDD);
     vm.startMonth = dateHelperService.getStartingMonth(isSDD);
     vm.maxMonth = dateHelperService.checkAndGetValidDate(new Date()).getMonth() + 1;
     vm.maxYear = dateHelperService.checkAndGetValidDate(new Date()).getFullYear();
