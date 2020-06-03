@@ -1210,6 +1210,13 @@ DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+OVERRIDE_EXPANDED_COLUMN_LIMIT_IN_REPORT_BUILDER = StaticToggle(
+    'override_expanded_column_limit_in_report_builder',
+    'COVID: Override the limit for expanded columns in report builder from 10 to 50',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 CLOUDCARE_LATEST_BUILD = StaticToggle(
     'use_latest_build_cloudcare',
     'Uses latest build for Web Apps instead of latest published',
