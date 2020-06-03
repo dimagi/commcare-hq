@@ -76,6 +76,28 @@ def test_fixture_data_item_to_dict():
     })
 
 
+def test_empty_fixture_data_item_to_dict():
+    data_item = FixtureDataItem(
+        domain='test-domain',
+        data_type_id='123456',
+        fields={
+            'id': FieldList(
+                doc_type='FieldList',
+                field_list=[]
+            ),
+            'name': FieldList(
+                doc_type='FieldList',
+                field_list=[]
+            )
+        }
+    )
+    dict_ = fixture_data_item_to_dict(data_item)
+    assert_equal(dict_, {
+        'id': None,
+        'name': None,
+    })
+
+
 def test_doctests():
     results = doctest.testmod(fixture_utils)
     assert results.failed == 0

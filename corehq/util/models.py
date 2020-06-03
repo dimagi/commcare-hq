@@ -73,9 +73,14 @@ class BouncedEmail(models.Model):
             meta_query = PermanentBounceMeta.objects.filter(
                 bounced_email__email=remaining_email)
             if not meta_query.exists():
-                # There is no metadata for this email, so we assume
-                # a hard bounce
-                bad_emails.add(remaining_email)
+                # check to see if this is Transiently bouncing
+                transient_bounce_query = TransientBounceEmail.objects.filter(
+                    email=remaining_email
+                )
+                if not transient_bounce_query.exists():
+                    # There is no metadata at all for this email, so we assume
+                    # a hard bounce
+                    bad_emails.add(remaining_email)
             elif meta_query.count() > GENERAL_BOUNCE_THRESHOLD:
                 # This email has too many general bounces recorded against it
                 bad_emails.add(remaining_email)

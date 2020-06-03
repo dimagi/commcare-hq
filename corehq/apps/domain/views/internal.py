@@ -445,12 +445,31 @@ def toggle_diff(request, domain):
     other_domain = params.get('domain')
     diff = []
     if Domain.get_by_name(other_domain):
-        diff = [{'slug': t.slug, 'label': t.label, 'url': reverse(ToggleEditView.urlname, args=[t.slug])}
-                for t in feature_previews.all_previews() + toggles.all_toggles()
-                if t.enabled(request.domain, toggles.NAMESPACE_DOMAIN)
-                and not t.enabled(other_domain, toggles.NAMESPACE_DOMAIN)]
-        diff.sort(key=lambda x: x['label'])
+        diff = [{
+            'slug': t.slug,
+            'label': t.label,
+            'url': reverse(ToggleEditView.urlname, args=[t.slug]),
+            'tag_name': _('Preview'),
+            'tag_css_class': 'default',
+            'tag_index': -1,
+        } for t in feature_previews.all_previews() if _can_copy_toggle(t, request.domain, other_domain)]
+        diff.extend([{
+            'slug': t.slug,
+            'label': t.label,
+            'url': reverse(ToggleEditView.urlname, args=[t.slug]),
+            'tag_name': t.tag.name,
+            'tag_css_class': t.tag.css_class,
+            'tag_index': t.tag.index,
+        } for t in toggles.all_toggles() if _can_copy_toggle(t, request.domain, other_domain)])
+        diff.sort(key=lambda x: (x['tag_index'], x['label']))
     return json_response(diff)
+
+
+def _can_copy_toggle(toggle, domain, other_domain):
+    return (
+        toggle.enabled(domain, toggles.NAMESPACE_DOMAIN)
+        and not toggle.enabled(other_domain, toggles.NAMESPACE_DOMAIN)
+    )
 
 
 @login_and_domain_required
