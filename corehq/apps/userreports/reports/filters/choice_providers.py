@@ -149,8 +149,11 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
 
     def query(self, query_context):
         try:
-            return [self._make_choice_from_value(value)
-                    for value in self.get_values_for_query(query_context)]
+            choices = [
+                self._make_choice_from_value(value)
+                for value in self.get_values_for_query(query_context)
+            ]
+            return self._deduplicate_and_sort_choices(choices)
         except ColumnNotFoundError:
             return []
 
@@ -192,6 +195,19 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
         elif value == "":
             return Choice(EMPTY_CHOICE, '[Empty]')
         return Choice(value, value)
+
+    @staticmethod
+    def _deduplicate_and_sort_choices(choices):
+        return list(sorted(DataSourceColumnChoiceProvider._deduplicate_choices(choices),
+                           key=lambda choice: choice.display))
+
+    @staticmethod
+    def _deduplicate_choices(choices):
+        found_values = set()
+        for choice in choices:
+            if choice.value not in found_values:
+                yield choice
+                found_values.add(choice.value)
 
 
 class MultiFieldDataSourceColumnChoiceProvider(DataSourceColumnChoiceProvider):
