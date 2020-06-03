@@ -325,8 +325,6 @@ class ChoiceListFilterValue(FilterValue):
             return None
 
         sql_filters = []
-        if self.is_null:
-            sql_filters.append(ISNULLFilter(self.filter['field']))
 
         non_null_values = self._get_value_without_nulls()
         if non_null_values:
@@ -343,6 +341,9 @@ class ChoiceListFilterValue(FilterValue):
                 sql_filters.append(in_filter)
         elif self._ancestor_filter:
             sql_filters.append(self._ancestor_filter.sql_filter())
+
+        if self.is_null:
+            sql_filters.append(ISNULLFilter(self.filter['field']))
 
         if len(sql_filters) > 1:
             return ORFilter(
