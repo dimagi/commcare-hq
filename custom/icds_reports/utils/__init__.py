@@ -40,7 +40,15 @@ from corehq.util.files import TransientTempfile
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
 from custom.icds_reports import const
-from custom.icds_reports.const import ISSUE_TRACKER_APP_ID, LOCATION_TYPES, AggregationLevels
+from custom.icds_reports.const import (
+ISSUE_TRACKER_APP_ID,
+LOCATION_TYPES,
+AggregationLevels,
+THR_REPORT_CONSOLIDATED,
+THR_REPORT_BENEFICIARY_TYPE,
+THR_REPORT_DAY_BENEFICIARY_TYPE
+)
+
 from custom.icds_reports.exceptions import InvalidLocationTypeException
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
@@ -1115,7 +1123,7 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
     worksheet.title = "THR Report"
     worksheet.sheet_view.showGridLines = False
 
-    if report_type == 'days_beneficiary_wise':
+    if report_type == THR_REPORT_DAY_BENEFICIARY_TYPE:
         total_column_count = 30
         data_start_row_diff = 3
         secondary_headers = ['Not provided',
@@ -1124,14 +1132,14 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
                              'Provided for 15-20 days',
                              'Provided for 21-24 days',
                              'Provided for at least 25 days (>=25 days)']
-    elif report_type == 'beneficiary_wise':
+    elif report_type == THR_REPORT_BENEFICIARY_TYPE:
         total_column_count = 15
         data_start_row_diff = 2
     else:
         total_column_count = 11
         data_start_row_diff = 1
 
-    if report_type != 'consolidated':
+    if report_type != THR_REPORT_CONSOLIDATED:
         beneficiary_type_columns = [
             'Pregnant women',
             'Lactating women',
@@ -1222,7 +1230,7 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
         worksheet[cell].alignment = warp_text_alignment
         worksheet[cell].value = value
 
-        if report_type == 'beneficiary_wise':
+        if report_type == THR_REPORT_BENEFICIARY_TYPE:
             if value in ('Total No. of Beneficiaries eligible for THR',
                          'Total No. of beneficiaries received THR in given month'):
                 next_deviated_column += column_deviation_2
@@ -1235,7 +1243,7 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
                 next_cell = "{}{}".format(columns[column_index], table_header_position_row+ data_start_row_diff - 1)
                 worksheet.merge_cells(f'{cell}:{next_cell}')
 
-        elif report_type == 'days_beneficiary_wise':
+        elif report_type == THR_REPORT_DAY_BENEFICIARY_TYPE:
             if value == 'Total No. of Beneficiaries eligible for THR':
                 next_deviated_column += column_deviation_2
                 next_cell = "{}{}".format(columns[column_index + column_deviation_2],
