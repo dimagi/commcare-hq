@@ -41,12 +41,12 @@ from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
 from custom.icds_reports import const
 from custom.icds_reports.const import (
-ISSUE_TRACKER_APP_ID,
-LOCATION_TYPES,
-AggregationLevels,
-THR_REPORT_CONSOLIDATED,
-THR_REPORT_BENEFICIARY_TYPE,
-THR_REPORT_DAY_BENEFICIARY_TYPE
+    ISSUE_TRACKER_APP_ID,
+    LOCATION_TYPES,
+    AggregationLevels,
+    THR_REPORT_CONSOLIDATED,
+    THR_REPORT_BENEFICIARY_TYPE,
+    THR_REPORT_DAY_BENEFICIARY_TYPE
 )
 
 from custom.icds_reports.exceptions import InvalidLocationTypeException
