@@ -137,9 +137,8 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
                     if (item !== undefined) {
                         //remove the item and add it back in the right spot
                         if (newPosition >= 0) {
-                            var newList = _.filter(list(), function (i) {
-                                return i !== item;
-                            });
+
+                            var newList = _.without(list(), item);
                             newList.splice(newPosition, 0, item);
                             list(newList);
 
