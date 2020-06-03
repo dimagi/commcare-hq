@@ -433,6 +433,10 @@ def get_location_filter(location_id, domain, include_object=False):
         }
     )
     config['aggregation_level'] = len(config) + 1
+
+    if include_object:
+        config['sql_location'] = sql_location
+
     return config
 
 
