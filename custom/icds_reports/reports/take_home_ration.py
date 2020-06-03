@@ -6,7 +6,8 @@ from custom.icds_reports.models.views import TakeHomeRationMonthly
 from custom.icds_reports.models.views import ServiceDeliveryReportView
 from custom.icds_reports.const import (
 THR_REPORT_BENEFICIARY_TYPE,
-THR_REPORT_DAY_BENEFICIARY_TYPE
+THR_REPORT_DAY_BENEFICIARY_TYPE,
+THR_21_DAYS_THRESHOLD_DATE
 )
 
 class TakeHomeRationExport(object):
@@ -93,7 +94,7 @@ class TakeHomeRationExport(object):
                    'Total No of Pictures taken by AWW']
 
         if self.beta:
-            thr_column = 'thr_21_days' if self.month <= datetime(2020, 3, 1) else 'thr_25_days'
+            thr_column = 'thr_21_days' if self.month <= THR_21_DAYS_THRESHOLD_DATE else 'thr_25_days'
             launched_column = 'num_launched_awcs'
             thr_eligible_column = 'thr_eligible'
             class_model = ServiceDeliveryReportView
@@ -118,7 +119,7 @@ class TakeHomeRationExport(object):
 
     def get_beneficiary_wise_data(self, filters, order_by):
 
-        thr_days = '21' if self.month <= datetime(2020, 3, 1) else '25'
+        thr_days = '21' if self.month <= THR_21_DAYS_THRESHOLD_DATE else '25'
 
         headers = ['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name', 'AWW Phone No.',
                    'Total No. of PW eligible for THR',
