@@ -12,7 +12,7 @@ from custom.icds_reports.sqldata.agg_ccs_record_monthly import AggCCSRecordMonth
 from custom.icds_reports.sqldata.agg_child_health_monthly import AggChildHealthMonthlyDataSource
 from custom.icds_reports.sqldata.national_aggregation import NationalAggregationDataSource
 from custom.icds_reports.utils import person_is_beneficiary_column, default_age_interval
-
+from custom.icds_reports.utils import get_location_level
 
 class FactSheetsReport(object):
 
@@ -560,7 +560,7 @@ class FactSheetsReport(object):
         return NationalAggregationDataSource(
             national_config,
             self.data_sources(config=national_config,
-                              loc_level=1 if self.beta else self.loc_level)[data_source_name],
+                              loc_level=get_location_level(1) if self.beta else self.loc_level)[data_source_name],
             show_test=self.show_test,
             beta=self.beta
         ).get_data()

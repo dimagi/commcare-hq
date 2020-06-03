@@ -426,8 +426,6 @@ def get_location_filter(location_id, domain, include_object=False):
         sql_location = SQLLocation.objects.get(location_id=location_id, domain=domain)
     except SQLLocation.DoesNotExist:
         return {'aggregation_level': 1}
-    if include_object:
-        config['sql_location'] = sql_location
     config.update(
         {
             ('%s_id' % ancestor.location_type.code): ancestor.location_id
