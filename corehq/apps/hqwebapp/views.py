@@ -450,8 +450,8 @@ def domain_login(req, domain, custom_template_name=None, extra_context=None):
 
 
 @location_safe
-def iframe_login(req, domain):
-    return domain_login(req, domain, custom_template_name="hqwebapp/iframe_login.html", extra_context={
+def iframe_domain_login(req, domain):
+    return domain_login(req, domain, custom_template_name="hqwebapp/iframe_domain_login.html", extra_context={
         'current_page': {'page_name': _('Your session has expired')},
     })
 
@@ -525,7 +525,7 @@ def login_new_window(request):
 
 @location_safe
 @login_required
-def iframe_login_new_window(request):
+def iframe_domain_login_new_window(request):
     return TemplateView.as_view(template_name='hqwebapp/iframe_close_window.html')(request)
 
 
