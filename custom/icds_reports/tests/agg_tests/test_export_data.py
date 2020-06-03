@@ -4459,7 +4459,7 @@ class TestExportData(TestCase):
                      '15.22%', 58, 598, '9.70%', 103, 598, '17.22%', 81, 598, '13.55%', 180, 598, '30.10%']]],
              ['Export Info',
               [[
-                  'Generated at', '20:05:54 03 June 2020'
+                  'Generated at', self.now
               ],
                   ['Location', 'National'],
                   ['Month', 'May'],
@@ -4530,7 +4530,7 @@ class TestExportData(TestCase):
                  '16.36%', 7, 483,
                  '1.45%', 0, 483, '0.00%', 234, 332, '70.48%']]],
              ['Export Info',
-              [['Generated at', '20:16:38 03 June 2020'],
+              [['Generated at', self.now],
                ['State', 'st1'],
                ['Month', 'May'],
                ['Year', 2017]]]]
