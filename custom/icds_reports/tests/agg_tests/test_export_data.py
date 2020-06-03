@@ -65,7 +65,7 @@ class TestExportData(TestCase):
         location = 'b1'
         data = TakeHomeRationExport(
             location=location,
-            month=datetime(2017, 5, 1),
+            month=date(2017, 5, 1),
             loc_level=3,
             report_type=THR_REPORT_CONSOLIDATED,
             beta=True
@@ -120,12 +120,11 @@ class TestExportData(TestCase):
         location = 'b1'
         data = TakeHomeRationExport(
             location=location,
-            month=datetime(2017, 5, 1),
+            month=date(2017, 5, 1),
             loc_level=3,
             report_type=THR_REPORT_BENEFICIARY_TYPE,
             beta=True
         ).get_excel_data()
-        print(data)
         self.assertListEqual(
             data,
             [[
@@ -222,7 +221,7 @@ class TestExportData(TestCase):
         location = 'b1'
         data = TakeHomeRationExport(
             location=location,
-            month=datetime(2017, 5, 1),
+            month=date(2017, 5, 1),
             loc_level=3,
             report_type=THR_REPORT_DAY_BENEFICIARY_TYPE,
             beta=True
@@ -4245,7 +4244,7 @@ class TestExportData(TestCase):
 
         data = TakeHomeRationExport(
             location=location,
-            month=datetime(2017, 5, 1),
+            month=date(2017, 5, 1),
             loc_level=3
         ).get_excel_data()
         self.assertListEqual(
@@ -4298,7 +4297,7 @@ class TestExportData(TestCase):
         location = ''
         data = TakeHomeRationExport(
             location=location,
-            month=datetime(2017, 5, 1),
+            month=date(2017, 5, 1),
             loc_level=0
         ).get_excel_data()
 
