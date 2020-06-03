@@ -60,6 +60,7 @@ from corehq.apps.hqwebapp.decorators import (
     use_datatables,
     use_daterangepicker,
     use_jquery_ui,
+    use_multiselect,
     use_nvd3,
 )
 from corehq.apps.hqwebapp.tasks import send_mail_async
@@ -222,6 +223,10 @@ class UserConfigReportsHomeView(BaseUserConfigReportsView):
 
 class BaseEditConfigReportView(BaseUserConfigReportsView):
     template_name = 'userreports/edit_report_config.html'
+
+    @use_multiselect
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
 
     @property
     def report_id(self):
