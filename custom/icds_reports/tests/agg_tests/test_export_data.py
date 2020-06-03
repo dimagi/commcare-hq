@@ -46,6 +46,11 @@ class TestExportData(TestCase):
             new=mock.Mock(return_value=cls.now)
         )
         cls.other_india_now_mock.start()
+        cls.india_now_mock_sdr = mock.patch(
+            'custom.icds_reports.reports.service_delivery_report.india_now',
+            new=mock.Mock(return_value=cls.now)
+        )
+        cls.india_now_mock_sdr.start()
 
     @classmethod
     def tearDownClass(cls):
