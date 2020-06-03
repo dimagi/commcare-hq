@@ -123,7 +123,7 @@ from corehq.apps.userreports.reports.builder.sources import (
 from corehq.apps.userreports.reports.filters.choice_providers import (
     ChoiceQueryContext,
 )
-from corehq.apps.userreports.reports.util import has_location_filter
+from corehq.apps.userreports.reports.util import report_has_location_filter
 from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.userreports.tasks import (
@@ -1439,7 +1439,7 @@ def _get_report_filter(domain, report_id, filter_id):
 
 
 def _is_location_safe_choice_list(view_fn, request, domain, report_id, filter_id, **view_kwargs):
-    return has_location_filter(view_fn, domain=domain, subreport_slug=report_id)
+    return report_has_location_filter(config_id=report_id, domain=domain)
 
 
 @login_and_domain_required
