@@ -58,13 +58,12 @@ class GapsByItemSummaryData:
     def rows(self):
         rows = {}
         for row in self._food_data.rows:
-            if row.conv_factor_gap_code != ConvFactorGaps.AVAILABLE:
-                key = (row.food_name, row.conv_method_code, row.conv_factor_gap_code)
-                if key not in rows:
-                    rows[key] = {col: getattr(row, col) for col in self.headers if col != 'number_occurrence'}
-                    rows[key]['number_occurrence'] = 1
-                else:
-                    rows[key]['number_occurrence'] += 1
+            key = (row.food_name, row.conv_method_code, row.conv_factor_gap_code)
+            if key not in rows:
+                rows[key] = {col: getattr(row, col) for col in self.headers if col != 'number_occurrence'}
+                rows[key]['number_occurrence'] = 1
+            else:
+                rows[key]['number_occurrence'] += 1
 
         for row in rows.values():
             yield format_row([row[col] for col in self.headers])
@@ -104,10 +103,7 @@ class GapsDetailsData:
                     (ConvFactorGaps, row.conv_factor_gap_code),
                     (FctGaps, row.fct_gap_code),
             ]:
-                if (gap_code != gap_class.AVAILABLE and (
-                        not self._food_data.selected_gap_type
-                        or self._food_data.selected_gap_type == gap_class.slug
-                )):
+                if not self._food_data.selected_gap_type or self._food_data.selected_gap_type == gap_class.slug:
                     manually_set = ['gap_type', 'gap_code', 'gap_desc']
                     yield format_row([gap_class.name, gap_code, gap_class.get_description(gap_code)] + [
                         getattr(row, col) for col in self.headers if col not in manually_set
