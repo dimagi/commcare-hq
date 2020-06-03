@@ -87,7 +87,7 @@ class SupplementsFilter(BaseSingleOptionFilter):
     def options(self):
         return [
             ('yes', _('Yes')),
-            ('no', _('Not'))
+            ('no', _('No'))
         ]
 
 
