@@ -441,7 +441,7 @@ class TestDeleteDomain(TestCase):
             location.save()
             AppReleaseByLocation.objects.create(domain=domain_name, app_id='123', build_id='456',
                                                 version=23, location=location)
-            with patch('corehq.apps.app_manager.models.GlobalAppConfig.by_app_id') as global_config:
+            with patch('corehq.apps.app_manager.models.GlobalAppConfig.by_app_id'):
                 LatestEnabledBuildProfiles.objects.create(domain=domain_name, app_id='123', build_id='456',
                                                           version=10)
             GlobalAppConfig.objects.create(domain=domain_name, app_id='123')
