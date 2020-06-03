@@ -69,6 +69,7 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
+from custom.icds.view_utils import check_data_interfaces_blocked_for_domain
 from no_exceptions.exceptions import Http403
 
 from .dispatcher import require_form_management_privilege
@@ -602,7 +603,6 @@ def find_by_id(request, domain):
     })
 
 
-
 class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     template_name = 'data_interfaces/list_automatic_update_rules.html'
     urlname = 'automatic_update_rule_list'
@@ -617,6 +617,7 @@ class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     ACTION_DEACTIVATE = 'deactivate'
 
     @method_decorator(requires_privilege_with_fallback(privileges.DATA_CLEANUP))
+    @method_decorator(check_data_interfaces_blocked_for_domain)
     def dispatch(self, *args, **kwargs):
         return super(AutomaticUpdateRuleListView, self).dispatch(*args, **kwargs)
 
