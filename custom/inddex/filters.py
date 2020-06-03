@@ -125,7 +125,7 @@ class GapDescriptionFilter(BaseDrilldownOptionFilter):
                 'val': klass.slug,
                 'next': [
                     {
-                        'text': klass.get_description(code),
+                        'text': klass.DESCRIPTIONS[code],
                         'val': str(code),
                         'next': [],
                     }

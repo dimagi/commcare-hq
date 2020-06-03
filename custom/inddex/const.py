@@ -37,10 +37,6 @@ class FctGaps:
         NOT_AVAILABLE: "no fct data available",
     }
 
-    @classmethod
-    def get_description(self, code):
-        return f"{code} - {self.DESCRIPTIONS[code]}"
-
 
 class ConvFactorGaps:
     slug = 'conv_factor'
@@ -53,7 +49,3 @@ class ConvFactorGaps:
         BASE_TERM: "using conversion factor from base term food code",
         NOT_AVAILABLE: "no conversion factor available",
     }
-
-    @classmethod
-    def get_description(self, code):
-        return f"{code} - {self.DESCRIPTIONS[code]}"
