@@ -6,6 +6,11 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", [
     $,
     ko
 ) {
+    // Need this due to https://github.com/knockout/knockout/pull/2324
+    // so that ko.bindingHandlers.foreach.update works properly
+    ko.options.foreachHidesDestroyed = true;
+
+
     ko.bindingHandlers.hqbSubmitReady = {
         update: function (element, valueAccessor) {
             var value = (valueAccessor()) ? valueAccessor()() : null;
