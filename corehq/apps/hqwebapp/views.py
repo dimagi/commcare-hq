@@ -26,6 +26,7 @@ from django.http import (
     HttpResponsePermanentRedirect,
     HttpResponseRedirect,
     HttpResponseServerError,
+    JsonResponse,
 )
 from django.shortcuts import redirect, render
 from django.template import loader
@@ -384,7 +385,6 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
-    context.update(extra_context)
     template_name = custom_login_page if custom_login_page else 'login_and_password/login.html'
     if not custom_login_page and domain_name:
         domain_obj = Domain.get_by_name(domain_name)
@@ -411,6 +411,7 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
     if settings.IS_SAAS_ENVIRONMENT:
         context['demo_workflow_ab_v2'] = demo_workflow_ab_v2.context
 
+    context.update(extra_context)
     response = auth_view.as_view(template_name=template_name, extra_context=context)(req)
 
     if settings.IS_SAAS_ENVIRONMENT:
@@ -446,6 +447,12 @@ def domain_login(req, domain, custom_template_name=None, extra_context=None):
     if custom_template_name is None:
         custom_template_name = get_custom_login_page(req.get_host())
     return _login(req, domain, custom_template_name, extra_context)
+
+
+def iframe_login(req, domain):
+    return domain_login(req, domain, custom_template_name="hqwebapp/iframe_login.html", extra_context={
+        'current_page': {'page_name': _('Your session has expired')},
+    })
 
 
 class HQLoginView(LoginView):
@@ -484,6 +491,37 @@ def logout(req, default_domain_redirect='domain_login'):
         return HttpResponseRedirect('%s' % domain_login_url)
     else:
         return HttpResponseRedirect(reverse('login'))
+
+
+# ping_login and ping_session are both tiny views used in user inactivity and session expiration handling
+# They are identical except that ping_session extends the user's current session, while ping_login does not.
+# This difference is controlled in SelectiveSessionMiddleware, which makes ping_login bypass sessions.
+@two_factor_exempt
+def ping_login(request):
+    return JsonResponse({
+        'success': request.user.is_authenticated,
+        'last_request': request.session.get('last_request'),
+        'username': request.user.username,
+    })
+
+
+@two_factor_exempt
+def ping_session(request):
+    return JsonResponse({
+        'success': request.user.is_authenticated,
+        'last_request': request.session.get('last_request'),
+        'username': request.user.username,
+    })
+
+
+@login_required
+def login_new_window(request):
+    return render_static(request, "hqwebapp/close_window.html", _("Thank you for logging in!"))
+
+
+@login_required
+def iframe_login_new_window(request):
+    return TemplateView.as_view(template_name='hqwebapp/iframe_close_window.html')(request)
 
 
 @login_and_domain_required

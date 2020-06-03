@@ -55,15 +55,16 @@ branches:
   - rn_update_perfect_scrollbar # Rohit Negi May 4
   - jls/migrate-MobileAuthKeyRecord-2 # Jenny May 16
   - bmb/SAAS-10882-wip  # Biyeun May 20 (updates knockout, bootstrap, jquery, DOMPurify)
-  - fr/linked-domains-ucr       # Farid May 23
   - nemanja1040:infobip_backend_improvements  # Nemanja Stancic May 25
   - nh/repeaters_ui  # Norman May 28
   - nh/charset  # Norman May 27
   - nemanja1040:aws_pinpoint  # Nemanja Stancic May 27
-  #- jls/relogin # Jenny May 27
-  - jls/relogin-debug # Jenny May 28
-  - orangejenny-patch-3 # Jenny May 28; this is the 3-minute timeout branch
   - mk/icds-user-permissions/roles-assignments # MK May 29
   - ce/web-apps-permission # Cal May 27
+  - jls/push-linked-apps # Jenny May 31
+  - dmr/ONE_PHONE_NUMBER_MULTIPLE_CONTACTS  # Danny Jun 1
+  #- orangejenny-patch-3 # Jenny May 28; this is the 3-minute timeout branch
+  - dm/logged-out-soft-assert+dmr/ONE_PHONE_NUMBER_MULTIPLE_CONTACTS
+  - dm/logged-out-soft-assert # Daniel June 1
 
 submodules: {}

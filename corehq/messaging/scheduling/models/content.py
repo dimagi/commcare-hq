@@ -7,21 +7,15 @@ from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.smsforms.app import start_session
+from corehq.apps.smsforms.tasks import send_first_message
 from corehq.apps.smsforms.util import form_requires_input, critical_section_for_smsforms_sessions
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.models.abstract import Content
 from corehq.apps.reminders.models import EmailUsage
-from corehq.apps.sms.api import (
-    MessageMetadata,
-    send_sms,
-    send_sms_to_verified_number,
-)
 from corehq.apps.sms.models import MessagingEvent, PhoneNumber, PhoneBlacklist
-from corehq.apps.sms.util import format_message_list, touchforms_error_is_config_error, get_formplayer_exception
+from corehq.apps.sms.util import touchforms_error_is_config_error, get_formplayer_exception
 from corehq.apps.smsforms.models import SQLXFormsSession
 from memoized import memoized
-from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
@@ -65,7 +59,8 @@ class SMSContent(Content):
             case_id=self.case.case_id if self.case else None,
         )
 
-        phone_entry_or_number = phone_entry or self.get_two_way_entry_or_phone_number(recipient)
+        phone_entry_or_number = phone_entry or self.get_two_way_entry_or_phone_number(
+            recipient, domain_for_toggles=logged_event.domain)
         if not phone_entry_or_number:
             logged_subevent.error(MessagingEvent.ERROR_NO_PHONE_NUMBER)
             return
@@ -216,7 +211,8 @@ class SMSSurveyContent(Content):
         # not the user case contact.
         phone_entry_or_number = (
             phone_entry or
-            self.get_two_way_entry_or_phone_number(recipient, try_user_case=False)
+            self.get_two_way_entry_or_phone_number(
+                recipient, try_user_case=False, domain_for_toggles=logged_event.domain)
         )
 
         if phone_entry_or_number is None:
@@ -261,7 +257,11 @@ class SMSSurveyContent(Content):
             if session:
                 logged_subevent.xforms_session = session
                 logged_subevent.save()
-                self.send_first_message(
+                # send_first_message is a celery task
+                # but we first call it synchronously to save resources in the 99% case
+                # send_first_message will retry itself as a delayed celery task
+                # if there are conflicting sessions preventing it from sending immediately
+                send_first_message(
                     logged_event.domain,
                     recipient,
                     phone_entry_or_number,
@@ -270,7 +270,6 @@ class SMSSurveyContent(Content):
                     logged_subevent,
                     self.get_workflow(logged_event)
                 )
-                logged_subevent.completed()
 
     def start_smsforms_session(self, domain, recipient, case_id, phone_entry_or_number, logged_subevent, workflow,
             app, module, form):
@@ -323,30 +322,6 @@ class SMSSurveyContent(Content):
         session.save()
 
         return session, responses
-
-    def send_first_message(self, domain, recipient, phone_entry_or_number, session, responses, logged_subevent,
-            workflow):
-        if len(responses) > 0:
-            message = format_message_list(responses)
-            metadata = MessageMetadata(
-                workflow=workflow,
-                xforms_session_couch_id=session.couch_id,
-            )
-            if isinstance(phone_entry_or_number, PhoneNumber):
-                send_sms_to_verified_number(
-                    phone_entry_or_number,
-                    message,
-                    metadata,
-                    logged_subevent=logged_subevent
-                )
-            else:
-                send_sms(
-                    domain,
-                    recipient,
-                    phone_entry_or_number,
-                    message,
-                    metadata
-                )
 
 
 class IVRSurveyContent(Content):
@@ -456,7 +431,8 @@ class CustomContent(Content):
             case_id=self.case.case_id if self.case else None,
         )
 
-        phone_entry_or_number = self.get_two_way_entry_or_phone_number(recipient)
+        phone_entry_or_number = self.get_two_way_entry_or_phone_number(
+            recipient, domain_for_toggles=logged_event.domain)
         if not phone_entry_or_number:
             logged_subevent.error(MessagingEvent.ERROR_NO_PHONE_NUMBER)
             return
