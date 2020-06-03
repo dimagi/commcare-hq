@@ -244,7 +244,7 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
             'form': self.edit_form,
             'report': self.config,
             'referring_apps': self.get_referring_apps(),
-            'linked_domain_list': [d.linked_domain for d in get_linked_domains(self.domain)],
+            'linked_domain_list': sorted([d.linked_domain for d in get_linked_domains(self.domain)]),
         }
 
     def get_referring_apps(self):
@@ -485,6 +485,7 @@ class ConfigureReport(ReportBuilderView):
     @use_jquery_ui
     @use_datatables
     @use_nvd3
+    @use_multiselect
     def dispatch(self, request, *args, **kwargs):
         if self.existing_report:
             self.source_type = get_source_type_from_report_config(self.existing_report)
@@ -625,7 +626,7 @@ class ConfigureReport(ReportBuilderView):
             'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, []),
             'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
             'date_range_options': [r._asdict() for r in get_simple_dateranges()],
-            'linked_domain_list': [d.linked_domain for d in get_linked_domains(self.domain)],
+            'linked_domain_list': sorted([d.linked_domain for d in get_linked_domains(self.domain)]),
         }
 
     def _get_bound_form(self, report_data):
