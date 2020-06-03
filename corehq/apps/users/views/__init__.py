@@ -548,7 +548,6 @@ class ListRolesView(BaseRoleAccessView):
                 "update the existing roles."))
         return {
             'user_roles': self.user_roles,
-            'non_admin_roles': self.user_roles[1:],
             'can_edit_roles': self.can_edit_roles,
             'default_role': UserRole.get_default(),
             'report_list': get_possible_reports(self.domain),
@@ -1199,12 +1198,7 @@ def _get_editable_role_choices(domain, couch_user, allow_admin_role):
 
     roles = UserRole.by_domain(domain)
     if not couch_user.is_domain_admin(domain):
-        user_role = couch_user.get_role()
-        user_role_id = user_role.get_id if user_role else None
-        roles = [
-            role for role in roles
-            if role.is_non_admin_editable or (user_role_id and user_role_id in role.assignable_by)
-        ]
+        roles = [role for role in roles if role.is_non_admin_editable]
     elif allow_admin_role:
         roles = [AdminUserRole(domain=domain)] + roles
     return [role_to_choice(role) for role in roles]
