@@ -24,5 +24,5 @@ class Migration(migrations.Migration):
             field=models.PositiveIntegerField(blank=True, null=True),
         ),
         migrations.RunSQL(
-            f"CREATE INDEX idx_aww_activity_state_district_block_sector {AggregateInactiveAWW._meta.db_table} ON (state_id, district_id, block_id, supervisor_id)")
+            f"CREATE INDEX idx_aww_activity_state_district_block_sector ON {AggregateInactiveAWW._meta.db_table} (state_id, district_id, block_id, supervisor_id)")
     ]
