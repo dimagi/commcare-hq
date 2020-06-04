@@ -447,6 +447,10 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 });
             };
 
+            self.unwrap = function () {
+                ko.mapping.toJS(self, mapping(self));
+            };
+
             return self;
         };
 
@@ -469,10 +473,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                     self.caseConfig.saveButton.fire('change');
                 },
             });
-
-            self.unwrap = function () {
-                ko.mapping.toJS(self, caseTransactionMapping(self));
-            };
 
             self.ensureBlankProperties = function () {
                 var items = [{
@@ -503,10 +503,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
 
             self.case_type = function () {
                 return 'commcare-user';
-            };
-
-            self.unwrap = function () {
-                ko.mapping.toJS(self, userCaseTransactionMapping(self));
             };
 
             self.ensureBlankProperties = function () {
