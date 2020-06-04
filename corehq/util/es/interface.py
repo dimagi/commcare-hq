@@ -101,6 +101,11 @@ class ElasticsearchInterface2(AbstractElasticsearchInterface):
 
 class ElasticsearchInterface7(AbstractElasticsearchInterface):
 
+    def search(self, index=None, doc_type=None, body=None, params=None, **kwargs):
+        results = self.es.search(index=index, body=body, params=params or {}, **kwargs)
+        self._fix_hits_in_results(results)
+        return results
+
     def put_mapping(self, doc_type, mapping, index):
         transform_for_es7(mapping)
         return self.es.indices.put_mapping(mapping, index=index)
