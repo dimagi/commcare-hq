@@ -9,7 +9,7 @@ from custom.icds_reports.models import AggregateInactiveAWW
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('icds_reports', '0192_add_child_beneficiary_status_fields_to_chm'),
+        ('icds_reports', '0194_auto_20200528_1024'),
     ]
 
     operations = [
