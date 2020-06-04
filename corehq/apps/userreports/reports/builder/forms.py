@@ -42,7 +42,7 @@ from corehq.apps.userreports.reports.builder import (
     DEFAULT_CASE_PROPERTY_DATATYPES,
     FORM_METADATA_PROPERTIES,
     get_filter_format_from_question_type,
-)
+    const)
 from corehq.apps.userreports.reports.builder.columns import (
     CasePropertyColumnOption,
     CountColumn,
@@ -245,19 +245,19 @@ class DataSourceProperty(object):
                 'pre_operator': configuration.get('pre_operator', None),
                 'pre_value': configuration.get('pre_value', []),
             })
-        if configuration['format'] == 'Is Empty':
+        if configuration['format'] == const.PRE_FILTER_VALUE_IS_EMPTY:
             filter.update({
                 'type': 'pre',
                 'pre_operator': "",
                 'pre_value': "",  # for now assume strings - this may not always work but None crashes
             })
-        if configuration['format'] == 'Exists':
+        if configuration['format'] == const.PRE_FILTER_VALUE_EXISTS:
             filter.update({
                 'type': 'pre',
                 'pre_operator': "!=",
                 'pre_value': "",
             })
-        if configuration['format'] == 'Value Not Equal':
+        if configuration['format'] == const.PRE_FILTER_VALUE_NOT_EQUAL:
             filter.update({
                 'type': 'pre',
                 'pre_operator': "distinct from",

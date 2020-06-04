@@ -28,3 +28,9 @@ PROPERTY_TYPE_META = "meta"
 PROPERTY_TYPE_CASE_PROP = "case_property"
 PROPERTY_TYPE_QUESTION = "question"
 PROPERTY_TYPE_RAW = "raw"
+
+
+# note: these values are duplicated in js/constants.js
+PRE_FILTER_VALUE_IS_EMPTY = 'Is Empty'
+PRE_FILTER_VALUE_EXISTS = 'Exists'
+PRE_FILTER_VALUE_NOT_EQUAL = 'Value Not Equal'
