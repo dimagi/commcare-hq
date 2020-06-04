@@ -19,22 +19,21 @@ class AwwActivityExport(object):
         def _format_date(data):
             return data.strftime("%d-%m-%Y") if data is not DATA_NOT_ENTERED else data
 
+        export_filters = [['Generated at', india_now()]]
         filters = {}
 
-        if self.loc_level == 4:
-            filters['supervisor_id'] = location
-            order_by = ('awc_name',)
-        elif self.loc_level == 3:
-            filters['block_id'] = location
-            order_by = ('supervisor_name', 'awc_name')
-        elif self.loc_level == 2:
-            filters['district_id'] = location
-            order_by = ('block_name', 'supervisor_name', 'awc_name')
-        elif self.loc_level == 1:
-            filters['state_id'] = location
-            order_by = ('district_name', 'block_name', 'supervisor_name', 'awc_name')
-        else:
-            order_by = ('state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name')
+        if location:
+            try:
+                locs = SQLLocation.objects.get(location_id=location).get_ancestors(include_self=True)
+                for loc in locs:
+                    export_filters.append([loc.location_type.name.title(), loc.name])
+                    location_key = '%s_id' % loc.location_type.code
+                    filters.update({
+                        location_key: loc.location_id,
+                    })
+            except SQLLocation.DoesNotExist:
+                pass
+        order_by = ('state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name')
 
         query_set = AggregateInactiveAWW.objects.filter(**filters).order_by(*order_by)
 
@@ -62,11 +61,6 @@ class AwwActivityExport(object):
             ]
 
             excel_rows.append(row_data)
-        filters = [['Generated at', india_now()]]
-        if location:
-            locs = SQLLocation.objects.get(location_id=location).get_ancestors(include_self=True)
-            for loc in locs:
-                filters.append([loc.location_type.name.title(), loc.name])
 
         return [
             [
@@ -75,6 +69,6 @@ class AwwActivityExport(object):
             ],
             [
                 'Export Info',
-                filters
+                export_filters
             ]
         ]

@@ -29,7 +29,7 @@ from custom.icds_reports.tasks import (
     _aggregate_delivery_forms,
     _aggregate_df_forms,
     _aggregate_gm_forms,
-    _aggregate_inactive_aww,
+    _aggregate_inactive_aww_agg,
     _ccs_record_monthly_table,
     _child_health_monthly_aggregation,
     _daily_attendance_table,
@@ -103,7 +103,7 @@ NORMAL_TASKS = {
     'update_service_delivery_report': (None, update_service_delivery_report, None),
     'update_bihar_api_table': (None, update_bihar_api_table, None),
     'update_child_vaccine_table': (None, update_child_vaccine_table, None),
-    'aggregate_inactive_aww': (None, _aggregate_inactive_aww, None)
+    'aggregate_inactive_aww_agg': (None, _aggregate_inactive_aww_agg, None)
 }
 
 

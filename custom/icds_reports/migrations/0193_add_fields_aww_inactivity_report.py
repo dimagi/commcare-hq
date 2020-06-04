@@ -4,9 +4,10 @@ from __future__ import unicode_literals
 
 from django.db import migrations, models
 
+from custom.icds_reports.models import AggregateInactiveAWW
+
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('icds_reports', '0192_add_child_beneficiary_status_fields_to_chm'),
     ]
@@ -22,4 +23,6 @@ class Migration(migrations.Migration):
             name='no_of_days_since_start',
             field=models.PositiveIntegerField(blank=True, null=True),
         ),
+        migrations.RunSQL(
+            f"CREATE INDEX idx_aww_activity_state_district_block_sector {AggregateInactiveAWW._meta.db_table} ON (state_id, district_id, block_id, supervisor_id)")
     ]

@@ -94,11 +94,11 @@ class InactiveAwwsAggregationDistributedHelper(BaseICDSAggregationDistributedHel
                 last_submission = GREATEST(agg_table.last_submission, ut.last_submission),
                 no_of_days_since_start = CASE
                     WHEN LEAST(agg_table.first_submission, ut.first_submission) IS DISTINCT FROM NULL
-                    THEN DATE_PART('day', NOW() - LEAST(agg_table.first_submission, ut.first_submission))
+                    THEN DATE_PART('day', {now} - LEAST(agg_table.first_submission, ut.first_submission))
                     ELSE NULL END,
                 no_of_days_inactive = CASE
                     WHEN GREATEST(agg_table.last_submission, ut.last_submission) IS DISTINCT FROM NULL
-                    THEN DATE_PART('day', NOW() - GREATEST(agg_table.last_submission, ut.last_submission))
+                    THEN DATE_PART('day', {now} - GREATEST(agg_table.last_submission, ut.last_submission))
                     ELSE NULL END
             FROM (
               SELECT
@@ -115,4 +115,5 @@ class InactiveAwwsAggregationDistributedHelper(BaseICDSAggregationDistributedHel
             table_name=self.aggregate_parent_table,
             ucr_table_query=ucr_query,
             awc_location_table_name='awc_location_local',
+            now=datetime.datetime.utcnow()
         ), params

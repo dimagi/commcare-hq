@@ -441,7 +441,7 @@ def icds_aggregation_task(self, date, func_name):
         '_agg_awc_table': _agg_awc_table,
         'aggregate_awc_daily': aggregate_awc_daily,
         'update_service_delivery_report': update_service_delivery_report,
-        '_aggregate_inactive_aww': _aggregate_inactive_aww
+        '_aggregate_inactive_aww_agg': _aggregate_inactive_aww_agg
     }[func_name]
 
     db_alias = get_icds_ucr_citus_db_alias()
@@ -564,6 +564,19 @@ def _aggregate_awc_infra_forms(state_id, day):
 @track_time
 def _aggregate_inactive_aww(day):
     AggregateInactiveAWW.aggregate(day)
+
+
+@track_time
+def _aggregate_inactive_aww_agg(day):
+    last_sync = IcdsFile.objects.filter(data_type='inactive_awws').order_by('-file_added').first()
+
+    # If last sync not exist then collect initial data
+    if not last_sync:
+        last_sync_date = datetime(2017, 3, 1).date()
+    else:
+        last_sync_date = last_sync.file_added
+
+    _aggregate_inactive_aww(last_sync_date)
 
 
 @track_time
