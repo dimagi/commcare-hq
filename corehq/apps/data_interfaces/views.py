@@ -617,7 +617,6 @@ class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     ACTION_DEACTIVATE = 'deactivate'
 
     @method_decorator(requires_privilege_with_fallback(privileges.DATA_CLEANUP))
-    @method_decorator(check_data_interfaces_blocked_for_domain)
     def dispatch(self, *args, **kwargs):
         return super(AutomaticUpdateRuleListView, self).dispatch(*args, **kwargs)
 
