@@ -16,8 +16,8 @@ from corehq.apps.hqwebapp.views import (
     debug_notify,
     domain_login,
     dropbox_upload,
-    iframe_login,
-    iframe_login_new_window,
+    iframe_domain_login,
+    iframe_domain_login_new_window,
     jserror,
     login,
     login_new_window,
@@ -85,14 +85,14 @@ urlpatterns = [
     url(r'^ping_login/$', ping_login, name='ping_login'),
     url(r'^ping_session/$', ping_session, name='ping_session'),
     url(r'^relogin/$', login_new_window, name='login_new_window'),
-    url(r'^relogin/iframe/$', iframe_login_new_window, name='iframe_login_new_window'),
+    url(r'^relogin/iframe/$', iframe_domain_login_new_window, name='iframe_domain_login_new_window'),
 
 ]
 
 domain_specific = [
     url(r'^$', redirect_to_default, name='domain_homepage'),
     url(r'^login/$', domain_login, name='domain_login'),
-    url(r'^login/iframe/$', iframe_login, name='iframe_login'),
+    url(r'^login/iframe/$', iframe_domain_login, name='iframe_domain_login'),
     url(r'^retreive_download/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',
         retrieve_download, {'template': 'hqwebapp/includes/file_download.html'},
         name='hq_soil_download'),
