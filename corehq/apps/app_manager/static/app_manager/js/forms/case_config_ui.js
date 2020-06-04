@@ -451,6 +451,26 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 ko.mapping.toJS(self, mapping(self));
             };
 
+            self.ensureBlankProperties = function () {
+                var items = [{
+                    properties: self.case_properties(),
+                    addProperty: self.addProperty,
+                }];
+                if (self.case_preload) {
+                    items.push({
+                        properties: self.case_preload(),
+                        addProperty: self.addPreload,
+                    });
+                }
+                _(items).each(function (item) {
+                    var properties = item.properties;
+                    var last = properties[properties.length - 1];
+                    if (last && !last.isBlank()) {
+                        item.addProperty();
+                    }
+                });
+            };
+
             return self;
         };
 
@@ -474,26 +494,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 },
             });
 
-            self.ensureBlankProperties = function () {
-                var items = [{
-                    properties: self.case_properties(),
-                    addProperty: self.addProperty,
-                }];
-                if (self.case_preload) {
-                    items.push({
-                        properties: self.case_preload(),
-                        addProperty: self.addPreload,
-                    });
-                }
-                _(items).each(function (item) {
-                    var properties = item.properties;
-                    var last = properties[properties.length - 1];
-                    if (last && !last.isBlank()) {
-                        item.addProperty();
-                    }
-                });
-            };
-
             return self;
         };
 
@@ -503,26 +503,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
 
             self.case_type = function () {
                 return 'commcare-user';
-            };
-
-            self.ensureBlankProperties = function () {
-                var items = [{
-                    properties: self.case_properties(),
-                    addProperty: self.addProperty,
-                }];
-                if (self.case_preload) {
-                    items.push({
-                        properties: self.case_preload(),
-                        addProperty: self.addPreload,
-                    });
-                }
-                _(items).each(function (item) {
-                    var properties = item.properties;
-                    var last = properties[properties.length - 1];
-                    if (last && !last.isBlank()) {
-                        item.addProperty();
-                    }
-                });
             };
 
             return self;
