@@ -191,7 +191,7 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
 
     def _make_choice_from_value(self, value):
         if value is None or value == '':
-            return Choice(NONE_CHOICE, '[Missing]')
+            return Choice(NONE_CHOICE, '[Blank]')
         return Choice(value, value)
 
     @staticmethod
