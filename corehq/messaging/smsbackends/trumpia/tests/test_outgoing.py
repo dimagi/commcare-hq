@@ -52,6 +52,15 @@ class TestTrumpiaBackend(SimpleTestCase):
         self.assertEqual(msg.system_error_message, "Gateway error: MPCE4001")
         self.assertTrue(msg.error)
 
+    def test_fail_MRME1054(self):
+        msg = self.mock_send(
+            response={"request_id": "1234561234567asdf123"},
+            report={"status_code": "MRME1054", "request_id": "1234561234567asdf123"},
+        )
+        self.assertEqual(msg.backend_message_id, "1234561234567asdf123")
+        self.assertEqual(msg.system_error_message, "Gateway error: MRME1054")
+        self.assertTrue(msg.error)
+
     def test_error_status_code(self):
         msg = self.mock_send(response={"status_code": "MRCE0101"})
         self.assertIsNone(msg.backend_message_id)
@@ -99,11 +108,20 @@ class TestTrumpiaBackend(SimpleTestCase):
             self.mock_send(status_code=500)
         self.assertRegex(str(err.exception), "Gateway 500 error")
 
-    def mock_send(self, status_code=200, response=None):
+    def test_get_message_details(self):
+        request_id = "1234561234567asdf123"
+        msg = QueuedSMS(phone_number='+15554443333', text="the message")
+        msg.backend_message_id = request_id
+        msg.save = lambda: None  # prevent db access in SimpleTestCase
+        report = {"status_code": "MRME1054", "request_id": request_id}
+        with requests_mock.Mocker() as mock:
+            self.mock_report(mock, request_id, report)
+            self.backend.get_message_details(msg)
+
+    def mock_send(self, status_code=200, response=None, report=None):
         msg = QueuedSMS(phone_number='+15554443333', text="the message")
         msg.save = lambda: None  # prevent db access in SimpleTestCase
         url = f"http://api.trumpia.com/rest/v1/{USERNAME}/sms"
-        headers = {"X-ApiKey": API_KEY, "Content-Type": "application/json"}
         if response is None:
             response = {
                 "request_id": "1234561234567asdf123",
@@ -112,9 +130,25 @@ class TestTrumpiaBackend(SimpleTestCase):
         with requests_mock.Mocker() as mock:
             mock.put(
                 url,
-                request_headers=headers,
+                request_headers=self.headers,
                 status_code=status_code,
                 json=(response if status_code == 200 else {})
             )
+            if "request_id" in response:
+                self.mock_report(mock, response["request_id"], report)
             self.backend.send(msg)
         return msg
+
+    def mock_report(self, mock, request_id, report):
+        url = f"http://api.trumpia.com/rest/v1/{USERNAME}/report/{request_id}"
+        if not report:
+            report = {"status": "sent", "request_id": request_id}
+        mock.get(url, request_headers=self.headers, status_code=200, json=report)
+
+    @property
+    def headers(self):
+        return {
+            "X-ApiKey": API_KEY,
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
