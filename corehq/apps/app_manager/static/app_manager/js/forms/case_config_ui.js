@@ -410,6 +410,14 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 });
             }
 
+            self.repeat_context = function () {
+                if (self.case_name) {
+                    return caseConfig.get_repeat_context(self.case_name());
+                } else {
+                    return null;
+                }
+            };
+
             return self;
         };
 
@@ -417,14 +425,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             var self = baseTransaction(caseTransactionMapping, caseConfig.saveButton, 'Form Level', data, caseConfig, hasPrivilege);
 
             self.case_type(self.case_type() || caseConfig.caseType);
-
-            self.repeat_context = function () {
-                if (self.case_name) {
-                    return self.caseConfig.get_repeat_context(self.case_name());
-                } else {
-                    return null;
-                }
-            };
 
             self.close_case = ko.computed({
                 read: function () {
@@ -503,14 +503,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
 
             self.case_type = function () {
                 return 'commcare-user';
-            };
-
-            self.repeat_context = function () {
-                if (self.case_name) {
-                    return self.caseConfig.get_repeat_context(self.case_name());
-                } else {
-                    return null;
-                }
             };
 
             self.setRequired = function (required) {
