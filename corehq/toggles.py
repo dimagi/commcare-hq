@@ -1954,10 +1954,3 @@ ONE_PHONE_NUMBER_MULTIPLE_CONTACTS = StaticToggle(
     Otherwise the recipient has no way to know who they're supposed to be enter information about.
     """
 )
-
-LOGOUT_SENSITIVE_DOMAIN = StaticToggle(
-    'logout_sensitive_domain',
-    'Get details about clients that are not logged in',
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-)
