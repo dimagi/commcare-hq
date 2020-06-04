@@ -187,3 +187,8 @@ CUSTOM_DATA_PULLS = {
     MonthlyPerformance.slug: MonthlyPerformance,
     VHSNDMonthlyReport.slug: VHSNDMonthlyReport,
 }
+
+THR_REPORT_CONSOLIDATED = 'consolidated'
+THR_REPORT_BENEFICIARY_TYPE = 'beneficiary_wise'
+THR_REPORT_DAY_BENEFICIARY_TYPE = 'days_beneficiary_wise'
+THR_21_DAYS_THRESHOLD_DATE = date(2020, 3, 1)

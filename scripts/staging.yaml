@@ -63,8 +63,7 @@ branches:
   - ce/web-apps-permission # Cal May 27
   - jls/push-linked-apps # Jenny May 31
   - dmr/ONE_PHONE_NUMBER_MULTIPLE_CONTACTS  # Danny Jun 1
-  - orangejenny-patch-3 # Jenny May 28; this is the 3-minute timeout branch
-  - jls/inactivity-troubles # Jenny June 1
+  #- orangejenny-patch-3 # Jenny May 28; this is the 3-minute timeout branch
   - dm/logged-out-soft-assert+dmr/ONE_PHONE_NUMBER_MULTIPLE_CONTACTS
   - dm/logged-out-soft-assert # Daniel June 1
 

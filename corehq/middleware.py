@@ -252,6 +252,7 @@ class SelectiveSessionMiddleware(SessionMiddleware):
             '/downloads/temp/ajax/',  # soil polling
             '/downloads/temp/heartbeat/',  # soil status
             '/a/{domain}/apps/view/[A-Za-z0-9-]+/current_version/$'  # app manager new changes polling
+            '/hq/notifications/service/$',  # background request for notification (bell menu in top nav)
         ]
         if settings.BYPASS_SESSIONS_FOR_MOBILE:
             regexes.extend(getattr(settings, 'SESSION_BYPASS_URLS', []))
