@@ -18,7 +18,7 @@ class PinpointIncomingMessageView(IncomingBackendView):
         message = request_body.get('Message')
         subscribe_url = request_body.get('SubscribeURL')
         if subscribe_url:
-            response = urlopen(subscribe_url)
+            urlopen(subscribe_url)
         elif message:
             message = json.loads(message)
             message_sid = message.get('inboundMessageId')

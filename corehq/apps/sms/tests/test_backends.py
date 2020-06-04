@@ -9,8 +9,6 @@ from django.test.utils import override_settings
 from mock import patch
 from six.moves.urllib.parse import urlencode
 
-from dimagi.utils.couch.cache.cache_core import get_redis_client
-
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
