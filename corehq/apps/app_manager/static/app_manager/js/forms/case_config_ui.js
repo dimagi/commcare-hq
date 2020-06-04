@@ -463,7 +463,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 };
 
                 self.unwrap = function () {
-                    caseTransaction.unwrap(self);
+                    ko.mapping.toJS(self, caseTransactionMapping(self));
                 };
 
                 self.ensureBlankProperties = function () {
@@ -487,9 +487,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 };
 
                 return self;
-            },
-            unwrap: function (self) {
-                return ko.mapping.toJS(self, caseTransactionMapping(self));
             },
         };
 
@@ -621,7 +618,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 };
 
                 self.unwrap = function () {
-                    userCaseTransaction.unwrap(self);
+                    ko.mapping.toJS(self, userCaseTransactionMapping(self));
                 };
 
                 self.ensureBlankProperties = function () {
@@ -645,10 +642,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 };
 
                 return self;
-            },
-
-            unwrap: function (self) {
-                return ko.mapping.toJS(self, userCaseTransactionMapping(self));
             },
         };
 
@@ -845,7 +838,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 return x;
             },
             from_case_transaction: function (case_transaction) {
-                var o = caseTransaction.unwrap(case_transaction);
+                var o = ko.mapping.toJS(case_transaction, caseTransactionMapping(case_transaction));
                 var x = caseConfigUtils.propertyArrayToDict(['name'], o.case_properties);
                 var case_properties = x[0],
                     case_name = x[1].name;
@@ -918,7 +911,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 }, caseConfig);
             },
             from_usercase_transaction: function (usercase_transaction) {
-                var o = userCaseTransaction.unwrap(usercase_transaction);
+                var o = ko.mapping.toJS(usercase_transaction, userCaseTransactionMapping(usercase_transaction));
                 var x = caseConfigUtils.propertyArrayToDict([], o.case_properties);
                 var case_properties = x[0];
                 var case_preload = caseConfigUtils.preloadArrayToDict(o.case_preload);
@@ -989,7 +982,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 }, caseConfig, privileges.subcases);
             },
             from_case_transaction: function (case_transaction) {
-                var o = caseTransaction.unwrap(case_transaction);
+                var o = ko.mapping.toJS(case_transaction, caseTransactionMapping(case_transaction));
                 var x = caseConfigUtils.propertyArrayToDict(['name'], o.case_properties);
                 var case_properties = x[0],
                     case_name = x[1].name;
