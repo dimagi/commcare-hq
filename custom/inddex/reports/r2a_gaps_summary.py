@@ -1,6 +1,7 @@
 import textwrap
 from collections import defaultdict
 
+from corehq.apps.reports.filters.case_list import CaseListFilter
 from custom.inddex import filters
 from custom.inddex.const import (
     FOOD_ITEM,
@@ -29,7 +30,7 @@ class GapsSummaryReport(MultiTabularReport):
     @property
     def fields(self):
         return [
-            filters.CaseOwnersFilter,
+            CaseListFilter,
             filters.DateRangeFilter,
             filters.GapTypeFilter,
             filters.RecallStatusFilter,

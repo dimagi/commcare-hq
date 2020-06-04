@@ -43,6 +43,9 @@ from functools import reduce
 
 from memoized import memoized
 
+from corehq.apps.es import users as user_es
+from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
+from corehq.apps.reports.standard.cases.utils import get_case_owners
 from custom.inddex.ucr_data import FoodCaseData
 
 from .const import (
@@ -409,10 +412,22 @@ class FoodData:
         return cls(
             domain,
             datespan=request.datespan,
-            filter_selections={'owner_id': request.GET.getlist('owner_id'),
+            filter_selections={'owner_id': cls._get_owner_ids(domain, request),
                                **{k: request.GET.get(k)
                                   for k in cls.FILTERABLE_COLUMNS if k != 'owner_id'}}
         )
+
+    @staticmethod
+    def _get_owner_ids(domain, request):
+        slugs = request.GET.getlist(EMWF.slug)
+        if EMWF.no_filters_selected(slugs) or EMWF.show_all_data(slugs) or EMWF.show_project_data(slugs):
+            return []  # don't filter by owner
+        if EMWF.show_deactivated_data(slugs):
+            return (user_es.UserES()
+                    .show_only_inactive()
+                    .domain(domain)
+                    .get_ids())
+        return get_case_owners(request, domain, slugs)
 
     def _matches_in_memory_filters(self, row):
         # If a gap type is specified, show only rows with gaps of that type

@@ -1,6 +1,7 @@
 import textwrap
 from itertools import chain
 
+from corehq.apps.reports.filters.case_list import CaseListFilter
 from custom.inddex import filters
 from custom.inddex.food import INDICATORS, FoodData
 
@@ -19,7 +20,7 @@ class MasterDataReport(MultiTabularReport):
     @property
     def fields(self):
         return [
-            filters.CaseOwnersFilter,
+            CaseListFilter,
             filters.DateRangeFilter,
             filters.GapTypeFilter,
             filters.RecallStatusFilter

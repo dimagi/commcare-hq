@@ -3,6 +3,7 @@ from itertools import chain
 
 from django.utils.safestring import mark_safe
 
+from corehq.apps.reports.filters.case_list import CaseListFilter
 from custom.inddex import filters
 from custom.inddex.food import FoodData
 
@@ -27,7 +28,7 @@ class NutrientIntakeReport(MultiTabularReport):
     @property
     def fields(self):
         return [
-            filters.CaseOwnersFilter,
+            CaseListFilter,
             filters.DateRangeFilter,
             filters.GenderFilter,
             filters.AgeRangeFilter,
