@@ -29,7 +29,10 @@ def get_valid_recipients(recipients):
     from corehq.util.models import BouncedEmail
     bounced_emails = BouncedEmail.get_hard_bounced_emails(recipients)
     for bounced_email in bounced_emails:
-        email_domain = bounced_email.split('@')[1]
+        try:
+            email_domain = bounced_email.split('@')[1]
+        except IndexError:
+            email_domain = bounced_email
         metrics_gauge('commcare.bounced_email', 1, tags={
             'domain': email_domain,
         })
