@@ -966,19 +966,20 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             location=location,
             month=config['month'],
             loc_level=loc_level,
-            beta=beta
+            beta=beta,
+            report_type=config['thr_report_type']
         ).get_excel_data()
         export_info = excel_data[1][1]
         generated_timestamp = date_parser.parse(export_info[0][1])
         formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
         data_type = 'THR Report__{}'.format(formatted_timestamp)
-
         if file_format == 'xlsx':
             cache_key = create_thr_report_excel_file(
                 excel_data,
                 data_type,
                 config['month'].strftime("%B %Y"),
                 loc_level,
+                config['thr_report_type']
             )
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
@@ -1863,8 +1864,8 @@ def get_data_not_in_ucr(status_record):
         for doc_id, doc_subtype, sql_modified_on in chunk:
             if doc_id in doc_id_and_inserted_in_ucr:
                 # This is to handle the cases which are outdated. This condition also handles the time drift of 1 sec
-                # between main db and ucr db. i.e  doc will even be included when inserted_at-sql_modified_on <= 1 sec
-                if sql_modified_on - doc_id_and_inserted_in_ucr[doc_id] >= timedelta(seconds=-1):
+                # between main db and ucr db. i.e  doc will even be included when inserted_at-sql_modified_on < 2 sec
+                if sql_modified_on - doc_id_and_inserted_in_ucr[doc_id] > timedelta(seconds=-2):
                     yield (doc_id, doc_subtype, sql_modified_on.isoformat())
             else:
                 yield (doc_id, doc_subtype, sql_modified_on.isoformat())

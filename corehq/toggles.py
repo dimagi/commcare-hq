@@ -1210,6 +1210,13 @@ DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+OVERRIDE_EXPANDED_COLUMN_LIMIT_IN_REPORT_BUILDER = StaticToggle(
+    'override_expanded_column_limit_in_report_builder',
+    'COVID: Override the limit for expanded columns in report builder from 10 to 50',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 CLOUDCARE_LATEST_BUILD = StaticToggle(
     'use_latest_build_cloudcare',
     'Uses latest build for Web Apps instead of latest published',
@@ -1919,7 +1926,38 @@ RESTRICT_LOGIN_AS = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description="""
-    Adds a permission that can be set on user roles to allow login as, but only as a limited set of users. Users with this enabled can "login as" other users that set custom user property "login_as_user" to the first user's username.
-    For example, if web user a@a.com has this permission set on their role, they can only login as mobile users who have the custom property "login_as_user" set to "a@a.com".
+    Adds a permission that can be set on user roles to allow login as, but only
+    as a limited set of users. Users with this enabled can "login as" other
+    users that set custom user property "login_as_user" to the first user's
+    username.
+
+    For example, if web user a@a.com has this permission set on their role,
+    they can only login as mobile users who have the custom property
+    "login_as_user" set to "a@a.com".
     """
+)
+
+ONE_PHONE_NUMBER_MULTIPLE_CONTACTS = StaticToggle(
+    'one_phone_number_multiple_contacts',
+    'Allow multiple contacts to share a single phone number',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Allows multiple SMS contacts in a project space to share the same phone number.
+    Sessions for different contacts are initiated in series rather than in parallel so that
+    only one contact per phone number is in an active session at any given time.
+    Incoming SMS are then routed to the live session.
+    If a form goes unfilled over SMS, it will prevent any further forms (for that contact or another)
+    from being initiated on that phone number until the original session expires.
+
+    Only use this feature if every form behind an SMS survey begins by identifying the contact.
+    Otherwise the recipient has no way to know who they're supposed to be enter information about.
+    """
+)
+
+LOGOUT_SENSITIVE_DOMAIN = StaticToggle(
+    'logout_sensitive_domain',
+    'Get details about clients that are not logged in',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
 )

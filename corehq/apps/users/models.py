@@ -23,6 +23,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
 from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
 from corehq.apps.users.exceptions import IllegalAccountConfirmation
+from corehq.util.models import BouncedEmail
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateProperty,
@@ -2605,6 +2606,10 @@ class Invitation(models.Model):
     @property
     def is_expired(self):
         return self.invited_on.date() + relativedelta(months=1) < datetime.utcnow().date()
+
+    @property
+    def email_marked_as_bounced(self):
+        return BouncedEmail.get_hard_bounced_emails([self.email])
 
     def send_activation_email(self, remaining_days=30):
         inviter = CouchUser.get_by_user_id(self.invited_by)

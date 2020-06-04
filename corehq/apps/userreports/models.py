@@ -98,6 +98,9 @@ def _check_ids(value):
 
 
 class DataSourceActionLog(models.Model):
+    """
+    Audit model that tracks changes to UCRs and their underlying tables.
+    """
     BUILD = 'build'
     MIGRATE = 'migrate'
     REBUILD = 'rebuild'
@@ -169,6 +172,9 @@ class DataSourceBuildInformation(DocumentSchema):
 
 class DataSourceMeta(DocumentSchema):
     build = SchemaProperty(DataSourceBuildInformation)
+
+    # If this is a linked datasource, this is the ID of the datasource this pulls from
+    master_id = StringProperty()
 
 
 class Validation(DocumentSchema):
@@ -621,6 +627,9 @@ class ReportMeta(DocumentSchema):
     last_modified = DateTimeProperty()
     builder_report_type = StringProperty(choices=['chart', 'list', 'table', 'worker', 'map'])
     builder_source_type = StringProperty(choices=REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES)
+
+    # If this is a linked report, this is the ID of the report this pulls from
+    master_id = StringProperty()
 
 
 class ReportConfiguration(QuickCachedDocumentMixin, Document):
