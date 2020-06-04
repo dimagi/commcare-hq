@@ -70,6 +70,7 @@ from corehq.apps.userreports.reports.builder.const import (
     UI_AGG_GROUP_BY,
     UI_AGG_SUM,
 )
+from corehq.apps.userreports.reports.builder.filter_formats import get_pre_filter_format
 from corehq.apps.userreports.reports.builder.sources import (
     get_source_type_from_report_config,
 )
@@ -1182,14 +1183,10 @@ class ConfigureNewReportBase(forms.Form):
             )
 
     def _get_default_filter_view_model_from_pre_filter(self, field, pre_filter, exists):
-        def _get_format():
-            # note: closures used!
-            return 'Value' if pre_filter['pre_value'] else 'Date'
-
         return DefaultFilterViewModel(
             exists_in_current_version=exists,
             display_text='',
-            format=_get_format(),
+            format=get_pre_filter_format(pre_filter),
             property=self._get_property_id_by_indicator_id(field) if exists else None,
             data_source_field=field if not exists else None,
             pre_value=pre_filter['pre_value'],
