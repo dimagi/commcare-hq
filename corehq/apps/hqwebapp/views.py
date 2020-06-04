@@ -493,8 +493,20 @@ def logout(req, default_domain_redirect='domain_login'):
         return HttpResponseRedirect(reverse('login'))
 
 
+# ping_login and ping_session are both tiny views used in user inactivity and session expiration handling
+# They are identical except that ping_session extends the user's current session, while ping_login does not.
+# This difference is controlled in SelectiveSessionMiddleware, which makes ping_login bypass sessions.
 @two_factor_exempt
 def ping_login(request):
+    return JsonResponse({
+        'success': request.user.is_authenticated,
+        'last_request': request.session.get('last_request'),
+        'username': request.user.username,
+    })
+
+
+@two_factor_exempt
+def ping_session(request):
     return JsonResponse({
         'success': request.user.is_authenticated,
         'last_request': request.session.get('last_request'),
@@ -1243,7 +1255,7 @@ def redirect_to_dimagi(endpoint):
             'india',
             'staging',
             'changeme',
-            'localdev',
+            settings.LOCAL_SERVER_ENVIRONMENT,
         ]:
             return HttpResponsePermanentRedirect(
                 "https://www.dimagi.com/{}{}".format(
