@@ -418,29 +418,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 }
             };
 
-            return self;
-        };
-
-        var caseTransaction = function (data, caseConfig, hasPrivilege) {
-            var self = baseTransaction(caseTransactionMapping, caseConfig.saveButton, 'Form Level', data, caseConfig, hasPrivilege);
-
-            self.case_type(self.case_type() || caseConfig.caseType);
-
-            self.close_case = ko.computed({
-                read: function () {
-                    if (self.close_condition) {
-                        return self.close_condition.type() !== 'never';
-                    } else {
-                        return false;
-                    }
-
-                },
-                write: function (value) {
-                    self.close_condition.type(value ? 'always' : 'never');
-                    self.caseConfig.saveButton.fire('change');
-                },
-            });
-
             self.setRequired = function (required) {
                 var delete_me = [];
                 _(self.case_properties()).each(function (case_property) {
@@ -469,6 +446,29 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                     }, self));
                 });
             };
+
+            return self;
+        };
+
+        var caseTransaction = function (data, caseConfig, hasPrivilege) {
+            var self = baseTransaction(caseTransactionMapping, caseConfig.saveButton, 'Form Level', data, caseConfig, hasPrivilege);
+
+            self.case_type(self.case_type() || caseConfig.caseType);
+
+            self.close_case = ko.computed({
+                read: function () {
+                    if (self.close_condition) {
+                        return self.close_condition.type() !== 'never';
+                    } else {
+                        return false;
+                    }
+
+                },
+                write: function (value) {
+                    self.close_condition.type(value ? 'always' : 'never');
+                    self.caseConfig.saveButton.fire('change');
+                },
+            });
 
             self.unwrap = function () {
                 ko.mapping.toJS(self, caseTransactionMapping(self));
@@ -503,35 +503,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
 
             self.case_type = function () {
                 return 'commcare-user';
-            };
-
-            self.setRequired = function (required) {
-                var delete_me = [];
-                _(self.case_properties()).each(function (case_property) {
-                    var key = case_property.key();
-                    if (_(required).contains(key)) {
-                        case_property.required(true);
-                        required.splice(required.indexOf(key), 1);
-                    } else {
-                        if (case_property.required()) {
-                            case_property.required(false);
-                            if (!case_property.path()) {
-                                delete_me.push(case_property);
-                            }
-                        }
-
-                    }
-                });
-                _(delete_me).each(function (case_property) {
-                    self.case_properties.remove(case_property);
-                });
-                _(required).each(function (key) {
-                    self.case_properties.splice(0, 0, caseProperty.wrap({
-                        path: '',
-                        key: key,
-                        required: true,
-                    }, self));
-                });
             };
 
             self.unwrap = function () {
