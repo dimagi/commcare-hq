@@ -414,7 +414,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
         };
 
         var caseTransaction = function (data, caseConfig, hasPrivilege) {
-            var self = baseTransaction(caseTransactionMapping, self.caseConfig.saveButton, 'Form Level', data, caseConfig, hasPrivilege);
+            var self = baseTransaction(caseTransactionMapping, caseConfig.saveButton, 'Form Level', data, caseConfig, hasPrivilege);
 
             self.case_type(self.case_type() || caseConfig.caseType);
 
@@ -499,7 +499,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
 
 
         var userCaseTransaction = function (data, caseConfig) {
-            var self = baseTransaction(userCaseTransactionMapping, self.caseConfig.saveUsercaseButton, 'User Case Management', data, caseConfig, true);
+            var self = baseTransaction(userCaseTransactionMapping, caseConfig.saveUsercaseButton, 'User Case Management', data, caseConfig, true);
 
             self.case_type = function () {
                 return 'commcare-user';
