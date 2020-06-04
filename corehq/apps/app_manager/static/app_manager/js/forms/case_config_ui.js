@@ -319,14 +319,20 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             return baseMapping(model, ['case_properties', 'case_preload']);
         };
 
-        var caseTransaction = function (data, caseConfig, hasPrivilege) {
+        var baseTransaction = function (data, caseConfig, hasPrivilege) {
             var self = {};
 
             self.hasPrivilege = hasPrivilege;
+            self.caseConfig = caseConfig;
+
+            return self;
+        };
+
+        var caseTransaction = function (data, caseConfig, hasPrivilege) {
+            var self = baseTransaction(data, caseConfig, hasPrivilege);
 
             ko.mapping.fromJS(data, caseTransactionMapping(self), self);
             self.case_type(self.case_type() || caseConfig.caseType);
-            self.caseConfig = caseConfig;
 
             // link self.case_name to corresponding path observable
             // in case_properties for convenience
@@ -490,12 +496,9 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
 
 
         var userCaseTransaction = function (data, caseConfig) {
-            var self = {};
-
-            self.hasPrivilege = true;
+            var self = baseTransaction(data, caseConfig, true);
 
             ko.mapping.fromJS(data, userCaseTransactionMapping(self), self);
-            self.caseConfig = caseConfig;
             self.case_type = function () {
                 return 'commcare-user';
             };
