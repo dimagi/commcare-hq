@@ -1192,10 +1192,14 @@ class ConfigureNewReportBase(forms.Form):
             )
 
     def _get_default_filter_view_model_from_pre_filter(self, field, pre_filter, exists):
+        def _get_format():
+            # note: closures used!
+            return 'Value' if pre_filter['pre_value'] else 'Date'
+
         return DefaultFilterViewModel(
             exists_in_current_version=exists,
             display_text='',
-            format='Value' if pre_filter['pre_value'] else 'Date',
+            format=_get_format(),
             property=self._get_property_id_by_indicator_id(field) if exists else None,
             data_source_field=field if not exists else None,
             pre_value=pre_filter['pre_value'],
