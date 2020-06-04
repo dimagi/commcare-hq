@@ -54,11 +54,15 @@ def _transform_types(mapping):
         elif ("type", "multi_field") in items:
             # multi_field is replaced by just fields
             mapping["type"] = "text"
-        if "include_in_all" in mapping:
-            mapping.pop("include_in_all")
+        unsupported_attribs = [
+            "include_in_all",
+            'geohash', 'geohash_prefix', 'geohash_precision', 'lat_lon'
+        ]
+        for attr in unsupported_attribs:
+            if attr in mapping:
+                mapping.pop(attr)
         return {k: _transform_types(v) for k, v in mapping.items()}
     elif isinstance(mapping, list):
         return [_transform_types(i) for i in mapping]
     else:
         return mapping
-

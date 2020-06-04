@@ -12,6 +12,7 @@ from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.pillows.user import transform_user_for_elasticsearch
 from corehq.util.elastic import ensure_index_deleted
+from corehq.apps.es.tests.utils import run_on_es2
 
 
 class TestCloudcareESAccessors(SimpleTestCase):
@@ -94,8 +95,7 @@ class TestCloudcareESAccessors(SimpleTestCase):
                     MagicMock(username='batman'),
                     None,
                     10,
-                    0,
-                    []
+                    0
                 ).count(),
                 1
             )
@@ -112,8 +112,18 @@ class TestCloudcareESAccessors(SimpleTestCase):
                     MagicMock(username='batman'),
                     None,
                     10,
-                    0,
-                    []
+                    0
                 ).count(),
                 2
             )
+
+from django.test import override_settings
+from unittest import skipUnless
+from mock import patch
+from corehq.util.es.interface import ElasticsearchInterface2
+
+
+@skipUnless(getattr('settings', 'ELASTICSEARCH_2_PORT', True), "ELASTICSEARCH_2_PORT is not defined")
+@override_settings(ELASTICSEARCH_MAJOR_VERSION=2, ELASTICSEARCH_PORT=getattr('settings', 'ELASTICSEARCH_2_PORT', 5200))
+class TestCloudcareESAccessorsES2(TestCloudcareESAccessors):
+    pass

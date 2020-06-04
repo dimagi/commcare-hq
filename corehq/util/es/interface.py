@@ -2,6 +2,7 @@ import abc
 
 from django.conf import settings
 
+from corehq.pillows.mappings.utils import transform_for_es7
 from corehq.util.es.elasticsearch import bulk
 
 
@@ -101,6 +102,7 @@ class ElasticsearchInterface2(AbstractElasticsearchInterface):
 class ElasticsearchInterface7(AbstractElasticsearchInterface):
 
     def put_mapping(self, doc_type, mapping, index):
+        transform_for_es7(mapping)
         return self.es.indices.put_mapping(mapping, index=index)
 
     def create_doc(self, index, doc_type, doc_id, doc):
@@ -124,8 +126,12 @@ class ElasticsearchInterface7(AbstractElasticsearchInterface):
     def delete_doc(self, index, doc_type, doc_id):
         self.es.delete(index, doc_id)
 
-ElasticsearchInterface = {
-    1: ElasticsearchInterface1,
-    2: ElasticsearchInterface2,
-    7: ElasticsearchInterface7,
-}[settings.ELASTICSEARCH_MAJOR_VERSION]
+
+class ElasticsearchInterface(object):
+    def __new__(cls, *args, **kwargs):
+        _class = {
+            1: ElasticsearchInterface1,
+            2: ElasticsearchInterface2,
+            7: ElasticsearchInterface7,
+        }[settings.ELASTICSEARCH_MAJOR_VERSION]
+        return _class(*args, **kwargs)

@@ -1,11 +1,11 @@
 from corehq.util.elastic import es_index
-from .utils import transform_for_es7
+
 from pillowtop.es_utils import ElasticsearchIndexInfo
 
 
 REPORT_CASE_INDEX = es_index("report_cases_czei39du507m9mmpqk3y01x72a3ux4p0")
 
-REPORT_CASE_MAPPING = transform_for_es7({'_meta': {'comment': '2013-11-05 dmyung',
+REPORT_CASE_MAPPING = {'_meta': {'comment': '2013-11-05 dmyung',
            'created': None},
  'date_detection': False,
  'date_formats': ['yyyy-MM-dd',
@@ -125,7 +125,7 @@ REPORT_CASE_MAPPING = transform_for_es7({'_meta': {'comment': '2013-11-05 dmyung
                          'type': 'multi_field'},
                 'user_id': {'type': 'string'},
                 'version': {'type': 'string'},
-                'xform_ids': {'index': 'not_analyzed', 'type': 'string'}}})
+                'xform_ids': {'index': 'not_analyzed', 'type': 'string'}}}
 
 REPORT_CASE_ES_ALIAS = "report_cases"
 REPORT_CASE_ES_TYPE = "report_case"

@@ -1,9 +1,8 @@
 from corehq.util.elastic import es_index
-from .utils import transform_for_es7
 from pillowtop.es_utils import ElasticsearchIndexInfo
 
 DOMAIN_INDEX = es_index("hqdomains_2020-02-10")
-DOMAIN_MAPPING = transform_for_es7({
+DOMAIN_MAPPING = {
  '_all': {'enabled': False},
  '_meta': {'comment': '', 'created': None},
  'date_detection': False,
@@ -254,7 +253,7 @@ DOMAIN_MAPPING = transform_for_es7({
                                                'type': 'string'}},
                           'type': 'multi_field'},
                 'use_sql_backend': {'type': "boolean"},
-                'yt_id': {'type': 'string'}}})
+                'yt_id': {'type': 'string'}}}
 
 
 DOMAIN_INDEX_INFO = ElasticsearchIndexInfo(

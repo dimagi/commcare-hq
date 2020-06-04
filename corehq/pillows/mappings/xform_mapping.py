@@ -3,12 +3,11 @@ from django.conf import settings
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
 from corehq.pillows.mappings import NULL_VALUE
 from corehq.util.elastic import es_index
-from .utils import transform_for_es7
 from pillowtop.es_utils import ElasticsearchIndexInfo
 
 XFORM_INDEX = es_index(settings.ES_XFORM_INDEX_NAME)
 
-XFORM_MAPPING = transform_for_es7({
+XFORM_MAPPING = {
     "date_detection": False,
     "date_formats": DATE_FORMATS_ARR,  # for parsing the explicitly defined dates
     'dynamic': False,
@@ -122,9 +121,9 @@ XFORM_MAPPING = transform_for_es7({
             },
         },
     }
-})
+}
 
-if settings.ES_XFORM_DISABLE_ALL and settings.ELASTICSEARCH_MAJOR_VERSION != 7:
+if settings.ES_XFORM_DISABLE_ALL:
     XFORM_MAPPING["_all"] = {"enabled": False}
 
 XFORM_ES_TYPE = 'xform'
