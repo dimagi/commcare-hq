@@ -1,12 +1,16 @@
 import os
 import tarfile
 import uuid
-from io import BytesIO
+from io import BytesIO, RawIOBase
 from tempfile import NamedTemporaryFile
 
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 
-from corehq.apps.hqmedia.models import CommCareAudio, CommCareVideo, CommCareImage
+from corehq.apps.hqmedia.models import (
+    CommCareAudio,
+    CommCareImage,
+    CommCareVideo,
+)
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.export import EXPORTERS
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB, new_meta
@@ -80,3 +84,68 @@ class TestBlobExport(TestCase):
             exporter.migrate(out.name, force=True)
             with tarfile.open(out.name, 'r:gz') as tgzfile:
                 self.assertEqual(expected, set(tgzfile.getnames()))
+
+
+class TestMockBigBlobIO(SimpleTestCase):
+
+    def test_zeros(self):
+        maybe_byte = next(zeros())
+        self.assertIsInstance(maybe_byte, bytes)
+
+    def test_read(self):
+        big_blob = MockBigBlobIO(zeros(), 100)
+        data = big_blob.read()
+        self.assertEqual(len(data), 100)
+
+    def test_read_size(self):
+        big_blob = MockBigBlobIO(zeros(), 100)
+        data = big_blob.read(50)
+        self.assertEqual(len(data), 50)
+
+    def test_read_chunks(self):
+        big_blob = MockBigBlobIO(zeros(), 100)
+        data1 = big_blob.read(25)
+        data2 = big_blob.read(100)
+        self.assertEqual(len(data1) + len(data2), 100)
+
+
+class MockBigBlobIO(RawIOBase):
+    """
+    A file-like object used for mocking a very large blob.
+
+    Consumes bytes from a generator up to a maximum size.
+    """
+    def __init__(self, bytes_gen, max_size):
+        self.generator = bytes_gen
+        self.size = max_size
+        self._consumed = 0
+
+    def readable(self):
+        return True
+
+    def seekable(self):
+        return False
+
+    def writable(self):
+        return False
+
+    def read(self, size=None):
+        size_remaining = self.size - self._consumed
+        if size is None or size < 0:
+            size = size_remaining
+        size = min(size, size_remaining)
+        if size > 0:
+            chunk = b''.join((next(self.generator) for __ in range(size)))
+            self._consumed = self._consumed + size
+            return bytes(chunk)
+
+    def readall(self):
+        return self.read(size=None)
+
+    def readinto(self, buffer):
+        raise NotImplementedError
+
+
+def zeros():
+    while True:
+        yield b'\x00'
