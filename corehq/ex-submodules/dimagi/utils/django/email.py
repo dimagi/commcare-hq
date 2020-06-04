@@ -5,6 +5,8 @@ from django.core.mail import get_connection
 from django.core.mail.message import EmailMultiAlternatives
 from django.utils.translation import ugettext as _
 
+from corehq.util.metrics import metrics_gauge
+
 NO_HTML_EMAIL_MESSAGE = """
 Your email client is trying to display the plaintext version of an email that
 is only supported in HTML. Please set your email client to display this message
@@ -26,6 +28,14 @@ def get_valid_recipients(recipients):
     """
     from corehq.util.models import BouncedEmail
     bounced_emails = BouncedEmail.get_hard_bounced_emails(recipients)
+    for bounced_email in bounced_emails:
+        try:
+            email_domain = bounced_email.split('@')[1]
+        except IndexError:
+            email_domain = bounced_email
+        metrics_gauge('commcare.bounced_email', 1, tags={
+            'email_domain': email_domain,
+        })
     return [recipient for recipient in recipients if recipient not in bounced_emails]
 
 
