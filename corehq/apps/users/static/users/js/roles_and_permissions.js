@@ -56,7 +56,6 @@ hqDefine("users/js/roles_and_permissions",[
 
         userRoles.initUserRoles($userRolesTable, {
             userRoles: initialPageData.get("user_roles"),
-            nonAdminRoles: initialPageData.get("non_admin_roles"),
             defaultRole: initialPageData.get("default_role"),
             saveUrl: url("post_user_role"),
             deleteUrl: url("delete_user_role"),

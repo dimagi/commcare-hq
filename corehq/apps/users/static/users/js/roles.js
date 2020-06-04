@@ -45,17 +45,6 @@ hqDefine('users/js/roles',[
                     }),
                 };
 
-                data.manageRoleAssignments = {
-                    all: data.is_non_admin_editable,
-                    specific: ko.utils.arrayMap(o.nonAdminRoles, function (role) {
-                        return {
-                            path: role._id,
-                            name: role.name,
-                            value: data.assignable_by.indexOf(role._id) !== -1,
-                        };
-                    }),
-                };
-
                 self = ko.mapping.fromJS(data);
                 self.reportPermissions.filteredSpecific = ko.computed(function () {
                     return ko.utils.arrayFilter(self.reportPermissions.specific(), function (report) {
@@ -93,12 +82,6 @@ hqDefine('users/js/roles',[
                     return app.value;
                 }), function (app) {
                     return app.path;
-                });
-                data.is_non_admin_editable = data.manageRoleAssignments.all;
-                data.assignable_by = ko.utils.arrayMap(ko.utils.arrayFilter(data.manageRoleAssignments.specific, function (role) {
-                    return role.value;
-                }), function (role) {
-                    return role.path;
                 });
                 return data;
             },
