@@ -68,7 +68,7 @@ from corehq.apps.linked_domain.dbaccessors import get_linked_domains
 from corehq.apps.linked_domain.models import DomainLink, ReportLinkDetail
 from corehq.apps.linked_domain.ucr import create_linked_ucr
 from corehq.apps.linked_domain.util import is_linked_report
-from corehq.apps.locations.permissions import conditionally_location_safe
+from corehq.apps.locations.permissions import conditionally_location_safe, location_safe
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.saved_reports.models import ReportConfig
@@ -123,7 +123,7 @@ from corehq.apps.userreports.reports.builder.sources import (
 from corehq.apps.userreports.reports.filters.choice_providers import (
     ChoiceQueryContext,
 )
-from corehq.apps.userreports.reports.util import has_location_filter
+from corehq.apps.userreports.reports.util import report_has_location_filter
 from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.userreports.tasks import (
@@ -1417,6 +1417,7 @@ def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
         return export_response(Temp(path), params.format, adapter.display_name)
 
 
+@location_safe
 @login_and_domain_required
 def data_source_status(request, domain, config_id):
     config, _ = get_datasource_config_or_404(config_id, domain)
@@ -1439,7 +1440,7 @@ def _get_report_filter(domain, report_id, filter_id):
 
 
 def _is_location_safe_choice_list(view_fn, request, domain, report_id, filter_id, **view_kwargs):
-    return has_location_filter(view_fn, domain=domain, subreport_slug=report_id)
+    return report_has_location_filter(config_id=report_id, domain=domain)
 
 
 @login_and_domain_required
