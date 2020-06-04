@@ -8,6 +8,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
     vm.monthsCopy = [];
     vm.years = [];
     vm.yearsCopy = [];
+    vm.quartersCopy = [];
     vm.userLocationType = userLocationType;
     vm.task_id = $location.search()['task_id'] || '';
     vm.haveAccessToFeatures = haveAccessToFeatures;
@@ -163,11 +164,30 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
     if (haveAccessToFeatures) {
         vm.indicators.push({id: 12, name: 'Service Delivery Report'});
         vm.indicators.push({id: 13, name: 'Child Growth Tracking Report'});
+        vm.indicators.push({id: 15, name: 'Poshan Progress Report'});
+        vm.reportLayouts = [
+            {id: 'comprehensive', name: 'Comprehensive'},
+            {id: 'summary', name: 'Summary'},
+        ];
+        vm.dataPeriods = [
+            {id: 1, name: 'Monthly'},
+            {id: 3, name: 'Quarterly'},
+        ];
         vm.beneficiaryCategories = [
             {id: 'pw_lw_children', name: 'PW, LW & Children 0-3 years'},
             {id: 'children_3_6', name: 'Children 3-6 years'},
         ];
+        vm.quarters = [
+            {id: 1, name: 'Jan-Mar'},
+            {id: 2, name: 'Apr-Jun'},
+            {id: 3, name: 'Jul-Sep'},
+            {id: 4, name: 'Oct-Dec'},
+        ];
+        vm.quartersCopy = vm.quarters;
         vm.selectedBeneficiaryCategory = 'pw_lw_children';
+        vm.selectedReportLayout = 'comprehensive';
+        vm.selectedDataPeriod = 1;
+        vm.selectedQuarter = 1;
     }
     vm.THRreportTypes = [
         {id: 'consolidated', name: 'Consolidated'},
@@ -319,11 +339,31 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
                 }
             });
             vm.selectedMonth = vm.selectedMonth >= 7 ? vm.selectedMonth : 7;
+        } else if((year.id === 2019 && vm.isPPRSelected())) {
+            var currentMonth = latest.getMonth() + 1;
+            var currentYear = latest.getFullYear();
+            vm.months = _.filter(vm.monthsCopy, function (month) {
+                if (currentYear === 2019) {
+                    return month.id >= 4 && month.id <= currentMonth;
+                } else {
+                    return month.id >= 4;
+                }
+            });
+            vm.selectedMonth = vm.selectedMonth >= 4 ? vm.selectedMonth : 4;
+            vm.quarters = vm.quartersCopy.slice(1,4);
+            vm.selectedQuarter = vm.selectedQuarter >= 2 ? vm.selectedQuarter : 2;
+
         } else if (year.id === latest.getFullYear()) {
+            const maxQuarter = Math.floor((latest.getMonth() + 1)/4) + 1;
             vm.months = _.filter(vm.monthsCopy, function (month) {
                 return month.id <= latest.getMonth() + 1;
             });
             vm.selectedMonth = vm.selectedMonth <= latest.getMonth() + 1 ? vm.selectedMonth : latest.getMonth() + 1;
+            vm.quarters = _.filter(vm.quartersCopy, function (quarter) {
+                return quarter.id <= maxQuarter;
+            });
+            vm.selectedQuarter = vm.selectedQuarter <= maxQuarter ? vm.selectedQuarter : maxQuarter;
+
         } else if (year.id === 2017) {
             vm.months = _.filter(vm.monthsCopy, function (month) {
                 return month.id >= 3;
@@ -393,14 +433,23 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
                 if (vm.selectedYear < 2020) {
                     vm.selectedYear = new Date().getFullYear();
                 }
+            } else if (vm.isPPRSelected()) {
+                var currentYear  = new Date().getFullYear();
+                vm.selectedYear = vm.selectedYear >= 2019 ? vm.selectedYear : currentYear;
+                vm.selectedFormat = vm.formats[1].id;
+                vm.years = _.filter(vm.yearsCopy, function (year) {
+                    return year.id >= 2019;
+                });
             } else {
                 vm.years = vm.yearsCopy;
             }
             vm.onSelectYear({'id': vm.selectedYear});
             vm.selectedFormat = 'xlsx';
         }
-
+        // set data period to monthly for all
+        vm.selectedDataPeriod = 1
         vm.adjustSelectedLevelForNoViewByFilter();
+
 
     };
 
@@ -430,6 +479,9 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
         if (haveAccessToFeatures) {
             taskConfig['beneficiary_category'] = vm.selectedBeneficiaryCategory;
             taskConfig['thr_report_type'] = vm.selectedTHRreportType;
+            taskConfig['report_layout'] = vm.selectedReportLayout;
+            taskConfig['data_period'] = vm.selectedDataPeriod;
+            taskConfig['quarter'] = vm.selectedQuarter;
         }
         var selectedFilters = vm.selectedFilterOptions();
         if (vm.isChildBeneficiaryListSelected()) {
@@ -462,6 +514,8 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
         vm.selectedIndicator = 1;
         vm.selectedFormat = 'xlsx';
         vm.selectedPDFFormat = 'many';
+        vm.selectedQuarter = 1;
+        vm.selectedDataPeriod = 1;
         initHierarchy();
         vm.updateSelectedDate();
     };
@@ -470,11 +524,12 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
         var beneficiaryListErrors = vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
         var growthListErrors = vm.isChildGrowthTrackerSelected() && !vm.isDistrictOrBelowSelected();
         var incentiveReportErrors = vm.isIncentiveReportSelected() && !vm.isStateSelected();
+        var PPRErrors = vm.isPPRSelected() && vm.isBlockOrBelowSelected();
         var ladySupervisorReportErrors = false;
         if (!vm.haveAccessToFeatures) {
             ladySupervisorReportErrors = vm.isLadySupervisorSelected() && !vm.isStateSelected();
         }
-        return beneficiaryListErrors || incentiveReportErrors || ladySupervisorReportErrors || growthListErrors;
+        return beneficiaryListErrors || incentiveReportErrors || ladySupervisorReportErrors || growthListErrors || PPRErrors;
     };
 
     vm.isCombinedPDFSelected = function () {
@@ -554,6 +609,18 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
         return vm.selectedIndicator === 13;
     };
 
+    vm.isMonthlyDataPeriodSelected = function() {
+        return vm.selectedDataPeriod === 1;
+    };
+
+    vm.isQuarterDataPeriodSelected = function() {
+        return vm.selectedDataPeriod === 3;
+    }
+
+    vm.isPPRSelected = function() {
+        return vm.selectedIndicator === 15;
+    };
+
     vm.isSupervisorOrBelowSelected = function () {
         return vm.selectedLocations[3] && vm.selectedLocations[3] !== ALL_OPTION.location_id;
     };
@@ -569,7 +636,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
     vm.showViewBy = function () {
         return !(vm.isChildBeneficiaryListSelected() || vm.isIncentiveReportSelected() ||
             vm.isLadySupervisorSelected() || vm.isDashboardUsageSelected() ||
-            vm.isChildGrowthTrackerSelected() || vm.isTakeHomeRationReportSelected());
+            vm.isChildGrowthTrackerSelected() || vm.isTakeHomeRationReportSelected() || vm.isPPRSelected());
     };
 
     vm.showLocationFilter = function () {
@@ -577,8 +644,12 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
     };
 
     vm.showMonthFilter = function () {
-        return !vm.isDashboardUsageSelected();
+        return !vm.isDashboardUsageSelected() && vm.isMonthlyDataPeriodSelected();
     };
+
+    vm.showQuarterFilter = function() {
+        return !vm.isDashboardUsageSelected() && vm.isQuarterDataPeriodSelected();
+    }
 
     vm.showYearFilter = function () {
         return !vm.isDashboardUsageSelected();
