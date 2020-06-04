@@ -1,3 +1,4 @@
+import copy
 from collections import OrderedDict
 from datetime import datetime, timedelta, date
 
@@ -374,9 +375,13 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
             age_filters,
             wfh_recorded_in_month_column(icds_feature_flag)
         )
+        agg_chm_config = copy.deepcopy(config)
+        if icds_feature_flag:
+            # Retrieving children of age 1-2 years
+            agg_chm_config['age_tranche'] = '24'
 
         queryset = AggChildHealthMonthly.objects.filter(
-            month=date, **config
+            month=date, **agg_chm_config
         ).values(
             'month', 'aggregation_level'
         ).annotate(
@@ -629,8 +634,8 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Immunization Coverage (at age 1 year)'),
                     'help_text': _((
-                        "Of the total number of children enrolled for Anganwadi Services who are over a year old, "
-                        "the percentage of children who have received the complete immunization as per the "
+                        "Of the total number of children enrolled for Anganwadi Services who are between 1-2"
+                        " years old, the percentage of children who have received the complete immunization as per the "
                         "National Immunization Schedule of India that is required by age 1."
                         "<br/><br/> "
                         "This includes the following immunizations:<br/> "
