@@ -32,11 +32,16 @@ class Command(BaseCommand):
         'static-pregnant-tasks_cases',
     ]
 
+    def add_arguments(self, parser):
+        parser.add_argument('ucr_name')
 
-    def handle(self, *args, **options):
+    def handle(self, ucr_name, *args, **options):
 
         for ucr in self.UCR_NAMES:
-            print(f"PROCESSING : {UCR}")
+            if ucr != 'ucr_name':
+                continue
+
+            print(f"PROCESSING : {ucr}")
             self.dump_duplicate_records(ucr)
             self.remove_duplicates(ucr)
             self.reprocess_cases(ucr)
