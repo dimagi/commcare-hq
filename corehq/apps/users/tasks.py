@@ -361,10 +361,8 @@ def gauge_pending_user_confirmations():
     from corehq.apps.users.analytics import get_inactive_commcare_users_in_domain
     for doc in Domain.get_all(include_docs=False):
         domain_name = doc['key']
-        num_unconfirmed = [
-            u.is_account_confirmed
-            for u in get_inactive_commcare_users_in_domain(domain_name)
-        ].count(False)
+        users = get_inactive_commcare_users_in_domain(domain_name)
+        num_unconfirmed = sum(1 for u in users if not u.is_account_confirmed)
         if num_unconfirmed:
             metrics_gauge(
                 metric_name, num_unconfirmed, tags={
