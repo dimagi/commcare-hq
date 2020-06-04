@@ -365,14 +365,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 saveButton.fire('change');
             };
 
-            return self;
-        };
-
-        var caseTransaction = function (data, caseConfig, hasPrivilege) {
-            var self = baseTransaction(caseTransactionMapping, self.caseConfig.saveButton, 'Form Level', data, caseConfig, hasPrivilege);
-
-            self.case_type(self.case_type() || caseConfig.caseType);
-
             self.propertyCounts = ko.computed(function () {
                 var count = {};
                 _(self.case_properties()).each(function (p) {
@@ -384,6 +376,14 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 });
                 return count;
             });
+
+            return self;
+        };
+
+        var caseTransaction = function (data, caseConfig, hasPrivilege) {
+            var self = baseTransaction(caseTransactionMapping, self.caseConfig.saveButton, 'Form Level', data, caseConfig, hasPrivilege);
+
+            self.case_type(self.case_type() || caseConfig.caseType);
 
             if (self.case_preload) {
                 self.addPreload = function () {
@@ -503,18 +503,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             self.case_type = function () {
                 return 'commcare-user';
             };
-
-            self.propertyCounts = ko.computed(function () {
-                var count = {};
-                _(self.case_properties()).each(function (p) {
-                    var key = p.key();
-                    if (!count.hasOwnProperty(key)) {
-                        count[key] = 0;
-                    }
-                    return count[key] += 1;
-                });
-                return count;
-            });
 
             if (self.case_preload) {
                 self.addPreload = function () {
