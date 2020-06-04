@@ -319,23 +319,14 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             return baseMapping(model, ['case_properties', 'case_preload']);
         };
 
-        var baseTransaction = function (data, caseConfig, hasPrivilege) {
+        var baseTransaction = function (mapping, saveButton, analyticsAction, data, caseConfig, hasPrivilege) {
             var self = {};
+            ko.mapping.fromJS(data, mapping(self), self);
 
             self.hasPrivilege = hasPrivilege;
             self.caseConfig = caseConfig;
 
-            return self;
-        };
-
-        var caseTransaction = function (data, caseConfig, hasPrivilege) {
-            var self = baseTransaction(data, caseConfig, hasPrivilege);
-
-            ko.mapping.fromJS(data, caseTransactionMapping(self), self);
-            self.case_type(self.case_type() || caseConfig.caseType);
-
-            // link self.case_name to corresponding path observable
-            // in case_properties for convenience
+            // link self.case_name to corresponding path observable in case_properties for convenience
             try {
                 self.case_name = _(self.case_properties()).find(function (p) {
                     return p.key() === 'name' && p.required();
@@ -343,12 +334,14 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             } catch (e) {
                 self.case_name = null;
             }
+
             self.suggestedPreloadProperties = ko.computed(function () {
                 if (!self.case_preload) {
                     return [];
                 }
                 return caseConfigUtils.filteredSuggestedProperties(self.suggestedProperties(), self.case_preload());
             }, self);
+
             self.suggestedSaveProperties = ko.computed(function () {
                 return caseConfigUtils.filteredSuggestedProperties(self.suggestedProperties(), self.case_properties());
             }, self);
@@ -362,14 +355,23 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 }, self);
 
                 self.case_properties.push(property);
+                hqImport('analytix/js/google').track.event('Case Management', analyticsAction, 'Save Properties');
             };
 
             self.removeProperty = function (property) {
                 if (!self.hasPrivilege) return;
-                hqImport('analytix/js/google').track.event('Case Management', 'Form Level', 'Save Properties (remove)');
+                hqImport('analytix/js/google').track.event('Case Management', analyticsAction, 'Save Properties (remove)');
                 self.case_properties.remove(property);
                 saveButton.fire('change');
             };
+
+            return self;
+        };
+
+        var caseTransaction = function (data, caseConfig, hasPrivilege) {
+            var self = baseTransaction(caseTransactionMapping, self.caseConfig.saveButton, 'Form Level', data, caseConfig, hasPrivilege);
+
+            self.case_type(self.case_type() || caseConfig.caseType);
 
             self.propertyCounts = ko.computed(function () {
                 var count = {};
@@ -496,46 +498,10 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
 
 
         var userCaseTransaction = function (data, caseConfig) {
-            var self = baseTransaction(data, caseConfig, true);
+            var self = baseTransaction(userCaseTransactionMapping, self.caseConfig.saveUsercaseButton, 'User Case Management', data, caseConfig, true);
 
-            ko.mapping.fromJS(data, userCaseTransactionMapping(self), self);
             self.case_type = function () {
                 return 'commcare-user';
-            };
-
-            // link self.case_name to corresponding path observable
-            // in case_properties for convenience
-            try {
-                self.case_name = _(self.case_properties()).find(function (p) {
-                    return p.key() === 'name' && p.required();
-                }).path;
-            } catch (e) {
-                self.case_name = null;
-            }
-            self.suggestedPreloadProperties = ko.computed(function () {
-                if (!self.case_preload) {
-                    return [];
-                }
-                return caseConfigUtils.filteredSuggestedProperties(self.suggestedProperties(), self.case_preload());
-            }, self);
-            self.suggestedSaveProperties = ko.computed(function () {
-                return caseConfigUtils.filteredSuggestedProperties(self.suggestedProperties(), self.case_properties());
-            }, self);
-
-            self.addProperty = function () {
-                var property = caseProperty.wrap({
-                    path: '',
-                    key: '',
-                    required: false,
-                }, self);
-
-                self.case_properties.push(property);
-                hqImport('analytix/js/google').track.event('Case Management', 'User Case Management', 'Save Properties');
-            };
-
-            self.removeProperty = function (property) {
-                self.case_properties.remove(property);
-                self.caseConfig.saveUsercaseButton.fire('change');
             };
 
             self.propertyCounts = ko.computed(function () {
