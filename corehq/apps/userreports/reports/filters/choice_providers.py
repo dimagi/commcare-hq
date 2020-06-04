@@ -201,11 +201,9 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
 
     @staticmethod
     def _deduplicate_choices(choices):
-        found_values = set()
-        for choice in choices:
-            if choice.value not in found_values:
-                yield choice
-                found_values.add(choice.value)
+        # don't return more than one result with the same value
+        # this can happen e.g. for NONE_CHOICE values
+        return {choice.value: choice for choice in choices}.values()
 
 
 class MultiFieldDataSourceColumnChoiceProvider(DataSourceColumnChoiceProvider):
