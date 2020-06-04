@@ -790,7 +790,7 @@ class UserInvitationView(object):
                                                  invited=invitation.email,
                                                  current=request.couch_user.username,
                                              ))
-                return HttpResponseRedirect(self.redirect_to_on_success(self.domain))
+                return HttpResponseRedirect(self.redirect_to_on_success(invitation.email, self.domain))
 
             if not is_invited_user:
                 messages.error(request, _("The invited user {invited} and your user {current} do not match!").format(
@@ -803,7 +803,7 @@ class UserInvitationView(object):
                                "Current user accepted a project invitation",
                                {"Current user accepted a project invitation": "yes"})
                 send_hubspot_form(HUBSPOT_EXISTING_USER_INVITE_FORM, request)
-                return HttpResponseRedirect(self.redirect_to_on_success(self.domain))
+                return HttpResponseRedirect(self.redirect_to_on_success(invitation.email, self.domain))
             else:
                 mobile_user = CouchUser.from_django_user(request.user).is_commcare_user()
                 context.update({
@@ -828,7 +828,7 @@ class UserInvitationView(object):
                                    "New User Accepted a project invitation",
                                    {"New User Accepted a project invitation": "yes"})
                     send_hubspot_form(HUBSPOT_NEW_USER_INVITE_FORM, request, user)
-                    return HttpResponseRedirect(self.redirect_to_on_success(invitation.domain))
+                    return HttpResponseRedirect(self.redirect_to_on_success(invitation.email, invitation.domain))
             else:
                 if CouchUser.get_by_username(invitation.email):
                     return HttpResponseRedirect(reverse("login") + '?next=' +
@@ -861,8 +861,8 @@ class UserInvitationView(object):
     def success_msg(self):
         return _('You have been added to the "%s" project space.') % self.domain
 
-    def redirect_to_on_success(self, domain):
-        if Invitation.by_email(user.user_name).count() > 0:
+    def redirect_to_on_success(self, email, domain):
+        if Invitation.by_email(email).count() > 0:
             return reverse("domain_select_redirect")
         else:
             return reverse("domain_homepage", args=[domain,])
