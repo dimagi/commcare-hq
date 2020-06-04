@@ -4,7 +4,11 @@ from tastypie.constants import ALL
 from tastypie.resources import ModelResource
 
 from corehq.apps.api.resources import HqBaseResource
-from corehq.apps.api.resources.auth import DomainAdminAuthentication
+from corehq.apps.api.resources.auth import (
+    DomainAdminAuthentication,
+    RequirePermissionAuthentication,
+)
+from corehq.apps.users.models import Permissions
 from corehq.util.view_utils import absolute_reverse
 
 from ..models import LocationType, SQLLocation
@@ -56,7 +60,7 @@ class LocationResource(ModelResource, HqBaseResource):
         resource_name = 'location'
         detail_uri_name = 'location_id'
         queryset = SQLLocation.objects.filter(is_archived=False).all()
-        authentication = DomainAdminAuthentication()
+        authentication = RequirePermissionAuthentication(Permissions.edit_locations)
         allowed_methods = ['get']
         fields = [
             'id',
