@@ -1167,15 +1167,7 @@ class ConfigureNewReportBase(forms.Form):
         field = filter['field']
         field, exists = self._check_and_update_column(field)
         if filter['type'] == 'pre':
-            return DefaultFilterViewModel(
-                exists_in_current_version=exists,
-                display_text='',
-                format='Value' if filter['pre_value'] else 'Date',
-                property=self._get_property_id_by_indicator_id(field) if exists else None,
-                data_source_field=field if not exists else None,
-                pre_value=filter['pre_value'],
-                pre_operator=filter['pre_operator'],
-            )
+            return self._get_default_filter_view_model_from_pre_filter(field, filter, exists)
         else:
             filter_type_map = {
                 'dynamic_choice_list': 'Choice',
@@ -1198,6 +1190,17 @@ class ConfigureNewReportBase(forms.Form):
                 property=self._get_property_id_by_indicator_id(field) if exists else None,
                 data_source_field=field if not exists else None
             )
+
+    def _get_default_filter_view_model_from_pre_filter(self, field, filter, exists):
+        return DefaultFilterViewModel(
+            exists_in_current_version=exists,
+            display_text='',
+            format='Value' if filter['pre_value'] else 'Date',
+            property=self._get_property_id_by_indicator_id(field) if exists else None,
+            data_source_field=field if not exists else None,
+            pre_value=filter['pre_value'],
+            pre_operator=filter['pre_operator'],
+        )
 
     def _get_column_option_by_indicator_id(self, indicator_column_id):
         """
