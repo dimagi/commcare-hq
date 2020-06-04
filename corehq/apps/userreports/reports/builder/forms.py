@@ -82,16 +82,6 @@ from corehq.toggles import (
     OVERRIDE_EXPANDED_COLUMN_LIMIT_IN_REPORT_BUILDER,
 )
 
-# This dict maps filter types from the report builder frontend to UCR filter types
-REPORT_BUILDER_FILTER_TYPE_MAP = {
-    'Choice': 'dynamic_choice_list',
-    'Date': 'date',
-    'Numeric': 'numeric',
-    'Value': 'pre',
-    'Is Empty': 'is_empty',
-    'Exists': 'exists',
-    'Value Not Equal': 'value_not_equal',
-}
 
 STATIC_CASE_PROPS = [
     "closed",
@@ -117,7 +107,7 @@ class FilterField(JsonField):
     def validate(self, value):
         super(FilterField, self).validate(value)
         for filter_conf in value:
-            if filter_conf.get('format', None) not in (list(REPORT_BUILDER_FILTER_TYPE_MAP) + [""]):
+            if filter_conf.get('format', None) not in (list(const.REPORT_BUILDER_FILTER_TYPE_MAP) + [""]):
                 raise forms.ValidationError("Invalid filter format!")
 
 
@@ -200,7 +190,7 @@ class DataSourceProperty(object):
                 assert self._type == 'meta'
                 filter_format = get_filter_format_from_question_type(self._source[1])
         else:
-            filter_format = REPORT_BUILDER_FILTER_TYPE_MAP[selected_filter_type]
+            filter_format = const.REPORT_BUILDER_FILTER_TYPE_MAP[selected_filter_type]
         return filter_format
 
     def _get_ui_aggregation_for_filter_format(self, filter_format):

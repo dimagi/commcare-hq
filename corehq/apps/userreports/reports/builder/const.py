@@ -34,3 +34,15 @@ PROPERTY_TYPE_RAW = "raw"
 PRE_FILTER_VALUE_IS_EMPTY = 'Is Empty'
 PRE_FILTER_VALUE_EXISTS = 'Exists'
 PRE_FILTER_VALUE_NOT_EQUAL = 'Value Not Equal'
+
+
+# This dict maps filter types from the report builder frontend to UCR filter types
+REPORT_BUILDER_FILTER_TYPE_MAP = {
+    'Choice': 'dynamic_choice_list',
+    'Date': 'date',
+    'Numeric': 'numeric',
+    'Value': 'pre',
+    PRE_FILTER_VALUE_IS_EMPTY: 'is_empty',
+    PRE_FILTER_VALUE_EXISTS: 'exists',
+    PRE_FILTER_VALUE_NOT_EQUAL: 'value_not_equal',
+}
