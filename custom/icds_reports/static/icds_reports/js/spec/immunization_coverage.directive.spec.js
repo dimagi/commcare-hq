@@ -256,11 +256,12 @@ describe('Immunization Coverage Directive feature flag enable', function () {
 
     it('tests template popup', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {all: 10, children: 5});
-        assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
+        var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>test</p>'
             + '<div>Total number of ICDS Child beneficiaries between 1-2 years old: <strong>10</strong></div>'
             + '<div>Total number of children between 1-2 years old who have received complete immunizations required by age 1: <strong>5</strong></div>'
-            + '<div>% of children between 1-2 years who have recieved complete immunizations required by age 1: <strong>50.00%</strong></div></div>');
+            + '<div>% of children between 1-2 years old who have received complete immunizations required by age 1: <strong>50.00%</strong></div></div>';
+        assert.equal(result, expected);
     });
 
     it('tests chart options', function () {
@@ -288,11 +289,11 @@ describe('Immunization Coverage Directive feature flag enable', function () {
             'margin': '0 auto',
             'width': '900px',
         });
-        assert.equal(controller.chartOptions.caption.html,
-            '<i class="fa fa-info-circle"></i> '
-            + 'Of the total number of children enrolled for Anganwadi Services between 1-2 years old, the percentage of children who have received the complete immunization as per the National Immunization Schedule of India that is required by age 1. <br/><br/>'
+        var expected = '<i class="fa fa-info-circle"></i> '
+            + 'Of the total number of children enrolled for Anganwadi Services who are between 1-2 years old, the percentage of children who have received the complete immunization as per the National Immunization Schedule of India that is required by age 1. <br/><br/>'
             + 'This includes the following immunizations:<br/>If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1'
-            + '<br/>If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1');
+            + '<br/>If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1';
+        assert.equal(controller.chartOptions.caption.html, expected);
     });
 
     it('tests chart tooltip content', function () {
@@ -301,8 +302,8 @@ describe('Immunization Coverage Directive feature flag enable', function () {
 
         var expected = '<p><strong>Jul 2017</strong></p><br/>'
             + '<div>Total number of ICDS Child beneficiaries between 1-2 years old: <strong>10</strong></div>'
-            + '<div>Total number of children between 1-2 years old who have recieved complete immunizations required by age 1: <strong>5</strong></div>'
-            + '<div>% of children between 1-2 years old who have recieved complete immunizations required by age 1: <strong>72.00%</strong></div>';
+            + '<div>Total number of children between 1-2 years old who have received complete immunizations required by age 1: <strong>5</strong></div>'
+            + '<div>% of children between 1-2 years old who have received complete immunizations required by age 1: <strong>72.00%</strong></div>';
 
         var result = controller.tooltipContent(month.value, data);
         assert.equal(expected, result);
@@ -312,8 +313,8 @@ describe('Immunization Coverage Directive feature flag enable', function () {
         var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>Ambah</p>' +
             '<div>Total number of ICDS Child beneficiaries between 1-2 years old: <strong>25</strong></div>' +
-            '<div>Total number of children between 1-2 years old who have recieved complete immunizations required by age 1: <strong>0</strong></div>' +
-            '<div>% of children between 1-2 years old who have recieved complete immunizations required by age 1: <strong>NaN%</strong></div></div>';
+            '<div>Total number of children between 1-2 years old who have received complete immunizations required by age 1: <strong>0</strong></div>' +
+            '<div>% of children between 1-2 years old who have received complete immunizations required by age 1: <strong>NaN%</strong></div></div>';
         controllermapOrSectorView.templatePopup = function (d) {
             return controller.templatePopup(d.loc, d.row);
         };

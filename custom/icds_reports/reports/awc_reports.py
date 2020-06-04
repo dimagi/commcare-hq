@@ -450,7 +450,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
         default_interval=default_age_interval(icds_feature_flag)
     )
 
-    return {
+    kpi_dict = {
         'kpi': [
             [
                 {
@@ -631,60 +631,72 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 },
             ],
             [
-                {
-                    'label': _('Immunization Coverage (at age 1 year)'),
-                    'help_text': _((
-                        "Of the total number of children enrolled for Anganwadi Services who are between 1-2"
-                        " years old, the percentage of children who have received the complete immunization as per the "
-                        "National Immunization Schedule of India that is required by age 1."
-                        "<br/><br/> "
-                        "This includes the following immunizations:<br/> "
-                        "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/> "
-                        "If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1"
-                    )),
-                    'percent': percent_diff(
-                        'immunized',
-                        this_month_data,
-                        prev_month_data,
-                        'eligible'
-                    ),
-                    'color': get_color_with_green_positive(percent_diff(
-                        'immunized',
-                        this_month_data,
-                        prev_month_data,
-                        'eligible'
-                    )),
-                    'value': get_value(this_month_data, 'immunized'),
-                    'all': get_value(this_month_data, 'eligible'),
-                    'format': 'percent_and_div',
-                    'frequency': 'month'
-                },
-                {
-                    'label': _('Institutional Deliveries'),
-                    'help_text': institutional_deliveries_help_text(),
-                    'percent': percent_diff(
-                        'institutional_delivery_in_month_sum',
-                        this_month_institutional_delivery_data,
-                        prev_month_institutional_delivery_data,
-                        'delivered_in_month_sum'
-                    ),
-                    'color': get_color_with_green_positive(percent_diff(
-                        'institutional_delivery_in_month_sum',
-                        this_month_institutional_delivery_data,
-                        prev_month_institutional_delivery_data,
-                        'delivered_in_month_sum'
-                    )),
-                    'value': get_value(
-                        this_month_institutional_delivery_data,
-                        'institutional_delivery_in_month_sum'
-                    ),
-                    'all': get_value(this_month_institutional_delivery_data, 'delivered_in_month_sum'),
-                    'format': 'percent_and_div',
-                    'frequency': 'month'
-                },
-            ]
+                        {
+                            'label': _('Immunization Coverage (at age 1 year)'),
+                            'help_text': _((
+                                "Of the total number of children enrolled for Anganwadi Services who are over a year old, "
+                                "the percentage of children who have received the complete immunization as per the "
+                                "National Immunization Schedule of India that is required by age 1."
+                                "<br/><br/> "
+                                "This includes the following immunizations:<br/> "
+                                "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/> "
+                                "If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1"
+                            )),
+                            'percent': percent_diff(
+                                'immunized',
+                                this_month_data,
+                                prev_month_data,
+                                'eligible'
+                            ),
+                            'color': get_color_with_green_positive(percent_diff(
+                                'immunized',
+                                this_month_data,
+                                prev_month_data,
+                                'eligible'
+                            )),
+                            'value': get_value(this_month_data, 'immunized'),
+                            'all': get_value(this_month_data, 'eligible'),
+                            'format': 'percent_and_div',
+                            'frequency': 'month'
+                        },
+                        {
+                            'label': _('Institutional Deliveries'),
+                            'help_text': institutional_deliveries_help_text(),
+                            'percent': percent_diff(
+                                'institutional_delivery_in_month_sum',
+                                this_month_institutional_delivery_data,
+                                prev_month_institutional_delivery_data,
+                                'delivered_in_month_sum'
+                            ),
+                            'color': get_color_with_green_positive(percent_diff(
+                                'institutional_delivery_in_month_sum',
+                                this_month_institutional_delivery_data,
+                                prev_month_institutional_delivery_data,
+                                'delivered_in_month_sum'
+                            )),
+                            'value': get_value(
+                                this_month_institutional_delivery_data,
+                                'institutional_delivery_in_month_sum'
+                            ),
+                            'all': get_value(this_month_institutional_delivery_data, 'delivered_in_month_sum'),
+                            'format': 'percent_and_div',
+                            'frequency': 'month'
+                        },
+                    ]
         ]
     }
+    if icds_feature_flag:
+        kpi_dict['kpi'][4][0]['help_text'] = _((
+                                "Of the total number of children enrolled for Anganwadi Services who are"
+                                " between 1-2 years old, "
+                                "the percentage of children who have received the complete immunization as per the "
+                                "National Immunization Schedule of India that is required by age 1."
+                                "<br/><br/> "
+                                "This includes the following immunizations:<br/> "
+                                "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/> "
+                                "If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1"
+                            ))
+    return kpi_dict
 
 
 @icds_quickcache(['domain', 'config', 'now_date', 'month', 'show_test', 'beta'], timeout=30 * 60)
