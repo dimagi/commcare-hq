@@ -24,28 +24,13 @@ def login_as_user_query(
     '''
     search_fields = ["base_username", "last_name", "first_name", "phone_numbers"]
 
-    should_criteria_query = [
-        queries.search_string_query(search_string, search_fields),
-    ]
-
     user_es = (
         UserES()
         .domain(domain)
         .start(offset)
         .size(limit)
         .sort('username.exact')
-        .set_query(
-            queries.BOOL_CLAUSE(
-                queries.SHOULD_CLAUSE(
-                    should_criteria_query,
-                    # It should either match on the search fields like username or it
-                    # should match on the custom user data fields. If this were 2, then
-                    # it would require the search string to match both on the search fields and
-                    # the custom user data fields.
-                    minimum_should_match=1,
-                ),
-            )
-        )
+        .search_string_query(search_string, search_fields)
     )
 
     if not couch_user.has_permission(domain, 'access_all_locations'):
