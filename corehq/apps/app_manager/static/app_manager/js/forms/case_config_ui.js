@@ -377,14 +377,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 return count;
             });
 
-            return self;
-        };
-
-        var caseTransaction = function (data, caseConfig, hasPrivilege) {
-            var self = baseTransaction(caseTransactionMapping, self.caseConfig.saveButton, 'Form Level', data, caseConfig, hasPrivilege);
-
-            self.case_type(self.case_type() || caseConfig.caseType);
-
             if (self.case_preload) {
                 self.addPreload = function () {
                     if (!self.hasPrivilege) return;
@@ -395,13 +387,14 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                     }, self);
 
                     self.case_preload.push(property);
+                    hqImport('analytix/js/google').track.event('Case Management', analyticsAction, 'Load Properties');
                 };
 
                 self.removePreload = function (property) {
                     if (!self.hasPrivilege) return;
-                    hqImport('analytix/js/google').track.event('Case Management', 'Form Level', 'Load Properties (remove)');
+                    hqImport('analytix/js/google').track.event('Case Management', analyticsAction, 'Load Properties (remove)');
                     self.case_preload.remove(property);
-                    self.caseConfig.saveButton.fire('change');
+                    saveButton.fire('change');
                 };
 
                 self.preloadCounts = ko.computed(function () {
@@ -416,6 +409,14 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                     return count;
                 });
             }
+
+            return self;
+        };
+
+        var caseTransaction = function (data, caseConfig, hasPrivilege) {
+            var self = baseTransaction(caseTransactionMapping, self.caseConfig.saveButton, 'Form Level', data, caseConfig, hasPrivilege);
+
+            self.case_type(self.case_type() || caseConfig.caseType);
 
             self.repeat_context = function () {
                 if (self.case_name) {
@@ -503,36 +504,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             self.case_type = function () {
                 return 'commcare-user';
             };
-
-            if (self.case_preload) {
-                self.addPreload = function () {
-                    var property = casePreload.wrap({
-                        path: '',
-                        key: '',
-                        required: false,
-                    }, self);
-
-                    self.case_preload.push(property);
-                    hqImport('analytix/js/google').track.event('Case Management', 'User Case Management', 'Load Properties');
-                };
-
-                self.removePreload = function (property) {
-                    self.case_preload.remove(property);
-                    self.caseConfig.saveUsercaseButton.fire('change');
-                };
-
-                self.preloadCounts = ko.computed(function () {
-                    var count = {};
-                    _(self.case_preload()).each(function (p) {
-                        var path = p.path();
-                        if (!count.hasOwnProperty(path)) {
-                            count[path] = 0;
-                        }
-                        return count[path] += 1;
-                    });
-                    return count;
-                });
-            }
 
             self.repeat_context = function () {
                 if (self.case_name) {
