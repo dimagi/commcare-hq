@@ -295,36 +295,37 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
         };
 
 
+        var baseMapping = function (model, include) {
+            return {
+                include: include,
+                case_properties: {
+                    create: function (options) {
+                        return caseProperty.wrap(options.data, model);
+                    },
+                },
+                case_preload: {
+                    create: function (options) {
+                        return casePreload.wrap(options.data, model);
+                    },
+                },
+            };
+        };
+        var caseTransactionMapping = function (model) {
+            return baseMapping(model, [
+                'case_type', 'reference_id', 'condition', 'case_properties', 'case_preload', 'close_condition', 'allow',
+            ]);
+        };
+        var userCaseTransactionMapping = function (model) {
+            return baseMapping(model, ['case_properties', 'case_preload']);
+        };
+
         var caseTransaction = {
-            mapping: function (self) {
-                return {
-                    include: [
-                        'case_type',
-                        'reference_id',
-                        'condition',
-                        'case_properties',
-                        'case_preload',
-                        'close_condition',
-                        'allow',
-                    ],
-                    case_properties: {
-                        create: function (options) {
-                            return caseProperty.wrap(options.data, self);
-                        },
-                    },
-                    case_preload: {
-                        create: function (options) {
-                            return casePreload.wrap(options.data, self);
-                        },
-                    },
-                };
-            },
             wrap: function (data, caseConfig, hasPrivilege) {
                 var self = {};
 
                 self.hasPrivilege = hasPrivilege;
 
-                ko.mapping.fromJS(data, caseTransaction.mapping(self), self);
+                ko.mapping.fromJS(data, caseTransactionMapping(self), self);
                 self.case_type(self.case_type() || caseConfig.caseType);
                 self.caseConfig = caseConfig;
 
@@ -488,37 +489,18 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 return self;
             },
             unwrap: function (self) {
-                return ko.mapping.toJS(self, caseTransaction.mapping(self));
+                return ko.mapping.toJS(self, caseTransactionMapping(self));
             },
         };
 
 
         var userCaseTransaction = {
-            mapping: function (self) {
-                return {
-                    include: [
-                        'case_properties',
-                        'case_preload',
-                    ],
-                    case_properties: {
-                        create: function (options) {
-                            return caseProperty.wrap(options.data, self);
-                        },
-                    },
-                    case_preload: {
-                        create: function (options) {
-                            return casePreload.wrap(options.data, self);
-                        },
-                    },
-                };
-            },
-
             wrap: function (data, caseConfig) {
                 var self = {};
 
                 self.hasPrivilege = true;
-                
-                ko.mapping.fromJS(data, userCaseTransaction.mapping(self), self);
+
+                ko.mapping.fromJS(data, userCaseTransactionMapping(self), self);
                 self.caseConfig = caseConfig;
                 self.case_type = function () {
                     return 'commcare-user';
@@ -666,7 +648,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             },
 
             unwrap: function (self) {
-                return ko.mapping.toJS(self, userCaseTransaction.mapping(self));
+                return ko.mapping.toJS(self, userCaseTransactionMapping(self));
             },
         };
 
