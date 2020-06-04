@@ -1,5 +1,3 @@
-import json
-
 from django.conf import settings
 
 import requests
@@ -24,7 +22,7 @@ class TrumpiaBackend(SQLSMSBackend):
         return ['username', 'api_key']
 
     def get_url(self):
-        return f'http://api.trumpia.com/rest/v1/{self.config.username}/sms'
+        return "http://api.trumpia.com/http/v2/sendverificationsms"
 
     @classmethod
     def get_api_id(cls):
@@ -39,15 +37,17 @@ class TrumpiaBackend(SQLSMSBackend):
         return TrumpiaBackendForm
 
     def send(self, msg, *args, **kwargs):
-        data = {
-            "country_code": 0,  # inferred from mobile_number, which must start with '+'
+        params = {
+            "apikey": self.config.api_key,
+            "country_code": 0,  # infer from mobile_number, which must start with '+'
             "mobile_number": msg.phone_number,
             "message": msg.text,
+            "concat": "TRUE",
         }
-        response = requests.put(
+        response = requests.get(
             self.get_url(),
-            data=json.dumps(data),
-            headers=self.http_headers,
+            params=params,
+            headers={"Accept": "application/json"},
             timeout=settings.SMS_GATEWAY_TIMEOUT,
         )
         self.handle_response(response, msg)
@@ -59,20 +59,20 @@ class TrumpiaBackend(SQLSMSBackend):
             msg.set_gateway_error(response.status_code)
             return
         data = response.json()
-        if "request_id" in data:
-            msg.backend_message_id = data["request_id"]
-            if data.get("status_code", "")[-6:] not in SUCCESS_CODES:
-                data = self.get_message_details(msg)
+        if "requestID" in data:
+            msg.backend_message_id = data["requestID"]
+            data = self.get_message_details(data["requestID"])
             if is_success(data):
-                return
-        error = data.get("status_code")
-        if not error:
-            error = "blocked" if "blocked_mobile" in data else response.text
-        elif error[-6:] in RETRY_CODES:
-            raise TrumpiaRetry(f"Gateway error: {error}")
-        msg.set_gateway_error(error)
+                return  # success
+            if "statuscode" in data:
+                message = f"status {data['statuscode']}: {data.get('message')}"
+            else:
+                message = repr(data)
+        else:
+            message = repr(data)
+        msg.set_gateway_error(message)
 
-    def get_message_details(self, msg):
+    def get_message_details(self, request_id):
         """Get message status for the given SMS object
 
         Note: could register for a push notification to get a detailed
@@ -83,37 +83,14 @@ class TrumpiaBackend(SQLSMSBackend):
         :returns: Report dict, which is empty if the msg object had no
         backend message id.
         """
-        if not msg.backend_message_id:
-            return {}
-        url = self.get_url()
-        assert url.endswith("/sms")
-        url = f"{url[:-4]}/report/{msg.backend_message_id}"
-        response = requests.get(url, headers=self.http_headers)
+        response = requests.get(
+            "http://api.trumpia.com/http/v2/checkresponse",
+            params={"request_id": request_id},
+            headers={"Accept": "application/json"},
+        )
         return response.json()
-
-    @property
-    def http_headers(self):
-        return {
-            "X-Apikey": self.config.api_key,
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        }
 
 
 def is_success(data):
-    return (
-        data.get("status") == "sent"
-        or data.get("status_code", "")[-6:] in SUCCESS_CODES
-    )
-
-
-# https://classic.trumpia.com/api/docs/rest/status-code/common.php
-# https://classic.trumpia.com/api/docs/rest/status-code/direct-sms.php
-SUCCESS_CODES = {
-    "CE0000",  # success
-    "CE4001",  # pending - interpret as success (see get_message_details note)
-}
-RETRY_CODES = {
-    "CE0301",  # The request failed due to a temporary issue. Please retry in a few moments.
-    "CE0302",  # API Call is temporarily disabled due to an internal issue.
-}
+    # 0: failure, 1: success
+    return data.get("statuscode") == "1"
