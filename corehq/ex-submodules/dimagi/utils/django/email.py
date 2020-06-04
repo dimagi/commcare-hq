@@ -34,7 +34,7 @@ def get_valid_recipients(recipients):
         except IndexError:
             email_domain = bounced_email
         metrics_gauge('commcare.bounced_email', 1, tags={
-            'domain': email_domain,
+            'email_domain': email_domain,
         })
     return [recipient for recipient in recipients if recipient not in bounced_emails]
 
