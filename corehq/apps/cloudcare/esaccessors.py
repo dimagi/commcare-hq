@@ -54,7 +54,7 @@ def login_as_user_query(
                 )
             )
         user_es = user_es.filter(
-            filters.nested(
+            queries.nested(
                 'user_data_es',
                 filters.OR(
                     *user_filters

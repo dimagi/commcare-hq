@@ -15,6 +15,7 @@ Contributing:
 Additions to this file should be added to the ``builtin_filters`` method on
 either ESQuery or HQESQuery, as appropriate (is it an HQ thing?).
 """
+from django.conf import settings
 
 
 def match_all():
@@ -38,12 +39,19 @@ def term(field, value):
 
 def OR(*filters):
     """Filter docs to match any of the filters passed in"""
-    return {"or": filters}
+    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+        return {"bool": {"should": filters}}
+    else:
+        return {"or": filters}
 
 
 def AND(*filters):
     """Filter docs to match all of the filters passed in"""
-    return {"and": filters}
+    # return {"and": filters}
+    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+        return {"bool": {"filter": filters}}
+    else:
+        return {"and": filters}
 
 
 def NOT(filter_):

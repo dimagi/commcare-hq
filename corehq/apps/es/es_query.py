@@ -100,6 +100,7 @@ Language
 import json
 from collections import namedtuple
 from copy import deepcopy
+from django.conf import settings
 
 from memoized import memoized
 
@@ -118,13 +119,17 @@ from . import aggregations, filters, queries
 from .utils import flatten_field_dict, values_list
 
 
+FILTERED = "filtered"
+BOOL = "bool"
+
+
 class ESQuery(object):
     """
     This query builder only outputs the following query structure::
-
+    # Todo update docs
         {
             "query": {
-                "filtered": {
+                "bool": {
                     "filter": {
                         "and": [
                             <filters>
@@ -160,10 +165,17 @@ class ESQuery(object):
         self._default_filters = deepcopy(self.default_filters)
         self._aggregations = []
         self.es_instance_alias = es_instance_alias
+        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+            self._filter_phrase = BOOL
+            self._query_phrase = 'must'
+        else:
+            self._filter_phrase = FILTERED
+            self._query_phrase = 'query'
+
         self.es_query = {"query": {
-            "filtered": {
-                "filter": {"and": []},
-                "query": queries.match_all()
+            self._filter_phrase: {
+                "filter": [] if settings.ELASTICSEARCH_MAJOR_VERSION == 7 else {"and": []},
+                self._query_phrase: queries.match_all()
             }
         }}
 
@@ -243,7 +255,11 @@ class ESQuery(object):
 
     @property
     def _filters(self):
-        return self.es_query['query']['filtered']['filter']['and']
+        _filter = self.es_query['query'][self._filter_phrase]['filter']
+        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+            return _filter
+        else:
+            return _filter['and']
 
     def exclude_source(self):
         """
@@ -296,7 +312,7 @@ class ESQuery(object):
 
     @property
     def _query(self):
-        return self.es_query['query']['filtered']['query']
+        return self.es_query['query'][self._filter_phrase][self._query_phrase]
 
     def set_query(self, query):
         """
@@ -304,7 +320,7 @@ class ESQuery(object):
         if you actually want Levenshtein distance or prefix querying...
         """
         es = deepcopy(self)
-        es.es_query['query']['filtered']['query'] = query
+        es.es_query['query'][self._filter_phrase][self._query_phrase] = query
         return es
 
     def add_query(self, new_query, clause):
@@ -327,7 +343,7 @@ class ESQuery(object):
         return self
 
     def get_query(self):
-        return self.es_query['query']['filtered']['query']
+        return self.es_query['query'][self._filter_phrase][self._query_phrase]
 
     def search_string_query(self, search_string, default_fields=None):
         """Accepts a user-defined search string"""
@@ -470,7 +486,11 @@ class ESQuery(object):
 
     def count(self):
         """Performs a minimal query to get the count of matching documents"""
-        return self.size(0).run().total
+        total = self.size(0).run().total
+        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+            return total.get('value', 0)
+        else:
+            return total
 
     def get_ids(self):
         """Performs a minimal query to get the ids of the matching documents
