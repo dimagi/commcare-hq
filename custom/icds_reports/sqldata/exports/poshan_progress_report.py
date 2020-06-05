@@ -48,7 +48,7 @@ COLS_SUMMARY = [
 
 
 class PoshanProgressReport(object):
-    title = 'AWW Activity Report'
+    title = 'Poshan Progress Report'
 
     def __init__(self, config, loc_level=0, beta=False, show_test=False):
         self.config = config
@@ -121,9 +121,7 @@ class PoshanProgressReport(object):
         for k, v in row_data_dict.items():
             i = 8
             while i < len(COLS_COMPREHENSIVE):
-                row_data_dict[k][COLS_COMPREHENSIVE[i]] = 100 * (
-                    v[COLS_COMPREHENSIVE[i - 1]] / v[COLS_COMPREHENSIVE[i - 2]]) if v[
-                    COLS_COMPREHENSIVE[i - 2]] else 0
+                row_data_dict[k][i] = 100 * (v[i - 1] / v[i - 2]) if v[i - 2] else 0
                 i = i + 3
 
         if self.layout != 'comprehensive':
@@ -134,10 +132,10 @@ class PoshanProgressReport(object):
             for k, v in row_data_dict.items():
                 row_data_dict[k] = [val for j, val in enumerate(v) if j not in indexes_to_remove]
 
-        data = []
+        excel_rows = [headers]
         for _, v in row_data_dict.items():
-            data.append(v)
-        return self.structure_data(headers, cols, data)
+            excel_rows.append(v)
+        return excel_rows
 
     def month_wise(self, filters, order_by):
         """

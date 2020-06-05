@@ -11,6 +11,7 @@ from custom.icds_reports.sqldata.exports.children import ChildrenExport
 from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
 from custom.icds_reports.sqldata.exports.growth_tracker_report import GrowthTrackerExport
 from custom.icds_reports.sqldata.exports.lady_supervisor import LadySupervisorExport
+from custom.icds_reports.sqldata.exports.poshan_progress_report import PoshanProgressReport
 from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExport
 from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
 from custom.icds_reports.reports.incentive import IncentiveReport
@@ -30,7 +31,12 @@ class TestExportData(TestCase):
             'custom.icds_reports.sqldata.exports.growth_tracker_report.india_now',
             new=mock.Mock(return_value=cls.now)
         )
-        cls.india_now_mock_gtr.start()
+        cls.india_now_mock_ppr.start()
+        cls.india_now_mock_ppr = mock.patch(
+            'custom.icds_reports.sqldata.exports.poshan_progress_report.india_now',
+            new=mock.Mock(return_value=cls.now)
+        )
+        cls.india_now_mock_ppr.start()
         cls.india_now_mock_thr = mock.patch(
             'custom.icds_reports.reports.take_home_ration.india_now',
             new=mock.Mock(return_value=cls.now)
@@ -45,6 +51,7 @@ class TestExportData(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.india_now_mock_gtr.stop()
+        cls.india_now_mock_ppr.stop()
         cls.india_now_mock_thr.stop()
         cls.other_india_now_mock.stop()
         super(TestExportData, cls).tearDownClass()
@@ -4120,4 +4127,195 @@ class TestExportData(TestCase):
                  ['Year', 2017]]
               ]
              ]
+        )
+
+    def test_ppr_comprehensive_month(self):
+        location = ''
+        data = PoshanProgressReport(
+            config={
+                'domain': 'icds-cas',
+                'month': date(2017, 5, 1),
+                'report_layout': 'comprehensive',
+                'data_format': 1
+            },
+            loc_level=0
+        ).get_excel_data(location)
+
+        self.assertListEqual(
+            data,
+            [['Poshan Progress Report', [
+                [
+                    'State Name', 'District Name', 'Number of Districts Covered', 'Number of Blocks Covered',
+                    'Number of AWCs Launched', '% Number of Days AWC Were opened', 'Expected Home Visits',
+                    'Actual Home Visits', '% of Home Visits', 'Total Number of Children (3-6 yrs)',
+                    'No. of children between 3-6 years provided PSE for atleast 21+ days',
+                    '% of children between 3-6 years provided PSE for atleast 21+ days',
+                    'Children Eligible to have their weight Measured',
+                    'Total number of children that were weighed in the month',
+                    'Weighing efficiency', 'Number of women in third trimester',
+                    'Number of trimester three women counselled on immediate and EBF',
+                    '% of trimester three women counselled on immediate and EBF',
+                    'Children Eligible to have their height Measured',
+                    'Total number of children that were heighed in the month',
+                    'Height Measurement Efficiency', 'Number of children between 6 months -3 years, P&LW',
+                    'No of children between 6 months -3 years, P&LW provided THR for atleast 21+ days',
+                    '% of children between 6 months -3 years, P&LW provided THR for atleast 21+ days',
+                    'No. of children between 3-6 years ',
+                    'No of children between 3-6 years provided SNP for atleast 21+ days',
+                    '% of children between 3-6 years provided SNP for atleast 21+ days'],
+                ['st2', 'd2', 1, 1, 6, 109, 104, 0, 0, 203, 39, 19, 251, 215, 85, 17, 12, 70, 251, 8, 3, 102, 79,
+                 77, 203, 3,
+                 1],
+                ['st2', 'd3', 1, 1, 5, 104, 89, 0, 0, 304, 20, 6, 262, 163, 62, 25, 18, 72, 262, 17, 6, 52, 24, 46,
+                 304, 9, 2],
+                ['st3', 'd4', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, None, 0, 0, 0],
+                ['st4', 'd5', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, None, 0, 0, 0],
+                ['st5', 'd6', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, None, 0, 0, 0],
+                ['st6', 'd7', 1, 1, 1, None, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, None, 1, 0, 0],
+                ['st7', 'd8', 1, 1, 1, None, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, None, 1, 0, 0],
+                ['Bihar', 'Patna', 1, 2, 10, 142, 185, 3, 1, 483, 7, 1, 475, 317, 66, 37, 27, 72, 475, 7, 1, 122,
+                 43, 35, 483,
+                 4, 0]]], ['Export Info', [['Generated at', self.now], ['Report Layout', 'Comprehensive'],
+                                          ['Data Period', 'Month']]]]
+        )
+
+    def test_ppr_summary_month(self):
+        location = ''
+        data = PoshanProgressReport(
+            config={
+                'domain': 'icds-cas',
+                'month': date(2017, 5, 1),
+                'report_layout': 'summary',
+                'data_format': 1
+            },
+            loc_level=0
+        ).get_excel_data(location)
+        self.assertListEqual(
+            data,
+            [['Poshan Progress Report',
+              [['State Name',
+                'District Name',
+                'Number of Districts Covered',
+                'Number of Blocks Covered',
+                'Number of AWCs Launched',
+                '% Number of Days AWC Were opened',
+                '% of Home Visits',
+                '% of children between 3-6 years provided PSE for atleast 21+ days',
+                'Weighing efficiency',
+                '% of trimester three women counselled on immediate and EBF',
+                'Height Measurement Efficiency',
+                '% of children between 6 months -3 years, P&LW provided THR for atleast 21+ days',
+                '% of children between 3-6 years provided SNP for atleast 21+ days'],
+               ['st2', 'd2', 1, 1, 6, 109, 0, 19, 85, 70, 3, 77, 1],
+               ['st2', 'd3', 1, 1, 5, 104, 0, 6, 62, 72, 6, 46, 2],
+               ['st3', 'd4', 0, 0, 0, 0, 0, 0, 0, 0, 0, None, 0],
+               ['st4', 'd5', 0, 0, 0, 0, 0, 0, 0, 0, 0, None, 0],
+               ['st5', 'd6', 0, 0, 0, 0, 0, 0, 0, 0, 0, None, 0],
+               ['st6', 'd7', 1, 1, 1, None, 0, 0, 0, 0, 0, None, 0],
+               ['st7', 'd8', 1, 1, 1, None, 0, 0, 0, 0, 0, None, 0],
+               ['Bihar', 'Patna', 1, 2, 10, 142, 1, 1, 66, 72, 1, 35, 0]]],
+             ['Export Info',
+              [['Generated at', self.now],
+               ['Report Layout', 'Summary'],
+               ['Data Period', 'Month']]]]
+        )
+
+    def test_ppr_comprehensive_quarter(self):
+        location = 'st2'
+        data = PoshanProgressReport(
+            config={
+                'domain': 'icds-cas',
+                'month': date(2017, 5, 1),
+                'report_layout': 'comprehensive',
+                'data_format': 3,
+                'quarter': 2,
+                'year': 2017
+            },
+            loc_level=1
+        ).get_excel_data(location)
+        self.assertListEqual(
+            data,
+            [['Poshan Progress Report', [[
+                    'State Name', 'District Name', 'Number of Districts Covered', 'Number of Blocks Covered',
+                    'Number of AWCs Launched', '% Number of Days AWC Were opened', 'Expected Home Visits',
+                    'Actual Home Visits', '% of Home Visits', 'Total Number of Children (3-6 yrs)',
+                    'No. of children between 3-6 years provided PSE for atleast 21+ days',
+                    '% of children between 3-6 years provided PSE for atleast 21+ days',
+                    'Children Eligible to have their weight Measured',
+                    'Total number of children that were weighed in the month',
+                    'Weighing efficiency', 'Number of women in third trimester',
+                    'Number of trimester three women counselled on immediate and EBF',
+                    '% of trimester three women counselled on immediate and EBF',
+                    'Children Eligible to have their height Measured',
+                    'Total number of children that were heighed in the month',
+                    'Height Measurement Efficiency', 'Number of children between 6 months -3 years, P&LW',
+                    'No of children between 6 months -3 years, P&LW provided THR for atleast 21+ days',
+                    '% of children between 6 months -3 years, P&LW provided THR for atleast 21+ days',
+                    'No. of children between 3-6 years ',
+                    'No of children between 3-6 years provided SNP for atleast 21+ days',
+                    '% of children between 3-6 years provided SNP for atleast 21+ days'],
+                ['st2', 'd3', 0.4444444444444444, 0.4444444444444444, 2.444444444444444, 31.444444444444443,
+                 51.888888888888886, 0.0, 0.0, 111.0, 9.333333333333334, 8.408408408408409, 115.22222222222223,
+                 81.11111111111111, 70.39537126325939, 7.666666666666667, 4.444444444444445, 57.971014492753625,
+                 115.22222222222223, 3.3333333333333335, 2.892960462873674, 35.22222222222222, 13.333333333333334,
+                 37.85488958990537, 111.0, 1.3333333333333333, 1.2012012012012012, 0.0],
+                ['st2', 'd3', 0.4444444444444444, 0.4444444444444444, 2.444444444444444, 31.444444444444443,
+                 51.888888888888886, 0.0, 0.0, 111.0, 9.333333333333334, 8.408408408408409, 115.22222222222223,
+                 81.11111111111111, 70.39537126325939, 7.666666666666667, 4.444444444444445, 57.971014492753625,
+                 115.22222222222223, 3.3333333333333335, 2.892960462873674, 35.22222222222222, 13.333333333333334,
+                 37.85488958990537, 111.0, 1.3333333333333333, 1.2012012012012012, 0.0]]], ['Export Info', [
+                ['Generated at', self.now], ['State', 'st2'], ['Report Layout', 'Comprehensive'],
+                ['Data Period', 'Quarter']]]]
+        )
+
+    def test_ppr_summary_quarter(self):
+        location = 'd1'
+        data = PoshanProgressReport(
+            config={
+                'domain': 'icds-cas',
+                'month': date(2017, 5, 1),
+                'report_layout': 'summary',
+                'data_format': 3,
+                'quarter': 2,
+                'year': 2017
+            },
+            loc_level=2
+        ).get_excel_data(location)
+        self.assertListEqual(
+            data,
+            [['Poshan Progress Report',
+              [['State Name',
+                'District Name',
+                'Number of Districts Covered',
+                'Number of Blocks Covered',
+                'Number of AWCs Launched',
+                '% Number of Days AWC Were opened',
+                '% of Home Visits',
+                '% of children between 3-6 years provided PSE for atleast 21+ days',
+                'Weighing efficiency',
+                '% of trimester three women counselled on immediate and EBF',
+                'Height Measurement Efficiency',
+                '% of children between 6 months -3 years, P&LW provided THR for atleast 21+ days',
+                '% of children between 3-6 years provided SNP for atleast 21+ days'],
+               ['Bihar',
+                'Patna',
+                0.6666666666666666,
+                1.3333333333333333,
+                6.666666666666667,
+                64.66666666666667,
+                0.6593406593406593,
+                2.5210084033613445,
+                67.38683127572017,
+                60.317460317460316,
+                1.440329218106996,
+                16.731517509727624,
+                1.1554621848739497,
+                0,
+                0]]],
+             ['Export Info',
+              [['Generated at', self.now],
+               ['State', 'Bihar'],
+               ['District', 'Patna'],
+               ['Report Layout', 'Summary'],
+               ['Data Period', 'Quarter']]]]
         )
