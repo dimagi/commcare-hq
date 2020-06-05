@@ -1,5 +1,3 @@
-/*globals $, hqDefine, hqImport, ko, _*/
-
 hqDefine('app_manager/js/forms/case_config_ui', function () {
     "use strict";
     $(function () {
@@ -303,11 +301,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                         return caseProperty.wrap(options.data, model);
                     },
                 },
-                case_preload: {
-                    create: function (options) {
-                        return casePreload.wrap(options.data, model);
-                    },
-                },
             };
         };
         var caseTransactionMapping = function (model) {
@@ -334,13 +327,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             } catch (e) {
                 self.case_name = null;
             }
-
-            self.suggestedPreloadProperties = ko.computed(function () {
-                if (!self.case_preload) {
-                    return [];
-                }
-                return caseConfigUtils.filteredSuggestedProperties(self.suggestedProperties(), self.case_preload());
-            }, self);
 
             self.suggestedSaveProperties = ko.computed(function () {
                 return caseConfigUtils.filteredSuggestedProperties(self.suggestedProperties(), self.case_properties());
@@ -376,39 +362,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 });
                 return count;
             });
-
-            if (self.case_preload) {
-                self.addPreload = function () {
-                    if (!self.hasPrivilege) return;
-                    var property = casePreload.wrap({
-                        path: '',
-                        key: '',
-                        required: false,
-                    }, self);
-
-                    self.case_preload.push(property);
-                    hqImport('analytix/js/google').track.event('Case Management', analyticsAction, 'Load Properties');
-                };
-
-                self.removePreload = function (property) {
-                    if (!self.hasPrivilege) return;
-                    hqImport('analytix/js/google').track.event('Case Management', analyticsAction, 'Load Properties (remove)');
-                    self.case_preload.remove(property);
-                    saveButton.fire('change');
-                };
-
-                self.preloadCounts = ko.computed(function () {
-                    var count = {};
-                    _(self.case_preload()).each(function (p) {
-                        var path = p.path();
-                        if (!count.hasOwnProperty(path)) {
-                            count[path] = 0;
-                        }
-                        return count[path] += 1;
-                    });
-                    return count;
-                });
-            }
 
             self.repeat_context = function () {
                 if (self.case_name) {
@@ -452,23 +405,11 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             };
 
             self.ensureBlankProperties = function () {
-                var items = [{
-                    properties: self.case_properties(),
-                    addProperty: self.addProperty,
-                }];
-                if (self.case_preload) {
-                    items.push({
-                        properties: self.case_preload(),
-                        addProperty: self.addPreload,
-                    });
+                var properties = self.case_properties()
+                var last = properties[properties.length - 1];
+                if (last && !last.isBlank()) {
+                    self.addProperty();
                 }
-                _(items).each(function (item) {
-                    var properties = item.properties;
-                    var last = properties[properties.length - 1];
-                    if (last && !last.isBlank()) {
-                        item.addProperty();
-                    }
-                });
             };
 
             return self;
@@ -577,32 +518,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             },
         };
 
-        var casePreload = {
-            wrap: function (data, case_transaction) {
-                var self = casePropertyBase.wrap(data, case_transaction);
-                self.defaultKey = ko.computed(function () {
-                    return '';
-                });
-                self.validateProperty = ko.computed(function () {
-                    if (self.path() || self.key()) {
-                        if (case_transaction.caseConfig.reserved_words.indexOf(self.key()) !== -1) {
-                            return '<strong>' + self.key() + '</strong> is a reserved word';
-                        }
-                    }
-                    return null;
-                });
-                self.validateQuestion = ko.computed(function () {
-                    if (self.path()) {
-                        if (case_transaction.preloadCounts()[self.path()] > 1) {
-                            return gettext("Two properties load to the same question");
-                        }
-                    }
-                    return null;
-                });
-                return self;
-            },
-        };
-
         var DEFAULT_CONDITION_ALWAYS = {
             type: 'always',
             question: null,
@@ -689,9 +604,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                     x.allow = {
                         condition: ko.computed(function () {
                             return caseConfig.caseConfigViewModel.actionType() === 'open';
-                        }),
-                        case_preload: ko.computed(function () {
-                            return caseConfig.caseConfigViewModel.actionType() === 'update';
                         }),
                         repeats: function () {
                             return false;
