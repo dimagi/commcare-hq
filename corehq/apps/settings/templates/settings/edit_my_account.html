@@ -23,7 +23,6 @@
 {% endblock %}
 
 {% block page_content %}
-  {% registerurl 'new_api_key' %}
 
   {% crispy form form.new_helper %}
   {% if user_type == 'web' %}

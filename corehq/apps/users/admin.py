@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 
 from django_digest.models import PartialDigest, UserNonce
 
-from .models import DomainPermissionsMirror
+from .models import DomainPermissionsMirror, HQApiKey
 
 
 class DDUserNonceAdmin(admin.ModelAdmin):
@@ -20,7 +20,17 @@ admin.site.register(UserNonce, DDUserNonceAdmin)
 admin.site.register(PartialDigest, DDPartialDigestAdmin)
 
 
+class ApiKeyInline(admin.TabularInline):
+    model = HQApiKey
+    readonly_fields = ['key', 'created']
+    extra = 1
+
+
 class CustomUserAdmin(UserAdmin):
+    inlines = [
+        ApiKeyInline,
+    ]
+
     def has_add_permission(self, request):
         return False
 
