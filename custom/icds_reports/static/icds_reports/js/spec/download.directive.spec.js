@@ -211,24 +211,21 @@ describe('Download Directive', function () {
 
         it('tests on indicator select when child growth tracker list is selected', function () {
             controller.selectedIndicator = 13;
-            var expected = "xlsx";
-
-            controller.onIndicatorSelect();
-            var result = controller.selectedFormat;
-
-            assert.equal(expected, result);
+            var result = controller.isChildGrowthTrackerSelected();
+            assert.isTrue(result);
         });
 
-        it('tests on indicator select when aww activity report is selected', function () {
-            controller.selectedIndicator = 14;
-            var expected = "xlsx";
-
-            controller.onIndicatorSelect();
-            var result = controller.selectedFormat;
-
-            assert.equal(expected, result);
+        it('tests on indicator select when child growth tracker list is not selected', function () {
+            controller.selectedIndicator = 12;
+            var result = controller.isChildGrowthTrackerSelected();
+            assert.isFalse(result);
         });
 
+        it('tests on indicator select when aww activity report is not selected', function () {
+            controller.selectedIndicator = 9;
+            var result = controller.isAwwActivityReportSelected();
+            assert.isFalse(result);
+        });
 
 
         it('tests on indicator select when child beneficiary list is selected', function () {
@@ -243,12 +240,9 @@ describe('Download Directive', function () {
 
         it('tests on indicator select when aww activity report is selected', function () {
             controller.selectedIndicator = 14;
-            var expected = "xlsx";
+            var result = controller.isAwwActivityReportSelected();
+            assert.isTrue(result);
 
-            controller.onIndicatorSelect();
-            var result = controller.selectedFormat;
-
-            assert.equal(expected, result);
         });
 
         it('tests isDistrictOrBelowSelected - state selected', function () {
