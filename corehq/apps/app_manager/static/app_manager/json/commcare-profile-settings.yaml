@@ -8,9 +8,10 @@
   since: "1.3"
   force: true
 
-- name: "Load multimedia files lazily"
-  description: "How should Commcare load the the multimedia files in the application. By default Commcare will try to load them instantly"
-  id: "lazy_load_multimedia_files"
+- name: "Load video files lazily"
+  description: "How should Commcare load the the video files in the application. By default Commcare will try to load them instantly"
+  id: "lazy_load_video_files"
+  toggle: OPTIONAL_MEDIA_IN_UPDATES
   values: ["true", "false"]
   value_names: ["Yes", "No"]
   default: "false"
