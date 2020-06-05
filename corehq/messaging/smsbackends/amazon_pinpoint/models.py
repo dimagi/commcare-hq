@@ -6,7 +6,7 @@ from corehq.messaging.smsbackends.amazon_pinpoint.forms import PinpointBackendFo
 MESSAGE_TYPE = "TRANSACTIONAL"
 
 
-class SQLPinpointBackend(SQLSMSBackend):
+class PinpointBackend(SQLSMSBackend):
 
     class Meta(object):
         app_label = 'sms'

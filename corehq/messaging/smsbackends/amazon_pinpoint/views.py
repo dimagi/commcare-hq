@@ -2,7 +2,7 @@ import json
 from urllib.request import urlopen
 from corehq.apps.sms.api import incoming as incoming_sms
 from corehq.apps.sms.views import IncomingBackendView
-from corehq.messaging.smsbackends.amazon_pinpoint.models import SQLPinpointBackend
+from corehq.messaging.smsbackends.amazon_pinpoint.models import PinpointBackend
 from django.http import HttpResponse
 
 
@@ -11,7 +11,7 @@ class PinpointIncomingMessageView(IncomingBackendView):
 
     @property
     def backend_class(self):
-        return SQLPinpointBackend
+        return PinpointBackend
 
     def post(self, request, api_key, *args, **kwargs):
         request_body = json.loads(request.body)
@@ -27,7 +27,7 @@ class PinpointIncomingMessageView(IncomingBackendView):
             incoming_sms(
                 from_,
                 body,
-                SQLPinpointBackend.get_api_id(),
+                PinpointBackend.get_api_id(),
                 backend_message_id=message_sid,
                 domain_scope=self.domain,
                 backend_id=self.backend_couch_id

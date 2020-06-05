@@ -65,7 +65,7 @@ from corehq.messaging.smsbackends.unicel.models import (
 )
 from corehq.messaging.smsbackends.vertex.models import VertexBackend
 from corehq.messaging.smsbackends.yo.models import SQLYoBackend
-from corehq.messaging.smsbackends.infobip.models import SQLInfobipBackend
+from corehq.messaging.smsbackends.infobip.models import InfobipBackend
 from corehq.util.test_utils import create_test_case
 
 
@@ -223,10 +223,10 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         )
         cls.airtel_tcl_backend.save()
 
-        cls.infobip_backend = SQLInfobipBackend(
+        cls.infobip_backend = InfobipBackend(
             name='INFOBIP',
             is_global=True,
-            hq_api_id=SQLInfobipBackend.get_api_id()
+            hq_api_id=InfobipBackend.get_api_id()
         )
         cls.infobip_backend.save()
 
@@ -350,7 +350,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
     @patch('corehq.messaging.smsbackends.ivory_coast_mtn.models.IvoryCoastMTNBackend.send')
     @patch('corehq.messaging.smsbackends.karix.models.KarixBackend.send')
     @patch('corehq.messaging.smsbackends.airtel_tcl.models.AirtelTCLBackend.send')
-    @patch('corehq.messaging.smsbackends.infobip.models.SQLInfobipBackend.send')
+    @patch('corehq.messaging.smsbackends.infobip.models.InfobipBackend.send')
     def test_outbound_sms(
             self,
             infobip_send,
