@@ -206,7 +206,7 @@ class ApiKeyFallbackBackend(object):
             return None
 
         try:
-            user = User.objects.get(username=username, api_key__key=password)
+            user = User.objects.get(username=username, api_keys__key=password)
         except (User.DoesNotExist, User.MultipleObjectsReturned):
             return None
         else:
