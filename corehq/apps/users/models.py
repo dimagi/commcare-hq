@@ -2937,6 +2937,12 @@ class HQApiKey(models.Model):
     created = models.DateTimeField(default=timezone.now)
     ip_whitelist = ArrayField(models.GenericIPAddressField(), default=list)
 
+    def save(self, *args, **kwargs):
+        if not self.key:
+            self.key = self.generate_key()
+
+        return super().save(*args, **kwargs)
+
     def generate_key(self):
         # From tastypie
         new_uuid = uuid4()
