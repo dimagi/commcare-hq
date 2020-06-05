@@ -222,7 +222,7 @@ class DataSourceProperty(object):
             "display": configuration["display_text"],
             "type": filter_format
         }
-        if configuration['format'] == 'Date':
+        if configuration['format'] == const.FORMAT_DATE:
             filter.update({'compare_as_string': True})
         if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_OWNER_NAME_PROPERTY_ID:
             filter.update({"choice_provider": {"type": "owner"}})
@@ -1145,7 +1145,7 @@ class ConfigureNewReportBase(forms.Form):
                 property='timeEnd',
                 data_source_field=None,
                 display_text='Form completion time',
-                format='Date',
+                format=const.FORMAT_DATE,
             ),
         ]
 
@@ -1161,11 +1161,11 @@ class ConfigureNewReportBase(forms.Form):
             return self._get_default_filter_view_model_from_pre_filter(field, filter, exists)
         else:
             filter_type_map = {
-                'dynamic_choice_list': 'Choice',
+                'dynamic_choice_list': const.FORMAT_CHOICE,
                 # This exists to handle the `closed` filter that might exist
-                'choice_list': 'Choice',
-                'date': 'Date',
-                'numeric': 'Numeric'
+                'choice_list': const.FORMAT_CHOICE,
+                'date': const.FORMAT_DATE,
+                'numeric': const.FORMAT_NUMERIC
             }
             try:
                 format_ = filter_type_map[filter['type']]
