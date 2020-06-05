@@ -70,7 +70,10 @@ def NOT(filter_):
         # but prevents {'not': {'not': A}}, in favor of just A
         return filter_['not']
     else:
-        return {"not": filter_}
+        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+            return {"must_not": filter_}
+        else:
+            return {"not": filter_}
 
 
 def not_term(field, value):
@@ -120,6 +123,13 @@ def missing(field, exist=True, null=True):
             "null_value": null
         }
     }
+
+
+def field_exists(field):
+    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+        return exists(field)
+    else:
+        return {"not": {"missing": {"field": field}}}
 
 
 def exists(field):
