@@ -528,24 +528,22 @@ class FactSheetsReport(object):
 
         return fact_sheet_data_config
 
-    def data_sources(self, config, loc_level=None):
-        if not loc_level:
-            loc_level = self.loc_level
+    def data_sources(self, config):
         return {
             'AggChildHealthMonthlyDataSource': AggChildHealthMonthlyDataSource(
                 config=config,
-                loc_level=loc_level,
+                loc_level=self.loc_level,
                 show_test=self.show_test,
                 beta=self.beta
             ),
             'AggCCSRecordMonthlyDataSource': AggCCSRecordMonthlyDataSource(
                 config=config,
-                loc_level=loc_level,
+                loc_level=self.loc_level,
                 show_test=self.show_test,
             ),
             'AggAWCMonthlyDataSource': AggAWCMonthlyDataSource(
                 config=config,
-                loc_level=loc_level,
+                loc_level=self.loc_level,
                 show_test=self.show_test,
                 beta=self.beta
             )
@@ -559,8 +557,7 @@ class FactSheetsReport(object):
         }
         return NationalAggregationDataSource(
             national_config,
-            self.data_sources(config=national_config,
-                              loc_level=get_location_level(1) if self.beta else self.loc_level)[data_source_name],
+            self.data_sources(config=national_config)[data_source_name],
             show_test=self.show_test,
             beta=self.beta
         ).get_data()
