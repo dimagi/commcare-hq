@@ -24,7 +24,6 @@ from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.sms.models import (
     SMS,
     BackendMap,
-    MobileBackendInvitation,
     PhoneLoadBalancingMixin,
     QueuedSMS,
     SQLMobileBackend,
@@ -57,6 +56,7 @@ from corehq.messaging.smsbackends.start_enterprise.models import (
 )
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
+from corehq.messaging.smsbackends.trumpia.models import TrumpiaBackend
 from corehq.messaging.smsbackends.turn.models import SQLTurnWhatsAppBackend
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.messaging.smsbackends.unicel.models import (
@@ -66,6 +66,7 @@ from corehq.messaging.smsbackends.unicel.models import (
 from corehq.messaging.smsbackends.vertex.models import VertexBackend
 from corehq.messaging.smsbackends.yo.models import SQLYoBackend
 from corehq.messaging.smsbackends.infobip.models import InfobipBackend
+from corehq.messaging.smsbackends.amazon_pinpoint.models import PinpointBackend
 from corehq.util.test_utils import create_test_case
 
 
@@ -223,12 +224,26 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         )
         cls.airtel_tcl_backend.save()
 
+        cls.trumpia_backend = TrumpiaBackend(
+            name='TRUMPIA',
+            is_global=True,
+            hq_api_id=TrumpiaBackend.get_api_id()
+        )
+        cls.trumpia_backend.save()
+
         cls.infobip_backend = InfobipBackend(
             name='INFOBIP',
             is_global=True,
             hq_api_id=InfobipBackend.get_api_id()
         )
         cls.infobip_backend.save()
+
+        cls.pinpoint_backend = PinpointBackend(
+            name='PINPOINT',
+            is_global=True,
+            hq_api_id=PinpointBackend.get_api_id()
+        )
+        cls.pinpoint_backend.save()
 
     @classmethod
     def tearDownClass(cls):
@@ -255,7 +270,9 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         cls.ivory_coast_mtn_backend.delete()
         cls.karix_backend.delete()
         cls.airtel_tcl_backend.delete()
+        cls.trumpia_backend.delete()
         cls.infobip_backend.delete()
+        cls.pinpoint_backend.delete()
         clear_plan_version_cache()
         super(AllBackendTest, cls).tearDownClass()
 
@@ -350,10 +367,14 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
     @patch('corehq.messaging.smsbackends.ivory_coast_mtn.models.IvoryCoastMTNBackend.send')
     @patch('corehq.messaging.smsbackends.karix.models.KarixBackend.send')
     @patch('corehq.messaging.smsbackends.airtel_tcl.models.AirtelTCLBackend.send')
+    @patch('corehq.messaging.smsbackends.trumpia.models.TrumpiaBackend.send')
     @patch('corehq.messaging.smsbackends.infobip.models.InfobipBackend.send')
+    @patch('corehq.messaging.smsbackends.pinpoint.models.PinpointBackend.send')
     def test_outbound_sms(
             self,
+            pinpoint_send,
             infobip_send,
+            trumpia_send,
             airtel_tcl_send,
             karix_send,
             ivory_coast_mtn_send,
@@ -394,7 +415,9 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         self._test_outbound_backend(self.ivory_coast_mtn_backend, 'ivory_coast_mtn_test', ivory_coast_mtn_send)
         self._test_outbound_backend(self.karix_backend, 'karix test', karix_send)
         self._test_outbound_backend(self.airtel_tcl_backend, 'airtel tcl test', airtel_tcl_send)
+        self._test_outbound_backend(self.trumpia_backend, 'trumpia test', trumpia_send)
         self._test_outbound_backend(self.infobip_backend, 'infobip test', infobip_send)
+        self._test_outbound_backend(self.pinpoint_backend, 'pinpoint test', pinpoint_send)
 
     @run_with_all_backends
     def test_unicel_inbound_sms(self):
