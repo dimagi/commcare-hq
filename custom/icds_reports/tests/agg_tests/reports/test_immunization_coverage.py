@@ -161,14 +161,14 @@ class TestImmunizationCoverage(TestCase):
                 },
                 {
                     'indicator': (
-                        'Total number of children between 1-2 years old who have recieved '
+                        'Total number of children between 1-2 years old who have received '
                         'complete immunizations required by age 1:'
                     ),
                     'value': "10"
                 },
                 {
                     'indicator': (
-                        '% of children between 1-2 years old who have recieved complete'
+                        '% of children between 1-2 years old who have received complete'
                         ' immunizations required by age 1:'
                     ),
                     'value': '9.90%'
