@@ -1,4 +1,5 @@
 import boto3
+from botocore.exceptions import ClientError
 from corehq.apps.sms.models import SQLSMSBackend
 from corehq.apps.sms.util import clean_phone_number
 from corehq.messaging.smsbackends.amazon_pinpoint.forms import PinpointBackendForm
@@ -57,8 +58,13 @@ class PinpointBackend(SQLSMSBackend):
                 }
             }
         }
-        response = client.send_messages(
-            ApplicationId=config.project_id,
-            MessageRequest=message_request
-        )
-        return response
+        try:
+            response = client.send_messages(
+                ApplicationId=config.project_id,
+                MessageRequest=message_request
+            )
+            msg.backend_message_id = response['MessageResponse']['Result'][phone_number]['MessageId']
+            msg.save()
+        except ClientError as e:
+            msg.set_gateway_error(e.response['Error']['Message'])
+        return
