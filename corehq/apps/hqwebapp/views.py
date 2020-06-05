@@ -449,8 +449,9 @@ def domain_login(req, domain, custom_template_name=None, extra_context=None):
     return _login(req, domain, custom_template_name, extra_context)
 
 
-def iframe_login(req, domain):
-    return domain_login(req, domain, custom_template_name="hqwebapp/iframe_login.html", extra_context={
+@location_safe
+def iframe_domain_login(req, domain):
+    return domain_login(req, domain, custom_template_name="hqwebapp/iframe_domain_login.html", extra_context={
         'current_page': {'page_name': _('Your session has expired')},
     })
 
@@ -493,6 +494,10 @@ def logout(req, default_domain_redirect='domain_login'):
         return HttpResponseRedirect(reverse('login'))
 
 
+# ping_login and ping_session are both tiny views used in user inactivity and session expiration handling
+# They are identical except that ping_session extends the user's current session, while ping_login does not.
+# This difference is controlled in SelectiveSessionMiddleware, which makes ping_login bypass sessions.
+@location_safe
 @two_factor_exempt
 def ping_login(request):
     return JsonResponse({
@@ -502,13 +507,25 @@ def ping_login(request):
     })
 
 
+@location_safe
+@two_factor_exempt
+def ping_session(request):
+    return JsonResponse({
+        'success': request.user.is_authenticated,
+        'last_request': request.session.get('last_request'),
+        'username': request.user.username,
+    })
+
+
+@location_safe
 @login_required
 def login_new_window(request):
     return render_static(request, "hqwebapp/close_window.html", _("Thank you for logging in!"))
 
 
+@location_safe
 @login_required
-def iframe_login_new_window(request):
+def iframe_domain_login_new_window(request):
     return TemplateView.as_view(template_name='hqwebapp/iframe_close_window.html')(request)
 
 
@@ -1243,7 +1260,7 @@ def redirect_to_dimagi(endpoint):
             'india',
             'staging',
             'changeme',
-            'localdev',
+            settings.LOCAL_SERVER_ENVIRONMENT,
         ]:
             return HttpResponsePermanentRedirect(
                 "https://www.dimagi.com/{}{}".format(

@@ -9,7 +9,7 @@
 </button>
 
 <div class="modal fade" id="link-reports">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <form class="form form-horizontal" method="post" action="{% url "copy_report" domain %}">
         {% csrf_token %}
@@ -20,18 +20,15 @@
           </h3>
         </div>
         <div class="modal-body">
-          <label class="control-label col-xs-12 col-sm-4 col-md-4 col-lg-2 requiredField" for=" #domain-selector">
-            {% trans "Link this report to project" %}
-            <span class="asteriskField">*</span>
-          </label>
-          <div class="controls col-xs-12 col-sm-8 col-md-8 col-lg-6">
-            <input type="hidden" name="report_id" value="{{ existing_report.get_id }}" />
-            <select name="domain" class="select form-control" required="" id="domain-selector">
-              <option value="" selected="">Select a project...</option>
-              {% for domain in linked_domain_list %}
-                <option value="{{ domain }}">{{ domain }}</option>
-              {% endfor %}
-            </select>
+          <div class="row">
+            <div class="controls col-xs-10">
+              <input type="hidden" name="report_id" value="{{ existing_report.get_id }}" />
+              <select name="to_domains" class="form-control" required="" id="domain-selector" multiple>
+                {% for domain in linked_domain_list %}
+                  <option value="{{ domain }}">{{ domain }}</option>
+                {% endfor %}
+              </select>
+            </div>
           </div>
         </div>
         <div class="modal-footer">

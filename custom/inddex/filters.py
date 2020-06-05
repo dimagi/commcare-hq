@@ -87,7 +87,7 @@ class SupplementsFilter(BaseSingleOptionFilter):
     def options(self):
         return [
             ('yes', _('Yes')),
-            ('no', _('Not'))
+            ('no', _('No'))
         ]
 
 
@@ -125,7 +125,7 @@ class GapDescriptionFilter(BaseDrilldownOptionFilter):
                 'val': klass.slug,
                 'next': [
                     {
-                        'text': klass.get_description(code),
+                        'text': klass.DESCRIPTIONS[code],
                         'val': str(code),
                         'next': [],
                     }

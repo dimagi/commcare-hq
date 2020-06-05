@@ -40,7 +40,15 @@ from corehq.util.files import TransientTempfile
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
 from custom.icds_reports import const
-from custom.icds_reports.const import ISSUE_TRACKER_APP_ID, LOCATION_TYPES, AggregationLevels
+from custom.icds_reports.const import (
+    ISSUE_TRACKER_APP_ID,
+    LOCATION_TYPES,
+    AggregationLevels,
+    THR_REPORT_CONSOLIDATED,
+    THR_REPORT_BENEFICIARY_TYPE,
+    THR_REPORT_DAY_BENEFICIARY_TYPE
+)
+
 from custom.icds_reports.exceptions import InvalidLocationTypeException
 from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
@@ -1088,7 +1096,7 @@ def create_excel_file_in_openpyxl(excel_data, data_type):
     return file_hash
 
 
-def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level):
+def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level, report_type='consolidated'):
     export_info = excel_data[1][1]
     national = 'National Level' if aggregation_level == 0 else ''
     state = export_info[1][1] if aggregation_level > 0 else ''
@@ -1107,22 +1115,47 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
     bold_font = Font(bold=True)
     blue_fill = PatternFill("solid", fgColor="B3C5E5")
     grey_fill = PatternFill("solid", fgColor="BFBFBF")
+    purple_fill = PatternFill("solid", fgColor="CFC6F5")
 
     workbook = Workbook()
     worksheet = workbook.active
     # sheet title
     worksheet.title = "THR Report"
     worksheet.sheet_view.showGridLines = False
-    amount_of_columns = 11 - aggregation_level
-    last_column = string.ascii_uppercase[amount_of_columns]
-    worksheet.merge_cells('B2:{0}2'.format(last_column))
-    title_cell = worksheet['B2']
+
+    if report_type == THR_REPORT_DAY_BENEFICIARY_TYPE:
+        total_column_count = 30
+        data_start_row_diff = 3
+        secondary_headers = ['Not provided',
+                             'Provided for 1-7 days',
+                             'Provided for 8-14 days',
+                             'Provided for 15-20 days',
+                             'Provided for 21-24 days',
+                             'Provided for at least 25 days (>=25 days)']
+    elif report_type == THR_REPORT_BENEFICIARY_TYPE:
+        total_column_count = 15
+        data_start_row_diff = 2
+    else:
+        total_column_count = 11
+        data_start_row_diff = 1
+
+    if report_type != THR_REPORT_CONSOLIDATED:
+        beneficiary_type_columns = [
+            'Pregnant women',
+            'Lactating women',
+            'Children (0-3 years)'
+        ]
+
+    amount_of_columns = total_column_count - aggregation_level
+    last_column = get_column_letter(amount_of_columns)
+    worksheet.merge_cells('A2:{0}2'.format(last_column))
+    title_cell = worksheet['A2']
     title_cell.fill = PatternFill("solid", fgColor="4472C4")
     title_cell.value = "Take Home Ration(THR) Report for the {}".format(month)
     title_cell.font = Font(size=18, color="FFFFFF")
     title_cell.alignment = Alignment(horizontal="center")
 
-    columns = [string.ascii_uppercase[i] for i in range(1, amount_of_columns + 1)]
+    columns = [get_column_letter(i) for i in range(1, amount_of_columns + 1)]
 
     # sheet header
     header_cells = ['{0}3'.format(column) for column in columns]
@@ -1146,7 +1179,7 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
             worksheet['F3'].value = "Sector: {}".format(supervisor)
 
     date_cell = '{0}3'.format(last_column)
-    date_description_cell = '{0}3'.format(string.ascii_uppercase[amount_of_columns - 1])
+    date_description_cell = '{0}3'.format(get_column_letter(amount_of_columns - 1))
     worksheet[date_description_cell].value = "Date when downloaded:"
     worksheet[date_description_cell].alignment = Alignment(horizontal="right")
     utc_now = datetime.now(pytz.utc)
@@ -1156,23 +1189,84 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
 
     # table header
     table_header_position_row = 5
-    header_data = excel_data[0]
     headers = ["S.No"]
-    headers.extend(header_data)
+    main_headers = ['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name', 'AWW Phone No.',
+                   'Total No. of Beneficiaries eligible for THR',
+                   'Total No. of beneficiaries received THR in given month',
+                   'Total No of Pictures taken by AWW']
+    headers.extend(main_headers[aggregation_level:])
 
-    table_header = {}
-    for col, header in zip(columns, headers):
-        table_header[col] = header
-    for column, value in table_header.items():
-        cell = "{}{}".format(column, table_header_position_row)
+    def set_beneficiary_columns(start_column_index, end_column_index, row):
+        for i in range(end_column_index - start_column_index + 1):
+            cell = "{}{}".format(columns[start_column_index + i], row)
+            worksheet[cell].fill = purple_fill
+            worksheet[cell].border = thin_border
+            worksheet[cell].font = bold_font
+            worksheet[cell].alignment = warp_text_alignment
+            worksheet[cell].value = beneficiary_type_columns[i % len(beneficiary_type_columns)]
+
+    def set_service_delivery_columns(start_column_index, row):
+        for i in range(6):
+            column_index = start_column_index + i * 3
+            cell = "{}{}".format(columns[column_index], row)
+            worksheet[cell].fill = blue_fill
+            worksheet[cell].border = thin_border
+            worksheet[cell].font = bold_font
+            worksheet[cell].alignment = warp_text_alignment
+            worksheet[cell].value = secondary_headers[i]
+            next_cell = "{}{}".format(columns[column_index + 2], row)
+            worksheet.merge_cells(f"{cell}:{next_cell}")
+
+    next_deviated_column = 0
+    column_deviation_2 = 2
+    column_deviation_17 = 17
+    for index, value in enumerate(headers):
+        column_index = index + next_deviated_column
+        cell = "{}{}".format(columns[column_index], table_header_position_row)
+
         worksheet[cell].fill = grey_fill
         worksheet[cell].border = thin_border
         worksheet[cell].font = bold_font
         worksheet[cell].alignment = warp_text_alignment
         worksheet[cell].value = value
 
+        if report_type == THR_REPORT_BENEFICIARY_TYPE:
+            if value in ('Total No. of Beneficiaries eligible for THR',
+                         'Total No. of beneficiaries received THR in given month'):
+                next_deviated_column += column_deviation_2
+                next_cell = "{}{}".format(columns[column_index + column_deviation_2],
+                                          table_header_position_row + data_start_row_diff - 2)
+                worksheet.merge_cells(f'{cell}:{next_cell}')
+                set_beneficiary_columns(column_index, column_index + column_deviation_2,
+                                        table_header_position_row + data_start_row_diff - 1)
+            else:
+                next_cell = "{}{}".format(columns[column_index], table_header_position_row+ data_start_row_diff - 1)
+                worksheet.merge_cells(f'{cell}:{next_cell}')
+
+        elif report_type == THR_REPORT_DAY_BENEFICIARY_TYPE:
+            if value == 'Total No. of Beneficiaries eligible for THR':
+                next_deviated_column += column_deviation_2
+                next_cell = "{}{}".format(columns[column_index + column_deviation_2],
+                                          table_header_position_row + data_start_row_diff - 2)
+                worksheet.merge_cells(f'{cell}:{next_cell}')
+                set_beneficiary_columns(column_index, column_index + column_deviation_2,
+                                        table_header_position_row + data_start_row_diff - 1)
+            elif value == 'Total No. of beneficiaries received THR in given month':
+                next_deviated_column += column_deviation_17
+                next_cell = "{}{}".format(columns[column_index + column_deviation_17], table_header_position_row)
+                worksheet.merge_cells(f'{cell}:{next_cell}')
+                set_service_delivery_columns(column_index,
+                                             table_header_position_row + data_start_row_diff - 2)
+                set_beneficiary_columns(column_index, column_index + column_deviation_17,
+                                        table_header_position_row + data_start_row_diff - 1)
+            else:
+                next_cell = "{}{}".format(columns[column_index],
+                                          table_header_position_row + data_start_row_diff - 1)
+                worksheet.merge_cells(f'{cell}:{next_cell}')
+
+
     # table contents
-    row_position = table_header_position_row + 1
+    row_position = table_header_position_row + data_start_row_diff
 
     for enum, row in enumerate(excel_data[1:], start=1):
         for column_index in range(len(columns)):
@@ -1194,7 +1288,9 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
     widths_columns.extend(columns)
     standard_widths = [4, 7]
     standard_widths.extend([15] * (4 - aggregation_level))
-    standard_widths.extend([25, 15, 25, 15, 15, 15])
+    standard_widths.extend([25, 15, 25])
+    standard_widths += [15] * (len(widths_columns) - len(standard_widths))
+
     for col, width in zip(widths_columns, standard_widths):
         widths[col] = width
 
