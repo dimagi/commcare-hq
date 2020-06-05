@@ -1,6 +1,5 @@
 from datetime import date
 
-import time
 from django.core.management.base import BaseCommand
 
 from django.db import connections, transaction
@@ -8,7 +7,9 @@ from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
 from corehq.apps.userreports.tasks import _get_config_by_id, _build_indicators
 from corehq.apps.change_feed.data_sources import get_document_store_for_doc_type
-from pillowtop.dao.couch import ID_CHUNK_SIZE
+from corehq.util.log import with_progress_bar
+from dimagi.utils.chunked import chunked
+
 
 @transaction.atomic
 def _run_custom_sql_script(command):
@@ -20,6 +21,7 @@ def _run_custom_sql_script(command):
         cursor.execute(command)
 
     return cursor.fetchall()
+
 
 class Command(BaseCommand):
     DOMAIN_NAME = 'icds-dashboard-qa'
@@ -33,14 +35,16 @@ class Command(BaseCommand):
     ]
 
     def add_arguments(self, parser):
-        parser.add_argument('ucr_name')
+        parser.add_argument('--ucr-name', action='store', required=True, dest='ucr_name')
 
-    def handle(self, ucr_name, *args, **options):
+    def handle(self, *args, **options):
 
-        for ucr in self.UCR_NAMES:
-            if ucr != ucr_name:
-                continue
+        if options.get('ucr_name'):
+            ucr_names_to_reprocess = [options.get('ucr_name')]
+        else:
+            ucr_names_to_reprocess = self.UCR_NAMES
 
+        for ucr in ucr_names_to_reprocess:
             print(f"PROCESSING : {ucr}")
             self.dump_duplicate_records(ucr)
             self.remove_duplicates(ucr)
@@ -67,7 +71,7 @@ class Command(BaseCommand):
 
         query = f"""
             CREATE TABLE {self.temp_duplicate_table_name} AS (
-                SELECT doc_id, count(*) from {ucr_table_name} group by doc_id order by count
+                SELECT doc_id, count(*) from {ucr_table_name} group by doc_id having count(*) >1
             )
         """
         _run_custom_sql_script(query)
@@ -91,17 +95,6 @@ class Command(BaseCommand):
         self.build_indicator(doc_ids, config, document_store)
 
     def build_indicator(self, doc_ids, config, document_store):
-        relevant_ids = list()
-        next_event = time.time() + 10
-        for doc_id in doc_ids:
-            relevant_ids.append(doc_id)
-            if len(relevant_ids) >= ID_CHUNK_SIZE:
-                _build_indicators(config, document_store, relevant_ids)
-                relevant_ids = []
 
-            if time.time() > next_event:
-                print("processed till case %s" % (doc_id))
-                next_event = time.time() + 10
-
-        if relevant_ids:
-            _build_indicators(config, document_store, relevant_ids)
+        for doc_ids in chunked(with_progress_bar(doc_ids), 100):
+            _build_indicators(config, document_store, list(doc_ids))
