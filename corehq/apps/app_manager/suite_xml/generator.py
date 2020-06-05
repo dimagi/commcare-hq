@@ -148,10 +148,8 @@ class MediaSuiteGenerator(object):
             install_path = '../../{}'.format(path)
             local_path = './{}/{}'.format(path, name)
 
-            load_lazily = False
-            lazy_load_preference = self.app.profile.get('properties', {}).get('lazy-load-multimedia-files')
-            if lazy_load_preference and lazy_load_preference == 'true':
-                load_lazily = True
+            lazy_load_preference = self.app.profile.get('properties', {}).get('lazy-load-video-files')
+            load_lazily = (lazy_load_preference == 'true' and m.media_type == "CommCareVideo")
             if not getattr(m, 'unique_id', None):
                 # lazy migration for adding unique_id to map_item
                 m.unique_id = HQMediaMapItem.gen_unique_id(m.multimedia_id, unchanged_path)
