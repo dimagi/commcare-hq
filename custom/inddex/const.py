@@ -44,8 +44,10 @@ class ConvFactorGaps:
     AVAILABLE = 2
     BASE_TERM = 4
     NOT_AVAILABLE = 6
+    NOT_APPLICABLE = 8
     DESCRIPTIONS = {
         AVAILABLE: "Conversion Factor available",
         BASE_TERM: "Using Conversion Factor from base term food code",
         NOT_AVAILABLE: "No Conversion Factor available",
+        NOT_APPLICABLE: "Not applicable",
     }

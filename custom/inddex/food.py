@@ -260,7 +260,11 @@ class FoodRow:
 
     def _set_conversion_factors(self):
         self.conv_factor_gap_code = ConvFactorGaps.NOT_AVAILABLE
-        if self.food_type in (FOOD_ITEM, STANDARD_RECIPE) and self.conv_method_code:
+
+        if (self.food_type == FOOD_ITEM and self._is_std_recipe_ingredient
+                or self.food_type == NON_STANDARD_RECIPE):
+            self.conv_factor_gap_code = ConvFactorGaps.NOT_APPLICABLE
+        elif self.food_type in (FOOD_ITEM, STANDARD_RECIPE) and self.conv_method_code:
             self.conv_factor_food_code = self.fixtures.conversion_factors.get(
                 (self.food_code, self.conv_method_code, self.conv_option_code))
             self.conv_factor_base_term_food_code = self.fixtures.conversion_factors.get(
