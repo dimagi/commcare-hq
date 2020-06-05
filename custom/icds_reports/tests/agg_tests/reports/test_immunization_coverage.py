@@ -74,13 +74,8 @@ class TestImmunizationCoverage(TestCase):
         self.assertDictEqual(
             data['data'],
             {
-                'st4': {'all': 0, 'original_name': ['st4'], 'children': 0, 'fillKey': '0%-20%'},
-                'st5': {'all': 0, 'original_name': ['st5'], 'children': 0, 'fillKey': '0%-20%'},
-                'st6': {'all': 0, 'original_name': ['st6'], 'children': 0, 'fillKey': '0%-20%'},
-                'st7': {'all': 0, 'original_name': ['st7'], 'children': 0, 'fillKey': '0%-20%'},
                 'st1': {'all': 44, 'original_name': ['st1'], 'children': 4, 'fillKey': '0%-20%'},
-                'st2': {'all': 57, 'original_name': ['st2'], 'children': 6, 'fillKey': '0%-20%'},
-                'st3': {'all': 0, 'original_name': ['st3'], 'children': 0, 'fillKey': '0%-20%'}
+                'st2': {'all': 57, 'original_name': ['st2'], 'children': 6, 'fillKey': '0%-20%'}
             }
         )
 
@@ -342,64 +337,54 @@ class TestImmunizationCoverage(TestCase):
                 icds_features_flag=True
             ),
             {
-                "location_type": "State",
-                "bottom_five": [
-                    {'loc_name': 'st3', 'percent': 0.0},
-                    {'loc_name': 'st4', 'percent': 0.0},
-                    {'loc_name': 'st5', 'percent': 0.0},
-                    {'loc_name': 'st6', 'percent': 0.0},
-                    {'loc_name': 'st7', 'percent': 0.0},
-                ],
-                "top_five": [
-                    {'loc_name': 'st2', 'percent': 10.526315789473685},
-                    {'loc_name': 'st1', 'percent': 9.090909090909092},
-                    {'loc_name': 'st3', 'percent': 0.0},
-                    {'loc_name': 'st4', 'percent': 0.0},
-                    {'loc_name': 'st5', 'percent': 0.0},
-                ],
-                "chart_data": [
+                'chart_data': [
                     {
-                        "color": ChartColors.BLUE,
-                        "classed": "dashed",
-                        "strokeWidth": 2,
-                        "values": [
+                        'values': [
                             {
-                                "y": 0,
-                                "x": 1485907200000,
-                                "all": 0,
-                                "in_month": 0
+                                'x': 1485907200000,
+                                'y': 0,
+                                'all': 0,
+                                'in_month': 0
                             },
                             {
-                                "y": 0,
-                                "x": 1488326400000,
-                                "all": 0,
-                                "in_month": 0
+                                'x': 1488326400000,
+                                'y': 0,
+                                'all': 0,
+                                'in_month': 0
                             },
                             {
-                                "y": 0.0784313725490196,
-                                "x": 1491004800000,
-                                "all": 102,
-                                "in_month": 8
+                                'x': 1491004800000,
+                                'y': 0.0784313725490196,
+                                'all': 102,
+                                'in_month': 8
                             },
                             {
-                                "y": 0.09900990099009901,
-                                "x": 1493596800000,
-                                "all": 101,
-                                "in_month": 10
+                                'x': 1493596800000,
+                                'y': 0.09900990099009901,
+                                'all': 101,
+                                'in_month': 10
                             }
                         ],
-                        "key": "% Children between 1-2 years old who received complete immunizations by 1 year"
+                        'key': '% Children between 1-2 years old who received complete immunizations by 1 year',
+                        'strokeWidth': 2,
+                        'classed': 'dashed',
+                        'color': '#005ebd'
                     }
                 ],
-                "all_locations": [
+                'all_locations': [
                     {'loc_name': 'st2', 'percent': 10.526315789473685},
-                    {'loc_name': 'st1', 'percent': 9.090909090909092},
-                    {'loc_name': 'st3', 'percent': 0.0},
-                    {'loc_name': 'st4', 'percent': 0.0},
-                    {'loc_name': 'st5', 'percent': 0.0},
-                    {'loc_name': 'st6', 'percent': 0.0},
-                    {'loc_name': 'st7', 'percent': 0.0},
-                ]
+                    {'loc_name': 'st1', 'percent': 9.090909090909092}
+                ],
+                'top_five': [
+                    {'loc_name': 'st2', 'percent': 10.526315789473685},
+                    {'loc_name': 'st1', 'percent': 9.090909090909092}
+                ],
+                'bottom_five': [
+                    {'loc_name': 'st2', 'percent': 10.526315789473685},
+                    {'loc_name': 'st1', 'percent': 9.090909090909092
+                    }
+                ],
+                'location_type': 'State'
             }
         )
 

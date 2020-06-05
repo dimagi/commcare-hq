@@ -1,3 +1,4 @@
+import copy
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
@@ -17,14 +18,14 @@ from custom.icds_reports.utils import get_location_launched_status
 @icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_features_flag'], timeout=30 * 60)
 def get_immunization_coverage_data_map(domain, config, loc_level, show_test=False, icds_features_flag=False):
     config['month'] = datetime(*config['month'])
-    if icds_features_flag:
-        # Retrieving children of age 1-2 years
-        config['age_tranche'] = '24'
 
     def get_data_for(filters):
-
+        agg_filters = copy.deepcopy(filters)
+        if icds_features_flag:
+            # Retrieving children of age 1-2 years
+            agg_filters['age_tranche'] = '24'
         queryset = AggChildHealthMonthly.objects.filter(
-            **filters
+            **agg_filters
         ).values(
             '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
@@ -121,14 +122,14 @@ def get_immunization_coverage_data_map(domain, config, loc_level, show_test=Fals
                     },
                     {
                         'indicator': (
-                            'Total number of children between 1-2 old years who have recieved complete'
+                            'Total number of children between 1-2 old years who have received complete'
                             ' immunizations required by age 1{}:'.format(chosen_filters)
                         ),
                         'value': indian_formatted_number(in_month_total)
                     },
                     {
                         'indicator': (
-                            '% of children between 1-2 years old who have recieved'
+                            '% of children between 1-2 years old who have received'
                             ' complete immunizations required by age 1{}:'.format(chosen_filters)
                         ),
                         'value': '%.2f%%' % (in_month_total * 100 / float(valid_total or 1))
