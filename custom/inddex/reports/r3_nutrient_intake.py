@@ -58,10 +58,10 @@ class IntakeData:
         'recall_status', 'gender', 'age_years_calculated',
         'age_months_calculated', 'age_range', 'pregnant', 'breastfeeding',
         'urban_rural', 'supplements', 'food_code', 'food_name', 'recipe_name',
-        'caseid', 'food_type', 'food_status', 'reference_food_code',
-        'base_term_food_code', 'include_in_analysis',
-        'fao_who_gift_food_group_code', 'fao_who_gift_food_group_description',
-        'user_food_group', 'is_ingredient', 'ingredient_type', 'total_grams',
+        'caseid', 'food_type', 'reference_food_code', 'base_term_food_code',
+        'include_in_analysis', 'fao_who_gift_food_group_code',
+        'fao_who_gift_food_group_description', 'user_food_group',
+        'is_ingredient', 'ingredient_type', 'total_grams',
         'conv_factor_gap_code', 'conv_factor_gap_desc', 'fct_gap_code',
         'fct_gap_desc'
     ]
