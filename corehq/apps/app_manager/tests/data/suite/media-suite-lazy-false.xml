@@ -10,4 +10,9 @@
             <location authority="remote">http://localhost:8000/hq/multimedia/file/CommCareImage/123/image1.jpg</location>
         </resource>
     </media>
+    <media path="../../commcare/video-inline/data">
+        <resource lazy="false" id="media-eb2483b7be7a27497788afbb2c8b0000-inline_video.mp4">
+            <location authority="remote">http://localhost:8000/hq/multimedia/file/CommCareVideo/789/inline_video.mp4</location>
+        </resource>
+    </media>
 </suite>

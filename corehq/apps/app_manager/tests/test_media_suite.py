@@ -24,7 +24,7 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin, parse_normalize, patch_get_xform_resource_overrides
 from corehq.apps.builds.models import BuildSpec
-from corehq.apps.hqmedia.models import CommCareAudio, CommCareImage
+from corehq.apps.hqmedia.models import CommCareAudio, CommCareImage, CommCareVideo
 from corehq.util.test_utils import softer_assert
 
 
@@ -79,22 +79,24 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         self.assertFalse(list(app.multimedia_map.keys()))
 
     def test_media_suite_generator(self):
-        app = Application.wrap(self.get_json('app'))
+        app = Application.wrap(self.get_json('app_video_inline'))
         image_path = 'jr://file/commcare/image1.jpg'
         audio_path = 'jr://file/commcare/audio1.mp3'
+        video_path = 'jr://file/commcare/video-inline/data/inline_video.mp4'
         app.create_mapping(CommCareImage(_id='123'), image_path, save=False)
         app.create_mapping(CommCareAudio(_id='456'), audio_path, save=False)
+        app.create_mapping(CommCareVideo(_id='789'), video_path, save=False)
         app.get_module(0).case_list_form.set_icon('en', image_path)
         app.get_module(0).case_list_form.set_audio('en', audio_path)
         app.get_module(0).case_list_form.form_id = app.get_module(0).get_form(0).unique_id
 
         app.profile["properties"] = {
-            'lazy-load-multimedia-files': 'true'
+            'lazy-load-video-files': 'true'
         }
         self.assertXmlEqual(self.get_xml('media-suite-lazy-true'), MediaSuiteGenerator(app).generate_suite())
 
         app.profile["properties"] = {
-            'lazy-load-multimedia-files': 'false'
+            'lazy-load-video-files': 'false'
         }
         self.assertXmlEqual(self.get_xml('media-suite-lazy-false'), MediaSuiteGenerator(app).generate_suite())
 
