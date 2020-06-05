@@ -12,15 +12,15 @@ from dimagi.utils.chunked import chunked
 
 
 @transaction.atomic
-def _run_custom_sql_script(command):
+def _run_custom_sql_script(command, fetch=False):
     db_alias = get_icds_ucr_citus_db_alias()
     if not db_alias:
         return
 
     with connections[db_alias].cursor() as cursor:
         cursor.execute(command)
-
-    return cursor.fetchall()
+        if fetch == True:
+            return cursor.fetchall()
 
 
 class Command(BaseCommand):
@@ -58,20 +58,19 @@ class Command(BaseCommand):
         )
         return config, document_store
 
-    @property
-    def temp_duplicate_table_name(self,ucr_name):
+    def temp_duplicate_table_name(self, ucr_name):
         today = date.today().strftime('%Y-%m-%d')
-        return f"temp_duplicate_{ucr_name}_{today}"
+        return f"temp_duplicate_person_case_v2"
 
     def dump_duplicate_records(self, ucr_name):
         ucr_table_name = get_table_name(self.DOMAIN_NAME, ucr_name)
 
-        delete_existing_temp = "DROP TABLE IF EXISTS {self.temp_duplicate_table_name}"
+        delete_existing_temp = f'DROP TABLE IF EXISTS "{self.temp_duplicate_table_name(ucr_name)}"'
         _run_custom_sql_script(delete_existing_temp)
 
         query = f"""
-            CREATE TABLE {self.temp_duplicate_table_name} AS (
-                SELECT doc_id, count(*) from {ucr_table_name} group by doc_id having count(*) >1
+            CREATE TABLE "{self.temp_duplicate_table_name(ucr_name)}" AS (
+                SELECT doc_id, count(*) from "{ucr_table_name}" group by doc_id having count(*) >1
             )
         """
         _run_custom_sql_script(query)
@@ -79,8 +78,8 @@ class Command(BaseCommand):
     def remove_duplicates(self, ucr_name):
         ucr_table_name = get_table_name(self.DOMAIN_NAME, ucr_name)
         query = f"""
-        delete from {ucr_table_name} where doc_id in
-        (select doc_id from {self.temp_duplicate_table_name} where count>1)
+        delete from "{ucr_table_name}" where doc_id in
+        (select doc_id from "{self.temp_duplicate_table_name(ucr_name)}" where count>1)
         """
         _run_custom_sql_script(query)
 
@@ -88,8 +87,8 @@ class Command(BaseCommand):
         config_id = f'static-{self.DOMAIN_NAME}-{ucr}'
         config, document_store = self.get_ucr_config_and_document_store(config_id)
 
-        query = f"select doc_id from {self.temp_duplicate_table_name} where count>1"
-        doc_ids = _run_custom_sql_script(query)
+        query = f'select doc_id from "{self.temp_duplicate_table_name(ucr)}" where count>1'
+        doc_ids = _run_custom_sql_script(query, fetch=True)
         doc_ids = [doc_id[0] for doc_id in doc_ids]
 
         self.build_indicator(doc_ids, config, document_store)
