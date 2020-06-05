@@ -118,6 +118,7 @@ urlpatterns = [
     url(r'^turn/', include('corehq.messaging.smsbackends.turn.urls')),
     url(r'^twilio/', include('corehq.messaging.smsbackends.twilio.urls')),
     url(r'^infobip/', include('corehq.messaging.smsbackends.infobip.urls')),
+    url(r'^pinpoint/', include('corehq.messaging.smsbackends.amazon_pinpoint.urls')),
     url(r'^dropbox/', include('corehq.apps.dropbox.urls')),
     url(r'^start_enterprise/', include('corehq.messaging.smsbackends.start_enterprise.urls')),
     url(r'^telerivet/', include('corehq.messaging.smsbackends.telerivet.urls')),
