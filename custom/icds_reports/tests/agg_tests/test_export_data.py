@@ -31,7 +31,7 @@ class TestExportData(TestCase):
             'custom.icds_reports.sqldata.exports.growth_tracker_report.india_now',
             new=mock.Mock(return_value=cls.now)
         )
-        cls.india_now_mock_ppr.start()
+        cls.india_now_mock_gtr.start()
         cls.india_now_mock_ppr = mock.patch(
             'custom.icds_reports.sqldata.exports.poshan_progress_report.india_now',
             new=mock.Mock(return_value=cls.now)
