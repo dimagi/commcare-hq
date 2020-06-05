@@ -122,7 +122,7 @@ def get_immunization_coverage_data_map(domain, config, loc_level, show_test=Fals
                     },
                     {
                         'indicator': (
-                            'Total number of children between 1-2 old years who have received complete'
+                            'Total number of children between 1-2 years old who have received complete'
                             ' immunizations required by age 1{}:'.format(chosen_filters)
                         ),
                         'value': indian_formatted_number(in_month_total)
