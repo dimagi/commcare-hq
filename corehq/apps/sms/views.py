@@ -2126,15 +2126,15 @@ class WhatsAppTemplatesView(BaseMessagingSectionView):
     def page_context(self):
         context = super(WhatsAppTemplatesView, self).page_context
         from corehq.messaging.smsbackends.turn.models import SQLTurnWhatsAppBackend
-        from corehq.messaging.smsbackends.infobip.models import SQLInfobipBackend
+        from corehq.messaging.smsbackends.infobip.models import InfobipBackend
 
         turn_backend = SQLTurnWhatsAppBackend.active_objects.filter(
             domain=self.domain,
             hq_api_id=SQLTurnWhatsAppBackend.get_api_id()
         )
-        infobip_backend = SQLInfobipBackend.active_objects.filter(
+        infobip_backend = InfobipBackend.active_objects.filter(
             domain=self.domain,
-            hq_api_id=SQLInfobipBackend.get_api_id()
+            hq_api_id=InfobipBackend.get_api_id()
         )
 
         if (turn_backend.count() + infobip_backend.count()) > 1:
