@@ -5,7 +5,7 @@ from corehq.apps.reports.filters.case_list import CaseListFilter
 from custom.inddex import filters
 from custom.inddex.food import INDICATORS, FoodData
 
-from .utils import MultiTabularReport, format_row
+from .utils import MultiTabularReport, format_row, na_for_None
 
 
 class MasterDataReport(MultiTabularReport):
@@ -57,5 +57,5 @@ class MasterData:
 
     def _get_nutrient_values(self, row):
         for name in self._food_data.fixtures.nutrient_names:
-            yield row.get_nutrient_per_100g(name)
-            yield row.get_nutrient_amt(name)
+            yield na_for_None(row.get_nutrient_per_100g(name))
+            yield na_for_None(row.get_nutrient_amt(name))

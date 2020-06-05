@@ -7,7 +7,7 @@ from corehq.apps.reports.filters.case_list import CaseListFilter
 from custom.inddex import filters
 from custom.inddex.food import FoodData
 
-from .utils import MultiTabularReport, format_row
+from .utils import MultiTabularReport, format_row, na_for_None
 
 
 class NutrientIntakeReport(MultiTabularReport):
@@ -94,7 +94,7 @@ class DailyIntakeData:
                 rows[key]['nutrients'] = map(_sum, zip(rows[key]['nutrients'], nutrients))
 
         for row in rows.values():
-            yield format_row(chain(row['static_cols'], row['nutrients']))
+            yield format_row(chain(row['static_cols'], map(na_for_None, row['nutrients'])))
 
 
 def _sum(items):
@@ -130,5 +130,5 @@ class IntakeData:
         for row in self._food_data.rows:
             yield format_row(chain(
                 (getattr(row, col) for col in self._columns),
-                (row.get_nutrient_amt(name) for name in self._nutrient_names),
+                (na_for_None(row.get_nutrient_amt(name)) for name in self._nutrient_names),
             ))

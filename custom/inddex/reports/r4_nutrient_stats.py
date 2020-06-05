@@ -7,7 +7,7 @@ from corehq.apps.reports.filters.case_list import CaseListFilter
 from custom.inddex import filters
 from custom.inddex.food import FoodData
 
-from .utils import MultiTabularReport, format_row
+from .utils import MultiTabularReport, format_row, na_for_None
 
 
 class NutrientStatsReport(MultiTabularReport):
@@ -57,7 +57,7 @@ class NutrientStatsData:
     @property
     def rows(self):
         for nutrient, amts in self._get_recall_totals():
-            yield format_row([
+            yield format_row(map(na_for_None, [
                 nutrient,
                 mean(amts) if len(amts) >= 1 else None,
                 stdev(amts) if len(amts) >= 2 else None,
@@ -66,7 +66,7 @@ class NutrientStatsData:
                 percentile(amts, .5),
                 percentile(amts, .75),
                 percentile(amts, .95),
-            ])
+            ]))
 
     def _get_recall_totals(self):
         totals = defaultdict(lambda: defaultdict(int))
