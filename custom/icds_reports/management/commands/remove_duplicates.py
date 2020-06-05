@@ -35,7 +35,7 @@ class Command(BaseCommand):
     ]
 
     def add_arguments(self, parser):
-        parser.add_argument('--ucr-name', action='store', required=True, dest='ucr_name')
+        parser.add_argument('--ucr-name', action='store', required=False, dest='ucr_name')
 
     def handle(self, *args, **options):
 
