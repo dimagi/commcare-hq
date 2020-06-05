@@ -38,7 +38,7 @@ class Command(BaseCommand):
     def handle(self, ucr_name, *args, **options):
 
         for ucr in self.UCR_NAMES:
-            if ucr != 'ucr_name':
+            if ucr != ucr_name:
                 continue
 
             print(f"PROCESSING : {ucr}")
@@ -55,18 +55,18 @@ class Command(BaseCommand):
         return config, document_store
 
     @property
-    def temp_duplicate_table(self,ucr_name):
+    def temp_duplicate_table_name(self,ucr_name):
         today = date.today().strftime('%Y-%m-%d')
         return f"temp_duplicate_{ucr_name}_{today}"
 
     def dump_duplicate_records(self, ucr_name):
         ucr_table_name = get_table_name(self.DOMAIN_NAME, ucr_name)
 
-        delete_existing_temp = "DROP TABLE IF EXISTS {self.temp_duplicate_table}"
+        delete_existing_temp = "DROP TABLE IF EXISTS {self.temp_duplicate_table_name}"
         _run_custom_sql_script(delete_existing_temp)
 
         query = f"""
-            CREATE TABLE {self.temp_duplicate_table} AS (
+            CREATE TABLE {self.temp_duplicate_table_name} AS (
                 SELECT doc_id, count(*) from {ucr_table_name} group by doc_id order by count
             )
         """
@@ -76,7 +76,7 @@ class Command(BaseCommand):
         ucr_table_name = get_table_name(self.DOMAIN_NAME, ucr_name)
         query = f"""
         delete from {ucr_table_name} where doc_id in
-        (select doc_id from {self.temp_duplicate_table} where count>1)
+        (select doc_id from {self.temp_duplicate_table_name} where count>1)
         """
         _run_custom_sql_script(query)
 
@@ -84,14 +84,13 @@ class Command(BaseCommand):
         config_id = f'static-{self.DOMAIN_NAME}-{ucr}'
         config, document_store = self.get_ucr_config_and_document_store(config_id)
 
-        query = f"select doc_id from {self.temp_duplicate_table} where count>1"
+        query = f"select doc_id from {self.temp_duplicate_table_name} where count>1"
         doc_ids = _run_custom_sql_script(query)
         doc_ids = [doc_id[0] for doc_id in doc_ids]
 
         self.build_indicator(doc_ids, config, document_store)
 
     def build_indicator(self, doc_ids, config, document_store):
-        config.asynchronous = True #build through async queue
         relevant_ids = list()
         next_event = time.time() + 10
         for doc_id in doc_ids:
@@ -101,7 +100,7 @@ class Command(BaseCommand):
                 relevant_ids = []
 
             if time.time() > next_event:
-                print("processed till case %s" % (doc_id['case_id']))
+                print("processed till case %s" % (doc_id))
                 next_event = time.time() + 10
 
         if relevant_ids:
