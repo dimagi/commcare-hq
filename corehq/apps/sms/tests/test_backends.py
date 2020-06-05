@@ -609,16 +609,8 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
     def test_pinpoint_inbound_sms(self):
         url = '/pinpoint/sms/%s' % self.pinpoint_backend.inbound_api_key
         payload = {
-            "results": [
-                {
-                    "from": self.test_phone_number,
-                    "messageId": "message_id",
-                    "message": {
-                        "type": "TEXT",
-                        "text": "pinpoint test"
-                    }
-                }
-            ]
+            "Message": "{\"originationNumber\":\"%s\",\"messageBody\":\"pinpoint test\","
+                       "\"inboundMessageId\":\"message_id\"}" % self.test_phone_number
         }
         self._simulate_inbound_request_with_payload(url, 'application/json', json.dumps(payload))
 
