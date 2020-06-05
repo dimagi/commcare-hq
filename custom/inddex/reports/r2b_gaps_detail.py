@@ -12,13 +12,13 @@ class GapsDetailReport(MultiTabularReport):
     slug = 'report_2b_detailed_information_on_gaps'
     is_released = False
     description = textwrap.dedent("""
-        This output assists researchers in identifying incomplete or missing
-        information in the recall data. Researchers can use this output to view the
-        specific items reported by respondents that are missing conversion factor or
-        food composition data. This output also includes the information collected from
-        the respondent during the recall. All gaps in this report should be addressed
-        before researchers conduct data analysis. Researchers therefore should not
-        download Outputs 3 and 4 unless all gaps in this report have been addressed.
+        This report assists researchers in identifying incomplete or missing
+        information in the recall data. Researchers can use this report to view
+        the specific items reported by respondents that are missing conversion
+        factor or food composition data. All gaps in this report should be
+        addressed before researchers conduct data analysis. Researchers
+        therefore should not download Reports 3 and 4 unless all gaps in this
+        report have been addressed.
     """)
 
     @property
@@ -58,13 +58,12 @@ class GapsByItemSummaryData:
     def rows(self):
         rows = {}
         for row in self._food_data.rows:
-            if row.conv_factor_gap_code != ConvFactorGaps.AVAILABLE:
-                key = (row.food_name, row.conv_method_code, row.conv_factor_gap_code)
-                if key not in rows:
-                    rows[key] = {col: getattr(row, col) for col in self.headers if col != 'number_occurrence'}
-                    rows[key]['number_occurrence'] = 1
-                else:
-                    rows[key]['number_occurrence'] += 1
+            key = (row.food_name, row.conv_method_code, row.conv_factor_gap_code)
+            if key not in rows:
+                rows[key] = {col: getattr(row, col) for col in self.headers if col != 'number_occurrence'}
+                rows[key]['number_occurrence'] = 1
+            else:
+                rows[key]['number_occurrence'] += 1
 
         for row in rows.values():
             yield format_row([row[col] for col in self.headers])
@@ -104,11 +103,8 @@ class GapsDetailsData:
                     (ConvFactorGaps, row.conv_factor_gap_code),
                     (FctGaps, row.fct_gap_code),
             ]:
-                if (gap_code != gap_class.AVAILABLE and (
-                        not self._food_data.selected_gap_type
-                        or self._food_data.selected_gap_type == gap_class.slug
-                )):
+                if not self._food_data.selected_gap_type or self._food_data.selected_gap_type == gap_class.slug:
                     manually_set = ['gap_type', 'gap_code', 'gap_desc']
-                    yield format_row([gap_class.name, gap_code, gap_class.get_description(gap_code)] + [
+                    yield format_row([gap_class.name, gap_code, gap_class.DESCRIPTIONS[gap_code]] + [
                         getattr(row, col) for col in self.headers if col not in manually_set
                     ])
