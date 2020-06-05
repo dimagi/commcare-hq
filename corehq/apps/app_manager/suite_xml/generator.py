@@ -134,6 +134,7 @@ class MediaSuiteGenerator(object):
     def media_resources(self):
         PREFIX = 'jr://file/'
         multimedia_map = self.app.multimedia_map_for_build(build_profile=self.build_profile, remove_unused=True)
+        lazy_load_preference = self.app.profile.get('properties', {}).get('lazy-load-video-files')
         for path, m in sorted(list(multimedia_map.items()), key=lambda item: item[0]):
             unchanged_path = path
             if path.startswith(PREFIX):
@@ -148,7 +149,6 @@ class MediaSuiteGenerator(object):
             install_path = '../../{}'.format(path)
             local_path = './{}/{}'.format(path, name)
 
-            lazy_load_preference = self.app.profile.get('properties', {}).get('lazy-load-video-files')
             load_lazily = (lazy_load_preference == 'true' and m.media_type == "CommCareVideo")
             if not getattr(m, 'unique_id', None):
                 # lazy migration for adding unique_id to map_item
