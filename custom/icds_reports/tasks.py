@@ -570,7 +570,6 @@ def _aggregate_inactive_aww(day):
     AggregateInactiveAWW.aggregate(day)
 
 
-@track_time
 def _aggregate_inactive_aww_agg(day):
     last_sync = IcdsFile.objects.filter(data_type='inactive_awws').order_by('-file_added').first()
 
@@ -580,7 +579,7 @@ def _aggregate_inactive_aww_agg(day):
     else:
         last_sync_date = last_sync.file_added
 
-    _aggregate_inactive_aww(last_sync_date)
+    AggregateInactiveAWW.aggregate(last_sync_date)
 
 
 @track_time

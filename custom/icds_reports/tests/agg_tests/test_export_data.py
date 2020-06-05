@@ -36,6 +36,11 @@ class TestExportData(TestCase):
             new=mock.Mock(return_value=cls.now)
         )
         cls.india_now_mock_gtr.start()
+        cls.india_now_mock_aww_activity = mock.patch(
+            'custom.icds_reports.sqldata.exports.aww_activity_report.india_now',
+            new=mock.Mock(return_value=cls.now)
+        )
+        cls.india_now_mock_aww_activity.start()
         cls.india_now_mock_thr = mock.patch(
             'custom.icds_reports.reports.take_home_ration.india_now',
             new=mock.Mock(return_value=cls.now)
@@ -50,6 +55,7 @@ class TestExportData(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.india_now_mock_gtr.stop()
+        cls.india_now_mock_aww_activity.stop()
         cls.india_now_mock_thr.stop()
         cls.other_india_now_mock.stop()
         super(TestExportData, cls).tearDownClass()
@@ -4097,9 +4103,6 @@ class TestExportData(TestCase):
                     config={
                         'domain': 'icds-cas',
                         'month': date(2017, 5, 1),
-                        'state_id': 'st1',
-                        'district_id': 'd1',
-                        'awc_id': 'a7',
                         'beta': False
                     },
                     loc_level=2
@@ -4165,7 +4168,7 @@ class TestExportData(TestCase):
                  ],
                 ["Export Info",
                  [
-                     ["Generated at", "11:03:29 29 May 2020"],
+                     ["Generated at", self.now],
                      ["State", "Bihar"],
                      ["District", "Patna"]
                  ]
