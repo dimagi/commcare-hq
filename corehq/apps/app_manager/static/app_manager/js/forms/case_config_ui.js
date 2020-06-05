@@ -438,9 +438,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             wrap: function (data, case_transaction) {
                 var self = ko.mapping.fromJS(data, caseProperty.mapping);
                 self.case_transaction = case_transaction;
-                self.isBlank = ko.computed(function () {
-                    return !self.key() && !self.path();
-                });
                 self.caseType = ko.computed(function () {
                     return self.case_transaction.case_type();
                 });

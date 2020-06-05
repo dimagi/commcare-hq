@@ -139,12 +139,9 @@
                        'has-error': validateProperty || validateQuestion,
                      }">
         <td class="col-sm-1 text-center">
-          <a href="#"
-             class="btn btn-danger"
-             data-bind="click: $parent.removePreload,
-                        visible: !(isBlank() && $index() === $parent.case_preload().length - 1)">
+          <button class="btn btn-danger" data-bind="click: $parent.removePreload">
             <i class="fa fa-remove"></i>
-          </a>
+          </button>
         </td>
         <td class="col-sm-5">
           <div class="full-width-select2"
@@ -218,12 +215,9 @@
                     }">
         <td class="col-sm-1 text-center"
             data-bind="if: $parent.hasPrivilege">
-          <a href="#"
-             class="btn btn-danger"
-             data-bind="click: $parent.removeProperty,
-                        visible: !required() && !(isBlank() && $index() === $parent.case_properties().length - 1)">
+          <button class="btn btn-danger" data-bind="click: $parent.removeProperty, visible: !required()">
             <i class="fa fa-remove"></i>
-          </a>
+          </button>
         </td>
         <td class="col-sm-5">
           <div class="full-width-select2"
