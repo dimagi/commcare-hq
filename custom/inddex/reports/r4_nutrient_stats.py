@@ -72,7 +72,9 @@ class NutrientStatsData:
         totals = defaultdict(lambda: defaultdict(int))
         for row in self._food_data.rows:
             for nutrient in self._nutrient_names:
-                totals[nutrient][row.recall_case_id] += row.get_nutrient_amt(nutrient) or 0
+                amount = row.get_nutrient_amt(nutrient)
+                if amount is not None:
+                    totals[nutrient][row.recall_case_id] += amount
 
         for nutrient in self._nutrient_names:
             yield nutrient, list(sorted(totals[nutrient].values()))
