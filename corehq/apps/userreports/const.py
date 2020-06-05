@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
 from corehq.apps.change_feed import topics
@@ -47,7 +48,7 @@ VALID_REFERENCED_DOC_TYPES = [
 ]
 
 ASYNC_INDICATOR_QUEUE_TIME = timedelta(minutes=5)
-ASYNC_INDICATOR_CHUNK_SIZE = 100
+ASYNC_INDICATOR_CHUNK_SIZE = getattr(settings, 'ASYNC_INDICATOR_CHUNK_SIZE', 100)
 ASYNC_INDICATOR_MAX_RETRIES = 20
 
 XFORM_CACHE_KEY_PREFIX = 'xform_to_json_cache'
