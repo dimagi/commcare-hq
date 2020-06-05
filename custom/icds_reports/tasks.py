@@ -357,9 +357,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
 
             res_sdr.get(disable_sync_subtasks=False)
 
-            res_inactive_aww = chain(
-                icds_aggregation_task.si(date=calculation_date, func_name='_aggregate_inactive_aww_agg'),
-                ).apply_async()
+            res_inactive_aww = chain(icds_aggregation_task.si(date=calculation_date, func_name='_aggregate_inactive_aww_agg'),).apply_async()
 
             res_inactive_aww.get(disable_sync_subtasks=False)
 
