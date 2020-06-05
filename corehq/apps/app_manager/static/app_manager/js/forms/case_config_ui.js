@@ -203,7 +203,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                             $usercaseMgmt.find('select').prop('disabled', true);
                             $usercaseMgmt.find('a').off('click');
                             // Remove "Load properties" / "Save properties" link
-                            _.each($usercaseMgmt.find('.firstProperty'), function (elem) {
+                            _.each($usercaseMgmt.find('.add-property'), function (elem) {
                                 elem.remove();
                             });
                         }
