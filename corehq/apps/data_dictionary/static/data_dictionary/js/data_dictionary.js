@@ -17,7 +17,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
     var caseType = function (name) {
         var self = {};
         self.name = name || gettext("No Name");
-        self.properties = ko.observableArray(
+        self.properties = ko.observableArray();
 
         self.init = function (groupDict, changeSaveButton) {
             _.each(groupDict, function (properties, group) {
