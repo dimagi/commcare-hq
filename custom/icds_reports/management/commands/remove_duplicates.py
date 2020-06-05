@@ -60,7 +60,7 @@ class Command(BaseCommand):
 
     def temp_duplicate_table_name(self, ucr_name):
         today = date.today().strftime('%Y-%m-%d')
-        return f"temp_duplicate_person_case_v2"
+        return f"temp_duplicate_{ucr_name}_{today}"
 
     def dump_duplicate_records(self, ucr_name):
         ucr_table_name = get_table_name(self.DOMAIN_NAME, ucr_name)
