@@ -5,7 +5,8 @@
 <form class="form form-horizontal form-notice-container" name="exportFiltersForm" data-bind="submit: prepareExport">
   <div class="form-notice-container">
     {% if dynamic_filters %}
-      <div class="form-group">
+      <div class="form-group"
+           data-bind="allowDescendantBindings: false"> {# IMPORTANT: needed because some of the dynamic_filters have their own ko bindings #}
         {{ dynamic_filters }}
       </div>
     {% endif %}
