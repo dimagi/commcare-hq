@@ -131,13 +131,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             self.questionScores = questionScores;
             self.caseConfigViewModel = caseConfigViewModel(self);
 
-            self.ensureBlankProperties = function () {
-                self.caseConfigViewModel.case_transaction.ensureBlankProperties();
-                _(self.caseConfigViewModel.subcases()).each(function (case_transaction) {
-                    case_transaction.ensureBlankProperties();
-                });
-            };
-
             self.getQuestions = function (filter, excludeHidden, includeRepeat, excludeTrigger) {
                 return caseConfigUtils.getQuestions(self.questions(), filter, excludeHidden, includeRepeat, excludeTrigger);
             };
@@ -151,13 +144,11 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
 
             self.change = function () {
                 self.saveButton.fire('change');
-                self.ensureBlankProperties();
                 self.forceRefreshTextchangeBinding(self.home);
             };
 
             self.usercaseChange = function () {
                 self.saveUsercaseButton.fire('change');
-                self.caseConfigViewModel.usercase_transaction.ensureBlankProperties();
                 self.forceRefreshTextchangeBinding($('#usercase-config-ko'));
             };
 
@@ -187,7 +178,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                             // all select2's are represented by an input[type="hidden"]
                             .on('change', 'select, input[type="hidden"]', self.change)
                             .on('click', 'a', self.change);
-                        self.ensureBlankProperties();
                         self.forceRefreshTextchangeBinding($home);
                     }
 
@@ -197,7 +187,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                             $usercaseMgmt.on('textchange', 'input', self.usercaseChange)
                                 .on('change', 'select, input[type="hidden"]', self.usercaseChange)
                                 .on('click', 'a', self.usercaseChange);
-                            self.caseConfigViewModel.usercase_transaction.ensureBlankProperties();
                         } else {
                             $usercaseMgmt.find('input').prop('disabled', true);
                             $usercaseMgmt.find('select').prop('disabled', true);
@@ -402,14 +391,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
 
             self.unwrap = function () {
                 ko.mapping.toJS(self, mapping(self));
-            };
-
-            self.ensureBlankProperties = function () {
-                var properties = self.case_properties()
-                var last = properties[properties.length - 1];
-                if (last && !last.isBlank()) {
-                    self.addProperty();
-                }
             };
 
             return self;
