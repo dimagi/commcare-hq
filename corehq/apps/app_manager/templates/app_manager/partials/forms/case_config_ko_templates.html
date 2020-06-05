@@ -177,13 +177,12 @@
          data-bind="visible: !case_preload().length">
       {% trans "No properties will be loaded" %}
     </div>
-    <a href="#"
-       class="firstProperty btn btn-default"
-       data-bind="click: addPreload,
-                  visible: !case_preload().length">
-      <i class="fa fa-plus"></i>
-      {% trans "Load properties" %}
-    </a>
+    <div class="add-property">
+      <button class="btn btn-default" data-bind="click: addPreload">
+        <i class="fa fa-plus"></i>
+        {% trans "Add Property" %}
+      </button>
+    </div>
   </div>
 </script>
 
@@ -276,13 +275,12 @@
          data-bind="visible: !case_properties().length">
       {% trans "No properties will be saved" %}
     </div>
-    <a href="#"
-       class="firstProperty btn btn-default"
-       data-bind="click: addProperty,
-                  visible: !case_properties().length && $parent.hasPrivilege">
-      <i class="fa fa-plus"></i>
-      {% trans "Save properties" %}
-    </a>
+    <div class="add-property">
+      <button class="btn btn-default" data-bind="click: addProperty, visible: $parent.hasPrivilege">
+        <i class="fa fa-plus"></i>
+        {% trans "Add Property" %}
+      </button>
+    </div>
     <!-- ko if: !case_properties().length && !$parent.hasPrivilege -->
       <p>
         {% blocktrans %}
