@@ -276,6 +276,26 @@ describe('Download Directive', function () {
             assert.isFalse(result);
         });
 
+        it('tests isPPRselecected - PPR selected', function () {
+            controller.selectedIndicator = 15;
+            var result = controller.isPPRSelected();
+            assert.isTrue(result);
+        });
+
+        it('tests isPPRselecected - PPR not selected', function () {
+            controller.selectedIndicator = 9;
+            var result = controller.isPPRSelected();
+            assert.isFalse(result);
+        });
+
+        it('tests get formats when PPR is selected', function () {
+            controller.selectedIndicator = 15;
+            var expected = [{"id": "xlsx", "name": "Excel"}];
+
+            var result = controller.getFormats();
+            assert.deepEqual(expected, result);
+        });
+
         it('test to check if current month is enabled after first three days', function () {
             var fakeDate = new Date(2019, 8, 4);
             var clock = sinon.useFakeTimers(fakeDate.getTime());
