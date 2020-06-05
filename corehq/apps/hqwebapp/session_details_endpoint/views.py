@@ -1,3 +1,4 @@
+import datetime
 import json
 
 from django.conf import settings
@@ -5,6 +6,8 @@ from django.http import Http404, HttpResponseBadRequest, JsonResponse
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
+
+from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.domain.auth import formplayer_auth
 from corehq.apps.domain.models import Domain
@@ -64,6 +67,7 @@ class SessionDetailsView(View):
             timeout = settings.INACTIVITY_TIMEOUT
 
         session.set_expiry(timeout * 60)
+        session['last_request'] = json_format_datetime(datetime.datetime.utcnow())
         session.save()
 
         domains = set()
