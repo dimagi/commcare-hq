@@ -14,4 +14,5 @@ hqDefine('settings/js/edit_my_account', [
         }).on("input", null, null, function () {
             $(":submit").prop("disabled", false);
         });
+    });
 });
