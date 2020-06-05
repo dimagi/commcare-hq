@@ -38,10 +38,6 @@ hqDefine('hqwebapp/js/components/pagination', [
             self.currentPage = ko.observable(self.currentPage || 1);
 
             self.totalItems = params.totalItems;
-            self.totalItems.subscribe(function (newValue) {
-                self.goToPage(1);
-            });
-
             self.slug = params.slug;
             self.inlinePageListOnly = !!params.inlinePageListOnly;
             self.perPage = ko.isObservable(params.perPage) ? params.perPage : ko.observable(params.perPage);

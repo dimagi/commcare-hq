@@ -317,6 +317,28 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 self.case_name = null;
             }
 
+            // Pagination and search
+            self.case_property_query = ko.observable('');
+            self.filtered_case_properties = ko.computed(function () {
+                return _.filter(self.case_properties(), function (item) {
+                    return item.path().indexOf(self.case_property_query()) !== -1;
+                });
+            });
+            self.visible_case_properties = ko.observableArray();
+            self.goToPage = function (page) {
+                page = page || 1;
+                var props = self.filtered_case_properties();
+                var skip = self.per_page() * (page - 1);
+                props = props.slice(skip, skip + self.per_page());
+                self.visible_case_properties(props);
+            };
+            // Don't allow changing per page; "Add Property" button is where the per page changer usually is
+            self.per_page = ko.observable(25);
+            self.total_case_properties = ko.computed(function () {
+                return self.filtered_case_properties().length;
+            });
+            self.goToPage(1);
+
             self.suggestedSaveProperties = ko.computed(function () {
                 return caseConfigUtils.filteredSuggestedProperties(self.suggestedProperties(), self.case_properties());
             }, self);
@@ -330,6 +352,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 }, self);
 
                 self.case_properties.push(property);
+                self.visible_case_properties.push(property);
                 hqImport('analytix/js/google').track.event('Case Management', analyticsAction, 'Save Properties');
             };
 
@@ -337,6 +360,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 if (!self.hasPrivilege) return;
                 hqImport('analytix/js/google').track.event('Case Management', analyticsAction, 'Save Properties (remove)');
                 self.case_properties.remove(property);
+                self.visible_case_properties.remove(property);
                 saveButton.fire('change');
             };
 

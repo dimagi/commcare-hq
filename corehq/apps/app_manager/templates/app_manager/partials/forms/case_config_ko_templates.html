@@ -1,3 +1,4 @@
+{% load hq_shared_tags %}
 {% load i18n %}
 
 <script type="text/html"
@@ -187,6 +188,15 @@
         id="case-config:case-transaction:case-properties">
   <div class="panel-heading">
     <h4 class="panel-title panel-title-nolink">
+      <div class="pull-right"
+           style="max-width: 25%; margin-top: -5px;"
+           data-bind="visible: case_properties().length">
+        <search-box data-apply-bindings="false"
+                    params="value: case_property_query,
+                            action: goToPage,
+                            immediate: true,
+                            placeholder: '{% trans_html_attr "Search properties..." %}'"></search-box>
+      </div>
       <i class="fa fa-arrow-right"></i><i class="fa fa-save"></i>
       {% trans "Save Questions to Case Properties" %}
     </h4>
@@ -207,7 +217,7 @@
       </tr>
       </thead>
 
-      <tbody data-bind="foreach: case_properties">
+      <tbody data-bind="foreach: visible_case_properties">
       <tr class="form-group"
           data-bind="css: {
                       'has-error': validate,
@@ -265,6 +275,13 @@
       </tr>
       </tbody>
     </table>
+    <div class="pull-right" data-bind="visible: filtered_case_properties().length">
+      <pagination data-apply-bindings="false"
+                  params="goToPage: goToPage,
+                          perPage: per_page,
+                          totalItems: total_case_properties,
+                          inlinePageListOnly: true"></pagination>
+    </div>
     <div class="alert alert-info"
          data-bind="visible: !case_properties().length">
       {% trans "No properties will be saved" %}
