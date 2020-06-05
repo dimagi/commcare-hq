@@ -6,10 +6,11 @@ from datetime import datetime
 from django.conf import settings
 from django.core.exceptions import ValidationError
 
+from corehq.apps.smsforms.models import SMSChannel, XFormsSessionSynchronization
 from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch.cache.cache_core import get_redis_client
-from dimagi.utils.logging import notify_exception
+from dimagi.utils.logging import notify_exception, notify_error
 from dimagi.utils.modules import to_function
 
 from corehq import privileges, toggles
@@ -625,12 +626,39 @@ def load_and_call(sms_handler_names, phone_number, text, sms):
 def get_inbound_phone_entry(msg):
     if msg.backend_id:
         backend = SQLMobileBackend.load(msg.backend_id, is_couch_id=True)
-        if not backend.is_global and toggles.INBOUND_SMS_LENIENCY.enabled(backend.domain):
-            p = PhoneNumber.get_two_way_number_with_domain_scope(msg.phone_number, backend.domains_with_access)
-            return (
-                p,
-                p is not None
-            )
+        if toggles.INBOUND_SMS_LENIENCY.enabled(backend.domain):
+            p = None
+            if toggles.ONE_PHONE_NUMBER_MULTIPLE_CONTACTS.enabled(backend.domain):
+                running_session_info = XFormsSessionSynchronization.get_running_session_info_for_channel(
+                    SMSChannel(backend_id=msg.backend_id, phone_number=msg.phone_number)
+                )
+                contact_id = running_session_info.contact_id
+                if contact_id:
+                    p = PhoneNumber.get_phone_number_for_owner(contact_id, msg.phone_number)
+                if p is not None:
+                    return (
+                        p,
+                        True
+                    )
+                elif running_session_info.session_id:
+                    # This would be very unusual, as it would mean the supposedly running form session
+                    # is linked to a phone number, contact pair that doesn't exist in the PhoneNumber table
+                    notify_error(
+                        "Contact from running session has no match in PhoneNumber table. "
+                        "Only known way for this to happen is if you "
+                        "unregister a phone number for a contact "
+                        "while they are in an active session.",
+                        details={
+                            'running_session_info': running_session_info
+                        }
+                    )
+
+            if not backend.is_global:
+                p = PhoneNumber.get_two_way_number_with_domain_scope(msg.phone_number, backend.domains_with_access)
+                return (
+                    p,
+                    p is not None
+                )
 
     return (
         PhoneNumber.get_reserved_number(msg.phone_number),

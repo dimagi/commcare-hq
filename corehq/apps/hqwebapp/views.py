@@ -26,6 +26,7 @@ from django.http import (
     HttpResponsePermanentRedirect,
     HttpResponseRedirect,
     HttpResponseServerError,
+    JsonResponse,
 )
 from django.shortcuts import redirect, render
 from django.template import loader
@@ -49,6 +50,7 @@ from sentry_sdk import last_event_id
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from two_factor.views import LoginView
 
+from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.util.metrics import create_metrics_event, metrics_counter, metrics_gauge
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
@@ -383,7 +385,6 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
-    context.update(extra_context)
     template_name = custom_login_page if custom_login_page else 'login_and_password/login.html'
     if not custom_login_page and domain_name:
         domain_obj = Domain.get_by_name(domain_name)
@@ -410,6 +411,7 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
     if settings.IS_SAAS_ENVIRONMENT:
         context['demo_workflow_ab_v2'] = demo_workflow_ab_v2.context
 
+    context.update(extra_context)
     response = auth_view.as_view(template_name=template_name, extra_context=context)(req)
 
     if settings.IS_SAAS_ENVIRONMENT:
@@ -445,6 +447,13 @@ def domain_login(req, domain, custom_template_name=None, extra_context=None):
     if custom_template_name is None:
         custom_template_name = get_custom_login_page(req.get_host())
     return _login(req, domain, custom_template_name, extra_context)
+
+
+@location_safe
+def iframe_domain_login(req, domain):
+    return domain_login(req, domain, custom_template_name="hqwebapp/iframe_domain_login.html", extra_context={
+        'current_page': {'page_name': _('Your session has expired')},
+    })
 
 
 class HQLoginView(LoginView):
@@ -483,6 +492,41 @@ def logout(req, default_domain_redirect='domain_login'):
         return HttpResponseRedirect('%s' % domain_login_url)
     else:
         return HttpResponseRedirect(reverse('login'))
+
+
+# ping_login and ping_session are both tiny views used in user inactivity and session expiration handling
+# They are identical except that ping_session extends the user's current session, while ping_login does not.
+# This difference is controlled in SelectiveSessionMiddleware, which makes ping_login bypass sessions.
+@location_safe
+@two_factor_exempt
+def ping_login(request):
+    return JsonResponse({
+        'success': request.user.is_authenticated,
+        'last_request': request.session.get('last_request'),
+        'username': request.user.username,
+    })
+
+
+@location_safe
+@two_factor_exempt
+def ping_session(request):
+    return JsonResponse({
+        'success': request.user.is_authenticated,
+        'last_request': request.session.get('last_request'),
+        'username': request.user.username,
+    })
+
+
+@location_safe
+@login_required
+def login_new_window(request):
+    return render_static(request, "hqwebapp/close_window.html", _("Thank you for logging in!"))
+
+
+@location_safe
+@login_required
+def iframe_domain_login_new_window(request):
+    return TemplateView.as_view(template_name='hqwebapp/iframe_close_window.html')(request)
 
 
 @login_and_domain_required
@@ -550,6 +594,7 @@ def debug_notify(request):
     return HttpResponse("Email should have been sent")
 
 
+@waf_allow('XSS_BODY')
 @require_POST
 def jserror(request):
     agent = request.META.get('HTTP_USER_AGENT', None)
@@ -1215,7 +1260,7 @@ def redirect_to_dimagi(endpoint):
             'india',
             'staging',
             'changeme',
-            'localdev',
+            settings.LOCAL_SERVER_ENVIRONMENT,
         ]:
             return HttpResponsePermanentRedirect(
                 "https://www.dimagi.com/{}{}".format(

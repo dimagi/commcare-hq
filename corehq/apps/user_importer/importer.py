@@ -1,5 +1,6 @@
 import logging
 from collections import defaultdict
+from datetime import datetime
 
 from django.db import DEFAULT_DB_ALIAS
 from django.utils.translation import ugettext as _
@@ -25,7 +26,7 @@ from corehq.apps.user_importer.validation import (
     get_user_import_validators,
     is_password,
 )
-from corehq.apps.users.models import CommCareUser, CouchUser, UserRole
+from corehq.apps.users.models import CommCareUser, CouchUser, UserRole, Invitation
 from corehq.apps.users.util import normalize_username
 
 required_headers = set(['username'])
@@ -34,7 +35,7 @@ allowed_headers = set([
     'uncategorized_data', 'user_id', 'is_active', 'is_account_confirmed', 'send_confirmation_email',
     'location_code', 'role',
     'User IMEIs (read only)', 'registered_on (read only)', 'last_submission (read only)',
-    'last_sync (read only)'
+    'last_sync (read only)', 'web_user'
 ]) | required_headers
 old_headers = {
     # 'old_header_name': 'new_header_name'
@@ -266,7 +267,7 @@ def get_location_from_site_code(site_code, location_cache):
         )
 
 
-def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, update_progress=None):
+def create_or_update_users_and_groups(domain, user_specs, upload_user, group_memoizer=None, update_progress=None):
     ret = {"errors": [], "rows": []}
 
     group_memoizer = group_memoizer or GroupMemoizer(domain)
@@ -316,7 +317,8 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                 location_codes = [location_codes]
             # ignore empty
             location_codes = [code for code in location_codes if code]
-            role = row.get('role', '')
+            role = row.get('role', None)
+            web_user = row.get('web_user')
 
             try:
                 username = normalize_username(str(username), domain) if username else None
@@ -340,7 +342,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
 
                     # note: explicitly not including "None" here because that's the default value if not set.
                     # False means it was set explicitly to that value
-                    if is_account_confirmed is False:
+                    if is_account_confirmed is False and not web_user:
                         raise UserUploadError(_(
                             f"You can only set 'Is Account Confirmed' to 'False' on a new User."
                         ))
@@ -350,7 +352,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                     status_row['flag'] = 'updated'
                 else:
                     kwargs = {}
-                    if is_account_confirmed is not None:
+                    if is_account_confirmed is not None and not web_user:
                         kwargs['is_account_confirmed'] = is_account_confirmed
                     user = CommCareUser.create(domain, username, password, commit=False, **kwargs)
                     status_row['flag'] = 'created'
@@ -389,11 +391,37 @@ def create_or_update_users_and_groups(domain, user_specs, group_memoizer=None, u
                         user.reset_locations(location_ids, commit=False)
 
                 if role:
-                    user.set_role(domain, roles_by_name[role].get_qualified_id())
+                    role_qualified_id = roles_by_name[role].get_qualified_id()
+                    user.set_role(domain, role_qualified_id)
+
+                if web_user:
+                    user.user_data.update({'login_as_user': web_user})
 
                 user.save()
 
-                if send_account_confirmation_email:
+                if web_user:
+                    current_user = CouchUser.get_by_username(web_user)
+                    if not current_user and is_account_confirmed:
+                        raise UserUploadError(_(
+                            f"You can only set 'Is Account Confirmed' to 'True' on an existing Web User. {web_user} is a new username."
+                        ))
+                    if current_user and not current_user.is_member_of(domain) and is_account_confirmed:
+                        current_user.add_as_web_user(domain, role=role_qualified_id, location_id=user.location_id)
+                    elif not current_user or not current_user.is_member_of(domain):
+                        invite_data = {
+                            'email': web_user,
+                            'invited_by': upload_user.user_id,
+                            'invited_on': datetime.utcnow(),
+                            'domain': domain,
+                            'role': role_qualified_id,
+                            'supply_point': user.location_id
+                        }
+                        invite = Invitation(**invite_data)
+                        invite.save()
+                        if send_account_confirmation_email:
+                            invite.send_activation_email()
+
+                if send_account_confirmation_email and not web_user:
                     send_account_confirmation_if_necessary(user)
 
                 if is_password(password):

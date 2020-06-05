@@ -12,9 +12,8 @@ class MasterDataReport(MultiTabularReport):
     slug = 'report_1_master_data_file'
     export_only = True
     description = textwrap.dedent("""
-        This output includes all data that appears in the output files as well
-        as background data that are used to perform calculations that appear in
-        the outputs.
+        This report includes all data that appear in the reports as well as
+        background data that are used to perform report calculations.
     """)
 
     @property

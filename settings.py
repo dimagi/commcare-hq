@@ -145,6 +145,7 @@ MIDDLEWARE = [
     'django_otp.middleware.OTPMiddleware',
     'django_user_agents.middleware.UserAgentMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
+    'corehq.middleware.LoggedOutDomainUserMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
     'corehq.middleware.SentryContextMiddleware',
@@ -302,6 +303,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.smsgh',
     'corehq.messaging.smsbackends.push',
     'corehq.messaging.smsbackends.starfish',
+    'corehq.messaging.smsbackends.trumpia',
     'corehq.messaging.smsbackends.apposit',
     'corehq.messaging.smsbackends.test',
     'corehq.apps.registration',
@@ -473,8 +475,11 @@ RETURN_PATH_EMAIL_PASSWORD = None
 ENABLE_SOFT_ASSERT_EMAILS = True
 IS_DIMAGI_ENVIRONMENT = True
 
-SERVER_ENVIRONMENT = 'localdev'
+LOCAL_SERVER_ENVIRONMENT = 'localdev'
+SERVER_ENVIRONMENT = LOCAL_SERVER_ENVIRONMENT
 ICDS_ENVS = ('icds',)
+# environments located in india, this should not even include staging
+INDIAN_ENVIRONMENTS = ('india', 'icds-cas', 'icds-staging')
 UNLIMITED_RULE_RESTART_ENVS = ('echis', 'pna', 'swiss')
 
 # minimum minutes between updates to user reporting metadata
@@ -1507,6 +1512,7 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.megamobile.models.SQLMegamobileBackend',
     'corehq.messaging.smsbackends.push.models.PushBackend',
     'corehq.messaging.smsbackends.starfish.models.StarfishBackend',
+    'corehq.messaging.smsbackends.trumpia.models.TrumpiaBackend',
     'corehq.messaging.smsbackends.sislog.models.SQLSislogBackend',
     'corehq.messaging.smsbackends.smsgh.models.SQLSMSGHBackend',
     'corehq.messaging.smsbackends.telerivet.models.SQLTelerivetBackend',
@@ -1846,8 +1852,6 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_2.json'),
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_3.json'),
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_4.json'),
-    os.path.join('custom', 'abt', 'reports', 'supervisory_report.json'),
-    os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2.json'),
     os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2019.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'dashboard', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr', '*.json'),
@@ -2050,6 +2054,7 @@ DOMAIN_MODULE_MAP = {
     'vectorlink-mali': 'custom.abt',
     'vectorlink-mozambique': 'custom.abt',
     'vectorlink-rwanda': 'custom.abt',
+    'vectorlink-senegal': 'custom.abt',
     'vectorlink-tanzania': 'custom.abt',
     'vectorlink-uganda': 'custom.abt',
     'vectorlink-zambia': 'custom.abt',

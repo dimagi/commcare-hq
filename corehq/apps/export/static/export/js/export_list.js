@@ -457,6 +457,7 @@ hqDefine("export/js/export_list", [
                 params: '^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]$',
             },
         });
+        self.updateLocationRestriction = ko.observable(false);
 
         // Editing filters for a saved export
         self.selectedExportModelType = ko.observable();
@@ -567,6 +568,7 @@ hqDefine("export/js/export_list", [
                         days: self.days(),
                         start_date: self.startDate(),
                         end_date: self.endDate(),
+                        update_location_restriction: self.updateLocationRestriction(),
                     }),
                     is_deid: self.isDeid,
                     is_odata: self.isOData,
@@ -582,6 +584,7 @@ hqDefine("export/js/export_list", [
                         export_.filters.days(self.days());
                         export_.filters.start_date(self.startDate());
                         export_.filters.end_date(self.endDate());
+                        self.locationRestrictions(data.locationRestrictions);
                         if (export_.hasEmailedExport) {
                             export_.emailedExport.pollProgressBar();
                         }
