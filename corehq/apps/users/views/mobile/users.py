@@ -710,7 +710,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         exists = user_exists(full_username)
         if exists.exists:
             if exists.is_deleted:
-                result = {'error': _('Username {} belonged to a user that was deleted.').format(username)}
+                result = {'error': _('Username {} belonged to a user that was deleted'
+                                     ' and cannot be reused').format(username)}
             else:
                 result = {'error': _('Username {} is already taken').format(username)}
         else:
