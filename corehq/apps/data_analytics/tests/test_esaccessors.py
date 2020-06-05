@@ -15,6 +15,8 @@ from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import generate_cases
 
 
+#Todo; run_on_es2
+
 class MaltAnalyticsTest(SimpleTestCase):
 
     @classmethod

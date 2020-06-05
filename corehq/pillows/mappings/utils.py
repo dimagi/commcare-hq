@@ -1,5 +1,6 @@
 import json
 import os
+import copy
 
 from django.conf import settings
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
@@ -14,7 +15,8 @@ def mapping_from_json(filename):
     return mapping
 
 
-def transform_for_es7(mapping):
+def transform_for_es7(original_mapping):
+    mapping = copy.deepcopy(original_mapping)
     mapping = _transform_types(mapping)
     if "_all" in mapping:
         mapping.pop("_all")
@@ -55,7 +57,7 @@ def _transform_types(mapping):
             # multi_field is replaced by just fields
             mapping["type"] = "text"
         unsupported_attribs = [
-            "include_in_all",
+            "include_in_all", "_all",
             'geohash', 'geohash_prefix', 'geohash_precision', 'lat_lon'
         ]
         for attr in unsupported_attribs:

@@ -107,7 +107,7 @@ class ElasticsearchInterface7(AbstractElasticsearchInterface):
         return results
 
     def put_mapping(self, doc_type, mapping, index):
-        transform_for_es7(mapping)
+        mapping = transform_for_es7(mapping)
         return self.es.indices.put_mapping(mapping, index=index)
 
     def create_doc(self, index, doc_type, doc_id, doc):
@@ -132,11 +132,8 @@ class ElasticsearchInterface7(AbstractElasticsearchInterface):
         self.es.delete(index, doc_id)
 
 
-class ElasticsearchInterface(object):
-    def __new__(cls, *args, **kwargs):
-        _class = {
-            1: ElasticsearchInterface1,
-            2: ElasticsearchInterface2,
-            7: ElasticsearchInterface7,
-        }[settings.ELASTICSEARCH_MAJOR_VERSION]
-        return _class(*args, **kwargs)
+ElasticsearchInterface = {
+    1: ElasticsearchInterface1,
+    2: ElasticsearchInterface2,
+    7: ElasticsearchInterface7,
+}[settings.ELASTICSEARCH_MAJOR_VERSION]

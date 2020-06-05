@@ -117,13 +117,7 @@ class TestCloudcareESAccessors(SimpleTestCase):
                 2
             )
 
-from django.test import override_settings
-from unittest import skipUnless
-from mock import patch
-from corehq.util.es.interface import ElasticsearchInterface2
 
-
-@skipUnless(getattr('settings', 'ELASTICSEARCH_2_PORT', True), "ELASTICSEARCH_2_PORT is not defined")
-@override_settings(ELASTICSEARCH_MAJOR_VERSION=2, ELASTICSEARCH_PORT=getattr('settings', 'ELASTICSEARCH_2_PORT', 5200))
-class TestCloudcareESAccessorsES2(TestCloudcareESAccessors):
+@run_on_es2
+class TestCloudcareESAccessorsES22(TestCloudcareESAccessors):
     pass
