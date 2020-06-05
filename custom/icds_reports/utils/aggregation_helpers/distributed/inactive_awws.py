@@ -94,11 +94,11 @@ class InactiveAwwsAggregationDistributedHelper(BaseICDSAggregationDistributedHel
                 last_submission = GREATEST(agg_table.last_submission, ut.last_submission),
                 no_of_days_since_start = CASE
                     WHEN LEAST(agg_table.first_submission, ut.first_submission) IS DISTINCT FROM NULL
-                    THEN DATE_PART('day', age('{now}'::DATE, LEAST(agg_table.first_submission, ut.first_submission)))
+                    THEN '{now}'::DATE - LEAST(agg_table.first_submission, ut.first_submission)::DATE
                     ELSE NULL END,
                 no_of_days_inactive = CASE
                     WHEN GREATEST(agg_table.last_submission, ut.last_submission) IS DISTINCT FROM NULL
-                    THEN DATE_PART('day', age('{now}'::DATE, GREATEST(agg_table.last_submission, ut.last_submission)))
+                    THEN '{now}'::DATE - GREATEST(agg_table.last_submission, ut.last_submission)::DATE
                     ELSE NULL END
             FROM (
               SELECT
