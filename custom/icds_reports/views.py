@@ -65,7 +65,8 @@ from custom.icds_reports.const import (
     LocationTypes,
     CAS_API_PAGE_SIZE,
     SERVICE_DELIVERY_REPORT,
-    CHILD_GROWTH_TRACKER_REPORT
+    CHILD_GROWTH_TRACKER_REPORT,
+    POSHAN_PROGRESS_REPORT
 )
 from custom.icds_reports.dashboard_utils import get_dashboard_template_context
 from custom.icds_reports.models.aggregate import AwcLocation
@@ -971,6 +972,9 @@ class ExportIndicatorView(View):
         aggregation_level = int(request.POST.get('aggregation_level'))
         indicator = int(request.POST.get('indicator'))
 
+
+
+
         config = {
             'aggregation_level': aggregation_level,
             'domain': self.kwargs['domain']
@@ -1057,10 +1061,17 @@ class ExportIndicatorView(View):
             if not sql_location or sql_location.location_type_name in [LocationTypes.STATE]:
                 return HttpResponseBadRequest()
             config = beneficiary_config
+        if indicator == POSHAN_PROGRESS_REPORT:
+            config['report_layout'] = request.POST.get('report_layout')
+            config['data_format'] = request.POST.get('data_format')
+            config['quarter'] = int(request.POST.get('quarter'))
+            config['year'] = year
+
+
         if indicator in (CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT,
                          AWC_INFRASTRUCTURE_EXPORT, GROWTH_MONITORING_LIST_EXPORT, AWW_INCENTIVE_REPORT,
                          LS_REPORT_EXPORT, THR_REPORT_EXPORT, DASHBOARD_USAGE_EXPORT,
-                         SERVICE_DELIVERY_REPORT, CHILD_GROWTH_TRACKER_REPORT):
+                         SERVICE_DELIVERY_REPORT, CHILD_GROWTH_TRACKER_REPORT, POSHAN_PROGRESS_REPORT):
             task = prepare_excel_reports.delay(
                 config,
                 aggregation_level,

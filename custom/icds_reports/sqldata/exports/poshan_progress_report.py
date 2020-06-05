@@ -1,4 +1,4 @@
-from dateutil.relativedelta import relativedelta
+from datetime import date
 
 from corehq.apps.locations.models import SQLLocation
 from custom.icds_reports.models.views import PoshanProgressReportView
@@ -47,15 +47,28 @@ COLS_SUMMARY = [
 ]
 
 
-class AwwActivityExport(object):
+class PoshanProgressReport(object):
     title = 'AWW Activity Report'
 
-    def __init__(self, config, loc_level=0, beta=False, layout='comprehensive', report_type='month'):
+    def __init__(self, config, loc_level=0, beta=False, show_test=False):
         self.config = config
         self.loc_level = loc_level
         self.beta = beta
-        self.layout = layout
-        self.report_type = report_type
+        self.show_test = show_test
+        self.layout = self.config['report_layout']
+        if self.config['data_format'] == 1:
+            self.report_type = 'month'
+        else:
+            self.report_type = 'quarter'
+            self.quarter = self.config['quarter']
+            self.year = self.config['year']
+
+    def _generate_quarter_years(self):
+        months = []
+        end_month = self.quarter * 3
+        for i in range(end_month - 2, end_month + 1):
+            months.append(date(self.year, i, 1))
+        return months
 
     def structure_data(self, headers, cols, rows):
         """
@@ -72,7 +85,7 @@ class AwwActivityExport(object):
             excel_rows.append(row_data)
         return excel_rows
 
-    def quater_wise(self, filters, order_by):
+    def quarter_wise(self, filters, order_by):
         """
         :param filters: quaterwise filter (months in [month array])
         :param order_by: order by columns
@@ -80,7 +93,7 @@ class AwwActivityExport(object):
         """
         query_set = PoshanProgressReportView.objects.filter(**filters).order_by(*order_by)
         cols = COLS_COMPREHENSIVE
-        cols.append('district_id') # used as key for the dict
+        cols.append('district_id')  # used as key for the dict
         data = query_set.values(*cols)
         row_data_dict = {}
         dummy_row = ['', ''] + [0 for _ in range(0, len(COLS_COMPREHENSIVE) - 2)]
@@ -104,7 +117,7 @@ class AwwActivityExport(object):
                     row_data_dict[k][COLS_COMPREHENSIVE.index(col)] = v[COLS_COMPREHENSIVE.index(col)] / 3
 
         # Calculating Percentage
-        # percent(current col) = 100 * (actual_value(prev col) / expeected_value(prev prev col))
+        # percent(current col) = 100 * (actual_value(prev col) / expected_value(prev prev col))
         for k, v in row_data_dict.items():
             i = 8
             while i < len(COLS_COMPREHENSIVE):
@@ -144,32 +157,26 @@ class AwwActivityExport(object):
 
     def get_excel_data(self, location):
         filters = {}
+        filters['aggregation_level'] = 2  # this report is needed district wise only
         if self.loc_level == 2:
             filters['district_id'] = location
         elif self.loc_level == 1:
             filters['state_id'] = location
         order_by = ('district_name', 'state_name')
         if self.report_type == 'month':
-            filters = {
-                "month": self.config['month']
-            }
+            filters['month'] = self.config['month']
             excel_rows = self.month_wise(filters, order_by)
         else:
-            month_itr = self.config['month']
-            months = []
-            for i in range(0, 3):
-                months.append(month_itr)
-                month_itr = month_itr - relativedelta(months=1)
-            filters = {
-                "month__in": months
-            }
-            excel_rows = self.quater_wise(filters, order_by)
+            filters['month__in'] = self._generate_quarter_years()
+            excel_rows = self.quarter_wise(filters, order_by)
 
         filters = [['Generated at', india_now()]]
         if location:
             locs = SQLLocation.objects.get(location_id=location).get_ancestors(include_self=True)
             for loc in locs:
                 filters.append([loc.location_type.name.title(), loc.name])
+        filters.append(['Report Layout', self.layout.title()])
+        filters.append(['Data Period', self.report_type.title()])
 
         return [
             [
