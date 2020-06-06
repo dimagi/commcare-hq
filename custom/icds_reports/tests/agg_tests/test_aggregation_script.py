@@ -423,7 +423,7 @@ class InactiveAWWsTest(TestCase):
         with get_cursor(AggregateInactiveAWW) as cursor:
             cursor.execute(missing_location_query)
         records = AggregateInactiveAWW.objects.filter(first_submission__isnull=False)
-        self.assertEqual(records.count(), 0)
+        self.assertEqual(records.count(), 46)
 
     def test_aggregate_query(self):
         with freeze_time(self.agg_time):
