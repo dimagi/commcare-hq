@@ -145,7 +145,7 @@ hqDefine('hqwebapp/js/multiselect_utils', [
      * refresh itself when the vaue of that binding changes.
      */
     ko.bindingHandlers.multiselect = {
-        init: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
+        init: function (element, valueAccessor, allBindings) {
             var options = valueAccessor();
             multiselect_utils.createFullMultiselectWidget(
                 element,
@@ -154,14 +154,11 @@ hqDefine('hqwebapp/js/multiselect_utils', [
                 options.searchItemTitle || gettext("Search items")
             );
             if (allBindings().selectedOptions) {
-                allBindings().selectedOptions.subscribe(function (newValue) {
+                allBindings().selectedOptions.subscribe(function () {
                     $(element).multiSelect('refresh');
                 });
             }
         },
-        update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
-            // Do nothing on update.
-        }
     };
 
     return multiselect_utils;
