@@ -10,8 +10,7 @@ hqDefine("linked_domain/js/domain_links", [
     initialPageData,
     _,
     ko,
-    alertUser,
-    multiselectUtils
+    alertUser
 ) {
     var _private = {};
     _private.RMI = function () {};
@@ -115,19 +114,6 @@ hqDefine("linked_domain/js/domain_links", [
 
         var model = DomainLinksViewModel(view_data);
         $("#domain_links").koApplyBindings(model);
-
-        multiselectUtils.createFullMultiselectWidget(
-            'select-push-domains',
-            gettext("All projects"),
-            gettext("Projects to release to"),
-            gettext("Search projects")
-        );
-        multiselectUtils.createFullMultiselectWidget(
-            'select-push-models',
-            gettext("All content"),
-            gettext("Content to release"),
-            gettext("Search content")
-        );
 
         var pushData = function () {
             return {
