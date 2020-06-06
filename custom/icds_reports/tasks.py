@@ -865,7 +865,6 @@ def _find_stagnant_cases(adapter, latest_datetime):
 @task(serializer='pickle', queue='icds_dashboard_reports_queue')
 def prepare_excel_reports(config, aggregation_level, include_test, beta, location, domain,
                           file_format, indicator):
-    print(config)
     if indicator == CHILDREN_EXPORT:
         data_type = 'Children'
         excel_data = ChildrenExport(
