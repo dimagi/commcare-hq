@@ -151,7 +151,7 @@ hqDefine('hqwebapp/js/multiselect_utils', [
                 element,
                 options.selectableHeaderTitle || gettext("Items"),
                 options.selectedHeaderTitle || gettext("Selected items"),
-                options.searchItemTitle || gettext("Search items"),
+                options.searchItemTitle || gettext("Search items")
             );
             if (allBindings().selectedOptions) {
                 allBindings().selectedOptions.subscribe(function (newValue) {
