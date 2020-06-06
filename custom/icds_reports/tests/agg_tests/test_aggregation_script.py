@@ -415,7 +415,7 @@ class InactiveAWWsTest(TestCase):
         cls.helper = InactiveAwwsAggregationDistributedHelper(last_sync)
 
     def tearDown(self):
-        AggregateInactiveAWW.objects.all().delete()
+        pass
 
     def test_missing_locations_query(self):
         with freeze_time(self.agg_time):
