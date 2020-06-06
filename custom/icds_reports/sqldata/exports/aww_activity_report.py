@@ -6,9 +6,10 @@ from custom.icds_reports.utils import india_now, DATA_NOT_ENTERED
 class AwwActivityExport(object):
     title = 'AWW Activity Report'
 
-    def __init__(self, config, loc_level=0, beta=False):
+    def __init__(self, config, loc_level=0, show_test=False, beta=False):
         self.config = config
         self.loc_level = loc_level
+        self.show_test = show_test
         self.beta = beta
 
     def get_excel_data(self, location):
