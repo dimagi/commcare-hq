@@ -34,10 +34,12 @@ def push_models(master_domain, models, linked_domains, build_apps, username):
         domain_link = domain_links_by_linked_domain[linked_domain]
         for model in models:
             try:
+                found = False
                 if model['type'] == MODEL_APP:
                     app_id = model['detail']['app_id']
                     for linked_app in get_apps_in_domain(linked_domain, include_remote=False):
                         if is_linked_app(linked_app) and linked_app.family_id == app_id:
+                            found = True
                             if toggles.MULTI_MASTER_LINKED_DOMAINS.enabled(linked_domain):
                                 msg = _("Cannot update apps for project spaces using multi master")
                                 errors.append(_("Updating {} in {}: {}").format(model['name'], linked_domain, msg))
@@ -51,9 +53,13 @@ def push_models(master_domain, models, linked_domains, build_apps, username):
                     report_id = model['detail']['report_id']
                     for linked_report in get_report_configs_for_domain(linked_domain):
                         if linked_report.report_meta.master_id == report_id:
+                            found = True
                             update_linked_ucr(domain_link, linked_report.get_id)
                 else:
+                    found = True
                     update_model_type(domain_link, model['type'], model_detail=model['detail'])
+                if not found:
+                    errors.append(_("Cound not find {} in {}").format(model['name'], linked_domain))
             except Exception as e:   # intentionally broad
                 errors.append(_("Updating {} in {}: {}").format(model['name'], linked_domain, str(e)))
     subject = _("Linked project release complete.")
