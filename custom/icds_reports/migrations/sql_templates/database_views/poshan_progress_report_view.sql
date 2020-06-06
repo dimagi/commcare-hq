@@ -95,4 +95,4 @@ CREATE VIEW poshan_progress_report_view AS
         ("awc_location_months"."block_id" = "agg_awc"."block_id") AND
         ("awc_location_months"."supervisor_id" = "agg_awc"."supervisor_id") AND
         ("awc_location_months"."awc_id" = "agg_awc"."awc_id")
-    )
+    );

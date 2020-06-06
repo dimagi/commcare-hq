@@ -92,7 +92,7 @@ class PoshanProgressReport(object):
         :return: excel_rows
         """
         query_set = PoshanProgressReportView.objects.filter(**filters).order_by(*order_by)
-        cols = COLS_COMPREHENSIVE
+        cols = COLS_COMPREHENSIVE[:]
         cols.append('district_id')  # used as key for the dict
         data = query_set.values(*cols)
         row_data_dict = {}
@@ -126,7 +126,7 @@ class PoshanProgressReport(object):
 
         if self.layout != 'comprehensive':
             headers = HEADERS_SUMMARY
-            cols = COLS_SUMMARY
+            cols = COLS_SUMMARY[:]
             extra_columns = list(set(COLS_COMPREHENSIVE) - set(COLS_SUMMARY))
             indexes_to_remove = [COLS_COMPREHENSIVE.index(col) for col in extra_columns]
             for k, v in row_data_dict.items():
