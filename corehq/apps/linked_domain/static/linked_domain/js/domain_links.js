@@ -140,7 +140,7 @@ hqDefine("linked_domain/js/domain_links", [
             $("#select-push-domains").multiSelect('refresh');
             $("#select-push-models").multiSelect('deselect_all');
             $("#select-push-models").multiSelect('refresh');
-            $("#build-apps").attr("checked", false)
+            $("#build-apps").attr("checked", false);
         };
         $("#select-push-models, #select-push-domains").change(function () {
             $("#push-button").attr('disabled', !_.every(_.values(pushData()), function (arr) { return arr.length; }));
