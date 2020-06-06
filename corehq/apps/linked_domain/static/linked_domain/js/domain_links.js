@@ -135,16 +135,29 @@ hqDefine("linked_domain/js/domain_links", [
                 "linked_domains": $("#select-push-domains").val(),
             };
         };
+        var resetForm = function () {
+            $("#select-push-domains").multiSelect('deselect_all');
+            $("#select-push-domains").multiSelect('refresh');
+            $("#select-push-models").multiSelect('deselect_all');
+            $("#select-push-models").multiSelect('refresh');
+            $("#build-apps").attr("checked", false)
+        };
         $("#select-push-models, #select-push-domains").change(function () {
             $("#push-button").attr('disabled', !_.every(_.values(pushData()), function (arr) { return arr.length; }));
         });
         $("#push-button").click(function () {
+            var $button = $(this);
+            $button.disableButton();
             _private.RMI("create_release", _.extend(pushData(), {
                 build_apps: $("#build-apps").val() === "on",
             })).done(function (data) {
                 alertUser.alert_user(data.message, data.success ? 'success' : 'danger');
+                $button.enableButton();
+                resetForm();
             }).fail(function () {
                 alertUser.alert_user(gettext('Something unexpected happened.\nPlease try again, or report an issue if the problem persists.'), 'danger');
+                $button.enableButton();
+                resetForm();
             });
         });
     });
