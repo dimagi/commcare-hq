@@ -82,6 +82,34 @@ hqDefine("linked_domain/js/domain_links", [
             });
         };
 
+        self.domainsToRelease = ko.observableArray();
+        self.modelsToRelease = ko.observableArray();
+        self.buildAppsOnRelease = ko.observable(false);
+        self.releaseInProgress = ko.observable(false);
+        self.enableReleaseButton = ko.computed(function () {
+            return self.domainsToRelease().length && self.modelsToRelease().length && !self.releaseInProgress();
+        });
+        self.resetReleaseForm = function () {
+            self.domainsToRelease([]);
+            self.modelsToRelease([]);
+            self.buildAppsOnRelease(false);
+            self.releaseInProgress(false);
+        };
+        self.createRelease = function () {
+            self.releaseInProgress(true);
+            _private.RMI("create_release", {
+                models: _.map(self.modelsToRelease(), JSON.parse),
+                linked_domains: self.domainsToRelease(),
+                build_apps: self.buildAppsOnRelease(),
+            }).done(function (data) {
+                alertUser.alert_user(data.message, data.success ? 'success' : 'danger');
+                self.resetReleaseForm();
+            }).fail(function () {
+                alertUser.alert_user(gettext('Something unexpected happened.\nPlease try again, or report an issue if the problem persists.'), 'danger');
+                self.resetReleaseForm();
+            });
+        };
+
         return self;
     };
 
@@ -114,37 +142,5 @@ hqDefine("linked_domain/js/domain_links", [
 
         var model = DomainLinksViewModel(view_data);
         $("#domain_links").koApplyBindings(model);
-
-        var pushData = function () {
-            return {
-                "models": _.map($("#select-push-models").val(), JSON.parse),
-                "linked_domains": $("#select-push-domains").val(),
-            };
-        };
-        var resetForm = function () {
-            $("#select-push-domains").multiSelect('deselect_all');
-            $("#select-push-domains").multiSelect('refresh');
-            $("#select-push-models").multiSelect('deselect_all');
-            $("#select-push-models").multiSelect('refresh');
-            $("#build-apps").attr("checked", false);
-        };
-        $("#select-push-models, #select-push-domains").change(function () {
-            $("#push-button").attr('disabled', !_.every(_.values(pushData()), function (arr) { return arr.length; }));
-        });
-        $("#push-button").click(function () {
-            var $button = $(this);
-            $button.disableButton();
-            _private.RMI("create_release", _.extend(pushData(), {
-                build_apps: $("#build-apps").val() === "on",
-            })).done(function (data) {
-                alertUser.alert_user(data.message, data.success ? 'success' : 'danger');
-                $button.enableButton();
-                resetForm();
-            }).fail(function () {
-                alertUser.alert_user(gettext('Something unexpected happened.\nPlease try again, or report an issue if the problem persists.'), 'danger');
-                $button.enableButton();
-                resetForm();
-            });
-        });
     });
 });
