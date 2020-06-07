@@ -281,6 +281,8 @@ class OtherCases(object):
         which holds details of all cases assigned to it
         """
         data = self._generate_data(transitions)
+        if not data:
+            return None
         zipstream = io.BytesIO()
         with zipfile.ZipFile(zipstream, "w") as z:
             for case_type, sheets in data.items():
