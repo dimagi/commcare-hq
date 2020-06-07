@@ -52,7 +52,7 @@ from custom.icds.location_reassignment.utils import (
 )
 
 
-class Download(object):
+class DownloadUsers(object):
     def __init__(self, location):
         """
         Generates an Excel file stream
