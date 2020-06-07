@@ -30,6 +30,7 @@ from custom.icds.location_reassignment.const import (
 from custom.icds.location_reassignment.models import Transition
 from custom.icds.location_reassignment.utils import (
     append_location_name_and_site_code,
+    get_case_ids_for_reassignment,
     get_household_case_ids,
 )
 
@@ -469,14 +470,22 @@ class OtherCasesReassignmentParser(object):
 
     def parse(self):
         errors = []
+        site_codes = set([ws.title for ws in self.workbook.worksheets])
+        location_ids = {loc.site_code: loc.location_id
+                        for loc in SQLLocation.objects.filter(domain=self.domain, site_code__in=site_codes)}
         for worksheet in self.workbook.worksheets:
             location_site_code = worksheet.title
+            location_id = location_ids[location_site_code]
+            _, case_ids_expected = get_case_ids_for_reassignment(self.domain, location_id)
+            expected_case_ids = set(case_ids_expected)
+            provided_case_ids = set()
             for row in worksheet:
                 case_id = row.get(CASE_ID_COLUMN)
                 new_site_code = row.get(NEW_SITE_CODE_COLUMN)
                 if not case_id:
                     errors.append("Missing Case ID for %s" % location_site_code)
                     continue
+                provided_case_ids.add(case_id)
                 if not new_site_code:
                     errors.append("Missing New Location Code for case ID %s" % case_id)
                     continue
@@ -484,5 +493,13 @@ class OtherCasesReassignmentParser(object):
                     'old_site_code': location_site_code,
                     'new_site_code': new_site_code
                 }
-            # ToDo: add check for expected case ids covered
+            if expected_case_ids ^ provided_case_ids:
+                missing_case_ids = expected_case_ids - provided_case_ids
+                unexpected_case_ids = provided_case_ids - expected_case_ids
+                if missing_case_ids:
+                    errors.append(f"Missing cases for {location_site_code}: "
+                                  f"{', '.join(missing_case_ids)}")
+                if unexpected_case_ids:
+                    errors.append(f"Unexpected cases for {location_site_code}: "
+                                  f"{', '.join(unexpected_case_ids)}")
         return errors
