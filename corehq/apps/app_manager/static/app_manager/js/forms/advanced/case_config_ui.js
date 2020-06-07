@@ -291,6 +291,13 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                 _(case_properties).each(function (p) {
                     action.case_properties.push(caseProperty.wrap(p, action));
                 });
+
+                // needed for compatibility with shared templates
+                action.searchAndFilter = false;
+                action.visible_case_properties = ko.computed(function () {
+                    return action.case_properties();
+                });
+
                 _(preload).each(function (p) {
                     action.preload.push(casePreloadProperty.wrap(p, action));
                 });
@@ -311,6 +318,13 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                 _(case_properties).each(function (p) {
                     action.case_properties.push(caseProperty.wrap(p, action));
                 });
+
+                // needed for compatibility with shared templates
+                action.searchAndFilter = false;
+                action.visible_case_properties = ko.computed(function () {
+                    return action.case_properties();
+                });
+
                 return action;
             }));
 
