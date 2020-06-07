@@ -77,7 +77,7 @@ class TestHouseholds(TestCase):
             call(self.domain, location.location_id)
         ])
         case_accessor_mock.assert_has_calls([
-            call('1'), call('2')
+            call('1'), call('2'), call('1'), call('2')
         ])
         child_cases_mock.assert_has_calls([
             call(self.domain, '100', location.location_id, [PERSON_CASE_TYPE]),
