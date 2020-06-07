@@ -65,6 +65,5 @@ branches:
   - dm/logged-out-soft-assert+dmr/ONE_PHONE_NUMBER_MULTIPLE_CONTACTS
   - ap/lazy-load-multimedia # Amit June 5
 # - fr/multiple-api-keys  # Conflicting migrations with ce/web-apps-permissions
-  - jls/DRYer-case-config-ui-3 # Jenny June 6
 
 submodules: {}
