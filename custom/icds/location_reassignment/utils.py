@@ -2,6 +2,10 @@ import re
 from datetime import datetime
 from xml.etree import cElementTree as ElementTree
 
+from django.conf import settings
+from django.core.mail.message import EmailMessage
+from django.template.defaultfilters import linebreaksbr
+
 from casexml.apps.case.mock import CaseBlock
 
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -135,3 +139,28 @@ def split_location_name_and_site_code(name):
 
 def append_location_name_and_site_code(name, site_code):
     return f"{name.rstrip()} [{site_code}]"
+
+
+def notify_failure(e, subject, email, uploaded_filename):
+    notify_success(
+        subject=subject,
+        body=linebreaksbr(
+            f"The request could not be completed for file {uploaded_filename}. Something went wrong.\n"
+            f"Error raised : {e}.\n"
+            "Please report an issue if needed."
+        ),
+        email=email
+    )
+
+
+def notify_success(subject, body, email, filestream=None, filename=None):
+    email_message = EmailMessage(
+        subject=subject,
+        body=linebreaksbr(body),
+        to=[email],
+        from_email=settings.DEFAULT_FROM_EMAIL
+    )
+    if filestream and filename:
+        email_message.attach(filename=filename, content=filestream.read())
+    email_message.content_subtype = "html"
+    email_message.send()
