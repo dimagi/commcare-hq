@@ -83,7 +83,6 @@ def get_supervisor_id(domain, location_id):
         return new_location.parent.location_id
 
 
-# ToDo: make this as a async task
 def reassign_household(domain, household_case_id, old_owner_id, new_owner_id, supervisor_id,
                        deprecation_time=None, household_child_case_ids=None):
     from custom.icds.location_reassignment.tasks import process_ucr_changes
@@ -113,7 +112,6 @@ def reassign_household(domain, household_case_id, old_owner_id, new_owner_id, su
     process_ucr_changes.delay(domain, case_ids)
 
 
-# ToDo: make this as a async task
 def reassign_cases(domain, case_ids, new_owner_id):
     case_blocks = []
     for case_id in case_ids:
