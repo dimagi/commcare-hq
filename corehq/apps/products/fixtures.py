@@ -3,7 +3,7 @@ from distutils.version import LooseVersion
 from casexml.apps.phone.fixtures import FixtureProvider
 
 from corehq.apps.commtrack.fixtures import simple_fixture_generator
-from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
+from corehq.apps.custom_data_fields.models import SQLCustomDataFieldsDefinition
 from corehq.apps.fixtures.utils import get_index_schema_node
 from corehq.apps.products.models import SQLProduct
 from corehq.const import OPENROSA_VERSION_MAP
@@ -37,9 +37,9 @@ def product_fixture_generator_json(domain):
     fields = [x for x in PRODUCT_FIELDS if x != CUSTOM_DATA_SLUG]
     fields.append('@id')
 
-    custom_fields = get_by_domain_and_type(domain, 'ProductFields')
+    custom_fields = SQLCustomDataFieldsDefinition.get(domain, 'ProductFields')
     if custom_fields:
-        for f in custom_fields.fields:
+        for f in custom_fields.get_fields():
             fields.append(CUSTOM_DATA_SLUG + '/' + f.slug)
 
     uri = 'jr://fixture/{}'.format(ProductFixturesProvider.id)
