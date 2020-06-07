@@ -318,6 +318,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             }
 
             // Pagination and search
+            self.searchAndFilter = true;
             self.case_property_query = ko.observable('');
             self.filtered_case_properties = ko.computed(function () {
                 return _.filter(self.case_properties(), function (item) {
