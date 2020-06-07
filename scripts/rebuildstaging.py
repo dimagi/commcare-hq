@@ -358,9 +358,9 @@ red = _wrap_with('31')
 
 
 def main():
-    from sys import stdin
     import yaml
-    config = yaml.safe_load(stdin)
+    with open(sys.argv[1]) as staging_yaml:
+        config = yaml.safe_load(staging_yaml)
     config = BranchConfig.wrap(config)
     config.normalize()
     if not config.check_trunk_is_recent():
