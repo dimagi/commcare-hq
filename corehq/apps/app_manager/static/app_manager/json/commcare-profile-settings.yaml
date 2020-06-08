@@ -9,7 +9,7 @@
   force: true
 
 - name: "Load video files lazily"
-  description: "How should Commcare load the the video files in the application. By default Commcare will try to load them instantly"
+  description: "Make OTA app updates skip download for video files at app update time."
   id: "lazy_load_video_files"
   toggle: OPTIONAL_MEDIA_IN_UPDATES
   values: ["true", "false"]
