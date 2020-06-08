@@ -1,10 +1,17 @@
-from datetime import date, datetime
 import json
+from datetime import date, datetime
 
+import mock
 from django.core.serializers.json import DjangoJSONEncoder
 from django.test.testcases import TestCase
-import mock
 
+from custom.icds_reports.const import (
+    THR_REPORT_CONSOLIDATED,
+    THR_REPORT_BENEFICIARY_TYPE,
+    THR_REPORT_DAY_BENEFICIARY_TYPE
+)
+from custom.icds_reports.reports.incentive import IncentiveReport
+from custom.icds_reports.reports.take_home_ration import TakeHomeRationExport
 from custom.icds_reports.sqldata.exports.awc_infrastructure import AWCInfrastructureExport
 from custom.icds_reports.sqldata.exports.aww_activity_report import AwwActivityExport
 from custom.icds_reports.sqldata.exports.beneficiary import BeneficiaryExport
@@ -14,19 +21,11 @@ from custom.icds_reports.sqldata.exports.growth_tracker_report import GrowthTrac
 from custom.icds_reports.sqldata.exports.lady_supervisor import LadySupervisorExport
 from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExport
 from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
-from custom.icds_reports.reports.incentive import IncentiveReport
-from custom.icds_reports.reports.take_home_ration import TakeHomeRationExport
-from custom.icds_reports.const import (
-    THR_REPORT_CONSOLIDATED,
-    THR_REPORT_BENEFICIARY_TYPE,
-    THR_REPORT_DAY_BENEFICIARY_TYPE
-)
 from custom.icds_reports.tasks import _aggregate_inactive_aww_agg
 
 
 class TestExportData(TestCase):
     maxDiff = None
-
 
     @classmethod
     def setUpClass(cls):
@@ -805,52 +804,87 @@ class TestExportData(TestCase):
                     'Percentage of women eating extra meal during pregnancy',
                     'Percentage of trimester 3 women counselled on immediate breastfeeding'
                 ],
-                ['st1', 171, 120, 31, '20.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.00 %', '75.83 %', '60.32 %'],
-                ['st1', 171, 120, 31, '20.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.00 %', '75.83 %', '60.32 %'],
-                ['st1', 171, 120, 31, '20.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.00 %', '75.83 %', '60.32 %'],
-                ['st1', 171, 120, 31, '20.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.00 %', '75.83 %', '60.32 %'],
-                ['st1', 171, 120, 31, '20.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.00 %', '75.83 %', '60.32 %'],
-                ['st2', 154, 139, 30, '20.14%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.54 %', '74.82 %', '57.97 %'],
-                ['st2', 154, 139, 30, '20.14%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.54 %', '74.82 %', '57.97 %'],
-                ['st2', 154, 139, 30, '20.14%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.54 %', '74.82 %', '57.97 %'],
-                ['st2', 154, 139, 30, '20.14%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.54 %', '74.82 %', '57.97 %'],
-                ['st2', 154, 139, 30, '20.14%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.54 %', '74.82 %', '57.97 %'],
-                ['st3', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st3', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st3', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st3', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st3', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st4', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st4', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st4', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st4', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st4', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st5', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st5', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st5', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st5', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st5', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st6', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st6', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st6', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st6', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st6', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st7', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st7', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st7', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st7', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st7', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %']
-                ]],
-                [
-                    'Export Info',
-                    [
-                        ['Generated at', self.now],
-                        ['State', 'st1'],
-                        ['District', 'd1'],
-                        ['Block', 'b1']
-                    ]
-                ]
-            ]
+                ['st1', 171, 120, 31, '20.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.00 %',
+                 '75.83 %', '60.32 %'],
+                ['st1', 171, 120, 31, '20.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.00 %',
+                 '75.83 %', '60.32 %'],
+                ['st1', 171, 120, 31, '20.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.00 %',
+                 '75.83 %', '60.32 %'],
+                ['st1', 171, 120, 31, '20.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.00 %',
+                 '75.83 %', '60.32 %'],
+                ['st1', 171, 120, 31, '20.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.00 %',
+                 '75.83 %', '60.32 %'],
+                ['st2', 154, 139, 30, '20.14%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.54 %',
+                 '74.82 %', '57.97 %'],
+                ['st2', 154, 139, 30, '20.14%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.54 %',
+                 '74.82 %', '57.97 %'],
+                ['st2', 154, 139, 30, '20.14%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.54 %',
+                 '74.82 %', '57.97 %'],
+                ['st2', 154, 139, 30, '20.14%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.54 %',
+                 '74.82 %', '57.97 %'],
+                ['st2', 154, 139, 30, '20.14%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.54 %',
+                 '74.82 %', '57.97 %'],
+                ['st3', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st3', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st3', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st3', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st3', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st4', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st4', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st4', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st4', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st4', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st5', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st5', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st5', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st5', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st5', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st6', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st6', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st6', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st6', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st6', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st7', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st7', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st7', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st7', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st7', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %']
+            ]],
+             [
+                 'Export Info',
+                 [
+                     ['Generated at', self.now],
+                     ['State', 'st1'],
+                     ['District', 'd1'],
+                     ['Block', 'b1']
+                 ]
+             ]
+             ]
         )
 
     def test_demographics_export(self):
@@ -880,77 +914,87 @@ class TestExportData(TestCase):
                             'Number of adolescent girls (11-14 years)',
                             'Number of out of school adolescent girls (11-14 years)',
                             'Number of adolescent girls 15 to 18 years old'],
-                           ['st1', 2637, 858, 369, 1517, '24.32 %', 120, 120, 171, 171, 1226, 1226, 56, 244, 926, 26, 0, 10],
-                           ['st1', 2637, 858, 369, 1517, '24.32 %', 120, 120, 171, 171, 1226, 1226, 56, 244, 926, 26, 0, 10],
-                           ['st1', 2637, 858, 369, 1517, '24.32 %', 120, 120, 171, 171, 1226, 1226, 56, 244, 926, 26, 0, 10],
-                           ['st1', 2637, 858, 369, 1517, '24.32 %', 120, 120, 171, 171, 1226, 1226, 56, 244, 926, 26, 0, 10],
-                           ['st1', 2637, 858, 369, 1517, '24.32 %', 120, 120, 171, 171, 1226, 1226, 56, 244, 926, 26, 0, 10],
-                           ['st2', 2952, 1058, 275, 1614, '17.04 %', 139, 139, 154, 154, 1321, 1321, 52, 301, 968, 25, 0, 20],
-                           ['st2', 2952, 1058, 275, 1614, '17.04 %', 139, 139, 154, 154, 1321, 1321, 52, 301, 968, 25, 0, 20],
-                           ['st2', 2952, 1058, 275, 1614, '17.04 %', 139, 139, 154, 154, 1321, 1321, 52, 301, 968, 25, 0, 20],
-                           ['st2', 2952, 1058, 275, 1614, '17.04 %', 139, 139, 154, 154, 1321, 1321, 52, 301, 968, 25, 0, 20],
-                           ['st2', 2952, 1058, 275, 1614, '17.04 %', 139, 139, 154, 154, 1321, 1321, 52, 301, 968, 25, 0, 20],
-                           ['st3', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st3', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st3', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st3', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st3', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st4', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st4', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st4', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st4', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st4', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st5', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st5', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st5', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st5', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st5', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st6', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st6', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st6', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st6', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st6', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st7', 2, 8, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1,
-                            6, 4, 0],
-                           ['st7', 2, 8, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1,
-                            6, 4, 0],
-                           ['st7', 2, 8, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1,
-                            6, 4, 0],
-                           ['st7', 2, 8, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1,
-                            6, 4, 0],
-                           ['st7', 2, 8, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1,
-                            6, 4, 0]]],
-             [
-                 'Export Info',
-                 [
-                     [
-                         'Generated at', self.now
-                     ],
-                     [
-                         'State', 'st1'
-                     ]
-                 ]
-             ]
+                        ['st1', 2637, 858, 369, 1517, '24.32 %', 120, 120, 171, 171, 1226, 1226, 56, 244, 926, 26,
+                         0, 10],
+                        ['st1', 2637, 858, 369, 1517, '24.32 %', 120, 120, 171, 171, 1226, 1226, 56, 244, 926, 26,
+                         0, 10],
+                        ['st1', 2637, 858, 369, 1517, '24.32 %', 120, 120, 171, 171, 1226, 1226, 56, 244, 926, 26,
+                         0, 10],
+                        ['st1', 2637, 858, 369, 1517, '24.32 %', 120, 120, 171, 171, 1226, 1226, 56, 244, 926, 26,
+                         0, 10],
+                        ['st1', 2637, 858, 369, 1517, '24.32 %', 120, 120, 171, 171, 1226, 1226, 56, 244, 926, 26,
+                         0, 10],
+                        ['st2', 2952, 1058, 275, 1614, '17.04 %', 139, 139, 154, 154, 1321, 1321, 52, 301, 968, 25,
+                         0, 20],
+                        ['st2', 2952, 1058, 275, 1614, '17.04 %', 139, 139, 154, 154, 1321, 1321, 52, 301, 968, 25,
+                         0, 20],
+                        ['st2', 2952, 1058, 275, 1614, '17.04 %', 139, 139, 154, 154, 1321, 1321, 52, 301, 968, 25,
+                         0, 20],
+                        ['st2', 2952, 1058, 275, 1614, '17.04 %', 139, 139, 154, 154, 1321, 1321, 52, 301, 968, 25,
+                         0, 20],
+                        ['st2', 2952, 1058, 275, 1614, '17.04 %', 139, 139, 154, 154, 1321, 1321, 52, 301, 968, 25,
+                         0, 20],
+                        ['st3', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st3', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st3', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st3', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st3', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st4', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st4', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st4', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st4', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st4', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st5', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st5', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st5', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st5', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st5', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st6', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st6', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st6', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st6', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st6', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st7', 2, 8, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1,
+                         6, 4, 0],
+                        ['st7', 2, 8, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1,
+                         6, 4, 0],
+                        ['st7', 2, 8, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1,
+                         6, 4, 0],
+                        ['st7', 2, 8, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1,
+                         6, 4, 0],
+                        ['st7', 2, 8, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1,
+                         6, 4, 0]]],
+                [
+                    'Export Info',
+                    [
+                        [
+                            'Generated at', self.now
+                        ],
+                        [
+                            'State', 'st1'
+                        ]
+                    ]
+                ]
             ]
         )
 
@@ -4113,40 +4157,63 @@ class TestExportData(TestCase):
             json.dumps([
                 [
                     "AWW Activity Report", [
-                        [
-                            "State", "District", "Block", "Supervisor name", "Awc Name", "AWC site code",
-                            "AWC launch date", "Last submission date", "Days since start", "Days inactive"
-                        ],
-                        ['st1', 'd1', 'b1', 's1', 'a1', 'awca1', '05-05-2017', '05-06-2017', 87, 56],
-                        ['st1', 'd1', 'b1', 's1', 'a17', 'awca17', '05-06-2017', '05-06-2017', 56, 56],
-                        ['st1', 'd1', 'b1', 's1', 'a25', 'awca25', '05-04-2017', '05-06-2017', 117, 56],
-                        ['st1', 'd1', 'b1', 's1', 'a33', 'awca33', '05-05-2017', '05-06-2017', 87, 56],
-                        ['st1', 'd1', 'b1', 's1', 'a41', 'awca41', '05-04-2017', '05-06-2017', 117, 56],
-                        ['st1', 'd1', 'b1', 's1', 'a49', 'awca49', '05-04-2017', '05-06-2017', 117, 56],
-                        ['st1', 'd1', 'b1', 's1', 'a9', 'awca9', '05-04-2017', '05-04-2017', 117, 117],
-                        ['st1', 'd1', 'b1', 's2', 'a10', 'awca10', '05-04-2017', '05-05-2017', 117, 87],
-                        ['st1', 'd1', 'b1', 's2', 'a18', 'awca18', '05-04-2017', '05-06-2017', 117, 56],
-                        ['st1', 'd1', 'b1', 's2', 'a2', 'awca2', 'Data Not Entered', 'Data Not Entered',
-                         'Data Not Entered', 'Data Not Entered'],
-                        ['st1', 'd1', 'b1', 's2', 'a26', 'awca26', '05-06-2017', '05-06-2017', 56, 56],
-                        ['st1', 'd1', 'b1', 's2', 'a34', 'awca34', 'Data Not Entered', 'Data Not Entered',
-                         'Data Not Entered', 'Data Not Entered'],
-                        ['st1', 'd1', 'b1', 's2', 'a42', 'awca42', '05-05-2017', '05-06-2017', 87, 56],
-                        ['st1', 'd1', 'b1', 's2', 'a50', 'awca50', '05-05-2017', '05-06-2017', 87, 56],
-                        ['st1', 'd1', 'b2', 's3', 'a11', 'awca11', '05-05-2017', '05-06-2017', 87, 56],
-                        ['st1', 'd1', 'b2', 's3', 'a19', 'awca19', '05-04-2017', '05-06-2017', 117, 56],
-                        ['st1', 'd1', 'b2', 's3', 'a27', 'awca27', 'Data Not Entered', 'Data Not Entered',
-                         'Data Not Entered', 'Data Not Entered'],
-                        ['st1', 'd1', 'b2', 's3', 'a3', 'awca3', '05-04-2017', '05-06-2017', 117, 56],
-                        ['st1', 'd1', 'b2', 's3', 'a35', 'awca35', '05-04-2017', '05-06-2017', 117, 56],
-                        ['st1', 'd1', 'b2', 's3', 'a43', 'awca43', '05-04-2017', '05-06-2017', 117, 56],
-                        ['st1', 'd1', 'b2', 's4', 'a12', 'awca12', '05-04-2017', '05-06-2017', 117, 56],
-                        ['st1', 'd1', 'b2', 's4', 'a20', 'awca20', '05-05-2017', '05-06-2017', 87, 56],
-                        ['st1', 'd1', 'b2', 's4', 'a28', 'awca28', '05-04-2017', '05-06-2017', 117, 56],
-                        ['st1', 'd1', 'b2', 's4', 'a36', 'awca36', '05-04-2017', '05-06-2017', 117, 56],
-                        ['st1', 'd1', 'b2', 's4', 'a4', 'awca4', '05-06-2017', '05-06-2017', 56, 56],
-                        ['st1', 'd1', 'b2', 's4', 'a44', 'awca44', '05-05-2017', '05-06-2017', 87, 56]
-                    ]
+                    [
+                        "State", "District", "Block", "Supervisor name", "Awc Name", "AWC site code",
+                        "AWC launch date", "Last submission date", "Days since start", "Days inactive"
+                    ],
+                    ['st1', 'd1', 'b1', 's1', 'a1', 'awca1', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b1', 's1', 'a17', 'awca17', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b1', 's1', 'a25', 'awca25', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b1', 's1', 'a33', 'awca33', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b1', 's1', 'a41', 'awca41', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b1', 's1', 'a49', 'awca49', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b1', 's1', 'a9', 'awca9', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b1', 's2', 'a10', 'awca10', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b1', 's2', 'a18', 'awca18', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b1', 's2', 'a2', 'awca2', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b1', 's2', 'a26', 'awca26', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b1', 's2', 'a34', 'awca34', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b1', 's2', 'a42', 'awca42', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b1', 's2', 'a50', 'awca50', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b2', 's3', 'a11', 'awca11', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b2', 's3', 'a19', 'awca19', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b2', 's3', 'a27', 'awca27', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b2', 's3', 'a3', 'awca3', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b2', 's3', 'a35', 'awca35', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b2', 's3', 'a43', 'awca43', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b2', 's4', 'a12', 'awca12', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b2', 's4', 'a20', 'awca20', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b2', 's4', 'a28', 'awca28', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b2', 's4', 'a36', 'awca36', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b2', 's4', 'a4', 'awca4', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b2', 's4', 'a44', 'awca44', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered']
+                ]
                 ],
                 ["Export Info",
                  [
@@ -4286,20 +4353,21 @@ class TestExportData(TestCase):
                'AWC not launched', 'AWC not launched', 'AWC not launched', 'AWC not launched'],
               ['st1', 'd1', 'b2', 's3', 'a3', 'AWC not launched', 'AWC not launched', 'AWC not launched',
                'AWC not launched', 'AWC not launched', 'AWC not launched', 'AWC not launched'],
-              ['st1', 'd1', 'b2', 's3', 'a35', 'Data Not Entered', 'Data Not Entered', '0.00%', 'No expected weight measurement',
+              ['st1', 'd1', 'b2', 's3', 'a35', 'Data Not Entered', 'Data Not Entered', '0.00%',
+               'No expected weight measurement',
                'No', 12, 'No'],
               ['st1', 'd1', 'b2', 's3', 'a43', 'Data Not Entered', 'Data Not Entered', '0.00%', '100.00%',
                'No', 13, 'No']]],
             ['Export Info',
-                [
-                    ['Grouped By', 'AWC'],
-                    ['Month', 5],
-                    ['Year', 2017],
-                    ['Disclaimer',
-                     'The information in the report is based on the self-reported '
-                     'data entered by the Anganwadi Worker in ICDS-CAS mobile application'
-                     ' and is subject to timely data submissions.']
-                ]
+             [
+                 ['Grouped By', 'AWC'],
+                 ['Month', 5],
+                 ['Year', 2017],
+                 ['Disclaimer',
+                  'The information in the report is based on the self-reported '
+                  'data entered by the Anganwadi Worker in ICDS-CAS mobile application'
+                  ' and is subject to timely data submissions.']
+             ]
              ]
         ]
         self.assertListEqual(
