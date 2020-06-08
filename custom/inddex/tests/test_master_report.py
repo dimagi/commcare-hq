@@ -31,7 +31,7 @@ from ..food import INDICATORS, FoodData
 from ..reports.r1_master_data import MasterData
 from ..reports.r2a_gaps_summary import get_gaps_data
 from ..reports.r2b_gaps_detail import GapsByItemSummaryData, GapsDetailsData
-from ..reports.r3_nutrient_intake import DailyIntakeData
+from ..reports.r3_nutrient_intake import DailyIntakeData, IntakeData
 from ..reports.r4_nutrient_stats import NutrientStatsData
 from ..ucr_data import FoodCaseData
 
@@ -244,26 +244,30 @@ class TestInddexReports(TestCase):
                 ).format(*map(to_string, [actual_report.headers, expected, actual]))
                 self.assertEqual(expected, actual, msg)
 
-    def test_gaps_summary(self):
+    def test_2a_gaps_summary(self):
         with patch('custom.inddex.reports.r2a_gaps_summary.FoodData.from_request', get_food_data):
             cf_gaps_data, fct_gaps_data = get_gaps_data(DOMAIN, None)
 
         self.assert_reports_match('2a_conv_factor_gaps_summary.csv', cf_gaps_data)
         self.assert_reports_match('2a_fct_gaps_summary.csv', fct_gaps_data)
 
-    def test_gaps_by_item_summary(self):
+    def test_2b_gaps_by_item_summary(self):
         data = GapsByItemSummaryData(get_food_data())
         self.assert_reports_match('2b_gaps_by_item_summary.csv', data)
 
-    def test_gaps_by_item_details(self):
+    def test_2b_gaps_by_item_details(self):
         data = GapsDetailsData(get_food_data())
         self.assert_reports_match('2b_gaps_by_item_details.csv', data)
 
-    def test_daily_intake(self):
+    def test_3_intake(self):
+        data = IntakeData(get_food_data())
+        self.assert_reports_match('3_disaggr_intake_data_by_rspndnt.csv', data)
+
+    def test_3_daily_intake(self):
         data = DailyIntakeData(get_food_data())
         self.assert_reports_match('3_aggr_daily_intake_by_rspndnt.csv', data)
 
-    def test_nutrient_stats(self):
+    def test_4_nutrient_stats(self):
         data = NutrientStatsData(get_food_data())
         self.assert_reports_match('4_nutr_intake_summary_stats.csv', data)
 
