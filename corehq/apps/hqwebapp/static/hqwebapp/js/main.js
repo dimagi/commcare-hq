@@ -80,6 +80,27 @@ hqDefine('hqwebapp/js/main', [
         },
     };
 
+    ko.bindingHandlers.runOnInit = {
+        // suggestion from https://github.com/knockout/knockout/issues/2446 to use
+        // instead of an anonymous template
+        init: function(elem, valueAccessor) {
+            valueAccessor();
+        }
+    };
+    ko.virtualElements.allowedBindings.runOnInit = true;
+
+    ko.bindingHandlers.allowDescendantBindings = {
+        // fixes an issue where we try to apply bindings to a parent element
+        // that has a child element with existing bindings.
+        // see: https://github.com/knockout/knockout/issues/1922
+        init: function(elem, valueAccessor) {
+            // Let bindings proceed as normal *only if* my value is false
+            var shouldAllowBindings = ko.unwrap(valueAccessor());
+            return { controlsDescendantBindings: !shouldAllowBindings };
+        }
+    };
+    ko.virtualElements.allowedBindings.allowDescendantBindings = true;
+
     var initBlock = function ($elem) {
         'use strict';
 
