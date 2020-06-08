@@ -57,7 +57,7 @@ services:
     environment:
       ES_JAVA_OPTS: "-Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
     ports:
-      - "9200:9200"
+      - "6200:6200"
 
   kafka:
     extends:
