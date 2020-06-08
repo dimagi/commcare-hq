@@ -21,7 +21,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
-        print(f"RUNNING FOR {date}")
         thr_path = os.path.join(os.path.dirname(__file__), 'sql_scripts',
                                 'build_thr_child_table.sql')
 
