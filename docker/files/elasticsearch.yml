@@ -1,6 +1,8 @@
 # Don't forget to rebuild and start the elasticsearch image after changing this file:
 #     $ ./scripts/docker rebuild elasticsearch
 #     $ ./scripts/docker up -d elasticsearch
+
+cluster.name: travis_hq
 network.host: 0.0.0.0
 http.port: 9200
 
