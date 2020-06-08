@@ -1329,10 +1329,7 @@ class CommCareUserFilterForm(forms.Form):
                 user_role_id = self.couch_user.get_role(self.domain).get_id
             except DomainMembershipError:
                 user_role_id = None
-            if not (
-                role.is_non_admin_editable
-                or (user_role_id and user_role_id in role.assignable_by)
-            ):
+            if not role.accessible_by_non_admin_role(user_role_id):
                 raise forms.ValidationError(_("Role Access Denied"))
         return role_id
 

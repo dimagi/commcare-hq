@@ -27,7 +27,7 @@ def get_editable_role_choices(domain, couch_user, allow_admin_role, use_qualifie
         user_role_id = user_role.get_id if user_role else None
         roles = [
             role for role in roles
-            if role.is_non_admin_editable or (user_role_id and user_role_id in role.assignable_by)
+            if role.accessible_by_non_admin_role(user_role_id)
         ]
     elif allow_admin_role:
         roles = [AdminUserRole(domain=domain)] + roles
