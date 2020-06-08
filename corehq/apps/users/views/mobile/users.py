@@ -15,7 +15,11 @@ from django.http import (
     HttpResponseBadRequest,
     HttpResponseRedirect,
 )
-from django.http.response import HttpResponseServerError, JsonResponse
+from django.http.response import (
+    HttpResponseForbidden,
+    HttpResponseServerError,
+    JsonResponse,
+)
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -1173,6 +1177,7 @@ class DownloadUsersStatusView(BaseUserSettingsView):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
+@method_decorator([FILTERED_BULK_USER_DOWNLOAD.required_decorator()], name='dispatch')
 class FilteredUserDownload(BaseManageCommCareUserView):
     urlname = 'filter_and_download_commcare_users'
     page_title = ugettext_noop('Filter and Download')
@@ -1350,6 +1355,8 @@ class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
 @require_can_edit_commcare_users
 def count_users(request, domain):
     from corehq.apps.users.dbaccessors.all_commcare_users import get_commcare_users_by_filters
+    if not FILTERED_BULK_USER_DOWNLOAD.enabled_for_request(request):
+        return HttpResponseForbidden()
     form = CommCareUserFilterForm(request.GET, domain=domain, couch_user=request.couch_user)
     if form.is_valid():
         user_filters = form.cleaned_data
