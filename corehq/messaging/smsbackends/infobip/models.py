@@ -10,7 +10,7 @@ INFOBIP_DOMAIN = "api.infobip.com"
 WA_TEMPLATE_STRING = "cc_wa_template"
 
 
-class SQLInfobipBackend(SQLSMSBackend):
+class InfobipBackend(SQLSMSBackend):
 
     class Meta(object):
         app_label = 'sms'
