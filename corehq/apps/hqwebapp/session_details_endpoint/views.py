@@ -1,3 +1,4 @@
+import datetime
 import json
 
 from django.conf import settings
@@ -6,8 +7,9 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
+from dimagi.utils.parsing import json_format_datetime
+
 from corehq.apps.domain.auth import formplayer_auth
-from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.utils import get_django_user_from_session, get_session
 from corehq.apps.users.models import CouchUser
 
@@ -53,17 +55,10 @@ class SessionDetailsView(View):
 
         # reset the session's expiry if there's some formplayer activity
         secure_session = session.get('secure_session')
-        if secure_session:
-            timeout = settings.SECURE_TIMEOUT
-            domain = data.get('domain')
-            if domain:
-                domain_obj = Domain.get_by_name(domain)
-                if domain_obj:
-                    timeout = domain_obj.secure_timeout or timeout
-        else:
-            timeout = settings.INACTIVITY_TIMEOUT
+        timeout = settings.SECURE_TIMEOUT if secure_session else settings.INACTIVITY_TIMEOUT
 
         session.set_expiry(timeout * 60)
+        session['last_request'] = json_format_datetime(datetime.datetime.utcnow())
         session.save()
 
         return JsonResponse({
