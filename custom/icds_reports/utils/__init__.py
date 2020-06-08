@@ -1450,7 +1450,7 @@ def create_child_report_excel_file(excel_data, data_type, month, aggregation_lev
     return file_hash
 
 
-def create_service_delivery_report(excel_data, data_type, config):
+def create_service_delivery_report(excel_data, data_type, config, beta=False):
 
     export_info = excel_data[1][1]
     location_padding_columns = ([''] * config['aggregation_level'])
@@ -1475,6 +1475,10 @@ def create_service_delivery_report(excel_data, data_type, config):
                          'Provided for 8-14 days',
                          'Provided for 15-20 days',
                          'Provided for at least 21 days (>=21 days)']
+    if beta:
+        secondary_headers.pop()
+        secondary_headers += ['Provided for 21-24 days',
+                              'Provided for at least 25 days (>=25 days)']
 
     workbook = Workbook()
     worksheet = workbook.active
@@ -1530,8 +1534,11 @@ def create_service_delivery_report(excel_data, data_type, config):
                                                    get_column_letter(current_column_location + merging_width)))
             current_column_location += merging_width+1
         else:
+            offset_count = 14
+            if beta:
+                offset_count = 17
             worksheet.merge_cells('{}1:{}1'.format(get_column_letter(current_column_location),
-                                                   get_column_letter(current_column_location + 14)))
+                                                   get_column_letter(current_column_location + offset_count)))
 
             current_column_location_sec_header = current_column_location
             for sec_header in secondary_headers:
@@ -1546,7 +1553,7 @@ def create_service_delivery_report(excel_data, data_type, config):
                                                        get_column_letter(current_column_location_sec_header + 2)))
                 current_column_location_sec_header += 3
 
-            current_column_location += 15
+            current_column_location += offset_count + 1
 
     # Secondary Header
     headers = excel_data[0][1][0]
