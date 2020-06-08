@@ -16,7 +16,6 @@ from django.http import (
     HttpResponseRedirect,
 )
 from django.http.response import (
-    HttpResponseForbidden,
     HttpResponseServerError,
     JsonResponse,
 )
@@ -1356,7 +1355,7 @@ class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
 def count_users(request, domain):
     from corehq.apps.users.dbaccessors.all_commcare_users import get_commcare_users_by_filters
     if not FILTERED_BULK_USER_DOWNLOAD.enabled_for_request(request):
-        return HttpResponseForbidden()
+        raise Http404()
     form = CommCareUserFilterForm(request.GET, domain=domain, couch_user=request.couch_user)
     if form.is_valid():
         user_filters = form.cleaned_data
