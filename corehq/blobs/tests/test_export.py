@@ -3,6 +3,7 @@ import tarfile
 import uuid
 from io import BytesIO, RawIOBase
 from tempfile import NamedTemporaryFile
+from unittest import skip
 
 from django.test import SimpleTestCase, TestCase
 
@@ -14,6 +15,8 @@ from corehq.apps.hqmedia.models import (
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.export import EXPORTERS
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB, new_meta
+
+GB = 1024 ** 3
 
 
 class TestBlobExport(TestCase):
@@ -84,6 +87,57 @@ class TestBlobExport(TestCase):
             exporter.migrate(out.name, force=True)
             with tarfile.open(out.name, 'r:gz') as tgzfile:
                 self.assertEqual(expected, set(tgzfile.getnames()))
+
+
+@skip('Uses over 33GB of drive space, and takes a long time')
+class TestBigBlobExport(TestCase):
+
+    domain_name = 'big-blob-test-domain'
+
+    def setUp(self):
+        self.db = TemporaryFilesystemBlobDB()
+        assert get_blob_db() is self.db, (get_blob_db(), self.db)
+        self.blob_metas = []
+
+    def tearDown(self):
+        for meta in self.blob_metas:
+            meta.delete()
+        self.db.close()
+
+    def test_33_x_1GB_blobs(self):
+        for __ in range(33):
+            meta = self.db.put(
+                MockBigBlobIO(zeros(), GB),
+                meta=new_meta(domain=self.domain_name, type_code=CODES.multimedia)
+            )
+            self.blob_metas.append(meta)
+
+        with NamedTemporaryFile() as out:
+            exporter = EXPORTERS['all_blobs'](self.domain_name)
+            exporter.migrate(out.name, force=True)
+
+            with tarfile.open(out.name, 'r:gz') as tgzfile:
+                self.assertEqual(
+                    set(tgzfile.getnames()),
+                    {m.key for m in self.blob_metas}
+                )
+
+    def test_1_x_33GB_blob(self):
+        meta = self.db.put(
+            MockBigBlobIO(zeros(), 33 * GB),
+            meta=new_meta(domain=self.domain_name, type_code=CODES.multimedia)
+        )
+        self.blob_metas.append(meta)
+
+        with NamedTemporaryFile() as out:
+            exporter = EXPORTERS['all_blobs'](self.domain_name)
+            exporter.migrate(out.name, force=True)
+
+            with tarfile.open(out.name, 'r:gz') as tgzfile:
+                self.assertEqual(
+                    set(tgzfile.getnames()),
+                    {m.key for m in self.blob_metas}
+                )
 
 
 class TestMockBigBlobIO(SimpleTestCase):
