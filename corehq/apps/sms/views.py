@@ -7,6 +7,7 @@ from datetime import datetime, time, timedelta
 
 from django.conf import settings
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Q
 from django.http import (
@@ -66,6 +67,7 @@ from corehq.apps.hqwebapp.decorators import (
     use_jquery_ui,
     use_timepicker,
     use_typeahead,
+    use_daterangepicker,
 )
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form, sign
@@ -127,6 +129,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CommCareUser, CouchUser, Permissions
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
 from corehq.const import SERVER_DATE_FORMAT, SERVER_DATETIME_FORMAT
+from custom.icds.tasks.sms import send_custom_sms_report
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.async_handlers import SMSSettingsAsyncHandler
@@ -1913,6 +1916,30 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
     @use_timepicker
     def dispatch(self, request, *args, **kwargs):
         return super(SMSSettingsView, self).dispatch(request, *args, **kwargs)
+
+
+@method_decorator(toggles.ICDS_CUSTOM_SMS_REPORT.required_decorator(), name='dispatch')
+class SMSUsageReport(BaseMessagingSectionView):
+    template_name = 'sms/usage_report.html'
+    urlname = 'sms_usage_report'
+    page_title = _('SMS Usage Report')
+
+    @use_daterangepicker
+    def dispatch(self, *args, **kwargs):
+        return super(SMSUsageReport, self).dispatch(*args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        try:
+            start_date, end_date = request.POST.get('date_range').split(' to ')
+            from corehq.messaging.scheduling.forms import validate_date
+            validate_date(start_date)
+            validate_date(end_date)
+            send_custom_sms_report.delay(start_date, end_date)
+            messages.success(self.request, _("Report will we soon emailed to the configured users"))
+        except (ValueError, ValidationError):
+            messages.error(self.request, _("Start date or End date not provided or are invalid"))
+            return self.get(*args, **kwargs)
+        return self.get(*args, **kwargs)
 
 
 class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPaginatedViewMixin):

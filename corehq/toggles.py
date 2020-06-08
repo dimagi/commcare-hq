@@ -1011,6 +1011,12 @@ ICDS_DASHBOARD_TEMPORARY_DOWNTIME = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+ICDS_CUSTOM_SMS_REPORT = StaticToggle(
+    'icds_custom_sms_report',
+    'ICDS: Generate a custom SMS',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
 
 OPENMRS_INTEGRATION = StaticToggle(
     'openmrs_integration',
