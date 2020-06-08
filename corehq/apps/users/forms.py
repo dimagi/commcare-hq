@@ -38,7 +38,7 @@ from corehq.apps.locations.permissions import user_can_access_location_id
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.users.dbaccessors.all_commcare_users import user_exists
-from corehq.apps.users.models import UserRole
+from corehq.apps.users.models import UserRole, DomainMembershipError
 from corehq.apps.users.util import cc_user_domain, format_username
 from corehq.toggles import TWO_STAGE_USER_PROVISIONING
 from custom.icds.view_utils import is_icds_cas_project
@@ -1325,7 +1325,14 @@ class CommCareUserFilterForm(forms.Form):
         if not role.domain == self.domain:
             raise forms.ValidationError(_("Invalid Role"))
         if restricted_role_access:
-            if not role.is_non_admin_editable:
+            try:
+                user_role_id = self.couch_user.get_role(self.domain).get_id
+            except DomainMembershipError:
+                user_role_id = None
+            if not (
+                role.is_non_admin_editable
+                or (user_role_id and user_role_id in role.assignable_by)
+            ):
                 raise forms.ValidationError(_("Role Access Denied"))
         return role_id
 
