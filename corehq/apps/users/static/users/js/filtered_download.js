@@ -36,13 +36,13 @@ hqDefine('users/js/filtered_download', [
 
     $(function () {
         var prevFilters = getFilters();
-        setInterval(function () {
+        $("#user-filters").change(function () {
             var currentFilters = getFilters();
             if (!_.isEqual(currentFilters, prevFilters)) {
                 countUsers(currentFilters);
             }
             prevFilters = currentFilters;
-        }, 1000);
+        });
         countUsers(getFilters());
     });
 });
