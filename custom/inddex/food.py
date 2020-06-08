@@ -295,14 +295,6 @@ class FoodRow:
             if age_range.lower_bound <= getattr(self, age_range.column) < age_range.upper_bound:
                 return age_range.name
 
-    @property
-    def recipe_case_id(self):
-        if self.is_recipe:
-            return self.caseid
-        if self._is_std_recipe_ingredient:
-            return self.ucr_row['doc_id']
-        return self.ucr_row['recipe_case_id']
-
     def get_nutrient_per_100g(self, nutrient_name):
         if self.fct_code:
             return self.composition.nutrients.get(nutrient_name)
@@ -472,6 +464,7 @@ class FoodData:
         for row in [recipe] + ingredients:
             row.total_grams = total_grams[row.uuid]
             row.recipe_num_ingredients = len(ingredients)
+            row.recipe_case_id = recipe.caseid
             if row.is_ingredient == 'yes':
                 row.recipe_name = recipe.recipe_name
                 if recipe.food_type == STANDARD_RECIPE:
