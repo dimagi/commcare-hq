@@ -41,6 +41,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import user_exists
 from corehq.apps.users.models import UserRole
 from corehq.apps.users.util import cc_user_domain, format_username
 from corehq.toggles import TWO_STAGE_USER_PROVISIONING
+from custom.icds.view_utils import is_icds_cas_project
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 from dimagi.utils.django.fields import TrimmedCharField
 
@@ -1272,7 +1273,7 @@ class CommCareUserFilterForm(forms.Form):
         self.fields['location_id'].widget = LocationSelectWidget(self.domain)
         self.fields['location_id'].help_text = ExpandedMobileWorkerFilter.location_search_help
 
-        if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS and not self.couch_user.is_domain_admin(self.domain):
+        if is_icds_cas_project(self.domain) and not self.couch_user.is_domain_admin(self.domain):
             roles = get_editable_role_choices(self.domain, self.couch_user, allow_admin_role=True,
                                               use_qualified_id=False)
             self.fields['role_id'].choices = roles
@@ -1311,7 +1312,7 @@ class CommCareUserFilterForm(forms.Form):
     def clean_role_id(self):
         role_id = self.cleaned_data['role_id']
         restricted_role_access = (
-            settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS and
+            is_icds_cas_project(self.domain) and
             not self.couch_user.is_domain_admin(self.domain)
         )
         if not role_id:
