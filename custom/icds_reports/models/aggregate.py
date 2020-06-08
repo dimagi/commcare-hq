@@ -1418,6 +1418,8 @@ class AggregateInactiveAWW(models.Model, AggregateMixin):
     state_name = models.TextField(blank=True, null=True)
     first_submission = models.DateField(blank=True, null=True)
     last_submission = models.DateField(blank=True, null=True)
+    no_of_days_since_start = models.PositiveIntegerField(blank=True, null=True)
+    no_of_days_inactive = models.PositiveIntegerField(blank=True, null=True)
 
     @property
     def days_since_start(self):
