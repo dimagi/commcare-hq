@@ -11,7 +11,7 @@ from .utils import MultiTabularReport, format_row, na_for_None
 
 
 class NutrientStatsReport(MultiTabularReport):
-    name = 'Output 4 - Nutrient Intake Summary Statistics'
+    name = 'Report 4 - Nutrient Intake Summary Statistics'
     slug = 'report_4_nutrient_intake_summary_statistics'
     description = textwrap.dedent("""
         This report includes summary statistics for energy and nutrient intakes
