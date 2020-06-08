@@ -312,14 +312,6 @@ describe('Download Directive', function () {
             assert.isFalse(result);
         });
 
-        it('tests get formats when PPR is selected', function () {
-            controller.selectedIndicator = 15;
-            var expected = [{"id": "xlsx", "name": "Excel"}];
-
-            var result = controller.getFormats();
-            assert.deepEqual(expected, result);
-        });
-
         it('test to check if current month is enabled after first three days', function () {
             var fakeDate = new Date(2019, 8, 4);
             var clock = sinon.useFakeTimers(fakeDate.getTime());
@@ -453,7 +445,7 @@ describe('Download Directive', function () {
         it('tests that all users have access to ISSNIP monthly register', function () {
 
             var length = controller.indicators.length;
-            assert.equal(numberOfReports + 2, length);
+            assert.equal(numberOfReports + 3, length);
         });
 
         it('tests first possible data choice on THR raport', function () {
@@ -610,7 +602,7 @@ describe('Download Directive', function () {
 
         it('tests that all users have access to ISSNIP monthly register', function () {
             var length = controller.indicators.length;
-            assert.equal(numberOfReports + 2, length);
+            assert.equal(numberOfReports + 3, length);
         });
     });
 
@@ -662,7 +654,7 @@ describe('Download Directive', function () {
 
         it('tests that block user does not have access to dashboard usage report', function () {
             var length = controller.indicators.length;
-            assert.equal(numberOfReports + 1, length);
+            assert.equal(numberOfReports + 2, length);
         });
     });
 
