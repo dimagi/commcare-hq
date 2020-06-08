@@ -94,86 +94,75 @@ class MenuContributor(SuiteContributorByModule):
                 menus.append(menu)
         else:
             from corehq.apps.app_manager.models import ShadowModule
-            id_modules = [module]       # the current module and all of its shadows
-            root_modules = []           # the current module's parent and all of that parent's shadows
 
-            shadow_modules = [m for m in self.app.get_modules()
-                              if isinstance(m, ShadowModule) and m.source_module_id]
-            if not module.put_in_root and module.root_module:
-                root_modules.append(module.root_module)
-                for shadow in shadow_modules:
-                    if module.root_module.unique_id == shadow.source_module_id:
-                        root_modules.append(shadow)
+            root_module = None
+            if not module.put_in_root:
+                if module.root_module:
+                    root_module = module.root_module
+                elif module.module_type == 'shadow' and module.source_module.root_module:
+                    root_module = module.source_module.root_module
+
+            menu_kwargs = {}
+            suffix = ""
+            if module.is_training_module:
+                menu_kwargs.update({'root': 'training-root'})
+            elif root_module:
+                menu_kwargs.update({'root': id_strings.menu_id(root_module)})
+                suffix = id_strings.menu_id(root_module) if isinstance(root_module, ShadowModule) else ""
+            menu_kwargs.update({'id': id_strings.menu_id(module, suffix)})
+
+            # Determine relevancy
+            if self.app.enable_module_filtering:
+                relevancy = module.module_filter
+                # If module has a parent, incorporate the parent's relevancy.
+                # This is only necessary when the child uses display only forms.
+                if module.put_in_root and module.root_module and module.root_module.module_filter:
+                    if relevancy:
+                        relevancy = str(XPath.and_(XPath(relevancy).paren(force=True),
+                            XPath(module.root_module.module_filter).paren(force=True)))
+                    else:
+                        relevancy = module.root_module.module_filter
+                if relevancy:
+                    menu_kwargs['relevant'] = interpolate_xpath(relevancy)
+
+            if self.app.enable_localized_menu_media:
+                module_custom_icon = module.custom_icon
+                menu_kwargs.update({
+                    'menu_locale_id': get_module_locale_id(module),
+                    'media_image': module.uses_image(build_profile_id=self.build_profile_id),
+                    'media_audio': module.uses_audio(build_profile_id=self.build_profile_id),
+                    'image_locale_id': id_strings.module_icon_locale(module),
+                    'audio_locale_id': id_strings.module_audio_locale(module),
+                    'custom_icon_locale_id': (
+                        id_strings.module_custom_icon_locale(module, module_custom_icon.form)
+                        if module_custom_icon and not module_custom_icon.xpath else None),
+                    'custom_icon_form': (module_custom_icon.form if module_custom_icon else None),
+                    'custom_icon_xpath': (module_custom_icon.xpath
+                                          if module_custom_icon and module_custom_icon.xpath else None),
+                })
+                menu = LocalizedMenu(**menu_kwargs)
             else:
-                root_modules.append(None)
-                if module.put_in_root and module.root_module:
-                    for shadow in shadow_modules:
-                        if module.root_module.unique_id == shadow.source_module_id:
-                            id_modules.append(shadow)
+                menu_kwargs.update({
+                    'media_image': module.default_media_image,
+                    'media_audio': module.default_media_audio,
+                    'locale_id': get_module_locale_id(module),
+                })
+                menu = Menu(**menu_kwargs)
 
-            for id_module in id_modules:
-                for root_module in root_modules:
-                    menu_kwargs = {}
-                    suffix = ""
-                    if id_module.is_training_module:
-                        menu_kwargs.update({'root': 'training-root'})
-                    elif root_module:
-                        menu_kwargs.update({'root': id_strings.menu_id(root_module)})
-                        suffix = id_strings.menu_id(root_module) if isinstance(root_module, ShadowModule) else ""
-                    menu_kwargs.update({'id': id_strings.menu_id(id_module, suffix)})
+            excluded_form_ids = []
+            if root_module and isinstance(root_module, ShadowModule):
+                excluded_form_ids = root_module.excluded_form_ids
+            if module and isinstance(module, ShadowModule):
+                excluded_form_ids = module.excluded_form_ids
 
-                    # Determine relevancy
-                    if self.app.enable_module_filtering:
-                        relevancy = id_module.module_filter
-                        # If module has a parent, incorporate the parent's relevancy.
-                        # This is only necessary when the child uses display only forms.
-                        if id_module.put_in_root and id_module.root_module and id_module.root_module.module_filter:
-                            if relevancy:
-                                relevancy = str(XPath.and_(XPath(relevancy).paren(force=True),
-                                    XPath(id_module.root_module.module_filter).paren(force=True)))
-                            else:
-                                relevancy = id_module.root_module.module_filter
-                        if relevancy:
-                            menu_kwargs['relevant'] = interpolate_xpath(relevancy)
+            commands = get_commands(excluded_form_ids)
+            if module.is_training_module and module.put_in_root and training_menu:
+                training_menu.commands.extend(commands)
+            else:
+                menu.commands.extend(commands)
 
-                    if self.app.enable_localized_menu_media:
-                        module_custom_icon = module.custom_icon
-                        menu_kwargs.update({
-                            'menu_locale_id': get_module_locale_id(module),
-                            'media_image': module.uses_image(build_profile_id=self.build_profile_id),
-                            'media_audio': module.uses_audio(build_profile_id=self.build_profile_id),
-                            'image_locale_id': id_strings.module_icon_locale(module),
-                            'audio_locale_id': id_strings.module_audio_locale(module),
-                            'custom_icon_locale_id': (
-                                id_strings.module_custom_icon_locale(module, module_custom_icon.form)
-                                if module_custom_icon and not module_custom_icon.xpath else None),
-                            'custom_icon_form': (module_custom_icon.form if module_custom_icon else None),
-                            'custom_icon_xpath': (module_custom_icon.xpath
-                                                  if module_custom_icon and module_custom_icon.xpath else None),
-                        })
-                        menu = LocalizedMenu(**menu_kwargs)
-                    else:
-                        menu_kwargs.update({
-                            'media_image': module.default_media_image,
-                            'media_audio': module.default_media_audio,
-                            'locale_id': get_module_locale_id(module),
-                        })
-                        menu = Menu(**menu_kwargs)
-
-                    excluded_form_ids = []
-                    if root_module and isinstance(root_module, ShadowModule):
-                        excluded_form_ids = root_module.excluded_form_ids
-                    if id_module and isinstance(id_module, ShadowModule):
-                        excluded_form_ids = id_module.excluded_form_ids
-
-                    commands = get_commands(excluded_form_ids)
-                    if module.is_training_module and module.put_in_root and training_menu:
-                        training_menu.commands.extend(commands)
-                    else:
-                        menu.commands.extend(commands)
-
-                    if len(menu.commands):
-                        menus.append(menu)
+            if len(menu.commands):
+                menus.append(menu)
 
         if self.app.grid_display_for_all_modules() or \
                 self.app.grid_display_for_some_modules() and module.grid_display_style():

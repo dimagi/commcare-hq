@@ -824,14 +824,19 @@ class EntriesHelper(object):
             Return the datums of the first form in the given module
             """
             datums_ = []
-            if module_:
-                try:
-                    # assume that all forms in the module have the same case management
-                    form = module_.get_form(0)
-                except FormNotFoundException:
-                    pass
-                else:
-                    datums_.extend(self.get_datums_meta_for_form_generic(form))
+            if not module_:
+                return datums_
+
+            if module_.module_type == 'shadow':
+                module_ = module_.source_module
+
+            try:
+                # assume that all forms in the module have the same case management
+                form = module_.get_form(0)
+            except FormNotFoundException:
+                pass
+            else:
+                datums_.extend(self.get_datums_meta_for_form_generic(form))
 
             return datums_
 
