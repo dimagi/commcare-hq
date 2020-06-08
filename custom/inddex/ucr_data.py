@@ -1,5 +1,5 @@
 from sqlagg.columns import SimpleColumn
-from sqlagg.filters import EQ, GTE, IN, LT, LTE
+from sqlagg.filters import AND, EQ, GTE, IN, LT, LTE
 
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData
 from corehq.apps.reports.util import get_INFilter_bindparams
@@ -14,7 +14,8 @@ class FoodCaseData(SqlData):
     """This class pulls raw data from the food_consumption_indicators UCR"""
     group_by = ['doc_id']
     engine_id = UCR_ENGINE_ID
-    FILTERABLE_COLUMNS = [  # columns easily filtered by exact match
+    FILTERABLE_COLUMNS = [
+        'age_range',
         'breastfeeding',
         'gender',
         'owner_id',
@@ -37,23 +38,42 @@ class FoodCaseData(SqlData):
     @property
     def filters(self):
         filters = [GTE('visit_date', 'startdate'), LTE('visit_date', 'enddate')]
-        for column in self.FILTERABLE_COLUMNS:
+        if self._age_range:
+            filters.append(self._get_age_range_filter())
+        if self.config.get('owner_id'):
+            infilter_bindparams = get_INFilter_bindparams('owner_id', self.config['owner_id'])
+            filters.append(IN('owner_id', infilter_bindparams))
+        for column in [
+                'breastfeeding',
+                'gender',
+                'pregnant',
+                'recall_status',
+                'supplements'
+                'urban_rural',
+        ]:
             if self.config.get(column):
-                if column == 'age_range':
-                    filters.append(self._age_range_filter)
-                elif column == 'owner_id':
-                    infilter_bindparams = get_INFilter_bindparams('owner_id', self.config['owner_id'])
-                    filters.append(IN('owner_id', infilter_bindparams))
-                else:
-                    filters.append(EQ(column, column))
+                filters.append(EQ(column, column))
         return filters
 
     @property
-    def _age_range_filter(self):
-        age_range = {age_range.slug: age_range for age_range in AGE_RANGES}[self.config['age_range']]
-        return [GTE(age_range.column, age_range.lower_bound),
-                LT(age_range.column, age_range.upper_bound)]
+    def _age_range(self):
+        if self.config.get('age_range'):
+            return {age_range.slug: age_range for age_range in AGE_RANGES}[self.config['age_range']]
+
+    def _get_age_range_filter(self):
+        return AND([GTE(self._age_range.column, 'age_range_lower_bound'),
+                    LT(self._age_range.column, 'age_range_upper_bound')])
+
+    def _get_age_range_filter_values(self):
+        return {
+            'age_range_lower_bound': self._age_range.lower_bound,
+            'age_range_upper_bound': self._age_range.upper_bound,
+        }
 
     @property
     def filter_values(self):
-        return clean_IN_filter_value(super().filter_values, 'owner_id')
+        filter_values = super().filter_values
+        clean_IN_filter_value(filter_values, 'owner_id')
+        if self._age_range:
+            filter_values.update(self._get_age_range_filter_values())
+        return filter_values

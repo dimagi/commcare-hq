@@ -146,6 +146,15 @@ class TestUcrAdapter(TestCase):
         }).get_data()
         self.assertItemsEqual(food_names(expected), food_names(ucr_data))
 
+    def test_age_filter(self):
+        ucr_data = FoodCaseData({
+            'domain': DOMAIN,
+            'startdate': date(2020, 1, 1).isoformat(),
+            'enddate': date(2020, 4, 1).isoformat(),
+            'age_range': 'gte65years',
+        }).get_data()
+        self.assertEqual([], ucr_data)
+
 
 class TestFixtures(TestCase):
     @cached_property
