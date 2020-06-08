@@ -326,6 +326,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 });
             });
             self.visible_case_properties = ko.observableArray();
+            self.pagination_reset_flag = ko.observable(false);
             self.goToPage = function (page) {
                 page = page || 1;
                 var props = self.filtered_case_properties();
@@ -362,6 +363,9 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 hqImport('analytix/js/google').track.event('Case Management', analyticsAction, 'Save Properties (remove)');
                 self.case_properties.remove(property);
                 self.visible_case_properties.remove(property);
+                if (!self.visible_case_properties().length) {
+                    self.pagination_reset_flag(!self.pagination_reset_flag());
+                }
                 saveButton.fire('change');
             };
 
