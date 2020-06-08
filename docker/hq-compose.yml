@@ -22,6 +22,7 @@ services:
       - couch
       - redis
       - elasticsearch
+      - elasticsearch2
       - kafka
       - zookeeper
       - minio
@@ -79,6 +80,16 @@ services:
     volumes:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-elasticsearch:}/usr/share/elasticsearch/data:rw
       - ./files/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:rw
+
+  elasticsearch2:
+    image: elasticsearch:2.4.6
+    environment:
+      ES_JAVA_OPTS: "-Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
+    expose:
+      - "9200"
+    volumes:
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-elasticsearch:}/usr/share/elasticsearch/data
+      - ./files/elasticsearch2.yml:/usr/share/elasticsearch/config/elasticsearch.yml:rw
 
   zookeeper:
     image: wurstmeister/zookeeper

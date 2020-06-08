@@ -1,8 +1,10 @@
 import uuid
 
+from django.conf import settings
 from django.test import SimpleTestCase
 
 from mock import MagicMock, patch
+from nose.plugins.attrib import attr
 
 from pillowtop.es_utils import initialize_index_and_mapping
 
@@ -15,6 +17,7 @@ from corehq.util.elastic import ensure_index_deleted
 from corehq.apps.es.tests.utils import run_on_es2
 
 
+@attr(es_test=True)
 class TestCloudcareESAccessors(SimpleTestCase):
 
     @classmethod
@@ -52,6 +55,12 @@ class TestCloudcareESAccessors(SimpleTestCase):
             send_to_elasticsearch('users', transform_user_for_elasticsearch(user.to_json()))
         self.es.indices.refresh(USER_INDEX)
         return user
+
+    def test_plain(self):
+        # todo; remvoe; test travis setup
+        configs = [settings.ELASTICSEARCH_PORT, settings.ELASTICSEARCH_MAJOR_VERSION]
+        self.assertEqual(configs, [6200, 2])
+        self.assertEqual(configs, [9200, 7])
 
     def test_login_as_user_query_username(self):
         self._send_user_to_es(username='superman')
