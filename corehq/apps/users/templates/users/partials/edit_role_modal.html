@@ -319,6 +319,29 @@
               {% endblocktrans %}
             </div>
           </div>{# END data permissions #}
+          
+          {# BEGIN web apps permissions #}
+          <div class="form-group" data-bind="visible: $root.webAppsPrivilege">
+            <div class="col-sm-2 controls">
+              <div class="form-check">
+                <input type="checkbox"
+                       id="access-web-apps-checkbox"
+                       data-bind="checked: permissions.access_web_apps,
+                                  disable: !$root.allowEdit" />
+                <label for="access-web-apps-checkbox"><span class="sr-only">{% trans "Access Web Apps" %}</span></label>
+              </div>
+            </div>
+            <div class="col-sm-2 controls">
+              <div class="form-check-placeholder">
+                <label></label>
+              </div>
+            </div>
+            <div class="col-sm-8 control-label">
+              {% blocktrans %}
+                <strong>Web Apps</strong> &mdash; use Web Apps for online data entry
+              {% endblocktrans %}
+            </div>
+          </div>{# END web apps permissions #}
 
           {# BEGIN dropzone permissions #}
           {% if request|toggle_enabled:"DATA_FILE_DOWNLOAD" %}
