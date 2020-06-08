@@ -1312,8 +1312,8 @@ class CommCareUserFilterForm(forms.Form):
     def clean_role_id(self):
         role_id = self.cleaned_data['role_id']
         restricted_role_access = (
-            is_icds_cas_project(self.domain) and
-            not self.couch_user.is_domain_admin(self.domain)
+            is_icds_cas_project(self.domain)
+            and not self.couch_user.is_domain_admin(self.domain)
         )
         if not role_id:
             if restricted_role_access:
