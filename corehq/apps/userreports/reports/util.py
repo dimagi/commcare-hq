@@ -18,11 +18,13 @@ def get_expanded_columns(column_configs, data_source_config):
     }
 
 
-def has_location_filter(view_fn, *args, **kwargs):
+def report_has_location_filter(config_id, domain):
     """check that the report has at least one location based filter or
     location choice provider filter
     """
-    report, _ = get_report_config(config_id=kwargs.get('subreport_slug'), domain=kwargs.get('domain'))
+    if not (config_id and domain):
+        return False
+    report, _ = get_report_config(config_id=config_id, domain=domain)
     return any(
         getattr(getattr(filter_, 'choice_provider', None), 'location_safe', False) or
         getattr(filter_, 'location_filter', False)
