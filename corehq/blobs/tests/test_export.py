@@ -1,8 +1,8 @@
 import os
+import tarfile
 import uuid
 from io import BytesIO
 from tempfile import NamedTemporaryFile
-from zipfile import ZipFile
 
 from django.test import TestCase
 
@@ -49,8 +49,8 @@ class TestBlobExport(TestCase):
         with NamedTemporaryFile() as out:
             exporter = EXPORTERS['all_blobs'](self.domain_name)
             exporter.migrate(out.name, force=True)
-            with ZipFile(out.name, 'r') as zip:
-                self.assertEqual(expected, set(zip.namelist()))
+            with tarfile.open(out.name, 'r:gz') as tgzfile:
+                self.assertEqual(expected, set(tgzfile.getnames()))
 
     def test_migrate_multimedia(self):
         image_path = os.path.join('corehq', 'apps', 'hqwebapp', 'static', 'hqwebapp', 'images',
@@ -78,5 +78,5 @@ class TestBlobExport(TestCase):
         with NamedTemporaryFile() as out:
             exporter = EXPORTERS['multimedia'](self.domain_name)
             exporter.migrate(out.name, force=True)
-            with ZipFile(out.name, 'r') as zip:
-                self.assertEqual(expected, set(zip.namelist()))
+            with tarfile.open(out.name, 'r:gz') as tgzfile:
+                self.assertEqual(expected, set(tgzfile.getnames()))
