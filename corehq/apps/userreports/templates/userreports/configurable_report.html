@@ -10,24 +10,19 @@
     <script src="{% static 'reports/js/standard_hq_report.js' %}"></script>
     <script src="{% static 'reports/js/report_config_models.js' %}"></script>
     <script src="{% static 'userreports/js/configurable_report.js' %}"></script>
-    <script src="{% static 'userreports/js/build_in_progress_warning.js' %}"></script>
   {% endcompress %}
 {% endblock %}
 
 {% block report_alerts %}
   {{ block.super }}
-  {% if not report.data_source.config.is_static %}
-    {% include 'userreports/partials/build_in_progress_warning.html' %}
-  {% endif %}
+  {% include 'userreports/partials/build_in_progress_warning.html' with data_source_config=report.data_source.config %}
 {% endblock %}
 
 {% block page_actions %}
-  {% registerurl 'configurable_data_source_status' domain report.spec.config_id %}
   {% registerurl 'add_report_config' domain %}
   {% initial_page_data 'standardHQReport' True %}
   {% initial_page_data 'builder_report_type' report.spec.report_meta.builder_report_type %}
   {% initial_page_data 'report_builder_events' report_builder_events %}
-  {% initial_page_data 'is_static_data_source' report.data_source.config.is_static %}
   {% initial_page_data 'default_config' default_config %}
   {% initial_page_data 'report_configs' report_configs %}
   {% initial_page_data 'has_datespan' report.has_datespan %}

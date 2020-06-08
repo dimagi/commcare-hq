@@ -25,6 +25,12 @@ hqDefine('hqwebapp/js/inactivity', [
         if (lastRequest) {
             millisLeft = timeout - (new Date() - new Date(lastRequest));
             log("last request was " + lastRequest + ", so there are " + (millisLeft / 1000 / 60) + " minutes left in the session");
+
+            // Prevent runaway polling if the page is loaded and secure sessions is then turned OFF, which
+            // will result in the user never getting logged out and eventually a negative number of millisLeft.
+            // If the session just "expired", it might be a timing issue, so keep polling, but back off as more
+            // time passes.
+            millisLeft = Math.abs(millisLeft);
         } else {
             log("no last request, so there are " + (millisLeft / 1000 / 60) + " minutes left in the session");
         }
@@ -112,8 +118,8 @@ hqDefine('hqwebapp/js/inactivity', [
                     if (!data.success) {
                         log("ping_login failed, showing login modal");
                         var $body = $modal.find(".modal-body");
-                        var src = initialPageData.reverse('iframe_login');
-                        src += "?next=" + initialPageData.reverse('iframe_login_new_window');
+                        var src = initialPageData.reverse('iframe_domain_login');
+                        src += "?next=" + initialPageData.reverse('iframe_domain_login_new_window');
                         src += "&username=" + initialPageData.get('secure_timeout_username');
                         $modal.on('shown.bs.modal', function () {
                             var content = _.template('<iframe src="<%= src %>" height="<%= height %>" width="<%= width %>" style="border: none;"></iframe>')({
