@@ -21,6 +21,7 @@ from custom.icds_reports.const import (
     THR_REPORT_BENEFICIARY_TYPE,
     THR_REPORT_DAY_BENEFICIARY_TYPE
 )
+from custom.icds_reports.tasks import _aggregate_inactive_aww_agg
 
 
 class TestExportData(TestCase):
@@ -4097,6 +4098,7 @@ class TestExportData(TestCase):
         )
 
     def test_aww_activity_export(self):
+        _aggregate_inactive_aww_agg()
         self.assertJSONEqual(
             json.dumps(
                 AwwActivityExport(

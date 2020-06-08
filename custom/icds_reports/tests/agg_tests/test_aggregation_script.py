@@ -415,7 +415,7 @@ class InactiveAWWsTest(TestCase):
         cls.helper = InactiveAwwsAggregationDistributedHelper(last_sync)
 
     def tearDown(self):
-        pass
+        AggregateInactiveAWW.objects.all().delete()
 
     def test_missing_locations_query(self):
         with freeze_time(self.agg_time):
@@ -423,7 +423,7 @@ class InactiveAWWsTest(TestCase):
         with get_cursor(AggregateInactiveAWW) as cursor:
             cursor.execute(missing_location_query)
         records = AggregateInactiveAWW.objects.filter(first_submission__isnull=False)
-        self.assertEqual(records.count(), 46)
+        self.assertEqual(records.count(), 0)
 
     def test_aggregate_query(self):
         with freeze_time(self.agg_time):

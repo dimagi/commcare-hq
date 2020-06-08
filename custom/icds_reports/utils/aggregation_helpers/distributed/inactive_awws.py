@@ -115,5 +115,5 @@ class InactiveAwwsAggregationDistributedHelper(BaseICDSAggregationDistributedHel
             table_name=self.aggregate_parent_table,
             ucr_table_query=ucr_query,
             awc_location_table_name='awc_location_local',
-            now=datetime.datetime.utcnow()
+            now=datetime.date.today()
         ), params
