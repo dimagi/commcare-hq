@@ -31,7 +31,7 @@ from dimagi.utils.parsing import string_to_boolean
 
 from corehq.tests.noseplugins.cmdline_params import CmdLineParametersPlugin
 from corehq.util.couchdb_management import couch_config
-from corehq.util.test_utils import unit_testing_only
+from corehq.util.test_utils import unit_testing_only, timelimit
 
 log = logging.getLogger(__name__)
 
@@ -195,6 +195,7 @@ class HqdbContext(DatabaseContext):
     def should_skip_test_setup(self):
         return CmdLineParametersPlugin.get('collect_only')
 
+    @timelimit(480)
     def setup(self):
         if self.should_skip_test_setup():
             return

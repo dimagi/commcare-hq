@@ -23,6 +23,7 @@ from dateutil.relativedelta import relativedelta
 
 from couchexport.export import Format
 from couchexport.shortcuts import export_response
+
 from custom.icds_reports.utils.topojson_util.topojson_util import get_block_topojson_for_state, get_map_name
 from dimagi.utils.dates import add_months, force_to_date
 
@@ -206,6 +207,10 @@ from custom.icds_reports.reports.registered_household import (
 from custom.icds_reports.reports.service_delivery_dashboard import (
     get_service_delivery_data,
 )
+from custom.icds_reports.reports.service_delivery_dashboard_data import (
+    get_service_delivery_report_data,
+    get_service_delivery_details,
+)
 from custom.icds_reports.reports.stadiometer import (
     get_stadiometer_data_chart,
     get_stadiometer_data_map,
@@ -229,7 +234,8 @@ from custom.icds_reports.utils import (
     filter_cas_data_export,
     get_deprecation_info,
     get_location_replacement_name,
-    timestamp_string_to_date_string
+    timestamp_string_to_date_string,
+    datetime_to_date_string
 )
 from custom.icds_reports.utils.data_accessor import (
     get_awc_covered_data_with_retrying,
@@ -521,8 +527,50 @@ class ServiceDeliveryDashboardView(BaseReportView):
         start, length, order_by_number_column, order_by_name_column, order_dir = \
             get_datatables_ordering_info(request)
         reversed_order = True if order_dir == 'desc' else False
+        icds_features_flag = icds_pre_release_features(self.request.couch_user)
+        if icds_features_flag:
+            data = get_service_delivery_report_data(
+                domain,
+                start,
+                length,
+                order_by_name_column,
+                reversed_order,
+                location_filters,
+                year,
+                month,
+                step,
+                include_test
+            )
+        else:
+            data = get_service_delivery_data(
+                domain,
+                start,
+                length,
+                order_by_name_column,
+                reversed_order,
+                location_filters,
+                year,
+                month,
+                step,
+                include_test
+            )
+        return JsonResponse(data=data)
 
-        data = get_service_delivery_data(
+
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
+class ServiceDeliveryDashboardDetailsView(BaseReportView):
+
+    def get(self, request, *args, **kwargs):
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
+
+        location_filters = get_location_filter(location, domain)
+        location_filters['aggregation_level'] = location_filters.get('aggregation_level', 1)
+
+        start, length, order_by_number_column, order_by_name_column, order_dir = \
+            get_datatables_ordering_info(request)
+        reversed_order = True if order_dir == 'desc' else False
+        data = get_service_delivery_details(
             domain,
             start,
             length,
@@ -620,7 +668,7 @@ class LocationView(View):
                 'parent_name': location.parent.name if location.parent else None,
                 'parent_map_name': get_map_name(location.parent),
                 'deprecates': get_location_replacement_name(location, 'deprecates', replacement_names),
-                'deprecated_at': timestamp_string_to_date_string(location.metadata.get('deprecated_at')),
+                'archived_on': datetime_to_date_string(location.archived_on),
                 'deprecated_to': get_location_replacement_name(location, 'deprecated_to', replacement_names),
                 'deprecates_at': timestamp_string_to_date_string(location.metadata.get('deprecates_at')),
             })
@@ -661,7 +709,7 @@ class LocationView(View):
                     ),
                     'user_have_access_to_parent': loc.location_id in parent_ids,
                     'deprecates': get_location_replacement_name(loc, 'deprecates', replacement_names),
-                    'deprecated_at': timestamp_string_to_date_string(loc.metadata.get('deprecated_at')),
+                    'archived_on': datetime_to_date_string(loc.archived_on),
                     'deprecated_to': get_location_replacement_name(loc, 'deprecated_to', replacement_names),
                     'deprecates_at': timestamp_string_to_date_string(loc.metadata.get('deprecates_at')),
                 }
@@ -704,7 +752,7 @@ class LocationAncestorsView(View):
                     ),
                     'user_have_access_to_parent': location.location_id in parent_locations_ids,
                     'deprecates': get_location_replacement_name(location, 'deprecates', replacement_names),
-                    'deprecated_at': timestamp_string_to_date_string(location.metadata.get('deprecated_at')),
+                    'archived_on': datetime_to_date_string(location.archived_on),
                     'deprecated_to': get_location_replacement_name(location, 'deprecated_to', replacement_names),
                     'deprecates_at': timestamp_string_to_date_string(location.metadata.get('deprecates_at')),
                 }
@@ -721,7 +769,7 @@ class LocationAncestorsView(View):
                 ),
                 'user_have_access_to_parent': selected_location.location_id in parent_locations_ids,
                 'deprecates': get_location_replacement_name(selected_location, 'deprecates', replacement_names),
-                'deprecated_at': timestamp_string_to_date_string(selected_location.metadata.get('deprecated_at')),
+                'archived_on': datetime_to_date_string(selected_location.archived_on),
                 'deprecated_to': get_location_replacement_name(selected_location, 'deprecated_to', replacement_names),
                 'deprecates_at': timestamp_string_to_date_string(selected_location.metadata.get('deprecates_at')),
             }
@@ -1002,6 +1050,8 @@ class ExportIndicatorView(View):
 
         if indicator == SERVICE_DELIVERY_REPORT:
             config['beneficiary_category'] = request.POST.get('beneficiary_category')
+        if indicator == THR_REPORT_EXPORT:
+            config['thr_report_type'] = request.POST.get('thr_report_type')
 
         if indicator == CHILD_GROWTH_TRACKER_REPORT:
             if not sql_location or sql_location.location_type_name in [LocationTypes.STATE]:

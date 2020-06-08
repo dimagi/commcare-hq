@@ -154,7 +154,6 @@ def json_request(params, lenient=True, booleans_as_strings=False):
     return d
 
 
-# get_ip was stolen verbatim from auditcare.utils
 # this is not intended to be an all-knowing IP address regex
 IP_RE = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}')
 
@@ -170,8 +169,7 @@ def get_ip(request):
     """
 
     # if neither header contain a value, just use local loopback
-    ip_address = request.META.get('HTTP_X_FORWARDED_FOR',
-        request.META.get('REMOTE_ADDR', '127.0.0.1'))
+    ip_address = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', '127.0.0.1'))
     if ip_address:
         # make sure we have one and only one IP
         try:

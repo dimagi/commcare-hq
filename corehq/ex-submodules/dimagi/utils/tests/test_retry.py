@@ -50,6 +50,16 @@ def test_retry_on_non_retry_error():
     eq(calls, [1])
 
 
+@timelimit
+def test_retry_with_delays():
+    retry = mod.retry_on(Error, delays=[2 ** x for x in range(5)])
+    func, calls = make_retry_function(retry, 6, Error)
+    with mock_retry_sleep() as sleeps, assert_raises(Error):
+        func(1)
+    eq(sleeps, [1, 2, 4, 8, 16])
+    eq(len(calls), 6)
+
+
 class Error(Exception):
     pass
 

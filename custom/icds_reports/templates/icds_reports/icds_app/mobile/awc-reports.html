@@ -20,7 +20,7 @@
           </div>
         </div>
         <kpi data="$ctrl.data.kpi"></kpi>
-        <div ng-if="haveAccessToFeatures && $ctrl.step === 'pse'">
+        <div ng-if="$ctrl.step === 'pse'">
           <!--AWC days open per week-->
           <div class="mobile-chart">
             <p class="center pl-3 pt-3 mb-0 font-montserrat font-weight-600 font-18">{$ $ctrl.data.charts[0][0].key $}</p>
@@ -82,7 +82,7 @@
     </div>
     <help-popup></help-popup>
 
-    <div ng-if="haveAccessToFeatures && $ctrl.data && $ctrl.step === 'pse' && $ctrl.showAwcOnMap" class="awc-location">
+    <div ng-if="$ctrl.data && $ctrl.step === 'pse' && $ctrl.showAwcOnMap" class="awc-location">
       <div class="d-flex align-items-center h-10vh">
         <img src="{% static 'icds_reports/mobile/images/back-icon.png' %}" class="mr-2" ng-click="$ctrl.showAwcOnMap=false">
         <p class="mb-0 font-weight-600 font-14 text-white font-montserrat">AWC Location</p>

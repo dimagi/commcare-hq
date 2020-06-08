@@ -169,7 +169,12 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
         ];
         vm.selectedBeneficiaryCategory = 'pw_lw_children';
     }
-
+    vm.THRreportTypes = [
+        {id: 'consolidated', name: 'Consolidated'},
+        {id: 'beneficiary_wise', name: 'Beneficiary wise'},
+        {id: 'days_beneficiary_wise', name: 'Days & Beneficiary wise'},
+    ];
+    vm.selectedTHRreportType = 'consolidated';
     var ALL_OPTION = locationsService.ALL_OPTION;
     var NATIONAL_OPTION = locationsService.ALL_OPTION;
 
@@ -424,6 +429,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
         };
         if (haveAccessToFeatures) {
             taskConfig['beneficiary_category'] = vm.selectedBeneficiaryCategory;
+            taskConfig['thr_report_type'] = vm.selectedTHRreportType;
         }
         var selectedFilters = vm.selectedFilterOptions();
         if (vm.isChildBeneficiaryListSelected()) {
@@ -604,7 +610,8 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
     };
 
     vm.showReassignmentMessage = function () {
-        return vm.selectedLocation && (Date.parse(vm.selectedLocation.deprecated_at) < vm.selectedDate || Date.parse(vm.selectedLocation.deprecates_at) > vm.selectedDate);
+        var utcSelectedDate = Date.UTC(vm.selectedDate.getFullYear(), vm.selectedDate.getMonth());
+        return vm.selectedLocation && (Date.parse(vm.selectedLocation.archived_on) <= utcSelectedDate || Date.parse(vm.selectedLocation.deprecates_at) > utcSelectedDate);
     };
 }
 

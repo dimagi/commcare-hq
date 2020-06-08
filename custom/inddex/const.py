@@ -15,6 +15,11 @@ AGE_RANGES = [
     AgeRange("65+ years", 'gte65years', 'age_years_calculated', 65, 200),
 ]
 
+FOOD_ITEM = 'food_item'
+NON_STANDARD_FOOD_ITEM = 'non_std_food_item'
+STANDARD_RECIPE = 'std_recipe'
+NON_STANDARD_RECIPE = 'non_std_recipe'
+
 
 class FctGaps:
     slug = 'fct'
@@ -25,16 +30,12 @@ class FctGaps:
     INGREDIENT_GAPS = 7
     NOT_AVAILABLE = 8
     DESCRIPTIONS = {
-        AVAILABLE: "fct data available",
-        BASE_TERM: "using fct data from base term food code",
-        REFERENCE: "using fct data from reference food code",
-        INGREDIENT_GAPS: "ingredients contain fct data gaps",
-        NOT_AVAILABLE: "no fct data available",
+        AVAILABLE: "FCT data available",
+        BASE_TERM: "Using FCT data from base term food code",
+        REFERENCE: "Using FCT data from reference food code",
+        INGREDIENT_GAPS: "Ingredients contain FCT data gaps",
+        NOT_AVAILABLE: "No FCT data available",
     }
-
-    @classmethod
-    def get_description(self, code):
-        return f"{code} - {self.DESCRIPTIONS[code]}"
 
 
 class ConvFactorGaps:
@@ -44,11 +45,7 @@ class ConvFactorGaps:
     BASE_TERM = 2
     NOT_AVAILABLE = 8
     DESCRIPTIONS = {
-        AVAILABLE: "conversion factor available",
-        BASE_TERM: "using conversion factor from base term food code",
-        NOT_AVAILABLE: "no conversion factor available",
+        AVAILABLE: "Conversion Factor available",
+        BASE_TERM: "Using Conversion Factor from base term food code",
+        NOT_AVAILABLE: "No Conversion Factor available",
     }
-
-    @classmethod
-    def get_description(self, code):
-        return f"{code} - {self.DESCRIPTIONS[code]}"
