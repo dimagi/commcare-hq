@@ -111,6 +111,7 @@ INDICATORS = [
     I('already_reported_recipe_case_id', IN_UCR),
     I('already_reported_recipe_name', IN_UCR),
     I('is_ingredient', IN_UCR),
+    I('ingredient_type', CALCULATED_LATER),
     I('recipe_case_id', IN_UCR),
     I('ingr_recipe_code'),
     I('ingr_fraction'),
@@ -252,7 +253,7 @@ class FoodRow:
             else:
                 self.fct_gap_code = FctGaps.INGREDIENT_GAPS
 
-        self.fct_gap_desc = FctGaps.get_description(self.fct_gap_code)
+        self.fct_gap_desc = FctGaps.DESCRIPTIONS[self.fct_gap_code]
 
     def _set_conversion_factors(self):
         self.conv_factor_gap_code = ConvFactorGaps.NOT_AVAILABLE
@@ -271,7 +272,7 @@ class FoodRow:
                 self.conv_factor = self.conv_factor_base_term_food_code
                 self.conv_factor_gap_code = ConvFactorGaps.BASE_TERM
 
-        self.conv_factor_gap_desc = ConvFactorGaps.get_description(self.conv_factor_gap_code)
+        self.conv_factor_gap_desc = ConvFactorGaps.DESCRIPTIONS[self.conv_factor_gap_code]
 
     @property
     def age_range(self):
@@ -319,6 +320,16 @@ class FoodRow:
         raise AttributeError(f"FoodRow has no definition for {name}")
 
 
+NSR_COLS_TO_COPY = [
+    'nsr_conv_method_code_post_cooking',
+    'nsr_conv_method_desc_post_cooking',
+    'nsr_conv_option_code_post_cooking',
+    'nsr_conv_option_desc_post_cooking',
+    'nsr_measurement_amount_post_cooking',
+    'nsr_consumed_cooked_fraction',
+]
+
+
 def enrich_rows(rows):
     """Insert data possibly dependent on other rows in a recipe"""
     recipe_possibilities = [row for row in rows if row.is_recipe]
@@ -336,12 +347,16 @@ def enrich_rows(rows):
         recipe.recipe_name = recipe.ucr_row['recipe_name']
         for row in [recipe] + ingredients:
             row.total_grams = total_grams[row.uuid]
-            if row.is_recipe:
-                row.recipe_num_ingredients = len(ingredients)
+            row.recipe_num_ingredients = len(ingredients)
             if row.is_ingredient == 'yes':
                 row.recipe_name = recipe.recipe_name
                 if recipe.food_type == STANDARD_RECIPE:
+                    row.ingredient_type = 'std_recipe_ingredient'
                     row.ingr_recipe_total_grams_consumed = total_grams[recipe.uuid]
+                else:
+                    row.ingredient_type = 'non_std_recipe_ingredient'
+                for col in NSR_COLS_TO_COPY:  # Copy these values from the recipe case
+                    setattr(row, col, getattr(recipe, col))
             row.enrichment_complete = True
 
 

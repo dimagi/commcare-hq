@@ -11,6 +11,7 @@ from custom.icds_reports.const import (
     THR_REPORT_DAY_BENEFICIARY_TYPE
 )
 from custom.icds_reports.reports.incentive import IncentiveReport
+from custom.icds_reports.reports.service_delivery_report import ServiceDeliveryReport
 from custom.icds_reports.reports.take_home_ration import TakeHomeRationExport
 from custom.icds_reports.sqldata.exports.awc_infrastructure import AWCInfrastructureExport
 from custom.icds_reports.sqldata.exports.aww_activity_report import AwwActivityExport
@@ -51,12 +52,18 @@ class TestExportData(TestCase):
             new=mock.Mock(return_value=cls.now)
         )
         cls.other_india_now_mock.start()
+        cls.india_now_mock_sdr = mock.patch(
+            'custom.icds_reports.reports.service_delivery_report.india_now',
+            new=mock.Mock(return_value=cls.now)
+        )
+        cls.india_now_mock_sdr.start()
 
     @classmethod
     def tearDownClass(cls):
         cls.india_now_mock_gtr.stop()
         cls.india_now_mock_aww_activity.stop()
         cls.india_now_mock_thr.stop()
+        cls.india_now_mock_sdr.stop()
         cls.other_india_now_mock.stop()
         super(TestExportData, cls).tearDownClass()
 
@@ -4535,4 +4542,150 @@ class TestExportData(TestCase):
                  ['Year', 2017]]
               ]
              ]
+        )
+
+    def test_sdr_report_pw_lw_children(self):
+        data = ServiceDeliveryReport(
+            config={
+                'domain': 'icds-cas',
+                'aggregation_level': 1,
+                'month': date(2017, 5, 1),
+                'beneficiary_category': 'pw_lw_children'
+            },
+            location='',
+            beta=True
+        ).get_excel_data()
+        self.assertListEqual(
+            data,
+            [['SDR - PW,LM & Children (0-3 years)',
+              [[
+                  'State', 'Number of AWCs launched', 'Number of home visits conducted by AWW',
+                  'Number of expected home visits to be conducted by the AWW',
+                  'Percentage of home visits conducted by the AWW',
+                  'Number of children (0-3 years) enrolled for Anganwadi services who were weighed',
+                  'Total children (0-3 years) enrolled for Anganwadi services',
+                  'Percentage of children (0-3 years) enrolled for Anganwadi services who were weighed',
+                  'Number of Anganwadi centers who have conducted at least 2 CBE',
+                  'Total number of launched Anganwadi centers',
+                  'Percentage of Anganwadi centers who have conducted at least 2 CBE',
+                  'Number of anganwadi centers who have conducted at least 1 VHSND',
+                  'Number of beneficiaries to whom THR was not provided',
+                  'Number of beneficiaries enrolled for Anganwadi services',
+                  'Percentage of beneficiaries to whom THR was not provided',
+                  'Number of beneficiaries to whom THR was provided for 1-7 days',
+                  'Number of beneficiaries enrolled for Anganwadi services',
+                  'Percentage of beneficiaries to whom THR was provided for 1-7 days',
+                  'Number of beneficiaries to whom THR was provided for 8-14 days',
+                  'Number of beneficiaries enrolled for Anganwadi services',
+                  'Percentage of beneficiaries to whom THR was provided for 8-14 days',
+                  'Number of beneficiaries to whom THR was provided for 15-20 days',
+                  'Number of beneficiaries enrolled for Anganwadi services',
+                  'Percentage of beneficiaries to whom THR was provided for 15-20 days',
+                  'Number of beneficiaries to whom THR was provided for 21-24 days',
+                  'Number of beneficiaries enrolled for Anganwadi services',
+                  'Percentage of beneficiaries to whom THR was provided for 21-24 days',
+                  'Number of beneficiaries to whom THR was provided for at least 25 days',
+                  'Number of beneficiaries enrolled for Anganwadi services',
+                  'Percentage of beneficiaries to whom THR was provided for at least 25 days'],
+                  ['st1', 10, 3, 185, '1.62%', 83, 143, '58.04%', 0, 10, '0.00%', 2, 50, 279, '17.92%',
+                   62, 279, '22.22%',
+                   35, 279, '12.54%', 52, 279, '18.64%', 56, 279, '20.07%', 24, 279, '8.60%'],
+                  ['st2', 11, 0, 193, '0.00%', 139, 171, '81.29%', 1, 11, '9.09%', 6, 34, 318, '10.69%',
+                   29, 318, '9.12%',
+                   23, 318, '7.23%', 51, 318, '16.04%', 25, 318, '7.86%', 156, 318, '49.06%'],
+                  ['st3', 0, 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, 0, '0.00%',
+                   0, 0, '0.00%',
+                   0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%'],
+                  ['st4', 0, 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, 0, '0.00%',
+                   0, 0, '0.00%',
+                   0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%'],
+                  ['st5', 0, 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, 0, '0.00%',
+                   0, 0, '0.00%',
+                   0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%'],
+                  ['st6', 0, 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, 0, '0.00%',
+                   0, 0, '0.00%',
+                   0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%'],
+                  ['st7', 1, 0, 1, '0.00%', 0, 0, '0.00%', 0, 1, '0.00%', 0, 1, 1, '100.00%', 0, 1, '0.00%',
+                   0, 1,
+                   '0.00%', 0, 1, '0.00%', 0, 1, '0.00%', 0, 1, '0.00%'],
+                  ['Grand Total', 22, 3, 379, '0.79%', 222, 314, '70.70%', 1, 22, '4.55%', 8, 85, 598,
+                   '14.21%', 91, 598,
+                   '15.22%', 58, 598, '9.70%', 103, 598, '17.22%', 81, 598, '13.55%', 180, 598, '30.10%']]],
+             ['Export Info',
+              [[
+                  'Generated at', self.now
+              ],
+                  ['Location', 'National'],
+                  ['Month', 'May'],
+                  ['Year', 2017]]]]
+        )
+
+    def test_sdr_report_children_3_6(self):
+        data = ServiceDeliveryReport(
+            config={
+                'aggregation_level': 1,
+                'domain': 'icds-cas',
+                'month': date(2017, 5, 1),
+                'state_id': 'st1',
+                'beneficiary_category': 'children_3_6'
+            },
+            location='st1',
+            beta=True
+        ).get_excel_data()
+        self.assertListEqual(
+            data,
+            [['SDR - Children (3-6 years)', [
+                ['State', 'Number of beneficiaries to whom hot cooked meal was not provided',
+                 'Number of beneficiaries enrolled for Anganwadi services',
+                 'Percentage of beneficiaries to whom hot cooked meal was not provided',
+                 'Number of beneficiaries to whom hot cooked meal was provided for 1-7 days',
+                 'Number of beneficiaries enrolled for Anganwadi services',
+                 'Percentage of beneficiaries to whom hot cooked meal was provided for 1-7 days',
+                 'Number of beneficiaries to whom hot cooked meal was provided for 8-14 days',
+                 'Number of beneficiaries enrolled for Anganwadi services',
+                 'Percentage of beneficiaries to whom hot cooked meal was provided for 8-14 days',
+                 'Number of beneficiaries to whom hot cooked meal was provided for 15-20 days',
+                 'Number of beneficiaries enrolled for Anganwadi services',
+                 'Percentage of beneficiaries to whom hot cooked meal was provided for 15-20 days',
+                 'Number of beneficiaries to whom hot cooked meal was provided for at 21-24 days',
+                 'Number of beneficiaries enrolled for Anganwadi services',
+                 'Percentage of beneficiaries to whom hot cooked meal was provided for 21-24 days',
+                 'Number of beneficiaries to whom hot cooked meal was provided for at least 25 days',
+                 'Number of beneficiaries enrolled for Anganwadi services',
+                 'Percentage of beneficiaries to whom hot cooked meal was provided for at least 25 days',
+                 'Number of beneficiaries who did not attend pre-school education',
+                 'Number of beneficiaries enrolled for Anganwadi services',
+                 'Percentage of beneficiaries who did not attend pre-school education',
+                 'Number of beneficiaries who attended pre-school education for 1-7 days',
+                 'Number of beneficiaries enrolled for Anganwadi services',
+                 'Percentage of beneficiaries who attended pre-school education for 1-7 days',
+                 'Number of beneficiaries who attended pre-school education for 8-14 days',
+                 'Number of beneficiaries enrolled for Anganwadi services',
+                 'Percentage of beneficiaries who attended pre-school education for 8-14 days',
+                 'Number of beneficiaries who attended pre-school education for 15-20 days',
+                 'Number of beneficiaries enrolled for Anganwadi services',
+                 'Percentage of beneficiaries who attended pre-school education for 15-20 days',
+                 'Number of beneficiaries who attended pre-school education for 21-24 days',
+                 'Number of beneficiaries enrolled for Anganwadi services',
+                 'Percentage of beneficiaries who attended pre-school education for 21-24 days',
+                 'Number of beneficiaries who attended pre-school education for at least 25 days',
+                 'Number of beneficiaries enrolled for Anganwadi services',
+                 'Percentage of beneficiaries who attended pre-school education for at least 25 days',
+                 'Number of children who were weighed', 'Total children enrolled for Anganwadi services',
+                 'Percentage of children who were weighed'],
+                ['st1', 477, 483, '98.76%', 1, 483, '0.21%', 1, 483, '0.21%', 0, 483, '0.00%', 4, 483,
+                 '0.83%', 0, 483,
+                 '0.00%', 38, 483, '7.87%', 168, 483, '34.78%', 191, 483, '39.54%', 79, 483, '16.36%',
+                 7, 483, '1.45%',
+                 0, 483, '0.00%', 234, 332, '70.48%'],
+                ['Grand Total', 477, 483, '98.76%', 1, 483, '0.21%', 1, 483, '0.21%', 0, 483, '0.00%',
+                 4, 483, '0.83%',
+                 0, 483, '0.00%', 38, 483, '7.87%', 168, 483, '34.78%', 191, 483, '39.54%', 79, 483,
+                 '16.36%', 7, 483,
+                 '1.45%', 0, 483, '0.00%', 234, 332, '70.48%']]],
+             ['Export Info',
+              [['Generated at', self.now],
+               ['State', 'st1'],
+               ['Month', 'May'],
+               ['Year', 2017]]]]
         )

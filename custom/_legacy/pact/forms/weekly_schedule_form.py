@@ -43,7 +43,7 @@ class ScheduleForm(forms.Form):
             yield (x.raw_username, x.raw_username)
 
     def __init__(self, *args, **kwargs):
-        super(ScheduleForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         user_choices = list(self.get_user_choices())
         for day in DAYS_OF_WEEK:
