@@ -86,7 +86,7 @@ class FilterSpec(JsonObject):
         if 'pre_value' in doc:
             pre_value = doc['pre_value']
             data_type = doc['datatype']
-            if data_type == 'string' and type(pre_value) != 'str':
+            if data_type == 'string':
                 doc['pre_value'] = str(pre_value)
 
         return super().wrap(*args, **kwargs)
