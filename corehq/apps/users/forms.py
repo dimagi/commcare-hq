@@ -1265,13 +1265,13 @@ class CommCareUserFilterForm(forms.Form):
         from corehq.apps.locations.forms import LocationSelectWidget
         from corehq.apps.users.views import get_editable_role_choices
         self.domain = kwargs.pop('domain')
-        couch_user = kwargs.pop('couch_user')
+        self.couch_user = kwargs.pop('couch_user')
         super(CommCareUserFilterForm, self).__init__(*args, **kwargs)
         self.fields['location_id'].widget = LocationSelectWidget(self.domain)
         self.fields['location_id'].help_text = ExpandedMobileWorkerFilter.location_search_help
 
-        if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS and not couch_user.is_domain_admin(self.domain):
-            roles = get_editable_role_choices(self.domain, couch_user, allow_admin_role=True,
+        if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS and not self.couch_user.is_domain_admin(self.domain):
+            roles = get_editable_role_choices(self.domain, self.couch_user, allow_admin_role=True,
                                               use_qualified_id=False)
             self.fields['role_id'].choices = roles
         else:
@@ -1308,10 +1308,22 @@ class CommCareUserFilterForm(forms.Form):
 
     def clean_role_id(self):
         role_id = self.cleaned_data['role_id']
+        restricted_role_access = (
+            settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS and
+            not self.couch_user.is_domain_admin(self.domain)
+        )
         if not role_id:
-            return None
-        if not UserRole.get(role_id).domain == self.domain:
+            if restricted_role_access:
+                raise forms.ValidationError(_("Please select a role"))
+            else:
+                return None
+
+        role = UserRole.get(role_id)
+        if not role.domain == self.domain:
             raise forms.ValidationError(_("Invalid Role"))
+        if restricted_role_access:
+            if not role.is_non_admin_editable:
+                raise forms.ValidationError(_("Role Access Denied"))
         return role_id
 
     def clean_search_string(self):
