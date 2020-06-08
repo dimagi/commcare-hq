@@ -102,9 +102,9 @@
               <select multiple class="form-control"
                       data-bind="selectedOptions: modelsToRelease,
                                  multiselect: {
-                                     selectableHeaderTitle: '{% trans_html_attr "All projects" %}',
-                                     selectedHeaderTitle: '{% trans_html_attr "Projects to release to" %}',
-                                     searchItemTitle: '{% trans_html_attr "Search projects" %}',
+                                     selectableHeaderTitle: '{% trans_html_attr "All content" %}',
+                                     selectedHeaderTitle: '{% trans_html_attr "Content to release" %}',
+                                     searchItemTitle: '{% trans_html_attr "Search content" %}',
                                 }">
                 {% for model in view_data.master_model_status %}
                   <option value="{% html_attr model %}">{{ model.name }}</option>
@@ -120,9 +120,9 @@
               <select multiple class="form-control"
                       data-bind="selectedOptions: domainsToRelease,
                                  multiselect: {
-                                     selectableHeaderTitle: '{% trans_html_attr "All content" %}',
-                                     selectedHeaderTitle: '{% trans_html_attr "Content to release" %}',
-                                     searchItemTitle: '{% trans_html_attr "Search content" %}',
+                                     selectableHeaderTitle: '{% trans_html_attr "All projects" %}',
+                                     selectedHeaderTitle: '{% trans_html_attr "Projects to release to" %}',
+                                     searchItemTitle: '{% trans_html_attr "Search projects" %}',
                                 }">
                 {% for link in view_data.linked_domains %}
                   {% if not linked_domain.is_remote %}
