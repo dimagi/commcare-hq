@@ -1,13 +1,10 @@
 from django.utils.translation import ugettext_lazy as _
 
-from corehq.apps.es import UserES
 from corehq.apps.reports.filters.base import (
-    BaseMultipleOptionFilter,
-    BaseSingleOptionFilter,
     BaseDrilldownOptionFilter,
+    BaseSingleOptionFilter,
 )
 from corehq.apps.reports.filters.dates import DatespanFilter
-from corehq.apps.reports.util import get_simplified_users
 from custom.inddex.const import AGE_RANGES, ConvFactorGaps, FctGaps
 
 
@@ -87,7 +84,7 @@ class SupplementsFilter(BaseSingleOptionFilter):
     def options(self):
         return [
             ('yes', _('Yes')),
-            ('no', _('Not'))
+            ('no', _('No'))
         ]
 
 
@@ -125,7 +122,7 @@ class GapDescriptionFilter(BaseDrilldownOptionFilter):
                 'val': klass.slug,
                 'next': [
                     {
-                        'text': klass.get_description(code),
+                        'text': klass.DESCRIPTIONS[code],
                         'val': str(code),
                         'next': [],
                     }
@@ -159,17 +156,6 @@ class FoodTypeFilter(BaseSingleOptionFilter):
         return [
             (x, x) for x in ['food_item', 'non_std_food_item', 'std_recipe', 'non_std_recipe']
         ]
-
-
-class CaseOwnersFilter(BaseMultipleOptionFilter):
-    slug = 'owner_id'
-    label = _('Case Owners')
-    default_text = _('All')
-
-    @property
-    def options(self):
-        users = get_simplified_users(UserES().domain(self.domain).mobile_users())
-        return [(user.user_id, user.username_in_report) for user in users]
 
 
 class FaoWhoGiftFoodGroupDescriptionFilter(BaseSingleOptionFilter):

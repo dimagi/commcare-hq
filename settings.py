@@ -145,7 +145,6 @@ MIDDLEWARE = [
     'django_otp.middleware.OTPMiddleware',
     'django_user_agents.middleware.UserAgentMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
-    'corehq.middleware.LoggedOutDomainUserMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
     'corehq.middleware.SentryContextMiddleware',
@@ -475,8 +474,11 @@ RETURN_PATH_EMAIL_PASSWORD = None
 ENABLE_SOFT_ASSERT_EMAILS = True
 IS_DIMAGI_ENVIRONMENT = True
 
-SERVER_ENVIRONMENT = 'localdev'
+LOCAL_SERVER_ENVIRONMENT = 'localdev'
+SERVER_ENVIRONMENT = LOCAL_SERVER_ENVIRONMENT
 ICDS_ENVS = ('icds',)
+# environments located in india, this should not even include staging
+INDIAN_ENVIRONMENTS = ('india', 'icds-cas', 'icds-staging')
 UNLIMITED_RULE_RESTART_ENVS = ('echis', 'pna', 'swiss')
 
 # minimum minutes between updates to user reporting metadata

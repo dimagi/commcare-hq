@@ -43,6 +43,9 @@ from functools import reduce
 
 from memoized import memoized
 
+from corehq.apps.es import users as user_es
+from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
+from corehq.apps.reports.standard.cases.utils import get_case_owners
 from custom.inddex.ucr_data import FoodCaseData
 
 from .const import (
@@ -78,10 +81,10 @@ INDICATORS = [
     I('location_id', IN_UCR, IS_RECALL_META),
     I('respondent_id', IN_UCR, IS_RECALL_META),
     I('recall_case_id', IN_UCR, IS_RECALL_META),
-    I('opened_on', IN_UCR, IS_RECALL_META),
     I('opened_by_username', IN_UCR, IS_RECALL_META),
     I('owner_name', IN_UCR, IS_RECALL_META),
     I('visit_date', IN_UCR, IS_RECALL_META),
+    I('opened_on', IN_UCR, IS_RECALL_META),
     I('recall_status', IN_UCR, IS_RECALL_META),
     I('gender', IN_UCR, IS_RECALL_META),
     I('age_years_calculated', IN_UCR, IS_RECALL_META),
@@ -89,28 +92,29 @@ INDICATORS = [
     I('age_range', IS_RECALL_META),
     I('pregnant', IN_UCR, IS_RECALL_META),
     I('breastfeeding', IN_UCR, IS_RECALL_META),
-    I('supplements', IN_UCR, IS_RECALL_META),
     I('urban_rural', IN_UCR, IS_RECALL_META),
+    I('supplements', IN_UCR, IS_RECALL_META),
     I('food_code', IN_UCR),
     I('food_name', IN_UCR, IN_FOOD_FIXTURE),
     I('recipe_name', IN_UCR, CALCULATED_LATER),
     I('caseid'),
+    I('food_type', IN_UCR, IN_FOOD_FIXTURE),
+    I('food_status', IN_UCR, IS_RECALL_META),
     I('reference_food_code'),
     I('base_term_food_code', IN_UCR),
-    I('food_type', IN_UCR, IN_FOOD_FIXTURE),
     I('include_in_analysis'),
-    I('food_status', IN_UCR, IS_RECALL_META),
-    I('eating_time', IN_UCR, IS_RECALL_META),
-    I('time_block', IN_UCR, IS_RECALL_META),
     I('fao_who_gift_food_group_code'),
     I('fao_who_gift_food_group_description'),
     I('user_food_group'),
+    I('eating_time', IN_UCR, IS_RECALL_META),
+    I('time_block', IN_UCR, IS_RECALL_META),
     I('already_reported_food', IN_UCR),
     I('already_reported_food_case_id', IN_UCR),
     I('already_reported_recipe', IN_UCR),
     I('already_reported_recipe_case_id', IN_UCR),
     I('already_reported_recipe_name', IN_UCR),
     I('is_ingredient', IN_UCR),
+    I('ingredient_type', CALCULATED_LATER),
     I('recipe_case_id', IN_UCR),
     I('ingr_recipe_code'),
     I('ingr_fraction'),
@@ -252,11 +256,15 @@ class FoodRow:
             else:
                 self.fct_gap_code = FctGaps.INGREDIENT_GAPS
 
-        self.fct_gap_desc = FctGaps.get_description(self.fct_gap_code)
+        self.fct_gap_desc = FctGaps.DESCRIPTIONS[self.fct_gap_code]
 
     def _set_conversion_factors(self):
         self.conv_factor_gap_code = ConvFactorGaps.NOT_AVAILABLE
-        if self.food_type in (FOOD_ITEM, STANDARD_RECIPE) and self.conv_method_code:
+
+        if (self.food_type == FOOD_ITEM and self._is_std_recipe_ingredient
+                or self.food_type == NON_STANDARD_RECIPE):
+            self.conv_factor_gap_code = ConvFactorGaps.NOT_APPLICABLE
+        elif self.food_type in (FOOD_ITEM, STANDARD_RECIPE) and self.conv_method_code:
             self.conv_factor_food_code = self.fixtures.conversion_factors.get(
                 (self.food_code, self.conv_method_code, self.conv_option_code))
             self.conv_factor_base_term_food_code = self.fixtures.conversion_factors.get(
@@ -271,7 +279,7 @@ class FoodRow:
                 self.conv_factor = self.conv_factor_base_term_food_code
                 self.conv_factor_gap_code = ConvFactorGaps.BASE_TERM
 
-        self.conv_factor_gap_desc = ConvFactorGaps.get_description(self.conv_factor_gap_code)
+        self.conv_factor_gap_desc = ConvFactorGaps.DESCRIPTIONS[self.conv_factor_gap_code]
 
     @property
     def age_range(self):
@@ -319,6 +327,16 @@ class FoodRow:
         raise AttributeError(f"FoodRow has no definition for {name}")
 
 
+NSR_COLS_TO_COPY = [
+    'nsr_conv_method_code_post_cooking',
+    'nsr_conv_method_desc_post_cooking',
+    'nsr_conv_option_code_post_cooking',
+    'nsr_conv_option_desc_post_cooking',
+    'nsr_measurement_amount_post_cooking',
+    'nsr_consumed_cooked_fraction',
+]
+
+
 def enrich_rows(rows):
     """Insert data possibly dependent on other rows in a recipe"""
     recipe_possibilities = [row for row in rows if row.is_recipe]
@@ -336,12 +354,16 @@ def enrich_rows(rows):
         recipe.recipe_name = recipe.ucr_row['recipe_name']
         for row in [recipe] + ingredients:
             row.total_grams = total_grams[row.uuid]
-            if row.is_recipe:
-                row.recipe_num_ingredients = len(ingredients)
+            row.recipe_num_ingredients = len(ingredients)
             if row.is_ingredient == 'yes':
                 row.recipe_name = recipe.recipe_name
                 if recipe.food_type == STANDARD_RECIPE:
+                    row.ingredient_type = 'std_recipe_ingredient'
                     row.ingr_recipe_total_grams_consumed = total_grams[recipe.uuid]
+                else:
+                    row.ingredient_type = 'non_std_recipe_ingredient'
+                for col in NSR_COLS_TO_COPY:  # Copy these values from the recipe case
+                    setattr(row, col, getattr(recipe, col))
             row.enrichment_complete = True
 
 
@@ -394,10 +416,22 @@ class FoodData:
         return cls(
             domain,
             datespan=request.datespan,
-            filter_selections={'owner_id': request.GET.getlist('owner_id'),
+            filter_selections={'owner_id': cls._get_owner_ids(domain, request),
                                **{k: request.GET.get(k)
                                   for k in cls.FILTERABLE_COLUMNS if k != 'owner_id'}}
         )
+
+    @staticmethod
+    def _get_owner_ids(domain, request):
+        slugs = request.GET.getlist(EMWF.slug)
+        if EMWF.no_filters_selected(slugs) or EMWF.show_all_data(slugs) or EMWF.show_project_data(slugs):
+            return []  # don't filter by owner
+        if EMWF.show_deactivated_data(slugs):
+            return (user_es.UserES()
+                    .show_only_inactive()
+                    .domain(domain)
+                    .get_ids())
+        return get_case_owners(request, domain, slugs)
 
     def _matches_in_memory_filters(self, row):
         # If a gap type is specified, show only rows with gaps of that type

@@ -25,35 +25,29 @@ class FctGaps:
     slug = 'fct'
     name = "Food Composition Table"
     AVAILABLE = 1
-    BASE_TERM = 2
-    REFERENCE = 3
+    BASE_TERM = 3
+    REFERENCE = 5
     INGREDIENT_GAPS = 7
-    NOT_AVAILABLE = 8
+    NOT_AVAILABLE = 9
     DESCRIPTIONS = {
-        AVAILABLE: "fct data available",
-        BASE_TERM: "using fct data from base term food code",
-        REFERENCE: "using fct data from reference food code",
-        INGREDIENT_GAPS: "ingredients contain fct data gaps",
-        NOT_AVAILABLE: "no fct data available",
+        AVAILABLE: "FCT data available",
+        BASE_TERM: "Using FCT data from base term food code",
+        REFERENCE: "Using FCT data from reference food code",
+        INGREDIENT_GAPS: "Ingredients contain FCT data gaps",
+        NOT_AVAILABLE: "No FCT data available",
     }
-
-    @classmethod
-    def get_description(self, code):
-        return f"{code} - {self.DESCRIPTIONS[code]}"
 
 
 class ConvFactorGaps:
     slug = 'conv_factor'
     name = "Conversion Factor"
-    AVAILABLE = 1
-    BASE_TERM = 2
-    NOT_AVAILABLE = 8
+    AVAILABLE = 2
+    BASE_TERM = 4
+    NOT_AVAILABLE = 6
+    NOT_APPLICABLE = 8
     DESCRIPTIONS = {
-        AVAILABLE: "conversion factor available",
-        BASE_TERM: "using conversion factor from base term food code",
-        NOT_AVAILABLE: "no conversion factor available",
+        AVAILABLE: "Conversion Factor available",
+        BASE_TERM: "Using Conversion Factor from base term food code",
+        NOT_AVAILABLE: "No Conversion Factor available",
+        NOT_APPLICABLE: "Not applicable",
     }
-
-    @classmethod
-    def get_description(self, code):
-        return f"{code} - {self.DESCRIPTIONS[code]}"

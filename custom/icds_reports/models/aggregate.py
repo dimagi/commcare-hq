@@ -1418,6 +1418,8 @@ class AggregateInactiveAWW(models.Model, AggregateMixin):
     state_name = models.TextField(blank=True, null=True)
     first_submission = models.DateField(blank=True, null=True)
     last_submission = models.DateField(blank=True, null=True)
+    no_of_days_since_start = models.PositiveIntegerField(blank=True, null=True)
+    no_of_days_inactive = models.PositiveIntegerField(blank=True, null=True)
 
     @property
     def days_since_start(self):
@@ -1744,6 +1746,33 @@ class AggServiceDeliveryReport(models.Model, AggregateMixin):
     thr_21_days = models.IntegerField(null=True)
     thr_21_24_days = models.IntegerField(null=True)
     thr_25_days = models.IntegerField(null=True)
+
+    child_thr_eligible = models.IntegerField(null=True)
+    child_thr_0_days = models.IntegerField(null=True)
+    child_thr_1_7_days = models.IntegerField(null=True)
+    child_thr_8_14_days = models.IntegerField(null=True)
+    child_thr_15_20_days = models.IntegerField(null=True)
+    child_thr_21_days = models.IntegerField(null=True)
+    child_thr_21_24_days = models.IntegerField(null=True)
+    child_thr_25_days = models.IntegerField(null=True)
+
+    pw_thr_eligible = models.IntegerField(null=True)
+    pw_thr_0_days = models.IntegerField(null=True)
+    pw_thr_1_7_days = models.IntegerField(null=True)
+    pw_thr_8_14_days = models.IntegerField(null=True)
+    pw_thr_15_20_days = models.IntegerField(null=True)
+    pw_thr_21_days = models.IntegerField(null=True)
+    pw_thr_21_24_days = models.IntegerField(null=True)
+    pw_thr_25_days = models.IntegerField(null=True)
+
+    lw_thr_eligible = models.IntegerField(null=True)
+    lw_thr_0_days = models.IntegerField(null=True)
+    lw_thr_1_7_days = models.IntegerField(null=True)
+    lw_thr_8_14_days = models.IntegerField(null=True)
+    lw_thr_15_20_days = models.IntegerField(null=True)
+    lw_thr_21_days = models.IntegerField(null=True)
+    lw_thr_21_24_days = models.IntegerField(null=True)
+    lw_thr_25_days = models.IntegerField(null=True)
     state_is_test = models.SmallIntegerField(null=True)
     district_is_test = models.SmallIntegerField(null=True)
     block_is_test = models.SmallIntegerField(null=True)

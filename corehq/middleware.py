@@ -13,13 +13,9 @@ from django.contrib.auth.views import LogoutView
 from django.utils.deprecation import MiddlewareMixin
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.utils import get_domain_from_url, legacy_domain_re
-from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
+from corehq.apps.domain.utils import legacy_domain_re
 from corehq.const import OPENROSA_DEFAULT_VERSION
-from corehq.toggles import LOGOUT_SENSITIVE_DOMAIN
-from corehq.util.soft_assert import soft_assert
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.web import get_ip
 
 from dimagi.utils.parsing import json_format_datetime, string_to_utc_datetime
 
@@ -158,15 +154,8 @@ class TimeoutMiddleware(MiddlewareMixin):
                 (domain_obj and domain_obj.secure_sessions)
                 or self._user_requires_secure_session(request.couch_user)))
 
-        timeout = None
-        if secure_session or change_to_secure_session:
-            if domain_obj:
-                timeout = domain_obj.secure_timeout
-            if not timeout:
-                timeout = settings.SECURE_TIMEOUT
-        else:
-            timeout = settings.INACTIVITY_TIMEOUT
-
+        use_secure_timeout = secure_session or change_to_secure_session
+        timeout = settings.SECURE_TIMEOUT if use_secure_timeout else settings.INACTIVITY_TIMEOUT
         if change_to_secure_session:
             # force re-authentication if the user has been logged in longer than the secure timeout
             if self._session_expired(timeout, request.user.last_login, now):
@@ -252,6 +241,7 @@ class SelectiveSessionMiddleware(SessionMiddleware):
             '/downloads/temp/ajax/',  # soil polling
             '/downloads/temp/heartbeat/',  # soil status
             '/a/{domain}/apps/view/[A-Za-z0-9-]+/current_version/$'  # app manager new changes polling
+            '/hq/notifications/service/$',  # background request for notification (bell menu in top nav)
         ]
         if settings.BYPASS_SESSIONS_FOR_MOBILE:
             regexes.extend(getattr(settings, 'SESSION_BYPASS_URLS', []))
@@ -267,45 +257,3 @@ class SelectiveSessionMiddleware(SessionMiddleware):
         if self._bypass_sessions(request):
             request.session.save = lambda *x: None
             request._bypass_sessions = True
-
-
-class LoggedOutDomainUserMiddleware(MiddlewareMixin):
-    """Soft assert with domain and client IP details if user is logged out
-
-    Used to get a lead on what was happening when someone tried to
-    access a page and was not logged in.
-    """
-
-    def process_request(self, request):
-        if request.user.is_authenticated:
-            return
-        domain_name = get_domain_from_url(request.path)
-        if self.is_logout_sensitive_domain(domain_name):
-            msg = "Unauthenticated client"
-            data = {
-                "domain": domain_name,
-                "ip_address": get_ip(request),
-                "path_info": request.path_info,
-            }
-            _soft_assert_is_authenticated(False, msg, data)
-            notify_exception(request, msg, details=data)
-
-    def is_logout_sensitive_domain(self, domain_name):
-        if domain_name:
-            if LOGOUT_SENSITIVE_DOMAIN.enabled(domain_name):
-                return True
-            link = get_domain_master_link(domain_name)
-            if link and LOGOUT_SENSITIVE_DOMAIN.enabled(link.master_domain):
-                return True
-        return False
-
-
-_soft_assert_is_authenticated = soft_assert(
-    to=['{}@{}'.format(email, 'dimagi.com') for email in [
-        'jschweers',
-        'cellowitz',
-        'kcowger',
-        'btalbot',
-    ]],
-    exponential_backoff=False,
-)

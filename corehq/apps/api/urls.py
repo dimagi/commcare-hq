@@ -9,7 +9,6 @@ from corehq.apps.api.domain_metadata import (
     GIRResource,
     MaltResource,
 )
-from corehq.apps.api.domainapi import DomainAPI
 from corehq.apps.api.object_fetch_api import (
     CaseAttachmentAPI,
     FormAttachmentAPI,
@@ -118,13 +117,6 @@ def api_url_patterns():
         for R in resources:
             api.register(R())
         yield url(r'^', include(api.urls))
-    # HACK: fix circular import here, to fix later
-    try:
-        from pact.api import PactAPI
-    except ImportError:
-        pass # maybe pact isn't installed
-    for view_class in DomainAPI.__subclasses__():
-        yield url(r'^custom/%s/v%s/$' % (view_class.api_name(), view_class.api_version()), view_class.as_view(), name="%s_%s" % (view_class.api_name(), view_class.api_version()))
     yield url(r'^case/attachment/(?P<case_id>[\w\-:]+)/(?P<attachment_id>.*)$', CaseAttachmentAPI.as_view(), name="api_case_attachment")
     yield url(r'^form/attachment/(?P<form_id>[\w\-:]+)/(?P<attachment_id>.*)$', FormAttachmentAPI.as_view(), name="api_form_attachment")
 
