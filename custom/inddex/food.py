@@ -426,10 +426,8 @@ class FoodData:
             if not master_recipe:
                 yield from self._non_recipe_rows(references + ingredients)
             else:
-                yield from self._recipe_rows(master_recipe, ingredients)
-                # This part will change next commit
-                for reference in references:
-                    yield from self._recipe_rows(reference, [])
+                for recipe in [master_recipe] + references:
+                    yield from self._recipe_rows(recipe, ingredients)
 
     @property
     @memoized
