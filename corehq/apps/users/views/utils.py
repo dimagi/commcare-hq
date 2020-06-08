@@ -21,7 +21,7 @@ def get_editable_role_choices(domain, couch_user, allow_admin_role, use_qualifie
     roles = UserRole.by_domain(domain)
     if not couch_user.is_domain_admin(domain):
         try:
-            user_role = couch_user.get_role()
+            user_role = couch_user.get_role(domain)
         except DomainMembershipError:
             user_role = None
         user_role_id = user_role.get_id if user_role else None
