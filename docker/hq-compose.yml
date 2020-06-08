@@ -89,7 +89,7 @@ services:
       - "9200"
     volumes:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-elasticsearch:}/usr/share/elasticsearch/data
-      - ./files/elasticsearch2.yml:/usr/share/elasticsearch/config/elasticsearch.yml:rw
+      - ./files/elasticsearch_2.yml:/usr/share/elasticsearch/config/elasticsearch.yml:rw
 
   zookeeper:
     image: wurstmeister/zookeeper
