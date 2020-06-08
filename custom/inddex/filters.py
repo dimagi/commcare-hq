@@ -56,7 +56,7 @@ class SettlementAreaFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         return [
-            ('per-urban', _('Peri-urban')),
+            ('peri-urban', _('Peri-urban')),
             ('urban', _('Urban')),
             ('rural', _('Rural'))
         ]
