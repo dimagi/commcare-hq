@@ -470,10 +470,13 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
                                                                       parent_module=self.basic_module)
         # m2
         self.shadow_module = self.factory.new_shadow_module('shadow_module', self.basic_module, with_form=False)
+        self.shadow_child_module = self.factory.new_shadow_module('shadow_child', self.child_module, with_form=False)
+        self.shadow_child_module.root_module_id = self.shadow_module.unique_id
 
         self.child_module.put_in_root = True
+        self.shadow_child_module.put_in_root = True
 
-        expected_entry = ("""
+        expected_menu = ("""
         <partial>
           <menu id="m0">
             <text>
@@ -496,25 +499,24 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
             <text>
               <locale id="modules.m2"/>
             </text>
-            <command id="m2.m1-f0"/>
-          </menu>
-        """                     # shadow module - child
-        """
-          <menu id="m2">
-            <text>
-              <locale id="modules.m2"/>
-            </text>
             <command id="m2-f0"/>
             <command id="m2-f1"/>
           </menu>
         """                     # shadow module - basic
         """
+          <menu id="m2">
+            <text>
+              <locale id="modules.m2"/>
+            </text>
+            <command id="m3-f0"/>
+          </menu>
+        """                     # shadow module - child
+        """
         </partial>
         """)
         suite = self.factory.app.create_suite()
-
         self.assertXmlPartialEqual(
-            expected_entry,
+            expected_menu,
             suite,
             './menu',
         )

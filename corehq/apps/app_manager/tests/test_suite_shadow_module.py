@@ -36,11 +36,17 @@ class ShadowModuleWithChildSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
     def test_shadow_module_source_parent(self, *args):
         self.shadow.source_module_id = self.parent.unique_id
+        self.shadow_child = self.app.add_module(ShadowModule.new_module('Shadow Child Module', None))
+        self.shadow_child.source_module_id = self.child.unique_id
+        self.shadow_child.root_module_id = self.shadow.unique_id
         self.assertXmlPartialEqual(self.get_xml('shadow_module_families_source_parent'),
                                    self.app.create_suite(), "./menu")
 
     def test_shadow_module_source_parent_forms_only(self, *args):
         self.shadow.source_module_id = self.parent.unique_id
+        self.shadow_child = self.app.add_module(ShadowModule.new_module('Shadow Child Module', None))
+        self.shadow_child.source_module_id = self.child.unique_id
+        self.shadow_child.root_module_id = self.shadow.unique_id
         for m in self.app.get_modules():
             m.put_in_root = True
         self.assertXmlPartialEqual(self.get_xml('shadow_module_families_source_parent_forms_only'),
