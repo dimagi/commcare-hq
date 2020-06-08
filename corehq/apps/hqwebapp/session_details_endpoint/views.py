@@ -11,7 +11,7 @@ from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.domain.auth import formplayer_auth
 from corehq.apps.hqadmin.utils import get_django_user_from_session, get_session
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, DomainPermissionsMirror
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -61,11 +61,17 @@ class SessionDetailsView(View):
         session['last_request'] = json_format_datetime(datetime.datetime.utcnow())
         session.save()
 
+        domains = set()
+        for domain in couch_user.domains:
+            domains.add(domain)
+            mirror_domains = DomainPermissionsMirror.mirror_domains(domain)
+            domains.update(mirror_domains)
+
         return JsonResponse({
             'username': user.username,
             'djangoUserId': user.pk,
             'superUser': user.is_superuser,
             'authToken': None,
-            'domains': couch_user.domains,
+            'domains': list(domains),
             'anonymous': False
         })
