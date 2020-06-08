@@ -10,15 +10,17 @@ from .utils import MultiTabularReport, format_row
 
 
 class NutrientIntakeReport(MultiTabularReport):
-    name = 'Output 3 - Disaggregated Intake Data by Food and Aggregated Daily Intake Data by Respondent'
-    slug = 'report_3_disaggr_intake_data_by_food_and_aggr_daily_intake_data_by_respondent'  # yup, really
+    name = 'Output 3 - Disaggregated Intake Data by Respondent and Aggregated Daily Intake Data by Respondent'
+    slug = 'report_3_disaggr_intake_data_by_rspndnt_and_aggr_daily_intake_data_by_rspndnt'  # yup, really
+
     export_only = True
     description = mark_safe(textwrap.dedent("""
-        This output provides information on the total quantity and total
+        This report provides information on the total quantity and total
         nutrient content for each individual food or recipe reported by each
-        respondent in the recall.
+        respondent in the recall. It also provides total daily energy and
+        nutrient intakes for each respondent.
         <br/>
-        This output cannot be previewed. Users must download the data to access
+        This report cannot be previewed. Users must download the data to access
         the information.
     """))
 
@@ -100,7 +102,7 @@ def _sum(items):
 
 class IntakeData:
     title = 'Disaggregated Intake Data By Food'
-    slug = 'disaggr_intake_data_by_food'
+    slug = 'disaggr_intake_data_by_rspndnt'
     _columns = [
         'unique_respondent_id', 'location_id', 'respondent_id',
         'recall_case_id', 'opened_by_username', 'owner_name', 'visit_date',
@@ -110,8 +112,8 @@ class IntakeData:
         'reference_food_code', 'caseid', 'food_name', 'recipe_name',
         'fao_who_gift_food_group_code', 'fao_who_gift_food_group_description',
         'user_food_group', 'food_type', 'include_in_analysis', 'is_ingredient',
-        'food_status', 'total_grams', 'conv_factor_gap_code',
-        'conv_factor_gap_desc', 'fct_gap_code', 'fct_gap_desc',
+        'total_grams', 'conv_factor_gap_code', 'conv_factor_gap_desc',
+        'fct_gap_code', 'fct_gap_desc',
     ]
 
     def __init__(self, food_data):

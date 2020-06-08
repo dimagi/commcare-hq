@@ -6,7 +6,7 @@ from django.http import HttpResponse
 
 
 class InfobipIncomingMessageView(IncomingBackendView):
-    urlname = 'infobip_message'
+    urlname = 'infobip_sms'
 
     @property
     def backend_class(self):
@@ -20,14 +20,15 @@ class InfobipIncomingMessageView(IncomingBackendView):
             message_content = message.get('message')
             if message_content.get('type') == 'TEXT':
                 body = message_content.get('text', {})
-            # TODO: Add other message types here
+            elif message_content.get('type') in ['IMAGE', 'AUDIO', 'VIDEO', 'DOCUMENT']:
+                body = message_content.get('caption', {})
 
-        incoming_sms(
-            from_,
-            body,
-            SQLInfobipBackend.get_api_id(),
-            backend_message_id=message_sid,
-            domain_scope=self.domain,
-            backend_id=self.backend_couch_id
-        )
+            incoming_sms(
+                from_,
+                body,
+                SQLInfobipBackend.get_api_id(),
+                backend_message_id=message_sid,
+                domain_scope=self.domain,
+                backend_id=self.backend_couch_id
+            )
         return HttpResponse("")

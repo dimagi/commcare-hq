@@ -98,6 +98,7 @@ from corehq.tabs.utils import (
     sidebar_to_dropdown,
 )
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
+from custom.icds.view_utils import data_interfaces_blocked_for_domain
 from custom.icds.views.hosted_ccz import ManageHostedCCZ, ManageHostedCCZLink
 
 
@@ -790,19 +791,22 @@ class ProjectDataTab(UITab):
             items.append([_("Export Data"), export_data_views])
 
         if self.can_edit_commcare_data:
-            from corehq.apps.data_interfaces.dispatcher \
-                import EditDataInterfaceDispatcher
-            edit_section = EditDataInterfaceDispatcher.navigation_sections(
-                request=self._request, domain=self.domain)
-
-            from corehq.apps.data_interfaces.views import AutomaticUpdateRuleListView
+            edit_section = None
+            if not data_interfaces_blocked_for_domain(self.domain):
+                from corehq.apps.data_interfaces.dispatcher import EditDataInterfaceDispatcher
+                edit_section = EditDataInterfaceDispatcher.navigation_sections(
+                    request=self._request, domain=self.domain)
 
             if self.can_use_data_cleanup:
-                edit_section[0][1].append({
+                from corehq.apps.data_interfaces.views import AutomaticUpdateRuleListView
+                automatic_update_rule_list_view = {
                     'title': _(AutomaticUpdateRuleListView.page_title),
                     'url': reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]),
-                })
-
+                }
+                if edit_section:
+                    edit_section[0][1].append(automatic_update_rule_list_view)
+                else:
+                    edit_section = [(ugettext_lazy('Edit Data'), [automatic_update_rule_list_view])]
             items.extend(edit_section)
 
         if ((toggles.EXPLORE_CASE_DATA.enabled_for_request(self._request) or
@@ -1183,6 +1187,7 @@ class MessagingTab(UITab):
     def whatsapp_urls(self):
         from corehq.apps.sms.models import SQLMobileBackend
         from corehq.messaging.smsbackends.turn.models import SQLTurnWhatsAppBackend
+        from corehq.messaging.smsbackends.infobip.models import SQLInfobipBackend
         from corehq.apps.sms.views import WhatsAppTemplatesView
         whatsapp_urls = []
 
@@ -1190,9 +1195,13 @@ class MessagingTab(UITab):
             SQLTurnWhatsAppBackend.get_api_id() in
             (b.get_api_id() for b in
              SQLMobileBackend.get_domain_backends(SQLMobileBackend.SMS, self.domain)))
+        domain_has_infobip_integration = (
+            SQLInfobipBackend.get_api_id() in
+            (b.get_api_id() for b in
+             SQLMobileBackend.get_domain_backends(SQLMobileBackend.SMS, self.domain)))
         user_is_admin = (self.couch_user.is_superuser or self.couch_user.is_domain_admin(self.domain))
 
-        if user_is_admin and domain_has_turn_integration:
+        if user_is_admin and (domain_has_turn_integration or domain_has_infobip_integration):
             whatsapp_urls.append({
                 'title': _('Template Management'),
                 'url': reverse(WhatsAppTemplatesView.urlname, args=[self.domain]),
