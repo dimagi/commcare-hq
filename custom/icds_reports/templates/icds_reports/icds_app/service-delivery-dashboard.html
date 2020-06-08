@@ -28,6 +28,10 @@
         <div ng-if="$ctrl.data">
             <div class="row black">
                 <div ng-if="$ctrl.showTable" class="col-md-12">
+                    <div class="d-flex justify-content-between" ng-if="$ctrl.isDetailsDisplayed">
+                      <b><span ng-bind="$ctrl.detailsTableHeading"></span></b>
+                      <button class="btn btn-info btn-sm right" ng-click="$ctrl.closeDetails()">Back</button>
+                    </div>
                     <table
                             id="serviceDeliveryDashboardTable"
                             datatable=""

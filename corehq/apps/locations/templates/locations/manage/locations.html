@@ -81,7 +81,7 @@
             </a>
           {% endif %}
 
-          {% if request.can_access_all_locations and not request.is_view_only %}
+          {% if user_is_domain_admin %}
             <a class="btn btn-default track-usage-link" href="{% url "location_fields_view" domain %}"
                data-category="Organization Structure" data-action="Edit Location Fields">
               <i class="fa fa-edit"></i>

@@ -1,6 +1,10 @@
 from django.utils.translation import ugettext as _
 
-from corehq.apps.users.models import AdminUserRole, UserRole
+from corehq.apps.users.models import (
+    AdminUserRole,
+    DomainMembershipError,
+    UserRole,
+)
 
 
 def get_editable_role_choices(domain, couch_user, allow_admin_role, use_qualified_id=True):
@@ -16,7 +20,15 @@ def get_editable_role_choices(domain, couch_user, allow_admin_role, use_qualifie
 
     roles = UserRole.by_domain(domain)
     if not couch_user.is_domain_admin(domain):
-        roles = [role for role in roles if role.is_non_admin_editable]
+        try:
+            user_role = couch_user.get_role()
+        except DomainMembershipError:
+            user_role = None
+        user_role_id = user_role.get_id if user_role else None
+        roles = [
+            role for role in roles
+            if role.is_non_admin_editable or (user_role_id and user_role_id in role.assignable_by)
+        ]
     elif allow_admin_role:
         roles = [AdminUserRole(domain=domain)] + roles
     return [role_to_choice(role) for role in roles]

@@ -24,7 +24,7 @@ from tastypie.authentication import ApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
 from tastypie.models import ApiKey
 
-from auditcare.utils import get_ip
+from dimagi.utils.web import get_ip
 
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.web import json_response
