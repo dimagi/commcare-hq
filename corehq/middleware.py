@@ -154,8 +154,15 @@ class TimeoutMiddleware(MiddlewareMixin):
                 (domain_obj and domain_obj.secure_sessions)
                 or self._user_requires_secure_session(request.couch_user)))
 
-        use_secure_timeout = secure_session or change_to_secure_session
-        timeout = settings.SECURE_TIMEOUT if use_secure_timeout else settings.INACTIVITY_TIMEOUT
+        timeout = None
+        if secure_session or change_to_secure_session:
+            if domain_obj:
+                timeout = domain_obj.secure_timeout
+            if not timeout:
+                timeout = settings.SECURE_TIMEOUT
+        else:
+            timeout = settings.INACTIVITY_TIMEOUT
+
         if change_to_secure_session:
             # force re-authentication if the user has been logged in longer than the secure timeout
             if self._session_expired(timeout, request.user.last_login, now):
