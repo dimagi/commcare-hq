@@ -14,16 +14,21 @@ class FoodCaseData(SqlData):
     """This class pulls raw data from the food_consumption_indicators UCR"""
     group_by = ['doc_id']
     engine_id = UCR_ENGINE_ID
-    FILTERABLE_COLUMNS = [
+    SPECIAL_COLS = [
         'age_range',
+    ]
+    MULTI_SELECT_COLS = [
+        'owner_id',
+        'urban_rural',
+    ]
+    SINGLE_SELECT_COLS = [
         'breastfeeding',
         'gender',
-        'owner_id',
         'pregnant',
         'recall_status',
         'supplements'
-        'urban_rural',
     ]
+    FILTERABLE_COLUMNS = (SPECIAL_COLS + MULTI_SELECT_COLS + SINGLE_SELECT_COLS)
 
     @property
     def columns(self):
@@ -40,21 +45,13 @@ class FoodCaseData(SqlData):
         filters = [GTE('visit_date', 'startdate'), LTE('visit_date', 'enddate')]
         if self._age_range:
             filters.append(self._get_age_range_filter())
-        for multiselect_column in ['owner_id', 'urban_rural']:
-            if self.config.get(multiselect_column):
-                infilter_bindparams = get_INFilter_bindparams(multiselect_column,
-                                                              self.config[multiselect_column])
-                filters.append(IN(multiselect_column, infilter_bindparams))
-        for column in [
-                'breastfeeding',
-                'gender',
-                'pregnant',
-                'recall_status',
-                'supplements'
-                'urban_rural',
-        ]:
-            if self.config.get(column):
-                filters.append(EQ(column, column))
+        for col in self.MULTI_SELECT_COLS:
+            if self.config.get(col):
+                infilter_bindparams = get_INFilter_bindparams(col, self.config[col])
+                filters.append(IN(col, infilter_bindparams))
+        for col in self.SINGLE_SELECT_COLS:
+            if self.config.get(col):
+                filters.append(EQ(col, col))
         return filters
 
     @property
@@ -75,7 +72,7 @@ class FoodCaseData(SqlData):
     @property
     def filter_values(self):
         filter_values = super().filter_values
-        for key in ['owner_id', 'urban_rural']:
+        for key in self.MULTI_SELECT_COLS:
             clean_IN_filter_value(filter_values, key)
         if self._age_range:
             filter_values.update(self._get_age_range_filter_values())
