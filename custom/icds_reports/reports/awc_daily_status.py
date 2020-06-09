@@ -12,8 +12,8 @@ from custom.icds_reports.models import AggAwcDailyView
 from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indian_formatted_number
 
 
-@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
-def get_awc_daily_status_data_map(domain, config, loc_level, show_test=False):
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'beta'], timeout=30 * 60)
+def get_awc_daily_status_data_map(domain, config, loc_level, show_test=False, beta=False):
     date = datetime(*config['month'])
     del config['month']
 
@@ -51,6 +51,8 @@ def get_awc_daily_status_data_map(domain, config, loc_level, show_test=False):
     fills.update({'0%-50%': MapColors.RED})
     fills.update({'50%-75%': MapColors.ORANGE})
     fills.update({'75%-100%': MapColors.PINK})
+    if beta:
+        fills.update({'Not Launched': MapColors.GREY})
     fills.update({'defaultFill': MapColors.GREY})
 
     return {
