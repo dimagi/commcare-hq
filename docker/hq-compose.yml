@@ -78,7 +78,7 @@ services:
     expose:
       - "9200"
     volumes:
-      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-elasticsearch:}/usr/share/elasticsearch/data
+      - ${VOLUME_PREFIX}${BLANK_IF_TESTS-elasticsearch:}/usr/share/elasticsearch/data:rw
       - ./files/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:rw
 
   elasticsearch2:
