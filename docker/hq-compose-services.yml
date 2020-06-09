@@ -53,8 +53,9 @@ services:
     extends:
       file: hq-compose.yml
       service: elasticsearch2
-    command: elasticsearch
+    command: elasticsearch --cluster.name=${ES_CLUSTER_NAME}
     environment:
+      ES_CLUSTER_NAME: ES_CLUSTER_NAME
       ES_JAVA_OPTS: "-Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
     ports:
       - "6200:6200" # is used in python-elasticsearch-v2 build matrix
