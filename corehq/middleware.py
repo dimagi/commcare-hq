@@ -113,11 +113,19 @@ class LogLongRequestMiddleware(MiddlewareMixin):
 
 class TimeoutMiddleware(MiddlewareMixin):
 
+    @classmethod
+    def update_secure_session(session, is_secure, timeout):
+        session['secure_session'] = is_secure
+        session['secure_session_timeout'] = timeout
+        session['last_request'] = json_format_datetime(datetime.datetime.utcnow())
+        session.set_expiry(timeout * 60)
+
     @staticmethod
-    def _session_expired(timeout, activity, time):
+    def _session_expired(timeout, activity):
         if activity is None:
             return False
 
+        time = datetime.datetime.utcnow()
         time_since_activity = time - string_to_utc_datetime(activity)
         return time_since_activity > datetime.timedelta(minutes=timeout)
 
@@ -145,7 +153,6 @@ class TimeoutMiddleware(MiddlewareMixin):
         secure_session = request.session.get('secure_session')
         domain = getattr(request, "domain", None)
         domain_obj = Domain.get_by_name(domain) if domain else None
-        now = datetime.datetime.utcnow()
 
         # figure out if we want to switch to secure_sessions
         change_to_secure_session = (
@@ -165,18 +172,16 @@ class TimeoutMiddleware(MiddlewareMixin):
 
         if change_to_secure_session:
             # force re-authentication if the user has been logged in longer than the secure timeout
-            if self._session_expired(timeout, request.user.last_login, now):
+            if self._session_expired(timeout, request.user.last_login):
                 LogoutView.as_view(template_name=settings.BASE_TEMPLATE)(request)
                 # this must be after logout so it is attached to the new session
-                request.session['secure_session'] = True
-                request.session.set_expiry(timeout * 60)
+                self.update_secure_session(request.session, True, timeout)
                 return HttpResponseRedirect(reverse('login') + '?next=' + request.path)
 
-            request.session['secure_session'] = True
+            self.update_secure_session(request.session, True, timeout)
 
         if not getattr(request, '_bypass_sessions', False):
-            request.session.set_expiry(timeout * 60)
-            request.session['last_request'] = json_format_datetime(now)
+            self.update_secure_session(request.session, secure_session, timeout)
 
 
 def always_allow_browser_caching(fn):
