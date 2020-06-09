@@ -584,9 +584,9 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
                         case "thr": return renderPercentageAndPartials(full.thr, haveAccessToFeatures ? full.thr_21_days : full.thr_given_21_days, haveAccessToFeatures ? full.thr_eligible : full.total_thr_candidates, 'THR');
                         case "pse": return renderPercentageAndPartials(full.pse, haveAccessToFeatures ? full.pse_21_days : full.pse_attended_21_days, haveAccessToFeatures ? full.pse_eligible : full.children_3_6, 'beneficiaries');
                         case "supNutrition": return renderPercentageAndPartials(full.sn, haveAccessToFeatures ? full.lunch_21_days : full.lunch_count_21_days, haveAccessToFeatures ? full.pse_eligible : full.children_3_6, 'beneficiaries');
-                        case "thrAtleast25": return renderPercentageAndPartials(full.thr, full.thr_25_days, full.thr_eligible);
-                        case "pseAtleast25": return renderPercentageAndPartials(full.pse, full.pse_25_days, full.pse_eligible);
-                        case "snAtleast25": return renderPercentageAndPartials(full.sn, full.lunch_25_days, full.pse_eligible);
+                        case "thrAtleast25": return renderPercentageAndPartials(full.thr, full.thr_25_days, full.thr_eligible, 'THR');
+                        case "pseAtleast25": return renderPercentageAndPartials(full.pse, full.pse_25_days, full.pse_eligible, 'beneficiaries');
+                        case "snAtleast25": return renderPercentageAndPartials(full.sn, full.lunch_25_days, full.pse_eligible, 'beneficiaries');
                         case "num_awcs_conducted_cbe": return renderPercentageAndPartials(full.cbe, full.num_awcs_conducted_cbe, full.num_launched_awcs, 'CBE');
                         case "pse0": return renderPercentageAndPartials(full.pse_0_days_val, full.pse_0_days, full.pse_eligible, 'beneficiaries');
                         case "pse17": return renderPercentageAndPartials(full.pse_1_7_days_val, full.pse_1_7_days, full.pse_eligible, 'beneficiaries');
