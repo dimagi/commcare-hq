@@ -7,7 +7,7 @@ from settings import *
 
 # to enable v2 ES tests
 ELASTICSEARCH_PORT = os.environ.get('ELASTICSEARCH_2_PORT', ELASTICSEARCH_PORT)
-ELASTICSEARCH_MAJOR_VERSION = os.environ.get('ELASTICSEARCH_MAJOR_VERSION') or 7
+ELASTICSEARCH_MAJOR_VERSION = int(os.environ.get('ELASTICSEARCH_MAJOR_VERSION')) or 7
 
 USING_CITUS = any(db.get('ROLE') == 'citus_master' for db in DATABASES.values())
 
