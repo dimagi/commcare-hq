@@ -11,7 +11,7 @@
   {% initial_page_data 'domain_links' domain_links %}
 
 <div id="all-links" class="ko-template">
-  <div class="btn-toolbar" data-bind="visible: invitationLinks().length">
+  <div class="btn-toolbar" data-bind="visible: invitationLinks().length > 1">
     <a class="btn btn-primary"
        href="{% url "accept_all_invitations" %}">
       <i class="fa fa-envelope"></i>
@@ -22,7 +22,7 @@
 
   <div class="panel panel-info" data-bind="visible: invitationLinks().length">
     <div class="panel-heading ">
-      <h3 class="panel-title" style="padding-top: 7px;">
+      <h3 class="panel-title">
         {% trans 'My Invitations' %}
       </h3>
     </div>
@@ -30,12 +30,12 @@
       <table class="table table-striped table-responsive">
         <thead>
           <tr>
-            <th>Project Name
+            <th>{% trans 'Project Name' %}
             </th>
           </tr>
         </thead>
         <tbody data-bind="foreach: invitationLinks">
-          <tr style="padding-bottom: 6px;">
+          <tr>
             <td>
               
               <a data-bind="attr: {href: url}" class="btn btn-default btn-xs">
@@ -55,7 +55,7 @@
     <div class="panel-heading ">
       <div class="row">
         <div class="col-sm-6">
-          <h3 class="panel-title" style="padding-top: 7px;">
+          <h3 class="panel-title">
             {% trans 'My Projects' %}
           </h3>
         </div>
@@ -73,11 +73,11 @@
       <table class="table table-striped table-responsive">
         <thead>
           <tr>
-            <th>Project Name
+            <th>{% trans 'Project Name' %}
             </th>
           </tr>
         </thead>
-        <tbody class="nav nav-pills nav-stacked" data-bind="foreach: domainLinks">
+        <tbody data-bind="foreach: domainLinks">
           <tr>
             <td>
               <a data-bind="attr: {href: url}, text: display_name">
