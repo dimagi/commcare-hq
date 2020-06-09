@@ -281,7 +281,9 @@ hqDefine('app_manager/js/releases/releases', function () {
             // Not so nice... Hide the open modal so we don't get bootstrap recursion errors
             // http://stackoverflow.com/questions/13649459/twitter-bootstrap-multiple-modal-error
             $('.modal.fade.in').modal('hide');
-            self.download_modal.modal({show: true});
+            if (self.download_modal) {
+                self.download_modal.modal({show: true});
+            }
         };
 
         self.buildButtonEnabled = ko.computed(function () {
