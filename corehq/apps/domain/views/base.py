@@ -50,7 +50,7 @@ def select(request, do_not_redirect=False, next_view=None):
         'domain_links': domain_links,
         'invitation_links': [{
             'display_name': i.domain,
-            'url': reverse("domain_accept_invitation", args=[i.domain, i.uuid]),
+            'url': reverse("domain_accept_invitation", args=[i.domain, i.uuid]) + '?no_redirect=true',
         } for i in open_invitations] if show_invitations else [],
         'current_page': {'page_name': _('Select A Project')},
     }
@@ -92,8 +92,9 @@ def accept_all_invitations(request):
     user = request.couch_user
     invites = Invitation.by_email(user.username)
     for invitation in invites:
-        _invite(invitation, user)
-        messages.success(request,  _(f'You have been added to the "{invitation.domain}" project space.'))
+        if not invitation.is_expired:
+            _invite(invitation, user)
+            messages.success(request, _(f'You have been added to the "{invitation.domain}" project space.'))
     return HttpResponseRedirect(reverse('domain_select_redirect'))
 
 

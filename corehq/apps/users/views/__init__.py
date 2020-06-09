@@ -66,7 +66,6 @@ from corehq.apps.registration.forms import (
 )
 from corehq.apps.registration.utils import activate_new_user
 from corehq.apps.reports.util import get_possible_reports
-from corehq.apps.settings.views import MyProjectsList
 from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.sms.verify import (
     VERIFICATION__ALREADY_IN_USE,
@@ -862,7 +861,7 @@ class UserInvitationView(object):
         return _('You have been added to the "%s" project space.') % self.domain
 
     def redirect_to_on_success(self, email, domain):
-        if Invitation.by_email(email).count() > 0:
+        if Invitation.by_email(email).count() > 0 and not self.request.GET.get('no_redirect'):
             return reverse("domain_select_redirect")
         else:
             return reverse("domain_homepage", args=[domain,])
