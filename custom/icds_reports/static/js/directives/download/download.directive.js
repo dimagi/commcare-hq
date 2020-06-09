@@ -348,7 +348,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
             vm.quarters = vm.quartersCopy.slice(1,4);
             vm.selectedQuarter = vm.selectedQuarter >= 2 ? vm.selectedQuarter : 2;
 
-        } else if (year.id === latest.getFullYear()) {
+        } else if (year.id === latest.getFullYear() && latest.getMonth() >= 3) {
             const maxQuarter = Math.floor((latest.getMonth() + 1)/4);
             vm.months = _.filter(vm.monthsCopy, function (month) {
                 return month.id <= latest.getMonth() + 1;
