@@ -1,8 +1,27 @@
 from collections import namedtuple
 
+from attr import attrib, attrs
+
 FOOD_CONSUMPTION = 'food_consumption_indicators'
 
-AgeRange = namedtuple("AgeRange", "name slug column lower_bound upper_bound")
+
+@attrs(frozen=True)
+class AgeRange:
+    name = attrib()
+    slug = attrib()
+    column = attrib()
+    lower_bound = attrib()
+    upper_bound = attrib()
+
+    @property
+    def lower_param(self):
+        return f"{self.slug}_lower"
+
+    @property
+    def upper_param(self):
+        return f"{self.slug}_upper"
+
+
 # note: these slugs are intended for internal use only (you can change them)
 AGE_RANGES = [
     AgeRange("0-5.9 months", 'lt6months', 'age_months_calculated', 0, 6),
