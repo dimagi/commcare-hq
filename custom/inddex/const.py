@@ -25,10 +25,10 @@ class FctGaps:
     slug = 'fct'
     name = "Food Composition Table"
     AVAILABLE = 1
-    BASE_TERM = 2
-    REFERENCE = 3
+    BASE_TERM = 3
+    REFERENCE = 5
     INGREDIENT_GAPS = 7
-    NOT_AVAILABLE = 8
+    NOT_AVAILABLE = 9
     DESCRIPTIONS = {
         AVAILABLE: "FCT data available",
         BASE_TERM: "Using FCT data from base term food code",
@@ -41,11 +41,13 @@ class FctGaps:
 class ConvFactorGaps:
     slug = 'conv_factor'
     name = "Conversion Factor"
-    AVAILABLE = 1
-    BASE_TERM = 2
-    NOT_AVAILABLE = 8
+    AVAILABLE = 2
+    BASE_TERM = 4
+    NOT_AVAILABLE = 6
+    NOT_APPLICABLE = 8
     DESCRIPTIONS = {
         AVAILABLE: "Conversion Factor available",
         BASE_TERM: "Using Conversion Factor from base term food code",
         NOT_AVAILABLE: "No Conversion Factor available",
+        NOT_APPLICABLE: "Not applicable",
     }

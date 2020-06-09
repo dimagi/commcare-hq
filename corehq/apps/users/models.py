@@ -411,6 +411,9 @@ class UserRole(QuickCachedDocumentMixin, Document):
     def preset_permissions_names(cls):
         return {details['name'] for role, details in PERMISSIONS_PRESETS.items()}
 
+    def accessible_by_non_admin_role(self, role_id):
+        return self.is_non_admin_editable or (role_id and role_id in self.assignable_by)
+
 
 PERMISSIONS_PRESETS = {
     'edit-apps': {

@@ -98,7 +98,7 @@ from corehq.tabs.utils import (
     sidebar_to_dropdown,
 )
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
-from custom.icds.view_utils import data_interfaces_blocked_for_domain
+from custom.icds.view_utils import is_icds_cas_project
 from custom.icds.views.hosted_ccz import ManageHostedCCZ, ManageHostedCCZLink
 
 
@@ -792,7 +792,7 @@ class ProjectDataTab(UITab):
 
         if self.can_edit_commcare_data:
             edit_section = None
-            if not data_interfaces_blocked_for_domain(self.domain):
+            if not is_icds_cas_project(self.domain):
                 from corehq.apps.data_interfaces.dispatcher import EditDataInterfaceDispatcher
                 edit_section = EditDataInterfaceDispatcher.navigation_sections(
                     request=self._request, domain=self.domain)

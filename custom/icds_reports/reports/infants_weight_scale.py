@@ -14,8 +14,8 @@ from custom.icds_reports.utils import apply_exclude, generate_data_for_map, indi
 from django.db.models import Case, When, Q, IntegerField
 
 
-@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
-def get_infants_weight_scale_data_map(domain, config, loc_level, show_test=False):
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'beta'], timeout=30 * 60)
+def get_infants_weight_scale_data_map(domain, config, loc_level, show_test=False, beta=False):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -44,6 +44,8 @@ def get_infants_weight_scale_data_map(domain, config, loc_level, show_test=False
     fills.update({'0%-25%': MapColors.RED})
     fills.update({'25%-75%': MapColors.ORANGE})
     fills.update({'75%-100%': MapColors.PINK})
+    if beta:
+        fills.update({'Not Launched': MapColors.GREY})
     fills.update({'defaultFill': MapColors.GREY})
 
     return {

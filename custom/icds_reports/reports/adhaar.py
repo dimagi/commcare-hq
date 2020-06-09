@@ -45,6 +45,8 @@ def get_adhaar_data_map(domain, config, loc_level, show_test=False, beta=False):
     fills.update({'0%-25%': MapColors.RED})
     fills.update({'25%-50%': MapColors.ORANGE})
     fills.update({'50%-100%': MapColors.PINK})
+    if beta:
+        fills.update({'Not Launched': MapColors.GREY})
     fills.update({'defaultFill': MapColors.GREY})
 
     return {
