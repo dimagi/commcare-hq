@@ -484,6 +484,7 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
 
 
 @waf_allow('XSS_BODY')
+@location_safe
 @login_and_domain_required
 def report_formplayer_error(request, domain):
     data = json.loads(request.body)

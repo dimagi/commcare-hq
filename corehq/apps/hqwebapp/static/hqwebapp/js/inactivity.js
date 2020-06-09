@@ -5,14 +5,54 @@
 hqDefine('hqwebapp/js/inactivity', [
     'jquery',
     'underscore',
+    'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
 ], function (
     $,
     _,
+    assertProperties,
     initialPageData
 ) {
     var log = function (message) {
-        console.log("[" + (new Date()).toLocaleTimeString() + "] " + message);
+        console.log("[" + (new Date()).toLocaleTimeString() + "] " + message);  // eslint-disable-line no-console
+    };
+
+    var calculateDelayAndWarning = function (timeout, lastRequest) {
+        var millisLeft = timeout,
+            response = {show_warning: false};
+
+        // Figure out when the session is going to expire
+        if (lastRequest) {
+            millisLeft = timeout - (new Date() - new Date(lastRequest));
+            log("last request was " + lastRequest + ", so there are " + (millisLeft / 1000 / 60) + " minutes left in the session");
+
+            // Prevent runaway polling if the page is loaded and secure sessions is then turned OFF, which
+            // will result in the user never getting logged out and eventually a negative number of millisLeft.
+            // If the session just "expired", it might be a timing issue, so keep polling, but back off as more
+            // time passes.
+            millisLeft = Math.abs(millisLeft);
+        } else {
+            log("no last request, so there are " + (millisLeft / 1000 / 60) + " minutes left in the session");
+        }
+
+        if (millisLeft < 30 * 1000) {
+            // Last 30 seconds, ping every 3 seconds
+            response.show_warning = true;
+            response.delay = 3000;
+            log("show warning and poll again in 3 sec");
+        } else if (millisLeft < 2 * 60 * 1000) {
+            // Last 2 minutes, ping every ten seconds
+            response.show_warning = true;
+            response.delay = 10 * 1000;
+            log("show warning and poll again in 10 sec");
+        } else {
+            // We have time, ping when 2 minutes from expiring
+            response.delay = millisLeft - 2 * 60 * 1000;
+            log("poll again in " + (millisLeft - 2 * 60 * 1000) / 1000 / 60 + " minutes");
+        }
+
+        assertProperties.assertRequired(response, ['delay', 'show_warning']);
+        return response;
     };
 
     $(function () {
@@ -28,9 +68,9 @@ hqDefine('hqwebapp/js/inactivity', [
         var keyboardOrMouseActive = false,
             shouldShowWarning = false;
 
-log("page loaded, timeout length is " + timeout / 1000 / 60 + " minutes");
+        log("page loaded, timeout length is " + timeout / 1000 / 60 + " minutes");
         if (timeout === undefined || !$modal.length) {
-log("couldn't find popup or no timeout was set, therefore returning early")
+            log("couldn't find popup or no timeout was set, therefore returning early");
             return;
         }
 
@@ -38,32 +78,13 @@ log("couldn't find popup or no timeout was set, therefore returning early")
           * Determine when to poll next. Poll more frequently as expiration approaches, to
           * increase the chance the modal pops up before the user takes an action and gets rejected.
           */
-        var calculateDelayAndWarn = function (lastRequest) {
-            var millisLeft = timeout;
-            if (lastRequest) {
-                millisLeft = timeout - (new Date() - new Date(lastRequest));
-log("last request was " + lastRequest + ", so there are " + (millisLeft / 1000 / 60) + " minutes left in the session");
-            } else {
-log("no last request, so there are " + (millisLeft / 1000 / 60) + " minutes left in the session");
-            }
-
-            // Last 30 seconds, ping every 3 seconds
-            if (millisLeft < 30 * 1000) {
-log("show warning and poll again in 3 sec");
+        var getDelayAndWarnIfNeeded = function (lastRequest) {
+            var response = calculateDelayAndWarning(timeout, lastRequest);
+            if (response.show_warning) {
                 showWarningModal();
-                return 3000;
             }
 
-            // Last 2 minutes, ping every ten seconds
-            if (millisLeft < 2 * 60 * 1000) {
-log("show warning and poll again in 10 sec");
-                showWarningModal();
-                return 10 * 1000;
-            }
-
-            // We have time, ping when 2 minutes from expiring
-log("poll again in " + (millisLeft - 2 * 60 * 1000) / 1000 / 60 + " minutes");
-            return millisLeft - 2 * 60 * 1000;
+            return response.delay;
         };
 
         var showWarningModal = function () {
@@ -89,16 +110,16 @@ log("poll again in " + (millisLeft - 2 * 60 * 1000) / 1000 / 60 + " minutes");
         };
 
         var pollToShowModal = function () {
-log("polling HQ's ping_login to decide about showing modal");
+            log("polling HQ's ping_login to decide about showing login modal");
             $.ajax({
                 url: initialPageData.reverse('ping_login'),
                 type: 'GET',
                 success: function (data) {
                     if (!data.success) {
-log("ping_login failed, showing login modal");
+                        log("ping_login failed, showing login modal");
                         var $body = $modal.find(".modal-body");
-                        var src = initialPageData.reverse('iframe_login');
-                        src += "?next=" + initialPageData.reverse('iframe_login_new_window');
+                        var src = initialPageData.reverse('iframe_domain_login');
+                        src += "?next=" + initialPageData.reverse('iframe_domain_login_new_window');
                         src += "&username=" + initialPageData.get('secure_timeout_username');
                         $modal.on('shown.bs.modal', function () {
                             var content = _.template('<iframe src="<%= src %>" height="<%= height %>" width="<%= width %>" style="border: none;"></iframe>')({
@@ -112,15 +133,14 @@ log("ping_login failed, showing login modal");
                         $body.html('<h1 class="text-center"><i class="fa fa-spinner fa-spin"></i></h1>');
                         hideWarningModal(true);
                     } else {
-log("ping_login succeeded, time to re-calculate when the next poll should be, data was " + JSON.stringify(data));
-                        _.delay(pollToShowModal, calculateDelayAndWarn(data.last_request));
+                        log("ping_login succeeded, time to re-calculate when the next poll should be, data was " + JSON.stringify(data));
+                        _.delay(pollToShowModal, getDelayAndWarnIfNeeded(data.last_request));
                     }
                 },
             });
         };
 
         var pollToHideModal = function (e) {
-log("polling HQ's ping_login to decide about hiding modal");
             var $button = $(e.currentTarget);
             $button.disableButton();
             $.ajax({
@@ -145,14 +165,14 @@ log("polling HQ's ping_login to decide about hiding modal");
                     } else {
                         $modal.modal('hide');
                         $button.text(gettext("Done"));
-                        _.delay(pollToShowModal, calculateDelayAndWarn());
+                        _.delay(pollToShowModal, getDelayAndWarnIfNeeded());
                     }
                 },
             });
         };
 
         var extendSession = function ($button) {
-log("extending session");
+            log("extending session");
             if ($button) {
                 $button.disableButton();
             }
@@ -164,8 +184,8 @@ log("extending session");
                     if ($button) {
                         $button.enableButton();
                     }
+                    log("session successfully extended, hiding warning popup if it's open");
                     hideWarningModal();
-log("session successfully extended, hiding warning popup if it's open");
                 },
             });
         };
@@ -192,14 +212,16 @@ log("session successfully extended, hiding warning popup if it's open");
         // Send no-op request to server to extend session when there's client-side user activity on this page.
         // _.throttle will prevent this from happening too often.
         var keepAliveTimeout = 60 * 1000;
-log("page loaded, will send a keep-alive request to server every click/keypress, at most once every " + (keepAliveTimeout / 1000 / 60) + " minutes");
+        log("page loaded, will send a keep-alive request to server every click/keypress, at most once every " + (keepAliveTimeout / 1000 / 60) + " minutes");
         $("body").on("keypress click", _.throttle(function () {
             extendSession();
         }, keepAliveTimeout));
 
         // Start polling
-        _.delay(pollToShowModal, calculateDelayAndWarn());
+        _.delay(pollToShowModal, getDelayAndWarnIfNeeded());
     });
 
-    return 1;
+    return {
+        calculateDelayAndWarning: calculateDelayAndWarning,
+    };
 });
