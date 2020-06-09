@@ -22,9 +22,9 @@ hqDefine('hqwebapp/js/multiselect_utils', [
 
     var _renderAction = function (buttonId, buttonClass, buttonIcon, text) {
         var action = _.template(
-            '<a href="#" class="btn <%=actionButtonClass %> btn-xs pull-right" id="<%= actionButtonId %>">' +
+            '<button class="btn <%=actionButtonClass %> btn-xs pull-right" id="<%= actionButtonId %>">' +
                 '<i class="<%= actionButtonIcon %>"></i> <%= actionButtonText %>' +
-            '</a>'
+            '</button>'
         );
         return action({
             actionButtonId: buttonId,
