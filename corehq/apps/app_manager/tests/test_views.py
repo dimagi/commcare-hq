@@ -7,6 +7,7 @@ from django.urls import reverse
 
 from mock import patch
 
+from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq import toggles
@@ -36,6 +37,7 @@ from .test_form_versioning import BLANK_TEMPLATE, INVALID_TEMPLATE
 
 
 @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+@attr(es_test=True)
 class TestViews(TestCase):
     app = None
     build = None

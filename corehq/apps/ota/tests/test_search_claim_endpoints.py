@@ -12,6 +12,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
+from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.case_search.models import (
@@ -276,6 +277,7 @@ class CaseSearchTests(TestCase, ElasticTestMixin):
         )
 
 
+@attr(es_test=True)
 class CaseClaimEndpointTests(TestCase):
     def setUp(self):
         self.domain = create_domain(DOMAIN)

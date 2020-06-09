@@ -3,6 +3,7 @@ import datetime
 from django.test import TestCase
 
 from dimagi.utils.dates import DateSpan
+from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.app_manager.const import AMPLIFIES_YES
@@ -20,6 +21,7 @@ from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 
 
+@attr(es_test=True)
 class MaltGeneratorTest(TestCase):
 
     DOMAIN_NAME = "test"

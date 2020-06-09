@@ -28,6 +28,7 @@ class TestBasic(SimpleTestCase):
         self.assertEqual(configs, [9200, 7])
 
 
+@attr(es_test=True)
 class TestCloudcareESAccessors(SimpleTestCase):
 
     @classmethod

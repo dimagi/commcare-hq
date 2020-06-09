@@ -12,6 +12,7 @@ from casexml.apps.case.const import CASE_ACTION_CREATE
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.parsing import string_to_utc_datetime
+from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.es.aggregations import MISSING_KEY
@@ -57,6 +58,7 @@ from corehq.util.elastic import ensure_index_deleted, reset_es_index
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
 
 
+@attr(es_test=True)
 class BaseESAccessorsTest(TestCase):
     es_index_info = None
 
@@ -807,6 +809,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.assertEqual(user_ids, 'u2')
 
 
+@attr(es_test=True)
 class TestUserESAccessors(SimpleTestCase):
 
     def setUp(self):

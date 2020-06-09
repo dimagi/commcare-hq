@@ -3,6 +3,7 @@ from datetime import datetime
 from django.test import SimpleTestCase
 
 from dimagi.utils.dates import DateSpan
+from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.data_analytics.esaccessors import (
@@ -17,6 +18,7 @@ from corehq.util.test_utils import generate_cases
 
 #Todo; run_on_es2
 
+@attr(es_test=True)
 class MaltAnalyticsTest(SimpleTestCase):
 
     @classmethod

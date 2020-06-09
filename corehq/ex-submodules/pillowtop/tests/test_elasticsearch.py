@@ -23,6 +23,7 @@ from pillowtop.processors.elastic import send_to_elasticsearch
 from .utils import get_doc_count, get_index_mapping, TEST_INDEX_INFO
 
 
+@attr(es_test=True)
 class ElasticPillowTest(SimpleTestCase):
 
     def setUp(self):
@@ -150,6 +151,7 @@ class ElasticPillowTest(SimpleTestCase):
                 .format(disallowed_setting))
 
 
+@attr(es_test=True)
 class TestSendToElasticsearch(SimpleTestCase):
 
     def setUp(self):

@@ -10,6 +10,7 @@ from testil import tempdir
 
 from casexml.apps.case.tests.util import delete_all_xforms
 from couchforms.models import XFormInstance
+from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.app_manager.models import Application, Module
@@ -30,6 +31,7 @@ from corehq.util.test_utils import trap_extra_setup
 DOMAIN = "test"
 
 
+@attr(es_test=True)
 class TestFixFormsWithMissingXmlns(TestCase, TestXmlMixin):
     file_path = ['data']
     root = os.path.dirname(__file__)

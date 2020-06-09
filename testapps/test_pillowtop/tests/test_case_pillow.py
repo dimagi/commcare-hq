@@ -4,6 +4,7 @@ from unittest.mock import patch
 from django.test import TestCase
 
 from pillow_retry.models import PillowError
+from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.es import CaseES, CaseSearchES
