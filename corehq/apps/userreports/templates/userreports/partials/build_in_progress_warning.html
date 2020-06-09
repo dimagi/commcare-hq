@@ -1,9 +1,13 @@
 {% load i18n %}
-
-<div id="built-warning" class="alert alert-warning hide">
-  <h4><i class="fa fa-exclamation-triangle"></i> {% trans "Your report is still being populated." %}</h4>
-  {% blocktrans %}
-    What you are seeing now is just a preview, and contains some or none of your data.
-    The report will refresh automatically when the data is finished being populated.
-  {% endblocktrans %}
-</div>
+{% if not data_source_config.is_static %}
+  {% if data_source_config.meta.build.initiated or data_source_config.meta.build.initiated_in_place %}
+    {% if not data_source_config.meta.build.finished and not data_source_config.meta.build.finished_in_place and not data_source_config.meta.build.rebuilt_asynchronously %}
+      <div id="built-warning" class="alert alert-warning">
+        <h4><i class="fa fa-exclamation-triangle"></i> {% trans "Your report is still being populated." %}</h4>
+        {% blocktrans %}
+          What you are seeing now is just a preview, and contains some or none of your data.
+        {% endblocktrans %}
+      </div>
+    {% endif %}
+  {% endif %}
+{% endif %}
