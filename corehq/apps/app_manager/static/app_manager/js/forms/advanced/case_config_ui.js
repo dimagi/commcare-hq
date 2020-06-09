@@ -62,7 +62,6 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                         success: function (data) {
                             var app_manager = hqImport('app_manager/js/app_manager');
                             app_manager.updateDOM(data.update);
-                            self.caseConfigViewModel.ensureBlankProperties();
                             self.setPropertiesMap(data.propertiesMap);
                             self.requires(self.caseConfigViewModel.load_update_cases().length > 0 ? 'case' : 'none');
                         },
@@ -156,10 +155,6 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                 }
             };
 
-            self.ensureBlankProperties = function () {
-                self.caseConfigViewModel.ensureBlankProperties();
-            };
-
             self.getQuestions = function (filter, excludeHidden, includeRepeat) {
                 return caseConfigUtils.getQuestions(self.questions(), filter, excludeHidden, includeRepeat);
             };
@@ -174,7 +169,6 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
 
             self.change = function () {
                 self.saveButton.fire('change');
-                self.ensureBlankProperties();
             };
 
             self.caseConfigViewModel = caseConfigViewModel(self, params);
@@ -219,7 +213,6 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                     // https://gist.github.com/mkelly12/424774/#comment-92080
                     $home.find('input').on('textchange', self.change);
 
-                    self.ensureBlankProperties();
                     self.initAccordion();
                     $('#case-configuration-tab').on('click', function () {
                         self.initAccordion();
@@ -299,6 +292,13 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                 _(case_properties).each(function (p) {
                     action.case_properties.push(caseProperty.wrap(p, action));
                 });
+
+                // needed for compatibility with shared templates
+                action.searchAndFilter = false;
+                action.visible_case_properties = ko.computed(function () {
+                    return action.case_properties();
+                });
+
                 _(preload).each(function (p) {
                     action.preload.push(casePreloadProperty.wrap(p, action));
                 });
@@ -319,6 +319,13 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                 _(case_properties).each(function (p) {
                     action.case_properties.push(caseProperty.wrap(p, action));
                 });
+
+                // needed for compatibility with shared templates
+                action.searchAndFilter = false;
+                action.visible_case_properties = ko.computed(function () {
+                    return action.case_properties();
+                });
+
                 return action;
             }));
 
@@ -369,35 +376,6 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                         }
                     }
                 }
-            };
-
-            self.ensureBlankProperties = function () {
-                var items = [];
-                var actions = self.load_update_cases();
-                for (var i = 0; i < actions.length; i++) {
-                    items.push({
-                        properties: actions[i].preload(),
-                        addProperty: actions[i].addPreload,
-                    });
-                    items.push({
-                        properties: actions[i].case_properties(),
-                        addProperty: actions[i].addProperty,
-                    });
-                }
-                actions = self.open_cases();
-                for (i = 0; i < actions.length; i++) {
-                    items.push({
-                        properties: actions[i].case_properties(),
-                        addProperty: actions[i].addProperty,
-                    });
-                }
-                _(items).each(function (item) {
-                    var properties = item.properties;
-                    var last = properties[properties.length - 1];
-                    if (last && !last.isBlank()) {
-                        item.addProperty();
-                    }
-                });
             };
 
             self.addFormAction = function (action) {
