@@ -10,7 +10,7 @@ from custom.icds_reports.utils.migrations import get_view_migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0194_auto_20200528_1024'),
+        ('icds_reports', '0195_add_fields_aww_inactivity_report'),
     ]
 
     operations = get_view_migrations()
