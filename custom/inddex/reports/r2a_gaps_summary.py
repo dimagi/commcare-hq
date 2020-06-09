@@ -1,6 +1,7 @@
 import textwrap
 from collections import defaultdict
 
+from corehq.apps.reports.filters.case_list import CaseListFilter
 from custom.inddex import filters
 from custom.inddex.const import (
     FOOD_ITEM,
@@ -16,20 +17,20 @@ from .utils import MultiTabularReport, format_row
 
 
 class GapsSummaryReport(MultiTabularReport):
-    name = 'Output 2a - Gaps Summary by Food Type'
+    name = 'Report 2a - Gaps Summary by Food Type'
     slug = 'report_2a_gaps_summary_by_food_type'
     description = textwrap.dedent("""
-        This output includes summaries of the existing conversion factor gaps
-        and FCT gaps in the recall data.It provides researchers with an
+        This report includes summaries of the existing conversion factor gaps
+        and FCT gaps in the recall data. It provides researchers with an
         overview of the number of data gaps that must be addressed before the
-        recall data can be analyzed. Information in this output is
+        recall data can be analyzed. Information in this report is
         disaggregated by food type.
     """)
 
     @property
     def fields(self):
         return [
-            filters.CaseOwnersFilter,
+            CaseListFilter,
             filters.DateRangeFilter,
             filters.GapTypeFilter,
             filters.RecallStatusFilter,
@@ -42,12 +43,12 @@ class GapsSummaryReport(MultiTabularReport):
 
 
 def get_gaps_data(domain, request):
-    cf_gaps = defaultdict(int)
-    fct_gaps = defaultdict(int)
+    cf_gaps = defaultdict(set)
+    fct_gaps = defaultdict(set)
     food_data = FoodData.from_request(domain, request)
     for row in food_data.rows:
-        cf_gaps[(row.conv_factor_gap_code, row.food_type or '')] += 1
-        fct_gaps[(row.fct_gap_code, row.food_type or '')] += 1
+        cf_gaps[(row.conv_factor_gap_code, row.food_type or '')].add(row.food_name)
+        fct_gaps[(row.fct_gap_code, row.food_type or '')].add(row.food_name)
 
     return (
         ConvFactorGapsData(cf_gaps),
@@ -64,7 +65,7 @@ class GapsData:
         for gap_code in self._gaps_descriptions:
             for food_type in [FOOD_ITEM, NON_STANDARD_FOOD_ITEM, STANDARD_RECIPE, NON_STANDARD_RECIPE]:
                 description = self._gaps_descriptions[gap_code]
-                count = self._gaps.get((gap_code, food_type), 0)
+                count = len(self._gaps[(gap_code, food_type)])
                 yield format_row([gap_code, description, food_type, count])
 
 

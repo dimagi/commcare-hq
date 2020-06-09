@@ -1,0 +1,160 @@
+{
+  "domains": [
+    "icds-dashboard-qa",
+    "sankalp_cas",
+    "zohaib-sandbox",
+    "akshita-sandbox",
+    "sunaina-sandbox",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test",
+    "icds-test",
+    "icds-sql",
+    "icds-cas",
+    "cas-lab",
+    "icds-cas-sandbox"
+  ],
+  "server_environment": [
+    "india",
+    "icds",
+    "icds-staging"
+  ],
+ "report_id": "ls_v2_report_lactating_women_names",
+  "data_source_table": "static-ccs_record_cases",
+  "config": {
+    "title": "UCR V2 - LS Report - Lactating Women Names",
+    "description": "",
+    "visible": false,
+    "aggregation_columns": [
+      "doc_id",
+      "supervisor_id"
+    ],
+    "filters": [
+     {
+      "compare_as_string": false,
+      "datatype": "date",
+      "required": false,
+      "display": "Date of Delivery",
+      "field": "add",
+      "type": "date",
+      "slug": "add"
+     },
+     {
+      "compare_as_string": false,
+      "display": "Open Status",
+      "datatype": "string",
+      "show_all": true,
+      "choices": [
+        {
+         "display": "Yes",
+         "value": "1"
+        }
+      ],
+      "field": "open_count",
+      "type": "choice_list",
+      "slug": "open_count"
+     },
+     {
+      "compare_as_string": false,
+      "show_all": true,
+      "datatype": "string",
+      "choice_provider": {
+      "type": "location"
+     },
+      "required": false,
+      "display": "Filter by Supervisor",
+      "field": "supervisor_id",
+      "type": "dynamic_choice_list",
+      "slug": "supervisor_id",
+      "ancestor_expression": {}
+     },
+     {
+      "compare_as_string": false,
+      "show_all": true,
+      "datatype": "string",
+      "type": "dynamic_choice_list",
+      "required": false,
+      "slug": "owner_id",
+      "field": "owner_id",
+      "choice_provider": {
+      "type": "location"
+     },
+      "display": "Owner Name",
+      "ancestor_expression": {}
+     },
+     {
+      "required": false,
+      "type": "numeric",
+      "slug": "is_migrated",
+      "field": "is_migrated",
+      "display": "Whether Migrated",
+      "datatype": "string"
+     },
+     {
+      "required": false,
+      "type": "numeric",
+      "slug": "is_availing",
+      "field": "is_availing",
+      "display": "Whether Availing Services",
+      "datatype": "string"
+      }
+    ],
+    "columns": [
+     {
+      "sortable": false,
+      "description": null,
+      "format": "default",
+      "aggregation": "simple",
+      "column_id": "person_name",
+      "field": "person_name",
+      "transform": {},
+      "calculate_total": false,
+      "type": "field",
+      "display": {
+        "mar": "\u0938\u094d\u0924\u094d\u0930\u0940",
+        "tel": "\u0c38\u0c4d\u0c24\u0c4d\u0c30\u0c40",
+        "hin": "\u092e\u0939\u093f\u0932\u093e\u092f\u0947",
+        "en": "Woman",
+        "tam": "\u0bae\u0b95\u0bb3\u0bbf\u0bb0\u0bcd",
+        "guj": "\u0aae\u0ab9\u0abf\u0ab2\u0abe",
+        "asm": "\u09ae\u09b9\u09bf\u09b2\u09be",
+        "pan": "\u0a14\u0a30\u0a24",
+        "kan": "\u0cae\u0cb9\u0cbf\u0cb3\u0cc6",
+        "urd": "\u0639\u0648\u0631\u062a"
+      },
+      "width": null,
+      "css_class": null,
+      "visible": true
+     },
+     {
+      "sortable": false,
+      "description": null,
+      "format": "default",
+      "aggregation": "simple",
+      "column_id": "add",
+      "field": "add",
+      "transform": {
+        "type": "date_format",
+        "format": "%-d/%-m/%Y"
+      },
+      "calculate_total": false,
+      "type": "field",
+      "display": {
+        "en": "Actual Date of Delivery"
+      },
+      "width": null,
+      "css_class": null,
+      "visible": true
+     }
+   ],
+   "sort_expression": [ ],
+   "configured_charts": [ ]
+   }
+ }

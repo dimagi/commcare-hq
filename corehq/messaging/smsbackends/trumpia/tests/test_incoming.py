@@ -46,19 +46,30 @@ class IncomingTest(TestCase):
         response, log = self.make_request("the message")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(log.text, "the message")
+        self.assertEqual(log.phone_number, "+17777722222")
         self.assertEqual(log.direction, INCOMING)
         self.assertEqual(log.backend_message_id, "1234561234567asdf123")
+
+    def test_incoming_non_nanp_number(self):
+        response, log = self.make_request("the message", phone="0123456789")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(log.phone_number, "+0123456789")
+
+    def test_incoming_non_nanp_number2(self):
+        response, log = self.make_request("the message", phone="1234567890")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(log.phone_number, "+1234567890")
 
     def test_incoming_with_keyword(self):
         response, log = self.make_request("ca va", "REPLY")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(log.text, "REPLY ca va")
+        self.assertEqual(log.text, "ca va")
         self.assertEqual(log.direction, INCOMING)
         self.assertEqual(log.backend_message_id, "1234561234567asdf123")
 
-    def make_request(self, message, keyword=""):
+    def make_request(self, message, keyword="", phone=None):
         xml = EXAMPLE_PUSH.format(
-            phone_number=self.phone_number,
+            phone_number=phone or self.phone_number,
             keyword=keyword,
             message=message,
         )

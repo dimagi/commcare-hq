@@ -513,6 +513,36 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         ).save()
         self._dump_and_load({AlertScheduleInstance: 1})
 
+    def test_case_importer(self):
+        from corehq.apps.case_importer.tracking.models import (
+            CaseUploadFileMeta,
+            CaseUploadFormRecord,
+            CaseUploadRecord,
+        )
+
+        upload_file_meta = CaseUploadFileMeta.objects.create(
+            identifier=uuid.uuid4().hex,
+            filename='picture.jpg',
+            length=1024,
+        )
+        case_upload_record = CaseUploadRecord.objects.create(
+            domain=self.domain_name,
+            upload_id=uuid.uuid4(),
+            task_id=uuid.uuid4(),
+            couch_user_id=uuid.uuid4().hex,
+            case_type='person',
+            upload_file_meta=upload_file_meta,
+        )
+        CaseUploadFormRecord.objects.create(
+            case_upload_record=case_upload_record,
+            form_id=uuid.uuid4().hex,
+        )
+        self._dump_and_load(Counter({
+            CaseUploadFileMeta: 1,
+            CaseUploadRecord: 1,
+            CaseUploadFormRecord: 1,
+        }))
+
     def test_transifex(self):
         from corehq.apps.translations.models import TransifexProject, TransifexOrganization
         org = TransifexOrganization.objects.create(slug='test', name='demo', api_token='123')

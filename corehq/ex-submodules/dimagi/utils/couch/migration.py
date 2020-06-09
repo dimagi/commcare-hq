@@ -185,7 +185,7 @@ class SyncSQLToCouchMixin(object):
         if not self._migration_couch_id:
             return None
         cls = self._migration_get_couch_model_class()
-        return cls.get(self._migration_couch_id)
+        return cls.get(str(self._migration_couch_id))
 
     def _migration_get_or_create_couch_object(self):
         cls = self._migration_get_couch_model_class()

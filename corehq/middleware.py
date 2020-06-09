@@ -17,7 +17,7 @@ from corehq.apps.domain.utils import legacy_domain_re
 from corehq.const import OPENROSA_DEFAULT_VERSION
 from dimagi.utils.logging import notify_exception
 
-from dimagi.utils.parsing import string_to_utc_datetime
+from dimagi.utils.parsing import json_format_datetime, string_to_utc_datetime
 
 try:
     import psutil
@@ -154,15 +154,8 @@ class TimeoutMiddleware(MiddlewareMixin):
                 (domain_obj and domain_obj.secure_sessions)
                 or self._user_requires_secure_session(request.couch_user)))
 
-        timeout = None
-        if secure_session or change_to_secure_session:
-            if domain_obj:
-                timeout = domain_obj.secure_timeout
-            if not timeout:
-                timeout = settings.SECURE_TIMEOUT
-        else:
-            timeout = settings.INACTIVITY_TIMEOUT
-
+        use_secure_timeout = secure_session or change_to_secure_session
+        timeout = settings.SECURE_TIMEOUT if use_secure_timeout else settings.INACTIVITY_TIMEOUT
         if change_to_secure_session:
             # force re-authentication if the user has been logged in longer than the secure timeout
             if self._session_expired(timeout, request.user.last_login, now):
@@ -174,7 +167,9 @@ class TimeoutMiddleware(MiddlewareMixin):
 
             request.session['secure_session'] = True
 
-        request.session.set_expiry(timeout * 60)
+        if not getattr(request, '_bypass_sessions', False):
+            request.session.set_expiry(timeout * 60)
+            request.session['last_request'] = json_format_datetime(now)
 
 
 def always_allow_browser_caching(fn):
@@ -240,16 +235,25 @@ class SelectiveSessionMiddleware(SessionMiddleware):
 
     def __init__(self, get_response=None):
         super().__init__(get_response)
-        regexes = getattr(settings, 'SESSION_BYPASS_URLS', [])
+        regexes = [
+            '/favicon.ico$',
+            '/ping_login/$',
+            '/downloads/temp/ajax/',  # soil polling
+            '/downloads/temp/heartbeat/',  # soil status
+            '/a/{domain}/apps/view/[A-Za-z0-9-]+/current_version/$'  # app manager new changes polling
+            '/hq/notifications/service/$',  # background request for notification (bell menu in top nav)
+        ]
+        if settings.BYPASS_SESSIONS_FOR_MOBILE:
+            regexes.extend(getattr(settings, 'SESSION_BYPASS_URLS', []))
         self.bypass_re = [
             re.compile(regex.format(domain=legacy_domain_re)) for regex in regexes
         ]
 
     def _bypass_sessions(self, request):
-        return (settings.BYPASS_SESSIONS_FOR_MOBILE and
-            any(rx.match(request.path_info) for rx in self.bypass_re))
+        return any(rx.match(request.path_info) for rx in self.bypass_re)
 
     def process_request(self, request):
         super().process_request(request)
         if self._bypass_sessions(request):
             request.session.save = lambda *x: None
+            request._bypass_sessions = True

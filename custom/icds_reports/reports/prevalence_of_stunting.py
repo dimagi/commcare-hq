@@ -103,6 +103,8 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
     fills.update({'0%-25%': MapColors.PINK})
     fills.update({'25%-38%': MapColors.ORANGE})
     fills.update({'38%-100%': MapColors.RED})
+    if icds_feature_flag:
+        fills.update({'Not Launched': MapColors.GREY})
     fills.update({'defaultFill': MapColors.GREY})
 
     gender_label, age_label, chosen_filters = chosen_filters_to_labels(

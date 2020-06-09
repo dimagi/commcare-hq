@@ -226,7 +226,9 @@ def get_active_users_by_email(email):
         else:
             # also any mobile workers from TWO_STAGE_USER_PROVISIONING domains should be included
             couch_user = CouchUser.get_by_username(user.username)
-            if couch_user.is_commcare_user() and TWO_STAGE_USER_PROVISIONING.enabled(couch_user.domain):
+            if (couch_user
+                    and couch_user.is_commcare_user()
+                    and TWO_STAGE_USER_PROVISIONING.enabled(couch_user.domain)):
                 yield user
             # intentionally excluded:
             # - WebUsers who have changed their email address from their login (though could revisit this)

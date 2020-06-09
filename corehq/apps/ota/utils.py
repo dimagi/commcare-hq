@@ -133,7 +133,7 @@ def _restoring_as_yourself(couch_user, as_user_obj):
 
 
 def _ensure_valid_domain(domain, couch_user):
-    if not couch_user.is_member_of(domain):
+    if not couch_user.is_member_of(domain, allow_mirroring=True):
         raise RestorePermissionDenied(_("{} was not in the domain {}").format(couch_user.username, domain))
 
 
