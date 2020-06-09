@@ -2,11 +2,6 @@ import datetime
 import json
 import re
 
-from crispy_forms import bootstrap as twbscrispy
-from crispy_forms import layout as crispy
-from crispy_forms.bootstrap import InlineField, StrictButton
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Fieldset, Layout, Submit
 from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import SetPasswordForm
@@ -20,8 +15,16 @@ from django.utils.safestring import mark_safe
 from django.utils.text import format_lazy
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
+
+from crispy_forms import bootstrap as twbscrispy
+from crispy_forms import layout as crispy
+from crispy_forms.bootstrap import InlineField, StrictButton
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Fieldset, Layout, Submit
 from django_countries.data import COUNTRIES
 from memoized import memoized
+
+from dimagi.utils.django.fields import TrimmedCharField
 
 from corehq import toggles
 from corehq.apps.analytics.tasks import set_analytics_opt_out
@@ -32,20 +35,17 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQModalFormHelper
 from corehq.apps.hqwebapp.utils import decode_password
-from corehq.apps.hqwebapp.widgets import (
-    Select2Ajax,
-    SelectToggle,
-)
+from corehq.apps.hqwebapp.widgets import Select2Ajax, SelectToggle
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_location_id
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.users.dbaccessors.all_commcare_users import user_exists
-from corehq.apps.users.models import UserRole
+from corehq.apps.users.models import DomainMembershipError, UserRole
 from corehq.apps.users.util import cc_user_domain, format_username
 from corehq.toggles import TWO_STAGE_USER_PROVISIONING
+from custom.icds.view_utils import is_icds_cas_project
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
-from dimagi.utils.django.fields import TrimmedCharField
 
 mark_safe_lazy = lazy(mark_safe, str)
 
@@ -1268,14 +1268,21 @@ class CommCareUserFilterForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         from corehq.apps.locations.forms import LocationSelectWidget
+        from corehq.apps.users.views import get_editable_role_choices
         self.domain = kwargs.pop('domain')
+        self.couch_user = kwargs.pop('couch_user')
         super(CommCareUserFilterForm, self).__init__(*args, **kwargs)
         self.fields['location_id'].widget = LocationSelectWidget(self.domain)
         self.fields['location_id'].help_text = ExpandedMobileWorkerFilter.location_search_help
 
-        roles = UserRole.by_domain(self.domain)
-        self.fields['role_id'].choices = [('', _('All Roles'))] + [
-            (role._id, role.name or _('(No Name)')) for role in roles]
+        if is_icds_cas_project(self.domain) and not self.couch_user.is_domain_admin(self.domain):
+            roles = get_editable_role_choices(self.domain, self.couch_user, allow_admin_role=True,
+                                              use_qualified_id=False)
+            self.fields['role_id'].choices = roles
+        else:
+            roles = UserRole.by_domain(self.domain)
+            self.fields['role_id'].choices = [('', _('All Roles'))] + [
+                (role._id, role.name or _('(No Name)')) for role in roles]
 
         self.helper = FormHelper()
         self.helper.form_method = 'GET'
@@ -1306,10 +1313,26 @@ class CommCareUserFilterForm(forms.Form):
 
     def clean_role_id(self):
         role_id = self.cleaned_data['role_id']
+        restricted_role_access = (
+            is_icds_cas_project(self.domain)
+            and not self.couch_user.is_domain_admin(self.domain)
+        )
         if not role_id:
-            return None
-        if not UserRole.get(role_id).domain == self.domain:
+            if restricted_role_access:
+                raise forms.ValidationError(_("Please select a role"))
+            else:
+                return None
+
+        role = UserRole.get(role_id)
+        if not role.domain == self.domain:
             raise forms.ValidationError(_("Invalid Role"))
+        if restricted_role_access:
+            try:
+                user_role_id = self.couch_user.get_role(self.domain).get_id
+            except DomainMembershipError:
+                user_role_id = None
+            if not role.accessible_by_non_admin_role(user_role_id):
+                raise forms.ValidationError(_("Role Access Denied"))
         return role_id
 
     def clean_search_string(self):

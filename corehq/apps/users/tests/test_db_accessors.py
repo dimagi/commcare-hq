@@ -188,7 +188,7 @@ class AllCommCareUsersTest(TestCase):
         )
 
     def test_get_existing_usernames(self):
-        users = [self.ccuser_1, self.web_user, self.ccuser_other_domain]
+        users = [self.ccuser_1, self.web_user, self.ccuser_other_domain, self.retired_user]
         usernames = [u.username for u in users] + ['nonexistant@username.com']
         self.assertItemsEqual(
             get_existing_usernames(usernames),
