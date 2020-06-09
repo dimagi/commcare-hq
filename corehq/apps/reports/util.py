@@ -414,6 +414,10 @@ def get_installed_custom_modules():
     return [import_module(module) for module in settings.CUSTOM_MODULES]
 
 
+def get_null_empty_value_bindparam(field_slug):
+    return f'{field_slug}_empty_eq'
+
+
 def get_INFilter_element_bindparam(base_name, index):
     return '%s_%d' % (base_name, index)
 

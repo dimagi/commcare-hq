@@ -217,7 +217,7 @@
           {% for invitation in invitations %}
             <tr>
               <td>
-                {{ invitation.email }}
+                {{ invitation.email }}{% if invitation.email_marked_as_bounced %} <span class="label label-danger">{% trans "Blocked" %}</span>{% endif %}
               </td>
               <td>
                 {{ invitation.role_label }}

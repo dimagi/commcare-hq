@@ -14,7 +14,7 @@ import requests
 from requests import HTTPError
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.util.hmac_request import get_hmac_digest
-from dimagi.utils.logging import notify_exception
+from dimagi.utils.logging import notify_exception, notify_error
 
 
 class TouchformsError(ValueError):
@@ -234,6 +234,7 @@ def _post_data(data, user_id):
     if 500 <= response.status_code < 600:
         http_error_msg = '{} Server Error: {} for url: {}'.format(
             response.status_code, response.reason, response.url)
+        notify_error(http_error_msg, details={'response': response, 'body': response.text})
         raise HTTPError(http_error_msg, response=response)
     return response.json()
 
