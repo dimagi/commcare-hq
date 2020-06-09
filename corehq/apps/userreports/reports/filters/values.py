@@ -29,10 +29,12 @@ from corehq.apps.reports.daterange import (
 from corehq.apps.reports.util import (
     get_INFilter_bindparams,
     get_INFilter_element_bindparam,
-)
+    get_null_empty_value_bindparam)
 
-SHOW_ALL_CHOICE = '_all'  # todo: if someone wants to name an actually choice "_all" this will break
+# todo: if someone wants to name an actual choice any of these values, it will break
+SHOW_ALL_CHOICE = '_all'
 NONE_CHOICE = "\u2400"
+
 CHOICE_DELIMITER = "\u001f"
 
 
@@ -295,6 +297,9 @@ class ChoiceListFilterValue(FilterValue):
     def is_null(self):
         return NONE_CHOICE in [choice.value for choice in self.value]
 
+    def _get_value_without_nulls(self):
+        return [choice for choice in self.value if choice.value != NONE_CHOICE]
+
     @property
     def _ancestor_filter(self):
         """
@@ -317,29 +322,54 @@ class ChoiceListFilterValue(FilterValue):
     def to_sql_filter(self):
         if self.show_all:
             return None
-        if self.is_null:
-            return ISNULLFilter(self.filter['field'])
 
-        in_filter = INFilter(
-            self.filter['field'],
-            get_INFilter_bindparams(self.filter['slug'], self.value)
-        )
-        if self._ancestor_filter:
-            return ANDFilter(
-                [self._ancestor_filter.sql_filter(), in_filter]
+        sql_filters = []
+
+        non_null_values = self._get_value_without_nulls()
+        if non_null_values:
+            in_filter = INFilter(
+                self.filter['field'],
+                get_INFilter_bindparams(self.filter['slug'], non_null_values)
+            )
+            if self._ancestor_filter:
+                sql_filters.append(ANDFilter([
+                    self._ancestor_filter.sql_filter(),
+                    in_filter,
+                ]))
+            else:
+                sql_filters.append(in_filter)
+        elif self._ancestor_filter:
+            sql_filters.append(self._ancestor_filter.sql_filter())
+
+        if self.is_null:
+            # combine null and blank fields into a single filter
+            sql_filters.append(
+                ORFilter([
+                    ISNULLFilter(self.filter['field']),
+                    EQFilter(self.filter['field'], get_null_empty_value_bindparam(self.filter['slug'])),
+                ])
+            )
+
+        if len(sql_filters) > 1:
+            return ORFilter(
+                sql_filters
             )
         else:
-            return in_filter
+            return sql_filters[0]
 
     def to_sql_values(self):
-        if self.show_all or self.is_null:
+        if self.show_all:
             return {}
         values = {
             get_INFilter_element_bindparam(self.filter['slug'], i): val.value
-            for i, val in enumerate(self.value)
+            for i, val in enumerate(self._get_value_without_nulls())
         }
+        if self.is_null:
+            values[get_null_empty_value_bindparam(self.filter['slug'])] = ''
+
         if self._ancestor_filter:
             values.update(self._ancestor_filter.sql_value())
+
         return values
 
 

@@ -11,10 +11,9 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from auditcare import models
 from auditcare.models import AccessAudit
+from dimagi.utils.web import get_ip
 
 # see if the user has overridden the failure limit
-from auditcare.utils import get_ip
-
 FAILURE_LIMIT = getattr(settings, 'AXES_LOGIN_FAILURE_LIMIT', 3)
 
 # see if the user has set axes to lock out logins after failure limit

@@ -78,7 +78,7 @@ INDICATORS = [
     I('location_id', IN_UCR, IS_RECALL_META),
     I('respondent_id', IN_UCR, IS_RECALL_META),
     I('recall_case_id', IN_UCR, IS_RECALL_META),
-    I('opened_date', IN_UCR, IS_RECALL_META),
+    I('opened_on', IN_UCR, IS_RECALL_META),
     I('opened_by_username', IN_UCR, IS_RECALL_META),
     I('owner_name', IN_UCR, IS_RECALL_META),
     I('visit_date', IN_UCR, IS_RECALL_META),
@@ -111,6 +111,7 @@ INDICATORS = [
     I('already_reported_recipe_case_id', IN_UCR),
     I('already_reported_recipe_name', IN_UCR),
     I('is_ingredient', IN_UCR),
+    I('ingredient_type', CALCULATED_LATER),
     I('recipe_case_id', IN_UCR),
     I('ingr_recipe_code'),
     I('ingr_fraction'),
@@ -183,8 +184,11 @@ class FoodRow:
         else:
             self.caseid = ucr_row['doc_id']
             self.food_code = ucr_row['food_code']
+
         if not self.food_code and self.food_name in self.fixtures.foods_by_name:
             self.food_code = self.fixtures.foods_by_name[self.food_name].food_code
+        if not self.base_term_food_code and self.food_base_term in self.fixtures.foods_by_name:
+            self.base_term_food_code = self.fixtures.foods_by_name[self.food_base_term].food_code
 
         self._set_composition()
         self._set_conversion_factors()
@@ -203,9 +207,6 @@ class FoodRow:
             self.is_ingredient = 'yes'
             self.ingr_recipe_code = ingredient.recipe_code
             self.ingr_fraction = ingredient.ingr_fraction
-
-            base_food = self.fixtures.foods_by_name.get(self.food_base_term)
-            self.base_term_food_code = base_food.food_code if base_food else None
 
     def _set_composition(self):
         # Get the food composition corresponding to food_code, fall back to base_term_food_code
@@ -252,7 +253,7 @@ class FoodRow:
             else:
                 self.fct_gap_code = FctGaps.INGREDIENT_GAPS
 
-        self.fct_gap_desc = FctGaps.get_description(self.fct_gap_code)
+        self.fct_gap_desc = FctGaps.DESCRIPTIONS[self.fct_gap_code]
 
     def _set_conversion_factors(self):
         self.conv_factor_gap_code = ConvFactorGaps.NOT_AVAILABLE
@@ -271,7 +272,7 @@ class FoodRow:
                 self.conv_factor = self.conv_factor_base_term_food_code
                 self.conv_factor_gap_code = ConvFactorGaps.BASE_TERM
 
-        self.conv_factor_gap_desc = ConvFactorGaps.get_description(self.conv_factor_gap_code)
+        self.conv_factor_gap_desc = ConvFactorGaps.DESCRIPTIONS[self.conv_factor_gap_code]
 
     @property
     def age_range(self):
@@ -319,6 +320,16 @@ class FoodRow:
         raise AttributeError(f"FoodRow has no definition for {name}")
 
 
+NSR_COLS_TO_COPY = [
+    'nsr_conv_method_code_post_cooking',
+    'nsr_conv_method_desc_post_cooking',
+    'nsr_conv_option_code_post_cooking',
+    'nsr_conv_option_desc_post_cooking',
+    'nsr_measurement_amount_post_cooking',
+    'nsr_consumed_cooked_fraction',
+]
+
+
 def enrich_rows(rows):
     """Insert data possibly dependent on other rows in a recipe"""
     recipe_possibilities = [row for row in rows if row.is_recipe]
@@ -336,12 +347,16 @@ def enrich_rows(rows):
         recipe.recipe_name = recipe.ucr_row['recipe_name']
         for row in [recipe] + ingredients:
             row.total_grams = total_grams[row.uuid]
-            if row.is_recipe:
-                row.recipe_num_ingredients = len(ingredients)
+            row.recipe_num_ingredients = len(ingredients)
             if row.is_ingredient == 'yes':
                 row.recipe_name = recipe.recipe_name
                 if recipe.food_type == STANDARD_RECIPE:
+                    row.ingredient_type = 'std_recipe_ingredient'
                     row.ingr_recipe_total_grams_consumed = total_grams[recipe.uuid]
+                else:
+                    row.ingredient_type = 'non_std_recipe_ingredient'
+                for col in NSR_COLS_TO_COPY:  # Copy these values from the recipe case
+                    setattr(row, col, getattr(recipe, col))
             row.enrichment_complete = True
 
 
