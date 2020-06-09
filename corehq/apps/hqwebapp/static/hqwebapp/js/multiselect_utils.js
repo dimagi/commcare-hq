@@ -143,7 +143,7 @@ hqDefine('hqwebapp/js/multiselect_utils', [
      * This binding does not handle dynamic options, but could be extended to do so.
      */
     ko.bindingHandlers.multiselect = {
-        init: function (element, valueAccessor, allBindings) {
+        init: function (element, valueAccessor) {
             var options = valueAccessor();
             multiselect_utils.createFullMultiselectWidget(
                 element,
