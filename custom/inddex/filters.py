@@ -3,6 +3,7 @@ from django.utils.translation import ugettext_lazy as _
 from corehq.apps.reports.filters.base import (
     BaseDrilldownOptionFilter,
     BaseSingleOptionFilter,
+    BaseMultipleOptionFilter,
 )
 from corehq.apps.reports.filters.dates import DatespanFilter
 from custom.inddex.const import AGE_RANGES, ConvFactorGaps, FctGaps
@@ -48,7 +49,7 @@ class PregnancyFilter(BaseSingleOptionFilter):
         ]
 
 
-class SettlementAreaFilter(BaseSingleOptionFilter):
+class SettlementAreaFilter(BaseMultipleOptionFilter):
     slug = 'urban_rural'
     label = _('Urban/Rural')
     default_text = _('All')

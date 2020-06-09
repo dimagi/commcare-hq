@@ -155,6 +155,15 @@ class TestUcrAdapter(TestCase):
         }).get_data()
         self.assertEqual([], ucr_data)
 
+    def test_urban_rural(self):
+        ucr_data = FoodCaseData({
+            'domain': DOMAIN,
+            'startdate': date(2020, 1, 1).isoformat(),
+            'enddate': date(2020, 4, 1).isoformat(),
+            'urban_rural': ['peri-urban', 'rural'],
+        }).get_data()
+        self.assertEqual([], ucr_data)
+
 
 class TestFixtures(TestCase):
     @cached_property

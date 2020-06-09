@@ -40,9 +40,11 @@ class FoodCaseData(SqlData):
         filters = [GTE('visit_date', 'startdate'), LTE('visit_date', 'enddate')]
         if self._age_range:
             filters.append(self._get_age_range_filter())
-        if self.config.get('owner_id'):
-            infilter_bindparams = get_INFilter_bindparams('owner_id', self.config['owner_id'])
-            filters.append(IN('owner_id', infilter_bindparams))
+        for multiselect_column in ['owner_id', 'urban_rural']:
+            if self.config.get(multiselect_column):
+                infilter_bindparams = get_INFilter_bindparams(multiselect_column,
+                                                              self.config[multiselect_column])
+                filters.append(IN(multiselect_column, infilter_bindparams))
         for column in [
                 'breastfeeding',
                 'gender',
@@ -73,7 +75,8 @@ class FoodCaseData(SqlData):
     @property
     def filter_values(self):
         filter_values = super().filter_values
-        clean_IN_filter_value(filter_values, 'owner_id')
+        for key in ['owner_id', 'urban_rural']:
+            clean_IN_filter_value(filter_values, key)
         if self._age_range:
             filter_values.update(self._get_age_range_filter_values())
         return filter_values
