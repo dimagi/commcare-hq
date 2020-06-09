@@ -13,7 +13,7 @@ class DateRangeFilter(DatespanFilter):
     label = _('Date Range')
 
 
-class AgeRangeFilter(BaseSingleOptionFilter):
+class AgeRangeFilter(BaseMultipleOptionFilter):
     slug = 'age_range'
     label = _('Age Range')
     default_text = _('All')
