@@ -1,5 +1,5 @@
 from copy import deepcopy
-from unittest import TestCase
+from django.test import SimpleTestCase
 from nose.plugins.attrib import attr
 
 from mock import patch
@@ -11,7 +11,7 @@ from corehq.elastic import SIZE_LIMIT
 
 
 @attr(es_test=True)
-class TestESQuery(ElasticTestMixin, TestCase):
+class TestESQuery(ElasticTestMixin, SimpleTestCase):
     maxDiff = 1000
 
     def _check_user_location_query(self, query, with_ids):
