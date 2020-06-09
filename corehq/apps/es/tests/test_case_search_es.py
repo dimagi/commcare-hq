@@ -1,4 +1,5 @@
 from django.test.testcases import SimpleTestCase
+from nose.plugins.attrib import attr
 
 from corehq.apps.case_search.const import RELEVANCE_SCORE
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
@@ -6,6 +7,7 @@ from corehq.apps.es.tests.utils import ElasticTestMixin
 from corehq.elastic import SIZE_LIMIT
 
 
+@attr(es_test=True)
 class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
 
     def setUp(self):

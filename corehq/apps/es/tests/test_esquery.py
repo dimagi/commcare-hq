@@ -1,5 +1,6 @@
 from copy import deepcopy
 from unittest import TestCase
+from nose.plugins.attrib import attr
 
 from mock import patch
 
@@ -9,6 +10,7 @@ from corehq.apps.es.tests.utils import ElasticTestMixin
 from corehq.elastic import SIZE_LIMIT
 
 
+@attr(es_test=True)
 class TestESQuery(ElasticTestMixin, TestCase):
     maxDiff = 1000
 
