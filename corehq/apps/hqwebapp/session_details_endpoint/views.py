@@ -7,10 +7,7 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
-from dimagi.utils.parsing import json_format_datetime
-
 from corehq.apps.domain.auth import formplayer_auth
-from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.utils import get_django_user_from_session, get_session
 from corehq.apps.users.models import CouchUser, DomainPermissionsMirror
 from corehq.middleware import TimeoutMiddleware
