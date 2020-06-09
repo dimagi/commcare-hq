@@ -141,8 +141,8 @@ class TestUcrAdapter(TestCase):
             'domain': DOMAIN,
             'startdate': date(2020, 1, 1).isoformat(),
             'enddate': date(2020, 4, 1).isoformat(),
-            'breastfeeding': 'breastfeeding_yes',
-            'age_range': 'lt50years',
+            'breastfeeding': ['breastfeeding_yes'],
+            'age_range': ['lt50years'],
         }).get_data()
         self.assertItemsEqual(food_names(expected), food_names(ucr_data))
 
@@ -151,7 +151,7 @@ class TestUcrAdapter(TestCase):
             'domain': DOMAIN,
             'startdate': date(2020, 1, 1).isoformat(),
             'enddate': date(2020, 4, 1).isoformat(),
-            'age_range': 'gte65years',
+            'age_range': ['gte65years'],
         }).get_data()
         self.assertEqual([], ucr_data)
 

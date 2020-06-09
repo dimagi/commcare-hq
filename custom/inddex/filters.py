@@ -147,7 +147,7 @@ class GapTypeFilter(BaseSingleOptionFilter):
         ]
 
 
-class FoodTypeFilter(BaseSingleOptionFilter):
+class FoodTypeFilter(BaseMultipleOptionFilter):
     slug = 'food_type'
     label = _('Food Type')
     default_text = _('All')
@@ -159,7 +159,7 @@ class FoodTypeFilter(BaseSingleOptionFilter):
         ]
 
 
-class FaoWhoGiftFoodGroupDescriptionFilter(BaseSingleOptionFilter):
+class FaoWhoGiftFoodGroupDescriptionFilter(BaseMultipleOptionFilter):
     slug = 'fao_who_gift_food_group_description'
     label = _('FAO/WHO GIFT Food Group Description')
     default_text = _('All')

@@ -57,7 +57,7 @@ class FoodCaseData(SqlData):
     @property
     def _age_range(self):
         if self.config.get('age_range'):
-            return {age_range.slug: age_range for age_range in AGE_RANGES}[self.config['age_range']]
+            return {age_range.slug: age_range for age_range in AGE_RANGES}[self.config['age_range'][0]]
 
     def _get_age_range_filter(self):
         return AND([GTE(self._age_range.column, 'age_range_lower_bound'),
@@ -72,6 +72,9 @@ class FoodCaseData(SqlData):
     @property
     def filter_values(self):
         filter_values = super().filter_values
+        for key in self.SINGLE_SELECT_COLS:
+            if filter_values.get(key):
+                filter_values[key] = filter_values[key][0]
         for key in self.MULTI_SELECT_COLS:
             clean_IN_filter_value(filter_values, key)
         if self._age_range:

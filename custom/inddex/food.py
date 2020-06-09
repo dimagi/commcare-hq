@@ -340,7 +340,8 @@ class FoodData:
             slug: filter_selections[slug] for slug in self.IN_MEMORY_FILTERS
             if slug in filter_selections
         }
-        self.selected_gap_type = self._in_memory_filter_selections.get('gap_type')
+        _gt = self._in_memory_filter_selections.get('gap_type')
+        self.selected_gap_type = _gt[0] if _gt else None
         self._ucr = FoodCaseData({
             'domain': domain,
             'startdate': str(datespan.startdate),
@@ -355,7 +356,7 @@ class FoodData:
             domain,
             datespan=request.datespan,
             filter_selections={'owner_id': cls._get_owner_ids(domain, request),
-                               **{k: request.GET.get(k)
+                               **{k: [v for v in request.GET.getlist(k) if v]
                                   for k in cls.FILTERABLE_COLUMNS if k != 'owner_id'}}
         )
 
@@ -379,20 +380,20 @@ class FoodData:
         if gap_type == FctGaps.slug and row.fct_gap_code == FctGaps.AVAILABLE:
             return False
 
-        food_type = self._in_memory_filter_selections.get('food_type')
-        if food_type and food_type != row.food_type:
+        food_types = self._in_memory_filter_selections.get('food_type')
+        if food_types and row.food_type not in food_types:
             return False
 
-        gap_code = self._in_memory_filter_selections.get('gap_code')
+        gap_codes = self._in_memory_filter_selections.get('gap_code')
         # gap_code is from a drilldown filter, so gap_type must also be selected
-        if gap_type and gap_code:
-            if gap_type == ConvFactorGaps.slug and str(row.conv_factor_gap_code) != gap_code:
+        if gap_type and gap_codes:
+            if gap_type == ConvFactorGaps.slug and str(row.conv_factor_gap_code) not in gap_codes:
                 return False
-            if gap_type == FctGaps.slug and str(row.fct_gap_code) != gap_code:
+            if gap_type == FctGaps.slug and str(row.fct_gap_code) not in gap_codes:
                 return False
 
-        food_group = self._in_memory_filter_selections.get('fao_who_gift_food_group_description')
-        if food_group and food_group != row.fao_who_gift_food_group_description:
+        food_groups = self._in_memory_filter_selections.get('fao_who_gift_food_group_description')
+        if food_groups and row.fao_who_gift_food_group_description not in food_groups:
             return False
 
         return True
