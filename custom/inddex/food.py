@@ -23,7 +23,8 @@ linked to the recipe by `recipe_case_id`.
 Beneficiaries may report eating a nonstandard recipe more than once, in which
 case subsequent references point to the recipe definition with
 already_reported_recipe_case_id and don't enumerate the ingredients again. We
-need to insert duplicates of the previously reported into the report for them.
+need to insert duplicates of the previously reported ingredients into the
+report for them.
 
 
 Components
