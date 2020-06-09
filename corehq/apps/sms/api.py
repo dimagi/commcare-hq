@@ -685,9 +685,21 @@ def process_incoming(msg):
         })
 
 
+def _allow_load_handlers(v, is_two_way, has_domain_two_way_scope):
+    return (
+        (is_two_way or has_domain_two_way_scope)
+        and is_contact_active(v.domain, v.owner_doc_type, v.owner_id)
+    )
+
+
+def _domain_accepts_inbound(msg):
+    return msg.domain and domain_has_privilege(msg.domain, privileges.INBOUND_SMS)
+
+
 def _process_incoming(msg):
     sms_load_counter("inbound", msg.domain)()
     v, has_domain_two_way_scope = get_inbound_phone_entry(msg)
+    is_two_way = v is not None and v.is_two_way
 
     if v:
         if any_migrations_in_progress(v.domain):
@@ -708,6 +720,7 @@ def _process_incoming(msg):
 
     opt_in_keywords, opt_out_keywords, pass_through_opt_in_keywords = get_opt_keywords(msg)
     domain = v.domain if v else None
+    opt_keyword = False
 
     if is_opt_message(msg.text, opt_out_keywords):
         if PhoneBlacklist.opt_out_sms(msg.phone_number, domain=domain):
@@ -719,6 +732,7 @@ def _process_incoming(msg):
                 send_sms_with_backend(msg.domain, msg.phone_number, text, msg.backend_id, metadata=metadata)
             else:
                 send_sms(msg.domain, None, msg.phone_number, text, metadata=metadata)
+            opt_keyword = True
     elif is_opt_message(msg.text, opt_in_keywords):
         if PhoneBlacklist.opt_in_sms(msg.phone_number, domain=domain):
             text = get_message(MSG_OPTED_IN, v, context=(opt_out_keywords[0],))
@@ -728,30 +742,27 @@ def _process_incoming(msg):
                 send_sms_with_backend(msg.domain, msg.phone_number, text, msg.backend_id)
             else:
                 send_sms(msg.domain, None, msg.phone_number, text)
+            opt_keyword = True
     else:
         if is_opt_message(msg.text, pass_through_opt_in_keywords):
             # Opt the phone number in, and then process the message normally
             PhoneBlacklist.opt_in_sms(msg.phone_number, domain=domain)
 
         handled = False
-        is_two_way = v is not None and v.is_two_way
 
-        if msg.domain and domain_has_privilege(msg.domain, privileges.INBOUND_SMS):
-            if v and v.pending_verification:
-                from . import verify
-                handled = verify.process_verification(v, msg, create_subevent_for_inbound=not has_domain_two_way_scope)
+    if _domain_accepts_inbound(msg):
+        if v and v.pending_verification:
+            from . import verify
+            handled = verify.process_verification(v, msg, create_subevent_for_inbound=not has_domain_two_way_scope)
 
-            if (
-                (is_two_way or has_domain_two_way_scope)
-                and is_contact_active(v.domain, v.owner_doc_type, v.owner_id)
-            ):
-                handled = load_and_call(settings.SMS_HANDLERS, v, msg.text, msg)
+        if _allow_load_handlers(v, is_two_way, has_domain_two_way_scope):
+            handled = load_and_call(settings.SMS_HANDLERS, v, msg.text, msg)
 
-        if not handled and not is_two_way:
-            handled = process_pre_registration(msg)
+    if not handled and not is_two_way and not opt_keyword:
+        handled = process_pre_registration(msg)
 
-            if not handled:
-                handled = process_sms_registration(msg)
+        if not handled:
+            handled = process_sms_registration(msg)
 
     # If the sms queue is enabled, then the billable gets created in remove_from_queue()
     if (
