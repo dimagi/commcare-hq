@@ -962,9 +962,6 @@ REQUIRE_TWO_FACTOR_FOR_SUPERUSERS = False
 # that adds messages to the partition with the fewest unprocessed messages
 USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
 
-SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = not DEBUG
-SESSION_COOKIE_HTTPONLY = CSRF_COOKIE_HTTPONLY = True
-
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
@@ -994,6 +991,13 @@ if callable(COMPRESS_ENABLED):
     COMPRESS_ENABLED = COMPRESS_ENABLED()
 if callable(COMPRESS_OFFLINE):
     COMPRESS_OFFLINE = COMPRESS_OFFLINE()
+
+# These default values can't be overridden.
+# Should you someday need to do so, use the lambda/if callable pattern above
+SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = lambda: not DEBUG
+SESSION_COOKIE_HTTPONLY = CSRF_COOKIE_HTTPONLY = True
+
+
 if UNIT_TESTING:
     # COMPRESS_COMPILERS overrides COMPRESS_ENABLED = False, so must be
     # cleared to disable compression completely. CSS/less compression is
