@@ -89,12 +89,6 @@ hqDefine("linked_domain/js/domain_links", [
         self.enableReleaseButton = ko.computed(function () {
             return self.domainsToRelease().length && self.modelsToRelease().length && !self.releaseInProgress();
         });
-        self.resetReleaseForm = function () {
-            self.domainsToRelease([]);
-            self.modelsToRelease([]);
-            self.buildAppsOnRelease(false);
-            self.releaseInProgress(false);
-        };
         self.createRelease = function () {
             self.releaseInProgress(true);
             _private.RMI("create_release", {
@@ -103,10 +97,10 @@ hqDefine("linked_domain/js/domain_links", [
                 build_apps: self.buildAppsOnRelease(),
             }).done(function (data) {
                 alertUser.alert_user(data.message, data.success ? 'success' : 'danger');
-                self.resetReleaseForm();
+                self.releaseInProgress(false);
             }).fail(function () {
                 alertUser.alert_user(gettext('Something unexpected happened.\nPlease try again, or report an issue if the problem persists.'), 'danger');
-                self.resetReleaseForm();
+                self.releaseInProgress(false);
             });
         };
 
