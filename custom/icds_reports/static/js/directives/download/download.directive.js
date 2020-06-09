@@ -341,25 +341,19 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
             });
             vm.selectedMonth = vm.selectedMonth >= 7 ? vm.selectedMonth : 7;
         } else if((year.id === 2019 && vm.isPPRSelected())) {
-            var currentMonth = latest.getMonth() + 1;
-            var currentYear = latest.getFullYear();
             vm.months = _.filter(vm.monthsCopy, function (month) {
-                if (currentYear === 2019) {
-                    return month.id >= 4 && month.id <= currentMonth;
-                } else {
-                    return month.id >= 4;
-                }
+                    return month.id >= 4
             });
             vm.selectedMonth = vm.selectedMonth >= 4 ? vm.selectedMonth : 4;
             vm.quarters = vm.quartersCopy.slice(1,4);
             vm.selectedQuarter = vm.selectedQuarter >= 2 ? vm.selectedQuarter : 2;
 
         } else if (year.id === latest.getFullYear()) {
-            const maxQuarter = Math.floor((latest.getMonth() + 1)/4) + 1;
+            const maxQuarter = Math.floor((latest.getMonth() + 1)/4);
             vm.months = _.filter(vm.monthsCopy, function (month) {
                 return month.id <= latest.getMonth() + 1;
             });
-            vm.selectedMonth = vm.selectedMonth <= latest.getMonth() + 1 ? vm.selectedMonth : latest.getMonth() + 1;
+            vm.selectedMonth = vm.selectedMonth <= latest.getMonth() + 1 ? vm.selectedMonth : latest.getMonth();
             vm.quarters = _.filter(vm.quartersCopy, function (quarter) {
                 return quarter.id <= maxQuarter;
             });
@@ -372,6 +366,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
             vm.selectedMonth = vm.selectedMonth >= 3 ? vm.selectedMonth : 3;
         } else {
             vm.months = vm.monthsCopy;
+            vm.quarters = v.quartersCopy;
         }
         vm.excludeCurrentMonthIfInitialThreeDays();
     };
@@ -437,10 +432,19 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
             } else if (vm.isPPRSelected()) {
                 var currentYear  = new Date().getFullYear();
                 vm.selectedYear = vm.selectedYear >= 2019 ? vm.selectedYear : currentYear;
+                if (vm.selectedYear == currentYear) {
+                    if ([0, 1, 2].includes(new Date().getMonth())) {
+                       vm.years = _.filter(vm.yearsCopy, function (year) {
+                            return year.id >= 2019 && year.id < currentYear;
+                        });
+                    } else {
+                        vm.years = _.filter(vm.yearsCopy, function (year) {
+                            return year.id >= 2019;
+                        });
+                    }
+                }
                 vm.selectedFormat = vm.formats[1].id;
-                vm.years = _.filter(vm.yearsCopy, function (year) {
-                    return year.id >= 2019;
-                });
+
             } else {
                 vm.years = vm.yearsCopy;
             }
@@ -651,7 +655,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
     };
 
     vm.showMonthFilter = function () {
-        return !(vm.isDashboardUsageSelected() || vm.isAwwActivityReportSelected());
+        return !(vm.isDashboardUsageSelected() || vm.isAwwActivityReportSelected() || vm.isQuarterDataPeriodSelected());
     };
 
     vm.showQuarterFilter = function() {
