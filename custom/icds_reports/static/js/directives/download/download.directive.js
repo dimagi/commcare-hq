@@ -434,10 +434,12 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
                 vm.selectedYear = vm.selectedYear >= 2019 ? vm.selectedYear : currentYear;
                 if (vm.selectedYear == currentYear) {
                     if ([0, 1, 2].includes(new Date().getMonth())) {
-                       vm.years = _.filter(vm.yearsCopy, function (year) {
+                        vm.selectedYear = currentYear - 1;
+                        vm.years = _.filter(vm.yearsCopy, function (year) {
                             return year.id >= 2019 && year.id < currentYear;
                         });
                     } else {
+                        vm.selectedYear = currentYear;
                         vm.years = _.filter(vm.yearsCopy, function (year) {
                             return year.id >= 2019;
                         });
