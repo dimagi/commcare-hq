@@ -10,7 +10,7 @@ from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.messages import ls_launched_help_text
 from custom.icds_reports.models.views import SystemUsageReportView
-from custom.icds_reports.utils import apply_exclude, indian_formatted_number, get_child_locations
+from custom.icds_reports.utils import apply_exclude, indian_formatted_number
 
 
 def get_prop(level):
@@ -238,7 +238,6 @@ def get_ls_launched_data_chart(domain, config, loc_level, show_test=False):
     config['month__range'] = (three_before, month)
     del config['month']
 
-    level = config['aggregation_level']
     chart_data = SystemUsageReportView.objects.filter(
         **config
     ).values(
