@@ -171,8 +171,8 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
             {id: 'summary', name: 'Summary'},
         ];
         vm.dataPeriods = [
-            {id: 1, name: 'Monthly'},
-            {id: 3, name: 'Quarterly'},
+            {id: 'month', name: 'Monthly'},
+            {id: 'quarter', name: 'Quarterly'},
         ];
         vm.beneficiaryCategories = [
             {id: 'pw_lw_children', name: 'PW, LW & Children 0-3 years'},
@@ -187,7 +187,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
         vm.quartersCopy = vm.quarters;
         vm.selectedBeneficiaryCategory = 'pw_lw_children';
         vm.selectedReportLayout = 'comprehensive';
-        vm.selectedDataPeriod = 1;
+        vm.selectedDataPeriod = 'month';
         vm.selectedQuarter = 1;
     }
     vm.THRreportTypes = [
@@ -454,7 +454,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
             vm.selectedFormat = 'xlsx';
         }
         // set data period to monthly for all
-        vm.selectedDataPeriod = 1
+        vm.selectedDataPeriod = 'month'
         vm.adjustSelectedLevelForNoViewByFilter();
 
 
@@ -522,7 +522,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
         vm.selectedFormat = 'xlsx';
         vm.selectedPDFFormat = 'many';
         vm.selectedQuarter = 1;
-        vm.selectedDataPeriod = 1;
+        vm.selectedDataPeriod = 'month';
         initHierarchy();
         vm.updateSelectedDate();
     };
@@ -618,11 +618,11 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
     };
 
     vm.isMonthlyDataPeriodSelected = function() {
-        return vm.selectedDataPeriod === 1;
+        return vm.selectedDataPeriod === 'month';
     };
 
     vm.isQuarterDataPeriodSelected = function() {
-        return vm.selectedDataPeriod === 3;
+        return vm.selectedDataPeriod === 'quarter';
     };
 
     vm.isPPRSelected = function() {
