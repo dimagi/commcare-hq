@@ -327,7 +327,7 @@ class FoodRow:
 
 class FoodData:
     """Generates the primary dataset for INDDEX reports.  See file docstring for more."""
-    IN_MEMORY_FILTERS = ['gap_type', 'gap_code', 'fao_who_gift_food_group_description', 'food_type']
+    IN_MEMORY_FILTERS = ['gap_type', 'gap_code', 'fao_who_gift_food_group_code', 'food_type']
     FILTERABLE_COLUMNS = IN_MEMORY_FILTERS + FoodCaseData.FILTERABLE_COLUMNS
 
     def __init__(self, domain, *, datespan, filter_selections):
@@ -392,8 +392,8 @@ class FoodData:
             if gap_type == FctGaps.slug and str(row.fct_gap_code) not in gap_codes:
                 return False
 
-        food_groups = self._in_memory_filter_selections.get('fao_who_gift_food_group_description')
-        if food_groups and row.fao_who_gift_food_group_description not in food_groups:
+        food_groups = self._in_memory_filter_selections.get('fao_who_gift_food_group_code')
+        if food_groups and row.fao_who_gift_food_group_code not in food_groups:
             return False
 
         return True
