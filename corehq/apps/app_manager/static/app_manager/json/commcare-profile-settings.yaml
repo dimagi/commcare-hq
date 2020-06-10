@@ -8,6 +8,16 @@
   since: "1.3"
   force: true
 
+- name: "Load video files lazily"
+  description: "Make OTA app updates skip download for video files at app update time."
+  id: "lazy_load_video_files"
+  toggle: OPTIONAL_MEDIA_IN_UPDATES
+  values: ["true", "false"]
+  value_names: ["Yes", "No"]
+  default: "false"
+  since: "2.50"
+  force: true
+
 - disabled: true
   name: "Purge Frequency"
   description: "How often the phone should attempt to purge any cached storage which may have expired"
