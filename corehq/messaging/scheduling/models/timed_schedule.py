@@ -151,26 +151,18 @@ class TimedSchedule(Schedule):
 
             self.set_next_event_due_timestamp(instance)
 
-    def get_start_date_with_start_offsets(self, instance):
-        start_date_with_start_offsets = instance.start_date + timedelta(days=self.start_offset)
+    def set_next_event_due_timestamp(self, instance):
+        if self.is_monthly:
+            user_timestamp = self.get_local_next_event_due_timestamp_for_monthly_schedule(instance)
+        else:
+            user_timestamp = self.get_local_next_event_due_timestamp(instance)
 
-        if self.start_day_of_week != self.ANY_DAY:
-            if self.start_day_of_week < self.MONDAY or self.start_day_of_week > self.SUNDAY:
-                raise ValueError("Expected start_day_of_week to be between 0 and 6 for schedule %s" %
-                    self.schedule_id)
-
-            while start_date_with_start_offsets.weekday() != self.start_day_of_week:
-                start_date_with_start_offsets += timedelta(days=1)
-
-        return start_date_with_start_offsets
-
-    def get_case_or_none(self, instance):
-        from corehq.messaging.scheduling.scheduling_partitioned.models import CaseTimedScheduleInstance
-
-        if isinstance(instance, CaseTimedScheduleInstance):
-            return instance.case
-
-        return None
+        instance.next_event_due = (
+            UserTime(user_timestamp, instance.get_timezone(self))
+            .server_time()
+            .done()
+            .replace(tzinfo=None)
+        )
 
     def get_local_next_event_due_timestamp(self, instance):
         if self.repeat_every <= 0:
@@ -232,18 +224,27 @@ class TimedSchedule(Schedule):
         local_time, additional_day_offset = current_event.get_time(case=self.get_case_or_none(instance))
         return datetime.combine(target_date + timedelta(days=additional_day_offset), local_time)
 
-    def set_next_event_due_timestamp(self, instance):
-        if self.is_monthly:
-            user_timestamp = self.get_local_next_event_due_timestamp_for_monthly_schedule(instance)
-        else:
-            user_timestamp = self.get_local_next_event_due_timestamp(instance)
+    def get_start_date_with_start_offsets(self, instance):
+        start_date_with_start_offsets = instance.start_date + timedelta(days=self.start_offset)
 
-        instance.next_event_due = (
-            UserTime(user_timestamp, instance.get_timezone(self))
-            .server_time()
-            .done()
-            .replace(tzinfo=None)
-        )
+        if self.start_day_of_week != self.ANY_DAY:
+            if self.start_day_of_week < self.MONDAY or self.start_day_of_week > self.SUNDAY:
+                raise ValueError(
+                    f"Expected start_day_of_week to be between 0 and 6 for schedule {self.schedule_id}")
+
+            while start_date_with_start_offsets.weekday() != self.start_day_of_week:
+                start_date_with_start_offsets += timedelta(days=1)
+
+        return start_date_with_start_offsets
+
+    @staticmethod
+    def get_case_or_none(instance):
+        from corehq.messaging.scheduling.scheduling_partitioned.models import CaseTimedScheduleInstance
+
+        if isinstance(instance, CaseTimedScheduleInstance):
+            return instance.case
+
+        return None
 
     def get_current_event_content(self, instance):
         current_event = self.memoized_events[instance.current_event_num]
