@@ -369,7 +369,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
     @patch('corehq.messaging.smsbackends.airtel_tcl.models.AirtelTCLBackend.send')
     @patch('corehq.messaging.smsbackends.trumpia.models.TrumpiaBackend.send')
     @patch('corehq.messaging.smsbackends.infobip.models.InfobipBackend.send')
-    @patch('corehq.messaging.smsbackends.pinpoint.models.PinpointBackend.send')
+    @patch('corehq.messaging.smsbackends.amazon_pinpoint.models.PinpointBackend.send')
     def test_outbound_sms(
             self,
             pinpoint_send,
