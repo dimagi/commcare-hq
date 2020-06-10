@@ -8,7 +8,7 @@ from xml.etree import cElementTree as ElementTree
 from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 
-from unidecode import unidecode
+from text_unidecode import unidecode
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase

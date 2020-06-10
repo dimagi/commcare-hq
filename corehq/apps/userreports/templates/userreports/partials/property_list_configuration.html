@@ -171,12 +171,16 @@ TODO:
                 attr: {disabled: !existsInCurrentVersion()}
             "></select>
       <!--/ko-->
-      <!--ko if: $data.format() !== 'Date'-->
+      <!--ko if: !$data.acceptsFormatValue() -->
+      <label>{% trans "N/A" %}</label>
+      <!--/ko-->
+      <!--ko if: $data.format() !== 'Date' && $data.acceptsFormatValue() -->
       <input type="text" class="form-control input-sm" data-bind="
                 textInput: filterValue,
                 attr: {disabled: !existsInCurrentVersion()}
             "/>
       <!--/ko-->
+
       <label class="help-block" data-bind="if: $parent.showWarnings() && !(filterValue() || filterOperator())">
         {% trans "Filter Value should not be blank." %}</label>
     </td>

@@ -1,3 +1,4 @@
+/* global FormplayerFrontend */
 var Formplayer = {
     Utils: {},
     Const: {},
@@ -214,7 +215,8 @@ function Form(json) {
     json.children = json.tree;
     delete json.tree;
     Container.call(self, json);
-    self.submitText = ko.observable('Submit');
+    self.blockSubmit = ko.observable(false);
+    self.isSubmitting = ko.observable(false);
 
     self.currentIndex = ko.observable("0");
     self.atLastIndex = ko.observable(false);
@@ -261,6 +263,18 @@ function Form(json) {
         if (!self.showInFormNavigation()) return false;
         return self.currentIndex() !== "0" && self.currentIndex() !== "-1" && !self.atFirstIndex();
     });
+
+    self.enableSubmitButton = ko.computed(function () {
+        return !self.isSubmitting();
+    });
+
+    self.submitText = ko.computed(function () {
+        if (self.isSubmitting()) {
+            return gettext('Submitting...');
+        }
+        return gettext('Submit');
+    });
+
 
     self.forceRequiredVisible = ko.observable(false);
 
@@ -333,12 +347,9 @@ function Form(json) {
     });
 
     $.subscribe('session.block', function (e, block) {
-        $('#webforms input, #webforms textarea').prop('disabled', !!block);
+        $('#webforms input, #webforms textarea').prop('disabled', block === Formplayer.Const.BLOCK_ALL);
+        self.blockSubmit(block === Formplayer.Const.BLOCK_ALL || block === Formplayer.Const.BLOCK_SUBMIT);
     });
-
-    self.submitting = function () {
-        self.submitText('Submitting...');
-    };
 }
 Form.prototype = Object.create(Container.prototype);
 Form.prototype.constructor = Container;
@@ -586,10 +597,13 @@ Formplayer.Const = {
     NO_PENDING_ANSWER: undefined,
     NO_ANSWER: null,
 
-    // UI Config
+    // UI
     LABEL_WIDTH: 'col-sm-4',
     LABEL_OFFSET: 'col-sm-offset-4',
     CONTROL_WIDTH: 'col-sm-8',
+    BLOCK_NONE: 'block-none',
+    BLOCK_SUBMIT: 'block-submit',
+    BLOCK_ALL: 'block-all',
 
     // XForm Navigation
     QUESTIONS_FOR_INDEX: 'questions_for_index',
@@ -650,6 +664,18 @@ Formplayer.Errors = {
 
 Formplayer.Utils.touchformsError = function (message) {
     return Formplayer.Errors.GENERIC_ERROR + message;
+};
+
+Formplayer.Utils.reloginErrorHtml = function () {
+    var isWebApps = FormplayerFrontend.request('currentUser').environment === FormplayerFrontend.Constants.WEB_APPS_ENVIRONMENT;
+    if (isWebApps) {
+        var url = hqImport("hqwebapp/js/initial_page_data").reverse('login_new_window');
+        return _.template(gettext("Looks like you got logged out because of inactivity, but your work is safe. " +
+                                  "<a href='<%= url %>' target='_blank'>Click here to log back in.</a>"))({url: url});
+    } else {
+        // target=_blank doesn't work properly within an iframe
+        return gettext("You have been logged out because of inactivity.");
+    }
 };
 
 /**

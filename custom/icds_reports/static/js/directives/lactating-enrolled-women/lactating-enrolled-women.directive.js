@@ -3,10 +3,10 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function LactatingEnrolledWomenController($scope, $routeParams, $location, $filter, demographicsService,
     locationsService, dateHelperService, navigationService, userLocationId, storageService,
-    haveAccessToAllLocations, baseControllersService, isAlertActive, isMobile) {
+    haveAccessToAllLocations, baseControllersService, isAlertActive, isMobile, haveAccessToFeatures) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
-        false, isMobile);
+        haveAccessToFeatures, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
     vm.label = "Lactating Mothers enrolled for Anganwadi Services";
@@ -89,6 +89,7 @@ LactatingEnrolledWomenController.$inject = [
     '$scope', '$routeParams', '$location', '$filter',
     'demographicsService', 'locationsService', 'dateHelperService', 'navigationService', 'userLocationId',
     'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive', 'isMobile',
+    'haveAccessToFeatures',
 ];
 
 window.angular.module('icdsApp').directive('lactatingEnrolledWomen', ['templateProviderService', function (templateProviderService) {

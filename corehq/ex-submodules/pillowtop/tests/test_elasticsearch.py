@@ -3,7 +3,7 @@ import uuid
 
 from django.conf import settings
 from django.test import SimpleTestCase
-from corehq.util.es.elasticsearch import ConnectionError, NotFoundError
+from corehq.util.es.elasticsearch import ConnectionError
 
 from corehq.elastic import get_es_new
 from corehq.util.elastic import ensure_index_deleted
@@ -167,12 +167,6 @@ class TestSendToElasticsearch(SimpleTestCase):
     def test_create_doc(self):
         doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'foo'}
         self._send_to_es_and_check(doc)
-
-    def test_auto_index_creation_fails(self):
-        es = get_es_new()
-        ensure_index_deleted(self.index)
-        with self.assertRaises(NotFoundError):
-            es.create(self.index, TEST_INDEX_INFO.type, {"username": "test"}, id="1")
 
     def _send_to_es_and_check(self, doc, update=False, es_merge_update=False,
                               delete=False, esgetter=None):

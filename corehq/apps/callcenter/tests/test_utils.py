@@ -365,6 +365,7 @@ class CallCenterUtilsUserCaseTests(TestCase):
         results = create_or_update_users_and_groups(
             TEST_DOMAIN,
             list(user_upload),
+            None
         )
         self.assertEqual(results['errors'], [])
 

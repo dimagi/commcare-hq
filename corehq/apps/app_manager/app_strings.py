@@ -7,7 +7,6 @@ from memoized import memoized
 
 import commcare_translations
 import langcodes
-from corehq import toggles
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 from corehq.apps.app_manager.util import (
@@ -111,10 +110,6 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
 
         yield id_strings.module_locale(module), maybe_add_index(trans(module.name))
 
-        if toggles.APP_BUILDER_CONDITIONAL_NAMES.enabled(app.domain) and getattr(module, 'name_enum', None):
-            for item in module.name_enum:
-                yield id_strings.module_name_enum_variable(module, item.key_as_variable), trans(item.value)
-
         icon = module.icon_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
         audio = module.audio_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
         custom_icon_form, custom_icon_text = module.custom_icon_form_and_text_by_language(lang)
@@ -170,10 +165,6 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
         for form in module.get_forms():
             form_name = trans(form.name) + ('${0}' if form.show_count else '')
             yield id_strings.form_locale(form), maybe_add_index(form_name)
-
-            if toggles.APP_BUILDER_CONDITIONAL_NAMES.enabled(app.domain) and getattr(module, 'name_enum', None):
-                for item in form.name_enum:
-                    yield id_strings.form_name_enum_variable(form, item.key_as_variable), trans(item.value)
 
             icon = form.icon_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
             audio = form.audio_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)

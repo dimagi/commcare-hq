@@ -109,7 +109,6 @@ def run_patches():
     mimetypes.init()
 
     patch_jsonfield()
-    patch_assertItemsEqual()
 
     import django
     _setup_once.setup = django.setup
@@ -134,11 +133,6 @@ def patch_jsonfield():
         return value
 
     JSONField.to_python = to_python
-
-
-def patch_assertItemsEqual():
-    import unittest
-    unittest.TestCase.assertItemsEqual = unittest.TestCase.assertCountEqual
 
 
 # HACK monkey-patch django setup to prevent second setup by django_nose

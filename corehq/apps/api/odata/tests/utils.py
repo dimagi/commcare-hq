@@ -15,6 +15,12 @@ from corehq.apps.accounting.models import (
     SubscriptionAdjustment,
 )
 from corehq.apps.domain.models import Domain
+from corehq.apps.export.models import (
+    PathNode,
+    ExportItem,
+    FormExportInstance,
+    CaseExportInstance,
+    ExportColumn, TableConfiguration)
 from corehq.apps.users.models import WebUser
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
@@ -33,6 +39,13 @@ class OdataTestMixin(object):
         cls.domain.save()
         cls.web_user = WebUser.create(cls.domain.name, 'test_user', 'my_password')
         cls._setup_user_permissions()
+        cls.app_id = '1234'
+        cls.instance = cls.get_instance(cls.domain.name)
+        cls.instance.save()
+
+    @classmethod
+    def get_instance(cls, domain_name):
+        raise NotImplementedError()
 
     @classmethod
     def _teardownclass(cls):
@@ -56,8 +69,8 @@ class OdataTestMixin(object):
         cls.web_user.set_role(cls.domain.name, 'admin')
         cls.web_user.save()
 
-    def _execute_query(self, credentials):
-        return self.client.get(self.view_url, HTTP_AUTHORIZATION='Basic ' + credentials)
+    def _execute_query(self, credentials, view_url=None):
+        return self.client.get(view_url or self.view_url, HTTP_AUTHORIZATION='Basic ' + credentials)
 
     @classmethod
     def _get_correct_credentials(cls):
@@ -67,19 +80,72 @@ class OdataTestMixin(object):
     def _get_basic_credentials(username, password):
         return base64.b64encode("{}:{}".format(username, password).encode('utf-8')).decode('utf-8')
 
+    @property
+    def view_url(self):
+        return reverse(self.view_urlname, kwargs={'domain': self.domain.name, 'config_id': self.instance._id})
+
 
 class CaseOdataTestMixin(OdataTestMixin):
 
-    @property
-    def view_url(self):
-        return reverse(self.view_urlname, kwargs={'domain': self.domain.name, 'config_id': 'my_config_id'})
+    @classmethod
+    def get_instance(cls, domain_name):
+        return CaseExportInstance(
+            domain=domain_name,
+            is_odata_config=True,
+            transform_dates=False,
+            tables=[
+                TableConfiguration(
+                    selected=True,
+                    columns=[
+                        ExportColumn(label='closed', selected=True,
+                                     # this is what exports generate for a base level property
+                                     item=ExportItem(
+                                         path=[PathNode(name='closed')])),
+                        ExportColumn(label='date_modified', selected=True,
+                                     item=ExportItem(path=[
+                                         PathNode(name='date_modified')])),
+                        ExportColumn(label='selected_property_1',
+                                     selected=True),
+                        ExportColumn(label='selected_property_2',
+                                     selected=True),
+                        ExportColumn(label='unselected_property'),
+                    ],
+                ),
+            ]
+        )
 
 
 class FormOdataTestMixin(OdataTestMixin):
 
-    @property
-    def view_url(self):
-        return reverse(self.view_urlname, kwargs={'domain': self.domain.name, 'config_id': 'my_config_id'})
+    @classmethod
+    def get_instance(cls, domain_name):
+        return FormExportInstance(
+            domain=domain_name,
+            is_odata_config=True,
+            transform_dates=False,
+            tables=[
+                TableConfiguration(
+                    selected=True,
+                    columns=[
+                        ExportColumn(label='received_on', selected=True,
+                                     item=ExportItem(
+                                         path=[PathNode(name='received_on')])),
+                        ExportColumn(label='started_time', selected=True,
+                                     item=ExportItem(path=[
+                                         PathNode(name='form'),
+                                         PathNode(name='meta'),
+                                         PathNode(name='timeStart'),
+                                     ])),
+
+                        ExportColumn(label='selected_property_1',
+                                     selected=True),
+                        ExportColumn(label='selected_property_2',
+                                     selected=True),
+                        ExportColumn(label='unselected_property'),
+                    ],
+                ),
+            ]
+        )
 
 
 def generate_api_key_from_web_user(web_user):

@@ -153,7 +153,7 @@ class TestMigrateBackend(TestCase):
         with tempdir() as tmp:
             filename = join(tmp, "file.txt")
             # do migration
-            migrated, skipped = MIGRATIONS[self.slug].migrate(filename)
+            migrated, skipped = MIGRATIONS[self.slug]().migrate(filename)
             self.assertGreaterEqual(migrated, self.test_size)
 
             # verify: migration state recorded
@@ -189,7 +189,7 @@ class TestMigrateBackend(TestCase):
     def test_resume_migration(self):
         with tempdir() as tmp:
             filename = join(tmp, "file.txt")
-            migrator = MIGRATIONS[self.slug]
+            migrator = MIGRATIONS[self.slug]()
             migrated1, skipped = migrator.migrate(filename)
             self.assertGreaterEqual(migrated1, self.test_size)
             self.assertFalse(skipped)
@@ -200,7 +200,7 @@ class TestMigrateBackend(TestCase):
 
             # resumed migration: all docs already migrated, so BlobMeta records
             # exist, but should not cause errors on attempting to insert them
-            migrated2, skipped = MIGRATIONS[self.slug].migrate(filename)
+            migrated2, skipped = MIGRATIONS[self.slug]().migrate(filename)
             self.assertEqual(migrated1, migrated2)
             self.assertFalse(skipped)
 

@@ -43,12 +43,18 @@ from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.util import reverse
 from corehq.util.files import file_extention_from_filename
+from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
 
 from .analytics import users_have_locations
 from .const import ROOT_LOCATION_TYPE
 from .dbaccessors import get_users_assigned_to_locations
 from .exceptions import LocationConsistencyError
-from .forms import LocationFormSet, RelatedLocationForm, UsersAtLocationForm, LocationFilterForm
+from .forms import (
+    LocationFilterForm,
+    LocationFormSet,
+    RelatedLocationForm,
+    UsersAtLocationForm,
+)
 from .models import LocationType, SQLLocation, filter_for_archived
 from .permissions import (
     can_edit_location,
@@ -206,6 +212,7 @@ class LocationsListView(BaseLocationView):
             'has_location_types': has_location_types,
             'can_edit_root': self.can_access_all_locations,
             'location_search_help': ExpandedMobileWorkerFilter.location_search_help,
+            'user_is_domain_admin': self.request.couch_user.is_domain_admin(self.domain),
         }
 
     def get_visible_locations(self):
@@ -269,7 +276,6 @@ class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
     entity_string = ugettext_lazy("Location")
     template_name = "custom_data_fields/custom_data_fields.html"
 
-    @method_decorator(require_can_edit_locations)
     @method_decorator(locations_access_required)
     @method_decorator(domain_admin_required)
     @method_decorator(check_pending_locations_import())
@@ -932,8 +938,15 @@ class LocationImportView(BaseLocationView):
         if not args:
             messages.error(request, _('no domain specified'))
             return self.get(request, *args, **kwargs)
-        if upload.content_type != 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+
+        if not upload.name.endswith('.xlsx'):
             messages.error(request, _("Invalid file-format. Please upload a valid xlsx file."))
+            return self.get(request, *args, **kwargs)
+
+        try:
+            get_workbook(upload)
+        except WorkbookJSONError as e:
+            messages.error(request, e)
             return self.get(request, *args, **kwargs)
 
         domain = args[0]
@@ -1042,7 +1055,7 @@ class DownloadLocationStatusView(BaseLocationView):
             next_url = reverse(FilteredLocationDownload.urlname, args=[self.domain])
             next_url_text = _("Go back to organization download")
         else:
-            next_url = reverse("location_export", args=[self.domain])
+            next_url = reverse(LocationsListView.urlname, args=[self.domain])
             next_url_text = _("Go back to organization structure")
         context.update({
             'domain': self.domain,

@@ -9,36 +9,40 @@
         <div class="col-xs-6 section-heading" ng-class="{'selectedSection': $ctrl.step === stepId}" ng-bind="step.label" ng-click="$ctrl.goToRoute(step.route)" ng-repeat="(stepId, step) in $ctrl.steps"></div>
       </div>
     </div>
-    <div ng-if="$ctrl.step === 'map'" style="padding-top: 10px">
+    <reassignment-message ng-show="$ctrl.showReassignmentMessage() && $ctrl.haveAccessToFeatures" selected-location="$ctrl.selectedLocation()"
+                          selected-date="$ctrl.selectedDate"></reassignment-message>
+    <div ng-if="!$ctrl.showReassignmentMessage()">
+      <div ng-if="$ctrl.step === 'map'" style="padding-top: 10px">
       <div class="mapView col-xs-11">
         <map-or-sector-view label="$ctrl.label" template-popup="$ctrl.templatePopup(loc, row)"
                             mode="{$ $ctrl.mode $}" data="$ctrl.data" location="$ctrl.location">
         </map-or-sector-view>
       </div>
     </div>
-    <div ng-if="$ctrl.step === 'chart'" style="padding-top: 10px">
-      <div class="chartView col-xs-11" ng-if="!$ctrl.hideRanking" >
-        <nvd3 ng-if="haveAccessToFeatures" options="$ctrl.chartOptions" data="$ctrl.chartData" class="with-3d-shadow with-transitions"></nvd3>
-        <hr ng-if="haveAccessToFeatures">
-        <div class="mb-3">
-          <span class="font-16 font-montserrat font-weight-600 mr-3">
-            {$ $ctrl.location_type === 'Awc' ? $ctrl.location_type.toUpperCase() : $ctrl.location_type $}s Ranking
-          </span>
+      <div ng-if="$ctrl.step === 'chart'" style="padding-top: 10px">
+        <div class="chartView col-xs-11" ng-if="!$ctrl.hideRanking" >
+          <nvd3 options="$ctrl.chartOptions" data="$ctrl.chartData" class="with-3d-shadow with-transitions"></nvd3>
+          <hr>
+          <div class="mb-3">
+            <span class="font-16 font-montserrat font-weight-600 mr-3">
+              {$ $ctrl.location_type === 'Awc' ? $ctrl.location_type.toUpperCase() : $ctrl.location_type $}s Ranking
+            </span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center"
+               ng-repeat="location in $ctrl.all_locations">
+            <a ng-click="$ctrl.displayMobilePopup(location)" class="location-names" ng-bind="location.loc_name"
+               data-toggle="modal" data-target="#infoModal" data-backdrop="false"></a>
+            <p class="font-montserrat font-weight-600 font-16">
+              <span ng-if="location.value !== undefined">{$ location.value $}</span>
+              <span ng-if="location.percent !== undefined">{$ location.percent | number:2 $}%</span>
+            </p>
+          </div>
         </div>
-        <div class="d-flex justify-content-between align-items-center"
-             ng-repeat="location in $ctrl.all_locations">
-          <a ng-click="$ctrl.displayMobilePopup(location)" class="location-names" ng-bind="location.loc_name"
-             data-toggle="modal" data-target="#infoModal" data-backdrop="false"></a>
-          <p class="font-montserrat font-weight-600 font-16">
-            <span ng-if="location.value !== undefined">{$ location.value $}</span>
-            <span ng-if="location.percent !== undefined">{$ location.percent | number:2 $}%</span>
+        <div class="chartView col-xs-11" ng-if="$ctrl.hideRanking" >
+          <p>
+            Sorry, rankings are not available for this report.
           </p>
         </div>
-      </div>
-      <div class="chartView col-xs-11" ng-if="$ctrl.hideRanking" >
-        <p>
-          Sorry, rankings are not available for this report.
-        </p>
       </div>
     </div>
     {# modal popup on rankings page #}

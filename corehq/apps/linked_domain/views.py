@@ -8,6 +8,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext, ugettext_lazy
 from django.views import View
 
+from couchdbkit import ResourceNotFound
 from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
@@ -49,6 +50,7 @@ from corehq.apps.linked_domain.models import (
     AppLinkDetail,
     DomainLink,
     DomainLinkHistory,
+    ReportLinkDetail,
     wrap_detail,
 )
 from corehq.apps.linked_domain.tasks import (
@@ -63,6 +65,11 @@ from corehq.apps.linked_domain.util import (
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
+from corehq.apps.userreports.models import (
+    DataSourceConfiguration,
+    ReportConfiguration,
+)
 from corehq.util.timezones.utils import get_timezone_for_request
 
 
@@ -121,6 +128,19 @@ def case_search_config(request, domain):
 
 @login_or_api_key
 @require_linked_domain
+def ucr_config(request, domain, config_id):
+    report_config = ReportConfiguration.get(config_id)
+    datasource_id = report_config.config_id
+    datasource_config = DataSourceConfiguration.get(datasource_id)
+
+    return JsonResponse({
+        "report": report_config.to_json(),
+        "datasource": datasource_config.to_json(),
+    })
+
+
+@login_or_api_key
+@require_linked_domain
 def get_latest_released_app_source(request, domain, app_id):
     master_app = get_app(None, app_id)
     if master_app.domain != domain:
@@ -173,6 +193,12 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                 app._id: app for app in get_brief_apps_in_domain(self.domain)
                 if is_linked_app(app)
             }
+            linked_reports = {
+                report.get_id: report
+                for report in get_report_configs_for_domain(self.domain)
+                if report.report_meta.master_id
+            }
+
             models_seen = set()
             history = DomainLinkHistory.objects.filter(link=master_link).annotate(row_number=RawSQL(
                 'row_number() OVER (PARTITION BY model, model_detail ORDER BY date DESC)',
@@ -191,6 +217,15 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                     'detail': action.model_detail,
                     'can_update': True
                 }
+                if action.model == 'report':
+                    report_id = action.wrapped_detail.report_id
+                    try:
+                        report = linked_reports.get(report_id)
+                        del linked_reports[report_id]
+                    except KeyError:
+                        report = ReportConfiguration.get(report_id)
+                    update['name'] = f'{name} ({report.title})'
+
                 if action.model == 'app':
                     app_name = 'Unknown App'
                     if action.model_detail:
@@ -208,7 +243,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
 
             # Add in models that have never been synced
             for model, name in LINKED_MODELS:
-                if model not in models_seen and model != 'app':
+                if model not in models_seen and model != 'app' and model != 'report':
                     model_status.append({
                         'type': model,
                         'name': name,
@@ -228,6 +263,17 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                         'can_update': True
                     }
                     model_status.append(update)
+
+            for linked_report_id, report in linked_reports.items():
+                report = ReportConfiguration.get(linked_report_id)
+                update = {
+                    'type': 'report',
+                    'name': f"{linked_models['report']} ({report.title})",
+                    'last_update': None,
+                    'detail': ReportLinkDetail(report_id=report.get_id).to_json(),
+                    'can_update': True,
+                }
+                model_status.append(update)
 
         return {
             'domain': self.domain,
@@ -255,7 +301,7 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         model = in_data['model']
         type_ = model['type']
         detail = model['detail']
-        detail_obj = wrap_detail(type, detail) if detail else None
+        detail_obj = wrap_detail(type_, detail) if detail else None
 
         master_link = get_domain_master_link(self.domain)
         update_model_type(master_link, type_, detail_obj)
@@ -373,15 +419,26 @@ class DomainLinkHistoryReport(GenericTabularReport):
 
     def _make_model_cell(self, record):
         name = LINKED_MODELS_MAP[record.model]
-        if record.model != 'app':
-            return name
 
-        detail = record.wrapped_detail
-        app_name = 'Unknown App'
-        if detail:
-            app_names = self.linked_app_names(self.selected_link.linked_domain)
-            app_name = app_names.get(detail.app_id, detail.app_id)
-        return '{} ({})'.format(name, app_name)
+        if record.model == 'app':
+            detail = record.wrapped_detail
+            app_name = ugettext_lazy('Unknown App')
+            if detail:
+                app_names = self.linked_app_names(self.selected_link.linked_domain)
+                app_name = app_names.get(detail.app_id, detail.app_id)
+            return '{} ({})'.format(name, app_name)
+
+        if record.model == 'report':
+            detail = record.wrapped_detail
+            report_name = ugettext_lazy('Unknown Report')
+            if detail:
+                try:
+                    report_name = ReportConfiguration.get(detail.report_id).title
+                except ResourceNotFound:
+                    pass
+            return '{} ({})'.format(name, report_name)
+
+        return name
 
     @property
     def headers(self):

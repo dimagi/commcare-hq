@@ -6,18 +6,18 @@ from dimagi.utils.couch.database import iter_docs
 from . import NotFound, get_blob_db
 from .migrate import PROCESSING_COMPLETE_MESSAGE
 from .models import BlobMeta
-from .zipdb import ZipBlobDB
+from .targzipdb import TarGzipBlobDB
 
 
 class BlobDbBackendExporter(object):
 
     def __init__(self, filename):
-        self.db = ZipBlobDB(filename)
+        self.db = TarGzipBlobDB(filename)
         self.total_blobs = 0
         self.not_found = 0
 
     def __enter__(self):
-        pass
+        self.db.open('w:gz')
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.db.close()

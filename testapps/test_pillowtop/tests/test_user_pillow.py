@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.test import TestCase
 
 from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed import topics
@@ -23,11 +22,13 @@ from couchforms.models import XFormInstance
 from corehq.util.test_utils import get_form_ready_to_save
 from pillowtop.es_utils import initialize_index
 
+from .base import BasePillowTestCase
+
 
 TEST_DOMAIN = 'user-pillow-test'
 
 
-class UserPillowTestBase(TestCase):
+class UserPillowTestBase(BasePillowTestCase):
     def setUp(self):
         super(UserPillowTestBase, self).setUp()
         self.index_info = USER_INDEX_INFO

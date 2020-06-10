@@ -79,9 +79,9 @@ def get_status_display(event, sms=None):
 
 def get_sms_status_display(sms):
     if sms.error:
-        error_message = (SMS.ERROR_MESSAGES.get(sms.system_error_message, None)
-                         if sms.system_error_message else None)
-        if error_message:
+        error = sms.system_error_message
+        if error:
+            error_message = SMS.ERROR_MESSAGES.get(error, error)
             return '%s - %s' % (_('Error'), _(error_message))
         else:
             return _('Error')

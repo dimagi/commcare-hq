@@ -44,8 +44,8 @@ class TempPrevUCRTables(TempPrevTablesBase):
     SELECT create_distributed_table('{prev_table}', 'supervisor_id');
     INSERT INTO "{prev_table}" (SELECT * FROM "{current_table}");
     CREATE INDEX "idx_reassignment_date_{alias}" ON "{prev_table}" USING hash (location_reassignment_date);
-    CREATE UNLOGGED TABLE "{prev_local}" AS (SELECT * FROM "{current_table}" WHERE location_reassignment_date='{prev_month}');
-    UPDATE "{prev_local}" SET supervisor_id = last_supervisor_id, awc_id=last_owner_id;
+    CREATE UNLOGGED TABLE "{prev_local}" AS (SELECT * FROM "{current_table}" WHERE date_trunc('MONTH', location_reassignment_date)='{prev_month}');
+    UPDATE "{prev_local}" SET supervisor_id = last_supervisor_id, awc_id=last_owner_id, location_reassignment_date=date_trunc('MONTH', location_reassignment_date);
     DELETE FROM "{prev_table}" WHERE location_reassignment_date='{prev_month}';
     INSERT INTO "{prev_table}" (SELECT * FROM "{prev_local}");
     """
@@ -59,13 +59,12 @@ class TempPrevUCRTables(TempPrevTablesBase):
             cursor.execute(self.DROP_QUERY.format(**data))
 
     def create_temp_tables(self, table, day):
-        alias, table = table
         data = {
-            'prev_table': get_prev_agg_tablename(alias),
-            'prev_local': f"{alias}_prev_local",
+            'prev_table': get_prev_agg_tablename(table),
+            'prev_local': f"{table}_prev_local",
             'prev_month': day,
-            'current_table': table,
-            'alias': alias
+            'current_table': get_table_name(DASHBOARD_DOMAIN, table),
+            'alias': table
         }
         with connections[get_icds_ucr_citus_db_alias()].cursor() as cursor:
             cursor.execute(self.CREATE_QUERY.format(**data))
@@ -73,15 +72,15 @@ class TempPrevUCRTables(TempPrevTablesBase):
     def make_all_tables(self, day):
         day = transform_day_to_month(day) + relativedelta(months=1)
         table_list = [
-            ('static-child_health_cases', get_table_name(DASHBOARD_DOMAIN, 'static-child_health_cases')),
-            ('static-ccs_record_cases', get_table_name(DASHBOARD_DOMAIN, 'static-ccs_record_cases')),
-            ('static-person_cases_v3', get_table_name(DASHBOARD_DOMAIN, 'static-person_cases_v3')),
-            ('static-household_cases', get_table_name(DASHBOARD_DOMAIN, 'static-household_cases')),
-            ('static-child_tasks_cases', get_table_name(DASHBOARD_DOMAIN, 'static-child_tasks_cases')),
-            ('static-pregnant-tasks_cases', get_table_name(DASHBOARD_DOMAIN, 'static-pregnant-tasks_cases')),
+            'static-child_health_cases',
+            'static-ccs_record_cases',
+            'static-person_cases_v3',
+            'static-household_cases',
+            'static-child_tasks_cases',
+            'static-pregnant-tasks_cases',
         ]
         for table in table_list:
-            self.drop_temp_tables(table[0])
+            self.drop_temp_tables(table)
             self.create_temp_tables(table, day)
 
 

@@ -9,6 +9,7 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
+from corehq.apps.hqwebapp.decorators import waf_allow
 from dimagi.utils.web import json_response
 
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
@@ -65,6 +66,7 @@ def _case_importer_breadcrumb_context(page_name, domain):
     }
 
 
+@waf_allow('XSS_BODY')
 @require_can_edit_data
 @conditionally_location_safe(location_safe_case_imports_enabled)
 def excel_config(request, domain):
@@ -267,6 +269,7 @@ def excel_commit(request, domain):
     return HttpResponseRedirect(base.ImportCases.get_url(domain))
 
 
+@waf_allow('XSS_BODY')
 @csrf_exempt
 @require_POST
 @api_auth

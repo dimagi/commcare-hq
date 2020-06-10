@@ -28,7 +28,7 @@ class BaseFilter(object):
     Base object for filters.
     """
     template = None
-    # setting this to True makes the report using the filter a location_safe report (has_location_filter())
+    # setting this to True makes the report using the filter a location_safe report (report_has_location_filter())
     location_filter = False
 
     def __init__(self, name, params=None):

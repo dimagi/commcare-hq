@@ -208,6 +208,11 @@ class CcsRecordMonthly(models.Model, AggregateMixin):
     )
     tt_booster = models.DateField(null=True)
     last_preg_year = models.IntegerField(null=True)
+    complication_type = models.TextField(blank=True, null=True)
+    reason_no_ifa = models.TextField(blank=True, null=True)
+    new_ifa_tablets_total_bp = models.SmallIntegerField(blank=True, null=True)
+    new_ifa_tablets_total_pnc = models.SmallIntegerField(blank=True, null=True)
+    ifa_last_seven_days = models.PositiveSmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         managed = False
@@ -366,6 +371,11 @@ class ChildHealthMonthly(models.Model, AggregateMixin):
     child_person_case_id = models.TextField(blank=True, null=True)
     delivery_nature = models.TextField(blank=True, null=True)
     term_days = models.SmallIntegerField(blank=True, null=True)
+    valid_status_daily = models.SmallIntegerField(blank=True, null=True)
+    migration_status_daily = models.SmallIntegerField(blank=True, null=True)
+    alive_status_daily = models.SmallIntegerField(blank=True, null=True)
+    duplicate_status_daily = models.SmallIntegerField(blank=True, null=True)
+    seeking_services_status_daily = models.SmallIntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -1066,6 +1076,10 @@ class AggregateCcsRecordPostnatalCareForms(models.Model, AggregateMixin):
         help_text="number of qualified visits for the incentive report",
         default=0
     )
+    new_ifa_tablets_total = models.SmallIntegerField(
+        null=True,
+        help_text="New ifa tablets"
+    )
 
     class Meta(object):
         db_table = AGG_CCS_RECORD_PNC_TABLE
@@ -1324,6 +1338,12 @@ class AggregateBirthPreparednesForms(models.Model, AggregateMixin):
         null=True,
         help_text="Has ever had /data/bp1/using_ifa='yes'"
     )
+    reason_no_ifa = models.TextField(null=True)
+    new_ifa_tablets_total = models.SmallIntegerField(
+        null=True,
+        help_text="New ifa tablets"
+    )
+
 
     class Meta(object):
         db_table = AGG_CCS_RECORD_BP_TABLE
@@ -1398,6 +1418,8 @@ class AggregateInactiveAWW(models.Model, AggregateMixin):
     state_name = models.TextField(blank=True, null=True)
     first_submission = models.DateField(blank=True, null=True)
     last_submission = models.DateField(blank=True, null=True)
+    no_of_days_since_start = models.PositiveIntegerField(blank=True, null=True)
+    no_of_days_inactive = models.PositiveIntegerField(blank=True, null=True)
 
     @property
     def days_since_start(self):
@@ -1706,18 +1728,51 @@ class AggServiceDeliveryReport(models.Model, AggregateMixin):
     lunch_8_14_days = models.IntegerField(null=True)
     lunch_15_20_days = models.IntegerField(null=True)
     lunch_21_days = models.IntegerField(null=True)
+    lunch_21_24_days = models.IntegerField(null=True)
+    lunch_25_days = models.IntegerField(null=True)
     pse_eligible = models.IntegerField(null=True)
     pse_0_days = models.IntegerField(null=True)
     pse_1_7_days = models.IntegerField(null=True)
     pse_8_14_days = models.IntegerField(null=True)
     pse_15_20_days = models.IntegerField(null=True)
     pse_21_days = models.IntegerField(null=True)
+    pse_21_24_days = models.IntegerField(null=True)
+    pse_25_days = models.IntegerField(null=True)
     thr_eligible = models.IntegerField(null=True)
     thr_0_days = models.IntegerField(null=True)
     thr_1_7_days = models.IntegerField(null=True)
     thr_8_14_days = models.IntegerField(null=True)
     thr_15_20_days = models.IntegerField(null=True)
     thr_21_days = models.IntegerField(null=True)
+    thr_21_24_days = models.IntegerField(null=True)
+    thr_25_days = models.IntegerField(null=True)
+
+    child_thr_eligible = models.IntegerField(null=True)
+    child_thr_0_days = models.IntegerField(null=True)
+    child_thr_1_7_days = models.IntegerField(null=True)
+    child_thr_8_14_days = models.IntegerField(null=True)
+    child_thr_15_20_days = models.IntegerField(null=True)
+    child_thr_21_days = models.IntegerField(null=True)
+    child_thr_21_24_days = models.IntegerField(null=True)
+    child_thr_25_days = models.IntegerField(null=True)
+
+    pw_thr_eligible = models.IntegerField(null=True)
+    pw_thr_0_days = models.IntegerField(null=True)
+    pw_thr_1_7_days = models.IntegerField(null=True)
+    pw_thr_8_14_days = models.IntegerField(null=True)
+    pw_thr_15_20_days = models.IntegerField(null=True)
+    pw_thr_21_days = models.IntegerField(null=True)
+    pw_thr_21_24_days = models.IntegerField(null=True)
+    pw_thr_25_days = models.IntegerField(null=True)
+
+    lw_thr_eligible = models.IntegerField(null=True)
+    lw_thr_0_days = models.IntegerField(null=True)
+    lw_thr_1_7_days = models.IntegerField(null=True)
+    lw_thr_8_14_days = models.IntegerField(null=True)
+    lw_thr_15_20_days = models.IntegerField(null=True)
+    lw_thr_21_days = models.IntegerField(null=True)
+    lw_thr_21_24_days = models.IntegerField(null=True)
+    lw_thr_25_days = models.IntegerField(null=True)
     state_is_test = models.SmallIntegerField(null=True)
     district_is_test = models.SmallIntegerField(null=True)
     block_is_test = models.SmallIntegerField(null=True)
@@ -1729,6 +1784,11 @@ class AggServiceDeliveryReport(models.Model, AggregateMixin):
     children_3_5 = models.IntegerField(null=True)
     gm_0_3 = models.IntegerField(null=True)
     gm_3_5 = models.IntegerField(null=True)
+    third_fourth_month_of_pregnancy_count = models.IntegerField(null=True)
+    annaprasan_diwas_count = models.IntegerField(null=True)
+    suposhan_diwas_count = models.IntegerField(null=True)
+    coming_of_age_count = models.IntegerField(null=True)
+    public_health_message_count = models.IntegerField(null=True)
 
     class Meta(object):
         db_table = AGG_SDR_TABLE
@@ -1795,6 +1855,14 @@ class BiharAPIDemographics(models.Model, AggregateMixin):
     date_return_private = models.DateField(null=True)
     out_of_school_status = models.SmallIntegerField(null=True)
     last_class_attended_ever = models.SmallIntegerField(null=True)
+    last_reported_fever_date = models.DateField(null=True)
+    age_marriage = models.SmallIntegerField(null=True)
+    last_referral_date = models.DateField(null=True)
+    referral_health_problem = models.TextField(null=True)
+    referral_reached_date = models.DateField(null=True)
+    referral_reached_facility = models.SmallIntegerField(null=True)
+    migrate_date = models.DateTimeField(null=True)
+    was_oos_ever = models.SmallIntegerField(null=True)
 
     class Meta(object):
         db_table = BIHAR_API_DEMOGRAPHICS_TABLE

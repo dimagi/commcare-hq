@@ -3,11 +3,13 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function ProgramSummaryController($scope, $http, $log, $routeParams, $location, storageService, dateHelperService,
-    navigationService, baseControllersService, userLocationId, haveAccessToAllLocations, isAlertActive, navMetadata) {
+    navigationService, baseControllersService, userLocationId, haveAccessToAllLocations, isAlertActive, navMetadata,
+                                  haveAccessToFeatures) {
     baseControllersService.BaseFilterController.call(
         this, $scope, $routeParams, $location, dateHelperService, storageService, navigationService
     );
     var vm = this;
+    vm.haveAccessToFeatures = haveAccessToFeatures;
     vm.data = {};
     vm.label = "Program Summary";
     vm.haveAccessToAllLocations = haveAccessToAllLocations;
@@ -129,7 +131,7 @@ function ProgramSummaryController($scope, $http, $log, $routeParams, $location, 
 ProgramSummaryController.$inject = [
     '$scope', '$http', '$log', '$routeParams', '$location', 'storageService',
     'dateHelperService', 'navigationService', 'baseControllersService', 'userLocationId',
-    'haveAccessToAllLocations', 'isAlertActive', 'navMetadata',
+    'haveAccessToAllLocations', 'isAlertActive', 'navMetadata', 'haveAccessToFeatures',
 ];
 
 window.angular.module('icdsApp').directive("programSummary", ['templateProviderService', function (templateProviderService) {

@@ -1,15 +1,17 @@
 from typing import List, Dict
 
+from django.conf import settings
 from prometheus_client import Counter as PCounter
 from prometheus_client import Gauge as PGauge
 from prometheus_client import Histogram as PHistogram
+from prometheus_client import CollectorRegistry, multiprocess, push_to_gateway
 
 from corehq.util.soft_assert import soft_assert
 from corehq.util.metrics.metrics import HqMetrics
 
 prometheus_soft_assert = soft_assert(to=[
     f'{name}@dimagi.com'
-    for name in ['skelly', 'rkumar']
+    for name in ['skelly', 'rkumar', 'sreddy']
 ])
 
 
@@ -81,6 +83,8 @@ class PrometheusMetrics(HqMetrics):
         else:
             assert metric.__class__ == metric_type
         try:
+            if getattr(settings, 'PUSHGATEWAY_HOST', None):
+                self._push_to_gateway()
             return metric.labels(**tags) if tags else metric
         except ValueError:
             prometheus_soft_assert(False, 'Prometheus metric error', {
@@ -89,3 +93,13 @@ class PrometheusMetrics(HqMetrics):
                 'expected_tags': metric._labelnames
             })
             raise
+
+    def _push_to_gateway(self):
+        registry = CollectorRegistry()
+        multiprocess.MultiProcessCollector(registry)
+        host = getattr(settings, 'PUSHGATEWAY_HOST')
+        try:
+            push_to_gateway(host, job='batch_mode', registry=registry)
+        except Exception:
+            # Could get a URLOpenerror if Pushgateway is not running
+            prometheus_soft_assert(False, 'Prometheus metric error while pushing to gateway')

@@ -1,7 +1,9 @@
+import json
 import logging
 from collections import defaultdict
 from contextlib import contextmanager
 from functools import partial
+from xml.sax.saxutils import unescape
 
 import attr
 
@@ -11,20 +13,12 @@ from casexml.apps.stock.models import StockTransaction
 from dimagi.utils.couch.database import retry_on_couch_error
 
 from corehq.apps.commtrack.models import StockState
+from corehq.apps.es.forms import updating_cases, FormES
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.tzmigration.timezonemigration import FormJsonDiff as Diff
 from corehq.apps.tzmigration.timezonemigration import MISSING, json_diff
 from corehq.blobs import get_blob_db
-from corehq.form_processor.backends.couch.dbaccessors import (
-    CaseAccessorCouch,
-    FormAccessorCouch,
-)
 from corehq.form_processor.backends.couch.processor import FormProcessorCouch
-from corehq.form_processor.backends.sql.dbaccessors import (
-    CaseAccessorSQL,
-    FormAccessorSQL,
-    LedgerAccessorSQL,
-)
 from corehq.form_processor.exceptions import MissingFormXml, XFormNotFound
 from corehq.form_processor.parsers.ledgers.form import (
     get_all_stock_report_helpers_from_form,
@@ -32,9 +26,17 @@ from corehq.form_processor.parsers.ledgers.form import (
 from corehq.util.metrics import metrics_counter
 
 from .diff import filter_case_diffs, filter_ledger_diffs
+from .diffrule import ANY
 from .rebuildcase import rebuild_and_diff_cases
+from .retrydb import (
+    couch_form_exists,
+    get_couch_form,
+    get_sql_cases,
+    get_sql_forms,
+    get_sql_ledger_values,
+    sql_form_exists,
+)
 from .statedb import Change
-from .util import retry_on_sql_error
 
 log = logging.getLogger(__name__)
 
@@ -81,7 +83,7 @@ def diff_cases(couch_cases, log_cases=False):
     dd_count = partial(metrics_counter, tags={"domain": get_domain()})
     case_ids = list(couch_cases)
     sql_case_ids = set()
-    for sql_case in CaseAccessorSQL.get_cases(case_ids):
+    for sql_case in get_sql_cases(case_ids):
         case_id = sql_case.case_id
         sql_case_ids.add(case_id)
         couch_case, diffs, changes = diff_case(sql_case, couch_cases[case_id], dd_count)
@@ -115,7 +117,7 @@ def diff_case(sql_case, couch_case, dd_count):
         return couch_case, diffs, changes
     diffs = diff(couch_case, sql_json)
     if diffs:
-        if is_case_patched(diffs):
+        if is_case_patched(case_id, diffs):
             return couch_case, [], []
         form_diffs = diff_case_forms(couch_case, sql_json)
         if form_diffs:
@@ -137,6 +139,8 @@ def diff_case(sql_case, couch_case, dd_count):
             except Exception as err:
                 dd_count("commcare.couchsqlmigration.case.rebuild.error")
                 log.warning(f"Case {case_id} rebuild SQL -> {type(err).__name__}: {err}")
+            if not diffs and is_case_patched(case_id, diff(original_couch_case, sql_json)):
+                return original_couch_case, [], []
         if diffs:
             diffs.extend(diff_case_forms(couch_case, sql_json))
         else:
@@ -178,7 +182,7 @@ def diff_ledgers(case_ids, dd_count):
     sql_refs = set()
     all_diffs = []
     all_changes = []
-    for ledger_value in LedgerAccessorSQL.get_ledger_values_for_cases(case_ids):
+    for ledger_value in get_sql_ledger_values(case_ids):
         ref = ledger_value.ledger_reference
         sql_refs.add(ref)
         dd_count("commcare.couchsqlmigration.ledger.diffed")
@@ -312,15 +316,58 @@ class StockTransactionLoader:
                     yield report.report_type, tx
 
 
-def is_case_patched(diffs):
-    from .casepatch import PatchForm
-    if not (len(diffs) == 1
-            and diffs[0].diff_type == "set_mismatch"
-            and list(diffs[0].path) == ["xform_ids", "[*]"]
-            and diffs[0].new_value):
+def is_case_patched(case_id, diffs):
+    """Check if case has been patched
+
+    The case has been patched if at least one patch form has been
+    applied to the SQL case and if all of the given diffs are
+    unpatchable and match an unpatchable diff encoded in one of the
+    patch forms.
+
+    Additionally, diffs having a MISSING `old_value` are patched with an
+    empty string, which is semantically equivalent to removing the case
+    property in CommCare. However, a difference is detectable at the
+    storage level even after the patch has been applied, and therefore
+    these subsequent patch diffs are considered to be patched.
+
+    The "xform_ids" diff is a special exception because it is not
+    patchable and is not required to be present in the patch form.
+
+    :returns: True if the case has been patched else False.
+    """
+    def is_patched(form_ids):
+        forms = get_sql_forms(form_ids, ordered=True)
+        for form in reversed(forms):
+            if form.xmlns == PatchForm.xmlns:
+                discard_expected_diffs(form.form_data.get("diff"))
+                if not unpatched:
+                    return True
         return False
-    form_ids = diffs[0].new_value.split(",")
-    return any(f.xmlns == PatchForm.xmlns for f in get_sql_forms(form_ids))
+
+    def discard_expected_diffs(patch_data):
+        data = json.loads(unescape(patch_data)) if patch_data else {}
+        if data.get("case_id") != case_id:
+            return
+        for diff in data.get("diffs", []):
+            diff.pop("reason", None)
+            path = tuple(diff["path"])
+            if path in unpatched and diff_to_json(unpatched[path], ANY) == diff:
+                unpatched.pop(path)
+
+    def expected_patch_diff(diff):
+        return not is_patchable(diff) or (
+            diff.old_value is MISSING and diff.new_value == "")
+
+    from .casepatch import PatchForm, is_patchable, diff_to_json
+    unpatched = {tuple(d.path): d for d in diffs if expected_patch_diff(d)}
+    xform_ids = unpatched.pop(("xform_ids", "[*]"), None)
+    return (
+        xform_ids is not None
+        and xform_ids.diff_type == "set_mismatch"
+        and xform_ids.new_value
+        and len(diffs) == len(unpatched) + 1  # false if any diffs are patchable
+        and is_patched(xform_ids.new_value.split(","))
+    )
 
 
 def diff_case_forms(couch_json, sql_json):
@@ -346,8 +393,8 @@ def diff_case_forms(couch_json, sql_json):
 
 
 def diff_form_state(form_id, *, in_couch=False):
-    in_couch = in_couch or FormAccessorCouch.form_exists(form_id)
-    in_sql = FormAccessorSQL.form_exists(form_id)
+    in_couch = in_couch or couch_form_exists(form_id)
+    in_sql = sql_form_exists(form_id)
     couch_miss = "missing"
     if not in_couch and get_blob_db().metadb.get_for_parent(form_id):
         couch_miss = MISSING_BLOB_PRESENT
@@ -390,15 +437,33 @@ def add_missing_docs(data, couch_cases, sql_case_ids, dd_count):
 
 
 def add_cases_missing_from_couch(data, case_ids):
-    sql_ids = {c.case_id for c in CaseAccessorSQL.get_cases(list(case_ids))}
+    sql_cases = {c.case_id: c for c in get_sql_cases(list(case_ids))}
     data.doc_ids.extend(case_ids)
     for case_id in case_ids:
-        new = "present" if case_id in sql_ids else MISSING
-        data.diffs.append((
-            "CommCareCase",
-            case_id,
-            [Diff("missing", path=["*"], old_value=MISSING, new_value=new)],
-        ))
+        if case_id in sql_cases:
+            new = "present"
+            if sql_cases[case_id].deleted:
+                miss = Diff("missing", path=["*"], old_value=MISSING, new_value=new)
+                data.diffs.append(("CommCareCase-Deleted", case_id, [miss]))
+                new = None
+        else:
+            forms = find_processed_and_unmigrated_form_ids(case_id)
+            new = f"missing with forms {forms}" if forms else None
+        diff = Diff("missing", path=["*"], old_value=MISSING, new_value=new)
+        data.diffs.append(("CommCareCase", case_id, [diff] if new else []))
+
+
+def find_processed_and_unmigrated_form_ids(case_id):
+    es_ids = find_form_ids_updating_case(case_id)
+    forms = get_sql_forms(es_ids)
+    normal = {f.form_id for f in forms if f.initial_processing_complete and f.is_normal}
+    unmigrated = set(es_ids) - {f.form_id for f in forms}
+    return normal | unmigrated
+
+
+def find_form_ids_updating_case(case_id):
+    result = FormES().filter(updating_cases([case_id])).run()
+    return [hit["_id"] for hit in result.hits]
 
 
 @contextmanager
@@ -484,18 +549,3 @@ def should_diff(case):
 
 def get_domain():
     return _diff_state.domain
-
-
-@retry_on_couch_error
-def get_couch_cases(case_ids):
-    return CaseAccessorCouch.get_cases(case_ids)
-
-
-@retry_on_couch_error
-def get_couch_form(form_id):
-    return FormAccessorCouch.get_form(form_id)
-
-
-@retry_on_sql_error
-def get_sql_forms(form_id):
-    return FormAccessorSQL.get_forms(form_id)

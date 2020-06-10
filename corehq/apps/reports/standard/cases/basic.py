@@ -8,6 +8,7 @@ from corehq.util.es.elasticsearch import TransportError
 from memoized import memoized
 
 from corehq.apps.es import cases as case_es
+from corehq.apps.es.utils import track_es_report_load
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
@@ -81,6 +82,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             query = query_deactivated_data(query, self.domain)
 
         else:  # Only show explicit matches
+            track_es_report_load(self.domain, self.slug, len(self.case_owners))
             query = query.owner(self.case_owners)
 
         if not self.request.can_access_all_locations:
@@ -108,29 +110,6 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     @property
     @memoized
     def case_owners(self):
-        """
-        For unrestricted user
-        :return:
-        user ids for selected user types
-        for selected reporting group ids, returns user_ids belonging to these groups
-            also finds the sharing groups which has any user from the above reporting group
-        selected sharing group ids
-        selected user ids
-            also finds the sharing groups which has any user from the above selected users
-            ids and descendants ids of assigned locations to these users
-        ids and descendants ids of selected locations
-            assigned users at selected locations and their descendants
-
-        For restricted user
-        :return:
-        selected user ids
-            also finds the sharing groups which has any user from the above selected users
-            ids and descendants ids of assigned locations to these users
-        ids and descendants ids of selected locations
-            assigned users at selected locations and their descendants
-        """
-        # Get user ids for each user that match the demo_user, admin,
-        # Unknown Users, or All Mobile Workers filters
         mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
         return get_case_owners(self.request, self.domain, mobile_user_and_group_slugs)
 
@@ -168,7 +147,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
     @classmethod
     def get_subpages(cls):
         def _get_case_name(request=None, **context):
-            if 'case' in context:
+            if 'case' in context and context['case'].name:
                 return mark_safe(context['case'].name)
             else:
                 return _('View Case')

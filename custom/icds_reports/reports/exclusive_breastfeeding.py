@@ -4,7 +4,6 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
-from django.utils.translation import ugettext as _
 
 from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
@@ -12,13 +11,14 @@ from custom.icds_reports.messages import exclusive_breastfeeding_help_text
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, generate_data_for_map, chosen_filters_to_labels, \
     indian_formatted_number
+from custom.icds_reports.utils import get_location_launched_status
 
 
-@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
-def get_exclusive_breastfeeding_data_map(domain, config, loc_level, show_test=False):
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_features_flag'], timeout=30 * 60)
+def get_exclusive_breastfeeding_data_map(domain, config, loc_level, show_test=False, icds_features_flag=False):
+    config['month'] = datetime(*config['month'])
 
     def get_data_for(filters):
-        filters['month'] = datetime(*filters['month'])
         queryset = AggChildHealthMonthly.objects.filter(
             **filters
         ).values(
@@ -31,19 +31,26 @@ def get_exclusive_breastfeeding_data_map(domain, config, loc_level, show_test=Fa
             queryset = apply_exclude(domain, queryset)
         return queryset
 
+    if icds_features_flag:
+        location_launched_status = get_location_launched_status(config, loc_level)
+    else:
+        location_launched_status = None
     data_for_map, valid_total, in_month_total, average, total = generate_data_for_map(
         get_data_for(config),
         loc_level,
         'children',
         'all',
         20,
-        60
+        60,
+        location_launched_status=location_launched_status
     )
 
     fills = OrderedDict()
     fills.update({'0%-20%': MapColors.RED})
     fills.update({'20%-60%': MapColors.ORANGE})
     fills.update({'60%-100%': MapColors.PINK})
+    if icds_features_flag:
+        fills.update({'Not Launched': MapColors.GREY})
     fills.update({'defaultFill': MapColors.GREY})
 
     gender_ignored, age_ignored, chosen_filters = chosen_filters_to_labels(config)
@@ -79,8 +86,8 @@ def get_exclusive_breastfeeding_data_map(domain, config, loc_level, show_test=Fa
     }
 
 
-@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
-def get_exclusive_breastfeeding_data_chart(domain, config, loc_level, show_test=False):
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_features_flag'], timeout=30 * 60)
+def get_exclusive_breastfeeding_data_chart(domain, config, loc_level, show_test=False, icds_features_flag=None):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
@@ -110,7 +117,18 @@ def get_exclusive_breastfeeding_data_chart(domain, config, loc_level, show_test=
         data['blue'][miliseconds] = {'y': 0, 'all': 0, 'in_month': 0}
 
     best_worst = {}
+    if icds_features_flag:
+        if 'month' not in config:
+            config['month'] = month
+        location_launched_status = get_location_launched_status(config, loc_level)
+    else:
+        location_launched_status = None
+
     for row in chart_data:
+        if location_launched_status:
+            launched_status = location_launched_status.get(row['%s_name' % loc_level])
+            if launched_status is None or launched_status <= 0:
+                continue
         date = row['month']
         in_month = row['in_month']
         location = row['%s_name' % loc_level]
@@ -160,8 +178,10 @@ def get_exclusive_breastfeeding_data_chart(domain, config, loc_level, show_test=
     }
 
 
-@icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
-def get_exclusive_breastfeeding_sector_data(domain, config, loc_level, location_id, show_test=False):
+@icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test', 'icds_features_flag'],
+                 timeout=30 * 60)
+def get_exclusive_breastfeeding_sector_data(domain, config, loc_level, location_id, show_test=False,
+                                            icds_features_flag=False):
     group_by = ['%s_name' % loc_level]
 
     config['month'] = datetime(*config['month'])
@@ -186,7 +206,15 @@ def get_exclusive_breastfeeding_sector_data(domain, config, loc_level, location_
         'all': 0
     })
 
+    if icds_features_flag:
+        location_launched_status = get_location_launched_status(config, loc_level)
+    else:
+        location_launched_status = None
     for row in data:
+        if location_launched_status:
+            launched_status = location_launched_status.get(row['%s_name' % loc_level])
+            if launched_status is None or launched_status <= 0:
+                continue
         valid = row['eligible']
         name = row['%s_name' % loc_level]
 

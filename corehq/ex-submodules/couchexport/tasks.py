@@ -1,5 +1,5 @@
 from celery.utils.log import get_task_logger
-from unidecode import unidecode
+from text_unidecode import unidecode
 from celery.task import task
 import zipfile
 from couchexport.files import Temp

@@ -1,7 +1,9 @@
+import json
 import logging
 from datetime import datetime
 from functools import partial, wraps
 from uuid import uuid4
+from xml.sax.saxutils import escape
 
 from django.template.loader import render_to_string
 
@@ -12,12 +14,10 @@ from casexml.apps.case import const
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
 from casexml.apps.phone.xml import get_case_xml
-from dimagi.utils.couch.database import retry_on_couch_error
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.tzmigration.timezonemigration import MISSING
 from corehq.blobs import get_blob_db
-from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import (
     Attachment,
@@ -29,7 +29,7 @@ from corehq.util.metrics import metrics_counter
 from .casediff import get_domain
 from .casedifftool import format_diffs
 from .couchsqlmigration import get_case_and_ledger_updates, save_migrated_models
-from .util import retry_on_sql_error
+from .retrydb import get_couch_case
 
 log = logging.getLogger(__name__)
 
@@ -98,7 +98,7 @@ class PatchCase:
             updates.extend([const.CASE_ACTION_CREATE, const.CASE_ACTION_UPDATE])
             self._dynamic_properties = self.case.dynamic_case_properties()
         else:
-            if cannot_patch(self.diffs):
+            if has_illegal_props(self.diffs):
                 raise CannotPatch(self.diffs)
             props = dict(iter_dynamic_properties(self.diffs))
             self._dynamic_properties = props
@@ -128,13 +128,55 @@ class PatchCase:
         if not diffs:
             return
         for diff in diffs:
-            if diff.path != ["indices", "[*]"] or diff.new_value is not MISSING:
+            if diff.path != ["indices", "[*]"]:
                 raise CannotPatch([diff])
-            yield CommCareCaseIndex.wrap(diff.old_value)
+            if diff.new_value is MISSING and isinstance(diff.old_value, dict):
+                yield CommCareCaseIndex.wrap(diff.old_value)
+            elif diff.old_value is MISSING and isinstance(diff.new_value, dict):
+                yield CommCareCaseIndex(
+                    identifier=diff.new_value["identifier"],
+                    referenced_type="",
+                )
+            else:
+                raise CannotPatch([diff])
 
 
-ILLEGAL_PROPS = {"actions", "*"}
-IGNORE_PROPS = {"opened_by", "external_id"}
+def has_illegal_props(diffs):
+    return any(d.path[0] in ILLEGAL_PROPS for d in diffs)
+
+
+def has_known_props(diffs):
+    return any(d.path[0] in KNOWN_PROPERTIES for d in diffs)
+
+
+def iter_dynamic_properties(diffs):
+    for diff in diffs:
+        name = diff.path[0]
+        if name in STATIC_PROPS:
+            continue
+        if diff.old_value is MISSING:
+            value = ""
+        elif len(diff.path) > 1 or not isinstance(diff.old_value, str):
+            raise CannotPatch([diff])
+        else:
+            value = diff.old_value
+        yield name, value
+
+
+ILLEGAL_PROPS = {"actions", "case_id", "domain", "*"}
+UNPATCHABLE_PROPS = {
+    "closed_by",
+    "closed_on",
+    "deleted_on",
+    "deletion_id",
+    "external_id",
+    "modified_by",
+    "modified_on",
+    "opened_by",
+    "opened_on",
+    "server_modified_on",
+    "xform_ids",
+}
 STATIC_PROPS = {
     "case_id",
     "closed",
@@ -158,32 +200,14 @@ STATIC_PROPS = {
     "user_id",
     "xform_ids",
 
-    # renamed Couch properties
+    # renamed/obsolete Couch properties
     "-deletion_date",   # deleted_on
     "-deletion_id",     # deletion_id
     "@date_modified",   # modified_on
     "@user_id",         # user_id
     "hq_user_id",       # external_id
+    "#text",            # ignore that junk
 }
-
-
-def cannot_patch(diffs):
-    return any(d.path[0] in ILLEGAL_PROPS for d in diffs) \
-        or all(d.path[0] in IGNORE_PROPS for d in diffs)
-
-
-def has_known_props(diffs):
-    return any(d.path[0] in KNOWN_PROPERTIES for d in diffs)
-
-
-def iter_dynamic_properties(diffs):
-    for diff in diffs:
-        name = diff.path[0]
-        if name in STATIC_PROPS:
-            continue
-        if len(diff.path) > 1 or not isinstance(diff.old_value, str):
-            raise CannotPatch([diff])
-        yield name, diff.old_value
 
 
 @attr.s
@@ -204,9 +228,10 @@ class PatchForm:
     def get_xml(self):
         updates = self._case._updates
         case_block = get_case_xml(self._case, updates, version='2.0')
+        diff_block = get_diff_block(self._case)
         return render_to_string('hqcase/xml/case_block.xml', {
             'xmlns': self.xmlns,
-            'case_block': case_block.decode('utf-8'),
+            'case_block': case_block.decode('utf-8') + diff_block,
             'time': json_format_datetime(self.received_on),
             'uid': self.form_id,
             'username': "",
@@ -226,7 +251,7 @@ def process_patch(patch_form):
     add_form_xml(sql_form, patch_form)
     add_patch_operation(sql_form)
     case_stock_result = get_case_and_ledger_updates(patch_form.domain, sql_form)
-    save_sql_form(sql_form, case_stock_result)
+    save_migrated_models(sql_form, case_stock_result)
 
 
 def add_form_xml(sql_form, patch_form):
@@ -245,21 +270,57 @@ def add_patch_operation(sql_form):
     ))
 
 
+def get_diff_block(case):
+    """Get XML element containing case diff data
+
+    Some early patch forms were submitted without this element.
+
+    :param case: `PatchCase` instance.
+    :returns: A "<diff>" XML element string containing XML-escaped
+    JSON-encoded case diff data, some of which may be patched.
+
+    ```json
+    {
+        "case_id": case.case_id,
+        "diffs": [
+            {
+                "path": diff.path,
+                "old": diff.old_value,  # omitted if old_value is MISSING
+                "new": diff.new_value,  # omitted if new_value is MISSING
+                "patch": true if patched else false
+                "reason": "...",  # omitted if reason for change is unknown
+            },
+            ...
+        ]
+    }
+    ```
+    """
+    diffs = [diff_to_json(d) for d in sorted(case.diffs, key=lambda d: d.path)]
+    data = {"case_id": case.case_id, "diffs": diffs}
+    return f"<diff>{escape(json.dumps(data))}</diff>"
+
+
+def diff_to_json(diff, new_value=None):
+    assert diff.old_value is not MISSING or diff.new_value is not MISSING, diff
+    obj = {"path": list(diff.path), "patch": is_patchable(diff)}
+    if diff.old_value is not MISSING:
+        obj["old"] = diff.old_value
+    if diff.new_value is not MISSING:
+        obj["new"] = diff.new_value if new_value is None else new_value
+    if getattr(diff, "reason", ""):
+        obj["reason"] = diff.reason
+    return obj
+
+
+def is_patchable(diff):
+    return diff.path[0] not in UNPATCHABLE_PROPS
+
+
 class CannotPatch(Exception):
 
     def __init__(self, json_diffs):
         super().__init__(repr(json_diffs))
         self.diffs = json_diffs
-
-
-@retry_on_couch_error
-def get_couch_case(case_id):
-    return CaseAccessorCouch.get_case(case_id)
-
-
-@retry_on_sql_error
-def save_sql_form(sql_form, case_stock_result):
-    save_migrated_models(sql_form, case_stock_result)
 
 
 def is_missing_in_sql(diffs):

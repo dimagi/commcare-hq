@@ -17,6 +17,7 @@
   {% initial_page_data 'status_codes' pagination.status_codes %}
   {% initial_page_data 'allow_item_creation' pagination.create.is_allowed %}
   {% initial_page_data 'create_item_form' pagination.create_item_form %}
+  {% initial_page_data 'create_item_form_class' pagination.create_item_form_class %}
 
   {% block pagination_header %}{% endblock %}
   {% block pagination_structure %}
@@ -95,8 +96,7 @@
                 <tr data-bind="visible: isCreateItemVisible">
                   <td colspan="{{ pagination.num_columns }}">
                     <form id="create-item-form"
-                          class="form form-inline"
-                          data-bind="html: createItemForm">
+                          data-bind="html: createItemForm, attr: { class: createItemFormClass }">
                     </form>
                   </td>
                 </tr>
