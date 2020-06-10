@@ -16,7 +16,6 @@ from corehq.apps.sms.views import (
     ManageRegistrationInvitationsView,
     SMSLanguagesView,
     SMSSettingsView,
-    SMSUsageReport,
     SubscribeSMSView,
     TestSMSMessageView,
     WhatsAppTemplatesView,
@@ -30,6 +29,7 @@ from corehq.apps.sms.views import (
     upload_sms_translations,
 )
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
+from custom.icds.views.custom_sms_report import SMSUsageReport
 from corehq.messaging.smsbackends.telerivet.urls import \
     domain_specific as telerivet_urls
 

@@ -1051,7 +1051,7 @@ class MessagingTab(UITab):
         messages_urls = []
 
         if self.can_use_outbound_sms:
-            from corehq.apps.sms.views import SMSUsageReport
+            from custom.icds.views.custom_sms_report import SMSUsageReport
             messages_urls.extend([
                 {
                     'title': _('Compose SMS Message'),
