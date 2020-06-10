@@ -12,10 +12,12 @@ class TarGzipBlobDB(AbstractBlobDB):
     into memory first.
     """
 
-    def __init__(self, filename):
+    def __init__(self, filename, extends):
         super().__init__()
         self.filename = filename
+        self.extends = extends
         self._tgzfile = None
+        self._names = None
 
     def open(self, mode='r:gz'):
         self._tgzfile = tarfile.open(self.filename, mode)
@@ -46,12 +48,18 @@ class TarGzipBlobDB(AbstractBlobDB):
             need to use the ``dump_domain_data`` management command.
 
         """
-        tarinfo = tarfile.TarInfo(name=key)
-        tarinfo.size = in_fileobj.content_length
-        self._tgzfile.addfile(tarinfo, in_fileobj)
+        if not self.exists(key):
+            tarinfo = tarfile.TarInfo(name=key)
+            tarinfo.size = in_fileobj.content_length
+            self._tgzfile.addfile(tarinfo, in_fileobj)
 
     def exists(self, key):
-        raise NotImplementedError
+        if self._names is None:
+            self._names = set()
+            for filename in self.extends:
+                with tarfile.open(filename, 'r:gz') as tgzfile:
+                    self._names.update(tgzfile.getnames())
+        return key in self._names
 
     def size(self, key):
         raise NotImplementedError
