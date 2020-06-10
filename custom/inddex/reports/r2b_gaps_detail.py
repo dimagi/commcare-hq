@@ -36,35 +36,31 @@ class GapsDetailReport(MultiTabularReport):
     @property
     def data_providers(self):
         food_data = FoodData.from_request(self.domain, self.request)
+        gaps_data = list(get_gaps_data(food_data))
         return [
-            GapsByItemSummaryData(food_data),
-            GapsDetailsData(food_data)
+            GapsByItemSummaryData(gaps_data),
+            GapsDetailsData(gaps_data)
         ]
 
 
-class BaseGapsData:
-    headers = []
-
-    def __init__(self, food_data):
-        self._food_data = food_data
-
-    def _get_rows(self):
-        for row in self._food_data.rows:
-            for gap_class, gap_code in [
-                    (ConvFactorGaps, row.conv_factor_gap_code),
-                    (FctGaps, row.fct_gap_code),
-            ]:
-                if not self._food_data.selected_gap_type or self._food_data.selected_gap_type == gap_class.slug:
-                    manually_set = ['gap_type', 'gap_code', 'gap_desc', 'number_occurrence']
-                    yield {
-                        'gap_type': gap_class.name,
-                        'gap_code': gap_code,
-                        'gap_desc': gap_class.DESCRIPTIONS[gap_code],
-                        **{col: getattr(row, col, None) for col in self.headers if col not in manually_set},
-                    }
+def get_gaps_data(food_data):
+    for row in food_data.rows:
+        for gap_class, gap_code in [
+                (ConvFactorGaps, row.conv_factor_gap_code),
+                (FctGaps, row.fct_gap_code),
+        ]:
+            if not food_data.selected_gap_type or food_data.selected_gap_type == gap_class.slug:
+                manually_set = ['gap_type', 'gap_code', 'gap_desc', 'number_occurrence']
+                yield {
+                    'gap_type': gap_class.name,
+                    'gap_code': gap_code,
+                    'gap_desc': gap_class.DESCRIPTIONS[gap_code],
+                    **{col: getattr(row, col, None) for col in GapsDetailsData.headers
+                       if col not in manually_set},
+                }
 
 
-class GapsByItemSummaryData(BaseGapsData):
+class GapsByItemSummaryData:
     title = 'Gaps By Item Summary'
     slug = 'gaps_by_item_summary'
     headers = [
@@ -73,13 +69,13 @@ class GapsByItemSummaryData(BaseGapsData):
         'fao_who_gift_food_group_description', 'user_food_group',
     ]
 
-    def __init__(self, food_data):
-        self._food_data = food_data
+    def __init__(self, gaps_data):
+        self._gaps_data = gaps_data
 
     @property
     def rows(self):
         rows = {}
-        for row in self._get_rows():
+        for row in self._gaps_data:
             key = (row['food_name'], row['gap_type'], row['gap_code'])
             if key not in rows:
                 rows[key] = {col: row[col] for col in self.headers if col != 'number_occurrence'}
@@ -91,7 +87,7 @@ class GapsByItemSummaryData(BaseGapsData):
             yield format_row([row[header] for header in self.headers])
 
 
-class GapsDetailsData(BaseGapsData):
+class GapsDetailsData:
     title = 'Gaps By Item Details'
     slug = 'gaps_by_item_details'
     headers = [
@@ -115,10 +111,10 @@ class GapsDetailsData(BaseGapsData):
         'opened_by_username', 'owner_name', 'visit_date'
     ]
 
-    def __init__(self, food_data):
-        self._food_data = food_data
+    def __init__(self, gaps_data):
+        self._gaps_data = gaps_data
 
     @property
     def rows(self):
-        for row in sorted(self._get_rows(), key=lambda row: (row['food_name'], row['gap_type'], row['gap_code'])):
+        for row in sorted(self._gaps_data, key=lambda row: (row['food_name'], row['gap_type'], row['gap_code'])):
             yield format_row([row[header] for header in self.headers])
