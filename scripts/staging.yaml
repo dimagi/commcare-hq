@@ -59,7 +59,6 @@ branches:
   - nh/charset  # Norman May 27
   - ce/web-apps-permission # Cal May 27
   - jls/push-linked-apps # Jenny May 31
-  #- orangejenny-patch-3 # Jenny May 28; this is the 3-minute timeout branch
   - ap/lazy-load-multimedia # Amit June 5
   - fr/multiple-api-keys  # Conflicting migrations with ce/web-apps-permissions
   # - fr/multiple-api-keys+ce/web-apps-permission # FR Jun 8 -- adds merge migration for users app
