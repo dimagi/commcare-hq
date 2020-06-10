@@ -268,8 +268,8 @@ class ContentForeignKeyMixin(models.Model):
 
     @content.setter
     def content(self, value):
-        from corehq.messaging.scheduling.models import (SMSContent, EmailContent,
-            SMSSurveyContent, IVRSurveyContent, CustomContent, SMSCallbackContent)
+        from corehq.messaging.scheduling.models import (
+            SMSContent, EmailContent, SMSSurveyContent, IVRSurveyContent, CustomContent, SMSCallbackContent)
 
         self.sms_content = None
         self.email_content = None
@@ -493,10 +493,10 @@ class Content(models.Model):
 
         if isinstance(phone_entry_or_number, PhoneNumber):
             send_sms_to_verified_number(phone_entry_or_number, message, metadata=metadata,
-                logged_subevent=logged_subevent)
+                                        logged_subevent=logged_subevent)
         else:
             send_sms(domain, recipient, phone_entry_or_number, message, metadata=metadata,
-                logged_subevent=logged_subevent)
+                     logged_subevent=logged_subevent)
 
 
 class Broadcast(models.Model):

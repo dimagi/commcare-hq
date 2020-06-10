@@ -272,7 +272,7 @@ class SMSSurveyContent(Content):
                 )
 
     def start_smsforms_session(self, domain, recipient, case_id, phone_entry_or_number, logged_subevent, workflow,
-            app, module, form):
+                               app, module, form):
         # Close all currently open sessions
         SQLXFormsSession.close_all_open_sms_sessions(domain, recipient.get_id)
 
@@ -306,16 +306,16 @@ class SMSSurveyContent(Content):
             )
 
             if touchforms_error_is_config_error(domain, e):
-                # Don't reraise the exception because this means there are configuration
+                # Don't re-raise the exception because this means there are configuration
                 # issues with the form that need to be fixed. The error is logged in the
                 # above lines.
                 return None, None
 
-            # Reraise the exception so that the framework retries it again later
+            # Re-raise the exception so that the framework retries it again later
             raise
         except:
             logged_subevent.error(MessagingEvent.ERROR_TOUCHFORMS_ERROR)
-            # Reraise the exception so that the framework retries it again later
+            # Re-raise the exception so that the framework retries it again later
             raise
 
         session.workflow = workflow
@@ -393,7 +393,7 @@ class SMSCallbackContent(Content):
 class CustomContent(Content):
     # Should be a key in settings.AVAILABLE_CUSTOM_SCHEDULING_CONTENT
     # which points to a function to call at runtime to get a list of
-    # messsages to send to the recipient.
+    # messages to send to the recipient.
     custom_content_id = models.CharField(max_length=126)
 
     def create_copy(self):
