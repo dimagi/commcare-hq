@@ -2,10 +2,12 @@ import os
 import tarfile
 import uuid
 from io import BytesIO, RawIOBase
+from math import ceil
 from tempfile import NamedTemporaryFile
 from unittest import skip
 
 from django.test import SimpleTestCase, TestCase
+from psutil import virtual_memory
 
 from corehq.apps.hqmedia.models import (
     CommCareAudio,
@@ -142,36 +144,43 @@ class TestBigBlobExport(TestCase):
 
 class TestMockBigBlobIO(SimpleTestCase):
 
+    @staticmethod
+    def two_zeros():
+        # Test for block size = 2 bytes
+        while True:
+            yield b'\x00\x00'
+
     def test_zeros(self):
-        maybe_byte = next(zeros())
+        maybe_byte = next(self.two_zeros())
         self.assertIsInstance(maybe_byte, bytes)
 
     def test_read(self):
-        big_blob = MockBigBlobIO(zeros(), 100)
+        big_blob = MockBigBlobIO(self.two_zeros(), 100)
         data = big_blob.read()
-        self.assertEqual(len(data), 100)
+        self.assertEqual(len(data), 200)
 
     def test_read_size(self):
-        big_blob = MockBigBlobIO(zeros(), 100)
-        data = big_blob.read(50)
-        self.assertEqual(len(data), 50)
+        big_blob = MockBigBlobIO(self.two_zeros(), 100)
+        data = big_blob.read(10)
+        self.assertEqual(len(data), 20)
 
     def test_read_chunks(self):
-        big_blob = MockBigBlobIO(zeros(), 100)
+        big_blob = MockBigBlobIO(self.two_zeros(), 100)
         data1 = big_blob.read(25)
         data2 = big_blob.read(100)
-        self.assertEqual(len(data1) + len(data2), 100)
+        self.assertEqual(len(data1) + len(data2), 200)
 
 
 class MockBigBlobIO(RawIOBase):
     """
     A file-like object used for mocking a very large blob.
 
-    Consumes bytes from a generator up to a maximum size.
+    Consumes blocks of bytes from a generator up to a maximum number of
+    blocks.
     """
-    def __init__(self, bytes_gen, max_size):
+    def __init__(self, bytes_gen, max_blocks):
         self.generator = bytes_gen
-        self.size = max_size
+        self.blocks = max_blocks
         self._consumed = 0
 
     def readable(self):
@@ -183,14 +192,14 @@ class MockBigBlobIO(RawIOBase):
     def writable(self):
         return False
 
-    def read(self, size=None):
-        size_remaining = self.size - self._consumed
-        if size is None or size < 0:
-            size = size_remaining
-        size = min(size, size_remaining)
-        if size > 0:
-            chunk = b''.join((next(self.generator) for __ in range(size)))
-            self._consumed = self._consumed + size
+    def read(self, blocks=None):
+        blocks_remaining = self.blocks - self._consumed
+        if blocks is None or blocks < 0:
+            blocks = blocks_remaining
+        blocks = min(blocks, blocks_remaining)
+        if blocks > 0:
+            chunk = b''.join((next(self.generator) for __ in range(blocks)))
+            self._consumed = self._consumed + blocks
             return bytes(chunk)
 
     def readall(self):
@@ -198,8 +207,3 @@ class MockBigBlobIO(RawIOBase):
 
     def readinto(self, buffer):
         raise NotImplementedError
-
-
-def zeros():
-    while True:
-        yield b'\x00'
