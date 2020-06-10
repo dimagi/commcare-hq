@@ -16,11 +16,15 @@ def _migrate_web_apps_permissions(apps, schema_editor):
     for role_doc in iter_docs(UserRole.get_db(), [r['id'] for r in roles]):
         role = UserRole.wrap(role_doc)
 
+        changed = False
         if role.permissions.edit_data:
             role.permissions.access_web_apps = True
-        else:
+            changed = True
+        elif role.permissions.access_web_apps:
             role.permissions.access_web_apps = False
-        role.save()
+            changed = True
+        if changed:
+            role.save()
 
 
 class Migration(migrations.Migration):
