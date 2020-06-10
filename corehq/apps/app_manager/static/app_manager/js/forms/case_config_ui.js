@@ -335,7 +335,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 self.visible_case_properties(props);
             };
             // Don't allow changing per page; "Add Property" button is where the per page changer usually is
-            self.per_page = ko.observable(25);
+            self.per_page = ko.observable(10);
             self.total_case_properties = ko.computed(function () {
                 return self.filtered_case_properties().length;
             });
