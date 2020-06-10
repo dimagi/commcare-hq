@@ -423,7 +423,7 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
         log_error(MessagingEvent.ERROR_COULD_NOT_PROCESS_STRUCTURED_SMS, logged_sub_event)
     except Exception:
         notify_exception(None, message=("Could not process structured sms for"
-            "contact %s, domain %s, keyword %s" % (contact_id, domain, keyword)))
+                                        "contact %s, domain %s, keyword %s" % (contact_id, domain, keyword)))
         error_occurred = True
         error_msg = get_message(MSG_TOUCHFORMS_ERROR, verified_number)
         log_error(MessagingEvent.ERROR_TOUCHFORMS_ERROR, logged_sub_event)
