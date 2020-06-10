@@ -471,7 +471,7 @@ class Content(models.Model):
         """
         raise NotImplementedError()
 
-    def get_sms_message_metadata(self, logged_subevent):
+    def get_sms_message_metadata(self, logged_sub_event):
         custom_metadata = {}
 
         if self.case:
@@ -482,21 +482,21 @@ class Content(models.Model):
 
         return MessageMetadata(
             custom_metadata=custom_metadata,
-            messaging_subevent_id=logged_subevent.pk,
+            messaging_subevent_id=logged_sub_event.pk,
         )
 
-    def send_sms_message(self, domain, recipient, phone_entry_or_number, message, logged_subevent):
+    def send_sms_message(self, domain, recipient, phone_entry_or_number, message, logged_sub_event):
         if not message:
             return
 
-        metadata = self.get_sms_message_metadata(logged_subevent)
+        metadata = self.get_sms_message_metadata(logged_sub_event)
 
         if isinstance(phone_entry_or_number, PhoneNumber):
             send_sms_to_verified_number(phone_entry_or_number, message, metadata=metadata,
-                                        logged_subevent=logged_subevent)
+                                        logged_sub_event=logged_sub_event)
         else:
             send_sms(domain, recipient, phone_entry_or_number, message, metadata=metadata,
-                     logged_subevent=logged_subevent)
+                     logged_sub_event=logged_sub_event)
 
 
 class Broadcast(models.Model):

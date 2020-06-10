@@ -124,7 +124,7 @@ def get_sms_class():
     return QueuedSMS if settings.SMS_QUEUE_ENABLED else SMS
 
 
-def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent=None):
+def send_sms(domain, contact, phone_number, text, metadata=None, logged_sub_event=None):
     """
     Sends an outbound SMS. Returns false if it fails.
     """
@@ -154,8 +154,8 @@ def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent
             try:
                 backend = SQLMobileBackend.load_by_name(SQLMobileBackend.SMS, domain, backend_name)
             except BadSMSConfigException as e:
-                if logged_subevent:
-                    logged_subevent.error(MessagingEvent.ERROR_GATEWAY_NOT_FOUND,
+                if logged_sub_event:
+                    logged_sub_event.error(MessagingEvent.ERROR_GATEWAY_NOT_FOUND,
                         additional_error_text=str(e))
                 return False
 
@@ -166,8 +166,7 @@ def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent
     return queue_outgoing_sms(msg)
 
 
-def send_sms_to_verified_number(verified_number, text, metadata=None,
-        logged_subevent=None):
+def send_sms_to_verified_number(verified_number, text, metadata=None, logged_sub_event=None):
     """
     Sends an sms using the given verified phone number entry.
 
@@ -179,8 +178,8 @@ def send_sms_to_verified_number(verified_number, text, metadata=None,
     try:
         backend = verified_number.backend
     except BadSMSConfigException as e:
-        if logged_subevent:
-            logged_subevent.error(MessagingEvent.ERROR_GATEWAY_NOT_FOUND,
+        if logged_sub_event:
+            logged_sub_event.error(MessagingEvent.ERROR_GATEWAY_NOT_FOUND,
                 additional_error_text=str(e))
             return False
         raise

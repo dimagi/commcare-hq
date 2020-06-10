@@ -335,19 +335,19 @@ def send_to_recipients(request, domain):
                 no_numbers.append(user.raw_username)
             else:
                 args = [user.doc_type, user.get_id] if user else []
-                logged_subevent = logged_event.create_subevent_for_single_sms(*args)
+                logged_sub_event = logged_event.create_subevent_for_single_sms(*args)
                 if send_sms(
                     domain, user, number, message,
-                    metadata=MessageMetadata(messaging_subevent_id=logged_subevent.pk)
+                    metadata=MessageMetadata(messaging_subevent_id=logged_sub_event.pk)
                 ):
                     sent.append("%s" % (user.raw_username if user else number))
-                    logged_subevent.completed()
+                    logged_sub_event.completed()
                 else:
                     failed_numbers.append("%s (%s)" % (
                         number,
                         user.raw_username if user else "<no username>"
                     ))
-                    logged_subevent.error(MessagingEvent.ERROR_INTERNAL_SERVER_ERROR)
+                    logged_sub_event.error(MessagingEvent.ERROR_INTERNAL_SERVER_ERROR)
 
         logged_event.completed()
 
@@ -492,11 +492,11 @@ def api_send_sms(request, domain):
                 else MessagingEvent.CONTENT_API_SMS))
 
         args = [contact.doc_type, contact.get_id] if contact else []
-        logged_subevent = logged_event.create_subevent_for_single_sms(*args)
+        logged_sub_event = logged_event.create_subevent_for_single_sms(*args)
 
         metadata = MessageMetadata(
             chat_user_id=chat_user_id,
-            messaging_subevent_id=logged_subevent.pk,
+            messaging_subevent_id=logged_sub_event.pk,
         )
         if backend_id is not None:
             success = send_sms_with_backend_name(domain, phone_number, text, backend_id, metadata)
@@ -506,11 +506,11 @@ def api_send_sms(request, domain):
             success = send_sms(domain, None, phone_number, text, metadata)
 
         if success:
-            logged_subevent.completed()
+            logged_sub_event.completed()
             logged_event.completed()
             return HttpResponse("OK")
         else:
-            logged_subevent.error(MessagingEvent.ERROR_INTERNAL_SERVER_ERROR)
+            logged_sub_event.error(MessagingEvent.ERROR_INTERNAL_SERVER_ERROR)
             return HttpResponse("ERROR")
     else:
         return HttpResponseBadRequest("POST Expected.")

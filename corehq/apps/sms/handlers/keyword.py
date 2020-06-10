@@ -277,9 +277,9 @@ def split_args(text, survey_keyword):
     return args
 
 
-def log_error(error, logged_subevent=None):
-    if logged_subevent:
-        logged_subevent.error(error)
+def log_error(error, logged_sub_event=None):
+    if logged_sub_event:
+        logged_sub_event.error(error)
 
 
 def get_case_id(contact, case=None):
@@ -292,7 +292,7 @@ def get_case_id(contact, case=None):
     return case_id
 
 
-def get_app_module_form(domain, app_id, form_unique_id, logged_subevent=None):
+def get_app_module_form(domain, app_id, form_unique_id, logged_sub_event=None):
     """
     Returns (app, module, form, error, error_code)
     """
@@ -302,12 +302,12 @@ def get_app_module_form(domain, app_id, form_unique_id, logged_subevent=None):
         module = form.get_module()
         return (app, module, form, False, None)
     except:
-        log_error(MessagingEvent.ERROR_CANNOT_FIND_FORM, logged_subevent)
+        log_error(MessagingEvent.ERROR_CANNOT_FIND_FORM, logged_sub_event)
         return (None, None, None, True, MSG_FORM_NOT_FOUND)
 
 
-def start_session_for_structured_sms(domain, contact, phone_number, app, module, form,
-        case_id, keyword, logged_subevent=None):
+def start_session_for_structured_sms(domain, contact, phone_number, app, module, form, case_id, keyword,
+                                     logged_sub_event=None):
     """
     Returns (session, responses, error, error_code)
     """
@@ -329,13 +329,13 @@ def start_session_for_structured_sms(domain, contact, phone_number, app, module,
             case_id=case_id,
             yield_responses=True
         )
-        if logged_subevent:
-            logged_subevent.xforms_session_id = session.pk
-            logged_subevent.save()
+        if logged_sub_event:
+            logged_sub_event.xforms_session_id = session.pk
+            logged_sub_event.save()
         return (session, responses, False, None)
     except TouchformsError as e:
         human_readable_message = get_formplayer_exception(domain, e)
-        logged_subevent.error(MessagingEvent.ERROR_TOUCHFORMS_ERROR,
+        logged_sub_event.error(MessagingEvent.ERROR_TOUCHFORMS_ERROR,
             additional_error_text=human_readable_message)
 
         if touchforms_error_is_config_error(domain, e):
@@ -353,9 +353,9 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
         text_args=None, logged_event=None):
 
     case_id = get_case_id(contact, case)
-    logged_subevent = None
+    logged_sub_event = None
     if logged_event:
-        logged_subevent = logged_event.create_structured_sms_subevent(case_id)
+        logged_sub_event = logged_event.create_structured_sms_subevent(case_id)
 
     domain = contact.domain
     contact_id = contact.get_id
@@ -371,20 +371,20 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
     error_msg = None
     session = None
 
-    app, module, form, error_occurred, error_code = get_app_module_form(domain,
-        survey_keyword_action.app_id, survey_keyword_action.form_unique_id, logged_subevent)
+    app, module, form, error_occurred, error_code = get_app_module_form(
+        domain, survey_keyword_action.app_id, survey_keyword_action.form_unique_id, logged_sub_event)
     if error_occurred:
         error_msg = get_message(error_code, verified_number)
-        clean_up_and_send_response(msg, contact, session, error_occurred, error_msg,
-            verified_number, send_response, logged_event, logged_subevent)
+        clean_up_and_send_response(msg, contact, session, error_occurred, error_msg, verified_number,
+                                   send_response, logged_event, logged_sub_event)
         return False
 
     session, responses, error_occurred, error_code = start_session_for_structured_sms(
-        domain, contact, verified_number, app, module, form, case_id, keyword, logged_subevent)
+        domain, contact, verified_number, app, module, form, case_id, keyword, logged_sub_event)
     if error_occurred:
         error_msg = get_message(error_code, verified_number)
-        clean_up_and_send_response(msg, contact, session, error_occurred, error_msg,
-            verified_number, send_response, logged_event, logged_subevent)
+        clean_up_and_send_response(msg, contact, session, error_occurred, error_msg, verified_number, send_response,
+                                   logged_event, logged_sub_event)
         return False
 
     session.workflow = WORKFLOW_KEYWORD
@@ -420,16 +420,16 @@ def handle_structured_sms(survey_keyword, survey_keyword_action, contact,
             error_msg = get_message(MSG_FIELD_DESCRIPTOR, verified_number,
                 (field_name,))
         error_msg = "%s%s" % (error_msg, sse.response_text)
-        log_error(MessagingEvent.ERROR_COULD_NOT_PROCESS_STRUCTURED_SMS, logged_subevent)
+        log_error(MessagingEvent.ERROR_COULD_NOT_PROCESS_STRUCTURED_SMS, logged_sub_event)
     except Exception:
         notify_exception(None, message=("Could not process structured sms for"
             "contact %s, domain %s, keyword %s" % (contact_id, domain, keyword)))
         error_occurred = True
         error_msg = get_message(MSG_TOUCHFORMS_ERROR, verified_number)
-        log_error(MessagingEvent.ERROR_TOUCHFORMS_ERROR, logged_subevent)
+        log_error(MessagingEvent.ERROR_TOUCHFORMS_ERROR, logged_sub_event)
 
-    clean_up_and_send_response(msg, contact, session, error_occurred, error_msg,
-        verified_number, send_response, logged_event, logged_subevent)
+    clean_up_and_send_response(msg, contact, session, error_occurred, error_msg, verified_number, send_response,
+                               logged_event, logged_sub_event)
 
     return not error_occurred
 
@@ -446,9 +446,8 @@ def add_keyword_metadata(msg, session):
     return metadata
 
 
-def clean_up_and_send_response(msg, contact, session, error_occurred, error_msg,
-        verified_number=None, send_response=False, logged_event=None,
-        logged_subevent=None):
+def clean_up_and_send_response(msg, contact, session, error_occurred, error_msg, verified_number=None,
+                               send_response=False, logged_event=None, logged_sub_event=None):
 
     metadata = add_keyword_metadata(msg, session)
 
@@ -463,8 +462,8 @@ def clean_up_and_send_response(msg, contact, session, error_occurred, error_msg,
         if response_subevent:
             response_subevent.completed()
 
-    if logged_subevent:
-        logged_subevent.completed()
+    if logged_sub_event:
+        logged_sub_event.completed()
 
 
 def get_question_id(xformsresponse, xpath_arg=None):

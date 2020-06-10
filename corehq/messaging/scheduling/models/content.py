@@ -40,20 +40,20 @@ class SMSContent(Content):
             message=deepcopy(self.message),
         )
 
-    def render_message(self, message, recipient, logged_subevent):
+    def render_message(self, message, recipient, logged_sub_event):
         if not message:
-            logged_subevent.error(MessagingEvent.ERROR_NO_MESSAGE)
+            logged_sub_event.error(MessagingEvent.ERROR_NO_MESSAGE)
             return None
 
         renderer = self.get_template_renderer(recipient)
         try:
             return renderer.render(message)
         except:
-            logged_subevent.error(MessagingEvent.ERROR_CANNOT_RENDER_MESSAGE)
+            logged_sub_event.error(MessagingEvent.ERROR_CANNOT_RENDER_MESSAGE)
             return None
 
     def send(self, recipient, logged_event, phone_entry=None):
-        logged_subevent = logged_event.create_subevent_from_contact_and_content(
+        logged_sub_event = logged_event.create_subevent_from_contact_and_content(
             recipient,
             self,
             case_id=self.case.case_id if self.case else None,
@@ -62,7 +62,7 @@ class SMSContent(Content):
         phone_entry_or_number = phone_entry or self.get_two_way_entry_or_phone_number(
             recipient, domain_for_toggles=logged_event.domain)
         if not phone_entry_or_number:
-            logged_subevent.error(MessagingEvent.ERROR_NO_PHONE_NUMBER)
+            logged_sub_event.error(MessagingEvent.ERROR_NO_PHONE_NUMBER)
             return
 
         message = self.get_translation_from_message_dict(
@@ -70,10 +70,10 @@ class SMSContent(Content):
             self.message,
             recipient.get_language_code()
         )
-        message = self.render_message(message, recipient, logged_subevent)
+        message = self.render_message(message, recipient, logged_sub_event)
 
-        self.send_sms_message(logged_event.domain, recipient, phone_entry_or_number, message, logged_subevent)
-        logged_subevent.completed()
+        self.send_sms_message(logged_event.domain, recipient, phone_entry_or_number, message, logged_sub_event)
+        logged_sub_event.completed()
 
 
 class EmailContent(Content):
@@ -100,7 +100,7 @@ class EmailContent(Content):
         is_trial = domain_is_on_trial(logged_event.domain)
         domain_obj = Domain.get_by_name(logged_event.domain)
 
-        logged_subevent = logged_event.create_subevent_from_contact_and_content(
+        logged_sub_event = logged_event.create_subevent_from_contact_and_content(
             recipient,
             self,
             case_id=self.case.case_id if self.case else None,
@@ -121,26 +121,26 @@ class EmailContent(Content):
         try:
             subject, message = self.render_subject_and_message(subject, message, recipient)
         except:
-            logged_subevent.error(MessagingEvent.ERROR_CANNOT_RENDER_MESSAGE)
+            logged_sub_event.error(MessagingEvent.ERROR_CANNOT_RENDER_MESSAGE)
             return
 
         subject = subject or '(No Subject)'
         if not message:
-            logged_subevent.error(MessagingEvent.ERROR_NO_MESSAGE)
+            logged_sub_event.error(MessagingEvent.ERROR_NO_MESSAGE)
             return
 
         email_address = recipient.get_email()
         if not email_address:
-            logged_subevent.error(MessagingEvent.ERROR_NO_EMAIL_ADDRESS)
+            logged_sub_event.error(MessagingEvent.ERROR_NO_EMAIL_ADDRESS)
             return
 
         if is_trial and EmailUsage.get_total_count(logged_event.domain) >= self.TRIAL_MAX_EMAILS:
-            logged_subevent.error(MessagingEvent.ERROR_TRIAL_EMAIL_LIMIT_REACHED)
+            logged_sub_event.error(MessagingEvent.ERROR_TRIAL_EMAIL_LIMIT_REACHED)
             return
 
         send_mail_async.delay(subject, message, settings.DEFAULT_FROM_EMAIL, [email_address])
         email_usage.update_count()
-        logged_subevent.completed()
+        logged_sub_event.completed()
 
 
 class SMSSurveyContent(Content):
@@ -173,7 +173,7 @@ class SMSSurveyContent(Content):
             logged_event.error(MessagingEvent.ERROR_CANNOT_FIND_FORM)
             return
 
-        logged_subevent = logged_event.create_subevent_from_contact_and_content(
+        logged_sub_event = logged_event.create_subevent_from_contact_and_content(
             recipient,
             self,
             case_id=self.case.case_id if self.case else None,
@@ -191,18 +191,18 @@ class SMSSurveyContent(Content):
         )
 
         if phone_entry_or_number is None:
-            logged_subevent.error(MessagingEvent.ERROR_NO_PHONE_NUMBER)
+            logged_sub_event.error(MessagingEvent.ERROR_NO_PHONE_NUMBER)
             return
 
         if requires_input and not isinstance(phone_entry_or_number, PhoneNumber):
-            logged_subevent.error(MessagingEvent.ERROR_NO_TWO_WAY_PHONE_NUMBER)
+            logged_sub_event.error(MessagingEvent.ERROR_NO_TWO_WAY_PHONE_NUMBER)
             return
 
         # The SMS framework already checks if the number has opted out before sending to
         # it. But for this use case we check for it here because we don't want to start
         # the survey session if they've opted out.
         if self.phone_has_opted_out(phone_entry_or_number):
-            logged_subevent.error(MessagingEvent.ERROR_PHONE_OPTED_OUT)
+            logged_sub_event.error(MessagingEvent.ERROR_PHONE_OPTED_OUT)
             return
 
         with self.get_critical_section(recipient):
@@ -214,7 +214,7 @@ class SMSSurveyContent(Content):
                 case_id = self.case.case_id
 
             if form.requires_case() and not case_id:
-                logged_subevent.error(MessagingEvent.ERROR_NO_CASE_GIVEN)
+                logged_sub_event.error(MessagingEvent.ERROR_NO_CASE_GIVEN)
                 return
 
             session, responses = self.start_smsforms_session(
@@ -222,7 +222,7 @@ class SMSSurveyContent(Content):
                 recipient,
                 case_id,
                 phone_entry_or_number,
-                logged_subevent,
+                logged_sub_event,
                 self.get_workflow(logged_event),
                 app,
                 module,
@@ -230,8 +230,8 @@ class SMSSurveyContent(Content):
             )
 
             if session:
-                logged_subevent.xforms_session = session
-                logged_subevent.save()
+                logged_sub_event.xforms_session = session
+                logged_sub_event.save()
                 # send_first_message is a celery task
                 # but we first call it synchronously to save resources in the 99% case
                 # send_first_message will retry itself as a delayed celery task
@@ -242,7 +242,7 @@ class SMSSurveyContent(Content):
                     phone_entry_or_number,
                     session,
                     responses,
-                    logged_subevent,
+                    logged_sub_event,
                     self.get_workflow(logged_event)
                 )
 
@@ -271,7 +271,7 @@ class SMSSurveyContent(Content):
 
         return critical_section_for_smsforms_sessions(recipient.get_id)
 
-    def start_smsforms_session(self, domain, recipient, case_id, phone_entry_or_number, logged_subevent, workflow,
+    def start_smsforms_session(self, domain, recipient, case_id, phone_entry_or_number, logged_sub_event, workflow,
                                app, module, form):
         # Close all currently open sessions
         SQLXFormsSession.close_all_open_sms_sessions(domain, recipient.get_id)
@@ -300,7 +300,7 @@ class SMSSurveyContent(Content):
                 case_id,
             )
         except TouchformsError as e:
-            logged_subevent.error(
+            logged_sub_event.error(
                 MessagingEvent.ERROR_TOUCHFORMS_ERROR,
                 additional_error_text=get_formplayer_exception(domain, e)
             )
@@ -314,7 +314,7 @@ class SMSSurveyContent(Content):
             # Re-raise the exception so that the framework retries it again later
             raise
         except:
-            logged_subevent.error(MessagingEvent.ERROR_TOUCHFORMS_ERROR)
+            logged_sub_event.error(MessagingEvent.ERROR_TOUCHFORMS_ERROR)
             # Re-raise the exception so that the framework retries it again later
             raise
 
@@ -405,7 +405,7 @@ class CustomContent(Content):
         )
 
     def send(self, recipient, logged_event, phone_entry=None):
-        logged_subevent = logged_event.create_subevent_from_contact_and_content(
+        logged_sub_event = logged_event.create_subevent_from_contact_and_content(
             recipient,
             self,
             case_id=self.case.case_id if self.case else None,
@@ -414,15 +414,15 @@ class CustomContent(Content):
         phone_entry_or_number = self.get_two_way_entry_or_phone_number(
             recipient, domain_for_toggles=logged_event.domain)
         if not phone_entry_or_number:
-            logged_subevent.error(MessagingEvent.ERROR_NO_PHONE_NUMBER)
+            logged_sub_event.error(MessagingEvent.ERROR_NO_PHONE_NUMBER)
             return
 
         # An empty list of messages returned from a custom content handler means
         # we shouldn't send anything, so we don't log an error for that.
         for message in self.get_list_of_messages(recipient):
-            self.send_sms_message(logged_event.domain, recipient, phone_entry_or_number, message, logged_subevent)
+            self.send_sms_message(logged_event.domain, recipient, phone_entry_or_number, message, logged_sub_event)
 
-        logged_subevent.completed()
+        logged_sub_event.completed()
 
     def get_list_of_messages(self, recipient):
         if not self.schedule_instance:

@@ -14,7 +14,7 @@ from dimagi.utils.logging import notify_error, notify_exception
 
 
 @no_result_task(serializer='pickle', queue='background_queue')
-def send_first_message(domain, recipient, phone_entry_or_number, session, responses, logged_subevent, workflow):
+def send_first_message(domain, recipient, phone_entry_or_number, session, responses, logged_sub_event, workflow):
     # This try/except section is just here (temporarily) to support future refactors
     # If any of these notify, they should be replaced with a comment as to why the two are different
     # so that someone refactoring in the future will know that this or that param is necessary.
@@ -29,10 +29,10 @@ def send_first_message(domain, recipient, phone_entry_or_number, session, respon
                 'session.connection_id': session.connection_id, 'recipient.get_id': recipient.get_id,
                 'recipient': recipient
             })
-        if session.related_subevent != logged_subevent:
-            # see if we can eliminate the logged_subevent arg
-            notify_error('Exploratory: session.related_subevent != logged_subevent', details={
-                'session.connection_id': session.connection_id, 'logged_subevent': logged_subevent})
+        if session.related_subevent != logged_sub_event:
+            # see if we can eliminate the logged_sub_event arg
+            notify_error('Exploratory: session.related_subevent != logged_sub_event', details={
+                'session.connection_id': session.connection_id, 'logged_sub_event': logged_sub_event})
     except Exception:
         # The above running is not mission critical, so if it errors just leave a message in the log
         # for us to follow up on.
@@ -43,7 +43,7 @@ def send_first_message(domain, recipient, phone_entry_or_number, session, respon
     if toggles.ONE_PHONE_NUMBER_MULTIPLE_CONTACTS.enabled(domain):
         if not XFormsSessionSynchronization.claim_channel_for_session(session):
             send_first_message.apply_async(
-                args=(domain, recipient, phone_entry_or_number, session, responses, logged_subevent, workflow),
+                args=(domain, recipient, phone_entry_or_number, session, responses, logged_sub_event, workflow),
                 countdown=60
             )
             return
@@ -61,7 +61,7 @@ def send_first_message(domain, recipient, phone_entry_or_number, session, respon
                 phone_entry_or_number,
                 message,
                 metadata,
-                logged_subevent=logged_subevent
+                logged_sub_event=logged_sub_event
             )
         else:
             send_sms(
@@ -71,7 +71,7 @@ def send_first_message(domain, recipient, phone_entry_or_number, session, respon
                 message,
                 metadata
             )
-    logged_subevent.completed()
+    logged_sub_event.completed()
 
 
 @no_result_task(serializer='pickle', queue='reminder_queue')
@@ -115,7 +115,7 @@ def handle_due_survey_action(domain, contact_id, session_id):
                     p,
                     resp.event.text_prompt,
                     metadata,
-                    logged_subevent=session.related_subevent
+                    logged_sub_event=session.related_subevent
                 )
 
             session.move_to_next_action()
