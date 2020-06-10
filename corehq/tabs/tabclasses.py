@@ -98,6 +98,7 @@ from corehq.tabs.utils import (
     sidebar_to_dropdown,
 )
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
+from custom.icds.view_utils import is_icds_cas_project
 from custom.icds.views.hosted_ccz import ManageHostedCCZ, ManageHostedCCZLink
 
 
@@ -790,19 +791,22 @@ class ProjectDataTab(UITab):
             items.append([_("Export Data"), export_data_views])
 
         if self.can_edit_commcare_data:
-            from corehq.apps.data_interfaces.dispatcher \
-                import EditDataInterfaceDispatcher
-            edit_section = EditDataInterfaceDispatcher.navigation_sections(
-                request=self._request, domain=self.domain)
-
-            from corehq.apps.data_interfaces.views import AutomaticUpdateRuleListView
+            edit_section = None
+            if not is_icds_cas_project(self.domain):
+                from corehq.apps.data_interfaces.dispatcher import EditDataInterfaceDispatcher
+                edit_section = EditDataInterfaceDispatcher.navigation_sections(
+                    request=self._request, domain=self.domain)
 
             if self.can_use_data_cleanup:
-                edit_section[0][1].append({
+                from corehq.apps.data_interfaces.views import AutomaticUpdateRuleListView
+                automatic_update_rule_list_view = {
                     'title': _(AutomaticUpdateRuleListView.page_title),
                     'url': reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]),
-                })
-
+                }
+                if edit_section:
+                    edit_section[0][1].append(automatic_update_rule_list_view)
+                else:
+                    edit_section = [(ugettext_lazy('Edit Data'), [automatic_update_rule_list_view])]
             items.extend(edit_section)
 
         if ((toggles.EXPLORE_CASE_DATA.enabled_for_request(self._request) or

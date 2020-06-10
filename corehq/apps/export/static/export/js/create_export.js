@@ -202,7 +202,7 @@ hqDefine("export/js/create_export", [
             }
         });
         self.module.subscribe(function (newValue) {
-            if (newValue) {
+            if (newValue && self.application()) {
                 var formChoices = self._forms_by_app_by_module[self.application()][newValue];
                 self.setForms(formChoices);
             } else {
