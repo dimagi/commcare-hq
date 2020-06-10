@@ -22,6 +22,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         delete_all_users()
         cls.domain_name = 'mydomain'
         cls.domain = Domain.get_or_create_with_name(name=cls.domain_name)
+        cls.other_domain = Domain.get_or_create_with_name(name='other-domain')
 
         permissions = Permissions(edit_apps=True, view_reports=True)
         cls.role = UserRole.get_or_create_with_permissions(cls.domain.name, permissions, 'edit-apps')
@@ -29,6 +30,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
     @classmethod
     def tearDownClass(cls):
         cls.domain.delete()
+        cls.other_domain.delete()
         super().tearDownClass()
 
     def tearDown(self):
@@ -317,7 +319,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual('with_email', mock_account_confirm_email.call_args[0][0].raw_username)
 
     @mock.patch('corehq.apps.user_importer.importer.Invitation')
-    def test_upload_invite_web_user(self, mock_invitation):
+    def test_upload_invite_web_user(self, mock_invitation_class):
+        mock_invite = mock_invitation_class.return_value
         import_users_and_groups(
             self.domain.name,
             [
@@ -331,19 +334,21 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [],
             mock.MagicMock()
         )
-        self.assertTrue(mock_invitation.send_activation_email.called)
+        self.assertTrue(mock_invite.send_activation_email.called)
 
     @mock.patch('corehq.apps.user_importer.importer.Invitation')
     def test_upload_add_web_user(self, mock_invitation):
         username = 'a@a.com'
-        web_user = WebUser.create('other-domain', username, 'password')
+        web_user = WebUser.create(self.other_domain.name, username, 'password')
+        mock_invite = mock_invitation_class.return_value
         import_users_and_groups(
             self.domain.name,
             [self._get_spec(web_user='a@a.com', is_account_confirmed='True', role=self.role.name)],
             [],
             mock.MagicMock()
         )
-        self.assertFalse(mock_invitation.send_activation_email.called)
+        web_user = WebUser.get_by_username(username)
+        self.assertFalse(mock_invite.send_activation_email.called)
         self.assertTrue(web_user.is_member_of(self.domain.name))
 
     def test_upload_edit_web_user(self):
@@ -355,6 +360,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [],
             mock.MagicMock()
         )
+        web_user = WebUser.get_by_username(username)
         self.assertEqual(web_user.get_role(self.domain.name).name, self.role.name)
 
     def test_remove_web_user(self):
@@ -366,6 +372,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             [],
             mock.MagicMock()
         )
+        web_user = WebUser.get_by_username(username)
         self.assertFalse(web_user.is_member_of(self.domain.name))
 
 
