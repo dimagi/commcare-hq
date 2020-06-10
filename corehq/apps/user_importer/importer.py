@@ -404,7 +404,7 @@ def create_or_update_users_and_groups(domain, user_specs, upload_user, group_mem
                     if not upload_user.can_edit_web_users():
                         raise UserUploadError(_(
                             "Only users with the edit web users permission can upload web users"
-                        )
+                        ))
                     current_user = CouchUser.get_by_username(web_user)
                     if remove_web_user:
                         if not current_user or not current_user.is_member_of(domain):
