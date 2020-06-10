@@ -36,7 +36,7 @@ class TestDefaultLandingPages(TestCase):
         cls.reports_role.save()
         cls.webapps_role = UserRole(
             domain=cls.domain, name='webapps-role', default_landing_page='webapps',
-            permissions=Permissions(edit_data=True),
+            permissions=Permissions(access_web_apps=True),
         )
         cls.webapps_role.save()
         cls.global_password = 'secret'
