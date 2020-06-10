@@ -18,7 +18,9 @@ def _migrate_web_apps_permissions(apps, schema_editor):
 
         if role.permissions.edit_data:
             role.permissions.access_web_apps = True
-            role.save()
+        else:
+            role.permissions.access_web_apps = False
+        role.save()
 
 
 class Migration(migrations.Migration):
