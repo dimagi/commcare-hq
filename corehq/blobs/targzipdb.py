@@ -51,8 +51,7 @@ class TarGzipBlobDB(AbstractBlobDB):
         self._tgzfile.addfile(tarinfo, in_fileobj)
 
     def exists(self, key):
-        with tarfile.open(self.filename, 'r:gz') as tgzfile:
-            return key in tgzfile.getnames()
+        raise NotImplementedError
 
     def size(self, key):
         raise NotImplementedError
