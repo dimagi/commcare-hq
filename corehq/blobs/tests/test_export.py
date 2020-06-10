@@ -7,7 +7,6 @@ from tempfile import NamedTemporaryFile
 from unittest import skip
 
 from django.test import SimpleTestCase, TestCase
-from psutil import virtual_memory
 
 from corehq.apps.hqmedia.models import (
     CommCareAudio,
@@ -105,7 +104,12 @@ class TestBigBlobExport(TestCase):
         self.db.close()
 
     def __init__(self, *args, **kwargs):
+        # psutil is in dev-requirements only. Don't bother trying to
+        # import for the module if the test is skipped.
+        from psutil import virtual_memory
+
         super().__init__(*args, **kwargs)
+        self.memory = virtual_memory().total
         MB = 1024 ** 2
         self.mb_block = b'\x00' * MB
 
@@ -114,8 +118,7 @@ class TestBigBlobExport(TestCase):
             yield self.mb_block
 
     def test_many_big_blobs(self):
-        memory = virtual_memory().total
-        number_of_1gb_blobs = ceil(memory / 1024 ** 3) + 1
+        number_of_1gb_blobs = ceil(self.memory / 1024 ** 3) + 1
 
         for __ in range(number_of_1gb_blobs):
             meta = self.db.put(
@@ -135,8 +138,7 @@ class TestBigBlobExport(TestCase):
                 )
 
     def test_1_very_big_blob(self):
-        memory = virtual_memory().total
-        number_of_1mb_blocks = ceil(memory / 1024 ** 2) + 1
+        number_of_1mb_blocks = ceil(self.memory / 1024 ** 2) + 1
 
         meta = self.db.put(
             MockBigBlobIO(self.mb_blocks(), number_of_1mb_blocks),
