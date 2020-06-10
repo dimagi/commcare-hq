@@ -132,6 +132,7 @@ hqDefine("hqwebapp/js/hq.helpers", [
         if (this.length > 1) {
             throw new Error("Multiple elements passed to koApplyBindings");
         }
+        ko.cleanNode(this.get(0)); // make sure we don't apply bindings twice to the same element
         ko.applyBindings(context, this.get(0));
         this.removeClass('ko-template');
     };
