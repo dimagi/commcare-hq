@@ -59,7 +59,7 @@ def push_models(master_domain, models, linked_domains, build_apps, username):
                     found = True
                     update_model_type(domain_link, model['type'], model_detail=model['detail'])
                 if not found:
-                    errors.append(_("Cound not find {} in {}").format(model['name'], linked_domain))
+                    errors.append(_("Could not find {} in {}").format(model['name'], linked_domain))
             except Exception as e:   # intentionally broad
                 errors.append(_("Updating {} in {}: {}").format(model['name'], linked_domain, str(e)))
     subject = _("Linked project release complete.")
