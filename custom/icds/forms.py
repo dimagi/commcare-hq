@@ -1,12 +1,16 @@
+import re
+
 from django import forms
 from django.core.exceptions import ValidationError
 from django.forms.widgets import Select
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
+from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
+from dateutil import parser
 
 from corehq.apps.app_manager.dbaccessors import (
     get_brief_apps_in_domain,
@@ -18,6 +22,20 @@ from corehq.apps.hqwebapp.crispy import HQFormHelper
 from custom.icds.models import HostedCCZ, HostedCCZLink
 from custom.icds.tasks.data_pulls import run_data_pull
 from custom.icds_reports.const import CUSTOM_DATA_PULLS
+
+
+def validate_date(value):
+    error = forms.ValidationError(_("Please enter a valid date in the format YYYY-MM-DD"))
+
+    if not isinstance(value, (str, str)) or not re.match(r'^\d\d\d\d-\d\d-\d\d$', value):
+        raise error
+
+    try:
+        value = parser.parse(value)
+    except ValueError:
+        raise error
+
+    return value.date()
 
 
 class HostedCCZLinkForm(forms.ModelForm):
@@ -175,3 +193,49 @@ class CustomDataPullForm(forms.Form):
                             self.cleaned_data['month'],
                             self.cleaned_data['location_id'],
                             email)
+
+
+class CustomSMSReportRequestForm(forms.Form):
+
+    date_range = forms.CharField(
+        label="Select Date Range",
+        widget=forms.TextInput(
+            attrs={'class': 'form-control', 'id': 'date_range_selector'}
+        ),
+        required=True
+    )
+
+    start_date = forms.CharField(widget=forms.HiddenInput(
+        attrs={'id': 'report_start_date'}
+    ), required=True)
+    end_date = forms.CharField(widget=forms.HiddenInput(
+        attrs={'id': 'report_end_date'}
+    ), required=True)
+
+    def __init__(self, *args, **kwargs):
+        super(CustomSMSReportRequestForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.layout = crispy.Layout(
+            hqcrispy.Field('date_range'),
+            hqcrispy.Field('start_date'),
+            hqcrispy.Field('end_date'),
+            twbscrispy.StrictButton(
+                _('Generate Report'),
+                type='submit',
+                css_class='btn-primary',
+            )
+        )
+
+    def clean_start_date(self):
+        data = self.cleaned_data['start_date']
+        validate_date(data)
+        return data
+
+    def clean_end_date(self):
+        start_date = self.cleaned_data['start_date']
+        end_date = self.cleaned_data['end_date']
+        validate_date(end_date)
+        if(start_date < end_date):
+            return end_date
+        raise forms.ValidationError(_("Start date cannot be greater than end date"))
