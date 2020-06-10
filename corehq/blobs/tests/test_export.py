@@ -94,6 +94,11 @@ class TestBigBlobExport(TestCase):
     domain_name = 'big-blob-test-domain'
 
     def setUp(self):
+        # psutil is in dev-requirements only. Don't bother trying to
+        # import for the module if the test is skipped.
+        from psutil import virtual_memory
+
+        self.memory = virtual_memory().total
         self.db = TemporaryFilesystemBlobDB()
         assert get_blob_db() is self.db, (get_blob_db(), self.db)
         self.blob_metas = []
@@ -104,12 +109,7 @@ class TestBigBlobExport(TestCase):
         self.db.close()
 
     def __init__(self, *args, **kwargs):
-        # psutil is in dev-requirements only. Don't bother trying to
-        # import for the module if the test is skipped.
-        from psutil import virtual_memory
-
         super().__init__(*args, **kwargs)
-        self.memory = virtual_memory().total
         MB = 1024 ** 2
         self.mb_block = b'\x00' * MB
 
