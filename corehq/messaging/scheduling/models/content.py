@@ -167,31 +167,6 @@ class SMSSurveyContent(Content):
             include_case_updates_in_partial_submissions=self.include_case_updates_in_partial_submissions,
         )
 
-    @memoized
-    def get_memoized_app_module_form(self, domain):
-        try:
-            app = get_app(domain, self.app_id)
-            form = app.get_form(self.form_unique_id)
-            module = form.get_module()
-        except (Http404, FormNotFoundException):
-            return None, None, None, None
-
-        return app, module, form, form_requires_input(form)
-
-    def phone_has_opted_out(self, phone_entry_or_number):
-        if isinstance(phone_entry_or_number, PhoneNumber):
-            pb = PhoneBlacklist.get_by_phone_number_or_none(phone_entry_or_number.phone_number)
-        else:
-            pb = PhoneBlacklist.get_by_phone_number_or_none(phone_entry_or_number)
-
-        return pb is not None and not pb.send_sms
-
-    def get_critical_section(self, recipient):
-        if self.critical_section_already_acquired:
-            return no_op_context_manager()
-
-        return critical_section_for_smsforms_sessions(recipient.get_id)
-
     def send(self, recipient, logged_event, phone_entry=None):
         app, module, form, requires_input = self.get_memoized_app_module_form(logged_event.domain)
         if any([o is None for o in (app, module, form)]):
@@ -270,6 +245,31 @@ class SMSSurveyContent(Content):
                     logged_subevent,
                     self.get_workflow(logged_event)
                 )
+
+    @memoized
+    def get_memoized_app_module_form(self, domain):
+        try:
+            app = get_app(domain, self.app_id)
+            form = app.get_form(self.form_unique_id)
+            module = form.get_module()
+        except (Http404, FormNotFoundException):
+            return None, None, None, None
+
+        return app, module, form, form_requires_input(form)
+
+    def phone_has_opted_out(self, phone_entry_or_number):
+        if isinstance(phone_entry_or_number, PhoneNumber):
+            pb = PhoneBlacklist.get_by_phone_number_or_none(phone_entry_or_number.phone_number)
+        else:
+            pb = PhoneBlacklist.get_by_phone_number_or_none(phone_entry_or_number)
+
+        return pb is not None and not pb.send_sms
+
+    def get_critical_section(self, recipient):
+        if self.critical_section_already_acquired:
+            return no_op_context_manager()
+
+        return critical_section_for_smsforms_sessions(recipient.get_id)
 
     def start_smsforms_session(self, domain, recipient, case_id, phone_entry_or_number, logged_subevent, workflow,
                                app, module, form):
@@ -404,26 +404,6 @@ class CustomContent(Content):
             custom_content_id=self.custom_content_id,
         )
 
-    def get_list_of_messages(self, recipient):
-        if not self.schedule_instance:
-            raise ValueError(
-                "Expected CustomContent to be invoked in the context of a "
-                "ScheduleInstance. Please pass ScheduleInstance to .set_context()"
-            )
-
-        if self.custom_content_id not in settings.AVAILABLE_CUSTOM_SCHEDULING_CONTENT:
-            raise ValueError("Encountered unexpected custom content id %s" % self.custom_content_id)
-
-        custom_function = to_function(
-            settings.AVAILABLE_CUSTOM_SCHEDULING_CONTENT[self.custom_content_id][0]
-        )
-        messages = custom_function(recipient, self.schedule_instance)
-
-        if not isinstance(messages, list):
-            raise TypeError("Expected content to be a list of messages")
-
-        return messages
-
     def send(self, recipient, logged_event, phone_entry=None):
         logged_subevent = logged_event.create_subevent_from_contact_and_content(
             recipient,
@@ -443,3 +423,23 @@ class CustomContent(Content):
             self.send_sms_message(logged_event.domain, recipient, phone_entry_or_number, message, logged_subevent)
 
         logged_subevent.completed()
+
+    def get_list_of_messages(self, recipient):
+        if not self.schedule_instance:
+            raise ValueError(
+                "Expected CustomContent to be invoked in the context of a "
+                "ScheduleInstance. Please pass ScheduleInstance to .set_context()"
+            )
+
+        if self.custom_content_id not in settings.AVAILABLE_CUSTOM_SCHEDULING_CONTENT:
+            raise ValueError("Encountered unexpected custom content id %s" % self.custom_content_id)
+
+        custom_function = to_function(
+            settings.AVAILABLE_CUSTOM_SCHEDULING_CONTENT[self.custom_content_id][0]
+        )
+        messages = custom_function(recipient, self.schedule_instance)
+
+        if not isinstance(messages, list):
+            raise TypeError("Expected content to be a list of messages")
+
+        return messages
