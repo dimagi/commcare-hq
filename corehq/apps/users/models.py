@@ -2623,9 +2623,9 @@ class Invitation(models.Model):
         params = {
             "domain": self.domain,
             "url": url,
-            'days': remaining_days,
+            "days": remaining_days,
             "inviter": inviter.formatted_name,
-            'url_prefix': get_static_url_prefix(),
+            "url_prefix": get_static_url_prefix(),
         }
 
         domain_request = DomainRequest.by_email(self.domain, self.email, is_approved=True)
