@@ -91,12 +91,12 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         app.get_module(0).case_list_form.form_id = app.get_module(0).get_form(0).unique_id
 
         app.profile["properties"] = {
-            'lazy_load_video_files': 'true'
+            'lazy-load-video-files': 'true'
         }
         self.assertXmlEqual(self.get_xml('media-suite-lazy-true'), MediaSuiteGenerator(app).generate_suite())
 
         app.profile["properties"] = {
-            'lazy_load_video_files': 'false'
+            'lazy-load-video-files': 'false'
         }
         self.assertXmlEqual(self.get_xml('media-suite-lazy-false'), MediaSuiteGenerator(app).generate_suite())
 
