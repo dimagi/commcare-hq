@@ -15,6 +15,7 @@ from nose.plugins.attrib import attr
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
+from corehq import blobs
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.commtrack.tests.util import get_single_balance_block
 from corehq.apps.domain.models import Domain
@@ -48,8 +49,11 @@ from corehq.form_processor.models import (
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     create_form_for_test,
+    use_sql_backend,
 )
-from corehq.messaging.scheduling.scheduling_partitioned.models import AlertScheduleInstance
+from corehq.messaging.scheduling.scheduling_partitioned.models import (
+    AlertScheduleInstance,
+)
 
 
 class BaseDumpLoadTest(TestCase):
@@ -577,6 +581,33 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             user_id='user_id',
         )
         self._dump_and_load(Counter({ZapierSubscription: 1}))
+
+
+@use_sql_backend
+class BlobMetaDumpTest(TestCase):
+
+    def setUp(self):
+        self.domain_name = 'blobmeta-dump-test-domain'
+        self.domain = Domain(name=self.domain_name)
+        self.domain.save()
+
+    def tearDown(self):
+        self.domain.delete()
+
+    def test_blob_meta(self):
+        blob_meta = BlobMeta(
+            domain=self.domain_name,
+            parent_id="test",
+            type_code=blobs.CODES.tempfile,
+            content_length=100,
+            compressed_length=50,
+        )
+        blob_meta.save()
+        self.assertTrue(blob_meta.is_compressed)
+        objects = list(get_objects_to_dump(self.domain_name, []))
+        dumped_blob_meta = objects[0]
+        self.assertFalse(dumped_blob_meta.is_compressed)
+        self.assertIsNone(dumped_blob_meta.compressed_length)
 
 
 def _normalize_object_counter(counter, for_loaded=False):

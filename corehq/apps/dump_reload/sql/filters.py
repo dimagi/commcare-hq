@@ -105,3 +105,19 @@ class UniqueFilteredModelIteratorBuilder(FilteredModelIteratorBuilder):
         querysets = self.querysets()
         for querysets in querysets:
             yield _unique(querysets)
+
+
+class BlobMetaIteratorBuilder(FilteredModelIteratorBuilder):
+    """
+    When blobs are exported they are not compressed. By setting
+    ``BlobMeta.compressed_length`` to ``None`` we cause
+    ``BlobMeta.is_compressed`` to return False.
+    """
+    def iterators(self):
+        def reset_compressed_length(queryset):
+            for blob_meta in queryset:
+                blob_meta.compressed_length = None
+                yield blob_meta
+
+        for queryset in self.querysets():
+            yield reset_compressed_length(queryset)

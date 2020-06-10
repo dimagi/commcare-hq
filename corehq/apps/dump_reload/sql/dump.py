@@ -8,11 +8,12 @@ from django.db import router
 from corehq.apps.dump_reload.exceptions import DomainDumpError
 from corehq.apps.dump_reload.interface import DataDumper
 from corehq.apps.dump_reload.sql.filters import (
+    BlobMetaIteratorBuilder,
     FilteredModelIteratorBuilder,
     SimpleFilter,
     UniqueFilteredModelIteratorBuilder,
     UserIDFilter,
-    UsernameFilter
+    UsernameFilter,
 )
 from corehq.apps.dump_reload.sql.serialization import JsonLinesSerializer
 from corehq.apps.dump_reload.util import get_model_label, get_model_class
@@ -22,7 +23,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
 [APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP[iterator.model_label].append(iterator) for iterator in [
     FilteredModelIteratorBuilder('locations.LocationType', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('locations.SQLLocation', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('blobs.BlobMeta', SimpleFilter('domain')),
+    BlobMetaIteratorBuilder('blobs.BlobMeta', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('form_processor.XFormInstanceSQL', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('form_processor.XFormOperationSQL', SimpleFilter('form__domain')),
     FilteredModelIteratorBuilder('form_processor.CommCareCaseSQL', SimpleFilter('domain')),
