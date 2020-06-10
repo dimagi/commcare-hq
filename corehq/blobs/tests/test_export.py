@@ -18,8 +18,6 @@ from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.export import EXPORTERS
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB, new_meta
 
-GB = 1024 ** 3
-
 
 class TestBlobExport(TestCase):
     @classmethod
@@ -91,7 +89,7 @@ class TestBlobExport(TestCase):
                 self.assertEqual(expected, set(tgzfile.getnames()))
 
 
-@skip('Uses over 33GB of drive space, and takes a long time')
+@skip('Takes a while, and uses as much drive space as there is RAM')
 class TestBigBlobExport(TestCase):
 
     domain_name = 'big-blob-test-domain'
@@ -106,10 +104,22 @@ class TestBigBlobExport(TestCase):
             meta.delete()
         self.db.close()
 
-    def test_33_x_1GB_blobs(self):
-        for __ in range(33):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        MB = 1024 ** 2
+        self.mb_block = b'\x00' * MB
+
+    def mb_blocks(self):
+        while True:
+            yield self.mb_block
+
+    def test_many_big_blobs(self):
+        memory = virtual_memory().total
+        number_of_1gb_blobs = ceil(memory / 1024 ** 3) + 1
+
+        for __ in range(number_of_1gb_blobs):
             meta = self.db.put(
-                MockBigBlobIO(zeros(), GB),
+                MockBigBlobIO(self.mb_blocks(), 1024),
                 meta=new_meta(domain=self.domain_name, type_code=CODES.multimedia)
             )
             self.blob_metas.append(meta)
@@ -124,9 +134,12 @@ class TestBigBlobExport(TestCase):
                     {m.key for m in self.blob_metas}
                 )
 
-    def test_1_x_33GB_blob(self):
+    def test_1_very_big_blob(self):
+        memory = virtual_memory().total
+        number_of_1mb_blocks = ceil(memory / 1024 ** 2) + 1
+
         meta = self.db.put(
-            MockBigBlobIO(zeros(), 33 * GB),
+            MockBigBlobIO(self.mb_blocks(), number_of_1mb_blocks),
             meta=new_meta(domain=self.domain_name, type_code=CODES.multimedia)
         )
         self.blob_metas.append(meta)
