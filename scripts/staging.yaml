@@ -66,5 +66,6 @@ branches:
   - fr/multiple-api-keys  # Conflicting migrations with ce/web-apps-permissions
   - fr/multiple-api-keys+ce/web-apps-permission # FR Jun 8 -- adds merge migration for users app
   - jls/DRYer-case-config-ui-3 # Jenny June 6
+  - revert-27725-jls/kill-configurable-timeout # Jenny June 9
 
 submodules: {}
