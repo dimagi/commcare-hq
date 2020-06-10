@@ -52,6 +52,8 @@ def get_newborn_with_low_birth_weight_map(domain, config, loc_level, show_test=F
     fills.update({'0%-20%': MapColors.PINK})
     fills.update({'20%-60%': MapColors.ORANGE})
     fills.update({'60%-100%': MapColors.RED})
+    if icds_features_flag:
+        fills.update({'Not Launched': MapColors.GREY})
     fills.update({'defaultFill': MapColors.GREY})
 
     gender_ignored, age_ignored, chosen_filters = chosen_filters_to_labels(config)

@@ -296,7 +296,10 @@ class UserRole(QuickCachedDocumentMixin, Document):
         choices=[page.id for page in ALL_LANDING_PAGES],
     )
     permissions = SchemaProperty(Permissions)
+    # role can be assigned by all non-admins
     is_non_admin_editable = BooleanProperty(default=False)
+    # role assignable by specific non-admins
+    assignable_by = StringListProperty(default=[])
     is_archived = BooleanProperty(default=False)
 
     def get_qualified_id(self):
@@ -407,6 +410,9 @@ class UserRole(QuickCachedDocumentMixin, Document):
     @classmethod
     def preset_permissions_names(cls):
         return {details['name'] for role, details in PERMISSIONS_PRESETS.items()}
+
+    def accessible_by_non_admin_role(self, role_id):
+        return self.is_non_admin_editable or (role_id and role_id in self.assignable_by)
 
 
 PERMISSIONS_PRESETS = {

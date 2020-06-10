@@ -3,24 +3,26 @@ from collections import defaultdict
 from math import ceil
 from statistics import mean, stdev
 
+from corehq.apps.reports.filters.case_list import CaseListFilter
 from custom.inddex import filters
 from custom.inddex.food import FoodData
 
-from .utils import MultiTabularReport, format_row
+from .utils import MultiTabularReport, format_row, na_for_None
 
 
 class NutrientStatsReport(MultiTabularReport):
-    name = 'Output 4 - Nutrient Intake Summary Statistics'
+    name = 'Report 4 - Nutrient Intake Summary Statistics'
     slug = 'report_4_nutrient_intake_summary_statistics'
     description = textwrap.dedent("""
-        This output includes summary statistics for nutrient intakes reported
-        during the recall (mean, median, standard deviation, and percentiles).
+        This report includes summary statistics for energy and nutrient intakes
+        reported during the recall (mean, median, standard deviation, and
+        percentiles).
     """)
 
     @property
     def fields(self):
         return [
-            filters.CaseOwnersFilter,
+            CaseListFilter,
             filters.DateRangeFilter,
             filters.GenderFilter,
             filters.AgeRangeFilter,
@@ -55,7 +57,7 @@ class NutrientStatsData:
     @property
     def rows(self):
         for nutrient, amts in self._get_recall_totals():
-            yield format_row([
+            yield format_row(map(na_for_None, [
                 nutrient,
                 mean(amts) if len(amts) >= 1 else None,
                 stdev(amts) if len(amts) >= 2 else None,
@@ -64,13 +66,15 @@ class NutrientStatsData:
                 percentile(amts, .5),
                 percentile(amts, .75),
                 percentile(amts, .95),
-            ])
+            ]))
 
     def _get_recall_totals(self):
         totals = defaultdict(lambda: defaultdict(int))
         for row in self._food_data.rows:
             for nutrient in self._nutrient_names:
-                totals[nutrient][row.recall_case_id] += row.get_nutrient_amt(nutrient) or 0
+                amount = row.get_nutrient_amt(nutrient)
+                if amount is not None:
+                    totals[nutrient][row.recall_case_id] += amount
 
         for nutrient in self._nutrient_names:
             yield nutrient, list(sorted(totals[nutrient].values()))
