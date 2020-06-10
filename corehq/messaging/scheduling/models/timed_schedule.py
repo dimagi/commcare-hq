@@ -307,15 +307,16 @@ class TimedSchedule(Schedule):
 
     @classmethod
     def create_simple_daily_schedule(cls, domain, model_event, content, total_iterations=REPEAT_INDEFINITELY,
-            start_offset=0, start_day_of_week=ANY_DAY, extra_options=None, repeat_every=1):
+                                     start_offset=0, start_day_of_week=ANY_DAY, extra_options=None,
+                                     repeat_every=1):
         schedule = cls(domain=domain)
-        schedule.set_simple_daily_schedule(model_event, content, total_iterations=total_iterations,
-            start_offset=start_offset, start_day_of_week=start_day_of_week, extra_options=extra_options,
-            repeat_every=repeat_every)
+        schedule.set_simple_daily_schedule(
+            model_event, content, total_iterations=total_iterations, start_offset=start_offset,
+            start_day_of_week=start_day_of_week, extra_options=extra_options, repeat_every=repeat_every)
         return schedule
 
     def set_simple_daily_schedule(self, model_event, content, total_iterations=REPEAT_INDEFINITELY, start_offset=0,
-            start_day_of_week=ANY_DAY, extra_options=None, repeat_every=1):
+                                  start_day_of_week=ANY_DAY, extra_options=None, repeat_every=1):
         self.check_positive_repeat_every(repeat_every)
 
         with transaction.atomic():
@@ -341,15 +342,17 @@ class TimedSchedule(Schedule):
 
     @classmethod
     def create_custom_daily_schedule(cls, domain, event_and_content_objects, total_iterations=REPEAT_INDEFINITELY,
-            start_offset=0, start_day_of_week=ANY_DAY, extra_options=None, repeat_every=1):
+                                     start_offset=0, start_day_of_week=ANY_DAY, extra_options=None,
+                                     repeat_every=1):
         schedule = cls(domain=domain)
-        schedule.set_custom_daily_schedule(event_and_content_objects, total_iterations=total_iterations,
-            start_offset=start_offset, start_day_of_week=start_day_of_week, extra_options=extra_options,
+        schedule.set_custom_daily_schedule(
+            event_and_content_objects, total_iterations=total_iterations, start_offset=start_offset,
+            start_day_of_week=start_day_of_week, extra_options=extra_options,
             repeat_every=repeat_every)
         return schedule
 
     def set_custom_daily_schedule(self, event_and_content_objects, total_iterations=REPEAT_INDEFINITELY,
-            start_offset=0, start_day_of_week=ANY_DAY, extra_options=None, repeat_every=1):
+                                  start_offset=0, start_day_of_week=ANY_DAY, extra_options=None, repeat_every=1):
         """
         :param event_and_content_objects: A list of (event, content) tuples where event is
         an instance of a subclass of AbstractTimedEvent and content is an instance of a
@@ -414,14 +417,15 @@ class TimedSchedule(Schedule):
 
     @classmethod
     def create_simple_weekly_schedule(cls, domain, model_event, content, days_of_week, start_day_of_week,
-            total_iterations=REPEAT_INDEFINITELY, extra_options=None, repeat_every=1):
+                                      total_iterations=REPEAT_INDEFINITELY, extra_options=None, repeat_every=1):
         schedule = cls(domain=domain)
-        schedule.set_simple_weekly_schedule(model_event, content, days_of_week, start_day_of_week,
+        schedule.set_simple_weekly_schedule(
+            model_event, content, days_of_week, start_day_of_week,
             total_iterations=total_iterations, extra_options=extra_options, repeat_every=repeat_every)
         return schedule
 
     def set_simple_weekly_schedule(self, model_event, content, days_of_week, start_day_of_week,
-            total_iterations=REPEAT_INDEFINITELY, extra_options=None, repeat_every=1):
+                                   total_iterations=REPEAT_INDEFINITELY, extra_options=None, repeat_every=1):
         """
         Sets this TimedSchedule to be a simple weekly schedule where you can choose
         the days of the week on which to send.
@@ -476,14 +480,14 @@ class TimedSchedule(Schedule):
 
     @classmethod
     def create_simple_monthly_schedule(cls, domain, model_event, days, content,
-            total_iterations=REPEAT_INDEFINITELY, extra_options=None, repeat_every=1):
+                                       total_iterations=REPEAT_INDEFINITELY, extra_options=None, repeat_every=1):
         schedule = cls(domain=domain)
         schedule.set_simple_monthly_schedule(model_event, days, content, total_iterations=total_iterations,
-            extra_options=extra_options, repeat_every=repeat_every)
+                                             extra_options=extra_options, repeat_every=repeat_every)
         return schedule
 
     def set_simple_monthly_schedule(self, model_event, days, content, total_iterations=REPEAT_INDEFINITELY,
-            extra_options=None, repeat_every=1):
+                                    extra_options=None, repeat_every=1):
         """
         :param repeat_every: A value of 1 means repeat every month; 2 means repeat every other month, etc.
         """
