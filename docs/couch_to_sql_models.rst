@@ -68,6 +68,7 @@ This should contain:
      * The new class will include a column for the corresponding couch document id.
      * The generated code does not include submodel classes (SchemaProperty or SchemaListProperty attributes). See `the first CustomDataFieldsDefinition PR <https://github.com/dimagi/commcare-hq/pull/27276>`_ for an example that uses submodels.
      * The generated code uses `SyncCouchToSQLMixin <https://github.com/dimagi/commcare-hq/blob/c2b93b627c830f3db7365172e9be2de0019c6421/corehq/ex-submodules/dimagi/utils/couch/migration.py#L4>`_ and `SyncSQLToCouchMixin <https://github.com/dimagi/commcare-hq/blob/c2b93b627c830f3db7365172e9be2de0019c6421/corehq/ex-submodules/dimagi/utils/couch/migration.py#L115>`_. If your model uses submodels, you will need to add overrides for ``_migration_sync_to_sql`` and ``_migration_sync_to_couch``.
+        * Beware that the sync mixins capture exceptions thrown while syncing in favor of calling ``notify_exception``. If you're overwriting the sync code, this makes bugs easy to miss. The branch ``jls/sync-mixins-hard-fail`` is included on staging to instead make syncing fail hard; you might consider doing the same while testing locally.
      * Consider if your new model could use any additional ``db_index`` flags or a ``unique_together``.
      * Some docs have attributes that are couch ids of other docs. These are weak spots easy to forget when the referenced doc type is migrated. Add a comment so these show up in a grep for the referenced doc type.
   * Run `makemigrations`

@@ -8,7 +8,7 @@ jsonobject-couchdbkit~=1.0.1
 git+git://github.com/dimagi/celery@dc7253614fd8500af78b09d1ceb79c50f1baac8d#egg=celery
 # required by django-digest
 decorator==4.0.11
-django>=1.11.28,<2  # https://github.com/advisories/GHSA-hmr4-m2h5-33qx
+django>=1.11.29,<2  # https://github.com/advisories/GHSA-hmr4-m2h5-33qx
 django-braces==1.13.0
 django-celery-results~=1.0.0
 django-crispy-forms==1.7.0
@@ -43,6 +43,7 @@ python-magic~=0.4.13
 pytz>=2017.2
 PyYAML~=5.1
 requests~=2.20
+requests_oauthlib
 schema
 suds-jurko==0.6
 tropo-webapi-python==0.1.3

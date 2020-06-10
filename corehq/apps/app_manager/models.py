@@ -3144,7 +3144,7 @@ def get_all_mobile_filter_configs():
         MobileFilterConfig('StaticDatespanFilter', StaticDatespanFilter, _('A standard date range')),
         MobileFilterConfig('CustomDatespanFilter', CustomDatespanFilter, _('A custom range relative to today')),
         MobileFilterConfig('CustomMonthFilter', CustomMonthFilter,
-                           _("Custom Month Filter (you probably don't want this")),
+                           _("Custom Month Filter (you probably don't want this)")),
         MobileFilterConfig('MobileSelectFilter', MobileSelectFilter, _('Show choices on mobile device')),
         MobileFilterConfig('AncestorLocationTypeFilter', AncestorLocationTypeFilter,
                            _("Ancestor location of the user's assigned location of a particular type")),
@@ -4501,7 +4501,8 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
     def convert_to_application(self):
         self.doc_type = 'Application'
-        del self.master
+        del self.upstream_app_id
+        del self.upstream_version
         del self.linked_app_translations
         del self.linked_app_logo_refs
         del self.linked_app_attrs
@@ -5541,7 +5542,9 @@ class LinkedApplication(Application):
     linked_app_logo_refs = DictProperty()  # corresponding property: logo_refs
     linked_app_attrs = DictProperty()  # corresponds to app attributes
 
-    SUPPORTED_SETTINGS = ['target_commcare_flavor', 'practice_mobile_worker_id']
+    @property
+    def supported_settings(self):
+        return ['target_commcare_flavor', 'practice_mobile_worker_id']
 
     @property
     @memoized

@@ -63,7 +63,8 @@ CREATE VIEW bihar_demographics_view AS
         "bihar_demographics"."referral_reached_date" AS "referral_reached_date",
         "bihar_demographics"."referral_reached_facility" AS "referral_reached_facility",
         "bihar_demographics"."migrate_date" AS "migrate_date",
-        CASE WHEN "bihar_demographics"."date_death" is NULL THEN 1 ELSE 0 END AS "is_alive"
+        CASE WHEN "bihar_demographics"."date_death" is NULL THEN 1 ELSE 0 END AS "is_alive",
+        "bihar_demographics"."was_oos_ever" AS "was_oos_ever"
     FROM "public"."bihar_api_demographics" "bihar_demographics"
     LEFT JOIN "public"."awc_location" "awc_location"
     ON (

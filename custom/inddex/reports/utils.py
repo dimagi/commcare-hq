@@ -55,6 +55,10 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
         ]
 
 
+def na_for_None(val):
+    return 'n/a' if val is None else val
+
+
 def _format_val(val):
     if isinstance(val, datetime):
         return val.strftime('%Y-%m-%d %H:%M:%S')

@@ -462,6 +462,7 @@ def prepare_form_multimedia(request, domain):
 
 
 @require_GET
+@location_safe
 @login_and_domain_required
 def has_multimedia(request, domain):
     """Checks to see if this form export has multimedia available to export

@@ -231,9 +231,11 @@ def can_use_restore_as(request):
     if request.couch_user.is_superuser:
         return True
 
+    domain = getattr(request, 'domain', None)
+
     return (
-        request.couch_user.can_login_as(request.domain) and
-        has_privilege(request, privileges.LOGIN_AS)
+        request.couch_user.can_login_as(domain)
+        and has_privilege(request, privileges.LOGIN_AS)
     )
 
 

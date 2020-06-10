@@ -197,6 +197,11 @@ class ChildHealthMonthlyView(models.Model):
     current_month_wasting_v2_sort = models.IntegerField(blank=True, null=True)
     aww_phone_number = models.TextField(blank=True, null=True)
     mother_phone_number = models.TextField(blank=True, null=True)
+    valid_status_daily = models.SmallIntegerField(blank=True, null=True)
+    migration_status_daily = models.SmallIntegerField(blank=True, null=True)
+    alive_status_daily = models.SmallIntegerField(blank=True, null=True)
+    duplicate_status_daily = models.SmallIntegerField(blank=True, null=True)
+    seeking_services_status_daily = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_reports'
@@ -1226,6 +1231,8 @@ class ServiceDeliveryReportView(models.Model):
     state_id = models.TextField(blank=True, null=True)
     state_name = models.TextField(blank=True, null=True)
     state_site_code = models.TextField(blank=True, null=True)
+    aww_name = models.TextField(blank=True, null=True)
+    contact_phone_number = models.TextField(blank=True, null=True)
     aggregation_level = models.IntegerField(
         blank=True, null=True, help_text="1 for state rows, 2 for district rows, and so on"
     )
@@ -1258,78 +1265,136 @@ class ServiceDeliveryReportView(models.Model):
         help_text="Number of children age 3-5 years"
     )
 
-    pse_eligible= models.IntegerField(
+    pse_eligible = models.IntegerField(
         blank=True, null=True,
         help_text="Number of children eligible for pse"
     )
-    pse_0_days= models.IntegerField(
+    pse_0_days = models.IntegerField(
         blank=True, null=True,
         help_text="Number of children who are eligible but attended 0 days of PSE"
     )
-    pse_1_7_days= models.IntegerField(
+    pse_1_7_days = models.IntegerField(
         blank=True, null=True,
         help_text="Number of children attended 1-7 days of PSE"
     )
-    pse_8_14_days= models.IntegerField(
+    pse_8_14_days = models.IntegerField(
         blank=True, null=True,
         help_text="Number of children attended 8-14 days of PSE"
     )
-    pse_15_20_days= models.IntegerField(
+    pse_15_20_days = models.IntegerField(
         blank=True, null=True,
         help_text="Number of children attended 15-20 days of PSE"
     )
-    pse_21_days= models.IntegerField(
+    pse_21_days = models.IntegerField(
         blank=True, null=True,
         help_text="Number of children attended >=21 days of PSE"
     )
-    lunch_eligible= models.IntegerField(
+    pse_21_24_days = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children attended 21-24 days of PSE"
+    )
+    pse_25_days = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children attended >=25 days of PSE"
+    )
+    lunch_eligible = models.IntegerField(
         blank=True, null=True,
         help_text="Number of children eligible for lunch"
     )
-    lunch_0_days= models.IntegerField(
+    lunch_0_days = models.IntegerField(
         blank=True, null=True,
         help_text="Number of children who are eligible but got 0 days of lunch"
     )
-    lunch_1_7_days= models.IntegerField(
+    lunch_1_7_days = models.IntegerField(
         blank=True, null=True,
         help_text="Number of children got 1-7 days of lunch"
     )
-    lunch_8_14_days= models.IntegerField(
+    lunch_8_14_days = models.IntegerField(
         blank=True, null=True,
         help_text="Number of children got 8-14 days of lunch"
     )
-    lunch_15_20_days= models.IntegerField(
+    lunch_15_20_days = models.IntegerField(
         blank=True, null=True,
         help_text="Number of children got 15-20 days of lunch"
     )
-    lunch_21_days= models.IntegerField(
+    lunch_21_days = models.IntegerField(
         blank=True, null=True,
         help_text="Number of children got >=21 days of lunch"
     )
-    thr_eligible= models.IntegerField(
+    lunch_21_24_days = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children got 21-24 days of lunch"
+    )
+    lunch_25_days = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children got >=25 days of lunch"
+    )
+    thr_eligible = models.IntegerField(
         blank=True, null=True,
         help_text="Total number of beneficiaries eligible for THR"
     )
-    thr_0_days= models.IntegerField(
+    thr_0_days = models.IntegerField(
         blank=True, null=True,
         help_text="beneficiarys who are eligible but got 0 days of THR"
     )
-    thr_1_7_days= models.IntegerField(
+    thr_1_7_days = models.IntegerField(
         blank=True, null=True,
         help_text="beneficiaries who got 1-7 days of THR"
     )
-    thr_8_14_days= models.IntegerField(
+    thr_8_14_days = models.IntegerField(
         blank=True, null=True,
         help_text="beneficiaries who got 8-14 days of THR"
     )
-    thr_15_20_days= models.IntegerField(
+    thr_15_20_days = models.IntegerField(
         blank=True, null=True,
         help_text="beneficiaries who got 15-20 days of THR"
     )
-    thr_21_days= models.IntegerField(
+    thr_21_days = models.IntegerField(
         blank=True, null=True,
         help_text="beneficiaries who got >=21 days of THR"
     )
+    thr_21_24_days = models.IntegerField(
+        blank=True, null=True,
+        help_text="beneficiaries who got 21-24 days of THR"
+    )
+    thr_25_days = models.IntegerField(
+        blank=True, null=True,
+        help_text="beneficiaries who got >=25 days of THR"
+    )
+
+    child_thr_eligible = models.IntegerField(null=True)
+    child_thr_0_days = models.IntegerField(null=True)
+    child_thr_1_7_days = models.IntegerField(null=True)
+    child_thr_8_14_days = models.IntegerField(null=True)
+    child_thr_15_20_days = models.IntegerField(null=True)
+    child_thr_21_days = models.IntegerField(null=True)
+    child_thr_21_24_days = models.IntegerField(null=True)
+    child_thr_25_days = models.IntegerField(null=True)
+
+    pw_thr_eligible = models.IntegerField(null=True)
+    pw_thr_0_days = models.IntegerField(null=True)
+    pw_thr_1_7_days = models.IntegerField(null=True)
+    pw_thr_8_14_days = models.IntegerField(null=True)
+    pw_thr_15_20_days = models.IntegerField(null=True)
+    pw_thr_21_days = models.IntegerField(null=True)
+    pw_thr_21_24_days = models.IntegerField(null=True)
+    pw_thr_25_days = models.IntegerField(null=True)
+
+    lw_thr_eligible = models.IntegerField(null=True)
+    lw_thr_0_days = models.IntegerField(null=True)
+    lw_thr_1_7_days = models.IntegerField(null=True)
+    lw_thr_8_14_days = models.IntegerField(null=True)
+    lw_thr_15_20_days = models.IntegerField(null=True)
+    lw_thr_21_days = models.IntegerField(null=True)
+    lw_thr_21_24_days = models.IntegerField(null=True)
+    lw_thr_25_days = models.IntegerField(null=True)
+    thr_distribution_image_count = models.IntegerField(null=True)
+
+    third_fourth_month_of_pregnancy_count = models.IntegerField(null=True)
+    annaprasan_diwas_count = models.IntegerField(null=True)
+    suposhan_diwas_count = models.IntegerField(null=True)
+    coming_of_age_count = models.IntegerField(null=True)
+    public_health_message_count = models.IntegerField(null=True)
 
     class Meta(object):
         app_label = 'icds_reports'
@@ -1400,6 +1465,7 @@ class BiharDemographicsView(models.Model):
     referral_reached_facility = models.SmallIntegerField(null=True)
     migrate_date = models.DateTimeField(null=True)
     is_alive = models.SmallIntegerField(null=True)
+    was_oos_ever = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_reports'
@@ -1500,6 +1566,8 @@ class BiharVaccineView(models.Model):
     due_list_date_7gdpt_booster_2 = models.DateField(blank=True, null=True)
     delivery_nature = models.TextField(blank=True, null=True)
     term_days = models.SmallIntegerField(blank=True, null=True)
+    birth_weight = models.SmallIntegerField(blank=True, null=True)
+    last_reported_fever_date = models.DateField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_reports'
@@ -1533,6 +1601,10 @@ class BiharAPIMotherView(models.Model):
     anc_2 = models.DateField(null=True)
     anc_3 = models.DateField(null=True)
     anc_4 = models.DateField(null=True)
+    total_ifa_tablets_received = models.SmallIntegerField(null=True)
+    ifa_consumed_7_days = models.SmallIntegerField(null=True)
+    causes_for_ifa = models.TextField(null=True)
+    maternal_complications = models.TextField(null=True)
 
     class Meta(object):
         app_label = 'icds_reports'

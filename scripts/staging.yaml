@@ -50,19 +50,21 @@ trunk: master
 name: autostaging
 branches:
   - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
-  - bmb/odata-qa-feedback  # Biyeun April 15
-  - dmr/require_can_edit_or_view_commcare_users-download_commcare_users  # Danny April 27
+  - jls/sync-mixins-hard-fail # Jenny May 24
   - jls/migrate-CustomDataFieldsDefinition-2 # Jenny April 29
-  - mk/location-reassignment-realign # MK May 4
   - rn_update_perfect_scrollbar # Rohit Negi May 4
-  - bmb/SAAS-10674  # Biyeun May 4
-  - dmr/case-upload-success-result-followup  # Danny May 5
-  - ap/SAAS-10739  # Danny/Amit May 13
-  - nemanja1040:infobip_integration  # Nemanja Stancic May 14
   - jls/migrate-MobileAuthKeyRecord-2 # Jenny May 16
-  - sr-messaging-rule # Sravan May 18
-  - dmr/add-better-user-correlation-to-auditcare  # Danny May 20
-#  - nh/auth/oauth2  # Norman May 20
-  - nh/connx+repeaters  # Norman May 20
+  - bmb/SAAS-10882  # Biyeun May 20 (updates knockout, bootstrap, jquery, DOMPurify)
+  - nh/repeaters_ui  # Norman May 28
+  - nh/charset  # Norman May 27
+  - ce/web-apps-permission # Cal May 27
+  - jls/push-linked-apps # Jenny May 31
+  #- orangejenny-patch-3 # Jenny May 28; this is the 3-minute timeout branch
+  - ap/lazy-load-multimedia # Amit June 5
+  - fr/multiple-api-keys  # Conflicting migrations with ce/web-apps-permissions
+  - fr/multiple-api-keys+ce/web-apps-permission # FR Jun 8 -- adds merge migration for users app
+  - jls/DRYer-case-config-ui-3 # Jenny June 6
+  - revert-27725-jls/kill-configurable-timeout # Jenny June 9
+  - nemanja1040:turn_gateway_improvements  # Nemanja Stancic June 10
 
 submodules: {}

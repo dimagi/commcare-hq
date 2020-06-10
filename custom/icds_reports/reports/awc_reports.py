@@ -981,12 +981,24 @@ def get_awc_report_infrastructure(domain, config, month, show_test=False, beta=F
     }
 
 
+def get_beneficiary_status(valid, migrated, alive, duplicate, seeking_services):
+    if valid:
+        return 'Active'
+    elif migrated:
+        return 'Migrated'
+    elif not seeking_services:
+        return 'Not availing'
+    elif duplicate:
+        return 'Duplicated'
+    elif not alive:
+        return 'Dead'
+    return 'N/A'
+
 @icds_quickcache([
     'start', 'length', 'draw', 'order', 'filters', 'month', 'two_before', 'icds_features_flag'
 ], timeout=30 * 60)
 def get_awc_report_beneficiary(start, length, draw, order, filters, month, two_before,
                                icds_features_flag):
-
     filters['month'] = datetime(*month)
     filters['open_in_month'] = 1
     filters['valid_in_month'] = 1
@@ -1038,7 +1050,12 @@ def get_awc_report_beneficiary(start, length, draw, order, filters, month, two_b
             ),
             pse_days_attended=row_data.pse_days_attended,
             mother_phone_number=row_data.mother_phone_number,
-            aww_phone_number=row_data.aww_phone_number
+            aww_phone_number=row_data.aww_phone_number,
+            beneficiary_status=get_beneficiary_status(row_data.valid_status_daily,
+                                                      row_data.migration_status_daily,
+                                                      row_data.alive_status_daily,
+                                                      row_data.duplicate_status_daily,
+                                                      row_data.seeking_services_status_daily)
         )
 
     for row in data:
@@ -1080,6 +1097,11 @@ def get_beneficiary_details(case_id, awc_id, selected_month):
             'age': current_age(row.dob, datetime.now().date()),
             'sex': row.sex,
             'age_in_months': age_in_months,
+            'beneficiary_status': get_beneficiary_status(row.valid_status_daily,
+                                                         row.migration_status_daily,
+                                                         row.alive_status_daily,
+                                                         row.duplicate_status_daily,
+                                                         row.seeking_services_status_daily)
         })
         if age_in_months <= 60:
             if recorded_weight:

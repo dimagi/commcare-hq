@@ -239,9 +239,10 @@ class RepeaterTest(BaseRepeaterTest):
         repeat_records = self.repeat_records()
 
         for repeat_record in repeat_records:
-            with patch(
-                    'corehq.motech.repeaters.models.simple_post',
-                    return_value=MockResponse(status_code=200, reason='No Reason')) as mock_post:
+            with patch('corehq.motech.repeaters.models.simple_post') as mock_post, \
+                    patch.object(Repeater, 'get_auth_manager') as mock_manager:
+                mock_post.return_value.status_code = 200
+                mock_manager.return_value = 'MockAuthManager'
                 repeat_record.fire()
                 self.assertEqual(mock_post.call_count, 1)
                 mock_post.assert_called_with(
@@ -249,7 +250,7 @@ class RepeaterTest(BaseRepeaterTest):
                     repeat_record.repeater.get_url(repeat_record),
                     repeat_record.get_payload(),
                     headers=repeat_record.repeater.get_headers(repeat_record),
-                    auth=repeat_record.repeater.get_auth(),
+                    auth_manager='MockAuthManager',
                     verify=repeat_record.repeater.verify,
                     notify_addresses=[],
                     payload_id=repeat_record.payload_id,
@@ -728,15 +729,17 @@ class TestRepeaterFormat(BaseRepeaterTest):
     @run_with_all_backends
     def test_new_format_payload(self):
         repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
-        with patch('corehq.motech.repeaters.models.simple_post') as mock_post:
+        with patch('corehq.motech.repeaters.models.simple_post') as mock_post, \
+                patch.object(Repeater, 'get_auth_manager') as mock_manager:
             mock_post.return_value.status_code = 200
+            mock_manager.return_value = 'MockAuthManager'
             repeat_record.fire()
             headers = self.repeater.get_headers(repeat_record)
             mock_post.assert_called_with(
                 self.domain,
                 self.repeater.url,
                 self.payload,
-                auth=self.repeater.get_auth(),
+                auth_manager='MockAuthManager',
                 headers=headers,
                 notify_addresses=[],
                 payload_id='ABC123CASEID',

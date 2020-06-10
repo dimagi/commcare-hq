@@ -4,9 +4,6 @@ from __future__ import unicode_literals
 
 from django.db import migrations, models
 
-from custom.icds_reports.utils.migrations import get_view_migrations
-
-
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -45,5 +42,3 @@ class Migration(migrations.Migration):
             field=models.SmallIntegerField(null=True),
         ),
     ]
-
-    operations.extend(get_view_migrations())

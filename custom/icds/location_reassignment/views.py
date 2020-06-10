@@ -52,7 +52,7 @@ from custom.icds.location_reassignment.tasks import (
 
 
 @location_safe
-@method_decorator([toggles.DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE.required_decorator()], name='dispatch')
+@method_decorator([toggles.PERFORM_LOCATION_REASSIGNMENT.required_decorator()], name='dispatch')
 class LocationReassignmentDownloadOnlyView(BaseProjectReportSectionView):
     section_name = ugettext_lazy("Download Location Reassignment Template")
 
@@ -252,8 +252,7 @@ class LocationReassignmentView(BaseLocationView):
             "Your request has been submitted. We will notify you via email once completed."))
 
 
-
-@toggles.DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE.required_decorator()
+@toggles.PERFORM_LOCATION_REASSIGNMENT.required_decorator()
 @require_GET
 @location_safe
 def download_location_reassignment_template(request, domain):

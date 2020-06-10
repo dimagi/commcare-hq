@@ -50,7 +50,7 @@ hqDefine('cloudcare/js/util', function () {
 
     var showHTMLError = function (message, $el, autoHideTime) {
         var htmlMessage = message = message || gettext("Sorry, an error occurred while processing that request.");
-        var $container = _show(message, $el, autoHideTime, "", true);
+        var $container = _show(message, $el, autoHideTime, "alert alert-danger", true);
         try {
             message = $container.text();  // pull out just the text the user sees
             message = message.replace(/\s+/g, ' ').trim();
@@ -82,13 +82,19 @@ hqDefine('cloudcare/js/util', function () {
         }
         // HTML errors may already have an alert dialog
         $alertDialog = $container.hasClass("alert") ? $container : $container.find('.alert');
-        $alertDialog
-            .prepend(
-                $("<a />")
-                    .addClass("close")
-                    .attr("data-dismiss", "alert")
-                    .html("&times;")
-            );
+        try {
+            $alertDialog
+                .prepend(
+                    $("<a />")
+                        .addClass("close")
+                        .attr("data-dismiss", "alert")
+                        .html("&times;")
+                );
+        } catch (e) {
+            // escaping a DOM-related error from running mocha tests using grunt
+            // in the command line. This passes just fine in the browser but
+            // breaks only when travis runs it.
+        }
         $el.append($container);
         if (autoHideTime) {
             $container.delay(autoHideTime).fadeOut(500);

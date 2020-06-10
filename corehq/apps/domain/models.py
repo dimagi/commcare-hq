@@ -42,6 +42,7 @@ from dimagi.utils.logging import log_signal_errors
 from dimagi.utils.next_available_name import next_available_name
 from dimagi.utils.web import get_url_base
 
+from corehq import toggles
 from corehq.apps.app_manager.const import (
     AMPLIFIES_NO,
     AMPLIFIES_NOT_SET,
@@ -434,7 +435,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     last_modified = DateTimeProperty(default=datetime(2015, 1, 1))
 
-    # when turned on, use SECURE_TIMEOUT for sessions of users who are members of this domain
+    # when turned on, use settings.SECURE_TIMEOUT for sessions of users who are members of this domain
     secure_sessions = BooleanProperty(default=False)
 
     two_factor_auth = BooleanProperty(default=False)
