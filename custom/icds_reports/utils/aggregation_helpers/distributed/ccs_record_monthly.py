@@ -272,7 +272,11 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
             ('num_children_del', 'agg_delivery.num_children_del'),
             ('still_live_birth', 'agg_delivery.still_live_birth'),
             ('last_preg_year', 'preg.last_preg'),
-
+            ('complication_type', 'case_list.complication_type'),  # backfilled for only Bihar
+            ('reason_no_ifa', 'agg_bp.reason_no_ifa'),  # backfilled for only Bihar
+            ('new_ifa_tablets_total_bp', 'agg_bp.new_ifa_tablets_total'),  # backfilled for only Bihar
+            ('new_ifa_tablets_total_pnc', 'agg_pnc.new_ifa_tablets_total'),  # backfilled for only Bihar
+            ('ifa_last_seven_days', 'agg_bp.ifa_last_seven_days'),  # backfilled for only Bihar
         )
         return """
         INSERT INTO "{tablename}" (

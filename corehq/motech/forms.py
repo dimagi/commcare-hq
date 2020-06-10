@@ -6,6 +6,8 @@ from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 
+from corehq.motech.auth import api_auth_settings_choices
+from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.motech.models import ConnectionSettings
 
 
@@ -14,11 +16,25 @@ class ConnectionSettingsForm(forms.ModelForm):
         label=_('URL'),
         help_text=_('e.g. "http://play.dhis2.org/demo/"')
     )
+    api_auth_settings = forms.ChoiceField(
+        label=_('API auth settings'),
+        choices=api_auth_settings_choices,
+        required=False,
+    )
     username = forms.CharField(required=False)
     plaintext_password = forms.CharField(
         label=_('Password'),
         required=False,
         widget=forms.PasswordInput(render_value=True),
+    )
+    client_id = forms.CharField(
+        label=_('Client ID'),
+        required=False,
+    )
+    plaintext_client_secret = forms.CharField(
+        label=_('Client secret'),
+        required=False,
+        widget=forms.PasswordInput,
     )
     skip_cert_verify = forms.BooleanField(
         label=_('Skip certificate verification'),
@@ -38,18 +54,38 @@ class ConnectionSettingsForm(forms.ModelForm):
             'name',
             'url',
             'auth_type',
+            'api_auth_settings',
             'username',
             'plaintext_password',
+            'client_id',
+            'plaintext_client_secret',
             'skip_cert_verify',
             'notify_addresses_str',
         ]
 
     def __init__(self, *args, domain, **kwargs):
         self.domain = domain  # Passed by ``FormSet.form_kwargs``
-        instance = kwargs.get('instance', None)
-        if instance:
-            kwargs['initial'] = {'plaintext_password': instance.plaintext_password, }
-
+        if 'instance' in kwargs:
+            # `plaintext_password` is not a database field, and so
+            # super().__init__() will not update `initial` with it. We
+            # need to do that here.
+            #
+            # We use PASSWORD_PLACEHOLDER to avoid telling the user what
+            # the password is, but still indicating that it has been
+            # set. (The password is only changed if its value is not
+            # PASSWORD_PLACEHOLDER.)
+            password = kwargs['instance'].plaintext_password
+            secret = kwargs['instance'].plaintext_client_secret
+            if 'initial' in kwargs:
+                kwargs['initial'].update({
+                    'plaintext_password': PASSWORD_PLACEHOLDER if password else '',
+                    'plaintext_client_secret': PASSWORD_PLACEHOLDER if secret else '',
+                })
+            else:
+                kwargs['initial'] = {
+                    'plaintext_password': PASSWORD_PLACEHOLDER if password else '',
+                    'plaintext_client_secret': PASSWORD_PLACEHOLDER if secret else '',
+                }
         super().__init__(*args, **kwargs)
 
     def save(self, commit=True):
@@ -116,8 +152,11 @@ class ConnectionSettingsFormSetHelper(FormHelper):
                 crispy.Field('name'),
                 crispy.Field('url'),
                 crispy.Field('auth_type'),
+                crispy.Field('api_auth_settings'),
                 crispy.Field('username'),
                 crispy.Field('plaintext_password'),
+                crispy.Field('client_id'),
+                crispy.Field('plaintext_client_secret'),
                 twbscrispy.PrependedText('skip_cert_verify', ''),
                 crispy.Field('notify_addresses_str'),
                 twbscrispy.PrependedText(

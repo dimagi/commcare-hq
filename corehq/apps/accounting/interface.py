@@ -27,6 +27,8 @@ from .filters import (
     BillingContactFilter,
     CreatedSubAdjMethodFilter,
     CustomerAccountFilter,
+    CreditAdjustmentReasonFilter,
+    CreditAdjustmentLinkFilter,
     DateCreatedFilter,
     DateFilter,
     DimagiContactFilter,
@@ -37,6 +39,7 @@ from .filters import (
     EntryPointFilter,
     InvoiceBalanceFilter,
     InvoiceNumberFilter,
+    CustomerInvoiceNumberFilter,
     IsHiddenFilter,
     NameFilter,
     PaymentStatusFilter,
@@ -1380,6 +1383,10 @@ class CreditAdjustmentInterface(GenericTabularReport):
         'corehq.apps.accounting.interface.NameFilter',
         'corehq.apps.accounting.interface.DomainFilter',
         'corehq.apps.accounting.interface.DateFilter',
+        'corehq.apps.accounting.interface.CreditAdjustmentReasonFilter',
+        'corehq.apps.accounting.interface.CreditAdjustmentLinkFilter',
+        'corehq.apps.accounting.interface.InvoiceNumberFilter',
+        'corehq.apps.accounting.interface.CustomerInvoiceNumberFilter',
     ]
 
     @property
@@ -1491,6 +1498,36 @@ class CreditAdjustmentInterface(GenericTabularReport):
                     invoice__isnull=True,
                     credit_line__account__created_by_domain=domain,
                 )
+            )
+
+        reason = CreditAdjustmentReasonFilter.get_value(
+            self.request, self.domain
+        )
+        if reason is not None:
+            queryset = queryset.filter(
+                reason=reason,
+            )
+
+        link_type = CreditAdjustmentLinkFilter.get_value(self.request, self.domain)
+        if link_type == 'customer_invoice':
+            queryset = queryset.exclude(
+                customer_invoice__isnull=True,
+            )
+        if link_type == 'invoice':
+            queryset = queryset.exclude(
+                invoice__isnull=True,
+            )
+
+        invoice_id = InvoiceNumberFilter.get_value(self.request, self.domain)
+        if invoice_id is not None:
+            queryset = queryset.filter(
+                invoice=int(invoice_id)
+            )
+
+        customer_invoice_id = CustomerInvoiceNumberFilter.get_value(self.request, self.domain)
+        if customer_invoice_id is not None:
+            queryset = queryset.filter(
+                customer_invoice=int(customer_invoice_id)
             )
 
         if DateFilter.use_filter(self.request):

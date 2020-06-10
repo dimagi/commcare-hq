@@ -1,6 +1,10 @@
-from django.test import SimpleTestCase, TestCase
-from mock import patch, Mock
+import uuid
 
+from django.test import TestCase
+
+from casexml.apps.phone.tests.utils import create_restore_user
+
+import mock
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.tests.util import (
@@ -9,14 +13,18 @@ from corehq.apps.locations.tests.util import (
     setup_location_types_with_structure,
     setup_locations_with_structure,
 )
+from corehq.apps.userreports.tests.utils import get_sample_report_config
 from corehq.apps.users.models import CommCareUser
+from corehq.util.test_utils import flag_enabled
 from custom.icds.messaging.custom_content import run_indicator_for_user
 from custom.icds.messaging.indicators import (
+    AWWAggregatePerformanceIndicator,
     IndicatorError,
     LSAggregatePerformanceIndicator,
-    AWWAggregatePerformanceIndicator,
+    _get_report_fixture_for_user,
 )
 from lxml import etree
+from mock import Mock, patch
 
 
 class PropertyMock(Mock):
@@ -129,3 +137,41 @@ class TestAWWAggregatePerformanceIndicator(BaseAggregatePerformanceTestCase):
         with self.assertRaises(IndicatorError) as e:
             run_indicator_for_user(self.aww, AWWAggregatePerformanceIndicator, language_code='en')
         self.assertIn('Attribute awc_opened_count not found in restore for AWC AWC1', str(e.exception))
+
+
+@flag_enabled('MOBILE_UCR')
+class TestGetReportFixture(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(TestGetReportFixture, cls).setUpClass()
+        cls.domain = uuid.uuid4().hex
+        cls.domain_obj = create_domain(cls.domain)
+        cls.user = create_restore_user(cls.domain)
+
+        cls.report_config1 = get_sample_report_config()
+        cls.report_config1.domain = cls.domain
+        cls.report_config1.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.report_config1.delete()
+        cls.domain_obj.delete()
+        super(TestGetReportFixture, cls).tearDownClass()
+
+    def test_get_report_fixture_for_user(self):
+        from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+        from corehq.apps.userreports.tests.utils import mock_datasource_config
+        from corehq.apps.app_manager.models import ReportAppConfig
+
+        app_report_config = ReportAppConfig.wrap({
+            'report_id': self.report_config1.get_id,
+            'uuid': 'abcdef'
+        })
+        with mock.patch.object(ConfigurableReportDataSource, 'get_data') as get_data_mock, \
+            mock.patch('custom.icds.messaging.indicators.get_report_configs') as get_report_configs:
+            get_report_configs.return_value = {'test_id': app_report_config}
+            get_data_mock.return_value = [{'owner': 'bob', 'count': 3, 'is_starred': True}]
+
+            with mock_datasource_config():
+                fixture = _get_report_fixture_for_user(self.domain, 'test_id', self.user).decode('utf8')
+                self.assertIn(self.report_config1.get_id, fixture)

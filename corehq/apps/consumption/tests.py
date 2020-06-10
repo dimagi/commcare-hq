@@ -13,7 +13,7 @@ from .models import (
     TYPE_PRODUCT,
     TYPE_SUPPLY_POINT,
     TYPE_SUPPLY_POINT_TYPE,
-    SQLDefaultConsumption,
+    DefaultConsumption,
 )
 
 domain = 'consumption-test'
@@ -118,32 +118,32 @@ class GetDefaultConsumptionTestCase(ConsumptionTestBase):
 class ConsumptionShortcutsTestCase(ConsumptionTestBase):
 
     def testSetForDomain(self):
-        self.assertEqual(None, SQLDefaultConsumption.get_domain_default(domain))
+        self.assertEqual(None, DefaultConsumption.get_domain_default(domain))
         default = set_default_monthly_consumption_for_domain(domain, 50)
-        self.assertEqual(50, SQLDefaultConsumption.get_domain_default(domain).default_consumption)
+        self.assertEqual(50, DefaultConsumption.get_domain_default(domain).default_consumption)
         self.assertEqual(1, _count_consumptions())
         updated = set_default_monthly_consumption_for_domain(domain, 40)
         self.assertEqual(default.id, updated.id)
-        self.assertEqual(40, SQLDefaultConsumption.get_domain_default(domain).default_consumption)
+        self.assertEqual(40, DefaultConsumption.get_domain_default(domain).default_consumption)
         self.assertEqual(1, _count_consumptions())
 
     def testSetForProduct(self):
-        self.assertEqual(None, SQLDefaultConsumption.get_product_default(domain, product_id))
+        self.assertEqual(None, DefaultConsumption.get_product_default(domain, product_id))
         default = set_default_consumption_for_product(domain, product_id, 50)
-        self.assertEqual(50, SQLDefaultConsumption.get_product_default(domain, product_id).default_consumption)
+        self.assertEqual(50, DefaultConsumption.get_product_default(domain, product_id).default_consumption)
         self.assertEqual(1, _count_consumptions())
         updated = set_default_consumption_for_product(domain, product_id, 40)
         self.assertEqual(default.id, updated.id)
-        self.assertEqual(40, SQLDefaultConsumption.get_product_default(domain, product_id).default_consumption)
+        self.assertEqual(40, DefaultConsumption.get_product_default(domain, product_id).default_consumption)
         self.assertEqual(1, _count_consumptions())
 
 
 def _create_domain_consumption(amt, domain=domain):
-    SQLDefaultConsumption(domain=domain, default_consumption=amt * DAYS_IN_MONTH, type=TYPE_DOMAIN).save()
+    DefaultConsumption(domain=domain, default_consumption=amt * DAYS_IN_MONTH, type=TYPE_DOMAIN).save()
 
 
 def _create_product_consumption(amt, domain=domain, product_id=product_id):
-    SQLDefaultConsumption(
+    DefaultConsumption(
         domain=domain,
         default_consumption=amt * DAYS_IN_MONTH,
         type=TYPE_PRODUCT,
@@ -152,7 +152,7 @@ def _create_product_consumption(amt, domain=domain, product_id=product_id):
 
 
 def _create_type_consumption(amt, domain=domain, product_id=product_id, type_id=type_id):
-    SQLDefaultConsumption(
+    DefaultConsumption(
         domain=domain,
         default_consumption=amt * DAYS_IN_MONTH,
         type=TYPE_SUPPLY_POINT_TYPE,
@@ -162,7 +162,7 @@ def _create_type_consumption(amt, domain=domain, product_id=product_id, type_id=
 
 
 def _create_id_consumption(amt, domain=domain, product_id=product_id, supply_point_id=supply_point_id):
-    SQLDefaultConsumption(
+    DefaultConsumption(
         domain=domain,
         default_consumption=amt * DAYS_IN_MONTH,
         type=TYPE_SUPPLY_POINT,
@@ -172,8 +172,8 @@ def _create_id_consumption(amt, domain=domain, product_id=product_id, supply_poi
 
 
 def _count_consumptions():
-    return SQLDefaultConsumption.objects.count()
+    return DefaultConsumption.objects.count()
 
 
 def _delete_all_consumptions():
-    SQLDefaultConsumption.objects.all().delete()
+    DefaultConsumption.objects.all().delete()

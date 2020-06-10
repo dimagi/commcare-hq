@@ -36,7 +36,8 @@ class TestPNCForms(BaseFormsTest):
                 "not_breastfeeding": None,
                 "unscheduled_visit": 0,
                 "days_visit_late": 28,
-                "next_visit": date(2017, 6, 17)
+                "next_visit": date(2017, 6, 17),
+                "new_ifa_tablets_total": None
             }])
 
     def test_pnc_form(self):
@@ -63,5 +64,6 @@ class TestPNCForms(BaseFormsTest):
                 "not_breastfeeding": None,
                 "unscheduled_visit": 0,
                 "days_visit_late": 2,
-                "next_visit": date(2017, 8, 23)
+                "next_visit": date(2017, 8, 23),
+                "new_ifa_tablets_total": 0
             }])

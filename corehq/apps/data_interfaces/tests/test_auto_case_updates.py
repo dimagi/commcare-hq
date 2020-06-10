@@ -40,6 +40,7 @@ from corehq.form_processor.tests.utils import (
 )
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.toggles import NAMESPACE_DOMAIN, RUN_AUTO_CASE_UPDATES_ON_SAVE
+from corehq.tests.locks import reentrant_redis_locks
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.test_utils import set_parent_case as set_actual_parent_case
 
@@ -900,6 +901,7 @@ class CaseRuleOnSaveTests(BaseCaseRuleTest):
         self.disable_updates_on_save()
 
     @run_with_all_backends
+    @reentrant_redis_locks()
     def test_run_on_save(self):
         self.enable_updates_on_save()
 

@@ -7,11 +7,7 @@ import gevent
 from gevent.pool import Pool
 from greenlet import GreenletExit
 
-from django.db import close_old_connections
-from django.db.utils import DatabaseError, InterfaceError
-
 from dimagi.utils.parsing import ISO_DATETIME_FORMAT
-from dimagi.utils.retry import retry_on
 
 log = logging.getLogger(__name__)
 
@@ -30,18 +26,6 @@ def str_to_datetime(value):
     except ValueError:
         sans_micros = ISO_DATETIME_FORMAT.replace(".%f", "")
         return datetime.strptime(value, sans_micros)
-
-
-def retry_on_sql_error(func):
-    retry = retry_on(DatabaseError, InterfaceError, should_retry=_close_connections)
-    return retry(func)
-
-
-def _close_connections(err):
-    """Close old db connections, then return true to retry"""
-    log.warning("retry diff cases on %s: %s", type(err).__name__, err)
-    close_old_connections()
-    return True
 
 
 @contextmanager

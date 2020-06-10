@@ -44,7 +44,9 @@ class TestBirthPreparednessForms(BaseFormsTest):
                 "rupture": None,
                 "unscheduled_visit": 1,
                 "days_visit_late": None,
-                "next_visit": date(2017, 7, 18)
+                "next_visit": date(2017, 7, 18),
+                "reason_no_ifa": None,
+                "new_ifa_tablets_total": 0
             }]
         )
 
@@ -79,6 +81,8 @@ class TestBirthPreparednessForms(BaseFormsTest):
                 "rupture": None,
                 "unscheduled_visit": 1,
                 "days_visit_late": None,
-                "next_visit": date(2018, 2, 21)
+                "next_visit": date(2018, 2, 21),
+                "new_ifa_tablets_total": 80,
+                "reason_no_ifa": None
             }]
         )

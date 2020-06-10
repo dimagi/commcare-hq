@@ -128,6 +128,10 @@ class UploadedTranslationsValidator(object):
 
     @memoized
     def _get_current_header_index(self, module_or_form_id, header):
+        if module_or_form_id not in self.current_headers:
+            raise BulkAppTranslationsException(_(
+                f"Could not find a module or form with ID '{module_or_form_id}' in app '{self.app.name}'"
+            ))
         for index, _column_name in enumerate(self.current_headers[module_or_form_id]):
             if _column_name == header:
                 return index

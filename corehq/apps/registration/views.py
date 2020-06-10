@@ -471,7 +471,6 @@ def eula_agreement(request):
 @login_required
 @require_POST
 def send_mobile_reminder(request):
-    send_mobile_experience_reminder(request.user.username,
+    send_mobile_experience_reminder(request.couch_user.email or request.user.username,
                                     request.couch_user.full_name)
-
     return HttpResponse()

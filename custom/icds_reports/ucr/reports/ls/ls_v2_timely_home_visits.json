@@ -23,7 +23,8 @@
   ],
   "server_environment": [
     "india",
-    "icds"
+    "icds",
+    "icds-staging"
   ],
   "report_id": "ls_v2_timely_home_visits",
   "data_source_table": "static-home_visit_forms",

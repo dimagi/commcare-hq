@@ -47,10 +47,16 @@
                     data-bind="click: initializeUser">
               <i class="fa fa-plus"></i> {% trans "Create Mobile Worker" %}
             </button>
+          {% endif %}
+
+          {% if can_access_all_locations %}
+            <a id="bulk_download" class="btn btn-info" href="{{ bulk_download_url }}">
+              <i class="fa fa-cloud-download"></i> {% trans "Download Mobile Workers" %}
+            </a>
+          {% endif %}
+
+          {% if not request.is_view_only %}
             {% if can_bulk_edit_users and can_access_all_locations %}
-              <a id="bulk_download" class="btn btn-info" href="{{ bulk_download_url }}">
-                <i class="fa fa-cloud-download"></i> {% trans "Download Mobile Workers" %}
-              </a>
               <a id="bulk_upload" class="btn btn-default" href="{% url "upload_commcare_users" domain %}">
                 <i class="fa fa-cloud-upload"></i> {% trans "Bulk Upload" %}
               </a>

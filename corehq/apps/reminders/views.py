@@ -41,10 +41,6 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
         return Keyword(domain=self.domain)
 
     @property
-    def keyword_form(self):
-        raise NotImplementedError("you must implement keyword_form")
-
-    @property
     def page_context(self):
         return {
             'form': self.keyword_form,
@@ -55,7 +51,8 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
     def keyword_form(self):
         if self.request.method == 'POST':
             return KeywordForm(
-                self.request.POST, domain=self.domain,
+                self.request.POST,
+                domain=self.domain,
                 process_structured=self.process_structured_message,
             )
         return KeywordForm(
@@ -161,13 +158,17 @@ class EditStructuredKeywordView(AddStructuredKeywordView):
         initial = self.get_initial_values()
         if self.request.method == 'POST':
             form = KeywordForm(
-                self.request.POST, domain=self.domain, initial=initial,
+                self.request.POST,
+                domain=self.domain,
+                initial=initial,
+                keyword_id=self.keyword_id,
                 process_structured=self.process_structured_message,
             )
             form._sk_id = self.keyword_id
             return form
         return KeywordForm(
-            domain=self.domain, initial=initial,
+            domain=self.domain,
+            initial=initial,
             process_structured=self.process_structured_message,
         )
 
@@ -251,10 +252,6 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain])
-
-    @property
-    def parameters(self):
-        return self.request.POST if self.request.method == 'POST' else self.request.GET
 
     @property
     @memoized

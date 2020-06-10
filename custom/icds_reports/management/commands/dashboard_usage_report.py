@@ -3,7 +3,7 @@ from collections import defaultdict
 
 from django.contrib.postgres.fields.jsonb import KeyTextTransform
 from django.core.management.base import BaseCommand
-from django.db.models import Count, IntegerField, TextField
+from django.db.models import Count, TextField
 
 from dimagi.utils.chunked import chunked
 from django.db.models.functions import Cast
@@ -75,11 +75,13 @@ class Command(BaseCommand):
 
         records = list(ICDSAuditEntryRecord.objects.filter(url=f'/a/{domain}/icds_export_indicator',
                                                            time_of_use__gte=start_date,
-                                                           time_of_use__lte=end_date)
-                       .annotate(indicator=Cast(KeyTextTransform('indicator', 'post_data'), IntegerField()))
+                                                           time_of_use__lt=end_date)
+                       .annotate(indicator=Cast(KeyTextTransform('indicator', 'post_data'), TextField()))
                        .filter(indicator__lte=THR_REPORT_EXPORT).values('indicator', 'username')
                        .annotate(count=Count('indicator')).order_by('username', 'indicator'))
         for record in records:
+            if record['indicator'] == '':
+                continue
             tabular_user_counts[record['username'].split('@')[0]] += record['count']
             tabular_user_indicators[record['username'].split('@')[0]][int(record['indicator']) - 1]\
                 = record['count']
@@ -98,7 +100,7 @@ class Command(BaseCommand):
 
         records = list(ICDSAuditEntryRecord.objects.filter(url=f'/a/{domain}/cas_export',
                                                            time_of_use__gte=start_date,
-                                                           time_of_use__lte=end_date)
+                                                           time_of_use__lt=end_date)
                        .annotate(indicator=Cast(KeyTextTransform('indicator', 'post_data'), TextField()))
                        .values('indicator')
                        .annotate(count=Count('indicator')).values('username', 'count').order_by('username'))
@@ -134,13 +136,14 @@ class Command(BaseCommand):
     def get_cas_data(self, username_state_mapping, start_date, end_date, domain):
         cas_total_counts = self.get_dashboard_cas_usage_counts(start_date, end_date, domain)
         sheet_headers = ['Sr.No', 'State/UT Name',
-                         'No. of times CAS data export downloaded (December 2019)']
+                         f'No. of times CAS data export downloaded ({start_date.strftime("%m-%d-%Y")} to {end_date.strftime("%m-%d-%Y")})']
         cas_data = list()
         cas_data_dict = defaultdict(int)
 
         # converting usernames to state names
         for key, value in cas_total_counts.items():
-            cas_data_dict[username_state_mapping[key]] += value
+            if key in username_state_mapping:
+                cas_data_dict[username_state_mapping[key]] += value
 
         # creating cas data
         serial = 0

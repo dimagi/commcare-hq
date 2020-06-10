@@ -20,9 +20,9 @@
         <div class="col-xs-3">
           <search-box data-apply-bindings="false"
                       params="value: query,
-                                                     action: onQuery,
-                                                     immediate: true,
-                                                     placeholder: queryLabel"></search-box>
+                              action: onQuery,
+                              immediate: true,
+                              placeholder: queryLabel"></search-box>
         </div>
         <div class="col-xs-9">
           <div class="btn-toolbar pull-right" role="toolbar">
@@ -185,7 +185,7 @@
       <ul data-bind="foreach: $data">
         <li>
           <span data-bind="html: $root.moduleFormReference(formId)"></span>
-          <!-- ko: if: conditions -->
+          <!-- ko if: conditions -->
           <ul class="fa-ul" data-bind="visible: $root.showConditions, foreach: conditions">
             <li>
               <i class="fa fa-sitemap"></i>

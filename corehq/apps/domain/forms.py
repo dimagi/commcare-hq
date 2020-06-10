@@ -579,7 +579,8 @@ class PrivacySecurityForm(forms.Form):
     secure_sessions = BooleanField(
         label=ugettext_lazy("Shorten Inactivity Timeout"),
         required=False,
-        help_text=ugettext_lazy("All web users on this project will be logged out after 30 minutes of inactivity")
+        help_text=ugettext_lazy("All web users on this project will be logged out after {} minutes "
+                                "of inactivity").format(settings.SECURE_TIMEOUT)
     )
     allow_domain_requests = BooleanField(
         label=ugettext_lazy("Web user requests"),
@@ -613,6 +614,7 @@ class PrivacySecurityForm(forms.Form):
         self.helper[4] = twbscrispy.PrependedText('hipaa_compliant', '')
         self.helper[5] = twbscrispy.PrependedText('two_factor_auth', '')
         self.helper[6] = twbscrispy.PrependedText('strong_mobile_passwords', '')
+
         if not domain_has_privilege(domain, privileges.ADVANCED_DOMAIN_SECURITY):
             self.helper.layout.pop(6)
             self.helper.layout.pop(5)

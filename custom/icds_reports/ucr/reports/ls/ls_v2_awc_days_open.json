@@ -23,7 +23,8 @@
   ],
   "server_environment": [
     "india",
-    "icds"
+    "icds",
+    "icds-staging"
   ],
   "report_id": "ls_v2_awc_days_open",
   "data_source_table": "static-daily_feeding_forms",

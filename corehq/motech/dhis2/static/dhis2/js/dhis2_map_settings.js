@@ -40,7 +40,7 @@ hqDefine('dhis2/js/dhis2_map_settings', [
         self.connectionSettingsId = ko.observable(properties["connection_settings_id"]);
         self.ucrId = ko.observable(properties["ucr_id"]);
         self.frequency = ko.observable(properties["frequency"]);
-        self.dayOfMonth = ko.observable(properties["day_to_send"]);
+        self.dayToSend = ko.observable(properties["day_to_send"]);
         self.dataSetId = ko.observable(properties["data_set_id"]);
 
         self.orgUnitId = ko.observable(properties["org_unit_id"]);
@@ -83,7 +83,7 @@ hqDefine('dhis2/js/dhis2_map_settings', [
                 "connection_settings_id": Number(self.connectionSettingsId()),
                 "ucr_id": self.ucrId(),
                 "frequency": self.frequency(),
-                "day_to_send": Number(self.dayOfMonth()),
+                "day_to_send": Number(self.dayToSend()),
                 "data_set_id": self.dataSetId(),
                 "org_unit_id": self.orgUnitId(),
                 "org_unit_column": self.orgUnitIdColumn(),
@@ -119,6 +119,7 @@ hqDefine('dhis2/js/dhis2_map_settings', [
         var self = {};
 
         self.frequencyOptions = [
+            {"value": "weekly", "text": "Weekly"},
             {"value": "monthly", "text": "Monthly"},
             {"value": "quarterly", "text": "Quarterly"},
         ];

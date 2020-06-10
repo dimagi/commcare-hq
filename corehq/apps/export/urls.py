@@ -27,6 +27,8 @@ from corehq.apps.export.views.edit import (
 from corehq.apps.export.views.incremental import (
     IncrementalExportView,
     incremental_export_checkpoint_file,
+    incremental_export_reset_checkpoint,
+    incremental_export_resend_all,
 )
 from corehq.apps.export.views.list import (
     CaseExportListView,
@@ -104,6 +106,12 @@ urlpatterns = [
     url(r"^custom/inc_export_file/(?P<checkpoint_id>[\w\-]+)$",
         incremental_export_checkpoint_file,
         name='incremental_export_checkpoint_file'),
+    url(r"^custom/inc_export_reset/(?P<checkpoint_id>[\w\-]+)$",
+        incremental_export_reset_checkpoint,
+        name='incremental_export_reset_checkpoint'),
+    url(r"^custom/inc_export_resend_all/(?P<incremental_export_id>[\w\-]+)$",
+        incremental_export_resend_all,
+        name='incremental_export_resend_all'),
 
     # New export configuration views
     url(r"^custom/new/form/create$",
