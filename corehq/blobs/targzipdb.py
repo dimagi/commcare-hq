@@ -48,16 +48,7 @@ class TarGzipBlobDB(AbstractBlobDB):
         """
         tarinfo = tarfile.TarInfo(name=key)
         tarinfo.size = in_fileobj.content_length
-        if self._tgzfile:
-            self._tgzfile.addfile(tarinfo, in_fileobj)
-        else:
-            self.open('x:gz')  # Raises FileExistsError if `self.filename`
-            # exists. If `self._tgzfile` is not already open, the caller
-            # might be trying to append to an existing file. The tarfile
-            # library cannot append to compressed files. Rather fail
-            # loudly than silently replace a file.
-            self._tgzfile.addfile(tarinfo, in_fileobj)
-            self.close()
+        self._tgzfile.addfile(tarinfo, in_fileobj)
 
     def exists(self, key):
         with tarfile.open(self.filename, 'r:gz') as tgzfile:
