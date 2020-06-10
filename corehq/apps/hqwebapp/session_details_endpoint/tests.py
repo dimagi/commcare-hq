@@ -130,11 +130,11 @@ class SessionDetailsViewTest(TestCase):
         client.login(username='jackalope', password='456')
         response = client.get(reverse('ping_login'))
         self.assertEqual(200, response.status_code)
-        self.assertJSONEqual(response.content, {
-            "success": False,
-            "last_request": None,
-            "username": "",
-        })
+        data = json.loads(response.content)
+        self.assertFalse(data['success'])
+        self.assertIsNone(data['last_request'])
+        self.assertFalse(data['secure_session'])
+        self.assertEquals("", data['username'])
 
     @override_settings(DEBUG=True)
     def test_ping_login_auth_user(self):
@@ -145,11 +145,10 @@ class SessionDetailsViewTest(TestCase):
         response = client.get(reverse('ping_login'))
         self.assertEqual(200, response.status_code)
         data = json.loads(response.content)
-        self.assertJSONEqual(response.content, {
-            "success": True,
-            "last_request": None,
-            "username": self.couch_user.username
-        })
+        self.assertTrue(data['success'])
+        self.assertIsNone(data['last_request'])
+        self.assertFalse(data['secure_session'])
+        self.assertEqual(self.couch_user.username, data['username'])
 
         # Request a page and then re-ping: last_request should exist
         client.get(reverse('bsd_license'))
