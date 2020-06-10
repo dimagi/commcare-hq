@@ -64,7 +64,6 @@ class PinpointBackend(SQLSMSBackend):
                 MessageRequest=message_request
             )
             msg.backend_message_id = response['MessageResponse']['Result'][phone_number]['MessageId']
-            msg.save()
         except ClientError as e:
             msg.set_gateway_error(e.response['Error']['Message'])
         return

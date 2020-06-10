@@ -61,7 +61,6 @@ class TrumpiaBackend(SQLSMSBackend):
         data = response.json()
         if "requestID" in data:
             msg.backend_message_id = data["requestID"]
-            msg.save()
             data = self.get_message_details(data["requestID"])
             if is_success(data):
                 return  # success
