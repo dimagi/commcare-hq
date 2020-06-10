@@ -8,7 +8,7 @@ from soil.util import expose_download, get_download_file_path
 
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
+from corehq.apps.custom_data_fields.models import SQLCustomDataFieldsDefinition
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.user_importer.importer import BulkCacheBase, GroupMemoizer
@@ -229,7 +229,7 @@ def dump_users_and_groups(domain, download_id, user_filters, task):
     users_groups_count = count_users_and_groups(domain, user_filters, group_memoizer)
     DownloadBase.set_progress(task, 0, users_groups_count)
 
-    user_data_model = CustomDataFieldsDefinition.get_or_create(
+    user_data_model = SQLCustomDataFieldsDefinition.get_or_create(
         domain,
         UserFieldsView.field_type
     )
