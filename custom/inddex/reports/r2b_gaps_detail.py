@@ -47,40 +47,34 @@ class GapsDetailReport(MultiTabularReport):
         ]
 
 
-def _matches_filters(row, selected_gap_type, selected_gap_code):
-    # If a gap type is specified, show only rows with gaps of that type
-    gap_type = selected_gap_type
-    if gap_type == ConvFactorGaps.slug and row.conv_factor_gap_code == ConvFactorGaps.AVAILABLE:
-        return False
-    if gap_type == FctGaps.slug and row.fct_gap_code == FctGaps.AVAILABLE:
-        return False
+def _matches_filters(row, gap_class, gap_code, selected_gap_type, selected_gap_code):
+    if selected_gap_type:
+        if gap_class.slug != selected_gap_type:
+            return False
 
-    # gap_code is from a drilldown filter, so gap_type must also be selected
-    if gap_type and selected_gap_code:
-        if gap_type == ConvFactorGaps.slug and str(row.conv_factor_gap_code) != selected_gap_code:
-            return False
-        if gap_type == FctGaps.slug and str(row.fct_gap_code) != selected_gap_code:
-            return False
+        if selected_gap_code:
+            gap_code = str(row.conv_factor_gap_code if selected_gap_type == ConvFactorGaps.slug
+                           else row.fct_gap_code)
+            return gap_code == selected_gap_code
 
     return True
 
 
 def get_gaps_data(food_data, selected_gap_type=None, selected_gap_code=None):
     for row in food_data.rows:
-        if _matches_filters(row, selected_gap_type, selected_gap_code):
-            for gap_class, gap_code in [
-                    (ConvFactorGaps, row.conv_factor_gap_code),
-                    (FctGaps, row.fct_gap_code),
-            ]:
-                if not selected_gap_type or selected_gap_type == gap_class.slug:
-                    manually_set = ['gap_type', 'gap_code', 'gap_desc', 'number_occurrence']
-                    yield {
-                        'gap_type': gap_class.name,
-                        'gap_code': gap_code,
-                        'gap_desc': gap_class.DESCRIPTIONS[gap_code],
-                        **{col: getattr(row, col, None) for col in GapsDetailsData.headers
-                        if col not in manually_set},
-                    }
+        for gap_class, gap_code in [
+                (ConvFactorGaps, row.conv_factor_gap_code),
+                (FctGaps, row.fct_gap_code),
+        ]:
+            if _matches_filters(row, gap_class, gap_code, selected_gap_type, selected_gap_code):
+                manually_set = ['gap_type', 'gap_code', 'gap_desc', 'number_occurrence']
+                yield {
+                    'gap_type': gap_class.name,
+                    'gap_code': gap_code,
+                    'gap_desc': gap_class.DESCRIPTIONS[gap_code],
+                    **{col: getattr(row, col, None) for col in GapsDetailsData.headers
+                    if col not in manually_set},
+                }
 
 
 class GapsByItemSummaryData:
