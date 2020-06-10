@@ -414,6 +414,10 @@ def create_or_update_users_and_groups(domain, user_specs, upload_user, group_mem
                         else:
                             current_user.delete_domain_membership(domain)
                     else:
+                        if not role:
+                            raise UserUploadError(_(
+                                f"You cannot upload a web user without a role. {web_user} does not have a role"
+                            ))
                         if not current_user and is_account_confirmed:
                             raise UserUploadError(_(
                                 f"You can only set 'Is Account Confirmed' to 'True' on an existing Web User. {web_user} is a new username."
