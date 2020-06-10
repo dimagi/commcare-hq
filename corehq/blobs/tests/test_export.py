@@ -194,7 +194,7 @@ class MockBigBlobIO(RawIOBase):
             return bytes(chunk)
 
     def readall(self):
-        return self.read(size=None)
+        return self.read()
 
     def readinto(self, buffer):
         raise NotImplementedError
