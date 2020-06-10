@@ -26,16 +26,6 @@ class TwilioIncomingSMSView(IncomingBackendView):
         message_sid = request.POST.get('MessageSid')
         from_ = SQLTwilioBackend.convert_from_whatsapp(request.POST.get('From'))
         body = request.POST.get('Body')
-        opt_out_type = request.POST.get('OptOutType')
-        if opt_out_type:
-            incoming_sms(
-                from_,
-                opt_out_type,
-                SQLTwilioBackend.get_api_id(),
-                backend_message_id=message_sid,
-                domain_scope=self.domain,
-                backend_id=self.backend_couch_id
-            )
         incoming_sms(
             from_,
             body,
