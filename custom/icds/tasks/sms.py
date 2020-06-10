@@ -45,7 +45,7 @@ def send_monthly_sms_report():
     except Exception as e:
         message = _("""
             Hi,
-            Could not generate the montly SMS report for ICDS.
+            Could not generate the monthly SMS report for ICDS.
             The error has been notified. Please report as an issue for quick followup
         """)
         send_html_email_async.delay(subject, recipients, message,
@@ -68,15 +68,15 @@ def send_custom_sms_report(start_date, end_date, email):
             link = f"{web.get_url_base()}{path}?get_file"
             message = _("""
             Hi,
-            Please download the sms report for last month at {link}.
-            The report is available only till midnight today.
-            """).format(link=link)
+            Please download the sms report for time frame {start_date} to {end_date} at {link}.
+            The report is available only for next 24 hours.
+            """).format(link=link, start_date=start_date, end_date=end_date)
             send_html_email_async.delay(subject, recipients, message,
                                         email_from=settings.DEFAULT_FROM_EMAIL)
     except Exception as e:
         message = _("""
             Hi,
-            Could not generate the customm SMS report for ICDS.
+            Could not generate the custom SMS report for ICDS.
             The error has been notified. Please report as an issue for quick followup
         """)
         send_html_email_async.delay(subject, recipients, message,
