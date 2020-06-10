@@ -292,7 +292,8 @@ class TimedSchedule(Schedule):
         else:
             raise TypeError("Unexpected type: %s" % type(model_event))
 
-    def check_positive_repeat_every(self, repeat_every):
+    @staticmethod
+    def check_positive_repeat_every(repeat_every):
         """
         The value that gets stored to this model for repeat_every can be
         negative to represent monthly schedules (see comment on repeat_every).
@@ -406,7 +407,8 @@ class TimedSchedule(Schedule):
                 event.order = order
                 event.save()
 
-    def validate_day_of_week(self, day):
+    @staticmethod
+    def validate_day_of_week(day):
         if not isinstance(day, int) or day < 0 or day > 6:
             raise ValueError("Expected a value between 0 and 6")
 
