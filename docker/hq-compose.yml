@@ -5,7 +5,7 @@ services:
       context: .
       dockerfile: "${DOCKERFILE}"
     environment:
-      DEPENDENT_SERVICES: "couch:5984 postgres:5432 redis:6379 elasticsearch:9200 minio:9980 kafka:9092"
+      DEPENDENT_SERVICES: "couch:5984 postgres:5432 redis:6379 elasticsearch:9200 elasticsearch2:6200 minio:9980 kafka:9092"
       DOCKER_HQ_OVERLAY: "${DOCKER_HQ_OVERLAY}"
       JS_SETUP: "${JS_SETUP}"
       NOSE_DIVIDED_WE_RUN: "${NOSE_DIVIDED_WE_RUN}"
