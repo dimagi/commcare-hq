@@ -127,6 +127,7 @@ class SyncCouchToSQLMixin(object):
             try:
                 self._migration_do_sync()
             except:
+                raise
                 sql_class_name = self._migration_get_sql_model_class().__name__
                 couch_class_name = self.__class__.__name__
                 notify_exception(None,
@@ -223,6 +224,7 @@ class SyncSQLToCouchMixin(object):
             try:
                 self._migration_do_sync()
             except:
+                raise
                 couch_class_name = self._migration_get_couch_model_class().__name__
                 sql_class_name = self.__class__.__name__
                 notify_exception(None,
