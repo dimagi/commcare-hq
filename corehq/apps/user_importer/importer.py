@@ -413,6 +413,7 @@ def create_or_update_users_and_groups(domain, user_specs, upload_user, group_mem
                             ))
                         else:
                             current_user.delete_domain_membership(domain)
+                            current_user.save()
                     else:
                         if not role:
                             raise UserUploadError(_(
@@ -445,6 +446,7 @@ def create_or_update_users_and_groups(domain, user_specs, upload_user, group_mem
                                 current_user.set_location(domain, user.location_id)
                             else:
                                 current_user.unset_location(domain)
+                            current_user.save()
 
                 if send_account_confirmation_email and not web_user:
                     send_account_confirmation_if_necessary(user)
