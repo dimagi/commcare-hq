@@ -54,10 +54,9 @@ def send_monthly_sms_report():
 
 
 @task
-def send_custom_sms_report(start_date, end_date):
+def send_custom_sms_report(start_date, end_date, email):
     subject = _('Monthly SMS report')
-    recipients = ['ayogi@dimagi.com', 'akaul@dimagi-associate.com', 'smazumdar@dimagi.com',
-                  'stewari@dimagi.com', 'pgoyal@dimagi.com', 'asharma@dimagi.com']
+    recipients = [email]
     filename = call_command('get_icds_sms_usage', 'icds-cas', str(start_date), str(end_date))
     try:
         with open(filename, 'rb') as f:
