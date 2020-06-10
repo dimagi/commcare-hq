@@ -322,7 +322,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             self.case_property_query = ko.observable('');
             self.filtered_case_properties = ko.computed(function () {
                 return _.filter(self.case_properties(), function (item) {
-                    return item.path().indexOf(self.case_property_query()) !== -1;
+                    return item.path().indexOf(self.case_property_query()) !== -1 || item.key().indexOf(self.case_property_query()) !== -1;
                 });
             });
             self.visible_case_properties = ko.observableArray();
