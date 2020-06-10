@@ -1,15 +1,18 @@
+import hmac
 import json
 import logging
 import re
 from datetime import datetime, timedelta
+from hashlib import sha1
 from uuid import uuid4
 from xml.etree import cElementTree as ElementTree
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.contrib.postgres.fields import JSONField
+from django.contrib.postgres.fields import ArrayField, JSONField
 from django.db import connection, models, router
 from django.template.loader import render_to_string
+from django.utils import timezone
 from django.utils.translation import override as override_language
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
@@ -22,7 +25,6 @@ from memoized import memoized
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
 from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
-from corehq.apps.users.exceptions import IllegalAccountConfirmation
 from corehq.util.models import BouncedEmail
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -60,6 +62,7 @@ from corehq.apps.domain.utils import (
 )
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
+from corehq.apps.users.exceptions import IllegalAccountConfirmation
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.apps.users.permissions import EXPORT_PERMISSIONS
 from corehq.apps.users.tasks import (
@@ -2931,3 +2934,22 @@ class UserReportingMetadataStaging(models.Model):
 
     class Meta(object):
         unique_together = ('domain', 'user_id', 'app_id')
+
+
+class HQApiKey(models.Model):
+    user = models.ForeignKey(User, related_name='api_keys', on_delete=models.CASCADE)
+    key = models.CharField(max_length=128, blank=True, default='', db_index=True)
+    name = models.CharField(max_length=255, blank=True, default='')
+    created = models.DateTimeField(default=timezone.now)
+    ip_whitelist = ArrayField(models.GenericIPAddressField(), default=list)
+
+    def save(self, *args, **kwargs):
+        if not self.key:
+            self.key = self.generate_key()
+
+        return super().save(*args, **kwargs)
+
+    def generate_key(self):
+        # From tastypie
+        new_uuid = uuid4()
+        return hmac.new(new_uuid.bytes, digestmod=sha1).hexdigest()

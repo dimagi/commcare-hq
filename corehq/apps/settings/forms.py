@@ -3,12 +3,16 @@ from datetime import datetime
 from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.postgres.forms import SimpleArrayField
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
 
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
+from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout
 from two_factor.forms import (
     DeviceValidationForm,
     MethodForm,
@@ -20,8 +24,9 @@ from two_factor.models import get_available_phone_methods
 from two_factor.utils import totp_digits
 
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.settings.validators import validate_international_phonenumber
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, HQApiKey
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 
 
@@ -254,6 +259,44 @@ class HQPhoneNumberForm(PhoneNumberForm):
                 ),
             )
         )
+
+
+class HQApiKeyForm(forms.Form):
+    name = forms.CharField()
+    ip_whitelist = SimpleArrayField(
+        forms.GenericIPAddressField(),
+        label=ugettext_lazy("IP Address Whitelist (comma separated)"),
+        required=False
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.helper = HQFormHelper()
+        self.helper.layout = Layout(
+            crispy.Fieldset(
+                ugettext_lazy("Add New API Key"),
+                crispy.Field('name'),
+                crispy.Field('ip_whitelist'),
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    mark_safe('<i class="fa fa-plus"></i> {}'.format(ugettext_lazy("Generate New API Key"))),
+                    css_class='btn btn-primary',
+                    type='submit'
+                )
+            )
+        )
+
+    def create_key(self, user):
+        new_key = HQApiKey.objects.create(
+            name=self.cleaned_data['name'],
+            ip_whitelist=self.cleaned_data['ip_whitelist'],
+            user=user,
+        )
+        new_key.key = new_key.generate_key()
+        new_key.save()
+        return new_key
 
 
 class HQEmptyForm(forms.Form):
