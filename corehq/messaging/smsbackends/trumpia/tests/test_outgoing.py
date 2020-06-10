@@ -1,3 +1,5 @@
+from urllib.parse import urlencode
+
 from django.test import SimpleTestCase
 
 import requests_mock
@@ -14,6 +16,11 @@ API_KEY = "123456789abc1011"
 
 
 class TestTrumpiaBackend(SimpleTestCase):
+    """Trumpia SMS backend
+
+    Error status code reference:
+    https://classic.trumpia.com/api/docs/http/status-code/direct-sms.php
+    """
 
     @classmethod
     def setUpClass(cls):
@@ -27,66 +34,37 @@ class TestTrumpiaBackend(SimpleTestCase):
         self.assertIsNone(msg.system_error_message)
         self.assertFalse(msg.error)
 
-    def test_success_MRCE0000(self):
-        msg = self.mock_send(response={
-            "request_id": "1234561234567asdf123",
-            "status_code": "MRCE0000",
-        })
+    def test_fail_missing_requestID(self):
+        msg = self.mock_send(response={"boo": "hoo"})
+        self.assertIsNone(msg.backend_message_id)
+        self.assertEqual(msg.system_error_message, "Gateway error: {'boo': 'hoo'}")
+        self.assertTrue(msg.error)
+
+    def test_fail_missing_statuscode(self):
+        msg = self.mock_send(report={"unexpected": "result"})
         self.assertEqual(msg.backend_message_id, "1234561234567asdf123")
-        self.assertIsNone(msg.system_error_message)
-        self.assertFalse(msg.error)
-
-    def test_success_MPCE4001(self):
-        msg = self.mock_send(response={
-            "request_id": "1234561234567asdf123",
-            "status_code": "MPCE4001",
-        })
-        self.assertEqual(msg.backend_message_id, "1234561234567asdf123")
-        self.assertIsNone(msg.system_error_message)
-        self.assertFalse(msg.error)
-
-    def test_fail_MPCE4001(self):
-        # missing request_id -> error
-        msg = self.mock_send(response={"status_code": "MPCE4001"})
-        self.assertIsNone(msg.backend_message_id)
-        self.assertEqual(msg.system_error_message, "Gateway error: MPCE4001")
-        self.assertTrue(msg.error)
-
-    def test_error_status_code(self):
-        msg = self.mock_send(response={"status_code": "MRCE0101"})
-        self.assertIsNone(msg.backend_message_id)
-        self.assertEqual(msg.system_error_message, "Gateway error: MRCE0101")
-        self.assertTrue(msg.error)
-
-    def test_blocked_mobile(self):
-        msg = self.mock_send(response={
-            "status": "failed",
-            "blocked_mobile": {"number": "2003004000"},
-        })
-        self.assertIsNone(msg.backend_message_id)
-        self.assertEqual(msg.system_error_message, "Gateway error: blocked")
-        self.assertTrue(msg.error)
-
-    def test_retry_MPCE0301(self):
-        with self.assertRaises(TrumpiaRetry) as err:
-            self.mock_send(response={"status_code": "MPCE0301"})
-        self.assertRegex(str(err.exception), "Gateway error: MPCE0301")
-
-    def test_retry_MRCE0301(self):
-        with self.assertRaises(TrumpiaRetry) as err:
-            self.mock_send(response={"status_code": "MRCE0301"})
-        self.assertRegex(str(err.exception), "Gateway error: MRCE0301")
-
-    def test_retry_MPCE0302(self):
-        with self.assertRaises(TrumpiaRetry) as err:
-            self.mock_send(response={"status_code": "MPCE0302"})
-        self.assertRegex(str(err.exception), "Gateway error: MPCE0302")
-
-    def test_unknown_error(self):
-        msg = self.mock_send(response={"unexpected": "result"})
-        self.assertIsNone(msg.backend_message_id)
         self.assertEqual(msg.system_error_message,
-            'Gateway error: {"unexpected": "result"}')
+            "Gateway error: {'unexpected': 'result'}")
+        self.assertTrue(msg.error)
+
+    def test_generic_failure(self):
+        msg = self.mock_send(
+            response={"requestID": "1234561234567asdf123"},
+            report={"statuscode": "0", "message": "Did not send."},
+        )
+        self.assertEqual(msg.backend_message_id, "1234561234567asdf123")
+        self.assertEqual(msg.system_error_message,
+            "Gateway error: status 0: Did not send.")
+        self.assertTrue(msg.error)
+
+    def test_fail_MRME0201(self):
+        msg = self.mock_send(
+            response={"requestID": "1234561234567asdf123"},
+            report={"statuscode": "MRME0201", "message": "Internal Error."},
+        )
+        self.assertEqual(msg.backend_message_id, "1234561234567asdf123")
+        self.assertEqual(msg.system_error_message,
+            "Gateway error: status MRME0201: Internal Error.")
         self.assertTrue(msg.error)
 
     def test_405(self):
@@ -99,22 +77,53 @@ class TestTrumpiaBackend(SimpleTestCase):
             self.mock_send(status_code=500)
         self.assertRegex(str(err.exception), "Gateway 500 error")
 
-    def mock_send(self, status_code=200, response=None):
+    def test_get_message_details(self):
+        request_id = "1234561234567asdf123"
+        report = {"statuscode": "1", "message": "Send Success"}
+        with requests_mock.Mocker() as mock:
+            self.mock_report(mock, request_id, report)
+            self.backend.get_message_details(request_id)
+
+    def mock_send(self, status_code=200, response=None, report=None):
         msg = QueuedSMS(phone_number='+15554443333', text="the message")
         msg.save = lambda: None  # prevent db access in SimpleTestCase
-        url = f"http://api.trumpia.com/rest/v1/{USERNAME}/sms"
-        headers = {"X-ApiKey": API_KEY, "Content-Type": "application/json"}
+        query = querystring({
+            "apikey": API_KEY,
+            "country_code": "0",
+            "mobile_number": msg.phone_number,
+            "message": msg.text,
+            "concat": "TRUE",
+        })
         if response is None:
-            response = {
-                "request_id": "1234561234567asdf123",
-                "sms_id": 987987987987
-            }
+            response = {"requestID": "1234561234567asdf123"}
         with requests_mock.Mocker() as mock:
-            mock.put(
-                url,
-                request_headers=headers,
+            mock.get(
+                "http://api.trumpia.com/http/v2/sendverificationsms" + query,
+                request_headers={"Accept": "application/json"},
                 status_code=status_code,
-                json=(response if status_code == 200 else {})
+                json=(response if status_code == 200 else {}),
             )
+            if "requestID" in response:
+                self.mock_report(mock, response["requestID"], report)
             self.backend.send(msg)
         return msg
+
+    def mock_report(self, mock, request_id, report):
+        query = querystring({"request_id": request_id})
+        if not report:
+            report = {
+                "statuscode": "1",
+                "message": "Send Success",
+                "creditProcessID": "12345",
+                "taskID": "123456",
+            }
+        mock.get(
+            "http://api.trumpia.com/http/v2/checkresponse" + query,
+            request_headers={"Accept": "application/json"},
+            status_code=200,
+            json=report
+        )
+
+
+def querystring(data):
+    return "?" + urlencode(data)

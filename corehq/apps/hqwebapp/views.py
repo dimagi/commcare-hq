@@ -1255,7 +1255,7 @@ def redirect_to_dimagi(endpoint):
             'india',
             'staging',
             'changeme',
-            'localdev',
+            settings.LOCAL_SERVER_ENVIRONMENT,
         ]:
             return HttpResponsePermanentRedirect(
                 "https://www.dimagi.com/{}{}".format(

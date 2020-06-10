@@ -949,19 +949,20 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             location=location,
             month=config['month'],
             loc_level=loc_level,
-            beta=beta
+            beta=beta,
+            report_type=config['thr_report_type']
         ).get_excel_data()
         export_info = excel_data[1][1]
         generated_timestamp = date_parser.parse(export_info[0][1])
         formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
         data_type = 'THR Report__{}'.format(formatted_timestamp)
-
         if file_format == 'xlsx':
             cache_key = create_thr_report_excel_file(
                 excel_data,
                 data_type,
                 config['month'].strftime("%B %Y"),
                 loc_level,
+                config['thr_report_type']
             )
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)

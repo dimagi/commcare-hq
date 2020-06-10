@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-05-27 21:15+0000\n"
+"POT-Creation-Date: 2020-06-03 15:38+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2020\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -175,23 +175,25 @@ msgstr ""
 "Vaya, ocurrió un problema al cargar esta sección. Por favor intente otra "
 "vez. "
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js:44
+#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js:45
+#, fuzzy
+#| msgid "Select One"
+msgid "Select None"
+msgstr "Seleccione Uno"
+
+#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js:45
 msgid "Select All"
 msgstr "Seleccionar Todos"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js:44
-msgid "<span class='label label-default'>"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js:103
+#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js:100
 msgid "Application name is required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js:110
+#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js:107
 msgid "Project name is required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js:113
+#: corehq/apps/app_manager/static/app_manager/js/app_view_application.js:110
 msgid "Invalid Project Selected"
 msgstr ""
 
@@ -3179,6 +3181,15 @@ msgstr "Borrar"
 msgid "Show All Dates"
 msgstr "Mostrar Todas las Fechas"
 
+#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:153
+msgid "Could not authenticate, please log in and try again"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:161
+#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js:38
+msgid "Done"
+msgstr "Listo"
+
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:261
 msgid "Saving..."
 msgstr "Guardando..."
@@ -3247,10 +3258,6 @@ msgstr "Editar Mapeo para"
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js:34
 msgid "Add Key &rarr; Value Mapping"
 msgstr "Agregar Clave &rarr; Mapeo de Valor"
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js:38
-msgid "Done"
-msgstr "Listo"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js:79
 msgid "Click <strong>Edit</strong> below to add mappings"
@@ -3694,14 +3701,14 @@ msgstr ""
 "El llenado automático no está disponible en Inglés (in). Por favor cambie su "
 "idioma usando el desplegable ubicado en la esquina superior izquierda."
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:368
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:383
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:371
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:386
 #: corehq/apps/userreports/static/userreports/js/report_config.js:305
 #: corehq/apps/userreports/static/userreports/js/report_config.js:333
 msgid "Choose the property you would like to add as a filter to this report."
 msgstr "Elija la propiedad que quisiera agregar como filtro para este reporte."
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:369
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:372
 #: corehq/apps/userreports/static/userreports/js/report_config.js:306
 msgid ""
 "Web users viewing the report will see this display text instead of the "
@@ -3711,7 +3718,7 @@ msgstr ""
 "del nombre de la propiedad. Asígnele un nombre a su filtro que sea fácil de "
 "entender para sus usuarios. "
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:370
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:373
 #: corehq/apps/userreports/static/userreports/js/report_config.js:307
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
@@ -3722,7 +3729,7 @@ msgstr ""
 "Seleccione esto si la propiedad es una fecha.<br/><strong>Opción</strong>: "
 "Seleccione esto si la propiedad es un texto u opción múltiple."
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:384
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:387
 #: corehq/apps/userreports/static/userreports/js/report_config.js:334
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
@@ -3734,19 +3741,19 @@ msgstr ""
 "><strong>Valor</strong>: Seleccione esto para filtrar la propiedad por un "
 "único valor."
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:385
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:388
 #: corehq/apps/userreports/static/userreports/js/report_config.js:335
 msgid "What value or date range must the property be equal to?"
 msgstr "¿Qué valor o rango de fecha debe la propiedad igualar?"
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:396
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:399
 msgid ""
 "Column format selection will determine how each row's value is calculated."
 msgstr ""
 "La selección de formato de las columnas determinará cómo se calcularán los "
 "valores de cada fila."
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:425
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:428
 msgid "Please check above for any errors in your configuration."
 msgstr "Por favor verifique arriba si hay algún error en su configuración."
 
@@ -3824,23 +3831,23 @@ msgstr ""
 "Ocurrió un problema al conectarse con el servidor. Revise la conexión a "
 "Internet."
 
-#: corehq/apps/users/static/users/js/roles.js:136
+#: corehq/apps/users/static/users/js/roles.js:153
 msgid "Edit Role: "
 msgstr "Editar Rol:"
 
-#: corehq/apps/users/static/users/js/roles.js:136
+#: corehq/apps/users/static/users/js/roles.js:153
 msgid "View Role: "
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:137
+#: corehq/apps/users/static/users/js/roles.js:154
 msgid "New Role"
 msgstr "Nuevo Rol"
 
-#: corehq/apps/users/static/users/js/roles.js:148
+#: corehq/apps/users/static/users/js/roles.js:165
 msgid "Delete Role: "
 msgstr "Eliminar Rol:"
 
-#: corehq/apps/users/static/users/js/roles.js:151
+#: corehq/apps/users/static/users/js/roles.js:168
 msgid "Are you sure you want to delete the role <%= role %>?"
 msgstr ""
 
