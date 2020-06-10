@@ -7,7 +7,6 @@ from datetime import datetime, time, timedelta
 
 from django.conf import settings
 from django.contrib import messages
-from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Q
 from django.http import (
@@ -128,7 +127,6 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CommCareUser, CouchUser, Permissions
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
 from corehq.const import SERVER_DATE_FORMAT, SERVER_DATETIME_FORMAT
-from custom.icds.tasks.sms import send_custom_sms_report
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.async_handlers import SMSSettingsAsyncHandler
