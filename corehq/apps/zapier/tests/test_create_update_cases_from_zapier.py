@@ -3,8 +3,6 @@ import json
 from django.test.testcases import TestCase
 from django.urls import reverse
 
-from tastypie.models import ApiKey
-
 from corehq.apps.accounting.models import (
     BillingAccount,
     DefaultProductPlan,
@@ -12,7 +10,7 @@ from corehq.apps.accounting.models import (
     Subscription,
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import HQApiKey, WebUser
 from corehq.apps.zapier.views import ZapierCreateCase, ZapierUpdateCase
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -37,7 +35,7 @@ class TestZapierCreateCaseAction(TestCase):
         cls.data = {'case_name': 'test1', 'price': '11'}
         cls.accessor = CaseAccessors(cls.domain)
         cls.user = WebUser.create(cls.domain, 'test', '******')
-        api_key_object, _ = ApiKey.objects.get_or_create(user=cls.user.get_django_user())
+        api_key_object, _ = HQApiKey.objects.get_or_create(user=cls.user.get_django_user())
         cls.api_key = api_key_object.key
 
     @classmethod
