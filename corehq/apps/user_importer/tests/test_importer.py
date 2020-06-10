@@ -324,7 +324,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
                 self._get_spec(
                     web_user='a@a.com',
                     is_account_confirmed='False',
-                    send_confirmation_email='True'
+                    send_confirmation_email='True',
+                    role=self.role.name
                 )
             ],
             [],
@@ -338,7 +339,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         web_user = WebUser.create('other-domain', username, 'password')
         import_users_and_groups(
             self.domain.name,
-            [self._get_spec(web_user='a@a.com', is_account_confirmed='True')],
+            [self._get_spec(web_user='a@a.com', is_account_confirmed='True', role=self.role.name)],
             [],
             mock.MagicMock()
         )

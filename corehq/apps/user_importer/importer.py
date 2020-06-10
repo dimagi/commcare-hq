@@ -437,7 +437,10 @@ def create_or_update_users_and_groups(domain, user_specs, upload_user, group_mem
                         elif current_user.is_member_of(domain):
                             # edit existing user in the domain
                             current_user.set_role(domain, role_qualified_id)
-                            current_user.set_location(user.location_id)
+                            if user.location_id:
+                                current_user.set_location(domain, user.location_id)
+                            else:
+                                current_user.unset_location(domain)
 
                 if send_account_confirmation_email and not web_user:
                     send_account_confirmation_if_necessary(user)
