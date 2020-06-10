@@ -337,7 +337,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertTrue(mock_invite.send_activation_email.called)
 
     @mock.patch('corehq.apps.user_importer.importer.Invitation')
-    def test_upload_add_web_user(self, mock_invitation):
+    def test_upload_add_web_user(self, mock_invitation_class):
         username = 'a@a.com'
         web_user = WebUser.create(self.other_domain.name, username, 'password')
         mock_invite = mock_invitation_class.return_value
