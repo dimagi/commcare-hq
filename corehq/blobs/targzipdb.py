@@ -65,5 +65,30 @@ class TarGzipBlobDB(AbstractBlobDB):
         raise NotImplementedError
 
 
-def get_export_filename(slug, domain):
-    return f'export-{domain}-{slug}-blobs.tar.gz'
+def get_export_filename(slug, domain, extends):
+    """
+    Returns a filename that includes filenames in ``extends``
+
+    >>> get_export_filename('multimedia', 'domain',
+    ...                     ['oldexport.tar.gz', 'olderexport.tar.gz'])
+    'export-domain-multimedia-blobs-extends-oldexport+olderexport.tar.gz'
+
+    """
+    filenames = [strip_tar_gz(f) for f in extends]
+    _extends = '-extends-' + '+'.join(filenames) if filenames else ''
+    return f'export-{domain}-{slug}-blobs{_extends}.tar.gz'
+
+
+def strip_tar_gz(filename):
+    """
+    Strips ".tar.gz" extensions.
+
+    >>> strip_tar_gz('spam.tar.gz')
+    'spam'
+    >>> strip_tar_gz('spam.ham')
+    'spam.ham'
+
+    """
+    if filename.endswith('.tar.gz'):
+        return filename[:-7]
+    return filename

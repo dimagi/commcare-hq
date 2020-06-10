@@ -48,7 +48,7 @@ class Command(BaseCommand):
     def handle(self, domain=None, reset=False,
                chunk_size=100, all=None, limit_to_db=None, **options):
         exporters = options.get('exporters')
-        extends = options.get('extends')
+        extends = options['extends']
 
         if not domain:
             raise CommandError(USAGE)
@@ -63,7 +63,7 @@ class Command(BaseCommand):
                 raise CommandError(USAGE)
 
             self.stdout.write("\nRunning exporter: {}\n{}".format(exporter_slug, '-' * 50))
-            export_filename = get_export_filename(exporter_slug, domain)
+            export_filename = get_export_filename(exporter_slug, domain, extends)
             if os.path.exists(export_filename):
                 raise CommandError(f"Export file '{export_filename}' exists. "
                                    f"Remove the file and re-run the command.")
