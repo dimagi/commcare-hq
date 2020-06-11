@@ -1,7 +1,7 @@
 import json
 import logging
 import re
-from datetime import datetime, timedelta
+from datetime import datetime
 from uuid import uuid4
 from xml.etree import cElementTree as ElementTree
 
@@ -57,7 +57,6 @@ from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import (
     domain_restricts_superusers,
     guess_domain_language,
-    normalize_domain_name,
 )
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency

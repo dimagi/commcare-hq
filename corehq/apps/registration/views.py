@@ -1,6 +1,6 @@
 import logging
 import re
-import sys
+
 from datetime import datetime
 
 from django.conf import settings
@@ -24,7 +24,6 @@ from dimagi.utils.couch.resource_conflict import retry_resource
 from dimagi.utils.web import get_ip
 
 from corehq.apps.accounting.models import BillingAccount
-from corehq.apps.accounting.utils import domain_is_on_trial
 from corehq.apps.analytics import ab_tests
 from corehq.apps.analytics.tasks import (
     HUBSPOT_COOKIE,
@@ -34,7 +33,6 @@ from corehq.apps.analytics.tasks import (
     track_workflow,
 )
 from corehq.apps.analytics.utils import get_meta
-from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.exceptions import NameUnavailableException
 from corehq.apps.domain.models import Domain
