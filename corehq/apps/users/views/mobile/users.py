@@ -15,10 +15,7 @@ from django.http import (
     HttpResponseBadRequest,
     HttpResponseRedirect,
 )
-from django.http.response import (
-    HttpResponseServerError,
-    JsonResponse,
-)
+from django.http.response import HttpResponseServerError, JsonResponse
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -115,7 +112,11 @@ from corehq.apps.users.views import (
     BaseUserSettingsView,
     get_domain_languages,
 )
-from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL, USER_DATE_FORMAT, WEB_REGISTRATION
+from corehq.const import (
+    GOOGLE_PLAY_STORE_COMMCARE_URL,
+    USER_DATE_FORMAT,
+    WEB_REGISTRATION,
+)
 from corehq.toggles import (
     FILTERED_BULK_USER_DOWNLOAD,
     TWO_STAGE_USER_PROVISIONING,

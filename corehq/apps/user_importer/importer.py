@@ -11,8 +11,6 @@ from couchdbkit.exceptions import (
     ResourceNotFound,
 )
 
-from corehq.apps.user_importer.helpers import spec_value_to_boolean_or_none
-from corehq.apps.users.account_confirmation import send_account_confirmation_if_necessary
 from dimagi.utils.parsing import string_to_boolean
 
 from corehq import privileges
@@ -22,11 +20,20 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.user_importer.exceptions import UserUploadError
+from corehq.apps.user_importer.helpers import spec_value_to_boolean_or_none
 from corehq.apps.user_importer.validation import (
     get_user_import_validators,
     is_password,
 )
-from corehq.apps.users.models import CommCareUser, CouchUser, UserRole, Invitation
+from corehq.apps.users.account_confirmation import (
+    send_account_confirmation_if_necessary,
+)
+from corehq.apps.users.models import (
+    CommCareUser,
+    CouchUser,
+    Invitation,
+    UserRole,
+)
 from corehq.apps.users.util import normalize_username
 from corehq.const import BULK_IMPORTER
 
