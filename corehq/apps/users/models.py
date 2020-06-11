@@ -1635,10 +1635,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         log_model_change(
             created_by,
             self.get_django_user(use_primary_db=True),
-            message=None,
-            fields_changed={
-                'created_via': created_via,
-            },
+            message={'created_via': created_via},
+            fields_changed=None,
             is_create=True
         )
 
