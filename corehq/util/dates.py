@@ -69,8 +69,8 @@ def get_first_last_days(year, month):
 
 def get_current_month_date_range(reference_date=None):
     reference_date = reference_date or datetime.date.today()
-    date_start = datetime.date(reference_date.year, reference_date.month, 1)
-    return date_start, reference_date
+    month_year, month = reference_date.year, reference_date.month
+    return get_first_last_days(month_year, month)
 
 
 def get_previous_month_date_range(reference_date=None):

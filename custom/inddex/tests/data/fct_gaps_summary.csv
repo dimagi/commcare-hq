@@ -1,8 +1,0 @@
-fct_gap_code,fct_gap_desc,food_type,fct_gap_food_type_total
-1,fct data available,food_item,14
-2,using fct data from base term food code,food_item,4
-3,using fct data from reference food code,food_item,5
-7,ingredients contain fct data gaps,non_std_recipe,1
-7,ingredients contain fct data gaps,std_recipe,2
-8,no fct data available,non_std_food_item,2
-8,no fct data available,non_std_recipe,2

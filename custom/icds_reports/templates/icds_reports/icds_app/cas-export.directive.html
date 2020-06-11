@@ -45,7 +45,7 @@
                        popover-placement="top-right"
                        popover-trigger="'mouseenter'"></i></label>
                 <div class="col-sm-6">
-                    <ui-select ng-model="$ctrl.selectedMonth" theme="bootstrap">
+                    <ui-select ng-model="$ctrl.selectedMonth" theme="bootstrap" on-select="$ctrl.onSelectMonth()">
                         <ui-select-match placeholder="Month"><span ng-bind="$select.selected.name"></span></ui-select-match>
                         <ui-select-choices repeat="month.id as month in $ctrl.months | propsFilter: {name: $select.search}">
                             <div ng-bind-html="month.name | highlight: $select.search"></div>

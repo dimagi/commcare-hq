@@ -4,40 +4,90 @@
 
 {% block title %}{% trans "My Projects" %}{% endblock title %}
 
+{% requirejs_main 'domain/js/select' %}
+
 {% block page_content %}
-  <div class="row">
-    <div class="col-sm-4">
-      <h2>{% trans "My Projects" %}</h2>
-      <ul class="nav nav-pills nav-stacked">
-        {% for domain in domains_for_user %}
-          <li><a href="{% url next_view domain.name %}">{{ domain.display_name }}</a></li>
-        {% endfor %}
-      </ul>
-      {% if open_invitations %}
-        <h2>{% trans "Project Invitations" %}</h2>
-        <ul class="list-unstyled">
-          {% for invitation in open_invitations %}
-            <li style="padding-bottom: 6px;">
-              <a href="{% url "domain_accept_invitation" invitation.domain invitation.uuid %}" class="btn btn-primary btn-xs">
-                Accept
+  {% initial_page_data 'invitation_links' invitation_links %}
+  {% initial_page_data 'domain_links' domain_links %}
+
+<div id="all-links" class="ko-template">
+  <div class="btn-toolbar" data-bind="visible: invitationLinks().length > 1">
+    <a class="btn btn-primary"
+       href="{% url "accept_all_invitations" %}">
+      <i class="fa fa-envelope"></i>
+      {% trans 'Accept All Invitations' %}
+    </a>
+  </div>
+  <p/>
+
+  <div class="panel panel-info" data-bind="visible: invitationLinks().length">
+    <div class="panel-heading ">
+      <h3 class="panel-title">
+        {% trans 'My Invitations' %}
+      </h3>
+    </div>
+    <div class="panel-body">
+      <table class="table table-striped table-responsive">
+        <thead>
+          <tr>
+            <th>{% trans 'Project Name' %}
+            </th>
+          </tr>
+        </thead>
+        <tbody data-bind="foreach: invitationLinks">
+          <tr>
+            <td>
+              
+              <a data-bind="attr: {href: url}" class="btn btn-default btn-xs">
+                <i class='fa fa-envelope'>
+                </i>
+                {% trans "Accept" %}
               </a>
-              {{  invitation.domain }}
-            </li>
-          {% endfor %}
-        </ul>
-      {% endif %}
-    </div>
-    <div class="col-sm-4">
-    </div>
-    <div class="col-sm-4">
-      {% if not restrict_domain_creation or request.user.is_superuser %}
-        {% if not hide_create_new_project %}
-          <aside class="well">
-            <h3>{% trans "Have a new idea?" %}</h3>
-            <a class="btn btn-primary" href="{% url "registration_domain" %}">{% trans "Create a Blank Project" %}</a>
-          </aside>
-        {% endif %}
-      {% endif %}
+              <!-- ko text: display_name -->
+              <!-- /ko -->
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
+  <div class="panel panel-default">
+    <div class="panel-heading ">
+      <div class="row">
+        <div class="col-sm-6">
+          <h3 class="panel-title">
+            {% trans 'My Projects' %}
+          </h3>
+        </div>
+        <div class="col-sm-6">
+          <search-box data-apply-bindings="false"
+                      params="value: query,
+                              action: search,
+                              immediate: true,
+                              placeholder: '{% trans_html_attr "Search Projects..." %}'">
+          </search-box>
+        </div>
+      </div>
+    </div>
+    <div class="panel-body">
+      <table class="table table-striped table-responsive">
+        <thead>
+          <tr>
+            <th>{% trans 'Project Name' %}
+            </th>
+          </tr>
+        </thead>
+        <tbody data-bind="foreach: domainLinks">
+          <tr>
+            <td>
+              <a data-bind="attr: {href: url}, text: display_name">
+              </a>
+            </td>
+          </tr>
+        </tbody>
+        
+      </table>
+    </div>
+  </div>
+</div>
 {% endblock %}

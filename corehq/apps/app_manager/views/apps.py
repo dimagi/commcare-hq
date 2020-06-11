@@ -192,7 +192,7 @@ def get_app_view_context(request, app):
             if disable_if_true and getattr(app, setting['id']):
                 continue
             if is_linked_app(app):
-                if setting['id'] in app.SUPPORTED_SETTINGS:
+                if setting['id'] in app.supported_settings:
                     if setting['id'] not in app.linked_app_attrs:
                         setting['is_inherited'] = True
             new_settings.append(setting)
@@ -854,7 +854,7 @@ def edit_app_attr(request, domain, app_id, attr):
                 value = transformation(value)
             if can_set_attr(attribute):
                 setattr(app, attribute, value)
-            if is_linked_app(app) and attribute in app.SUPPORTED_SETTINGS:
+            if is_linked_app(app) and attribute in app.supported_settings:
                 app.linked_app_attrs.update({
                     attribute: value,
                 })

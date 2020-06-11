@@ -55,7 +55,7 @@ django-transfer==0.4      # via -r requirements/requirements.in
 django-two-factor-auth==1.6.2  # via -r requirements/requirements.in
 django-user-agents==0.3.2  # via -r requirements/requirements.in
 django-websocket-redis==0.5.2  # via -r requirements/requirements.in
-django==1.11.28           # via -r requirements/requirements.in, django-angular, django-appconf, django-bulk-update, django-formtools, django-otp, django-phonenumber-field, django-prbac, django-ranged-response, django-redis, django-simple-captcha, django-statici18n, django-two-factor-auth, django-user-agents, djangorestframework, jsonfield
+django==1.11.29           # via -r requirements/requirements.in, django-angular, django-appconf, django-bulk-update, django-formtools, django-otp, django-phonenumber-field, django-prbac, django-ranged-response, django-redis, django-simple-captcha, django-statici18n, django-two-factor-auth, django-user-agents, djangorestframework, jsonfield
 djangorestframework==3.11.0  # via -r requirements/requirements.in
 dnspython==1.15.0         # via -r requirements/requirements.in, email-validator, eventlet
 docutils==0.15.2          # via botocore
@@ -100,6 +100,7 @@ markupsafe==1.1.1         # via jinja2, mako
 mock==2.0.0               # via -r requirements/requirements.in
 msgpack-python==0.5.6     # via ddtrace
 ndg-httpsclient==0.5.1    # via -r requirements/prod-requirements.in
+oauthlib==3.1.0           # via requests-oauthlib
 openpyxl==2.6.4           # via -r requirements/requirements.in, commcaretranslationchecker
 pbr==5.4.3                # via mock
 pdfrw==0.4                # via weasyprint
@@ -142,7 +143,8 @@ rcssmin==1.0.6            # via django-compressor
 redis-py-cluster==1.3.6   # via -r requirements/requirements.in
 redis==2.10.6             # via -r requirements/requirements.in, django-redis, django-redis-sessions, django-websocket-redis, redis-py-cluster
 reportlab==3.0            # via -r requirements/requirements.in
-requests==2.22.0          # via -r requirements/requirements.in, cloudant, datadog, dropbox, stripe, tinys3, twilio
+requests-oauthlib==1.3.0  # via -r requirements/requirements.in
+requests==2.22.0          # via -r requirements/requirements.in, cloudant, datadog, dropbox, requests-oauthlib, stripe, tinys3, twilio
 rjsmin==1.0.12            # via django-compressor
 s3transfer==0.2.1         # via boto3
 schema==0.7.1             # via -r requirements/requirements.in
@@ -159,7 +161,7 @@ sqlagg==0.16.1            # via -r requirements/requirements.in
 sqlalchemy==1.3.10        # via -r requirements/requirements.in, alembic, sqlagg
 stripe==1.67.0            # via -r requirements/requirements.in
 suds-jurko==0.6           # via -r requirements/requirements.in
-text-unidecode==1.2       # via faker
+text-unidecode==1.2       # via -r requirements/requirements.in, faker
 tinycss2==1.0.2           # via cairosvg, cssselect2, weasyprint
 tinys3==0.1.12            # via -r requirements/requirements.in
 tornado==4.5.3            # via -r requirements/prod-requirements.in, flower
@@ -168,7 +170,6 @@ tropo-webapi-python==0.1.3  # via -r requirements/requirements.in
 turn-python==0.0.1        # via -r requirements/requirements.in
 twilio==6.5.1             # via -r requirements/requirements.in
 ua-parser==0.8.0          # via user-agents
-unidecode==0.04.20        # via -r requirements/requirements.in
 urllib3==1.25.6           # via botocore, elasticsearch, elasticsearch2, py-kissmetrics, requests, sentry-sdk
 user-agents==2.0          # via django-user-agents
 uwsgi==2.0.18             # via -r requirements/prod-requirements.in

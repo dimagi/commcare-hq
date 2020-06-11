@@ -3,6 +3,8 @@ from collections import namedtuple
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
+from tastypie.models import ApiKey
+
 from corehq.util.markup import mark_up_urls
 from corehq.util.quickcache import quickcache
 
@@ -51,3 +53,8 @@ class MaintenanceAlert(models.Model):
             return active_alerts[0]
         else:
             return ''
+
+
+class ApiKeySettings(models.Model):
+    api_key = models.OneToOneField(ApiKey, on_delete=models.CASCADE)
+    ip_whitelist = ArrayField(models.GenericIPAddressField(), default=list, null=True, blank=True)

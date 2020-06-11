@@ -17,16 +17,21 @@ from corehq.apps.export.models import (
 from corehq.apps.export.models.incremental import (
     IncrementalExport,
     IncrementalExportStatus,
-)
-from corehq.apps.export.tasks import (
     _generate_incremental_export,
     _send_incremental_export,
 )
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from corehq.apps.locations.tests.util import delete_all_locations
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.tests.util import setup_locations_and_types
 from corehq.apps.export.tests.util import DEFAULT_CASE_TYPE, new_case
+from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.motech.const import BASIC_AUTH
 from corehq.motech.models import ConnectionSettings
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
+from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
 
@@ -38,12 +43,16 @@ class TestIncrementalExport(TestCase):
         with trap_extra_setup(ConnectionError, msg="cannot connect to elasicsearch"):
             cls.es = get_es_new()
             initialize_index_and_mapping(cls.es, CASE_INDEX_INFO)
+            initialize_index_and_mapping(cls.es, USER_INDEX_INFO)
 
         cls.domain = uuid.uuid4().hex
-        now = datetime.utcnow()
+        create_domain(cls.domain)
+        cls.now = datetime.utcnow()
         cases = [
-            new_case(domain=cls.domain, foo="apple", bar="banana", server_modified_on=now - timedelta(hours=3)),
-            new_case(domain=cls.domain, foo="orange", bar="pear", server_modified_on=now - timedelta(hours=2)),
+            new_case(domain=cls.domain, foo="apple", bar="banana",
+                     server_modified_on=cls.now - timedelta(hours=3)),
+            new_case(domain=cls.domain, foo="orange", bar="pear",
+                     server_modified_on=cls.now - timedelta(hours=2)),
         ]
 
         for case in cases:
@@ -51,9 +60,16 @@ class TestIncrementalExport(TestCase):
 
         cls.es.indices.refresh(CASE_INDEX_INFO.index)
 
-        cls.export_instance = CaseExportInstance(
+    @classmethod
+    def tearDownClass(cls):
+        ensure_index_deleted(CASE_INDEX_INFO.index)
+        super().tearDownClass()
+
+    def setUp(self):
+        super().setUp()
+        self.export_instance = CaseExportInstance(
             export_format=Format.UNZIPPED_CSV,
-            domain=cls.domain,
+            domain=self.domain,
             case_type=DEFAULT_CASE_TYPE,
             tables=[TableConfiguration(
                 label="My table",
@@ -77,23 +93,21 @@ class TestIncrementalExport(TestCase):
                 ]
             )]
         )
-        cls.export_instance.save()
+        self.export_instance.save()
 
-        cls.incremental_export = IncrementalExport.objects.create(
-            domain=cls.domain,
+        self.incremental_export = IncrementalExport.objects.create(
+            domain=self.domain,
             name='test_export',
-            export_instance_id=cls.export_instance.get_id,
+            export_instance_id=self.export_instance.get_id,
             connection_settings=ConnectionSettings.objects.create(
-                domain=cls.domain, name='test conn', url='http://somewhere', auth_type=BASIC_AUTH,
+                domain=self.domain, name='test conn', url='http://somewhere', auth_type=BASIC_AUTH,
             )
         )
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.incremental_export.delete()
-        cls.export_instance.delete()
-        ensure_index_deleted(CASE_INDEX_INFO.index)
-        super().tearDownClass()
+    def tearDown(self):
+        self.incremental_export.delete()
+        self.export_instance.delete()
+        super().tearDown()
 
     def _cleanup_case(self, case_id):
         def _clean():
@@ -126,11 +140,21 @@ class TestIncrementalExport(TestCase):
         self.es.indices.refresh(CASE_INDEX_INFO.index)
         self.addCleanup(self._cleanup_case(case.case_id))
 
-        checkpoint = _generate_incremental_export(self.incremental_export)
+        checkpoint = _generate_incremental_export(self.incremental_export, last_doc_date=checkpoint.last_doc_date)
         data = checkpoint.get_blob().read().decode('utf-8-sig')
         expected = "Foo column,Bar column\r\npeach,plumb\r\n"
         self.assertEqual(data, expected)
         self.assertEqual(checkpoint.doc_count, 1)
+
+        checkpoint = _generate_incremental_export(
+            self.incremental_export, last_doc_date=self.now - timedelta(hours=2, minutes=1)
+        )
+        data = checkpoint.get_blob().read().decode("utf-8-sig")
+        expected = "Foo column,Bar column\r\norange,pear\r\npeach,plumb\r\n"
+        self.assertEqual(data, expected)
+        self.assertEqual(checkpoint.doc_count, 2)
+
+        self.assertEqual(self.incremental_export.checkpoints.count(), 3)
 
     def test_sending_success(self):
         self._test_sending(200, IncrementalExportStatus.SUCCESS)
@@ -147,3 +171,68 @@ class TestIncrementalExport(TestCase):
             checkpoint.refresh_from_db()
             self.assertEqual(checkpoint.status, expected_status)
             self.assertEqual(checkpoint.request_log.response_status, status_code)
+
+    def test_owner_filter(self):
+        setup_locations_and_types(
+            self.domain,
+            ['state', 'health-department', 'team', 'sub-team'],
+            [],
+            [
+                ('State1', [
+                    ('HealthDepartment1', [
+                        ('Team1', [
+                            ('SubTeam1', []),
+                            ('SubTeam2', []),
+                        ]),
+                        ('Team2', []),
+                    ]),
+                ])
+            ]
+        )
+        team1 = SQLLocation.objects.filter(domain=self.domain, name='Team1').first()
+        health_department = SQLLocation.objects.filter(domain=self.domain, name='HealthDepartment1').first()
+        self.addCleanup(delete_all_locations)
+
+        user = CommCareUser.create(self.domain, 'm2', 'abc', location=team1)
+        send_to_elasticsearch('users', user.to_json())
+        self.es.indices.refresh(USER_INDEX_INFO.index)
+        self.addCleanup(delete_all_users)
+
+        cases = [
+            new_case(
+                domain=self.domain,
+                foo="peach",
+                bar="plumb",
+                server_modified_on=datetime.utcnow() + timedelta(hours=-1),
+                owner_id='123',
+            ),
+            new_case(
+                domain=self.domain,
+                foo="orange",
+                bar="melon",
+                server_modified_on=datetime.utcnow(),
+                owner_id=user.user_id,  # this user is part of the team1 location.
+            ),
+            new_case(
+                domain=self.domain,
+                foo="grape",
+                bar="pineapple",
+                server_modified_on=datetime.utcnow(),
+            ),
+        ]
+        for case in cases:
+            send_to_elasticsearch("cases", case.to_json())
+            self.addCleanup(self._cleanup_case(case.case_id))
+
+        self.es.indices.refresh(CASE_INDEX_INFO.index)
+
+        self.export_instance.filters.show_project_data = False
+        self.export_instance.filters.locations = [health_department.location_id]
+        self.export_instance.filters.users = ['123']
+        self.export_instance.save()
+
+        checkpoint = _generate_incremental_export(self.incremental_export)
+
+        data = checkpoint.get_blob().read().decode("utf-8-sig")
+        expected = "Foo column,Bar column\r\npeach,plumb\r\norange,melon\r\n"
+        self.assertEqual(data, expected)

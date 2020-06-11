@@ -45,7 +45,7 @@ class TempPrevUCRTables(TempPrevTablesBase):
     INSERT INTO "{prev_table}" (SELECT * FROM "{current_table}");
     CREATE INDEX "idx_reassignment_date_{alias}" ON "{prev_table}" USING hash (location_reassignment_date);
     CREATE UNLOGGED TABLE "{prev_local}" AS (SELECT * FROM "{current_table}" WHERE date_trunc('MONTH', location_reassignment_date)='{prev_month}');
-    UPDATE "{prev_local}" SET supervisor_id = last_supervisor_id, awc_id=last_owner_id;
+    UPDATE "{prev_local}" SET supervisor_id = last_supervisor_id, awc_id=last_owner_id, location_reassignment_date=date_trunc('MONTH', location_reassignment_date);
     DELETE FROM "{prev_table}" WHERE location_reassignment_date='{prev_month}';
     INSERT INTO "{prev_table}" (SELECT * FROM "{prev_local}");
     """

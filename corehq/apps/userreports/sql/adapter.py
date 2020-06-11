@@ -168,9 +168,10 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         except Exception as e:
             self.handle_exception(doc, e)
 
-    def save_rows(self, rows):
+    def save_rows(self, rows, use_shard_col=True):
         """
         Saves rows to a data source after deleting the old rows
+        :param use_shard_col: use shard column along with doc id for searching rows to delete/update
         """
         if not rows:
             return
@@ -180,14 +181,14 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             {i.column.database_column_name.decode('utf-8'): i.value for i in row}
             for row in rows
         ]
-        if self.session_helper.is_citus_db:
+        if self.session_helper.is_citus_db and use_shard_col:
             config = self.config.sql_settings.citus_config
             if config.distribution_type == 'hash':
                 self._by_column_update(formatted_rows)
                 return
         doc_ids = set(row['doc_id'] for row in formatted_rows)
         table = self.get_table()
-        if self.supports_upsert():
+        if self.supports_upsert() and use_shard_col:
             queries = [self._upsert_query(table, formatted_rows)]
         else:
             delete = table.delete().where(table.c.doc_id.in_(doc_ids))
@@ -254,8 +255,8 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             rows.extend(self.get_all_values(doc))
         self.save_rows(rows)
 
-    def bulk_delete(self, docs):
-        if self.session_helper.is_citus_db:
+    def bulk_delete(self, docs, use_shard_col=True):
+        if self.session_helper.is_citus_db and use_shard_col:
             config = self.config.sql_settings.citus_config
             if config.distribution_type == 'hash':
                 self._citus_bulk_delete(docs, config.distribution_column)
@@ -311,8 +312,8 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             with self.session_context() as session:
                 session.execute(delete)
 
-    def delete(self, doc):
-        self.bulk_delete([doc])
+    def delete(self, doc, use_shard_col=True):
+        self.bulk_delete([doc], use_shard_col)
 
     def doc_exists(self, doc):
         with self.session_context() as session:
@@ -379,17 +380,17 @@ class MultiDBSqlAdapter(object):
         for adapter in self.all_adapters:
             adapter.clear_table()
 
-    def save_rows(self, rows):
+    def save_rows(self, rows, use_shard_col=True):
         for adapter in self.all_adapters:
-            adapter.save_rows(rows)
+            adapter.save_rows(rows, use_shard_col)
 
     def bulk_save(self, docs):
         for adapter in self.all_adapters:
             adapter.bulk_save(docs)
 
-    def bulk_delete(self, docs):
+    def bulk_delete(self, docs, use_shard_col=True):
         for adapter in self.all_adapters:
-            adapter.bulk_delete(docs)
+            adapter.bulk_delete(docs, use_shard_col)
 
     def doc_exists(self, doc):
         return any([

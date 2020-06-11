@@ -12,13 +12,12 @@ from corehq.apps.dump_reload.sql.filters import (
     SimpleFilter,
     UniqueFilteredModelIteratorBuilder,
     UserIDFilter,
-    UsernameFilter, RelatedModelIteratorBuilder,
+    UsernameFilter
 )
 from corehq.apps.dump_reload.sql.serialization import JsonLinesSerializer
 from corehq.apps.dump_reload.util import get_model_label, get_model_class
 from corehq.sql_db.config import plproxy_config
 
-# order is important here for foreign key constraints
 APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
 [APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP[iterator.model_label].append(iterator) for iterator in [
     FilteredModelIteratorBuilder('locations.LocationType', SimpleFilter('domain')),
@@ -97,6 +96,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('data_interfaces.CaseRuleSubmission', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('data_interfaces.DomainCaseRuleRun', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('auth.User', UsernameFilter()),
+    FilteredModelIteratorBuilder('mobile_auth.SQLMobileAuthKeyRecord', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('phonelog.DeviceReportEntry', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('phonelog.ForceCloseEntry', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('phonelog.UserErrorEntry', SimpleFilter('domain')),
@@ -119,17 +119,22 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('cloudcare.SQLAppGroup', SimpleFilter('application_access__domain')),
     FilteredModelIteratorBuilder('linked_domain.DomainLink', SimpleFilter('linked_domain')),
     FilteredModelIteratorBuilder('linked_domain.DomainLinkHistory', SimpleFilter('link__linked_domain')),
+    FilteredModelIteratorBuilder('users.DomainPermissionsMirror', SimpleFilter('source')),
     FilteredModelIteratorBuilder('locations.LocationFixtureConfiguration', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('consumption.SQLDefaultConsumption', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('consumption.DefaultConsumption', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('data_dictionary.CaseType', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('data_dictionary.CaseProperty', SimpleFilter('case_type__domain')),
     FilteredModelIteratorBuilder('app_manager.GlobalAppConfig', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('app_manager.AppReleaseByLocation', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('app_manager.LatestEnabledBuildProfiles', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('case_importer.CaseUploadFileMeta', SimpleFilter('caseuploadrecord__domain')),
+    FilteredModelIteratorBuilder('case_importer.CaseUploadFormRecord', SimpleFilter('case_upload_record__domain')),
+    FilteredModelIteratorBuilder('case_importer.CaseUploadRecord', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('translations.SMSTranslations', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('translations.TransifexBlacklist', SimpleFilter('domain')),
-    RelatedModelIteratorBuilder('translations.TransifexOrganization', 'translations.TransifexProject', SimpleFilter('domain'), 'organization'),
+    FilteredModelIteratorBuilder('translations.TransifexOrganization', SimpleFilter('transifexproject__domain')),
     FilteredModelIteratorBuilder('translations.TransifexProject', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('zapier.ZapierSubscription', SimpleFilter('domain')),
 ]]
 
 

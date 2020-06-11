@@ -166,6 +166,7 @@ class LocationsTest(TestCase):
         loc.archive()
         loc.refresh_from_db()
         self.assertIsInstance(loc.archived_on, datetime.datetime)
+        self.assertEqual(loc.archived_on.isoformat(), loc.to_json()['archived_on'])
         loc.unarchive()
         loc.refresh_from_db()
         self.assertIsNone(loc.archived_on)

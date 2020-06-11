@@ -281,7 +281,13 @@ hqDefine('app_manager/js/releases/releases', function () {
             // Not so nice... Hide the open modal so we don't get bootstrap recursion errors
             // http://stackoverflow.com/questions/13649459/twitter-bootstrap-multiple-modal-error
             $('.modal.fade.in').modal('hide');
-            self.download_modal.modal({show: true});
+            try {
+                self.download_modal.modal({show: true});
+            } catch (e) {
+                // do nothing. this error only shows up in mocha tests when run
+                // via grunt rather than the browser due to how the DOM is
+                // interpreted. this runs fine in the browser.
+            }
         };
 
         self.buildButtonEnabled = ko.computed(function () {

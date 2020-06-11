@@ -486,6 +486,7 @@ class SQLLocation(AdjListModel):
             'domain': self.domain,
             'external_id': self.external_id,
             'is_archived': self.is_archived,
+            'archived_on': self.archived_on.isoformat() if self.archived_on else None,
             'last_modified': self.last_modified.isoformat(),
             'latitude': float(self.latitude) if self.latitude else None,
             'longitude': float(self.longitude) if self.longitude else None,
@@ -525,7 +526,7 @@ class SQLLocation(AdjListModel):
         self.stocks_all_products = (set(value) ==
                                     set(SQLProduct.by_domain(self.domain)))
 
-        self._products = value
+        self._products.set(value)
 
     def _remove_user(self):
         """

@@ -50,15 +50,21 @@ trunk: master
 name: autostaging
 branches:
   - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
-  - bmb/odata-qa-feedback  # Biyeun April 15
-  - dmr/require_can_edit_or_view_commcare_users-download_commcare_users  # Danny April 27
-  - sr-es-alias # Sravan April 29
-  - jls/migrate-CustomDataFieldsDefinition-1+jls/migrate-DefaultConsumption-3 # Jenny April 29
-  - jls/migrate-DefaultConsumption-3 # Jenny April 24
+  - jls/sync-mixins-hard-fail # Jenny May 24
   - jls/migrate-CustomDataFieldsDefinition-2 # Jenny April 29
-  - bmb/SAAS-10813  # Biyeun April 30
-  - mk/location-reassignment-realign # MK May 3
-  - mk/location-reassignment-add-view # MK May 3
-  - mk/location-reassignment-extract-descendants # MK May 3
+  - rn_update_perfect_scrollbar # Rohit Negi May 4
+  - jls/migrate-MobileAuthKeyRecord-2 # Jenny May 16
+  - bmb/SAAS-10882  # Biyeun May 20 (updates knockout, bootstrap, jquery, DOMPurify)
+  - nh/repeaters_ui  # Norman May 28
+  - nh/charset  # Norman May 27
+  - ce/web-apps-permission # Cal May 27
+  - jls/push-linked-apps # Jenny May 31
+  - ap/lazy-load-multimedia # Amit June 5
+  - fr/multiple-api-keys  # Conflicting migrations with ce/web-apps-permissions
+  # - fr/multiple-api-keys+ce/web-apps-permission # FR Jun 8 -- adds merge migration for users app
+  # ^^^ NH: Commenting out for now because migration from ce/web-apps-permission is missing. I can't see why.
+  - jls/DRYer-case-config-ui-3 # Jenny June 6
+  - revert-27725-jls/kill-configurable-timeout # Jenny June 9
+  - nemanja1040:turn_gateway_improvements  # Nemanja Stancic June 10
 
 submodules: {}
