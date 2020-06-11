@@ -377,7 +377,7 @@ class LocationFormSet(object):
         self.location = location
         self.domain = location.domain
         self.is_new = is_new
-        self.request_user = request_user # couch user
+        self.request_user = request_user  # couch user
         self.location_form = self._location_form_class(location, bound_data, is_new=is_new)
         self.custom_location_data = self._get_custom_location_data(bound_data, is_new)
         self.forms = [self.location_form, self.custom_location_data]
