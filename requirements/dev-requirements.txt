@@ -49,6 +49,7 @@ django-cte==1.1.4         # via -r requirements/requirements.in
 django-debug-toolbar==2.0  # via -r requirements/dev-requirements.in
 django-extensions==2.2.5  # via -r requirements/dev-requirements.in
 django-formtools==2.1     # via -r requirements/requirements.in, django-two-factor-auth
+django-logentry-admin==1.0.6  # via -r requirements/requirements.in
 git+git://github.com/dimagi/django-nose@fast-first-1.4.6#egg=django-nose  # via -r requirements/test-requirements.in
 django-otp==0.3.13        # via -r requirements/requirements.in, django-two-factor-auth
 django-partial-index==0.6.0  # via -r requirements/requirements.in
@@ -64,7 +65,7 @@ django-transfer==0.4      # via -r requirements/requirements.in
 django-two-factor-auth==1.6.2  # via -r requirements/requirements.in
 django-user-agents==0.3.2  # via -r requirements/requirements.in
 django-websocket-redis==0.5.2  # via -r requirements/requirements.in
-django==1.11.29           # via -r requirements/requirements.in, django-angular, django-appconf, django-bulk-update, django-debug-toolbar, django-formtools, django-otp, django-phonenumber-field, django-prbac, django-ranged-response, django-redis, django-simple-captcha, django-statici18n, django-two-factor-auth, django-user-agents, djangorestframework, jsonfield
+django==1.11.29           # via -r requirements/requirements.in, django-angular, django-appconf, django-bulk-update, django-debug-toolbar, django-formtools, django-logentry-admin, django-otp, django-phonenumber-field, django-prbac, django-ranged-response, django-redis, django-simple-captcha, django-statici18n, django-two-factor-auth, django-user-agents, djangorestframework, jsonfield
 djangorestframework==3.11.0  # via -r requirements/requirements.in
 dnspython==1.15.0         # via -r requirements/requirements.in, email-validator
 docutils==0.15.2          # via -r requirements/dev-requirements.in, botocore, recommonmark, sphinx
