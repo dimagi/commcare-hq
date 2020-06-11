@@ -10,7 +10,7 @@ from corehq.apps.case_search.models import (
 )
 from corehq.apps.custom_data_fields.models import (
     SQLField,
-    CustomDataFieldsDefinition,
+    SQLCustomDataFieldsDefinition,
 )
 from corehq.apps.linked_domain.const import (
     MODEL_CASE_SEARCH,
@@ -87,7 +87,7 @@ def update_custom_data_models(domain_link, limit_types=None):
         master_results = local_custom_data_models(domain_link.master_domain, limit_types)
 
     for field_type, field_definitions in master_results.items():
-        model = CustomDataFieldsDefinition.get_or_create(domain_link.linked_domain, field_type)
+        model = SQLCustomDataFieldsDefinition.get_or_create(domain_link.linked_domain, field_type)
         model.set_fields([
             SQLField(
                 slug=field_def['slug'],
