@@ -4,6 +4,8 @@ from collections import defaultdict
 from django.conf import settings
 from django.utils.translation import ugettext as _
 
+from dimagi.utils.logging import notify_exception
+
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.util import is_linked_app
@@ -80,6 +82,7 @@ def push_models(master_domain, models, linked_domains, build_apps, username):
                     errors_by_domain[linked_domain].append(_("""
                         Could not update {}: {}
                     """.strip()).format(model['name'], str(e)))
+                notify_exception(None, "Exception pushing linked domains: {}".format(e))
 
     subject = _("Linked project release complete.")
     if errors_by_domain:
