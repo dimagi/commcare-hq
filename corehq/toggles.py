@@ -439,6 +439,13 @@ APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+LAZY_LOAD_MULTIMEDIA = StaticToggle(
+    'optional-media',
+    'ICDS: Lazy load multimedia files in Updates',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 APP_BUILDER_ADVANCED = StaticToggle(
     'advanced-app-builder',
     'Advanced Module in App-Builder',
