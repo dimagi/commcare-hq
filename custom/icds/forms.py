@@ -1,5 +1,3 @@
-import re
-
 from django import forms
 from django.core.exceptions import ValidationError
 from django.forms.widgets import Select
@@ -22,20 +20,6 @@ from corehq.apps.hqwebapp.crispy import HQFormHelper
 from custom.icds.models import HostedCCZ, HostedCCZLink
 from custom.icds.tasks.data_pulls import run_data_pull
 from custom.icds_reports.const import CUSTOM_DATA_PULLS
-
-
-def validate_date(value):
-    error = forms.ValidationError(_("Please enter a valid date in the format YYYY-MM-DD"))
-
-    if not isinstance(value, (str, str)) or not re.match(r'^\d\d\d\d-\d\d-\d\d$', value):
-        raise error
-
-    try:
-        value = parser.parse(value)
-    except ValueError:
-        raise error
-
-    return value.date()
 
 
 class HostedCCZLinkForm(forms.ModelForm):
@@ -228,14 +212,20 @@ class CustomSMSReportRequestForm(forms.Form):
         )
 
     def clean_start_date(self):
-        data = self.cleaned_data['start_date']
-        validate_date(data)
-        return data
+        start_date = self.cleaned_data['start_date']
+        try:
+            start_date = parser.parse(start_date).date()
+        except ValueError:
+            raise forms.ValidationError(_("Invalid date"))
+        return start_date
 
     def clean_end_date(self):
         start_date = self.cleaned_data['start_date']
         end_date = self.cleaned_data['end_date']
-        validate_date(end_date)
-        if(start_date < end_date):
-            return end_date
+        try:
+            end_date = parser.parse(end_date).date()
+            if start_date <= end_date:
+                return end_date
+        except ValueError:
+            raise forms.ValidationError(_("Invalid date"))
         raise forms.ValidationError(_("Start date cannot be greater than end date"))
