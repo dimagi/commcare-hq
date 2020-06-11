@@ -831,8 +831,8 @@ class UserInvitationView(object):
                 if form.is_valid():
                     # create the new user
                     invited_by_user = CouchUser.get_by_user_id(invitation.invited_by)
-                    user = activate_new_user(form, created_by=invited_by_user, created_via=USER_CHANGE_VIA_INVITATION,
-                                             domain=invitation.domain)
+                    user = activate_new_user(form, created_by=invited_by_user,
+                                             created_via=USER_CHANGE_VIA_INVITATION, domain=invitation.domain)
                     user.save()
                     messages.success(request, _("User account for %s created!") % form.cleaned_data["email"])
                     self._invite(invitation, user)
