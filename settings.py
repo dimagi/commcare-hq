@@ -867,9 +867,6 @@ LOAD_BALANCED_APPS = {}
 # encryption or signing workflows.
 HQ_PRIVATE_KEY = None
 
-# Set to the list of domain names for which we will run the ICDS SMS indicators
-ICDS_SMS_INDICATOR_DOMAINS = []
-
 KAFKA_BROKERS = ['localhost:9092']
 KAFKA_API_VERSION = None
 
