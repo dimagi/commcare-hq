@@ -4,6 +4,7 @@ from django.forms.widgets import Select
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
+from corehq.apps.hqwebapp.crispy import HQFormHelper
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
@@ -182,7 +183,7 @@ class CustomDataPullForm(forms.Form):
 class CustomSMSReportRequestForm(forms.Form):
 
     date_range = forms.CharField(
-        label="Select Date Range",
+        label=_('Select Date Range'),
         widget=forms.TextInput(
             attrs={'class': 'form-control', 'id': 'date_range_selector'}
         ),
@@ -198,7 +199,7 @@ class CustomSMSReportRequestForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super(CustomSMSReportRequestForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
+        self.helper = HQFormHelper()
         self.helper.form_method = 'post'
         self.helper.layout = crispy.Layout(
             hqcrispy.Field('date_range'),
