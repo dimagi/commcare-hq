@@ -68,7 +68,7 @@ def send_custom_sms_report(start_date, end_date, email):
             link = f"{web.get_url_base()}{path}?get_file"
             message = _("""
             Hi,
-            Please download the sms report for time frame {start_date} to {end_date} at {link}.
+            Please download the sms report for time frame {start_date} to {end_date} (inclusive) at {link}.
             The report is available only for next 24 hours.
             """).format(link=link, start_date=start_date, end_date=end_date)
             send_html_email_async.delay(subject, recipients, message,
