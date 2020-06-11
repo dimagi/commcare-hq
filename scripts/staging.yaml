@@ -61,8 +61,7 @@ branches:
   - jls/push-linked-apps # Jenny May 31
   - ap/lazy-load-multimedia # Amit June 5
   - fr/multiple-api-keys  # Conflicting migrations with ce/web-apps-permissions
-  # - fr/multiple-api-keys+ce/web-apps-permission # FR Jun 8 -- adds merge migration for users app
-  # ^^^ NH: Commenting out for now because migration from ce/web-apps-permission is missing. I can't see why.
+  - fr/multiple-api-keys+ce/web-apps-permission # FR Jun 8 -- adds merge migration for users app
   - jls/DRYer-case-config-ui-3 # Jenny June 6
   - revert-27725-jls/kill-configurable-timeout # Jenny June 9
   - nemanja1040:turn_gateway_improvements  # Nemanja Stancic June 10
