@@ -35,7 +35,7 @@ allowed_headers = set([
     'uncategorized_data', 'user_id', 'is_active', 'is_account_confirmed', 'send_confirmation_email',
     'location_code', 'role',
     'User IMEIs (read only)', 'registered_on (read only)', 'last_submission (read only)',
-    'last_sync (read only)', 'web_user'
+    'last_sync (read only)', 'web_user', 'remove_web_user'
 ]) | required_headers
 old_headers = {
     # 'old_header_name': 'new_header_name'
@@ -327,6 +327,7 @@ def create_or_update_users_and_groups(domain, user_specs, upload_user, group_mem
                 is_active = spec_value_to_boolean_or_none(row, 'is_active')
                 is_account_confirmed = spec_value_to_boolean_or_none(row, 'is_account_confirmed')
                 send_account_confirmation_email = spec_value_to_boolean_or_none(row, 'send_confirmation_email')
+                remove_web_user = spec_value_to_boolean_or_none(row, 'remove_web_user')
 
                 if user_id:
                     user = CommCareUser.get_by_user_id(user_id, domain)
@@ -400,26 +401,52 @@ def create_or_update_users_and_groups(domain, user_specs, upload_user, group_mem
                 user.save()
 
                 if web_user:
-                    current_user = CouchUser.get_by_username(web_user)
-                    if not current_user and is_account_confirmed:
+                    if not upload_user.can_edit_web_users():
                         raise UserUploadError(_(
-                            f"You can only set 'Is Account Confirmed' to 'True' on an existing Web User. {web_user} is a new username."
+                            "Only users with the edit web users permission can upload web users"
                         ))
-                    if current_user and not current_user.is_member_of(domain) and is_account_confirmed:
-                        current_user.add_as_web_user(domain, role=role_qualified_id, location_id=user.location_id)
-                    elif not current_user or not current_user.is_member_of(domain):
-                        invite_data = {
-                            'email': web_user,
-                            'invited_by': upload_user.user_id,
-                            'invited_on': datetime.utcnow(),
-                            'domain': domain,
-                            'role': role_qualified_id,
-                            'supply_point': user.location_id
-                        }
-                        invite = Invitation(**invite_data)
-                        invite.save()
-                        if send_account_confirmation_email:
-                            invite.send_activation_email()
+                    current_user = CouchUser.get_by_username(web_user)
+                    if remove_web_user:
+                        if not current_user or not current_user.is_member_of(domain):
+                            raise UserUploadError(_(
+                                f"You cannot remove a web user that is not a member of this project. {web_user} is not a member."
+                            ))
+                        else:
+                            current_user.delete_domain_membership(domain)
+                            current_user.save()
+                    else:
+                        if not role:
+                            raise UserUploadError(_(
+                                f"You cannot upload a web user without a role. {web_user} does not have a role"
+                            ))
+                        if not current_user and is_account_confirmed:
+                            raise UserUploadError(_(
+                                f"You can only set 'Is Account Confirmed' to 'True' on an existing Web User. {web_user} is a new username."
+                            ))
+                        if current_user and not current_user.is_member_of(domain) and is_account_confirmed:
+                            current_user.add_as_web_user(domain, role=role_qualified_id, location_id=user.location_id)
+                        elif not current_user or not current_user.is_member_of(domain):
+                            invite_data = {
+                                'email': web_user,
+                                'invited_by': upload_user.user_id,
+                                'invited_on': datetime.utcnow(),
+                                'domain': domain,
+                                'role': role_qualified_id,
+                                'supply_point': user.location_id
+                            }
+                            invite = Invitation(**invite_data)
+                            invite.save()
+                            if send_account_confirmation_email:
+                                invite.send_activation_email()
+
+                        elif current_user.is_member_of(domain):
+                            # edit existing user in the domain
+                            current_user.set_role(domain, role_qualified_id)
+                            if user.location_id:
+                                current_user.set_location(domain, user.location_id)
+                            else:
+                                current_user.unset_location(domain)
+                            current_user.save()
 
                 if send_account_confirmation_email and not web_user:
                     send_account_confirmation_if_necessary(user)
