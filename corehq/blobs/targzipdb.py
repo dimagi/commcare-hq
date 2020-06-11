@@ -12,10 +12,12 @@ class TarGzipBlobDB(AbstractBlobDB):
     into memory first.
     """
 
-    def __init__(self, filename):
+    def __init__(self, filename, extends):
         super().__init__()
         self.filename = filename
+        self.extends = extends
         self._tgzfile = None
+        self._names = None
 
     def open(self, mode='r:gz'):
         self._tgzfile = tarfile.open(self.filename, mode)
@@ -46,16 +48,47 @@ class TarGzipBlobDB(AbstractBlobDB):
             need to use the ``dump_domain_data`` management command.
 
         """
-        tarinfo = tarfile.TarInfo(name=key)
-        tarinfo.size = in_fileobj.content_length
-        self._tgzfile.addfile(tarinfo, in_fileobj)
+        if not self.exists(key):
+            tarinfo = tarfile.TarInfo(name=key)
+            tarinfo.size = in_fileobj.content_length
+            self._tgzfile.addfile(tarinfo, in_fileobj)
 
     def exists(self, key):
-        raise NotImplementedError
+        if self._names is None:
+            self._names = set()
+            for filename in self.extends:
+                with tarfile.open(filename, 'r:gz') as tgzfile:
+                    self._names.update(tgzfile.getnames())
+        return key in self._names
 
     def size(self, key):
         raise NotImplementedError
 
 
-def get_export_filename(slug, domain):
-    return f'export-{domain}-{slug}-blobs.tar.gz'
+def get_export_filename(slug, domain, extends):
+    """
+    Returns a filename that includes filenames in ``extends``
+
+    >>> get_export_filename('multimedia', 'domain',
+    ...                     ['oldexport.tar.gz', 'olderexport.tar.gz'])
+    'export-domain-multimedia-blobs-extends-oldexport+olderexport.tar.gz'
+
+    """
+    filenames = [strip_tar_gz(f) for f in extends]
+    _extends = '-extends-' + '+'.join(filenames) if filenames else ''
+    return f'export-{domain}-{slug}-blobs{_extends}.tar.gz'
+
+
+def strip_tar_gz(filename):
+    """
+    Strips ".tar.gz" extensions.
+
+    >>> strip_tar_gz('spam.tar.gz')
+    'spam'
+    >>> strip_tar_gz('spam.ham')
+    'spam.ham'
+
+    """
+    if filename.endswith('.tar.gz'):
+        return filename[:-7]
+    return filename

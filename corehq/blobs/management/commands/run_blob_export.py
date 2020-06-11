@@ -39,12 +39,16 @@ class Command(BaseCommand):
         parser.add_argument('--limit-to-db', dest='limit_to_db',
                             help="When specifying a SQL importer use this to restrict "
                                  "the exporter to a single database.")
+        parser.add_argument('--extend', dest='extends', action='append', default=[],
+                            help='Extend a previous export file. '
+                                 'You can extend multiple files.')
 
     @change_log_level('boto3', logging.WARNING)
     @change_log_level('botocore', logging.WARNING)
     def handle(self, domain=None, reset=False,
                chunk_size=100, all=None, limit_to_db=None, **options):
         exporters = options.get('exporters')
+        extends = options['extends']
 
         if not domain:
             raise CommandError(USAGE)
@@ -59,12 +63,17 @@ class Command(BaseCommand):
                 raise CommandError(USAGE)
 
             self.stdout.write("\nRunning exporter: {}\n{}".format(exporter_slug, '-' * 50))
-            export_filename = get_export_filename(exporter_slug, domain)
+            export_filename = get_export_filename(exporter_slug, domain, extends)
             if os.path.exists(export_filename):
                 raise CommandError(f"Export file '{export_filename}' exists. "
                                    f"Remove the file and re-run the command.")
 
             exporter = exporter_cls(domain)
-            total, skips = exporter.migrate(export_filename, chunk_size=chunk_size, limit_to_db=limit_to_db)
+            total, skips = exporter.migrate(
+                export_filename,
+                chunk_size=chunk_size,
+                limit_to_db=limit_to_db,
+                extends=extends,
+            )
             if skips:
                 sys.exit(skips)

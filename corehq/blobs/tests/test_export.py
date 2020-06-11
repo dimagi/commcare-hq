@@ -1,3 +1,4 @@
+import doctest
 import os
 import tarfile
 import uuid
@@ -86,6 +87,74 @@ class TestBlobExport(TestCase):
             exporter.migrate(out.name, force=True)
             with tarfile.open(out.name, 'r:gz') as tgzfile:
                 self.assertEqual(expected, set(tgzfile.getnames()))
+
+
+class TestExtendingExport(TestCase):
+
+    domain_name = 'extending-export-test-domain'
+
+    def setUp(self):
+        self.db = TemporaryFilesystemBlobDB()
+        assert get_blob_db() is self.db, (get_blob_db(), self.db)
+        self.blob_metas = []
+
+    def tearDown(self):
+        for meta in self.blob_metas:
+            meta.delete()
+        self.db.close()
+
+    def test_extends(self):
+
+        # First export file ...
+        for blob in (b'ham', b'spam', b'eggs'):
+            meta_meta = new_meta(
+                domain=self.domain_name,
+                type_code=CODES.multimedia,
+            )
+            meta = self.db.put(BytesIO(blob), meta=meta_meta)  # Naming ftw
+            self.blob_metas.append(meta)
+        with NamedTemporaryFile() as file_one:
+            exporter = EXPORTERS['all_blobs'](self.domain_name)
+            exporter.migrate(file_one.name, force=True)
+            with tarfile.open(file_one.name, 'r:gz') as tgzfile:
+                last_three = set(m.key for m in self.blob_metas[-3:])
+                self.assertEqual(set(tgzfile.getnames()), last_three)
+
+            # Second export file extends first ...
+            for blob in (b'foo', b'bar', b'baz'):
+                meta_meta = new_meta(
+                    domain=self.domain_name,
+                    type_code=CODES.multimedia,
+                )
+                meta = self.db.put(BytesIO(blob), meta=meta_meta)
+                self.blob_metas.append(meta)
+            with NamedTemporaryFile() as file_two:
+                exporter = EXPORTERS['all_blobs'](self.domain_name)
+                exporter.migrate(
+                    file_two.name,
+                    extends=[file_one.name], force=True,
+                )
+                with tarfile.open(file_two.name, 'r:gz') as tgzfile:
+                    last_three = set(m.key for m in self.blob_metas[-3:])
+                    self.assertEqual(set(tgzfile.getnames()), last_three)
+
+                # Third export file extends first and second ...
+                for blob in (b'wibble', b'wobble', b'wubble'):
+                    meta_meta = new_meta(
+                        domain=self.domain_name,
+                        type_code=CODES.multimedia,
+                    )
+                    meta = self.db.put(BytesIO(blob), meta=meta_meta)
+                    self.blob_metas.append(meta)
+                with NamedTemporaryFile() as file_three:
+                    exporter = EXPORTERS['all_blobs'](self.domain_name)
+                    exporter.migrate(
+                        file_three.name,
+                        extends=[file_one.name, file_two.name], force=True,
+                    )
+                    with tarfile.open(file_three.name, 'r:gz') as tgzfile:
+                        last_three = set(m.key for m in self.blob_metas[-3:])
+                        self.assertEqual(set(tgzfile.getnames()), last_three)
 
 
 @skip('Takes a while, and uses as much drive space as there is RAM')
@@ -222,3 +291,10 @@ class MockBigBlobIO(RawIOBase):
 
     def readinto(self, buffer):
         raise NotImplementedError
+
+
+def test_doctests():
+    from corehq.blobs import targzipdb
+
+    results = doctest.testmod(targzipdb)
+    assert results.failed == 0
