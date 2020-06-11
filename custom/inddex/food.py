@@ -328,7 +328,7 @@ class FoodRow:
 
 class FoodData:
     """Generates the primary dataset for INDDEX reports.  See file docstring for more."""
-    IN_MEMORY_FILTERS = ['gap_type', 'gap_code', 'fao_who_gift_food_group_code', 'food_type']
+    IN_MEMORY_FILTERS = ['gap_type', 'fao_who_gift_food_group_code', 'food_type']
     FILTERABLE_COLUMNS = IN_MEMORY_FILTERS + FoodCaseData.FILTERABLE_COLUMNS
 
     def __init__(self, domain, *, datespan, filter_selections):
@@ -341,8 +341,6 @@ class FoodData:
             slug: filter_selections[slug] for slug in self.IN_MEMORY_FILTERS
             if slug in filter_selections
         }
-        _gt = self._in_memory_filter_selections.get('gap_type')
-        self.selected_gap_type = _gt[0] if _gt else None
         self._ucr = FoodCaseData({
             'domain': domain,
             'startdate': str(datespan.startdate),
@@ -375,7 +373,7 @@ class FoodData:
 
     def _matches_in_memory_filters(self, row):
         # If a gap type is specified, show only rows with gaps of that type
-        gap_type = self.selected_gap_type
+        gap_type = self._in_memory_filter_selections.get('gap_type')
         if gap_type == ConvFactorGaps.slug and row.conv_factor_gap_code == ConvFactorGaps.AVAILABLE:
             return False
         if gap_type == FctGaps.slug and row.fct_gap_code == FctGaps.AVAILABLE:
@@ -384,14 +382,6 @@ class FoodData:
         food_types = self._in_memory_filter_selections.get('food_type')
         if food_types and row.food_type not in food_types:
             return False
-
-        gap_codes = self._in_memory_filter_selections.get('gap_code')
-        # gap_code is from a drilldown filter, so gap_type must also be selected
-        if gap_type and gap_codes:
-            if gap_type == ConvFactorGaps.slug and str(row.conv_factor_gap_code) not in gap_codes:
-                return False
-            if gap_type == FctGaps.slug and str(row.fct_gap_code) not in gap_codes:
-                return False
 
         food_groups = self._in_memory_filter_selections.get('fao_who_gift_food_group_code')
         if food_groups and row.fao_who_gift_food_group_code not in food_groups:

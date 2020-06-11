@@ -29,8 +29,9 @@ from ..example_data.data import (
 from ..fixtures import FixtureAccessor
 from ..food import INDICATORS, FoodData
 from ..reports.r1_master_data import MasterData
-from ..reports.r2a_gaps_summary import get_gaps_data
+from ..reports.r2a_gaps_summary import get_gaps_data as get_2a_gaps_data
 from ..reports.r2b_gaps_detail import GapsByItemSummaryData, GapsDetailsData
+from ..reports.r2b_gaps_detail import get_gaps_data as get_2b_gaps_data
 from ..reports.r3_nutrient_intake import DailyIntakeData, IntakeData
 from ..reports.r4_nutrient_stats import NutrientStatsData
 from ..ucr_data import FoodCaseData
@@ -262,18 +263,15 @@ class TestInddexReports(TestCase):
 
     def test_2a_gaps_summary(self):
         with patch('custom.inddex.reports.r2a_gaps_summary.FoodData.from_request', get_food_data):
-            cf_gaps_data, fct_gaps_data = get_gaps_data(DOMAIN, None)
+            cf_gaps_data, fct_gaps_data = get_2a_gaps_data(DOMAIN, None)
 
         self.assert_reports_match('2a_conv_factor_gaps_summary.csv', cf_gaps_data)
         self.assert_reports_match('2a_fct_gaps_summary.csv', fct_gaps_data)
 
-    def test_2b_gaps_by_item_summary(self):
-        data = GapsByItemSummaryData(get_food_data())
-        self.assert_reports_match('2b_gaps_by_item_summary.csv', data)
-
-    def test_2b_gaps_by_item_details(self):
-        data = GapsDetailsData(get_food_data())
-        self.assert_reports_match('2b_gaps_by_item_details.csv', data)
+    def test_2b_gaps_reports(self):
+        gaps_data = get_2b_gaps_data(get_food_data())
+        self.assert_reports_match('2b_gaps_by_item_summary.csv', GapsByItemSummaryData(gaps_data))
+        self.assert_reports_match('2b_gaps_by_item_details.csv', GapsDetailsData(gaps_data))
 
     def test_3_intake(self):
         data = IntakeData(get_food_data())
@@ -291,8 +289,8 @@ class TestInddexReports(TestCase):
         # There should be no data with this filter selection
         food_data = FoodData(DOMAIN, datespan=DateSpan(date(2020, 1, 1), date(2020, 4, 1)),
                              filter_selections={'owner_id': ['not-a-user']})
-        self.assertEqual([], list(GapsByItemSummaryData(food_data).rows))
-        self.assertEqual([], list(GapsDetailsData(food_data).rows))
+        self.assertEqual([], list(IntakeData(food_data).rows))
+        self.assertEqual([], list(DailyIntakeData(food_data).rows))
 
 
 class DocTests(SimpleTestCase):
