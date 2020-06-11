@@ -20,7 +20,7 @@
           <div class="form-group">
             <label class="col-sm-4 control-label"
                    for="role-name">
-              {% trans "Role Name" %}
+              {% trans "Role Name*" %}
             </label>
             <div class="col-sm-8 controls">
               <input data-bind="value: name, disable: !$root.allowEdit"
@@ -723,7 +723,18 @@
             {% trans "Cancel" %}
           </button>
           <div data-bind="saveButton2: $root.modalSaveButton.state,
-                                    saveOptions: $root.modalSaveButton.saveOptions"></div>
+                          saveOptions: $root.modalSaveButton.saveOptions">
+          </div>
+          <!--
+          <button type="submit"
+                  data-bind=" 
+                  saveOptions: $root.modalSaveButton.saveOptions,
+                  enable: $root.allowSubmit"
+                  class="btn btn-primary">
+            {% trans "Save" %}
+          </button>
+          -->
+
         {% else %}
           <button type="button"
                   class="btn btn-default"

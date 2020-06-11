@@ -139,6 +139,8 @@ hqDefine('users/js/roles',[
             roleCopy.modalTitle = title;
             self.roleBeingEdited(roleCopy);
             self.modalSaveButton.state('save');
+            
+            
         };
         self.unsetRoleBeingEdited = function () {
             self.roleBeingEdited(undefined);
@@ -191,6 +193,27 @@ hqDefine('users/js/roles',[
                 };
             },
         };
+
+        self.allowSubmit = ko.computed(function () {
+            if (!self.roleBeingEdited()) {
+                return false;
+            }
+            if (!self.roleBeingEdited().name()) {
+                console.log('allowSubmit false');
+                return false;
+            }
+
+            // var fieldData = self.roleBeingEdited().name();
+            // if (!_.isObject(fieldData) && !_.isArray(fieldData)) {
+            //     if (!_.every(fieldData, function(value) { return value(); })) {
+            //         console.log('this false');
+            //         return false;
+            //     }
+            // }
+
+            console.log('allowSubmit true');
+            return true;
+        })
 
         return self;
     };
