@@ -28,7 +28,7 @@ from corehq.apps.locations.permissions import LOCATION_ACCESS_DENIED
 from corehq.apps.locations.util import valid_location_site_code
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_display_string
-from corehq.const import WEB_REGISTRATION
+from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.util.quickcache import quickcache
 
 from .models import (
@@ -416,7 +416,7 @@ class LocationFormSet(object):
             username,
             password,
             created_by=self.request_user,
-            created_via=WEB_REGISTRATION,
+            created_via=USER_CHANGE_VIA_WEB,
             device_id="Generated from HQ",
             first_name=first_name,
             last_name=last_name,

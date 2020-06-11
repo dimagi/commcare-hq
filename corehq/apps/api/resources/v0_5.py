@@ -82,7 +82,7 @@ from corehq.apps.users.models import (
     WebUser,
 )
 from corehq.apps.users.util import raw_username
-from corehq.const import API_REGISTRATION
+from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
 from corehq.util.couch import DocumentNotFound, get_document_or_not_found
 from corehq.util.timer import TimingContext
@@ -255,7 +255,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                 username=bundle.data['username'].lower(),
                 password=bundle.data['password'],
                 created_by=bundle.request.couch_user,
-                created_via=API_REGISTRATION,
+                created_via=USER_CHANGE_VIA_API,
                 email=bundle.data.get('email', '').lower(),
             )
             del bundle.data['password']
@@ -357,7 +357,7 @@ class WebUserResource(v0_1.WebUserResource):
                 username=bundle.data['username'].lower(),
                 password=bundle.data['password'],
                 created_by=bundle.request.couch_user,
-                created_via=API_REGISTRATION,
+                created_via=USER_CHANGE_VIA_API,
                 email=bundle.data.get('email', '').lower(),
                 is_admin=bundle.data.get('is_admin', False)
             )

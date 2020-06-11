@@ -50,7 +50,7 @@ from corehq.apps.smsforms.models import (
     XFormsSessionSynchronization,
 )
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.const import SMS_REGISTRATION
+from corehq.const import USER_CHANGE_VIA_SMS
 from corehq.form_processor.utils import is_commcarecase
 from corehq.util.metrics import metrics_counter
 from corehq.util.metrics.load_counters import sms_load_counter
@@ -512,7 +512,7 @@ def process_sms_registration(msg):
                         username = process_username(username, domain_obj)
                         password = random_password()
                         new_user = CommCareUser.create(domain_obj.name, username, password, created_by=None,
-                                                       created_via=SMS_REGISTRATION, user_data=user_data)
+                                                       created_via=USER_CHANGE_VIA_SMS, user_data=user_data)
                         new_user.add_phone_number(cleaned_phone_number)
                         new_user.save()
 

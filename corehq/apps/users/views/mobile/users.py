@@ -115,7 +115,7 @@ from corehq.apps.users.views import (
 from corehq.const import (
     GOOGLE_PLAY_STORE_COMMCARE_URL,
     USER_DATE_FORMAT,
-    WEB_REGISTRATION,
+    USER_CHANGE_VIA_WEB,
 )
 from corehq.toggles import (
     FILTERED_BULK_USER_DOWNLOAD,
@@ -781,7 +781,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             username,
             password,
             created_by=self.request.couch_user,
-            created_via=WEB_REGISTRATION,
+            created_via=USER_CHANGE_VIA_WEB,
             email=email,
             device_id="Generated from HQ",
             first_name=first_name,
@@ -979,7 +979,7 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
                 username,
                 password,
                 created_by=request.couch_user,
-                created_via=WEB_REGISTRATION,
+                created_via=USER_CHANGE_VIA_WEB,
                 phone_number=phone_number,
                 device_id="Generated from HQ",
                 user_data=self.custom_data.get_data_to_save(),
@@ -1453,7 +1453,7 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
                 self.form.cleaned_data.get('username'),
                 self.form.cleaned_data.get('password'),
                 created_by=None,
-                created_via=WEB_REGISTRATION,
+                created_via=USER_CHANGE_VIA_WEB,
                 email=email,
                 phone_number=self.invitation.phone_number,
                 device_id='Generated from HQ',

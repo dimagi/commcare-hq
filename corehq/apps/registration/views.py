@@ -51,7 +51,7 @@ from corehq.apps.registration.utils import (
     send_new_request_update_email,
 )
 from corehq.apps.users.models import CouchUser, WebUser
-from corehq.const import WEB_REGISTRATION
+from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.util.context_processors import get_per_domain_context
 from corehq.util.soft_assert import soft_assert
 
@@ -75,7 +75,7 @@ class ProcessRegistrationView(JSONResponseMixin, View):
         raise Http404()
 
     def _create_new_account(self, reg_form, additional_hubspot_data=None):
-        activate_new_user(reg_form, created_by=None, created_via=WEB_REGISTRATION, ip=get_ip(self.request))
+        activate_new_user(reg_form, created_by=None, created_via=USER_CHANGE_VIA_WEB, ip=get_ip(self.request))
         new_user = authenticate(
             username=reg_form.cleaned_data['email'],
             password=reg_form.cleaned_data['password']

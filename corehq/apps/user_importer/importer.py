@@ -35,7 +35,7 @@ from corehq.apps.users.models import (
     UserRole,
 )
 from corehq.apps.users.util import normalize_username
-from corehq.const import BULK_IMPORTER
+from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 
 required_headers = set(['username'])
 allowed_headers = set([
@@ -364,7 +364,7 @@ def create_or_update_users_and_groups(domain, user_specs, upload_user, group_mem
                     if is_account_confirmed is not None and not web_user:
                         kwargs['is_account_confirmed'] = is_account_confirmed
                     user = CommCareUser.create(domain, username, password, created_by=upload_user,
-                                               created_via=BULK_IMPORTER, commit=False, **kwargs)
+                                               created_via=USER_CHANGE_VIA_BULK_IMPORTER, commit=False, **kwargs)
                     status_row['flag'] = 'created'
 
                 if phone_number:
