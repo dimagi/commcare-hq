@@ -1728,8 +1728,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                domain,
                username,
                password,
-               created_by,
-               created_via,
+               created_by=None,
+               created_via=None,
                email=None,
                uuid='',
                date='',
@@ -2371,7 +2371,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         return self.is_superuser
 
     @classmethod
-    def create(cls, domain, username, password, created_by, created_via, email=None, uuid='', date='',
+    def create(cls, domain, username, password, created_by=None, created_via=None, email=None, uuid='', date='',
                **kwargs):
         web_user = super(WebUser, cls).create(domain, username, password, created_by, created_via, email, uuid,
                                               date, **kwargs)
