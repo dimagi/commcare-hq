@@ -17,7 +17,7 @@ class SMSUsageReport(BaseMessagingSectionView):
 
     @use_daterangepicker
     def dispatch(self, *args, **kwargs):
-        return super(SMSUsageReport, self).dispatch(*args, **kwargs)
+        return super().dispatch(*args, **kwargs)
 
     @property
     def page_context(self):
@@ -42,6 +42,7 @@ class SMSUsageReport(BaseMessagingSectionView):
                 .format(user_email=user_email))
             )
         else:
-            for message in self.request_form.errors.values():
-                messages.error(self.request, _(message[0]))
+            for message_list in self.request_form.errors.values():
+                for message in message_list:
+                    messages.error(self.request, message)
         return self.get(*args, **kwargs)
