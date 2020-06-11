@@ -450,6 +450,13 @@ class BaseRoleAccessView(BaseUserSettingsView):
 
     @property
     @memoized
+    def web_apps_privilege(self):
+        return self.domain_object.has_privilege(
+            privileges.CLOUDCARE
+        )
+
+    @property
+    @memoized
     def user_roles(self):
         user_roles = [AdminUserRole(domain=self.domain)]
         user_roles.extend(sorted(
@@ -568,6 +575,7 @@ class ListRolesView(BaseRoleAccessView):
                 toggles.OPENMRS_INTEGRATION.enabled(self.domain) or
                 toggles.DHIS2_INTEGRATION.enabled(self.domain)
             ),
+            'web_apps_privilege': self.web_apps_privilege,
         }
 
 
