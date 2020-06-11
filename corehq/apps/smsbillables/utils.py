@@ -1,4 +1,6 @@
 import logging
+import requests
+import json
 
 from django.conf import settings
 from django.utils.encoding import force_text
@@ -47,4 +49,35 @@ def get_twilio_message(backend_instance, backend_message_id):
     try:
         return _get_twilio_client(backend_instance).messages.get(backend_message_id).fetch()
     except TwilioRestException as e:
+        raise RetryBillableTaskException(str(e))
+
+
+@quickcache(vary_on=['backend_instance', 'backend_message_id'], timeout=1 * 60)
+def get_infobip_message(backend_instance, backend_message_id):
+    from corehq.messaging.smsbackends.infobip.models import INFOBIP_DOMAIN
+    from corehq.messaging.smsbackends.infobip.models import InfobipBackend
+    try:
+        infobip_backend = SQLMobileBackend.load(
+            backend_instance,
+            api_id=InfobipBackend.get_api_id(),
+            is_couch_id=True,
+            include_deleted=True,
+        )
+        config = infobip_backend.config
+        api_suffix = '/sms/1/reports'
+        if config.scenario_key:
+            api_suffix = '/omni/1/reports'
+
+        headers = {
+            'Authorization': f'App {config.auth_token}',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+        parameters = {
+           'messageId': backend_message_id
+        }
+        url = f'https://{config.personalized_subdomain}.{INFOBIP_DOMAIN}{api_suffix}'
+        response = requests.get(url, params=parameters, headers=headers)
+        return json.loads(response.content)
+    except Exception as e:
         raise RetryBillableTaskException(str(e))
