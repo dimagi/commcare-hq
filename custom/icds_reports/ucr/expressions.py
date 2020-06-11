@@ -5,7 +5,8 @@ from quickcache.django_quickcache import get_django_quickcache
 
 from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID
 from casexml.apps.case.xform import extract_case_blocks
-from corehq.apps.receiverwrapper.util import get_version_from_appversion_text
+from corehq.apps.receiverwrapper.util import get_version_from_appversion_text,\
+    get_commcare_version_from_appversion_text
 from corehq.apps.userreports.const import XFORM_CACHE_KEY_PREFIX
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.mixins import NoPropertyTypeCoercionMixIn
@@ -31,6 +32,7 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('icds_get_last_case_property_update', 'custom.icds_reports.ucr.expressions.get_last_case_property_update'),
     ('icds_get_case_forms_in_date', 'custom.icds_reports.ucr.expressions.get_forms_in_date_expression'),
     ('icds_get_app_version', 'custom.icds_reports.ucr.expressions.get_app_version'),
+    ('icds_get_commcare_version', 'custom.icds_reports.ucr.expressions.get_commcare_version'),
     ('icds_datetime_now', 'custom.icds_reports.ucr.expressions.datetime_now'),
     ('icds_boolean', 'custom.icds_reports.ucr.expressions.boolean_question'),
     ('icds_user_location', 'custom.icds_reports.ucr.expressions.icds_user_location'),
@@ -322,6 +324,44 @@ class GetAppVersion(JsonObject):
 
     def __str__(self):
         return "Application Version"
+
+
+class GetCommcareVersion(JsonObject):
+    type = TypeProperty('icds_get_commcare_version')
+    commcare_version_string = DefaultProperty(required=True)
+
+    def configure(self, commcare_version_string):
+        self.commcare_version_string = commcare_version_string
+
+    def get_version_from_app_object(self, item, commcare_version_from_app_string):
+        domain_name = item.get('domain')
+        form_accessor = FormAccessors(domain_name)
+        form_id = item.get('form').get('meta').get('instanceID')
+        form = form_accessor.get_form(form_id)
+
+        app_build = get_build_by_version(domain_name, form.app_id, commcare_version_from_app_string)
+
+        if app_build is None:
+            return commcare_version_from_app_string
+
+        elif app_build.get('value').get('doc_type') == 'LinkedApplication':
+            return app_build.get('value').get('upstream_version')
+        else:
+            return app_build.get('value').get('version')
+
+    def get_version_from_appversion_string(self, item, context):
+        commcare_version_string = self.commcare_version_string(item, context)
+        return get_commcare_version_from_appversion_text(commcare_version_string)
+
+    def __call__(self, item, context=None):
+        commcare_version = self.get_version_from_appversion_string(item, context)
+        if settings.SERVER_ENVIRONMENT == 'india':
+            commcare_version = self.get_version_from_app_object(item, commcare_version)
+
+        return commcare_version
+
+    def __str__(self):
+        return "Commcare Version"
 
 
 class DateTimeNow(JsonObject):
@@ -856,6 +896,14 @@ def get_app_version(spec, context):
     wrapped = GetAppVersion.wrap(spec)
     wrapped.configure(
         app_version_string=ExpressionFactory.from_spec(wrapped.app_version_string, context)
+    )
+    return wrapped
+
+
+def get_commcare_version(spec, context):
+    wrapped = GetCommcareVersion.wrap(spec)
+    wrapped.configure(
+        commcare_version_string=ExpressionFactory.from_spec(wrapped.commcare_version_string, context)
     )
     return wrapped
 

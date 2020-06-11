@@ -800,6 +800,40 @@
         "type": "expression"
       },
       {
+        "type": "expression",
+        "column_id": "appVersion",
+        "datatype": "integer",
+        "expression": {
+            "type": "icds_get_app_version",
+            "app_version_string": {
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "meta",
+                "appVersion",
+                "#text"
+              ]
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "commcareVersion",
+        "datatype": "string",
+        "expression": {
+            "type": "icds_get_commcare_version",
+            "commcare_version_string": {
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "meta",
+                "appVersion",
+                "#text"
+              ]
+          }
+        }
+      },
+      {
         "comment": "Preschool Education conducted on this day",
         "column_id": "pse_conducted",
         "type": "expression",
