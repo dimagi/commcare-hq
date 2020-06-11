@@ -1637,7 +1637,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             self.get_django_user(use_primary_db=True),
             message=None,
             fields_changed={
-                'created_by': created_by.get_id,
                 'created_via': created_via,
             },
             is_create=True
