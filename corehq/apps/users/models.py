@@ -23,6 +23,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
 from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
 from corehq.apps.users.exceptions import IllegalAccountConfirmation
+from corehq.util.model_log import log_model_change
 from corehq.util.models import BouncedEmail
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -1461,7 +1462,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         return cls.get_by_username(django_user.username, strict=strict)
 
     @classmethod
-    def create(cls, domain, username, password, email=None, uuid='', date='',
+    def create(cls, domain, username, password, created_by, created_via, email=None, uuid='', date='',
                first_name='', last_name='', **kwargs):
         try:
             django_user = User.objects.get(username=username)
@@ -1627,6 +1628,20 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             self.has_built_app = True
             self.save()
 
+    def log_user_create(self, created_by, created_via):
+        # fallback to self if not created by any user
+        created_by = created_by or self
+        log_model_change(
+            created_by,
+            self,
+            message=None,
+            fields_changed={
+                'created_by': created_by.get_id,
+                'created_via': created_via,
+            },
+            is_create=True
+        )
+
 
 class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin):
 
@@ -1715,6 +1730,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                domain,
                username,
                password,
+               created_by,
+               created_via,
                email=None,
                uuid='',
                date='',
@@ -1733,7 +1750,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         elif not is_account_confirmed:
             assert not kwargs['is_active'], \
                 "it's illegal to create a user with is_active=True and is_account_confirmed=False"
-        commcare_user = super(CommCareUser, cls).create(domain, username, password, email, uuid, date, **kwargs)
+        commcare_user = super(CommCareUser, cls).create(domain, username, password, created_by, created_via,
+                                                        email, uuid, date, **kwargs)
         if phone_number is not None:
             commcare_user.add_phone_number(phone_number)
 
@@ -1750,7 +1768,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         if commit:
             commcare_user.save(**get_safe_write_kwargs())
-
+            commcare_user.log_user_create(created_by, created_via)
         return commcare_user
 
     @property
@@ -2355,11 +2373,14 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         return self.is_superuser
 
     @classmethod
-    def create(cls, domain, username, password, email=None, uuid='', date='', **kwargs):
-        web_user = super(WebUser, cls).create(domain, username, password, email, uuid, date, **kwargs)
+    def create(cls, domain, username, password, created_by, created_via, email=None, uuid='', date='',
+               **kwargs):
+        web_user = super(WebUser, cls).create(domain, username, password, created_by, created_via, email, uuid,
+                                              date, **kwargs)
         if domain:
             web_user.add_domain_membership(domain, **kwargs)
         web_user.save()
+        web_user.log_user_create(created_by, created_via)
         return web_user
 
     def is_commcare_user(self):
