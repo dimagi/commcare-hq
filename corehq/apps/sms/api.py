@@ -7,6 +7,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 
 from corehq.apps.smsforms.models import SMSChannel, XFormsSessionSynchronization
+from corehq.const import SMS_REGISTRATION
 from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -141,7 +142,7 @@ def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent
         date=get_utcnow(),
         backend_id=None,
         location_id=get_location_id_by_contact(domain, contact),
-        text = text
+        text=text
     )
     if contact:
         msg.couch_recipient = contact.get_id
@@ -507,7 +508,8 @@ def process_sms_registration(msg):
 
                         username = process_username(username, domain_obj)
                         password = random_password()
-                        new_user = CommCareUser.create(domain_obj.name, username, password, user_data=user_data)
+                        new_user = CommCareUser.create(domain_obj.name, username, password, created_by=None,
+                                                       created_via=SMS_REGISTRATION, user_data=user_data)
                         new_user.add_phone_number(cleaned_phone_number)
                         new_user.save()
 

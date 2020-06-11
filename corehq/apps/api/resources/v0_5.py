@@ -82,6 +82,7 @@ from corehq.apps.users.models import (
     WebUser,
 )
 from corehq.apps.users.util import raw_username
+from corehq.const import API_REGISTRATION
 from corehq.util import get_document_or_404
 from corehq.util.couch import DocumentNotFound, get_document_or_not_found
 from corehq.util.timer import TimingContext
@@ -253,6 +254,8 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                 domain=kwargs['domain'],
                 username=bundle.data['username'].lower(),
                 password=bundle.data['password'],
+                created_by=bundle.request.couch_user,
+                created_via=API_REGISTRATION,
                 email=bundle.data.get('email', '').lower(),
             )
             del bundle.data['password']
@@ -284,6 +287,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         if user:
             user.retire()
         return ImmediateHttpResponse(response=http.HttpAccepted())
+
 
 class WebUserResource(v0_1.WebUserResource):
 
@@ -352,6 +356,8 @@ class WebUserResource(v0_1.WebUserResource):
                 domain=kwargs['domain'],
                 username=bundle.data['username'].lower(),
                 password=bundle.data['password'],
+                created_by=bundle.request.couch_user,
+                created_via=API_REGISTRATION,
                 email=bundle.data.get('email', '').lower(),
                 is_admin=bundle.data.get('is_admin', False)
             )
