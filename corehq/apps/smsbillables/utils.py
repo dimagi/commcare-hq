@@ -78,6 +78,7 @@ def get_infobip_message(backend_instance, backend_message_id):
         }
         url = f'https://{config.personalized_subdomain}.{INFOBIP_DOMAIN}{api_suffix}'
         response = requests.get(url, params=parameters, headers=headers)
-        return json.loads(response.content)
+        response_content = json.loads(response.content)
+        return response_content['results'][0]
     except Exception as e:
         raise RetryBillableTaskException(str(e))

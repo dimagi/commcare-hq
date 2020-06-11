@@ -366,7 +366,7 @@ class SmsBillable(models.Model):
                 raise RetryBillableTaskException("backend_message_id=%s" % backend_message_id)
         elif backend_api_id == InfobipBackend.get_api_id():
             infobip_message = get_infobip_message(backend_instance, backend_message_id)
-            segments = infobip_message['results'][0]['smsCount']
+            segments = infobip_message['smsCount']
             if segments is not None:
                 return int(segments)
             else:
@@ -434,9 +434,9 @@ class SmsBillable(models.Model):
                 price = message.price
             else:
                 message = get_infobip_message(backend_instance, backend_message_id)
-                status = message['results'][0]['status']['name']
-                price = message['results'][0]['price']['pricePerMessage']
-            if status.lower() in [
+                status = message['status']['name']
+                price = message['price']['pricePerMessage']
+            if status is None or status.lower() in [
                 'accepted',
                 'queued',
                 'sending',
