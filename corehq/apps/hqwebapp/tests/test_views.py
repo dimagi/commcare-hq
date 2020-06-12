@@ -29,6 +29,8 @@ class TestBugReport(TestCase):
             cls.domain,
             'bug-dude',
             password='***',
+            created_by=None,
+            created_via=None,
         )
         cls.web_user.is_superuser = True
         cls.web_user.save()

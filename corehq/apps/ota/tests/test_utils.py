@@ -34,11 +34,15 @@ class RestorePermissionsTest(LocationHierarchyTestCase):
             username='billy@goats.com',
             domain=cls.domain,
             password='***',
+            created_by=None,
+            created_via=None,
         )
         cls.super_user = WebUser.create(
             username='super@woman.com',
             domain=cls.other_domain,
             password='***',
+            created_by=None,
+            created_via=None,
         )
         cls.super_user.is_superuser = True
         cls.super_user.save()
@@ -66,6 +70,8 @@ class RestorePermissionsTest(LocationHierarchyTestCase):
             username='web-location@location.com',
             domain=cls.domain,
             password='***',
+            created_by=None,
+            created_via=None,
         )
 
         cls.commcare_user.set_location(cls.locations['usa'])
@@ -219,6 +225,8 @@ class GetRestoreUserTest(TestCase):
             username='billy@goats.com',
             domain=cls.domain,
             password='***',
+            created_by=None,
+            created_via=None,
         )
         cls.commcare_user = CommCareUser.create(
             username=format_username('jane', cls.domain),
@@ -234,6 +242,8 @@ class GetRestoreUserTest(TestCase):
             username='super@woman.com',
             domain=cls.other_domain,
             password='***',
+            created_by=None,
+            created_via=None,
         )
         cls.super_user.is_superuser = True
         cls.super_user.save()

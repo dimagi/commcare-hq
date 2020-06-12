@@ -163,6 +163,8 @@ class WebUserLocationAssignmentTest(TestCase):
             domain=self.domain,
             username='web1',
             password='***',
+            created_by=None,
+            created_via=None,
             last_login=datetime.now()
         )
 

@@ -245,7 +245,7 @@ class OwnerTests(LocationHierarchyTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.web_user = WebUser.create(TEST_DOMAIN, 'user1', '***')
+        cls.web_user = WebUser.create(TEST_DOMAIN, 'user1', '***', None, None)
         cls.mobile_worker = CommCareUser.create(TEST_DOMAIN, 'chw1', '***')
         cls.group = Group.wrap({
             'domain': TEST_DOMAIN,

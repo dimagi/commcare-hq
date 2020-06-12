@@ -43,6 +43,8 @@ class UserAnalyticsTest(TestCase):
             domain='test',
             username='web',
             password='secret',
+            created_by=None,
+            created_via=None,
         )
         reset_es_index(USER_INDEX_INFO)
         update_analytics_indexes()

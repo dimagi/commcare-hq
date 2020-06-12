@@ -153,7 +153,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         post_case_blocks([case_block], {'domain': self.domain})
 
     def create_web_user(self, username, password):
-        user = WebUser.create(self.domain, username, password)
+        user = WebUser.create(self.domain, username, password, None, None)
         self.users.append(user)
         return user
 

@@ -295,6 +295,8 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             domain=self.domain_name,
             username='webuser_t1',
             password='secret',
+            created_by=None,
+            created_via=None,
             email='webuser@example.com',
         )
         self.addCleanup(ccuser_1.delete)

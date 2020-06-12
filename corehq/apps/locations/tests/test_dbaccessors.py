@@ -41,7 +41,9 @@ class TestUsersByLocation(TestCase):
         cls.george = WebUser.create(
             cls.domain,
             username="George RR Martin",
-            password='password'
+            password='password',
+            created_by=None,
+            created_via=None,
         )
         cls.george.set_location(cls.domain, cls.meereen)
 

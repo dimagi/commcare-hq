@@ -39,7 +39,7 @@ class ImporterTest(TestCase):
         self.domain = self.domain_obj.name
         self.default_case_type = 'importer-test-casetype'
 
-        self.couch_user = WebUser.create(None, "test", "foobar")
+        self.couch_user = WebUser.create(None, "test", "foobar", None, None)
         self.couch_user.add_domain_membership(self.domain, is_admin=True)
         self.couch_user.save()
 
@@ -509,7 +509,7 @@ def make_worksheet_wrapper(*rows):
 def restrict_user_to_location(test_case, location):
     orig_user = test_case.couch_user
 
-    restricted_user = WebUser.create(test_case.domain, "restricted", "s3cr3t")
+    restricted_user = WebUser.create(test_case.domain, "restricted", "s3cr3t", None, None)
     restricted_user.set_location(test_case.domain, location)
     restrict_user_by_location(test_case.domain, restricted_user)
     test_case.couch_user = restricted_user

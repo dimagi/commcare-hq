@@ -75,6 +75,8 @@ class AllCommCareUsersTest(TestCase):
             domain=cls.ccdomain.name,
             username='webuser',
             password='secret',
+            created_by=None,
+            created_via=None,
             email='webuser@example.com',
         )
         cls.ccuser_other_domain = CommCareUser.create(

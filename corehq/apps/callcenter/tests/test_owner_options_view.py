@@ -48,7 +48,7 @@ class CallCenterLocationOwnerOptionsViewTest(TestCase):
 
         cls.username = "foo"
         cls.password = "bar"
-        cls.web_user = WebUser.create(cls.domain.name, cls.username, cls.password)
+        cls.web_user = WebUser.create(cls.domain.name, cls.username, cls.password, None, None)
         cls.web_user.save()
 
         # Create case sharing groups

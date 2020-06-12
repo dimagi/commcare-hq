@@ -394,7 +394,7 @@ class SQLPhoneNumberTestCase(TestCase):
         self.assertTrue(isinstance(owner, CommCareUser))
         self.assertEqual(owner.get_id, mobile_user.get_id)
 
-        web_user = WebUser.create(self.domain, 'ghi', 'jkl')
+        web_user = WebUser.create(self.domain, 'ghi', 'jkl', None, None)
         number = PhoneNumber(owner_doc_type='WebUser', owner_id=web_user.get_id)
         owner = number.owner
         self.assertTrue(isinstance(owner, WebUser))

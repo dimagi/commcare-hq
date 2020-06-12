@@ -67,9 +67,9 @@ class SchedulingRecipientTest(TestCase):
         cls.mobile_user5.user_data['role'] = ['nurse', 'pharmacist']
         cls.mobile_user5.save()
 
-        cls.web_user = WebUser.create(cls.domain, 'web', 'abc')
+        cls.web_user = WebUser.create(cls.domain, 'web', 'abc', None, None)
 
-        cls.web_user2 = WebUser.create(cls.domain, 'web2', 'abc')
+        cls.web_user2 = WebUser.create(cls.domain, 'web2', 'abc', None, None)
         cls.web_user2.user_data['role'] = 'nurse'
         cls.web_user2.save()
 

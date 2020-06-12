@@ -24,7 +24,7 @@ class PasswordResetTest(TestCase):
 
     def test_web_user_lookup(self):
         email = 'web-user@example.com'
-        web_user = WebUser.create(self.domain, email, 's3cr3t')
+        web_user = WebUser.create(self.domain, email, 's3cr3t', None, None)
         self.addCleanup(web_user.delete)
         results = list(get_active_users_by_email(email))
         self.assertEqual(1, len(results))
@@ -32,7 +32,7 @@ class PasswordResetTest(TestCase):
 
     def test_web_user_by_email(self):
         email = 'web-user-email@example.com'
-        web_user = WebUser.create(self.domain, 'web-user2@example.com', 's3cr3t', email=email)
+        web_user = WebUser.create(self.domain, 'web-user2@example.com', 's3cr3t', None, None, email=email)
         self.addCleanup(web_user.delete)
         self.assertEqual(0, len(list(get_active_users_by_email(email))))
 

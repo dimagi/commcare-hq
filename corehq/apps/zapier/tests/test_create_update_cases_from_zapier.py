@@ -36,7 +36,7 @@ class TestZapierCreateCaseAction(TestCase):
         cls.query_string = "?domain=fruit&case_type=watermelon&owner_id=test_user&user=test"
         cls.data = {'case_name': 'test1', 'price': '11'}
         cls.accessor = CaseAccessors(cls.domain)
-        cls.user = WebUser.create(cls.domain, 'test', '******')
+        cls.user = WebUser.create(cls.domain, 'test', '******', None, None)
         api_key_object, _ = ApiKey.objects.get_or_create(user=cls.user.get_django_user())
         cls.api_key = api_key_object.key
 
@@ -137,7 +137,7 @@ class TestZapierCreateCaseAction(TestCase):
 
     def test_user_does_not_have_access(self):
         fake_domain = Domain.get_or_create_with_name('fake', is_active=True)
-        fake_user = WebUser.create('fake', 'faker2', '******')
+        fake_user = WebUser.create('fake', 'faker2', '******', None, None)
         self.addCleanup(fake_domain.delete)
         query_string = "?domain=fruit&case_type=fake&user_id=test_user&user=faker2&owner_id=test_user"
         response = self.client.post(reverse(ZapierCreateCase.urlname,

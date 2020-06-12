@@ -470,7 +470,7 @@ class TestApiKey(APIResourceTest):
     def test_wrong_user_api_key(self):
         username = 'blah@qwerty.commcarehq.org'
         password = '***'
-        other_user = WebUser.create(self.domain.name, username, password)
+        other_user = WebUser.create(self.domain.name, username, password, None, None)
         other_user.set_role(self.domain.name, 'admin')
         other_user.save()
         self.addCleanup(other_user.delete)

@@ -13,7 +13,7 @@ class SyncWebUserTestCase(TestCase):
         username = "mr-danny@dimagi.com"
         password = "s3cr3t"
         self.domain_obj = create_domain(domain)
-        self.web_user = WebUser.create(domain, username, password)
+        self.web_user = WebUser.create(domain, username, password, None, None)
         self.web_user.save()
 
     def test_couch_to_django(self):

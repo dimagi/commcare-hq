@@ -238,7 +238,7 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(len(api_users), 1)
         self._check_user_data(self.user, api_users[0])
 
-        another_user = WebUser.create(self.domain.name, 'anotherguy', '***')
+        another_user = WebUser.create(self.domain.name, 'anotherguy', '***', None, None)
         another_user.set_role(self.domain.name, 'field-implementer')
         another_user.save()
         self.addCleanup(another_user.delete)
@@ -356,7 +356,7 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(response.content.decode('utf-8'), '{"error": "Please assign role for non admin user"}')
 
     def test_update(self):
-        user = WebUser.create(domain=self.domain.name, username="test", password="qwer1234")
+        user = WebUser.create(domain=self.domain.name, username="test", password="qwer1234", None, None)
         self.addCleanup(user.delete)
         user_json = deepcopy(self.default_user_json)
         user_json.pop('username')

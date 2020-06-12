@@ -205,7 +205,7 @@ class ProjectHealthDashboardTest(SetupProjectPerformanceMixin, TestCase):
 
     @classmethod
     def _setup_web_user(cls):
-        cls.web_user = WebUser.create(cls.DOMAIN_NAME, cls.WEB_USER, '*****')
+        cls.web_user = WebUser.create(cls.DOMAIN_NAME, cls.WEB_USER, '*****', None, None)
         cls.web_user.save()
         cls.request.couch_user = cls.web_user
 

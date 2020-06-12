@@ -30,7 +30,7 @@ class DigestOtaRestoreTest(TestCase):
         create_domain(cls.domain)
         create_domain(cls.wrong_domain)
         cls.commcare_user = CommCareUser.create(cls.domain, cls.username, cls.password)
-        cls.web_user = WebUser.create(cls.domain, cls.web_username, cls.password)
+        cls.web_user = WebUser.create(cls.domain, cls.web_username, cls.password, None, None)
 
     @classmethod
     def tearDownClass(cls):

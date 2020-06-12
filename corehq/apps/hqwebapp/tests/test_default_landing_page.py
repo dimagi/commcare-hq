@@ -47,7 +47,7 @@ class TestDefaultLandingPages(TestCase):
 
     def _make_web_user(self, username, role=None, override_domain=None):
         domain = override_domain or self.domain
-        web_user = WebUser.create(domain, username, self.global_password)
+        web_user = WebUser.create(domain, username, self.global_password, None, None)
         web_user.eula.signed = True
         if role:
             web_user.set_role(domain, role.get_qualified_id())
