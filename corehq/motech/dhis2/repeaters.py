@@ -29,7 +29,7 @@ from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.repeater_helpers import (
     get_relevant_case_updates_from_form_json,
 )
-from corehq.motech.repeaters.models import CaseRepeater, FormRepeater, Repeater
+from corehq.motech.repeaters.models import CaseRepeater, FormRepeater
 from corehq.motech.repeaters.repeater_generators import (
     FormRepeaterJsonPayloadGenerator,
 )
