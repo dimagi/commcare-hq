@@ -175,7 +175,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
     base_doc = 'Repeater'
 
     domain = StringProperty()
-
+    name = StringProperty(default="")
     connection_settings_id = IntegerProperty(required=False, default=None)
     # TODO: Delete the following properties once all Repeaters have been
     #       migrated to ConnectionSettings. (2020-05-16)
@@ -195,8 +195,10 @@ class Repeater(QuickCachedDocumentMixin, Document):
     _has_config = False
 
     def __str__(self):
-        url = "@".join((self.username, self.url)) if self.username else self.url
-        return f"<{self.__class__.__name__} {self._id} {url}>"
+        return self.name
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__} {self._id} {self.name}>"
 
     @property
     def connection_settings(self):
@@ -351,7 +353,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
 
     def get_url(self, repeat_record):
         # to be overridden
-        return self.url
+        return self.connection_settings.url
 
     def allow_retries(self, response):
         """Whether to requeue the repeater when it fails
@@ -466,6 +468,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
         # Allow ConnectionSettings to encrypt old Repeater passwords:
         conn.plaintext_password = self.plaintext_password
         conn.save()
+        self.name = conn.name
         self.connection_settings_id = conn.id
         self.save()
         return conn
@@ -522,9 +525,6 @@ class FormRepeater(Repeater):
         })
         return headers
 
-    def __str__(self):
-        return "forwarding forms to: %s" % self.url
-
 
 class CaseRepeater(Repeater):
     """
@@ -569,9 +569,6 @@ class CaseRepeater(Repeater):
             "server-modified-on": self.payload_doc(repeat_record).server_modified_on.isoformat()+"Z"
         })
         return headers
-
-    def __str__(self):
-        return "forwarding cases to: %s" % self.url
 
 
 class CreateCaseRepeater(CaseRepeater):
@@ -618,7 +615,7 @@ class ReferCaseRepeater(CreateCaseRepeater):
 
     def get_url(self, repeat_record):
         new_domain = self.payload_doc(repeat_record).get_case_property('new_domain')
-        return self.url.format(domain=new_domain)
+        return self.connection_settings.url.format(domain=new_domain)
 
 
 class ShortFormRepeater(Repeater):
@@ -646,9 +643,6 @@ class ShortFormRepeater(Repeater):
         })
         return headers
 
-    def __str__(self):
-        return "forwarding short form to: %s" % self.url
-
 
 class AppStructureRepeater(Repeater):
     friendly_name = _("Forward App Schema Changes")
@@ -668,9 +662,6 @@ class UserRepeater(Repeater):
     def payload_doc(self, repeat_record):
         return CommCareUser.get(repeat_record.payload_id)
 
-    def __str__(self):
-        return "forwarding users to: %s" % self.url
-
 
 class LocationRepeater(Repeater):
     friendly_name = _("Forward Locations")
@@ -680,9 +671,6 @@ class LocationRepeater(Repeater):
     @memoized
     def payload_doc(self, repeat_record):
         return SQLLocation.objects.get(location_id=repeat_record.payload_id)
-
-    def __str__(self):
-        return "forwarding locations to: %s" % self.url
 
 
 class RepeatRecordAttempt(DocumentSchema):

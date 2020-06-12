@@ -46,7 +46,7 @@ from corehq.motech.repeater_helpers import (
     RepeaterResponse,
     get_relevant_case_updates_from_form_json,
 )
-from corehq.motech.repeaters.models import CaseRepeater, Repeater
+from corehq.motech.repeaters.models import CaseRepeater
 from corehq.motech.repeaters.repeater_generators import (
     FormRepeaterJsonPayloadGenerator,
 )
@@ -112,9 +112,6 @@ class OpenmrsRepeater(CaseRepeater):
             isinstance(other, self.__class__) and
             self.get_id == other.get_id
         )
-
-    def __str__(self):
-        return Repeater.__str__(self)
 
     @classmethod
     def wrap(cls, data):

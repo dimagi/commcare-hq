@@ -29,7 +29,7 @@ from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.repeater_helpers import (
     get_relevant_case_updates_from_form_json,
 )
-from corehq.motech.repeaters.models import CaseRepeater, FormRepeater, Repeater
+from corehq.motech.repeaters.models import CaseRepeater, FormRepeater
 from corehq.motech.repeaters.repeater_generators import (
     FormRepeaterJsonPayloadGenerator,
 )
@@ -93,9 +93,6 @@ class Dhis2EntityRepeater(CaseRepeater, Dhis2Instance):
 
     _has_config = True
 
-    def __str__(self):
-        return Repeater.__str__(self)
-
     def allowed_to_forward(self, payload):
         # If the payload is the system form for updating a case with its
         # DHIS2 TEI ID then don't send it back.
@@ -158,9 +155,6 @@ class Dhis2Repeater(FormRepeater, Dhis2Instance):
     dhis2_config = SchemaProperty(Dhis2Config)
 
     _has_config = True
-
-    def __str__(self):
-        return Repeater.__str__(self)
 
     def __eq__(self, other):
         return (

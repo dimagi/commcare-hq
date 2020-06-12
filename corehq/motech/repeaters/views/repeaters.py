@@ -140,6 +140,7 @@ class BaseRepeaterView(BaseAdminProjectSettingsView):
         repeater.domain = self.domain
         repeater.connection_settings_id = int(cleaned_data['connection_settings_id'])
         repeater.format = cleaned_data['format']
+        repeater.name = repeater.connection_settings.name
         return repeater
 
     def post_save(self, request, repeater):
