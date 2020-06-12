@@ -11,7 +11,7 @@ from .utils import MultiTabularReport, format_row, na_for_None
 
 
 class NutrientIntakeReport(MultiTabularReport):
-    name = 'Output 3 - Disaggregated Intake Data by Respondent and Aggregated Daily Intake Data by Respondent'
+    name = 'Report 3 - Disaggregated Intake Data by Respondent and Aggregated Daily Intake Data by Respondent'
     slug = 'report_3_disaggr_intake_data_by_rspndnt_and_aggr_daily_intake_data_by_rspndnt'  # yup, really
 
     export_only = True

@@ -6,18 +6,18 @@ from dimagi.utils.couch.database import iter_docs
 from . import NotFound, get_blob_db
 from .migrate import PROCESSING_COMPLETE_MESSAGE
 from .models import BlobMeta
-from .zipdb import ZipBlobDB
+from .targzipdb import TarGzipBlobDB
 
 
 class BlobDbBackendExporter(object):
 
-    def __init__(self, filename):
-        self.db = ZipBlobDB(filename)
+    def __init__(self, filename, extends):
+        self.db = TarGzipBlobDB(filename, extends)
         self.total_blobs = 0
         self.not_found = 0
 
     def __enter__(self):
-        pass
+        self.db.open('w:gz')
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.db.close()
@@ -45,7 +45,8 @@ class BlobExporter(ABC):
     def slug(self):
         raise NotImplementedError
 
-    def migrate(self, filename, chunk_size=100, limit_to_db=None, force=False):
+    def migrate(self, filename, chunk_size=100, limit_to_db=None, extends=(),
+                force=False):
         if not self.domain:
             raise ExportError("Must specify domain")
 
@@ -55,7 +56,7 @@ class BlobExporter(ABC):
                 "To re-run the export use 'reset'".format(self.slug)
             )
 
-        migrator = BlobDbBackendExporter(filename)
+        migrator = BlobDbBackendExporter(filename, extends)
         with migrator:
             self._migrate(migrator, chunk_size, limit_to_db)
         print("Processed {} {} objects".format(migrator.total_blobs, self.slug))
