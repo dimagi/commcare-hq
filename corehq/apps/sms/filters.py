@@ -38,6 +38,18 @@ class MessageTypeFilter(BaseMultipleOptionFilter):
         return options_var
 
 
+class ErrorCodeFilter(BaseMultipleOptionFilter):
+    label = ugettext_noop('Error')
+    default_text = ugettext_noop('Select Error...')
+    slug = 'error_code'
+
+    options = [
+        (code, message)
+        for code, message in MessagingEvent.ERROR_MESSAGES.items()
+        if code != MessagingEvent.ERROR_SUBEVENT_ERROR
+    ]
+
+
 class EventTypeFilter(BaseMultipleOptionFilter):
     label = ugettext_noop('Communication Type')
     default_text = ugettext_noop('Select Communication Type...')
