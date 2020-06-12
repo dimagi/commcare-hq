@@ -38,7 +38,7 @@
       </header>
       <template>
         <text>
-          <xpath function="if(birthdate = '', '', format_date(date(if(birthdate = '', 0, birthdate)),'short'))"/>
+          <xpath function="if(birthdate = '', '', format-date(date(birthdate), '%d/%m/%y'))"/>
         </text>
       </template>
       <sort type="string" order="1" direction="descending">
@@ -72,7 +72,7 @@
       </header>
       <template>
         <text>
-          <xpath function="if(birthdate = '', '', format_date(date(if(birthdate = '', 0, birthdate)),'short'))"/>
+          <xpath function="if(birthdate = '', '', format-date(date(birthdate), '%d/%m/%y'))"/>
         </text>
       </template>
       <sort type="string">
@@ -89,7 +89,7 @@
       </header>
       <template>
         <text>
-          <xpath function="if(date_opened = '', '', format_date(date(if(date_opened = '', 0, date_opened)),'short'))"/>
+          <xpath function="if(date_opened = '', '', format-date(date(date_opened), '%d/%m/%y'))"/>
         </text>
       </template>
       <sort type="string" order="2" direction="descending">
@@ -113,7 +113,7 @@
       </header>
       <template>
         <text>
-          <xpath function="if(birthdate = '', '', format_date(date(if(birthdate = '', 0, birthdate)),'short'))"/>
+          <xpath function="if(birthdate = '', '', format-date(date(birthdate), '%d/%m/%y'))"/>
         </text>
       </template>
     </field>
@@ -137,7 +137,7 @@
       </header>
       <template>
         <text>
-          <xpath function="if(birthdate = '', '', format_date(date(if(birthdate = '', 0, birthdate)),'short'))"/>
+          <xpath function="if(birthdate = '', '', format-date(date(birthdate), '%d/%m/%y'))"/>
         </text>
       </template>
     </field>
@@ -149,7 +149,7 @@
       </header>
       <template>
         <text>
-          <xpath function="if(date_opened = '', '', format_date(date(if(date_opened = '', 0, date_opened)),'short'))"/>
+          <xpath function="if(date_opened = '', '', format-date(date(date_opened), '%d/%m/%y'))"/>
         </text>
       </template>
     </field>
