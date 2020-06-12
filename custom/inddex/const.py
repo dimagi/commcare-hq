@@ -1,8 +1,27 @@
 from collections import namedtuple
 
+from attr import attrib, attrs
+
 FOOD_CONSUMPTION = 'food_consumption_indicators'
 
-AgeRange = namedtuple("AgeRange", "name slug column lower_bound upper_bound")
+
+@attrs(frozen=True)
+class AgeRange:
+    name = attrib()
+    slug = attrib()
+    column = attrib()
+    lower_bound = attrib()
+    upper_bound = attrib()
+
+    @property
+    def lower_param(self):
+        return f"{self.slug}_lower"
+
+    @property
+    def upper_param(self):
+        return f"{self.slug}_upper"
+
+
 # note: these slugs are intended for internal use only (you can change them)
 AGE_RANGES = [
     AgeRange("0-5.9 months", 'lt6months', 'age_months_calculated', 0, 6),
@@ -25,10 +44,10 @@ class FctGaps:
     slug = 'fct'
     name = "Food Composition Table"
     AVAILABLE = 1
-    BASE_TERM = 2
-    REFERENCE = 3
+    BASE_TERM = 3
+    REFERENCE = 5
     INGREDIENT_GAPS = 7
-    NOT_AVAILABLE = 8
+    NOT_AVAILABLE = 9
     DESCRIPTIONS = {
         AVAILABLE: "FCT data available",
         BASE_TERM: "Using FCT data from base term food code",
@@ -41,11 +60,13 @@ class FctGaps:
 class ConvFactorGaps:
     slug = 'conv_factor'
     name = "Conversion Factor"
-    AVAILABLE = 1
-    BASE_TERM = 2
-    NOT_AVAILABLE = 8
+    AVAILABLE = 2
+    BASE_TERM = 4
+    NOT_AVAILABLE = 6
+    NOT_APPLICABLE = 8
     DESCRIPTIONS = {
         AVAILABLE: "Conversion Factor available",
         BASE_TERM: "Using Conversion Factor from base term food code",
         NOT_AVAILABLE: "No Conversion Factor available",
+        NOT_APPLICABLE: "Not applicable",
     }
