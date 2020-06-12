@@ -54,7 +54,6 @@ def get_twilio_message(backend_instance, backend_message_id):
 
 @quickcache(vary_on=['backend_instance', 'backend_message_id'], timeout=1 * 60)
 def get_infobip_message(backend_instance, backend_message_id):
-    from corehq.messaging.smsbackends.infobip.models import INFOBIP_DOMAIN
     from corehq.messaging.smsbackends.infobip.models import InfobipBackend
     try:
         infobip_backend = SQLMobileBackend.load(
@@ -64,9 +63,10 @@ def get_infobip_message(backend_instance, backend_message_id):
             include_deleted=True,
         )
         config = infobip_backend.config
-        api_suffix = '/sms/1/reports'
+        api_channel = '/sms/1'
+        api_suffix = '/reports'
         if config.scenario_key:
-            api_suffix = '/omni/1/reports'
+            api_channel = '/omni/1'
 
         headers = {
             'Authorization': f'App {config.auth_token}',
@@ -76,9 +76,18 @@ def get_infobip_message(backend_instance, backend_message_id):
         parameters = {
            'messageId': backend_message_id
         }
-        url = f'https://{config.personalized_subdomain}.{INFOBIP_DOMAIN}{api_suffix}'
-        response = requests.get(url, params=parameters, headers=headers)
-        response_content = json.loads(response.content)
-        return response_content['results'][0]
+        messages = _get_infobip_message_details(api_channel, api_suffix, config, headers, parameters)
+        if not messages:
+            api_suffix = '/logs'
+            messages = _get_infobip_message_details(api_channel, api_suffix, config, headers, parameters)
+        return messages[0]
     except Exception as e:
         raise RetryBillableTaskException(str(e))
+
+def _get_infobip_message_details(api_channel, api_suffix, config, headers, parameters):
+    from corehq.messaging.smsbackends.infobip.models import INFOBIP_DOMAIN
+    url = f'https://{config.personalized_subdomain}.{INFOBIP_DOMAIN}{api_channel}{api_suffix}'
+    response = requests.get(url, params=parameters, headers=headers)
+    response_content = json.loads(response.content)
+    messages = response_content['results']
+    return messages
