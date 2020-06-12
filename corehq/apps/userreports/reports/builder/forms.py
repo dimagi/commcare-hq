@@ -81,7 +81,7 @@ from corehq.toggles import (
     SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER,
     SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER,
     OVERRIDE_EXPANDED_COLUMN_LIMIT_IN_REPORT_BUILDER,
-)
+    SHOW_IDS_IN_REPORT_BUILDER)
 
 
 STATIC_CASE_PROPS = [
@@ -552,6 +552,7 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
             'user_id': _('User ID Last Updating Case'),
             'owner_name': _('Case Owner'),
             'mobile worker': _('Mobile Worker Last Updating Case'),
+            'case_id': _('Case ID')
         }
 
         properties = OrderedDict()
@@ -571,9 +572,23 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
         properties[COMPUTED_OWNER_NAME_PROPERTY_ID] = self._get_owner_name_pseudo_property()
         properties[COMPUTED_USER_NAME_PROPERTY_ID] = self._get_user_name_pseudo_property()
 
+        if SHOW_IDS_IN_REPORT_BUILDER.enabled(self.domain):
+            properties['case_id'] = self._get_case_id_pseudo_property()
+
         if SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER.enabled(self.domain):
             properties[COMPUTED_OWNER_LOCATION_PROPERTY_ID] = self._get_owner_location_pseudo_property()
+
         return properties
+
+    @staticmethod
+    def _get_case_id_pseudo_property():
+        return DataSourceProperty(
+            type=PROPERTY_TYPE_CASE_PROP,
+            id='case_id',
+            text=_('Case ID'),
+            source='case_id',
+            data_types=["string"],
+        )
 
     @staticmethod
     def _get_owner_name_pseudo_property():
