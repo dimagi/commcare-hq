@@ -2849,5 +2849,6 @@ class DailyOutboundSMSLimitReached(models.Model):
         # require use of a CriticalSection to prevent IntegrityErrors.
         try:
             cls.objects.create(domain=domain, date=date)
+            return True
         except IntegrityError:
-            pass
+            return False

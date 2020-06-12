@@ -51,3 +51,21 @@ def send_monthly_sms_report():
         send_html_email_async.delay(subject, recipients, message,
                                     email_from=settings.DEFAULT_FROM_EMAIL)
         raise e
+
+
+def send_sms_limit_exceeded_alert(domain, date, sms_limit):
+    if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+        subject = "SMS Daily Limit exceeded"
+        recipients = [
+            'ndube@dimagi.com',
+            'dsivaramakrishnan@dimagi.com',
+            'mshashtri@dimagi.com',
+            'asharma@dimagi.com'
+        ]
+        message = _("""
+        Hi,
+        This is to inform you that the Daily SMS limit for {domain} has reached on {date}.
+        The current limit set is {sms_limit}
+        """).format(domain=domain, date=date, sms_limit=sms_limit)
+        send_html_email_async.delay(subject, recipients, message,
+                email_from=settings.DEFAULT_FROM_EMAIL)
