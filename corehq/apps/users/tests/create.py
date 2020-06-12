@@ -22,7 +22,7 @@ class CreateTestCase(TestCase):
         domain = "test"
         domain_obj = create_domain(domain)
         self.addCleanup(domain_obj.delete)
-        couch_user = WebUser.create(domain, username, password, email)
+        couch_user = WebUser.create(domain, username, password, email=email)
         self.addCleanup(couch_user.delete)
 
         self.assertEqual(couch_user.domains, [domain])
@@ -45,7 +45,7 @@ class CreateTestCase(TestCase):
         domain2 = create_domain('domain2')
         self.addCleanup(domain2.delete)
         self.addCleanup(domain1.delete)
-        couch_user = WebUser.create(None, username, password, email)
+        couch_user = WebUser.create(None, username, password, email=email)
         self.addCleanup(couch_user.delete)
         self.assertEqual(couch_user.username, username)
         self.assertEqual(couch_user.email, email)
@@ -81,8 +81,8 @@ class TestDomainMemberships(TestCase):
         cls.project.save()
         create_domain('nodomain')
 
-        cls.webuser = WebUser.create(cls.domain, w_username, password, w_email)
-        cls.webuser2 = WebUser.create('nodomain', w2_username, password, w2_email)
+        cls.webuser = WebUser.create(cls.domain, w_username, password, email=w_email)
+        cls.webuser2 = WebUser.create('nodomain', w2_username, password, email=w2_email)
         cls.ccuser = CommCareUser.create(cls.domain, cc_username, password)
 
     def setUp(self):
