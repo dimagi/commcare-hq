@@ -64,7 +64,7 @@ def get_last_visited_domain(couch_user):
 
 def set_last_visited_domain(couch_user, domain):
     client = cache_core.get_redis_client()
-    cache_expiration = 60 * 60 * 24
+    cache_expiration = 60 * 60 * 24 * 7
     cache_key = _last_visited_domain_cache_key(couch_user)
     client.set(cache_key, domain)
     client.expire(cache_key, cache_expiration)
