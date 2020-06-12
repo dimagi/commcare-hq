@@ -1170,6 +1170,13 @@ SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+SHOW_IDS_IN_REPORT_BUILDER = StaticToggle(
+    'show_ids_in_report_builder',
+    'Allow adding Case IDs to report builder reports.',
+    TAG_SOLUTIONS_OPEN,
+    [NAMESPACE_DOMAIN],
+)
+
 MOBILE_USER_DEMO_MODE = StaticToggle(
     'mobile_user_demo_mode',
     'Ability to make a mobile worker into Demo only mobile worker',
