@@ -2852,20 +2852,21 @@ class DailyOutboundSMSLimitReached(models.Model):
         except IntegrityError:
             pass
 
-    class Email(models.Model):
-        """
-        Represents an email that is associated with a messaging subevent.
-        """
 
-        domain = models.CharField(max_length=126, null=True, db_index=True)
-        date = models.DateTimeField(null=True, db_index=True)
-        couch_recipient_doc_type = models.CharField(max_length=126, null=True, db_index=True)
-        couch_recipient = models.CharField(max_length=126, null=True, db_index=True)
+class Email(models.Model):
+    """
+    Represents an email that is associated with a messaging subevent.
+    """
 
-        # The MessagingSubEvent that this email is tied to
-        messaging_subevent = models.ForeignKey('sms.MessagingSubEvent', null=True, on_delete=models.PROTECT)
+    domain = models.CharField(max_length=126, null=True, db_index=True)
+    date = models.DateTimeField(null=True, db_index=True)
+    couch_recipient_doc_type = models.CharField(max_length=126, null=True, db_index=True)
+    couch_recipient = models.CharField(max_length=126, null=True, db_index=True)
 
-        # Email details
-        recipient_address = models.CharField(max_length=255, null=True, db_index=True)
-        subject = models.TextField(null=True)
-        body = models.TextField(null=True)
+    # The MessagingSubEvent that this email is tied to
+    messaging_subevent = models.ForeignKey('sms.MessagingSubEvent', null=True, on_delete=models.PROTECT)
+
+    # Email details
+    recipient_address = models.CharField(max_length=255, null=True, db_index=True)
+    subject = models.TextField(null=True)
+    body = models.TextField(null=True)
