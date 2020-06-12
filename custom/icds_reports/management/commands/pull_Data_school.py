@@ -47,17 +47,20 @@ class Command(BaseCommand):
                     if primary_school_admit == 'yes' and parser.parse(date_primary_admit) < next_month:
                         count_primary_school_going += 1
 
-                    if date_last_private_admit is not None and parser.parse(date_last_private_admit) < next_month and \
-                        (date_return_private is None or parser.parse(date_return_private) >= next_month):
+                    if (date_last_private_admit is not None and parser.parse(date_last_private_admit) < next_month and
+                        (date_return_private is None or parser.parse(date_return_private) >= next_month)):
                         count_private_school_going += 1
 
-                    if primary_school_admit == 'yes' and parser.parse(date_primary_admit) >= month and parser.parse(date_primary_admit) < next_month:
+                    if (primary_school_admit == 'yes' and parser.parse(date_primary_admit) >= month and
+                        parser.parse(date_primary_admit) < next_month):
                         count_joined_primary_school_during_month += 1
 
-                    if date_last_private_admit is not None and  parser.parse(date_last_private_admit) >= month and parser.parse(date_last_private_admit)< next_month:
+                    if (date_last_private_admit is not None and  parser.parse(date_last_private_admit) >= month and
+                        parser.parse(date_last_private_admit)< next_month):
                         count_joined_private_school_during_month += 1
 
-                    if date_return_private is not None and parser.parse(date_return_private) >= month and parser.parse(date_return_private) < next_month:
+                    if (date_return_private is not None and parser.parse(date_return_private) >= month and
+                        parser.parse(date_return_private) < next_month):
                         count_stopped_private_school_during_month += 1
 
                 count_children_pse_in_awc = len(total_count) - count_primary_school_going - count_private_school_going
