@@ -1,11 +1,13 @@
 from django.conf import settings
-from django.core.mail import mail_admins, send_mail
+from django.core.mail import mail_admins
+from django.core.mail.message import EmailMessage
 
 from celery.schedules import crontab
 from celery.task import task, periodic_task
 
 from corehq.util.bounced_email_manager import BouncedEmailManager
 from corehq.util.metrics import metrics_gauge_task, metrics_track_errors
+from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER
 from dimagi.utils.logging import notify_exception
 
 from corehq.util.log import send_HTML_email
@@ -13,9 +15,7 @@ from corehq.util.log import send_HTML_email
 
 @task(serializer='pickle', queue="email_queue",
       bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
-def send_mail_async(self, subject, message, from_email, recipient_list,
-                    fail_silently=False, auth_user=None, auth_password=None,
-                    connection=None):
+def send_mail_async(self, subject, message, from_email, recipient_list, messaging_event_id=None):
     """ Call with send_mail_async.delay(*args, **kwargs)
     - sends emails in the main celery queue
     - if sending fails, retry in 15 min
@@ -40,10 +40,20 @@ def send_mail_async(self, subject, message, from_email, recipient_list,
 
     if not recipient_list:
         return
+
+    headers = {}
+    if messaging_event_id is not None:
+        headers = {COMMCARE_MESSAGE_ID_HEADER: messaging_event_id}
+
     try:
-        send_mail(subject, message, from_email, recipient_list,
-                  fail_silently=fail_silently, auth_user=auth_user,
-                  auth_password=auth_password, connection=connection)
+        message = EmailMessage(
+            subject=subject,
+            body=message,
+            from_email=from_email,
+            to=recipient_list,
+            headers=headers,
+        )
+        return message.send()
     except Exception as e:
         notify_exception(
             None,
@@ -62,17 +72,27 @@ def send_mail_async(self, subject, message, from_email, recipient_list,
 def send_html_email_async(self, subject, recipient, html_content,
                           text_content=None, cc=None,
                           email_from=settings.DEFAULT_FROM_EMAIL,
-                          file_attachments=None, bcc=None, smtp_exception_skip_list=None):
+                          file_attachments=None, bcc=None,
+                          smtp_exception_skip_list=None,
+                          messaging_event_id=None):
     """ Call with send_HTML_email_async.delay(*args, **kwargs)
     - sends emails in the main celery queue
     - if sending fails, retry in 15 min
     - retry a maximum of 10 times
     """
     try:
-        send_HTML_email(subject, recipient, html_content,
-                        text_content=text_content, cc=cc, email_from=email_from,
-                        file_attachments=file_attachments, bcc=bcc,
-                        smtp_exception_skip_list=smtp_exception_skip_list)
+        send_HTML_email(
+            subject,
+            recipient,
+            html_content,
+            text_content=text_content,
+            cc=cc,
+            email_from=email_from,
+            file_attachments=file_attachments,
+            bcc=bcc,
+            smtp_exception_skip_list=smtp_exception_skip_list,
+            messaging_event_id=messaging_event_id
+        )
     except Exception as e:
         recipient = list(recipient) if not isinstance(recipient, str) else [recipient]
         notify_exception(
