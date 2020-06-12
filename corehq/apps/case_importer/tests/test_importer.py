@@ -430,7 +430,7 @@ class ImporterTest(TestCase):
 
     @run_with_all_backends
     def test_columns_and_rows_align(self):
-        case_owner = CommCareUser.create(self.domain, 'username', 'pw')
+        case_owner = CommCareUser.create(self.domain, 'username', 'pw', None, None)
         res = self.import_mock_file([
             ['case_id', 'name', '', 'favorite_color', 'owner_id'],
             ['', 'Jeff', '', 'blue', case_owner._id],
@@ -466,9 +466,9 @@ class ImporterTest(TestCase):
     def test_user_can_access_owner(self):
         with make_business_units(self.domain) as (inc, dsi, dsa), \
                 restrict_user_to_location(self, dsa):
-            inc_owner = CommCareUser.create(self.domain, 'inc', 'pw', location=inc)
-            dsi_owner = CommCareUser.create(self.domain, 'dsi', 'pw', location=dsi)
-            dsa_owner = CommCareUser.create(self.domain, 'dsa', 'pw', location=dsa)
+            inc_owner = CommCareUser.create(self.domain, 'inc', 'pw', None, None, location=inc)
+            dsi_owner = CommCareUser.create(self.domain, 'dsi', 'pw', None, None, location=dsi)
+            dsa_owner = CommCareUser.create(self.domain, 'dsa', 'pw', None, None, location=dsa)
 
             res = self.import_mock_file([
                 ['case_id', 'name', 'owner_id'],

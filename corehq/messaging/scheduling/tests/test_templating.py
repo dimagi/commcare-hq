@@ -23,6 +23,8 @@ class TemplatingTestCase(TestCase):
             cls.domain,
             'mobile1@templating-test',
             '12345',
+            None,
+            None,
             first_name='Mobile',
             last_name='User'
         )

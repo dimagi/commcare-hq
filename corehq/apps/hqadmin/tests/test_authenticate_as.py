@@ -15,7 +15,7 @@ class AuthenticateAsFormTest(TestCase):
         super(AuthenticateAsFormTest, cls).setUpClass()
         cls.domain = Domain(name='pottery')
         cls.domain.save()
-        cls.mobile_worker = CommCareUser.create('potter', 'harry@potter.commcarehq.org', '123')
+        cls.mobile_worker = CommCareUser.create('potter', 'harry@potter.commcarehq.org', '123', None, None)
         cls.regular = WebUser.create('pottery', 'awebuser', '***', None, None, is_active=True)
 
     @classmethod
@@ -76,7 +76,7 @@ class AuthenticateAsIntegrationTest(TestCase):
 
         cls.user.is_superuser = True
         cls.user.save()
-        cls.mobile_worker = CommCareUser.create('potter', 'harry@potter.commcarehq.org', '123')
+        cls.mobile_worker = CommCareUser.create('potter', 'harry@potter.commcarehq.org', '123', None, None)
         cls.regular = WebUser.create(cls.domain.name, cls.regular_name, cls.password, None, None, is_active=True)
 
     @classmethod

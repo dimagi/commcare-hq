@@ -38,6 +38,8 @@ class TestBugReport(TestCase):
             cls.domain,
             'bug-kid',
             password='***',
+            created_by=None,
+            created_via=None,
         )
         cls.url = reverse("bug_report")
 

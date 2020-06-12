@@ -73,7 +73,7 @@ class CallCenterLocationOwnerOptionsViewTest(TestCase):
         cls.location_ids = {l._id for l in cls.locations}
 
         # Create users
-        cls.users = [CommCareUser.create(TEST_DOMAIN, 'user{}'.format(i), '***') for i in range(3)]
+        cls.users = [CommCareUser.create(TEST_DOMAIN, 'user{}'.format(i), '***', None, None) for i in range(3)]
         for user in cls.users:
             send_to_elasticsearch('users', user.to_json())
         es.indices.refresh(USER_INDEX_INFO.index)

@@ -378,7 +378,8 @@ class TestSingleSignOnResource(APIResourceTest):
         super(TestSingleSignOnResource, self).setUp()
         self.commcare_username = 'webby@qwerty.commcarehq.org'
         self.commcare_password = '*****'
-        self.commcare_user = CommCareUser.create(self.domain.name, self.commcare_username, self.commcare_password)
+        self.commcare_user = CommCareUser.create(self.domain.name, self.commcare_username, self.commcare_password,
+                                                 None, None)
 
     def tearDown(self):
         self.commcare_user.delete()

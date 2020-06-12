@@ -50,21 +50,29 @@ class RestorePermissionsTest(LocationHierarchyTestCase):
             username=format_username('super', cls.domain),
             domain=cls.domain,
             password='***',
+            created_by=None,
+            created_via=None,
         )
         cls.no_edit_commcare_user = CommCareUser.create(
             username=format_username('noedit', cls.domain),
             domain=cls.domain,
             password='***',
+            created_by=None,
+            created_via=None,
         )
         cls.location_user = CommCareUser.create(
             username=format_username('location', cls.domain),
             domain=cls.domain,
             password='***',
+            created_by=None,
+            created_via=None,
         )
         cls.wrong_location_user = CommCareUser.create(
             username=format_username('wrong-location', cls.domain),
             domain=cls.domain,
             password='***',
+            created_by=None,
+            created_via=None,
         )
         cls.web_location_user = WebUser.create(
             username='web-location@location.com',
@@ -232,11 +240,15 @@ class GetRestoreUserTest(TestCase):
             username=format_username('jane', cls.domain),
             domain=cls.domain,
             password='***',
+            created_by=None,
+            created_via=None,
         )
         cls.other_commcare_user = CommCareUser.create(
             username=format_username('john', cls.domain),
             domain=cls.domain,
             password='***',
+            created_by=None,
+            created_via=None,
         )
         cls.super_user = WebUser.create(
             username='super@woman.com',

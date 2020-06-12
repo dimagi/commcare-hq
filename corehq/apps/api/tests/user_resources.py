@@ -36,7 +36,8 @@ class TestCommCareUserResource(APIResourceTest):
 
     def test_get_list(self):
 
-        commcare_user = CommCareUser.create(domain=self.domain.name, username='fake_user', password='*****')
+        commcare_user = CommCareUser.create(domain=self.domain.name, username='fake_user', password='*****',
+                                            created_by=None, created_via=None)
         self.addCleanup(commcare_user.delete)
         backend_id = commcare_user.get_id
         update_analytics_indexes()
@@ -63,7 +64,8 @@ class TestCommCareUserResource(APIResourceTest):
     @flaky
     def test_get_single(self):
 
-        commcare_user = CommCareUser.create(domain=self.domain.name, username='fake_user', password='*****')
+        commcare_user = CommCareUser.create(domain=self.domain.name, username='fake_user', password='*****',
+                                            created_by=None, created_via=None)
         self.addCleanup(commcare_user.delete)
         backend_id = commcare_user._id
 
@@ -130,7 +132,8 @@ class TestCommCareUserResource(APIResourceTest):
 
     def test_update(self):
 
-        user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234")
+        user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
+                                   created_by=None, created_via=None)
         group = Group({"name": "test"})
         group.save()
 

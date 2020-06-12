@@ -38,7 +38,7 @@ class PasswordResetTest(TestCase):
 
     def test_mobile_worker_excluded(self):
         email = 'mw-excluded@example.com'
-        mobile_worker = CommCareUser.create(self.domain, 'mw-excluded', 's3cr3t', email=email)
+        mobile_worker = CommCareUser.create(self.domain, 'mw-excluded', 's3cr3t', None, None, email=email)
         self.addCleanup(mobile_worker.delete)
         results = list(get_active_users_by_email(email))
         self.assertEqual(0, len(results))
@@ -46,7 +46,7 @@ class PasswordResetTest(TestCase):
     @flag_enabled('TWO_STAGE_USER_PROVISIONING')
     def test_mobile_worker_included_with_flag(self):
         email = 'mw-included@example.com'
-        mobile_worker = CommCareUser.create(self.domain, 'mw-included', 's3cr3t', email=email)
+        mobile_worker = CommCareUser.create(self.domain, 'mw-included', 's3cr3t', None, None, email=email)
         self.addCleanup(mobile_worker.delete)
         results = list(get_active_users_by_email(email))
         self.assertEqual(1, len(results))

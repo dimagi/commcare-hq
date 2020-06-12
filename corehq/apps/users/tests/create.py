@@ -83,7 +83,7 @@ class TestDomainMemberships(TestCase):
 
         cls.webuser = WebUser.create(cls.domain, w_username, password, None, None, email=w_email)
         cls.webuser2 = WebUser.create('nodomain', w2_username, password, None, None, email=w2_email)
-        cls.ccuser = CommCareUser.create(cls.domain, cc_username, password)
+        cls.ccuser = CommCareUser.create(cls.domain, cc_username, password, None, None)
 
     def setUp(self):
         # Reload users before each test

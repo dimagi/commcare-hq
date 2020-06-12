@@ -283,12 +283,16 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             domain=self.domain_name,
             username='user_1',
             password='secret',
+            created_by=None,
+            created_via=None,
             email='email@example.com',
         )
         ccuser_2 = CommCareUser.create(
             domain=self.domain_name,
             username='user_2',
             password='secret',
+            created_by=None,
+            created_via=None,
             email='email1@example.com',
         )
         web_user = WebUser.create(
@@ -323,6 +327,8 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             domain=self.domain_name,
             username='user_1',
             password='secret',
+            created_by=None,
+            created_via=None,
             email='email@example.com',
             uuid='428d454aa9abc74e1964e16d3565d6b6'  # match ID in devicelog.xml
         )
@@ -349,6 +355,8 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             domain=self.domain_name,
             username='user_1',
             password='secret',
+            created_by=None,
+            created_via=None,
             email='email@example.com',
             uuid=user_id
         )

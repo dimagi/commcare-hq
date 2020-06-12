@@ -82,7 +82,7 @@ class PhoneUsersTestCase(TestCase):
         self.assertEqual(len(self.couch_user.phone_numbers), 0)
 
     def test_get_cached_full_name(self):
-        testuser = CommCareUser.create('test-domain', 'testuser', 'test-pass')
+        testuser = CommCareUser.create('test-domain', 'testuser', 'test-pass', None, None)
         FULL_NAME = "Test User"
         testuser.set_full_name(FULL_NAME)
         testuser.save()

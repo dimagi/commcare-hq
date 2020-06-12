@@ -96,7 +96,7 @@ class TestNewFormEditRestrictions(LocationHierarchyTestCase):
     @classmethod
     def make_mobile_user(cls, location):
         username = ''.join(random.sample(string.ascii_letters, 8))
-        user = CommCareUser.create(cls.domain, username, 'password')
+        user = CommCareUser.create(cls.domain, username, 'password', None, None)
         user.set_location(cls.locations[location])
         return user
 
@@ -160,7 +160,7 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
         cls.restrict_user_to_assigned_locations(cls.suffolk_user)
 
         def make_mobile_worker(username, location):
-            worker = CommCareUser.create(cls.domain, username, '123')
+            worker = CommCareUser.create(cls.domain, username, '123', None, None)
             worker.set_location(cls.locations[location])
             UserESFake.save_doc(worker._doc)
             return worker

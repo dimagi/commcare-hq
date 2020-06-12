@@ -246,7 +246,7 @@ class OwnerTests(LocationHierarchyTestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.web_user = WebUser.create(TEST_DOMAIN, 'user1', '***', None, None)
-        cls.mobile_worker = CommCareUser.create(TEST_DOMAIN, 'chw1', '***')
+        cls.mobile_worker = CommCareUser.create(TEST_DOMAIN, 'chw1', '***', None, None)
         cls.group = Group.wrap({
             'domain': TEST_DOMAIN,
             'name': 'group',
@@ -375,7 +375,7 @@ class OpenmrsAtomFeedsTests(TestCase):
             location_id='test_location',
             location_type=cls.location_type,
         )
-        cls.user = CommCareUser.create(TEST_DOMAIN, 'username', 'password', location=cls.location)
+        cls.user = CommCareUser.create(TEST_DOMAIN, 'username', 'password', None, None, location=cls.location)
         cls.repeater = OpenmrsRepeater.wrap({
             "domain": TEST_DOMAIN,
             "url": "https://demo.mybahmni.org/openmrs/",
