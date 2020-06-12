@@ -52,9 +52,7 @@ class DomainHistoryMiddleware(MiddlewareMixin):
 
     def remember_domain_visit(self, request):
         if hasattr(request, 'couch_user') and request.couch_user:
-            last_visited_domain = get_last_visited_domain(request.couch_user)
-            if last_visited_domain != request.domain:
-                set_last_visited_domain(request.couch_user, request.domain)
+            set_last_visited_domain(request.couch_user, request.domain)
 
 
 def get_last_visited_domain(couch_user):
