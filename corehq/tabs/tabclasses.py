@@ -98,7 +98,7 @@ from corehq.tabs.utils import (
     sidebar_to_dropdown,
 )
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
-from custom.icds.view_utils import data_interfaces_blocked_for_domain
+from custom.icds.view_utils import is_icds_cas_project
 from custom.icds.views.hosted_ccz import ManageHostedCCZ, ManageHostedCCZLink
 
 
@@ -792,7 +792,7 @@ class ProjectDataTab(UITab):
 
         if self.can_edit_commcare_data:
             edit_section = None
-            if not data_interfaces_blocked_for_domain(self.domain):
+            if not is_icds_cas_project(self.domain):
                 from corehq.apps.data_interfaces.dispatcher import EditDataInterfaceDispatcher
                 edit_section = EditDataInterfaceDispatcher.navigation_sections(
                     request=self._request, domain=self.domain)
@@ -976,7 +976,7 @@ class CloudcareTab(UITab):
             has_privilege(self._request, privileges.CLOUDCARE)
             and self.domain
             and not isinstance(self.couch_user, AnonymousCouchUser)
-            and (self.couch_user.can_edit_data() or self.couch_user.is_commcare_user())
+            and (self.couch_user.can_access_web_apps() or self.couch_user.is_commcare_user())
         )
 
 
@@ -1187,7 +1187,7 @@ class MessagingTab(UITab):
     def whatsapp_urls(self):
         from corehq.apps.sms.models import SQLMobileBackend
         from corehq.messaging.smsbackends.turn.models import SQLTurnWhatsAppBackend
-        from corehq.messaging.smsbackends.infobip.models import SQLInfobipBackend
+        from corehq.messaging.smsbackends.infobip.models import InfobipBackend
         from corehq.apps.sms.views import WhatsAppTemplatesView
         whatsapp_urls = []
 
@@ -1196,7 +1196,7 @@ class MessagingTab(UITab):
             (b.get_api_id() for b in
              SQLMobileBackend.get_domain_backends(SQLMobileBackend.SMS, self.domain)))
         domain_has_infobip_integration = (
-            SQLInfobipBackend.get_api_id() in
+            InfobipBackend.get_api_id() in
             (b.get_api_id() for b in
              SQLMobileBackend.get_domain_backends(SQLMobileBackend.SMS, self.domain)))
         user_is_admin = (self.couch_user.is_superuser or self.couch_user.is_domain_admin(self.domain))

@@ -24,7 +24,6 @@ from crispy_forms.layout import Fieldset, Layout, Submit
 from django_countries.data import COUNTRIES
 from memoized import memoized
 
-from corehq.toggles import TWO_STAGE_USER_PROVISIONING
 from dimagi.utils.django.fields import TrimmedCharField
 
 from corehq import toggles
@@ -36,16 +35,16 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQModalFormHelper
 from corehq.apps.hqwebapp.utils import decode_password
-from corehq.apps.hqwebapp.widgets import (
-    Select2Ajax,
-    SelectToggle,
-)
+from corehq.apps.hqwebapp.widgets import Select2Ajax, SelectToggle
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_location_id
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
-from corehq.apps.users.models import CouchUser, UserRole
+from corehq.apps.users.dbaccessors.all_commcare_users import user_exists
+from corehq.apps.users.models import DomainMembershipError, UserRole
 from corehq.apps.users.util import cc_user_domain, format_username
+from corehq.toggles import TWO_STAGE_USER_PROVISIONING
+from custom.icds.view_utils import is_icds_cas_project
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 
 mark_safe_lazy = lazy(mark_safe, str)
@@ -81,7 +80,10 @@ def clean_mobile_worker_username(domain, username, name_too_long_message=None,
     username = format_username(username, domain)
     validate_username(username)
 
-    if CouchUser.username_exists(username):
+    exists = user_exists(username)
+    if exists.exists:
+        if exists.is_deleted:
+            raise forms.ValidationError(_('This username was used previously.'))
         raise forms.ValidationError(name_exists_message or
             _('This Mobile Worker already exists.'))
 
@@ -1247,14 +1249,21 @@ class CommCareUserFilterForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         from corehq.apps.locations.forms import LocationSelectWidget
+        from corehq.apps.users.views import get_editable_role_choices
         self.domain = kwargs.pop('domain')
+        self.couch_user = kwargs.pop('couch_user')
         super(CommCareUserFilterForm, self).__init__(*args, **kwargs)
         self.fields['location_id'].widget = LocationSelectWidget(self.domain)
         self.fields['location_id'].help_text = ExpandedMobileWorkerFilter.location_search_help
 
-        roles = UserRole.by_domain(self.domain)
-        self.fields['role_id'].choices = [('', _('All Roles'))] + [
-            (role._id, role.name or _('(No Name)')) for role in roles]
+        if is_icds_cas_project(self.domain) and not self.couch_user.is_domain_admin(self.domain):
+            roles = get_editable_role_choices(self.domain, self.couch_user, allow_admin_role=True,
+                                              use_qualified_id=False)
+            self.fields['role_id'].choices = roles
+        else:
+            roles = UserRole.by_domain(self.domain)
+            self.fields['role_id'].choices = [('', _('All Roles'))] + [
+                (role._id, role.name or _('(No Name)')) for role in roles]
 
         self.helper = FormHelper()
         self.helper.form_method = 'GET'
@@ -1285,10 +1294,26 @@ class CommCareUserFilterForm(forms.Form):
 
     def clean_role_id(self):
         role_id = self.cleaned_data['role_id']
+        restricted_role_access = (
+            is_icds_cas_project(self.domain)
+            and not self.couch_user.is_domain_admin(self.domain)
+        )
         if not role_id:
-            return None
-        if not UserRole.get(role_id).domain == self.domain:
+            if restricted_role_access:
+                raise forms.ValidationError(_("Please select a role"))
+            else:
+                return None
+
+        role = UserRole.get(role_id)
+        if not role.domain == self.domain:
             raise forms.ValidationError(_("Invalid Role"))
+        if restricted_role_access:
+            try:
+                user_role_id = self.couch_user.get_role(self.domain).get_id
+            except DomainMembershipError:
+                user_role_id = None
+            if not role.accessible_by_non_admin_role(user_role_id):
+                raise forms.ValidationError(_("Role Access Denied"))
         return role_id
 
     def clean_search_string(self):

@@ -69,7 +69,7 @@ from corehq.apps.linked_domain.dbaccessors import get_linked_domains
 from corehq.apps.linked_domain.models import DomainLink, ReportLinkDetail
 from corehq.apps.linked_domain.ucr import create_linked_ucr
 from corehq.apps.linked_domain.util import is_linked_report
-from corehq.apps.locations.permissions import conditionally_location_safe, location_safe
+from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.saved_reports.models import ReportConfig
@@ -1421,20 +1421,6 @@ def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
             )
             return HttpResponse(msg, status=400)
         return export_response(Temp(path), params.format, adapter.display_name)
-
-
-@location_safe
-@login_and_domain_required
-def data_source_status(request, domain, config_id):
-    config, _ = get_datasource_config_or_404(config_id, domain)
-    build = config.meta.build
-    # there appears to be a way that these can be built, but not have initiated set
-    if build.initiated or build.initiated_in_place:
-        return JsonResponse({
-            'isBuilt': build.finished or build.rebuilt_asynchronously or build.finished_in_place
-        })
-
-    return JsonResponse({'isBuilt': True})
 
 
 def _get_report_filter(domain, report_id, filter_id):
