@@ -66,6 +66,7 @@ hqDefine("users/js/roles_and_permissions",[
             allowEdit: initialPageData.get("can_edit_roles"),
             canRestrictAccessByLocation: initialPageData.get("can_restrict_access_by_location"),
             landingPageChoices: initialPageData.get("landing_page_choices"),
+            webAppsPrivilege: initialPageData.get("web_apps_privilege")
         });
     });
 });
