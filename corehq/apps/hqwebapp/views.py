@@ -38,6 +38,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import LANGUAGE_SESSION_KEY
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
@@ -54,6 +55,7 @@ from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.util.metrics import create_metrics_event, metrics_counter, metrics_gauge
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
+from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import get_site_domain, get_url_base, json_response
@@ -97,6 +99,7 @@ from corehq.apps.hqwebapp.utils import (
 )
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent
 from corehq.apps.users.landing_pages import (
     get_cloudcare_urlname,
     get_redirect_url,
@@ -1276,3 +1279,35 @@ def temporary_google_verify(request):
     # will remove once google search console verify process completes
     # BMB 4/20/18
     return render(request, "google9633af922b8b0064.html")
+
+
+@require_POST
+@csrf_exempt
+def log_email_event(request):
+    # From Amazon SNS: https://docs.aws.amazon.com/ses/latest/DeveloperGuide/event-publishing-retrieving-sns-examples.html
+    request_json = json.loads(request.body)
+    message = json.loads(request_json['Message'])
+    headers = message.get('mail', {}).get('headers', [])
+
+    subevent_id = None
+    for header in headers:
+        if header["name"] == COMMCARE_MESSAGE_ID_HEADER:
+            subevent_id = header["value"]
+            break
+
+    if subevent_id is None:
+        return HttpResponse()
+
+    try:
+        subevent = MessagingSubEvent.objects.get(id=subevent_id)
+    except MessagingSubEvent.DoesNotExist:
+        return HttpResponse()   # There's nothing we can do here
+
+    event_type = message.get('eventType')
+    if event_type == 'Bounce':
+        subevent.status = MessagingEvent.STATUS_BOUNCE
+        subevent.additional_error_text = message['bounce']
+        subevent.save()
+
+    return HttpResponse()
+

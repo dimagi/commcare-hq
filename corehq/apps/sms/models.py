@@ -881,12 +881,14 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     STATUS_COMPLETED = 'CMP'
     STATUS_NOT_COMPLETED = 'NOT'
     STATUS_ERROR = 'ERR'
+    STATUS_BOUNCE = 'BNC'
 
     STATUS_CHOICES = (
         (STATUS_IN_PROGRESS, ugettext_noop('In Progress')),
         (STATUS_COMPLETED, ugettext_noop('Completed')),
         (STATUS_NOT_COMPLETED, ugettext_noop('Not Completed')),
         (STATUS_ERROR, ugettext_noop('Error')),
+        (STATUS_BOUNCE, ugettext_noop('Bounce')),
     )
 
     SOURCE_BROADCAST = 'BRD'
