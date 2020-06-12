@@ -312,7 +312,6 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.vertex',
     'corehq.messaging.smsbackends.start_enterprise',
     'corehq.messaging.smsbackends.ivory_coast_mtn',
-    'corehq.messaging.smsbackends.karix',
     'corehq.messaging.smsbackends.airtel_tcl',
     'corehq.apps.reports.app_config.ReportsModule',
     'corehq.apps.reports_core',
@@ -1526,7 +1525,6 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.vertex.models.VertexBackend',
     'corehq.messaging.smsbackends.start_enterprise.models.StartEnterpriseBackend',
     'corehq.messaging.smsbackends.ivory_coast_mtn.models.IvoryCoastMTNBackend',
-    'corehq.messaging.smsbackends.karix.models.KarixBackend',
     'corehq.messaging.smsbackends.airtel_tcl.models.AirtelTCLBackend',
 ]
 

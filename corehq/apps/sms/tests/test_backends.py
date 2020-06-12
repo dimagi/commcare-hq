@@ -45,7 +45,6 @@ from corehq.messaging.smsbackends.icds_nic.models import SQLICDSBackend
 from corehq.messaging.smsbackends.ivory_coast_mtn.models import (
     IvoryCoastMTNBackend,
 )
-from corehq.messaging.smsbackends.karix.models import KarixBackend
 from corehq.messaging.smsbackends.mach.models import SQLMachBackend
 from corehq.messaging.smsbackends.megamobile.models import SQLMegamobileBackend
 from corehq.messaging.smsbackends.push.models import PushBackend
@@ -209,13 +208,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         )
         cls.ivory_coast_mtn_backend.save()
 
-        cls.karix_backend = KarixBackend(
-            name='KARIX',
-            is_global=True,
-            hq_api_id=KarixBackend.get_api_id()
-        )
-        cls.karix_backend.save()
-
         cls.airtel_tcl_backend = AirtelTCLBackend(
             name='AIRTEL_TCL',
             is_global=True,
@@ -260,7 +252,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         cls.vertext_backend.delete()
         cls.start_enterprise_backend.delete()
         cls.ivory_coast_mtn_backend.delete()
-        cls.karix_backend.delete()
         cls.airtel_tcl_backend.delete()
         cls.trumpia_backend.delete()
         cls.infobip_backend.delete()
@@ -356,7 +347,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
     @patch('corehq.messaging.smsbackends.vertex.models.VertexBackend.send')
     @patch('corehq.messaging.smsbackends.start_enterprise.models.StartEnterpriseBackend.send')
     @patch('corehq.messaging.smsbackends.ivory_coast_mtn.models.IvoryCoastMTNBackend.send')
-    @patch('corehq.messaging.smsbackends.karix.models.KarixBackend.send')
     @patch('corehq.messaging.smsbackends.airtel_tcl.models.AirtelTCLBackend.send')
     @patch('corehq.messaging.smsbackends.trumpia.models.TrumpiaBackend.send')
     @patch('corehq.messaging.smsbackends.infobip.models.SQLInfobipBackend.send')
@@ -365,7 +355,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
             infobip_send,
             trumpia_send,
             airtel_tcl_send,
-            karix_send,
             ivory_coast_mtn_send,
             start_ent_send,
             vertex_send,
@@ -402,7 +391,6 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         self._test_outbound_backend(self.vertext_backend, 'vertex_test', vertex_send)
         self._test_outbound_backend(self.start_enterprise_backend, 'start_ent_test', start_ent_send)
         self._test_outbound_backend(self.ivory_coast_mtn_backend, 'ivory_coast_mtn_test', ivory_coast_mtn_send)
-        self._test_outbound_backend(self.karix_backend, 'karix test', karix_send)
         self._test_outbound_backend(self.airtel_tcl_backend, 'airtel tcl test', airtel_tcl_send)
         self._test_outbound_backend(self.trumpia_backend, 'trumpia test', trumpia_send)
         self._test_outbound_backend(self.infobip_backend, 'infobip test', infobip_send)
