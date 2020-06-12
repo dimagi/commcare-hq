@@ -13,6 +13,9 @@ is only supported in HTML. Please set your email client to display this message
 in HTML, or use an email client that supports HTML emails.
 """
 
+# This is used to mark messages as bounced, etc. from Amazon's SES email service
+COMMCARE_MESSAGE_ID_HEADER = "X-COMMCAREHQ-MESSAGE-ID"
+
 LARGE_FILE_SIZE_ERROR_CODE = 552
 # ICDS TCL gateway uses non-standard code
 LARGE_FILE_SIZE_ERROR_CODE_ICDS_TCL = 452
@@ -41,7 +44,8 @@ def get_valid_recipients(recipients):
 
 def send_HTML_email(subject, recipient, html_content, text_content=None,
                     cc=None, email_from=settings.DEFAULT_FROM_EMAIL,
-                    file_attachments=None, bcc=None, smtp_exception_skip_list=None):
+                    file_attachments=None, bcc=None,
+                    smtp_exception_skip_list=None, messaging_event_id=None):
     recipients = list(recipient) if not isinstance(recipient, str) else [recipient]
     recipients = get_valid_recipients(recipients)
     if not recipients:
@@ -58,14 +62,17 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
     elif not isinstance(text_content, str):
         text_content = text_content.decode('utf-8')
 
-    from_header = {'From': email_from}  # From-header
+    headers = {'From': email_from}  # From-header
 
     if settings.RETURN_PATH_EMAIL:
-        from_header['Return-Path'] = settings.RETURN_PATH_EMAIL
+        headers['Return-Path'] = settings.RETURN_PATH_EMAIL
+
+    if messaging_event_id is not None:
+        headers[COMMCARE_MESSAGE_ID_HEADER] = messaging_event_id
 
     connection = get_connection()
     msg = EmailMultiAlternatives(subject, text_content, email_from,
-                                 recipients, headers=from_header,
+                                 recipients, headers=headers,
                                  connection=connection, cc=cc, bcc=bcc)
     for file in (file_attachments or []):
         if file:
