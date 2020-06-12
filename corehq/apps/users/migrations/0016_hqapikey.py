@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('users', '0016_webappspermissions'),
+        ('users', '0015_domainpermissionsmirror'),
     ]
 
     operations = [
