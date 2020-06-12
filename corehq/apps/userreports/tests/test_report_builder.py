@@ -139,7 +139,7 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
         self.assertEqual(COMPUTED_OWNER_LOCATION_PROPERTY_ID, owner_location_prop.get_id())
         self.assertEqual('Case Owner (Location)', owner_location_prop.get_text())
         owner_location_prop_w_descendants = \
-            builder.data_source_properties[COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID ]
+            builder.data_source_properties[COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID]
         self.assertEqual(COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID,
                          owner_location_prop_w_descendants.get_id())
         self.assertEqual('Case Owner (Location w/ Descendants)', owner_location_prop_w_descendants.get_text())
