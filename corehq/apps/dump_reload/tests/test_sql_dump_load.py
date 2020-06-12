@@ -84,10 +84,11 @@ class BaseDumpLoadTest(TestCase):
         self.delete_sql_data()
         super(BaseDumpLoadTest, self).tearDown()
 
-    def _dump_and_load(self, expected_object_counts):
-        expected_object_counts.update(self.default_objects_counts)
+    def _dump_and_load(self, expected_dump_counts, load_filter=None, expected_load_counts=None):
+        expected_load_counts = expected_load_counts or expected_dump_counts
+        expected_dump_counts.update(self.default_objects_counts)
 
-        models = list(expected_object_counts)
+        models = list(expected_dump_counts)
         self._check_signals_handle_raw(models)
 
         output_stream = StringIO()
@@ -101,18 +102,23 @@ class BaseDumpLoadTest(TestCase):
         counts = Counter(object_classes)
         self.assertEqual([], objects_remaining, 'Not all data deleted: {}'.format(counts))
 
+        # Dump
         dump_output = output_stream.getvalue().split('\n')
         dump_lines = [line.strip() for line in dump_output if line.strip()]
-        total_object_count, loaded_model_counts = SqlDataLoader().load_objects(dump_lines)
 
-        expected_model_counts = _normalize_object_counter(expected_object_counts)
+        expected_model_counts = _normalize_object_counter(expected_dump_counts)
         actual_model_counts = Counter([json.loads(line)['model'] for line in dump_lines])
-        expected_total_objects = sum(expected_object_counts.values())
         self.assertDictEqual(dict(expected_model_counts), dict(actual_model_counts))
-        expected_loaded_counts = _normalize_object_counter(expected_object_counts, for_loaded=True)
-        self.assertDictEqual(dict(expected_loaded_counts), dict(loaded_model_counts))
-        self.assertEqual(expected_total_objects, sum(loaded_model_counts.values()))
-        self.assertEqual(expected_total_objects, total_object_count)
+
+        # Load
+        loader = SqlDataLoader(object_filter=load_filter)
+        total_object_count, loaded_model_counts = loader.load_objects(dump_lines)
+
+        normalized_expected_loaded_counts = _normalize_object_counter(expected_load_counts, for_loaded=True)
+        self.assertDictEqual(dict(normalized_expected_loaded_counts), dict(loaded_model_counts))
+        expected_total_load_objects = sum(expected_load_counts.values())
+        self.assertEqual(expected_total_load_objects, sum(loaded_model_counts.values()))
+        self.assertEqual(expected_total_load_objects, total_object_count)
 
         return dump_lines
 
@@ -550,6 +556,18 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             organization=org, slug='testp', name='demop', domain=self.domain_name
         )
         self._dump_and_load(Counter({TransifexOrganization: 1, TransifexProject: 1}))
+
+    def test_filtered_dump_load(self):
+        from corehq.apps.locations.tests.test_location_types import make_loc_type
+        from corehq.apps.products.models import SQLProduct
+        from corehq.apps.locations.models import LocationType
+
+        make_loc_type('state', domain=self.domain_name)
+        SQLProduct.objects.create(domain=self.domain_name, product_id='test1', name='test1')
+        expected_object_counts = Counter({LocationType: 1, SQLProduct: 1})
+
+        self._dump_and_load(expected_object_counts, load_filter='sqlproduct', expected_load_counts=Counter({SQLProduct: 1}))
+        self.assertEqual(0, LocationType.objects.count())
 
     def test_sms_content(self):
         from corehq.messaging.scheduling.models import AlertSchedule, SMSContent, AlertEvent

@@ -42,7 +42,7 @@ from corehq.apps.userreports.reports.builder import (
     DEFAULT_CASE_PROPERTY_DATATYPES,
     FORM_METADATA_PROPERTIES,
     get_filter_format_from_question_type,
-)
+    const)
 from corehq.apps.userreports.reports.builder.columns import (
     CasePropertyColumnOption,
     CountColumn,
@@ -55,6 +55,7 @@ from corehq.apps.userreports.reports.builder.columns import (
 )
 from corehq.apps.userreports.reports.builder.const import (
     COMPUTED_OWNER_LOCATION_PROPERTY_ID,
+    COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID,
     COMPUTED_OWNER_NAME_PROPERTY_ID,
     COMPUTED_USER_NAME_PROPERTY_ID,
     PROPERTY_TYPE_CASE_PROP,
@@ -70,6 +71,7 @@ from corehq.apps.userreports.reports.builder.const import (
     UI_AGG_GROUP_BY,
     UI_AGG_SUM,
 )
+from corehq.apps.userreports.reports.builder.filter_formats import get_pre_filter_format
 from corehq.apps.userreports.reports.builder.sources import (
     get_source_type_from_report_config,
 )
@@ -80,18 +82,8 @@ from corehq.toggles import (
     SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER,
     SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER,
     OVERRIDE_EXPANDED_COLUMN_LIMIT_IN_REPORT_BUILDER,
-)
+    SHOW_IDS_IN_REPORT_BUILDER)
 
-# This dict maps filter types from the report builder frontend to UCR filter types
-REPORT_BUILDER_FILTER_TYPE_MAP = {
-    'Choice': 'dynamic_choice_list',
-    'Date': 'date',
-    'Numeric': 'numeric',
-    'Value': 'pre',
-    'Is Empty': 'is_empty',
-    'Exists': 'exists',
-    'Value Not Equal': 'value_not_equal',
-}
 
 STATIC_CASE_PROPS = [
     "closed",
@@ -117,7 +109,7 @@ class FilterField(JsonField):
     def validate(self, value):
         super(FilterField, self).validate(value)
         for filter_conf in value:
-            if filter_conf.get('format', None) not in (list(REPORT_BUILDER_FILTER_TYPE_MAP) + [""]):
+            if filter_conf.get('format', None) not in (list(const.REPORT_BUILDER_FILTER_TYPE_MAP) + [""]):
                 raise forms.ValidationError("Invalid filter format!")
 
 
@@ -178,7 +170,9 @@ class DataSourceProperty(object):
         elif self._type == PROPERTY_TYPE_META:
             return FormMetaColumnOption(self._id, self._data_types, self._text, self._source)
         elif self._type == PROPERTY_TYPE_CASE_PROP:
-            if self._id == COMPUTED_OWNER_NAME_PROPERTY_ID or self._id == COMPUTED_OWNER_LOCATION_PROPERTY_ID:
+            if self._id in (
+                    COMPUTED_OWNER_NAME_PROPERTY_ID, COMPUTED_OWNER_LOCATION_PROPERTY_ID,
+                    COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID):
                 return OwnernameComputedCasePropertyOption(self._id, self._data_types, self._text)
             elif self._id == COMPUTED_USER_NAME_PROPERTY_ID:
                 return UsernameComputedCasePropertyOption(self._id, self._data_types, self._text)
@@ -200,7 +194,7 @@ class DataSourceProperty(object):
                 assert self._type == 'meta'
                 filter_format = get_filter_format_from_question_type(self._source[1])
         else:
-            filter_format = REPORT_BUILDER_FILTER_TYPE_MAP[selected_filter_type]
+            filter_format = const.REPORT_BUILDER_FILTER_TYPE_MAP[selected_filter_type]
         return filter_format
 
     def _get_ui_aggregation_for_filter_format(self, filter_format):
@@ -231,7 +225,7 @@ class DataSourceProperty(object):
             "display": configuration["display_text"],
             "type": filter_format
         }
-        if configuration['format'] == 'Date':
+        if configuration['format'] == const.FORMAT_DATE:
             filter.update({'compare_as_string': True})
         if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_OWNER_NAME_PROPERTY_ID:
             filter.update({"choice_provider": {"type": "owner"}})
@@ -239,25 +233,27 @@ class DataSourceProperty(object):
             filter.update({"choice_provider": {"type": "user"}})
         if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_OWNER_LOCATION_PROPERTY_ID:
             filter.update({"choice_provider": {"type": "location"}})
+        if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID:
+            filter.update({"choice_provider": {"type": "location", "include_descendants": True}})
         if configuration.get('pre_value') or configuration.get('pre_operator'):
             filter.update({
                 'type': 'pre',  # type could have been "date"
                 'pre_operator': configuration.get('pre_operator', None),
                 'pre_value': configuration.get('pre_value', []),
             })
-        if configuration['format'] == 'Is Empty':
+        if configuration['format'] == const.PRE_FILTER_VALUE_IS_EMPTY:
             filter.update({
                 'type': 'pre',
                 'pre_operator': "",
                 'pre_value': "",  # for now assume strings - this may not always work but None crashes
             })
-        if configuration['format'] == 'Exists':
+        if configuration['format'] == const.PRE_FILTER_VALUE_EXISTS:
             filter.update({
                 'type': 'pre',
                 'pre_operator': "!=",
                 'pre_value': "",
             })
-        if configuration['format'] == 'Value Not Equal':
+        if configuration['format'] == const.PRE_FILTER_VALUE_NOT_EQUAL:
             filter.update({
                 'type': 'pre',
                 'pre_operator': "distinct from",
@@ -561,6 +557,7 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
             'user_id': _('User ID Last Updating Case'),
             'owner_name': _('Case Owner'),
             'mobile worker': _('Mobile Worker Last Updating Case'),
+            'case_id': _('Case ID')
         }
 
         properties = OrderedDict()
@@ -580,9 +577,25 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
         properties[COMPUTED_OWNER_NAME_PROPERTY_ID] = self._get_owner_name_pseudo_property()
         properties[COMPUTED_USER_NAME_PROPERTY_ID] = self._get_user_name_pseudo_property()
 
+        if SHOW_IDS_IN_REPORT_BUILDER.enabled(self.domain):
+            properties['case_id'] = self._get_case_id_pseudo_property()
+
         if SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER.enabled(self.domain):
             properties[COMPUTED_OWNER_LOCATION_PROPERTY_ID] = self._get_owner_location_pseudo_property()
+            properties[COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID] = \
+                self._get_owner_location_with_descendants_pseudo_property()
+
         return properties
+
+    @staticmethod
+    def _get_case_id_pseudo_property():
+        return DataSourceProperty(
+            type=PROPERTY_TYPE_CASE_PROP,
+            id='case_id',
+            text=_('Case ID'),
+            source='case_id',
+            data_types=["string"],
+        )
 
     @staticmethod
     def _get_owner_name_pseudo_property():
@@ -606,6 +619,17 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
             id=COMPUTED_OWNER_LOCATION_PROPERTY_ID,
             text=_('Case Owner (Location)'),
             source=COMPUTED_OWNER_LOCATION_PROPERTY_ID,
+            data_types=["string"],
+        )
+
+    @classmethod
+    def _get_owner_location_with_descendants_pseudo_property(cls):
+        # similar to the location property but also include descendants
+        return DataSourceProperty(
+            type=PROPERTY_TYPE_CASE_PROP,
+            id=COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID,
+            text=_('Case Owner (Location w/ Descendants)'),
+            source=COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID,
             data_types=["string"],
         )
 
@@ -1154,7 +1178,7 @@ class ConfigureNewReportBase(forms.Form):
                 property='timeEnd',
                 data_source_field=None,
                 display_text='Form completion time',
-                format='Date',
+                format=const.FORMAT_DATE,
             ),
         ]
 
@@ -1167,22 +1191,14 @@ class ConfigureNewReportBase(forms.Form):
         field = filter['field']
         field, exists = self._check_and_update_column(field)
         if filter['type'] == 'pre':
-            return DefaultFilterViewModel(
-                exists_in_current_version=exists,
-                display_text='',
-                format='Value' if filter['pre_value'] else 'Date',
-                property=self._get_property_id_by_indicator_id(field) if exists else None,
-                data_source_field=field if not exists else None,
-                pre_value=filter['pre_value'],
-                pre_operator=filter['pre_operator'],
-            )
+            return self._get_default_filter_view_model_from_pre_filter(field, filter, exists)
         else:
             filter_type_map = {
-                'dynamic_choice_list': 'Choice',
+                'dynamic_choice_list': const.FORMAT_CHOICE,
                 # This exists to handle the `closed` filter that might exist
-                'choice_list': 'Choice',
-                'date': 'Date',
-                'numeric': 'Numeric'
+                'choice_list': const.FORMAT_CHOICE,
+                'date': const.FORMAT_DATE,
+                'numeric': const.FORMAT_NUMERIC
             }
             try:
                 format_ = filter_type_map[filter['type']]
@@ -1198,6 +1214,17 @@ class ConfigureNewReportBase(forms.Form):
                 property=self._get_property_id_by_indicator_id(field) if exists else None,
                 data_source_field=field if not exists else None
             )
+
+    def _get_default_filter_view_model_from_pre_filter(self, field, pre_filter, exists):
+        return DefaultFilterViewModel(
+            exists_in_current_version=exists,
+            display_text='',
+            format=get_pre_filter_format(pre_filter),
+            property=self._get_property_id_by_indicator_id(field) if exists else None,
+            data_source_field=field if not exists else None,
+            pre_value=pre_filter['pre_value'],
+            pre_operator=pre_filter['pre_operator'],
+        )
 
     def _get_column_option_by_indicator_id(self, indicator_column_id):
         """

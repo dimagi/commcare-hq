@@ -67,7 +67,9 @@ from custom.icds_reports.const import (
     THREE_MONTHS,
     DASHBOARD_USAGE_EXPORT,
     SERVICE_DELIVERY_REPORT,
-    CHILD_GROWTH_TRACKER_REPORT, POSHAN_PROGRESS_REPORT
+    CHILD_GROWTH_TRACKER_REPORT,
+    POSHAN_PROGRESS_REPORT,
+    AWW_ACTIVITY_REPORT
 )
 from custom.icds_reports.models import (
     AggAwc,
@@ -124,6 +126,7 @@ from custom.icds_reports.reports.service_delivery_report import ServiceDeliveryR
 from custom.icds_reports.sqldata.exports.awc_infrastructure import (
     AWCInfrastructureExport,
 )
+from custom.icds_reports.sqldata.exports.aww_activity_report import AwwActivityExport
 from custom.icds_reports.sqldata.exports.beneficiary import BeneficiaryExport
 from custom.icds_reports.sqldata.exports.children import ChildrenExport
 from custom.icds_reports.sqldata.exports.dashboard_usage import DashBoardUsage
@@ -151,7 +154,9 @@ from custom.icds_reports.utils import (
     zip_folder,
     get_dashboard_usage_excel_file,
     create_service_delivery_report,
-    create_child_growth_tracker_report, create_poshan_progress_report
+    create_child_growth_tracker_report,
+    create_poshan_progress_report,
+    create_aww_activity_report
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     ChildHealthMonthlyAggregationDistributedHelper,
@@ -356,6 +361,10 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
 
             res_sdr.get(disable_sync_subtasks=False)
 
+            res_inactive_aww = chain(icds_aggregation_task.si(date=calculation_date, func_name='_aggregate_inactive_aww_agg'),).apply_async()
+
+            res_inactive_aww.get(disable_sync_subtasks=False)
+
             res_awc = chain(icds_aggregation_task.si(date=calculation_date, func_name='_agg_awc_table'),
                             *res_ls_tasks
                             ).apply_async()
@@ -439,7 +448,8 @@ def icds_aggregation_task(self, date, func_name):
         '_agg_ccs_record_table': _agg_ccs_record_table,
         '_agg_awc_table': _agg_awc_table,
         'aggregate_awc_daily': aggregate_awc_daily,
-        'update_service_delivery_report': update_service_delivery_report
+        'update_service_delivery_report': update_service_delivery_report,
+        '_aggregate_inactive_aww_agg': _aggregate_inactive_aww_agg
     }[func_name]
 
     db_alias = get_icds_ucr_citus_db_alias()
@@ -562,6 +572,18 @@ def _aggregate_awc_infra_forms(state_id, day):
 @track_time
 def _aggregate_inactive_aww(day):
     AggregateInactiveAWW.aggregate(day)
+
+
+def _aggregate_inactive_aww_agg(day=None):
+    last_sync = IcdsFile.objects.filter(data_type='inactive_awws').order_by('-file_added').first()
+
+    # If last sync not exist then collect initial data
+    if not last_sync:
+        last_sync_date = datetime(2017, 3, 1).date()
+    else:
+        last_sync_date = last_sync.file_added
+
+    AggregateInactiveAWW.aggregate(last_sync_date)
 
 
 @track_time
@@ -950,19 +972,20 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             location=location,
             month=config['month'],
             loc_level=loc_level,
-            beta=beta
+            beta=beta,
+            report_type=config['thr_report_type']
         ).get_excel_data()
         export_info = excel_data[1][1]
         generated_timestamp = date_parser.parse(export_info[0][1])
         formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
         data_type = 'THR Report__{}'.format(formatted_timestamp)
-
         if file_format == 'xlsx':
             cache_key = create_thr_report_excel_file(
                 excel_data,
                 data_type,
                 config['month'].strftime("%B %Y"),
                 loc_level,
+                config['thr_report_type']
             )
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
@@ -997,7 +1020,8 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             cache_key = create_service_delivery_report(
                 excel_data,
                 data_type,
-                config
+                config,
+                beta
             )
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
@@ -1027,6 +1051,30 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             )
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
+
+    elif indicator == AWW_ACTIVITY_REPORT:
+        data_type = 'AWW_Activity_Report'
+        excel_data = AwwActivityExport(
+            config=config,
+            loc_level=aggregation_level,
+            show_test=include_test,
+            beta=beta
+        ).get_excel_data(location)
+        export_info = excel_data[1][1]
+        generated_timestamp = date_parser.parse(export_info[0][1])
+        formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
+        data_type = 'Aww_Activity_Report__{}'.format(formatted_timestamp)
+
+        if file_format == 'xlsx':
+            cache_key = create_aww_activity_report(
+                excel_data,
+                data_type,
+                config,
+                aggregation_level
+            )
+        else:
+            cache_key = create_excel_file(excel_data, data_type, file_format)
+
     elif indicator == POSHAN_PROGRESS_REPORT:
         data_type = 'Poshan_Progress_Report'
         excel_data = PoshanProgressReport(
@@ -1044,18 +1092,13 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             formatted_timestamp=formatted_timestamp)
 
         if file_format == 'xlsx':
-            cache_key = create_poshan_progress_report(
-                excel_data,
-                data_type,
-                config,
-                aggregation_level
-            )
+            cache_key = create_poshan_progress_report(excel_data, data_type, config, aggregation_level)
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
 
     if indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT, THR_REPORT_EXPORT, CHILDREN_EXPORT,
                          DASHBOARD_USAGE_EXPORT, SERVICE_DELIVERY_REPORT, CHILD_GROWTH_TRACKER_REPORT,
-                         POSHAN_PROGRESS_REPORT):
+                         AWW_ACTIVITY_REPORT, POSHAN_PROGRESS_REPORT):
         if file_format == 'xlsx' and beta:
             cache_key = create_excel_file_in_openpyxl(excel_data, data_type)
         else:

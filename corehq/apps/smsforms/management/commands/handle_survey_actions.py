@@ -66,7 +66,8 @@ class Command(BaseCommand):
                     phone_number=phone_number,
                 )
                 if not XFormsSessionSynchronization.channel_is_available_for_session(fake_session):
-                    running_session_info = XFormsSessionSynchronization.get_running_session_info_for_channel()
+                    running_session_info = XFormsSessionSynchronization.get_running_session_info_for_channel(
+                        fake_session.get_channel())
                     # First confirm the supposedly running session is even open
                     # and if it's not (should be exceedingly rare) release it and act like it wasn't there
                     if running_session_info.session_id \
