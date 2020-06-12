@@ -72,7 +72,7 @@
       </header>
       <template>
         <text>
-          <xpath function="if(birthdate = '', '', format-date(date(birthdate), '%d/%m/%y'))"/>
+          <xpath function="if(birthdate = '', '', format-date(date(birthdate), '%d/%m/%Y'))"/>
         </text>
       </template>
       <sort type="string">
@@ -113,7 +113,7 @@
       </header>
       <template>
         <text>
-          <xpath function="if(birthdate = '', '', format-date(date(birthdate), '%d/%m/%y'))"/>
+          <xpath function="if(birthdate = '', '', format-date(date(birthdate), '%b %d, %Y'))"/>
         </text>
       </template>
     </field>
