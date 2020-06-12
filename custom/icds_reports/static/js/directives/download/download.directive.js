@@ -353,7 +353,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
             vm.months = _.filter(vm.monthsCopy, function (month) {
                 return month.id <= latest.getMonth() + 1;
             });
-            vm.selectedMonth = vm.selectedMonth <= latest.getMonth() + 1 ? vm.selectedMonth : latest.getMonth();
+            vm.selectedMonth = vm.selectedMonth <= latest.getMonth() + 1 ? vm.selectedMonth : latest.getMonth() + 1;
             vm.quarters = _.filter(vm.quartersCopy, function (quarter) {
                 return quarter.id <= maxQuarter;
             });
@@ -531,7 +531,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
         var beneficiaryListErrors = vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
         var growthListErrors = vm.isChildGrowthTrackerSelected() && !vm.isDistrictOrBelowSelected();
         var incentiveReportErrors = vm.isIncentiveReportSelected() && !vm.isStateSelected();
-        var PPRErrors = vm.isPPRSelected() && vm.isBlockOrBelowSelected();
+        var PPRErrors = vm.isPPRSelected() && vm.isDistrictOrBelowSelected();
         var ladySupervisorReportErrors = false;
         if (!vm.haveAccessToFeatures) {
             ladySupervisorReportErrors = vm.isLadySupervisorSelected() && !vm.isStateSelected();
@@ -648,8 +648,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
     vm.showViewBy = function () {
         return !(vm.isChildBeneficiaryListSelected() || vm.isIncentiveReportSelected() ||
             vm.isLadySupervisorSelected() || vm.isDashboardUsageSelected() ||
-            vm.isChildGrowthTrackerSelected() || vm.isTakeHomeRationReportSelected() || vm.isPPRSelected() ||
-            vm.isAwwActivityReportSelected());
+            vm.isChildGrowthTrackerSelected() || vm.isTakeHomeRationReportSelected() || vm.isAwwActivityReportSelected());
     };
 
     vm.showLocationFilter = function () {
