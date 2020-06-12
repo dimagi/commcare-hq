@@ -129,6 +129,7 @@ class Permissions(DocumentSchema):
     edit_shared_exports = BooleanProperty(default=False)
     access_all_locations = BooleanProperty(default=True)
     access_api = BooleanProperty(default=True)
+    access_web_apps = BooleanProperty(default=False)
 
     view_reports = BooleanProperty(default=False)
     view_report_list = StringListProperty(default=[])
@@ -2623,9 +2624,9 @@ class Invitation(models.Model):
         params = {
             "domain": self.domain,
             "url": url,
-            'days': remaining_days,
+            "days": remaining_days,
             "inviter": inviter.formatted_name,
-            'url_prefix': get_static_url_prefix(),
+            "url_prefix": get_static_url_prefix(),
         }
 
         domain_request = DomainRequest.by_email(self.domain, self.email, is_approved=True)
