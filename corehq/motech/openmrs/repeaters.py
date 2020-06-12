@@ -113,9 +113,6 @@ class OpenmrsRepeater(CaseRepeater):
             self.get_id == other.get_id
         )
 
-    def __str__(self):
-        return Repeater.__str__(self)
-
     @classmethod
     def wrap(cls, data):
         if 'atom_feed_last_polled_at' in data:
