@@ -143,7 +143,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="form-group" ng-if="($ctrl.showViewBy() && $ctrl.selectedIndicator != 10)">
+                <div class="form-group" ng-if="($ctrl.showViewBy() && $ctrl.selectedIndicator != 10 && $ctrl.selectedIndicator != 15)">
                     <label class="control-label col-sm-2" for="view_by">View by: <i class="fa fa-info-circle" uib-popover="Select the administrative level at which you want to download the tabular report. The tabular report will generate one row for each administrative level selected (for example, view by block would show one row for each block within the selected location)."
                            popover-placement="top-right"
                            popover-trigger="'mouseenter'"></i></label>
@@ -151,6 +151,19 @@
                         <ui-select ng-model="$ctrl.selectedLevel" theme="bootstrap">
                             <ui-select-match placeholder="View By"><span ng-bind="$select.selected.name"></span></ui-select-match>
                             <ui-select-choices repeat="level.id as level in $ctrl.groupByLevels | propsFilter: {name: $select.search}">
+                                <div ng-bind-html="level.name | highlight: $select.search"></div>
+                            </ui-select-choices>
+                        </ui-select>
+                    </div>
+                </div>
+                <div class="form-group" ng-if="($ctrl.showViewBy() && $ctrl.selectedIndicator != 10 && $ctrl.selectedIndicator == 15)">
+                    <label class="control-label col-sm-2" for="view_by">View by: <i class="fa fa-info-circle" uib-popover="Select the administrative level at which you want to download the tabular report. The tabular report will generate one row for each administrative level selected (for example, view by block would show one row for each block within the selected location)."
+                           popover-placement="top-right"
+                           popover-trigger="'mouseenter'"></i></label>
+                    <div class="col-sm-6">
+                        <ui-select ng-model="$ctrl.selectedLevel" theme="bootstrap">
+                            <ui-select-match placeholder="View By"><span ng-bind="$select.selected.name"></span></ui-select-match>
+                            <ui-select-choices ui-disable-choice="level.id == 3 || level.id == 4 || level.id == 5 " repeat="level.id as level in $ctrl.groupByLevels | propsFilter: {name: $select.search}">
                                 <div ng-bind-html="level.name | highlight: $select.search"></div>
                             </ui-select-choices>
                         </ui-select>
