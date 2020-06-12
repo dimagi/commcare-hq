@@ -241,6 +241,9 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
     var init = function () {
         initHierarchy();
         locationsCache = locationsService.initLocations(vm, locationsCache);
+        if (vm.selectedIndicator == 15) {
+            vm.groupByLevels = vm.groupByLevelValuesPPR();
+        }
     };
 
     init();
@@ -277,6 +280,9 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
 
     vm.onSelectLocation = function ($item, level) {
         locationsService.onSelectLocation($item, level, locationsCache, vm);
+        if (vm.selectedIndicator == 15) {
+            vm.groupByLevels = vm.groupByLevelValuesPPR();
+        }
     };
 
     vm.onSelectAWCs = function ($item) {
@@ -410,6 +416,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
     };
 
     vm.onIndicatorSelect = function () {
+        vm.handleViewByShift();
         if (vm.isChildBeneficiaryListSelected()) {
             init();
             vm.selectedFormat = vm.formats[0].id;
@@ -430,7 +437,9 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
                     vm.selectedYear = new Date().getFullYear();
                 }
             } else if (vm.isPPRSelected()) {
+                vm.groupByLevels = vm.groupByLevelValuesPPR();
                 var currentYear  = new Date().getFullYear();
+                vm.selectedLevel = 1;
                 vm.selectedYear = vm.selectedYear >= 2019 ? vm.selectedYear : currentYear;
                 if (vm.selectedYear == currentYear) {
                     if ([0, 1, 2].includes(new Date().getMonth())) {
@@ -459,6 +468,13 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
 
 
     };
+
+    vm.handleViewByShift = function() {
+        var locationIndex = locationsService.selectedLocationIndex(vm.selectedLocations);
+        var levels = _.filter(vm.levels, function (value){return value.id > locationIndex;});
+        vm.groupByLevels = levels;
+        vm.selectedLevel = locationIndex + 1;
+    }
 
     /**
      * To adjust selectedLevel for the reports that do not have viewBy filter. These
@@ -523,6 +539,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
         vm.selectedPDFFormat = 'many';
         vm.selectedQuarter = 1;
         vm.selectedDataPeriod = 'month';
+        vm.handleViewByShift();
         initHierarchy();
         vm.updateSelectedDate();
     };
@@ -660,7 +677,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
     };
 
     vm.showQuarterFilter = function() {
-        return !vm.isDashboardUsageSelected() && vm.isQuarterDataPeriodSelected();
+        return vm.isQuarterDataPeriodSelected();
     }
 
     vm.showYearFilter = function () {
@@ -692,10 +709,18 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
         }
     };
 
+    vm.groupByLevelValuesPPR = function () {
+        return _.filter(vm.groupByLevels, function (level) {
+                return level.id == 1 || level.id == 2
+        });
+    };
+
     vm.showReassignmentMessage = function () {
         var utcSelectedDate = Date.UTC(vm.selectedDate.getFullYear(), vm.selectedDate.getMonth());
         return vm.selectedLocation && (Date.parse(vm.selectedLocation.archived_on) <= utcSelectedDate || Date.parse(vm.selectedLocation.deprecates_at) > utcSelectedDate);
     };
+
+
 }
 
 DownloadController.$inject = ['$scope', '$rootScope', '$location', 'locationHierarchy', 'locationsService',
