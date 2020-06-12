@@ -351,7 +351,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
 
     def get_url(self, repeat_record):
         # to be overridden
-        return self.url
+        return self.connection_settings.url
 
     def allow_retries(self, response):
         """Whether to requeue the repeater when it fails
@@ -618,7 +618,7 @@ class ReferCaseRepeater(CreateCaseRepeater):
 
     def get_url(self, repeat_record):
         new_domain = self.payload_doc(repeat_record).get_case_property('new_domain')
-        return self.url.format(domain=new_domain)
+        return self.connection_settings.url.format(domain=new_domain)
 
 
 class ShortFormRepeater(Repeater):
