@@ -55,6 +55,7 @@ from corehq.apps.userreports.reports.builder.columns import (
 )
 from corehq.apps.userreports.reports.builder.const import (
     COMPUTED_OWNER_LOCATION_PROPERTY_ID,
+    COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID,
     COMPUTED_OWNER_NAME_PROPERTY_ID,
     COMPUTED_USER_NAME_PROPERTY_ID,
     PROPERTY_TYPE_CASE_PROP,
@@ -169,7 +170,9 @@ class DataSourceProperty(object):
         elif self._type == PROPERTY_TYPE_META:
             return FormMetaColumnOption(self._id, self._data_types, self._text, self._source)
         elif self._type == PROPERTY_TYPE_CASE_PROP:
-            if self._id == COMPUTED_OWNER_NAME_PROPERTY_ID or self._id == COMPUTED_OWNER_LOCATION_PROPERTY_ID:
+            if self._id in (
+                    COMPUTED_OWNER_NAME_PROPERTY_ID, COMPUTED_OWNER_LOCATION_PROPERTY_ID,
+                    COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID):
                 return OwnernameComputedCasePropertyOption(self._id, self._data_types, self._text)
             elif self._id == COMPUTED_USER_NAME_PROPERTY_ID:
                 return UsernameComputedCasePropertyOption(self._id, self._data_types, self._text)
@@ -230,6 +233,8 @@ class DataSourceProperty(object):
             filter.update({"choice_provider": {"type": "user"}})
         if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_OWNER_LOCATION_PROPERTY_ID:
             filter.update({"choice_provider": {"type": "location"}})
+        if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID:
+            filter.update({"choice_provider": {"type": "location", "include_descendants": True}})
         if configuration.get('pre_value') or configuration.get('pre_operator'):
             filter.update({
                 'type': 'pre',  # type could have been "date"
@@ -577,6 +582,8 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
 
         if SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER.enabled(self.domain):
             properties[COMPUTED_OWNER_LOCATION_PROPERTY_ID] = self._get_owner_location_pseudo_property()
+            properties[COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID] = \
+                self._get_owner_location_with_descendants_pseudo_property()
 
         return properties
 
@@ -612,6 +619,17 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
             id=COMPUTED_OWNER_LOCATION_PROPERTY_ID,
             text=_('Case Owner (Location)'),
             source=COMPUTED_OWNER_LOCATION_PROPERTY_ID,
+            data_types=["string"],
+        )
+
+    @classmethod
+    def _get_owner_location_with_descendants_pseudo_property(cls):
+        # similar to the location property but also include descendants
+        return DataSourceProperty(
+            type=PROPERTY_TYPE_CASE_PROP,
+            id=COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID,
+            text=_('Case Owner (Location w/ Descendants)'),
+            source=COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID,
             data_types=["string"],
         )
 
