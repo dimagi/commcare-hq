@@ -4559,7 +4559,7 @@ class TestExportData(TestCase):
                 'domain': 'icds-cas',
                 'month': date(2017, 5, 1),
                 'report_layout': 'comprehensive',
-                'data_format': 'month'
+                'data_period': 'month'
             },
             loc_level=1
         ).get_excel_data(location)
@@ -4599,7 +4599,7 @@ class TestExportData(TestCase):
                 'domain': 'icds-cas',
                 'month': date(2017, 5, 1),
                 'report_layout': 'summary',
-                'data_format': 'month'
+                'data_period': 'month'
             },
             loc_level=1
         ).get_excel_data(location)
@@ -4632,7 +4632,7 @@ class TestExportData(TestCase):
                 'domain': 'icds-cas',
                 'month': date(2017, 5, 1),
                 'report_layout': 'comprehensive',
-                'data_format': 'quarter',
+                'data_period': 'quarter',
                 'quarter': 2,
                 'year': 2017
             },
@@ -4690,7 +4690,7 @@ class TestExportData(TestCase):
                 'domain': 'icds-cas',
                 'month': date(2017, 5, 1),
                 'report_layout': 'summary',
-                'data_format': 'quarter',
+                'data_period': 'quarter',
                 'quarter': 2,
                 'year': 2017
             },
