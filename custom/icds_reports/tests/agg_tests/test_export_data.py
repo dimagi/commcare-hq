@@ -4733,6 +4733,7 @@ class TestExportData(TestCase):
              ['Export Info',
               [['Generated at', '16:21:11 15 November 2017'], ['Report Layout', 'Summary'],
                ['Data Period', 'Quarter']]]]
+        )
 
     def test_sdr_report_pw_lw_children(self):
         data = ServiceDeliveryReport(
