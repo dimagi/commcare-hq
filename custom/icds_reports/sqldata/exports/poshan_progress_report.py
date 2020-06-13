@@ -247,7 +247,7 @@ class PoshanProgressReport(object):
         order_by = ('state_name', 'district_name')
         if self.report_type == 'month':
             filters['month'] = self.config['month']
-            excel_rows = self.month_wise(filters, order_by, aggregation_level)
+            excel_rows = self.month_wise(filters, order_by)
         else:
             filters['month__in'] = self._generate_quarter_years()
             excel_rows = self.quarter_wise(filters, order_by, aggregation_level)
