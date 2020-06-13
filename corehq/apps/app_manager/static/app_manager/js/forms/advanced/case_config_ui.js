@@ -24,6 +24,7 @@ hqDefine('app_manager/js/forms/advanced/case_config_ui', function () {
                 $('.property-description').closest('.read-only').popover({
                     'trigger': 'hover',
                     'placement': 'bottom',
+                    'sanitize': false,
                 });
             };
 
