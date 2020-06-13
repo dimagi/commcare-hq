@@ -973,9 +973,6 @@ class ExportIndicatorView(View):
         aggregation_level = int(request.POST.get('aggregation_level'))
         indicator = int(request.POST.get('indicator'))
 
-
-
-
         config = {
             'aggregation_level': aggregation_level,
             'domain': self.kwargs['domain']

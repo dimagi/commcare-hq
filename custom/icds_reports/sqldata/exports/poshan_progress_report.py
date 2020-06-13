@@ -106,7 +106,7 @@ class PoshanProgressReport(object):
         # generate a dict
         # {'unique_id': [contains the excel row with sum of col values for all months eg. m1+m2+m3]}
         for row in data:
-            row_data = dummy_row
+            row_data = dummy_row[:]
             for k, v in row.items():
                 if k == 'state_name' or k == 'district_name':
                     row_data[cols_comprehensive.index(k)] = v
@@ -138,7 +138,7 @@ class PoshanProgressReport(object):
         if self.layout != 'comprehensive':
             headers = headers_summary
             for k, v in row_data_dict.items():
-                row_data_dict[k] = [val for j, val in enumerate(v) if j not in self._indexes_to_remove()]
+                row_data_dict[k] = [v[cols_comprehensive.index(column)] for column in cols_summary]
 
         excel_rows = [headers]
         for _, v in row_data_dict.items():
@@ -174,7 +174,8 @@ class PoshanProgressReport(object):
         if self.layout != 'comprehensive':
             excel_rows[0] = headers_summary
             for i in range(1, len(excel_rows)):
-                excel_rows[i] = [val for j, val in enumerate(excel_rows[i]) if j not in self._indexes_to_remove()]
+                val = excel_rows[i][:]
+                excel_rows[i] = [val[cols_comprehensive.index(column)] for column in cols_summary]
 
         return excel_rows
 
