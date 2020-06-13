@@ -1632,17 +1632,15 @@ class PoshanProgressReportView(models.Model):
         blank=True, null=True,
         help_text="number of AWCs that have at least one Household registration form"
     )
-    avg_days_awc_open_percent = models.DecimalField(max_digits=16, decimal_places=8, blank=True, null=True)
+    awc_days_open = models.IntegerField(blank=True, null=True)
     wer_eligible = models.IntegerField(
         blank=True, null=True, help_text="Number of children valid_in_month and age < 60 months"
     )
     wer_weighed = models.IntegerField(
         blank=True, null=True, help_text="Number of children that have been weighed in the month"
     )
-    weighed_percent = models.DecimalField(max_digits=16, decimal_places=8, blank=True, null=True)
     expected_visits = models.IntegerField(help_text='Expected home visits')
     valid_visits = models.IntegerField(help_text='Valid home visits')
-    visits_percent = models.DecimalField(max_digits=16, decimal_places=8, blank=True, null=True)
     thr_eligible = models.IntegerField(
         blank=True, null=True,
         help_text="Total number of beneficiaries eligible for THR"
@@ -1651,8 +1649,6 @@ class PoshanProgressReportView(models.Model):
         blank=True, null=True,
         help_text="beneficiaries who got >=21 days of THR"
     )
-    thr_percent = models.DecimalField(
-        max_digits=16, decimal_places=8, blank=True, null=True)
     pse_eligible = models.IntegerField(
         blank=True, null=True,
         help_text="Number of children eligible for pse"
@@ -1661,7 +1657,6 @@ class PoshanProgressReportView(models.Model):
         blank=True, null=True,
         help_text="Number of children attended pse for atleast 21 days in the month"
     )
-    pse_attended_21_days_percent = models.DecimalField(max_digits=16, decimal_places=8, blank=True, null=True)
     lunch_eligible = models.IntegerField(
         blank=True, null=True,
         help_text="Number of children eligible for SNP"
@@ -1670,17 +1665,14 @@ class PoshanProgressReportView(models.Model):
         blank=True, null=True,
         help_text="Number of children had lunch for atleast 21 days in the month"
     )
-    lunch_count_21_days_percent = models.DecimalField(max_digits=16, decimal_places=8, blank=True, null=True)
     height_eligible = models.IntegerField(
         blank=True, null=True, help_text="age < 60 months and valid_in_month"
     )
     height_measured_in_month = models.IntegerField(
         blank=True, null=True, help_text="height_eligible and height_child recorded in this month"
     )
-    height_measured_in_month_percent = models.DecimalField(max_digits=16, decimal_places=8, blank=True, null=True)
     trimester_3 = models.IntegerField(blank=True, null=True)
     counsel_immediate_bf = models.IntegerField(blank=True, null=True)
-    counsel_immediate_bf_percent = models.DecimalField(max_digits=16, decimal_places=8, blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_reports'
