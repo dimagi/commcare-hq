@@ -57,7 +57,7 @@ class PoshanProgressReport(object):
         self.beta = beta
         self.show_test = show_test
         self.layout = self.config['report_layout']
-        self.report_type = self.config['data_format']
+        self.report_type = self.config['data_period']
         self.row_constants = [HEADERS_COMPREHENSIVE[:], COLS_COMPREHENSIVE[:], HEADERS_SUMMARY[:], COLS_SUMMARY[:]]
         if self.report_type == 'quarter':
             self.quarter = self.config['quarter']
@@ -173,9 +173,8 @@ class PoshanProgressReport(object):
 
         if self.layout != 'comprehensive':
             excel_rows[0] = headers_summary
-            for i in range(0, len(excel_rows)):
+            for i in range(1, len(excel_rows)):
                 excel_rows[i] = [val for j, val in enumerate(excel_rows[i]) if j not in self._indexes_to_remove()]
-        excel_rows[0] = headers_summary
 
         return excel_rows
 

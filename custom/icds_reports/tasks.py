@@ -1087,7 +1087,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
         generated_timestamp = date_parser.parse(export_info[0][1])
         formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
         report_layout = config['report_layout']
-        data_type = 'Poshan Progress Report {}__{}'.format(
+        data_type = 'Poshan Progress Report {report_layout}__{formatted_timestamp}'.format(
             report_layout=report_layout,
             formatted_timestamp=formatted_timestamp)
 

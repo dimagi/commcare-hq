@@ -1983,11 +1983,11 @@ def create_child_growth_tracker_report(excel_data, data_type, config, aggregatio
 def create_poshan_progress_report(excel_data, data_type, config, aggregation_level):
     export_info = excel_data[1][1]
     layout = config['report_layout']
-    national = 'National Level' if aggregation_level == 0 else ''
-    state = export_info[1][1] if aggregation_level > 0 else ''
-    district = export_info[2][1] if aggregation_level > 1 else ''
-    block = export_info[3][1] if aggregation_level > 2 else ''
-    supervisor = export_info[3][1] if aggregation_level > 3 else ''
+    national = 'National Level' if len(export_info) == 3 else ''
+    state = export_info[1][1] if len(export_info) > 3 else ''
+    district = export_info[2][1] if len(export_info) > 4 else ''
+    block = export_info[3][1] if len(export_info) > 5 else ''
+    supervisor = export_info[3][1] if len(export_info) > 6 else ''
 
     excel_data = excel_data[0][1]
     thin_border = Border(
@@ -2007,15 +2007,15 @@ def create_poshan_progress_report(excel_data, data_type, config, aggregation_lev
     worksheet.title = "Poshan Progress Report {}".format(layout)
     worksheet.sheet_view.showGridLines = False
     amount_of_columns = 1 + len(excel_data[0])
-    last_column = string.ascii_uppercase[amount_of_columns]
+    last_column = get_column_letter(amount_of_columns+1)
     worksheet.merge_cells('B2:{0}2'.format(last_column))
     title_cell = worksheet['B2']
     title_cell.fill = PatternFill("solid", fgColor="4472C4")
-    title_cell.value = "Poshan Progress Report {}".format(layout)
+    title_cell.value = "Poshan Progress Report {}".format(layout.title())
     title_cell.font = Font(size=18, color="FFFFFF")
     title_cell.alignment = Alignment(horizontal="center")
 
-    columns = [string.ascii_uppercase[i] for i in range(1, amount_of_columns + 1)]
+    columns = [get_column_letter(i) for i in range(2, amount_of_columns + 2)]
 
     # sheet header
     header_cells = ['{0}3'.format(column) for column in columns]
@@ -2039,7 +2039,7 @@ def create_poshan_progress_report(excel_data, data_type, config, aggregation_lev
             worksheet['F3'].value = "Sector: {}".format(supervisor)
 
     date_cell = '{0}3'.format(last_column)
-    date_description_cell = '{0}3'.format(string.ascii_uppercase[amount_of_columns - 1])
+    date_description_cell = '{0}3'.format(get_column_letter(amount_of_columns))
     worksheet[date_description_cell].value = "Date when downloaded:"
     worksheet[date_description_cell].alignment = Alignment(horizontal="right")
     utc_now = datetime.now(pytz.utc)
@@ -2086,7 +2086,7 @@ def create_poshan_progress_report(excel_data, data_type, config, aggregation_lev
     widths_columns = ['A']
     widths_columns.extend(columns)
     standard_widths = [4, 7]
-    standard_widths.extend([15] * 10)
+    standard_widths.extend([15] * (len(columns) - 1))
     for col, width in zip(widths_columns, standard_widths):
         widths[col] = width
 

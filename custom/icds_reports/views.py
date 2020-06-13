@@ -1065,7 +1065,7 @@ class ExportIndicatorView(View):
 
         if indicator == POSHAN_PROGRESS_REPORT:
             config['report_layout'] = request.POST.get('report_layout')
-            config['data_format'] = request.POST.get('data_format')
+            config['data_period'] = request.POST.get('data_period')
             config['quarter'] = int(request.POST.get('quarter'))
             config['year'] = year
 
