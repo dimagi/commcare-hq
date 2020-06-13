@@ -416,6 +416,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                         required: true,
                     }, self));
                 });
+                self.pagination_reset_flag(!self.pagination_reset_flag());
             };
 
             self.unwrap = function () {
