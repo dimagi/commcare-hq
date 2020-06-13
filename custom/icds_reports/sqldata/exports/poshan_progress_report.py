@@ -1,6 +1,7 @@
 from datetime import date
 
 from corehq.apps.locations.models import SQLLocation
+from custom.icds_reports.models import AwcLocation
 from custom.icds_reports.models.views import PoshanProgressReportView
 from custom.icds_reports.utils import india_now
 
@@ -75,12 +76,6 @@ class PoshanProgressReport(object):
             months.append(date(self.year, i, 1))
         return months
 
-    def _indexes_to_remove(self):
-        _, cols_comprehensive, _, cols_summary = self.row_constants
-        extra_columns = list(set(cols_comprehensive) - set(cols_summary))
-        indexes_to_remove = [cols_comprehensive.index(col) for col in extra_columns]
-        return indexes_to_remove
-
     def quarter_wise(self, filters, order_by, aggregation_level):
         """
         :param filters: quaterwise filter (months in [month array])
@@ -103,10 +98,15 @@ class PoshanProgressReport(object):
         dummy_row = ['' for _ in range(0, aggregation_level)] + [0 for _ in range(0, len(
             headers_comprehensive) - aggregation_level)]
         headers = headers_comprehensive
-        # generate a dict
+        # prepare a dict with { 'unique_id' : dummy_row}
+        del filters['month__in']
+        unique_ids = AwcLocation.objects.filter(**filters).order_by(*order_by).values(unique_id)
+        for id in unique_ids:
+            row_data_dict[id[unique_id]] = dummy_row
+        # update the dict
         # {'unique_id': [contains the excel row with sum of col values for all months eg. m1+m2+m3]}
         for row in data:
-            row_data = dummy_row[:]
+            row_data = row_data_dict[row[unique_id]][:]
             for k, v in row.items():
                 if k == 'state_name' or k == 'district_name':
                     row_data[cols_comprehensive.index(k)] = v
