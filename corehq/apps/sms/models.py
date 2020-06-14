@@ -881,12 +881,18 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     STATUS_COMPLETED = 'CMP'
     STATUS_NOT_COMPLETED = 'NOT'
     STATUS_ERROR = 'ERR'
+    STATUS_EMAIL_BOUNCED = 'BNC'
+    STATUS_EMAIL_SENT = 'SND'
+    STATUS_EMAIL_DELIVERED = 'BNC'
 
     STATUS_CHOICES = (
         (STATUS_IN_PROGRESS, ugettext_noop('In Progress')),
         (STATUS_COMPLETED, ugettext_noop('Completed')),
         (STATUS_NOT_COMPLETED, ugettext_noop('Not Completed')),
         (STATUS_ERROR, ugettext_noop('Error')),
+        (STATUS_EMAIL_BOUNCED, ugettext_noop('Email Bounced')),
+        (STATUS_EMAIL_SENT, ugettext_noop('Email Sent')),
+        (STATUS_EMAIL_DELIVERED, ugettext_noop('Email Delivered')),
     )
 
     SOURCE_BROADCAST = 'BRD'
