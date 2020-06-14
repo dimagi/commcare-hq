@@ -259,6 +259,8 @@ from . import const
 from .exceptions import InvalidLocationTypeException, TableauTokenException
 
 # checks required to view the dashboard
+from custom.icds_reports.reports.poshan_progress_dashboard_data import get_poshan_progress_dashboard_data
+
 DASHBOARD_CHECKS = [
     toggles.DASHBOARD_ICDS_REPORT.required_decorator(),
     require_permission(Permissions.view_report, 'custom.icds_reports.reports.reports.DashboardReport',
@@ -2775,3 +2777,46 @@ class BiharMotherDetailsAPI(BaseCasAPIView):
         }
 
         return JsonResponse(data=response_json)
+
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
+class PoshanProgressDashboardView(BaseReportView):
+    def get_settings(self, request, *args, **kwargs):
+        step = kwargs.get('step')
+        now = datetime.utcnow()
+        month = int(request.GET.get('month', now.month))
+        year = int(request.GET.get('year', now.year))
+
+        include_test = request.GET.get('include_test', False)
+        domain = self.kwargs['domain']
+        location = request.GET.get('location_id')
+        if location == 'null' or location == 'undefined':
+            location = None
+        data_format = request.GET.get('data_format', 'month')
+        quarter = int(request.GET.get('quarter', 1))
+
+        return step, month, year, include_test, domain, data_format, quarter, location
+
+    def get(self, request, *args, **kwargs):
+        step, month, year, include_test, domain, data_format, quarter, location = \
+            self.get_settings(request, *args, **kwargs)
+        print(self.get_settings(request, *args, **kwargs))
+
+        location_filters = get_location_filter(location, domain)
+        location_filters['aggregation_level'] = location_filters.get('aggregation_level', 1)
+
+        icds_features_flag = icds_pre_release_features(self.request.couch_user)
+        data = {}
+        if icds_features_flag:
+            data = get_poshan_progress_dashboard_data(
+                domain,
+                year,
+                month,
+                quarter,
+                data_format,
+                step,
+                location_filters,
+                include_test
+            )
+        return JsonResponse(data=data)
+
+

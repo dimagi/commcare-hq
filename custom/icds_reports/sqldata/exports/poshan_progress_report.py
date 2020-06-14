@@ -67,6 +67,33 @@ COLS_PERCENTAGE_RELATIONS = {
 }
 
 
+def _generate_quarter_months(quarter, year):
+    months = []
+    end_month = int(quarter) * 3
+    for i in range(end_month - 2, end_month + 1):
+        months.append(date(year, i, 1))
+    return months
+
+
+def _calculate_percent(num, den, extra_number):
+    if den == 0:
+        ret = 0
+    else:
+        ret = (num / den) * 100
+
+    if extra_number:
+        ret = ret / extra_number
+    return "{}%".format("%.2f" % ret)
+
+
+def _handle_average(val):
+    if val is None:
+        ret = 0
+    else:
+        ret = "%.2f" % (val / 3)
+    return float(ret)
+
+
 class PoshanProgressReport(object):
     title = 'Poshan Progress Report'
 
@@ -89,36 +116,12 @@ class PoshanProgressReport(object):
             self.row_constants[3].remove('district_name')
             self.row_constants[4].remove('district_name')
 
-    def _generate_quarter_years(self):
-        months = []
-        end_month = self.quarter * 3
-        for i in range(end_month - 2, end_month + 1):
-            months.append(date(self.year, i, 1))
-        return months
-
-    def __handle_average(self, number):
-        if number is None:
-            ret = 0
-        else:
-            ret = "%.2f" % (number / 3)
-        return float(ret)
-
-    def __calculate_percent(self, num, den, extra_number):
-        if den == 0:
-            ret = 0
-        else:
-            ret = (num / den) * 100
-
-        if extra_number:
-            ret = ret / extra_number
-        return "{}%".format("%.2f" % ret)
-
     def __calculate_percentage_in_rows(self, row, all_cols):
         for k, v in COLS_PERCENTAGE_RELATIONS.items():
             num = row[all_cols.index(v[0])]
             den = row[all_cols.index(v[1])]
             extra_number = v[2] if len(v) > 2 else None
-            row[all_cols.index(k)] = self.__calculate_percent(num, den, extra_number)
+            row[all_cols.index(k)] = _calculate_percent(num, den, extra_number)
         return row
 
     def quarter_wise(self, filters, order_by, aggregation_level):
@@ -163,7 +166,7 @@ class PoshanProgressReport(object):
             for col in all_cols[:]:
                 if col not in ['state_name', 'district_name', unique_id]:
                     val = v[all_cols.index(col)]
-                    row_data_dict[k][all_cols.index(col)] = self.__handle_average(val)
+                    row_data_dict[k][all_cols.index(col)] = _handle_average(val)
                     total_row[all_cols.index(col)] += val if val else 0
                 elif col in ['state_name', 'district_name']:
                     total_row[all_cols.index(col)] = 'Total'
@@ -247,9 +250,9 @@ class PoshanProgressReport(object):
         order_by = ('state_name', 'district_name')
         if self.report_type == 'month':
             filters['month'] = self.config['month']
-            excel_rows = self.month_wise(filters, order_by, aggregation_level)
+            excel_rows = self.month_wise(filters, order_by)
         else:
-            filters['month__in'] = self._generate_quarter_years()
+            filters['month__in'] = _generate_quarter_months(self.quarter, self.year)
             excel_rows = self.quarter_wise(filters, order_by, aggregation_level)
 
         export_filters.append(['Report Layout', self.layout.title()])
