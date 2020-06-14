@@ -45,6 +45,7 @@ from django.views.generic import TemplateView
 from django.views.generic.base import View
 
 import httpagentparser
+import requests
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 from sentry_sdk import last_event_id
@@ -1287,6 +1288,15 @@ def log_email_event(request):
     # From Amazon SNS:
     # https://docs.aws.amazon.com/ses/latest/DeveloperGuide/event-publishing-retrieving-sns-examples.html
     request_json = json.loads(request.body)
+
+    if request_json['Type'] == "SubscriptionConfirmation":
+        # When creating an SNS topic, the first message is a subscription
+        # confirmation, where we need to access the subscribe URL to confirm we
+        # are able to receive messages at this endpoint
+        subscribe_url = request_json['SubscribeURL']
+        requests.get(subscribe_url)
+        return HttpResponse()
+
     message = json.loads(request_json['Message'])
     headers = message.get('mail', {}).get('headers', [])
 
@@ -1302,7 +1312,7 @@ def log_email_event(request):
     try:
         subevent = MessagingSubEvent.objects.get(id=subevent_id)
     except MessagingSubEvent.DoesNotExist:
-        return HttpResponse()   # There's nothing we can do here
+        return HttpResponse()
 
     event_type = message.get('eventType')
     if event_type == 'Bounce':
@@ -1316,4 +1326,3 @@ def log_email_event(request):
 
     subevent.save()
     return HttpResponse()
-
