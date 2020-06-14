@@ -166,9 +166,9 @@ class TestPPDData(TestCase):
                                           'Number of Districts Covered': 4,
                                           'Number of States Covered': 7},
                     'Service Delivery': {
-                        '% of children between 3-6 years provided PSE for atleast 21days': '6.66%',
-                        '% of children between 3-6 years provided SNP for atleast 21days': '1.61%',
-                        '% of children between 6 months -3 years, P&LW provided THR for atleast 21days': '52.90%',
+                        '% of children between 3-6 years provided PSE for atleast 21+ days': '6.66%',
+                        '% of children between 3-6 years provided SNP for atleast 21+ days': '1.61%',
+                        '% of children between 6 months -3 years, P&LW provided THR for atleast 21+ days': '52.90%',
                         '% of trimester three women counselled on immediate and EBF': '72.15%',
                         'Height Measurement Efficiency': '3.24%',
                         'Weighing efficiency': '70.27%'}}
@@ -195,9 +195,9 @@ class TestPPDData(TestCase):
                                           'Number of Districts Covered': 2.67,
                                           'Number of States Covered': 14},
                     'Service Delivery': {
-                        '% of children between 3-6 years provided PSE for atleast 21days': '5.53%',
-                        '% of children between 3-6 years provided SNP for atleast 21days': '1.18%',
-                        '% of children between 6 months -3 years, P&LW provided THR for atleast 21days': '28.40%',
+                        '% of children between 3-6 years provided PSE for atleast 21+ days': '5.53%',
+                        '% of children between 3-6 years provided SNP for atleast 21+ days': '1.18%',
+                        '% of children between 6 months -3 years, P&LW provided THR for atleast 21+ days': '28.40%',
                         '% of trimester three women counselled on immediate and EBF': '59.09%',
                         'Height Measurement Efficiency': '2.19%',
                         'Weighing efficiency': '68.91%'}}
