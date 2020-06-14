@@ -1,3 +1,5 @@
+from smtplib import SMTPDataError
+
 from django.conf import settings
 from django.core.mail import mail_admins
 from django.core.mail.message import EmailMessage
@@ -7,7 +9,7 @@ from celery.task import task, periodic_task
 
 from corehq.util.bounced_email_manager import BouncedEmailManager
 from corehq.util.metrics import metrics_gauge_task, metrics_track_errors
-from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER
+from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER, SES_CONFIGURATION_SET_HEADER
 from dimagi.utils.logging import notify_exception
 
 from corehq.util.log import send_HTML_email
@@ -43,7 +45,9 @@ def send_mail_async(self, subject, message, from_email, recipient_list, messagin
 
     headers = {}
     if messaging_event_id is not None:
-        headers = {COMMCARE_MESSAGE_ID_HEADER: messaging_event_id}
+        headers[COMMCARE_MESSAGE_ID_HEADER] = messaging_event_id
+    if settings.SES_CONFIGURATION_SET is not None:
+        headers[SES_CONFIGURATION_SET_HEADER] = settings.SES_CONFIGURATION_SET
 
     try:
         message = EmailMessage(
@@ -54,6 +58,17 @@ def send_mail_async(self, subject, message, from_email, recipient_list, messagin
             headers=headers,
         )
         return message.send()
+    except SMTPDataError as e:
+        # If the SES configuration has not been properly set up, resend the message
+        if (
+            "Configuration Set does not exist" in e.smtp_error
+            and SES_CONFIGURATION_SET_HEADER in message.extra_headers
+        ):
+            del message.extra_headers[SES_CONFIGURATION_SET_HEADER]
+            message.send()
+            notify_exception(None, message="SES Configuration Set missing", details={'error': e})
+        else:
+            raise
     except Exception as e:
         notify_exception(
             None,
