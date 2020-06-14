@@ -431,6 +431,31 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
 
         yield """
         UPDATE "{tablename}" agg_awc SET
+            app_version = ut.app_version,
+            commcare_version = ut.commcare_version
+        FROM (
+            SELECT distinct 
+                awc_id,
+                supervisor_id,
+                %(start_date)s::DATE AS month,
+                LAST_VALUE(app_version) over w as app_version,
+                LAST_VALUE(commcare_version) over w as commcare_version
+            FROM "{usage_table}" 
+            WHERE month = %(start_date)s WINDOW w as (
+                PARTITION BY awc_id, supervisor_id ORDER BY 
+                form_date RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+            )
+        ) ut
+        WHERE ut.awc_id = agg_awc.awc_id AND ut.supervisor_id = agg_awc.supervisor_id AND ut.month = agg_awc.month
+        """.format(
+            tablename=self.temporary_tablename,
+            usage_table=get_table_name(self.domain, 'static-usage_forms'),
+        ), {
+            'start_date': self.month_start
+        }
+
+        yield """
+        UPDATE "{tablename}" agg_awc SET
             infra_last_update_date = ut.infra_last_update_date,
             infra_type_of_building = ut.infra_type_of_building,
             infra_clean_water = ut.infra_clean_water,
@@ -768,6 +793,8 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             ('awc_with_gm_devices', 'COALESCE(sum(awc_with_gm_devices), 0)'),
             ('num_anc_visits', 'COALESCE(sum(num_anc_visits), 0)'),
             ('num_children_immunized', 'COALESCE(sum(num_children_immunized), 0)'),
+            ('app_version', 'MAX(app_version)'),
+            ('commcare_version', 'MAX(commcare_version::numeric)'),
             ('state_is_test', 'MAX(state_is_test)'),
             (
                 'district_is_test',

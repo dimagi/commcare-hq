@@ -549,6 +549,8 @@ class AggAwc(models.Model, AggregateMixin):
     cases_ccs_lactating_reg_in_month = models.IntegerField(blank=True, null=True)
     cases_ccs_pregnant_all_reg_in_month = models.IntegerField(blank=True, null=True)
     cases_ccs_lactating_all_reg_in_month = models.IntegerField(blank=True, null=True)
+    app_version = models.IntegerField(blank=True, null=True)
+    commcare_version = models.TextField(blank=True, null=True)
 
     class Meta:
         managed = False

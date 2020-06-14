@@ -331,33 +331,14 @@ class GetCommcareVersion(JsonObject):
     commcare_version_string = DefaultProperty(required=True)
 
     def configure(self, commcare_version_string):
-        self.commcare_version_string = commcare_version_string
-
-    def get_version_from_app_object(self, item, commcare_version_from_app_string):
-        domain_name = item.get('domain')
-        form_accessor = FormAccessors(domain_name)
-        form_id = item.get('form').get('meta').get('instanceID')
-        form = form_accessor.get_form(form_id)
-
-        app_build = get_build_by_version(domain_name, form.app_id, commcare_version_from_app_string)
-
-        if app_build is None:
-            return commcare_version_from_app_string
-
-        elif app_build.get('value').get('doc_type') == 'LinkedApplication':
-            return app_build.get('value').get('upstream_version')
-        else:
-            return app_build.get('value').get('version')
+        self._commcare_version_string = commcare_version_string
 
     def get_version_from_appversion_string(self, item, context):
-        commcare_version_string = self.commcare_version_string(item, context)
+        commcare_version_string = self._commcare_version_string(item, context)
         return get_commcare_version_from_appversion_text(commcare_version_string)
 
     def __call__(self, item, context=None):
         commcare_version = self.get_version_from_appversion_string(item, context)
-        if settings.SERVER_ENVIRONMENT == 'india':
-            commcare_version = self.get_version_from_app_object(item, commcare_version)
-
         return commcare_version
 
     def __str__(self):

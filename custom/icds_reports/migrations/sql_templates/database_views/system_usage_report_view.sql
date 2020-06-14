@@ -26,7 +26,9 @@ CREATE VIEW system_usage_report_view AS
         COALESCE("agg_awc_monthly"."usage_num_cf", 0) AS "usage_num_cf",
         COALESCE("agg_awc_monthly"."usage_num_gmp", 0) AS "usage_num_gmp",
         COALESCE("agg_awc_monthly"."usage_num_due_list_ccs", 0) + COALESCE("agg_awc_monthly"."usage_num_due_list_child_health", 0) AS "usage_num_due_list_ccs_and_child_health",
-        COALESCE("agg_ls"."num_supervisor_launched", 0) AS "num_supervisor_launched"
+        COALESCE("agg_ls"."num_supervisor_launched", 0) AS "num_supervisor_launched",
+        "agg_awc_monthly"."app_version" AS "app_version",
+        "agg_awc_monthly"."commcare_version" AS "commcare_version"
     FROM "agg_awc_monthly"
     LEFT JOIN agg_ls ON (
         ("agg_awc_monthly"."month" = "agg_ls"."month") AND

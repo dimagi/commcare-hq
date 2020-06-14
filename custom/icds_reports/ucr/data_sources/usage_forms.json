@@ -965,6 +965,40 @@
         }
       },
       {
+        "type": "expression",
+        "column_id": "app_version",
+        "datatype": "integer",
+        "expression": {
+            "type": "icds_get_app_version",
+            "app_version_string": {
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "meta",
+                "appVersion",
+                "#text"
+              ]
+          }
+        }
+      },
+      {
+        "type": "expression",
+        "column_id": "commcare_version",
+        "datatype": "string",
+        "expression": {
+            "type": "icds_get_commcare_version",
+            "commcare_version_string": {
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "meta",
+                "appVersion",
+                "#text"
+              ]
+          }
+        }
+      },
+      {
         "display_name": null,
         "transform": {},
         "datatype": "datetime",
