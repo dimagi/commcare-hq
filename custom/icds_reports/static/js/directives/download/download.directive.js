@@ -335,6 +335,10 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
             });
         }
 
+        if (vm.isPPRSelected()) {
+            vm.setPPRYears();
+        }
+
         if (year.id === 2019 && vm.isTakeHomeRationReportSelected()) {
             var currentMonth = latest.getMonth() + 1;
             var currentYear = latest.getFullYear();
@@ -353,6 +357,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
             vm.selectedMonth = vm.selectedMonth >= 4 ? vm.selectedMonth : 4;
             vm.quarters = vm.quartersCopy.slice(1,4);
             vm.selectedQuarter = vm.selectedQuarter >= 2 ? vm.selectedQuarter : 2;
+            vm.setPPRYears();
 
         } else if (year.id === latest.getFullYear()) {
             const maxQuarter = Math.floor((latest.getMonth() + 1)/4);
@@ -444,17 +449,11 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
                 if (vm.selectedYear == currentYear) {
                     if ([0, 1, 2].includes(new Date().getMonth())) {
                         vm.selectedYear = currentYear - 1;
-                        vm.years = _.filter(vm.yearsCopy, function (year) {
-                            return year.id >= 2019 && year.id < currentYear;
-                        });
-                    } else {
-                        vm.selectedYear = currentYear;
-                        vm.years = _.filter(vm.yearsCopy, function (year) {
-                            return year.id >= 2019;
-                        });
                     }
                 }
+                vm.setPPRYears();
                 vm.selectedFormat = vm.formats[1].id;
+                vm.selectedMonth = latest.getMonth();
 
             } else {
                 vm.years = vm.yearsCopy;
@@ -714,6 +713,13 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
                 return level.id == 1 || level.id == 2
         });
     };
+
+    vm.setPPRYears = function () {
+        vm.years = _.filter(vm.yearsCopy, function (year) {
+            return year.id >= 2019;
+        });
+
+    }
 
     vm.showReassignmentMessage = function () {
         var utcSelectedDate = Date.UTC(vm.selectedDate.getFullYear(), vm.selectedDate.getMonth());
