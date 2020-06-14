@@ -52,15 +52,8 @@
     </div>
   {% endif %}
 
-  <div data-bind="if: allow.case_preload()">
-    <div class="panel panel-appmanager case-properties wide-select2s"
-         data-bind="template: 'case-config:case-transaction:case-properties'"></div>
-  </div>
-
-  <div data-bind="if: !allow.case_preload()">
-    <div class="panel panel-appmanager"
-         data-bind="template: 'case-config:case-transaction:case-properties'"></div>
-  </div>
+  <div class="panel panel-appmanager case-properties wide-select2s"
+       data-bind="template: 'case-config:case-transaction:case-properties'"></div>
 
   <div class="panel panel-appmanager">
     <div class="panel-heading">
