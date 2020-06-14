@@ -63,6 +63,5 @@ branches:
   - jls/DRYer-case-config-ui-3 # Jenny June 6
   - revert-27725-jls/kill-configurable-timeout # Jenny June 9
   - nemanja1040:turn_gateway_improvements  # Nemanja Stancic June 10
-  - jls/messaging-history-error-code-filter # Jenny June 12
 
 submodules: {}

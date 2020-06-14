@@ -163,7 +163,7 @@ class PoshanProgressReport(object):
         # m1+m2+m3/3
         total_row = [0 for _ in range(0, len(all_cols))]
         for k, v in row_data_dict.items():
-            for col in all_cols[:]:
+            for col in all_cols:
                 if col not in ['state_name', 'district_name', unique_id]:
                     val = v[all_cols.index(col)]
                     row_data_dict[k][all_cols.index(col)] = _handle_average(val)
@@ -209,7 +209,6 @@ class PoshanProgressReport(object):
             row_data = dummy_row[:]
             for col in cols_to_fetch:
                 row_data[all_cols.index(col)] = row[col]
-                row_data.append(row[col])
                 if col not in ['state_name', 'district_name']:
                     total_row[all_cols.index(col)] += row[col] if row[col] else 0
                 else:
