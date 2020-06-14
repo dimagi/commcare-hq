@@ -214,6 +214,7 @@ class PoshanProgressReport(object):
                 else:
                     total_row[all_cols.index(col)] = 'Total'
             excel_rows.append(row_data)
+        excel_rows.append(total_row)
         # calcuating percentage for all rows
         for i in range(1, len(excel_rows)):
             row = excel_rows[i][:]
