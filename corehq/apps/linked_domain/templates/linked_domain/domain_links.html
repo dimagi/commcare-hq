@@ -19,12 +19,14 @@
   <div id="domain_links" class="ko-template">
     {% if is_master_domain %}
       <ul class="nav nav-tabs sticky-tabs">
-        <li class="active"><a data-toggle="tab" href="#tabs-master">{% trans "Project Link" %}</a></li>
-        <li><a data-toggle="tab" href="#tabs-linked">{% trans "Projects linked to this one" %}</a></li>
+        {% if is_linked_domain %}
+          <li class="active"><a data-toggle="tab" href="#tabs-master">{% trans "Project Link" %}</a></li>
+        {% endif %}
+        <li{% if not is_linked_domain %} class="active"{% endif %}><a data-toggle="tab" href="#tabs-linked">{% trans "Projects linked to this one" %}</a></li>
         <li><a data-toggle="tab" href="#tabs-release">{% trans "Release Content" %}</a></li>
       </ul>
       <div class="spacer"></div>
-    {% else %}
+    {% elif is_linked_domain %}
       <h2>{% trans "Project Link" %}</h2>  {# header for the only tab that will be displayed #}
     {% endif %}
 
