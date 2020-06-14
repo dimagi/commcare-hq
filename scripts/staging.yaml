@@ -54,7 +54,6 @@ branches:
   - jls/migrate-CustomDataFieldsDefinition-2 # Jenny April 29
   - rn_update_perfect_scrollbar # Rohit Negi May 4
   - jls/migrate-MobileAuthKeyRecord-2 # Jenny May 16
-  - bmb/SAAS-10882  # Biyeun May 20 (updates knockout, bootstrap, jquery, DOMPurify)
   - nh/repeaters_ui  # Norman May 28
   - nh/charset  # Norman May 27
   - jls/push-linked-apps # Jenny May 31
