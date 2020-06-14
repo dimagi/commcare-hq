@@ -1,3 +1,5 @@
+import textwrap
+
 from celery.task import task
 from collections import defaultdict
 
@@ -11,7 +13,7 @@ from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.app_manager.views.utils import update_linked_app
 from corehq.apps.hqwebapp.tasks import send_mail_async
-from corehq.apps.linked_domain.const import MODEL_APP, MODEL_REPORT
+from corehq.apps.linked_domain.const import MODEL_APP, MODEL_CASE_SEARCH, MODEL_REPORT
 from corehq.apps.linked_domain.dbaccessors import get_linked_domains
 from corehq.apps.linked_domain.ucr import update_linked_ucr
 from corehq.apps.linked_domain.updates import update_model_type
@@ -48,9 +50,9 @@ def push_models(master_domain, models, linked_domains, build_apps, username):
                         if is_linked_app(linked_app) and linked_app.family_id == app_id:
                             found = True
                             if toggles.MULTI_MASTER_LINKED_DOMAINS.enabled(linked_domain):
-                                errors_by_domain[linked_domain].append(_("""
+                                errors_by_domain[linked_domain].append(textwrap.dedent(_("""
                                     Could not update {} because multi master flag is in use
-                                """.strip()).format(model['name']))
+                                """.strip()).format(model['name'])))
                                 continue
                             app = update_linked_app(linked_app, app_id, user.user_id)
                             updated_app = True
@@ -65,6 +67,14 @@ def push_models(master_domain, models, linked_domains, build_apps, username):
                         if linked_report.report_meta.master_id == report_id:
                             found = True
                             update_linked_ucr(domain_link, linked_report.get_id)
+                elif (
+                    model['type'] == MODEL_CASE_SEARCH
+                    and not toggles.SYNC_SEARCH_CASE_CLAIM.enabled(linked_domain)
+                ):
+                    errors_by_domain[linked_domain].append(textwrap.dedent(_("""
+                        Could not update {} because case claim flag is not on
+                    """.strip()).format(model['name'])))
+                    continue
                 else:
                     found = True
                     update_model_type(domain_link, model['type'], model_detail=model['detail'])
@@ -75,13 +85,13 @@ def push_models(master_domain, models, linked_domains, build_apps, username):
             except Exception as e:   # intentionally broad
                 if model['type'] == MODEL_APP and updated_app and build_apps and not built_app:
                     # Updating an app can be a 2-step process, make it clear which one failed
-                    errors_by_domain[linked_domain].append(_("""
+                    errors_by_domain[linked_domain].append(textwrap.dedent(_("""
                         Updated {} but could not make and release build: {}
-                    """.strip()).format(model['name'], str(e)))
+                    """.strip()).format(model['name'], str(e))))
                 else:
-                    errors_by_domain[linked_domain].append(_("""
+                    errors_by_domain[linked_domain].append(textwrap.dedent(_("""
                         Could not update {}: {}
-                    """.strip()).format(model['name'], str(e)))
+                    """.strip()).format(model['name'], str(e))))
                 notify_exception(None, "Exception pushing linked domains: {}".format(e))
 
     subject = _("Linked project release complete.")

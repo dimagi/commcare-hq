@@ -12,6 +12,7 @@ from couchdbkit import ResourceNotFound
 from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
+from corehq import toggles
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
@@ -36,7 +37,7 @@ from corehq.apps.domain.views.settings import BaseAdminProjectSettingsView
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.decorators import use_multiselect
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pretty_doc_info
-from corehq.apps.linked_domain.const import LINKED_MODELS, LINKED_MODELS_MAP
+from corehq.apps.linked_domain.const import LINKED_MODELS, LINKED_MODELS_MAP, MODEL_CASE_SEARCH
 from corehq.apps.linked_domain.dbaccessors import (
     get_domain_master_link,
     get_linked_domains,
@@ -249,7 +250,11 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         ignore_models = ignore_models or []
 
         for model, name in LINKED_MODELS:
-            if model not in ignore_models and model not in ('app', 'report'):
+            if (
+                model not in ignore_models
+                and model not in ('app', 'report')
+                and (model != MODEL_CASE_SEARCH or toggles.SYNC_SEARCH_CASE_CLAIM.enabled(self.domain))
+            ):
                 model_status.append({
                     'type': model,
                     'name': name,
