@@ -1284,7 +1284,8 @@ def temporary_google_verify(request):
 @require_POST
 @csrf_exempt
 def log_email_event(request):
-    # From Amazon SNS: https://docs.aws.amazon.com/ses/latest/DeveloperGuide/event-publishing-retrieving-sns-examples.html
+    # From Amazon SNS:
+    # https://docs.aws.amazon.com/ses/latest/DeveloperGuide/event-publishing-retrieving-sns-examples.html
     request_json = json.loads(request.body)
     message = json.loads(request_json['Message'])
     headers = message.get('mail', {}).get('headers', [])
@@ -1305,9 +1306,14 @@ def log_email_event(request):
 
     event_type = message.get('eventType')
     if event_type == 'Bounce':
-        subevent.status = MessagingEvent.STATUS_BOUNCE
-        subevent.additional_error_text = message['bounce']
-        subevent.save()
+        subevent.status = MessagingEvent.STATUS_EMAIL_BOUNCED
+        subevent.additional_error_text = message.get('bounce')
+    elif event_type == 'Send':
+        subevent.status = MessagingEvent.STATUS_EMAIL_SENT
+    elif event_type == 'Delivery':
+        subevent.status = MessagingEvent.STATUS_EMAIL_DELIVERED
+        subevent.additional_error_text = message.get('delivery')
 
+    subevent.save()
     return HttpResponse()
 
