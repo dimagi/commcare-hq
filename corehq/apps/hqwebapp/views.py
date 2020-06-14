@@ -1282,6 +1282,7 @@ def temporary_google_verify(request):
     return render(request, "google9633af922b8b0064.html")
 
 
+@waf_allow('XSS_BODY')
 @require_POST
 @csrf_exempt
 def log_email_event(request):
