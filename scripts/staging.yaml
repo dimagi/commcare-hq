@@ -65,7 +65,6 @@ branches:
   - fr/bounced-email-in-reports # Farid June 14
   - jls/messaging-history-error-code-filter+kev/sms-messaging-email-filter # Jenny June 15
   - jls/messaging-history-error-code-filter # Jenny June 15
-  - kev/sms-messaging-email-model # Kevin June 15
   - kev/sms-messaging-email-filter # Kevin June 15
   - ce/email-details # Cal June 15
 
