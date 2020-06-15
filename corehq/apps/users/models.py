@@ -1629,12 +1629,13 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     def log_user_create(self, created_by, created_via):
         # fallback to self if not created by any user
-        created_by = created_by or self
+        self_django_user = self.get_django_user(use_primary_db=True)
+        created_by = created_by or self_django_user
         if isinstance(created_by, CouchUser):
             created_by = created_by.get_django_user()
         log_model_change(
             created_by,
-            self.get_django_user(use_primary_db=True),
+            self_django_user,
             message={'created_via': created_via},
             fields_changed=None,
             is_create=True
