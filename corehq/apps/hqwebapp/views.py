@@ -494,25 +494,17 @@ def logout(req, default_domain_redirect='domain_login'):
         return HttpResponseRedirect(reverse('login'))
 
 
-# ping_login and ping_session are both tiny views used in user inactivity and session expiration handling
-# They are identical except that ping_session extends the user's current session, while ping_login does not.
+# ping_response powers the ping_login and ping_session views, both tiny views used in user inactivity and
+# session expiration handling.ping_session extends the user's current session, while ping_login does not.
 # This difference is controlled in SelectiveSessionMiddleware, which makes ping_login bypass sessions.
 @location_safe
 @two_factor_exempt
-def ping_login(request):
+def ping_response(request):
     return JsonResponse({
         'success': request.user.is_authenticated,
-        'last_request': request.session.get('last_request'),
-        'username': request.user.username,
-    })
-
-
-@location_safe
-@two_factor_exempt
-def ping_session(request):
-    return JsonResponse({
-        'success': request.user.is_authenticated,
-        'last_request': request.session.get('last_request'),
+        'session_expiry': request.session.get('session_expiry'),
+        'secure_session': request.session.get('secure_session'),
+        'secure_session_timeout': request.session.get('secure_session_timeout'),
         'username': request.user.username,
     })
 
