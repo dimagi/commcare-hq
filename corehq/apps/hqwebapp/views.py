@@ -1300,13 +1300,11 @@ def log_email_event(request):
     message = json.loads(request_json['Message'])
     headers = message.get('mail', {}).get('headers', [])
 
-    subevent_id = None
     for header in headers:
         if header["name"] == COMMCARE_MESSAGE_ID_HEADER:
             subevent_id = header["value"]
             break
-
-    if subevent_id is None:
+    else:
         return HttpResponse()
 
     try:

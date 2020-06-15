@@ -883,7 +883,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     STATUS_ERROR = 'ERR'
     STATUS_EMAIL_BOUNCED = 'BNC'
     STATUS_EMAIL_SENT = 'SND'
-    STATUS_EMAIL_DELIVERED = 'BNC'
+    STATUS_EMAIL_DELIVERED = 'DEL'
 
     STATUS_CHOICES = (
         (STATUS_IN_PROGRESS, ugettext_noop('In Progress')),
