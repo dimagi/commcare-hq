@@ -49,21 +49,21 @@ class TestDomainViews(TestCase, DomainSubscriptionMixin):
     def test_allow_domain_requests(self):
         self.client.login(username=self.username, password=self.password)
 
-        with domain_test_fixture("public", allow_domain_requests=True):
+        with domain_fixture("public", allow_domain_requests=True):
             response = self.client.get(reverse("domain_homepage", args=["public"]), follow=True)
             self.assertEqual(response.status_code, 200)
 
     def test_disallow_domain_requests(self):
         self.client.login(username=self.username, password=self.password)
 
-        with domain_test_fixture("private"):
+        with domain_fixture("private"):
             response = self.client.get(reverse("domain_homepage", args=["private"]), follow=True)
             self.assertEqual(response.status_code, 404)
 
     def test_add_repeater(self):
         self.client.login(username=self.username, password=self.password)
 
-        with connection_test_fixture(self.domain.name) as connx:
+        with connection_fixture(self.domain.name) as connx:
             post_url = reverse('add_repeater', kwargs={
                 'domain': self.domain.name,
                 'repeater_type': 'AppStructureRepeater'
@@ -112,7 +112,7 @@ class TestPasswordResetFormAutocomplete(BaseAutocompleteTest):
 
 
 @contextmanager
-def domain_test_fixture(domain_name, allow_domain_requests=False):
+def domain_fixture(domain_name, allow_domain_requests=False):
     domain = Domain(name=domain_name, is_active=True)
     if allow_domain_requests:
         domain.allow_domain_requests = True
@@ -124,7 +124,7 @@ def domain_test_fixture(domain_name, allow_domain_requests=False):
 
 
 @contextmanager
-def connection_test_fixture(domain_name):
+def connection_fixture(domain_name):
     connx = ConnectionSettings(
         domain=domain_name,
         name='example.com',
