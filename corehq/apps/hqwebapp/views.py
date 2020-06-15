@@ -1336,7 +1336,7 @@ def log_email_event(request, secret):
         subevent.status = MessagingEvent.STATUS_EMAIL_SENT
     elif event_type == 'Delivery':
         subevent.status = MessagingEvent.STATUS_EMAIL_DELIVERED
-        subevent.additional_error_text = message.get('delivery')
+        subevent.additional_error_text = message.get('delivery', {}).get('timestamp')
 
     subevent.save()
 
