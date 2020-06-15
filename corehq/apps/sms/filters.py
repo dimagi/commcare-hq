@@ -76,6 +76,7 @@ class EventStatusFilter(BaseSingleOptionFilter):
         (MessagingEvent.STATUS_IN_PROGRESS, ugettext_noop('In Progress')),
         (MessagingEvent.STATUS_NOT_COMPLETED, ugettext_noop('Not Completed')),
         (MessagingEvent.STATUS_ERROR, ugettext_noop('Error')),
+        (MessagingEvent.STATUS_EMAIL_DELIVERED, ugettext_noop('Delivered (Email Only)')),
     )
 
     slug = 'event_status'
