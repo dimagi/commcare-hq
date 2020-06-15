@@ -1464,7 +1464,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     def create(cls, domain, username, password, email=None, uuid='', date='',
                first_name='', last_name='', **kwargs):
         try:
-            django_user = User.objects.get(username=username)
+            django_user = User.objects.using(router.db_for_write(User)).get(username=username)
         except User.DoesNotExist:
             django_user = create_user(
                 username, password=password, email=email,
