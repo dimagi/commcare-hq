@@ -66,7 +66,6 @@ def get_per_domain_context(project, request=None):
         'CUSTOM_LOGO_URL': custom_logo_url,
         'allow_report_an_issue': allow_report_an_issue,
         'EULA_COMPLIANCE': getattr(settings, 'EULA_COMPLIANCE', False),
-        'SECURE_TIMEOUT': settings.SECURE_TIMEOUT if project and project.secure_sessions else None,
     }
 
 
