@@ -64,5 +64,8 @@ branches:
   - nemanja1040:turn_gateway_improvements  # Nemanja Stancic June 10
   - fr/bounced-email-in-reports # Farid June 14
   - jls/messaging-history-error-code-filter # Jenny June 15
+  - kev/sms-messaging-email-model # Kevin June 15
+  - kev/sms-messaging-email-filter # Kevin June 15
+  - ce/email-detail # Cal June 15
 
 submodules: {}
