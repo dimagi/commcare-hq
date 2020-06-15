@@ -781,7 +781,8 @@ class MessagingEventsReport(BaseMessagingEventReport):
             {'name': 'enddate', 'value': self.datespan.enddate.strftime('%Y-%m-%d')},
             {'name': EventTypeFilter.slug, 'value': EventTypeFilter.get_value(self.request, self.domain)},
             {'name': EventStatusFilter.slug, 'value': EventStatusFilter.get_value(self.request, self.domain)},
-            {'name': PhoneNumberOrEmailFilter.slug, 'value': PhoneNumberOrEmailFilter.get_value(self.request, self.domain)},
+            {'name': PhoneNumberOrEmailFilter.slug,
+             'value': PhoneNumberOrEmailFilter.get_value(self.request, self.domain)},
         ]
 
     @property

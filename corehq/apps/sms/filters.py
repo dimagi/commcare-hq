@@ -89,8 +89,8 @@ class RequiredPhoneNumberFilter(PhoneNumberFilter):
 class PhoneNumberOrEmailFilter(BaseSimpleFilter):
     slug = "phone_number_or_email_address"
     label = ugettext_lazy("Phone Number or Email Address")
-    help_inline = ugettext_lazy("Enter a full or partial phone number or a full or partial email address to filter "
-                                "results")
+    help_inline = ugettext_lazy("Enter a full or partial phone number or a full or partial email "
+                                "address to filter results")
 
 
 class PhoneNumberReportFilter(BaseReportFilter):
