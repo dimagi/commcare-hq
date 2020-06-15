@@ -373,6 +373,20 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
                     storageService.setKey('search', $location.search());
                     $scope.$emit('filtersChange');
                 }
+                if ($location.path().indexOf('poshan_progress_dashboard') !== -1 && selectedLocationIndex() > 0) {
+                    vm.onSelect(vm.selectedLocations[0], 0);
+                    vm.selectedLocationId = vm.selectedLocations[0].location_id;
+                    vm.location_id = vm.selectedLocationId;
+                    locations = vm.getLocationsForLevel(selectedLocationIndex());
+                    var loc = _.filter(locations, function (loc) {
+                        return loc.location_id === vm.selectedLocationId;
+                    });
+                    $location.search('location_name', loc[0]['name']);
+                    $location.search('location_id', vm.selectedLocationId);
+                    $location.search('selectedLocationLevel', selectedLocationIndex());
+                    storageService.setKey('search', $location.search());
+                    $scope.$emit('filtersChange');
+                }
             });
         } else {
             initHierarchy();
