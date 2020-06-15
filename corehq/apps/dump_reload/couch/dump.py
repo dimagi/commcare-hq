@@ -22,7 +22,7 @@ from corehq.feature_previews import all_previews
 DOC_PROVIDERS = {
     DocTypeIDProvider(['Application']),
     DocTypeIDProvider(['CommtrackConfig']),
-    DocTypeIDProvider(['DefaultConsumption']),
+    ViewIDProvider('CommCareMultimedia', 'hqmedia/by_domain', DomainKeyGenerator()),
     DocTypeIDProvider(['MobileAuthKeyRecord']),
     DocTypeIDProvider(['Product']),
     DocTypeIDProvider(['Program']),
@@ -46,6 +46,12 @@ DOC_PROVIDERS = {
     DocTypeIDProvider(['FixtureDataItem']),
     ViewIDProvider('Repeater', 'repeaters/repeaters', DomainInListKeyGenerator()),
     ViewIDProvider('RepeatRecord', 'repeaters/repeat_records', DomainInListKeyGenerator([None])),
+}
+
+DOC_PROVIDERS_BY_DOC_TYPE = {
+    doc_type: provider
+    for provider in DOC_PROVIDERS
+    for doc_type in provider.doc_types
 }
 
 

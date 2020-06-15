@@ -1,0 +1,3 @@
+doc_id,inserted_at,repeat_iteration,awc_id,supervisor_id,block_id,district_id,state_id,submitted_on,add,edd,mother_resident_status,sex,child_health_case_id,delivery_nature,still_live_birth,birth_weight_kg
+a20,2017-05-01,1,a20,s4,b2,d1,st1,2017-05-01,2017-04-01,2017-03-01,1,F,afd225dd-8301-47ee-9223-64fe70c9f84a,vaginal,,
+a21,2017-05-01,1,a20,s4,b2,d1,st1,2017-05-01,2017-04-01,2018-03-01,1,F,baf57f25-7808-490c-b9ba-325d23f1c562,vaginal,,

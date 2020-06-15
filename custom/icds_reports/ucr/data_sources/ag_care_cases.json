@@ -1,0 +1,403 @@
+{
+  "domains": [
+    "akshita-sandbox",
+    "aparatest",
+    "cas-lab",
+    "ccqa",
+    "ccqa-downstream",
+    "derek-icds-sandbox",
+    "icds-cas",
+    "icds-cas-sandbox",
+    "icds-dashboard-qa",
+    "icds-sql",
+    "icds-test",
+    "jessica-icds-cas",
+    "laurence-project-1",
+    "marissa-test",
+    "priyanka-app",
+    "reach-dashboard-qa",
+    "reach-sandbox",
+    "reach-test",
+    "sankalp_cas",
+    "shrena-dev",
+    "sunaina-sandbox",
+    "zohaib-sandbox"
+  ],
+  "server_environment": [
+    "india",
+    "icds",
+    "icds-staging"
+  ],
+  "config": {
+    "table_id": "static-ag_care_cases",
+    "display_name": "Cases - ag_care",
+    "referenced_doc_type": "CommCareCase",
+    "description": "",
+    "base_item_expression": {},
+    "configured_filter": {
+      "operator": "eq",
+      "type": "boolean_expression",
+      "expression": {
+        "type": "property_name",
+        "property_name": "type",
+        "datatype": null
+      },
+      "property_value": "ag_care",
+      "comment": null
+    },
+    "validations": [
+      {
+        "name": "owned_by_awc",
+        "error_message": "Case not owned by AWC",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "location_id_expression": {
+              "type": "property_name",
+              "property_name": "owner_id"
+            },
+            "type": "location_type_name"
+          },
+          "property_value": "awc"
+        }
+      }
+    ],
+    "configured_indicators": [
+      {
+        "display_name": null,
+        "datatype": "string",
+        "expression": {
+          "expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "owner_id"
+          },
+          "type": "root_doc"
+        },
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": false,
+        "type": "expression",
+        "column_id": "awc_id",
+        "create_index": false,
+        "comment": null
+      },
+      {
+        "display_name": null,
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": true,
+        "transform": {},
+        "is_nullable": false,
+        "expression": {
+          "location_id": {
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "owner_id"
+            },
+            "type": "root_doc"
+          },
+          "location_type": "supervisor",
+          "location_property": "_id",
+          "type": "ancestor_location"
+        },
+        "column_id": "supervisor_id",
+        "create_index": false,
+        "comment": null
+      },
+      {
+        "display_name": null,
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "expression": {
+          "location_id": {
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "owner_id"
+            },
+            "type": "root_doc"
+          },
+          "location_type": "block",
+          "location_property": "_id",
+          "type": "ancestor_location"
+        },
+        "column_id": "block_id",
+        "create_index": false,
+        "comment": null
+      },
+      {
+        "display_name": null,
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "expression": {
+          "location_id": {
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "owner_id"
+            },
+            "type": "root_doc"
+          },
+          "location_type": "district",
+          "location_property": "_id",
+          "type": "ancestor_location"
+        },
+        "column_id": "district_id",
+        "create_index": false,
+        "comment": null
+      },
+      {
+        "display_name": null,
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "expression": {
+          "location_id": {
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "owner_id"
+            },
+            "type": "root_doc"
+          },
+          "location_type": "state",
+          "location_property": "_id",
+          "type": "ancestor_location"
+        },
+        "create_index": true,
+        "column_id": "state_id",
+        "comment": null
+      },
+      {
+        "display_name": null,
+        "property_path": [],
+        "datatype": "datetime",
+        "is_primary_key": false,
+        "column_id": "opened_on",
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": "opened_on",
+        "create_index": false,
+        "comment": null
+      },
+      {
+        "display_name": null,
+        "property_path": [],
+        "datatype": "datetime",
+        "is_primary_key": false,
+        "column_id": "closed_on",
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": "closed_on",
+        "create_index": false,
+        "comment": null
+      },
+      {
+        "display_name": "Last Modified",
+        "property_path": [],
+        "datatype": "datetime",
+        "is_primary_key": false,
+        "column_id": "modified_on",
+        "is_nullable": true,
+        "type": "raw",
+        "property_name": "modified_on",
+        "create_index": false,
+        "comment": null
+      },
+      {
+        "filter": {
+          "type": "named",
+          "name": "open_cases",
+          "comment": null
+        },
+        "display_name": null,
+        "type": "boolean",
+        "column_id": "open_count",
+        "comment": null
+      },
+      {
+        "display_name": null,
+        "transform": {},
+        "datatype": "small_integer",
+        "type": "expression",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "out_of_school",
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "type": "named",
+            "name": "open_cases",
+            "comment": null
+          },
+          "expression_if_true": {
+            "type": "conditional",
+            "test": {
+              "operator": "eq",
+              "type": "boolean_expression",
+              "expression": {
+                "value_expression": {
+                  "type": "property_name",
+                  "property_name": "is_oos",
+                  "datatype": null
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareCase",
+                "doc_id_expression": {
+                  "type": "named",
+                  "name": "parent_id"
+                }
+              },
+              "property_value": "yes",
+              "comment": null
+            },
+            "expression_if_true": {
+              "type": "constant",
+              "constant": 1
+            },
+            "expression_if_false": {
+              "type": "constant",
+              "constant": 0
+            }
+          },
+          "expression_if_false": {
+            "type": "constant",
+            "constant": 0
+          }
+        },
+        "create_index": false,
+        "comment": null
+      },
+      {
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "operator": "eq",
+            "expression": {
+              "value_expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "migration_status"
+              },
+              "type": "related_doc",
+              "related_doc_type": "CommCareCase",
+              "doc_id_expression": {
+                "type": "named",
+                "name": "parent_id"
+              }
+            },
+            "type": "boolean_expression",
+            "property_value": "migrated",
+            "comment": null
+          },
+          "expression_if_true": {
+            "type": "constant",
+            "constant": 1
+          },
+          "expression_if_false": {
+            "type": "constant",
+            "constant": 0
+          }
+        },
+        "type": "expression",
+        "column_id": "is_migrated",
+        "is_nullable": true,
+        "datatype": "integer",
+        "is_primary_key": false,
+        "create_index": false,
+        "transform": {},
+        "display_name": null,
+        "comment": null
+      },
+      {
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "operator": "not_eq",
+            "expression": {
+              "value_expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "registered_status"
+              },
+              "type": "related_doc",
+              "related_doc_type": "CommCareCase",
+              "doc_id_expression": {
+                "type": "named",
+                "name": "parent_id"
+              }
+            },
+            "type": "boolean_expression",
+            "property_value": "not_registered",
+            "comment": null
+          },
+          "expression_if_true": {
+            "type": "constant",
+            "constant": 1
+          },
+          "expression_if_false": {
+            "type": "constant",
+            "constant": 0
+          }
+        },
+        "type": "expression",
+        "column_id": "is_availing",
+        "is_nullable": true,
+        "datatype": "integer",
+        "is_primary_key": false,
+        "create_index": false,
+        "transform": {},
+        "display_name": null,
+        "comment": null
+      }
+    ],
+    "named_expressions": {
+      "parent_id": {
+        "type": "property_name",
+        "property_name": "host_person_id",
+        "datatype": null
+      }
+    },
+    "named_filters": {
+      "open_cases": {
+        "operator": "eq",
+        "expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "closed"
+        },
+        "type": "boolean_expression",
+        "property_value": false,
+        "comment": null
+      }
+    },
+    "engine_id": "icds-ucr-citus",
+    "sql_settings": {
+      "citus_config": {
+        "distribution_type": "hash",
+        "distribution_column": "supervisor_id"
+      },
+      "primary_key": ["supervisor_id","doc_id"]
+    },
+    "sql_column_indexes": [
+      {
+        "column_ids": [
+          "awc_id",
+          "opened_on"
+        ]
+      }
+    ],
+    "disable_destructive_rebuild": true
+  }
+}

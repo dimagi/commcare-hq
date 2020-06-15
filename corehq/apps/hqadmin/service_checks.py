@@ -153,7 +153,7 @@ def check_blobdb():
         parent_id="check_blobdb",
         type_code=CODES.tempfile,
     )
-    with db.get(key=meta.key) as fh:
+    with db.get(meta=meta) as fh:
         res = fh.read()
     db.delete(key=meta.key)
     if res == contents:

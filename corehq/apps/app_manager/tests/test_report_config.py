@@ -475,7 +475,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
               </header>
               <template>
                 <text>
-                  <xpath function="concat($message, ' ', format-date(date(instance('commcare-reports:index')/report_index/reports/@last_update), '%d/%m/%Y'))">
+                  <xpath function="concat($message, ' ', format-date(date(instance('commcare-reports:index')/report_index/reports/@last_update), '%e/%n/%Y'))">
                     <variable name="message">
                       <locale id="cchq.reports_last_updated_on"/>
                     </variable>

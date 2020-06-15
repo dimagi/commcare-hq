@@ -1,3 +1,4 @@
+import csv
 import io
 from datetime import date, timedelta
 
@@ -8,7 +9,6 @@ from django.template import Context, Template
 from django.template.loader import render_to_string
 
 import attr
-import csv
 from celery.schedules import crontab
 from celery.task import task
 from celery.task.base import periodic_task
@@ -21,6 +21,7 @@ from pillowtop.utils import get_couch_pillow_instances
 from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.util.celery_utils import periodic_task_when_true
 from corehq.util.soft_assert import soft_assert
 
 from .utils import check_for_rewind
@@ -52,16 +53,15 @@ def create_historical_checkpoints():
     HistoricalPillowCheckpoint.objects.filter(date_updated__lt=thirty_days_ago).delete()
 
 
-if settings.IS_DIMAGI_ENVIRONMENT:
-    @periodic_task(run_every=crontab(minute=0), queue='background_queue')
-    def check_non_dimagi_superusers():
-        non_dimagis_superuser = ', '.join((get_user_model().objects.filter(
-            (Q(is_staff=True) | Q(is_superuser=True)) & ~Q(username__endswith='@dimagi.com')
-        ).values_list('username', flat=True)))
-        if non_dimagis_superuser:
-            message = "{non_dimagis} have superuser privileges".format(non_dimagis=non_dimagis_superuser)
-            _soft_assert_superusers(False, message)
-            notify_error(message=message)
+@periodic_task_when_true(settings.IS_DIMAGI_ENVIRONMENT, run_every=crontab(minute=0), queue='background_queue')
+def check_non_dimagi_superusers():
+    non_dimagis_superuser = ', '.join((get_user_model().objects.filter(
+        (Q(is_staff=True) | Q(is_superuser=True)) & ~Q(username__endswith='@dimagi.com')
+    ).values_list('username', flat=True)))
+    if non_dimagis_superuser:
+        message = "{non_dimagis} have superuser privileges".format(non_dimagis=non_dimagis_superuser)
+        _soft_assert_superusers(False, message)
+        notify_error(message=message)
 
 
 @task(serializer='pickle', queue="email_queue")

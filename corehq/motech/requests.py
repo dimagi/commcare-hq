@@ -1,26 +1,49 @@
 import logging
+from functools import wraps
+from typing import Callable, Optional
 
 from django.conf import settings
 
-import requests
+import attr
+from requests.structures import CaseInsensitiveDict
 
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.hqwebapp.tasks import send_mail_async
+from corehq.motech.auth import AuthManager, BasicAuthManager
 from corehq.motech.const import REQUEST_TIMEOUT
 from corehq.motech.models import RequestLog
-from corehq.motech.utils import pformat_json
+from corehq.motech.utils import (
+    get_endpoint_url,
+    pformat_json,
+    unpack_request_args,
+)
 
 
-def log_request(func):
+@attr.s(frozen=True)
+class RequestLogEntry:
+    domain = attr.ib()
+    payload_id = attr.ib()
+    method = attr.ib()
+    url = attr.ib()
+    headers = attr.ib()
+    params = attr.ib()
+    data = attr.ib()
+    error = attr.ib()
+    response_status = attr.ib()
+    response_body = attr.ib()
 
-    def request_wrapper(self, *args, **kwargs):
+
+def log_request(self, func, logger):
+
+    @wraps(func)
+    def request_wrapper(method, url, *args, **kwargs):
         log_level = logging.INFO
         request_error = ''
         response_status = None
         response_body = ''
         try:
-            response = func(self, *args, **kwargs)
+            response = func(method, url, *args, **kwargs)
             response_status = response.status_code
             response_body = response.content
         except Exception as err:
@@ -33,19 +56,12 @@ def log_request(func):
         else:
             return response
         finally:
-            # args will be Requests method, url, and optionally params, data or json.
-            # kwargs may include Requests method kwargs and raise_for_status.
-            kwargs.pop('raise_for_status', None)
-            RequestLog.log(
-                log_level,
-                self.domain_name,
-                self.payload_id,
-                request_error,
-                response_status,
-                response_body,
-                *args,
-                **kwargs
+            params, data, headers = unpack_request_args(method, args, kwargs)
+            entry = RequestLogEntry(
+                self.domain_name, self.payload_id, method, url, headers, params, data,
+                request_error, response_status, response_body
             )
+            logger(log_level, entry)
 
     return request_wrapper
 
@@ -61,40 +77,51 @@ class Requests(object):
     Requests as a context manager.
     """
 
-    def __init__(self, domain_name, base_url, username, password,
-                 verify=True, notify_addresses=None, payload_id=None):
+    def __init__(
+        self,
+        domain_name: str,
+        base_url: Optional[str],
+        *,
+        verify: bool = True,
+        auth_manager: AuthManager,
+        notify_addresses: Optional[list] = None,
+        payload_id: Optional[str] = None,
+        logger: Optional[Callable] = None,
+    ):
         """
         Initialise instance
 
         :param domain_name: Domain to store logs under
         :param base_url: Remote API base URL
-        :param username: Remote API username
-        :param password: Remote API plaintext password
         :param verify: Verify SSL certificate?
+        :param auth_manager: AuthManager instance to manage
+            authentication
         :param notify_addresses: A list of email addresses to notify of
             errors.
         :param payload_id: The ID of the case or form submission
             associated with this request
+        :param logger: function called after a request has been sent:
+                        `logger(log_level, log_entry: RequestLogEntry)`
         """
         self.domain_name = domain_name
         self.base_url = base_url
-        self.username = username
-        self.password = password
         self.verify = verify
-        self.notify_addresses = [] if notify_addresses is None else notify_addresses
+        self.auth_manager = auth_manager
+        self.notify_addresses = notify_addresses if notify_addresses else []
         self.payload_id = payload_id
+        self.logger = logger or RequestLog.log
+        self.send_request = log_request(self, self._send_request, self.logger)
         self._session = None
 
     def __enter__(self):
-        self._session = requests.Session()
+        self._session = self.auth_manager.get_session()
         return self
 
     def __exit__(self, *args):
         self._session.close()
         self._session = None
 
-    @log_request
-    def send_request(self, method, *args, **kwargs):
+    def _send_request(self, method, *args, **kwargs):
         raise_for_status = kwargs.pop('raise_for_status', False)
         if not self.verify:
             kwargs['verify'] = False
@@ -103,43 +130,40 @@ class Requests(object):
             response = self._session.request(method, *args, **kwargs)
         else:
             # Mimics the behaviour of requests.api.request()
-            with requests.Session() as session:
+            with self.auth_manager.get_session() as session:
                 response = session.request(method, *args, **kwargs)
         if raise_for_status:
             response.raise_for_status()
         return response
 
-    def get_url(self, uri):
-        return '/'.join((self.base_url.rstrip('/'), uri.lstrip('/')))
-
-    def delete(self, uri, **kwargs):
+    def delete(self, endpoint, **kwargs):
         kwargs.setdefault('headers', {'Accept': 'application/json'})
-        return self.send_request('DELETE', self.get_url(uri),
-                                 auth=(self.username, self.password), **kwargs)
+        url = get_endpoint_url(self.base_url, endpoint)
+        return self.send_request('DELETE', url, **kwargs)
 
-    def get(self, uri, *args, **kwargs):
+    def get(self, endpoint, *args, **kwargs):
         kwargs.setdefault('headers', {'Accept': 'application/json'})
         kwargs.setdefault('allow_redirects', True)
-        return self.send_request('GET', self.get_url(uri), *args,
-                                 auth=(self.username, self.password), **kwargs)
+        url = get_endpoint_url(self.base_url, endpoint)
+        return self.send_request('GET', url, *args, **kwargs)
 
-    def post(self, uri, data=None, json=None, *args, **kwargs):
+    def post(self, endpoint, data=None, json=None, *args, **kwargs):
         kwargs.setdefault('headers', {
             'Content-type': 'application/json',
             'Accept': 'application/json'
         })
-        return self.send_request('POST', self.get_url(uri), *args,
-                                 data=data, json=json,
-                                 auth=(self.username, self.password), **kwargs)
+        url = get_endpoint_url(self.base_url, endpoint)
+        return self.send_request('POST', url, *args,
+                                 data=data, json=json, **kwargs)
 
-    def put(self, uri, data=None, json=None, *args, **kwargs):
+    def put(self, endpoint, data=None, json=None, *args, **kwargs):
         kwargs.setdefault('headers', {
             'Content-type': 'application/json',
             'Accept': 'application/json'
         })
-        return self.send_request('PUT', self.get_url(uri), *args,
-                                 data=data, json=json,
-                                 auth=(self.username, self.password), **kwargs)
+        url = get_endpoint_url(self.base_url, endpoint)
+        return self.send_request('PUT', url, *args,
+                                 data=data, json=json, **kwargs)
 
     def notify_exception(self, message=None, details=None):
         self.notify_error(message, details)
@@ -152,7 +176,6 @@ class Requests(object):
             message,
             f'Project space: {self.domain_name}',
             f'Remote API base URL: {self.base_url}',
-            f'Remote API username: {self.username}',
         ]
         if self.payload_id:
             message_lines.append(f'Payload ID: {self.payload_id}')
@@ -164,6 +187,14 @@ class Requests(object):
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=self.notify_addresses,
         )
+
+
+def get_basic_requests(domain_name, base_url, username, password, **kwargs):
+    """
+    Returns a Requests instance with basic auth.
+    """
+    kwargs['auth_manager'] = BasicAuthManager(username, password)
+    return Requests(domain_name, base_url, **kwargs)
 
 
 def parse_request_exception(err):
@@ -182,3 +213,29 @@ def parse_request_exception(err):
     else:
         err_response = str(err)
     return err_request, err_response
+
+
+def simple_post(domain, url, data, *, headers, auth_manager, verify,
+                notify_addresses=None, payload_id=None):
+    """
+    POST with a cleaner API, and return the actual HTTPResponse object, so
+    that error codes can be interpreted.
+    """
+    if isinstance(data, str):
+        # Encode as UTF-8, otherwise requests will send data containing
+        # non-ASCII characters as 'data:application/octet-stream;base64,...'
+        data = data.encode('utf-8')
+    default_headers = CaseInsensitiveDict({
+        "content-type": "text/xml",
+        "content-length": str(len(data)),
+    })
+    default_headers.update(headers)
+    requests = Requests(
+        domain,
+        base_url=None,
+        verify=verify,
+        auth_manager=auth_manager,
+        notify_addresses=notify_addresses,
+        payload_id=payload_id,
+    )
+    return requests.post(url, data=data, headers=default_headers)

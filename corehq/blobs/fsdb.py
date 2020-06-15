@@ -2,12 +2,27 @@
 """
 import os
 from collections import namedtuple
+from gzip import GzipFile
 from hashlib import md5
-from os.path import commonprefix, exists, isabs, isdir, dirname, join, realpath, sep
+from os.path import (
+    commonprefix,
+    dirname,
+    exists,
+    isabs,
+    isdir,
+    join,
+    realpath,
+    sep,
+)
 
 from corehq.blobs.exceptions import BadName, NotFound
 from corehq.blobs.interface import AbstractBlobDB
-from corehq.blobs.util import check_safe_key
+from corehq.blobs.util import (
+    BlobStream,
+    GzipStream,
+    check_safe_key,
+    get_content_size,
+)
 from corehq.util.metrics import metrics_counter
 
 CHUNK_SIZE = 4096
@@ -28,7 +43,9 @@ class FilesystemBlobDB(AbstractBlobDB):
         dirpath = dirname(path)
         if not isdir(dirpath):
             os.makedirs(dirpath)
-        length = 0
+        if meta.is_compressed:
+            content = GzipStream(content)
+        chunk_sizes = []
         digest = md5()
         with open(path, "wb") as fh:
             while True:
@@ -36,18 +53,27 @@ class FilesystemBlobDB(AbstractBlobDB):
                 if not chunk:
                     break
                 fh.write(chunk)
-                length += len(chunk)
+                chunk_sizes.append(len(chunk))
                 digest.update(chunk)
-        meta.content_length = length
+
+        meta.content_length, meta.compressed_length = get_content_size(content, chunk_sizes)
         self.metadb.put(meta)
         return meta
 
-    def get(self, key):
+    def get(self, key=None, type_code=None, meta=None):
+        key = self._validate_get_args(key, type_code, meta)
         path = self.get_path(key)
         if not exists(path):
             metrics_counter('commcare.blobdb.notfound')
             raise NotFound(key)
-        return open(path, "rb")
+
+        file_obj = open(path, "rb")
+        if meta and meta.is_compressed:
+            content_length, compressed_length = meta.content_length, meta.compressed_length
+            file_obj = GzipFile(fileobj=file_obj, mode='rb')
+        else:
+            content_length, compressed_length = self.size(key), None
+        return BlobStream(file_obj, self, key, content_length, compressed_length)
 
     def size(self, key):
         path = self.get_path(key)

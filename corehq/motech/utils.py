@@ -1,5 +1,6 @@
 import json
 from base64 import b64decode, b64encode
+from typing import Optional
 
 from django.conf import settings
 
@@ -119,3 +120,41 @@ def pformat_json(data):
         return json.dumps(json_data, indent=2, sort_keys=True)
     except (TypeError, ValueError):
         return data
+
+
+def unpack_request_args(request_method, args, kwargs):
+    params = kwargs.pop('params', None)
+    json_data = kwargs.pop('json', None)  # dict
+    data = kwargs.pop('data', None)  # string
+    if data is None:
+        data = json_data
+    # Don't bother trying to cast `data` as a dict.
+    # RequestLog.request_body will store it, and it will be rendered
+    # as prettified JSON if possible, regardless of whether it's a
+    # dict or a string.
+    if args:
+        if request_method == 'GET':
+            params = args[0]
+        elif request_method == 'PUT':
+            data = args[0]
+    headers = kwargs.pop('headers', {})
+    return params, data, headers
+
+
+def get_endpoint_url(base_url: Optional[str], endpoint: str) -> str:
+    """
+    Joins ``endpoint`` to ``base_url`` if ``base_url`` is not None.
+
+    >>> get_endpoint_url('https://example.com/', '/foo')
+    'https://example.com/foo'
+
+    >>> get_endpoint_url('https://example.com', 'foo')
+    'https://example.com/foo'
+
+    >>> get_endpoint_url(None, 'https://example.com/foo')
+    'https://example.com/foo'
+
+    """
+    if base_url is None:
+        return endpoint
+    return '/'.join((base_url.rstrip('/'), endpoint.lstrip('/')))

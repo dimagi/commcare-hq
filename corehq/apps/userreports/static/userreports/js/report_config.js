@@ -164,6 +164,16 @@ hqDefine('userreports/js/report_config', function () {
                         self.refreshPreview();
                     }
                 });
+                self.areColumnsValidForChart = function () {
+                    var selectedColumnsForReport = self.columnList.columns();
+                    for (var index = 0; index < selectedColumnsForReport.length; index++) {
+                        var column = selectedColumnsForReport[index];
+                        if (column.calculation() === "Average" || column.calculation() === "Sum") {
+                            return true;
+                        }
+                    }
+                    return false;
+                };
                 self.addChart = function () {
                     self.selectedChart('bar');
                     hqImport('userreports/js/report_analytix').track.event('Add Chart');
@@ -467,7 +477,12 @@ hqDefine('userreports/js/report_config', function () {
                     var default_filters = JSON.parse(self.defaultFilterList.serializedProperties());
                     default_filters = _.filter(
                         default_filters,
-                        function (c) {return c.property && (c.pre_value || c.pre_operator);}
+                        function (c) {
+                            return c.property && (
+                                c.pre_value || c.pre_operator ||
+                                c.format === "Is Empty" || c.format === "Exists"
+                            );
+                        }
                     );
                     return {
                         "existing_report": self.existingReportId,

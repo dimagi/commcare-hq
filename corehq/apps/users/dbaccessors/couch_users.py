@@ -21,7 +21,7 @@ def get_user_id_by_username(username):
 
 def get_display_name_for_user_id(domain, user_id, default=None):
     if user_id:
-        user = CouchUser.get_by_user_id(user_id, domain)
+        user = CouchUser.get_by_user_id(user_id)
         if user:
             return user.full_name
     return default

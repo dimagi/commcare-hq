@@ -352,6 +352,7 @@ class SQLLocation(AdjListModel):
     created_at = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True, db_index=True)
     is_archived = models.BooleanField(default=False)
+    archived_on = models.DateTimeField(null=True, blank=True)
     latitude = models.DecimalField(max_digits=20, decimal_places=10, null=True, blank=True)
     longitude = models.DecimalField(max_digits=20, decimal_places=10, null=True, blank=True)
     parent = models.ForeignKey('self', null=True, blank=True, related_name='children', on_delete=models.CASCADE)
@@ -485,6 +486,7 @@ class SQLLocation(AdjListModel):
             'domain': self.domain,
             'external_id': self.external_id,
             'is_archived': self.is_archived,
+            'archived_on': self.archived_on.isoformat() if self.archived_on else None,
             'last_modified': self.last_modified.isoformat(),
             'latitude': float(self.latitude) if self.latitude else None,
             'longitude': float(self.longitude) if self.longitude else None,
@@ -524,7 +526,7 @@ class SQLLocation(AdjListModel):
         self.stocks_all_products = (set(value) ==
                                     set(SQLProduct.by_domain(self.domain)))
 
-        self._products = value
+        self._products.set(value)
 
     def _remove_user(self):
         """
@@ -547,6 +549,7 @@ class SQLLocation(AdjListModel):
         locations = self.get_descendants(include_self=True)
         for loc in locations:
             loc.is_archived = True
+            loc.archived_on = datetime.utcnow()
             loc.save()
             loc._remove_user()
 
@@ -566,6 +569,7 @@ class SQLLocation(AdjListModel):
         from corehq.apps.users.models import CommCareUser
         for loc in itertools.chain(self.get_descendants(include_self=True), self.get_ancestors()):
             loc.is_archived = False
+            loc.archived_on = None
             loc.save()
 
             if loc.user_id:

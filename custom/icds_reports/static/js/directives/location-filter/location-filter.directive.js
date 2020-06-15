@@ -1,6 +1,6 @@
 /* global _, LocationModalController, LocationFilterController */
 
-function LocationModalController($uibModalInstance, $location, locationsService, selectedLocationId, hierarchy, selectedLocations, locationsCache, maxLevel, userLocationId, showMessage, showSectorMessage) {
+function LocationModalController($uibModalInstance, $location, locationsService, selectedLocationId, hierarchy, selectedLocations, locationsCache, maxLevel, userLocationId, showMessage, showSectorMessage, dateHelperService) {
     // LocationModalController shares a lot of the same logic / state as LocationFilterController.
     // But it controls all the logic once the modal is popped up (so tiered selection).
     var vm = this;
@@ -23,6 +23,17 @@ function LocationModalController($uibModalInstance, $location, locationsService,
     vm.showMessage = showMessage;
     vm.showSectorMessage = showSectorMessage;
 
+    vm.selectedLocation = function () {
+        return vm.selectedLocations[selectedLocationIndex()];
+    };
+
+    vm.selectedDate = dateHelperService.getSelectedDate();
+
+    vm.showReassignmentMessage = function () {
+        var utcSelectedDate = Date.UTC(vm.selectedDate.getFullYear(), vm.selectedDate.getMonth());
+        return vm.selectedLocation() && (Date.parse(vm.selectedLocation().archived_on) <= utcSelectedDate || Date.parse(vm.selectedLocation().deprecates_at) > utcSelectedDate);
+    };
+
     vm.errors = function () {
         return vm.showMessage || vm.showSectorMessage;
     };
@@ -41,7 +52,7 @@ function LocationModalController($uibModalInstance, $location, locationsService,
 
     var selectedLocationIndex = function () {
         return _.findLastIndex(vm.selectedLocations, function (location) {
-            return location && location !== ALL_OPTION.location_id;
+            return location && location !== ALL_OPTION.location_id && location.location_id !== ALL_OPTION.location_id;
         });
     };
 
@@ -88,7 +99,11 @@ function LocationModalController($uibModalInstance, $location, locationsService,
     };
 
     vm.apply = function () {
-        vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
+        if (selectedLocationIndex() >= 0) {
+            vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
+        } else {
+            vm.selectedLocationId = ALL_OPTION;
+        }
         hqImport('analytix/js/google').track.event(
             'Location Filter',
             'Location Changed',
@@ -126,8 +141,9 @@ function LocationModalController($uibModalInstance, $location, locationsService,
 
 function LocationFilterController($rootScope, $scope, $location, $uibModal, locationHierarchy, locationsService,
     storageService, navigationService, userLocationId, haveAccessToAllLocations,
-    allUserLocationId) {
+    allUserLocationId, haveAccessToFeatures) {
     var vm = this;
+    vm.haveAccessToFeatures = haveAccessToFeatures;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
     } else {
@@ -236,7 +252,6 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
             vm.selectedLocations = selectedLocations;
             vm.currentLevel = selectedLocationIndex();
             vm.selectedLocation = vm.selectedLocations[selectedLocationIndex()];
-
             if (selectedLocationIndex() >= 0) {
                 vm.selectedLocationId = vm.selectedLocation.location_id;
                 vm.location_id = vm.selectedLocationId;
@@ -506,9 +521,9 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
 
 LocationFilterController.$inject = [
     '$rootScope', '$scope', '$location', '$uibModal', 'locationHierarchy', 'locationsService', 'storageService',
-    'navigationService', 'userLocationId', 'haveAccessToAllLocations', 'allUserLocationId',
+    'navigationService', 'userLocationId', 'haveAccessToAllLocations', 'allUserLocationId', 'haveAccessToFeatures',
 ];
-LocationModalController.$inject = ['$uibModalInstance', '$location', 'locationsService', 'selectedLocationId', 'hierarchy', 'selectedLocations', 'locationsCache', 'maxLevel', 'userLocationId', 'showMessage', 'showSectorMessage'];
+LocationModalController.$inject = ['$uibModalInstance', '$location', 'locationsService', 'selectedLocationId', 'hierarchy', 'selectedLocations', 'locationsCache', 'maxLevel', 'userLocationId', 'showMessage', 'showSectorMessage', 'dateHelperService'];
 
 window.angular.module('icdsApp').directive("locationFilter", ['templateProviderService', function (templateProviderService) {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;

@@ -84,6 +84,7 @@ hqDefine('icds_reports/js/spec/utils', function () {
         provideOverrideOrDefault("userLocationId", null);
         provideOverrideOrDefault("isAlertActive", false);
         provideOverrideOrDefault("haveAccessToAllLocations", false);
+        provideOverrideOrDefault("haveAccessToFeatures", false);
         provideOverrideOrDefault("isMobile", false);
     };
     return module;

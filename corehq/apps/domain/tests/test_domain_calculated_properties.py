@@ -14,6 +14,7 @@ from corehq.elastic import get_es_new, refresh_elasticsearch_index
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
+from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from pillowtop.processors.elastic import send_to_elasticsearch
 
@@ -26,7 +27,7 @@ class DomainCalculatedPropertiesTest(TestCase):
         cls.es = [{
             'info': i,
             'instance': get_es_new(),
-        } for i in [CASE_INDEX_INFO, SMS_INDEX_INFO, XFORM_INDEX_INFO]]
+        } for i in [CASE_INDEX_INFO, SMS_INDEX_INFO, XFORM_INDEX_INFO, USER_INDEX_INFO]]
 
     def setUp(self):
         self.domain = Domain(name='test-b9289e19d819')

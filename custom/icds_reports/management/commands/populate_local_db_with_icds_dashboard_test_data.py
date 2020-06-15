@@ -61,5 +61,5 @@ def _rename_location(location_name_column, old_name, new_name):
     AwcLocation.objects.filter(**{location_name_column: old_name}).update(**{location_name_column: new_name})
     with get_cursor(AwcLocationLocal) as cursor:
         cursor.execute(
-            f"UPDATE awc_location_local SET {location_name_column}='{new_name}' where {location_name_column} = '{old_name}'b"
+            f"UPDATE awc_location_local SET {location_name_column}='{new_name}' where {location_name_column} = '{old_name}'"
         )

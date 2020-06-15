@@ -4,7 +4,7 @@ from dimagi.utils.couch.database import iter_bulk_delete, iter_docs
 
 from corehq.apps.es import UserES
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
 
@@ -161,13 +161,14 @@ def get_user_docs_by_username(usernames):
 
 
 def get_existing_usernames(usernames):
-    return [
+    return {
         ret['key'] for ret in _get_user_results_by_username(usernames, include_docs=False)
-    ]
+    }.union(
+        ret['key'] for ret in _get_deleted_user_results_by_username(usernames)
+    )
 
 
 def _get_user_results_by_username(usernames, include_docs=True):
-    from corehq.apps.users.models import CouchUser
     return CouchUser.get_db().view(
         'users/by_username',
         keys=list(usernames),
@@ -176,8 +177,16 @@ def _get_user_results_by_username(usernames, include_docs=True):
     ).all()
 
 
+def _get_deleted_user_results_by_username(usernames):
+    return CouchUser.get_db().view(
+        'deleted_users_by_username/view',
+        keys=list(usernames),
+        reduce=False,
+        include_docs=False,
+    ).all()
+
+
 def get_all_user_ids():
-    from corehq.apps.users.models import CouchUser
     return [res['id'] for res in CouchUser.get_db().view(
         'users/by_username',
         reduce=False,
@@ -186,7 +195,6 @@ def get_all_user_ids():
 
 @unit_testing_only
 def delete_all_users():
-    from corehq.apps.users.models import CouchUser
     from django.contrib.auth.models import User
 
     def _clear_cache(doc):

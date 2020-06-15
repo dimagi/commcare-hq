@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+from itertools import chain
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
@@ -12,6 +13,7 @@ from dimagi.utils.chunked import chunked
 
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
     CASE_DOC_TYPES,
+    CleanBreak,
     do_couch_to_sql_migration,
     setup_logging,
 )
@@ -152,6 +154,13 @@ class Command(BaseCommand):
                 forms referenced by a case that do not exist in Couch but
                 a blob does exit. The file path must begin with / or ./
             """)
+        parser.add_argument('--patch',
+            dest="patch", action='store_true', default=False,
+            help="""
+                Shorthand for --forms=missing --case-diff=patch
+                This option is useful to migrate missing forms and patch
+                case diffs after a standard MIGRATE run.
+            """)
         parser.add_argument('-x', '--stop-on-error',
             dest="stop_on_error", action='store_true', default=False,
             help="""
@@ -175,6 +184,14 @@ class Command(BaseCommand):
     def handle(self, domain, action, **options):
         if action != STATS and should_use_sql_backend(domain):
             raise CommandError('It looks like {} has already been migrated.'.format(domain))
+
+        if options["patch"]:
+            if options["forms"]:
+                raise CommandError("--patch and --forms=... are mutually exclusive")
+            if options["case_diff"] != "after":
+                raise CommandError("--patch and --case-diff=... are mutually exclusive")
+            options["forms"] = "missing"
+            options["case_diff"] = "patch"
 
         for opt in [
             "no_input",
@@ -234,16 +251,20 @@ class Command(BaseCommand):
                 sys.exit(1)
         else:
             set_couch_sql_migration_started(domain, self.live_migrate)
-        do_couch_to_sql_migration(
-            domain,
-            self.state_dir,
-            with_progress=not self.no_input,
-            live_migrate=self.live_migrate,
-            case_diff=self.case_diff,
-            rebuild_state=self.rebuild_state,
-            stop_on_error=self.stop_on_error,
-            forms=self.forms,
-        )
+        try:
+            do_couch_to_sql_migration(
+                domain,
+                self.state_dir,
+                with_progress=not self.no_input,
+                live_migrate=self.live_migrate,
+                case_diff=self.case_diff,
+                rebuild_state=self.rebuild_state,
+                stop_on_error=self.stop_on_error,
+                forms=self.forms,
+            )
+        except CleanBreak:
+            print("migration stopped")
+            sys.exit(1)
 
         has_diffs = self.print_stats(domain, short=True, diffs_only=True)
         if self.live_migrate:
@@ -276,7 +297,17 @@ class Command(BaseCommand):
         self.print_stats(domain, short=not self.verbose)
 
     def do_diff(self, domain):
-        print(f"replaced by: couch_sql_diff {domain} show [--select=DOC_TYPE]")
+        from .couch_sql_diff import format_doc_diffs
+        statedb = open_state_db(domain, self.state_dir)
+        items = chain(
+            statedb.iter_doc_diffs(),
+            statedb.iter_doc_changes(),
+        )
+        try:
+            for doc_diffs in chunked(items, 100, list):
+                format_doc_diffs(doc_diffs)
+        except (KeyboardInterrupt, BrokenPipeError):
+            pass
 
     def do_rewind(self, domain):
         db = open_state_db(domain, self.state_dir)

@@ -3,7 +3,7 @@ from functools import wraps
 
 from django.conf import settings
 from django.db import migrations
-from django.db.backends.postgresql_psycopg2.schema import DatabaseSchemaEditor
+from django.db.backends.postgresql.schema import DatabaseSchemaEditor
 from django.db.migrations import RunPython
 
 
@@ -53,9 +53,13 @@ def add_if_not_exists_raw(string, name):
 
 class DatabaseSchemaEditorIfNotExists(DatabaseSchemaEditor):
     sql_create_index = add_if_not_exists(DatabaseSchemaEditor.sql_create_index)
-    sql_create_varchar_index = add_if_not_exists(DatabaseSchemaEditor.sql_create_varchar_index)
-    sql_create_text_index = add_if_not_exists(DatabaseSchemaEditor.sql_create_text_index)
     sql_create_unique = add_if_not_exists(DatabaseSchemaEditor.sql_create_unique)
+    # can remove the following lines once we're on Django 2.x
+    # they're internals whose usage within Django was replaced
+    if hasattr(DatabaseSchemaEditor, 'sql_create_varchar_index'):
+        sql_create_varchar_index = add_if_not_exists(DatabaseSchemaEditor.sql_create_varchar_index)
+    if hasattr(DatabaseSchemaEditor, 'sql_create_text_index'):
+        sql_create_text_index = add_if_not_exists(DatabaseSchemaEditor.sql_create_text_index)
 
 
 class AlterIndexIfNotExists(migrations.AlterIndexTogether):

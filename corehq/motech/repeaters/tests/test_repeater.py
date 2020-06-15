@@ -36,7 +36,6 @@ from corehq.form_processor.tests.utils import (
 from corehq.motech.repeaters.const import (
     MAX_RETRY_WAIT,
     MIN_RETRY_WAIT,
-    POST_TIMEOUT,
     RECORD_SUCCESS_STATE,
 )
 from corehq.motech.repeaters.dbaccessors import (
@@ -240,18 +239,21 @@ class RepeaterTest(BaseRepeaterTest):
         repeat_records = self.repeat_records()
 
         for repeat_record in repeat_records:
-            with patch(
-                    'corehq.motech.repeaters.models.simple_post',
-                    return_value=MockResponse(status_code=200, reason='No Reason')) as mock_post:
+            with patch('corehq.motech.repeaters.models.simple_post') as mock_post, \
+                    patch.object(Repeater, 'get_auth_manager') as mock_manager:
+                mock_post.return_value.status_code = 200
+                mock_manager.return_value = 'MockAuthManager'
                 repeat_record.fire()
                 self.assertEqual(mock_post.call_count, 1)
-                mock_post.assert_any_call(
-                    repeat_record.get_payload(),
+                mock_post.assert_called_with(
+                    self.domain,
                     repeat_record.repeater.get_url(repeat_record),
+                    repeat_record.get_payload(),
                     headers=repeat_record.repeater.get_headers(repeat_record),
-                    timeout=POST_TIMEOUT,
-                    auth=repeat_record.repeater.get_auth(),
+                    auth_manager='MockAuthManager',
                     verify=repeat_record.repeater.verify,
+                    notify_addresses=[],
+                    payload_id=repeat_record.payload_id,
                 )
 
         # The following is pretty fickle and depends on which of
@@ -727,16 +729,20 @@ class TestRepeaterFormat(BaseRepeaterTest):
     @run_with_all_backends
     def test_new_format_payload(self):
         repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
-        with patch('corehq.motech.repeaters.models.simple_post') as mock_post:
+        with patch('corehq.motech.repeaters.models.simple_post') as mock_post, \
+                patch.object(Repeater, 'get_auth_manager') as mock_manager:
             mock_post.return_value.status_code = 200
+            mock_manager.return_value = 'MockAuthManager'
             repeat_record.fire()
             headers = self.repeater.get_headers(repeat_record)
             mock_post.assert_called_with(
-                self.payload,
+                self.domain,
                 self.repeater.url,
+                self.payload,
+                auth_manager='MockAuthManager',
                 headers=headers,
-                timeout=POST_TIMEOUT,
-                auth=self.repeater.get_auth(),
+                notify_addresses=[],
+                payload_id='ABC123CASEID',
                 verify=self.repeater.verify,
             )
 
@@ -884,6 +890,7 @@ class LocationRepeaterTest(TestCase, DomainSubscriptionMixin):
                 'domain': self.domain,
                 'external_id': None,
                 'is_archived': False,
+                'archived_on': None,
                 'last_modified': location.last_modified.isoformat(),
                 'latitude': None,
                 'lineage': [],

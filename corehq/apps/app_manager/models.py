@@ -983,7 +983,6 @@ class FormBase(DocumentSchema):
     form_type = None
 
     name = DictProperty(str)
-    name_enum = SchemaListProperty(MappingItem)
     unique_id = StringProperty()
     show_count = BooleanProperty(default=False)
     xmlns = StringProperty()
@@ -2125,7 +2124,6 @@ class CaseListForm(NavMenuItemMediaMixin):
 
 class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, CommentMixin):
     name = DictProperty(str)
-    name_enum = SchemaListProperty(MappingItem)
     unique_id = StringProperty()
     case_type = StringProperty()
     case_list_form = SchemaProperty(CaseListForm)
@@ -3146,7 +3144,7 @@ def get_all_mobile_filter_configs():
         MobileFilterConfig('StaticDatespanFilter', StaticDatespanFilter, _('A standard date range')),
         MobileFilterConfig('CustomDatespanFilter', CustomDatespanFilter, _('A custom range relative to today')),
         MobileFilterConfig('CustomMonthFilter', CustomMonthFilter,
-                           _("Custom Month Filter (you probably don't want this")),
+                           _("Custom Month Filter (you probably don't want this)")),
         MobileFilterConfig('MobileSelectFilter', MobileSelectFilter, _('Show choices on mobile device')),
         MobileFilterConfig('AncestorLocationTypeFilter', AncestorLocationTypeFilter,
                            _("Ancestor location of the user's assigned location of a particular type")),
@@ -3520,7 +3518,7 @@ class ReportModule(ModuleBase):
         return ReportModuleSuiteHelper(self).get_custom_entries()
 
     def get_menus(self, build_profile_id=None):
-        from corehq.apps.app_manager.suite_xml.utils import get_module_enum_text, get_module_locale_id
+        from corehq.apps.app_manager.suite_xml.utils import get_module_locale_id
         kwargs = {}
         if self.get_app().enable_module_filtering and self.module_filter:
             kwargs['relevant'] = interpolate_xpath(self.module_filter)
@@ -3528,7 +3526,6 @@ class ReportModule(ModuleBase):
         menu = suite_models.LocalizedMenu(
             id=id_strings.menu_id(self),
             menu_locale_id=get_module_locale_id(self),
-            menu_enum_text=get_module_enum_text(self),
             media_image=self.uses_image(build_profile_id=build_profile_id),
             media_audio=self.uses_audio(build_profile_id=build_profile_id),
             image_locale_id=id_strings.module_icon_locale(self),
@@ -4504,7 +4501,8 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
     def convert_to_application(self):
         self.doc_type = 'Application'
-        del self.master
+        del self.upstream_app_id
+        del self.upstream_version
         del self.linked_app_translations
         del self.linked_app_logo_refs
         del self.linked_app_attrs
@@ -4622,8 +4620,11 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
         # TODO: revamp so signal_connections <- models <- signals
         from corehq.apps.app_manager import signals
         from couchforms.analytics import get_form_analytics_metadata
+        from corehq.apps.reports.analytics.esaccessors import (
+            guess_form_name_from_submissions_using_xmlns)
         for xmlns in self.get_xmlns_map():
             get_form_analytics_metadata.clear(self.domain, self._id, xmlns)
+            guess_form_name_from_submissions_using_xmlns.clear(self.domain, xmlns)
         signals.app_post_save.send(Application, application=self)
 
     def delete_copy(self, copy):
@@ -5541,7 +5542,9 @@ class LinkedApplication(Application):
     linked_app_logo_refs = DictProperty()  # corresponding property: logo_refs
     linked_app_attrs = DictProperty()  # corresponds to app attributes
 
-    SUPPORTED_SETTINGS = ['target_commcare_flavor', 'practice_mobile_worker_id']
+    @property
+    def supported_settings(self):
+        return ['target_commcare_flavor', 'practice_mobile_worker_id']
 
     @property
     @memoized
@@ -5728,7 +5731,7 @@ class ExchangeApplication(models.Model):
 
 class ExchangeApplicationAdmin(admin.ModelAdmin):
     model = ExchangeApplication
-    list_display = ['domain', 'app_id']
+    list_display = ['domain', 'app_id', 'help_link', 'changelog_link']
     list_filter = ['domain', 'app_id']
 
 

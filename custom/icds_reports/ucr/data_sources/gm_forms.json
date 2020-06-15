@@ -1,29 +1,32 @@
 {
   "domains": [
-    "icds-dashboard-qa",
-    "sankalp_cas",
-    "zohaib-sandbox",
     "akshita-sandbox",
-    "sunaina-sandbox",
-    "laurence-project-1",
-    "jessica-icds-cas",
-    "marissa-test",
-    "derek-icds-sandbox",
-    "priyanka-app",
-    "shrena-dev",
     "aparatest",
-    "reach-sandbox",
-    "reach-dashboard-qa",
-    "reach-test",
+    "cas-lab",
+    "ccqa",
+    "ccqa-downstream",
+    "derek-icds-sandbox",
+    "icds-cas",
+    "icds-cas-sandbox",
+    "icds-dashboard-qa",
     "icds-sql",
     "icds-test",
-    "icds-cas",
-    "cas-lab",
-    "icds-cas-sandbox"
+    "jessica-icds-cas",
+    "laurence-project-1",
+    "marissa-test",
+    "priyanka-app",
+    "reach-dashboard-qa",
+    "reach-sandbox",
+    "reach-test",
+    "sankalp_cas",
+    "shrena-dev",
+    "sunaina-sandbox",
+    "zohaib-sandbox"
   ],
   "server_environment": [
     "india",
-    "icds"
+    "icds",
+    "icds-staging"
   ],
   "config": {
     "table_id": "static-gm_forms",
@@ -354,6 +357,86 @@
         "type": "boolean",
         "display_name": null,
         "column_id": "M_mod_resident_weighed_count"
+      },
+      {
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "resident",
+              "comment": null
+            },
+            {
+              "type": "named",
+              "name": "weighed",
+              "comment": null
+            },
+            {
+              "type": "named",
+              "name": "male",
+              "comment": null
+            },
+            {
+              "operator": "eq",
+              "expression": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "zscore_grading_wfa"
+                ]
+              },
+              "type": "boolean_expression",
+              "property_value": "green",
+              "comment": null
+            }
+          ]
+        },
+        "type": "boolean",
+        "display_name": null,
+        "column_id": "M_norm_resident_weighed_count",
+        "comment": null
+      },
+      {
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "resident",
+              "comment": null
+            },
+            {
+              "type": "named",
+              "name": "weighed",
+              "comment": null
+            },
+            {
+              "type": "named",
+              "name": "female",
+              "comment": null
+            },
+            {
+              "operator": "eq",
+              "expression": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "zscore_grading_wfa"
+                ]
+              },
+              "type": "boolean_expression",
+              "property_value": "green",
+              "comment": null
+            }
+          ]
+        },
+        "type": "boolean",
+        "display_name": null,
+        "column_id": "F_norm_resident_weighed_count",
+        "comment": null
       }
     ],
     "named_expressions": {

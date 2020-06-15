@@ -4,6 +4,7 @@ from corehq.apps.case_importer.tracking.views import (
     case_upload_case_ids,
     case_upload_file,
     case_upload_form_ids,
+    case_upload_status,
     case_uploads,
     update_case_upload_comment,
 )
@@ -22,6 +23,8 @@ urlpatterns = [
     url(r'^history/uploads/$', case_uploads, name='case_importer_uploads'),
     url(r'^history/uploads/(?P<upload_id>[\w-]+)/comment/$', update_case_upload_comment,
         name='case_importer_update_upload_comment'),
+    url(r'^history/uploads/(?P<upload_id>[\w-]+)/status$', case_upload_status,
+        name='case_importer_upload_status'),
     url(r'^history/uploads/(?P<upload_id>[\w-]+)/$', case_upload_file,
         name='case_importer_upload_file_download'),
     url(r'^history/uploads/(?P<upload_id>[\w-]+)/form_ids.txt$', case_upload_form_ids,

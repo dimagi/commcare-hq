@@ -28,7 +28,8 @@
         </div>
     </div>
     <info-message></info-message>
-    <div class="report-content report-content-without-message" >
+    <reassignment-message ng-show="$ctrl.showReassignmentMessage()" selected-location="$ctrl.selectedLocation()" selected-date="$ctrl.selectedDate"></reassignment-message>
+    <div class="report-content report-content-without-message" ng-if="!$ctrl.showReassignmentMessage()" >
         <div ng-if="$ctrl.message" class="alert alert-info">
             Data for this report is shown at the sector level. For AWC-level information, please use the AWC Report.
         </div>

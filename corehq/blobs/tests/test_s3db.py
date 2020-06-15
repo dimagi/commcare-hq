@@ -11,7 +11,7 @@ Initialize a docker machine for minio (skip if you already have one):
 
 Start the minio service:
 
-    mkdir -p ~/.minio/data && mkdir ~/.minio/conf
+    mkdir -p ~/.minio/{data,conf}
 
     # INSECURE KEY VALUES FOR TESTING ONLY, DO NOT USE IN PRODUCTION!
     docker run -p 9988:9000 --name minio1 --detach \
@@ -65,7 +65,9 @@ from io import BytesIO, SEEK_SET, TextIOWrapper
 from django.conf import settings
 from django.test import TestCase
 
-from corehq.blobs.s3db import S3BlobDB, BlobStream
+from corehq.blobs import CODES
+from corehq.blobs.s3db import S3BlobDB
+from corehq.blobs.util import BlobStream
 from corehq.blobs.tests.util import new_meta, TemporaryS3BlobDB
 from corehq.blobs.tests.test_fsdb import _BlobDBTests
 from corehq.util.test_utils import trap_extra_setup
@@ -88,15 +90,23 @@ class TestS3BlobDB(TestCase, _BlobDBTests):
     def test_put_from_other_s3_db(self):
         # cleanup will be done by self.db
         db2 = S3BlobDB(settings.S3_BLOB_DB_SETTINGS)
-        meta = self.db.put(BytesIO(b"content"), meta=new_meta())
-        with self.db.get(meta.key) as blob:
-            meta2 = db2.put(blob, meta=new_meta())
+        meta = self.db.put(BytesIO(b"content"), meta=self.new_meta())
+        with self.db.get(meta=meta) as blob:
+            meta2 = db2.put(blob, meta=self.new_meta())
         self.assertEqual(meta2.content_length, meta.content_length)
-        with db2.get(meta2.key) as blob2:
+        with db2.get(meta=meta2) as blob2:
             self.assertEqual(blob2.read(), b"content")
 
 
+class TestS3BlobDBCompressed(TestS3BlobDB):
+    meta_kwargs = {'compressed_length': -1}
+
+
 class TestBlobStream(TestCase):
+
+    @classmethod
+    def new_meta(cls, **kwargs):
+        return new_meta(**kwargs)
 
     @classmethod
     def setUpClass(cls):
@@ -104,7 +114,7 @@ class TestBlobStream(TestCase):
         with trap_extra_setup(AttributeError, msg="S3_BLOB_DB_SETTINGS not configured"):
             config = settings.S3_BLOB_DB_SETTINGS
         cls.db = TemporaryS3BlobDB(config)
-        cls.meta = cls.db.put(BytesIO(b"bytes"), meta=new_meta())
+        cls.meta = cls.db.put(BytesIO(b"bytes"), meta=cls.new_meta())
 
     @classmethod
     def tearDownClass(cls):
@@ -112,8 +122,8 @@ class TestBlobStream(TestCase):
         super(TestBlobStream, cls).tearDownClass()
 
     def test_text_io_wrapper(self):
-        meta = self.db.put(BytesIO(b"x\ny\rz\n"), meta=new_meta())
-        with self.db.get(key=meta.key) as fh:
+        meta = self.db.put(BytesIO(b"x\ny\rz\n"), meta=self.new_meta())
+        with self.db.get(meta=meta) as fh:
             # universl unewline mode: \r -> \n
             textio = TextIOWrapper(fh, encoding="utf-8")
             self.assertEqual(list(textio), ["x\n", "y\n", "z\n"])
@@ -157,18 +167,25 @@ class TestBlobStream(TestCase):
     def test_close(self):
         fake = FakeStream()
         self.assertEqual(fake.close_calls, 0)
-        BlobStream(fake, fake, None).close()
+        BlobStream(fake, fake, None, 0, 0).close()
         self.assertEqual(fake.close_calls, 1)
 
     def test_close_on_exit_context(self):
         fake = FakeStream()
         self.assertEqual(fake.close_calls, 0)
-        with BlobStream(fake, fake, None):
+        with BlobStream(fake, fake, None, 0, 0):
             pass
         self.assertEqual(fake.close_calls, 1)
 
     def get_blob(self):
-        return self.db.get(key=self.meta.key)
+        return self.db.get(meta=self.meta)
+
+
+class TestBlobStreamCompressed(TestBlobStream):
+    @classmethod
+    def new_meta(cls, **kwargs):
+        # set compressed_length to anything except None
+        return new_meta(compressed_length=-1, type_code=CODES.form_xml)
 
 
 class FakeStream(object):

@@ -10,7 +10,9 @@ CREATE VIEW child_health_monthly_view AS
       awc_location_months.block_id,
       awc_location_months.block_name,
       awc_location_months.district_id,
+      awc_location_months.district_name,
       awc_location_months.state_id,
+      awc_location_months.state_name,
       awc_location_months."contact_phone_number" AS "aww_phone_number",
       child_health_monthly.person_name,
       child_health_monthly.mother_name,
@@ -34,6 +36,12 @@ CREATE VIEW child_health_monthly_view AS
       child_health_monthly.current_month_wasting,
       child_health_monthly.thr_eligible,
       child_health_monthly.num_rations_distributed,
+      child_health_monthly.lunch_count,
+      child_health_monthly.valid_status_daily,
+      child_health_monthly.migration_status_daily,
+      child_health_monthly.alive_status_daily,
+      child_health_monthly.duplicate_status_daily,
+      child_health_monthly.seeking_services_status_daily,
       GREATEST(child_health_monthly.fully_immunized_on_time, child_health_monthly.fully_immunized_late) AS fully_immunized,
       CASE WHEN child_health_monthly.current_month_nutrition_status = 'severely_underweight' THEN 1
           WHEN child_health_monthly.current_month_nutrition_status = 'moderately_underweight' THEN 2

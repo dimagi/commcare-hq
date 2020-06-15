@@ -1,20 +1,19 @@
 from django.utils.translation import ugettext_lazy as _
 
-from sqlagg.columns import SimpleColumn
-
-from corehq.apps.reports.datatables import DataTablesColumn
-from corehq.apps.reports.filters.base import BaseSingleOptionFilter
+from corehq.apps.reports.filters.base import (
+    BaseDrilldownOptionFilter,
+    BaseSingleOptionFilter,
+    BaseMultipleOptionFilter,
+)
 from corehq.apps.reports.filters.dates import DatespanFilter
-from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData
-from corehq.apps.userreports.util import get_table_name
-from custom.inddex.const import FOOD_CONSUMPTION, AGE_RANGES
+from custom.inddex.const import AGE_RANGES, ConvFactorGaps, FctGaps
 
 
 class DateRangeFilter(DatespanFilter):
     label = _('Date Range')
 
 
-class AgeRangeFilter(BaseSingleOptionFilter):
+class AgeRangeFilter(BaseMultipleOptionFilter):
     slug = 'age_range'
     label = _('Age Range')
     default_text = _('All')
@@ -50,7 +49,7 @@ class PregnancyFilter(BaseSingleOptionFilter):
         ]
 
 
-class SettlementAreaFilter(BaseSingleOptionFilter):
+class SettlementAreaFilter(BaseMultipleOptionFilter):
     slug = 'urban_rural'
     label = _('Urban/Rural')
     default_text = _('All')
@@ -58,7 +57,7 @@ class SettlementAreaFilter(BaseSingleOptionFilter):
     @property
     def options(self):
         return [
-            ('per-urban', _('Peri-urban')),
+            ('peri-urban', _('Peri-urban')),
             ('urban', _('Urban')),
             ('rural', _('Rural'))
         ]
@@ -86,7 +85,7 @@ class SupplementsFilter(BaseSingleOptionFilter):
     def options(self):
         return [
             ('yes', _('Yes')),
-            ('no', _('Not'))
+            ('no', _('No'))
         ]
 
 
@@ -103,43 +102,54 @@ class RecallStatusFilter(BaseSingleOptionFilter):
         ]
 
 
-class GapDescriptionFilter(BaseSingleOptionFilter):
-    slug = 'gap_description'
-    label = _('Gap description')
+class R2BGapFilter(BaseDrilldownOptionFilter):
+    slug = '2b_gap'
+    label = _('Gap Description')
     default_text = _('All')
 
-    @property
-    def options(self):
+    @classmethod
+    def get_labels(cls):
         return [
-            (x, x) for x in [
-                '1 - conversion factor available',
-                '1 - fct data available',
-                '2 - using conversion factor from base term food code',
-                '2 - using fct data from base term food code',
-                '3 - using fct data from reference food code',
-                '7 - ingredient(s) contain fct data gaps',
-                '8 - no conversion factor available',
-                '8 - no fct data available',
-            ]
+            # will come through as `2b_gap_type` and `2b_gap_code`
+            ("Gap Type", "All", 'type'),
+            ("Gap Description", "All", 'code'),
+        ]
+
+    @property
+    def drilldown_map(self):
+        return [
+            {
+                'text': klass.name,
+                'val': klass.slug,
+                'next': [
+                    {
+                        'text': klass.DESCRIPTIONS[code],
+                        'val': str(code),
+                        'next': [],
+                    }
+                    for code in klass.DESCRIPTIONS
+                ]
+            }
+            for klass in [ConvFactorGaps, FctGaps]
         ]
 
 
 class GapTypeFilter(BaseSingleOptionFilter):
     slug = 'gap_type'
-    label = _('Gap type')
+    label = _('Gap Type')
     default_text = _('All')
 
     @property
     def options(self):
         return [
-            ('conv_factor', 'Conversion Factor'),
-            ('fct', 'Food Composition Table'),
+            (ConvFactorGaps.slug, ConvFactorGaps.name),
+            (FctGaps.slug, FctGaps.name),
         ]
 
 
-class FoodTypeFilter(BaseSingleOptionFilter):
+class FoodTypeFilter(BaseMultipleOptionFilter):
     slug = 'food_type'
-    label = _('Food type')
+    label = _('Food Type')
     default_text = _('All')
 
     @property
@@ -149,50 +159,31 @@ class FoodTypeFilter(BaseSingleOptionFilter):
         ]
 
 
-class CaseOwnerData(SqlData):
-    engine_id = 'ucr'
-    filters = []
-    group_by = ['owner_name']
-    headers = [DataTablesColumn('Case owner')]
-    columns = [DatabaseColumn('Case owner', SimpleColumn('owner_name'))]
-
-    @property
-    def table_name(self):
-        return get_table_name(self.config['domain'], FOOD_CONSUMPTION)
-
-
-class CaseOwnersFilter(BaseSingleOptionFilter):
-    slug = 'owner_name'
-    label = _('Case Owners')
-    default_text = _('All')
-
-    @property
-    def options(self):
-        owner_data = CaseOwnerData(config={'domain': self.domain})
-        names = {
-            owner['owner_name']
-            for owner in owner_data.get_data()
-            if owner.get('owner_name')
-        }
-        return [(x, x) for x in names]
-
-
-class FaoWhoGiftFoodGroupDescriptionFilter(BaseSingleOptionFilter):
-    slug = 'fao_who_gift_food_group_description'
+class FaoWhoGiftFoodGroupDescriptionFilter(BaseMultipleOptionFilter):
+    slug = 'fao_who_gift_food_group_code'
     label = _('FAO/WHO GIFT Food Group Description')
     default_text = _('All')
 
     @property
     def options(self):
         return [
-            (x, x) for x in [
-                'Cereals and their products (1)', 'Roots, tubers, plantains and their products (2)',
-                'Pulses, seeds and nuts and their products (3)', 'Milk and milk products (4)',
-                'Eggs and their products (5)', 'Fish, shellfish and their products (6)',
-                'Meat and meat products (7)', 'Insects, grubs and their products (8)',
-                'Vegetables and their products( 9)', 'Fruits and their products (10)',
-                'Fats and oils (11)', 'Sweets and sugars (12)', 'Spices and condiments (13)', 'Beverages (14)',
-                'Foods for particular nutritional uses (15)', 'Food supplements and similar (16)',
-                'Food additives (17)', 'Composite foods (18)', 'Savoury snacks (19)',
-            ]
+            ('1', 'Cereals and their products (1)'),
+            ('2', 'Roots, tubers, plantains and their products (2)'),
+            ('3', 'Pulses, seeds and nuts and their products (3)'),
+            ('4', 'Milk and milk products (4)'),
+            ('5', 'Eggs and their products (5)'),
+            ('6', 'Fish, shellfish and their products (6)'),
+            ('7', 'Meat and meat products (7)'),
+            ('8', 'Insects, grubs and their products (8)'),
+            ('9', 'Vegetables and their products (9)'),
+            ('10', 'Fruits and their products (10)'),
+            ('11', 'Fats and oils (11)'),
+            ('12', 'Sweets and sugars (12)'),
+            ('13', 'Spices and condiments (13)'),
+            ('14', 'Beverages (14)'),
+            ('15', 'Foods for particular nutritional uses (15)'),
+            ('16', 'Food supplements and similar (16)'),
+            ('17', 'Food additives (17)'),
+            ('18', 'Composite foods (18)'),
+            ('19', 'Savoury snacks (19)'),
         ]

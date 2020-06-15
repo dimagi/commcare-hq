@@ -68,7 +68,7 @@
 
   {% initial_page_data 'apps' apps %}
   {% initial_page_data 'domain_is_on_trial' domain_is_on_trial %}
-  {% initial_page_data 'debugger_enabled' request.couch_user.can_edit_data %}
+  {% initial_page_data 'debugger_enabled' request.couch_user.can_access_web_apps %}
   {% initial_page_data 'domain' domain %}
   {% initial_page_data 'environment' environment %}
   {% initial_page_data 'formplayer_url' formplayer_url %}
@@ -82,6 +82,7 @@
   {% registerurl 'list_form_exports' request.domain %}
   {% registerurl 'case_data' request.domain '---' %}
   {% registerurl 'render_form_data' request.domain '---' %}
+  {% registerurl 'report_formplayer_error' request.domain %}
 
   <!-- For now we won't touch this since the form entry code is coupled with it  -->
 
@@ -105,7 +106,7 @@
       </section>
     </div>
     <small id="version-info"></small>
-    {% if request.couch_user.can_edit_data %}
+    {% if request.couch_user.can_access_web_apps %}
       <section id="cloudcare-debugger" data-bind="
           template: {
               name: 'instance-viewer-ko-template',

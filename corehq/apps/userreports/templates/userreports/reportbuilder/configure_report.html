@@ -71,6 +71,11 @@
           Delete Report
         </a>&nbsp;
       {% endif %}
+      {% if request|toggle_enabled:"LINKED_DOMAINS" %}
+        {% if existing_report %}
+          {% include "userreports/partials/link_reports.html" %}
+        {% endif %}
+      {% endif %}
       {% if has_report_builder_access %}
         {% if not at_report_limit or existing_report %}
           <button id="btnSaveView" class="btn btn-primary">{% trans 'Save and View Report' %}</button>
@@ -235,6 +240,30 @@
           </div>
           <div class="panel-body">
 
+            <!-- ko if: selectedChart() === 'bar' -->
+            <div class="alert alert-warning" data-bind="visible: areColumnsValidForChart()">
+                    {% blocktrans %}
+                      Properties with FORMAT <strong>Sum</strong> or <strong>Average</strong> show up in bar chart.
+                    {% endblocktrans %}
+            </div>
+            <div class="alert alert-warning" data-bind="visible: !areColumnsValidForChart()">
+                    {% blocktrans %}
+                      This bar chart below will not be shown in the report because it is not configured to show any data. To show the bar chart, please add at least one property with FORMAT <strong>Sum</strong> or <strong>Average</strong>.
+                    {% endblocktrans %}
+            </div>
+            <!-- /ko -->
+            <!-- ko if: selectedChart() === 'pie' -->
+            <div class="alert alert-warning" data-bind="visible: areColumnsValidForChart()">
+                    {% blocktrans %}
+                      Pie charts will show the breakdown of the first column that is summed or averaged.
+                    {% endblocktrans %}
+            </div>
+            <div class="alert alert-warning" data-bind="visible: !areColumnsValidForChart()">
+                    {% blocktrans %}
+                      This pie chart below will not be shown in the report because it is not configured to show any data. To show the pie chart, please add at least one property with FORMAT <strong>Sum</strong> or <strong>Average</strong>.
+                    {% endblocktrans %}
+            </div>
+            <!-- /ko -->
             <!-- ko if: selectedChart() === 'none' -->
             <div data-bind="fadeVisible: isAggregationEnabled">
               <div class="btn btn-primary" data-bind="click: addChart">{% trans 'Add Chart' %}</div>

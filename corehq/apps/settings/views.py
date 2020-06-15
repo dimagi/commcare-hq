@@ -251,18 +251,12 @@ class MyProjectsList(BaseMyAccountView):
         return super(MyProjectsList, self).dispatch(request, *args, **kwargs)
 
     @property
-    def all_domains(self):
-        all_domains = self.request.couch_user.get_domains()
-        for d in all_domains:
-            yield {
-                'name': d,
-                'is_admin': self.request.couch_user.is_domain_admin(d)
-            }
-
-    @property
     def page_context(self):
         return {
-            'domains': self.all_domains,
+            'domains': [{
+                'name': d,
+                'is_admin': self.request.couch_user.is_domain_admin(d)
+            } for d in self.request.couch_user.get_domains()],
             'web_user': self.request.couch_user.is_web_user
         }
 

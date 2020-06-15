@@ -11,6 +11,7 @@ class AvailingServiceFormsAggregationDistributedHelper(StateBasedAggregationDist
     helper_key = 'availing_service-forms'
     ucr_data_source_id = 'static-availing_service_form'
     aggregate_parent_table = AGG_AVAILING_SERVICES_TABLE
+    months_required = 3
 
     def data_from_ucr_query(self):
         month = self.month.replace(day=1)
@@ -31,7 +32,7 @@ class AvailingServiceFormsAggregationDistributedHelper(StateBasedAggregationDist
             %(month)s::DATE AS month,
             person_case_id AS person_case_id,
             LAST_VALUE(is_registered) OVER w AS is_registered,
-            timeend AS registration_date
+            LAST_VALUE(timeend) OVER w AS registration_date
           FROM "{ucr_tablename}"
           WHERE state_id = %(state_id)s AND
                 timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
@@ -71,7 +72,7 @@ class AvailingServiceFormsAggregationDistributedHelper(StateBasedAggregationDist
             COALESCE(ucr.registration_date, prev_month.registration_date) as registration_date
           FROM ({ucr_table_query}) ucr
           FULL OUTER JOIN (
-             SELECT * FROM "{tablename}" WHERE month = %(previous_month)s AND state_id = %(state_id)s
+             SELECT * FROM "{prev_tablename}" WHERE state_id = %(state_id)s
              ) prev_month
             ON ucr.person_case_id = prev_month.person_case_id AND ucr.supervisor_id = prev_month.supervisor_id
             WHERE coalesce(ucr.month, %(month)s) = %(month)s
@@ -79,7 +80,7 @@ class AvailingServiceFormsAggregationDistributedHelper(StateBasedAggregationDist
                 AND coalesce(prev_month.state_id, %(state_id)s) = %(state_id)s
         )
         """.format(
-            ucr_tablename=self.ucr_tablename,
             tablename=self.aggregate_parent_table,
-            ucr_table_query=ucr_query
+            ucr_table_query=ucr_query,
+            prev_tablename=self.prev_tablename
         ), query_params

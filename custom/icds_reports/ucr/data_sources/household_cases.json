@@ -23,7 +23,8 @@
   ],
   "server_environment": [
     "india",
-    "icds"
+    "icds",
+    "icds-staging"
   ],
   "config": {
     "table_id": "static-household_cases",
@@ -273,6 +274,24 @@
         "type": "boolean",
         "display_name": null,
         "column_id": "open_count"
+      },
+      {
+        "column_id": "location_reassignment_date",
+        "datatype": "date",
+        "type": "raw",
+        "property_name": "location_reassignment_datetime"
+      },
+      {
+        "column_id": "last_owner_id",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "location_reassignment_last_owner_id"
+      },
+      {
+        "column_id": "last_supervisor_id",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "location_reassignment_last_supervisor_id"
       }
     ],
     "named_expressions": {},

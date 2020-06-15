@@ -261,13 +261,14 @@ class CachedResponse(object):
         try:
             value = self._fileobj
         except AttributeError:
-            value = get_blob_db().get(key=self.name) if self.name else None
+            value = get_blob_db().get(key=self.name, type_code=CODES.restore) if self.name else None
             self._fileobj = value
         return value
 
     def get_http_response(self):
-        headers = {'Content-Length': get_blob_db().size(key=self.name)}
-        return stream_response(self.as_file(), headers)
+        file = self.as_file()
+        headers = {'Content-Length': file.content_length}
+        return stream_response(file, headers)
 
 
 class RestoreParams(object):

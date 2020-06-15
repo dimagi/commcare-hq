@@ -100,6 +100,13 @@ class Log(models.Model):
     # The MessagingSubEvent that this log is tied to
     messaging_subevent = models.ForeignKey('sms.MessagingSubEvent', null=True, on_delete=models.PROTECT)
 
+    def set_gateway_error(self, message):
+        """Set gateway error message or code
+
+        :param message: Non-retryable message or code returned by the gateway.
+        """
+        self.set_system_error(f"Gateway error: {message}")
+
     def set_system_error(self, message=None):
         self.error = True
         self.system_error_message = message
@@ -181,6 +188,7 @@ class SMSBase(UUIDGeneratorMixin, Log):
     ERROR_MESSAGE_TOO_LONG = 'MESSAGE_TOO_LONG'
     ERROR_CONTACT_IS_INACTIVE = 'CONTACT_IS_INACTIVE'
     ERROR_TRIAL_SMS_EXCEEDED = 'TRIAL_SMS_EXCEEDED'
+    ERROR_MESSAGE_FORMAT_INVALID = 'MESSAGE_FORMAT_INVALID'
 
     ERROR_MESSAGES = {
         ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS:
@@ -199,6 +207,8 @@ class SMSBase(UUIDGeneratorMixin, Log):
             ugettext_noop("The recipient has been deactivated."),
         ERROR_TRIAL_SMS_EXCEEDED:
             ugettext_noop("The number of SMS that can be sent on a trial plan has been exceeded."),
+        ERROR_MESSAGE_FORMAT_INVALID:
+            ugettext_noop("The message format was invalid.")
     }
 
     UUIDS_TO_GENERATE = ['couch_id']

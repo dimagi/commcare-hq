@@ -704,6 +704,11 @@ class ExportInstanceFilters(DocumentSchema):
             return True
         elif self.can_access_all_locations:
             return False
+        elif not self.accessible_location_ids:
+            # if accessible_location_ids is empty, then in theory the user could
+            # have access to all data if can_access_all_locations was ever set
+            # to False. We need to prevent this from ever happening.
+            return False
         else:  # It can be restricted by location
             users_accessible_locations = SQLLocation.active_objects.accessible_location_ids(
                 request.domain, request.couch_user
@@ -2770,7 +2775,7 @@ class DataFile(object):
     def get_blob(self):
         db = get_blob_db()
         try:
-            blob = db.get(key=self._meta.key)
+            blob = db.get(meta=self._meta)
         except (KeyError, NotFound) as err:
             raise NotFound(str(err))
         return blob

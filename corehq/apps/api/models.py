@@ -44,7 +44,7 @@ class ApiUser(models.Model):
             raise Exception("ApiUser _id has to be 'ApiUser-' + username")
 
     def set_password(self, raw_password):
-        salt = os.urandom(5).encode('hex')
+        salt = os.urandom(5).hex()
         self.password = make_password(raw_password, salt=salt)
 
     def check_password(self, raw_password):

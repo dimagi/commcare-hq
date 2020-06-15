@@ -1,0 +1,150 @@
+{
+  "domains": [
+    "icds-dashboard-qa",
+    "sankalp_cas",
+    "zohaib-sandbox",
+    "akshita-sandbox",
+    "sunaina-sandbox",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test",
+    "icds-test",
+    "icds-sql",
+    "icds-cas",
+    "cas-lab",
+    "icds-cas-sandbox"
+  ],
+  "server_environment": [
+    "india",
+    "icds",
+    "icds-staging"
+  ],
+  "report_id": "ls_v2_ag_monthly",
+  "data_source_table": "static-ag_care_cases_monthly",
+  "config": {
+    "title": "UCR V2 - LS - Adolescent Girls Monthly",
+    "description": "",
+    "visible": false,
+    "aggregation_columns": [
+      "awc_id",
+      "month"
+    ],
+    "filters": [
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "awc_id",
+        "field": "awc_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "ancestor_expression": {
+          "field": "supervisor_id",
+          "location_type": "supervisor"
+        },
+        "display": "Filter by AWW"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "supervisor_id",
+        "field": "supervisor_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "display": "Filter by Supervisor"
+      },
+      {
+        "required": false,
+        "type": "numeric",
+        "slug": "is_migrated",
+        "field": "is_migrated",
+        "display": "Whether Migrated",
+        "datatype": "string"
+      },
+      {
+        "required": false,
+        "type": "numeric",
+        "slug": "is_availing",
+        "field": "is_availing",
+        "display": "Whether Availing Services",
+        "datatype": "string"
+      }
+    ],
+    "columns": [
+      {
+        "display": "Month",
+        "column_id": "month",
+        "type": "aggregate_date",
+        "field": "month",
+        "format": "%Y-%m"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        },
+        "column_id": "owner_id",
+        "field": "awc_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": "owner_id",
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "thr_21_plus_days",
+        "field": "thr_21_plus_days",
+        "transform": {},
+        "calculate_total": true,
+        "type": "field",
+        "display": "thr_21_plus_days"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "ifa_4_plus_tablets",
+        "field": "ifa_4_plus_tablets",
+        "transform": {},
+        "calculate_total": true,
+        "type": "field",
+        "display": "ifa_4_plus_tablets"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "hcm_21_plus_days",
+        "field": "hcm_21_plus_days",
+        "transform": {},
+        "calculate_total": true,
+        "type": "field",
+        "display": "hcm_21_plus_days"
+      }
+    ],
+    "sort_expression": [ ],
+    "configured_charts": [ ]
+  }
+}

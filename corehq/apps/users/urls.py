@@ -4,6 +4,7 @@ from corehq.apps.domain.utils import grandfathered_domain_re
 
 from .views import (
     DefaultProjectUserSettingsView,
+    DomainPermissionsMirrorView,
     DomainRequestView,
     EditWebUserView,
     InviteWebUserView,
@@ -63,6 +64,7 @@ from .views.mobile.users import (
     user_download_job_poll,
     user_upload_job_poll,
     CommCareUserConfirmAccountView, send_confirmation_email)
+from ..hqwebapp.decorators import waf_allow
 
 urlpatterns = [
     url(r'^$', DefaultProjectUserSettingsView.as_view(), name=DefaultProjectUserSettingsView.urlname),
@@ -90,6 +92,7 @@ urlpatterns = [
     url(r'^web/delete_request/$', delete_request, name='delete_request'),
     url(r'^web/$', ListWebUsersView.as_view(), name=ListWebUsersView.urlname),
     url(r'^web/json/$', paginate_web_users, name='paginate_web_users'),
+    url(r'^enterprise/$', DomainPermissionsMirrorView.as_view(), name=DomainPermissionsMirrorView.urlname),
     url(r'^join/(?P<uuid>[ \w-]+)/$', accept_invitation, name='domain_accept_invitation'),
     url(r'^roles/$', ListRolesView.as_view(), name=ListRolesView.urlname),
     url(r'^roles/save/$', post_user_role, name='post_user_role'),
@@ -126,7 +129,7 @@ urlpatterns = [
         name=DemoRestoreStatusView.urlname),
     url(r'^commcare/demo_restore/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$', demo_restore_job_poll,
         name='demo_restore_job_poll'),
-    url(r'^commcare/upload/$', UploadCommCareUsers.as_view(), name=UploadCommCareUsers.urlname),
+    url(r'^commcare/upload/$', waf_allow('XSS_BODY')(UploadCommCareUsers.as_view()), name=UploadCommCareUsers.urlname),
     url(r'^commcare/upload/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$', UserUploadStatusView.as_view(),
         name=UserUploadStatusView.urlname),
     url(r'^commcare/upload/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',

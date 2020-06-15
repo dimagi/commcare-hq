@@ -50,6 +50,11 @@
 </div>
 <!--/ko-->
 <!--/ko-->
+<!--ko if: state == $root.states.SUCCESS && !result-->
+<div class="alert alert-warning">
+  <p>{% trans "Unable to retrieve details" %}</p>
+</div>
+<!--/ko-->
 <!--ko if: state === $root.states.FAILED && result && !_.isEmpty(result.errors)-->
 <div class="alert alert-warning">
   <ul class="list-unstyled">

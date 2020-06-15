@@ -1,28 +1,32 @@
 {
   "domains": [
-    "icds-dashboard-qa",
-    "sankalp_cas",
-    "zohaib-sandbox",
     "akshita-sandbox",
-    "sunaina-sandbox",
-    "laurence-project-1",
-    "jessica-icds-cas",
-    "marissa-test",
-    "derek-icds-sandbox",
-    "priyanka-app",
-    "shrena-dev",
     "aparatest",
-    "reach-sandbox",
-    "reach-dashboard-qa",
-    "reach-test",
-    "icds-test",
+    "cas-lab",
+    "ccqa",
+    "ccqa-downstream",
+    "derek-icds-sandbox",
     "icds-cas",
     "icds-cas-sandbox",
-    "cas-lab"
+    "icds-dashboard-qa",
+    "icds-sql",
+    "icds-test",
+    "jessica-icds-cas",
+    "laurence-project-1",
+    "marissa-test",
+    "priyanka-app",
+    "reach-dashboard-qa",
+    "reach-sandbox",
+    "reach-test",
+    "sankalp_cas",
+    "shrena-dev",
+    "sunaina-sandbox",
+    "zohaib-sandbox"
   ],
   "server_environment": [
     "india",
-    "icds"
+    "icds",
+    "icds-staging"
   ],
   "config": {
     "table_id": "static-ccs_record_cases_monthly_v2",
@@ -582,12 +586,85 @@
         "column_id": "lactating"
       },
       {
+        "display_name": null,
+        "datatype": "string",
+        "expression": {
+          "test": {
+            "type": "named",
+            "name": "pregnant"
+          },
+          "expression_if_true": {
+            "constant": "bp",
+            "type": "constant"
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "test": {
+              "type": "named",
+              "name": "post_natal_care"
+            },
+            "expression_if_true": {
+              "constant": "pnc",
+              "type": "constant"
+            },
+            "type": "conditional",
+            "expression_if_false": {
+              "test": {
+                "type": "named",
+                "name": "lactating"
+              },
+              "expression_if_true": {
+                "constant": "ebf",
+                "type": "constant"
+              },
+              "type": "conditional",
+              "expression_if_false": {
+                "constant": "pre_ccs",
+                "type": "constant"
+              }
+            }
+          }
+        },
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "ccs_phase"
+      },
+      {
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "open_in_month"
+            },
+            {
+              "operator": "gte",
+              "expression": {
+                "type": "named",
+                "name": "thr_rations"
+              },
+              "type": "boolean_expression",
+              "property_value": 21
+            }
+          ]
+        },
+        "display_name": null,
+        "type": "boolean",
+        "column_id": "thr_rations_gte_21"
+      },
+      {
         "filter": {
           "type": "and",
           "filters": [
             {
               "type": "named",
               "name": "pregnant"
+            },
+            {
+              "type": "named",
+              "name": "is_resident"
             },
             {
               "operator": "gte",
@@ -613,6 +690,10 @@
               "name": "lactating"
             },
             {
+              "type": "named",
+              "name": "is_resident"
+            },
+            {
               "operator": "gte",
               "expression": {
                 "type": "named",
@@ -634,6 +715,10 @@
             {
               "type": "named",
               "name": "pregnant"
+            },
+            {
+              "type": "named",
+              "name": "is_resident"
             },
             {
               "type": "named",
@@ -664,6 +749,10 @@
             },
             {
               "type": "named",
+              "name": "is_resident"
+            },
+            {
+              "type": "named",
               "name": "is_caste_st"
             },
             {
@@ -688,6 +777,10 @@
             {
               "type": "named",
               "name": "pregnant"
+            },
+            {
+              "type": "named",
+              "name": "is_resident"
             },
             {
               "type": "named",
@@ -718,6 +811,10 @@
             },
             {
               "type": "named",
+              "name": "is_resident"
+            },
+            {
+              "type": "named",
               "name": "is_caste_sc"
             },
             {
@@ -742,6 +839,10 @@
             {
               "type": "named",
               "name": "pregnant"
+            },
+            {
+              "type": "named",
+              "name": "is_resident"
             },
             {
               "type": "named",
@@ -772,6 +873,10 @@
             },
             {
               "type": "named",
+              "name": "is_resident"
+            },
+            {
+              "type": "named",
               "name": "is_caste_others"
             },
             {
@@ -796,6 +901,10 @@
             {
               "type": "named",
               "name": "pregnant"
+            },
+            {
+              "type": "named",
+              "name": "is_resident"
             },
             {
               "type": "named",
@@ -826,6 +935,10 @@
             },
             {
               "type": "named",
+              "name": "is_resident"
+            },
+            {
+              "type": "named",
               "name": "is_disabled"
             },
             {
@@ -853,6 +966,10 @@
             },
             {
               "type": "named",
+              "name": "is_resident"
+            },
+            {
+              "type": "named",
               "name": "is_minority"
             },
             {
@@ -877,6 +994,10 @@
             {
               "type": "named",
               "name": "lactating"
+            },
+            {
+              "type": "named",
+              "name": "is_resident"
             },
             {
               "type": "named",
@@ -1569,7 +1690,175 @@
                     "property_name": "migration_status"
                   }
                 },
-                "property_value": "yes"
+                "property_value": "migrated"
+              }
+            ]
+          }
+        ]
+      },
+      "post_natal_care": {
+        "type": "and",
+        "filters": [
+          {
+            "type": "and",
+            "filters": [
+              {
+                "type": "and",
+                "filters": [
+                  {
+                    "operator": "gte",
+                    "type": "boolean_expression",
+                    "expression": {
+                      "type": "diff_days",
+                      "from_date_expression": {
+                        "type": "root_doc",
+                        "expression": {
+                          "datatype": "date",
+                          "type": "property_name",
+                          "property_name": "opened_on"
+                        }
+                      },
+                      "to_date_expression": {
+                        "type": "named",
+                        "name": "month_end"
+                      }
+                    },
+                    "property_value": 0
+                  },
+                  {
+                    "type": "or",
+                    "filters": [
+                      {
+                        "operator": "eq",
+                        "type": "boolean_expression",
+                        "expression": {
+                          "type": "root_doc",
+                          "expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "closed"
+                          }
+                        },
+                        "property_value": false
+                      },
+                      {
+                        "operator": "gte",
+                        "type": "boolean_expression",
+                        "expression": {
+                          "type": "diff_days",
+                          "from_date_expression": {
+                            "type": "named",
+                            "name": "month_start"
+                          },
+                          "to_date_expression": {
+                            "datatype": "date",
+                            "type": "property_name",
+                            "property_name": "closed_on"
+                          }
+                        },
+                        "property_value": 0
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "filter": {
+              "operator": "in",
+              "type": "boolean_expression",
+              "expression": {
+                "type": "root_doc",
+                "expression": {
+                  "datatype": null,
+                  "type": "property_name",
+                  "property_name": "add"
+                }
+              },
+              "property_value": [
+                "",
+                null
+              ]
+            },
+            "type": "not"
+          },
+          {
+            "operator": "gte",
+            "type": "boolean_expression",
+            "expression": {
+              "type": "diff_days",
+              "from_date_expression": {
+                "type": "root_doc",
+                "expression": {
+                  "datatype": "date",
+                  "type": "property_name",
+                  "property_name": "add"
+                }
+              },
+              "to_date_expression": {
+                "type": "named",
+                "name": "month_end"
+              }
+            },
+            "property_value": 0
+          },
+          {
+            "operator": "lte",
+            "type": "boolean_expression",
+            "expression": {
+              "type": "diff_days",
+              "from_date_expression": {
+                "type": "root_doc",
+                "expression": {
+                  "datatype": "date",
+                  "type": "property_name",
+                  "property_name": "add"
+                }
+              },
+              "to_date_expression": {
+                "type": "named",
+                "name": "month_end"
+              }
+            },
+            "property_value": 21
+          },
+          {
+            "type": "and",
+            "filters": [
+              {
+                "operator": "not_eq",
+                "type": "boolean_expression",
+                "expression": {
+                  "doc_id_expression": {
+                    "type": "icds_parent_id"
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareCase",
+                  "value_expression": {
+                    "type": "property_name",
+                    "property_name": "registered_status",
+                    "datatype": null
+                  }
+                },
+                "property_value": "not_registered"
+              },
+              {
+                "operator": "not_eq",
+                "type": "boolean_expression",
+                "expression": {
+                  "doc_id_expression": {
+                    "type": "icds_parent_id"
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareCase",
+                  "value_expression": {
+                    "type": "property_name",
+                    "property_name": "migration_status",
+                    "datatype": null
+                  }
+                },
+                "property_value": "migrated"
               }
             ]
           }
@@ -2283,7 +2572,7 @@
                     "property_name": "migration_status"
                   }
                 },
-                "property_value": "yes"
+                "property_value": "migrated"
               }
             ]
           }

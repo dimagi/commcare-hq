@@ -23,6 +23,7 @@ from nose.tools import nottest
 from testil import tempdir
 
 from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.xform import CaseProcessingResult
 from corehq.apps.domain.models import Domain
 from corehq.util.metrics.tests.utils import capture_metrics
 from couchforms.models import XFormInstance
@@ -33,6 +34,7 @@ from corehq.apps.cleanup.management.commands.swap_duplicate_xforms import (
     FIXED_FORM_PROBLEM_TEMPLATE,
 )
 from corehq.apps.commtrack.helpers import make_product
+from corehq.apps.commtrack.processing import StockProcessingResult
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain_migration_flags.models import DomainMigrationProgress
@@ -57,6 +59,10 @@ from corehq.form_processor.interfaces.dbaccessors import (
     FormAccessors,
     LedgerAccessors,
 )
+from corehq.form_processor.submission_post import (
+    CaseStockProcessingResult,
+    SubmissionPost,
+)
 from corehq.form_processor.system_action import SYSTEM_ACTION_XMLNS
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import convert_xform_to_json, should_use_sql_backend
@@ -79,9 +85,11 @@ from .. import couchsqlmigration as mod
 from ..asyncforms import get_case_ids
 from ..diffrule import ANY
 from ..management.commands.migrate_domain_from_couch_to_sql import (
+    CACHED,
     COMMIT,
     MIGRATE,
     REBUILD,
+    RECHECK,
     RESET,
     STATS,
 )
@@ -187,7 +195,7 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
             for kind, counts in statedb.get_doc_counts().items()
             if counts.missing
         }, missing or {})
-        if not (diffs or changes or ignore_fail):
+        if not (diffs or changes or missing or ignore_fail):
             if not self.migration_success:
                 self.fail("migration failed")
             assert not self.is_live_migration(), "live migration not finished"
@@ -292,18 +300,38 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         with raise_context, mock.patch(path, iter_docs):
             yield
 
-    @staticmethod
-    def skip_case_and_ledger_updates(form_id):
-        def maybe_get_result(self, sql_form, couch_form):
+    @contextmanager
+    def skip_case_and_ledger_updates(self, form_id):
+        def maybe_get_result(self_, sql_form, couch_form):
             if couch_form.form_id == form_id:
                 return None
-            return get_result(self, sql_form, couch_form)
+            return get_result(self_, sql_form, couch_form)
+
+        @staticmethod
+        def maybe_process_xforms_for_cases(xforms, casedb):
+            if any(f.form_id == form_id for f in xforms):
+                assert len(xforms) == 1, xforms
+                stock = StockProcessingResult(xforms[0])
+                stock.populate_models()
+                return CaseStockProcessingResult(
+                    case_result=CaseProcessingResult(self.domain_name, [], []),
+                    case_models=[],
+                    stock_result=stock,
+                )
+            return process_forms(xforms, casedb)
+
         get_result = mod.CouchSqlDomainMigrator._get_case_stock_result
-        return mock.patch.object(
+        process_forms = SubmissionPost.process_xforms_for_cases
+        with mock.patch.object(
             mod.CouchSqlDomainMigrator,
             "_get_case_stock_result",
             maybe_get_result,
-        )
+        ), mock.patch.object(
+            SubmissionPost,
+            "process_xforms_for_cases",
+            maybe_process_xforms_for_cases,
+        ):
+            yield
 
     @contextmanager
     def diff_without_rebuild(self):
@@ -315,7 +343,7 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
             yield
 
 
-IGNORE = object()
+IGNORE = ANY
 
 
 @contextmanager
@@ -407,6 +435,13 @@ class MigrationTestCase(BaseMigrationTestCase):
 
         self.do_migration()
         self.assertEqual(1, len(self._get_form_ids()))
+
+    def test_form_with_null_xmlns(self):
+        form = submit_form_locally(ERROR_FORM, self.domain_name).xform
+        form.xmlns = None
+        form.save()
+        self.do_migration()
+        self.assertEqual(self._get_form_ids('XFormError'), {"im-a-bad-form"})
 
     def test_archived_form_migration(self):
         form = create_and_save_a_form(self.domain_name)
@@ -1107,33 +1142,19 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.do_migration(finish=True)
 
     def test_migrate_skipped_forms(self):
-        def skip_forms(form_ids):
-            def maybe_migrate_form(self, form, **kw):
-                if form.form_id in form_ids:
-                    log.info("skipping %s", form.form_id)
-                else:
-                    migrate(self, form, **kw)
-
-            migrate = mod.CouchSqlDomainMigrator._migrate_form_and_associated_models
-            return mock.patch.object(
-                mod.CouchSqlDomainMigrator,
-                "_migrate_form_and_associated_models",
-                maybe_migrate_form,
-            )
-
         self.submit_form(make_test_form("test-1"), timedelta(minutes=-95))
         self.submit_form(make_test_form("test-2"), timedelta(minutes=-90))
         self.submit_form(make_test_form("test-3"), timedelta(minutes=-85))
         self.submit_form(make_test_form("test-4"))
         self.assert_backend("couch")
 
-        with self.patch_migration_chunk_size(1), skip_forms({"test-1", "test-2"}):
+        with self.patch_migration_chunk_size(1), self.skip_forms({"test-1", "test-2"}):
             self.do_migration(live=True, diffs=IGNORE)
         self.assert_backend("sql")
         self.assertEqual(self._get_form_ids(), {"test-3"})
         self.assertEqual(self._get_case_ids(), {"test-case"})
 
-        with self.patch_migration_chunk_size(1), skip_forms({"test-2"}):
+        with self.patch_migration_chunk_size(1), self.skip_forms({"test-2"}):
             self.do_migration(STATS, missing_docs=REBUILD, diffs=IGNORE)
             self.do_migration(live=True, forms="missing", diffs=IGNORE)
         self.assertEqual(self._get_form_ids(), {"test-1", "test-3"})
@@ -1145,6 +1166,50 @@ class MigrationTestCase(BaseMigrationTestCase):
 
         self.do_migration(finish=True)
         self.assertEqual(self._get_form_ids(), {"test-1", "test-2", "test-3", "test-4"})
+
+    def test_migrate_missing_problem_form(self):
+        with self.missing_problem_form():
+            self.do_migration(forms="missing")
+
+    def test_migrate_specific_problem_form(self):
+        with self.missing_problem_form():
+            self.do_migration(forms="form-2", missing_docs=RECHECK)
+
+    @contextmanager
+    def missing_problem_form(self):
+        self.submit_form(make_test_form("form-1", age=31))
+        with self.skip_case_and_ledger_updates("form-2"):
+            form2 = self.submit_form(make_test_form("form-2", age=32))
+            form2.problem = "did not process"
+            form2.save()
+            assert not form2.is_error, form2
+
+        with self.skip_forms({"form-2"}):
+            self.do_migration(missing_docs=CACHED, diffs=IGNORE)
+        self.compare_diffs(missing={"XFormInstance": 1})
+        self.assertEqual(self._get_form_ids(), {"form-1"})
+        self.assertEqual(self._get_case_ids(), {"test-case"})
+
+        yield
+        form = self._get_form('form-2')
+        assert form.is_error, form
+        case = self._get_case("test-case")
+        self.assertEqual(case.dynamic_case_properties()["age"], '31')
+
+    @staticmethod
+    def skip_forms(form_ids):
+        def maybe_migrate_form(self, form, **kw):
+            if form.form_id in form_ids:
+                log.info("skipping %s", form.form_id)
+            else:
+                migrate(self, form, **kw)
+
+        migrate = mod.CouchSqlDomainMigrator._migrate_form_and_associated_models
+        return mock.patch.object(
+            mod.CouchSqlDomainMigrator,
+            "_migrate_form_and_associated_models",
+            maybe_migrate_form,
+        )
 
     def test_migrate_partially_migrated_form_with_case(self):
         # form      age     min     max
@@ -1340,6 +1405,22 @@ class MigrationTestCase(BaseMigrationTestCase):
         ])
         self.do_migration(forms="missing")
 
+    def test_case_with_unprocessed_case_close_form(self):
+        # form state=normal, initial_processing_complete=false
+        self.submit_form(make_test_form("one", age=28))
+        with self.skip_case_and_ledger_updates("two"):
+            two = self.submit_form(make_test_form("two", age=30, closed=True))
+        two.initial_processing_complete = False
+        two.save()
+        with self.skip_forms(["one"]):
+            self.do_migration(missing_docs=CACHED, diffs=IGNORE)
+        self.compare_diffs(
+            missing={"XFormInstance": 1, "CommCareCase": 1}, diffs=IGNORE)
+        self.do_migration(forms="missing", missing_docs=REBUILD)
+        case = self._get_case("test-case")
+        self.assertEqual(case.case_json["age"], "28")
+        self.assertFalse(case.closed)
+
     def test_missing_case(self):
         # This can happen when a form is edited, removing the last
         # remaining reference to a case. The case effectively becomes
@@ -1416,6 +1497,19 @@ class MigrationTestCase(BaseMigrationTestCase):
     def test_case_with_very_long_name(self):
         self.submit_form(make_test_form("naaaame", case_name="ha" * 128))
         self.do_migration(finish=True)
+
+    def test_case_with_malformed_date_modified(self):
+        bad_xml = TEST_FORM.replace('"2015-08-04T18:25:56.656Z"', '"2015-08-014"')
+        assert bad_xml.count("2015-08-014") == 1, bad_xml
+        form = submit_form_locally(TEST_FORM, self.domain_name).xform
+        form.form_data["case"]["@date_modified"] = "2015-08-014"
+        form.delete_attachment('form.xml')
+        form.put_attachment(bad_xml, 'form.xml')
+        form.save()
+        self.do_migration()
+        case = self._get_case("test-case")
+        self.assertEqual(case.xform_ids, ["test-form"])
+        self.assertEqual(case.modified_on, datetime(2015, 8, 14, 0, 0))
 
 
 class LedgerMigrationTests(BaseMigrationTestCase):
@@ -1622,7 +1716,7 @@ def create_form_with_extra_xml_blob_metadata(domain_name):
 
 
 @nottest
-def make_test_form(form_id, **data):
+def make_test_form(form_id, *, closed=False, **data):
     def update(form, pairs, ns=""):
         old = f"<{ns}age>27</{ns}age>"
         new = "".join(
@@ -1651,6 +1745,8 @@ def make_test_form(form_id, **data):
     if updates:
         form = update(form, updates)
         form = update(form, updates, "n0:")
+    if closed:
+        form.replace("</n0:update>", "</n0:update><n0:close />")
     return form.replace(">test-form<", f">{form_id}<")
 
 

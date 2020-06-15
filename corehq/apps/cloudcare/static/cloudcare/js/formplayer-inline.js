@@ -32,12 +32,12 @@
 
                 data = $.extend(data, {
                     onsubmit: function (xml) {
-                        $target.html(alertHtml('Form successfully submitted!', 'alert-success'));
+                        $target.html(alertHtml(gettext('Form successfully submitted!'), 'alert-success'));
                         options.onsubmit();
                     },
                     onerror: function (resp) {
                         $target.html(alertHtml(
-                            resp.human_readable_message || resp.message || 'An unexpected error occurred!',
+                            resp.human_readable_message || resp.message || gettext('An unexpected error occurred!'),
                             'alert-danger'
                         ));
                     },

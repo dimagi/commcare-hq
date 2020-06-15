@@ -161,12 +161,20 @@
 
         </div>
         <div class="modal-footer">
-          <button type="button"
-                  class="btn btn-primary"
-                  data-bind="click: submitDowngrade,
-                             enable: oRequiredQuestionsAnswered">
-            {% trans "Continue" %}
-          </button>
+          <!-- ko if: oRequiredQuestionsAnswered -->
+            <button type="button"
+                    class="btn btn-primary"
+                    data-bind="click: submitDowngrade">
+              {% trans "Continue" %}
+            </button>
+          <!-- /ko -->
+          <!-- ko ifnot: oRequiredQuestionsAnswered -->
+            <button type="button"
+                    disabled="disabled"
+                    class="btn btn-default">
+              {% trans "Continue" %}
+            </button>
+          <!-- /ko -->
         </div>
       </div>
     </div>

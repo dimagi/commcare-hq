@@ -2,3 +2,5 @@ doc_id,inserted_at,state_id,awc_id,ccs_record_case_id,tasks_type,num_anc_complet
 task_case_id1,2017-04-01,state2,a40,bfc8681e-bd2d-45f2-a811-cdffa41ddf32,pregnancy,,,2017-04-02,2017-04-07,,,,,,s8
 task_case_id2,2017-04-01,state1,a12,3a9c23af-0a21-475c-a9b8-1de4c1ed68b8,pregnancy,,,2017-03-02,,,,,,,s4
 task_case_id3,2017-04-01,state2,a39,45e84a85-9944-4027-b0eb-866a79cbe955,pregnancy,,,2017-05-02,,,,,,,s7
+task_case_id4,2017-04-01,st1,a27,08d215e7-81c7-4ad3-9c7d-1b27f0ed4bb5,pregnancy,,,2016-10-08,2016-11-07,2016-12-07,2017-01-06,2017-05-01,2017-05-02,2017-05-03,s3
+task_case_id5,2017-04-01,st1,a27,f491263a-4846-4ffd-a64d-a6653c03dd03,pregnancy,,,2016-11-07,2016-12-07,2017-01-06,2017-02-05,2017-05-31,2017-06-01,2017-06-02,s2

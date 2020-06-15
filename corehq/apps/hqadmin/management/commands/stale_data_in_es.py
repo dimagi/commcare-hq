@@ -172,7 +172,7 @@ class CaseBackend:
             case_type=run_config.case_type
         )
         iteration_key = f'sql_cases-{run_config.iteration_key}'
-        for chunk in _get_resumable_chunked_iterator(accessor, iteration_key):
+        for chunk in _get_resumable_chunked_iterator(accessor, iteration_key, '[SQL cases] '):
             matching_records = [
                 (case.case_id, case.type, case.server_modified_on, case.domain)
                 for case in chunk
@@ -249,7 +249,7 @@ class FormBackend:
             start_date=run_config.start_date, end_date=run_config.end_date,
         )
         iteration_key = f'sql_forms-{run_config.iteration_key}'
-        for chunk in _get_resumable_chunked_iterator(accessor, iteration_key):
+        for chunk in _get_resumable_chunked_iterator(accessor, iteration_key, '[SQL forms] '):
             matching_records = [
                 (form.form_id, form.doc_type, form.xmlns, form.received_on, form.domain)
                 for form in chunk
@@ -356,7 +356,7 @@ class ProgressEventHandler(PaginationEventHandler):
         print(f'{self.log_prefix} Processed {total_emitted} of {self.total} in {duration}', file=self.stream)
 
 
-def _get_resumable_chunked_iterator(dbaccessor, iteration_key):
+def _get_resumable_chunked_iterator(dbaccessor, iteration_key, log_prefix):
     total_docs = 0
     for db in dbaccessor.sql_db_aliases:
         total_docs += dbaccessor.get_approximate_doc_count(db)
@@ -372,7 +372,7 @@ def _get_resumable_chunked_iterator(dbaccessor, iteration_key):
         total=total_docs,
         reset=False,
         chunk_size=CHUNK_SIZE,
-        logger=ProcessorProgressLogger('[Couch Forms] ', sys.stderr)
+        logger=ProcessorProgressLogger(log_prefix, sys.stderr)
     )
     with progress:
         for chunk in chunked(iterable, CHUNK_SIZE):

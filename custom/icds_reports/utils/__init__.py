@@ -7,10 +7,12 @@ import zipfile
 
 from collections import defaultdict
 from datetime import datetime, timedelta, date
+from dateutil.parser import parse
 from functools import wraps
 from memoized import memoized
 from tempfile import mkstemp
 
+import attr
 import operator
 
 import pytz
@@ -38,18 +40,29 @@ from corehq.util.files import TransientTempfile
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
 from custom.icds_reports import const
-from custom.icds_reports.const import ISSUE_TRACKER_APP_ID, LOCATION_TYPES
+from custom.icds_reports.const import (
+    ISSUE_TRACKER_APP_ID,
+    LOCATION_TYPES,
+    AggregationLevels,
+    THR_REPORT_CONSOLIDATED,
+    THR_REPORT_BENEFICIARY_TYPE,
+    THR_REPORT_DAY_BENEFICIARY_TYPE
+)
+
 from custom.icds_reports.exceptions import InvalidLocationTypeException
+from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.queries import get_test_state_locations_id, get_test_district_locations_id
 from couchexport.export import export_from_tables
 from dimagi.utils.dates import DateSpan
+from dimagi.utils.parsing import ISO_DATE_FORMAT
 from django.db.models import Case, When, Q, F, IntegerField, Max, Min
 from django.db.utils import OperationalError
 import uuid
 from sqlagg.filters import EQ, NOT
 from pillowtop.models import KafkaCheckpoint
-
+from custom.icds_reports.cache import icds_quickcache
+from custom.icds_reports.models import AggAwcMonthly
 
 OPERATORS = {
     "==": operator.eq,
@@ -405,7 +418,7 @@ def match_age(age):
         return '3-6 years'
 
 
-def get_location_filter(location_id, domain):
+def get_location_filter(location_id, domain, include_object=False):
     """
     Args:
         location_id (str)
@@ -428,6 +441,10 @@ def get_location_filter(location_id, domain):
         }
     )
     config['aggregation_level'] = len(config) + 1
+
+    if include_object:
+        config['sql_location'] = sql_location
+
     return config
 
 
@@ -563,7 +580,8 @@ def include_records_by_age_for_column(include_config, column):
     )
 
 
-def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower, fill_key_bigger, all_property=None):
+def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower, fill_key_bigger,
+                          all_property=None, location_launched_status=None):
     data_for_map = defaultdict(lambda: {
         num_prop: 0,
         denom_prop: 0,
@@ -583,7 +601,12 @@ def generate_data_for_map(data, loc_level, num_prop, denom_prop, fill_key_lower,
     total = 0
     values_to_calculate_average = {'numerator': 0, 'denominator': 0}
 
+
     for row in data:
+        if location_launched_status is not None:
+            launched_status = location_launched_status.get(row['%s_name' % loc_level])
+            if launched_status is None or launched_status <= 0:
+                continue
         valid = row[denom_prop] or 0
         name = row['%s_name' % loc_level]
         on_map_name = row['%s_map_location_name' % loc_level] or name
@@ -870,6 +893,12 @@ def percent_or_not_entered(x, y):
     return percent(x, y) if y and x is not None else DATA_NOT_ENTERED
 
 
+def format_data_not_entered_to_zero(value):
+    if value == DATA_NOT_ENTERED:
+        return 0
+    return value
+
+
 def india_now():
     utc_now = datetime.now(pytz.utc)
     india_now = utc_now.astimezone(india_timezone)
@@ -1069,7 +1098,7 @@ def create_excel_file_in_openpyxl(excel_data, data_type):
     return file_hash
 
 
-def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level):
+def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level, report_type='consolidated'):
     export_info = excel_data[1][1]
     national = 'National Level' if aggregation_level == 0 else ''
     state = export_info[1][1] if aggregation_level > 0 else ''
@@ -1088,22 +1117,47 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
     bold_font = Font(bold=True)
     blue_fill = PatternFill("solid", fgColor="B3C5E5")
     grey_fill = PatternFill("solid", fgColor="BFBFBF")
+    purple_fill = PatternFill("solid", fgColor="CFC6F5")
 
     workbook = Workbook()
     worksheet = workbook.active
     # sheet title
     worksheet.title = "THR Report"
     worksheet.sheet_view.showGridLines = False
-    amount_of_columns = 11 - aggregation_level
-    last_column = string.ascii_uppercase[amount_of_columns]
-    worksheet.merge_cells('B2:{0}2'.format(last_column))
-    title_cell = worksheet['B2']
+
+    if report_type == THR_REPORT_DAY_BENEFICIARY_TYPE:
+        total_column_count = 30
+        data_start_row_diff = 3
+        secondary_headers = ['Not provided',
+                             'Provided for 1-7 days',
+                             'Provided for 8-14 days',
+                             'Provided for 15-20 days',
+                             'Provided for 21-24 days',
+                             'Provided for at least 25 days (>=25 days)']
+    elif report_type == THR_REPORT_BENEFICIARY_TYPE:
+        total_column_count = 15
+        data_start_row_diff = 2
+    else:
+        total_column_count = 11
+        data_start_row_diff = 1
+
+    if report_type != THR_REPORT_CONSOLIDATED:
+        beneficiary_type_columns = [
+            'Pregnant women',
+            'Lactating women',
+            'Children (0-3 years)'
+        ]
+
+    amount_of_columns = total_column_count - aggregation_level
+    last_column = get_column_letter(amount_of_columns)
+    worksheet.merge_cells('A2:{0}2'.format(last_column))
+    title_cell = worksheet['A2']
     title_cell.fill = PatternFill("solid", fgColor="4472C4")
     title_cell.value = "Take Home Ration(THR) Report for the {}".format(month)
     title_cell.font = Font(size=18, color="FFFFFF")
     title_cell.alignment = Alignment(horizontal="center")
 
-    columns = [string.ascii_uppercase[i] for i in range(1, amount_of_columns + 1)]
+    columns = [get_column_letter(i) for i in range(1, amount_of_columns + 1)]
 
     # sheet header
     header_cells = ['{0}3'.format(column) for column in columns]
@@ -1127,7 +1181,7 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
             worksheet['F3'].value = "Sector: {}".format(supervisor)
 
     date_cell = '{0}3'.format(last_column)
-    date_description_cell = '{0}3'.format(string.ascii_uppercase[amount_of_columns - 1])
+    date_description_cell = '{0}3'.format(get_column_letter(amount_of_columns - 1))
     worksheet[date_description_cell].value = "Date when downloaded:"
     worksheet[date_description_cell].alignment = Alignment(horizontal="right")
     utc_now = datetime.now(pytz.utc)
@@ -1137,23 +1191,84 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
 
     # table header
     table_header_position_row = 5
-    header_data = excel_data[0]
     headers = ["S.No"]
-    headers.extend(header_data)
+    main_headers = ['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name', 'AWW Phone No.',
+                   'Total No. of Beneficiaries eligible for THR',
+                   'Total No. of beneficiaries received THR in given month',
+                   'Total No of Pictures taken by AWW']
+    headers.extend(main_headers[aggregation_level:])
 
-    table_header = {}
-    for col, header in zip(columns, headers):
-        table_header[col] = header
-    for column, value in table_header.items():
-        cell = "{}{}".format(column, table_header_position_row)
+    def set_beneficiary_columns(start_column_index, end_column_index, row):
+        for i in range(end_column_index - start_column_index + 1):
+            cell = "{}{}".format(columns[start_column_index + i], row)
+            worksheet[cell].fill = purple_fill
+            worksheet[cell].border = thin_border
+            worksheet[cell].font = bold_font
+            worksheet[cell].alignment = warp_text_alignment
+            worksheet[cell].value = beneficiary_type_columns[i % len(beneficiary_type_columns)]
+
+    def set_service_delivery_columns(start_column_index, row):
+        for i in range(6):
+            column_index = start_column_index + i * 3
+            cell = "{}{}".format(columns[column_index], row)
+            worksheet[cell].fill = blue_fill
+            worksheet[cell].border = thin_border
+            worksheet[cell].font = bold_font
+            worksheet[cell].alignment = warp_text_alignment
+            worksheet[cell].value = secondary_headers[i]
+            next_cell = "{}{}".format(columns[column_index + 2], row)
+            worksheet.merge_cells(f"{cell}:{next_cell}")
+
+    next_deviated_column = 0
+    column_deviation_2 = 2
+    column_deviation_17 = 17
+    for index, value in enumerate(headers):
+        column_index = index + next_deviated_column
+        cell = "{}{}".format(columns[column_index], table_header_position_row)
+
         worksheet[cell].fill = grey_fill
         worksheet[cell].border = thin_border
         worksheet[cell].font = bold_font
         worksheet[cell].alignment = warp_text_alignment
         worksheet[cell].value = value
 
+        if report_type == THR_REPORT_BENEFICIARY_TYPE:
+            if value in ('Total No. of Beneficiaries eligible for THR',
+                         'Total No. of beneficiaries received THR in given month'):
+                next_deviated_column += column_deviation_2
+                next_cell = "{}{}".format(columns[column_index + column_deviation_2],
+                                          table_header_position_row + data_start_row_diff - 2)
+                worksheet.merge_cells(f'{cell}:{next_cell}')
+                set_beneficiary_columns(column_index, column_index + column_deviation_2,
+                                        table_header_position_row + data_start_row_diff - 1)
+            else:
+                next_cell = "{}{}".format(columns[column_index], table_header_position_row+ data_start_row_diff - 1)
+                worksheet.merge_cells(f'{cell}:{next_cell}')
+
+        elif report_type == THR_REPORT_DAY_BENEFICIARY_TYPE:
+            if value == 'Total No. of Beneficiaries eligible for THR':
+                next_deviated_column += column_deviation_2
+                next_cell = "{}{}".format(columns[column_index + column_deviation_2],
+                                          table_header_position_row + data_start_row_diff - 2)
+                worksheet.merge_cells(f'{cell}:{next_cell}')
+                set_beneficiary_columns(column_index, column_index + column_deviation_2,
+                                        table_header_position_row + data_start_row_diff - 1)
+            elif value == 'Total No. of beneficiaries received THR in given month':
+                next_deviated_column += column_deviation_17
+                next_cell = "{}{}".format(columns[column_index + column_deviation_17], table_header_position_row)
+                worksheet.merge_cells(f'{cell}:{next_cell}')
+                set_service_delivery_columns(column_index,
+                                             table_header_position_row + data_start_row_diff - 2)
+                set_beneficiary_columns(column_index, column_index + column_deviation_17,
+                                        table_header_position_row + data_start_row_diff - 1)
+            else:
+                next_cell = "{}{}".format(columns[column_index],
+                                          table_header_position_row + data_start_row_diff - 1)
+                worksheet.merge_cells(f'{cell}:{next_cell}')
+
+
     # table contents
-    row_position = table_header_position_row + 1
+    row_position = table_header_position_row + data_start_row_diff
 
     for enum, row in enumerate(excel_data[1:], start=1):
         for column_index in range(len(columns)):
@@ -1175,7 +1290,9 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
     widths_columns.extend(columns)
     standard_widths = [4, 7]
     standard_widths.extend([15] * (4 - aggregation_level))
-    standard_widths.extend([25, 15, 25, 15, 15, 15])
+    standard_widths.extend([25, 15, 25])
+    standard_widths += [15] * (len(widths_columns) - len(standard_widths))
+
     for col, width in zip(widths_columns, standard_widths):
         widths[col] = width
 
@@ -1333,7 +1450,7 @@ def create_child_report_excel_file(excel_data, data_type, month, aggregation_lev
     return file_hash
 
 
-def create_service_delivery_report(excel_data, data_type, config):
+def create_service_delivery_report(excel_data, data_type, config, beta=False):
 
     export_info = excel_data[1][1]
     location_padding_columns = ([''] * config['aggregation_level'])
@@ -1358,6 +1475,10 @@ def create_service_delivery_report(excel_data, data_type, config):
                          'Provided for 8-14 days',
                          'Provided for 15-20 days',
                          'Provided for at least 21 days (>=21 days)']
+    if beta:
+        secondary_headers.pop()
+        secondary_headers += ['Provided for 21-24 days',
+                              'Provided for at least 25 days (>=25 days)']
 
     workbook = Workbook()
     worksheet = workbook.active
@@ -1366,6 +1487,7 @@ def create_service_delivery_report(excel_data, data_type, config):
     # Styling initialisation
     bold_font = Font(size=14, color="FFFFFF")
     bold_font_black = Font(size=14, color="000000")
+    bold_font_black_normal = Font(color="000000", bold=True)
     cell_pattern = PatternFill("solid", fgColor="B3C5E5")
     cell_pattern_blue = PatternFill("solid", fgColor="4472C4")
     cell_pattern_grey = PatternFill("solid", fgColor="C3C3C3")
@@ -1412,8 +1534,11 @@ def create_service_delivery_report(excel_data, data_type, config):
                                                    get_column_letter(current_column_location + merging_width)))
             current_column_location += merging_width+1
         else:
+            offset_count = 14
+            if beta:
+                offset_count = 17
             worksheet.merge_cells('{}1:{}1'.format(get_column_letter(current_column_location),
-                                                   get_column_letter(current_column_location + 14)))
+                                                   get_column_letter(current_column_location + offset_count)))
 
             current_column_location_sec_header = current_column_location
             for sec_header in secondary_headers:
@@ -1428,7 +1553,7 @@ def create_service_delivery_report(excel_data, data_type, config):
                                                        get_column_letter(current_column_location_sec_header + 2)))
                 current_column_location_sec_header += 3
 
-            current_column_location += 15
+            current_column_location += offset_count + 1
 
     # Secondary Header
     headers = excel_data[0][1][0]
@@ -1450,6 +1575,9 @@ def create_service_delivery_report(excel_data, data_type, config):
             cell = worksheet['{}{}'.format(column_name, row_num)]
             cell.value = col_value
             cell.border = thin_border
+            if col_value == 'Grand Total':
+                cell.font = bold_font_black_normal
+                cell.fill = cell_pattern
 
     # Export info
     worksheet2 = workbook.create_sheet("Export Info")
@@ -1694,6 +1822,310 @@ def get_dashboard_usage_excel_file(excel_data, data_type):
     return file_hash
 
 
+def create_child_growth_tracker_report(excel_data, data_type, config, aggregation_level):
+    month = config['month']
+    export_info = excel_data[1][1]
+    national = 'National Level' if aggregation_level == 0 else ''
+    state = export_info[1][1] if aggregation_level > 0 else ''
+    district = export_info[2][1] if aggregation_level > 1 else ''
+    block = export_info[3][1] if aggregation_level > 2 else ''
+    supervisor = export_info[3][1] if aggregation_level > 3 else ''
+
+    excel_data = excel_data[0][1]
+    thin_border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+    warp_text_alignment = Alignment(wrap_text=True)
+    bold_font = Font(bold=True)
+    blue_fill = PatternFill("solid", fgColor="B3C5E5")
+    grey_fill = PatternFill("solid", fgColor="BFBFBF")
+
+    workbook = Workbook()
+    worksheet = workbook.active
+    # sheet title
+    worksheet.title = "Child Growth Tracker Report"
+    worksheet.sheet_view.showGridLines = False
+    amount_of_columns = 25
+    last_column = string.ascii_uppercase[amount_of_columns]
+    worksheet.merge_cells('B2:{0}2'.format(last_column))
+    title_cell = worksheet['B2']
+    title_cell.fill = PatternFill("solid", fgColor="4472C4")
+    title_cell.value = "Child Growth Tracker Report for the {}".format(month)
+    title_cell.font = Font(size=18, color="FFFFFF")
+    title_cell.alignment = Alignment(horizontal="center")
+
+    columns = [string.ascii_uppercase[i] for i in range(1, amount_of_columns + 1)]
+
+    # sheet header
+    header_cells = ['{0}3'.format(column) for column in columns]
+    for cell in header_cells:
+        worksheet[cell].fill = blue_fill
+        worksheet[cell].font = bold_font
+        worksheet[cell].alignment = warp_text_alignment
+
+    if national:
+        worksheet['B3'].value = national
+        worksheet.merge_cells('B3:C3')
+    else:
+        if state:
+            worksheet['B3'].value = "State: {}".format(state)
+            worksheet.merge_cells('B3:C3')
+        if district:
+            worksheet['D3'].value = "District: {}".format(district)
+        if block:
+            worksheet['E3'].value = "Block: {}".format(block)
+        if supervisor:
+            worksheet['F3'].value = "Sector: {}".format(supervisor)
+
+    date_cell = '{0}3'.format(last_column)
+    date_description_cell = '{0}3'.format(string.ascii_uppercase[amount_of_columns - 1])
+    worksheet[date_description_cell].value = "Date when downloaded:"
+    worksheet[date_description_cell].alignment = Alignment(horizontal="right")
+    utc_now = datetime.now(pytz.utc)
+    now_in_india = utc_now.astimezone(india_timezone)
+    worksheet[date_cell].value = custom_strftime('{S} %b %Y', now_in_india)
+    worksheet[date_cell].alignment = Alignment(horizontal="right")
+
+    # table header
+    table_header_position_row = 6
+    header_data = excel_data[0]
+    headers = ["S.No"]
+    headers.extend(header_data)
+
+    table_header = {}
+    for col, header in zip(columns, headers):
+        table_header[col] = header.split('_')[1] if len(header.split('_')) > 1 else header
+    for column, value in table_header.items():
+        cell = "{}{}".format(column, table_header_position_row)
+        worksheet[cell].fill = blue_fill
+        worksheet[cell].border = thin_border
+        worksheet[cell].font = bold_font
+        worksheet[cell].alignment = warp_text_alignment
+        worksheet[cell].value = value
+    cols = ["Pre-school Education Attendance", "Supplementary Nutrition", "Stunting (height-for-age)",
+            "Wasting (weight-for-height)", "Underweight (weight-for-age)"]
+    start_col = 11
+    for col in cols:
+        cell = f"{string.ascii_uppercase[start_col]}{table_header_position_row-1}"
+        worksheet[cell].fill = grey_fill
+        worksheet[cell].border = thin_border
+        worksheet[cell].font = bold_font
+        worksheet[cell].alignment = Alignment(horizontal="center")
+        worksheet[cell].value = col
+        start_col = start_col + 3
+        merge_cell = f"{string.ascii_uppercase[start_col - 1]}{table_header_position_row - 1}"
+        worksheet.merge_cells(f"{cell}:{merge_cell}")
+    # table contents
+    row_position = table_header_position_row + 1
+    for enum, row in enumerate(excel_data[1:], start=1):
+        for column_index in range(len(columns)):
+            column = columns[column_index]
+            cell = "{}{}".format(column, row_position)
+            worksheet[cell].border = thin_border
+            if column_index == 0:
+                worksheet[cell].value = enum
+            else:
+                worksheet[cell].value = row[column_index - 1]
+        row_position += 1
+
+    # sheet dimensions
+    title_row = worksheet.row_dimensions[2]
+    title_row.height = 23
+    worksheet.row_dimensions[table_header_position_row].height = 46
+    widths = {}
+    widths_columns = ['A']
+    widths_columns.extend(columns)
+    standard_widths = [4, 7]
+    standard_widths.extend([15] * 24)
+    for col, width in zip(widths_columns, standard_widths):
+        widths[col] = width
+
+    widths['C'] = max(widths['C'], len(state) * 4 // 3)
+    widths['D'] = 9 + (len(district) * 4 // 3)
+    widths['E'] = 8 + (len(block) * 4 // 3)
+    widths['F'] = 8 + (len(supervisor) * 4 // 3)
+
+    columns = columns[1:]
+    # column widths based on table contents
+    for column_index in range(len(columns)):
+        widths[columns[column_index]] = max(
+            widths[columns[column_index]],
+            max(
+                len(row[column_index].decode('utf-8') if isinstance(row[column_index], bytes)
+                    else str(row[column_index])
+                    )
+                for row in excel_data[1:]) * 4 // 3 if len(excel_data) >= 2 else 0
+        )
+
+    for column, width in widths.items():
+        worksheet.column_dimensions[column].width = width
+
+    # export info
+    worksheet2 = workbook.create_sheet("Export Info")
+    worksheet2.column_dimensions['A'].width = 14
+    for n, export_info_item in enumerate(export_info, start=1):
+        worksheet2['A{0}'.format(n)].value = export_info_item[0]
+        worksheet2['B{0}'.format(n)].value = export_info_item[1]
+
+    # saving file
+    file_hash = uuid.uuid4().hex
+    export_file = BytesIO()
+    icds_file = IcdsFile(blob_id=file_hash, data_type=data_type)
+    workbook.save(export_file)
+    export_file.seek(0)
+    icds_file.store_file_in_blobdb(export_file, expired=ONE_DAY)
+    icds_file.save()
+    return file_hash
+
+
+def create_aww_activity_report(excel_data, data_type, config, aggregation_level):
+    export_info = excel_data[1][1]
+    national = 'National Level' if aggregation_level == 0 else ''
+    state = export_info[1][1] if aggregation_level > 0 else ''
+    district = export_info[2][1] if aggregation_level > 1 else ''
+    block = export_info[3][1] if aggregation_level > 2 else ''
+    supervisor = export_info[3][1] if aggregation_level > 3 else ''
+
+    excel_data = excel_data[0][1]
+    thin_border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+    warp_text_alignment = Alignment(wrap_text=True)
+    bold_font = Font(bold=True)
+    blue_fill = PatternFill("solid", fgColor="B3C5E5")
+    grey_fill = PatternFill("solid", fgColor="BFBFBF")
+
+    workbook = Workbook()
+    worksheet = workbook.active
+    # sheet title
+    worksheet.title = "AWW Activity Report"
+    worksheet.sheet_view.showGridLines = False
+    amount_of_columns = 11
+    last_column = string.ascii_uppercase[amount_of_columns]
+    worksheet.merge_cells('B2:{0}2'.format(last_column))
+    title_cell = worksheet['B2']
+    title_cell.fill = PatternFill("solid", fgColor="4472C4")
+    title_cell.value = "Aww Activity Report"
+    title_cell.font = Font(size=18, color="FFFFFF")
+    title_cell.alignment = Alignment(horizontal="center")
+
+    columns = [string.ascii_uppercase[i] for i in range(1, amount_of_columns + 1)]
+
+    # sheet header
+    header_cells = ['{0}3'.format(column) for column in columns]
+    for cell in header_cells:
+        worksheet[cell].fill = blue_fill
+        worksheet[cell].font = bold_font
+        worksheet[cell].alignment = warp_text_alignment
+
+    if national:
+        worksheet['B3'].value = national
+        worksheet.merge_cells('B3:C3')
+    else:
+        if state:
+            worksheet['B3'].value = "State: {}".format(state)
+            worksheet.merge_cells('B3:C3')
+        if district:
+            worksheet['D3'].value = "District: {}".format(district)
+        if block:
+            worksheet['E3'].value = "Block: {}".format(block)
+        if supervisor:
+            worksheet['F3'].value = "Sector: {}".format(supervisor)
+
+    date_cell = '{0}3'.format(last_column)
+    date_description_cell = '{0}3'.format(string.ascii_uppercase[amount_of_columns - 1])
+    worksheet[date_description_cell].value = "Date when downloaded:"
+    worksheet[date_description_cell].alignment = Alignment(horizontal="right")
+    utc_now = datetime.now(pytz.utc)
+    now_in_india = utc_now.astimezone(india_timezone)
+    worksheet[date_cell].value = custom_strftime('{S} %b %Y', now_in_india)
+    worksheet[date_cell].alignment = Alignment(horizontal="right")
+
+    # table header
+    table_header_position_row = 5
+    header_data = excel_data[0]
+    headers = ["S.No"]
+    headers.extend(header_data)
+
+    table_header = {}
+    for col, header in zip(columns, headers):
+        table_header[col] = header
+    for column, value in table_header.items():
+        cell = "{}{}".format(column, table_header_position_row)
+        worksheet[cell].fill = grey_fill
+        worksheet[cell].border = thin_border
+        worksheet[cell].font = bold_font
+        worksheet[cell].alignment = warp_text_alignment
+        worksheet[cell].value = value
+
+    # table contents
+    row_position = table_header_position_row + 1
+
+    for enum, row in enumerate(excel_data[1:], start=1):
+        for column_index in range(len(columns)):
+            column = columns[column_index]
+            cell = "{}{}".format(column, row_position)
+            worksheet[cell].border = thin_border
+            if column_index == 0:
+                worksheet[cell].value = enum
+            else:
+                worksheet[cell].value = row[column_index - 1]
+        row_position += 1
+
+    # sheet dimensions
+    title_row = worksheet.row_dimensions[2]
+    title_row.height = 23
+    worksheet.row_dimensions[table_header_position_row].height = 46
+    widths = {}
+    widths_columns = ['A']
+    widths_columns.extend(columns)
+    standard_widths = [4, 7]
+    standard_widths.extend([15] * 10)
+    for col, width in zip(widths_columns, standard_widths):
+        widths[col] = width
+
+    widths['C'] = max(widths['C'], len(state) * 4 // 3 if state else 0)
+    widths['D'] = 9 + (len(district) * 4 // 3 if district else 0)
+    widths['E'] = 8 + (len(block) * 4 // 3 if district else 0)
+    widths['F'] = 8 + (len(supervisor) * 4 // 3 if district else 0)
+    columns = columns[1:]
+    # column widths based on table contents
+    for column_index in range(len(columns)):
+        widths[columns[column_index]] = max(
+            widths[columns[column_index]],
+            max(
+                len(row[column_index].decode('utf-8') if isinstance(row[column_index], bytes)
+                    else str(row[column_index])
+                    )
+                for row in excel_data[1:]) * 4 // 3 if len(excel_data) >= 2 else 0
+        )
+
+    for column, width in widths.items():
+        worksheet.column_dimensions[column].width = width
+
+    # export info
+    worksheet2 = workbook.create_sheet("Export Info")
+    worksheet2.column_dimensions['A'].width = 14
+    for n, export_info_item in enumerate(export_info, start=1):
+        worksheet2['A{0}'.format(n)].value = export_info_item[0]
+        worksheet2['B{0}'.format(n)].value = export_info_item[1]
+
+    # saving file
+    file_hash = uuid.uuid4().hex
+    export_file = BytesIO()
+    icds_file = IcdsFile(blob_id=file_hash, data_type=data_type)
+    workbook.save(export_file)
+    export_file.seek(0)
+    icds_file.store_file_in_blobdb(export_file, expired=ONE_DAY)
+    icds_file.save()
+    return file_hash
+
 
 def get_datatables_ordering_info(request):
     # retrive table ordering provided by datatables plugin upon clicking on column header
@@ -1763,3 +2195,133 @@ def create_group_by(aggregation_level):
 
 def column_value_as_per_agg_level(aggregation_level, agg_level_threshold, true_value, false_value):
     return true_value if aggregation_level > agg_level_threshold else false_value
+
+
+@attr.s
+class AggLevelInfo(object):
+    agg_level = attr.ib()
+    col_name = attr.ib()
+
+
+def _construct_replacement_map_from_awc_location(loc_level, replacement_location_ids):
+
+    def _full_hierarchy_name(loc):
+        loc_names = [loc[f'{level}_name'] for level in levels.keys() if loc[f'{level}_name']]
+        return ' > '.join(loc_names)
+
+    levels = {
+        'state': AggLevelInfo(AggregationLevels.STATE, 'state_id'),
+        'district': AggLevelInfo(AggregationLevels.DISTRICT, 'district_id'),
+        'block': AggLevelInfo(AggregationLevels.BLOCK, 'block_id'),
+        'supervisor': AggLevelInfo(AggregationLevels.SUPERVISOR, 'supervisor_id'),
+        'awc': AggLevelInfo(AggregationLevels.AWC, 'doc_id')
+    }
+    level_info = levels[loc_level]
+    filters = {
+        f'{level_info.col_name}__in': replacement_location_ids,
+        'aggregation_level': level_info.agg_level
+    }
+    columns = [
+        level_info.col_name,
+        'state_name',
+        'district_name',
+        'block_name',
+        'supervisor_name',
+        'awc_name'
+    ]
+    replacement_locations = AwcLocation.objects.filter(**filters).values(*columns)
+    replacement_names = {loc[level_info.col_name]: _full_hierarchy_name(loc) for loc in replacement_locations}
+    return replacement_names
+
+
+def _construct_replacement_map_from_sql_location(replacement_location_ids):
+
+    def _full_hierarchy_name(loc):
+        loc_names = []
+        while loc is not None:
+            loc_names.append(loc.name)
+            loc = loc.parent
+        loc_names.reverse()
+        return ' > '.join(loc_names)
+
+    # prefetch all possible parents
+    replacement_locations = SQLLocation.objects.filter(location_id__in=replacement_location_ids).select_related('parent__parent__parent__parent')
+
+    replacement_names = {loc.location_id: _full_hierarchy_name(loc) for loc in replacement_locations}
+    return replacement_names
+
+
+def get_deprecation_info(locations, show_test, multiple_levels=False):
+    locations_list = []
+    replacement_location_ids = []
+    for loc in locations:
+        loc_level = loc.location_type.name
+        if show_test or loc.metadata.get('is_test_location', 'real') != 'test':
+            locations_list.append(loc)
+            if loc.metadata.get('deprecated_to'):
+                replacement_location_ids.extend(loc.metadata['deprecated_to'].split(','))
+            if loc.metadata.get('deprecates'):
+                replacement_location_ids.extend(loc.metadata['deprecates'].split(','))
+
+    if multiple_levels:
+        replacement_names = _construct_replacement_map_from_sql_location(replacement_location_ids)
+
+    else:
+        replacement_names = _construct_replacement_map_from_awc_location(loc_level, replacement_location_ids)
+
+    return locations_list, replacement_names
+
+
+def get_location_replacement_name(location, field, replacement_names):
+    locations = location.metadata.get(field)
+    if locations:
+        locations = locations.split(',')
+    else:
+        locations = []
+    return [replacement_names.get(loc_id, '') for loc_id in locations]
+
+
+@icds_quickcache(['filters', 'loc_name'], timeout=30 * 60)
+def get_location_launched_status(filters, loc_name):
+
+    def select_location_filter(filters):
+        location_filters = dict()
+        location_filters['aggregation_level'] = filters['aggregation_level']
+        location_filters['month'] = filters['month']
+
+        if location_filters['aggregation_level'] == 1 and 'state_id' not in filters:
+            return location_filters
+        else:
+            location_id_cols = ['state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id']
+            # Subtracting 1 from agg level because agg level is 1 level deeper as it finds the
+            # launched status of all sub locations
+            reduced_loc_id_cols = location_id_cols[:location_filters['aggregation_level'] - 1]
+
+            location_filters.update(
+                {
+                    col: filters[col]
+                    for col in reduced_loc_id_cols
+                }
+            )
+
+        return location_filters
+
+    locations_launched_status = AggAwcMonthly.objects.filter(
+        **select_location_filter(filters)
+    ).values('%s_name' % loc_name, 'num_launched_awcs')
+
+    return {loc['%s_name' % loc_name]: loc['num_launched_awcs'] for loc in locations_launched_status}
+
+
+def timestamp_string_to_date_string(ts_string):
+    if ts_string:
+        return parse(ts_string).strftime(ISO_DATE_FORMAT)
+    else:
+        return None
+
+
+def datetime_to_date_string(dtime):
+    if dtime:
+        return dtime.strftime(ISO_DATE_FORMAT)
+    else:
+        return None

@@ -45,14 +45,14 @@ class BlobExpireTest(TestCase):
             with patch('corehq.blobs.metadata._utcnow', return_value=now):
                 self.db.put(BytesIO(b'content'), timeout=60, **self.args)
 
-            self.assertIsNotNone(self.db.get(key=self.key))
+            self.assertIsNotNone(self.db.get(key=self.key, type_code=CODES.tempfile))
             with patch('corehq.blobs.tasks._utcnow', return_value=now + timedelta(minutes=61)):
                 bytes_deleted = delete_expired_blobs()
 
             self.assertEqual(bytes_deleted, len('content'))
 
             with self.assertRaises(NotFound):
-                self.db.get(key=self.key)
+                self.db.get(key=self.key, type_code=CODES.tempfile)
 
             self.assertEqual(manager.all().count(), pre_expire_count)
             self.assertRegex(
@@ -68,9 +68,9 @@ class BlobExpireTest(TestCase):
         with patch('corehq.blobs.metadata._utcnow', return_value=now):
             self.db.put(BytesIO(b'content'), timeout=60, **self.args)
 
-        self.assertIsNotNone(self.db.get(key=self.key))
+        self.assertIsNotNone(self.db.get(key=self.key, type_code=CODES.tempfile))
         with patch('corehq.blobs.tasks._utcnow', return_value=now + timedelta(minutes=30)):
             delete_expired_blobs()
 
-        self.assertIsNotNone(self.db.get(key=self.key))
+        self.assertIsNotNone(self.db.get(key=self.key, type_code=CODES.tempfile))
         self.assertEqual(manager.all().count(), pre_expire_count + 1)

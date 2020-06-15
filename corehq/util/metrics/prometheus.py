@@ -1,10 +1,18 @@
 from typing import List, Dict
 
+from django.conf import settings
 from prometheus_client import Counter as PCounter
 from prometheus_client import Gauge as PGauge
 from prometheus_client import Histogram as PHistogram
+from prometheus_client import CollectorRegistry, multiprocess, push_to_gateway
 
+from corehq.util.soft_assert import soft_assert
 from corehq.util.metrics.metrics import HqMetrics
+
+prometheus_soft_assert = soft_assert(to=[
+    f'{name}@dimagi.com'
+    for name in ['skelly', 'rkumar', 'sreddy']
+])
 
 
 class PrometheusMetrics(HqMetrics):
@@ -15,11 +23,17 @@ class PrometheusMetrics(HqMetrics):
 
     def _counter(self, name: str, value: float = 1, tags: Dict[str, str] = None, documentation: str = ''):
         """See https://prometheus.io/docs/concepts/metric_types/#counter"""
-        self._get_metric(PCounter, name, tags, documentation).inc(value)
+        try:
+            self._get_metric(PCounter, name, tags, documentation).inc(value)
+        except ValueError:
+            pass
 
     def _gauge(self, name: str, value: float, tags: Dict[str, str] = None, documentation: str = ''):
         """See https://prometheus.io/docs/concepts/metric_types/#histogram"""
-        self._get_metric(PGauge, name, tags, documentation).set(value)
+        try:
+            self._get_metric(PGauge, name, tags, documentation).set(value)
+        except ValueError:
+            pass
 
     def _histogram(self, name: str, value: float, bucket_tag: str, buckets: List[int], bucket_unit: str = '',
                   tags: Dict[str, str] = None, documentation: str = ''):
@@ -51,7 +65,10 @@ class PrometheusMetrics(HqMetrics):
             # commcare_request_duration_count{...tags...} 1.0
 
         See https://prometheus.io/docs/concepts/metric_types/#histogram"""
-        self._get_metric(PHistogram, name, tags, documentation, buckets=buckets).observe(value)
+        try:
+            self._get_metric(PHistogram, name, tags, documentation, buckets=buckets).observe(value)
+        except ValueError:
+            pass
 
     def _get_metric(self, metric_type, name, tags, documentation, **kwargs):
         name = name.replace('.', '_')
@@ -65,4 +82,24 @@ class PrometheusMetrics(HqMetrics):
             self._metrics[name] = metric
         else:
             assert metric.__class__ == metric_type
-        return metric.labels(**tags) if tags else metric
+        try:
+            if getattr(settings, 'PUSHGATEWAY_HOST', None):
+                self._push_to_gateway()
+            return metric.labels(**tags) if tags else metric
+        except ValueError:
+            prometheus_soft_assert(False, 'Prometheus metric error', {
+                'metric_name': name,
+                'tags': list(tags),
+                'expected_tags': metric._labelnames
+            })
+            raise
+
+    def _push_to_gateway(self):
+        registry = CollectorRegistry()
+        multiprocess.MultiProcessCollector(registry)
+        host = getattr(settings, 'PUSHGATEWAY_HOST')
+        try:
+            push_to_gateway(host, job='batch_mode', registry=registry)
+        except Exception:
+            # Could get a URLOpenerror if Pushgateway is not running
+            prometheus_soft_assert(False, 'Prometheus metric error while pushing to gateway')

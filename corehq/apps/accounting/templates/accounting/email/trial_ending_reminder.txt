@@ -3,9 +3,9 @@
 Dear {{ domain }} administrator,
 
 Your 30 Day Trial for {{ domain }} is ending soon! If you do not
-change your subscription before then, you will automatically be subscribed
-to the CommCare Community plan and lose access to all pay-only
-features {{ ending_on }}
+change your subscription before then, your subscription will be paused on
+{{ ending_on }} and you will lose access to all features until you
+re-subscribe to a new paid plan.
 
 To change your subscription, please log into your project on
 CommCare HQ and and navigate to the subscription page in your project

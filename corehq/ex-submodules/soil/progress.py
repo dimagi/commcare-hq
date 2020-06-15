@@ -7,6 +7,7 @@ from django.db import IntegrityError
 import six
 from celery.result import GroupResult
 
+from corehq.util.metrics import metrics_counter
 from soil.exceptions import TaskFailedError
 
 TaskProgress = namedtuple('TaskProgress',
@@ -73,8 +74,49 @@ def get_task_progress(task):
     )
 
 
-def set_task_progress(task, current, total):
+def set_task_progress(task, current, total, src='unknown'):
+    metrics_counter('commcare.celery.set_task_progress', tags={
+        'src': src
+    })
     update_task_state(task, 'PROGRESS', {'current': current, 'total': total})
+
+
+class TaskProgressManager(object):
+    """
+    A context manager that mediates calls to `set_task_progress`
+
+    and only flushes updates when progress % changes by 1/resolution or more
+    (conceptual "pixel size" on progress bar)
+    and flushes on __exit__
+
+    """
+    def __init__(self, task, src='unknown_via_progress_manager', resolution=100):
+        self.task = task
+        self._resolution = resolution
+        self._value = {'current': None, 'total': None}
+        self._src = src
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.flush()
+
+    def set_progress(self, current, total):
+        new_value = {'current': current, 'total': total}
+
+        if self._should_flush(new_value):
+            self._value = new_value
+            self.flush()
+
+    def _should_flush(self, new_value):
+        return self._quantized_value(**self._value) != self._quantized_value(**new_value)
+
+    def _quantized_value(self, current, total):
+        return self._resolution * current // total if current and total else None
+
+    def flush(self):
+        set_task_progress(self.task, src=self._src, **self._value)
 
 
 def update_task_state(task, state, meta):

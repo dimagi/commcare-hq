@@ -1,6 +1,6 @@
 import csv
+import math
 import os
-from datetime import timezone
 from functools import wraps
 
 from django.core.management.base import BaseCommand
@@ -52,17 +52,15 @@ class Command(BaseCommand):
         )
 
     def handle(self, start_date, end_date, **options):
-        domain = 'icds-cas'
-        start_date = start_date.replace(tzinfo=timezone.utc)
-        end_date = end_date.replace(tzinfo=timezone.utc)
-        users_without_permission = self.get_users_without_permission(domain, start_date, end_date)
+        users_without_permission = self.get_users_without_permission(start_date, end_date)
         self.get_request_data(users_without_permission, start_date, end_date)
         print(f'Request data written to file {REQUEST_DATA_CACHE}')
 
     def get_request_data(self, usernames, start_date, end_date):
         print(f'Compiling request data for {len(usernames)} users')
-        request_data = []
-        for chunk in with_progress_bar(chunked(usernames, 50), prefix='\tProcessing'):
+        request_data = ['username', 'url', 'response code', 'date', 'request count']
+        num_chunks = math.ceil(len(usernames) / 50)
+        for chunk in with_progress_bar(chunked(usernames, 50), length=num_chunks, prefix='\tProcessing'):
             query = (
                 ICDSAuditEntryRecord.objects.values('username', 'url', 'response_code')
                 .filter(~Q(url__contains='login'))
@@ -87,7 +85,8 @@ class Command(BaseCommand):
         print(f'Filter {len(usernames)} users according to permission')
         permission_name = get_permission_name(Permissions.view_report)
         users_without_permission = []
-        for chunk in with_progress_bar(chunked(usernames, 100), prefix='\tProcessing'):
+        num_chunks = math.ceil(len(usernames) / 100)
+        for chunk in with_progress_bar(chunked(usernames, 100), length=num_chunks, prefix='\tProcessing'):
             users = [CouchUser.wrap_correctly(doc) for doc in get_user_docs_by_username(chunk)]
             for user in users:
                 if not user.has_permission(DASHBOARD_DOMAIN, permission_name, data=PERMISSION):

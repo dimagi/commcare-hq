@@ -10,6 +10,8 @@ from corehq.apps.users.analytics import (
 )
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
+from corehq.util.elastic import reset_es_index
 
 
 class UserAnalyticsTest(TestCase):
@@ -42,6 +44,7 @@ class UserAnalyticsTest(TestCase):
             username='web',
             password='secret',
         )
+        reset_es_index(USER_INDEX_INFO)
         update_analytics_indexes()
 
     @classmethod

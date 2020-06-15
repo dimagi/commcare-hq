@@ -50,11 +50,6 @@ from corehq.messaging.scheduling.const import (
 )
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
-    CustomContent,
-    EmailContent,
-    Schedule,
-    SMSContent,
-    SMSSurveyContent,
     TimedSchedule,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
@@ -135,8 +130,8 @@ class AutomaticUpdateRule(models.Model):
 
     @property
     def references_parent_case(self):
-        for crierion in self.memoized_criteria:
-            definition = crierion.definition
+        for criterion in self.memoized_criteria:
+            definition = criterion.definition
             if isinstance(definition, ClosedParentDefinition):
                 return True
             elif (

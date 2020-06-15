@@ -15,4 +15,4 @@ class Migration(migrations.Migration):
         ('icds_reports', '0175_bihar_api_view'),
     ]
 
-    operations = get_view_migrations()
+    operations = []

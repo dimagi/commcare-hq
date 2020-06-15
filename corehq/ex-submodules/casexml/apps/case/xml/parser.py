@@ -70,7 +70,7 @@ class CaseActionBase(object):
                     if getattr(self, p) is not None)
 
     def __repr__(self):
-        return "CaseAction(block={})".format(self.raw_block)
+        return f"{type(self).__name__}(block={self.raw_block!r})"
 
     @classmethod
     def _from_block_and_mapping(cls, block, mapping):

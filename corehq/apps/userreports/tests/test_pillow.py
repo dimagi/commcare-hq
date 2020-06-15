@@ -17,7 +17,7 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.userreports.data_source_providers import (
     MockDataSourceProvider,
-)
+    DynamicDataSourceProvider)
 from corehq.apps.userreports.exceptions import StaleRebuildError
 from corehq.apps.userreports.models import (
     AsyncIndicator,
@@ -89,6 +89,96 @@ class ConfigurableReportTableManagerTest(SimpleTestCase):
         self.assertFalse(table_manager.needs_bootstrap())
         table_manager.last_bootstrapped = before_now - timedelta(seconds=REBUILD_CHECK_INTERVAL)
         self.assertTrue(table_manager.needs_bootstrap())
+
+
+class ConfigurableReportTableManagerDbTest(TestCase):
+    def tearDown(self):
+        for data_source in DynamicDataSourceProvider().get_all_data_sources():
+            data_source.delete()
+
+    def test_table_adapters(self):
+        data_source_1 = get_sample_data_source()
+        ds_1_domain = data_source_1.domain
+        table_manager = ConfigurableReportTableManagerMixin([MockDataSourceProvider({
+            ds_1_domain: [data_source_1]
+        })])
+        table_manager.bootstrap()
+        self.assertEqual(1, len(table_manager.table_adapters_by_domain))
+        self.assertEqual(1, len(table_manager.table_adapters_by_domain[ds_1_domain]))
+        self.assertEqual(data_source_1, table_manager.table_adapters_by_domain[ds_1_domain][0].config)
+
+    def test_merge_table_adapters(self):
+        data_source_1 = get_sample_data_source()
+        data_source_1.save()
+        ds_1_domain = data_source_1.domain
+        table_manager = ConfigurableReportTableManagerMixin([MockDataSourceProvider({
+            ds_1_domain: [data_source_1]
+        })])
+        table_manager.bootstrap()
+        # test in same domain
+        data_source_2 = self._copy_data_source(data_source_1)
+        data_source_2.save()
+        table_manager._add_data_sources_to_table_adapters([data_source_2])
+        self.assertEqual(1, len(table_manager.table_adapters_by_domain))
+        self.assertEqual(2, len(table_manager.table_adapters_by_domain[ds_1_domain]))
+        self.assertEqual(
+            {data_source_1, data_source_2},
+            set([table_adapter.config for table_adapter in table_manager.table_adapters_by_domain[ds_1_domain]])
+        )
+        # test in a new domain
+        data_source_3 = self._copy_data_source(data_source_1)
+        ds3_domain = 'new_domain'
+        data_source_3.domain = ds3_domain
+        data_source_3.save()
+        table_manager._add_data_sources_to_table_adapters([data_source_3])
+        # should now be 2 domains in the map
+        self.assertEqual(2, len(table_manager.table_adapters_by_domain))
+        # ensure domain 1 unchanged
+        self.assertEqual(
+            {data_source_1, data_source_2},
+            set([table_adapter.config for table_adapter in table_manager.table_adapters_by_domain[ds_1_domain]])
+        )
+        self.assertEqual(1, len(table_manager.table_adapters_by_domain[ds3_domain]))
+        self.assertEqual(data_source_3, table_manager.table_adapters_by_domain[ds3_domain][0].config)
+
+        # finally pass in existing data sources and ensure they modify in place
+        table_manager._add_data_sources_to_table_adapters([data_source_1, data_source_3])
+        self.assertEqual(2, len(table_manager.table_adapters_by_domain))
+        self.assertEqual(
+            {data_source_1, data_source_2},
+            set([table_adapter.config for table_adapter in table_manager.table_adapters_by_domain[ds_1_domain]])
+        )
+        self.assertEqual(data_source_3, table_manager.table_adapters_by_domain[ds3_domain][0].config)
+
+    def test_complete_integration(self):
+        # initialize pillow with one data source
+        data_source_1 = get_sample_data_source()
+        data_source_1.save()
+        ds_1_domain = data_source_1.domain
+        table_manager = ConfigurableReportTableManagerMixin([DynamicDataSourceProvider()])
+        table_manager.bootstrap()
+        self.assertEqual(1, len(table_manager.table_adapters_by_domain))
+        self.assertEqual(1, len(table_manager.table_adapters_by_domain[ds_1_domain]))
+        self.assertEqual(data_source_1._id, table_manager.table_adapters_by_domain[ds_1_domain][0].config._id)
+
+        data_source_2 = self._copy_data_source(data_source_1)
+        data_source_2.save()
+        self.assertFalse(table_manager.needs_bootstrap())
+        # should call _pull_in_new_and_modified_data_sources
+        table_manager.bootstrap_if_needed()
+        self.assertEqual(1, len(table_manager.table_adapters_by_domain))
+        self.assertEqual(2, len(table_manager.table_adapters_by_domain[ds_1_domain]))
+        self.assertEqual(
+            {data_source_1._id, data_source_2._id},
+            set([table_adapter.config._id for table_adapter in table_manager.table_adapters_by_domain[ds_1_domain]])
+        )
+
+    def _copy_data_source(self, data_source):
+        data_source_json = data_source.to_json()
+        if data_source_json.get('_id'):
+            del data_source_json['_id']
+        return DataSourceConfiguration.wrap(data_source_json)
+
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)

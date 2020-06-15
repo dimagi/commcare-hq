@@ -1,29 +1,32 @@
 {
   "domains": [
+    "akshita-sandbox",
     "aparatest",
     "cas-lab",
+    "ccqa",
+    "ccqa-downstream",
     "derek-icds-sandbox",
     "icds-cas",
     "icds-cas-sandbox",
     "icds-dashboard-qa",
-    "sankalp_cas",
-    "zohaib-sandbox",
-    "akshita-sandbox",
-    "sunaina-sandbox",
     "icds-sql",
     "icds-test",
     "jessica-icds-cas",
     "laurence-project-1",
     "marissa-test",
     "priyanka-app",
-    "reach-test",
-    "reach-sandbox",
     "reach-dashboard-qa",
-    "shrena-dev"
+    "reach-sandbox",
+    "reach-test",
+    "sankalp_cas",
+    "shrena-dev",
+    "sunaina-sandbox",
+    "zohaib-sandbox"
   ],
   "server_environment": [
     "india",
-    "icds"
+    "icds",
+    "icds-staging"
   ],
   "config": {
     "table_id": "static-person_cases_v3",
@@ -583,7 +586,8 @@
           "type": "switch",
           "switch_on": {
             "type": "property_name",
-            "property_name": "registered_status"
+            "property_name": "registered_status",
+            "datatype": null
           },
           "cases": {
             "not_registered": {
@@ -593,9 +597,15 @@
           },
           "default": {
             "type": "constant",
-            "constant": null
+            "constant": 1
           }
-        }
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "create_index": false,
+        "transform": {},
+        "display_name": null,
+        "comment": null
       },
       {
         "column_id": "migration_status",
@@ -605,7 +615,8 @@
           "type": "switch",
           "switch_on": {
             "type": "property_name",
-            "property_name": "migration_status"
+            "property_name": "migration_status",
+            "datatype": null
           },
           "cases": {
             "migrated": {
@@ -615,9 +626,15 @@
           },
           "default": {
             "type": "constant",
-            "constant": null
+            "constant": 0
           }
-        }
+        },
+        "is_nullable": true,
+        "is_primary_key": false,
+        "create_index": false,
+        "transform": {},
+        "display_name": null,
+        "comment": null
       },
       {
         "column_id": "aadhar_date",
@@ -759,6 +776,58 @@
         "datatype": "string",
         "type": "raw",
         "property_name": "phone_number"
+      },
+      {
+        "column_id": "location_reassignment_date",
+        "datatype": "date",
+        "type": "raw",
+        "property_name": "location_reassignment_datetime"
+      },
+      {
+        "column_id": "last_owner_id",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "location_reassignment_last_owner_id"
+      },
+      {
+        "column_id": "last_supervisor_id",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "location_reassignment_last_supervisor_id"
+      },
+      {
+        "column_id": "was_oos_ever",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "property_name",
+            "property_name": "was_oos_ever"
+          },
+          "cases": {
+            "yes": {
+              "type": "constant",
+              "constant": 1
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": 0
+          }
+        }
+      },
+      {
+        "column_id": "last_reported_fever_date",
+        "datatype": "date",
+        "type": "raw",
+        "property_name": "last_reported_fever_date"
+      },
+      {
+        "column_id": "modified_on",
+        "datatype": "datetime",
+        "type": "raw",
+        "property_name": "modified_on"
       }
     ],
     "named_expressions": {},

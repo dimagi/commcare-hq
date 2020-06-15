@@ -165,6 +165,10 @@ class Attachment(IsImageMixin):
         """Get RFC-1864-compliant Content-MD5 header value"""
         return get_content_md5(self.open())
 
+    @property
+    def type_code(self):
+        return CODES.form_xml if self.name == "form.xml" else CODES.form_attachment
+
     def write(self, blob_db, xform):
         """Save attachment
 
@@ -186,7 +190,7 @@ class Attachment(IsImageMixin):
             key=self.key,
             domain=xform.domain,
             parent_id=xform.form_id,
-            type_code=(CODES.form_xml if self.name == "form.xml" else CODES.form_attachment),
+            type_code=self.type_code,
             name=self.name,
             content_type=self.content_type,
             properties=self.properties,
@@ -313,6 +317,7 @@ class AttachmentMixin(SaveStateMixin):
 
         if self.is_saved():
             return self._get_attachment_from_db(attachment_name)
+        raise AttachmentNotFound(self.get_id, attachment_name)
 
     def _get_attachment_from_db(self, attachment_name):
         raise NotImplementedError
@@ -1131,7 +1136,7 @@ class CaseAttachmentSQL(PartitionedModel, models.Model, SaveStateMixin, IsImageM
 
     def open(self):
         try:
-            return get_blob_db().get(key=self.key)
+            return get_blob_db().get(key=self.key, type_code=CODES.form_attachment)
         except (KeyError, NotFound, BadName):
             raise AttachmentNotFound(self.case_id, self.name)
 

@@ -11,38 +11,40 @@ from .do_import import do_import
 from .exceptions import ImporterError
 from .tracking.analytics import get_case_upload_files_total_bytes
 from .tracking.case_upload_tracker import CaseUpload
+from .tracking.task_status import make_task_status_success
 from .util import get_importer_error_message, exit_celery_with_error_message
 
 
 @task(serializer='pickle', queue='case_import_queue')
 def bulk_import_async(config, domain, excel_id):
     case_upload = CaseUpload.get(excel_id)
+    # case_upload.trigger_upload fires off this task right before saving the CaseUploadRecord
+    # because CaseUploadRecord needs to be saved with the task id firing off the task creates.
+    # Occasionally, this task could start before the CaseUploadRecord was saved,
+    # which causes unpredictable/undesirable error behavior
+    case_upload.wait_for_case_upload_record()
+    result_stored = False
     try:
         case_upload.check_file()
-    except ImporterError as e:
-        return exit_celery_with_error_message(bulk_import_async, get_importer_error_message(e))
-
-    try:
         with case_upload.get_spreadsheet() as spreadsheet:
             result = do_import(spreadsheet, config, domain, task=bulk_import_async,
                                record_form_callback=case_upload.record_form)
 
         _alert_on_result(result, domain)
-
-        # return compatible with soil
-        return {
-            'messages': result
-        }
+        # save the success result into the CaseUploadRecord
+        case_upload.store_task_result(make_task_status_success(result))
+        result_stored = True
     except ImporterError as e:
         return exit_celery_with_error_message(bulk_import_async, get_importer_error_message(e))
     finally:
-        store_task_result.delay(excel_id)
+        if not result_stored:
+            store_failed_task_result.delay(excel_id)
 
 
 @task(serializer='pickle', queue='case_import_queue')
-def store_task_result(upload_id):
+def store_failed_task_result(upload_id):
     case_upload = CaseUpload.get(upload_id)
-    case_upload.store_task_result()
+    case_upload.store_failed_task_result()
 
 
 def _alert_on_result(result, domain):

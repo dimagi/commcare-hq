@@ -20,12 +20,12 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
-from couchdbkit import ResourceNotFound
 from diff_match_patch import diff_match_patch
 from lxml import etree
-from unidecode import unidecode
+from text_unidecode import unidecode
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
+from corehq.apps.hqwebapp.decorators import waf_allow
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 
@@ -238,12 +238,14 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     return json_response(response_json)
 
 
+@waf_allow('XSS_BODY')
 @csrf_exempt
 @api_domain_view
 def edit_form_attr_api(request, domain, app_id, form_unique_id, attr):
     return _edit_form_attr(request, domain, app_id, form_unique_id, attr)
 
 
+@waf_allow('XSS_BODY')
 @login_or_digest
 def edit_form_attr(request, domain, app_id, form_unique_id, attr):
     return _edit_form_attr(request, domain, app_id, form_unique_id, attr)
@@ -291,10 +293,6 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
 
     if should_edit('comment'):
         form.comment = request.POST['comment']
-
-    if should_edit("name_enum"):
-        name_enum = json.loads(request.POST.get("name_enum"))
-        form.name_enum = [MappingItem(i) for i in name_enum]
 
     if should_edit("xform") or "xform" in request.FILES:
         try:
@@ -506,6 +504,7 @@ def new_form(request, domain, app_id, module_unique_id):
     )
 
 
+@waf_allow('XSS_BODY')
 @no_conflict_require_POST
 @login_or_digest
 @require_permission(Permissions.edit_apps, login_decorator=None)

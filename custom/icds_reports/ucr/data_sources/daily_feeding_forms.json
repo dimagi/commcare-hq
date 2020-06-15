@@ -1,29 +1,32 @@
 {
   "domains": [
-    "icds-dashboard-qa",
-    "sankalp_cas",
-    "zohaib-sandbox",
     "akshita-sandbox",
-    "sunaina-sandbox",
-    "laurence-project-1",
-    "jessica-icds-cas",
-    "marissa-test",
-    "derek-icds-sandbox",
-    "priyanka-app",
-    "shrena-dev",
     "aparatest",
-    "reach-sandbox",
-    "reach-dashboard-qa",
-    "reach-test",
+    "cas-lab",
+    "ccqa",
+    "ccqa-downstream",
+    "derek-icds-sandbox",
+    "icds-cas",
+    "icds-cas-sandbox",
+    "icds-dashboard-qa",
     "icds-sql",
     "icds-test",
-    "icds-cas",
-    "cas-lab",
-    "icds-cas-sandbox"
+    "jessica-icds-cas",
+    "laurence-project-1",
+    "marissa-test",
+    "priyanka-app",
+    "reach-dashboard-qa",
+    "reach-sandbox",
+    "reach-test",
+    "sankalp_cas",
+    "shrena-dev",
+    "sunaina-sandbox",
+    "zohaib-sandbox"
   ],
   "server_environment": [
     "india",
-    "icds"
+    "icds",
+    "icds-staging"
   ],
   "config": {
     "table_id": "static-daily_feeding_forms",
@@ -209,10 +212,11 @@
           "filters": [
             {
               "type": "named",
-              "name": "awc_open"
+              "name": "awc_open",
+              "comment": null
             },
             {
-              "operator": "eq",
+              "operator": "not_eq",
               "type": "boolean_expression",
               "expression": {
                 "datatype": "string",
@@ -222,13 +226,15 @@
                   "meal_served"
                 ]
               },
-              "property_value": "cooked_served_hot"
+              "property_value": "not_served",
+              "comment": null
             }
           ]
         },
         "display_name": null,
         "type": "boolean",
-        "column_id": "open_hotcooked_count"
+        "column_id": "open_hotcooked_count",
+        "comment": null
       },
       {
         "filter": {

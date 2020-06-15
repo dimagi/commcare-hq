@@ -82,6 +82,7 @@ TEST_CASES = [
             {'username': factory.user_name(), 'is_account_confirmed': 'False'},
             {'username': factory.user_name(), 'is_account_confirmed': 'True'},
             {'username': factory.user_name(), 'is_account_confirmed': ''},
+            {'username': factory.user_name(), 'is_account_confirmed': False},
         ],
         NewUserPasswordValidator('domain'),
         {

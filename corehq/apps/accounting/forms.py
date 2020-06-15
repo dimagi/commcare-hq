@@ -67,6 +67,7 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionType,
     WireBillingRecord,
+    DomainUserHistory,
 )
 from corehq.apps.accounting.tasks import send_subscription_reminder_emails
 from corehq.apps.accounting.utils import (
@@ -1888,8 +1889,16 @@ class TriggerInvoiceForm(forms.Form):
     month = forms.ChoiceField(label="Statement Period Month")
     year = forms.ChoiceField(label="Statement Period Year")
     domain = forms.CharField(label="Project Space", widget=forms.Select(choices=[]))
+    num_users = forms.IntegerField(
+        label="Number of Users",
+        required=False,
+        help_text="This is part of accounting tests and overwrites the "
+                  "DomainUserHistory recorded for this month. Please leave "
+                  "this blank to use what is already in the system."
+    )
 
     def __init__(self, *args, **kwargs):
+        self.show_testing_options = kwargs.pop('show_testing_options')
         super(TriggerInvoiceForm, self).__init__(*args, **kwargs)
         today = datetime.date.today()
         one_month_ago = today - relativedelta(months=1)
@@ -1905,14 +1914,24 @@ class TriggerInvoiceForm(forms.Form):
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_class = 'form form-horizontal'
+
+        details = [
+            'Trigger Invoice Details',
+            crispy.Field('month', css_class="input-large"),
+            crispy.Field('year', css_class="input-large"),
+            crispy.Field(
+                'domain',
+                css_class="input-xxlarge accounting-async-select2",
+                placeholder="Search for Project"
+            )
+        ]
+        if self.show_testing_options:
+            details.append(crispy.Field('num_users', css_class='input_large'))
+        else:
+            del self.fields['num_users']
+
         self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                'Trigger Invoice Details',
-                crispy.Field('month', css_class="input-large"),
-                crispy.Field('year', css_class="input-large"),
-                crispy.Field('domain', css_class="input-xxlarge accounting-async-select2",
-                             placeholder="Search for Project")
-            ),
+            crispy.Fieldset(*details),
             hqcrispy.FormActions(
                 StrictButton(
                     "Trigger Invoice",
@@ -1928,7 +1947,24 @@ class TriggerInvoiceForm(forms.Form):
         month = int(self.cleaned_data['month'])
         invoice_start, invoice_end = get_first_last_days(year, month)
         domain_obj = Domain.get_by_name(self.cleaned_data['domain'])
+
         self.clean_previous_invoices(invoice_start, invoice_end, domain_obj.name)
+
+        if self.show_testing_options and self.cleaned_data['num_users']:
+            num_users = int(self.cleaned_data['num_users'])
+            existing_histories = DomainUserHistory.objects.filter(
+                domain=domain_obj.name,
+                record_date__gte=invoice_start,
+                record_date__lte=invoice_end,
+            )
+            if existing_histories.exists():
+                existing_histories.all().delete()
+            DomainUserHistory.objects.create(
+                domain=domain_obj.name,
+                record_date=invoice_end,
+                num_users=num_users
+            )
+
         invoice_factory = DomainInvoiceFactory(
             invoice_start, invoice_end, domain_obj, recipients=[settings.ACCOUNTS_EMAIL]
         )
@@ -2185,8 +2221,12 @@ class AdjustBalanceForm(forms.Form):
 
     method = forms.ChoiceField(
         choices=(
-            (CreditAdjustmentReason.MANUAL, "Update balance directly"),
+            (CreditAdjustmentReason.MANUAL, "Register back office payment"),
             (CreditAdjustmentReason.TRANSFER, "Take from available credit lines"),
+            (
+                CreditAdjustmentReason.FRIENDLY_WRITE_OFF,
+                "Forgive amount with a friendly write-off"
+            ),
         )
     )
 
@@ -2203,7 +2243,7 @@ class AdjustBalanceForm(forms.Form):
 
     def __init__(self, invoice, *args, **kwargs):
         self.invoice = invoice
-        super(AdjustBalanceForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields['adjustment_type'].choices = (
             ('current', 'Pay off Current Balance: %s' %
                         get_money_str(self.invoice.balance)),
@@ -2283,7 +2323,10 @@ class AdjustBalanceForm(forms.Form):
             'subscription': None if self.invoice.is_customer_invoice else self.invoice.subscription,
             'web_user': web_user,
         }
-        if method == CreditAdjustmentReason.MANUAL:
+        if method in [
+            CreditAdjustmentReason.MANUAL,
+            CreditAdjustmentReason.FRIENDLY_WRITE_OFF,
+        ]:
             if self.invoice.is_customer_invoice:
                 CreditLine.add_credit(
                     -self.amount,
@@ -2672,3 +2715,33 @@ class EnterpriseSettingsForm(forms.Form):
         account.restrict_signup_message = self.cleaned_data.get('restrict_signup_message', '')
         account.save()
         return True
+
+
+class TriggerDowngradeForm(forms.Form):
+    domain = forms.CharField(label="Project Space", widget=forms.Select(choices=[]))
+
+    def __init__(self, *args, **kwargs):
+        super(TriggerDowngradeForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.form_class = 'form form-horizontal'
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Trigger Downgrade Details',
+                crispy.Field(
+                    'domain',
+                    css_class="input-xxlarge accounting-async-select2",
+                    placeholder="Search for Project"
+                ),
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    "Trigger Downgrade",
+                    css_class="btn-primary disable-on-submit",
+                    type="submit",
+                ),
+            )
+        )

@@ -23,7 +23,8 @@
   ],
   "server_environment": [
     "india",
-    "icds"
+    "icds",
+    "icds-staging"
   ],
   "config": {
     "table_id": "static-child_delivery_forms",
@@ -193,6 +194,26 @@
         "is_nullable": true,
         "type": "expression",
         "column_id": "add"
+      },
+      {
+        "display_name": null,
+        "datatype": "date",
+        "expression": {
+          "expression": {
+            "datatype": "date",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "edd"
+            ]
+          },
+          "type": "root_doc"
+        },
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "edd"
       },
       {
         "display_name": null,

@@ -23,7 +23,8 @@
   ],
   "server_environment": [
     "india",
-    "icds"
+    "icds",
+    "icds-staging"
   ],
   "config": {
     "table_id": "static-ccs_record_cases",
@@ -593,6 +594,10 @@
             {
               "type": "named",
               "name": "open_person_cases"
+            },
+            {
+              "type": "named",
+              "name": "open_cases"
             },
             {
               "type": "named",
@@ -1247,6 +1252,24 @@
           "type": "property_name",
           "property_name": "child_name"
         }
+      },
+      {
+        "column_id": "location_reassignment_date",
+        "datatype": "date",
+        "type": "raw",
+        "property_name": "location_reassignment_datetime"
+      },
+      {
+        "column_id": "last_owner_id",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "location_reassignment_last_owner_id"
+      },
+      {
+        "column_id": "last_supervisor_id",
+        "datatype": "string",
+        "type": "raw",
+        "property_name": "location_reassignment_last_supervisor_id"
       }
     ],
     "named_expressions": {

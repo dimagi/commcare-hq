@@ -21,6 +21,7 @@ class TestChildDeliveryForms(BaseFormsTest):
                     'child_health_case_id': '67134d8d-0ebf-447e-acf7-919f5327cfd3',
                     'delivery_nature': 'vaginal',
                     "add": datetime.date(2019, 12, 3),
+                    "edd": datetime.date(2019, 12, 3),
                     'birth_weight_kg': None,
                     'still_live_birth': 'live',
                     'submitted_on': None,
@@ -54,6 +55,7 @@ class TestChildDeliveryForms(BaseFormsTest):
             [
                 {
                     'add': datetime.date(2020, 4, 9),
+                    "edd": datetime.date(2020, 4, 9),
                     'birth_weight_kg': None,
                     'child_health_case_id': 'fc3683ef-94d8-4d0f-a681-148cc7d3b659',
                     'delivery_nature': 'vaginal',
@@ -81,6 +83,7 @@ class TestChildDeliveryForms(BaseFormsTest):
                     'weighed_M_resident_birth_count': 0},
                 {
                     'add': datetime.date(2020, 4, 9),
+                    'edd': datetime.date(2020, 4, 9),
                     'birth_weight_kg': None,
                     'child_health_case_id': 'dc0eec14-565e-44cb-a82f-b99dc63a023c',
                     'delivery_nature': 'vaginal',

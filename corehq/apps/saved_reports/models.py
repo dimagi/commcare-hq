@@ -681,7 +681,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
 
     def _get_and_send_report(self, language, emails):
         from corehq.apps.reports.views import get_scheduled_report_response, render_full_report_notification
-
+        from corehq.apps.reports.standard.deployments import ApplicationStatusReport
         with localize(language):
             title = (
                 _(DEFAULT_REPORT_NOTIF_SUBJECT)
@@ -737,14 +737,15 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                             mock_query_string_parts.append(urlencode(report_config.filters, True))
                             mock_query_string_parts.append(urlencode(report_config.get_date_range(), True))
                         mock_request.GET = QueryDict('&'.join(mock_query_string_parts))
-                        date_range = report_config.get_date_range()
-                        start_date = datetime.strptime(date_range['startdate'], '%Y-%m-%d')
-                        end_date = datetime.strptime(date_range['enddate'], '%Y-%m-%d')
-
-                        datespan = DateSpan(start_date, end_date)
                         request_data = vars(mock_request)
                         request_data['couch_user'] = mock_request.couch_user.userID
-                        request_data['datespan'] = datespan
+                        if report_config.report_slug != ApplicationStatusReport.slug:
+                            # ApplicationStatusReport doesn't have date filter
+                            date_range = report_config.get_date_range()
+                            start_date = datetime.strptime(date_range['startdate'], '%Y-%m-%d')
+                            end_date = datetime.strptime(date_range['enddate'], '%Y-%m-%d')
+                            datespan = DateSpan(start_date, end_date)
+                            request_data['datespan'] = datespan
 
                         full_request = {'request': request_data,
                                         'domain': request_data['domain'],

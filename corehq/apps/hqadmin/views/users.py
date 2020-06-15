@@ -35,6 +35,7 @@ from two_factor.utils import default_device
 
 from casexml.apps.phone.xml import SYNC_XMLNS
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
+from corehq.util.model_log import log_model_change
 from couchexport.models import Format
 from couchforms.openrosa_response import RESPONSE_XMLNS
 from dimagi.utils.django.email import send_HTML_email
@@ -129,19 +130,20 @@ class SuperuserManagement(UserAdministration):
             is_superuser = 'is_superuser' in form.cleaned_data['privileges']
             is_staff = 'is_staff' in form.cleaned_data['privileges']
 
+            changed_fields = []
             for user in users:
                 # save user object only if needed and just once
-                should_save = False
                 if user.is_superuser is not is_superuser:
                     user.is_superuser = is_superuser
-                    should_save = True
+                    changed_fields.append('is_superuser')
 
                 if can_toggle_is_staff and user.is_staff is not is_staff:
                     user.is_staff = is_staff
-                    should_save = True
+                    changed_fields.append('is_staff')
 
-                if should_save:
+                if changed_fields:
                     user.save()
+                    log_model_change(self.request.user, user, fields_changed=changed_fields)
             messages.success(request, _("Successfully updated superuser permissions"))
 
         return self.get(request, *args, **kwargs)
@@ -428,6 +430,8 @@ class DisableUserView(FormView):
         self.user.save()
 
         verb = 're-enabled' if self.user.is_active else 'disabled'
+        reason = form.cleaned_data['reason']
+        log_model_change(self.request.user, self.user, f'User {verb}. Reason: "{reason}"')
         mail_admins(
             "User account {}".format(verb),
             "The following user account has been {verb}: \n"
@@ -439,7 +443,7 @@ class DisableUserView(FormView):
                 username=self.username,
                 reset_by=self.request.user.username,
                 password_reset=str(reset_password),
-                reason=form.cleaned_data['reason'],
+                reason=reason,
             )
         )
         send_HTML_email(
@@ -511,6 +515,12 @@ class DisableTwoFactorView(FormView):
             couch_user.two_factor_auth_disabled_until = disable_until
             couch_user.save()
 
+        verification = form.cleaned_data['verification_mode']
+        verified_by = form.cleaned_data['via_who'] or self.request.user.username
+        log_model_change(
+            self.request.user, user,
+            f'Two factor disabled. Verified by: {verified_by}, verification mode: "{verification}"'
+        )
         mail_admins(
             "Two-Factor account reset",
             "Two-Factor auth was reset. Details: \n"
@@ -521,8 +531,8 @@ class DisableTwoFactorView(FormView):
             "    Two-Factor disabled for {days} days.".format(
                 username=username,
                 reset_by=self.request.user.username,
-                verification=form.cleaned_data['verification_mode'],
-                verified_by=form.cleaned_data['via_who'] or self.request.user.username,
+                verification=verification,
+                verified_by=verified_by,
                 days=disable_for_days
             ),
         )

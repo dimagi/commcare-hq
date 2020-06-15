@@ -28,6 +28,7 @@ from corehq.elastic import iter_es_docs_from_query
 from corehq.toggles import PAGINATED_EXPORTS
 from corehq.util.metrics.load_counters import load_counter
 from corehq.util.files import TransientTempfile, safe_filename
+from soil.progress import TaskProgressManager
 
 
 class ExportFile(object):
@@ -345,44 +346,45 @@ def write_export_instance(writer, export_instance, documents, progress_tracker=N
     :param progress_tracker: A task for soil to track progress against
     :return: None
     """
-    if progress_tracker:
-        DownloadBase.set_progress(progress_tracker, 0, documents.count)
-
-    start = _time_in_milliseconds()
-    total_bytes = 0
-    total_rows = 0
-    track_load = load_counter(export_instance.type, "export", export_instance.domain)
-
-    for row_number, doc in enumerate(documents):
-        total_bytes += sys.getsizeof(doc)
-        for table in export_instance.selected_tables:
-            try:
-                rows = table.get_rows(
-                    doc,
-                    row_number,
-                    split_columns=export_instance.split_multiselects,
-                    transform_dates=export_instance.transform_dates,
-                )
-            except Exception as e:
-                notify_exception(None, "Error exporting doc", details={
-                    'domain': export_instance.domain,
-                    'export_instance_id': export_instance.get_id,
-                    'export_table': table.label,
-                    'doc_id': doc.get('_id'),
-                })
-                e.sentry_capture = False
-                raise
-
-            for row in rows:
-                # It might be bad to write one row at a time when you can do more (from a performance perspective)
-                # Regardless, we should handle the batching of rows in the _Writer class, not here.
-                writer.write(table, row)
-
-            total_rows += len(rows)
-
-        track_load()
+    with TaskProgressManager(progress_tracker, src="export") as progress_manager:
         if progress_tracker:
-            DownloadBase.set_progress(progress_tracker, row_number + 1, documents.count)
+            progress_manager.set_progress(0, documents.count)
+
+        start = _time_in_milliseconds()
+        total_bytes = 0
+        total_rows = 0
+        track_load = load_counter(export_instance.type, "export", export_instance.domain)
+
+        for row_number, doc in enumerate(documents):
+            total_bytes += sys.getsizeof(doc)
+            for table in export_instance.selected_tables:
+                try:
+                    rows = table.get_rows(
+                        doc,
+                        row_number,
+                        split_columns=export_instance.split_multiselects,
+                        transform_dates=export_instance.transform_dates,
+                    )
+                except Exception as e:
+                    notify_exception(None, "Error exporting doc", details={
+                        'domain': export_instance.domain,
+                        'export_instance_id': export_instance.get_id,
+                        'export_table': table.label,
+                        'doc_id': doc.get('_id'),
+                    })
+                    e.sentry_capture = False
+                    raise
+
+                for row in rows:
+                    # It might be bad to write one row at a time from a performance perspective.
+                    # Regardless, we should handle the batching of rows in the _Writer class, not here.
+                    writer.write(table, row)
+
+                total_rows += len(rows)
+
+            track_load()
+            if progress_tracker:
+                progress_manager.set_progress(row_number + 1, documents.count)
 
     end = _time_in_milliseconds()
     tags = {'format': writer.format}

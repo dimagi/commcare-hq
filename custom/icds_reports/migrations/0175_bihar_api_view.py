@@ -11,4 +11,4 @@ class Migration(migrations.Migration):
         ('icds_reports', '0174_bihar_api_model'),
     ]
 
-    operations = get_view_migrations()
+    operations = []

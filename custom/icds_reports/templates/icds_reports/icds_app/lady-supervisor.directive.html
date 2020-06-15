@@ -17,7 +17,8 @@
         </div>
     </div>
     <info-message></info-message>
-    <div class="ls-dashboard-report-content">
+    <reassignment-message ng-show="$ctrl.showReassignmentMessage()" selected-location="$ctrl.selectedLocation()" selected-date="$ctrl.selectedDate"></reassignment-message>
+    <div class="ls-dashboard-report-content" ng-if="!$ctrl.showReassignmentMessage()">
         <div class="row" ng-repeat="section in $ctrl.data track by $index">
             <div class="col-md-6" ng-repeat="cell in section track by $index">
                 <div class="report-cell kpi">

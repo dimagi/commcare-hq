@@ -8,6 +8,13 @@
 {% if report.needs_filters %}
     {% include 'reports/partials/description.html' %}
 {% else %}
+
+    {% if fixture_error %}
+    <div class="alert alert-danger">
+        <i class="fa fa-exclamation-triangle"></i> {{ fixture_error }}
+    </div>
+    {% endif %}
+
     {% if export_only %}
     <div class="alert alert-info">
         <h3>This report is only available for export.</h3>

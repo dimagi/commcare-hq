@@ -1,5 +1,4 @@
-DROP TABLE IF EXISTS dummy_thr_table;
-CREATE TEMPORARY TABLE dummy_thr_table AS
+CREATE TABLE {temp_table} AS
   (SELECT supervisor_id,
           SUM(CASE
                 WHEN thr_eligible IS NOT NULL THEN thr_eligible

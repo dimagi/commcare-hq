@@ -7,7 +7,7 @@ from io import StringIO
 
 from django.contrib.admin.utils import NestedObjects
 from django.core import serializers
-from django.db.models.signals import post_save
+from django.db.models.signals import post_delete, post_save
 from django.test import TestCase
 from django.test.utils import override_settings
 
@@ -26,6 +26,11 @@ from corehq.apps.dump_reload.sql.dump import (
 )
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.products.models import SQLProduct
+from corehq.apps.zapier.consts import EventTypes
+from corehq.apps.zapier.models import ZapierSubscription
+from corehq.apps.zapier.signals.receivers import (
+    zapier_subscription_post_delete,
+)
 from corehq.blobs.models import BlobMeta
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import (
@@ -44,11 +49,13 @@ from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     create_form_for_test,
 )
+from corehq.messaging.scheduling.scheduling_partitioned.models import AlertScheduleInstance
 
 
 class BaseDumpLoadTest(TestCase):
     @classmethod
     def setUpClass(cls):
+        post_delete.disconnect(zapier_subscription_post_delete, sender=ZapierSubscription)
         super(BaseDumpLoadTest, cls).setUpClass()
         cls.domain_name = uuid.uuid4().hex
         cls.domain = Domain(name=cls.domain_name)
@@ -62,12 +69,13 @@ class BaseDumpLoadTest(TestCase):
     def tearDownClass(cls):
         cls.domain.delete()
         super(BaseDumpLoadTest, cls).tearDownClass()
+        post_delete.connect(zapier_subscription_post_delete, sender=ZapierSubscription)
 
     def delete_sql_data(self):
         for model_class, builder in get_model_iterator_builders_to_dump(self.domain_name, []):
-            for queryset in builder.querysets():
-                collector = NestedObjects(using=queryset.db)
-                collector.collect(queryset)
+            for iterator in builder.querysets():
+                collector = NestedObjects(using=iterator.db)
+                collector.collect(iterator)
                 collector.delete()
 
         self.assertEqual([], list(get_objects_to_dump(self.domain_name, [])))
@@ -255,7 +263,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         ]
         for fuzzy in fuzzies:
             fuzzy.save()
-        pre_config.fuzzy_properties = fuzzies
+        pre_config.fuzzy_properties.set(fuzzies)
         pre_config.save()
 
         self._dump_and_load(expected_object_counts)
@@ -490,6 +498,85 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         )
 
         self._dump_and_load(expected_object_counts)
+
+    def test_message_scheduling(self):
+        AlertScheduleInstance(
+            schedule_instance_id=uuid.uuid4(),
+            domain=self.domain_name,
+            recipient_type='CommCareUser',
+            recipient_id=uuid.uuid4().hex,
+            current_event_num=0,
+            schedule_iteration_num=1,
+            next_event_due=datetime(2017, 3, 1),
+            active=True,
+            alert_schedule_id=uuid.uuid4(),
+        ).save()
+        self._dump_and_load({AlertScheduleInstance: 1})
+
+    def test_case_importer(self):
+        from corehq.apps.case_importer.tracking.models import (
+            CaseUploadFileMeta,
+            CaseUploadFormRecord,
+            CaseUploadRecord,
+        )
+
+        upload_file_meta = CaseUploadFileMeta.objects.create(
+            identifier=uuid.uuid4().hex,
+            filename='picture.jpg',
+            length=1024,
+        )
+        case_upload_record = CaseUploadRecord.objects.create(
+            domain=self.domain_name,
+            upload_id=uuid.uuid4(),
+            task_id=uuid.uuid4(),
+            couch_user_id=uuid.uuid4().hex,
+            case_type='person',
+            upload_file_meta=upload_file_meta,
+        )
+        CaseUploadFormRecord.objects.create(
+            case_upload_record=case_upload_record,
+            form_id=uuid.uuid4().hex,
+        )
+        self._dump_and_load(Counter({
+            CaseUploadFileMeta: 1,
+            CaseUploadRecord: 1,
+            CaseUploadFormRecord: 1,
+        }))
+
+    def test_transifex(self):
+        from corehq.apps.translations.models import TransifexProject, TransifexOrganization
+        org = TransifexOrganization.objects.create(slug='test', name='demo', api_token='123')
+        TransifexProject.objects.create(
+            organization=org, slug='testp', name='demop', domain=self.domain_name
+        )
+        self._dump_and_load(Counter({TransifexOrganization: 1, TransifexProject: 1}))
+
+    def test_sms_content(self):
+        from corehq.messaging.scheduling.models import AlertSchedule, SMSContent, AlertEvent
+        from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import \
+            delete_alert_schedule_instances_for_schedule
+
+        schedule = AlertSchedule.create_simple_alert(self.domain, SMSContent())
+
+        schedule.set_custom_alert(
+            [
+                (AlertEvent(minutes_to_wait=5), SMSContent()),
+                (AlertEvent(minutes_to_wait=15), SMSContent()),
+            ]
+        )
+
+        self.addCleanup(lambda: delete_alert_schedule_instances_for_schedule(AlertScheduleInstance, schedule.schedule_id))
+        self._dump_and_load(Counter({AlertSchedule: 1, AlertEvent: 2, SMSContent: 2}))
+
+    def test_zapier_subscription(self):
+        ZapierSubscription.objects.create(
+            domain=self.domain_name,
+            case_type='case_type',
+            event_name=EventTypes.NEW_CASE,
+            url='example.com',
+            user_id='user_id',
+        )
+        self._dump_and_load(Counter({ZapierSubscription: 1}))
 
 
 def _normalize_object_counter(counter, for_loaded=False):

@@ -50,9 +50,20 @@ trunk: master
 name: autostaging
 branches:
   - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
-  - jls/migrate-DefaultConsumption-2 # Jenny March 6
-  #- jls/use-textinput # Jenny March 10
-  - mk/location-reassignment-9 # MK April 14
-  - bmb/SAAS-10712  # Biyeun April 1
-  - ap/remove-delete-in-name # Amit April 8
+  - jls/sync-mixins-hard-fail # Jenny May 24
+  - jls/migrate-CustomDataFieldsDefinition-2 # Jenny April 29
+  - rn_update_perfect_scrollbar # Rohit Negi May 4
+  - jls/migrate-MobileAuthKeyRecord-2 # Jenny May 16
+  - bmb/SAAS-10882  # Biyeun May 20 (updates knockout, bootstrap, jquery, DOMPurify)
+  - nh/repeaters_ui  # Norman May 28
+  - nh/charset  # Norman May 27
+  - ce/web-apps-permission # Cal May 27
+  - jls/push-linked-apps # Jenny May 31
+  - ap/lazy-load-multimedia # Amit June 5
+  - fr/multiple-api-keys  # Conflicting migrations with ce/web-apps-permissions
+  - fr/multiple-api-keys+ce/web-apps-permission # FR Jun 8 -- adds merge migration for users app
+  - jls/DRYer-case-config-ui-3 # Jenny June 6
+  - revert-27725-jls/kill-configurable-timeout # Jenny June 9
+  - nemanja1040:turn_gateway_improvements  # Nemanja Stancic June 10
+
 submodules: {}

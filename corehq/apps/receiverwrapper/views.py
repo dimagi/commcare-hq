@@ -6,10 +6,11 @@ from django.views.decorators.http import require_POST
 
 import couchforms
 from casexml.apps.case.xform import get_case_updates, is_device_report
+from corehq.apps.hqwebapp.decorators import waf_allow
 from couchforms import openrosa_response
 from couchforms.const import MAGIC_PROPERTY, BadRequest
 from couchforms.getters import MultimediaBug
-from dimagi.utils.decorators.profile import profile_prod
+from dimagi.utils.decorators.profile import profile_dump
 from dimagi.utils.logging import notify_exception
 
 from corehq import toggles
@@ -56,7 +57,7 @@ PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_SUBMISSION_LIMIT')
 PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 
 
-@profile_prod('commcare_receiverwapper_process_form.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
+@profile_dump('commcare_receiverwapper_process_form.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
 
@@ -122,7 +123,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             submit_ip=couchforms.get_submit_ip(request),
             last_sync_token=couchforms.get_last_sync_token(request),
             openrosa_headers=couchforms.get_openrosa_headers(request),
-            force_logs=bool(request.GET.get('force_logs', False)),
+            force_logs=request.GET.get('force_logs', 'false') == 'true',
         )
 
         try:
@@ -193,6 +194,7 @@ def _record_metrics(tags, submission_type, response, timer=None, xform=None):
     metrics_counter('commcare.xform_submissions.count', tags=tags)
 
 
+@waf_allow('XSS_BODY')
 @location_safe
 @csrf_exempt
 @require_POST
@@ -308,6 +310,7 @@ def _secure_post_basic(request, domain, app_id=None):
     )
 
 
+@waf_allow('XSS_BODY')
 @location_safe
 @csrf_exempt
 @require_POST
