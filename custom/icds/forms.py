@@ -225,8 +225,8 @@ class CustomSMSReportRequestForm(forms.Form):
         end_date = self.cleaned_data['end_date']
         try:
             end_date = parser.parse(end_date).date()
-            if start_date <= end_date:
-                return end_date
         except ValueError:
             raise forms.ValidationError(_("Invalid date"))
-        raise forms.ValidationError(_("Start date cannot be greater than end date"))
+        if start_date > end_date:
+            raise forms.ValidationError(_("Start date cannot be greater than end date"))
+        return end_date
