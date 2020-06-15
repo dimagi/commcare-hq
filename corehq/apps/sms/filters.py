@@ -38,6 +38,18 @@ class MessageTypeFilter(BaseMultipleOptionFilter):
         return options_var
 
 
+class ErrorCodeFilter(BaseMultipleOptionFilter):
+    label = ugettext_noop('Error')
+    default_text = ugettext_noop('Select Error...')
+    slug = 'error_code'
+
+    options = [
+        (code, message.split(".")[0])   # shorten multi-sentence messages
+        for code, message in MessagingEvent.ERROR_MESSAGES.items()
+        if code != MessagingEvent.ERROR_SUBEVENT_ERROR
+    ]
+
+
 class EventTypeFilter(BaseMultipleOptionFilter):
     label = ugettext_noop('Communication Type')
     default_text = ugettext_noop('Select Communication Type...')
@@ -84,6 +96,13 @@ class RequiredPhoneNumberFilter(PhoneNumberFilter):
         context = super(RequiredPhoneNumberFilter, self).filter_context
         context['required'] = True
         return context
+
+
+class PhoneNumberOrEmailFilter(BaseSimpleFilter):
+    slug = "phone_number_or_email_address"
+    label = ugettext_lazy("Phone Number or Email Address")
+    help_inline = ugettext_lazy("Enter a full or partial phone number or a full or partial email address to filter "
+                                "results")
 
 
 class PhoneNumberReportFilter(BaseReportFilter):

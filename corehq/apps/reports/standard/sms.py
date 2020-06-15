@@ -51,10 +51,11 @@ from corehq.apps.reports.standard.message_event_display import (
 )
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.sms.filters import (
+    ErrorCodeFilter,
     EventStatusFilter,
     EventTypeFilter,
     MessageTypeFilter,
-    PhoneNumberFilter,
+    PhoneNumberOrEmailFilter,
     PhoneNumberReportFilter,
 )
 from corehq.apps.sms.mixin import apply_leniency
@@ -630,7 +631,8 @@ class MessagingEventsReport(BaseMessagingEventReport):
         DatespanFilter,
         EventTypeFilter,
         EventStatusFilter,
-        PhoneNumberFilter,
+        ErrorCodeFilter,
+        PhoneNumberOrEmailFilter,
     ]
     ajax_pagination = True
 
@@ -653,8 +655,8 @@ class MessagingEventsReport(BaseMessagingEventReport):
 
     @property
     @memoized
-    def phone_number_filter(self):
-        value = PhoneNumberFilter.get_value(self.request, self.domain)
+    def phone_number_or_email_filter(self):
+        value = PhoneNumberOrEmailFilter.get_value(self.request, self.domain)
         if isinstance(value, str):
             return value.strip()
 
@@ -663,6 +665,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
     def get_filters(self):
         source_filter = []
         content_type_filter = []
+        error_code_filter = ErrorCodeFilter.get_value(self.request, self.domain)
         event_status_filter = None
         event_type_filter = EventTypeFilter.get_value(self.request, self.domain)
 
@@ -724,7 +727,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
                  Q(messagingsubevent__xforms_session__submission_id__isnull=True))
             )
 
-        return source_filter, content_type_filter, event_status_filter
+        return source_filter, content_type_filter, event_status_filter, error_code_filter
 
     def _fmt_recipient(self, event, doc_info):
         if event.recipient_type in (
@@ -743,22 +746,30 @@ class MessagingEventsReport(BaseMessagingEventReport):
             )
 
     def get_queryset(self):
-        source_filter, content_type_filter, event_status_filter = self.get_filters()
+        source_filter, content_type_filter, event_status_filter, error_code_filter = self.get_filters()
 
         data = MessagingEvent.objects.filter(
             Q(domain=self.domain),
             Q(date__gte=self.datespan.startdate_utc),
             Q(date__lte=self.datespan.enddate_utc),
-            (Q(source__in=source_filter) |
-                Q(content_type__in=content_type_filter) |
-                Q(messagingsubevent__content_type__in=content_type_filter)),
+            (Q(source__in=source_filter)
+                | Q(content_type__in=content_type_filter)
+                | Q(messagingsubevent__content_type__in=content_type_filter)),
         )
+        if error_code_filter:
+            data = data.filter(
+                Q(error_code__in=error_code_filter)
+                | Q(messagingsubevent__error_code__in=error_code_filter)
+            )
 
         if event_status_filter:
             data = data.filter(event_status_filter)
 
-        if self.phone_number_filter:
-            data = data.filter(messagingsubevent__sms__phone_number__contains=self.phone_number_filter)
+        if self.phone_number_or_email_filter:
+            if self.phone_number_or_email_filter.isdigit():
+                data = data.filter(messagingsubevent__sms__phone_number__contains=self.phone_number_or_email_filter)
+            else:
+                data = data.filter(messagingsubevent__email__recipient_address__contains=self.phone_number_or_email_filter)
 
         # We need to call distinct() on this because it's doing an
         # outer join to sms_messagingsubevent in order to filter on
@@ -777,7 +788,8 @@ class MessagingEventsReport(BaseMessagingEventReport):
             {'name': 'enddate', 'value': self.datespan.enddate.strftime('%Y-%m-%d')},
             {'name': EventTypeFilter.slug, 'value': EventTypeFilter.get_value(self.request, self.domain)},
             {'name': EventStatusFilter.slug, 'value': EventStatusFilter.get_value(self.request, self.domain)},
-            {'name': PhoneNumberFilter.slug, 'value': PhoneNumberFilter.get_value(self.request, self.domain)},
+            {'name': ErrorCodeFilter.slug, 'value': ErrorCodeFilter.get_value(self.request, self.domain)},
+            {'name': PhoneNumberOrEmailFilter.slug, 'value': PhoneNumberOrEmailFilter.get_value(self.request, self.domain)},
         ]
 
     @property
@@ -1130,8 +1142,8 @@ class PhoneNumberReport(BaseCommConnectLogReport):
 
     @property
     @memoized
-    def phone_number_filter(self):
-        value = self._filter['phone_number_filter']
+    def phone_number_or_email_filter(self):
+        value = self._filter['phone_number_or_email_filter']
         if isinstance(value, str):
             return apply_leniency(value.strip())
 
