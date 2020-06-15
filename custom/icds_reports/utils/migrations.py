@@ -30,7 +30,8 @@ def get_view_migrations():
         'bihar_demographics.sql',
         'pmo_api.sql',
         'bihar_api_mother_view.sql',
-        'bihar_vaccine.sql'
+        'bihar_vaccine.sql',
+        'poshan_progress_report_view.sql'
     ]
     migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
     operations = []

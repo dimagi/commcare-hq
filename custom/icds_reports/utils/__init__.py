@@ -1980,6 +1980,150 @@ def create_child_growth_tracker_report(excel_data, data_type, config, aggregatio
     icds_file.save()
     return file_hash
 
+def create_poshan_progress_report(excel_data, data_type, config, aggregation_level):
+    export_info = excel_data[1][1]
+    layout = config['report_layout']
+    national = 'National Level' if len(export_info) == 3 else ''
+    state = export_info[1][1] if len(export_info) > 3 else ''
+    district = export_info[2][1] if len(export_info) > 4 else ''
+    block = export_info[3][1] if len(export_info) > 5 else ''
+    supervisor = export_info[3][1] if len(export_info) > 6 else ''
+
+    excel_data = excel_data[0][1]
+    thin_border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+    warp_text_alignment = Alignment(wrap_text=True)
+    bold_font = Font(bold=True)
+    blue_fill = PatternFill("solid", fgColor="B3C5E5")
+    grey_fill = PatternFill("solid", fgColor="BFBFBF")
+
+    workbook = Workbook()
+    worksheet = workbook.active
+    # sheet title
+    worksheet.title = "Poshan Progress Report {}".format(layout)
+    worksheet.sheet_view.showGridLines = False
+    amount_of_columns = 1 + len(excel_data[0])
+    last_column = get_column_letter(amount_of_columns+1)
+    worksheet.merge_cells('B2:{0}2'.format(last_column))
+    title_cell = worksheet['B2']
+    title_cell.fill = PatternFill("solid", fgColor="4472C4")
+    title_cell.value = "Poshan Progress Report {}".format(layout.title())
+    title_cell.font = Font(size=18, color="FFFFFF")
+    title_cell.alignment = Alignment(horizontal="center")
+
+    columns = [get_column_letter(i) for i in range(2, amount_of_columns + 2)]
+
+    # sheet header
+    header_cells = ['{0}3'.format(column) for column in columns]
+    for cell in header_cells:
+        worksheet[cell].fill = blue_fill
+        worksheet[cell].font = bold_font
+        worksheet[cell].alignment = warp_text_alignment
+
+    if national:
+        worksheet['B3'].value = national
+        worksheet.merge_cells('B3:C3')
+    else:
+        if state:
+            worksheet['B3'].value = "State: {}".format(state)
+            worksheet.merge_cells('B3:C3')
+        if district:
+            worksheet['D3'].value = "District: {}".format(district)
+        if block:
+            worksheet['E3'].value = "Block: {}".format(block)
+        if supervisor:
+            worksheet['F3'].value = "Sector: {}".format(supervisor)
+
+    date_cell = '{0}3'.format(last_column)
+    date_description_cell = '{0}3'.format(get_column_letter(amount_of_columns))
+    worksheet[date_description_cell].value = "Date when downloaded:"
+    worksheet[date_description_cell].alignment = Alignment(horizontal="right")
+    utc_now = datetime.now(pytz.utc)
+    now_in_india = utc_now.astimezone(india_timezone)
+    worksheet[date_cell].value = custom_strftime('{S} %b %Y', now_in_india)
+    worksheet[date_cell].alignment = Alignment(horizontal="right")
+
+    # table header
+    table_header_position_row = 5
+    header_data = excel_data[0]
+    headers = ["S.No"]
+    headers.extend(header_data)
+
+    table_header = {}
+    for col, header in zip(columns, headers):
+        table_header[col] = header
+    for column, value in table_header.items():
+        cell = "{}{}".format(column, table_header_position_row)
+        worksheet[cell].fill = grey_fill
+        worksheet[cell].border = thin_border
+        worksheet[cell].font = bold_font
+        worksheet[cell].alignment = warp_text_alignment
+        worksheet[cell].value = value
+
+    # table contents
+    row_position = table_header_position_row + 1
+
+    for enum, row in enumerate(excel_data[1:], start=1):
+        for column_index in range(len(columns)):
+            column = columns[column_index]
+            cell = "{}{}".format(column, row_position)
+            worksheet[cell].border = thin_border
+            if column_index == 0:
+                worksheet[cell].value = enum
+            else:
+                worksheet[cell].value = row[column_index - 1]
+        row_position += 1
+
+    # sheet dimensions
+    title_row = worksheet.row_dimensions[2]
+    title_row.height = 23
+    worksheet.row_dimensions[table_header_position_row].height = 46
+    widths = {}
+    widths_columns = ['A']
+    widths_columns.extend(columns)
+    standard_widths = [4, 7]
+    standard_widths.extend([15] * (len(columns) - 1))
+    for col, width in zip(widths_columns, standard_widths):
+        widths[col] = width
+
+    widths['C'] = max(widths['C'], len(state) * 4 // 3 if state else 0)
+    widths['D'] = 9 + (len(district) * 4 // 3 if district else 0)
+    columns = columns[1:]
+    # column widths based on table contents
+    for column_index in range(len(columns)):
+        widths[columns[column_index]] = max(
+            widths[columns[column_index]],
+            max(
+                len(row[column_index].decode('utf-8') if isinstance(row[column_index], bytes)
+                    else str(row[column_index])
+                    )
+                for row in excel_data[1:]) * 4 // 3 if len(excel_data) >= 2 else 0
+        )
+
+    for column, width in widths.items():
+        worksheet.column_dimensions[column].width = width
+
+    # export info
+    worksheet2 = workbook.create_sheet("Export Info")
+    worksheet2.column_dimensions['A'].width = 14
+    for n, export_info_item in enumerate(export_info, start=1):
+        worksheet2['A{0}'.format(n)].value = export_info_item[0]
+        worksheet2['B{0}'.format(n)].value = export_info_item[1]
+
+    # saving file
+    file_hash = uuid.uuid4().hex
+    export_file = BytesIO()
+    icds_file = IcdsFile(blob_id=file_hash, data_type=data_type)
+    workbook.save(export_file)
+    export_file.seek(0)
+    icds_file.store_file_in_blobdb(export_file, expired=ONE_DAY)
+    icds_file.save()
+    return file_hash
+
 
 def create_aww_activity_report(excel_data, data_type, config, aggregation_level):
     export_info = excel_data[1][1]

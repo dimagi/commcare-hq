@@ -291,6 +291,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.turn',
     'corehq.messaging.smsbackends.twilio',
     'corehq.messaging.smsbackends.infobip',
+    'corehq.messaging.smsbackends.amazon_pinpoint',
     'corehq.apps.dropbox',
     'corehq.messaging.smsbackends.megamobile',
     'corehq.messaging.ivrbackends.kookoo',
@@ -866,9 +867,6 @@ LOAD_BALANCED_APPS = {}
 # encryption or signing workflows.
 HQ_PRIVATE_KEY = None
 
-# Set to the list of domain names for which we will run the ICDS SMS indicators
-ICDS_SMS_INDICATOR_DOMAINS = []
-
 KAFKA_BROKERS = ['localhost:9092']
 KAFKA_API_VERSION = None
 
@@ -994,7 +992,7 @@ if callable(COMPRESS_OFFLINE):
 
 # These default values can't be overridden.
 # Should you someday need to do so, use the lambda/if callable pattern above
-SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = lambda: not DEBUG
+SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_HTTPONLY = CSRF_COOKIE_HTTPONLY = True
 
 
@@ -1523,7 +1521,8 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.tropo.models.SQLTropoBackend',
     'corehq.messaging.smsbackends.turn.models.SQLTurnWhatsAppBackend',
     'corehq.messaging.smsbackends.twilio.models.SQLTwilioBackend',
-    'corehq.messaging.smsbackends.infobip.models.SQLInfobipBackend',
+    'corehq.messaging.smsbackends.infobip.models.InfobipBackend',
+    'corehq.messaging.smsbackends.amazon_pinpoint.models.PinpointBackend',
     'corehq.messaging.smsbackends.unicel.models.SQLUnicelBackend',
     'corehq.messaging.smsbackends.yo.models.SQLYoBackend',
     'corehq.messaging.smsbackends.vertex.models.VertexBackend',

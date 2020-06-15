@@ -131,6 +131,9 @@ class Schedule(models.Model):
         if self.total_iterations_complete(instance):
             instance.active = False
 
+    def set_next_event_due_timestamp(self, instance):
+        raise NotImplementedError()
+
     def move_to_next_event_not_in_the_past(self, instance):
         while instance.active and instance.next_event_due < util.utcnow():
             self.move_to_next_event(instance)
