@@ -962,7 +962,7 @@ class MessageEventDetailReport(BaseMessagingEventReport):
                     self._fmt(content),
                     self._fmt(recipient_address),
                     self._fmt_direction(OUTGOING),
-                    self._fmt('Email'),
+                    self._fmt(_('Email')),
                     self._fmt(status),
                 ])
         return result
