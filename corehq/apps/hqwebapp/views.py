@@ -1284,9 +1284,13 @@ def temporary_google_verify(request):
 
 @require_POST
 @csrf_exempt
-def log_email_event(request):
+def log_email_event(request, secret):
     # From Amazon SNS:
     # https://docs.aws.amazon.com/ses/latest/DeveloperGuide/event-publishing-retrieving-sns-examples.html
+
+    if secret != settings.SNS_EMAIL_EVENT_SECRET:
+        return HttpResponse(status=403)
+
     request_json = json.loads(request.body)
 
     if request_json['Type'] == "SubscriptionConfirmation":
