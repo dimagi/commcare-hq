@@ -478,6 +478,7 @@ RETURN_PATH_EMAIL_PASSWORD = None
 # https://console.aws.amazon.com/ses/home?region=us-east-1#configuration-set-list:
 
 SES_CONFIGURATION_SET = None
+SNS_EMAIL_EVENT_SECRET = None
 
 ENABLE_SOFT_ASSERT_EMAILS = True
 IS_DIMAGI_ENVIRONMENT = True
