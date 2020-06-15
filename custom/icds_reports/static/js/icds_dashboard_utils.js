@@ -40,6 +40,16 @@ hqDefine("js/icds_dashboard_utils", function () {
             {id: '0_3', name: 'PW, LW & Children 0-3 years (0-1095 days)'},
             {id: '3_6', name: 'Children 3-6 years (1096-2190 days)'},
         ]);
+        angular.module(appName).constant('dataPeriods', [
+            {id: 'month', name: 'Monthly'},
+            {id: 'quarter', name: 'Quarterly'},
+        ]);
+        angular.module(appName).constant('quartersOfYear', [
+            {id: '1', name: 'Jan-Mar'},
+            {id: '2', name: 'Apr-Jun'},
+            {id: '3', name: 'Jul-Sep'},
+            {id: '4', name: 'Oct-Dec'},
+        ]);
     }
 
     function addMaternalChildRoutes($routeProvider, defaultStep) {
@@ -222,6 +232,14 @@ hqDefine("js/icds_dashboard_utils", function () {
                 template: "<service-delivery-dashboard></service-delivery-dashboard>",
             });
     }
+    function addPPDRoutes($routeProvider) {
+        $routeProvider.when("/poshan_progress_dashboard", {
+            redirectTo: "/poshan_progress_dashboard/overview",
+        })
+            .when("/poshan_progress_dashboard/:step", {
+                template: "<poshan-progress-dashboard></poshan-progress-dashboard>",
+            });
+    }
     function addFactSheetRoutes($routeProvider) {
         $routeProvider.when("/fact_sheets", {
             template: "<progress-report></progress-report>",
@@ -238,6 +256,7 @@ hqDefine("js/icds_dashboard_utils", function () {
         addAWCReportRoutes($routeProvider);
         addSDDRoutes($routeProvider);
         addFactSheetRoutes($routeProvider);
+        addPPDRoutes($routeProvider);
     }
     return {
         populateDashboardConstants: populateDashboardConstants,

@@ -3,7 +3,13 @@
 window.angular.module('icdsApp').factory('dateHelperService', ['$location', function ($location) {
     var reportStartDates = {
         'sdd': new Date(2019, 1),
+        'ppd': new Date(2019, 3),
     };
+
+    var quarterlyDataAvailabilityDates = {
+        'year': 2019,
+        'quarter': 2,
+    }
 
     var defaultStartYear = 2017;
     var defaultStartMonth = 3;
@@ -43,7 +49,7 @@ window.angular.module('icdsApp').factory('dateHelperService', ['$location', func
         var formattedMonth = moment(getSelectedMonth(), 'MM').format('MMMM');
         return formattedMonth + ' ' + getSelectedYear();
     }
-    function getCustomAvailableMonthsForReports(selectedYear, selectedMonth, monthsCopy, isSDD) {
+    function getCustomAvailableMonthsForReports(selectedYear, selectedMonth, monthsCopy, isSDD, isPPD) {
         var months = monthsCopy;
 
         if (selectedYear === new Date().getFullYear()) {
@@ -70,6 +76,13 @@ window.angular.module('icdsApp').factory('dateHelperService', ['$location', func
 
                 selectedMonth = selectedMonth >= reportStartDates['sdd'].getMonth() + 1 ?
                     selectedMonth : reportStartDates['sdd'].getMonth() + 1;
+            } else if (isPPD && selectedYear === reportStartDates['ppd'].getFullYear()) {
+                months = _.filter(monthsCopy, function (month) {
+                    return month.id >= reportStartDates['ppd'].getMonth() + 1;
+                });
+
+                selectedMonth = selectedMonth >= reportStartDates['ppd'].getMonth() + 1 ?
+                    selectedMonth : reportStartDates['ppd'].getMonth() + 1;
             }
 
             // Dashboard data is available from 2017 March
@@ -87,15 +100,19 @@ window.angular.module('icdsApp').factory('dateHelperService', ['$location', func
         };
 
     }
-    function getStartingMonth(isSDD) {
+    function getStartingMonth(isSDD, isPPD) {
         if (isSDD) {
             return reportStartDates['sdd'].getMonth() + 1;
+        } else if (isPPD) {
+            return reportStartDates['ppd'].getMonth() + 1;
         }
         return defaultStartMonth;
     }
-    function getStartingYear(isSDD) {
+    function getStartingYear(isSDD, isPPD) {
         if (isSDD) {
             return reportStartDates['sdd'].getFullYear();
+        } else if (isPPD) {
+            return reportStartDates['ppd'].getFullYear();
         }
         return defaultStartYear;
     }
@@ -114,6 +131,96 @@ window.angular.module('icdsApp').factory('dateHelperService', ['$location', func
         }
         return date;
     }
+    function getLatestQuarterAvailable() {
+        var currentDate = new Date();
+        var maxQuarterInCurrentYear = Math.floor(currentDate.getMonth() / 3);
+        return {
+            'quarter': maxQuarterInCurrentYear ? maxQuarterInCurrentYear : 4,
+            'year': maxQuarterInCurrentYear ? currentDate.getFullYear() : (currentDate.getFullYear() - 1),
+        };
+    }
+    function getSelectedQuarterAndYear() {
+        var latestQuarter = getLatestQuarterAvailable();
+        var selectedQuarter = parseInt($location.search()['quarter']) || latestQuarter['quarter'];
+        var selectedYear =  parseInt($location.search()['year']) || latestQuarter['year'];
+
+        // if data for selected quarter is not yet available, setting it to the latest quarter
+        if (selectedYear > latestQuarter['year']) {
+            selectedQuarter = latestQuarter['quarter'];
+            selectedYear = latestQuarter['year'];
+        } else if (selectedYear < quarterlyDataAvailabilityDates['year']) {
+            selectedQuarter = quarterlyDataAvailabilityDates['quarter'];
+            selectedYear = quarterlyDataAvailabilityDates['year'];
+        } else if ((selectedYear === latestQuarter['year']) && (selectedQuarter > latestQuarter['quarter'])) {
+            selectedQuarter = latestQuarter['quarter'];
+        } else if ((selectedYear === quarterlyDataAvailabilityDates['year']) &&
+            (selectedQuarter < quarterlyDataAvailabilityDates['quarter'])) {
+            selectedQuarter = quarterlyDataAvailabilityDates['quarter'];
+        }
+        $location.search()['quarter'] ? $location.search('quarter', selectedQuarter) : void(0);
+        $location.search()['year'] ? $location.search('year', selectedYear) : void(0);
+        return {
+            'quarter': selectedQuarter,
+            'year': selectedYear,
+        };
+    }
+    function getQuarterAndYearFromDate(month, year) {
+        // this function is used to get quarter and year while switching from monthly to quarterly data period
+        var currentDate = new Date();
+        var maxQuarterInCurrentYear = Math.floor(currentDate.getMonth() / 3);
+
+        if (year === currentDate.getFullYear()) {
+            if (!maxQuarterInCurrentYear) {
+                return {
+                    'year': year - 1,
+                    'quarter': 4,
+                };
+            } else {
+                if (Math.floor(month / 3) < maxQuarterInCurrentYear) {
+                    return {
+                        'year': year,
+                        'quarter': Math.floor(month / 3) + 1,
+                    };
+                } else {
+                    return {
+                        'year': year,
+                        'quarter': maxQuarterInCurrentYear,
+                    }
+                }
+            }
+        } else {
+            return {
+                'year': year,
+                'quarter': Math.floor(month / 3) + 1,
+            };
+        }
+    }
+    function getCustomAvailableQuarters(selectedYear, selectedQuarter, quarters) {
+        var quartersCopy = window.angular.copy(quarters);
+        var currentDate = new Date();
+        var maxQuarterInCurrentYear = Math.floor(currentDate.getMonth() / 3);
+        if (selectedYear === currentDate.getFullYear()) {
+            selectedQuarter = (selectedQuarter <= maxQuarterInCurrentYear) ? selectedQuarter : maxQuarterInCurrentYear;
+            return {
+                'selectedQuarter': selectedQuarter,
+                'quarters': quartersCopy.slice(0, maxQuarterInCurrentYear),
+            };
+        } else if (selectedYear === 2019) {
+            selectedQuarter = (selectedQuarter > 1) ? selectedQuarter : 2;
+            return {
+                'selectedQuarter': selectedQuarter,
+                'quarters': quartersCopy.slice(1),
+            };
+        }
+        return {
+            'selectedQuarter': selectedQuarter,
+            'quarters': quartersCopy,
+        };
+    }
+    function updateSelectedQuarter(quarter, year) {
+        $location.search('quarter', quarter);
+        $location.search('year', year);
+    }
     return {
         getSelectedMonth: getSelectedMonth,
         getSelectedYear: getSelectedYear,
@@ -126,5 +233,10 @@ window.angular.module('icdsApp').factory('dateHelperService', ['$location', func
         getReportStartDates: getReportStartDates,
         getValidSelectedDate: getValidSelectedDate,
         checkAndGetValidDate: checkAndGetValidDate,
+        getQuarterAndYearFromDate: getQuarterAndYearFromDate,
+        getLatestQuarterAvailable: getLatestQuarterAvailable,
+        getCustomAvailableQuarters: getCustomAvailableQuarters,
+        getSelectedQuarterAndYear: getSelectedQuarterAndYear,
+        updateSelectedQuarter: updateSelectedQuarter,
     };
 }]);
