@@ -1274,7 +1274,7 @@ class TestExportData(TestCase):
             ]
         )
 
-    def test_system_usage_export_for_awc_level_with_beta_before_jan_2020(self):
+    def test_system_usage_export_for_awc_level_with_beta_app_version(self):
         self.assertListEqual(
             SystemUsageExport(
                 config={
