@@ -500,19 +500,21 @@ def logout(req, default_domain_redirect='domain_login'):
 @location_safe
 @two_factor_exempt
 def ping_login(request):
-    return JsonResponse({
-        'success': request.user.is_authenticated,
-        'last_request': request.session.get('last_request'),
-        'username': request.user.username,
-    })
+    return _ping_response(request)
 
 
 @location_safe
 @two_factor_exempt
 def ping_session(request):
+    return _ping_response(request)
+
+
+def _ping_response(request):
     return JsonResponse({
         'success': request.user.is_authenticated,
         'last_request': request.session.get('last_request'),
+        'secure_session': request.session.get('secure_session'),
+        'secure_session_timeout': request.session.get('secure_session_timeout'),
         'username': request.user.username,
     })
 
