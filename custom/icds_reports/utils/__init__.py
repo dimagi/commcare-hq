@@ -1145,7 +1145,7 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
         beneficiary_type_columns = [
             'Pregnant women',
             'Lactating women',
-            'Children (0-3 years)'
+            'Children (6-36 months)'
         ]
 
     amount_of_columns = total_column_count - aggregation_level
