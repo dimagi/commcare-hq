@@ -78,6 +78,7 @@ def push_models(master_domain, models, linked_domains, build_apps, username):
                 else:
                     found = True
                     update_model_type(domain_link, model['type'], model_detail=model['detail'])
+                    domain_link.update_last_pull(model['type'], user._id, model_details=model['detail'])
                 if found:
                     successes_by_domain[linked_domain].append(_("{} was updated").format(model['name']))
                 else:
