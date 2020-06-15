@@ -1,5 +1,3 @@
-/*globals $, hqDefine, hqImport, ko, _*/
-
 hqDefine('app_manager/js/forms/case_config_ui', function () {
     "use strict";
     $(function () {
@@ -133,13 +131,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             self.questionScores = questionScores;
             self.caseConfigViewModel = caseConfigViewModel(self);
 
-            self.ensureBlankProperties = function () {
-                self.caseConfigViewModel.case_transaction.ensureBlankProperties();
-                _(self.caseConfigViewModel.subcases()).each(function (case_transaction) {
-                    case_transaction.ensureBlankProperties();
-                });
-            };
-
             self.getQuestions = function (filter, excludeHidden, includeRepeat, excludeTrigger) {
                 return caseConfigUtils.getQuestions(self.questions(), filter, excludeHidden, includeRepeat, excludeTrigger);
             };
@@ -153,13 +144,11 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
 
             self.change = function () {
                 self.saveButton.fire('change');
-                self.ensureBlankProperties();
                 self.forceRefreshTextchangeBinding(self.home);
             };
 
             self.usercaseChange = function () {
                 self.saveUsercaseButton.fire('change');
-                self.caseConfigViewModel.usercase_transaction.ensureBlankProperties();
                 self.forceRefreshTextchangeBinding($('#usercase-config-ko'));
             };
 
@@ -189,7 +178,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                             // all select2's are represented by an input[type="hidden"]
                             .on('change', 'select, input[type="hidden"]', self.change)
                             .on('click', 'a', self.change);
-                        self.ensureBlankProperties();
                         self.forceRefreshTextchangeBinding($home);
                     }
 
@@ -199,13 +187,12 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                             $usercaseMgmt.on('textchange', 'input', self.usercaseChange)
                                 .on('change', 'select, input[type="hidden"]', self.usercaseChange)
                                 .on('click', 'a', self.usercaseChange);
-                            self.caseConfigViewModel.usercase_transaction.ensureBlankProperties();
                         } else {
                             $usercaseMgmt.find('input').prop('disabled', true);
                             $usercaseMgmt.find('select').prop('disabled', true);
                             $usercaseMgmt.find('a').off('click');
                             // Remove "Load properties" / "Save properties" link
-                            _.each($usercaseMgmt.find('.firstProperty'), function (elem) {
+                            _.each($usercaseMgmt.find('.add-property'), function (elem) {
                                 elem.remove();
                             });
                         }
@@ -303,11 +290,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                         return caseProperty.wrap(options.data, model);
                     },
                 },
-                case_preload: {
-                    create: function (options) {
-                        return casePreload.wrap(options.data, model);
-                    },
-                },
             };
         };
         var caseTransactionMapping = function (model) {
@@ -335,12 +317,29 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 self.case_name = null;
             }
 
-            self.suggestedPreloadProperties = ko.computed(function () {
-                if (!self.case_preload) {
-                    return [];
-                }
-                return caseConfigUtils.filteredSuggestedProperties(self.suggestedProperties(), self.case_preload());
-            }, self);
+            // Pagination and search
+            self.searchAndFilter = true;
+            self.case_property_query = ko.observable('');
+            self.filtered_case_properties = ko.computed(function () {
+                return _.filter(self.case_properties(), function (item) {
+                    return item.path().indexOf(self.case_property_query()) !== -1 || item.key().indexOf(self.case_property_query()) !== -1;
+                });
+            });
+            self.visible_case_properties = ko.observableArray();
+            self.pagination_reset_flag = ko.observable(false);
+            self.goToPage = function (page) {
+                page = page || 1;
+                var props = self.filtered_case_properties();
+                var skip = self.per_page() * (page - 1);
+                props = props.slice(skip, skip + self.per_page());
+                self.visible_case_properties(props);
+            };
+            // Don't allow changing per page; "Add Property" button is where the per page changer usually is
+            self.per_page = ko.observable(10);
+            self.total_case_properties = ko.computed(function () {
+                return self.filtered_case_properties().length;
+            });
+            self.goToPage(1);
 
             self.suggestedSaveProperties = ko.computed(function () {
                 return caseConfigUtils.filteredSuggestedProperties(self.suggestedProperties(), self.case_properties());
@@ -355,6 +354,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 }, self);
 
                 self.case_properties.push(property);
+                self.visible_case_properties.push(property);
                 hqImport('analytix/js/google').track.event('Case Management', analyticsAction, 'Save Properties');
             };
 
@@ -362,6 +362,10 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 if (!self.hasPrivilege) return;
                 hqImport('analytix/js/google').track.event('Case Management', analyticsAction, 'Save Properties (remove)');
                 self.case_properties.remove(property);
+                self.visible_case_properties.remove(property);
+                if (!self.visible_case_properties().length) {
+                    self.pagination_reset_flag(!self.pagination_reset_flag());
+                }
                 saveButton.fire('change');
             };
 
@@ -376,39 +380,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 });
                 return count;
             });
-
-            if (self.case_preload) {
-                self.addPreload = function () {
-                    if (!self.hasPrivilege) return;
-                    var property = casePreload.wrap({
-                        path: '',
-                        key: '',
-                        required: false,
-                    }, self);
-
-                    self.case_preload.push(property);
-                    hqImport('analytix/js/google').track.event('Case Management', analyticsAction, 'Load Properties');
-                };
-
-                self.removePreload = function (property) {
-                    if (!self.hasPrivilege) return;
-                    hqImport('analytix/js/google').track.event('Case Management', analyticsAction, 'Load Properties (remove)');
-                    self.case_preload.remove(property);
-                    saveButton.fire('change');
-                };
-
-                self.preloadCounts = ko.computed(function () {
-                    var count = {};
-                    _(self.case_preload()).each(function (p) {
-                        var path = p.path();
-                        if (!count.hasOwnProperty(path)) {
-                            count[path] = 0;
-                        }
-                        return count[path] += 1;
-                    });
-                    return count;
-                });
-            }
 
             self.repeat_context = function () {
                 if (self.case_name) {
@@ -445,30 +416,11 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                         required: true,
                     }, self));
                 });
+                self.pagination_reset_flag(!self.pagination_reset_flag());
             };
 
             self.unwrap = function () {
                 ko.mapping.toJS(self, mapping(self));
-            };
-
-            self.ensureBlankProperties = function () {
-                var items = [{
-                    properties: self.case_properties(),
-                    addProperty: self.addProperty,
-                }];
-                if (self.case_preload) {
-                    items.push({
-                        properties: self.case_preload(),
-                        addProperty: self.addPreload,
-                    });
-                }
-                _(items).each(function (item) {
-                    var properties = item.properties;
-                    var last = properties[properties.length - 1];
-                    if (last && !last.isBlank()) {
-                        item.addProperty();
-                    }
-                });
             };
 
             return self;
@@ -516,9 +468,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             wrap: function (data, case_transaction) {
                 var self = ko.mapping.fromJS(data, caseProperty.mapping);
                 self.case_transaction = case_transaction;
-                self.isBlank = ko.computed(function () {
-                    return !self.key() && !self.path();
-                });
                 self.caseType = ko.computed(function () {
                     return self.case_transaction.case_type();
                 });
@@ -569,32 +518,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                         ).length) {
                             return gettext('Property uses unrecognized prefix <strong>' +
                                 self.key().replace(/\/[^\/]*$/, '') + '</strong>');
-                        }
-                    }
-                    return null;
-                });
-                return self;
-            },
-        };
-
-        var casePreload = {
-            wrap: function (data, case_transaction) {
-                var self = casePropertyBase.wrap(data, case_transaction);
-                self.defaultKey = ko.computed(function () {
-                    return '';
-                });
-                self.validateProperty = ko.computed(function () {
-                    if (self.path() || self.key()) {
-                        if (case_transaction.caseConfig.reserved_words.indexOf(self.key()) !== -1) {
-                            return '<strong>' + self.key() + '</strong> is a reserved word';
-                        }
-                    }
-                    return null;
-                });
-                self.validateQuestion = ko.computed(function () {
-                    if (self.path()) {
-                        if (case_transaction.preloadCounts()[self.path()] > 1) {
-                            return gettext("Two properties load to the same question");
                         }
                     }
                     return null;
@@ -689,9 +612,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                     x.allow = {
                         condition: ko.computed(function () {
                             return caseConfig.caseConfigViewModel.actionType() === 'open';
-                        }),
-                        case_preload: ko.computed(function () {
-                            return caseConfig.caseConfigViewModel.actionType() === 'update';
                         }),
                         repeats: function () {
                             return false;
