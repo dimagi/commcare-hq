@@ -111,7 +111,7 @@ class SystemUsageExport(ExportableMixin, IcdsSqlData):
                     slug='num_supervisor_launched')
                 )
             # adding version fields
-            if self.loc_level > 4 and self.config['month'] >= datetime.date(2016, 5, 1):
+            if self.loc_level > 4 and self.config['month'] >= datetime.date(2020, 5, 1):
                 agg_columns.append(DatabaseColumn(
                     'AWW Application version',
                      MaxColumn('app_version'), slug='app_version'
