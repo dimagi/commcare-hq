@@ -170,6 +170,7 @@ def pull_missing_multimedia(request, domain, app_id):
     return HttpResponseRedirect(reverse('app_settings', args=[domain, app_id]))
 
 
+@method_decorator(toggles.LINKED_DOMAINS.required_decorator(), name='dispatch')
 class DomainLinkView(BaseAdminProjectSettingsView):
     urlname = 'domain_links'
     page_title = ugettext_lazy("Linked Projects")
