@@ -1168,7 +1168,13 @@ SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER = StaticToggle(
     'This can be used to create report builder reports that are location-safe.',
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/internal/Demo+Mobile+Workers',
+)
+
+SHOW_IDS_IN_REPORT_BUILDER = StaticToggle(
+    'show_ids_in_report_builder',
+    'Allow adding Case IDs to report builder reports.',
+    TAG_SOLUTIONS_OPEN,
+    [NAMESPACE_DOMAIN],
 )
 
 MOBILE_USER_DEMO_MODE = StaticToggle(
@@ -1953,11 +1959,4 @@ ONE_PHONE_NUMBER_MULTIPLE_CONTACTS = StaticToggle(
     Only use this feature if every form behind an SMS survey begins by identifying the contact.
     Otherwise the recipient has no way to know who they're supposed to be enter information about.
     """
-)
-
-LOGOUT_SENSITIVE_DOMAIN = StaticToggle(
-    'logout_sensitive_domain',
-    'Get details about clients that are not logged in',
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
 )

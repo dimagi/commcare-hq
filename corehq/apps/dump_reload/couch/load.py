@@ -45,13 +45,19 @@ class CouchDataLoader(DataLoader):
             total_object_count += 1
             doc = json.loads(obj_string)
             doc_type = drop_suffix(doc['doc_type'])
-            db = self._get_db_for_doc_type(doc_type)
-            db.save(doc)
+            if self.filter_doc(doc_type):
+                db = self._get_db_for_doc_type(doc_type)
+                db.save(doc)
 
         for db in self._dbs.values():
             db.commit()
 
         return total_object_count, self.success_counter
+
+    def filter_doc(self, doc_type):
+        if not self.object_filter:
+            return True
+        return self.object_filter.findall(doc_type)
 
 
 class LoaderCallback(IterDBCallback):

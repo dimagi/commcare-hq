@@ -28,9 +28,9 @@ def log_model_change(user, model_object, message=None, fields_changed=None):
 
     return LogEntry.objects.log_action(
         user_id=user.pk,
-        content_type_id=get_content_type_for_model(object).pk,
+        content_type_id=get_content_type_for_model(model_object).pk,
         object_id=model_object.pk,
-        object_repr=force_text(object),
+        object_repr=force_text(model_object),
         action_flag=CHANGE,
         change_message=message,
     )

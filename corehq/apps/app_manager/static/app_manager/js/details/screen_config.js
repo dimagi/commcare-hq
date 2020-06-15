@@ -468,6 +468,26 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     self.graph_extra.setName(self.header.val());
                 });
 
+                var yyyy = new Date().getFullYear(),
+                    yy = String(yyyy).substring(2);
+                self.date_extra = uiElement.select([{
+                    label: '31/10/' + yy,
+                    value: '%d/%m/%y',
+                }, {
+                    label: '31/10/' + yyyy,
+                    value: '%d/%m/%Y',
+                }, {
+                    label: '10/31/' + yyyy,
+                    value: '%m/%d/%Y',
+                }, {
+                    label: '10/31/' + yy,
+                    value: '%m/%d/%y',
+                }, {
+                    label: gettext('Oct 31, ') + yyyy,
+                    value: '%b %d, %Y',
+                }]);
+                self.date_extra.ui.prepend($('<div/>').text(gettext(' Format ')));
+
                 self.late_flag_extra = uiElement.input().val(self.original.late_flag.toString());
                 self.late_flag_extra.ui.find('input').css('width', 'auto').css("display", "inline-block");
                 self.late_flag_extra.ui.prepend($('<span>' + gettext(' Days late ') + '</span>'));
@@ -512,6 +532,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     'nodeset',
                     'relevant',
                     'format',
+                    'date_extra',
                     'enum_extra',
                     'graph_extra',
                     'late_flag_extra',
@@ -528,13 +549,22 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 self.format.on('change', function () {
                     // Prevent self from running on page load before init
                     if (self.format.ui.parent().length > 0) {
+                        self.date_extra.ui.detach();
                         self.enum_extra.ui.detach();
                         self.graph_extra.ui.detach();
                         self.late_flag_extra.ui.detach();
                         self.filter_xpath_extra.ui.detach();
                         self.calc_xpath_extra.ui.detach();
                         self.time_ago_extra.ui.detach();
-                        if (this.val() === "enum" || this.val() === "enum-image" || this.val() === 'conditional-enum') {
+                        if (this.val() === "date") {
+                            self.format.ui.parent().append(self.date_extra.ui);
+                            var select = self.date_extra.ui.find('select');
+                            select.change(function () {
+                                self.date_extra.value = select.val();
+                                fireChange();
+                            });
+                            self.date_extra.value = select.val();
+                        } else if (this.val() === "enum" || this.val() === "enum-image" || this.val() === 'conditional-enum') {
                             self.enum_extra.values_are_icons(this.val() === 'enum-image');
                             self.enum_extra.keys_are_conditions(this.val() === 'conditional-enum');
                             self.format.ui.parent().append(self.enum_extra.ui);
@@ -581,6 +611,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     column.nodeset = self.nodeset.val();
                     column.relevant = self.relevant.val();
                     column.format = self.format.val();
+                    column.date_format = self.date_extra.val();
                     column.enum = self.enum_extra.getItems();
                     column.graph_configuration =
                         self.format.val() === "graph" ? self.graph_extra.val() : null;
@@ -690,6 +721,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     column.field.setEdit(true);
                     column.header.setEdit(true);
                     column.format.setEdit(true);
+                    column.date_extra.setEdit(true);
                     column.enum_extra.setEdit(true);
                     column.late_flag_extra.setEdit(true);
                     column.filter_xpath_extra.setEdit(true);
