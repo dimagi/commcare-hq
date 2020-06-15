@@ -1318,14 +1318,18 @@ def log_email_event(request, secret):
         return HttpResponse()
 
     event_type = message.get('eventType')
-    if event_type == 'Bounce':
-        subevent.status = MessagingEvent.STATUS_EMAIL_BOUNCED
-        subevent.additional_error_text = message.get('bounce')
-    elif event_type == 'Send':
-        subevent.status = MessagingEvent.STATUS_EMAIL_SENT
-    elif event_type == 'Delivery':
-        subevent.status = MessagingEvent.STATUS_EMAIL_DELIVERED
-        subevent.additional_error_text = message.get('delivery')
+    status = {
+        'Bounce': MessagingEvent.STATUS_EMAIL_BOUNCED,
+        'Send': MessagingEvent.STATUS_EMAIL_SENT,
+        'Delivery': MessagingEvent.STATUS_EMAIL_DELIVERED,
+    }[event_type]
+
+    subevent.status = status
+    subevent.additional_error_test = message.get(event_type.lower())
+
+    subevent.parent.status = status
 
     subevent.save()
+    subevent.parent.save()
+
     return HttpResponse()
