@@ -758,10 +758,11 @@ class MessagingEventsReport(BaseMessagingEventReport):
             data = data.filter(event_status_filter)
 
         if self.phone_number_or_email_filter:
-            if self.phone_number_or_email_filter.isdigit():
-                data = data.filter(messagingsubevent__sms__phone_number__contains=self.phone_number_or_email_filter)
-            else:
-                data = data.filter(messagingsubevent__email__recipient_address__contains=self.phone_number_or_email_filter)
+            phone_qs = data.filter(
+                messagingsubevent__sms__phone_number__contains=self.phone_number_or_email_filter)
+            email_qs = data.filter(
+                messagingsubevent__email__recipient_address__icontains=self.phone_number_or_email_filter)
+            data = (email_qs | phone_qs) if self.phone_number_or_email_filter.isdigit() else email_qs
 
         # We need to call distinct() on this because it's doing an
         # outer join to sms_messagingsubevent in order to filter on
