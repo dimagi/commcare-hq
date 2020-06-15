@@ -66,6 +66,6 @@ branches:
   - jls/messaging-history-error-code-filter # Jenny June 15
   - kev/sms-messaging-email-model # Kevin June 15
   - kev/sms-messaging-email-filter # Kevin June 15
-  - ce/email-detail # Cal June 15
+  - ce/email-details # Cal June 15
 
 submodules: {}
