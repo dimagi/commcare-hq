@@ -1833,6 +1833,7 @@ class DetailColumn(IndexedSchema):
     advanced = StringProperty(default="")
     filter_xpath = StringProperty(default="")
     time_ago_interval = FloatProperty(default=365.25)
+    date_format = StringProperty(default="%d/%m/%y")
 
     @property
     def enum_dict(self):
