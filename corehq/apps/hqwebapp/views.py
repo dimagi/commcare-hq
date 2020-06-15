@@ -502,7 +502,7 @@ def logout(req, default_domain_redirect='domain_login'):
 def ping_response(request):
     return JsonResponse({
         'success': request.user.is_authenticated,
-        'last_request': request.session.get('last_request'),
+        'session_expiry': request.session.get('session_expiry'),
         'secure_session': request.session.get('secure_session'),
         'secure_session_timeout': request.session.get('secure_session_timeout'),
         'username': request.user.username,
