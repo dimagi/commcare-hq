@@ -1,6 +1,4 @@
 from django.conf import settings
-from django.core.mail.message import EmailMessage
-from django.template.defaultfilters import linebreaksbr
 
 from celery.task import task
 
@@ -21,6 +19,8 @@ from custom.icds.location_reassignment.processor import (
 from custom.icds.location_reassignment.utils import (
     get_case_ids_for_reassignment,
     get_supervisor_id,
+    notify_failure,
+    notify_success,
     reassign_cases,
     reassign_household,
 )
@@ -31,27 +31,19 @@ def process_location_reassignment(domain, transitions, uploaded_filename, user_e
     try:
         Processor(domain, transitions).process()
     except Exception as e:
-        email = EmailMessage(
+        notify_failure(
+            e,
             subject=f"[{settings.SERVER_ENVIRONMENT}] - Location Reassignment Failed",
-            body=linebreaksbr(
-                f"The request could not be completed for file {uploaded_filename}. Something went wrong.\n"
-                f"Error raised : {e}.\n"
-                "Please report an issue if needed."
-            ),
-            to=[user_email],
-            from_email=settings.DEFAULT_FROM_EMAIL
+            email=user_email,
+            uploaded_filename=uploaded_filename
         )
-        email.content_subtype = "html"
-        email.send()
         raise e
     else:
-        email = EmailMessage(
+        notify_success(
             subject=f"[{settings.SERVER_ENVIRONMENT}] - Location Reassignment Completed",
             body=f"The request has been successfully completed for file {uploaded_filename}.",
-            to=[user_email],
-            from_email=settings.DEFAULT_FROM_EMAIL
+            email=user_email
         )
-        email.send()
 
 
 @task(queue=settings.CELERY_LOCATION_REASSIGNMENT_QUEUE)
@@ -80,34 +72,26 @@ def email_household_details(domain, transitions, uploaded_filename, user_email):
         transition_objs = [Transition(**transition) for transition in transitions]
         filestream = Households(domain).dump(transition_objs)
     except Exception as e:
-        email = EmailMessage(
+        notify_failure(
+            e,
             subject=f"[{settings.SERVER_ENVIRONMENT}] - Location Reassignment Household Dump Failed",
-            body=linebreaksbr(
-                f"The request could not be completed for file {uploaded_filename}. Something went wrong.\n"
-                f"Error raised : {e}.\n"
-                "Please report an issue if needed."
-            ),
-            to=[user_email],
-            from_email=settings.DEFAULT_FROM_EMAIL
+            email=user_email,
+            uploaded_filename=uploaded_filename
         )
-        email.content_subtype = "html"
-        email.send()
         raise e
     else:
-        email = EmailMessage(
+        body = f"The request has been successfully completed for file {uploaded_filename}. "
+        if not filestream:
+            body += "There were no house hold details found. "
+        body += f"Please note that the households are fetched only for " \
+                f"{', '.join(Households.valid_operations)}."
+        notify_success(
             subject=f"[{settings.SERVER_ENVIRONMENT}] - Location Reassignment Household Dump Completed",
-            body=f"The request has been successfully completed for file {uploaded_filename}. ",
-            to=[user_email],
-            from_email=settings.DEFAULT_FROM_EMAIL
+            body=body,
+            email=user_email,
+            filestream=filestream,
+            filename=f"Households - {uploaded_filename.split('.')[0]}.xlsx"
         )
-        if filestream:
-            email.attach(filename=f"Households - {uploaded_filename.split('.')[0]}.xlsx",
-                         content=filestream.read())
-        else:
-            email.body += "There were no house hold details found. "
-        email.body += f"Please note that the households are fetched only for " \
-                      f"{', '.join(Households.valid_operations)}."
-        email.send()
 
 
 @task
@@ -116,33 +100,26 @@ def email_other_cases_details(domain, transitions, uploaded_filename, user_email
         transition_objs = [Transition(**transition) for transition in transitions]
         filestream = OtherCases(domain).dump(transition_objs)
     except Exception as e:
-        email = EmailMessage(
+        notify_failure(
+            e,
             subject=f"[{settings.SERVER_ENVIRONMENT}] - Location Reassignment Other Cases Dump Failed",
-            body=linebreaksbr(
-                f"The request could not be completed for file {uploaded_filename}. Something went wrong.\n"
-                f"Error raised : {e}.\n"
-                "Please report an issue if needed."
-            ),
-            to=[user_email],
-            from_email=settings.DEFAULT_FROM_EMAIL
+            email=user_email,
+            uploaded_filename=uploaded_filename
         )
-        email.content_subtype = "html"
-        email.send()
         raise e
     else:
-        email = EmailMessage(
+        body = f"The request has been successfully completed for file {uploaded_filename}. "
+        if not filestream:
+            body += "There were no cases found. "
+        body += f"Please note that the cases are fetched only for " \
+                f"{', '.join(OtherCases.valid_operations)}."
+        notify_success(
             subject=f"[{settings.SERVER_ENVIRONMENT}] - Location Reassignment Other Cases Dump Completed",
-            body=f"The request has been successfully completed for file {uploaded_filename}. ",
-            to=[user_email],
-            from_email=settings.DEFAULT_FROM_EMAIL
+            body=body,
+            email=user_email,
+            filestream=filestream,
+            filename=f"Other Cases - {uploaded_filename.split('.')[0]}.xlsx"
         )
-        if filestream:
-            email.attach(filename="Other Cases.zip", content=filestream.read())
-        else:
-            email.body += "There were no cases found. "
-        email.body += f"Please note that the cases are fetched only for " \
-                      f"{', '.join(OtherCases.valid_operations)}."
-        email.send()
 
 
 @task
@@ -150,27 +127,19 @@ def process_households_reassignment(domain, reassignments, uploaded_filename, us
     try:
         HouseholdReassignmentProcessor(domain, reassignments).process()
     except Exception as e:
-        email = EmailMessage(
+        notify_failure(
+            e,
             subject=f"[{settings.SERVER_ENVIRONMENT}] - Household Reassignment Failed",
-            body=linebreaksbr(
-                f"The request could not be completed for file {uploaded_filename}. Something went wrong.\n"
-                f"Error raised : {e}.\n"
-                "Please report an issue if needed."
-            ),
-            to=[user_email],
-            from_email=settings.DEFAULT_FROM_EMAIL
+            email=user_email,
+            uploaded_filename=uploaded_filename
         )
-        email.content_subtype = "html"
-        email.send()
         raise e
     else:
-        email = EmailMessage(
+        notify_success(
             subject=f"[{settings.SERVER_ENVIRONMENT}] - Household Reassignment Completed",
             body=f"The request has been successfully completed for file {uploaded_filename}.",
-            to=[user_email],
-            from_email=settings.DEFAULT_FROM_EMAIL
+            email=user_email
         )
-        email.send()
 
 
 @task
@@ -178,27 +147,19 @@ def process_other_cases_reassignment(domain, reassignments, uploaded_filename, u
     try:
         OtherCasesReassignmentProcessor(domain, reassignments).process()
     except Exception as e:
-        email = EmailMessage(
+        notify_failure(
+            e,
             subject=f"[{settings.SERVER_ENVIRONMENT}] - Other Cases Reassignment Failed",
-            body=linebreaksbr(
-                f"The request could not be completed for file {uploaded_filename}. Something went wrong.\n"
-                f"Error raised : {e}.\n"
-                "Please report an issue if needed."
-            ),
-            to=[user_email],
-            from_email=settings.DEFAULT_FROM_EMAIL
+            email=user_email,
+            uploaded_filename=uploaded_filename
         )
-        email.content_subtype = "html"
-        email.send()
         raise e
     else:
-        email = EmailMessage(
+        notify_success(
             subject=f"[{settings.SERVER_ENVIRONMENT}] - Other Cases Reassignment Completed",
             body=f"The request has been successfully completed for file {uploaded_filename}.",
-            to=[user_email],
-            from_email=settings.DEFAULT_FROM_EMAIL
+            email=user_email
         )
-        email.send()
 
 
 @task(queue=settings.CELERY_LOCATION_REASSIGNMENT_QUEUE)
