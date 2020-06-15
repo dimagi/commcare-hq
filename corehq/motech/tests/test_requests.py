@@ -54,7 +54,10 @@ class SendRequestTests(SimpleTestCase):
             'http://dhis2.example.org/2.3.4/api/dataValueSets',
             data=None,
             json=payload,
-            headers={'Content-type': 'application/json', 'Accept': 'application/json'},
+            headers={
+                'Content-type': 'application/json; charset=utf-8',
+                'Accept': 'application/json'
+            },
             timeout=REQUEST_TIMEOUT,
         )
 
