@@ -1055,7 +1055,7 @@ class DownloadLocationStatusView(BaseLocationView):
             next_url = reverse(FilteredLocationDownload.urlname, args=[self.domain])
             next_url_text = _("Go back to organization download")
         else:
-            next_url = reverse("location_export", args=[self.domain])
+            next_url = reverse(LocationsListView.urlname, args=[self.domain])
             next_url_text = _("Go back to organization structure")
         context.update({
             'domain': self.domain,
