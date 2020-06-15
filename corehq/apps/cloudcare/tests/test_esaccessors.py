@@ -130,8 +130,3 @@ class TestCloudcareESAccessors(SimpleTestCase):
                 ).count(),
                 2
             )
-
-
-@run_on_es2
-class TestCloudcareESAccessorsES22(TestCloudcareESAccessors):
-    pass

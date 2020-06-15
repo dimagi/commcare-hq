@@ -12,6 +12,7 @@ from corehq.apps.es import case_search as case_search_es
 
 from warnings import warn
 
+from django.conf import settings
 from django.utils.dateparse import parse_date
 
 from corehq.apps.case_search.const import (
@@ -163,16 +164,27 @@ def exact_case_property_text_query(case_property_name, value):
     letter casing and punctuation.
 
     """
-    return queries.nested(
-        CASE_PROPERTIES_PATH,
-        queries.filtered(
-            queries.match_all(),
-            filters.AND(
-                filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
-                filters.term('{}.{}.exact'.format(CASE_PROPERTIES_PATH, VALUE), value),
+    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+        return queries.nested(
+            CASE_PROPERTIES_PATH,
+            queries.BOOL_CLAUSE(
+                {"filter": [
+                    filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
+                    filters.term('{}.{}.exact'.format(CASE_PROPERTIES_PATH, VALUE), value),
+                ]},
+                queries.match_all()
+            ))
+    else:
+        return queries.nested(
+            CASE_PROPERTIES_PATH,
+            queries.filtered(
+                queries.match_all(),
+                filters.AND(
+                    filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
+                    filters.term('{}.{}.exact'.format(CASE_PROPERTIES_PATH, VALUE), value),
+                )
             )
         )
-    )
 
 
 def case_property_text_query(case_property_name, value, fuzziness='0'):

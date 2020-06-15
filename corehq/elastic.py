@@ -72,18 +72,7 @@ def _es_hosts():
     return hosts
 
 
-def conditional_memoized(fn):
-    @functools.wraps(fn)
-    def wrapper():
-        if settings.UNIT_TESTING:
-            return fn()
-        else:
-            return memoized(fn())
-
-    return wrapper
-
-
-@conditional_memoized
+@memoized
 def get_es_new():
     """
     Get a handle to the configured elastic search DB.
@@ -93,7 +82,7 @@ def get_es_new():
     return Elasticsearch(hosts, timeout=settings.ES_SEARCH_TIMEOUT, serializer=ESJSONSerializer())
 
 
-@conditional_memoized
+@memoized
 def get_es_export():
     """
     Get a handle to the configured elastic search DB with settings geared towards exports.

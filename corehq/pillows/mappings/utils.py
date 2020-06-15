@@ -53,6 +53,9 @@ def _transform_types(mapping):
                 mapping.pop("index")
             else:
                 mapping["type"] = "text"
+            if "null_value" in mapping:
+                # null_value is not supported for text types
+                mapping.pop("null_value")
         elif ("type", "multi_field") in items:
             # multi_field is replaced by just fields
             mapping["type"] = "text"

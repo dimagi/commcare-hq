@@ -145,11 +145,19 @@ class CaseSearchPillowTest(TestCase):
 
     def _make_case(self, domain=None, case_properties=None):
         # make a case
-        case_id = uuid.uuid4().hex
+        case_properties = case_properties or {}
+        if '_id' in case_properties:
+            case_id = case_properties.pop('_id')
+        else:
+            case_id = uuid.uuid4().hex
         case_name = 'case-name-{}'.format(uuid.uuid4().hex)
         if domain is None:
             domain = self.domain
-        case = create_and_save_a_case(domain, case_id, case_name, case_properties)
+        if 'owner_id' in case_properties:
+            owner_id = case_properties.pop('owner_id')
+        else:
+            owner_id = None
+        case = create_and_save_a_case(domain, case_id, case_name, case_properties, owner_id=owner_id)
         return case
 
     def _assert_case_in_es(self, domain, case):
@@ -179,9 +187,76 @@ class CaseSearchPillowTest(TestCase):
         results = CaseSearchES().run()
         self.assertEqual(0, results.total)
 
-    def _bootstrap_cases_in_es_for_domain(self, domain):
-        case = self._make_case(domain)
+    def _bootstrap_cases_in_es_for_domain(self, domain, create_case=False):
+        case = self._make_case(domain) if create_case else None
         with patch('corehq.pillows.case_search.domains_needing_search_index',
                    MagicMock(return_value=[domain])):
             CaseSearchReindexerFactory(domain=domain).build().reindex()
         return case
+
+    def _assert_query_runs_correctly(self, domain, input_cases, query, output):
+        for case in input_cases:
+            self._make_case(domain, case)
+        self._bootstrap_cases_in_es_for_domain(domain, create_case=False)
+        self.elasticsearch.indices.refresh(CASE_SEARCH_INDEX)
+        import pdb; pdb.set_trace()
+        self.assertItemsEqual(
+            query.get_ids(),
+            output
+        )
+
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def test_simple_case_property_query(self):
+        self._assert_query_runs_correctly(
+            self.domain,
+            [
+                {'_id': 'c1', 'name': 'redbeard'},
+                {'_id': 'c2', 'name': 'blackbeard'},
+            ],
+            CaseSearchES().domain(self.domain).case_property_query("name", "redbeard"),
+            ['c1']
+        )
+
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def test_multiple_case_search_queries(self):
+        query = (CaseSearchES().domain(self.domain)
+                 .case_property_query("name", "redbeard")
+                 .case_property_query("parrot_name", "polly"))
+        self._assert_query_runs_correctly(
+            self.domain,
+            [
+                {'_id': 'c1', 'name': 'redbeard', 'parrot_name': 'polly'},
+                {'_id': 'c2', 'name': 'blackbeard', 'parrot_name': 'polly'},
+                {'_id': 'c3', 'name': 'redbeard', 'parrot_name': 'molly'}
+            ],
+            query,
+            ['c1']
+        )
+
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def test_multiple_case_search_queries_should_clause(self):
+        query = (CaseSearchES().domain(self.domain)
+                 .case_property_query("name", "redbeard")
+                 .case_property_query("parrot_name", "polly", clause="should"))
+        self._assert_query_runs_correctly(
+            self.domain,
+            [
+                {'_id': 'c1', 'name': 'redbeard', 'parrot_name': 'polly'},
+                {'_id': 'c2', 'name': 'blackbeard', 'parrot_name': 'polly'},
+                {'_id': 'c3', 'name': 'redbeard', 'parrot_name': 'molly'}
+            ],
+            query,
+            ['c1', 'c3']
+        )
+
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def test_blacklisted_owner_ids(self):
+        self._assert_query_runs_correctly(
+            self.domain,
+            [
+                {'_id': 'c1', 'owner_id': '123'},
+                {'_id': 'c2', 'owner_id': '234'},
+            ],
+            CaseSearchES().domain(self.domain).blacklist_owner_id('123'),
+            ['c2']
+        )

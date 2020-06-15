@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from datetime import datetime
 
+from django.conf import settings
 from django.core.mail import mail_admins
 from django.db import ProgrammingError
 
@@ -264,9 +265,15 @@ def delete_case_search_cases(domain):
     get_es_new().indices.refresh(CASE_SEARCH_INDEX)
     case_ids = CaseSearchES().domain(domain).values_list('_id', flat=True)
 
-    ElasticsearchInterface(get_es_new()).bulk_ops([{
+    op_kwargs = {
         "_op_type": "delete",
         "_index": CASE_SEARCH_INDEX,
         "_type": CASE_ES_TYPE,
+    }
+    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+        op_kwargs.pop('_type')
+
+    ElasticsearchInterface(get_es_new()).bulk_ops([{
+        **op_kwargs,
         "_id": case_id,
     } for case_id in case_ids])
