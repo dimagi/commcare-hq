@@ -423,6 +423,8 @@ class FormActions(DocumentSchema):
         names.update(list(self.case_preload.preload.values()))
         for subcase in self.subcases:
             names.update(list(subcase.case_properties.keys()))
+        names.update(list(self.usercase_update.update.keys()))
+        names.update(list(self.usercase_preload.preload.values()))
         return names
 
     def count_subcases_per_repeat_context(self):
