@@ -1,5 +1,5 @@
 import datetime
-from sqlagg.columns import SumColumn, SimpleColumn
+from sqlagg.columns import SumColumn, SimpleColumn, MaxColumn
 
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
 from custom.icds_reports.sqldata.base import IcdsSqlData
@@ -109,6 +109,18 @@ class SystemUsageExport(ExportableMixin, IcdsSqlData):
                     SumColumn('num_supervisor_launched'),
                     format_fn=lambda x: (x or 0) if self.loc_level < 5 else "Not applicable at AWC level",
                     slug='num_supervisor_launched')
+                )
+            # adding version fields
+            if self.loc_level > 4 and self.config['month'] >= datetime.date(2016, 5, 1):
+                agg_columns.append(DatabaseColumn(
+                    'AWW Application version',
+                     MaxColumn('app_version'), slug='app_version'
+                    )
+                )
+                agg_columns.append(DatabaseColumn(
+                    'CommCare version',
+                    MaxColumn('commcare_version'), slug='commcare_version'
+                    )
                 )
         else:
             agg_columns.insert(4, AggregateColumn(

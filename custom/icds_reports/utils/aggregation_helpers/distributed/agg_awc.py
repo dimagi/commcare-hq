@@ -793,8 +793,6 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             ('awc_with_gm_devices', 'COALESCE(sum(awc_with_gm_devices), 0)'),
             ('num_anc_visits', 'COALESCE(sum(num_anc_visits), 0)'),
             ('num_children_immunized', 'COALESCE(sum(num_children_immunized), 0)'),
-            ('app_version', 'MAX(app_version)'),
-            ('commcare_version', 'MAX(commcare_version::numeric)'),
             ('state_is_test', 'MAX(state_is_test)'),
             (
                 'district_is_test',
