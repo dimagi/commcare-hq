@@ -43,29 +43,33 @@ class Command(BaseCommand):
         query_param = dict()
         query_param['agg_migration'] = AGG_MIGRATION_TABLE
         query_param['input_month'] = input_month
+        query_param['next_month'] = next_month
+        query_param['child_health_ucr'] = get_table_name(domain, 'static-child_health_cases')
+        query_param['ccs_ucr'] = get_table_name(domain, 'static-ccs_record_cases')
 
         ccs_mig_query = """
         select  count(*) from  ccs_record_monthly ccs inner join "{agg_migration}" mig on ccs.supervisor_id = mig.supervisor_id and
-         ccs.case_id=mig.person_case_id and ccs.month = mig.month where ccs.month='{input_month}'and mig.is_migrated = 1
+         ccs.person_case_id=mig.person_case_id and mig.month='{input_month}' where mig.migration_date < '{next_month}' and 
+         mig.migration_date >= '{input_month}' and mig.is_migrated = 1 
         """.format(**query_param)
         queries_list.append(ccs_mig_query)
 
         chm_mig_query = """
         select count(*) from child_health_monthly chm inner join "{agg_migration}" mig on chm.supervisor_id = mig.supervisor_id and
-         chm.child_person_case_id=mig.person_case_id and chm.month = mig.month where chm.month='{input_month}'and mig.is_migrated = 1
+         chm.child_person_case_id=mig.person_case_id and mig.month = '{input_month}' where mig.migration_date < '{next_month}' and 
+         mig.migration_date >= '{input_month}'and mig.is_migrated = 1
         """.format(**query_param)
         queries_list.append(chm_mig_query)
 
-        query_param['child_health_ucr'] = get_table_name(domain, 'static-child_health_cases')
-        query_param['next_month'] = next_month
         ccs_closed_query = """
-        select  count(*) from  ccs_record_monthly ccs inner join "{child_health_ucr}" chm on ccs.supervisor_id = chm.supervisor_id and
-         ccs.case_id=chm.case_id where chm.closed_on >= '{input_month}' and chm.closed_on < '{next_month}' and ccs.month = '{input_month}'
+        select  count(*) from  ccs_record_monthly ccs inner join "{ccs_ucr}" ccs_ucr on ccs.supervisor_id = ccs_ucr.supervisor_id and
+         ccs.person_case_id=ccs_ucr.person_case_id and ccs.month = '{input_month}' where ccs_ucr.closed_on >= '{input_month}' and ccs_ucr.closed_on < '{next_month}'
         """.format(**query_param)
         queries_list.append(ccs_closed_query)
 
         chm_closed_query = """
-        select  count(*) from  "{child_health_ucr}" chm where chm.closed_on >= '{input_month}' and chm.closed_on < '{next_month}'
+        select  count(*) from  child_health_monthly chm inner join "{child_health_ucr}" chm_ucr on chm.supervisor_id = chm_ucr.supervisor_id and 
+        chm.child_person_case_id = chm_ucr.mother_id and chm.month = '{input_month}' where chm_ucr.closed_on >= '{input_month}' and chm_ucr.closed_on < '{next_month}'
         """.format(**query_param)
         queries_list.append(chm_closed_query)
 
