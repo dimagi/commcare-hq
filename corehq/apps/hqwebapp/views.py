@@ -38,12 +38,14 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import LANGUAGE_SESSION_KEY
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
 from django.views.generic.base import View
 
 import httpagentparser
+import requests
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 from sentry_sdk import last_event_id
@@ -54,6 +56,7 @@ from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.util.metrics import create_metrics_event, metrics_counter, metrics_gauge
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
+from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import get_site_domain, get_url_base, json_response
@@ -97,6 +100,7 @@ from corehq.apps.hqwebapp.utils import (
 )
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent
 from corehq.apps.users.landing_pages import (
     get_cloudcare_urlname,
     get_redirect_url,
@@ -1268,3 +1272,52 @@ def temporary_google_verify(request):
     # will remove once google search console verify process completes
     # BMB 4/20/18
     return render(request, "google9633af922b8b0064.html")
+
+
+@waf_allow('XSS_BODY')
+@require_POST
+@csrf_exempt
+def log_email_event(request, secret):
+    # From Amazon SNS:
+    # https://docs.aws.amazon.com/ses/latest/DeveloperGuide/event-publishing-retrieving-sns-examples.html
+
+    if secret != settings.SNS_EMAIL_EVENT_SECRET:
+        return HttpResponse(status=403)
+
+    request_json = json.loads(request.body)
+
+    if request_json['Type'] == "SubscriptionConfirmation":
+        # When creating an SNS topic, the first message is a subscription
+        # confirmation, where we need to access the subscribe URL to confirm we
+        # are able to receive messages at this endpoint
+        subscribe_url = request_json['SubscribeURL']
+        requests.get(subscribe_url)
+        return HttpResponse()
+
+    message = json.loads(request_json['Message'])
+    headers = message.get('mail', {}).get('headers', [])
+
+    for header in headers:
+        if header["name"] == COMMCARE_MESSAGE_ID_HEADER:
+            subevent_id = header["value"]
+            break
+    else:
+        return HttpResponse()
+
+    try:
+        subevent = MessagingSubEvent.objects.get(id=subevent_id)
+    except MessagingSubEvent.DoesNotExist:
+        return HttpResponse()
+
+    event_type = message.get('eventType')
+    if event_type == 'Bounce':
+        subevent.status = MessagingEvent.STATUS_EMAIL_BOUNCED
+        subevent.additional_error_text = message.get('bounce')
+    elif event_type == 'Send':
+        subevent.status = MessagingEvent.STATUS_EMAIL_SENT
+    elif event_type == 'Delivery':
+        subevent.status = MessagingEvent.STATUS_EMAIL_DELIVERED
+        subevent.additional_error_text = message.get('delivery')
+
+    subevent.save()
+    return HttpResponse()
