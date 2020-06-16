@@ -95,12 +95,21 @@ def get_poshan_progress_dashboard_data(domain, year, month, quarter, data_format
 
     def prepare_structure_comparative(data):
         icds_cas_coverage_comparitive_mapping = deepcopy(ICDS_CAS_COVERAGE_COMPARITIVE_MAPPING)
-        icds_cas_coverage = [__get_top_worst_cases(deepcopy(data), col, aggregation_level, indicator) for
-                             indicator, col in icds_cas_coverage_comparitive_mapping.items()]
+        icds_cas_coverage = []
+        temp_array = [] # to add two indicators to one array (make frontend int. easy)
+        for indicator, col in icds_cas_coverage_comparitive_mapping.items():
+            temp_array.append(__get_top_worst_cases(deepcopy(data), col, aggregation_level, indicator))
+            if len(temp_array) == 2:
+                icds_cas_coverage.append(temp_array[:])
+                temp_array = []
         service_delivery_comparitive_mapping = deepcopy(SERVICE_DELIVERY_COMPARITIVE_MAPPING)
-        service_delivery = [
-            __get_top_worst_cases(deepcopy(data), col, aggregation_level, indicator) for indicator, col in
-            service_delivery_comparitive_mapping.items()]
+        temp_array = []
+        service_delivery = []
+        for indicator, col in service_delivery_comparitive_mapping.items():
+            temp_array.append(__get_top_worst_cases(deepcopy(data), col, aggregation_level, indicator))
+            if len(temp_array) == 2:
+                service_delivery.append(temp_array[:])
+                temp_array = []
         data = {
             "ICDS CAS Coverage": icds_cas_coverage,
             "Service Delivery": service_delivery
@@ -159,7 +168,7 @@ def get_poshan_progress_dashboard_data(domain, year, month, quarter, data_format
             "Best performers": best,
             "Worst performers": worst
         }
-        return [ret]
+        return ret
 
     aggregation_level = location_filters.get('aggregation_level')
     filters = location_filters
@@ -182,6 +191,7 @@ def get_poshan_progress_dashboard_data(domain, year, month, quarter, data_format
     if not include_test:
         data = apply_exclude(domain, data)
     aggregation_level = location_filters.get('aggregation_level')
+    response = {}
     if step == 'aggregated':
         response = calculate_aggregated_row(data, aggregation_level, data_format)
     elif step == 'comparitive':

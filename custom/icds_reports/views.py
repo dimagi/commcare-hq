@@ -2778,6 +2778,7 @@ class BiharMotherDetailsAPI(BaseCasAPIView):
 
         return JsonResponse(data=response_json)
 
+
 @method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class PoshanProgressDashboardView(BaseReportView):
     def get_settings(self, request, *args, **kwargs):
@@ -2799,7 +2800,6 @@ class PoshanProgressDashboardView(BaseReportView):
     def get(self, request, *args, **kwargs):
         step, month, year, include_test, domain, data_format, quarter, location = \
             self.get_settings(request, *args, **kwargs)
-        print(self.get_settings(request, *args, **kwargs))
 
         location_filters = get_location_filter(location, domain)
         location_filters['aggregation_level'] = location_filters.get('aggregation_level', 1)
@@ -2818,5 +2818,3 @@ class PoshanProgressDashboardView(BaseReportView):
                 include_test
             )
         return JsonResponse(data=data)
-
-
