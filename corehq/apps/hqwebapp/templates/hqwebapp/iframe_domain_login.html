@@ -41,12 +41,14 @@
     <script src="{% static 'blazy/blazy.js' %}"></script>
     <script>
       new Blazy({container: 'body'});
-      var username = (new URLSearchParams(window.location.search)).get("username");
-      if (username) {
+      var username = (new URLSearchParams(window.location.search)).get("username"),
+          element = document.getElementById('id_auth-username');
+      if (username && element) {
         if (username.endsWith("commcarehq.org")) {
           username = username.split("@")[0];
         }
-        document.getElementById('id_auth-username').value = username;
+        element.value = username;
+        element.readOnly = true;
       }
     </script>
   </body>

@@ -423,6 +423,8 @@ class FormActions(DocumentSchema):
         names.update(list(self.case_preload.preload.values()))
         for subcase in self.subcases:
             names.update(list(subcase.case_properties.keys()))
+        names.update(list(self.usercase_update.update.keys()))
+        names.update(list(self.usercase_preload.preload.values()))
         return names
 
     def count_subcases_per_repeat_context(self):
@@ -1833,6 +1835,7 @@ class DetailColumn(IndexedSchema):
     advanced = StringProperty(default="")
     filter_xpath = StringProperty(default="")
     time_ago_interval = FloatProperty(default=365.25)
+    date_format = StringProperty(default="%d/%m/%y")
 
     @property
     def enum_dict(self):
@@ -3144,7 +3147,7 @@ def get_all_mobile_filter_configs():
         MobileFilterConfig('StaticDatespanFilter', StaticDatespanFilter, _('A standard date range')),
         MobileFilterConfig('CustomDatespanFilter', CustomDatespanFilter, _('A custom range relative to today')),
         MobileFilterConfig('CustomMonthFilter', CustomMonthFilter,
-                           _("Custom Month Filter (you probably don't want this")),
+                           _("Custom Month Filter (you probably don't want this)")),
         MobileFilterConfig('MobileSelectFilter', MobileSelectFilter, _('Show choices on mobile device')),
         MobileFilterConfig('AncestorLocationTypeFilter', AncestorLocationTypeFilter,
                            _("Ancestor location of the user's assigned location of a particular type")),
@@ -5731,7 +5734,7 @@ class ExchangeApplication(models.Model):
 
 class ExchangeApplicationAdmin(admin.ModelAdmin):
     model = ExchangeApplication
-    list_display = ['domain', 'app_id']
+    list_display = ['domain', 'app_id', 'help_link', 'changelog_link']
     list_filter = ['domain', 'app_id']
 
 

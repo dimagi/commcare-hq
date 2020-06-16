@@ -39,15 +39,12 @@ hqDefine("app_manager/js/app_view_application", function () {
                         if (toggles.length) {
                             var template = _.template($modal.find("script").html()),
                                 $ul = $modal.find("ul").html(""),
-                                $selectAll = $(template({
-                                    slug: "",
-                                    label: gettext("<span class='label label-default'>" + gettext("Select All") +
-                                    "</span>"),
-                                }));
-                            $selectAll.find("input:checkbox").change(function () {
-                                $ul.find("input:checkbox").prop('checked', $(this).prop('checked'));
+                                allSelected = false;
+                            $modal.find(".select-all").click(function (e) {
+                                allSelected = !allSelected;
+                                $(e.currentTarget).text(allSelected ? gettext("Select None") : gettext("Select All"));
+                                $ul.find("input:checkbox").prop('checked', allSelected);
                             });
-                            $ul.append($selectAll);
                             _.each(toggles, function (toggle) {
                                 $ul.append(template(toggle));
                             });

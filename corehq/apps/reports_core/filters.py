@@ -28,7 +28,7 @@ class BaseFilter(object):
     Base object for filters.
     """
     template = None
-    # setting this to True makes the report using the filter a location_safe report (has_location_filter())
+    # setting this to True makes the report using the filter a location_safe report (report_has_location_filter())
     location_filter = False
 
     def __init__(self, name, params=None):
@@ -395,17 +395,8 @@ class DynamicChoiceListFilter(BaseFilter):
         if selection:
             choices = selection if isinstance(selection, list) else [selection]
             typed_choices = [transform_from_datatype(self.datatype)(c) for c in choices]
-            transformed_choices = [self._transform_for_default_value(tc) for tc in typed_choices]
-            return self.choice_provider.get_sorted_choices_for_values(transformed_choices, user)
+            return self.choice_provider.get_sorted_choices_for_values(typed_choices, user)
         return self.default_value(user)
-
-    @staticmethod
-    def _transform_for_default_value(choice):
-        from corehq.apps.userreports.reports.filters.values import EMPTY_CHOICE
-        if choice == EMPTY_CHOICE:
-            return ''
-        else:
-            return choice
 
     def default_value(self, request_user=None):
         from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE

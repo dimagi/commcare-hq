@@ -98,6 +98,19 @@ class SQLTurnWhatsAppBackend(SQLSMSBackend):
         client = TurnBusinessManagementClient(config.business_id, config.business_auth_token)
         return client.message_templates.get_message_templates()
 
+    @classmethod
+    def generate_template_string(cls, template):
+        """From the template JSON returned by Turn, create the magic string for people to copy / paste
+        """
+
+        template_text = ""
+        for component in template.get("components", []):
+            if component.get("type") == "BODY":
+                template_text = component.get("text", "")
+                break
+        num_params = template_text.count("{") // 2  # each parameter is bracketed by {{}}
+        parameters = ",".join([f"{{var{i}}}" for i in range(1, num_params + 1)])
+        return f"{WA_TEMPLATE_STRING}:{template['name']}:{template['language']}:{parameters}"
 
 def is_whatsapp_template_message(message_text):
     return message_text.lower().startswith(WA_TEMPLATE_STRING)
@@ -118,17 +131,3 @@ def get_template_hsm_parts(message_text):
         return HsmParts(template_name=parts[1], lang_code=parts[2], params=params)
     except IndexError:
         raise WhatsAppTemplateStringException
-
-
-def generate_template_string(template):
-    """From the template JSON returned by Turn, create the magic string for people to copy / paste
-    """
-
-    template_text = ""
-    for component in template.get("components", []):
-        if component.get("type") == "BODY":
-            template_text = component.get("text", "")
-            break
-    num_params = template_text.count("{") // 2  # each parameter is bracketed by {{}}
-    parameters = ",".join([f"{{var{i}}}" for i in range(1, num_params + 1)])
-    return f"{WA_TEMPLATE_STRING}:{template['name']}:{template['language']}:{parameters}"

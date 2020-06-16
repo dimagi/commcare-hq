@@ -8,7 +8,7 @@ jsonobject-couchdbkit~=1.0.1
 git+git://github.com/dimagi/celery@dc7253614fd8500af78b09d1ceb79c50f1baac8d#egg=celery
 # required by django-digest
 decorator==4.0.11
-django>=1.11.28,<2  # https://github.com/advisories/GHSA-hmr4-m2h5-33qx
+django>=1.11.29,<2  # https://github.com/advisories/GHSA-hmr4-m2h5-33qx
 django-braces==1.13.0
 django-celery-results~=1.0.0
 django-crispy-forms==1.7.0
@@ -100,7 +100,7 @@ csiphash==0.0.5
 json-delta==2.0
 email_validator==1.0.3
 dnspython==1.15.0
-sentry-sdk==0.13.5
+sentry-sdk==0.14.4
 quickcache~=0.5
 ethiopian-date-converter==0.1.5
 hiredis==0.2.0

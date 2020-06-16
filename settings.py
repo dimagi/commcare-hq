@@ -291,6 +291,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.turn',
     'corehq.messaging.smsbackends.twilio',
     'corehq.messaging.smsbackends.infobip',
+    'corehq.messaging.smsbackends.amazon_pinpoint',
     'corehq.apps.dropbox',
     'corehq.messaging.smsbackends.megamobile',
     'corehq.messaging.ivrbackends.kookoo',
@@ -474,8 +475,11 @@ RETURN_PATH_EMAIL_PASSWORD = None
 ENABLE_SOFT_ASSERT_EMAILS = True
 IS_DIMAGI_ENVIRONMENT = True
 
-SERVER_ENVIRONMENT = 'localdev'
+LOCAL_SERVER_ENVIRONMENT = 'localdev'
+SERVER_ENVIRONMENT = LOCAL_SERVER_ENVIRONMENT
 ICDS_ENVS = ('icds',)
+# environments located in india, this should not even include staging
+INDIAN_ENVIRONMENTS = ('india', 'icds-cas', 'icds-staging')
 UNLIMITED_RULE_RESTART_ENVS = ('echis', 'pna', 'swiss')
 
 # minimum minutes between updates to user reporting metadata
@@ -863,9 +867,6 @@ LOAD_BALANCED_APPS = {}
 # encryption or signing workflows.
 HQ_PRIVATE_KEY = None
 
-# Set to the list of domain names for which we will run the ICDS SMS indicators
-ICDS_SMS_INDICATOR_DOMAINS = []
-
 KAFKA_BROKERS = ['localhost:9092']
 KAFKA_API_VERSION = None
 
@@ -959,9 +960,6 @@ REQUIRE_TWO_FACTOR_FOR_SUPERUSERS = False
 # that adds messages to the partition with the fewest unprocessed messages
 USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
 
-SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = not DEBUG
-SESSION_COOKIE_HTTPONLY = CSRF_COOKIE_HTTPONLY = True
-
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
@@ -991,6 +989,13 @@ if callable(COMPRESS_ENABLED):
     COMPRESS_ENABLED = COMPRESS_ENABLED()
 if callable(COMPRESS_OFFLINE):
     COMPRESS_OFFLINE = COMPRESS_OFFLINE()
+
+# These default values can't be overridden.
+# Should you someday need to do so, use the lambda/if callable pattern above
+SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_HTTPONLY = CSRF_COOKIE_HTTPONLY = True
+
+
 if UNIT_TESTING:
     # COMPRESS_COMPILERS overrides COMPRESS_ENABLED = False, so must be
     # cleared to disable compression completely. CSS/less compression is
@@ -1516,7 +1521,8 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.tropo.models.SQLTropoBackend',
     'corehq.messaging.smsbackends.turn.models.SQLTurnWhatsAppBackend',
     'corehq.messaging.smsbackends.twilio.models.SQLTwilioBackend',
-    'corehq.messaging.smsbackends.infobip.models.SQLInfobipBackend',
+    'corehq.messaging.smsbackends.infobip.models.InfobipBackend',
+    'corehq.messaging.smsbackends.amazon_pinpoint.models.PinpointBackend',
     'corehq.messaging.smsbackends.unicel.models.SQLUnicelBackend',
     'corehq.messaging.smsbackends.yo.models.SQLYoBackend',
     'corehq.messaging.smsbackends.vertex.models.VertexBackend',

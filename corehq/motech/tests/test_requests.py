@@ -181,6 +181,7 @@ class AuthClassTests(SimpleTestCase):
         self.assertEqual(auth.__class__.__name__, 'HTTPDigestAuth')
 
 
+'''
 @skip('This test uses third-party resources.')
 class RequestsOAuth2Tests(TestCase):
 
@@ -245,6 +246,7 @@ class RequestsOAuth2Tests(TestCase):
                              'refresh_token', 'scope', 'token_type'}
             self.assertEqual(set(auth_manager.last_token), expected_keys)
             self.assertEqual(auth_manager.last_token['token_type'], 'bearer')
+'''
 
 
 def mkpasswd(length):

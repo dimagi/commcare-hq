@@ -104,6 +104,8 @@ THR_REPORT_EXPORT = 10
 DASHBOARD_USAGE_EXPORT = 11
 SERVICE_DELIVERY_REPORT = 12
 CHILD_GROWTH_TRACKER_REPORT = 13
+AWW_ACTIVITY_REPORT = 14
+POSHAN_PROGRESS_REPORT = 15
 
 AGG_COMP_FEEDING_TABLE = 'icds_dashboard_comp_feed_form'
 AGG_CCS_RECORD_CF_TABLE = 'icds_dashboard_ccs_record_cf_forms'
@@ -138,7 +140,7 @@ BIHAR_API_MOTHER_DETAILS_TABLE = 'bihar_api_mother_details'
 CHILD_VACCINE_TABLE = 'child_vaccines'
 CHILD_DELIVERY_FORM_ID = 'static-child_delivery_forms'
 
-DASHBOARD_DOMAIN = 'icds-dashboard-qa' if settings.SERVER_ENVIRONMENT == 'india' else 'icds-cas'
+DASHBOARD_DOMAIN = 'icds-dashboard-qa' if settings.SERVER_ENVIRONMENT in ('india', 'icds-staging') else 'icds-cas'
 
 THREE_MONTHS = 60 * 60 * 24 * 95
 
@@ -187,3 +189,8 @@ CUSTOM_DATA_PULLS = {
     MonthlyPerformance.slug: MonthlyPerformance,
     VHSNDMonthlyReport.slug: VHSNDMonthlyReport,
 }
+
+THR_REPORT_CONSOLIDATED = 'consolidated'
+THR_REPORT_BENEFICIARY_TYPE = 'beneficiary_wise'
+THR_REPORT_DAY_BENEFICIARY_TYPE = 'days_beneficiary_wise'
+THR_21_DAYS_THRESHOLD_DATE = date(2020, 3, 1)
