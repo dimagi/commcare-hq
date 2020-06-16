@@ -16,6 +16,7 @@ SELECT
     WHERE
     ccs.age_in_months >= 132 AND ccs.age_in_months<168
     AND (ccs.pregnant=1 OR ccs.lactating=1)
+    AND ccs.month = '2020-02-01'
     AND (awc.state_is_test IS DISTINCT FROM 1);
     
 --     
