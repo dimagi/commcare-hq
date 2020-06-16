@@ -142,10 +142,8 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
 
         pnc_complete = "(case_list.pnc1_date is not null AND case_list.pnc1_date<{})".format(end_month_string)
         bp_visited_in_month = "date_trunc('MONTH', agg_bp.latest_time_end_processed)={}".format(start_month_string)
-        thr_eligible = ("CASE WHEN {} and {}"
-                        "and person_cases.dob is not null"
-                        "THEN 1 ELSE 0 END").format(valid_in_month,
-                                                    person_case_open_in_month)
+        thr_eligible = ("{} and {}"
+                        "and person_cases.dob is not null").format(valid_in_month, person_case_open_in_month)
         columns = (
             ('awc_id', 'case_list.awc_id'),
             ('case_id', 'case_list.case_id'),
@@ -159,7 +157,7 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
             ('alive_in_month', 'CASE WHEN {} THEN 1 ELSE 0 END'.format(alive_in_month)),
             ('trimester', trimester),
             ('num_rations_distributed', 'COALESCE(agg_thr.days_ration_given_mother, 0)'),
-            ('thr_eligible', 'CASE WHEN {} THEN 1 ELSE 0 END'.format(thr_eligible)),   #TODO
+            ('thr_eligible', 'CASE WHEN ({}) THEN 1 ELSE 0 END'.format(thr_eligible)),
             ('tetanus_complete', 'CASE WHEN {} THEN 1 ELSE 0 END'.format(tetanus_complete)),
             ('delivered_in_month', 'CASE WHEN {} THEN 1 ELSE 0 END'.format(delivered_in_month)),
             ('anc1_received_at_delivery', 'CASE WHEN {} AND case_list.anc1_received=1 '
@@ -211,9 +209,9 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
             ('counsel_fp_methods', 'NULL'),
             ('pregnant', 'CASE WHEN {} THEN 1 ELSE 0 END'.format(pregnant_to_consider)),
             ('pregnant_all', 'CASE WHEN {} THEN 1 ELSE 0 END'.format(pregnant_all)),
-            ('lactating', 'CASE WHEN {} and {} and person_cases.dob is not null '
+            ('lactating', 'CASE WHEN {} and ({}) and person_cases.dob is not null '
                           'THEN 1 ELSE 0 END'.format(lactating, person_case_open_in_month)),
-            ('lactating_all', 'CASE WHEN {} {} and person_cases.dob is not null '
+            ('lactating_all', 'CASE WHEN {} and ({}) and person_cases.dob is not null '
                               'THEN 1 ELSE 0 END'.format(lactating_all, person_case_open_in_month)),
             ('institutional_delivery_in_month', 'CASE WHEN agg_delivery.where_born=2 AND {} THEN'
                                                 ' 1 ELSE 0 END'.format(delivered_in_month)),
