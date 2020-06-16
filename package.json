@@ -7,6 +7,7 @@
     "eslint-plugin-eslint-dimagi": "^1.0.0",
     "js-xpath": "dimagi/js-xpath#v0.0.2-rc1",
     "less": "~3.10.3",
+    "npm": "^6.14.5",
     "uglify-js": "^2.6.1"
   },
   "devDependencies": {
