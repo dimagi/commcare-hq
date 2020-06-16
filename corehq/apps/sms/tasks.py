@@ -53,7 +53,6 @@ from corehq.messaging.util import use_phone_entries
 from corehq.util.celery_utils import no_result_task
 from corehq.util.timezones.conversions import ServerTime
 
-from custom.icds.tasks.sms import send_sms_limit_exceeded_alert
 
 MAX_TRIAL_SMS = 50
 
@@ -335,12 +334,10 @@ class OutboundDailyCounter(object):
             delay_processing(queued_sms, 60)
             domain = self.domain_object.name if self.domain_object else ''
             # Log the fact that we reached this limit and send alert on first breach
-            first_breach = DailyOutboundSMSLimitReached.create_for_domain_and_date(
+            DailyOutboundSMSLimitReached.create_for_domain_and_date(
                 domain,
                 self.date
             )
-            if first_breach:
-                send_sms_limit_exceeded_alert(domain, self.date, self.daily_limit)
             return False
 
         return True

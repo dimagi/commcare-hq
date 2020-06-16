@@ -3,6 +3,8 @@ from datetime import date
 
 from django.conf import settings
 from django.core.management import call_command
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
@@ -13,7 +15,9 @@ from dimagi.utils import web
 from soil.util import expose_cached_download
 
 from celery.schedules import crontab
+from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.sms.models import DailyOutboundSMSLimitReached
 from corehq.util.celery_utils import periodic_task_on_envs
 from corehq.util.files import file_extention_from_filename
 
@@ -53,8 +57,14 @@ def send_monthly_sms_report():
         raise e
 
 
-def send_sms_limit_exceeded_alert(domain, date, sms_limit):
-    if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+@receiver(post_save, sender=DailyOutboundSMSLimitReached)
+def send_sms_limit_exceeded_alert(sender, instance, **kwargs):
+    if settings.SERVER_ENVIRONMENT == 'icds':
+        sms_daily_limit = 10000
+        domain_obj = Domain.get_by_name(instance.domain)
+        if domain_obj:
+            sms_daily_limit = domain_obj.get_daily_outbound_sms_limit()
+
         subject = "SMS Daily Limit exceeded"
         recipients = [
             'ndube@dimagi.com',
@@ -64,8 +74,8 @@ def send_sms_limit_exceeded_alert(domain, date, sms_limit):
         ]
         message = _("""
         Hi,
-        This is to inform you that the Daily SMS limit for {domain} has reached on {date}.
+        This is to inform you that the Daily SMS limit for domain {domain} has exceeded for {date}.
         The current limit set is {sms_limit}
-        """).format(domain=domain, date=date, sms_limit=sms_limit)
+        """).format(domain=instance.domain, date=instance.date, sms_limit=sms_daily_limit)
         send_html_email_async.delay(subject, recipients, message,
                 email_from=settings.DEFAULT_FROM_EMAIL)
