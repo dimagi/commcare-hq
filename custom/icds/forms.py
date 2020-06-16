@@ -229,4 +229,9 @@ class CustomSMSReportRequestForm(forms.Form):
             raise forms.ValidationError(_("Invalid date"))
         if start_date > end_date:
             raise forms.ValidationError(_("Start date cannot be greater than end date"))
+        if (end_date - start_date).days > 95:
+            raise forms.ValidationError(_(
+                "You can request SMS report for maximum 95 days, your request was for {requested_days} days"
+                .format(requested_days=(end_date - start_date).days)
+            ))
         return end_date
