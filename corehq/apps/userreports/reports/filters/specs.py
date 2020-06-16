@@ -85,7 +85,7 @@ class FilterSpec(JsonObject):
         doc = args[0]
         if 'pre_value' in doc:
             pre_value = doc['pre_value']
-            data_type = doc['datatype']
+            data_type = doc.get('datatype')
             if data_type == 'string':
                 doc['pre_value'] = str(pre_value)
 

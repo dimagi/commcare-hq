@@ -102,15 +102,15 @@ class RecallStatusFilter(BaseSingleOptionFilter):
         ]
 
 
-class GapDescriptionFilter(BaseDrilldownOptionFilter):
-    slug = 'gap'
+class R2BGapFilter(BaseDrilldownOptionFilter):
+    slug = '2b_gap'
     label = _('Gap Description')
     default_text = _('All')
 
     @classmethod
     def get_labels(cls):
         return [
-            # will come through as `gap_type` and `gap_code`
+            # will come through as `2b_gap_type` and `2b_gap_code`
             ("Gap Type", "All", 'type'),
             ("Gap Description", "All", 'code'),
         ]

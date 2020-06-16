@@ -976,7 +976,7 @@ class CloudcareTab(UITab):
             has_privilege(self._request, privileges.CLOUDCARE)
             and self.domain
             and not isinstance(self.couch_user, AnonymousCouchUser)
-            and (self.couch_user.can_edit_data() or self.couch_user.is_commcare_user())
+            and (self.couch_user.can_access_web_apps() or self.couch_user.is_commcare_user())
         )
 
 
