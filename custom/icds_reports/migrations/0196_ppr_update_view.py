@@ -13,4 +13,4 @@ class Migration(migrations.Migration):
         ('icds_reports', '0195_add_fields_aww_inactivity_report'),
     ]
 
-    operations = get_view_migrations()
+    operations = []
