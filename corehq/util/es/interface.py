@@ -17,11 +17,11 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         assert set(settings_dict.keys()) == {'index'}, settings_dict.keys()
         return self.es.indices.put_settings(settings_dict, index=index)
 
-    def _get_source(self, index, doc_type, doc_id):
-        return self.es.get_source(index, doc_type, doc_id)
+    def _get_source(self, index, doc_type, doc_id, source_includes=None):
+        return self.es.get_source(index, doc_type, doc_id, source_include=source_includes)
 
-    def get_doc(self, index, doc_type, doc_id):
-        doc = self._get_source(index, doc_type, doc_id)
+    def get_doc(self, index, doc_type, doc_id, source_includes=None):
+        doc = self._get_source(index, doc_type, doc_id, source_includes=source_includes)
         doc['_id'] = doc_id
         return doc
 
@@ -113,8 +113,8 @@ class ElasticsearchInterface7(AbstractElasticsearchInterface):
     def create_doc(self, index, doc_type, doc_id, doc):
         self.es.create(index, body=self._without_id_field(doc), id=doc_id)
 
-    def _get_source(self, index, doc_type, doc_id):
-        return self.es.get_source(index, doc_id)
+    def _get_source(self, index, doc_type, doc_id, source_includes=None):
+        return self.es.get_source(index, doc_id, _source_includes=source_includes)
 
     def _mget(self, index, body, doc_type):
         return self.es.mget(
