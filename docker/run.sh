@@ -32,6 +32,7 @@ function setup() {
     fi
 
     if [ "$TEST" = "javascript" -o "$JS_SETUP" = "yes" ]; then
+        npm install npm@latest
         npm install --progress=false
         bower install --config.interactive=false
     fi
