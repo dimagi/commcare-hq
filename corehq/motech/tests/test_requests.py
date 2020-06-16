@@ -1,6 +1,6 @@
 import random
 import string
-from unittest import skip
+from unittest import skipUnless
 
 from django.conf import settings
 from django.test import SimpleTestCase, TestCase
@@ -176,7 +176,7 @@ class AuthClassTests(SimpleTestCase):
         self.assertEqual(auth.__class__.__name__, 'HTTPDigestAuth')
 
 
-@skip('This test uses third-party resources.')
+@skipUnless(settings.DEBUG, 'This test uses third-party resources.')
 class RequestsOAuth2Tests(TestCase):
 
     base_url = 'https://play.dhis2.org/dev'
