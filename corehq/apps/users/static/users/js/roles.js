@@ -1,5 +1,6 @@
 hqDefine('users/js/roles',[
     'knockout',
+    'jquery',
 ], function (ko) {
     var RolesViewModel = function (o) {
         'use strict';
@@ -199,25 +200,36 @@ hqDefine('users/js/roles',[
                 return false;
             }
             if (!self.roleBeingEdited().name()) {
-                console.log('allowSubmit false');
                 return false;
             }
 
-            // var fieldData = self.roleBeingEdited().name();
-            // if (!_.isObject(fieldData) && !_.isArray(fieldData)) {
-            //     if (!_.every(fieldData, function(value) { return value(); })) {
-            //         console.log('this false');
-            //         return false;
-            //     }
-            // }
-
-            console.log('allowSubmit true');
             return true;
-        })
+        });
+
+        self.submitNewRole = function () {
+            // moved saveOptions inline
+            $.ajax({
+                method: 'POST',
+                url: o.saveUrl,
+                data: JSON.stringify(UserRole.unwrap(self.roleBeingEdited)),
+                dataType: 'json',
+                success: function (data) {
+                    self.addOrReplaceRole(data);
+                    self.unsetRoleBeingEdited();
+                },
+                error: function (data) {
+                    console.log('error');
+                }
+
+            });
+
+
+        };
 
         return self;
     };
 
+    //function(ko) return:
     return {
         initUserRoles: function ($element, o) {
             $element.each(function () {

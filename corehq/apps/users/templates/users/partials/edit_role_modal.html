@@ -26,7 +26,8 @@
               <input data-bind="value: name, disable: !$root.allowEdit"
                      type="text"
                      id="role-name"
-                     class="form-control" />
+                     class="form-control"
+                     required />
             </div>
           </div>
           <legend>
@@ -715,34 +716,30 @@
           </div>
         </div>
       </div>
-      <div class="modal-footer">
-        {% if can_edit_roles %}
-          <button type="button"
-                  class="btn btn-default"
-                  data-bind="click: $root.unsetRoleBeingEdited">
-            {% trans "Cancel" %}
-          </button>
-          <div data-bind="saveButton2: $root.modalSaveButton.state,
-                          saveOptions: $root.modalSaveButton.saveOptions">
-          </div>
-          <!--
-          <button type="submit"
-                  data-bind=" 
-                  saveOptions: $root.modalSaveButton.saveOptions,
-                  enable: $root.allowSubmit"
-                  class="btn btn-primary">
-            {% trans "Save" %}
-          </button>
-          -->
-
-        {% else %}
-          <button type="button"
-                  class="btn btn-default"
-                  data-bind="click: $root.unsetRoleBeingEdited">
-            {% trans "Close" %}
-          </button>
-        {% endif %}
-      </div>
+      <form novalidate data-bind="submit: $root.submitNewRole">
+        <div class="modal-footer">
+          {% if can_edit_roles %}
+            <button type="button"
+                    class="btn btn-default"
+                    data-bind="click: $root.unsetRoleBeingEdited">
+              {% trans "Cancel" %}
+            </button>
+            <button type="submit"
+                    data-bind="
+                    saveOptions: $root.modalSaveButton.saveOptions,
+                    enable: $root.allowSubmit",
+                    class="btn btn-primary disable-on-submit">
+              {% trans "Save" %}
+            </button>
+          {% else %}
+            <button type="button"
+                    class="btn btn-default"
+                    data-bind="click: $root.unsetRoleBeingEdited">
+              {% trans "Close" %}
+            </button>
+          {% endif %}
+        </div>
+      </form>
     </div>
   </div>
 </div>
