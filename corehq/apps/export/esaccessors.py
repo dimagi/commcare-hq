@@ -60,4 +60,4 @@ def get_case_name(case_id):
     except ElasticsearchException:
         return None
 
-    return result['_source']['name']
+    return result['name']
