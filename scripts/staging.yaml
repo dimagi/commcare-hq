@@ -61,7 +61,7 @@ branches:
   - fr/multiple-api-keys  # Conflicting migrations with ce/web-apps-permissions
   - jls/DRYer-case-config-ui-3 # Jenny June 6
   - revert-27725-jls/kill-configurable-timeout # Jenny June 9
-  - nemanja1040:turn_gateway_improvements  # Nemanja Stancic June 10
+  # - nemanja1040:turn_gateway_improvements  # Nemanja Stancic June 10
   - jls/messaging-history-error-code-filter+kev/sms-messaging-email-filter # Jenny June 15
   - jls/messaging-history-error-code-filter # Jenny June 15
   - kev/sms-messaging-email-filter # Kevin June 15
