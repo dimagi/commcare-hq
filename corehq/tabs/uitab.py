@@ -135,6 +135,13 @@ class UITab(object):
         if not self.show_by_default and not self.is_active_tab:
             return False
 
+        # Run tab-specific logic first, so that dropdown generation can assume any necessary data is present
+        try:
+            if not self._is_viewable:
+                return False
+        except AttributeError:
+            return False
+
         if not self.can_access_all_locations:
             if self.dropdown_items and not self.filtered_dropdown_items:
                 # location-safe filtering makes this whole tab inaccessible
@@ -144,10 +151,7 @@ class UITab(object):
             if not self.dropdown_items and not url_is_location_safe(self.url):
                 return False
 
-        try:
-            return self._is_viewable
-        except AttributeError:
-            return False
+        return True
 
     @property
     @memoized
