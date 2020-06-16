@@ -17,6 +17,9 @@ def mapping_from_json(filename):
 
 def transform_for_es7(original_mapping):
     mapping = copy.deepcopy(original_mapping)
+    if settings.ELASTICSEARCH_MAJOR_VERSION != 7:
+        # v1 and v2 have same mapping
+        return mapping
     mapping = _transform_types(mapping)
     if "_all" in mapping:
         mapping.pop("_all")

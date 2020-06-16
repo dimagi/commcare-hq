@@ -10,6 +10,7 @@ from corehq.util.es.elasticsearch import ConnectionError
 from corehq.elastic import get_es_new
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
+from corehq.pillows.mappings.utils import transform_for_es7
 from pillowtop.es_utils import (
     assume_alias,
     initialize_index,
@@ -57,8 +58,8 @@ class ElasticPillowTest(SimpleTestCase):
         mapping = get_index_mapping(self.es, self.index, TEST_INDEX_INFO.type)
         # we can't compare the whole dicts because ES adds a bunch of stuff to them
         self.assertEqual(
-            TEST_INDEX_INFO.mapping['properties']['doc_type']['index'],
-            mapping['properties']['doc_type']['index']
+            transform_for_es7(TEST_INDEX_INFO.mapping)['properties']['doc_type'],
+            mapping['properties']['doc_type']
         )
 
     def test_refresh_index(self):

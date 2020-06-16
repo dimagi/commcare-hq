@@ -135,8 +135,11 @@ class ElasticsearchInterface7(AbstractElasticsearchInterface):
             index=index, body=body, _source=True)
 
     def update_doc(self, index, doc_type, doc_id, doc, params=None):
+        params = params or {}
+        # not supported in ES7
+        params.pop('retry_on_conflict', None)
         self.es.index(index, body=self._without_id_field(doc), id=doc_id,
-                      params=params or {})
+                      params=params)
 
     def update_doc_fields(self, index, doc_type, doc_id, fields, params=None):
         self.es.update(index, doc_id, body={"doc": self._without_id_field(fields)},

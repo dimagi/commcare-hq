@@ -154,7 +154,7 @@ def initialize_index(es, index_info):
 def mapping_exists(es, index_info):
     try:
         if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-            return es.indices.get_mapping(index_info.index)
+            return es.indices.get_mapping(index_info.index).get(index_info.index, {}).get('mappings', None)
         else:
             return es.indices.get_mapping(index_info.index, index_info.type)
     except TransportError:
