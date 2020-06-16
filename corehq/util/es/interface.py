@@ -10,6 +10,9 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
     def __init__(self, es):
         self.es = es
 
+    def get_aliases(self):
+        return self.es.indices.get_aliases()
+
     def put_mapping(self, doc_type, mapping, index):
         return self.es.indices.put_mapping(doc_type, {doc_type: mapping}, index=index)
 
@@ -103,6 +106,9 @@ class ElasticsearchInterface2(AbstractElasticsearchInterface):
 
 
 class ElasticsearchInterface7(AbstractElasticsearchInterface):
+
+    def get_aliases(self):
+        return self.es.indices.get_alias()
 
     def search(self, index=None, doc_type=None, body=None, params=None, **kwargs):
         results = self.es.search(index=index, body=body, params=params or {}, **kwargs)

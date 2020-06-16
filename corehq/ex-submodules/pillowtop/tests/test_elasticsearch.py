@@ -1,6 +1,8 @@
 import functools
 import uuid
 
+from nose.plugins.attrib import attr
+
 from django.conf import settings
 from django.test import SimpleTestCase
 from corehq.util.es.elasticsearch import ConnectionError
@@ -102,12 +104,13 @@ class ElasticPillowTest(SimpleTestCase):
         self.addCleanup(functools.partial(ensure_index_deleted, new_index))
 
         # make sure it's there in the other index
-        aliases = self.es.indices.get_aliases()
+        aliases = self.es_interface.get_aliases()
         self.assertEqual([TEST_INDEX_INFO.alias], list(aliases[new_index]['aliases']))
 
         # assume alias and make sure it's removed (and added to the right index)
         assume_alias(self.es, self.index, TEST_INDEX_INFO.alias)
-        aliases = self.es.indices.get_aliases()
+        aliases = self.es_interface.get_aliases()
+
         self.assertEqual(0, len(aliases[new_index]['aliases']))
         self.assertEqual([TEST_INDEX_INFO.alias], list(aliases[self.index]['aliases']))
 

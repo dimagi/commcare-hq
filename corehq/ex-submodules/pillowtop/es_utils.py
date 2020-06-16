@@ -180,7 +180,7 @@ def assume_alias(es, index, alias):
     This operation assigns the alias to the index and removes the alias
     from any other indices it might be assigned to.
     """
-    if es.indices.exists_alias(None, alias):
+    if es.indices.exists_alias(name=alias):
         # this part removes the conflicting aliases
         alias_indices = list(es.indices.get_alias(alias))
         for aliased_index in alias_indices:
