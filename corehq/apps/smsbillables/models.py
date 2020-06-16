@@ -21,6 +21,7 @@ from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.smsbillables.exceptions import (
     AmbiguousPrefixException,
     RetryBillableTaskException,
+    ProviderFeeNotSupportedException
 )
 from corehq.apps.smsbillables.utils import (
     get_twilio_message,
@@ -433,10 +434,12 @@ class SmsBillable(models.Model):
                 message = get_twilio_message(backend_instance, backend_message_id)
                 status = message.status
                 price = message.price
-            else:
+            elif backend_api_id == InfobipBackend.get_api_id():
                 message = get_infobip_message(backend_instance, backend_message_id)
                 status = message['status']['name']
                 price = message['price']['pricePerMessage']
+            else:
+                raise ProviderFeeNotSupportedException("backend_message_id=%s" % backend_message_id)
             if status is None or status.lower() in [
                 'accepted',
                 'queued',
