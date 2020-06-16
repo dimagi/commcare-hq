@@ -366,6 +366,8 @@ class Repeater(QuickCachedDocumentMixin, Document):
 
     @property
     def plaintext_password(self):
+        if self.password is None:
+            return ''
         if self.password.startswith('${algo}$'.format(algo=ALGO_AES)):
             ciphertext = self.password.split('$', 2)[2]
             return b64_aes_decrypt(ciphertext)
