@@ -25,6 +25,9 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         doc['_id'] = doc_id
         return doc
 
+    def doc_exists(self, index, doc_id, doc_type):
+        return self.es.exists(index, doc_type, doc_id)
+
     def _mget(self, index, body, doc_type):
         return self.es.mget(
             index=index, doc_type=doc_type, body=body, _source=True)
@@ -112,6 +115,9 @@ class ElasticsearchInterface7(AbstractElasticsearchInterface):
 
     def create_doc(self, index, doc_type, doc_id, doc):
         self.es.create(index, body=self._without_id_field(doc), id=doc_id)
+
+    def doc_exists(self, index, doc_id, doc_type):
+        return self.es.exists(index, doc_id)
 
     def _get_source(self, index, doc_type, doc_id, source_includes=None):
         return self.es.get_source(index, doc_id, _source_includes=source_includes)

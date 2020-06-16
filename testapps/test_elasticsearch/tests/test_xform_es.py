@@ -8,6 +8,7 @@ from corehq.apps.es import FormES
 from corehq.elastic import get_es_new, send_to_elasticsearch, doc_exists_in_es
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
+from corehq.util.es.interface import ElasticsearchInterface
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
 from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
@@ -43,8 +44,9 @@ class XFormESTestCase(SimpleTestCase):
 
     @classmethod
     def tearDownClass(cls):
+        interface = ElasticsearchInterface(cls.es)
         for form in cls.forms:
-            cls.es.delete(XFORM_INDEX_INFO.index, XFORM_INDEX_INFO.type, form.wrapped_form.form_id)
+            interface.delete_doc(XFORM_INDEX_INFO.index, XFORM_INDEX_INFO.type, form.wrapped_form.form_id)
         cls.es.indices.refresh(XFORM_INDEX_INFO.index)
         cls.forms = []
         super(XFormESTestCase, cls).tearDownClass()

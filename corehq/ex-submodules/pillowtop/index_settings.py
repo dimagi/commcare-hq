@@ -4,23 +4,23 @@ from django.conf import settings
 
 from corehq.elastic import SIZE_LIMIT
 
+disallowed_settings_by_es_version = {
+    1: ['max_result_window'],
+    2: [
+        'merge.policy.merge_factor',
+        'store.throttle.max_bytes_per_sec',
+        'store.throttle.type'
+    ],
+    7: [
+        'merge.policy.merge_factor',
+        'store.throttle.max_bytes_per_sec',
+        'store.throttle.type'
+    ]
+}
 
 def _get_es_settings(es_settings):
     es_settings = copy(es_settings)
-    version_disallow = {
-        1: ['max_result_window'],
-        2: [
-            'merge.policy.merge_factor',
-            'store.throttle.max_bytes_per_sec',
-            'store.throttle.type'
-        ],
-        7: [
-            'merge.policy.merge_factor',
-            'store.throttle.max_bytes_per_sec',
-            'store.throttle.type'
-        ]
-    }
-    for setting in version_disallow[settings.ELASTICSEARCH_MAJOR_VERSION]:
+    for setting in disallowed_settings_by_es_version[settings.ELASTICSEARCH_MAJOR_VERSION]:
         es_settings['index'].pop(setting)
     return es_settings
 

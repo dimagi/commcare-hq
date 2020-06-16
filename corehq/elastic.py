@@ -122,7 +122,7 @@ def doc_exists_in_es(index_info, doc_id_or_dict):
     else:
         assert isinstance(doc_id_or_dict, dict)
         doc_id = doc_id_or_dict['_id']
-    return get_es_new().exists(index_info.index, index_info.type, doc_id)
+    return ElasticsearchInterface(get_es_new()).doc_exists(index_info.index, doc_id, index_info.type)
 
 
 def send_to_elasticsearch(index_name, doc, delete=False, es_merge_update=False):
