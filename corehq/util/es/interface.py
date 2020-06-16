@@ -21,7 +21,8 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         return self.es.indices.put_settings(settings_dict, index=index)
 
     def _get_source(self, index, doc_type, doc_id, source_includes=None):
-        return self.es.get_source(index, doc_type, doc_id, source_include=source_includes)
+        kwargs = {"_source_include": source_includes} if source_includes else {}
+        return self.es.get_source(index, doc_type, doc_id, **kwargs)
 
     def get_doc(self, index, doc_type, doc_id, source_includes=None):
         doc = self._get_source(index, doc_type, doc_id, source_includes=source_includes)
@@ -126,7 +127,8 @@ class ElasticsearchInterface7(AbstractElasticsearchInterface):
         return self.es.exists(index, doc_id)
 
     def _get_source(self, index, doc_type, doc_id, source_includes=None):
-        return self.es.get_source(index, doc_id, _source_includes=source_includes)
+        kwargs = {"_source_includes": source_includes} if source_includes else {}
+        return self.es.get_source(index, doc_id, **kwargs)
 
     def _mget(self, index, body, doc_type):
         return self.es.mget(
