@@ -29,12 +29,11 @@ from corehq.apps.reports.daterange import (
 from corehq.apps.reports.util import (
     get_INFilter_bindparams,
     get_INFilter_element_bindparam,
-)
+    get_null_empty_value_bindparam)
 
 # todo: if someone wants to name an actual choice any of these values, it will break
 SHOW_ALL_CHOICE = '_all'
 NONE_CHOICE = "\u2400"
-EMPTY_CHOICE = '_cchq_empty'
 
 CHOICE_DELIMITER = "\u001f"
 
@@ -325,8 +324,6 @@ class ChoiceListFilterValue(FilterValue):
             return None
 
         sql_filters = []
-        if self.is_null:
-            sql_filters.append(ISNULLFilter(self.filter['field']))
 
         non_null_values = self._get_value_without_nulls()
         if non_null_values:
@@ -344,6 +341,15 @@ class ChoiceListFilterValue(FilterValue):
         elif self._ancestor_filter:
             sql_filters.append(self._ancestor_filter.sql_filter())
 
+        if self.is_null:
+            # combine null and blank fields into a single filter
+            sql_filters.append(
+                ORFilter([
+                    ISNULLFilter(self.filter['field']),
+                    EQFilter(self.filter['field'], get_null_empty_value_bindparam(self.filter['slug'])),
+                ])
+            )
+
         if len(sql_filters) > 1:
             return ORFilter(
                 sql_filters
@@ -358,8 +364,12 @@ class ChoiceListFilterValue(FilterValue):
             get_INFilter_element_bindparam(self.filter['slug'], i): val.value
             for i, val in enumerate(self._get_value_without_nulls())
         }
+        if self.is_null:
+            values[get_null_empty_value_bindparam(self.filter['slug'])] = ''
+
         if self._ancestor_filter:
             values.update(self._ancestor_filter.sql_value())
+
         return values
 
 

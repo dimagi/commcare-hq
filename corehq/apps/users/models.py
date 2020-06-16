@@ -23,6 +23,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
 from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
 from corehq.apps.users.exceptions import IllegalAccountConfirmation
+from corehq.util.models import BouncedEmail
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateProperty,
@@ -128,6 +129,7 @@ class Permissions(DocumentSchema):
     edit_shared_exports = BooleanProperty(default=False)
     access_all_locations = BooleanProperty(default=True)
     access_api = BooleanProperty(default=True)
+    access_web_apps = BooleanProperty(default=False)
 
     view_reports = BooleanProperty(default=False)
     view_report_list = StringListProperty(default=[])
@@ -295,7 +297,10 @@ class UserRole(QuickCachedDocumentMixin, Document):
         choices=[page.id for page in ALL_LANDING_PAGES],
     )
     permissions = SchemaProperty(Permissions)
+    # role can be assigned by all non-admins
     is_non_admin_editable = BooleanProperty(default=False)
+    # role assignable by specific non-admins
+    assignable_by = StringListProperty(default=[])
     is_archived = BooleanProperty(default=False)
 
     def get_qualified_id(self):
@@ -406,6 +411,9 @@ class UserRole(QuickCachedDocumentMixin, Document):
     @classmethod
     def preset_permissions_names(cls):
         return {details['name'] for role, details in PERMISSIONS_PRESETS.items()}
+
+    def accessible_by_non_admin_role(self, role_id):
+        return self.is_non_admin_editable or (role_id and role_id in self.assignable_by)
 
 
 PERMISSIONS_PRESETS = {
@@ -2606,15 +2614,19 @@ class Invitation(models.Model):
     def is_expired(self):
         return self.invited_on.date() + relativedelta(months=1) < datetime.utcnow().date()
 
+    @property
+    def email_marked_as_bounced(self):
+        return BouncedEmail.get_hard_bounced_emails([self.email])
+
     def send_activation_email(self, remaining_days=30):
         inviter = CouchUser.get_by_user_id(self.invited_by)
         url = absolute_reverse("domain_accept_invitation", args=[self.domain, self.uuid])
         params = {
             "domain": self.domain,
             "url": url,
-            'days': remaining_days,
+            "days": remaining_days,
             "inviter": inviter.formatted_name,
-            'url_prefix': get_static_url_prefix(),
+            "url_prefix": get_static_url_prefix(),
         }
 
         domain_request = DomainRequest.by_email(self.domain, self.email, is_approved=True)

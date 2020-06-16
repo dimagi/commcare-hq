@@ -11,7 +11,7 @@ from mock import patch
 
 from dimagi.utils.dates import DateSpan
 
-import custom.inddex.reports.nutrient_stats
+import custom.inddex.reports.r4_nutrient_stats
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.fixtures.dbaccessors import (
@@ -28,11 +28,12 @@ from ..example_data.data import (
 )
 from ..fixtures import FixtureAccessor
 from ..food import INDICATORS, FoodData
-from ..reports.gaps_detail import GapsByItemSummaryData, GapsDetailsData
-from ..reports.gaps_summary import get_gaps_data
-from ..reports.master_data import MasterData
-from ..reports.nutrient_intake import DailyIntakeData
-from ..reports.nutrient_stats import NutrientStatsData
+from ..reports.r1_master_data import MasterData
+from ..reports.r2a_gaps_summary import get_gaps_data as get_2a_gaps_data
+from ..reports.r2b_gaps_detail import GapsByItemSummaryData, GapsDetailsData
+from ..reports.r2b_gaps_detail import get_gaps_data as get_2b_gaps_data
+from ..reports.r3_nutrient_intake import DailyIntakeData, IntakeData
+from ..reports.r4_nutrient_stats import NutrientStatsData
 from ..ucr_data import FoodCaseData
 
 DOMAIN = 'inddex-reports-test'
@@ -44,14 +45,27 @@ def get_expected_report(filename):
 
     # Swap out the external IDs in the test fixture for the real IDs
     case_ids_by_external_id = _get_case_ids_by_external_id()
+    return [{
+        key: case_ids_by_external_id[val] if val in case_ids_by_external_id else val
+        for key, val in row.items()
+    } for row in rows]
 
-    def substitute_real_ids(row):
-        return {
-            key: case_ids_by_external_id[val] if val in case_ids_by_external_id else val
-            for key, val in row.items()
-        }
 
-    return [substitute_real_ids(r) for r in rows]
+def _overwrite_report(filename, actual_report):
+    """For use when making changes - force overwrites test data"""
+    accessor = CaseAccessors(DOMAIN)
+    case_ids = accessor.get_case_ids_in_domain()
+    external_ids_by_case_id = {c.case_id: c.external_id for c in accessor.get_cases(case_ids)}
+    rows = [[
+        external_ids_by_case_id[val] if val in external_ids_by_case_id else val
+        for val in row
+    ] for row in actual_report.rows]
+
+    with open(os.path.join(os.path.dirname(__file__), 'data', filename), 'w') as f:
+        writer = csv.writer(f)
+        writer.writerow(actual_report.headers)
+        writer.writerows(rows)
+
 
 
 @require_db_context
@@ -113,8 +127,7 @@ class TestSetupUtils(TestCase):
 
 class TestUcrAdapter(TestCase):
     def test_data_source(self):
-        # Only the rows with case IDs will appear in the UCR
-        expected = [r for r in get_expected_report('master.csv') if r['caseid']]
+        expected = get_expected_report('data_source.csv')
         ucr_data = FoodCaseData({
             'domain': DOMAIN,
             'startdate': date(2020, 1, 1).isoformat(),
@@ -123,17 +136,34 @@ class TestUcrAdapter(TestCase):
         self.assertItemsEqual(food_names(expected), food_names(ucr_data))
 
     def test_data_source_filter(self):
-        # Only the rows with case IDs will appear in the UCR
-        expected = [r for r in get_expected_report('master.csv')
-                    if r['caseid'] and r['breastfeeding'] == 'breastfeeding_yes']
+        expected = [r for r in get_expected_report('data_source.csv')
+                    if r['breastfeeding'] == 'breastfeeding_yes']
         ucr_data = FoodCaseData({
             'domain': DOMAIN,
             'startdate': date(2020, 1, 1).isoformat(),
             'enddate': date(2020, 4, 1).isoformat(),
-            'breastfeeding': 'breastfeeding_yes',
-            'age_range': 'lt50years',
+            'breastfeeding': ['breastfeeding_yes'],
+            'age_range': ['lt50years', 'lt15years'],
         }).get_data()
         self.assertItemsEqual(food_names(expected), food_names(ucr_data))
+
+    def test_age_filter(self):
+        ucr_data = FoodCaseData({
+            'domain': DOMAIN,
+            'startdate': date(2020, 1, 1).isoformat(),
+            'enddate': date(2020, 4, 1).isoformat(),
+            'age_range': ['gte65years'],
+        }).get_data()
+        self.assertEqual([], ucr_data)
+
+    def test_urban_rural(self):
+        ucr_data = FoodCaseData({
+            'domain': DOMAIN,
+            'startdate': date(2020, 1, 1).isoformat(),
+            'enddate': date(2020, 4, 1).isoformat(),
+            'urban_rural': ['peri-urban', 'rural'],
+        }).get_data()
+        self.assertEqual([], ucr_data)
 
 
 class TestFixtures(TestCase):
@@ -171,7 +201,7 @@ class TestMasterReport(TestCase):
     maxDiff = None
 
     def test_master_report(self):
-        expected = sort_rows(get_expected_report('master.csv'))
+        expected = sort_rows(get_expected_report('1_master.csv'))
         actual = sort_rows(self.run_new_report())
         self.assertEqual(food_names(expected), food_names(actual))
 
@@ -189,6 +219,7 @@ class TestMasterReport(TestCase):
 
     def run_new_report(self):
         report = MasterData(get_food_data())
+        # _overwrite_report('1_master.csv', report); raise Exception
         return [dict(zip(report.headers, row)) for row in report.rows]
 
     def assert_columns_equal(self, expected_rows, actual_rows, column):
@@ -210,6 +241,8 @@ class TestInddexReports(TestCase):
     maxDiff = None
 
     def assert_reports_match(self, csv_filename, actual_report):
+        # _overwrite_report(csv_filename, actual_report); raise Exception
+
         def to_string(row):
             return ' | '.join(f'{v:<25}' for v in row)
 
@@ -228,39 +261,40 @@ class TestInddexReports(TestCase):
                 ).format(*map(to_string, [actual_report.headers, expected, actual]))
                 self.assertEqual(expected, actual, msg)
 
-    def test_gaps_summary(self):
-        with patch('custom.inddex.reports.gaps_summary.FoodData.from_request', get_food_data):
-            cf_gaps_data, fct_gaps_data = get_gaps_data(DOMAIN, None)
+    def test_2a_gaps_summary(self):
+        with patch('custom.inddex.reports.r2a_gaps_summary.FoodData.from_request', get_food_data):
+            cf_gaps_data, fct_gaps_data = get_2a_gaps_data(DOMAIN, None)
 
-        self.assert_reports_match('conv_factor_gaps_summary.csv', cf_gaps_data)
-        self.assert_reports_match('fct_gaps_summary.csv', fct_gaps_data)
+        self.assert_reports_match('2a_conv_factor_gaps_summary.csv', cf_gaps_data)
+        self.assert_reports_match('2a_fct_gaps_summary.csv', fct_gaps_data)
 
-    def test_gaps_by_item_summary(self):
-        data = GapsByItemSummaryData(get_food_data())
-        self.assert_reports_match('gaps_by_item_summary.csv', data)
+    def test_2b_gaps_reports(self):
+        gaps_data = get_2b_gaps_data(get_food_data())
+        self.assert_reports_match('2b_gaps_by_item_summary.csv', GapsByItemSummaryData(gaps_data))
+        self.assert_reports_match('2b_gaps_by_item_details.csv', GapsDetailsData(gaps_data))
 
-    def test_gaps_by_item_details(self):
-        data = GapsDetailsData(get_food_data())
-        self.assert_reports_match('gaps_by_item_details.csv', data)
+    def test_3_intake(self):
+        data = IntakeData(get_food_data())
+        self.assert_reports_match('3_disaggr_intake_data_by_rspndnt.csv', data)
 
-    def test_daily_intake(self):
+    def test_3_daily_intake(self):
         data = DailyIntakeData(get_food_data())
-        self.assert_reports_match('aggr_daily_intake_by_rspndnt.csv', data)
+        self.assert_reports_match('3_aggr_daily_intake_by_rspndnt.csv', data)
 
-    def test_nutrient_stats(self):
+    def test_4_nutrient_stats(self):
         data = NutrientStatsData(get_food_data())
-        self.assert_reports_match('nutr_intake_summary_stats.csv', data)
+        self.assert_reports_match('4_nutr_intake_summary_stats.csv', data)
 
     def test_sharing_filtered_food_data(self):
         # There should be no data with this filter selection
         food_data = FoodData(DOMAIN, datespan=DateSpan(date(2020, 1, 1), date(2020, 4, 1)),
                              filter_selections={'owner_id': ['not-a-user']})
-        self.assertEqual([], list(GapsByItemSummaryData(food_data).rows))
-        self.assertEqual([], list(GapsDetailsData(food_data).rows))
+        self.assertEqual([], list(IntakeData(food_data).rows))
+        self.assertEqual([], list(DailyIntakeData(food_data).rows))
 
 
 class DocTests(SimpleTestCase):
 
     def test_doctests(self):
-        results = doctest.testmod(custom.inddex.reports.nutrient_stats)
+        results = doctest.testmod(custom.inddex.reports.r4_nutrient_stats)
         self.assertEqual(results.failed, 0)

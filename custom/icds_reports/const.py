@@ -104,6 +104,8 @@ THR_REPORT_EXPORT = 10
 DASHBOARD_USAGE_EXPORT = 11
 SERVICE_DELIVERY_REPORT = 12
 CHILD_GROWTH_TRACKER_REPORT = 13
+AWW_ACTIVITY_REPORT = 14
+POSHAN_PROGRESS_REPORT = 15
 
 AGG_COMP_FEEDING_TABLE = 'icds_dashboard_comp_feed_form'
 AGG_CCS_RECORD_CF_TABLE = 'icds_dashboard_ccs_record_cf_forms'
@@ -187,3 +189,8 @@ CUSTOM_DATA_PULLS = {
     MonthlyPerformance.slug: MonthlyPerformance,
     VHSNDMonthlyReport.slug: VHSNDMonthlyReport,
 }
+
+THR_REPORT_CONSOLIDATED = 'consolidated'
+THR_REPORT_BENEFICIARY_TYPE = 'beneficiary_wise'
+THR_REPORT_DAY_BENEFICIARY_TYPE = 'days_beneficiary_wise'
+THR_21_DAYS_THRESHOLD_DATE = date(2020, 3, 1)

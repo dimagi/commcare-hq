@@ -4,13 +4,10 @@ from django_prbac.utils import has_privilege
 
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from corehq.apps.reports.dispatcher import (
-    ProjectReportDispatcher,
-    ReportDispatcher,
-    datespan_default,
-)
+from corehq.apps.reports.dispatcher import ReportDispatcher, datespan_default
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from custom.icds.view_utils import check_data_interfaces_blocked_for_domain
 
 require_can_edit_data = require_permission(Permissions.edit_data)
 
@@ -22,6 +19,7 @@ class EditDataInterfaceDispatcher(ReportDispatcher):
     map_name = 'EDIT_DATA_INTERFACES'
 
     @method_decorator(require_can_edit_data)
+    @method_decorator(check_data_interfaces_blocked_for_domain)
     @datespan_default
     def dispatch(self, request, *args, **kwargs):
         from corehq.apps.case_importer.base import ImportCases
