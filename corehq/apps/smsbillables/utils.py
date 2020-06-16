@@ -74,7 +74,7 @@ def get_infobip_message(backend_instance, backend_message_id):
             'Accept': 'application/json'
         }
         parameters = {
-           'messageId': backend_message_id
+            'messageId': backend_message_id
         }
         messages = _get_infobip_message_details(api_channel, api_suffix, config, headers, parameters)
         if not messages:
@@ -83,6 +83,7 @@ def get_infobip_message(backend_instance, backend_message_id):
         return messages[0]
     except Exception as e:
         raise RetryBillableTaskException(str(e))
+
 
 def _get_infobip_message_details(api_channel, api_suffix, config, headers, parameters):
     from corehq.messaging.smsbackends.infobip.models import INFOBIP_DOMAIN

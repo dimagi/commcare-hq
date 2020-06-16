@@ -457,6 +457,7 @@ class SmsBillable(models.Model):
             )
             return _ProviderChargeInfo(None, None)
 
+
 _ProviderChargeInfo = namedtuple('_ProviderCharges', ['provider_gateway_fee', 'gateway_fee'])
 _GatewayChargeInfo = namedtuple('_GatewayChargeInfo', ['gateway_fee', 'conversion_rate', 'direct_gateway_fee'])
 
@@ -477,6 +478,7 @@ def add_twilio_gateway_fee(apps):
             criteria_class=apps.get_model('smsbillables', 'SmsGatewayFeeCriteria'),
             currency=default_currency,
         )
+
 
 def add_infobip_gateway_fee(apps):
     default_currency, _ = apps.get_model(
