@@ -1,6 +1,7 @@
 COMPUTED_USER_NAME_PROPERTY_ID = "computed/user_name"
 COMPUTED_OWNER_NAME_PROPERTY_ID = "computed/owner_name"
 COMPUTED_OWNER_LOCATION_PROPERTY_ID = "computed/owner_location"
+COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID = "computed/owner_location_with_descendants"
 
 UI_AGG_AVERAGE = "Average"
 UI_AGG_COUNT_PER_CHOICE = "Count per Choice"
