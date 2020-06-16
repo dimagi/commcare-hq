@@ -2859,7 +2859,7 @@ class Email(models.Model):
     """
 
     domain = models.CharField(max_length=126, db_index=True)
-    date = models.DateTimeField(null=True, db_index=True)
+    date = models.DateTimeField(db_index=True)
     couch_recipient_doc_type = models.CharField(max_length=126, db_index=True)
     couch_recipient = models.CharField(max_length=126, db_index=True)
 
