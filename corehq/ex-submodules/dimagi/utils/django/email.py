@@ -24,6 +24,19 @@ LARGE_FILE_SIZE_ERROR_CODE_ICDS_TCL = 452
 LARGE_FILE_SIZE_ERROR_CODES = [LARGE_FILE_SIZE_ERROR_CODE, LARGE_FILE_SIZE_ERROR_CODE_ICDS_TCL]
 
 
+def mark_subevent_bounced(bounced_addresses, messaging_event_id):
+    from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent
+    try:
+        subevent = MessagingSubEvent.objects.get(id=messaging_event_id)
+    except MessagingSubEvent.DoesNotExist:
+        pass
+    else:
+        subevent.error(
+            MessagingEvent.ERROR_EMAIL_BOUNCED,
+            additional_error_text=", ".join(bounced_addresses)
+        )
+
+
 def get_valid_recipients(recipients):
     """
     This filters out any emails that have reported hard bounces or complaints to
@@ -49,8 +62,12 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
                     file_attachments=None, bcc=None,
                     smtp_exception_skip_list=None, messaging_event_id=None):
     recipients = list(recipient) if not isinstance(recipient, str) else [recipient]
-    recipients = get_valid_recipients(recipients)
-    if not recipients:
+    filtered_recipients = get_valid_recipients(recipients)
+    bounced_addresses = list(set(recipients) - set(filtered_recipients))
+    if bounced_addresses and messaging_event_id:
+        mark_subevent_bounced(bounced_addresses, messaging_event_id)
+
+    if not filtered_recipients:
         # todo address root issues by throwing a real error to catch upstream
         #  fail silently for now to fix time-sensitive SES issue
         return
@@ -76,7 +93,7 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
 
     connection = get_connection()
     msg = EmailMultiAlternatives(subject, text_content, email_from,
-                                 recipients, headers=headers,
+                                 filtered_recipients, headers=headers,
                                  connection=connection, cc=cc, bcc=bcc)
     for file in (file_attachments or []):
         if file:
@@ -121,7 +138,7 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
                 error_subject,
                 error_text,
                 email_from,
-                recipients,
+                filtered_recipients,
                 headers=headers,
                 connection=connection,
                 cc=cc,
