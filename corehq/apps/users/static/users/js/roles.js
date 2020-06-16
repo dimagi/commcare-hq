@@ -139,9 +139,7 @@ hqDefine('users/js/roles',[
             var roleCopy = UserRole.wrap(UserRole.unwrap(role));
             roleCopy.modalTitle = title;
             self.roleBeingEdited(roleCopy);
-            self.modalSaveButton.state('save');
-            
-            
+            self.modalSaveButton.state('save'); 
         };
         self.unsetRoleBeingEdited = function () {
             self.roleBeingEdited(undefined);
@@ -202,7 +200,6 @@ hqDefine('users/js/roles',[
             if (!self.roleBeingEdited().name()) {
                 return false;
             }
-
             return true;
         });
 
@@ -220,10 +217,7 @@ hqDefine('users/js/roles',[
                 error: function (data) {
                     console.log('error');
                 }
-
             });
-
-
         };
 
         return self;
