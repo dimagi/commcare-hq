@@ -176,7 +176,6 @@ class AuthClassTests(SimpleTestCase):
         self.assertEqual(auth.__class__.__name__, 'HTTPDigestAuth')
 
 
-'''
 @skip('This test uses third-party resources.')
 class RequestsOAuth2Tests(TestCase):
 
@@ -185,39 +184,31 @@ class RequestsOAuth2Tests(TestCase):
     password = 'district'
     fullname = 'John Traore'  # The name of user "admin" on play.dhis2.org
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
+    def setUp(self):
         id_ = random.randint(10_000, 99_999)
         client_id = f'client{id_}'
         client_name = f'Example Client {id_}'  # DHIS2 needs this to be unique
         client_secret = mkpasswd(length=36)  # Mandatory length for DHIS2
-        cls.client_uid = cls.add_dhis2_oauth2_client(
+        self.client_uid = self.add_dhis2_oauth2_client(
             client_name, client_id, client_secret
         )
-        cls.connection_settings = ConnectionSettings.objects.create(
+        self.connection_settings = ConnectionSettings.objects.create(
             domain=DOMAIN,
-            name=cls.base_url,
-            url=cls.base_url,
+            name=self.base_url,
+            url=self.base_url,
             auth_type=OAUTH2_PWD,
             api_auth_settings='dhis2_auth_settings',
-            username=cls.username,
-            password=cls.password,
+            username=self.username,
+            password=self.password,
             client_id=client_id,
             client_secret=client_secret,
         )
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.connection_settings.delete()
-        get_basic_requests(
-            DOMAIN, cls.base_url, cls.username, cls.password,
-            logger=noop_logger,
-        ).delete(f'/api/oAuth2Clients/{cls.client_uid}')
-        super().tearDownClass()
+    def tearDown(self):
+        self.connection_settings.delete()
+        self.delete_dhis2_oauth2_client()
 
-    @classmethod
-    def add_dhis2_oauth2_client(cls, client_name, client_id, client_secret):
+    def add_dhis2_oauth2_client(self, client_name, client_id, client_secret):
         json_data = {
             "name": client_name,
             "cid": client_id,
@@ -225,10 +216,16 @@ class RequestsOAuth2Tests(TestCase):
             "grantTypes": ["password", "refresh_token"]
         }
         resp = get_basic_requests(
-            DOMAIN, cls.base_url, cls.username, cls.password,
+            DOMAIN, self.base_url, self.username, self.password,
             logger=noop_logger,
         ).post('/api/oAuth2Clients', json=json_data, raise_for_status=True)
         return resp.json()['response']['uid']
+
+    def delete_dhis2_oauth2_client(self):
+        get_basic_requests(
+            DOMAIN, self.base_url, self.username, self.password,
+            logger=noop_logger,
+        ).delete(f'/api/oAuth2Clients/{self.client_uid}')
 
     def test_oauth2_0_password(self):
         req = self.connection_settings.get_requests(logger=noop_logger)
@@ -244,7 +241,6 @@ class RequestsOAuth2Tests(TestCase):
                          expected_keys)
         self.assertEqual(self.connection_settings.last_token['token_type'],
                          'bearer')
-'''
 
 
 def mkpasswd(length):
