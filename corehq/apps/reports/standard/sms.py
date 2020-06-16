@@ -1135,8 +1135,8 @@ class PhoneNumberReport(BaseCommConnectLogReport):
 
     @property
     @memoized
-    def phone_number_or_email_filter(self):
-        value = self._filter['phone_number_or_email_filter']
+    def phone_number_filter(self):
+        value = self._filter['phone_number_filter']
         if isinstance(value, str):
             return apply_leniency(value.strip())
 
