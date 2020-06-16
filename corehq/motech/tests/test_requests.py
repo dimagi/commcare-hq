@@ -8,15 +8,10 @@ from django.test import SimpleTestCase, TestCase
 import requests
 from mock import patch
 
-from corehq.motech.auth import (
-    AuthManager,
-    BasicAuthManager,
-    DigestAuthManager,
-    OAuth2PasswordGrantManager,
-    dhis2_auth_settings,
-)
-from corehq.motech.const import REQUEST_TIMEOUT
-from corehq.motech.requests import Requests, get_basic_requests
+from corehq.motech.auth import AuthManager, BasicAuthManager, DigestAuthManager
+from corehq.motech.const import OAUTH2_PWD, REQUEST_TIMEOUT
+from corehq.motech.models import ConnectionSettings
+from corehq.motech.requests import get_basic_requests
 
 BASE_URL = 'http://dhis2.example.org/2.3.4/'
 USERNAME = 'admin'
@@ -194,13 +189,27 @@ class RequestsOAuth2Tests(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         id_ = random.randint(10_000, 99_999)
-        cls.client_id = f'client{id_}'
+        client_id = f'client{id_}'
         client_name = f'Example Client {id_}'  # DHIS2 needs this to be unique
-        cls.client_secret = mkpasswd(length=36)  # Mandatory length for DHIS2
-        cls.client_uid = cls.add_dhis2_oauth2_client(client_name)
+        client_secret = mkpasswd(length=36)  # Mandatory length for DHIS2
+        cls.client_uid = cls.add_dhis2_oauth2_client(
+            client_name, client_id, client_secret
+        )
+        cls.connection_settings = ConnectionSettings.objects.create(
+            domain=DOMAIN,
+            name=cls.base_url,
+            url=cls.base_url,
+            auth_type=OAUTH2_PWD,
+            api_auth_settings='dhis2_auth_settings',
+            username=cls.username,
+            password=cls.password,
+            client_id=client_id,
+            client_secret=client_secret,
+        )
 
     @classmethod
     def tearDownClass(cls):
+        cls.connection_settings.delete()
         get_basic_requests(
             DOMAIN, cls.base_url, cls.username, cls.password,
             logger=noop_logger,
@@ -208,11 +217,11 @@ class RequestsOAuth2Tests(TestCase):
         super().tearDownClass()
 
     @classmethod
-    def add_dhis2_oauth2_client(cls, client_name):
+    def add_dhis2_oauth2_client(cls, client_name, client_id, client_secret):
         json_data = {
             "name": client_name,
-            "cid": cls.client_id,
-            "secret": cls.client_secret,
+            "cid": client_id,
+            "secret": client_secret,
             "grantTypes": ["password", "refresh_token"]
         }
         resp = get_basic_requests(
@@ -222,30 +231,19 @@ class RequestsOAuth2Tests(TestCase):
         return resp.json()['response']['uid']
 
     def test_oauth2_0_password(self):
-        auth_manager = OAuth2PasswordGrantManager(
-            DOMAIN,
-            self.base_url,
-            username=self.username,
-            password=self.password,
-            client_id=self.client_id,
-            client_secret=self.client_secret,
-            api_settings=dhis2_auth_settings,
-        )
-        with Requests(DOMAIN, self.base_url,
-                      auth_manager=auth_manager,
-                      logger=noop_logger) as requests:
-            # NOTE: Use Requests instance as a context manager so that
-            #       it uses OAuth2Session.
-            resp = requests.get('/api/me/')
+        req = self.connection_settings.get_requests(logger=noop_logger)
+        resp = req.get('/api/me/')
 
-            # Check API request succeeded
-            self.assertEqual(resp.json()['name'], self.fullname)
+        # Check API request succeeded
+        self.assertEqual(resp.json()['name'], self.fullname)
 
-            # Check token
-            expected_keys = {'access_token', 'expires_at', 'expires_in',
-                             'refresh_token', 'scope', 'token_type'}
-            self.assertEqual(set(auth_manager.last_token), expected_keys)
-            self.assertEqual(auth_manager.last_token['token_type'], 'bearer')
+        # Check token
+        expected_keys = {'access_token', 'expires_at', 'expires_in',
+                         'refresh_token', 'scope', 'token_type'}
+        self.assertEqual(set(self.connection_settings.last_token),
+                         expected_keys)
+        self.assertEqual(self.connection_settings.last_token['token_type'],
+                         'bearer')
 '''
 
 
