@@ -374,6 +374,7 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
                     $scope.$emit('filtersChange');
                 }
                 if ($location.path().indexOf('poshan_progress_dashboard') !== -1 && selectedLocationIndex() > 0) {
+                    // if selected location is above state level when navigated to PPD, location is reset to state level
                     vm.onSelect(vm.selectedLocations[0], 0);
                     vm.selectedLocationId = vm.selectedLocations[0].location_id;
                     vm.location_id = vm.selectedLocationId;

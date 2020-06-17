@@ -128,6 +128,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
             if (($location.path().indexOf('ls_launched') !== -1 || $location.path().indexOf('lady_supervisor') !== -1 || $location.path().indexOf('service_delivery_dashboard') !== -1) && level === sector_level) {
                 return false;
             } else if (($location.path().indexOf('poshan_progress_dashboard') !== -1) && level === 1) {
+                // restricting location access to state level
                 return false;
             }
             // otherwise

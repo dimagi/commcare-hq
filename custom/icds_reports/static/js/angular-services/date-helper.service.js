@@ -77,6 +77,7 @@ window.angular.module('icdsApp').factory('dateHelperService', ['$location', func
                 selectedMonth = selectedMonth >= reportStartDates['sdd'].getMonth() + 1 ?
                     selectedMonth : reportStartDates['sdd'].getMonth() + 1;
             } else if (isPPD && selectedYear === reportStartDates['ppd'].getFullYear()) {
+                // getting custom months for PPD
                 months = _.filter(monthsCopy, function (month) {
                     return month.id >= reportStartDates['ppd'].getMonth() + 1;
                 });
@@ -132,6 +133,8 @@ window.angular.module('icdsApp').factory('dateHelperService', ['$location', func
         return date;
     }
     function getLatestQuarterAvailable() {
+        // this function returns the latest quarter for which data is available along with the year to which this quarter belongs to.
+        // if the year is still in its first quarter, it returns previous year and 4th quarter of last year
         var currentDate = new Date();
         var maxQuarterInCurrentYear = Math.floor(currentDate.getMonth() / 3);
         return {
@@ -140,11 +143,11 @@ window.angular.module('icdsApp').factory('dateHelperService', ['$location', func
         };
     }
     function getSelectedQuarterAndYear() {
+        // this function handles if data for selected quarter and year is not available
         var latestQuarter = getLatestQuarterAvailable();
         var selectedQuarter = parseInt($location.search()['quarter']) || latestQuarter['quarter'];
         var selectedYear =  parseInt($location.search()['year']) || latestQuarter['year'];
 
-        // if data for selected quarter is not yet available, setting it to the latest quarter
         if (selectedYear > latestQuarter['year']) {
             selectedQuarter = latestQuarter['quarter'];
             selectedYear = latestQuarter['year'];
@@ -196,6 +199,11 @@ window.angular.module('icdsApp').factory('dateHelperService', ['$location', func
         }
     }
     function getCustomAvailableQuarters(selectedYear, selectedQuarter, quarters) {
+        // displaying available quarters for a selected year
+        // for 2019, displaying from 2nd quarter and if current year is selected, displaying till the latest quarter
+        // This function never receives an year which is still in its first quarter as parameter. That is handled in
+        // the places where this function is called. (restricted showing the year in the date filter if it is still in
+        // its first quarter)
         var quartersCopy = window.angular.copy(quarters);
         var currentDate = new Date();
         var maxQuarterInCurrentYear = Math.floor(currentDate.getMonth() / 3);

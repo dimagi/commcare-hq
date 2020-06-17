@@ -7,7 +7,7 @@ function MonthModalController($location, $uibModalInstance, dateHelperService, q
     vm.years = [];
     vm.monthsCopy = [];
     vm.showMessage = false;
-    vm.showPPDMessage = false;
+    vm.showPPDMessage = false; // this is set to true if the selected data is less than PPD start date
     vm.quartersOfYear = window.angular.copy(quartersOfYear);
     vm.quartersOfYearDisplayed = [];
     var reportStartDates = dateHelperService.getReportStartDates();
@@ -23,6 +23,7 @@ function MonthModalController($location, $uibModalInstance, dateHelperService, q
     var currentDate = new Date();
     var maxYear = dateHelperService.checkAndGetValidDate(currentDate).getFullYear();
     if (isPPD && isQuarterlyDataPeriodSelected) {
+        // max year in date filter is set based upon the latest quarter for which data is available
         maxYear = dateHelperService.getLatestQuarterAvailable()['year'];
     }
 
@@ -132,6 +133,7 @@ function MonthFilterController($scope, $location, $uibModal, storageService, dat
     vm.maxMonth = dateHelperService.checkAndGetValidDate(new Date()).getMonth() + 1;
     vm.maxYear = dateHelperService.checkAndGetValidDate(new Date()).getFullYear();
 
+    // if moved out of PPD, then data_period and quarter is removed from url params
     if (isPPD) {
         var isQuarterlyDataPeriodSelected = $location.search()['data_period'] === 'quarter';
         var isQuarterSelected = $location.search()['quarter'] || false;
@@ -191,6 +193,7 @@ function MonthFilterController($scope, $location, $uibModal, storageService, dat
         });
 
         modalInstance.result.then(function (data) {
+            // Upon closing modal, params in the url are updated based on data_period type
             if(isPPD && isQuarterlyDataPeriodSelected) {
                 dateHelperService.updateSelectedQuarter(data['quarter'], data['year']);
             } else {
@@ -226,6 +229,7 @@ function MonthFilterController($scope, $location, $uibModal, storageService, dat
     vm.init = function () {
         var selectedDate = dateHelperService.getValidSelectedDate();
 
+        // opening date filter if selected date is less than corresponding report start date
         if ((($location.path().indexOf('service_delivery_dashboard') !== -1 &&
             selectedDate < new Date(2019, 1)) ||
             (($location.path().indexOf('poshan_progress_dashboard') !== -1 &&

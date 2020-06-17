@@ -58,6 +58,7 @@
                   <td class="text-center" ng-if="row[1]">{$ row[1]['Best performers'][0]['place'] $}<br>{$ row[1]['Best performers'][0]['value'] $}</td>
                   <td class="text-center" ng-if="row[1]">{$ row[1]['Worst performers'][0]['place'] $}<br>{$ row[1]['Worst performers'][0]['value'] $}</td>
                 </tr>
+                {# dynamically showing table rows (apart from first row) based on total number of rows, backend is sending   #}
                 <tr ng-init="numberOfEntries = $ctrl.getRowSpan(row[0], row[1])" ng-repeat-end
                     ng-repeat="x in [].constructor(numberOfEntries) | limitTo : (1 - numberOfEntries) track by $index">
                   <td class="text-center">{$ row[0]['Best performers'][$index + 1]['place'] $}<br>{$ row[0]['Best performers'][$index + 1]['value'] $}</td>
