@@ -1,6 +1,7 @@
 import io
 import itertools
 import zipfile
+from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 
 from openpyxl import Workbook
@@ -52,7 +53,7 @@ from custom.icds.location_reassignment.utils import (
 )
 
 
-class Download(object):
+class DownloadUsers(object):
     def __init__(self, location):
         """
         Generates an Excel file stream
@@ -201,77 +202,104 @@ class Download(object):
             worksheet.append(headers)
 
 
-class Households(object):
-    """
-    Download Household cases assigned the old locations undergoing transition
-    """
+class DownloadCases(metaclass=ABCMeta):
     valid_operations = [SPLIT_OPERATION, EXTRACT_OPERATION]
-    headers = [AWC_NAME_COLUMN, AWC_CODE_COLUMN, 'Name of Household', 'Date of Registration', 'Religion',
-               'Caste', 'APL/BPL', 'Number of Household Members', HOUSEHOLD_MEMBER_DETAILS_COLUMN,
-               HOUSEHOLD_ID_COLUMN]
+    headers = None
 
     def __init__(self, domain):
         self.domain = domain
+        self.case_accessor = CaseAccessors(domain)
+
+    @abstractmethod
+    def dump(self, transitions):
+        """
+        :param transitions: transition objects
+        :return: filestream
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def _generate_data(self, transitions):
+        raise NotImplementedError
+
+    @abstractmethod
+    def _get_rows_for_location(self, location):
+        raise NotImplementedError
+
+    @abstractmethod
+    def _get_row_for_case(self, location, case):
+        raise NotImplementedError
+
+    def _dump_to_excel(self, sheets):
+        stream = io.BytesIO()
+        headers = [[site_code, self.headers] for site_code in sheets]
+        export_raw(headers, sheets.items(), stream)
+        stream.seek(0)
+        return stream
+
+
+class Households(DownloadCases):
+    """
+    Download Household cases assigned the old locations undergoing transition
+    """
+    headers = [AWC_NAME_COLUMN, AWC_CODE_COLUMN, 'Name of Household', 'Date of Registration', 'Religion',
+               'Caste', 'APL/BPL', 'Number of Household Members', HOUSEHOLD_MEMBER_DETAILS_COLUMN,
+               HOUSEHOLD_ID_COLUMN]
 
     def dump(self, transitions):
         """
         :return: excel workbook with each tab titled as old location's site code,
         which holds details all household cases assigned to it
         """
+        sheets = self._generate_data(transitions)
+        if sheets:
+            return self._dump_to_excel(sheets)
+
+    def _generate_data(self, transitions):
         rows = {}
         for transition in transitions:
             operation = transition.operation
             if operation in self.valid_operations:
-                rows.update(self._get_rows_for_transition(transition))
-        if rows:
-            stream = io.BytesIO()
-            headers = [[site_code, self.headers] for site_code in rows]
-            export_raw(headers, rows.items(), stream)
-            stream.seek(0)
-            return stream
-
-    def _get_rows_for_transition(self, transition):
-        rows = {}
-        for site_code in transition.old_site_codes:
-            rows[site_code] = self._build_rows(site_code)
+                rows_for_transition = {}
+                for site_code in transition.old_site_codes:
+                    location = SQLLocation.active_objects.get(domain=self.domain, site_code=site_code)
+                    rows_for_transition[site_code] = self._get_rows_for_location(location)
+                rows.update(rows_for_transition)
         return rows
 
-    def _build_rows(self, site_code):
+    def _get_rows_for_location(self, location):
         rows = []
-        location = SQLLocation.active_objects.get(domain=self.domain, site_code=site_code)
         case_ids = get_household_case_ids(self.domain, location.location_id)
         for case_id in case_ids:
-            household_case = CaseAccessors(self.domain).get_case(case_id)
-            person_cases = get_household_child_cases_by_owner(
-                self.domain, case_id, location.location_id, [PERSON_CASE_TYPE])
-            rows.append([
-                '',
-                '',
-                household_case.name,
-                household_case.get_case_property('hh_reg_date'),
-                household_case.get_case_property('hh_religion'),
-                household_case.get_case_property('hh_caste'),
-                household_case.get_case_property('hh_bpl_apl'),
-                len(person_cases),
-                ", ".join([
-                    "%s (%s/%s)" % (
-                        case.name, case.get_case_property('age_at_reg'), case.get_case_property('sex'))
-                    for case in person_cases
-                ]),
-                household_case.case_id
-            ])
+            rows.append(self._get_row_for_case(location, self.case_accessor.get_case(case_id)))
         return rows
 
+    def _get_row_for_case(self, location, case):
+        person_cases = get_household_child_cases_by_owner(
+            self.domain, case.case_id, location.location_id, [PERSON_CASE_TYPE])
+        return [
+            '',
+            '',
+            case.name,
+            case.get_case_property('hh_reg_date'),
+            case.get_case_property('hh_religion'),
+            case.get_case_property('hh_caste'),
+            case.get_case_property('hh_bpl_apl'),
+            len(person_cases),
+            ", ".join([
+                "%s (%s/%s)" % (
+                    case.name, case.get_case_property('age_at_reg'), case.get_case_property('sex'))
+                for case in person_cases
+            ]),
+            case.case_id
+        ]
 
-class OtherCases(object):
+
+class OtherCases(DownloadCases):
     """
     Download other cases that are not households or child cases of households
     """
-    valid_operations = [SPLIT_OPERATION, EXTRACT_OPERATION]
     headers = [NEW_NAME, NEW_SITE_CODE_COLUMN, CASE_NAME, CASE_ID_COLUMN]
-
-    def __init__(self, domain):
-        self.domain = domain
 
     def dump(self, transitions):
         """
@@ -298,30 +326,24 @@ class OtherCases(object):
         for transition in transitions:
             operation = transition.operation
             if operation in self.valid_operations:
-                for old_site_code in transition.old_site_codes:
-                    for case_type, rows in self._get_rows_for_location(old_site_code).items():
-                        data[case_type][old_site_code] = rows
+                for site_code in transition.old_site_codes:
+                    location = SQLLocation.active_objects.get(domain=self.domain, site_code=site_code)
+                    for case_type, rows in self._get_rows_for_location(location).items():
+                        data[case_type][site_code] = rows
         return data
 
-    def _get_rows_for_location(self, site_code):
+    def _get_rows_for_location(self, location):
         rows_per_case_type = defaultdict(list)
-        location = SQLLocation.active_objects.get(domain=self.domain, site_code=site_code)
         _, case_ids = get_case_ids_for_reassignment(self.domain, location.location_id)
-        if not case_ids:
-            return rows_per_case_type
-        cases = CaseAccessors(self.domain).get_cases(case_ids)
-        for case in cases:
-            rows_per_case_type[case.type].append([
-                '',
-                '',
-                case.name,
-                case.case_id
-            ])
+        if case_ids:
+            for case in self.case_accessor.get_cases(case_ids):
+                rows_per_case_type[case.type].append(self._get_row_for_case(location, case))
         return rows_per_case_type
 
-    def _dump_to_excel(self, sheets):
-        stream = io.BytesIO()
-        headers = [[site_code, self.headers] for site_code in sheets]
-        export_raw(headers, sheets.items(), stream)
-        stream.seek(0)
-        return stream
+    def _get_row_for_case(self, location, case):
+        return [
+            '',
+            '',
+            case.name,
+            case.case_id
+        ]

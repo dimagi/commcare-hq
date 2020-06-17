@@ -66,6 +66,7 @@ from custom.icds_reports.const import (
     CAS_API_PAGE_SIZE,
     SERVICE_DELIVERY_REPORT,
     CHILD_GROWTH_TRACKER_REPORT,
+    POSHAN_PROGRESS_REPORT,
     AWW_ACTIVITY_REPORT
 )
 from custom.icds_reports.dashboard_utils import get_dashboard_template_context
@@ -171,6 +172,11 @@ from custom.icds_reports.reports.lactating_enrolled_women import (
 )
 from custom.icds_reports.reports.lady_supervisor import (
     get_lady_supervisor_data,
+)
+from custom.icds_reports.reports.ls_launched import (
+    get_ls_launched_data_chart,
+    get_ls_launched_data_map,
+    get_ls_launched_sector_data,
 )
 from custom.icds_reports.reports.medicine_kit import (
     get_medicine_kit_data_chart,
@@ -1059,6 +1065,12 @@ class ExportIndicatorView(View):
                 return HttpResponseBadRequest()
             config = beneficiary_config
 
+        if indicator == POSHAN_PROGRESS_REPORT:
+            config['report_layout'] = request.POST.get('report_layout')
+            config['data_period'] = request.POST.get('data_period')
+            config['quarter'] = int(request.POST.get('quarter'))
+            config['year'] = year
+
         if indicator == AWW_ACTIVITY_REPORT:
             if not sql_location or sql_location.location_type_name not in [
                 LocationTypes.STATE, LocationTypes.DISTRICT, LocationTypes.BLOCK, LocationTypes.SUPERVISOR
@@ -1069,7 +1081,8 @@ class ExportIndicatorView(View):
         if indicator in (CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT,
                          AWC_INFRASTRUCTURE_EXPORT, GROWTH_MONITORING_LIST_EXPORT, AWW_INCENTIVE_REPORT,
                          LS_REPORT_EXPORT, THR_REPORT_EXPORT, DASHBOARD_USAGE_EXPORT,
-                         SERVICE_DELIVERY_REPORT, CHILD_GROWTH_TRACKER_REPORT, AWW_ACTIVITY_REPORT):
+                         SERVICE_DELIVERY_REPORT, CHILD_GROWTH_TRACKER_REPORT, AWW_ACTIVITY_REPORT,
+                         POSHAN_PROGRESS_REPORT):
             task = prepare_excel_reports.delay(
                 config,
                 aggregation_level,
@@ -1530,6 +1543,38 @@ class AWCsCoveredView(BaseReportView):
         loc_level = get_location_level(config.get('aggregation_level'))
 
         data = get_awc_covered_data_with_retrying(step, domain, config, loc_level, location, include_test)
+
+        return JsonResponse(data={
+            'report_data': data,
+        })
+
+
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
+class LSsLaunchedView(BaseReportView):
+    def get(self, request, *args, **kwargs):
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
+
+        config = {
+            'month': tuple(selected_month.timetuple())[:3],
+            'aggregation_level': 1,
+        }
+        config.update(get_location_filter(location, self.kwargs['domain']))
+        loc_level = get_location_level(config.get('aggregation_level'))
+
+        data = {}
+        if step == "map":
+            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+                data = get_ls_launched_sector_data(domain, config, loc_level, location, include_test)
+            else:
+                data = get_ls_launched_data_map(domain, config.copy(), loc_level, include_test)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_ls_launched_sector_data(
+                        domain, config, loc_level, location, include_test
+                    )
+                    data.update(sector)
+        elif step == "chart":
+            data = get_ls_launched_data_chart(domain, config, loc_level, include_test)
 
         return JsonResponse(data={
             'report_data': data,

@@ -105,7 +105,7 @@ urlpatterns = [
         MobileWorkerListView.as_view(),
         name=MobileWorkerListView.urlname),
     url(r'^commcare/json/$', paginate_mobile_workers, name='paginate_mobile_workers'),
-    url(r'^commcare/fields/$', UserFieldsView.as_view(), name=UserFieldsView.urlname),
+    url(r'^commcare/fields/$', waf_allow('XSS_BODY')(UserFieldsView.as_view()), name=UserFieldsView.urlname),
     url(r'^commcare/account/(?P<couch_user_id>[ \w-]+)/$', EditCommCareUserView.as_view(),
         name=EditCommCareUserView.urlname),
     url(r'^commcare/account/(?P<couch_user_id>[ \w-]+)/user_data/$', update_user_data, name='update_user_data'),

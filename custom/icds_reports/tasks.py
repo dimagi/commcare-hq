@@ -68,6 +68,7 @@ from custom.icds_reports.const import (
     DASHBOARD_USAGE_EXPORT,
     SERVICE_DELIVERY_REPORT,
     CHILD_GROWTH_TRACKER_REPORT,
+    POSHAN_PROGRESS_REPORT,
     AWW_ACTIVITY_REPORT
 )
 from custom.icds_reports.models import (
@@ -134,6 +135,7 @@ from custom.icds_reports.sqldata.exports.growth_tracker_report import GrowthTrac
 from custom.icds_reports.sqldata.exports.lady_supervisor import (
     LadySupervisorExport,
 )
+from custom.icds_reports.sqldata.exports.poshan_progress_report import PoshanProgressReport
 from custom.icds_reports.sqldata.exports.pregnant_women import (
     PregnantWomenExport,
 )
@@ -152,7 +154,9 @@ from custom.icds_reports.utils import (
     zip_folder,
     get_dashboard_usage_excel_file,
     create_service_delivery_report,
-    create_child_growth_tracker_report, create_aww_activity_report
+    create_child_growth_tracker_report,
+    create_poshan_progress_report,
+    create_aww_activity_report
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     ChildHealthMonthlyAggregationDistributedHelper,
@@ -1048,8 +1052,6 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
 
-        formatted_timestamp = datetime.now().strftime("%d-%m-%Y__%H-%M-%S")
-        data_type = 'Child Growth Tracker Report__{}'.format(formatted_timestamp)
     elif indicator == AWW_ACTIVITY_REPORT:
         data_type = 'AWW_Activity_Report'
         excel_data = AwwActivityExport(
@@ -1073,12 +1075,30 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
 
+    elif indicator == POSHAN_PROGRESS_REPORT:
+        data_type = 'Poshan_Progress_Report'
+        excel_data = PoshanProgressReport(
+            config=config,
+            loc_level=aggregation_level,
+            show_test=include_test,
+            beta=beta
+        ).get_excel_data(location)
+        export_info = excel_data[1][1]
+        generated_timestamp = date_parser.parse(export_info[0][1])
+        formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
+        report_layout = config['report_layout']
+        data_type = 'Poshan Progress Report {report_layout}__{formatted_timestamp}'.format(
+            report_layout=report_layout,
+            formatted_timestamp=formatted_timestamp)
 
-
+        if file_format == 'xlsx':
+            cache_key = create_poshan_progress_report(excel_data, data_type, config, aggregation_level)
+        else:
+            cache_key = create_excel_file(excel_data, data_type, file_format)
 
     if indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT, THR_REPORT_EXPORT, CHILDREN_EXPORT,
                          DASHBOARD_USAGE_EXPORT, SERVICE_DELIVERY_REPORT, CHILD_GROWTH_TRACKER_REPORT,
-                         AWW_ACTIVITY_REPORT):
+                         AWW_ACTIVITY_REPORT, POSHAN_PROGRESS_REPORT):
         if file_format == 'xlsx' and beta:
             cache_key = create_excel_file_in_openpyxl(excel_data, data_type)
         else:

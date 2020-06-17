@@ -47,11 +47,11 @@ class LocationTypeResource(BaseLocationsResource):
             "domain": ('exact',),
         }
 
-    def get_resource_uri(self, bundle_or_obj=None):
+    def get_resource_uri(self, bundle_or_obj=None, url_name='api_dispatch_list'):
         if isinstance(bundle_or_obj, Bundle):
             obj = bundle_or_obj.obj
         elif bundle_or_obj is None:
-            return None
+            return super().get_resource_uri(bundle_or_obj, url_name)
         else:
             obj = bundle_or_obj
 
@@ -96,11 +96,11 @@ class LocationResource(BaseLocationsResource):
             'longitude': ALL,
         }
 
-    def get_resource_uri(self, bundle_or_obj=None):
+    def get_resource_uri(self, bundle_or_obj=None, url_name='api_dispatch_list'):
         if isinstance(bundle_or_obj, Bundle):
             obj = bundle_or_obj.obj
         elif bundle_or_obj is None:
-            return None
+            return super().get_resource_uri(bundle_or_obj, url_name)
         else:
             obj = bundle_or_obj
 
