@@ -351,7 +351,13 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
         if isinstance(self.spec, ReportConfiguration) and self.spec.report_meta.builder_report_type == 'map':
             context['report_table']['default_rows'] = 100
         if self.request.couch_user.is_staff:
-            context['queries'] = self.data_source.data_source.get_query_strings()
+            if hasattr(self.data_source, 'data_source'):
+                context['queries'] = self.data_source.data_source.get_query_strings()
+            elif hasattr(self.data_source, 'original_data_source'):
+                # CombinedDataSource does not have a `data_source` attribute,
+                # but it does have an `original_data_source` attribute. Useful?
+                context['queries'] = self.data_source.original_data_source.data_source.get_query_strings()
+                # Yeah. It's turtles all the way down.
         return context
 
     def pop_report_builder_context_data(self):
