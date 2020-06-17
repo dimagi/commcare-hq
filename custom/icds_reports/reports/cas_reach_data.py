@@ -4,12 +4,13 @@ from dateutil.relativedelta import relativedelta
 from django.db.models.aggregates import Sum, Max
 from django.utils.translation import ugettext as _
 
-from custom.icds_reports.messages import awcs_launched_help_text
+from custom.icds_reports.messages import awcs_launched_help_text, ls_launched_help_text
 from custom.icds_reports.models import AggAwcMonthly, AggAwcDailyView
+from custom.icds_reports.models.views import SystemUsageReportView
 from custom.icds_reports.utils import get_value, percent_increase, apply_exclude, get_color_with_green_positive
 
 
-def get_cas_reach_data(domain, now_date, config, show_test=False):
+def get_cas_reach_data(domain, now_date, config, show_test=False, show_prerelease_features=False):
     now_date = datetime(*now_date)
 
     def get_data_for_awc_monthly(month, filters):
@@ -38,6 +39,18 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
             'aggregation_level'
         ).annotate(
             daily_attendance=Sum('daily_attendance_open')
+        )
+        if not show_test:
+            queryset = apply_exclude(domain, queryset)
+        return queryset
+
+    def get_data_for_ls_launched(month, filters):
+        queryset = SystemUsageReportView.objects.filter(
+            month=month, **filters
+        ).values(
+            'aggregation_level'
+        ).annotate(
+            ls_launched=Sum('num_supervisor_launched')
         )
         if not show_test:
             queryset = apply_exclude(domain, queryset)
@@ -91,62 +104,105 @@ def get_cas_reach_data(domain, now_date, config, show_test=False):
             'frequency': 'month',
         }
 
-    return {
-        'records': [
+    awcs_launched = {
+        'label': _('AWCs Launched'),
+        'help_text': awcs_launched_help_text(),
+        'color': None,
+        'percent': None,
+        'value': awcs,
+        'all': None,
+        'format': 'number',
+        'frequency': 'month',
+        'redirect': 'icds_cas_reach/awcs_covered'
+    }
+
+    sectors_covered = {
+        'label': _('Sectors covered'),
+        'help_text': _('Total Sectors that have launched ICDS CAS'),
+        'percent': None,
+        'value': get_value(awc_this_month_data, 'sectors'),
+        'all': None,
+        'format': 'number',
+        'frequency': 'month',
+    }
+
+    blocks_covered = {
+        'label': _('Blocks covered'),
+        'help_text': _('Total Blocks that have launched ICDS CAS'),
+        'percent': None,
+        'value': get_value(awc_this_month_data, 'blocks'),
+        'all': None,
+        'format': 'number',
+        'frequency': 'month',
+    }
+
+    districts_covered = {
+        'label': _('Districts covered'),
+        'help_text': _('Total Districts that have launched ICDS CAS'),
+        'percent': None,
+        'value': get_value(awc_this_month_data, 'districts'),
+        'all': None,
+        'format': 'number',
+        'frequency': 'month',
+    }
+
+    states_covered = {
+        'label': _('States/UTs covered'),
+        'help_text': _('Total States that have launched ICDS CAS'),
+        'percent': None,
+        'value': get_value(awc_this_month_data, 'states'),
+        'all': None,
+        'format': 'number',
+        'frequency': 'month',
+    }
+
+    cas_reach_records = [
+        [
+            awcs_launched,
+            number_of_awc_open_yesterday
+        ],
+        [
+            sectors_covered,
+            blocks_covered
+        ],
+        [
+            districts_covered,
+            states_covered
+        ]
+    ]
+
+    if show_prerelease_features:
+        ls_launched_data = get_data_for_ls_launched(current_month, config)
+        number_of_lss_launched = {
+            'label': _('LSs Launched'),
+            'help_text': ls_launched_help_text(),
+            'color': None,
+            'percent': None,
+            'value': get_value(ls_launched_data, 'ls_launched'),
+            'all': None,
+            'format': 'number',
+            'frequency': 'month',
+            'redirect': 'icds_cas_reach/ls_launched'
+        }
+
+        cas_reach_records = [
             [
-                {
-                    'label': _('AWCs Launched'),
-                    'help_text': awcs_launched_help_text(),
-                    'color': None,
-                    'percent': None,
-                    'value': awcs,
-                    'all': None,
-                    'format': 'number',
-                    'frequency': 'month',
-                    'redirect': 'icds_cas_reach/awcs_covered'
-                },
+                awcs_launched,
                 number_of_awc_open_yesterday
             ],
             [
-                {
-                    'label': _('Sectors covered'),
-                    'help_text': _('Total Sectors that have launched ICDS CAS'),
-                    'percent': None,
-                    'value': get_value(awc_this_month_data, 'sectors'),
-                    'all': None,
-                    'format': 'number',
-                    'frequency': 'month',
-                },
-                {
-                    'label': _('Blocks covered'),
-                    'help_text': _('Total Blocks that have launched ICDS CAS'),
-                    'percent': None,
-                    'value': get_value(awc_this_month_data, 'blocks'),
-                    'all': None,
-                    'format': 'number',
-                    'frequency': 'month',
-                },
+                number_of_lss_launched,
+                sectors_covered
             ],
             [
-
-                {
-                    'label': _('Districts covered'),
-                    'help_text': _('Total Districts that have launched ICDS CAS'),
-                    'percent': None,
-                    'value': get_value(awc_this_month_data, 'districts'),
-                    'all': None,
-                    'format': 'number',
-                    'frequency': 'month',
-                },
-                {
-                    'label': _('States/UTs covered'),
-                    'help_text': _('Total States that have launched ICDS CAS'),
-                    'percent': None,
-                    'value': get_value(awc_this_month_data, 'states'),
-                    'all': None,
-                    'format': 'number',
-                    'frequency': 'month',
-                }
+                blocks_covered,
+                districts_covered
+            ],
+            [
+                states_covered
             ]
         ]
+
+    return {
+        'records': cas_reach_records
     }

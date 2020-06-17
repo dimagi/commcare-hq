@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from custom.icds_reports.messages import awcs_launched_help_text
+from custom.icds_reports.messages import awcs_launched_help_text, ls_launched_help_text
 from custom.icds_reports.reports.cas_reach_data import get_cas_reach_data
 
 
@@ -77,6 +77,101 @@ class TestICDSCASReach(TestCase):
                             'format': 'number',
                             'percent': None,
                             'value': 3,
+                            'label': 'States/UTs covered',
+                            'frequency': 'month',
+                            'help_text': 'Total States that have launched ICDS CAS'
+                        }
+                    ]
+                ]
+            }
+        )
+
+    def test_data_for_ff_user(self):
+        self.assertDictEqual(
+            get_cas_reach_data(
+                'icds-cas',
+                (2020, 4, 1),
+                {
+                    'month': (2020, 2, 1),
+                    'prev_month': (2020, 1, 1),
+                    'aggregation_level': 1
+                },
+                show_test=False,
+                show_prerelease_features=True,
+            ),
+            {
+                "records": [
+                    [
+                        {
+                            'redirect': 'icds_cas_reach/awcs_covered',
+                            'all': None,
+                            'color': None,
+                            'format': 'number',
+                            'percent': None,
+                            'value': 0,
+                            'label': 'AWCs Launched',
+                            'frequency': 'month',
+                            'help_text': awcs_launched_help_text()
+                        },
+                        {
+                            'all': 0,
+                            'format': 'number_and_percent',
+                            'color': 'green',
+                            'percent': 'Data in the previous reporting period was 0',
+                            'value': 0,
+                            'label': 'Number of AWCs open for at least one day in month',
+                            'frequency': 'month',
+                            'help_text': 'Total Number of AWCs open for at least one day in month'
+                        }
+                    ],
+                    [
+                        {
+                            'all': None,
+                            'color': None,
+                            'format': 'number',
+                            'frequency': 'month',
+                            'help_text': ls_launched_help_text(),
+                            'label': 'LSs Launched',
+                            'percent': None,
+                            'redirect': 'icds_cas_reach/ls_launched',
+                            'value': 0
+                        },
+                        {
+                            'all': None,
+                            'format': 'number',
+                            'percent': None,
+                            'value': 0,
+                            'label': 'Sectors covered',
+                            'frequency': 'month',
+                            'help_text': 'Total Sectors that have launched ICDS CAS'
+                        }
+                    ],
+                    [
+                        {
+                            'all': None,
+                            'format': 'number',
+                            'percent': None,
+                            'value': 0,
+                            'label': 'Blocks covered',
+                            'frequency': 'month',
+                            'help_text': 'Total Blocks that have launched ICDS CAS'
+                        },
+                        {
+                            'all': None,
+                            'format': 'number',
+                            'percent': None,
+                            'value': 0,
+                            'label': 'Districts covered',
+                            'frequency': 'month',
+                            'help_text': 'Total Districts that have launched ICDS CAS'
+                        }
+                    ],
+                    [
+                        {
+                            'all': None,
+                            'format': 'number',
+                            'percent': None,
+                            'value': 0,
                             'label': 'States/UTs covered',
                             'frequency': 'month',
                             'help_text': 'Total States that have launched ICDS CAS'
