@@ -20,7 +20,7 @@ from corehq.apps.linked_domain.const import (
     MODEL_PRODUCT_DATA,
     MODEL_USER_DATA,
     MODEL_REPORT,
-    MODELS_ROLES,
+    MODEL_ROLES,
 )
 from corehq.apps.linked_domain.local_accessors import \
     get_custom_data_models as local_custom_data_models
@@ -51,7 +51,7 @@ from corehq.toggles import NAMESPACE_DOMAIN
 def update_model_type(domain_link, model_type, model_detail=None):
     update_fn = {
         MODEL_FLAGS: update_toggles_previews,
-        MODELS_ROLES: update_user_roles,
+        MODEL_ROLES: update_user_roles,
         MODEL_LOCATION_DATA: partial(update_custom_data_models, limit_types=[LocationFieldsView.field_type]),
         MODEL_PRODUCT_DATA: partial(update_custom_data_models, limit_types=[ProductFieldsView.field_type]),
         MODEL_USER_DATA: partial(update_custom_data_models, limit_types=[UserFieldsView.field_type]),
