@@ -128,4 +128,5 @@ class DailyIntakeData:
 
 
 def _sum(items):
-    return sum(filter(None, items))
+    real_items = [item for item in items if item is not None]
+    return sum(real_items) if real_items else None

@@ -123,7 +123,6 @@ from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.tasks import prune_auto_generated_builds
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.util import (
-    LatestAppInfo,
     actions_use_usercase,
     expire_get_latest_app_release_by_location_cache,
     get_and_assert_practice_user_in_domain,
@@ -131,7 +130,6 @@ from corehq.apps.app_manager.util import (
     get_latest_app_release_by_location,
     get_latest_enabled_build_for_profile,
     get_latest_enabled_versions_per_profile,
-    is_linked_app,
     is_remote_app,
     is_usercase_in_use,
     module_offers_search,
@@ -423,6 +421,8 @@ class FormActions(DocumentSchema):
         names.update(list(self.case_preload.preload.values()))
         for subcase in self.subcases:
             names.update(list(subcase.case_properties.keys()))
+        names.update(list(self.usercase_update.update.keys()))
+        names.update(list(self.usercase_preload.preload.values()))
         return names
 
     def count_subcases_per_repeat_context(self):
@@ -4043,7 +4043,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     @property
     @memoized
     def global_app_config(self):
-        return GlobalAppConfig.for_app(self)
+        return GlobalAppConfig.by_app(self)
 
     def rename_lang(self, old_lang, new_lang):
         validate_lang(new_lang)
@@ -4452,9 +4452,9 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         self.last_modified = datetime.datetime.utcnow()
         if not self._rev and not domain_has_apps(self.domain):
             domain_has_apps.clear(self.domain)
-
-        LatestAppInfo(self.master_id, self.domain).clear_caches()
-
+        if self.get_id:
+            # expire cache unless new application
+            self.global_app_config.clear_version_caches()
         get_all_case_properties.clear(self)
         get_usercase_properties.clear(self)
         get_app_languages.clear(self.domain)
@@ -5754,19 +5754,69 @@ class GlobalAppConfig(models.Model):
     class Meta(object):
         unique_together = ('domain', 'app_id')
 
+    _app = None
+
     @classmethod
-    def for_app(cls, app):
+    def by_app(cls, app):
         model, created = cls.objects.get_or_create(app_id=app.master_id, domain=app.domain, defaults={
             'apk_version': LATEST_APK_VALUE,
             'app_version': LATEST_APP_VALUE,
         })
+        model._app = app
         return model
 
+    @classmethod
+    def by_app_id(cls, domain, app_id):
+        app = get_app(domain, app_id, latest=True, target='release')
+        assert app_id == app.master_id, "this class doesn't handle copy app ids"
+        return cls.by_app(app)
+
     def save(self, force_insert=False, force_update=False, using=DEFAULT_DB_ALIAS, update_fields=None):
-        LatestAppInfo(self.app_id, self.domain).clear_caches()
+        if self.pk:
+            self.clear_version_caches()
         super().save(
             force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields
         )
+
+    @quickcache(['self.app_id'])
+    def get_latest_apk_version(self):
+        if self.apk_prompt == "off":
+            return {}
+        else:
+            configured_version = self.apk_version
+            if configured_version == LATEST_APK_VALUE:
+                value = get_default_build_spec().version
+            else:
+                value = BuildSpec.from_string(configured_version).version
+            force = self.apk_prompt == "forced"
+            return {"value": value, "force": force}
+
+    @quickcache(['self.app_id', 'build_profile_id'])
+    def get_latest_app_version(self, build_profile_id):
+        if self.app_prompt == "off":
+            return {}
+        else:
+            force = self.app_prompt == "forced"
+            app_version = self.app_version
+            if app_version != LATEST_APP_VALUE:
+                return {"value": app_version, "force": force}
+            else:
+                if not self._app or not self._app.is_released:
+                    return {}
+                else:
+                    version = self._app.version
+                    if build_profile_id:
+                        latest = LatestEnabledBuildProfiles.for_app_and_profile(self.app_id, build_profile_id)
+                        if latest:
+                            version = latest.version
+                    return {"value": version, "force": force}
+
+    def clear_version_caches(self):
+        build_profile_ids = self._app.build_profiles.keys()
+        self.get_latest_app_version.clear(self, '')
+        self.get_latest_apk_version.clear(self)
+        for build_profile_id in build_profile_ids:
+            self.get_latest_app_version.clear(self, build_profile_id)
 
 
 class AppReleaseByLocation(models.Model):
@@ -5858,6 +5908,7 @@ class LatestEnabledBuildProfiles(models.Model):
 
     def save(self, *args, **kwargs):
         super(LatestEnabledBuildProfiles, self).save(*args, **kwargs)
+        GlobalAppConfig.by_app_id(self.domain, self.app_id).clear_version_caches()
         self.expire_cache(self.domain)
 
     @property

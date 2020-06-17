@@ -105,7 +105,7 @@ def default_data_view_url(request, domain):
     if can_download_data_files(domain, request.couch_user):
         return reverse(DataFileDownloadList.urlname, args=[domain])
 
-    if request.couch_user.can_edit_data:
+    if request.couch_user.can_edit_data():
         return CaseReassignmentInterface.get_url(domain)
 
     raise Http404()

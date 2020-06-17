@@ -59,13 +59,13 @@ branches:
   - jls/push-linked-apps # Jenny May 31
   - ap/lazy-load-multimedia # Amit June 5
   - fr/multiple-api-keys  # Conflicting migrations with ce/web-apps-permissions
-  - jls/DRYer-case-config-ui-3 # Jenny June 6
   - revert-27725-jls/kill-configurable-timeout # Jenny June 9
-  - nemanja1040:turn_gateway_improvements  # Nemanja Stancic June 10
-  - fr/bounced-email-in-reports # Farid June 14
+  - fr/bounced-email-in-reports+kev/sms-messaging-email-filter             # Farid June 15
+  - jls/messaging-history-error-code-filter+kev/sms-messaging-email-filter # Jenny June 15
   - jls/messaging-history-error-code-filter # Jenny June 15
-  - kev/sms-messaging-email-model # Kevin June 15
   - kev/sms-messaging-email-filter # Kevin June 15
-  - ce/email-detail # Cal June 15
+  - ce/email-details # Cal June 15
+  - fr/bounced-email-in-reports # Farid June 15
+  - nemanja1040:aws_pinpoint_fees  # Nemanja Stancic June 17
 
 submodules: {}
