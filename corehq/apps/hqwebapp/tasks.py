@@ -37,10 +37,13 @@ def send_mail_async(self, subject, message, from_email, recipient_list, messagin
     recipient_list = [_f for _f in recipient_list if _f]
 
     # todo deal with recipients marked as bounced
-    from dimagi.utils.django.email import get_valid_recipients
-    recipient_list = get_valid_recipients(recipient_list)
+    from dimagi.utils.django.email import get_valid_recipients, mark_subevent_bounced
+    filtered_recipient_list = get_valid_recipients(recipient_list)
+    bounced_recipients = list(set(recipient_list) - set(filtered_recipient_list))
+    if bounced_recipients and messaging_event_id:
+        mark_subevent_bounced(bounced_recipients, messaging_event_id)
 
-    if not recipient_list:
+    if not filtered_recipient_list:
         return
 
     headers = {}
@@ -54,7 +57,7 @@ def send_mail_async(self, subject, message, from_email, recipient_list, messagin
             subject=subject,
             body=message,
             from_email=from_email,
-            to=recipient_list,
+            to=filtered_recipient_list,
             headers=headers,
         )
         return message.send()
@@ -75,7 +78,7 @@ def send_mail_async(self, subject, message, from_email, recipient_list, messagin
             message="Encountered error while sending email",
             details={
                 'subject': subject,
-                'recipients': ', '.join(recipient_list),
+                'recipients': ', '.join(filtered_recipient_list),
                 'error': e,
             }
         )
