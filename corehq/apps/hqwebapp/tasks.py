@@ -3,7 +3,9 @@ from smtplib import SMTPDataError
 from django.conf import settings
 from django.core.mail import mail_admins
 from django.core.mail.message import EmailMessage
+from django.utils.translation import ugettext as _
 
+from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab
 from celery.task import task, periodic_task
 
@@ -13,6 +15,23 @@ from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER, SES_CONFIGURAT
 from dimagi.utils.logging import notify_exception
 
 from corehq.util.log import send_HTML_email
+
+
+def mark_subevent_gateway_error(messaging_event_id, error, retrying=False):
+    from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent
+    try:
+        subevent = MessagingSubEvent.objects.get(id=messaging_event_id)
+    except MessagingSubEvent.DoesNotExist:
+        pass
+    else:
+        if retrying:
+            message = "{}. {}".format(str(error), _("Sending will be retried."))
+        else:
+            message = "{}. {}".format(str(error), _("Sending aborted."))
+        subevent.error(
+            MessagingEvent.ERROR_EMAIL_GATEWAY,
+            additional_error_text=message
+        )
 
 
 @task(serializer='pickle', queue="email_queue",
@@ -80,9 +99,14 @@ def send_mail_async(self, subject, message, from_email, recipient_list, messagin
                 'subject': subject,
                 'recipients': ', '.join(filtered_recipient_list),
                 'error': e,
+                'messaging_event_id': messaging_event_id,
             }
         )
-        self.retry(exc=e)
+        mark_subevent_gateway_error(messaging_event_id, e, retrying=True)
+        try:
+            self.retry(exc=e)
+        except MaxRetriesExceededError:
+            mark_subevent_gateway_error(messaging_event_id, e, retrying=False)
 
 
 @task(serializer='pickle', queue="email_queue",
@@ -122,7 +146,12 @@ def send_html_email_async(self, subject, recipient, html_content,
                 'error': e,
             }
         )
-        self.retry(exc=e)
+        try:
+            self.retry(exc=e)
+            mark_subevent_gateway_error(messaging_event_id, e, retrying=True)
+        except MaxRetriesExceededError:
+            from dimagi.utils.django.email import mark_subevent_gateway_error
+            mark_subevent_gateway_error(messaging_event_id, e, retrying=False)
 
 
 @task(serializer='pickle', queue="email_queue",
