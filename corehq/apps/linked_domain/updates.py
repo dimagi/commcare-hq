@@ -25,6 +25,8 @@ from corehq.apps.linked_domain.const import (
 from corehq.apps.linked_domain.local_accessors import \
     get_custom_data_models as local_custom_data_models
 from corehq.apps.linked_domain.local_accessors import \
+    get_fixtures as local_fixtures
+from corehq.apps.linked_domain.local_accessors import \
     get_toggles_previews as local_toggles_previews
 from corehq.apps.linked_domain.local_accessors import \
     get_user_roles as local_get_user_roles
@@ -32,6 +34,8 @@ from corehq.apps.linked_domain.remote_accessors import \
     get_case_search_config as remote_get_case_search_config
 from corehq.apps.linked_domain.remote_accessors import \
     get_custom_data_models as remote_custom_data_models
+from corehq.apps.linked_domain.remote_accessors import \
+    get_fixtures as remote_fixtures
 from corehq.apps.linked_domain.remote_accessors import \
     get_toggles_previews as remote_toggles_previews
 from corehq.apps.linked_domain.remote_accessors import \
@@ -94,6 +98,15 @@ def update_custom_data_models(domain_link, limit_types=None):
         model = CustomDataFieldsDefinition.get_or_create(domain_link.linked_domain, field_type)
         model.fields = [CustomDataField.wrap(field_def) for field_def in field_definitions]
         model.save()
+
+
+def update_fixtures(domain_link):
+    if domain_link.is_remote:
+        master_results = remote_fixtures(domain_link)
+    else:
+        master_results = local_fixtures(domain_link.master_domain)
+
+    # TODO: copy fixture types and data
 
 
 def update_user_roles(domain_link):
