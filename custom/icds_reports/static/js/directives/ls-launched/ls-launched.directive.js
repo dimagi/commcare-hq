@@ -1,5 +1,4 @@
 /* global d3 */
-var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function LSLaunchedController($scope, $routeParams, $location, $filter, icdsCasReachService, locationsService,
     dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
