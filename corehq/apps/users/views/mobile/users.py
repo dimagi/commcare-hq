@@ -1464,6 +1464,7 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
         return self.get(request, *args, **kwargs)
 
 
+@location_safe
 @method_decorator(TWO_STAGE_USER_PROVISIONING.required_decorator(), name='dispatch')
 class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
     template_name = "users/commcare_user_confirm_account.html"

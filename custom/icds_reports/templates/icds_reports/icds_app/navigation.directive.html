@@ -21,7 +21,8 @@
                     <div class="col-sm-1"><i class="fa fa-angle-down" aria-hidden="true"></i></div>
                 </div>
                 <ul class="nav nav-list collapse" uib-collapse="{$ menuItem['sectionId'] $}">
-                    <li ng-repeat="subPage in menuItem['sub_pages']" ng-show="subPage['showInWeb'] && !subPage['featureFlagOnly']"
+                    <li ng-repeat="subPage in menuItem['sub_pages']"
+                        ng-show="subPage['showInWeb'] && !subPage['featureFlagOnly']"
                         ng-class="{'active': $location.path().indexOf(subPage['route']) !== -1}">
                         <a href="{$ goToStep(subPage['route'], $location.search()) $}" >
                             {% blocktrans %} {$ subPage['name'] $} {% endblocktrans %}</a>

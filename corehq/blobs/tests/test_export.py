@@ -26,7 +26,7 @@ class TestBlobExport(TestCase):
 
         cls.db = TemporaryFilesystemBlobDB()
         assert get_blob_db() is cls.db, (get_blob_db(), cls.db)
-        data = b'binary data not valid utf-8 \xe4\x94'
+        cls.data = data = b'binary data not valid utf-8 \xe4\x94'
         cls.blob_metas = []
         cls.not_found = set()
 
@@ -87,6 +87,24 @@ class TestBlobExport(TestCase):
             exporter.migrate(out.name, force=True)
             with tarfile.open(out.name, 'r:gz') as tgzfile:
                 self.assertEqual(expected, set(tgzfile.getnames()))
+
+    def test_export_and_import_compressed_blobs(self):
+        with NamedTemporaryFile() as out:
+            exporter = EXPORTERS['all_blobs'](self.domain_name)
+            exporter.migrate(out.name, force=True)
+            self.import_and_verify(out.name)
+
+    def import_and_verify(self, filename):
+        from ..management.commands.run_blob_import import Command as ImportCommand
+        expected_metas = {m for m in self.blob_metas
+            if m.key not in self.not_found and m.domain == self.domain_name}
+        self.assertTrue(any(m.is_compressed for m in expected_metas))
+        with TemporaryFilesystemBlobDB() as dest_db:
+            assert get_blob_db() is dest_db, (get_blob_db(), dest_db)
+            ImportCommand.handle(None, filename)
+            for meta in expected_metas:
+                with dest_db.get(meta=meta) as fh:
+                    self.assertEqual(fh.read(), self.data, meta.type_code)
 
 
 class TestExtendingExport(TestCase):

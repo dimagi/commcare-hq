@@ -126,6 +126,12 @@ hqDefine("js/icds_dashboard_utils", function () {
             })
             .when("/icds_cas_reach/awcs_covered/:step", {
                 template: "<awcs-covered></awcs-covered>",
+            })
+            .when("/icds_cas_reach/ls_launched", {
+                redirectTo: "/icds_cas_reach/ls_launched/" + defaultStep,
+            })
+            .when("/icds_cas_reach/ls_launched/:step", {
+                template: "<ls-launched></ls-launched>",
             });
     }
     function addDemographicsRoutes($routeProvider, defaultStep) {

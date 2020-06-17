@@ -1104,7 +1104,7 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
     state = export_info[1][1] if aggregation_level > 0 else ''
     district = export_info[2][1] if aggregation_level > 1 else ''
     block = export_info[3][1] if aggregation_level > 2 else ''
-    supervisor = export_info[3][1] if aggregation_level > 3 else ''
+    supervisor = export_info[4][1] if aggregation_level > 3 else ''
 
     excel_data = [line[aggregation_level:] for line in excel_data[0][1]]
     thin_border = Border(
@@ -1145,7 +1145,7 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
         beneficiary_type_columns = [
             'Pregnant women',
             'Lactating women',
-            'Children (0-3 years)'
+            'Children (6-36 months)'
         ]
 
     amount_of_columns = total_column_count - aggregation_level
@@ -1167,18 +1167,18 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
         worksheet[cell].alignment = warp_text_alignment
 
     if national:
-        worksheet['B3'].value = national
-        worksheet.merge_cells('B3:C3')
+        worksheet['A3'].value = national
+        worksheet.merge_cells('A3:B3')
     else:
         if state:
-            worksheet['B3'].value = "State: {}".format(state)
-            worksheet.merge_cells('B3:C3')
+            worksheet['A3'].value = "State: {}".format(state)
+            worksheet.merge_cells('A3:B3')
         if district:
-            worksheet['D3'].value = "District: {}".format(district)
+            worksheet['C3'].value = "District: {}".format(district)
         if block:
-            worksheet['E3'].value = "Block: {}".format(block)
+            worksheet['D3'].value = "Block: {}".format(block)
         if supervisor:
-            worksheet['F3'].value = "Sector: {}".format(supervisor)
+            worksheet['E3'].value = "Sector: {}".format(supervisor)
 
     date_cell = '{0}3'.format(last_column)
     date_description_cell = '{0}3'.format(get_column_letter(amount_of_columns - 1))
@@ -2469,3 +2469,33 @@ def datetime_to_date_string(dtime):
         return dtime.strftime(ISO_DATE_FORMAT)
     else:
         return None
+
+
+def generate_quarter_months(quarter, year):
+    months = []
+    end_month = int(quarter) * 3
+    for i in range(end_month - 2, end_month + 1):
+        months.append(date(year, i, 1))
+    return months
+
+
+def calculate_percent(num, den, extra_number, truncate_out=True):
+    if den == 0:
+        ret = 0
+    else:
+        ret = (num / den) * 100
+
+    if extra_number:
+        ret = ret / extra_number
+    if truncate_out == True:
+        return "{}%".format("%.2f" % ret)
+    else:
+        return ret
+
+
+def handle_average(val):
+    if val is None:
+        ret = 0
+    else:
+        ret = round(val / 3)
+    return ret
