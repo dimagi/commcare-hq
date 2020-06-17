@@ -249,7 +249,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
     init();
 
     vm.disallowNational = function () {
-        return vm.isChildBeneficiaryListSelected() || vm.isChildGrowthTrackerSelected();
+        return vm.isChildBeneficiaryListSelected() || vm.isChildGrowthTrackerSelected() || vm.isAwwActivityReportSelected();
     };
 
     vm.getPlaceholder = function (locationTypes) {
@@ -552,7 +552,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
         if (!vm.haveAccessToFeatures) {
             ladySupervisorReportErrors = vm.isLadySupervisorSelected() && !vm.isStateSelected();
         }
-        var awwActvityReportErrors = vm.isAwwActivityReportSelected() && !vm.isStateSelected();
+        var awwActvityReportErrors = vm.isAwwActivityReportSelected() && (vm.selectedLevel === 5 || vm.selectedLevel === 0);
         return beneficiaryListErrors || incentiveReportErrors || ladySupervisorReportErrors || growthListErrors || awwActvityReportErrors || PPRErrors;
     };
 
