@@ -102,11 +102,13 @@ def send_mail_async(self, subject, message, from_email, recipient_list, messagin
                 'messaging_event_id': messaging_event_id,
             }
         )
-        mark_subevent_gateway_error(messaging_event_id, e, retrying=True)
+        if messaging_event_id is not None:
+            mark_subevent_gateway_error(messaging_event_id, e, retrying=True)
         try:
             self.retry(exc=e)
         except MaxRetriesExceededError:
-            mark_subevent_gateway_error(messaging_event_id, e, retrying=False)
+            if messaging_event_id is not None:
+                mark_subevent_gateway_error(messaging_event_id, e, retrying=False)
 
 
 @task(serializer='pickle', queue="email_queue",
@@ -148,10 +150,11 @@ def send_html_email_async(self, subject, recipient, html_content,
         )
         try:
             self.retry(exc=e)
-            mark_subevent_gateway_error(messaging_event_id, e, retrying=True)
+            if messaging_event_id is not None:
+                mark_subevent_gateway_error(messaging_event_id, e, retrying=True)
         except MaxRetriesExceededError:
-            from dimagi.utils.django.email import mark_subevent_gateway_error
-            mark_subevent_gateway_error(messaging_event_id, e, retrying=False)
+            if messaging_event_id is not None:
+                mark_subevent_gateway_error(messaging_event_id, e, retrying=False)
 
 
 @task(serializer='pickle', queue="email_queue",
