@@ -1,5 +1,3 @@
-import gevent
-
 from dateutil.relativedelta import relativedelta
 
 from corehq.apps.locations.models import SQLLocation
@@ -19,9 +17,6 @@ class GrowthTrackerExport(ExportableMixin, IcdsSqlData):
         stunting_column = current_month_stunting_column(self.beta)
         wasting_column = current_month_wasting_column(self.beta)
 
-        def _check_case_presence(case_id, column, data_dict):
-            return data_dict[case_id][column] if case_id in data_dict.keys() else "N/A"
-
         def _generate_months(month):
             months = []
             for i in range(0, 3):
@@ -29,16 +24,6 @@ class GrowthTrackerExport(ExportableMixin, IcdsSqlData):
                 month = month - relativedelta(months=1)
             months.reverse()
             return months
-
-        def _fetch_data(query_filter):
-            filters = query_filter['filters']
-            order_by = query_filter['order_by']
-            query_set = ChildHealthMonthlyView.objects.filter(**filters).order_by(*order_by)
-            data_month = query_set.values('state_name', 'district_name', 'block_name', 'supervisor_name',
-                                          'awc_name', 'awc_site_code', 'person_name', 'dob', 'mother_name',
-                                          'mother_phone_number', 'pse_days_attended', 'lunch_count',
-                                          'current_month_nutrition_status', stunting_column, wasting_column, 'case_id')
-            return data_month
 
         filters = {
             "month__in": _generate_months(self.config['month']),
@@ -61,10 +46,10 @@ class GrowthTrackerExport(ExportableMixin, IcdsSqlData):
             order_by = ('-month', 'block_name', 'supervisor_name', 'awc_name', 'person_name')
         query_set = ChildHealthMonthlyView.objects.filter(**filters).order_by(*order_by)
         data_rows = query_set.values('state_name', 'district_name', 'block_name', 'supervisor_name',
-                                      'awc_name', 'awc_site_code', 'person_name', 'dob', 'mother_name',
-                                      'mother_phone_number', 'pse_days_attended', 'lunch_count',
-                                      'current_month_nutrition_status', stunting_column, wasting_column,
-                                      'case_id', 'month')
+                                     'awc_name', 'awc_site_code', 'person_name', 'dob', 'mother_name',
+                                     'mother_phone_number', 'pse_days_attended', 'lunch_count',
+                                     'current_month_nutrition_status', stunting_column, wasting_column,
+                                     'case_id', 'month')
         month_1 = data_month_1.strftime('%B %Y')
         month_2 = data_month_2.strftime('%B %Y')
         month_3 = data_month_3.strftime('%B %Y')
