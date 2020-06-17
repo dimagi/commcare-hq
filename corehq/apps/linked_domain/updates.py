@@ -1,9 +1,8 @@
 from functools import partial
 
+from dimagi.utils.couch.database import iter_bulk_delete
 from toggle.shortcuts import set_toggle
 
-from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.models import LinkedApplication
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
     CaseSearchQueryAddition,
@@ -12,7 +11,10 @@ from corehq.apps.custom_data_fields.models import (
     CustomDataField,
     CustomDataFieldsDefinition,
 )
-from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
+from corehq.apps.fixtures.dbaccessors import get_fixture_data_types, iter_fixture_items_for_data_type
+from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
+from corehq.apps.fixtures.upload.run_upload import clear_fixture_quickcache
+from corehq.apps.fixtures.utils import clear_fixture_cache
 from corehq.apps.linked_domain.const import (
     MODEL_CASE_SEARCH,
     MODEL_FIXTURES,
@@ -108,7 +110,34 @@ def update_fixtures(domain_link):
     else:
         master_results = local_fixtures(domain_link.master_domain)
 
-    # TODO: copy fixture types and data
+    linked_data_types_by_tag = {t.tag: t for t in get_fixture_data_types(domain_link.linked_domain)}
+    for master_data_type in master_results["data_types"]:
+        # Update data type
+        master_data_type = master_data_type.to_json()
+        master_data_type_id = master_data_type["_id"]
+        del master_data_type["_id"]
+        del master_data_type["_rev"]
+        linked_data_type = linked_data_types_by_tag.get(master_data_type["tag"], FixtureDataType()).to_json()
+        linked_data_type.update(master_data_type)
+        linked_data_type["domain"] = domain_link.linked_domain
+        linked_data_type = FixtureDataType.wrap(linked_data_type)
+        linked_data_type.save()
+        clear_fixture_quickcache(domain_link.linked_domain, [linked_data_type])
+
+        # Re-create relevant data items
+        old_data_item_ids = [
+            i["_id"] for i in iter_fixture_items_for_data_type(domain_link.linked_domain, linked_data_type._id)
+        ]
+        iter_bulk_delete(FixtureDataItem.get_db(), old_data_item_ids)
+        for master_item in master_results["data_items"].get(master_data_type_id, []):
+            doc = master_item.to_json()
+            del doc["_id"]
+            del doc["_rev"]
+            doc["domain"] = domain_link.linked_domain
+            doc["data_type_id"] = linked_data_type._id
+            FixtureDataItem.wrap(doc).save()
+
+    clear_fixture_cache(domain_link.linked_domain)
 
 
 def update_user_roles(domain_link):
