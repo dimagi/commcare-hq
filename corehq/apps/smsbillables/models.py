@@ -26,11 +26,13 @@ from corehq.apps.smsbillables.exceptions import (
 from corehq.apps.smsbillables.utils import (
     get_twilio_message,
     get_infobip_message,
+    get_pinpoint_message,
     log_smsbillables_error,
 )
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.messaging.smsbackends.infobip.models import InfobipBackend
+from corehq.messaging.smsbackends.amazon_pinpoint.models import PinpointBackend
 from corehq.util.quickcache import quickcache
 
 
@@ -373,6 +375,13 @@ class SmsBillable(models.Model):
                 return int(segments)
             else:
                 raise RetryBillableTaskException("backend_message_id=%s" % backend_message_id)
+        elif backend_api_id == PinpointBackend.get_api_id():
+            pinpoint_message = get_pinpoint_message(backend_instance, backend_message_id)
+            segments = pinpoint_message['delivery']['numberOfMessageParts']
+            if segments is not None:
+                return int(segments)
+            else:
+                raise RetryBillableTaskException("backend_message_id=%s" % backend_message_id)
         else:
             return multipart_count
 
@@ -384,7 +393,7 @@ class SmsBillable(models.Model):
             backend_instance) or toggles.ENABLE_INCLUDE_SMS_GATEWAY_CHARGING.enabled(domain)
 
         if is_gateway_billable:
-            if backend_api_id in [SQLTwilioBackend.get_api_id(), InfobipBackend.get_api_id()]:
+            if backend_api_id in [SQLTwilioBackend.get_api_id(), InfobipBackend.get_api_id(), PinpointBackend.get_api_id()]:
                 provider_charges = cls._get_provider_charges(
                     backend_message_id, backend_instance, direction, couch_id, backend_api_id
                 )
@@ -438,6 +447,10 @@ class SmsBillable(models.Model):
                 message = get_infobip_message(backend_instance, backend_message_id)
                 status = message['status']['name']
                 price = message['price']['pricePerMessage']
+            elif backend_api_id == PinpointBackend.get_api_id():
+                message = get_pinpoint_message(backend_instance, backend_message_id)
+                status = message['status']
+                price = message['delivery']['priceInUSD'] / message['delivery']['numberOfMessageParts']
             else:
                 raise ProviderFeeNotSupportedException("backend_message_id=%s" % backend_message_id)
             if status is None or status.lower() in [
@@ -493,6 +506,24 @@ def add_infobip_gateway_fee(apps):
     for direction in [INCOMING, OUTGOING]:
         SmsGatewayFee.create_new(
             InfobipBackend.get_api_id(),
+            direction,
+            None,
+            fee_class=apps.get_model('smsbillables', 'SmsGatewayFee'),
+            criteria_class=apps.get_model('smsbillables', 'SmsGatewayFeeCriteria'),
+            currency=default_currency,
+        )
+
+
+def add_pinpoint_gateway_fee(apps):
+    default_currency, _ = apps.get_model(
+        'accounting', 'Currency'
+    ).objects.get_or_create(
+        code=settings.DEFAULT_CURRENCY
+    )
+
+    for direction in [INCOMING, OUTGOING]:
+        SmsGatewayFee.create_new(
+            PinpointBackend.get_api_id(),
             direction,
             None,
             fee_class=apps.get_model('smsbillables', 'SmsGatewayFee'),

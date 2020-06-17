@@ -2,6 +2,9 @@ import logging
 import requests
 import json
 
+import boto3
+from botocore.exceptions import ClientError
+
 from django.conf import settings
 from django.utils.encoding import force_text
 
@@ -92,3 +95,33 @@ def _get_infobip_message_details(api_channel, api_suffix, config, headers, param
     response_content = json.loads(response.content)
     messages = response_content['results']
     return messages
+
+
+@quickcache(vary_on=['backend_instance', 'backend_message_id'], timeout=1 * 60)
+def get_pinpoint_message(backend_instance, backend_message_id):
+    from corehq.messaging.smsbackends.amazon_pinpoint.models import PinpointBackend
+    try:
+        pinpoint_backend = SQLMobileBackend.load(
+            backend_instance,
+            api_id=PinpointBackend.get_api_id(),
+            is_couch_id=True,
+            include_deleted=True,
+        )
+        config = pinpoint_backend.config
+        client = _get_pinpoint_client(backend_instance)
+        response = client.filter_log_events(
+            logGroupName=f'sns/{config.region}/754026553166/DirectPublishToPhoneNumber',
+            filterPattern='{$.notification.messageId = %s}' % backend_message_id
+        )
+        return response['events'][0]
+    except Exception as e:
+        raise RetryBillableTaskException(str(e))
+
+
+def _get_pinpoint_client(backend_instance):
+    config = backend_instance.config
+    client = boto3.client(
+        'logs', region_name=config.region,
+        aws_access_key_id=config.access_key, aws_secret_access_key=config.secret_access_key
+    )
+    return client
