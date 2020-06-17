@@ -15,6 +15,7 @@ from corehq.apps.custom_data_fields.models import (
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.linked_domain.const import (
     MODEL_CASE_SEARCH,
+    MODEL_FIXTURES,
     MODEL_FLAGS,
     MODEL_LOCATION_DATA,
     MODEL_PRODUCT_DATA,
@@ -54,6 +55,7 @@ from corehq.toggles import NAMESPACE_DOMAIN
 
 def update_model_type(domain_link, model_type, model_detail=None):
     update_fn = {
+        MODEL_FIXTURES: update_fixtures,
         MODEL_FLAGS: update_toggles_previews,
         MODEL_ROLES: update_user_roles,
         MODEL_LOCATION_DATA: partial(update_custom_data_models, limit_types=[LocationFieldsView.field_type]),
