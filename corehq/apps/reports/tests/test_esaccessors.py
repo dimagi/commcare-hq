@@ -872,6 +872,7 @@ class TestUserESAccessors(SimpleTestCase):
         })
 
 
+@attr(es_test=True)
 class TestGroupESAccessors(SimpleTestCase):
 
     def setUp(self):

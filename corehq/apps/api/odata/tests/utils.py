@@ -85,6 +85,7 @@ class OdataTestMixin(object):
         return reverse(self.view_urlname, kwargs={'domain': self.domain.name, 'config_id': self.instance._id})
 
 
+@attr(es_test=True)
 class CaseOdataTestMixin(OdataTestMixin):
 
     @classmethod
@@ -115,6 +116,7 @@ class CaseOdataTestMixin(OdataTestMixin):
         )
 
 
+@attr(es_test=True)
 class FormOdataTestMixin(OdataTestMixin):
 
     @classmethod

@@ -5,6 +5,7 @@ from django.urls import reverse
 from django.utils.http import urlencode
 
 from flaky import flaky
+from nose.plugins.attrib import attr
 
 from corehq.apps.api.resources import v0_5
 from corehq.apps.groups.models import Group
@@ -22,6 +23,7 @@ from corehq.util.elastic import reset_es_index
 from .utils import APIResourceTest
 
 
+@attr(es_test=True)
 class TestCommCareUserResource(APIResourceTest):
     """
     Basic sanity checking of v0_1.CommCareUserResource

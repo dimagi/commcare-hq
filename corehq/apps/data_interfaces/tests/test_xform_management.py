@@ -1,6 +1,7 @@
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.http import HttpRequest, QueryDict
 from django.test import TestCase, Client
+from nose.plugins.attrib import attr
 
 from corehq.apps.data_interfaces.views import XFormManagementView
 from corehq.apps.domain.shortcuts import create_domain
@@ -9,6 +10,7 @@ from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.elastic import reset_es_index
 
 
+@attr(es_test=True)
 class XFormManagementTest(TestCase):
 
     @classmethod
