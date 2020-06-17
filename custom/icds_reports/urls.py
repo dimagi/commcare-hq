@@ -16,7 +16,7 @@ from custom.icds_reports.views import (
     DailyIndicators, InfantometerView, StadiometerView, MWCDDataView, IcdsDynamicMobileTemplateView,
     GovernanceHomeVisitAPI, GovernanceBeneficiaryAPI, GovernanceStateListAPI, GovernanceVHNDSAPI,
     MobileDashboardDownloadView, GovernanceCBEAPI, BiharDemographicsAPI, BiharMotherDetailsAPI, BiharVaccinesAPI,
-    BiharSchoolAPI, ServiceDeliveryDashboardDetailsView, PoshanProgressDashboardView
+    BiharSchoolAPI, ServiceDeliveryDashboardDetailsView, PoshanProgressDashboardView, LSsLaunchedView
 )
 
 
@@ -76,6 +76,10 @@ cas_reach_urls = [
         r'^awcs_covered/(?P<step>[\w-]+)/',
         AWCsCoveredView.as_view(),
         name='awcs_covered'),
+    url(
+        r'^ls_launched/(?P<step>[\w-]+)/',
+        LSsLaunchedView.as_view(),
+        name='ls_launched'),
 ]
 
 demographics_urls = [

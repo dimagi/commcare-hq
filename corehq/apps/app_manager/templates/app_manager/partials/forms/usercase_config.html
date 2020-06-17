@@ -3,20 +3,7 @@
 
 <script type="text/html" id="usercase-config:case-transaction">
   <div class="row top-spacer">
-    <div class="panel panel-appmanager">
-      <div class="panel-heading">
-        <h4 class="panel-title panel-title-nolink">
-          <i class="fa fa-arrow-right"></i><i class="fa fa-save"></i>
-          {% trans "Load the following case properties into the form" %}
-        </h4>
-      </div>
-      <div class="panel-body">
-        <p>{% trans "User properties can now be loaded in the form builer with easy references" %}</p>
-        <p><img src="{% static 'app_manager/images/user-properties-loading-moved.png' %}"></p>
-      </div>
-    </div>
-    <div class="panel panel-appmanager"
-         data-bind="template: 'case-config:case-transaction:case-properties'"></div>
+    <div class="panel panel-appmanager" data-bind="template: 'case-config:case-transaction:case-properties'"></div>
   </div>
 </script>
 
