@@ -50,10 +50,10 @@ class FctGaps:
     NOT_AVAILABLE = 9
     DESCRIPTIONS = {
         AVAILABLE: "FCT data available",
-        BASE_TERM: "Using FCT data from base term food code",
-        REFERENCE: "Using FCT data from reference food code",
-        INGREDIENT_GAPS: "Ingredients contain FCT data gaps",
-        NOT_AVAILABLE: "No FCT data available",
+        BASE_TERM: "using FCT data from base term food code",
+        REFERENCE: "using FCT data from reference food code",
+        INGREDIENT_GAPS: "ingredient(s) contain FCT data gaps",
+        NOT_AVAILABLE: "no FCT data available",
     }
 
 
@@ -65,8 +65,8 @@ class ConvFactorGaps:
     NOT_AVAILABLE = 6
     NOT_APPLICABLE = 8
     DESCRIPTIONS = {
-        AVAILABLE: "Conversion Factor available",
-        BASE_TERM: "Using Conversion Factor from base term food code",
-        NOT_AVAILABLE: "No Conversion Factor available",
-        NOT_APPLICABLE: "Not applicable",
+        AVAILABLE: "conversion factor available",
+        BASE_TERM: "using conversion factor from base term food code",
+        NOT_AVAILABLE: "no conversion factor available",
+        NOT_APPLICABLE: "not applicable",
     }

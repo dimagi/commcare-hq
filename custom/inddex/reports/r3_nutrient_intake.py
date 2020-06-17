@@ -1,8 +1,6 @@
 import textwrap
 from itertools import chain
 
-from django.utils.safestring import mark_safe
-
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from custom.inddex import filters
 from custom.inddex.food import FoodData
@@ -15,15 +13,13 @@ class NutrientIntakeReport(MultiTabularReport):
     slug = 'report_3_disaggr_intake_data_by_rspndnt_and_aggr_daily_intake_data_by_rspndnt'  # yup, really
 
     export_only = True
-    description = mark_safe(textwrap.dedent("""
+    description = textwrap.dedent("""
         This report provides information on the total quantity and total
         nutrient content for each individual food or recipe reported by each
         respondent in the recall. It also provides total daily energy and
-        nutrient intakes for each respondent.
-        <br/>
-        This report cannot be previewed. Users must download the data to access
-        the information.
-    """))
+        nutrient intakes for each respondent. This report cannot be previewed.
+        Users must download the data to access the information.
+    """)
 
     @property
     def fields(self):
@@ -132,4 +128,5 @@ class DailyIntakeData:
 
 
 def _sum(items):
-    return sum(filter(None, items))
+    real_items = [item for item in items if item is not None]
+    return sum(real_items) if real_items else None

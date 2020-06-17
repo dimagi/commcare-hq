@@ -23,7 +23,7 @@ def get_cas_reach_data(domain, now_date, config, show_test=False, show_prereleas
             states=Sum('num_launched_states') if level <= 1 else Max('num_launched_states'),
             districts=Sum('num_launched_districts') if level <= 2 else Max('num_launched_districts'),
             blocks=Sum('num_launched_blocks') if level <= 3 else Max('num_launched_blocks'),
-            supervisors=Sum('num_launched_supervisors') if level <= 4 else Max('num_launched_supervisors'),
+            sectors=Sum('num_launched_supervisors') if level <= 4 else Max('num_launched_supervisors'),
             awc_num_open=Sum('awc_num_open') if level <= 5 else Max('awc_num_open'),
             awcs=Sum('num_launched_awcs') if level <= 5 else Max('num_launched_awcs'),
             all_awcs=Sum('num_awcs') if level <= 5 else Max('num_awcs')
@@ -120,7 +120,7 @@ def get_cas_reach_data(domain, now_date, config, show_test=False, show_prereleas
         'label': _('Sectors covered'),
         'help_text': _('Total Sectors that have launched ICDS CAS'),
         'percent': None,
-        'value': get_value(awc_this_month_data, 'supervisors'),
+        'value': get_value(awc_this_month_data, 'sectors'),
         'all': None,
         'format': 'number',
         'frequency': 'month',

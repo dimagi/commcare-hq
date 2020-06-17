@@ -66,6 +66,7 @@ from custom.icds_reports.const import (
     CAS_API_PAGE_SIZE,
     SERVICE_DELIVERY_REPORT,
     CHILD_GROWTH_TRACKER_REPORT,
+    POSHAN_PROGRESS_REPORT,
     AWW_ACTIVITY_REPORT
 )
 from custom.icds_reports.dashboard_utils import get_dashboard_template_context
@@ -1064,6 +1065,12 @@ class ExportIndicatorView(View):
                 return HttpResponseBadRequest()
             config = beneficiary_config
 
+        if indicator == POSHAN_PROGRESS_REPORT:
+            config['report_layout'] = request.POST.get('report_layout')
+            config['data_period'] = request.POST.get('data_period')
+            config['quarter'] = int(request.POST.get('quarter'))
+            config['year'] = year
+
         if indicator == AWW_ACTIVITY_REPORT:
             if not sql_location or sql_location.location_type_name not in [
                 LocationTypes.STATE, LocationTypes.DISTRICT, LocationTypes.BLOCK, LocationTypes.SUPERVISOR
@@ -1074,7 +1081,8 @@ class ExportIndicatorView(View):
         if indicator in (CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT,
                          AWC_INFRASTRUCTURE_EXPORT, GROWTH_MONITORING_LIST_EXPORT, AWW_INCENTIVE_REPORT,
                          LS_REPORT_EXPORT, THR_REPORT_EXPORT, DASHBOARD_USAGE_EXPORT,
-                         SERVICE_DELIVERY_REPORT, CHILD_GROWTH_TRACKER_REPORT, AWW_ACTIVITY_REPORT):
+                         SERVICE_DELIVERY_REPORT, CHILD_GROWTH_TRACKER_REPORT, AWW_ACTIVITY_REPORT,
+                         POSHAN_PROGRESS_REPORT):
             task = prepare_excel_reports.delay(
                 config,
                 aggregation_level,
