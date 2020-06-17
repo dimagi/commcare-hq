@@ -347,7 +347,7 @@ def get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=None,
              .aggregation(
                  TermsAggregation('user_id', 'form.meta.userID').aggregation(
                      TermsAggregation('app_id', 'app_id').aggregation(
-                         TermsAggregation('xmlns', 'xmlns')
+                         TermsAggregation('xmlns', 'xmlns.exact')
                      )
                  )
              )
@@ -363,7 +363,7 @@ def get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=None,
             query = query.aggregation(
                 MissingAggregation('missing_user_id', 'form.meta.userID').aggregation(
                     TermsAggregation('app_id', 'app_id').aggregation(
-                        TermsAggregation('xmlns', 'xmlns')
+                        TermsAggregation('xmlns', 'xmlns.exact')
                     )
                 )
             )
