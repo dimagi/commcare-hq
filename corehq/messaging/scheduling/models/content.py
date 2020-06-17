@@ -140,7 +140,7 @@ class EmailContent(Content):
             logged_subevent.error(MessagingEvent.ERROR_TRIAL_EMAIL_LIMIT_REACHED)
             return
 
-        send_mail_async.delay(subject, message, settings.DEFAULT_FROM_EMAIL, [email_address])
+        send_mail_async.delay(subject, message, settings.DEFAULT_FROM_EMAIL, [email_address], logged_subevent.id)
 
         email = Email(
             domain=logged_event.domain,
@@ -153,6 +153,7 @@ class EmailContent(Content):
             body=message,
         )
         email.save()
+
         email_usage.update_count()
         logged_subevent.completed()
 

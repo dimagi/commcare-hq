@@ -724,6 +724,11 @@ class MessagingEventsReport(BaseMessagingEventReport):
                 (Q(messagingsubevent__xforms_session__session_is_open=False) &
                  Q(messagingsubevent__xforms_session__submission_id__isnull=True))
             )
+        elif event_status == MessagingEvent.STATUS_EMAIL_DELIVERED:
+            event_status_filter = (
+                Q(status=event_status) |
+                Q(messagingsubevent__status=event_status)
+            )
 
         return source_filter, content_type_filter, event_status_filter
 
