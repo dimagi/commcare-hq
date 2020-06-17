@@ -3,7 +3,7 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function PoshanProgressController($scope, $http, $log, $routeParams, $location, storageService, userLocationId,
-                                  haveAccessToAllLocations, isAlertActive, dateHelperService, haveAccessToFeatures) {
+                                  haveAccessToAllLocations, isAlertActive, dateHelperService) {
     var vm = this;
     vm.data = {};
     vm.label = "Poshan Progress Dashboard";
@@ -32,7 +32,7 @@ function PoshanProgressController($scope, $http, $log, $routeParams, $location, 
     vm.getRowSpan = function (firstIndicator, secondIndicator) {
         var firstIndicatorDataLength = firstIndicator['Best performers'].length;
         var secondIndicatorDataLength = 0;
-        if(secondIndicator) {
+        if (secondIndicator) {
             secondIndicatorDataLength = secondIndicator['Best performers'].length;
         }
         var maxLength = Math.max(firstIndicatorDataLength, secondIndicatorDataLength);
@@ -41,7 +41,7 @@ function PoshanProgressController($scope, $http, $log, $routeParams, $location, 
         } else {
             return 1;
         }
-    }
+    };
 
     vm.getData = function () {
         vm.selectedDate = dateHelperService.getSelectedDate();
@@ -102,7 +102,7 @@ function PoshanProgressController($scope, $http, $log, $routeParams, $location, 
 }
 
 PoshanProgressController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService',
-    'userLocationId', 'haveAccessToAllLocations', 'isAlertActive', 'dateHelperService', 'haveAccessToFeatures'];
+    'userLocationId', 'haveAccessToAllLocations', 'isAlertActive', 'dateHelperService'];
 
 window.angular.module('icdsApp').directive('poshanProgressDashboard', function () {
     return {

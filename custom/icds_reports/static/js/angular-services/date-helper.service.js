@@ -9,7 +9,7 @@ window.angular.module('icdsApp').factory('dateHelperService', ['$location', func
     var quarterlyDataAvailabilityDates = {
         'year': 2019,
         'quarter': 2,
-    }
+    };
 
     var defaultStartYear = 2017;
     var defaultStartMonth = 3;
@@ -188,7 +188,7 @@ window.angular.module('icdsApp').factory('dateHelperService', ['$location', func
                     return {
                         'year': year,
                         'quarter': maxQuarterInCurrentYear,
-                    }
+                    };
                 }
             }
         } else {

@@ -1,3 +1,5 @@
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
+
 function DataPeriodModalController($location, $uibModalInstance, filters, dataPeriods, haveAccessToFeatures) {
     var vm = this;
     vm.filters = filters;

@@ -194,7 +194,7 @@ function MonthFilterController($scope, $location, $uibModal, storageService, dat
 
         modalInstance.result.then(function (data) {
             // Upon closing modal, params in the url are updated based on data_period type
-            if(isPPD && isQuarterlyDataPeriodSelected) {
+            if (isPPD && isQuarterlyDataPeriodSelected) {
                 dateHelperService.updateSelectedQuarter(data['quarter'], data['year']);
             } else {
                 dateHelperService.updateSelectedMonth(data['month'], data['year']);
