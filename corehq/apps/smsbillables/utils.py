@@ -2,6 +2,9 @@ import logging
 import requests
 import json
 
+import boto3
+from botocore.exceptions import ClientError
+
 from django.conf import settings
 from django.utils.encoding import force_text
 
@@ -86,6 +89,52 @@ def get_infobip_message(backend_instance, backend_message_id):
 
 
 def _get_infobip_message_details(api_channel, api_suffix, config, headers, parameters):
+    from corehq.messaging.smsbackends.infobip.models import INFOBIP_DOMAIN
+    url = f'https://{config.personalized_subdomain}.{INFOBIP_DOMAIN}{api_channel}{api_suffix}'
+    response = requests.get(url, params=parameters, headers=headers)
+    response_content = json.loads(response.content)
+    messages = response_content['results']
+    return messages
+
+
+@quickcache(vary_on=['backend_instance', 'backend_message_id'], timeout=1 * 60)
+def get_pinpoint_message(backend_instance, backend_message_id):
+    from corehq.messaging.smsbackends.amazon_pinpoint.models import PinpointBackend
+    try:
+        pinpoint_backend = SQLMobileBackend.load(
+            backend_instance,
+            api_id=PinpointBackend.get_api_id(),
+            is_couch_id=True,
+            include_deleted=True,
+        )
+        config = pinpoint_backend.config
+        api_channel = '/sms/1'
+        api_suffix = '/reports'
+        if config.scenario_key:
+            api_channel = '/omni/1'
+
+        headers = {
+            'Authorization': f'App {config.auth_token}',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+        parameters = {
+            'messageId': backend_message_id
+        }
+        messages = _get_pinpoint_message_details(api_channel, api_suffix, config, headers, parameters)
+        if not messages:
+            api_suffix = '/logs'
+            messages = _get_infobip_message_details(api_channel, api_suffix, config, headers, parameters)
+        return messages[0]
+    except Exception as e:
+        raise RetryBillableTaskException(str(e))
+
+
+def _get_pinpoint_message_details(api_channel, api_suffix, config, headers, parameters):
+    client = boto3.client(
+        'logs', region_name=config.region,
+        aws_access_key_id=config.access_key, aws_secret_access_key='MkAvhUbUDjBRCIt8AVV30VJZdBYHrVR6+1dZlDEa'
+    )
     from corehq.messaging.smsbackends.infobip.models import INFOBIP_DOMAIN
     url = f'https://{config.personalized_subdomain}.{INFOBIP_DOMAIN}{api_channel}{api_suffix}'
     response = requests.get(url, params=parameters, headers=headers)

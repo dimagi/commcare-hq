@@ -31,6 +31,7 @@ from corehq.apps.smsbillables.utils import (
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.messaging.smsbackends.infobip.models import InfobipBackend
+from corehq.messaging.smsbackends.amazon_pinpoint.models import PinpointBackend
 from corehq.util.quickcache import quickcache
 
 
@@ -367,6 +368,14 @@ class SmsBillable(models.Model):
                 raise RetryBillableTaskException("backend_message_id=%s" % backend_message_id)
         elif backend_api_id == InfobipBackend.get_api_id():
             infobip_message = get_infobip_message(backend_instance, backend_message_id)
+            segments = infobip_message['messageCount'] \
+                if 'messageCount' in infobip_message else infobip_message['smsCount']
+            if segments is not None:
+                return int(segments)
+            else:
+                raise RetryBillableTaskException("backend_message_id=%s" % backend_message_id)
+        elif backend_api_id == PinpointBackend.get_api_id():
+            pinpoint_message = get_infobip_message(backend_instance, backend_message_id)
             segments = infobip_message['messageCount'] \
                 if 'messageCount' in infobip_message else infobip_message['smsCount']
             if segments is not None:
