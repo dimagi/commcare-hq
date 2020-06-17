@@ -119,8 +119,8 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
         }
         self.assertEqual(expected_filter, builder.filter)
         expected_property_names = [
-            "closed", "first_name", "last_name", "modified_on", "name", "opened_on", "owner_id", "user_id",
-            "computed/owner_name", "computed/user_name",
+            "closed", "closed_on", "first_name", "last_name", "modified_on", "name", "opened_on",
+            "owner_id", "user_id", "computed/owner_name", "computed/user_name",
         ]
         self.assertEqual(expected_property_names, list(builder.data_source_properties.keys()))
         owner_name_prop = builder.data_source_properties['computed/owner_name']
