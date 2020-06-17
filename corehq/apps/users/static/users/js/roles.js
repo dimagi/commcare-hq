@@ -1,7 +1,8 @@
 hqDefine('users/js/roles',[
-    'knockout',
     'jquery',
-], function (ko) {
+    'knockout',
+    'hqwebapp/js/alert_user',
+], function ($, ko, alertUser) {
     var RolesViewModel = function (o) {
         'use strict';
         var self, root;
@@ -139,7 +140,6 @@ hqDefine('users/js/roles',[
             var roleCopy = UserRole.wrap(UserRole.unwrap(role));
             roleCopy.modalTitle = title;
             self.roleBeingEdited(roleCopy);
-            self.modalSaveButton.state('save'); 
         };
         self.unsetRoleBeingEdited = function () {
             self.roleBeingEdited(undefined);
@@ -161,21 +161,6 @@ hqDefine('users/js/roles',[
         };
         self.unsetRoleBeingDeleted = function () {
             self.roleBeingDeleted(undefined);
-        };
-        self.modalSaveButton = {
-            state: ko.observable(),
-            saveOptions: function () {
-                return {
-                    url: o.saveUrl,
-                    type: 'post',
-                    data: JSON.stringify(UserRole.unwrap(self.roleBeingEdited)),
-                    dataType: 'json',
-                    success: function (data) {
-                        self.addOrReplaceRole(data);
-                        self.unsetRoleBeingEdited();
-                    },
-                };
-            },
         };
         self.modalDeleteButton = {
             state: ko.observable(),
@@ -214,8 +199,8 @@ hqDefine('users/js/roles',[
                     self.addOrReplaceRole(data);
                     self.unsetRoleBeingEdited();
                 },
-                error: function (data) {
-                    console.log('error');
+                error: function (response) {
+                    alertUser.alert_user(response.responseJSON.message, 'danger');
                 }
             });
         };
@@ -223,7 +208,6 @@ hqDefine('users/js/roles',[
         return self;
     };
 
-    //function(ko) return:
     return {
         initUserRoles: function ($element, o) {
             $element.each(function () {

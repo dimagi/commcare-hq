@@ -18,10 +18,12 @@
       <div class="modal-body">
         <div class="form form-horizontal">
           <div class="form-group">
-            <label class="col-sm-4 control-label"
-                   for="role-name">
-              {% trans "Role Name*" %}
-            </label>
+            <span class="asteriskField">
+              <label class="col-sm-4 control-label"
+                     for="role-name">
+                {% trans "Role Name*" %}
+              </label>
+            </span>
             <div class="col-sm-8 controls">
               <input data-bind="value: name, disable: !$root.allowEdit"
                      type="text"
