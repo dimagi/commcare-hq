@@ -70,7 +70,7 @@ class TestMigrateBackend(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
         super(TestMigrateBackend, cls).tearDownClass()
 
     def CaseUploadFileMeta_save(self, obj, key):

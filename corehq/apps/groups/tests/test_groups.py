@@ -32,7 +32,7 @@ class GroupTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         for user in CommCareUser.all():
-            user.delete()
+            user.delete(deleted_by=None)
         super(GroupTest, cls).tearDownClass()
 
     def testGetUsers(self):

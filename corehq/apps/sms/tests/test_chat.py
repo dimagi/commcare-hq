@@ -192,7 +192,7 @@ class ChatHistoryTestCase(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.contact3.delete()
-        cls.chat_user.delete()
+        cls.chat_user.delete(deleted_by=None)
         cls.domain_obj.delete()
         super(ChatHistoryTestCase, cls).tearDownClass()
 

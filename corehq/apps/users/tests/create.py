@@ -62,7 +62,7 @@ class TestDomainMemberships(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.webuser.delete()
+        cls.webuser.delete(deleted_by=None)
         cls.webuser2.delete()
         cls.project.delete()
         super(TestDomainMemberships, cls).tearDownClass()

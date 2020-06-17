@@ -189,7 +189,7 @@ class AllCommCareUsersTest(TestCase):
             [user.username for user in
              get_all_commcare_users_by_domain(self.ccdomain.name)]
         )
-        deleted_user.delete()
+        deleted_user.delete(deleted_by=None)
 
     def test_get_user_docs_by_username(self):
         users = [self.ccuser_1, self.web_user, self.ccuser_other_domain]

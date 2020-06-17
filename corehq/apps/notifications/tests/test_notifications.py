@@ -23,7 +23,7 @@ class NotificationTest(TestCase):
 
     def tearDown(self):
         self.note.delete()
-        self.user.delete()
+        self.user.delete(deleted_by=None)
 
     def test_activate(self):
         notes = Notification.get_by_user(self.user, self.couch_user)

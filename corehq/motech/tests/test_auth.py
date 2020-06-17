@@ -62,7 +62,7 @@ class RepeaterAuthManagerTests(TestCase, DomainSubscriptionMixin):
     @classmethod
     def tearDownClass(cls):
         cls.teardown_subscriptions()
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
         cls.domain.delete()
         clear_plan_version_cache()
         super().tearDownClass()

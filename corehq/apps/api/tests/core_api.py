@@ -382,7 +382,7 @@ class TestSingleSignOnResource(APIResourceTest):
                                                  None, None)
 
     def tearDown(self):
-        self.commcare_user.delete()
+        self.commcare_user.delete(deleted_by=None)
         super(TestSingleSignOnResource, self).tearDown()
 
     def test_web_user_success(self):

@@ -48,7 +48,7 @@ def create_domain_and_user(domain_name, username):
     domain = create_domain(domain_name)
     user = CommCareUser.get_by_username(username)
     if user:
-        user.delete()
+        user.delete(deleted_by=None)
     user = CommCareUser.create(domain_name, username, '***', None, None)
 
     domain.call_center_config.enabled = True
@@ -177,10 +177,10 @@ class CallCenterTests(BaseCCTests):
     def tearDownClass(cls):
         clear_data(cls.aarohi_domain.name)
         clear_data(cls.cc_domain.name)
-        cls.cc_user.delete()
+        cls.cc_user.delete(deleted_by=None)
         cls.cc_user_no_data.delete()
         cls.cc_domain.delete()
-        cls.aarohi_user.delete()
+        cls.aarohi_user.delete(deleted_by=None)
         cls.aarohi_domain.delete()
         super(CallCenterTests, cls).tearDownClass()
 
@@ -619,7 +619,7 @@ class TestSavingToUCRDatabase(BaseCCTests):
     def tearDown(self):
         super(TestSavingToUCRDatabase, self).tearDown()
         clear_data(self.cc_domain.name)
-        self.cc_user.delete()
+        self.cc_user.delete(deleted_by=None)
         self.cc_domain.delete()
 
         connection_manager.dispose_engine('ucr')

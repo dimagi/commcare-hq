@@ -131,7 +131,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
         self.user = create_restore_user(self.domain, 'user', '123')
 
     def tearDown(self):
-        self.user._couch_user.delete()
+        self.user._couch_user.delete(deleted_by=None)
         for lt in self.location_types.values():
             lt.expand_to = None
             lt._expand_from_root = False
@@ -450,7 +450,7 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
     @classmethod
     def tearDownClass(cls):
         cls.loc_fields.delete()
-        cls.user._couch_user.delete()
+        cls.user._couch_user.delete(deleted_by=None)
         super(LocationFixturesDataTest, cls).tearDownClass()
 
     def test_utility_method(self):
@@ -649,7 +649,7 @@ class RelatedLocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocations
 
     @classmethod
     def tearDownClass(cls):
-        cls.user._couch_user.delete()
+        cls.user._couch_user.delete(deleted_by=None)
         super(RelatedLocationFixturesTest, cls).tearDownClass()
 
     def tearDown(self):

@@ -40,7 +40,7 @@ class SessionDetailsViewTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.couch_user.delete()
+        cls.couch_user.delete(deleted_by=None)
         super(SessionDetailsViewTest, cls).tearDownClass()
 
     @override_settings(DEBUG=True)

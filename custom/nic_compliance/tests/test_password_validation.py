@@ -15,7 +15,7 @@ class TestUsedPasswordsRestriction(TestCase):
         self.user = WebUser.create(self.domain.name, self.username, self.password, None, None).get_django_user()
 
     def tearDown(self):
-        self.user.delete()
+        self.user.delete(deleted_by=None)
         self.domain.delete()
 
     def test_used_password_reset(self):

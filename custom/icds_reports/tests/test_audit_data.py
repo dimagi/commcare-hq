@@ -20,7 +20,7 @@ class TestICDSAuditData(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
         super(TestICDSAuditData, cls).tearDownClass()
 
     def tearDown(self):

@@ -39,7 +39,7 @@ class BaseDomainTest(TestCase):
         self.muggle.save()
 
     def tearDown(self):
-        self.user.delete()
+        self.user.delete(deleted_by=None)
         self.domain.delete()
         self.muggle.delete()
         self.another_domain.delete()

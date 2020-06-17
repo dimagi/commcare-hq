@@ -17,7 +17,7 @@ class CaseExportTest(TestCase):
     def setUp(self):
         super(CaseExportTest, self).setUp()
         for user in CommCareUser.all():
-            user.delete()
+            user.delete(deleted_by=None)
 
     def testUserFilters(self):
         self.assertTrue(case_users_filter(_mock_case('owner', 'user'), ['owner']))

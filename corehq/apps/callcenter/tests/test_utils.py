@@ -60,7 +60,7 @@ class CallCenterUtilsTests(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
         cls.domain.delete()
         super(CallCenterUtilsTests, cls).tearDownClass()
 
@@ -214,7 +214,7 @@ class CallCenterUtilsUserCaseTests(TestCase):
         self.user = CommCareUser.create(TEST_DOMAIN, 'user1', '***', None, None, commit=False)  # Don't commit yet
 
     def tearDown(self):
-        self.user.delete()
+        self.user.delete(deleted_by=None)
 
     @classmethod
     def tearDownClass(cls):

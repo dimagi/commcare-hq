@@ -67,7 +67,7 @@ class TestViews(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
         cls.build.delete()
         cls.project.delete()
         super(TestViews, cls).tearDownClass()

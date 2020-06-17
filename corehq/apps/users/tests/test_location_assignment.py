@@ -42,7 +42,7 @@ class CCUserLocationAssignmentTest(TestCase):
         )
 
     def tearDown(self):
-        self.user.delete()
+        self.user.delete(deleted_by=None)
         super(CCUserLocationAssignmentTest, self).tearDown()
 
     def test_set_location(self):
@@ -173,7 +173,7 @@ class WebUserLocationAssignmentTest(TestCase):
         )
 
     def tearDown(self):
-        self.user.delete()
+        self.user.delete(deleted_by=None)
         super(WebUserLocationAssignmentTest, self).tearDown()
 
     def test_set_location(self):
