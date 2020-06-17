@@ -492,7 +492,10 @@ class ESQuery(object):
         """Performs a minimal query to get the count of matching documents"""
         total = self.size(0).run().total
         if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-            return total.get('value', 0)
+            if type(total):
+                return total
+            else:
+                return total.get('value', 0)
         else:
             return total
 
