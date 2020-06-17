@@ -3,6 +3,7 @@ from io import StringIO
 
 from django.core.management import call_command
 from django.test import TestCase
+from nose.plugins.attrib import attr
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
@@ -32,6 +33,7 @@ class ExitEarlyException(Exception):
     pass
 
 
+@attr(es_test=True)
 class TestStaleDataInESSQL(TestCase):
 
     use_sql_backend = True
@@ -308,6 +310,7 @@ class TestStaleDataInESSQL(TestCase):
         self._delete_cases_from_es(self.cases_to_delete_from_es)
 
 
+@attr(es_test=True)
 class TestStaleDataInESCouch(TestStaleDataInESSQL):
 
     use_sql_backend = False

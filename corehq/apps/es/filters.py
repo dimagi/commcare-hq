@@ -116,13 +116,19 @@ def doc_id(doc_id):
 
 def missing(field, exist=True, null=True):
     """Only return docs missing a value for ``field``"""
-    return {
-        "missing": {
-            "field": field,
-            "existence": exist,
-            "null_value": null
+    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+        # null and empty values are considered to be missing
+        return {
+            "bool": {"must_not": exists(field)}
         }
-    }
+    else:
+        return {
+            "missing": {
+                "field": field,
+                "existence": exist,
+                "null_value": null
+            }
+        }
 
 
 def field_exists(field):
