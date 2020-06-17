@@ -46,8 +46,6 @@ class EventTypeFilter(BaseMultipleOptionFilter):
         (MessagingEvent.SOURCE_BROADCAST, ugettext_noop('Broadcast')),
         (MessagingEvent.SOURCE_KEYWORD, ugettext_noop('Keyword')),
         (MessagingEvent.SOURCE_REMINDER, ugettext_noop('Conditional Alert')),
-        (MessagingEvent.CONTENT_SMS_SURVEY, ugettext_noop('Survey')),
-        (MessagingEvent.CONTENT_SMS_CALLBACK, ugettext_noop('Callback')),
         (MessagingEvent.SOURCE_UNRECOGNIZED, ugettext_noop('Unrecognized')),
         (MessagingEvent.SOURCE_OTHER, ugettext_noop('Other')),
     ]
@@ -55,8 +53,22 @@ class EventTypeFilter(BaseMultipleOptionFilter):
         MessagingEvent.SOURCE_BROADCAST,
         MessagingEvent.SOURCE_KEYWORD,
         MessagingEvent.SOURCE_REMINDER,
-        MessagingEvent.CONTENT_SMS_SURVEY,
     ]
+
+
+class EventContentFilter(BaseMultipleOptionFilter):
+    label = ugettext_noop('Content Type')
+    default_text = ugettext_noop('All')
+    slug = 'content_type'
+
+    @property
+    def options(self):
+        return [
+            (MessagingEvent.CONTENT_SMS_SURVEY, ugettext_noop('SMS Survey')),
+            (MessagingEvent.CONTENT_SMS_CALLBACK, ugettext_noop('SMS Callback')),
+            (MessagingEvent.CONTENT_SMS, ugettext_noop('Other SMS')),
+            (MessagingEvent.CONTENT_EMAIL, ugettext_noop('Email')),
+        ]
 
 
 class EventStatusFilter(BaseSingleOptionFilter):
