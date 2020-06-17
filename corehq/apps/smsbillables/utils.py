@@ -108,36 +108,20 @@ def get_pinpoint_message(backend_instance, backend_message_id):
             include_deleted=True,
         )
         config = pinpoint_backend.config
-        api_channel = '/sms/1'
-        api_suffix = '/reports'
-        if config.scenario_key:
-            api_channel = '/omni/1'
-
-        headers = {
-            'Authorization': f'App {config.auth_token}',
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        }
-        parameters = {
-            'messageId': backend_message_id
-        }
-        messages = _get_pinpoint_message_details(api_channel, api_suffix, config, headers, parameters)
-        if not messages:
-            api_suffix = '/logs'
-            messages = _get_infobip_message_details(api_channel, api_suffix, config, headers, parameters)
-        return messages[0]
+        client = _get_pinpoint_client(backend_instance)
+        response = client.filter_log_events(
+            logGroupName=f'sns/{config.region}/754026553166/DirectPublishToPhoneNumber',
+            filterPattern='{$.notification.messageId = %s}' % backend_message_id
+        )
+        return response['events'][0]
     except Exception as e:
         raise RetryBillableTaskException(str(e))
 
 
-def _get_pinpoint_message_details(api_channel, api_suffix, config, headers, parameters):
+def _get_pinpoint_client(backend_instance):
+    config = backend_instance.config
     client = boto3.client(
         'logs', region_name=config.region,
-        aws_access_key_id=config.access_key, aws_secret_access_key='MkAvhUbUDjBRCIt8AVV30VJZdBYHrVR6+1dZlDEa'
+        aws_access_key_id=config.access_key, aws_secret_access_key=config.secret_access_key
     )
-    from corehq.messaging.smsbackends.infobip.models import INFOBIP_DOMAIN
-    url = f'https://{config.personalized_subdomain}.{INFOBIP_DOMAIN}{api_channel}{api_suffix}'
-    response = requests.get(url, params=parameters, headers=headers)
-    response_content = json.loads(response.content)
-    messages = response_content['results']
-    return messages
+    return client
