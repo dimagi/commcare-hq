@@ -1,5 +1,6 @@
 from collections import defaultdict, namedtuple
 from datetime import datetime, timedelta
+from django.conf import settings
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_datetime
@@ -387,6 +388,13 @@ def get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=None,
     return counts
 
 
+def _duration_script():
+    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+        return "doc['form.meta.timeEnd'].value.millis - doc['form.meta.timeStart'].value.millis"
+    else:
+        return "doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value"
+
+
 def get_form_duration_stats_by_user(
         domain,
         app_id,
@@ -412,7 +420,7 @@ def get_form_duration_stats_by_user(
                 ExtendedStatsAggregation(
                     'duration_stats',
                     'form.meta.timeStart',
-                    script="doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value",
+                    script=_duration_script(),
                 )
             )
         )
@@ -428,7 +436,7 @@ def get_form_duration_stats_by_user(
                 ExtendedStatsAggregation(
                     'duration_stats',
                     'form.meta.timeStart',
-                    script="doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value",
+                    script=_duration_script(),
                 )
             )
         )
@@ -467,7 +475,7 @@ def get_form_duration_stats_for_users(
             ExtendedStatsAggregation(
                 'duration_stats',
                 'form.meta.timeStart',
-                script="doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value",
+                script=_duration_script(),
             )
         )
         .size(0)
