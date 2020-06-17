@@ -6,9 +6,9 @@ from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
 
 from custom.icds_reports.cache import icds_quickcache
-from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
+from custom.icds_reports.const import LocationTypes, ChartColors, MapColors, AggregationLevels
 from custom.icds_reports.messages import underweight_children_help_text
-from custom.icds_reports.models import AggChildHealthMonthly
+from custom.icds_reports.models import AggChildHealthMonthly, ChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels, indian_formatted_number,\
     format_decimal
 from custom.icds_reports.utils import get_location_launched_status
@@ -20,9 +20,12 @@ def get_prevalence_of_undernutrition_data_map(domain, config, loc_level,
     config['month'] = datetime(*config['month'])
 
     def get_data_for(filters):
-        queryset = AggChildHealthMonthly.objects.filter(
-            **filters
-        ).values(
+        # using child health monthly while querying for awc level due to performance issues
+        if icds_features_flag and config['aggregation_level'] >= AggregationLevels.AWC:
+            chm_queryset = ChildHealthMonthly.objects.filter(**filters)
+        else:
+            chm_queryset = AggChildHealthMonthly.objects.filter(**filters)
+        queryset = chm_queryset.values(
             '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
             moderately_underweight=Sum('nutrition_status_moderately_underweight'),
@@ -158,10 +161,12 @@ def get_prevalence_of_undernutrition_data_chart(domain, config, loc_level,
 
     config['month__range'] = (three_before, month)
     del config['month']
-
-    chart_data = AggChildHealthMonthly.objects.filter(
-        **config
-    ).values(
+    # using child health monthly while querying for awc level due to performance issues
+    if icds_features_flag and config['aggregation_level'] >= AggregationLevels.AWC:
+        chm_queryset = ChildHealthMonthly.objects.filter(**config)
+    else:
+        chm_queryset = AggChildHealthMonthly.objects.filter(**config)
+    chart_data = chm_queryset.values(
         'month', '%s_name' % loc_level
     ).annotate(
         moderately_underweight=Sum('nutrition_status_moderately_underweight'),
@@ -296,9 +301,12 @@ def get_prevalence_of_undernutrition_sector_data(domain, config, loc_level, loca
     group_by = ['%s_name' % loc_level]
 
     config['month'] = datetime(*config['month'])
-    data = AggChildHealthMonthly.objects.filter(
-        **config
-    ).values(
+    # using child health monthly while querying for awc level due to performance issues
+    if icds_features_flag and config['aggregation_level'] >= AggregationLevels.AWC:
+        chm_queryset = ChildHealthMonthly.objects.filter(**config)
+    else:
+        chm_queryset = AggChildHealthMonthly.objects.filter(**config)
+    data = chm_queryset.values(
         *group_by
     ).annotate(
         moderately_underweight=Sum('nutrition_status_moderately_underweight'),

@@ -42,6 +42,11 @@ CREATE VIEW child_health_monthly_view AS
       child_health_monthly.alive_status_daily,
       child_health_monthly.duplicate_status_daily,
       child_health_monthly.seeking_services_status_daily,
+      chm.nutrition_status_weighed AS nutrition_status_weighed,
+      CASE WHEN chm.current_month_nutrition_status = 'normal' THEN 1 ELSE 0 END AS nutrition_status_normal,
+      CASE WHEN chm.current_month_nutrition_status = 'moderately_underweight' THEN 1 ELSE 0 END AS nutrition_status_moderately_underweight,
+      CASE WHEN chm.current_month_nutrition_status = 'severely_underweight' THEN 1 ELSE 0 END AS nutrition_status_severely_underweight,
+      chm.wer_eligible,
       GREATEST(child_health_monthly.fully_immunized_on_time, child_health_monthly.fully_immunized_late) AS fully_immunized,
       CASE WHEN child_health_monthly.current_month_nutrition_status = 'severely_underweight' THEN 1
           WHEN child_health_monthly.current_month_nutrition_status = 'moderately_underweight' THEN 2
