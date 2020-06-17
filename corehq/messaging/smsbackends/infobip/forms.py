@@ -7,12 +7,15 @@ from django.utils.translation import ugettext_lazy as _
 class InfobipBackendForm(BackendForm):
     account_sid = TrimmedCharField(
         label=_("Account SID"),
+        required=True
     )
     auth_token = TrimmedCharField(
         label=_("Auth Token"),
+        required=True
     )
     personalized_subdomain = TrimmedCharField(
         label=_("Personalized Subdomain"),
+        required=True
     )
     scenario_key = TrimmedCharField(
         label=_("Scenario Key"),

@@ -32,7 +32,7 @@ from custom.icds.location_reassignment.const import (
     OPERATION_COLUMN,
     SHEETS_TO_IGNORE,
 )
-from custom.icds.location_reassignment.download import Download
+from custom.icds.location_reassignment.download import DownloadUsers
 from custom.icds.location_reassignment.dumper import Dumper
 from custom.icds.location_reassignment.forms import (
     LocationReassignmentRequestForm,
@@ -263,7 +263,7 @@ def download_location_reassignment_template(request, domain):
         return HttpResponseRedirect(reverse(LocationReassignmentView.urlname, args=[domain]))
 
     location = SQLLocation.active_objects.get(location_id=location_id, domain=domain)
-    response_file = Download(location).dump()
+    response_file = DownloadUsers(location).dump()
     response = HttpResponse(response_file, content_type="text/html; charset=utf-8")
     timezone = get_timezone_for_user(request.couch_user, domain)
     creation_time = datetime.now(timezone).strftime(FILENAME_DATETIME_FORMAT)

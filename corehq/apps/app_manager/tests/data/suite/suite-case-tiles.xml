@@ -234,7 +234,7 @@
       </header>
       <template>
         <text>
-          <xpath function="if(dob = '', '', format_date(date(if(dob = '', 0, dob)),'short'))"/>
+          <xpath function="if(dob = '', '', format-date(date(dob), '%d/%m/%y'))"/>
         </text>
       </template>
       <sort type="string">
