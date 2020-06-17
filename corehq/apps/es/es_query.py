@@ -222,6 +222,10 @@ class ESQuery(object):
             size = sliced_or_int.stop - start
         return self.start(start).size(size).run().hits
 
+    @property
+    def is_es7(self):
+        return settings.ELASTICSEARCH_MAJOR_VERSION == 7
+
     def run(self, include_hits=False):
         """Actually run the query.  Returns an ESQuerySet object."""
         query = self._clean_before_run(include_hits)
@@ -530,6 +534,9 @@ class ESQuerySet(object):
         if query._legacy_fields:
             return flatten_field_dict(result, fields_property='_source')
         else:
+            # ES7 scroll for some reason don't include _id in the source even if it's specified
+            if settings.ELASTICSEARCH_MAJOR_VERSION == 7 and query._source and "_id" in query._source:
+                result['_source']['_id'] = result.get('_id', None)
             return result['_source']
 
     @property

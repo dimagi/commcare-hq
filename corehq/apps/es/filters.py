@@ -71,7 +71,7 @@ def NOT(filter_):
         return filter_['not']
     else:
         if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-            return {"must_not": filter_}
+            return {"bool": {"must_not": filter_}}
         else:
             return {"not": filter_}
 
@@ -150,12 +150,24 @@ def non_null(field):
 
 def nested(path, filter_):
     """Query nested documents which normally can't be queried directly"""
-    return {
-        "nested": {
-            "path": path,
-            "filter": filter_
+    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+        return {
+            "nested": {
+                "path": path,
+                "query": {
+                    "bool": {
+                        "filter": filter_
+                    }
+                }
+            }
         }
-    }
+    else:
+        return {
+            "nested": {
+                "path": path,
+                "filter": filter_
+            }
+        }
 
 
 def regexp(field, regex):

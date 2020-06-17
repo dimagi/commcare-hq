@@ -3,6 +3,7 @@ import base64
 from django.core.management import call_command
 from django.test import Client
 from django.urls import reverse
+from nose.plugins.attrib import attr
 
 from corehq.apps.domain.utils import clear_domain_names
 from tastypie.models import ApiKey

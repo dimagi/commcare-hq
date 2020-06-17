@@ -320,7 +320,7 @@ def scan_es7(client, query=None, scroll='5m', **kwargs):
 
     # initial search
     initial_resp = client.search(
-        body=query, scroll=scroll, size=1000, **kwargs
+        body=query, scroll=scroll, size=SCROLL_PAGE_SIZE_LIMIT, **kwargs
     )
 
     def fetch_all(initial_response):
