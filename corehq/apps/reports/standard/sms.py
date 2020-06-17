@@ -54,7 +54,7 @@ from corehq.apps.sms.filters import (
     EventStatusFilter,
     EventTypeFilter,
     MessageTypeFilter,
-    PhoneNumberFilter,
+    PhoneNumberOrEmailFilter,
     PhoneNumberReportFilter,
 )
 from corehq.apps.sms.mixin import apply_leniency
@@ -630,7 +630,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
         DatespanFilter,
         EventTypeFilter,
         EventStatusFilter,
-        PhoneNumberFilter,
+        PhoneNumberOrEmailFilter,
     ]
     ajax_pagination = True
 
@@ -653,8 +653,8 @@ class MessagingEventsReport(BaseMessagingEventReport):
 
     @property
     @memoized
-    def phone_number_filter(self):
-        value = PhoneNumberFilter.get_value(self.request, self.domain)
+    def phone_number_or_email_filter(self):
+        value = PhoneNumberOrEmailFilter.get_value(self.request, self.domain)
         if isinstance(value, str):
             return value.strip()
 
@@ -723,6 +723,11 @@ class MessagingEventsReport(BaseMessagingEventReport):
                 (Q(messagingsubevent__xforms_session__session_is_open=False) &
                  Q(messagingsubevent__xforms_session__submission_id__isnull=True))
             )
+        elif event_status == MessagingEvent.STATUS_EMAIL_DELIVERED:
+            event_status_filter = (
+                Q(status=event_status) |
+                Q(messagingsubevent__status=event_status)
+            )
 
         return source_filter, content_type_filter, event_status_filter
 
@@ -757,8 +762,12 @@ class MessagingEventsReport(BaseMessagingEventReport):
         if event_status_filter:
             data = data.filter(event_status_filter)
 
-        if self.phone_number_filter:
-            data = data.filter(messagingsubevent__sms__phone_number__contains=self.phone_number_filter)
+        if self.phone_number_or_email_filter:
+            phone_qs = data.filter(
+                messagingsubevent__sms__phone_number__contains=self.phone_number_or_email_filter)
+            email_qs = data.filter(
+                messagingsubevent__email__recipient_address__icontains=self.phone_number_or_email_filter)
+            data = (email_qs | phone_qs) if self.phone_number_or_email_filter.isdigit() else email_qs
 
         # We need to call distinct() on this because it's doing an
         # outer join to sms_messagingsubevent in order to filter on
@@ -777,7 +786,8 @@ class MessagingEventsReport(BaseMessagingEventReport):
             {'name': 'enddate', 'value': self.datespan.enddate.strftime('%Y-%m-%d')},
             {'name': EventTypeFilter.slug, 'value': EventTypeFilter.get_value(self.request, self.domain)},
             {'name': EventStatusFilter.slug, 'value': EventStatusFilter.get_value(self.request, self.domain)},
-            {'name': PhoneNumberFilter.slug, 'value': PhoneNumberFilter.get_value(self.request, self.domain)},
+            {'name': PhoneNumberOrEmailFilter.slug,
+             'value': PhoneNumberOrEmailFilter.get_value(self.request, self.domain)},
         ]
 
     @property
@@ -1130,8 +1140,8 @@ class PhoneNumberReport(BaseCommConnectLogReport):
 
     @property
     @memoized
-    def phone_number_filter(self):
-        value = self._filter['phone_number_filter']
+    def phone_number_or_email_filter(self):
+        value = self._filter['phone_number_or_email_filter']
         if isinstance(value, str):
             return apply_leniency(value.strip())
 

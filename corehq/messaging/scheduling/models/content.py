@@ -1,6 +1,8 @@
 import jsonfield as old_jsonfield
 from contextlib import contextmanager
 from copy import deepcopy
+from datetime import datetime
+
 from corehq.apps.accounting.utils import domain_is_on_trial
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException
@@ -12,7 +14,7 @@ from corehq.apps.smsforms.util import form_requires_input, critical_section_for_
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.models.abstract import Content
 from corehq.apps.reminders.models import EmailUsage
-from corehq.apps.sms.models import MessagingEvent, PhoneNumber, PhoneBlacklist
+from corehq.apps.sms.models import MessagingEvent, PhoneNumber, PhoneBlacklist, Email
 from corehq.apps.sms.util import touchforms_error_is_config_error, get_formplayer_exception
 from corehq.apps.smsforms.models import SQLXFormsSession
 from memoized import memoized
@@ -138,7 +140,20 @@ class EmailContent(Content):
             logged_subevent.error(MessagingEvent.ERROR_TRIAL_EMAIL_LIMIT_REACHED)
             return
 
-        send_mail_async.delay(subject, message, settings.DEFAULT_FROM_EMAIL, [email_address])
+        send_mail_async.delay(subject, message, settings.DEFAULT_FROM_EMAIL, [email_address], logged_subevent.id)
+
+        email = Email(
+            domain=logged_event.domain,
+            date=datetime.utcnow(),
+            couch_recipient_doc_type=logged_event.recipient_type,
+            couch_recipient=logged_event.recipient_id,
+            messaging_subevent_id=logged_subevent.pk,
+            recipient_address=email_address,
+            subject=subject,
+            body=message,
+        )
+        email.save()
+
         email_usage.update_count()
         logged_subevent.completed()
 
