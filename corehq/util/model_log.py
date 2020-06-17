@@ -2,14 +2,14 @@ from django.contrib.admin.options import get_content_type_for_model
 from django.utils.encoding import force_text
 
 
-def log_model_change(user, model_object, message=None, fields_changed=None, is_create=False):
+def log_model_change(user, model_object, message=None, fields_changed=None, is_create=False, is_delete=False):
     """
     :param user: User making the change (couch user or django user)
     :param model_object: The object being changed (must be a Django model)
     :param message: Message text
     :param fields_changed: List of model field names that have changed
     """
-    from django.contrib.admin.models import ADDITION, CHANGE, LogEntry
+    from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
     from corehq.apps.users.models import CouchUser
     if isinstance(user, CouchUser):
         user = user.get_django_user()
@@ -26,11 +26,17 @@ def log_model_change(user, model_object, message=None, fields_changed=None, is_c
 
         message = {'changed': {'fields': fields_changed}}
 
+    if is_delete:
+        action_flag = DELETION
+    elif is_create:
+        action_flag = ADDITION
+    else:
+        action_flag = CHANGE
     return LogEntry.objects.log_action(
         user_id=user.pk,
         content_type_id=get_content_type_for_model(model_object).pk,
         object_id=model_object.pk,
         object_repr=force_text(model_object),
-        action_flag=ADDITION if is_create else CHANGE,
+        action_flag=action_flag,
         change_message=message,
     )
