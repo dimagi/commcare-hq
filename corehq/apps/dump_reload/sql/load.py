@@ -1,5 +1,7 @@
 import json
 from collections import Counter, defaultdict
+from concurrent.futures.process import ProcessPoolExecutor
+from typing import List
 
 from django.apps import apps
 from django.core.management.color import no_style
@@ -101,12 +103,11 @@ def load_objects(objects):
     """
     load_stats_by_db = {}
 
-    for db_alias, objects_for_db in _group_objects_by_db(objects):
-        with transaction.atomic(using=db_alias):
-            load_stat = load_data_for_db(db_alias, objects_for_db)
-
+    objects_by_db = _group_objects_by_db(objects)
+    executor = ProcessPoolExecutor(max_workers=len(objects_by_db))
+    results = executor.map(load_data_task, objects_by_db)
+    for load_stat in results:
         _update_stats(load_stats_by_db, [load_stat])
-
     return list(load_stats_by_db.values())
 
 
@@ -118,6 +119,13 @@ def _update_stats(current_stats_by_db, new_stats):
             current_stat.update(new_stat)
         else:
             current_stats_by_db[new_stat.db_alias] = new_stat
+
+
+def load_data_task(dbalias_objects: tuple) -> LoadStat:
+    db_alias, objects_for_db = dbalias_objects
+    with transaction.atomic(using=db_alias):
+        load_stat = load_data_for_db(db_alias, objects_for_db)
+    return load_stat
 
 
 def load_data_for_db(db_alias, objects):
