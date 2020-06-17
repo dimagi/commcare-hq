@@ -1,9 +1,11 @@
 import json
 from collections import Counter, defaultdict
-from concurrent.futures.process import ProcessPoolExecutor
-from typing import List
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from functools import partial
+import multiprocessing as mp
 
 from django.apps import apps
+from django.conf import settings
 from django.core.management.color import no_style
 from django.core.serializers.python import Deserializer as PythonDeserializer
 from django.db import (
@@ -19,6 +21,8 @@ from corehq.apps.dump_reload.exceptions import DataLoadException
 from corehq.apps.dump_reload.interface import DataLoader
 from corehq.apps.dump_reload.util import get_model_label
 from corehq.sql_db.routers import HINT_PARTITION_VALUE
+
+CHUNK_SIZE = 200
 
 
 class DefaultDictWithKey(defaultdict):
@@ -48,48 +52,102 @@ class SqlDataLoader(DataLoader):
     slug = 'sql'
 
     def load_objects(self, object_strings, force=False):
-        # Keep a count of the installed objects
-        load_stats_by_db = {}
-        total_object_counts = []
+        object_count = 0
 
-        def _process_chunk(chunk):
-            nonlocal total_object_counts
-            nonlocal load_stats_by_db
+        def enqueue_object(dbalias_to_workerqueue, obj):
+            nonlocal object_count
+            db_alias = get_db_alias(obj)
+            __, queue = dbalias_to_workerqueue[db_alias]
+            queue.put(obj)
+            object_count += 1
+            if not object_count % 1000:
+                self.stdout.write(f'Loaded {object_count} SQL objects')
 
-            chunk_stats = load_objects(chunk)
-            total_object_counts.append(len(chunk))
-            self.stdout.write('Loaded {} SQL objects'.format(sum(total_object_counts)))
-            _update_stats(load_stats_by_db, chunk_stats)
+        def terminate_workers(dbalias_to_workerqueue):
+            for __, queue in dbalias_to_workerqueue.values():
+                queue.put(None)
 
-        chunk = []
-        for line in object_strings:
-            line = line.strip()
-            if not line:
-                continue
+        def collect_stats(dbalias_to_workerqueue):
+            worker_tasks = {wq[0] for wq in dbalias_to_workerqueue.values()}
+            return [t.result() for t in as_completed(worker_tasks)]
+
+        num_aliases = len(settings.DATABASES)
+        manager = mp.Manager()
+        with ProcessPoolExecutor(max_workers=num_aliases) as executor:
+            # Map each db_alias to a queue + a worker task to consume the queue
+            worker_queue_factory = partial(get_worker_queue, executor, manager)
+            # DefaultDictWithKey passes the key to its factory function so that
+            # the worker knows its db_alias without having to figure it out
+            dbalias_to_workerqueue = DefaultDictWithKey(worker_queue_factory)
+
+            for line in object_strings:
+                obj = self.line_to_object(line)
+                if obj:
+                    enqueue_object(dbalias_to_workerqueue, obj)
+            terminate_workers(dbalias_to_workerqueue)
+            load_stats = collect_stats(dbalias_to_workerqueue)
+
+        _reset_sequences(load_stats)
+        loaded_model_counts = Counter()
+        for db_stats in load_stats:
+            model_labels = (f'(sql) {get_model_label(model)}'
+                            for model in db_stats.model_counter.elements())
+            loaded_model_counts.update(model_labels)
+        return object_count, loaded_model_counts
+
+    def line_to_object(self, line):
+        line = line.strip()
+        if line:
             obj = json.loads(line)
             if self.filter_object(obj):
-                chunk.append(obj)
-            if len(chunk) >= 1000:
-                _process_chunk(chunk)
-                chunk = []
-
-        if chunk:
-            _process_chunk(chunk)
-
-        _reset_sequences(list(load_stats_by_db.values()))
-
-        loaded_model_counts = Counter()
-        for db_stats in load_stats_by_db.values():
-            model_labels = ('(sql) {}'.format(get_model_label(model)) for model in db_stats.model_counter.elements())
-            loaded_model_counts.update(model_labels)
-
-        return sum(total_object_counts), loaded_model_counts
+                return obj
 
     def filter_object(self, object):
         if not self.object_filter:
             return True
         model_label = object['model']
         return self.object_filter.findall(model_label)
+
+
+def get_worker_queue(process_pool_executor, manager, db_alias):
+    """
+    Instantiates a queue, and starts a worker task in its own process
+    """
+    queue = manager.JoinableQueue(maxsize=CHUNK_SIZE)
+    worker_task = process_pool_executor.submit(worker, queue, db_alias)
+    return worker_task, queue
+
+
+def worker(queue, db_alias):
+    """
+    Pulls objects from queue and loads them into their DB.
+    """
+    load_stat = LoadStat(db_alias, Counter())
+
+    def process(chunk_):
+        nonlocal load_stat
+        with transaction.atomic(using=db_alias):
+            stat = load_data_for_db(db_alias, chunk_)
+        load_stat.update(stat)
+        chunk_.clear()
+
+    chunk = []
+    while True:
+        obj = queue.get()
+        if obj is None:  # None is used as a terminator
+            break
+        chunk.append(obj)
+        try:
+            if len(chunk) == CHUNK_SIZE:
+                process(chunk)
+        finally:
+            queue.task_done()
+    try:
+        if chunk:
+            process(chunk)
+    finally:
+        queue.task_done()
+    return load_stat
 
 
 def _reset_sequences(load_stats):
@@ -180,28 +238,32 @@ def _group_objects_by_db(objects):
     """
     objects_by_db = defaultdict(list)
     for obj in objects:
-        app_label = obj['model']
-        model = apps.get_model(app_label)
-        router_hints = {}
-        if hasattr(model, 'partition_attr'):
-            try:
-                partition_value = obj['fields'][model.partition_attr]
-            except KeyError:
-                # in the case of foreign keys the serialized field name is the
-                # name of the foreign key attribute
-                field = [
-                    field for field in model._meta.fields
-                    if field.column == model.partition_attr
-                ][0]
-                try:
-                    partition_value = obj['fields'][field.name]
-                except KeyError:
-                    if model.partition_attr == model._meta.pk.attname:
-                        partition_value = obj['pk']
-                    else:
-                        raise DataLoadException(f"Unable to find field {app_label}.{model.partition_attr}")
-
-            router_hints[HINT_PARTITION_VALUE] = partition_value
-        db_alias = router.db_for_write(model, **router_hints)
+        db_alias = get_db_alias(obj)
         objects_by_db[db_alias].append(obj)
     return list(objects_by_db.items())
+
+
+def get_db_alias(obj: dict) -> str:
+    app_label = obj['model']
+    model = apps.get_model(app_label)
+    router_hints = {}
+    if hasattr(model, 'partition_attr'):
+        try:
+            partition_value = obj['fields'][model.partition_attr]
+        except KeyError:
+            # in the case of foreign keys the serialized field name is the
+            # name of the foreign key attribute
+            field = [
+                field for field in model._meta.fields
+                if field.column == model.partition_attr
+            ][0]
+            try:
+                partition_value = obj['fields'][field.name]
+            except KeyError:
+                if model.partition_attr == model._meta.pk.attname:
+                    partition_value = obj['pk']
+                else:
+                    raise DataLoadException(f"Unable to find field {app_label}.{model.partition_attr}")
+
+        router_hints[HINT_PARTITION_VALUE] = partition_value
+    return router.db_for_write(model, **router_hints)
