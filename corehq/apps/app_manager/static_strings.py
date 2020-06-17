@@ -216,6 +216,7 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     ugettext_noop('We frequently release new versions of CommCare Mobile. Use the latest version to take advantage of new features and bug fixes. Note that if you are using CommCare for Android you must also update your version of CommCare from the Google Play Store.'),
     ugettext_noop('We suggest moving to CommCare 2.0 and above, unless your project is using referrals'),
     ugettext_noop('Web App'),
+    ugettext_noop('Web Apps Logo'),
     ugettext_noop('Weekly Log Sending Frequency'),
     ugettext_noop('Weekly'),
     ugettext_noop("What characters to allow users to input"),
