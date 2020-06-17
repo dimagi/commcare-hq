@@ -223,8 +223,8 @@ class CaseBackend:
             if run_config.start_date <= modified_on < run_config.end_date:
                 yield case_id, 'COUCH_TYPE_NOT_SUPPORTED', modified_on, domain
 
-    @retry_on_es_timeout
     @staticmethod
+    @retry_on_es_timeout
     def _get_es_modified_dates(case_ids):
         results = (
             CaseES(es_instance_alias=ES_EXPORT_INSTANCE)
