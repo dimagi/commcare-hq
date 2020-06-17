@@ -64,6 +64,7 @@ class EventStatusFilter(BaseSingleOptionFilter):
         (MessagingEvent.STATUS_IN_PROGRESS, ugettext_noop('In Progress')),
         (MessagingEvent.STATUS_NOT_COMPLETED, ugettext_noop('Not Completed')),
         (MessagingEvent.STATUS_ERROR, ugettext_noop('Error')),
+        (MessagingEvent.STATUS_EMAIL_DELIVERED, ugettext_noop('Delivered (Email Only)')),
     )
 
     slug = 'event_status'
@@ -84,6 +85,13 @@ class RequiredPhoneNumberFilter(PhoneNumberFilter):
         context = super(RequiredPhoneNumberFilter, self).filter_context
         context['required'] = True
         return context
+
+
+class PhoneNumberOrEmailFilter(BaseSimpleFilter):
+    slug = "phone_number_or_email_address"
+    label = ugettext_lazy("Phone Number or Email Address")
+    help_inline = ugettext_lazy("Enter a full or partial phone number or a full or partial email "
+                                "address to filter results")
 
 
 class PhoneNumberReportFilter(BaseReportFilter):
