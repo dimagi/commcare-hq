@@ -41,7 +41,10 @@ class SqlDataLoader(DataLoader):
         load_stats_by_db = {}
         total_object_counts = []
 
-        def _process_chunk(chunk, total_object_counts=total_object_counts, load_stats_by_db=load_stats_by_db):
+        def _process_chunk(chunk):
+            nonlocal total_object_counts
+            nonlocal load_stats_by_db
+
             chunk_stats = load_objects(chunk)
             total_object_counts.append(len(chunk))
             self.stdout.write('Loaded {} SQL objects'.format(sum(total_object_counts)))
