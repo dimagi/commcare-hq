@@ -205,6 +205,7 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     ugettext_noop('Update on every sync'),
     ugettext_noop('Upload a file to serve as a demo logo on Android phones'),
     ugettext_noop('Upload a file to serve as a login logo on Android phones'),
+    ugettext_noop('Upload a file to serve as an app logo in Web Apps'),
     ugettext_noop('Use Secure Submissions'),
     ugettext_noop('Use project level setting'),
     ugettext_noop('Use a different base URL for all app URLs. This makes the phone send forms, sync and look for updates from a differnent URL. Main use case is to allow migrating ICDS to a new cluster.'),
