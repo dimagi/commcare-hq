@@ -177,17 +177,6 @@ hqDefine('users/js/roles',[
                 };
             },
         };
-
-        self.allowSubmit = ko.computed(function () {
-            if (!self.roleBeingEdited()) {
-                return false;
-            }
-            if (!self.roleBeingEdited().name()) {
-                return false;
-            }
-            return true;
-        });
-
         self.submitNewRole = function () {
             // moved saveOptions inline
             $.ajax({
