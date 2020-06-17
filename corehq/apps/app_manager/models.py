@@ -194,6 +194,7 @@ ANDROID_LOGO_PROPERTY_MAPPING = {
     'hq_logo_android_home': 'brand-banner-home',
     'hq_logo_android_login': 'brand-banner-login',
     'hq_logo_android_demo': 'brand-banner-home-demo',
+    'hq_logo_web_apps': 'brand-banner-web-apps',
 }
 
 

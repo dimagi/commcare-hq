@@ -367,7 +367,7 @@ class LoginAsUsers(View):
 
 
 def _format_app(app):
-    app['imageUri'] = app.get('logo_refs', {}).get('hq_logo_android_home', {}).get('path', '')
+    app['imageUri'] = app.get('logo_refs', {}).get('hq_logo_web_apps', {}).get('path', '')
     return app
 
 
