@@ -85,6 +85,7 @@ from corehq.apps.users.util import raw_username
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
 from corehq.util.couch import DocumentNotFound, get_document_or_not_found
+from corehq.util.model_log import log_model_change
 from corehq.util.timer import TimingContext
 
 from . import (
@@ -263,13 +264,15 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             bundle.obj.save()
         except Exception:
             if bundle.obj._id:
-                bundle.obj.retire()
+                bundle.obj.retire(deleted_by=request.user, deleted_via=USER_CHANGE_VIA_API)
             try:
                 django_user = bundle.obj.get_django_user()
             except User.DoesNotExist:
                 pass
             else:
-                django_user.delete()
+                django_user.delete(deleted_by=request.user, deleted_via=USER_CHANGE_VIA_API)
+                log_model_change(request.user, django_user, message={'deleted_via': USER_CHANGE_VIA_API},
+                                 is_delete=True)
         return bundle
 
     def obj_update(self, bundle, **kwargs):
@@ -285,7 +288,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
     def obj_delete(self, bundle, **kwargs):
         user = CommCareUser.get(kwargs['pk'])
         if user:
-            user.retire()
+            user.retire(deleted_by=bundle.request.user, deleted_via=USER_CHANGE_VIA_API)
         return ImmediateHttpResponse(response=http.HttpAccepted())
 
 
