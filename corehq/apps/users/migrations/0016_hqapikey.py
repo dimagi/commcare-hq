@@ -7,8 +7,10 @@ import django.contrib.postgres.fields
 from django.db import migrations, models
 import django.db.models.deletion
 import django.utils.timezone
+from corehq.util.django_migrations import skip_on_fresh_install
 
 
+@skip_on_fresh_install
 def populate_api_keys(apps, schema_editor):
     TastyPieApiKey = apps.get_model('tastypie', 'ApiKey')
     ApiKeySettings = apps.get_model('hqwebapp', 'ApiKeySettings')
