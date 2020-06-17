@@ -29,6 +29,20 @@ function PoshanProgressController($scope, $http, $log, $routeParams, $location, 
     vm.filtersData = $location.search();
     vm.selectedLocationLevel = storageService.getKey('search')['selectedLocationLevel'] || 0;
 
+    vm.getRowSpan = function (firstIndicator, secondIndicator) {
+        var firstIndicatorDataLength = firstIndicator['Best performers'].length;
+        var secondIndicatorDataLength = 0;
+        if(secondIndicator) {
+            secondIndicatorDataLength = secondIndicator['Best performers'].length;
+        }
+        var maxLength = Math.max(firstIndicatorDataLength, secondIndicatorDataLength);
+        if (maxLength) {
+            return maxLength;
+        } else {
+            return 1;
+        }
+    }
+
     vm.getData = function () {
         vm.selectedDate = dateHelperService.getSelectedDate();
         vm.dateDisplayed = vm.selectedDate.toLocaleString('default', { month: 'short'}) + ' ' + vm.selectedDate.getFullYear();
