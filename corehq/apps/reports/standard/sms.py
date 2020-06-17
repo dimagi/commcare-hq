@@ -68,6 +68,7 @@ from corehq.apps.sms.models import (
     MessagingSubEvent,
     PhoneBlacklist,
     PhoneNumber,
+    Email
 )
 from corehq.apps.sms.util import get_backend_name
 from corehq.apps.smsforms.models import SQLXFormsSession
@@ -854,11 +855,17 @@ class MessageEventDetailReport(BaseMessagingEventReport):
 
     @property
     def headers(self):
+        EMAIL_ADDRRESS = _('Email Address')
+        PHONE_NUMBER = _('Phone Number')
+        if self.messaging_event and self.messaging_event.content_type == MessagingEvent.CONTENT_EMAIL:
+            contact_column = EMAIL_ADDRRESS
+        else:
+            contact_column = PHONE_NUMBER
         return DataTablesHeader(
             DataTablesColumn(_('Date')),
             DataTablesColumn(_('Recipient')),
             DataTablesColumn(_('Content')),
-            DataTablesColumn(_('Phone Number')),
+            DataTablesColumn(contact_column),
             DataTablesColumn(_('Direction')),
             DataTablesColumn(_('Gateway')),
             DataTablesColumn(_('Status')),
@@ -958,13 +965,21 @@ class MessageEventDetailReport(BaseMessagingEventReport):
             elif messaging_subevent.content_type == MessagingEvent.CONTENT_EMAIL:
                 timestamp = ServerTime(messaging_subevent.date).user_time(self.timezone).done()
                 status = get_status_display(messaging_subevent)
+                content = '-'
+                recipient_address = '-'
+                try:
+                    email = Email.objects.get(messaging_subevent=messaging_subevent.pk)
+                    content = email.body
+                    recipient_address = email.recipient_address
+                except Email.DoesNotExist:
+                    pass
                 result.append([
                     self._fmt_timestamp(timestamp),
                     self._fmt_contact_link(messaging_subevent.recipient_id, doc_info),
-                    self._fmt('-'),
-                    self._fmt('-'),
-                    self._fmt_direction('-'),
-                    self._fmt('-'),
+                    self._fmt(content),
+                    self._fmt(recipient_address),
+                    self._fmt_direction(OUTGOING),
+                    self._fmt(_('Email')),
                     self._fmt(status),
                 ])
         return result
