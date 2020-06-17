@@ -18,15 +18,15 @@ def populate_api_keys(apps, schema_editor):
 
     for api_key in TastyPieApiKey.objects.all():
         try:
-            ip_whitelist = ApiKeySettings.objects.get(api_key=api_key).ip_whitelist
+            ip_allowlist = ApiKeySettings.objects.get(api_key=api_key).ip_whitelist
         except ApiKeySettings.DoesNotExist:
-            ip_whitelist = []
+            ip_allowlist = []
 
         HQApiKey.objects.create(
             key=api_key.key,
             created=api_key.created,
             user=api_key.user,
-            ip_whitelist=ip_whitelist,
+            ip_allowlist=ip_allowlist,
         )
 
 
@@ -45,7 +45,7 @@ class Migration(migrations.Migration):
                 ('key', models.CharField(blank=True, db_index=True, default='', max_length=128)),
                 ('name', models.CharField(blank=True, default='', max_length=255)),
                 ('created', models.DateTimeField(default=django.utils.timezone.now)),
-                ('ip_whitelist', django.contrib.postgres.fields.ArrayField(base_field=models.GenericIPAddressField(), default=list, size=None)),
+                ('ip_allowlist', django.contrib.postgres.fields.ArrayField(base_field=models.GenericIPAddressField(), default=list, size=None)),
                 ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='api_keys', to=settings.AUTH_USER_MODEL)),
             ],
         ),

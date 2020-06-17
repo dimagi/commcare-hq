@@ -265,8 +265,8 @@ class HQApiKeyAuthentication(ApiKeyAuthentication):
         except HQApiKey.DoesNotExist:
             return self._unauthorized()
 
-        # ensure the IP address is in the whitelist, if that exists
-        if key.ip_whitelist and (get_ip(request) not in key.ip_whitelist):
+        # ensure the IP address is in the allowlist, if that exists
+        if key.ip_allowlist and (get_ip(request) not in key.ip_allowlist):
             return self._unauthorized()
 
         request.user = user

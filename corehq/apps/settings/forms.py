@@ -263,9 +263,9 @@ class HQPhoneNumberForm(PhoneNumberForm):
 
 class HQApiKeyForm(forms.Form):
     name = forms.CharField()
-    ip_whitelist = SimpleArrayField(
+    ip_allowlist = SimpleArrayField(
         forms.GenericIPAddressField(),
-        label=ugettext_lazy("IP Address Whitelist (comma separated)"),
+        label=ugettext_lazy("Allowed IP Addresses (comma separated)"),
         required=False
     )
 
@@ -277,7 +277,7 @@ class HQApiKeyForm(forms.Form):
             crispy.Fieldset(
                 ugettext_lazy("Add New API Key"),
                 crispy.Field('name'),
-                crispy.Field('ip_whitelist'),
+                crispy.Field('ip_allowlist'),
             ),
             hqcrispy.FormActions(
                 StrictButton(
@@ -291,7 +291,7 @@ class HQApiKeyForm(forms.Form):
     def create_key(self, user):
         new_key = HQApiKey.objects.create(
             name=self.cleaned_data['name'],
-            ip_whitelist=self.cleaned_data['ip_whitelist'],
+            ip_allowlist=self.cleaned_data['ip_allowlist'],
             user=user,
         )
         new_key.key = new_key.generate_key()

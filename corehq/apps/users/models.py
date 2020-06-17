@@ -2942,7 +2942,7 @@ class HQApiKey(models.Model):
     key = models.CharField(max_length=128, blank=True, default='', db_index=True)
     name = models.CharField(max_length=255, blank=True, default='')
     created = models.DateTimeField(default=timezone.now)
-    ip_whitelist = ArrayField(models.GenericIPAddressField(), default=list)
+    ip_allowlist = ArrayField(models.GenericIPAddressField(), default=list)
 
     def save(self, *args, **kwargs):
         if not self.key:

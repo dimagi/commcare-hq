@@ -537,9 +537,9 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
                     "id": api_key.id,
                     "name": api_key.name,
                     "key": redacted_key,
-                    "ip_whitelist": (
-                        ", ".join(api_key.ip_whitelist)
-                        if api_key.ip_whitelist else _("All IP Addresses")
+                    "ip_allowlist": (
+                        ", ".join(api_key.ip_allowlist)
+                        if api_key.ip_allowlist else _("All IP Addresses")
                     ),
                     "created": api_key.created.strftime('%Y-%m-%d %H:%M:%S'),
                 },
@@ -564,7 +564,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
                 'id': new_api_key.id,
                 'name': new_api_key.name,
                 'key': f"{new_api_key.key} ({copy_key_message})",
-                'ip_whitelist': new_api_key.ip_whitelist,
+                'ip_allowlist': new_api_key.ip_allowlist,
                 'created': new_api_key.created.isoformat()
             },
             'template': 'new-user-api-key-template',
