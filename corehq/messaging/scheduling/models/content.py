@@ -145,8 +145,8 @@ class EmailContent(Content):
         email = Email(
             domain=logged_event.domain,
             date=datetime.utcnow(),
-            couch_recipient_doc_type=logged_event.recipient_type,
-            couch_recipient=logged_event.recipient_id,
+            couch_recipient_doc_type=logged_subevent.recipient_type,
+            couch_recipient=logged_subevent.recipient_id,
             messaging_subevent_id=logged_subevent.pk,
             recipient_address=email_address,
             subject=subject,
