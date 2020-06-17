@@ -1,6 +1,6 @@
 from corehq.apps.locations.models import SQLLocation
 from custom.icds_reports.models.views import PoshanProgressReportView
-from custom.icds_reports.utils import generate_quarter_months, calculate_percent, handle_average
+from custom.icds_reports.utils import generate_quarter_months, calculate_percent, handle_average, apply_exclude
 from custom.icds_reports.utils import india_now
 
 HEADERS_COMPREHENSIVE = [
@@ -104,6 +104,8 @@ class PoshanProgressReport(object):
         """
         headers_comprehensive, cols_comprehensive, headers_summary, cols_summary, cols_to_fetch = self.row_constants
         query_set = PoshanProgressReportView.objects.filter(**filters).order_by(*order_by)
+        if not self.show_test:
+            query_set = apply_exclude(self.config['domain'], query_set)
         all_cols = list(set(cols_comprehensive + cols_to_fetch))
 
         # it used to uniquely identify the row
@@ -171,6 +173,8 @@ class PoshanProgressReport(object):
         :return: excel_rows
         """
         query_set = PoshanProgressReportView.objects.filter(**filters).order_by(*order_by)
+        if not self.show_test:
+            query_set = apply_exclude(self.config['domain'], query_set)
         headers_comprehensive, cols_comprehensive, headers_summary, cols_summary, cols_to_fetch = self.row_constants
         data = query_set.values(*cols_to_fetch)
         all_cols = list(set(cols_comprehensive + cols_to_fetch))
