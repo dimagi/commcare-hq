@@ -6,6 +6,7 @@ from django.views.decorators.http import require_POST
 
 import couchforms
 from casexml.apps.case.xform import get_case_updates, is_device_report
+from corehq.apps.hqwebapp.decorators import waf_allow
 from couchforms import openrosa_response
 from couchforms.const import MAGIC_PROPERTY, BadRequest
 from couchforms.getters import MultimediaBug
@@ -193,6 +194,7 @@ def _record_metrics(tags, submission_type, response, timer=None, xform=None):
     metrics_counter('commcare.xform_submissions.count', tags=tags)
 
 
+@waf_allow('XSS_BODY')
 @location_safe
 @csrf_exempt
 @require_POST
@@ -308,6 +310,7 @@ def _secure_post_basic(request, domain, app_id=None):
     )
 
 
+@waf_allow('XSS_BODY')
 @location_safe
 @csrf_exempt
 @require_POST

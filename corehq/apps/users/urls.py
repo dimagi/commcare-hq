@@ -64,6 +64,7 @@ from .views.mobile.users import (
     user_download_job_poll,
     user_upload_job_poll,
     CommCareUserConfirmAccountView, send_confirmation_email)
+from ..hqwebapp.decorators import waf_allow
 
 urlpatterns = [
     url(r'^$', DefaultProjectUserSettingsView.as_view(), name=DefaultProjectUserSettingsView.urlname),
@@ -128,7 +129,7 @@ urlpatterns = [
         name=DemoRestoreStatusView.urlname),
     url(r'^commcare/demo_restore/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$', demo_restore_job_poll,
         name='demo_restore_job_poll'),
-    url(r'^commcare/upload/$', UploadCommCareUsers.as_view(), name=UploadCommCareUsers.urlname),
+    url(r'^commcare/upload/$', waf_allow('XSS_BODY')(UploadCommCareUsers.as_view()), name=UploadCommCareUsers.urlname),
     url(r'^commcare/upload/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$', UserUploadStatusView.as_view(),
         name=UserUploadStatusView.urlname),
     url(r'^commcare/upload/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',

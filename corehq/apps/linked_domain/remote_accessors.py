@@ -59,6 +59,17 @@ def get_latest_released_versions_by_app_id(domain_link):
     return _do_simple_request('linked_domain:released_app_versions', domain_link)['versions']
 
 
+def get_ucr_config(domain_link, report_config_id):
+    from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
+    url = reverse('linked_domain:ucr_config', args=[domain_link.master_domain,
+                                                    report_config_id])
+    response = _do_request_to_remote_hq_json(url, domain_link.remote_details, domain_link.linked_domain)
+    return {
+        "report": ReportConfiguration.wrap(response["report"]),
+        "datasource": DataSourceConfiguration.wrap(response["datasource"]),
+    }
+
+
 def _convert_app_from_remote_linking_source(app_json):
     attachments = app_json.pop('_LAZY_ATTACHMENTS', {})
     app = wrap_app(app_json)

@@ -70,12 +70,12 @@ from corehq.apps.hqwebapp.decorators import (
     use_datatables,
     use_jquery_ui,
     use_legacy_jquery,
-)
+    waf_allow)
 from corehq.apps.hqwebapp.views import render_static
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.users.decorators import require_can_login_as
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.models import CommCareUser, CouchUser, DomainMembershipError
 from corehq.apps.users.util import format_username
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.form_processor.exceptions import XFormNotFound
@@ -89,11 +89,6 @@ from xml2json.lib import xml2json
 @require_cloudcare_access
 def default(request, domain):
     return HttpResponseRedirect(reverse('formplayer_main', args=[domain]))
-
-
-@login_and_domain_required
-def login_new_window(request, domain):
-    return render_static(request, "close_window.html", _("Thank you for logging in!"))
 
 
 @location_safe
@@ -129,7 +124,12 @@ class FormplayerMain(View):
         apps = filter(None, apps)
         apps = filter(lambda app: app.get('cloudcare_enabled') or self.preview, apps)
         apps = filter(lambda app: app_access.user_can_access_app(user, app), apps)
-        role = user.get_role(domain)
+        role = None
+        try:
+            role = user.get_role(domain)
+        except DomainMembershipError:
+            # User has access via domain mirroring
+            pass
         if role:
             apps = [app for app in apps if role.permissions.view_web_app(app)]
         apps = sorted(apps, key=lambda app: app['name'])
@@ -488,6 +488,8 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
         return json_response({'success': 1})
 
 
+@waf_allow('XSS_BODY')
+@location_safe
 @login_and_domain_required
 def report_formplayer_error(request, domain):
     data = json.loads(request.body)

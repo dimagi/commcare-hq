@@ -114,7 +114,7 @@ from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2Ajax
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.users.models import CouchUser, WebUser
 from corehq.apps.users.permissions import can_manage_releases
-from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR, SECURE_SESSION_TIMEOUT
+from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
@@ -582,12 +582,6 @@ class PrivacySecurityForm(forms.Form):
         help_text=ugettext_lazy("All web users on this project will be logged out after {} minutes "
                                 "of inactivity").format(settings.SECURE_TIMEOUT)
     )
-    secure_sessions_timeout = IntegerField(
-        label=ugettext_lazy("Inactivity Timeout Length"),
-        required=False,
-        help_text=ugettext_lazy("Override the default {}-minute length of the inactivity timeout. Has "
-                                "no effect unless inactivity timeout is in use").format(settings.SECURE_TIMEOUT)
-    )
     allow_domain_requests = BooleanField(
         label=ugettext_lazy("Web user requests"),
         required=False,
@@ -616,19 +610,16 @@ class PrivacySecurityForm(forms.Form):
         self.helper[0] = twbscrispy.PrependedText('restrict_superusers', '')
         self.helper[1] = twbscrispy.PrependedText('secure_submissions', '')
         self.helper[2] = twbscrispy.PrependedText('secure_sessions', '')
-        self.helper[3] = crispy.Field('secure_sessions_timeout')
-        self.helper[4] = twbscrispy.PrependedText('allow_domain_requests', '')
-        self.helper[5] = twbscrispy.PrependedText('hipaa_compliant', '')
-        self.helper[6] = twbscrispy.PrependedText('two_factor_auth', '')
-        self.helper[7] = twbscrispy.PrependedText('strong_mobile_passwords', '')
+        self.helper[3] = twbscrispy.PrependedText('allow_domain_requests', '')
+        self.helper[4] = twbscrispy.PrependedText('hipaa_compliant', '')
+        self.helper[5] = twbscrispy.PrependedText('two_factor_auth', '')
+        self.helper[6] = twbscrispy.PrependedText('strong_mobile_passwords', '')
 
         if not domain_has_privilege(domain, privileges.ADVANCED_DOMAIN_SECURITY):
-            self.helper.layout.pop(7)
             self.helper.layout.pop(6)
-        if not HIPAA_COMPLIANCE_CHECKBOX.enabled(user_name):
             self.helper.layout.pop(5)
-        if not SECURE_SESSION_TIMEOUT.enabled(domain):
-            self.helper.layout.pop(3)
+        if not HIPAA_COMPLIANCE_CHECKBOX.enabled(user_name):
+            self.helper.layout.pop(4)
         if not domain_has_privilege(domain, privileges.ADVANCED_DOMAIN_SECURITY):
             self.helper.layout.pop(2)
         self.helper.all().wrap_together(crispy.Fieldset, 'Edit Privacy Settings')
@@ -646,7 +637,6 @@ class PrivacySecurityForm(forms.Form):
         domain.restrict_superusers = self.cleaned_data.get('restrict_superusers', False)
         domain.allow_domain_requests = self.cleaned_data.get('allow_domain_requests', False)
         domain.secure_sessions = self.cleaned_data.get('secure_sessions', False)
-        domain.secure_sessions_timeout = self.cleaned_data.get('secure_sessions_timeout', None)
         domain.two_factor_auth = self.cleaned_data.get('two_factor_auth', False)
         domain.strong_mobile_passwords = self.cleaned_data.get('strong_mobile_passwords', False)
         secure_submissions = self.cleaned_data.get(

@@ -2,6 +2,7 @@ import uuid
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.sms.models import SMS, SQLMobileBackend, SQLMobileBackendMapping
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.views import BaseMessagingSectionView, DomainSmsGatewayListView
@@ -41,6 +42,7 @@ TELERIVET_INBOUND_FIELD_MAP = (
 )
 
 
+@waf_allow('XSS_BODY')
 @require_POST
 @csrf_exempt
 def incoming_message(request):

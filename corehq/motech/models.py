@@ -135,32 +135,32 @@ class ConnectionSettings(models.Model):
         if self.auth_type == BASIC_AUTH:
             return BasicAuthManager(
                 self.username,
-                self.password,
+                self.plaintext_password,
             )
         if self.auth_type == DIGEST_AUTH:
             return DigestAuthManager(
                 self.username,
-                self.password,
+                self.plaintext_password,
             )
         if self.auth_type == OAUTH1:
             return OAuth1Manager(
                 client_id=self.client_id,
-                client_secret=self.client_secret,
+                client_secret=self.plaintext_client_secret,
                 api_endpoints=self._get_oauth1_api_endpoints(),
                 connection_settings=self,
             )
         if self.auth_type == BEARER_AUTH:
             return BearerAuthManager(
                 self.username,
-                self.password,
+                self.plaintext_password,
             )
         if self.auth_type == OAUTH2_PWD:
             return OAuth2PasswordGrantManager(
                 self.url,
                 self.username,
-                self.password,
+                self.plaintext_password,
                 client_id=self.client_id,
-                client_secret=self.client_secret,
+                client_secret=self.plaintext_client_secret,
                 api_settings=self._get_oauth2_api_settings(),
                 connection_settings=self,
             )

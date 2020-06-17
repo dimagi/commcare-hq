@@ -1168,7 +1168,13 @@ SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER = StaticToggle(
     'This can be used to create report builder reports that are location-safe.',
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/internal/Demo+Mobile+Workers',
+)
+
+SHOW_IDS_IN_REPORT_BUILDER = StaticToggle(
+    'show_ids_in_report_builder',
+    'Allow adding Case IDs to report builder reports.',
+    TAG_SOLUTIONS_OPEN,
+    [NAMESPACE_DOMAIN],
 )
 
 MOBILE_USER_DEMO_MODE = StaticToggle(
@@ -1208,6 +1214,13 @@ DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
     'Enikshay: Disable column limit in UCR',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
+)
+
+OVERRIDE_EXPANDED_COLUMN_LIMIT_IN_REPORT_BUILDER = StaticToggle(
+    'override_expanded_column_limit_in_report_builder',
+    'COVID: Override the limit for expanded columns in report builder from 10 to 50',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
 )
 
 CLOUDCARE_LATEST_BUILD = StaticToggle(
@@ -1272,7 +1285,7 @@ ICDS = StaticToggle(
     "ICDS: Enable ICDS features (necessary since features are on India and ICDS envs)",
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    relevant_environments={'icds', 'india', 'staging'},
+    relevant_environments={'icds', 'india', 'staging', 'icds-staging'},
 )
 
 DATA_DICTIONARY = StaticToggle(
@@ -1552,7 +1565,7 @@ ICDS_DISHA_API = StaticToggle(
     'ICDS: Access DISHA API',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
-    relevant_environments={'icds', 'india'},
+    relevant_environments={'icds', 'india', 'icds-staging'},
 )
 
 
@@ -1561,7 +1574,7 @@ ICDS_NIC_INDICATOR_API = StaticToggle(
     'ICDS: Dashboard Indicator API for NIC',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
-    relevant_environments={'icds', 'india'},
+    relevant_environments={'icds', 'india', 'icds-staging'},
 )
 
 AP_WEBSERVICE = StaticToggle(
@@ -1569,7 +1582,7 @@ AP_WEBSERVICE = StaticToggle(
     'ICDS: ENABLE AP webservice',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
-    relevant_environments={'icds', 'india'},
+    relevant_environments={'icds', 'india', 'icds-staging'},
 )
 
 ALLOW_BLANK_CASE_TAGS = StaticToggle(
@@ -1759,7 +1772,7 @@ ICDS_GOVERNANCE_DASHABOARD_API = StaticToggle(
     'ICDS: Dashboard Governance dashboard API',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
-    relevant_environments={'icds', 'india'},
+    relevant_environments={'icds', 'india', 'icds-staging'},
 )
 
 DO_NOT_RATE_LIMIT_SUBMISSIONS = StaticToggle(
@@ -1878,7 +1891,7 @@ PERFORM_LOCATION_REASSIGNMENT = StaticToggle(
     'Ability to submit requests for location reassignment',
     TAG_CUSTOM,
     [NAMESPACE_USER],
-    relevant_environments={'icds', 'india', 'staging'},
+    relevant_environments={'icds', 'india', 'staging', 'icds-staging'},
 )
 
 DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE = StaticToggle(
@@ -1886,7 +1899,7 @@ DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE = StaticToggle(
     'Allow domain users to download location reassignment template',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
-    relevant_environments={'icds', 'india', 'staging'},
+    relevant_environments={'icds', 'india', 'staging', 'icds-staging'},
 )
 
 ICDS_BIHAR_DEMOGRAPHICS_API = StaticToggle(
@@ -1894,7 +1907,7 @@ ICDS_BIHAR_DEMOGRAPHICS_API = StaticToggle(
     'ICDS: Bihar Demographics API',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
-    relevant_environments={'icds', 'india'},
+    relevant_environments={'icds', 'india', 'icds-staging'},
 
 )
 
@@ -1903,7 +1916,7 @@ ICDS_LOCATION_REASSIGNMENT_AGG = StaticToggle(
     'ICDS: Use aggregation modifications for location reassignment',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    relevant_environments={'icds', 'india'},
+    relevant_environments={'icds', 'india', 'icds-staging'},
 )
 
 REFER_CASE_REPEATER = StaticToggle(
@@ -1919,7 +1932,31 @@ RESTRICT_LOGIN_AS = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description="""
-    Adds a permission that can be set on user roles to allow login as, but only as a limited set of users. Users with this enabled can "login as" other users that set custom user property "login_as_user" to the first user's username.
-    For example, if web user a@a.com has this permission set on their role, they can only login as mobile users who have the custom property "login_as_user" set to "a@a.com".
+    Adds a permission that can be set on user roles to allow login as, but only
+    as a limited set of users. Users with this enabled can "login as" other
+    users that set custom user property "login_as_user" to the first user's
+    username.
+
+    For example, if web user a@a.com has this permission set on their role,
+    they can only login as mobile users who have the custom property
+    "login_as_user" set to "a@a.com".
+    """
+)
+
+ONE_PHONE_NUMBER_MULTIPLE_CONTACTS = StaticToggle(
+    'one_phone_number_multiple_contacts',
+    'Allow multiple contacts to share a single phone number',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Allows multiple SMS contacts in a project space to share the same phone number.
+    Sessions for different contacts are initiated in series rather than in parallel so that
+    only one contact per phone number is in an active session at any given time.
+    Incoming SMS are then routed to the live session.
+    If a form goes unfilled over SMS, it will prevent any further forms (for that contact or another)
+    from being initiated on that phone number until the original session expires.
+
+    Only use this feature if every form behind an SMS survey begins by identifying the contact.
+    Otherwise the recipient has no way to know who they're supposed to be enter information about.
     """
 )
