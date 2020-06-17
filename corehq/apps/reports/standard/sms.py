@@ -51,6 +51,7 @@ from corehq.apps.reports.standard.message_event_display import (
 )
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.sms.filters import (
+    EventContentFilter,
     EventStatusFilter,
     EventTypeFilter,
     MessageTypeFilter,
@@ -630,6 +631,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
     fields = [
         DatespanFilter,
         EventTypeFilter,
+        EventContentFilter,
         EventStatusFilter,
         PhoneNumberOrEmailFilter,
     ]
@@ -688,12 +690,22 @@ class MessagingEventsReport(BaseMessagingEventReport):
                 else:
                     source_filter.append(source_type)
 
+        content_types = EventContentFilter.get_value(self.request, self.domain)
+
         for content_type, x in MessagingEvent.CONTENT_CHOICES:
-            if content_type in event_type_filter:
+            if content_type in content_types:
                 if content_type == MessagingEvent.CONTENT_SMS_SURVEY:
                     content_type_filter.extend([
                         MessagingEvent.CONTENT_SMS_SURVEY,
                         MessagingEvent.CONTENT_IVR_SURVEY,
+                    ])
+                if content_type == MessagingEvent.CONTENT_SMS:
+                    content_type_filter.extend([
+                        MessagingEvent.CONTENT_SMS,
+                        MessagingEvent.CONTENT_PHONE_VERIFICATION,
+                        MessagingEvent.CONTENT_ADHOC_SMS,
+                        MessagingEvent.CONTENT_API_SMS,
+                        MessagingEvent.CONTENT_CHAT_SMS
                     ])
                 else:
                     content_type_filter.append(content_type)
@@ -755,10 +767,14 @@ class MessagingEventsReport(BaseMessagingEventReport):
             Q(domain=self.domain),
             Q(date__gte=self.datespan.startdate_utc),
             Q(date__lte=self.datespan.enddate_utc),
-            (Q(source__in=source_filter) |
-                Q(content_type__in=content_type_filter) |
-                Q(messagingsubevent__content_type__in=content_type_filter)),
+            Q(source__in=source_filter),
         )
+
+        if content_type_filter:
+            data = data.filter(
+                (Q(content_type__in=content_type_filter) |
+                 Q(messagingsubevent__content_type__in=content_type_filter))
+            )
 
         if event_status_filter:
             data = data.filter(event_status_filter)
@@ -786,6 +802,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
             {'name': 'startdate', 'value': self.datespan.startdate.strftime('%Y-%m-%d')},
             {'name': 'enddate', 'value': self.datespan.enddate.strftime('%Y-%m-%d')},
             {'name': EventTypeFilter.slug, 'value': EventTypeFilter.get_value(self.request, self.domain)},
+            {'name': EventContentFilter.slug, 'value': EventContentFilter.get_value(self.request, self.domain)},
             {'name': EventStatusFilter.slug, 'value': EventStatusFilter.get_value(self.request, self.domain)},
             {'name': PhoneNumberOrEmailFilter.slug,
              'value': PhoneNumberOrEmailFilter.get_value(self.request, self.domain)},
