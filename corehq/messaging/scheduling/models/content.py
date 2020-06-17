@@ -155,7 +155,6 @@ class EmailContent(Content):
         email.save()
 
         email_usage.update_count()
-        logged_subevent.completed()
 
 
 class SMSSurveyContent(Content):
