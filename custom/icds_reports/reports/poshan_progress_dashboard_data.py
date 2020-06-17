@@ -4,41 +4,22 @@ from datetime import date
 from django.db.models import Count, Sum
 
 from custom.icds_reports.cache import icds_quickcache
-from custom.icds_reports.models.views import PoshanProgressReportView
-from custom.icds_reports.sqldata.exports.poshan_progress_report import (
-    COLS_COMPREHENSIVE,
-    COLS_TO_FETCH,
-    COLS_PERCENTAGE_RELATIONS,
-    HEADERS_COMPREHENSIVE
+from custom.icds_reports.const import (
+    PPR_HEADERS_COMPREHENSIVE,
+    PPR_COLS_COMPREHENSIVE,
+    PPR_COLS_TO_FETCH,
+    PPR_COLS_PERCENTAGE_RELATIONS,
+    PPD_ICDS_CAS_COVERAGE_OVERVIEW,
+    PPD_SERVICE_DELIVERY_OVERVIEW,
+    PPD_ICDS_CAS_COVERAGE_COMPARATIVE_MAPPING,
+    PPD_SERVICE_DELIVERY_COMPARATIVE_MAPPING
 )
+from custom.icds_reports.models.views import PoshanProgressReportView
 from custom.icds_reports.utils import apply_exclude, generate_quarter_months, calculate_percent, handle_average
-
-ICDS_CAS_COVERAGE_OVERVIEW = [
-    "Number of States Covered", "Number of Districts Covered", "Number of Blocks Covered",
-    "Number of AWCs Launched", "% Number of Days AWC Were opened", "% of Home Visits"]
-
-SERVICE_DELIVERY_OVERVIEW = [
-    "% of children between 3-6 years provided PSE for atleast 21+ days", "Weighing efficiency",
-    "% of trimester three women counselled on immediate and EBF", "Height Measurement Efficiency",
-    "% of children between 6 months -3 years, P&LW provided THR for atleast 21+ days",
-    "% of children between 3-6 years provided SNP for atleast 21+ days"]
-
-ICDS_CAS_COVERAGE_COMPARITIVE_MAPPING = {
-    "AWC Open": "avg_days_awc_open_percent",
-    "Home Visits": "visits_percent"
-}
-SERVICE_DELIVERY_COMPARITIVE_MAPPING = {
-    "Pre-school Education": "pse_attended_21_days_percent",
-    "Weighing efficiency": "weighed_percent",
-    "Height Measurement Efficiency": "height_measured_in_month_percent",
-    "Counselling": "counsel_immediate_bf_percent",
-    "Take Home Ration": "thr_percent",
-    "Supplementary Nutrition": "lunch_count_21_days_percent"
-}
 
 
 def calculate_percentage_single_row(row, truncate_out=True):
-    for k, v in COLS_PERCENTAGE_RELATIONS.items():
+    for k, v in PPR_COLS_PERCENTAGE_RELATIONS.items():
         num = row[v[0]]
         den = row[v[1]]
         extra_number = v[2] if len(v) > 2 else None
@@ -63,8 +44,8 @@ def calculate_aggregated_row(data, aggregation_level, data_format):
 
 
 def prepare_structure_aggregated_row(row, count, aggregation_level):
-    header_to_col_dict = dict(zip(HEADERS_COMPREHENSIVE, COLS_COMPREHENSIVE))
-    icds_cas_coverage_overview = ICDS_CAS_COVERAGE_OVERVIEW[:]
+    header_to_col_dict = dict(zip(PPR_HEADERS_COMPREHENSIVE, PPR_COLS_COMPREHENSIVE))
+    icds_cas_coverage_overview = PPD_ICDS_CAS_COVERAGE_OVERVIEW[:]
     # for district level we don't need state count
     if aggregation_level == 2:
         icds_cas_coverage_overview.remove("Number of States Covered")
@@ -74,7 +55,7 @@ def prepare_structure_aggregated_row(row, count, aggregation_level):
             icds_cas_coverage_dict[key] = count
         else:
             icds_cas_coverage_dict[key] = row[header_to_col_dict[key]]
-    service_delivery_overview = SERVICE_DELIVERY_OVERVIEW[:]
+    service_delivery_overview = PPD_SERVICE_DELIVERY_OVERVIEW[:]
     service_delivery_dict = {}
     for key in service_delivery_overview:
         service_delivery_dict[key] = row[header_to_col_dict[key]]
@@ -86,18 +67,18 @@ def prepare_structure_aggregated_row(row, count, aggregation_level):
 
 
 def prepare_structure_comparative(data, aggregation_level):
-    icds_cas_coverage_comparitive_mapping = deepcopy(ICDS_CAS_COVERAGE_COMPARITIVE_MAPPING)
+    icds_cas_coverage_comparative_mapping = deepcopy(PPD_ICDS_CAS_COVERAGE_COMPARATIVE_MAPPING)
     icds_cas_coverage = []
     temp_array = []  # to add two indicators to one array (make frontend int. easy)
-    for indicator, col in icds_cas_coverage_comparitive_mapping.items():
+    for indicator, col in icds_cas_coverage_comparative_mapping.items():
         temp_array.append(get_top_worst_cases(deepcopy(data), col, aggregation_level, indicator))
         if len(temp_array) == 2:
             icds_cas_coverage.append(temp_array[:])
             temp_array = []
-    service_delivery_comparitive_mapping = deepcopy(SERVICE_DELIVERY_COMPARITIVE_MAPPING)
+    service_delivery_comparative_mapping = deepcopy(PPD_SERVICE_DELIVERY_COMPARATIVE_MAPPING)
     temp_array = []
     service_delivery = []
-    for indicator, col in service_delivery_comparitive_mapping.items():
+    for indicator, col in service_delivery_comparative_mapping.items():
         temp_array.append(get_top_worst_cases(deepcopy(data), col, aggregation_level, indicator))
         if len(temp_array) == 2:
             service_delivery.append(temp_array[:])
@@ -109,21 +90,22 @@ def prepare_structure_comparative(data, aggregation_level):
     return data
 
 
-def calculate_comparitive_rows(data, aggregation_level, data_format, unique_id):
+def calculate_comparative_rows(data, aggregation_level, data_format, unique_id):
     # for quarter we need to average summation
-    quarter_compartivie_dict = {}
+    quarter_comparative_dict = {}
     if data_format == 'quarter':
         for i in range(0, len(data)):
-            if data[i][unique_id] in quarter_compartivie_dict.keys():
-                quarter_compartivie_dict[data[i][unique_id]] = data[i]
+            key = data[i][unique_id]
+            if key not in quarter_comparative_dict.keys():
+                quarter_comparative_dict[key] = data[i]
             else:
                 for k, v in data[i].items():
-                    if v[unique_id] not in ['state_name', 'district_name', unique_id]:
-                        quarter_compartivie_dict[v[unique_id]][k] += data[i][k] if data[i][k] else 0
+                    if k not in ['state_name', 'district_name', unique_id]:
+                        quarter_comparative_dict[key][k] += data[i][k] if data[i][k] else 0
                     else:
-                        quarter_compartivie_dict[v[unique_id]][k] = data[i][k]
+                        quarter_comparative_dict[key][k] = data[i][k]
         data = []
-        for _, v in quarter_compartivie_dict.items():
+        for _, v in quarter_comparative_dict.items():
             data.append(v)
 
         for i in range(0, len(data)):
@@ -142,8 +124,8 @@ def get_top_worst_cases(data, key, aggregation_level, indicator_name):
         place_key = "state_name"
     else:
         place_key = "district_name"
-    worst_performers = sorted(data, key=lambda i: (i[key], i[COLS_PERCENTAGE_RELATIONS[key][1]]))
-    best_performers = sorted(data, key=lambda i: (i[key], i[COLS_PERCENTAGE_RELATIONS[key][1]]), reverse=True)
+    worst_performers = sorted(data, key=lambda i: (i[key], i[PPR_COLS_PERCENTAGE_RELATIONS[key][1]]))
+    best_performers = sorted(data, key=lambda i: (i[key], i[PPR_COLS_PERCENTAGE_RELATIONS[key][1]]), reverse=True)
     worst = []
     for per in worst_performers[:3]:
         worst.append({
@@ -171,7 +153,7 @@ def get_poshan_progress_dashboard_data(domain, year, month, quarter, data_format
                                        include_test=False):
     aggregation_level = location_filters.get('aggregation_level', 1)
     filters = location_filters
-    value_fields = COLS_TO_FETCH[:]
+    value_fields = PPR_COLS_TO_FETCH[:]
     unique_id = ''
     if data_format == 'month':
         filters['month'] = date(year, month, 1)
@@ -214,7 +196,7 @@ def get_poshan_progress_dashboard_data(domain, year, month, quarter, data_format
             lunch_count_21_days=Sum('lunch_count_21_days'),
         )
         response = calculate_aggregated_row(data, aggregation_level, data_format)
-    elif step == 'comparitive':
+    elif step == 'comparative':
         data = queryset.values(*value_fields)
-        response = calculate_comparitive_rows(deepcopy(data), aggregation_level, data_format, unique_id)
+        response = calculate_comparative_rows(deepcopy(data), aggregation_level, data_format, unique_id)
     return response
