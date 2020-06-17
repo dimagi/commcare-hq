@@ -1,7 +1,6 @@
-from datetime import date
-
 from corehq.apps.locations.models import SQLLocation
 from custom.icds_reports.models.views import PoshanProgressReportView
+from custom.icds_reports.utils import generate_quarter_months, calculate_percent, handle_average
 from custom.icds_reports.utils import india_now
 
 HEADERS_COMPREHENSIVE = [
@@ -67,33 +66,6 @@ COLS_PERCENTAGE_RELATIONS = {
 }
 
 
-def _generate_quarter_months(quarter, year):
-    months = []
-    end_month = int(quarter) * 3
-    for i in range(end_month - 2, end_month + 1):
-        months.append(date(year, i, 1))
-    return months
-
-
-def _calculate_percent(num, den, extra_number):
-    if den == 0:
-        ret = 0
-    else:
-        ret = (num / den) * 100
-
-    if extra_number:
-        ret = ret / extra_number
-    return "{}%".format("%.2f" % ret)
-
-
-def _handle_average(val):
-    if val is None:
-        ret = 0
-    else:
-        ret = "%.2f" % (val / 3)
-    return float(ret)
-
-
 class PoshanProgressReport(object):
     title = 'Poshan Progress Report'
 
@@ -121,7 +93,7 @@ class PoshanProgressReport(object):
             num = row[all_cols.index(v[0])]
             den = row[all_cols.index(v[1])]
             extra_number = v[2] if len(v) > 2 else None
-            row[all_cols.index(k)] = _calculate_percent(num, den, extra_number)
+            row[all_cols.index(k)] = calculate_percent(num, den, extra_number)
         return row
 
     def quarter_wise(self, filters, order_by, aggregation_level):
@@ -166,7 +138,7 @@ class PoshanProgressReport(object):
             for col in all_cols:
                 if col not in ['state_name', 'district_name', unique_id]:
                     val = v[all_cols.index(col)]
-                    row_data_dict[k][all_cols.index(col)] = _handle_average(val)
+                    row_data_dict[k][all_cols.index(col)] = handle_average(val)
                     total_row[all_cols.index(col)] += val if val else 0
                 elif col in ['state_name', 'district_name']:
                     total_row[all_cols.index(col)] = 'Total'
@@ -252,7 +224,7 @@ class PoshanProgressReport(object):
             filters['month'] = self.config['month']
             excel_rows = self.month_wise(filters, order_by)
         else:
-            filters['month__in'] = _generate_quarter_months(self.quarter, self.year)
+            filters['month__in'] = generate_quarter_months(self.quarter, self.year)
             excel_rows = self.quarter_wise(filters, order_by, aggregation_level)
 
         export_filters.append(['Report Layout', self.layout.title()])

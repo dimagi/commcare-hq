@@ -2469,3 +2469,33 @@ def datetime_to_date_string(dtime):
         return dtime.strftime(ISO_DATE_FORMAT)
     else:
         return None
+
+
+def generate_quarter_months(quarter, year):
+    months = []
+    end_month = int(quarter) * 3
+    for i in range(end_month - 2, end_month + 1):
+        months.append(date(year, i, 1))
+    return months
+
+
+def calculate_percent(num, den, extra_number, truncate_out=True):
+    if den == 0:
+        ret = 0
+    else:
+        ret = (num / den) * 100
+
+    if extra_number:
+        ret = ret / extra_number
+    if truncate_out == True:
+        return "{}%".format("%.2f" % ret)
+    else:
+        return ret
+
+
+def handle_average(val):
+    if val is None:
+        ret = 0
+    else:
+        ret = round(val / 3)
+    return ret
