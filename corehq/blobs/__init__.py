@@ -57,6 +57,9 @@ class CODES:
     well as tools like the `check_blob_logs` management command will not
     function properly if this contract is broken.
     """
+    # used to get stored blob bytes (no blobs should have this type)
+    maybe_compressed = -1
+
     _default = 0        # legacy, do not use
 
     tempfile = 1
