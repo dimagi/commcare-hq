@@ -1,5 +1,5 @@
 import datetime
-from sqlagg.columns import SumColumn, SimpleColumn, MaxColumn
+from sqlagg.columns import SumColumn, SimpleColumn
 
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
 from custom.icds_reports.sqldata.base import IcdsSqlData

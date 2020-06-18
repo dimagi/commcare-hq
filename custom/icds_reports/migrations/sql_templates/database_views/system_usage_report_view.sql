@@ -34,7 +34,6 @@ CREATE VIEW system_usage_report_view AS
         "agg_awc_monthly"."block_map_location_name" AS "block_map_location_name",
         "agg_awc_monthly"."district_map_location_name" AS "district_map_location_name",
         "agg_awc_monthly"."state_map_location_name" AS "state_map_location_name",
-        COALESCE("agg_ls"."num_supervisor_launched", 0) AS "num_supervisor_launched",
         "agg_awc_monthly"."app_version" AS "app_version",
         "agg_awc_monthly"."commcare_version" AS "commcare_version"
     FROM "agg_awc_monthly"
