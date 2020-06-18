@@ -21,6 +21,15 @@ from corehq.apps.dump_reload.util import get_model_label
 from corehq.sql_db.routers import HINT_PARTITION_VALUE
 
 
+class DefaultDictWithKey(defaultdict):
+    """
+    A defaultdict that passes ``key`` to its factory
+    """
+    def __missing__(self, key):
+        self[key] = value = self.default_factory(key)
+        return value
+
+
 class LoadStat(object):
     """Simple object for keeping track of stats"""
     def __init__(self, db_alias, model_counter):

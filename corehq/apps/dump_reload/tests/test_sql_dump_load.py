@@ -8,7 +8,7 @@ from io import StringIO
 from django.contrib.admin.utils import NestedObjects
 from django.core import serializers
 from django.db.models.signals import post_delete, post_save
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.test.utils import override_settings
 
 from nose.plugins.attrib import attr
@@ -24,6 +24,7 @@ from corehq.apps.dump_reload.sql.dump import (
     get_model_iterator_builders_to_dump,
     get_objects_to_dump,
 )
+from corehq.apps.dump_reload.sql.load import DefaultDictWithKey
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.zapier.consts import EventTypes
@@ -49,7 +50,9 @@ from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     create_form_for_test,
 )
-from corehq.messaging.scheduling.scheduling_partitioned.models import AlertScheduleInstance
+from corehq.messaging.scheduling.scheduling_partitioned.models import (
+    AlertScheduleInstance,
+)
 
 
 class BaseDumpLoadTest(TestCase):
@@ -605,6 +608,45 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             user_id='user_id',
         )
         self._dump_and_load(Counter({ZapierSubscription: 1}))
+
+
+class DefaultDictWithKeyTests(SimpleTestCase):
+
+    def test_intended_use_case(self):
+        def enlist(item):
+            return [item]
+        greasy_spoon = DefaultDictWithKey(enlist)
+        self.assertEqual(greasy_spoon['spam'], ['spam'])
+        greasy_spoon['spam'].append('spam')
+        self.assertEqual(greasy_spoon['spam'], ['spam', 'spam'])
+
+    def test_not_enough_params(self):
+        def empty_list():
+            return []
+        greasy_spoon = DefaultDictWithKey(empty_list)
+        with self.assertRaisesRegex(
+            TypeError,
+            r'empty_list\(\) takes 0 positional arguments but 1 was given'
+        ):
+            greasy_spoon['spam']
+
+    def test_too_many_params(self):
+        def appender(item1, item2):
+            return [item1, item2]
+        greasy_spoon = DefaultDictWithKey(appender)
+        with self.assertRaisesRegex(
+            TypeError,
+            r"appender\(\) missing 1 required positional argument: 'item2'"
+        ):
+            greasy_spoon['spam']
+
+    def test_no_factory(self):
+        greasy_spoon = DefaultDictWithKey()
+        with self.assertRaisesRegex(
+            TypeError,
+            "'NoneType' object is not callable"
+        ):
+            greasy_spoon['spam']
 
 
 def _normalize_object_counter(counter, for_loaded=False):
