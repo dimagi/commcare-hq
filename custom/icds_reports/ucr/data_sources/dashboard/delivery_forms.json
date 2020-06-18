@@ -108,7 +108,7 @@
         }
       },
       {
-        "column_id": "compeleted_on",
+        "column_id": "completed_on",
         "datatype": "datetime",
         "type": "expression",
         "expression": {
@@ -308,6 +308,9 @@
     "sql_column_indexes": [
       {
         "column_ids": ["state_id", "timeend"]
+      },
+      {
+        "column_ids": ["state_id", "completed_on"]
       }
     ],
     "sql_settings": {
