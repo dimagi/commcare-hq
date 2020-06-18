@@ -1,5 +1,7 @@
 from functools import partial
 
+from django.utils.translation import ugettext as _
+
 from dimagi.utils.couch.database import iter_bulk_delete
 from toggle.shortcuts import set_toggle
 
@@ -25,6 +27,7 @@ from corehq.apps.linked_domain.const import (
     MODEL_REPORT,
     MODEL_ROLES,
 )
+from corehq.apps.linked_domain.exceptions import UnsupportedActionError
 from corehq.apps.linked_domain.local_accessors import \
     get_custom_data_models as local_custom_data_models
 from corehq.apps.linked_domain.local_accessors import \
@@ -110,8 +113,13 @@ def update_fixtures(domain_link):
     else:
         master_results = local_fixtures(domain_link.master_domain)
 
+    skipped = []
     linked_data_types_by_tag = {t.tag: t for t in get_fixture_data_types(domain_link.linked_domain)}
     for master_data_type in master_results["data_types"]:
+        if not master_data_type.is_global:
+            skipped.append(master_data_type.tag)
+            continue
+
         # Update data type
         master_data_type = master_data_type.to_json()
         master_data_type_id = master_data_type["_id"]
@@ -138,6 +146,9 @@ def update_fixtures(domain_link):
             FixtureDataItem.wrap(doc).save()
 
     clear_fixture_cache(domain_link.linked_domain)
+
+    if skipped:
+        raise UnsupportedActionError(_("Could not update non-global lookup tables: {}").format(", ".join(skipped)))
 
 
 def update_user_roles(domain_link):
