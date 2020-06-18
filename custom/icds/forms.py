@@ -21,6 +21,7 @@ from corehq.apps.hqwebapp.crispy import HQFormHelper
 from custom.icds.models import HostedCCZ, HostedCCZLink
 from custom.icds.tasks.data_pulls import run_data_pull
 from custom.icds_reports.const import CUSTOM_DATA_PULLS
+from custom.icds.const import MAX_SMS_REPORT_DURATION
 
 
 class HostedCCZLinkForm(forms.ModelForm):
@@ -229,7 +230,7 @@ class CustomSMSReportRequestForm(forms.Form):
             raise forms.ValidationError(_("Invalid date"))
         if start_date > end_date:
             raise forms.ValidationError(_("Start date cannot be greater than end date"))
-        if (end_date - start_date).days > 95:
+        if (end_date - start_date).days > MAX_SMS_REPORT_DURATION:
             raise forms.ValidationError(_(
                 "You can request SMS report for maximum 95 days, your request was for {requested_days} days"
                 .format(requested_days=(end_date - start_date).days)
