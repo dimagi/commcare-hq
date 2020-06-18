@@ -189,17 +189,17 @@ class TestPPDData(TestCase):
             },
             False
         )
-        expected = {'ICDS CAS Coverage': {'% Number of Days AWC Were opened': '79.98%',
+        expected = {'ICDS CAS Coverage': {'% Number of Days AWC Were opened': '78.13%',
                                           '% of Home Visits': '0.32%',
-                                          'Number of AWCs Launched': 14.67,
-                                          'Number of Blocks Covered': 3.33,
-                                          'Number of Districts Covered': 2.67,
-                                          'Number of States Covered': 14},
+                                          'Number of AWCs Launched': 15,
+                                          'Number of Blocks Covered': 3,
+                                          'Number of Districts Covered': 3,
+                                          'Number of States Covered': 5},
                     'Service Delivery': {
                         '% of children between 3-6 years provided PSE for atleast 21+ days': '5.53%',
-                        '% of children between 3-6 years provided SNP for atleast 21+ days': '1.18%',
-                        '% of children between 6 months -3 years, P&LW provided THR for atleast 21+ days': '28.40%',
+                        '% of children between 3-6 years provided SNP for atleast 21+ days': '1.23%',
+                        '% of children between 6 months -3 years, P&LW provided THR for atleast 21+ days': '28.27%',
                         '% of trimester three women counselled on immediate and EBF': '59.09%',
-                        'Height Measurement Efficiency': '2.19%',
-                        'Weighing efficiency': '68.91%'}}
+                        'Height Measurement Efficiency': '2.24%',
+                        'Weighing efficiency': '68.96%'}}
         self.assertDictEqual(expected, data)
