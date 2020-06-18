@@ -32,9 +32,6 @@ function setup() {
     fi
 
     if [ "$TEST" = "javascript" -o "$JS_SETUP" = "yes" ]; then
-        curl -sL https://deb.nodesource.com/setup | sudo bash - && \
-        apt-get install -yq nodejs build-essential
-        npm install -g npm
         npm install --progress=false
         bower install --config.interactive=false
     fi
