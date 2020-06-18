@@ -107,8 +107,9 @@ def get_pinpoint_message(backend_instance, backend_message_id):
             is_couch_id=True,
             include_deleted=True,
         )
+        pinpoint_service = 'logs'
         config = pinpoint_backend.config
-        client = _get_pinpoint_client(backend_instance)
+        client = _get_pinpoint_client(backend_instance, pinpoint_service)
         response = client.filter_log_events(
             logGroupName=f'sns/{config.region}/754026553166/DirectPublishToPhoneNumber',
             filterPattern='{$.notification.messageId = %s}' % backend_message_id
@@ -118,10 +119,10 @@ def get_pinpoint_message(backend_instance, backend_message_id):
         raise RetryBillableTaskException(str(e))
 
 
-def _get_pinpoint_client(backend_instance):
+def _get_pinpoint_client(backend_instance, service):
     config = backend_instance.config
     client = boto3.client(
-        'logs', region_name=config.region,
+        service, region_name=config.region,
         aws_access_key_id=config.access_key, aws_secret_access_key=config.secret_access_key
     )
     return client
