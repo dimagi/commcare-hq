@@ -244,12 +244,12 @@ class ConfigurableReportTableManagerMixin(object):
             if config._rev != latest_rev:
                 raise StaleRebuildError('Tried to rebuild a stale table ({})! Ignoring...'.format(config))
 
+        diff_dicts = [diff.to_dict() for diff in diffs]
         if config.disable_destructive_rebuild and adapter.table_exists:
-            diff_dicts = [diff.to_dict() for diff in diffs]
             adapter.log_table_rebuild_skipped(source='pillowtop', diffs=diff_dicts)
             return
 
-        rebuild_indicators.delay(adapter.config.get_id, source='pillowtop', engine_id=adapter.engine_id)
+        rebuild_indicators.delay(adapter.config.get_id, source='pillowtop', engine_id=adapter.engine_id, diffs=diff_dicts)
 
     def _pull_in_new_and_modified_data_sources(self):
         """
