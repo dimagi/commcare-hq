@@ -38,7 +38,7 @@ module.exports = function(grunt) {
     ];
 
     var custom = [
-        'icds_reports',
+        // 'icds_reports',  ICDS team to fix this one.
         'champ',
     ];
 
