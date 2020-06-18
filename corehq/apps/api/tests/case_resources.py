@@ -204,7 +204,7 @@ class TestCommCareCaseResource(APIResourceTest):
         :return:
         """
         community_domain = Domain.get_or_create_with_name('dvorak', is_active=True)
-        new_user = WebUser.create(community_domain.name, 'test', 'testpass')
+        new_user = WebUser.create(community_domain.name, 'test', 'testpass', None, None)
         new_user.save()
 
         self.addCleanup(community_domain.delete)
@@ -218,7 +218,7 @@ class TestCommCareCaseResource(APIResourceTest):
         :return:
         """
         community_domain = Domain.get_or_create_with_name('dvorak', is_active=True)
-        new_user = WebUser.create(community_domain.name, 'test', 'testpass', is_superuser=True)
+        new_user = WebUser.create(community_domain.name, 'test', 'testpass', None, None, is_superuser=True)
         new_user.save()
 
         self.addCleanup(community_domain.delete)

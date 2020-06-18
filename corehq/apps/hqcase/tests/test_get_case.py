@@ -19,7 +19,7 @@ class GetCaseTest(TestCase):
         super(GetCaseTest, cls).setUpClass()
         cls.domain = Domain(name='foo')
         cls.domain.save()
-        cls.user = CommCareUser.create(cls.domain.name, 'username', 's3cr3t')
+        cls.user = CommCareUser.create(cls.domain.name, 'username', 's3cr3t', None, None)
 
     @classmethod
     def tearDownClass(cls):

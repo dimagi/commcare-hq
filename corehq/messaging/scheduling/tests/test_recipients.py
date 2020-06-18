@@ -49,27 +49,27 @@ class SchedulingRecipientTest(TestCase):
         cls.state_location = make_loc('ma', domain=cls.domain, type='state', parent=cls.country_location)
         cls.city_location = make_loc('boston', domain=cls.domain, type='city', parent=cls.state_location)
 
-        cls.mobile_user = CommCareUser.create(cls.domain, 'mobile', 'abc')
+        cls.mobile_user = CommCareUser.create(cls.domain, 'mobile', 'abc', None, None)
         cls.mobile_user.set_location(cls.city_location)
 
-        cls.mobile_user2 = CommCareUser.create(cls.domain, 'mobile2', 'abc')
+        cls.mobile_user2 = CommCareUser.create(cls.domain, 'mobile2', 'abc', None, None)
         cls.mobile_user2.set_location(cls.state_location)
 
-        cls.mobile_user3 = CommCareUser.create(cls.domain, 'mobile3', 'abc')
+        cls.mobile_user3 = CommCareUser.create(cls.domain, 'mobile3', 'abc', None, None)
         cls.mobile_user3.user_data['role'] = 'pharmacist'
         cls.mobile_user3.save()
 
-        cls.mobile_user4 = CommCareUser.create(cls.domain, 'mobile4', 'abc')
+        cls.mobile_user4 = CommCareUser.create(cls.domain, 'mobile4', 'abc', None, None)
         cls.mobile_user4.user_data['role'] = 'nurse'
         cls.mobile_user4.save()
 
-        cls.mobile_user5 = CommCareUser.create(cls.domain, 'mobile5', 'abc')
+        cls.mobile_user5 = CommCareUser.create(cls.domain, 'mobile5', 'abc', None, None)
         cls.mobile_user5.user_data['role'] = ['nurse', 'pharmacist']
         cls.mobile_user5.save()
 
-        cls.web_user = WebUser.create(cls.domain, 'web', 'abc')
+        cls.web_user = WebUser.create(cls.domain, 'web', 'abc', None, None)
 
-        cls.web_user2 = WebUser.create(cls.domain, 'web2', 'abc')
+        cls.web_user2 = WebUser.create(cls.domain, 'web2', 'abc', None, None)
         cls.web_user2.user_data['role'] = 'nurse'
         cls.web_user2.save()
 
@@ -592,9 +592,9 @@ class SchedulingRecipientTest(TestCase):
 
     @run_with_all_backends
     def test_one_way_numbers(self):
-        user1 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
-        user2 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
-        user3 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
+        user1 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
+        user2 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
+        user3 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
         self.addCleanup(user1.delete)
         self.addCleanup(user2.delete)
         self.addCleanup(user3.delete)
@@ -649,9 +649,9 @@ class SchedulingRecipientTest(TestCase):
                 self.assertEqual(Content.get_two_way_entry_or_phone_number(case), '23456')
 
     def _test_two_way_numbers(self, change_context_manager):
-        user1 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
-        user2 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
-        user3 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
+        user1 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
+        user2 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
+        user3 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
         self.addCleanup(user1.delete)
         self.addCleanup(user2.delete)
         self.addCleanup(user3.delete)
@@ -705,9 +705,9 @@ class SchedulingRecipientTest(TestCase):
 
             patch1.return_value = patch2.return_value = patch3.return_value = False
 
-            user1 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
-            user2 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
-            user3 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
+            user1 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
+            user2 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
+            user3 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
             self.addCleanup(user1.delete)
             self.addCleanup(user2.delete)
             self.addCleanup(user3.delete)
@@ -739,7 +739,7 @@ class SchedulingRecipientTest(TestCase):
 
     @run_with_all_backends
     def test_phone_number_preference(self):
-        user = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
+        user = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
         self.addCleanup(user.delete)
 
         user.add_phone_number('12345')

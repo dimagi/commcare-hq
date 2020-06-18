@@ -47,7 +47,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
     def setUpClass(cls):
         super(SubmissionErrorTest, cls).setUpClass()
         cls.domain = create_domain("submit-errors")
-        cls.couch_user = WebUser.create(None, "test", "foobar")
+        cls.couch_user = WebUser.create(None, "test", "foobar", None, None)
         cls.couch_user.add_domain_membership(cls.domain.name, is_admin=True)
         cls.couch_user.save()
         cls.client = Client()

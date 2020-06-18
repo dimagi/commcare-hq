@@ -37,7 +37,7 @@ def _get_or_create_user(domain):
     username = format_username('nick', domain)
     user = CommCareUser.get_by_username(username, strict=True)
     if not user:
-        user = CommCareUser.create(domain, username, 'secret')
+        user = CommCareUser.create(domain, username, 'secret', None, None)
     return user
 
 
