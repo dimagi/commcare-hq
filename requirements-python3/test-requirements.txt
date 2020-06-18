@@ -89,7 +89,7 @@ jdcal==1.4.1              # via openpyxl
 jinja2==2.10.3            # via -r requirements/requirements.in
 jmespath==0.9.4           # via boto3, botocore
 json-delta==2.0           # via -r requirements/requirements.in
-jsonfield==1.0.3          # via -r requirements/requirements.in, django-prbac
+jsonfield==2.1.1          # via -r requirements/requirements.in, django-prbac
 jsonobject-couchdbkit==1.0.1  # via -r requirements/requirements.in
 jsonobject==0.9.9         # via -r requirements/requirements.in, jsonobject-couchdbkit
 jsonpath-rw==1.4.0        # via -r requirements/requirements.in
@@ -153,7 +153,7 @@ sentry-sdk==0.14.4        # via -r requirements/requirements.in
 sh==1.09                  # via -r requirements/requirements.in
 simpleeval==0.9.8         # via -r requirements/requirements.in
 simplejson==3.16.0        # via -r requirements/requirements.in, datadog, django-prbac
-six==1.13.0               # via -r requirements/requirements.in, django-appconf, django-prbac, django-simple-captcha, django-transfer, django-websocket-redis, dropbox, ethiopian-date-converter, eulxml, faker, freezegun, ghdiff, html5lib, jsonobject, jsonobject-couchdbkit, jsonpath-rw, mock, pip-tools, python-dateutil, pyzxcvbn, qrcode, quickcache, requests-mock, sqlalchemy-postgres-copy, twilio, unittest2
+six==1.13.0               # via -r requirements/requirements.in, django-appconf, django-prbac, django-simple-captcha, django-transfer, django-websocket-redis, dropbox, ethiopian-date-converter, eulxml, faker, freezegun, ghdiff, html5lib, jsonfield, jsonobject, jsonobject-couchdbkit, jsonpath-rw, mock, pip-tools, python-dateutil, pyzxcvbn, qrcode, quickcache, requests-mock, sqlalchemy-postgres-copy, twilio, unittest2
 smartypants==2.0.1        # via pycco
 socketpool==0.5.3         # via -r requirements/requirements.in
 soupsieve==1.9.5          # via beautifulsoup4
