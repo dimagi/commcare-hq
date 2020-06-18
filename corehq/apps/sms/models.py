@@ -994,6 +994,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     ERROR_NO_EMAIL_ADDRESS = 'NO_EMAIL_ADDRESS'
     ERROR_TRIAL_EMAIL_LIMIT_REACHED = 'TRIAL_EMAIL_LIMIT_REACHED'
     ERROR_EMAIL_BOUNCED = 'EMAIL_BOUNCED'
+    ERROR_EMAIL_GATEWAY = 'EMAIL_GATEWAY_ERROR'
 
     ERROR_MESSAGES = {
         ERROR_NO_RECIPIENT:
@@ -1045,7 +1046,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         ERROR_TRIAL_EMAIL_LIMIT_REACHED:
             ugettext_noop("Cannot send any more reminder emails. The limit for "
                 "sending reminder emails on a Trial plan has been reached."),
-        ERROR_EMAIL_BOUNCED: ugettext_noop("Email Bounced")
+        ERROR_EMAIL_BOUNCED: ugettext_noop("Email Bounced"),
+        ERROR_EMAIL_GATEWAY: ugettext_noop("Email Gateway Error"),
     }
 
     domain = models.CharField(max_length=126, null=False, db_index=True)

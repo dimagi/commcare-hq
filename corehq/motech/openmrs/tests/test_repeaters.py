@@ -297,7 +297,7 @@ class AllowedToForwardTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super(AllowedToForwardTests, cls).setUpClass()
-        cls.owner = CommCareUser.create(DOMAIN, 'chw@example.com', '123')
+        cls.owner = CommCareUser.create(DOMAIN, 'chw@example.com', '123', None, None)
 
     @classmethod
     def tearDownClass(cls):
@@ -387,7 +387,7 @@ class CaseLocationTests(LocationHierarchyTestCase):
         get_case_location should return case owner's location when owner is a mobile worker
         """
         gardens = self.locations['Gardens']
-        self.owner = CommCareUser.create(self.domain, 'gardens_user', '***', location=gardens)
+        self.owner = CommCareUser.create(self.domain, 'gardens_user', '***', None, None, location=gardens)
         form, (case, ) = _create_case(domain=self.domain, case_id=uuid.uuid4().hex, owner_id=self.owner.get_id)
         location = get_case_location(case)
         self.assertEqual(location, gardens)
@@ -396,7 +396,7 @@ class CaseLocationTests(LocationHierarchyTestCase):
         """
         get_case_location should return None when owner has no location
         """
-        self.owner = CommCareUser.create(self.domain, 'no_location', '***')
+        self.owner = CommCareUser.create(self.domain, 'no_location', '***', None, None)
         form, (case, ) = _create_case(domain=self.domain, case_id=uuid.uuid4().hex, owner_id=self.owner.get_id)
         location = get_case_location(case)
         self.assertIsNone(location)

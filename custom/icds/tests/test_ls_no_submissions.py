@@ -48,7 +48,7 @@ class TestLSSubmissionPerformanceIndicator(TestCase):
 
     @classmethod
     def _make_user(cls, name, location):
-        user = CommCareUser.create(cls.domain, name, 'password')
+        user = CommCareUser.create(cls.domain, name, 'password', None, None)
         user.set_location(location)
         return user
 

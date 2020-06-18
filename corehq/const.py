@@ -28,3 +28,10 @@ GOOGLE_PLAY_STORE_COMMCARE_URL = 'https://play.google.com/store/apps/details?id=
 
 ONE_DAY = 60 * 60 * 24
 DEFAULT_PARALLEL_EXECUTION_TIMEOUT = 60 * 60  # one hour
+
+
+USER_CHANGE_VIA_API = "api"
+USER_CHANGE_VIA_WEB = "web"
+USER_CHANGE_VIA_SMS = "sms"
+USER_CHANGE_VIA_BULK_IMPORTER = "bulk_importer"
+USER_CHANGE_VIA_INVITATION = "invitation"
