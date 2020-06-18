@@ -45,6 +45,7 @@ from corehq.apps.linked_domain.dbaccessors import (
 from corehq.apps.linked_domain.decorators import require_linked_domain
 from corehq.apps.linked_domain.local_accessors import (
     get_custom_data_models,
+    get_fixtures,
     get_toggles_previews,
     get_user_roles,
 )
@@ -87,6 +88,12 @@ def toggles_and_previews(request, domain):
 def custom_data_models(request, domain):
     limit_types = request.GET.getlist('type')
     return JsonResponse(get_custom_data_models(domain, limit_types))
+
+
+@login_or_api_key
+@require_linked_domain
+def fixtures(request, domain):
+    return JsonResponse(get_fixtures(domain))
 
 
 @login_or_api_key
