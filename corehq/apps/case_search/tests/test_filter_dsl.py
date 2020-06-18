@@ -21,6 +21,7 @@ from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import generate_cases, trap_extra_setup
 
 
+@attr(es_test=True)
 class TestFilterDsl(SimpleTestCase):
     def test_simple_filter(self):
         parsed = parse_xpath("name = 'farid'")

@@ -1,6 +1,5 @@
 import uuid
 
-from django.conf import settings
 from django.test import SimpleTestCase
 
 from mock import MagicMock, patch
