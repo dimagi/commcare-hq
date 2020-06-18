@@ -354,6 +354,27 @@ class TestAWCReport(TestCase):
             ['kpi', 'charts']
         )
 
+    def test_awc_reports_pse_images_length(self):
+        data = get_awc_reports_pse(
+            {
+                'state_id': 'st1',
+                'district_id': 'd1',
+                'block_id': 'b1',
+                'awc_id': 'a1',
+                'aggregation_level': 5
+            },
+            (2017, 5, 1),
+            'icds-cas',
+            now_date=(2017, 6, 1)
+        )
+        for kpi in data['kpi']:
+            for el in kpi:
+                del el['help_text']
+        self.assertEqual(
+            len(data['images']),
+            8
+        )
+
     def test_awc_reports_pse_images_0(self):
         data = get_awc_reports_pse(
             {
@@ -701,26 +722,6 @@ class TestAWCReport(TestCase):
                     "id": 30
                 }
             ]
-        )
-
-    def test_awc_reports_pse_images_length(self):
-        data = get_awc_reports_pse(
-            {
-                'state_id': 'st1',
-                'district_id': 'd1',
-                'block_id': 'b1',
-                'awc_id': 'a1',
-                'aggregation_level': 5
-            },
-            (2017, 5, 1),
-            'icds-cas'
-        )
-        for kpi in data['kpi']:
-            for el in kpi:
-                del el['help_text']
-        self.assertEqual(
-            len(data['images']),
-            0
         )
 
     def test_awc_reports_pse_kpi(self):
