@@ -448,7 +448,7 @@ class SmsBillable(models.Model):
             ] or price is None:
                 raise RetryBillableTaskException("backend_message_id=%s" % backend_message_id)
             return _ProviderChargeInfo(
-                Decimal(price) * -1,
+                abs(Decimal(price)),
                 SmsGatewayFee.get_by_criteria(
                     backend_api_id,
                     direction,
