@@ -46,7 +46,7 @@ from corehq.motech.repeater_helpers import (
     RepeaterResponse,
     get_relevant_case_updates_from_form_json,
 )
-from corehq.motech.repeaters.models import CaseRepeater, Repeater, get_requests
+from corehq.motech.repeaters.models import CaseRepeater
 from corehq.motech.repeaters.repeater_generators import (
     FormRepeaterJsonPayloadGenerator,
 )
@@ -113,9 +113,6 @@ class OpenmrsRepeater(CaseRepeater):
             self.get_id == other.get_id
         )
 
-    def __str__(self):
-        return Repeater.__str__(self)
-
     @classmethod
     def wrap(cls, data):
         if 'atom_feed_last_polled_at' in data:
@@ -131,7 +128,8 @@ class OpenmrsRepeater(CaseRepeater):
     def requests(self):
         # Used by atom_feed module and views that don't have a payload
         # associated with the request
-        return get_requests(self)
+        # TODO: Drop this. Use repeater.connection_settings.get_requests() instead
+        return self.connection_settings.get_requests()
 
     @cached_property
     def first_user(self):
@@ -204,7 +202,7 @@ class OpenmrsRepeater(CaseRepeater):
             extra_fields=[conf["case_property"] for conf in value_source_configs if "case_property" in conf],
             form_question_values=get_form_question_values(payload),
         )
-        requests = get_requests(self, repeat_record.payload_id)
+        requests = self.connection_settings.get_requests(self, repeat_record.payload_id)
         try:
             response = send_openmrs_data(
                 requests,
