@@ -1,10 +1,12 @@
 hqDefine('hqwebapp/js/multiselect_utils', [
     "jquery",
+    "knockout",
     "underscore",
     "multiselect/js/jquery.multi-select",
     "quicksearch/dist/jquery.quicksearch.min",
 ], function (
     $,
+    ko,
     _
 ) {
     var multiselect_utils = {};
@@ -20,9 +22,9 @@ hqDefine('hqwebapp/js/multiselect_utils', [
 
     var _renderAction = function (buttonId, buttonClass, buttonIcon, text) {
         var action = _.template(
-            '<a href="#" class="btn <%=actionButtonClass %> btn-xs pull-right" id="<%= actionButtonId %>">' +
+            '<button class="btn <%=actionButtonClass %> btn-xs pull-right" id="<%= actionButtonId %>">' +
                 '<i class="<%= actionButtonIcon %>"></i> <%= actionButtonText %>' +
-            '</a>'
+            '</button>'
         );
         return action({
             actionButtonId: buttonId,
@@ -48,17 +50,19 @@ hqDefine('hqwebapp/js/multiselect_utils', [
     };
 
     multiselect_utils.createFullMultiselectWidget = function (
-        multiselectId,
+        elementOrId,
         selectableHeaderTitle,
         selectedHeaderTitle,
         searchItemTitle
     ) {
-        var selectAllId = multiselectId + '-select-all',
-            removeAllId = multiselectId + '-remove-all',
-            searchSelectableId = multiselectId + '-search-selectable',
-            searchSelectedId = multiselectId + '-search-selected';
+        var $element = _.isString(elementOrId) ? $('#' + elementOrId) : $(elementOrId),
+            baseId = _.isString(elementOrId) ? elementOrId : "multiselect-" + String(Math.random()).substring(2),
+            selectAllId = baseId + '-select-all',
+            removeAllId = baseId + '-remove-all',
+            searchSelectableId = baseId + '-search-selectable',
+            searchSelectedId = baseId + '-search-selected';
 
-        $('#' + multiselectId).multiSelect({
+        $element.multiSelect({
             selectableHeader: _renderHeader(
                 selectableHeaderTitle,
                 _renderAction(selectAllId, 'btn-default', 'fa fa-plus', gettext("Add All")),
@@ -125,13 +129,29 @@ hqDefine('hqwebapp/js/multiselect_utils', [
         });
 
         $('#' + selectAllId).click(function () {
-            $('#' + multiselectId).multiSelect('select_all');
+            $element.multiSelect('select_all');
             return false;
         });
         $('#' + removeAllId).click(function () {
-            $('#' + multiselectId).multiSelect('deselect_all');
+            $element.multiSelect('deselect_all');
             return false;
         });
+    };
+
+    /*
+     * A custom binding for using multiselect in knockout content.
+     * This binding does not handle dynamic options, but could be extended to do so.
+     */
+    ko.bindingHandlers.multiselect = {
+        init: function (element, valueAccessor) {
+            var options = valueAccessor();
+            multiselect_utils.createFullMultiselectWidget(
+                element,
+                options.selectableHeaderTitle || gettext("Items"),
+                options.selectedHeaderTitle || gettext("Selected items"),
+                options.searchItemTitle || gettext("Search items")
+            );
+        },
     };
 
     return multiselect_utils;
