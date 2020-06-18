@@ -1,10 +1,8 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-<div data-bind="modal: roleBeingEdited" tabindex="-1" role="dialog"
-     class="modal fade">
-  <div data-bind="with: roleBeingEdited"
-       class="modal-dialog">
+<div data-bind="modal: roleBeingEdited" tabindex="-1" role="dialog" class="modal fade">
+  <div data-bind="with: roleBeingEdited" class="modal-dialog">
     <form data-bind="submit: $root.submitNewRole">
       <div class="modal-content">
         <div class="modal-header">
@@ -19,8 +17,7 @@
         <div class="modal-body">
           <div class="form form-horizontal">
             <div class="form-group">
-              <label class="col-sm-4 control-label"
-                     for="role-name">
+              <label class="col-sm-4 control-label" for="role-name">
                 {% trans "Role Name" %}<span class="asteriskField">*</span>
               </label>
               <div class="col-sm-8 controls">
@@ -45,109 +42,140 @@
 
             {# BEGIN web_users permissions #}
             <div class="form-group" data-bind="visible: permissions.access_all_locations">
-
               <div class="col-sm-2 controls">
                 <div class="form-check">
                   <input type="checkbox"
                          id="edit-web-users-checkbox"
-                         data-bind="checked: permissions.edit_web_users,
-                                                    disable: !$root.allowEdit" />
-                  <label for="edit-web-users-checkbox"><span class="sr-only">{% trans "Edit & View Web Users" %}</span></label>
+                         data-bind="checked: permissions.edit_web_users, disable: !$root.allowEdit" />
+                  <label for="edit-web-users-checkbox">
+                    <span class="sr-only">
+                      {% trans "Edit & View Web Users" %}
+                    </span>
+                  </label>
                 </div>
               </div>
 
               <div class="col-sm-2 controls">
-
                 {# PLACEHOLDER checkbox when edit_web_users is true #}
                 <div class="form-check" data-bind="visible: permissions.edit_web_users()">
                   <input type="checkbox" checked="checked" disabled="disabled" />
-                  <label><span class="sr-only">{% trans "View-Only Web Users" %}</span></label>
-                </div> {# end PLACEHOLDER #}
+                  <label>
+                    <span class="sr-only">
+                      {% trans "View-Only Web Users" %}
+                    </span>
+                  </label>
+                </div>
+                {# end PLACEHOLDER #}
 
                 {# REAL checkbox that controls view_web_users permission #}
                 <div class="form-check" data-bind="visible: !permissions.edit_web_users()">
                   <input type="checkbox"
                          id="view-web-users-checkbox"
                          data-bind="checked: permissions.view_web_users,
-                                                    disable: !$root.allowEdit" />
-                  <label for="view-web-users-checkbox"><span class="sr-only">{% trans "View-Only Web Users" %}</span></label>
-                </div> {# END REAL checkbox #}
-
+                                    disable: !$root.allowEdit" />
+                  <label for="view-web-users-checkbox">
+                    <span class="sr-only">
+                      {% trans "View-Only Web Users" %}
+                    </span>
+                  </label>
+                </div>
+                {# END REAL checkbox #}
               </div>
+
               <div class="col-sm-8 control-label">
                 {% blocktrans %}
                   <strong>Web Users</strong> &mdash; invite new web users, manage account settings, remove membership
                 {% endblocktrans %}
               </div>
-            </div> {# END web_users permissions #}
+            </div>
+            {# END web_users permissions #}
 
             {#  BEGIN commcare_users permissions #}
             <div class="form-group">
-
               <div class="col-sm-2 controls">
                 <div class="form-check">
                   <input type="checkbox"
                          id="edit-commcare-users-checkbox"
-                         data-bind="checked: permissions.edit_commcare_users,
-                                                    disable: !$root.allowEdit" />
-                  <label for="edit-commcare-users-checkbox"><span class="sr-only">{% trans "Edit & View Mobile Workers" %}</span></label>
+                         data-bind="checked: permissions.edit_commcare_users, disable: !$root.allowEdit" />
+                  <label for="edit-commcare-users-checkbox">
+                    <span class="sr-only">
+                      {% trans "Edit & View Mobile Workers" %}
+                    </span>
+                  </label>
                 </div>
               </div>
 
               <div class="col-sm-2 controls">
-
                 {# PLACEHOLDER checkbox when edit_commcare_users is true #}
                 <div class="form-check" data-bind="visible: permissions.edit_commcare_users()">
                   <input type="checkbox" checked="checked" disabled="disabled" />
-                  <label><span class="sr-only">{% trans "View-Only Mobile Workers" %}</span></label>
-                </div> {# end PLACEHOLDER #}
+                  <label>
+                    <span class="sr-only">
+                      {% trans "View-Only Mobile Workers" %}
+                    </span>
+                  </label>
+                </div>
+                {# end PLACEHOLDER #}
 
                 {# REAL checkbox that controls view_commcare_users permission #}
                 <div class="form-check" data-bind="visible: !permissions.edit_commcare_users()">
                   <input type="checkbox"
                          id="view-commcare-users-checkbox"
                          data-bind="checked: permissions.view_commcare_users,
-                                                    disable: (permissions.edit_commcare_users() && $root.allowEdit) || !$root.allowEdit" />
-                  <label for="view-commcare-users-checkbox"><span class="sr-only">{% trans "View-Only Mobile Workers" %}</span></label>
-                </div> {# END REAL checkbox #}
+                                    disable: (permissions.edit_commcare_users() && $root.allowEdit) || !$root.allowEdit" />
+                  <label for="view-commcare-users-checkbox">
+                    <span class="sr-only">
+                      {% trans "View-Only Mobile Workers" %}
+                    </span>
+                  </label>
+                </div>
+                {# END REAL checkbox #}
 
               </div>
               <div class="col-sm-8 control-label">
                 {% blocktrans %}
-                  <strong>Mobile Workers</strong> &mdash; create new accounts, manage account settings, deactivate or delete mobile workers. This permission also allows users to login as any mobile worker in Web Apps.
+                  <strong>Mobile Workers</strong> &mdash; create new accounts, manage account settings,deactivate or delete mobile workers. This permission also allows users to login as any mobile worker in Web Apps.
                 {% endblocktrans %}
               </div>
-            </div> {# END commcare_users permissions #}
+            </div>
+            {# END commcare_users permissions #}
 
             {#  BEGIN groups permissions #}
             <div class="form-group" data-bind="visible: permissions.access_all_locations">
-
               <div class="col-sm-2 controls">
                 <div class="form-check">
                   <input type="checkbox"
                          id="edit-groups-checkbox"
-                         data-bind="checked: permissions.edit_groups,
-                                                    disable: !$root.allowEdit" />
-                  <label for="edit-groups-checkbox"><span class="sr-only">{% trans "Edit & View Groups" %}</span></label>
+                         data-bind="checked: permissions.edit_groups, disable: !$root.allowEdit" />
+                  <label for="edit-groups-checkbox">
+                    <span class="sr-only">
+                      {% trans "Edit & View Groups" %}
+                    </span>
+                  </label>
                 </div>
               </div>
 
               <div class="col-sm-2 controls">
-
                 {# PLACEHOLDER checkbox when edit_groups is true #}
                 <div class="form-check" data-bind="visible: permissions.edit_groups()">
                   <input type="checkbox" checked="checked" disabled="disabled" />
                   <label><span class="sr-only">{% trans "View-Only Groups" %}</span></label>
-                </div> {# end PLACEHOLDER #}
+                </div>
+                {# end PLACEHOLDER #}
 
                 {# REAL checkbox that controls view_groups permission #}
                 <div class="form-check" data-bind="visible: !permissions.edit_groups()">
                   <input type="checkbox"
                          id="view-groups-checkbox"
                          data-bind="checked: permissions.view_groups,
-                                                    disable: (permissions.edit_groups() && $root.allowEdit) || !$root.allowEdit" />
-                  <label for="view-groups-checkbox"><span class="sr-only">{% trans "View-Only Groups" %}</span></label>
-                </div>{# END REAL checkbox #}
+                                    disable: (permissions.edit_groups() && $root.allowEdit) || !$root.allowEdit" />
+                  <label for="view-groups-checkbox">
+                    <span class="sr-only">
+                      {% trans "View-Only Groups" %}
+                    </span>
+                  </label>
+                </div>
+                {# END REAL checkbox #}
               </div>
 
               <div class="col-sm-8 control-label">
@@ -162,18 +190,19 @@
                   <label>
                     {% trans "Allow changing group membership." %}
                   </label>
-                </div>{# end PLACEHOLDER #}
+                </div>
+                {# end PLACEHOLDER #}
 
                 {# REAL checkbox for edit_users_in_groups #}
                 <div class="form-check" data-bind="visible: !permissions.edit_commcare_users() && permissions.edit_groups()">
                   <input type="checkbox"
                          id="edit-users-groups-checkbox"
-                         data-bind="checked: permissions.edit_users_in_groups,
-                                                    disable: !$root.allowEdit" />
+                         data-bind="checked: permissions.edit_users_in_groups, disable: !$root.allowEdit" />
                   <label for="edit-users-groups-checkbox">
                     {% trans "Allow changing group membership." %}
                   </label>
-                </div>{# end REAL #}
+                </div>
+                {# end REAL #}
 
                 {# PLACEHOLDER checkbox when edit_groups is false #}
                 <div class="form-check" data-bind="visible: !permissions.edit_groups()">
@@ -181,10 +210,11 @@
                   <label>
                     {% trans "Allow changing group membership (requires edit groups)." %}
                   </label>
-                </div>{# end PLACEHOLDER #}
-
+                </div>
+                {# end PLACEHOLDER #}
               </div>
-            </div> {#  END groups permissions #}
+            </div>
+            {#  END groups permissions #}
 
             {# BEGIN locations permissions #}
             <div class="form-group">
@@ -192,27 +222,39 @@
                 <div class="form-check">
                   <input type="checkbox"
                          id="edit-locations-checkbox"
-                         data-bind="checked: permissions.edit_locations,
-                                                    disable: !$root.allowEdit" />
-                  <label for="edit-locations-checkbox"><span class="sr-only">{% trans "Edit & View Locations" %}</span></label>
+                         data-bind="checked: permissions.edit_locations, disable: !$root.allowEdit" />
+                  <label for="edit-locations-checkbox">
+                    <span class="sr-only">
+                      {% trans "Edit & View Locations" %}
+                    </span>
+                  </label>
                 </div>
               </div>
               <div class="col-sm-2 controls">
-
                 {# PLACEHOLDER checkbox when edit_locations is true #}
                 <div class="form-check" data-bind="visible: permissions.edit_locations()">
                   <input type="checkbox" checked="checked" disabled="disabled" />
-                  <label><span class="sr-only">{% trans "View-Only Locations" %}</span></label>
-                </div> {# end PLACEHOLDER #}
+                  <label>
+                    <span class="sr-only">
+                      {% trans "View-Only Locations" %}
+                    </span>
+                  </label>
+                </div>
+                {# end PLACEHOLDER #}
 
                 {# REAL checkbox that controls view_locations permission #}
                 <div class="form-check" data-bind="visible: !permissions.edit_locations()">
                   <input type="checkbox"
                          id="view-locations-checkbox"
                          data-bind="checked: permissions.view_locations,
-                                                    disable: (permissions.edit_locations() && $root.allowEdit) || !$root.allowEdit" />
-                  <label for="view-locations-checkbox"><span class="sr-only">{% trans "View-Only Locations" %}</span></label>
-                </div>{# end REAL checkbox #}
+                                    disable: (permissions.edit_locations() && $root.allowEdit) || !$root.allowEdit" />
+                  <label for="view-locations-checkbox">
+                    <span class="sr-only">
+                      {% trans "View-Only Locations" %}
+                    </span>
+                  </label>
+                </div>
+                {# end REAL checkbox #}
 
               </div>
               <div class="col-sm-8 control-label">
@@ -227,18 +269,19 @@
                   <label>
                     {% trans "Allow changing workers at a location." %}
                   </label>
-                </div>{# end PLACEHOLDER #}
+                </div>
+                {# end PLACEHOLDER #}
 
                 {# REAL checkbox for edit_users_in_groups #}
                 <div class="form-check" data-bind="visible: !permissions.edit_commcare_users() && permissions.edit_locations()">
                   <input type="checkbox"
                          id="edit-users-locations-checkbox"
-                         data-bind="checked: permissions.edit_users_in_locations,
-                                                    disable: !$root.allowEdit" />
+                         data-bind="checked: permissions.edit_users_in_locations, disable: !$root.allowEdit" />
                   <label for="edit-users-locations-checkbox">
                     {% trans "Allow changing workers at a location." %}
                   </label>
-                </div>{# end REAL #}
+                </div>
+                {# end REAL #}
 
                 {# PLACEHOLDER checkbox when edit_locations is false #}
                 <div class="form-check" data-bind="visible: !permissions.edit_locations()">
@@ -249,7 +292,8 @@
                 </div>{# end PLACEHOLDER #}
 
               </div>
-            </div> {# END locations permissions #}
+            </div>
+            {# END locations permissions #}
 
             {# BEGIN data permissions #}
             <div class="form-group">
@@ -257,9 +301,12 @@
                 <div class="form-check">
                   <input type="checkbox"
                          id="edit-data-checkbox"
-                         data-bind="checked: permissions.edit_data,
-                                                    disable: !$root.allowEdit" />
-                  <label for="edit-data-checkbox"><span class="sr-only">{% trans "Edit & View Data" %}</span></label>
+                         data-bind="checked: permissions.edit_data, disable: !$root.allowEdit" />
+                  <label for="edit-data-checkbox">
+                    <span class="sr-only">
+                      {% trans "Edit & View Data" %}
+                    </span>
+                  </label>
                 </div>
               </div>
               <div class="col-sm-2 controls">
@@ -274,37 +321,70 @@
                 {% endblocktrans %}
               </div>
             </div>{# END data permissions #}
+            
+            {# BEGIN web apps permissions #}
+            <div class="form-group" data-bind="visible: $root.webAppsPrivilege">
+              <div class="col-sm-2 controls">
+                <div class="form-check">
+                  <input type="checkbox"
+                         id="access-web-apps-checkbox"
+                         data-bind="checked: permissions.access_web_apps,
+                                    disable: !$root.allowEdit" />
+                  <label for="access-web-apps-checkbox"><span class="sr-only">{% trans "Access Web Apps" %}</span></label>
+                </div>
+              </div>
+              <div class="col-sm-2 controls">
+                <div class="form-check-placeholder">
+                  <label></label>
+                </div>
+              </div>
+              <div class="col-sm-8 control-label">
+                {% blocktrans %}
+                  <strong>Web Apps</strong> &mdash; use Web Apps for online data entry
+                {% endblocktrans %}
+              </div>
+            </div>{# END web apps permissions #}
 
             {# BEGIN dropzone permissions #}
             {% if request|toggle_enabled:"DATA_FILE_DOWNLOAD" %}
             <div class="form-group">
-
               <div class="col-sm-2 controls">
                 <div class="form-check">
                   <input type="checkbox"
                          id="edit-dropzone-checkbox"
-                         data-bind="checked: permissions.edit_file_dropzone,
-                                                    disable: !$root.allowEdit" />
-                  <label for="edit-dropzone-checkbox"><span class="sr-only">{% trans "Edit & Download files from the Dropzone " %}</span></label>
+                         data-bind="checked: permissions.edit_file_dropzone, disable: !$root.allowEdit" />
+                  <label for="edit-dropzone-checkbox">
+                    <span class="sr-only">
+                      {% trans "Edit & Download files from the Dropzone " %}
+                    </span>
+                  </label>
                 </div>
               </div>
 
               <div class="col-sm-2 controls">
-
                 {# PLACEHOLDER checkbox when edit_file_dropzone is true #}
                 <div class="form-check" data-bind="visible: permissions.edit_file_dropzone()">
                   <input type="checkbox" checked="checked" disabled="disabled" />
-                  <label><span class="sr-only">{% trans "View-Only Dropzone" %}</span></label>
-                </div> {# end PLACEHOLDER #}
+                  <label>
+                    <span class="sr-only">
+                      {% trans "View-Only Dropzone" %}
+                    </span>
+                  </label>
+                </div>
+                {# end PLACEHOLDER #}
 
                 {# REAL checkbox that controls view_file_dropzone permission #}
                 <div class="form-check" data-bind="visible: !permissions.edit_file_dropzone()">
                   <input type="checkbox"
                          id="view-dropzone-checkbox"
-                         data-bind="checked: permissions.view_file_dropzone,
-                                                    disable: !$root.allowEdit" />
-                  <label for="view-dropzone-checkbox"><span class="sr-only">{% trans "Download-Only files from the Dropzone" %}</span></label>
-                </div> {# END REAL checkbox #}
+                         data-bind="checked: permissions.view_file_dropzone, disable: !$root.allowEdit" />
+                  <label for="view-dropzone-checkbox">
+                    <span class="sr-only">
+                      {% trans "Download-Only files from the Dropzone" %}
+                    </span>
+                  </label>
+                </div>
+                {# END REAL checkbox #}
 
               </div>
               <div class="col-sm-8 control-label">
@@ -312,7 +392,8 @@
                   <strong>Dropzone</strong> &mdash; Upload and download files from the file Dropzone
                 {% endblocktrans %}
               </div>
-            </div> {# END dropzone permissions #}
+            </div>
+            {# END dropzone permissions #}
             {% endif %}
 
             {# BEGIN API permission #}
@@ -321,9 +402,12 @@
                 <div class="form-check">
                   <input type="checkbox"
                          id="edit-api-checkbox"
-                         data-bind="checked: permissions.access_api,
-                                    disable: !$root.allowEdit" />
-                  <label for="edit-api-checkbox"><span class="sr-only">{% trans "Access APIs" %}</span></label>
+                         data-bind="checked: permissions.access_api, disable: !$root.allowEdit" />
+                  <label for="edit-api-checkbox">
+                    <span class="sr-only">
+                      {% trans "Access APIs" %}
+                    </span>
+                  </label>
                 </div>
               </div>
               <div class="col-sm-2 controls">
@@ -337,7 +421,8 @@
                   Specific APIs may require additional permissions.
                 {% endblocktrans %}
               </div>
-            </div> {# END API permission #}
+            </div>
+            {# END API permission #}
 
             {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
               {# BEGIN Shared Export permissions #}
@@ -346,9 +431,12 @@
                   <div class="form-check">
                     <input type="checkbox"
                            id="edit-shared-exports-checkbox"
-                           data-bind="checked: permissions.edit_shared_exports,
-                                                    disable: !$root.allowEdit" />
-                    <label for="edit-shared-exports-checkbox"><span class="sr-only">{% trans "Edit & View Shared Exports" %}</span></label>
+                           data-bind="checked: permissions.edit_shared_exports, disable: !$root.allowEdit" />
+                    <label for="edit-shared-exports-checkbox">
+                      <span class="sr-only">
+                        {% trans "Edit & View Shared Exports" %}
+                      </span>
+                    </label>
                   </div>
                 </div>
                 <div class="col-sm-2 controls">
@@ -361,7 +449,8 @@
                     <strong>Shared Exports</strong> &mdash; access and edit the content and structure of shared exports
                   {% endblocktrans %}
                 </div>
-              </div> {# END Shared Export permissions #}
+              </div>
+            {# END Shared Export permissions #}
             {% endif %}
 
             {# BEGIN Applications permissions #}
@@ -370,9 +459,12 @@
                 <div class="form-check">
                   <input type="checkbox"
                          id="edit-apps-checkbox"
-                         data-bind="checked: permissions.edit_apps,
-                                                    disable: !$root.allowEdit" />
-                  <label for="edit-apps-checkbox"><span class="sr-only">{% trans "Edit & View Apps" %}</span></label>
+                         data-bind="checked: permissions.edit_apps, disable: !$root.allowEdit" />
+                  <label for="edit-apps-checkbox">
+                    <span class="sr-only">
+                      {% trans "Edit & View Apps" %}
+                    </span>
+                  </label>
                 </div>
               </div>
               <div class="col-sm-2 controls">
@@ -386,7 +478,8 @@
                   and configuration of all applications.
                 {% endblocktrans %}
               </div>
-            </div> {# END Applications permissions #}
+            </div>
+            {# END Applications permissions #}
 
             {# BEGIN Roles & Permissions permissions #}
             <div class="form-group" data-bind="visible: permissions.access_all_locations">
@@ -399,9 +492,12 @@
                 <div class="form-check">
                   <input type="checkbox"
                          id="view-roles-checkbox"
-                         data-bind="checked: permissions.view_roles,
-                                                    disable: !$root.allowEdit" />
-                  <label for="view-roles-checkbox"><span class="sr-only">{% trans "View Roles and Permssions" %}</span></label>
+                         data-bind="checked: permissions.view_roles, disable: !$root.allowEdit" />
+                  <label for="view-roles-checkbox">
+                    <span class="sr-only">
+                      {% trans "View Roles and Permssions" %}
+                    </span>
+                  </label>
                 </div>
               </div>
               <div class="col-sm-8 control-label">
@@ -410,7 +506,8 @@
                   roles &amp; permissions (only Admins can edit roles)
                 {% endblocktrans %}
               </div>
-            </div> {# END Roles & Permissions permissions #}
+            </div>
+            {# END Roles & Permissions permissions #}
 
             <legend>
               {% trans "Other Settings" %}
@@ -425,8 +522,7 @@
                   <div class="form-check">
                     <input type="checkbox"
                            id="edit-motech-checkbox"
-                           data-bind="checked: permissions.edit_motech,
-                                                    disable: !$root.allowEdit" />
+                           data-bind="checked: permissions.edit_motech, disable: !$root.allowEdit" />
                     <label for="edit-motech-checkbox">
                       {% trans "Allow role to manage integration with other systems." %}
                     </label>
@@ -443,8 +539,7 @@
                 <div class="form-check">
                   <input type="checkbox"
                          id="edit-billing-checkbox"
-                         data-bind="checked: permissions.edit_billing,
-                                                    disable: !$root.allowEdit" />
+                         data-bind="checked: permissions.edit_billing, disable: !$root.allowEdit" />
                   <label for="edit-billing-checkbox">
                     {% trans "Allow role to manage subscription information." %}
                   </label>
@@ -454,7 +549,7 @@
 
             <div class="form-group"
                  data-bind="css: { 'has-error': hasUnpermittedLocationRestriction },
-                                      visible: $root.canRestrictAccessByLocation || hasUnpermittedLocationRestriction">
+                            visible: $root.canRestrictAccessByLocation || hasUnpermittedLocationRestriction">
               <label class="col-sm-4 control-label">
                 {% trans "Full Organization Access" %}
               </label>
@@ -463,12 +558,13 @@
                   <input type="checkbox"
                          id="allow-data-all-access-checkbox"
                          data-bind="checked: permissions.access_all_locations,
-                                                    disable: hasUnpermittedLocationRestriction || !$root.allowEdit" />
+                                    disable: hasUnpermittedLocationRestriction || !$root.allowEdit" />
                   <label for="allow-data-all-access-checkbox">
                     {% trans "Allow role to access data from all locations." %}
                   </label>
                 </div>
-                <div class="help-block alert alert-warning" data-bind="visible: !hasUnpermittedLocationRestriction && !permissions.access_all_locations()">
+                <div class="help-block alert alert-warning"
+                     data-bind="visible: !hasUnpermittedLocationRestriction && !permissions.access_all_locations()">
                   {% blocktrans %}
                     Make sure any users assigned this role also have a location assigned to them.
                     Users without assigned locations will not be permitted to log in.
@@ -491,16 +587,14 @@
                 <div class="form-check">
                   <input type="checkbox"
                          id="access-all-reports-checkbox"
-                         data-bind="checked: reportPermissions.all,
-                                                    disable: !$root.allowEdit" />
+                         data-bind="checked: reportPermissions.all, disable: !$root.allowEdit" />
                   <label for="access-all-reports-checkbox">
                     {% trans "Allow role to access all reports." %}
                   </label>
                 </div>
               </div>
             </div>
-            <div class="form-group"
-                 data-bind="visible: !reportPermissions.all()">
+            <div class="form-group" data-bind="visible: !reportPermissions.all()">
               <label class="col-sm-4 control-label">
                 {% trans "Access Specific Reports" %}
               </label>
@@ -513,9 +607,8 @@
                        data-bind="foreach: reportPermissions.specific, slideVisible: !reportPermissions.all()">
                     <div class="form-check">
                       <input type="checkbox"
-                             data-bind="checked: value,
-                                                            attr: { 'id': slug() + '-checkbox' },
-                                                            disable: !$root.allowEdit" />
+                             data-bind="checked: value, attr: { 'id': slug() + '-checkbox' },
+                                        disable: !$root.allowEdit" />
                       <label data-bind="attr: { 'for': slug() + '-checkbox' }">
                         <span data-bind="html: name"></span>
                       </label>
@@ -533,8 +626,7 @@
                   <div class="form-check">
                     <input type="checkbox"
                            id="access-all-webapps-checkbox"
-                           data-bind="checked: webAppsPermissions.all,
-                                                        disable: !$root.allowEdit" />
+                           data-bind="checked: webAppsPermissions.all, disable: !$root.allowEdit" />
                     <label for="access-all-webapps-checkbox">
                       {% trans "Allow role to view all Web Apps." %}
                     </label>
@@ -555,9 +647,8 @@
                          data-bind="foreach: webAppsPermissions.specific, slideVisible: !webAppsPermissions.all()">
                       <div class="form-check">
                         <input type="checkbox"
-                               data-bind="checked: value,
-                                                                attr: { 'id': 'app-' + path() + '-checkbox' },
-                                                                disable: !$root.allowEdit" />
+                               data-bind="checked: value, attr: { 'id': 'app-' + path() + '-checkbox' },
+                                          disable: !$root.allowEdit" />
                         <label data-bind="attr: { 'for': 'app-' + path() + '-checkbox' }">
                           <span data-bind="html: name"></span>
                         </label>
@@ -610,7 +701,11 @@
                            id="edit-mobile-checkbox"
                            data-bind="checked: permissions.access_mobile_endpoints,
                                       disable: !$root.allowEdit" />
-                                    <label for="edit-mobile-checkbox"><span class="sr-only">{% trans "Access to Offline Mobile Apps" %}</span></label>
+                  <label for="edit-mobile-checkbox">
+                    <span class="sr-only">
+                      {% trans "Access to Offline Mobile Apps" %}
+                    </span>
+                  </label>
                 </div>
               </div>
               <div class="col-sm-2 controls">
@@ -656,9 +751,8 @@
                          data-bind="foreach: manageAppReleasePermissions.specific, slideVisible: !manageAppReleasePermissions.all()">
                       <div class="form-check">
                         <input type="checkbox"
-                               data-bind="checked: value,
-                                                                attr: { 'id': 'release-' + path() + '-checkbox' },
-                                                                disable: !$root.allowEdit" />
+                               data-bind="checked: value, attr: { 'id': 'release-' + path() + '-checkbox' },
+                                          disable: !$root.allowEdit" />
                         <label data-bind="attr: { 'for': 'release-' + path() + '-checkbox' }">
                           <span data-bind="html: name"></span>
                         </label>
@@ -674,13 +768,13 @@
                 {% trans "Default Landing Page" %}
               </label>
               <div class="col-sm-8 controls">
-                <select class="form-control" id="landing-page" data-bind="
-                                  options: $root.landingPageChoices,
+                <select class="form-control" id="landing-page"
+                        data-bind="options: $root.landingPageChoices,
                                   optionsText: 'name',
                                   optionsValue: 'id',
                                   value: default_landing_page,
-                                  disable: !$root.allowEdit
-                              "></select>
+                                  disable: !$root.allowEdit">
+                </select>
               </div>
             </div>
             <div class="form-group">
@@ -691,8 +785,7 @@
                 <div class="form-check">
                   <input type="checkbox"
                          id="report-issue-checkbox"
-                         data-bind="checked: permissions.report_an_issue,
-                                                    disable: !$root.allowEdit" />
+                         data-bind="checked: permissions.report_an_issue, disable: !$root.allowEdit" />
                   <label for="report-issue-checkbox">
                     {% trans "Allow this role to report issues." %}
                   </label>
@@ -707,35 +800,58 @@
                 <div class="form-check">
                   <input type="checkbox"
                          id="non-admin-edit-checkbox"
-                         data-bind="checked: is_non_admin_editable,
-                                                    disable: !$root.allowEdit" />
+                         data-bind="checked: manageRoleAssignments.all, disable: !$root.allowEdit" />
                   <label for="non-admin-edit-checkbox">
-                    {% trans "Allow non-admins to assign this role to other users." %}
+                    {% trans "Allow all non-admins to assign this role to other users." %}
                   </label>
+                </div>
+              </div>
+            </div>
+            <div class="form-group"
+                 data-bind="visible: !manageRoleAssignments.all()">
+              <label class="col-sm-4 control-label">
+                {% trans "Manage Role Assignment" %}
+              </label>
+              <div class="col-sm-8 controls">
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                    {% trans "Select which other roles can assign this role:" %}
+                  </div>
+                  <div class="panel-body"
+                       data-bind="foreach: manageRoleAssignments.specific, slideVisible: !manageRoleAssignments.all()">
+                    <div class="form-check">
+                      <input type="checkbox"
+                             data-bind="checked: value, attr: { 'id': 'role-' + path() + '-checkbox' },
+                                        disable: !$root.allowEdit" />
+                      <label data-bind="attr: { 'for': 'role-' + path() + '-checkbox' }">
+                        <span data-bind="html: name"></span>
+                      </label>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-          <div class="modal-footer">
-            {% if can_edit_roles %}
-              <button type="button"
-                      class="btn btn-default"
-                      data-bind="click: $root.unsetRoleBeingEdited">
-                {% trans "Cancel" %}
-              </button>
-              <button type="submit"
-                      class="btn btn-primary disable-on-submit">
-                {% trans "Save" %}
-              </button>
-            {% else %}
-              <button type="button"
-                      class="btn btn-default"
-                      data-bind="click: $root.unsetRoleBeingEdited">
-                {% trans "Close" %}
-              </button>
-            {% endif %}
-          </div>
+        <div class="modal-footer">
+          {% if can_edit_roles %}
+            <button type="button"
+                    class="btn btn-default"
+                    data-bind="click: $root.unsetRoleBeingEdited">
+              {% trans "Cancel" %}
+            </button>
+            <button type="submit"
+                    class="btn btn-primary disable-on-submit">
+              {% trans "Save" %}
+            </button>
+          {% else %}
+            <button type="button"
+                    class="btn btn-default"
+                    data-bind="click: $root.unsetRoleBeingEdited">
+              {% trans "Close" %}
+            </button>
+          {% endif %}
+        </div>
       </div>
     </form>
   </div>

@@ -75,7 +75,7 @@ from corehq.apps.hqwebapp.views import render_static
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.users.decorators import require_can_login_as
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.models import CommCareUser, CouchUser, DomainMembershipError
 from corehq.apps.users.util import format_username
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.form_processor.exceptions import XFormNotFound
@@ -124,7 +124,12 @@ class FormplayerMain(View):
         apps = filter(None, apps)
         apps = filter(lambda app: app.get('cloudcare_enabled') or self.preview, apps)
         apps = filter(lambda app: app_access.user_can_access_app(user, app), apps)
-        role = user.get_role(domain)
+        role = None
+        try:
+            role = user.get_role(domain)
+        except DomainMembershipError:
+            # User has access via domain mirroring
+            pass
         if role:
             apps = [app for app in apps if role.permissions.view_web_app(app)]
         apps = sorted(apps, key=lambda app: app['name'])
