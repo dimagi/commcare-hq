@@ -474,7 +474,7 @@ class TestApiKey(APIResourceTest):
         other_user = WebUser.create(self.domain.name, username, password, None, None)
         other_user.set_role(self.domain.name, 'admin')
         other_user.save()
-        self.addCleanup(other_user.delete)
+        self.addCleanup(other_user.delete, deleted_by=None)
         django_user = WebUser.get_django_user(other_user)
         other_api_key, _ = ApiKey.objects.get_or_create(user=django_user)
         self.addCleanup(other_api_key.delete)

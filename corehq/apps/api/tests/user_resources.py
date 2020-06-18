@@ -283,7 +283,7 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(user_back.last_name, "Admin")
         self.assertEqual(user_back.email, "admin@example.com")
         self.assertTrue(user_back.is_domain_admin(self.domain.name))
-        user_back.delete()
+        user_back.delete(deleted_by=None)
 
     def test_create_admin_without_role(self):
         user_json = deepcopy(self.default_user_json)
@@ -298,7 +298,7 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(user_back.last_name, "Admin")
         self.assertEqual(user_back.email, "admin@example.com")
         self.assertTrue(user_back.is_domain_admin(self.domain.name))
-        user_back.delete()
+        user_back.delete(deleted_by=None)
 
     def test_create_with_preset_role(self):
         user_json = deepcopy(self.default_user_json)
@@ -310,7 +310,7 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(response.status_code, 201)
         user_back = WebUser.get_by_username("test_1234")
         self.assertEqual(user_back.role, 'Field Implementer')
-        user_back.delete()
+        user_back.delete(deleted_by=None)
 
     def test_create_with_custom_role(self):
         new_user_role = UserRole.get_or_create_with_permissions(
@@ -324,7 +324,7 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(response.status_code, 201)
         user_back = WebUser.get_by_username("test_1234")
         self.assertEqual(user_back.role, new_user_role.name)
-        user_back.delete()
+        user_back.delete(deleted_by=None)
 
     def test_create_with_invalid_admin_role(self):
         user_json = deepcopy(self.default_user_json)
