@@ -482,7 +482,7 @@ SNS_EMAIL_EVENT_SECRET = None
 ENABLE_SOFT_ASSERT_EMAILS = True
 IS_DIMAGI_ENVIRONMENT = True
 
-LOCAL_SERVER_ENVIRONMENT = 'localdev'
+LOCAL_SERVER_ENVIRONMENT = 'icds'
 SERVER_ENVIRONMENT = LOCAL_SERVER_ENVIRONMENT
 ICDS_ENVS = ('icds',)
 # environments located in india, this should not even include staging
@@ -821,7 +821,8 @@ STRIPE_PRIVATE_KEY = ''
 # }
 REPORTING_DATABASES = {
     'default': 'default',
-    'ucr': 'default'
+    'ucr': 'default',
+    'icds-ucr': 'icds-ucr'
 }
 
 PL_PROXY_CLUSTER_NAME = 'commcarehq'
