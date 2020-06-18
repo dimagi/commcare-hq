@@ -2,7 +2,6 @@ from functools import partial
 
 from django.utils.translation import ugettext as _
 
-from dimagi.utils.couch.database import iter_bulk_delete
 from toggle.shortcuts import set_toggle
 
 from corehq.apps.case_search.models import (
@@ -13,7 +12,10 @@ from corehq.apps.custom_data_fields.models import (
     CustomDataField,
     CustomDataFieldsDefinition,
 )
-from corehq.apps.fixtures.dbaccessors import get_fixture_data_types, iter_fixture_items_for_data_type
+from corehq.apps.fixtures.dbaccessors import (
+    delete_fixture_items_for_data_type,
+    get_fixture_data_types,
+)
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
 from corehq.apps.fixtures.upload.run_upload import clear_fixture_quickcache
 from corehq.apps.fixtures.utils import clear_fixture_cache
@@ -133,10 +135,7 @@ def update_fixtures(domain_link):
         clear_fixture_quickcache(domain_link.linked_domain, [linked_data_type])
 
         # Re-create relevant data items
-        old_data_item_ids = [
-            i["_id"] for i in iter_fixture_items_for_data_type(domain_link.linked_domain, linked_data_type._id)
-        ]
-        iter_bulk_delete(FixtureDataItem.get_db(), old_data_item_ids)
+        delete_fixture_items_for_data_type(domain_link.linked_domain, linked_data_type._id)
         for master_item in master_results["data_items"].get(master_data_type_id, []):
             doc = master_item.to_json()
             del doc["_id"]
