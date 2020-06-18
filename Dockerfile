@@ -29,5 +29,4 @@ RUN npm -g install \
  && echo '{ "allow_root": true }' > /root/.bowerrc \
  && cd /vendor \
  && npm shrinkwrap \
- && npm -g install \
- && npm cache clean
+ && npm -g install
