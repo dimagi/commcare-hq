@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.signals import user_logged_in
 from django.db.models.signals import post_save
 from django.dispatch import Signal, receiver
@@ -35,9 +36,10 @@ def update_user_in_es(sender, couch_user, **kwargs):
     Automatically sync the user to elastic directly on save or delete
     """
     from corehq.pillows.user import transform_user_for_elasticsearch
-    send_to_elasticsearch("users", transform_user_for_elasticsearch(couch_user.to_json()),
-                          delete=couch_user.to_be_deleted())
-
+    if not settings.UNIT_TESTING:
+        # skip in tests
+        send_to_elasticsearch("users", transform_user_for_elasticsearch(couch_user.to_json()),
+                              delete=couch_user.to_be_deleted())
 
 def sync_user_phone_numbers(sender, couch_user, **kwargs):
     from corehq.apps.sms.tasks import sync_user_phone_numbers as sms_sync_user_phone_numbers
