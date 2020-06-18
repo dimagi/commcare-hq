@@ -1,7 +1,6 @@
 import asyncio
 import sys
 import tarfile
-from concurrent.futures import ThreadPoolExecutor
 
 from django.core.management import BaseCommand
 
