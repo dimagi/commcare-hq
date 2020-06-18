@@ -108,6 +108,15 @@
         }
       },
       {
+        "column_id": "compeleted_on",
+        "datatype": "datetime",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "meta", "timeEnd"]
+        }
+      },
+      {
         "column_id": "add",
         "datatype": "date",
         "type": "expression",
