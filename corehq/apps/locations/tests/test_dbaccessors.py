@@ -125,15 +125,15 @@ class TestUsersByLocation(TestCase):
             [self.varys._id, self.tyrion._id, self.daenerys._id]
         )
 
-    # def test_generate_user_ids_from_primary_location_ids_es(self):
-    #     self.george.set_location(self.domain, self.pentos)
-    #     self.assertItemsEqual(
-    #         get_user_ids_from_primary_location_ids(
-    #             self.domain, [self.pentos.location_id]
-    #         ).keys(),
-    #         [self.varys._id]
-    #     )
-    #     self.george.unset_location(self.domain)
+    def test_generate_user_ids_from_primary_location_ids_es(self):
+        self.tyrion.set_location(self.pentos)
+        self.assertItemsEqual(
+            get_user_ids_from_primary_location_ids(
+                self.domain, [self.pentos.location_id]
+            ).keys(),
+            [self.varys._id, self.tyrion._id]
+        )
+        self.tyrion.unset_location()
 
     def test_get_user_ids_from_assigned_location_ids(self):
         self.assertItemsEqual(
