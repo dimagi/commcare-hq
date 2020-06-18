@@ -20,6 +20,9 @@ from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.sms.models import DailyOutboundSMSLimitReached
 from corehq.util.celery_utils import periodic_task_on_envs
 from corehq.util.files import file_extention_from_filename
+from custom.icds.view_utils import is_icds_cas_project
+
+from corehq.apps.sms.const import DEFAULT_SMS_DAILY_LIMIT
 
 
 @periodic_task_on_envs(settings.ICDS_ENVS, run_every=crontab(day_of_month='2', minute=0, hour=0), queue='sms_queue')
@@ -59,12 +62,8 @@ def send_monthly_sms_report():
 
 @receiver(post_save, sender=DailyOutboundSMSLimitReached)
 def send_sms_limit_exceeded_alert(sender, instance, **kwargs):
-    if settings.SERVER_ENVIRONMENT == 'icds':
-        sms_daily_limit = 10000
+    if is_icds_cas_project:
         domain_obj = Domain.get_by_name(instance.domain)
-        if domain_obj:
-            sms_daily_limit = domain_obj.get_daily_outbound_sms_limit()
-
         subject = "SMS Daily Limit exceeded"
         recipients = [
             'ndube@dimagi.com',
@@ -72,10 +71,19 @@ def send_sms_limit_exceeded_alert(sender, instance, **kwargs):
             'mshashtri@dimagi.com',
             'asharma@dimagi.com'
         ]
-        message = _("""
-        Hi,
-        This is to inform you that the Daily SMS limit for domain {domain} has exceeded for {date}.
-        The current limit set is {sms_limit}
-        """).format(domain=instance.domain, date=instance.date, sms_limit=sms_daily_limit)
+        if domain_obj:
+            sms_daily_limit = domain_obj.get_daily_outbound_sms_limit()
+            message = _("""
+            Hi,
+            This is to inform you that the Daily SMS limit for domain {domain} has exceeded for {date}.
+            The sms limit at the time of sending this email was set to {sms_limit}
+            """).format(domain=instance.domain, date=instance.date, sms_limit=sms_daily_limit)
+        else:
+            sms_daily_limit = DEFAULT_SMS_DAILY_LIMIT
+            message = _("""
+            Hi,
+            This is to inform you that the Daily SMS limit for enviornment {env} has exceeded for {date}.
+            The sms limit at the time of sending this email was set to {sms_limit}
+            """).format(env=settings.SERVER_ENVIRONMENT, date=instance.date, sms_limit=sms_daily_limit)
         send_html_email_async.delay(subject, recipients, message,
                 email_from=settings.DEFAULT_FROM_EMAIL)
