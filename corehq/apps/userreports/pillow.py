@@ -249,10 +249,7 @@ class ConfigurableReportTableManagerMixin(object):
             adapter.log_table_rebuild_skipped(source='pillowtop', diffs=diff_dicts)
             return
 
-        if config.is_static:
-            rebuild_indicators.delay(adapter.config.get_id, source='pillowtop', engine_id=adapter.engine_id)
-        else:
-            adapter.rebuild_table(source='pillowtop')
+        rebuild_indicators.delay(adapter.config.get_id, source='pillowtop', engine_id=adapter.engine_id)
 
     def _pull_in_new_and_modified_data_sources(self):
         """
