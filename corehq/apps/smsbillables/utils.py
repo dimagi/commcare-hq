@@ -1,9 +1,7 @@
 import logging
 import requests
 import json
-
 import boto3
-from botocore.exceptions import ClientError
 
 from django.conf import settings
 from django.utils.encoding import force_text

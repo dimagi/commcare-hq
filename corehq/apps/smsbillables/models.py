@@ -393,7 +393,11 @@ class SmsBillable(models.Model):
             backend_instance) or toggles.ENABLE_INCLUDE_SMS_GATEWAY_CHARGING.enabled(domain)
 
         if is_gateway_billable:
-            if backend_api_id in [SQLTwilioBackend.get_api_id(), InfobipBackend.get_api_id(), PinpointBackend.get_api_id()]:
+            if backend_api_id in [
+                SQLTwilioBackend.get_api_id(),
+                InfobipBackend.get_api_id(),
+                PinpointBackend.get_api_id()
+            ]:
                 provider_charges = cls._get_provider_charges(
                     backend_message_id, backend_instance, direction, couch_id, backend_api_id
                 )
