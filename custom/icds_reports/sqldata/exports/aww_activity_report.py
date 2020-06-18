@@ -56,7 +56,7 @@ class AwwActivityExport(object):
                 row['awc_name'],
                 row['awc_site_code']
             ]
-            if row['first_submission'] is None or row['first_submission'] == '':
+            if not row['first_submission'] or row['first_submission'] == '':
                 # if there is no form submitted then AWC is not launched
                 row_data.extend(["Not Launched" for _ in range(0, 4)])
             else:
