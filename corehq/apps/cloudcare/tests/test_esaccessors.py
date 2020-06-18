@@ -18,17 +18,6 @@ from corehq.apps.es.tests.utils import run_on_es2
 
 
 @attr(es_test=True)
-class TestBasic(SimpleTestCase):
-
-    def test_plain(self):
-        # todo; remvoe; test travis setup
-        configs = [settings.ELASTICSEARCH_PORT, settings.ELASTICSEARCH_MAJOR_VERSION]
-        self.assertEqual(configs, [6200, 2])
-        initialize_index_and_mapping(get_es_new(), USER_INDEX_INFO)
-        self.assertEqual(configs, [9200, 7])
-
-
-@attr(es_test=True)
 class TestCloudcareESAccessors(SimpleTestCase):
 
     @classmethod
