@@ -24,6 +24,8 @@ class TestMobileWorkerConfirmAccountView(TestCase):
             self.domain,
             'mw1',
             's3cr4t',
+            None,
+            None,
             email='mw1@example.com',
             is_account_confirmed=False,
         )

@@ -193,7 +193,7 @@ class TestIncrementalExport(TestCase):
         health_department = SQLLocation.objects.filter(domain=self.domain, name='HealthDepartment1').first()
         self.addCleanup(delete_all_locations)
 
-        user = CommCareUser.create(self.domain, 'm2', 'abc', location=team1)
+        user = CommCareUser.create(self.domain, 'm2', 'abc', None, None, location=team1)
         send_to_elasticsearch('users', user.to_json())
         self.es.indices.refresh(USER_INDEX_INFO.index)
         self.addCleanup(delete_all_users)

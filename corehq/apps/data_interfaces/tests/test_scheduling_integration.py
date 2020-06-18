@@ -104,7 +104,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             default_timezone='America/New_York',
         )
         cls.domain_obj.save()
-        cls.user = CommCareUser.create(cls.domain, 'test1', 'abc')
+        cls.user = CommCareUser.create(cls.domain, 'test1', 'abc', None, None)
 
     @classmethod
     def tearDownClass(cls):

@@ -339,7 +339,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
     @mock.patch('corehq.apps.user_importer.importer.Invitation')
     def test_upload_add_web_user(self, mock_invitation_class):
         username = 'a@a.com'
-        web_user = WebUser.create(self.other_domain.name, username, 'password')
+        web_user = WebUser.create(self.other_domain.name, username, 'password', None, None)
         mock_invite = mock_invitation_class.return_value
         import_users_and_groups(
             self.domain.name,
@@ -353,7 +353,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
     def test_upload_edit_web_user(self):
         username = 'a@a.com'
-        web_user = WebUser.create(self.domain.name, username, 'password')
+        web_user = WebUser.create(self.domain.name, username, 'password', None, None)
         import_users_and_groups(
             self.domain.name,
             [self._get_spec(web_user='a@a.com', role=self.role.name)],
@@ -365,7 +365,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
     def test_remove_web_user(self):
         username = 'a@a.com'
-        web_user = WebUser.create(self.domain.name, username, 'password')
+        web_user = WebUser.create(self.domain.name, username, 'password', None, None)
         import_users_and_groups(
             self.domain.name,
             [self._get_spec(web_user='a@a.com', remove_web_user='True')],

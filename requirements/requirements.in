@@ -12,7 +12,7 @@ django>=1.11.29,<2  # https://github.com/advisories/GHSA-hmr4-m2h5-33qx
 django-braces==1.13.0
 django-celery-results~=1.0.0
 django-crispy-forms==1.7.0
-jsonfield==1.0.3
+jsonfield==2.1.1
 dropbox==9.3.0
 defusedxml==0.5.0
 diff-match-patch==20120106
@@ -116,3 +116,4 @@ WeasyPrint==0.42.3
 architect==0.5.6
 prometheus-client==0.7.1
 turn-python==0.0.1
+django-logentry-admin==1.0.6

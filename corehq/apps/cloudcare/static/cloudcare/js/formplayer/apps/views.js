@@ -13,6 +13,14 @@ FormplayerFrontend.module("Apps.Views", function (Views, FormplayerFrontend, Bac
             e.preventDefault();
             FormplayerFrontend.trigger("app:select", this.model.get('_id'));
         },
+
+        templateHelpers: function () {
+            var imageUri = this.options.model.get('imageUri');
+            var appId = this.options.model.get('_id');
+            return {
+                imageUrl: imageUri && appId ? FormplayerFrontend.request('resourceMap', imageUri, appId) : "",
+            };
+        },
     });
 
     Views.BaseAppView = {
@@ -111,9 +119,11 @@ FormplayerFrontend.module("Apps.Views", function (Views, FormplayerFrontend, Bac
         },
         templateHelpers: function () {
             var currentApp = FormplayerFrontend.request("appselect:getApp", this.appId),
-                appName = currentApp.get('name');
+                appName = currentApp.get('name'),
+                imageUri = currentApp.get('imageUri');
             return {
                 appName: appName,
+                imageUrl: imageUri && this.appId ? FormplayerFrontend.request('resourceMap', imageUri, this.appId) : "",
             };
         },
         startApp: function () {
