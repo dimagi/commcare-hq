@@ -1,4 +1,4 @@
-doc_id,state_id,case_load_ccs_record0,timeend,completed_at,add,where_born,which_hospital,breastfed_at_birth,unscheduled_visit,days_visit_late,next_visit,inserted_at,supervisor_id,num_children_del,still_live_birth
+doc_id,state_id,case_load_ccs_record0,timeend,completed_on,add,where_born,which_hospital,breastfed_at_birth,unscheduled_visit,days_visit_late,next_visit,inserted_at,supervisor_id,num_children_del,still_live_birth
 d1,st1,f136bec0-d495-4e97-83a0-80fdf84aac31,2017-04-01,2017-04-01,,2,,,,,,2017-04-01,s4,,
 d2,st1,a29c5571-e48f-4812-be34-2469c3deac85,2017-04-01,2017-04-01,,2,,,,,,2017-04-01,s2,,
 d3,st1,e4c3c2ae-6732-4f6e-a7b0-9e674a177edb,2017-04-01,2017-04-01,,2,,,,,,2017-04-01,s1,,
