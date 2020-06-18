@@ -4184,7 +4184,7 @@ class TestExportData(TestCase):
                      'Not Launched', 'Not Launched'],
                     ['st1', 'd1', 'b1', 's1', 'a33', 'awca33', 'Not Launched', 'Not Launched',
                      'Not Launched', 'Not Launched'],
-                    ['st1', 'd1', 'b1', 's1', 'a41', 'awca41', 'Data Not Entered', 'Data Not Entered',
+                    ['st1', 'd1', 'b1', 's1', 'a41', 'awca41', 'Not Launched', 'Not Launched',
                      'Not Launched', 'Not Launched'],
                     ['st1', 'd1', 'b1', 's1', 'a49', 'awca49', 'Not Launched', 'Not Launched',
                      'Not Launched', 'Not Launched'],
