@@ -178,7 +178,7 @@ class CallCenterTests(BaseCCTests):
         clear_data(cls.aarohi_domain.name)
         clear_data(cls.cc_domain.name)
         cls.cc_user.delete(deleted_by=None)
-        cls.cc_user_no_data.delete()
+        cls.cc_user_no_data.delete(deleted_by=None)
         cls.cc_domain.delete()
         cls.aarohi_user.delete(deleted_by=None)
         cls.aarohi_domain.delete()
