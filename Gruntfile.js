@@ -59,18 +59,24 @@ module.exports = function(grunt) {
 
         var currentApp = queuedTests[0],
             currentTestPath = BASE_URL + currentApp,
-            testText = "Running Test '" + currentApp + "'";
+            testText = "Running Test '" + currentApp + "'",
+            runner_options = {
+                file: currentTestPath,
+                visible: false,
+                timeout: 120000,
+                reporter: 'dot',
+            };
+
+        // For running in docker/travis
+        if (process.env.PUPPETEER_SKIP_CHROMIUM_DOWNLOAD) {
+            runner_options.executablePath = 'google-chrome-unstable';
+        }
 
         grunt.log.writeln("\n");
         grunt.log.writeln(testText.bold);
         grunt.log.write(currentTestPath.italic.cyan);
 
-        headless.runner({
-            file: currentTestPath,
-            visible: false,
-            timeout: 120000,
-            reporter: 'dot',
-        }).then(function (data) {
+        headless.runner(runner_options).then(function (data) {
             if (data.result.failures.length) {
                 failures[currentApp] = data.result.failures;
             }
