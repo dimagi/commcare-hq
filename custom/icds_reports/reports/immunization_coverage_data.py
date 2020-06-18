@@ -23,7 +23,7 @@ def get_immunization_coverage_data_map(domain, config, loc_level, show_test=Fals
         agg_filters = copy.deepcopy(filters)
         if icds_features_flag:
             # Retrieving children of age 1-2 years
-            agg_filters['age_tranche'] = '24'
+            agg_filters['age_tranche__lte'] = '24'
         queryset = AggChildHealthMonthly.objects.filter(
             **agg_filters
         ).values(
@@ -252,7 +252,7 @@ def get_immunization_coverage_data_chart(domain, config, loc_level, show_test=Fa
     config['month__range'] = (three_before, month)
     if icds_features_flag:
         # Retrieving children of age 1-2 years
-        config['age_tranche'] = '24'
+        config['age_tranche__lte'] = '24'
     del config['month']
 
     chart_data = AggChildHealthMonthly.objects.filter(

@@ -375,13 +375,27 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
             age_filters,
             wfh_recorded_in_month_column(icds_feature_flag)
         )
-        agg_chm_config = copy.deepcopy(config)
+        fully_immunized_on_time = 'fully_immunized_on_time'
+        fully_immunized_late = 'fully_immunized_late'
+        fully_immunized_eligible = 'fully_immunized_eligible'
+
         if icds_feature_flag:
-            # Retrieving children of age 1-2 years
-            agg_chm_config['age_tranche'] = '24'
+            immunization_age_filter = {'age_tranche__lte': 24}
+            fully_immunized_on_time = include_records_by_age_for_column(
+                immunization_age_filter,
+                fully_immunized_on_time
+            )
+            fully_immunized_late = include_records_by_age_for_column(
+                immunization_age_filter,
+                fully_immunized_late
+            )
+            fully_immunized_eligible = include_records_by_age_for_column(
+                immunization_age_filter,
+                fully_immunized_eligible
+            )
 
         queryset = AggChildHealthMonthly.objects.filter(
-            month=date, **agg_chm_config
+            month=date, **config
         ).values(
             'month', 'aggregation_level'
         ).annotate(
@@ -390,9 +404,9 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
             ),
             valid_weighed=Sum(nutrition_status_weighed),
             immunized=(
-                Sum('fully_immunized_on_time') + Sum('fully_immunized_late')
+                Sum(fully_immunized_on_time) + Sum(fully_immunized_late)
             ),
-            eligible=Sum('fully_immunized_eligible'),
+            eligible=Sum(fully_immunized_eligible),
             wasting=Sum(wasting_moderate) + Sum(wasting_severe),
             height_measured_in_month=Sum(height_measured_in_month),
             weighed_and_height_measured_in_month=Sum(weighed_and_height_measured_in_month),

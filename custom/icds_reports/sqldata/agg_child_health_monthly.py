@@ -333,15 +333,15 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
                 lambda x, y, z: ((x or 0) + (y or 0)) * 100 / float(z or 1),
                 [
                     SumWhen(
-                        whens=[["age_tranche = :age_24", 'fully_immunized_on_time']],
+                        whens=[["age_tranche <= :age_24", 'fully_immunized_on_time']],
                         alias='fully_immunized_on_time'
                     ),
                     SumWhen(
-                        whens=[["age_tranche = :age_24", 'fully_immunized_late']],
+                        whens=[["age_tranche <= :age_24", 'fully_immunized_late']],
                         alias='fully_immunized_late'
                     ),
                     SumWhen(
-                        whens=[["age_tranche = :age_24", 'fully_immunized_eligible']],
+                        whens=[["age_tranche <= :age_24", 'fully_immunized_eligible']],
                         alias='fully_immunized_eligible'
                     )
                 ],
