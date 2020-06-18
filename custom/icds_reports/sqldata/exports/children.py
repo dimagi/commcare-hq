@@ -386,7 +386,8 @@ class ChildrenExport(ExportableMixin, IcdsSqlData):
                                                   AliasColumn('fully_immunized_eligible'),
                                                   slug='fully_immunized_eligible'))
             agg_columns.insert(39, AggregateColumn('Percentage of children with completed 1 year immunizations',
-                                                   lambda x, y, z: '%.2f%%' % (((x or 0) + (y or 0)) * 100 / float(z or 1)),
+                                                   lambda x, y, z:
+                                                   '%.2f%%' % (((x or 0) + (y or 0)) * 100 / float(z or 1)),
                                                    [
                                                        SumColumn('fully_immunized_on_time',
                                                                  alias='fully_immunized_on_time'),
@@ -403,12 +404,12 @@ class ChildrenExport(ExportableMixin, IcdsSqlData):
                                                     lambda x, y: ((x or 0) + (y or 0)),
                                                     [
                                                         SumWhen(
-                                                            whens=[["age_tranche = :age_24",
+                                                            whens=[["age_tranche <= :age_24",
                                                                     'fully_immunized_on_time']],
                                                             alias='fully_immunized_on_time_num'
                                                             ),
                                                         SumWhen(
-                                                            whens=[["age_tranche = :age_24",
+                                                            whens=[["age_tranche <= :age_24",
                                                                     'fully_immunized_late']],
                                                             alias='fully_immunized_late_num'
                                                             )
@@ -416,25 +417,30 @@ class ChildrenExport(ExportableMixin, IcdsSqlData):
                                                     slug='num_immun_children'))
             agg_columns.insert(38, DatabaseColumn('Total no. of children from age >12 months and <= 24',
                                                   SumWhen(
-                                                      whens=[["age_tranche = :age_24", 'fully_immunized_eligible']],
+                                                      whens=[["age_tranche <= :age_24",
+                                                              'fully_immunized_eligible']],
                                                       alias='fully_immunized_eligible_num'
                                                   ),
                                                   slug='fully_immunized_eligible'))
 
             agg_columns.insert(39, AggregateColumn('Percentage of children between 1-2 years who completed'
                                                    ' 1 year immunizations',
-                                                   lambda x, y, z: '%.2f%%' % (((x or 0) + (y or 0)) * 100 / float(z or 1)),
+                                                   lambda x, y, z:
+                                                   '%.2f%%' % (((x or 0) + (y or 0)) * 100 / float(z or 1)),
                                                    [
                                                        SumWhen(
-                                                           whens=[["age_tranche = :age_24", 'fully_immunized_on_time']],
+                                                           whens=[["age_tranche <= :age_24",
+                                                                   'fully_immunized_on_time']],
                                                            alias='fully_immunized_on_time'
                                                        ),
                                                        SumWhen(
-                                                           whens=[["age_tranche = :age_24", 'fully_immunized_late']],
+                                                           whens=[["age_tranche <= :age_24",
+                                                                   'fully_immunized_late']],
                                                            alias='fully_immunized_late'
                                                        ),
                                                        SumWhen(
-                                                           whens=[["age_tranche = :age_24", 'fully_immunized_eligible']],
+                                                           whens=[["age_tranche <= :age_24",
+                                                                   'fully_immunized_eligible']],
                                                            alias='fully_immunized_eligible'
                                                        )
                                                    ],

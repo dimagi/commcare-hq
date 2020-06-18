@@ -106,9 +106,9 @@ def get_immunization_coverage_data_map(domain, config, loc_level, show_test=Fals
             "rightLegend": {
                 "average": average,
                 "info": _((
-                    "Of the total number of children enrolled for Anganwadi Services who are between 1-2 years old, "
-                    "the percentage of children who have received the complete immunization as per the National "
-                    "Immunization Schedule of India that is required by age 1."
+                    "Of the total number of children enrolled for Anganwadi Services who are between"
+                    " 1-2 years old, the percentage of children who have received the complete immunization"
+                    " as per the National Immunization Schedule of India that is required by age 1."
                     "<br/><br/>"
                     "This includes the following immunizations:<br/>"
                     "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"
@@ -202,9 +202,9 @@ def get_immunization_coverage_sector_data(domain, config, loc_level, location_id
         return {
             "tooltips_data": dict(tooltips_data),
             "info": _((
-                "Of the total number of children enrolled for Anganwadi Services who are over a year old, the "
-                "percentage of children who have received the complete immunization as per the National Immunization "
-                "Schedule of India that is required by age 1."
+                "Of the total number of children enrolled for Anganwadi Services who are over a year old,"
+                " the percentage of children who have received the complete immunization as per the"
+                " National Immunization Schedule of India that is required by age 1."
                 "<br/><br/>"
                 "This includes the following immunizations:<br/>"
                 "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"
@@ -224,9 +224,9 @@ def get_immunization_coverage_sector_data(domain, config, loc_level, location_id
         return {
             "tooltips_data": dict(tooltips_data),
             "info": _((
-                "Of the total number of children enrolled for Anganwadi Services who are between 1-2 years old, the "
-                "percentage of children who have received the complete immunization as per the National Immunization "
-                "Schedule of India that is required by age 1."
+                "Of the total number of children enrolled for Anganwadi Services who are between"
+                " 1-2 years old, the percentage of children who have received the complete immunization"
+                " as per the National Immunization Schedule of India that is required by age 1."
                 "<br/><br/>"
                 "This includes the following immunizations:<br/>"
                 "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"

@@ -513,9 +513,11 @@ class TestExportData(TestCase):
              'No. of children initiated complementary feeding with adequate diet quantity',
              'No.of children (6-24) months of age enrolled with ICDS-CAS',
              'Percentage of children receiving complementary feeding with adequate diet quantity',
-             'Total Number of children receiving complementary feeding with appropriate handwashing before feeding',
+             'Total Number of children receiving complementary feeding with appropriate handwashing'
+             ' before feeding',
              'No.of children (6-24) months of age enrolled with ICDS-CAS',
-             'Percentage of children receiving complementary feeding with appropriate handwashing before feeding']
+             'Percentage of children receiving complementary feeding with appropriate handwashing'
+             ' before feeding']
         )
 
     def test_children_export_child_one(self):

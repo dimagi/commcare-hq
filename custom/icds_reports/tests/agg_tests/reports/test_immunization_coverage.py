@@ -381,8 +381,7 @@ class TestImmunizationCoverage(TestCase):
                 ],
                 'bottom_five': [
                     {'loc_name': 'st2', 'percent': 10.526315789473685},
-                    {'loc_name': 'st1', 'percent': 9.090909090909092
-                    }
+                    {'loc_name': 'st1', 'percent': 9.090909090909092}
                 ],
                 'location_type': 'State'
             }
