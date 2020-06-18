@@ -65,7 +65,7 @@ class QueueingTestCase(BaseSMSTest):
         self.create_account_and_subscription(self.domain)
         self.domain_obj = Domain.get(self.domain_obj._id)
         self.backend, self.backend_mapping = setup_default_sms_test_backend()
-        self.contact = CommCareUser.create(self.domain, 'user1', 'abc', phone_number='999123')
+        self.contact = CommCareUser.create(self.domain, 'user1', 'abc', None, None, phone_number='999123')
         entry = self.contact.get_or_create_phone_entry('999123')
         entry.set_two_way()
         entry.set_verified()

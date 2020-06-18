@@ -7,8 +7,8 @@ from django.forms import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseNotFound
 from django.urls import reverse
 from django.utils.translation import ugettext_noop
-from memoized import memoized_property
 
+from memoized import memoized_property
 from tastypie import fields, http
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.authorization import ReadOnlyAuthorization
@@ -19,11 +19,6 @@ from tastypie.resources import ModelResource, Resource, convert_post_to_patch
 from tastypie.utils import dict_strip_unicode_keys
 
 from casexml.apps.stock.models import StockTransaction
-from corehq.apps.locations.permissions import location_safe
-from corehq.apps.reports.standard.cases.utils import (
-    query_location_restricted_cases,
-    query_location_restricted_forms,
-)
 from phonelog.models import DeviceReportEntry
 
 from corehq import privileges
@@ -54,8 +49,13 @@ from corehq.apps.export.esaccessors import (
 )
 from corehq.apps.export.models import CaseExportInstance, FormExportInstance
 from corehq.apps.groups.models import Group
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es,
+)
+from corehq.apps.reports.standard.cases.utils import (
+    query_location_restricted_cases,
+    query_location_restricted_forms,
 )
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
@@ -82,6 +82,7 @@ from corehq.apps.users.models import (
     WebUser,
 )
 from corehq.apps.users.util import raw_username
+from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
 from corehq.util.couch import DocumentNotFound, get_document_or_not_found
 from corehq.util.timer import TimingContext
@@ -253,6 +254,8 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                 domain=kwargs['domain'],
                 username=bundle.data['username'].lower(),
                 password=bundle.data['password'],
+                created_by=bundle.request.user,
+                created_via=USER_CHANGE_VIA_API,
                 email=bundle.data.get('email', '').lower(),
             )
             del bundle.data['password']
@@ -284,6 +287,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         if user:
             user.retire()
         return ImmediateHttpResponse(response=http.HttpAccepted())
+
 
 class WebUserResource(v0_1.WebUserResource):
 
@@ -352,6 +356,8 @@ class WebUserResource(v0_1.WebUserResource):
                 domain=kwargs['domain'],
                 username=bundle.data['username'].lower(),
                 password=bundle.data['password'],
+                created_by=bundle.request.user,
+                created_via=USER_CHANGE_VIA_API,
                 email=bundle.data.get('email', '').lower(),
                 is_admin=bundle.data.get('is_admin', False)
             )

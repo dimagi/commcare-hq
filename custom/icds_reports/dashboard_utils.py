@@ -46,9 +46,11 @@ def get_dashboard_template_context(domain, couch_user):
     if couch_user.is_web_user():
         context['is_web_user'] = True
 
+    beta = icds_pre_release_features(couch_user)
+
     context['nav_metadata'] = _get_nav_metadatada()
     context['sdd_metadata'] = _get_sdd_metadata()
-    context['nav_menu_items'] = _get_nav_menu_items()
+    context['nav_menu_items'] = _get_nav_menu_items(beta)
     context['fact_sheet_sections'] = _get_factsheet_sections()
     context['MAPBOX_ACCESS_TOKEN'] = settings.MAPBOX_ACCESS_TOKEN
     context['support_email'] = settings.SUPPORT_EMAIL
@@ -181,7 +183,11 @@ def _get_factsheet_sections():
     ]))
 
 
-def _get_nav_menu_items():
+def _get_nav_menu_items(beta):
+    icds_reach_sub_pages = [NavMenuSubPages(_('AWCs Daily Status'), 'icds_cas_reach/awc_daily_status'),
+                            NavMenuSubPages(_('AWCs Launched'), 'icds_cas_reach/awcs_covered')]
+    if beta:
+        icds_reach_sub_pages.append(NavMenuSubPages(_('LSs Launched'), 'icds_cas_reach/ls_launched'))
     return attr.asdict(NavMenuSectionsList([
         NavMenuSection(_('Maternal and Child Nutrition'),
                        [NavMenuSubPages(_('Prevalence of Underweight (Weight-for-Age)'),
@@ -205,8 +211,7 @@ def _get_nav_menu_items():
                        'healthCollapsed', 'fa-child', 'mother.png'
                        ),
         NavMenuSection(_('ICDS-CAS Reach'),
-                       [NavMenuSubPages(_('AWCs Daily Status'), 'icds_cas_reach/awc_daily_status'),
-                        NavMenuSubPages(_('AWCs Launched'), 'icds_cas_reach/awcs_covered')],
+                       icds_reach_sub_pages,
                        'icdsCasReach', 'fa-bar-chart', 'stats-sidebar.png'
                        ),
         NavMenuSection(_('Demographics'),

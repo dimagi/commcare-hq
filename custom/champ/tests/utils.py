@@ -32,7 +32,7 @@ class ChampTestCase(TestCase, DomainSubscriptionMixin):
         domain.save()
         cls.domain = domain
         cls.setup_subscription(cls.domain.name, SoftwarePlanEdition.ADVANCED)
-        cls.user = WebUser.create(domain.name, 'test', 'passwordtest')
+        cls.user = WebUser.create(domain.name, 'test', 'passwordtest', None, None)
         cls.user.is_authenticated = True
         cls.user.is_superuser = True
         cls.user.is_authenticated = True

@@ -321,8 +321,9 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             self.searchAndFilter = true;
             self.case_property_query = ko.observable('');
             self.filtered_case_properties = ko.computed(function () {
+                var query = self.case_property_query() || '';
                 return _.filter(self.case_properties(), function (item) {
-                    return item.path().indexOf(self.case_property_query()) !== -1 || item.key().indexOf(self.case_property_query()) !== -1;
+                    return (item.path() || '').indexOf(query) !== -1 || (item.key() || '').indexOf(query) !== -1;
                 });
             });
             self.visible_case_properties = ko.observableArray();
