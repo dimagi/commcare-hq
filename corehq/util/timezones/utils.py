@@ -63,7 +63,7 @@ def get_timezone_for_user(couch_user_or_id, domain):
 
         if requesting_user:
             domain_membership = requesting_user.get_domain_membership(domain)
-            if domain_membership:
+            if domain_membership and domain_membership.override_global_tz:
                 return coerce_timezone_value(domain_membership.timezone)
 
     return get_timezone_for_domain(domain)
