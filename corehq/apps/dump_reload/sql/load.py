@@ -164,37 +164,6 @@ def _reset_sequences(load_stats):
                         cursor.execute(line)
 
 
-def load_objects(objects):
-    """Load the given list of object dictionaries into the database
-    :return: List of LoadStat objects
-    """
-    load_stats_by_db = {}
-
-    objects_by_db = _group_objects_by_db(objects)
-    executor = ProcessPoolExecutor(max_workers=len(objects_by_db))
-    results = executor.map(load_data_task, objects_by_db)
-    for load_stat in results:
-        _update_stats(load_stats_by_db, [load_stat])
-    return list(load_stats_by_db.values())
-
-
-def _update_stats(current_stats_by_db, new_stats):
-    """Helper to update stats dictionary"""
-    for new_stat in new_stats:
-        current_stat = current_stats_by_db.get(new_stat.db_alias)
-        if current_stat is not None:
-            current_stat.update(new_stat)
-        else:
-            current_stats_by_db[new_stat.db_alias] = new_stat
-
-
-def load_data_task(dbalias_objects: tuple) -> LoadStat:
-    db_alias, objects_for_db = dbalias_objects
-    with transaction.atomic(using=db_alias):
-        load_stat = load_data_for_db(db_alias, objects_for_db)
-    return load_stat
-
-
 def load_data_for_db(db_alias, objects):
     """
     :param db_alias: Django alias for database to load objects into
@@ -229,18 +198,6 @@ def load_data_for_db(db_alias, objects):
         raise
 
     return LoadStat(db_alias, model_counter)
-
-
-def _group_objects_by_db(objects):
-    """
-    :param objects: Deserialized object dictionaries
-    :return: List of tuples of (db_alias, [object,...])
-    """
-    objects_by_db = defaultdict(list)
-    for obj in objects:
-        db_alias = get_db_alias(obj)
-        objects_by_db[db_alias].append(obj)
-    return list(objects_by_db.items())
 
 
 def get_db_alias(obj: dict) -> str:
