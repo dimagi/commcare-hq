@@ -5,7 +5,7 @@ from custom.icds_reports.reports.poshan_progress_dashboard_data import get_posha
 
 class TestPPDData(TestCase):
 
-    def test_get_ppr_data_comparitive_month(self):
+    def test_get_ppr_data_comparative_month(self):
         self.maxDiff = None
         data = get_poshan_progress_dashboard_data(
             'icds-cas',
@@ -13,7 +13,7 @@ class TestPPDData(TestCase):
             5,
             2,
             'month',
-            'comparitive',
+            'comparative',
             {
                 'aggregation_level': 2,
                 'state_id': 'st1',
@@ -53,7 +53,7 @@ class TestPPDData(TestCase):
                           'indicator': 'Supplementary Nutrition'}]]}
         self.assertDictEqual(expected, data)
 
-    def test_get_ppr_data_comparitive_quarter(self):
+    def test_get_ppr_data_comparative_quarter(self):
         self.maxDiff = None
         data = get_poshan_progress_dashboard_data(
             'icds-cas',
@@ -61,7 +61,7 @@ class TestPPDData(TestCase):
             None,
             2,
             'quarter',
-            'comparitive',
+            'comparative',
             {
                 'aggregation_level': 1,
             },
