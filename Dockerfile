@@ -26,8 +26,8 @@ RUN npm -g install \
     bower \
     grunt-cli \
     uglify-js \
+    mocha-headless-chrome \
  && echo '{ "allow_root": true }' > /root/.bowerrc \
  && cd /vendor \
  && npm shrinkwrap \
- && npm -g install \
- && npm cache clean
+ && npm -g install
