@@ -149,7 +149,7 @@ def get_immunization_coverage_sector_data(domain, config, loc_level, location_id
     config['month'] = datetime(*config['month'])
     if icds_features_flag:
         # Retrieving children of age 1-2 years
-        config['age_tranche'] = '24'
+        config['age_tranche__lte'] = '24'
     data = AggChildHealthMonthly.objects.filter(
         **config
     ).values(
