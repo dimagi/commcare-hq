@@ -172,6 +172,7 @@ def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None,
     data = data if data is not None else {}
     current_tries = 0
     es_interface = ElasticsearchInterface(es_getter())
+    retries = 1 if settings.UNIT_TESTING else retries
     while current_tries < retries:
         try:
             if delete:
