@@ -21,7 +21,8 @@
   ],
   "server_environment": [
     "india",
-    "icds"
+    "icds",
+    "icds-staging"
   ],
   "config": {
     "table_id": "static-thr_forms_v2",

@@ -105,10 +105,17 @@ class AuditMiddleware(MiddlewareMixin):
         """
         For auditing views, we need to verify on the response whether or not the permission was granted, we infer this from the status code.
         Update the audit document set in the request object.
+
+        We also need to add the user field when it was not initially inferred from the sessionid,
+        such as when using Api Key, Basic Auth, Digest Auth, or HMAC auth.
         """
         audit_doc = getattr(request, 'audit_doc', None)
         if audit_doc:
+            if not audit_doc.user:
+                if hasattr(request, 'audit_user'):
+                    audit_doc.user = request.audit_user
+                elif hasattr(request, 'couch_user'):
+                    audit_doc.user = request.couch_user.username
             audit_doc.status_code = response.status_code
             audit_doc.save()
         return response
-

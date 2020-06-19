@@ -56,9 +56,9 @@ class GrowthTrackerExport(ExportableMixin, IcdsSqlData):
         filters["month"] = initial_month - relativedelta(months=2)
         data_month_1 = _fetch_data(filters, order_by, True)
         filters["month"] = initial_month
-        month_1 = (initial_month - relativedelta(months=2)).strftime('%Y-%m-%d')
-        month_2 = (initial_month - relativedelta(months=1)).strftime('%Y-%m-%d')
-        month_3 = initial_month.strftime('%Y-%m-%d')
+        month_1 = (initial_month - relativedelta(months=2)).strftime('%B %Y')
+        month_2 = (initial_month - relativedelta(months=1)).strftime('%B %Y')
+        month_3 = initial_month.strftime('%B %Y')
 
         headers = ['State', 'District', 'Block', 'Sector', 'Awc Name', 'Child', 'Age', 'Mother Name',
                    'Mother Phone Number', f'PSE_{month_1}', f'PSE_{month_2}', f'PSE_{month_3}', f'SN_{month_1}',

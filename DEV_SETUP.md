@@ -48,7 +48,7 @@ Save those backups to somewhere you'll be able to access from the new environmen
 
 - Requirements of Python libraries, if they aren't already installed.
 
-      $ sudo apt install libpango1.0-0 postgresql-common libncurses-dev libxml2-dev libxslt1-dev
+      $ sudo apt install libpango1.0-0 libncurses-dev libxml2-dev libxslt1-dev libpq-dev
 
 
 ##### macOS Notes
@@ -300,7 +300,7 @@ Formplayer is a Java service that allows us to use applications on the web inste
 
 In `localsettings.py`:
 ```
-FORMPLAYER_URL = 'http://localhost:8010'
+FORMPLAYER_URL = 'http://localhost:8080'
 LOCAL_APPS += ('django_extensions',)
 ```
 
@@ -465,11 +465,11 @@ In order for the tests to run the __development server needs to be running on po
 
 To run all JavaScript tests in all the apps:
 
-    $ grunt mocha
+    $ grunt test
 
 To run the JavaScript tests for a particular app run:
 
-    $ grunt mocha:<app_name> // (e.g. grunt mocha:app_manager)
+    $ grunt test:<app_name> // (e.g. grunt test:app_manager)
 
 To list all the apps available to run:
 
@@ -489,12 +489,6 @@ Occasionally you will see an app specified with a `#`, like `app_manager#b3`. Th
 ```
 http://localhost:8000/mocha/<app_name>/<config>  // (e.g. http://localhost:8000/mocha/app_manager/b3)
 ```
-
-### Continuous JavaScript testing
-
-By running the `watch` command, it's possible to continuously run the JavaScript test suite while developing
-
-    $ grunt watch:<app_name>  // (e.g. grunt watch:app_manager)
 
 ## Sniffer
 

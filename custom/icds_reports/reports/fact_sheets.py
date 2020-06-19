@@ -640,9 +640,11 @@ class FactSheetsReport(object):
             for row_data in all_data:
                 m = row_data['month'].strftime("%b %Y")
                 if sql_location is not None:
-                    activation_date = parse(sql_location.metadata.get('deprecates_at')).date()
-                    if activation_date and row_data['month'] < activation_date:
-                        active_location = False
+                    activation_date = sql_location.metadata.get('deprecates_at')
+                    if activation_date:
+                        activation_date = parse(activation_date).date()
+                        if row_data['month'] < activation_date:
+                            active_location = False
                 if month == m:
                     month_data = row_data
                     data_for_month = True

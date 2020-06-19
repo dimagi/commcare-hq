@@ -26,6 +26,7 @@ from django.http import (
     HttpResponsePermanentRedirect,
     HttpResponseRedirect,
     HttpResponseServerError,
+    JsonResponse,
 )
 from django.shortcuts import redirect, render
 from django.template import loader
@@ -37,21 +38,25 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import LANGUAGE_SESSION_KEY
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
 from django.views.generic.base import View
 
 import httpagentparser
+import requests
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 from sentry_sdk import last_event_id
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from two_factor.views import LoginView
 
+from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.util.metrics import create_metrics_event, metrics_counter, metrics_gauge
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
+from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import get_site_domain, get_url_base, json_response
@@ -95,6 +100,7 @@ from corehq.apps.hqwebapp.utils import (
 )
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent
 from corehq.apps.users.landing_pages import (
     get_cloudcare_urlname,
     get_redirect_url,
@@ -131,7 +137,7 @@ def format_traceback_the_way_python_does(type, exc, tb):
     return f'Traceback (most recent call last):\n{tb}{type.__name__}: {exc}'
 
 
-def server_error(request, template_name='500.html'):
+def server_error(request, template_name='500.html', exception=None):
     """
     500 error handler.
     """
@@ -172,7 +178,7 @@ def server_error(request, template_name='500.html'):
     ))
 
 
-def not_found(request, template_name='404.html'):
+def not_found(request, template_name='404.html', exception=None):
     """
     404 error handler.
     """
@@ -335,7 +341,7 @@ def _no_permissions_message(request, template_name="403.html", message=None):
     )
 
 
-def no_permissions(request, redirect_to=None, template_name="403.html", message=None):
+def no_permissions(request, redirect_to=None, template_name="403.html", message=None, exception=None):
     """
     403 error handler.
     """
@@ -383,7 +389,6 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
-    context.update(extra_context)
     template_name = custom_login_page if custom_login_page else 'login_and_password/login.html'
     if not custom_login_page and domain_name:
         domain_obj = Domain.get_by_name(domain_name)
@@ -410,6 +415,7 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
     if settings.IS_SAAS_ENVIRONMENT:
         context['demo_workflow_ab_v2'] = demo_workflow_ab_v2.context
 
+    context.update(extra_context)
     response = auth_view.as_view(template_name=template_name, extra_context=context)(req)
 
     if settings.IS_SAAS_ENVIRONMENT:
@@ -445,6 +451,13 @@ def domain_login(req, domain, custom_template_name=None, extra_context=None):
     if custom_template_name is None:
         custom_template_name = get_custom_login_page(req.get_host())
     return _login(req, domain, custom_template_name, extra_context)
+
+
+@location_safe
+def iframe_domain_login(req, domain):
+    return domain_login(req, domain, custom_template_name="hqwebapp/iframe_domain_login.html", extra_context={
+        'current_page': {'page_name': _('Your session has expired')},
+    })
 
 
 class HQLoginView(LoginView):
@@ -483,6 +496,41 @@ def logout(req, default_domain_redirect='domain_login'):
         return HttpResponseRedirect('%s' % domain_login_url)
     else:
         return HttpResponseRedirect(reverse('login'))
+
+
+# ping_login and ping_session are both tiny views used in user inactivity and session expiration handling
+# They are identical except that ping_session extends the user's current session, while ping_login does not.
+# This difference is controlled in SelectiveSessionMiddleware, which makes ping_login bypass sessions.
+@location_safe
+@two_factor_exempt
+def ping_login(request):
+    return JsonResponse({
+        'success': request.user.is_authenticated,
+        'last_request': request.session.get('last_request'),
+        'username': request.user.username,
+    })
+
+
+@location_safe
+@two_factor_exempt
+def ping_session(request):
+    return JsonResponse({
+        'success': request.user.is_authenticated,
+        'last_request': request.session.get('last_request'),
+        'username': request.user.username,
+    })
+
+
+@location_safe
+@login_required
+def login_new_window(request):
+    return render_static(request, "hqwebapp/close_window.html", _("Thank you for logging in!"))
+
+
+@location_safe
+@login_required
+def iframe_domain_login_new_window(request):
+    return TemplateView.as_view(template_name='hqwebapp/iframe_close_window.html')(request)
 
 
 @login_and_domain_required
@@ -550,6 +598,7 @@ def debug_notify(request):
     return HttpResponse("Email should have been sent")
 
 
+@waf_allow('XSS_BODY')
 @require_POST
 def jserror(request):
     agent = request.META.get('HTTP_USER_AGENT', None)
@@ -848,7 +897,7 @@ class CRUDPaginatedViewMixin(object):
         """
         Specify GET or POST from a request object.
         """
-        raise NotImplementedError("you need to implement get_param_source")
+        return self.request.POST if self.request.method == 'POST' else self.request.GET
 
     @property
     @memoized
@@ -908,6 +957,7 @@ class CRUDPaginatedViewMixin(object):
                     'new_items': self.new_items_header,
                 },
                 'create_item_form': self.get_create_form_response(create_form) if create_form else None,
+                'create_item_form_class': self.create_item_form_class,
             }
         }
 
@@ -1018,6 +1068,8 @@ class CRUDPaginatedViewMixin(object):
         """
         pass
 
+    create_item_form_class = 'form form-inline'
+
     def get_create_form_response(self, create_form):
         return render_to_string(
             'hqwebapp/includes/create_item_form.html', {
@@ -1089,7 +1141,8 @@ def quick_find(request):
         return HttpResponseBadRequest('GET param "q" must be provided')
 
     def deal_with_doc(doc, domain, doc_info_fn):
-        if request.couch_user.is_superuser or (domain and request.couch_user.is_member_of(domain)):
+        is_member = domain and request.couch_user.is_member_of(domain, allow_mirroring=True)
+        if is_member or request.couch_user.is_superuser:
             doc_info = doc_info_fn(doc)
         else:
             raise Http404()
@@ -1211,7 +1264,7 @@ def redirect_to_dimagi(endpoint):
             'india',
             'staging',
             'changeme',
-            'localdev',
+            settings.LOCAL_SERVER_ENVIRONMENT,
         ]:
             return HttpResponsePermanentRedirect(
                 "https://www.dimagi.com/{}{}".format(
@@ -1227,3 +1280,64 @@ def temporary_google_verify(request):
     # will remove once google search console verify process completes
     # BMB 4/20/18
     return render(request, "google9633af922b8b0064.html")
+
+
+@waf_allow('XSS_BODY')
+@require_POST
+@csrf_exempt
+def log_email_event(request, secret):
+    # From Amazon SNS:
+    # https://docs.aws.amazon.com/ses/latest/DeveloperGuide/event-publishing-retrieving-sns-examples.html
+
+    if secret != settings.SNS_EMAIL_EVENT_SECRET:
+        return HttpResponse(f"Incorrect secret: {secret}", status=403, content_type='text/plain')
+
+    request_json = json.loads(request.body)
+
+    if request_json['Type'] == "SubscriptionConfirmation":
+        # When creating an SNS topic, the first message is a subscription
+        # confirmation, where we need to access the subscribe URL to confirm we
+        # are able to receive messages at this endpoint
+        subscribe_url = request_json['SubscribeURL']
+        requests.get(subscribe_url)
+        return HttpResponse()
+
+    message = json.loads(request_json['Message'])
+    headers = message.get('mail', {}).get('headers', [])
+
+    for header in headers:
+        if header["name"] == COMMCARE_MESSAGE_ID_HEADER:
+            subevent_id = header["value"]
+            break
+    else:
+        return HttpResponse()
+
+    try:
+        subevent = MessagingSubEvent.objects.get(id=subevent_id)
+    except MessagingSubEvent.DoesNotExist:
+        return HttpResponse()
+
+    event_type = message.get('eventType')
+    if event_type == 'Bounce':
+        additional_error_text = ''
+
+        bounce_type = message.get('bounce', {}).get('bounceType')
+        if bounce_type:
+            additional_error_text = f"{bounce_type}."
+        bounced_recipients = message.get('bounce', {}).get('bouncedRecipients', [])
+        recipient_addresses = []
+        for bounced_recipient in bounced_recipients:
+            recipient_addresses.append(bounced_recipient.get('emailAddress'))
+        if recipient_addresses:
+            additional_error_text = f"{additional_error_text} - {', '.join(recipient_addresses)}"
+
+        subevent.error(MessagingEvent.ERROR_EMAIL_BOUNCED, additional_error_text=additional_error_text)
+    elif event_type == 'Send':
+        subevent.status = MessagingEvent.STATUS_EMAIL_SENT
+    elif event_type == 'Delivery':
+        subevent.status = MessagingEvent.STATUS_EMAIL_DELIVERED
+        subevent.additional_error_text = message.get('delivery', {}).get('timestamp')
+
+    subevent.save()
+
+    return HttpResponse()

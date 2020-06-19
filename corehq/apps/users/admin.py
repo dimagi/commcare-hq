@@ -4,6 +4,8 @@ from django.contrib.auth.models import User
 
 from django_digest.models import PartialDigest, UserNonce
 
+from .models import DomainPermissionsMirror
+
 
 class DDUserNonceAdmin(admin.ModelAdmin):
     list_display = ('user', 'nonce', 'count', 'last_used_at')
@@ -25,3 +27,11 @@ class CustomUserAdmin(UserAdmin):
 
 admin.site.unregister(User)
 admin.site.register(User, CustomUserAdmin)
+
+
+class DomainPermissionsMirrorAdmin(admin.ModelAdmin):
+    list_display = ['source', 'mirror']
+    list_filter = ['source', 'mirror']
+
+
+admin.site.register(DomainPermissionsMirror, DomainPermissionsMirrorAdmin)

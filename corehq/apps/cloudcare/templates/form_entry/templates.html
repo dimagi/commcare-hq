@@ -82,15 +82,12 @@
           </div>
           <div class="form-actions form-group" data-bind="visible: showSubmitButton">
             <div data-bind="css: Formplayer.Const.LABEL_OFFSET + ' ' + Formplayer.Const.CONTROL_WIDTH">
-              <input class="submit btn btn-primary"
+              <button class="submit btn btn-primary"
                      type="submit"
-                     value="Submit"
-                     data-bind="
-                            attr: {
-                                value: submitText
-                            }
-                            "
-              />
+                     data-bind="enable: enableSubmitButton">
+                <i class="fa fa-spin fa-refresh" data-bind="visible: !enableSubmitButton()"></i>
+                <!-- ko text: submitText --><!-- /ko -->
+              </button>
             </div>
           </div>
         </form>
@@ -189,10 +186,12 @@
     </div>
     <div class="panel-body">
       <div class="children" data-bind="template: { name: childTemplate, foreach: $data.children }"/>
-      <div class="alert alert-info empty" data-bind="visible: !children().length">This repeatable group is empty</div>
+      <div class="alert alert-info empty" data-bind="visible: !children().length">
+        {% trans "This repeatable group is empty" %}
+      </div>
     </div>
     <div class="panel-footer">
-      <button class="btn btn-default btn-xs add" href="#" data-bind="click: newRepeat">Add new repeat</button>
+      <button class="btn btn-default btn-xs add" href="#" data-bind="click: newRepeat">{% trans "Add new repeat" %}</button>
     </div>
 
   </div>
@@ -278,9 +277,7 @@
       <td class="lat coordinate" data-bind="text: formatLat()"></td>
       <td class="lon coordinate" data-bind="text: formatLon()"></td>
       <td align="right" valign="bottom">
-        <button class="btn btn-default btn-xs clear" data-bind="
-                        click: onClear
-                    ">Clear map</button>
+        <button class="btn btn-default btn-xs clear" data-bind="click: onClear">{% trans "Clear map" %}</button>
       </td>
     </tr>
     </tbody>
@@ -295,8 +292,8 @@
           <div class="input-group">
             <input class="query form-control" type="text" />
             <span class="input-group-btn">
-                            <button class="btn btn-default search">Search</button>
-                        </span>
+              <button class="btn btn-default search">{% trans "Search" %}</button>
+            </span>
           </div>
         </div>
       </div>
@@ -304,22 +301,27 @@
   </div>
 </script>
 <script type="text/html" id="select-entry-ko-template">
-  <div class="sel" data-bind="foreach: choices, as: 'choice'">
-    <div data-bind="css: { checkbox: $parent.isMulti, radio: !$parent.isMulti }">
-      <label>
-        <input data-bind="
-                    checked: $parent.rawAnswer,
-                    checkedValue: $index() + 1,
-                    attr: {
-                        id: 'group-' + $parent.entryId + '-choice-' + $index(),
-                        type: $parent.isMulti ? 'checkbox' : 'radio',
-                        name: $parent.entryId,
-                        class: 'group-' + $parent.entryId,
-                    }
-                "/>
-        <span data-bind="renderMarkdown: $data"></span>
-      </label>
+  <div class="sel clear">
+    <div data-bind="foreach: choices, as: 'choice'">
+      <div data-bind="css: { checkbox: $parent.isMulti, radio: !$parent.isMulti }">
+        <label>
+          <input data-bind="
+                      checked: $parent.rawAnswer,
+                      checkedValue: $index() + 1,
+                      attr: {
+                          id: 'group-' + $parent.entryId + '-choice-' + $index(),
+                          type: $parent.isMulti ? 'checkbox' : 'radio',
+                          name: $parent.entryId,
+                          class: 'group-' + $parent.entryId,
+                      }
+                  "/>
+          <span data-bind="renderMarkdown: $data"></span>
+        </label>
+      </div>
     </div>
+    <button class="btn btn-default btn-xs pull-right" data-bind="click: onClear, fadeVisible: !isMulti && rawAnswer()">
+      {% trans "Clear" %}
+    </button>
   </div>
 </script>
 <script type="text/html" id="dropdown-entry-ko-template">

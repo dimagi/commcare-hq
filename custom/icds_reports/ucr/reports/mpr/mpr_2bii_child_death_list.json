@@ -23,7 +23,8 @@
   ],
   "server_environment": [
     "india",
-    "icds"
+    "icds",
+    "icds-staging"
   ],
   "report_id": "static-mpr_2bii_child_death_list",
   "data_source_table": "static-child_health_cases",

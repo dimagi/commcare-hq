@@ -42,7 +42,9 @@ class XFormPillowTest(TestCase):
         cls.user = CommCareUser.create(
             cls.domain,
             cls.username,
-            cls.password
+            cls.password,
+            None,
+            None,
         )
         cls.metadata = TestFormMetadata(
             domain=cls.domain,

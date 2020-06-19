@@ -1,3 +1,4 @@
+import csv
 from datetime import timedelta
 
 from django.contrib.auth.models import User
@@ -106,3 +107,10 @@ def write_generic_log_event(writer, event):
         event.event_date, event.doc_type, event.user, getattr(event, 'domain', ''),
         getattr(event, 'ip_address', ''), action, resource, event.description
     ])
+
+
+def write_export_from_all_log_events(file_obj, start, end):
+    writer = csv.writer(file_obj)
+    writer.writerow(['Date', 'Type', 'User', 'Domain', 'IP Address', 'Action', 'Resource', 'Description'])
+    for event in get_all_log_events(start, end):
+        write_generic_log_event(writer, event)

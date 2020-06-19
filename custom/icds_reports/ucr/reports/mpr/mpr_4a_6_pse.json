@@ -23,7 +23,8 @@
   ],
   "server_environment": [
     "india",
-    "icds"
+    "icds",
+    "icds-staging"
   ],
   "report_id": "static-mpr_4a_6_pse",
   "data_source_table": "static-daily_feeding_forms",

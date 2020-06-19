@@ -1,14 +1,20 @@
+from abc import ABCMeta, abstractmethod
 from collections import defaultdict
+
+from django.utils.functional import cached_property
 
 import attr
 
 from corehq.apps.locations.models import LocationType, SQLLocation
+from corehq.apps.locations.util import valid_location_site_code
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 from custom.icds.location_reassignment.const import (
     AWC_CODE_COLUMN,
+    CASE_ID_COLUMN,
     CURRENT_SITE_CODE_COLUMN,
     EXTRACT_OPERATION,
+    HAVE_APPENDED_LOCATION_NAMES,
     HOUSEHOLD_ID_COLUMN,
     MERGE_OPERATION,
     NEW_LGD_CODE,
@@ -18,11 +24,24 @@ from custom.icds.location_reassignment.const import (
     NEW_SUB_DISTRICT_NAME,
     NEW_USERNAME_COLUMN,
     OPERATION_COLUMN,
+    OPERATIONS_TO_IGNORE,
+    SHEETS_TO_IGNORE,
     SPLIT_OPERATION,
     USERNAME_COLUMN,
     VALID_OPERATIONS,
 )
 from custom.icds.location_reassignment.models import Transition
+from custom.icds.location_reassignment.utils import (
+    append_location_name_and_site_code,
+    get_case_ids_for_reassignment,
+    get_household_case_ids,
+)
+
+
+def parse_site_code(site_code):
+    if site_code:
+        return str(site_code).lower()
+    return ''
 
 
 class TransitionRow(object):
@@ -30,15 +49,22 @@ class TransitionRow(object):
     An object representation of each row in excel
     """
     def __init__(self, location_type, operation, old_site_code, new_site_code, expects_parent,
-                 new_location_details=None, old_username=None, new_username=None):
+                 new_location_details, old_username=None, new_username=None):
         self.location_type = location_type
         self.operation = operation
         self.old_site_code = old_site_code
         self.new_site_code = new_site_code
         self.expects_parent = expects_parent
-        self.new_location_details = new_location_details or {}
+        self.new_location_details = new_location_details
         self.old_username = old_username
         self.new_username = new_username
+
+        if location_type in HAVE_APPENDED_LOCATION_NAMES:
+            if self.new_location_details['name'] and self.new_site_code:
+                self.new_location_details['name'] = append_location_name_and_site_code(
+                    self.new_location_details['name'],
+                    new_site_code
+                )
 
     def validate(self):
         """
@@ -62,14 +88,23 @@ class TransitionRow(object):
             errors.append(f"No change in location code for operation {self.operation}. "
                           f"Got old: '{self.old_site_code}' and new: '{self.new_site_code}'")
 
+        if not valid_location_site_code(self.old_site_code):
+            errors.append(f"Got invalid location code '{self.old_site_code}' for operation {self.operation}")
+        if not valid_location_site_code(self.new_site_code):
+            errors.append(f"Got invalid location code '{self.new_site_code}' for operation {self.operation}")
         if bool(self.new_username) != bool(self.old_username):
             errors.append(f"Need both old and new username for {self.operation} operation "
                           f"on location '{self.old_site_code}'")
-        if not self.new_location_details.get('name', '').strip():
+        if not self.new_location_details.get('name', ''):
             errors.append(f"Missing new location name for {self.new_site_code}")
-        if self.expects_parent and not self.new_location_details.get('parent_site_code'):
+        parent_site_code = self.new_location_details.get('parent_site_code')
+        if parent_site_code:
+            if not valid_location_site_code(parent_site_code):
+                errors.append(f"Got invalid parent location code '{parent_site_code}' "
+                              f"for new location '{self.new_site_code}' for operation {self.operation}")
+        if self.expects_parent and not parent_site_code:
             errors.append(f"Need parent for '{self.new_site_code}'")
-        if not self.expects_parent and self.new_location_details.get('parent_site_code'):
+        if not self.expects_parent and parent_site_code:
             errors.append(f"Unexpected parent set for '{self.new_site_code}'")
         return errors
 
@@ -90,6 +125,7 @@ class Parser(object):
             a. all old locations should be present in the system
             b. if a location is deprecated, all its descendants should get deprecated too
             c. new parent assigned should be of the expected location type
+            d. usernames passed are present in the system
         """
         self.domain = domain
         self.workbook = workbook
@@ -99,6 +135,8 @@ class Parser(object):
         self.transiting_site_codes = set()
         # maintain a list of valid site codes to be deprecated i.e all old site codes
         self.site_codes_to_be_deprecated = set()
+        # maintain a list of valid site codes to be archived
+        self.site_codes_to_be_archived = set()
 
         # mapping of expected parent type for a location type
         self.location_type_parent = {
@@ -126,21 +164,23 @@ class Parser(object):
 
     def parse(self):
         for worksheet in self.workbook.worksheets:
+            if worksheet.title in SHEETS_TO_IGNORE:
+                continue
             location_type_code = worksheet.title
             expects_parent = bool(self.location_type_parent.get(location_type_code))
             for row in worksheet:
                 operation = row.get(OPERATION_COLUMN)
-                if not operation:
+                if not operation or operation in OPERATIONS_TO_IGNORE:
                     continue
                 transition_row = TransitionRow(
                     location_type=location_type_code,
                     operation=operation,
-                    old_site_code=row.get(CURRENT_SITE_CODE_COLUMN),
-                    new_site_code=row.get(NEW_SITE_CODE_COLUMN),
+                    old_site_code=parse_site_code(row.get(CURRENT_SITE_CODE_COLUMN)),
+                    new_site_code=parse_site_code(row.get(NEW_SITE_CODE_COLUMN)),
                     expects_parent=expects_parent,
                     new_location_details={
-                        'name': row.get(NEW_NAME),
-                        'parent_site_code': row.get(NEW_PARENT_SITE_CODE),
+                        'name': row.get(NEW_NAME, '').strip(),
+                        'parent_site_code': parse_site_code(row.get(NEW_PARENT_SITE_CODE)),
                         'lgd_code': row.get(NEW_LGD_CODE),
                         'sub_district_name': row.get(NEW_SUB_DISTRICT_NAME)
                     },
@@ -187,6 +227,8 @@ class Parser(object):
                     continue
                 if self._is_valid_transition(transition):
                     self.site_codes_to_be_deprecated.update(transition.old_site_codes)
+                    if transition.operation_obj.archives_old_locations:
+                        self.site_codes_to_be_archived.update(transition.old_site_codes)
                     self.valid_transitions[location_type_code].append(transition)
                     for old_username, new_username in transition.user_transitions.items():
                         if old_username:
@@ -250,8 +292,21 @@ class Parser(object):
         if self.site_codes_to_be_deprecated:
             self._validate_old_locations()
             self._validate_descendants_deprecated()
+        self._validate_new_site_codes_type()
         self._validate_parents()
         self._validate_usernames()
+
+    def _validate_new_site_codes_type(self):
+        # validate that new site codes, if present in the system, belong to the correct location type
+        for location_type_code, new_site_codes in self.new_site_codes_for_location_type.items():
+            if not new_site_codes:
+                continue
+            locations = (SQLLocation.active_objects.select_related('location_type')
+                         .filter(domain=self.domain, site_code__in=new_site_codes))
+            for location in locations:
+                if location.location_type.code != location_type_code:
+                    self.errors.append(f"{location.location_type.code} {location.site_code} used as "
+                                       f"{location_type_code}")
 
     def _validate_old_locations(self):
         deprecating_locations_site_codes = (
@@ -260,11 +315,11 @@ class Parser(object):
             .values_list('site_code', flat=True)
         )
         if len(deprecating_locations_site_codes) != len(self.site_codes_to_be_deprecated):
-            self.errors.append(f"Found {len(deprecating_locations_site_codes)} locations for "
+            self.errors.append(f"Found {len(deprecating_locations_site_codes)} location(s) for "
                                f"{len(self.site_codes_to_be_deprecated)} deprecating site codes")
         missing_site_codes = set(self.site_codes_to_be_deprecated) - set(deprecating_locations_site_codes)
         if missing_site_codes:
-            self.errors.append(f"Could not find old locations with site codes {','.join(missing_site_codes)}")
+            self.errors.append(f"Could not find old location(s) with site codes {','.join(missing_site_codes)}")
 
     def _validate_descendants_deprecated(self):
         """
@@ -288,8 +343,10 @@ class Parser(object):
                         self.errors.append(f"Could not find old location with site code {old_site_code}")
                         continue
                     descendants_sites_codes = location.child_locations().values_list('site_code', flat=True)
+                    if not descendants_sites_codes:
+                        continue
                     if operation == EXTRACT_OPERATION:
-                        if not set(descendants_sites_codes) & site_codes_to_be_deprecated:
+                        if not (set(descendants_sites_codes) & site_codes_to_be_deprecated):
                             self.errors.append(
                                 f"Location {location.site_code} is getting deprecated via {operation} "
                                 f"but none of its descendants")
@@ -324,12 +381,14 @@ class Parser(object):
                 for new_site_code, new_location_details in transition.new_location_details.items():
                     parent_site_code = new_location_details['parent_site_code']
                     if parent_site_code in existing_new_parents:
-                        if existing_new_parents[parent_site_code].location_type.code != expected_parent_type:
-                            self.errors.append(f"Unexpected parent {parent_site_code} "
-                                               f"for type {location_type_code}")
+                        parent_location_type = existing_new_parents[parent_site_code].location_type.code
+                        if parent_location_type != expected_parent_type:
+                            self.errors.append(f"Unexpected {parent_location_type} parent {parent_site_code} "
+                                               f"set for {location_type_code}")
                     elif parent_site_code not in self.new_site_codes_for_location_type[expected_parent_type]:
-                        self.errors.append(f"Unexpected parent {parent_site_code} for type {location_type_code}")
-                    if parent_site_code in self.site_codes_to_be_deprecated:
+                        self.errors.append(f"Unexpected non-{expected_parent_type} parent {parent_site_code} "
+                                           f"set for {location_type_code}")
+                    if parent_site_code in self.site_codes_to_be_archived:
                         self.errors.append(f"Parent {parent_site_code} is marked for archival")
 
     def _get_new_parent_site_codes(self, location_type_code):
@@ -363,27 +422,90 @@ class Parser(object):
         return json_response
 
 
-class HouseholdReassignmentParser(object):
+class CaseReassignmentParser(metaclass=ABCMeta):
+    case_id_column = None
+    new_site_code_column = None
+
     def __init__(self, domain, workbook):
         self.domain = domain
         self.workbook = workbook
-        self.reassignments = {}  # household id mapped to a dict with old_site_code and new_site_code
+        self.reassignments = {}  # case id mapped to a dict with old_site_code and new_site_code
 
     def parse(self):
         errors = []
         for worksheet in self.workbook.worksheets:
-            location_site_code = worksheet.title
-            for row in worksheet:
-                household_id = row.get(HOUSEHOLD_ID_COLUMN)
-                new_awc_code = row.get(AWC_CODE_COLUMN)
-                if not household_id:
-                    errors.append("Missing Household ID for %s" % location_site_code)
-                    continue
-                if not new_awc_code:
-                    errors.append("Missing New AWC Code for household ID %s" % household_id)
-                    continue
-                self.reassignments[household_id] = {
-                    'old_site_code': location_site_code,
-                    'new_site_code': new_awc_code
-                }
+            errors.extend(self._parse_worksheet(worksheet))
         return errors
+
+    def _parse_worksheet(self, worksheet):
+        errors = []
+        case_ids = set()
+        location_site_code = worksheet.title
+        for row in worksheet:
+            case_id = row.get(self.case_id_column)
+            new_site_code = row.get(self.new_site_code_column)
+            if not case_id:
+                errors.append("Missing Case ID for %s" % location_site_code)
+                continue
+            case_ids.add(case_id)
+            if not new_site_code:
+                errors.append("Missing New Location Code for case ID %s" % case_id)
+                continue
+            self.reassignments[case_id] = {
+                'old_site_code': location_site_code,
+                'new_site_code': new_site_code
+            }
+        errors.extend(self._ensure_case_ids(location_site_code, case_ids))
+        return errors
+
+    def _ensure_case_ids(self, location_site_code, case_ids):
+        # ensure only and all expected case ids are present
+        location_id = self._location_ids[location_site_code]
+        expected_case_ids = self._expected_case_ids_for_location(location_id)
+        return self._compare_case_ids(
+            location_site_code,
+            expected_case_ids,
+            case_ids
+        )
+
+    @abstractmethod
+    def _expected_case_ids_for_location(self, location_id):
+        raise NotImplementedError
+
+    @staticmethod
+    def _compare_case_ids(location_site_code, expected_case_ids, case_ids):
+        # compare two sets of case ids and add appropriate error message
+        errors = []
+        if expected_case_ids ^ case_ids:
+            missing_case_ids = expected_case_ids - case_ids
+            unexpected_case_ids = case_ids - expected_case_ids
+            if missing_case_ids:
+                errors.append(f"Missing cases for {location_site_code}: "
+                              f"{', '.join(missing_case_ids)}")
+            if unexpected_case_ids:
+                errors.append(f"Unexpected cases for {location_site_code}: "
+                              f"{', '.join(unexpected_case_ids)}")
+        return errors
+
+    @cached_property
+    def _location_ids(self):
+        site_codes = set([ws.title for ws in self.workbook.worksheets])
+        return {loc.site_code: loc.location_id
+                for loc in SQLLocation.objects.filter(domain=self.domain, site_code__in=site_codes)}
+
+
+class HouseholdReassignmentParser(CaseReassignmentParser):
+    case_id_column = HOUSEHOLD_ID_COLUMN
+    new_site_code_column = AWC_CODE_COLUMN
+
+    def _expected_case_ids_for_location(self, location_id):
+        return set(get_household_case_ids(self.domain, location_id))
+
+
+class OtherCasesReassignmentParser(CaseReassignmentParser):
+    case_id_column = CASE_ID_COLUMN
+    new_site_code_column = NEW_SITE_CODE_COLUMN
+
+    def _expected_case_ids_for_location(self, location_id):
+        _, case_ids_expected = get_case_ids_for_reassignment(self.domain, location_id)
+        return set(case_ids_expected)

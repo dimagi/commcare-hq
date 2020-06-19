@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from memoized import memoized
 
 from corehq.apps.locations.models import LocationType, SQLLocation
@@ -36,7 +38,7 @@ class HouseholdReassignmentProcessor():
         self.reassignments = reassignments
 
     def process(self):
-        from custom.icds.location_reassignment.utils import reassign_household_case
+        from custom.icds.location_reassignment.utils import reassign_household
         old_site_codes = set()
         new_site_codes = set()
         for household_id, details in self.reassignments.items():
@@ -52,8 +54,29 @@ class HouseholdReassignmentProcessor():
             old_owner_id = old_locations_by_site_code[details['old_site_code']].location_id
             new_owner_id = new_locations_by_site_code[details['new_site_code']].location_id
             supervisor_id = self._supervisor_id(old_owner_id)
-            reassign_household_case(self.domain, household_id, old_owner_id, new_owner_id, supervisor_id)
+            reassign_household(self.domain, household_id, old_owner_id, new_owner_id, supervisor_id)
 
     @memoized
     def _supervisor_id(self, location_id):
         return get_supervisor_id(self.domain, location_id)
+
+
+class OtherCasesReassignmentProcessor():
+    def __init__(self, domain, reassignments):
+        self.domain = domain
+        self.reassignments = reassignments
+
+    def process(self):
+        from custom.icds.location_reassignment.utils import reassign_cases
+        new_site_codes = set()
+        reassignments_by_location_id = defaultdict(list)
+        for case_id, details in self.reassignments.items():
+            new_site_codes.add(details['new_site_code'])
+        new_locations_by_site_code = {
+            loc.site_code: loc
+            for loc in SQLLocation.active_objects.filter(domain=self.domain, site_code__in=new_site_codes)}
+        for case_id, details in self.reassignments.items():
+            new_owner_id = new_locations_by_site_code[details['new_site_code']].location_id
+            reassignments_by_location_id[new_owner_id].append(case_id)
+        for new_owner_id, case_ids in reassignments_by_location_id.items():
+            reassign_cases(self.domain, case_ids, new_owner_id)

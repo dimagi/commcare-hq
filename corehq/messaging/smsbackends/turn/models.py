@@ -63,6 +63,11 @@ class SQLTurnWhatsAppBackend(SQLSMSBackend):
         except WhatsAppTemplateStringException:
             msg.set_system_error(SMS.ERROR_MESSAGE_FORMAT_INVALID)
 
+        if msg.invalid_survey_response:
+            error_message = extract_error_message_from_template_string(msg.text)
+            if error_message:
+                client.messages.send_text(wa_id, error_message)
+
         return client.messages.send_templated_message(
             wa_id,
             self.config.template_namespace,
@@ -98,9 +103,29 @@ class SQLTurnWhatsAppBackend(SQLSMSBackend):
         client = TurnBusinessManagementClient(config.business_id, config.business_auth_token)
         return client.message_templates.get_message_templates()
 
+    @classmethod
+    def generate_template_string(cls, template):
+        """From the template JSON returned by Turn, create the magic string for people to copy / paste
+        """
+
+        template_text = ""
+        for component in template.get("components", []):
+            if component.get("type") == "BODY":
+                template_text = component.get("text", "")
+                break
+        num_params = template_text.count("{") // 2  # each parameter is bracketed by {{}}
+        parameters = ",".join([f"{{var{i}}}" for i in range(1, num_params + 1)])
+        return f"{WA_TEMPLATE_STRING}:{template['name']}:{template['language']}:{parameters}"
 
 def is_whatsapp_template_message(message_text):
-    return message_text.lower().startswith(WA_TEMPLATE_STRING)
+    return WA_TEMPLATE_STRING in message_text.lower()
+
+
+def extract_error_message_from_template_string(message_text):
+    """If message is labeled as "invalid_survey_response" then error message should be
+    extracted from template string
+    """
+    return message_text.split(WA_TEMPLATE_STRING)[0]
 
 
 def get_template_hsm_parts(message_text):
@@ -118,17 +143,3 @@ def get_template_hsm_parts(message_text):
         return HsmParts(template_name=parts[1], lang_code=parts[2], params=params)
     except IndexError:
         raise WhatsAppTemplateStringException
-
-
-def generate_template_string(template):
-    """From the template JSON returned by Turn, create the magic string for people to copy / paste
-    """
-
-    template_text = ""
-    for component in template.get("components", []):
-        if component.get("type") == "BODY":
-            template_text = component.get("text", "")
-            break
-    num_params = template_text.count("{") // 2  # each parameter is bracketed by {{}}
-    parameters = ",".join([f"{{var{i}}}" for i in range(1, num_params + 1)])
-    return f"{WA_TEMPLATE_STRING}:{template['name']}:{template['language']}:{parameters}"

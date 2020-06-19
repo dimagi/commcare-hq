@@ -86,7 +86,7 @@ class TestHouseholdReassignmentProcessor(UnitTestTestCase):
             'household_case_id2': {'old_site_code': '3', 'new_site_code': '4'},
         }
 
-    @patch('custom.icds.location_reassignment.utils.reassign_household_case')
+    @patch('custom.icds.location_reassignment.utils.reassign_household')
     @patch('custom.icds.location_reassignment.processor.get_supervisor_id')
     @patch('custom.icds.location_reassignment.processor.SQLLocation.active_objects.filter')
     @patch('custom.icds.location_reassignment.processor.SQLLocation.objects.filter')

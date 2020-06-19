@@ -347,7 +347,7 @@ def queue_async_indicators():
             break
 
 
-def _queue_indicators(async_indicators):
+def _queue_indicators(async_indicators, use_agg_queue=False):
     """
         Extract doc ids for the passed AsyncIndicators and queue task to process indicators for them.
         Mark date_queued on all AsyncIndicator passed to utcnow.
@@ -358,7 +358,15 @@ def _queue_indicators(async_indicators):
         # AsyncIndicator have doc_id as a unique column, so this update would only
         # update the passed AsyncIndicators
         AsyncIndicator.objects.filter(doc_id__in=indicator_doc_ids).update(date_queued=now)
-        build_async_indicators.delay(indicator_doc_ids)
+        if use_agg_queue:
+            build_indicators_with_agg_queue.delay(indicator_doc_ids)
+        else:
+            build_async_indicators.delay(indicator_doc_ids)
+
+
+@task(queue='icds_aggregation_queue', ignore_result=True, acks_late=True)
+def build_indicators_with_agg_queue(indicator_doc_ids):
+    build_async_indicators(indicator_doc_ids)
 
 
 @task(serializer='pickle', queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
@@ -416,6 +424,9 @@ def build_async_indicators(indicator_doc_ids):
         }
         if config_id and settings.ENTERPRISE_MODE:
             tags['config_id'] = config_id
+        else:
+            # Prometheus requires consistent tags even if not available
+            tags['config_id'] = None
         return metrics_histogram_timer(
             'commcare.async_indicator.timing',
             timing_buckets=(.03, .1, .3, 1, 3, 10), tags=tags
@@ -560,9 +571,14 @@ def async_indicators_metrics():
     unsuccessful_attempts = sum(AsyncIndicator.objects.values_list('unsuccessful_attempts', flat=True).all()[:100])
     metrics_gauge('commcare.async_indicator.unsuccessful_attempts', unsuccessful_attempts)
 
+    oldest_unprocessed = AsyncIndicator.objects.filter(unsuccessful_attempts=0).first()
+    if oldest_unprocessed:
+        lag = (now - oldest_unprocessed.date_created).total_seconds()
+    else:
+        lag = 0
     metrics_gauge(
         'commcare.async_indicator.true_lag',
-        (now - AsyncIndicator.objects.filter(unsuccessful_attempts=0).first().date_created).total_seconds,
+        lag,
         documentation="Lag of oldest created indicator that didn't get ever queued"
     )
     metrics_gauge(

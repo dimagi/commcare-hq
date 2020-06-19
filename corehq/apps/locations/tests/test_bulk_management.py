@@ -293,7 +293,7 @@ class TestTreeValidator(UploadTestUtils, TestCase):
     def setUp(self):
         super(TestTreeValidator, self).setUp()
         self.domain_obj = create_domain(self.domain)
-        self.user = WebUser.create(self.domain, 'username', 'password')
+        self.user = WebUser.create(self.domain, 'username', 'password', None, None)
 
     def tearDown(self):
         self.user.delete()
@@ -448,7 +448,7 @@ class TestBulkManagementNoInitialLocs(UploadTestUtils, TestCase):
     def setUp(self):
         super(TestBulkManagementNoInitialLocs, self).setUp()
         self.domain_obj = create_domain(self.domain)
-        self.user = WebUser.create(self.domain, 'username', 'password')
+        self.user = WebUser.create(self.domain, 'username', 'password', None, None)
 
     def tearDown(self):
         self.user.delete()
@@ -725,7 +725,7 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
 
     def setUp(self):
         super(TestBulkManagementWithInitialLocs, self).setUp()
-        self.user = WebUser.create(self.domain, 'username', 'password')
+        self.user = WebUser.create(self.domain, 'username', 'password', None, None)
 
     def tearDown(self):
         self.user.delete()
@@ -1111,7 +1111,7 @@ class TestRestrictedUserUpload(UploadTestUtils, LocationHierarchyPerTest):
 
     def setUp(self):
         super(TestRestrictedUserUpload, self).setUp()
-        self.user = WebUser.create(self.domain, 'username', 'password')
+        self.user = WebUser.create(self.domain, 'username', 'password', None, None)
         self.user.set_location(self.domain, self.locations['Middlesex'])
         restrict_user_by_location(self.domain, self.user)
 

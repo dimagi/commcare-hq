@@ -740,7 +740,7 @@ class ShouldSyncLocationFixturesTest(TestCase):
             code="state",
         )
         password = "What have I got in my pocket"
-        cls.user = CommCareUser.create(cls.domain, cls.username, password)
+        cls.user = CommCareUser.create(cls.domain, cls.username, password, None, None)
         cls.user.save()
         cls.location_type.save()
 

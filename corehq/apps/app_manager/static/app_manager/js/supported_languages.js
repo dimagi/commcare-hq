@@ -131,15 +131,15 @@ hqDefine('app_manager/js/supported_languages',[
             self._seen(true);
         };
         self.removeLanguage = function (language) {
-            self.languages.remove(language);
+            self.languages(_.without(self.languages(), language));
             self.removedLanguages.push(language);
         };
         self.setAsDefault = function (language) {
-            self.languages.remove(language);
+            self.languages(_.without(self.languages(), language));
             self.languages.unshift(language);
         };
         self.unremoveLanguage = function (language) {
-            self.removedLanguages.remove(language);
+            self.removedLanguages(_.without(self.removedLanguages(), language));
             self.languages.push(language);
         };
         for (var i = 0; i < langs.length; i += 1) {

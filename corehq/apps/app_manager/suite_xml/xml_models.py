@@ -204,6 +204,7 @@ class LocaleResource(AbstractResource):
 class MediaResource(AbstractResource):
     ROOT_NAME = 'media'
     path = StringField('@path')
+    lazy = SimpleBooleanField('resource/@lazy', true="true", false="false")
 
 
 class PracticeUserRestoreResource(AbstractResource):
@@ -227,23 +228,19 @@ class DisplayNode(XmlObject):
     text = NodeField('text', Text)
     display = NodeField('display', Display)
 
-    def __init__(self, node=None, context=None,
-                 locale_id=None, enum_text=None,
+    def __init__(self, node=None, context=None, locale_id=None,
                  media_image=None, media_audio=None, **kwargs):
         super(DisplayNode, self).__init__(node, context, **kwargs)
         self.set_display(
             locale_id=locale_id,
-            enum_text=enum_text,
             media_image=media_image,
             media_audio=media_audio,
         )
 
-    def set_display(self, locale_id=None, enum_text=None, media_image=None, media_audio=None):
+    def set_display(self, locale_id=None, media_image=None, media_audio=None):
         text = None
         if locale_id:
             text = Text(locale_id=locale_id)
-        elif enum_text:
-            text = enum_text
 
         if media_image or media_audio:
             self.display = Display(
@@ -279,14 +276,12 @@ class TextOrDisplay(XmlObject):
     display = NodeField('display', LocalizedMediaDisplay)
 
     def __init__(self, node=None, context=None, custom_icon_locale_id=None, custom_icon_form=None,
-                 custom_icon_xpath=None, menu_locale_id=None, menu_enum_text=None, image_locale_id=None,
+                 custom_icon_xpath=None, menu_locale_id=None, image_locale_id=None,
                  audio_locale_id=None, media_image=None, media_audio=None, for_action_menu=False, **kwargs):
         super(TextOrDisplay, self).__init__(node, context, **kwargs)
         text = None
         if menu_locale_id:
             text = Text(locale_id=menu_locale_id)
-        elif menu_enum_text:
-            text = menu_enum_text
 
         media_text = []
         if media_image:

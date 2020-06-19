@@ -22,7 +22,9 @@ linked to the recipe by `recipe_case_id`.
 
 Beneficiaries may report eating a nonstandard recipe more than once, in which
 case subsequent references point to the recipe definition with
-already_reported_recipe_case_id and don't enumerate the ingredients again.
+already_reported_recipe_case_id and don't enumerate the ingredients again. We
+need to insert duplicates of the previously reported ingredients into the
+report for them.
 
 
 Components
@@ -31,10 +33,6 @@ FoodData :: This is the interface to this dataset, it glues together all the
             component pieces and presents the result as a unified dataset.
 
 FoodRow :: Class responsible for row-wise calculations and indicator definitions.
-
-enrich_rows :: mutates FoodRow after the fact to calculate information related
-               to ingredients in a recipe (which is otherwise outside the
-               direct scope of FoodRow)
 """
 import operator
 import uuid
@@ -43,21 +41,25 @@ from functools import reduce
 
 from memoized import memoized
 
+from corehq.apps.es import users as user_es
+from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
+from corehq.apps.reports.standard.cases.utils import get_case_owners
 from custom.inddex.ucr_data import FoodCaseData
 
-from .const import AGE_RANGES, ConvFactorGaps, FctGaps
+from .const import (
+    AGE_RANGES,
+    FOOD_ITEM,
+    NON_STANDARD_RECIPE,
+    STANDARD_RECIPE,
+    ConvFactorGaps,
+    FctGaps,
+)
 from .fixtures import FixtureAccessor
 
 IN_UCR = 'in_ucr'
 IN_FOOD_FIXTURE = 'in_food_fixture'
 IS_RECALL_META = 'is_recall_meta'
 CALCULATED_LATER = 'calculated_later'
-
-# food_type options
-FOOD_ITEM = 'food_item'
-NON_STANDARD_FOOD_ITEM = 'non_std_food_item'
-STANDARD_RECIPE = 'std_recipe'
-NON_STANDARD_RECIPE = 'non_std_recipe'
 
 
 class I:
@@ -77,10 +79,10 @@ INDICATORS = [
     I('location_id', IN_UCR, IS_RECALL_META),
     I('respondent_id', IN_UCR, IS_RECALL_META),
     I('recall_case_id', IN_UCR, IS_RECALL_META),
-    I('opened_date', IN_UCR, IS_RECALL_META),
     I('opened_by_username', IN_UCR, IS_RECALL_META),
     I('owner_name', IN_UCR, IS_RECALL_META),
     I('visit_date', IN_UCR, IS_RECALL_META),
+    I('opened_on', IN_UCR, IS_RECALL_META),
     I('recall_status', IN_UCR, IS_RECALL_META),
     I('gender', IN_UCR, IS_RECALL_META),
     I('age_years_calculated', IN_UCR, IS_RECALL_META),
@@ -88,28 +90,29 @@ INDICATORS = [
     I('age_range', IS_RECALL_META),
     I('pregnant', IN_UCR, IS_RECALL_META),
     I('breastfeeding', IN_UCR, IS_RECALL_META),
-    I('supplements', IN_UCR, IS_RECALL_META),
     I('urban_rural', IN_UCR, IS_RECALL_META),
+    I('supplements', IN_UCR, IS_RECALL_META),
     I('food_code', IN_UCR),
     I('food_name', IN_UCR, IN_FOOD_FIXTURE),
-    I('recipe_name', IN_UCR),
+    I('recipe_name', IN_UCR, CALCULATED_LATER),
     I('caseid'),
+    I('food_type', IN_UCR, IN_FOOD_FIXTURE),
+    I('food_status', IN_UCR, IS_RECALL_META),
     I('reference_food_code'),
     I('base_term_food_code', IN_UCR),
-    I('food_type', IN_UCR, IN_FOOD_FIXTURE),
     I('include_in_analysis'),
-    I('food_status', IN_UCR, IS_RECALL_META),
-    I('eating_time', IN_UCR, IS_RECALL_META),
-    I('time_block', IN_UCR, IS_RECALL_META),
     I('fao_who_gift_food_group_code'),
     I('fao_who_gift_food_group_description'),
     I('user_food_group'),
+    I('eating_time', IN_UCR, IS_RECALL_META),
+    I('time_block', IN_UCR, IS_RECALL_META),
     I('already_reported_food', IN_UCR),
     I('already_reported_food_case_id', IN_UCR),
     I('already_reported_recipe', IN_UCR),
     I('already_reported_recipe_case_id', IN_UCR),
     I('already_reported_recipe_name', IN_UCR),
     I('is_ingredient', IN_UCR),
+    I('ingredient_type', CALCULATED_LATER),
     I('recipe_case_id', IN_UCR),
     I('ingr_recipe_code'),
     I('ingr_fraction'),
@@ -167,6 +170,15 @@ INDICATORS = [
 ]
 _INDICATORS_BY_SLUG = {i.slug: i for i in INDICATORS}
 
+NSR_COLS_TO_COPY = [
+    'nsr_conv_method_code_post_cooking',
+    'nsr_conv_method_desc_post_cooking',
+    'nsr_conv_option_code_post_cooking',
+    'nsr_conv_option_desc_post_cooking',
+    'nsr_measurement_amount_post_cooking',
+    'nsr_consumed_cooked_fraction',
+]
+
 
 class FoodRow:
 
@@ -183,28 +195,28 @@ class FoodRow:
             self.caseid = ucr_row['doc_id']
             self.food_code = ucr_row['food_code']
 
+        if not self.food_code and self.food_name in self.fixtures.foods_by_name:
+            self.food_code = self.fixtures.foods_by_name[self.food_name].food_code
+        if not self.base_term_food_code and self.food_base_term in self.fixtures.foods_by_name:
+            self.base_term_food_code = self.fixtures.foods_by_name[self.food_base_term].food_code
+
         self._set_composition()
         self._set_conversion_factors()
 
         self.is_recipe = self.food_type in (STANDARD_RECIPE, NON_STANDARD_RECIPE)
         self.include_in_analysis = not self.is_recipe
 
-        self.measurement_amount = float(self.measurement_amount) if self.measurement_amount else None
-        self.portions = float(self.portions) if self.portions else None
-        self.nsr_consumed_cooked_fraction = (float(self.nsr_consumed_cooked_fraction)
-                                             if self.nsr_consumed_cooked_fraction else None)
+        self.measurement_amount = _maybe_float(self.measurement_amount)
+        self.portions = _maybe_float(self.portions)
+        self.nsr_consumed_cooked_fraction = _maybe_float(self.nsr_consumed_cooked_fraction)
+
         self.enrichment_complete = False
 
     def _set_ingredient_fields(self, ingredient):
         if self._is_std_recipe_ingredient:
             self.is_ingredient = 'yes'
-            self.recipe_name = self.ucr_row['recipe_name']
-            self.recipe_case_id = self.ucr_row['doc_id']
             self.ingr_recipe_code = ingredient.recipe_code
             self.ingr_fraction = ingredient.ingr_fraction
-
-            base_food = self.fixtures.foods_by_name.get(self.food_base_term)
-            self.base_term_food_code = base_food.food_code if base_food else None
 
     def _set_composition(self):
         # Get the food composition corresponding to food_code, fall back to base_term_food_code
@@ -251,11 +263,15 @@ class FoodRow:
             else:
                 self.fct_gap_code = FctGaps.INGREDIENT_GAPS
 
-        self.fct_gap_desc = FctGaps.get_description(self.fct_gap_code)
+        self.fct_gap_desc = FctGaps.DESCRIPTIONS[self.fct_gap_code]
 
     def _set_conversion_factors(self):
         self.conv_factor_gap_code = ConvFactorGaps.NOT_AVAILABLE
-        if self.food_type in (FOOD_ITEM, STANDARD_RECIPE) and self.conv_method_code:
+
+        if (self.food_type == FOOD_ITEM and self._is_std_recipe_ingredient
+                or self.food_type == NON_STANDARD_RECIPE):
+            self.conv_factor_gap_code = ConvFactorGaps.NOT_APPLICABLE
+        elif self.food_type in (FOOD_ITEM, STANDARD_RECIPE) and self.conv_method_code:
             self.conv_factor_food_code = self.fixtures.conversion_factors.get(
                 (self.food_code, self.conv_method_code, self.conv_option_code))
             self.conv_factor_base_term_food_code = self.fixtures.conversion_factors.get(
@@ -270,7 +286,7 @@ class FoodRow:
                 self.conv_factor = self.conv_factor_base_term_food_code
                 self.conv_factor_gap_code = ConvFactorGaps.BASE_TERM
 
-        self.conv_factor_gap_desc = ConvFactorGaps.get_description(self.conv_factor_gap_code)
+        self.conv_factor_gap_desc = ConvFactorGaps.DESCRIPTIONS[self.conv_factor_gap_code]
 
     @property
     def age_range(self):
@@ -279,12 +295,6 @@ class FoodRow:
         for age_range in AGE_RANGES:
             if age_range.lower_bound <= getattr(self, age_range.column) < age_range.upper_bound:
                 return age_range.name
-
-    @property
-    def recipe_id(self):
-        if self.is_recipe:
-            return self.caseid
-        return self.recipe_case_id or 'NO_RECIPE'
 
     def get_nutrient_per_100g(self, nutrient_name):
         if self.fct_code:
@@ -316,55 +326,9 @@ class FoodRow:
         raise AttributeError(f"FoodRow has no definition for {name}")
 
 
-def enrich_rows(recipe_id, rows):
-    """Insert data possibly dependent on other rows in a recipe"""
-    if recipe_id == 'NO_RECIPE':
-        recipe = None
-    else:
-        recipe_possibilities = [row for row in rows if row.is_recipe]
-        recipe = recipe_possibilities[0] if len(recipe_possibilities) == 1 else None
-
-    if not recipe:
-        for row in rows:
-            row.total_grams = _multiply(row.measurement_amount, row.conv_factor, row.portions)
-            row.set_fct_gap()
-            row.enrichment_complete = True
-    else:
-        ingredients = [row for row in rows if not row.uuid == recipe.uuid]
-        total_grams = _calculate_total_grams(recipe, ingredients)
-        recipe.set_fct_gap(ingredients)
-        for row in [recipe] + ingredients:
-            row.total_grams = total_grams[row.uuid]
-            if row.is_recipe:
-                row.recipe_num_ingredients = len(ingredients)
-            if row.is_ingredient == 'yes' and recipe.food_type == STANDARD_RECIPE:
-                row.ingr_recipe_total_grams_consumed = total_grams[recipe.uuid]
-            row.enrichment_complete = True
-
-
-def _calculate_total_grams(recipe, ingredients):
-    if recipe.food_type == STANDARD_RECIPE:
-        res = {}
-        recipe_total = _multiply(recipe.measurement_amount, recipe.conv_factor, recipe.portions)
-        res[recipe.uuid] = recipe_total
-        for row in ingredients:
-            res[row.uuid] = _multiply(recipe_total, row.ingr_fraction)
-        return res
-    else:  # NON_STANDARD_RECIPE
-        res = {}
-        for row in ingredients:
-            res[row.uuid] = _multiply(row.measurement_amount, row.conv_factor,
-                                      row.portions, recipe.nsr_consumed_cooked_fraction)
-        try:
-            res[recipe.uuid] = sum(res.values()) if res else None
-        except TypeError:
-            res[recipe.uuid] = None
-        return res
-
-
 class FoodData:
     """Generates the primary dataset for INDDEX reports.  See file docstring for more."""
-    IN_MEMORY_FILTERS = ['gap_type', 'gap', 'fao_who_gift_food_group_description', 'food_type']
+    IN_MEMORY_FILTERS = ['gap_type', 'fao_who_gift_food_group_code', 'food_type']
     FILTERABLE_COLUMNS = IN_MEMORY_FILTERS + FoodCaseData.FILTERABLE_COLUMNS
 
     def __init__(self, domain, *, datespan, filter_selections):
@@ -390,10 +354,22 @@ class FoodData:
         return cls(
             domain,
             datespan=request.datespan,
-            filter_selections={'owner_id': request.GET.getlist('owner_id'),
-                               **{k: request.GET.get(k)
+            filter_selections={'owner_id': cls._get_owner_ids(domain, request),
+                               **{k: [v for v in request.GET.getlist(k) if v]
                                   for k in cls.FILTERABLE_COLUMNS if k != 'owner_id'}}
         )
+
+    @staticmethod
+    def _get_owner_ids(domain, request):
+        slugs = request.GET.getlist(EMWF.slug)
+        if EMWF.no_filters_selected(slugs) or EMWF.show_all_data(slugs) or EMWF.show_project_data(slugs):
+            return []  # don't filter by owner
+        if EMWF.show_deactivated_data(slugs):
+            return (user_es.UserES()
+                    .show_only_inactive()
+                    .domain(domain)
+                    .get_ids())
+        return get_case_owners(request, domain, slugs)
 
     def _matches_in_memory_filters(self, row):
         # If a gap type is specified, show only rows with gaps of that type
@@ -403,45 +379,128 @@ class FoodData:
         if gap_type == FctGaps.slug and row.fct_gap_code == FctGaps.AVAILABLE:
             return False
 
-        food_type = self._in_memory_filter_selections.get('food_type')
-        if food_type and food_type != row.food_type:
+        food_types = self._in_memory_filter_selections.get('food_type')
+        if food_types and row.food_type not in food_types:
             return False
 
-        gap = self._in_memory_filter_selections.get('gap')
-        if gap:
-            gap_type, gap_code = gap.split('-')
-            if gap_type == ConvFactorGaps.slug and str(row.conv_factor_gap_code) != gap_code:
-                return False
-            if gap_type == FctGaps.slug and str(row.fct_gap_code) != gap_code:
-                return False
-
-        food_group = self._in_memory_filter_selections.get('fao_who_gift_food_group_description')
-        if food_group and food_group != row.fao_who_gift_food_group_description:
+        food_groups = self._in_memory_filter_selections.get('fao_who_gift_food_group_code')
+        if food_groups and row.fao_who_gift_food_group_code not in food_groups:
             return False
 
         return True
 
+    def _get_grouped_rows(self):
+        """Return raw case rows grouped by recipe"""
+        rows = defaultdict(lambda: {
+            'recipe': None,
+            'references': [],
+            'ingredients': [],
+        })
+        for row in self._ucr.get_data():
+            if row['food_type'] in (STANDARD_RECIPE, NON_STANDARD_RECIPE):
+                if row['already_reported_recipe_case_id']:
+                    rows[row['already_reported_recipe_case_id']]['references'].append(row)
+                else:
+                    rows[row['doc_id']]['recipe'] = row
+            elif row['recipe_case_id']:
+                rows[row['recipe_case_id']]['ingredients'].append(row)
+            else:
+                # this isn't part of a recipe
+                rows[row['doc_id']]['ingredients'].append(row)
+        return rows.values()
+
+    def _get_all_rows(self):
+        for group in self._get_grouped_rows():
+            master_recipe = group['recipe']
+            references = group['references']
+            ingredients = group['ingredients']
+
+            if not master_recipe:
+                yield from self._non_recipe_rows(references + ingredients)
+            else:
+                yield from self._recipe_rows(master_recipe, ingredients)
+                for recipe in references:
+                    recipe = _insert_nsr_cols(recipe, master_recipe)
+                    yield from self._recipe_rows(recipe, ingredients)
+
     @property
     @memoized
     def rows(self):
-        rows_by_recipe = defaultdict(list)
-
-        for ucr_row in self._ucr.get_data():
-            food = FoodRow(ucr_row, self.fixtures)
-            rows_by_recipe[food.recipe_id].append(food)
-
-            if food.food_type == STANDARD_RECIPE:
-                for ingredient_data in self.fixtures.recipes[food.food_code]:
-                    ingr_row = FoodRow(ucr_row, self.fixtures, ingredient_data)
-                    rows_by_recipe[food.recipe_id].append(ingr_row)
-
         rows = []
-        for recipe_id, rows_in_recipe in rows_by_recipe.items():
-            enrich_rows(recipe_id, rows_in_recipe)
-            for row in rows_in_recipe:
-                if self._matches_in_memory_filters(row):
-                    rows.append(row)
+        for row in self._get_all_rows():
+            if self._matches_in_memory_filters(row):
+                rows.append(row)
         return rows
+
+    def _non_recipe_rows(self, rows):
+        """These rows aren't part of a recipe, or it wasn't found"""
+        for raw_row in rows:
+            row = FoodRow(raw_row, self.fixtures)
+            row.total_grams = _multiply(row.measurement_amount, row.conv_factor, row.portions)
+            row.set_fct_gap()
+            row.enrichment_complete = True
+            yield row
+
+    def _recipe_rows(self, raw_recipe, raw_ingredients):
+        recipe = FoodRow(raw_recipe, self.fixtures)
+        if recipe.food_type == STANDARD_RECIPE:
+            # std recipe ingredients come from the DB, NOT ingredient cases
+            ingredients = [FoodRow(raw_recipe, self.fixtures, ingredient_data)
+                           for ingredient_data in self.fixtures.recipes[recipe.food_code]]
+        else:  # NON_STANDARD_RECIPE
+            ingredients = [FoodRow(raw, self.fixtures) for raw in raw_ingredients]
+
+        total_grams = _calculate_total_grams(recipe, ingredients)
+        recipe.set_fct_gap(ingredients)
+        recipe.recipe_name = recipe.ucr_row['recipe_name']
+        for row in [recipe] + ingredients:
+            row.total_grams = total_grams[row.uuid]
+            row.recipe_num_ingredients = len(ingredients)
+            row.recipe_case_id = recipe.caseid
+            if row.is_ingredient == 'yes':
+                row.recipe_name = recipe.recipe_name
+                if recipe.food_type == STANDARD_RECIPE:
+                    row.ingredient_type = 'std_recipe_ingredient'
+                    row.ingr_recipe_total_grams_consumed = total_grams[recipe.uuid]
+                else:
+                    row.ingredient_type = 'non_std_recipe_ingredient'
+                for col in NSR_COLS_TO_COPY:  # Copy these values from the recipe case
+                    setattr(row, col, getattr(recipe, col))
+            row.enrichment_complete = True
+            yield row
+
+
+def _insert_nsr_cols(raw_recipe, master_recipe):
+    # nsr references are missing some values, insert them from the master recipe
+    nsr_cols = {col: master_recipe[col] for col in NSR_COLS_TO_COPY}
+    amount = _maybe_float(raw_recipe['measurement_amount'])
+    portions = _maybe_float(raw_recipe['portions'])
+    amount_post_cooking = _maybe_float(master_recipe['nsr_measurement_amount_post_cooking'])
+    if all(val is not None for val in [amount, portions, amount_post_cooking]):
+        nsr_cols['nsr_consumed_cooked_fraction'] = amount * portions / amount_post_cooking
+    else:
+        nsr_cols['nsr_consumed_cooked_fraction'] = None
+    return {**raw_recipe, **nsr_cols}
+
+
+def _calculate_total_grams(recipe, ingredients):
+    if recipe.food_type == STANDARD_RECIPE:
+        res = {}
+        recipe_total = _multiply(recipe.measurement_amount, recipe.conv_factor, recipe.portions)
+        res[recipe.uuid] = recipe_total
+        for row in ingredients:
+            res[row.uuid] = _multiply(recipe_total, row.ingr_fraction)
+        return res
+    else:  # NON_STANDARD_RECIPE
+        res = {}
+        for row in ingredients:
+            res[row.uuid] = _multiply(row.measurement_amount, row.conv_factor,
+                                      row.portions, recipe.nsr_consumed_cooked_fraction)
+        try:
+            res[recipe.uuid] = sum(res.values()) if res else None
+        except TypeError:
+            res[recipe.uuid] = None
+        return res
 
 
 def _multiply(*args):
@@ -449,3 +508,7 @@ def _multiply(*args):
         return reduce(operator.mul, args)
     except TypeError:
         return None
+
+
+def _maybe_float(val):
+    return float(val) if val not in (None, '') else None

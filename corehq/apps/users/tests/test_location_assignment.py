@@ -36,6 +36,8 @@ class CCUserLocationAssignmentTest(TestCase):
             domain=self.domain,
             username='cc1',
             password='***',
+            created_by=None,
+            created_via=None,
             last_login=datetime.now()
         )
 
@@ -115,6 +117,8 @@ class CCUserLocationAssignmentTest(TestCase):
             domain=self.domain,
             username='cc2',
             password='***',
+            created_by=None,
+            created_via=None,
             last_login=datetime.now(),
             location=self.loc1,
         )
@@ -163,6 +167,8 @@ class WebUserLocationAssignmentTest(TestCase):
             domain=self.domain,
             username='web1',
             password='***',
+            created_by=None,
+            created_via=None,
             last_login=datetime.now()
         )
 
