@@ -625,7 +625,6 @@ def jserror(request):
         'browser_version': browser_version,
         'browser_name': browser_name,
         'url': sanitize_url(url),
-        'file': request.POST.get('filename'),
         'bot': bot,
         'domain': domain,
     })
