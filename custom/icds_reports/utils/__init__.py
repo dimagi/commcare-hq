@@ -2487,7 +2487,7 @@ def calculate_percent(num, den, extra_number, truncate_out=True):
 
     if extra_number:
         ret = ret / extra_number
-    if truncate_out == True:
+    if truncate_out is True:
         return "{}%".format("%.2f" % ret)
     else:
         return ret
@@ -2497,5 +2497,5 @@ def handle_average(val):
     if val is None:
         ret = 0
     else:
-        ret = round(val / 3)
+        ret = val / 3
     return ret

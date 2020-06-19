@@ -16,7 +16,7 @@ class DropboxUploadHelperTest(TestCase):
     def setUpClass(cls):
         super(DropboxUploadHelperTest, cls).setUpClass()
         cls.domain = create_domain('adomain')
-        cls.user = WebUser.create('adomain', 'ben', '***')
+        cls.user = WebUser.create('adomain', 'ben', '***', None, None)
 
     @classmethod
     def tearDownClass(cls):

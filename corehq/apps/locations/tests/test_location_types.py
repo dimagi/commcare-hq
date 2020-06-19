@@ -69,6 +69,8 @@ class TestLocationTypeOwnership(TestCase):
             self.domain,
             'username',
             'password',
+            created_by=None,
+            created_via=None,
             first_name='Location types',
             last_name='Tester',
         )

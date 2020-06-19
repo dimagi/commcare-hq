@@ -378,7 +378,8 @@ class TestSingleSignOnResource(APIResourceTest):
         super(TestSingleSignOnResource, self).setUp()
         self.commcare_username = 'webby@qwerty.commcarehq.org'
         self.commcare_password = '*****'
-        self.commcare_user = CommCareUser.create(self.domain.name, self.commcare_username, self.commcare_password)
+        self.commcare_user = CommCareUser.create(self.domain.name, self.commcare_username, self.commcare_password,
+                                                 None, None)
 
     def tearDown(self):
         self.commcare_user.delete()
@@ -470,7 +471,7 @@ class TestApiKey(APIResourceTest):
     def test_wrong_user_api_key(self):
         username = 'blah@qwerty.commcarehq.org'
         password = '***'
-        other_user = WebUser.create(self.domain.name, username, password)
+        other_user = WebUser.create(self.domain.name, username, password, None, None)
         other_user.set_role(self.domain.name, 'admin')
         other_user.save()
         self.addCleanup(other_user.delete)

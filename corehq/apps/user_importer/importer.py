@@ -11,8 +11,6 @@ from couchdbkit.exceptions import (
     ResourceNotFound,
 )
 
-from corehq.apps.user_importer.helpers import spec_value_to_boolean_or_none
-from corehq.apps.users.account_confirmation import send_account_confirmation_if_necessary
 from dimagi.utils.parsing import string_to_boolean
 
 from corehq import privileges
@@ -22,12 +20,22 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.user_importer.exceptions import UserUploadError
+from corehq.apps.user_importer.helpers import spec_value_to_boolean_or_none
 from corehq.apps.user_importer.validation import (
     get_user_import_validators,
     is_password,
 )
-from corehq.apps.users.models import CommCareUser, CouchUser, UserRole, Invitation
+from corehq.apps.users.account_confirmation import (
+    send_account_confirmation_if_necessary,
+)
+from corehq.apps.users.models import (
+    CommCareUser,
+    CouchUser,
+    Invitation,
+    UserRole,
+)
 from corehq.apps.users.util import normalize_username
+from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 
 required_headers = set(['username'])
 allowed_headers = set([
@@ -355,7 +363,8 @@ def create_or_update_users_and_groups(domain, user_specs, upload_user, group_mem
                     kwargs = {}
                     if is_account_confirmed is not None and not web_user:
                         kwargs['is_account_confirmed'] = is_account_confirmed
-                    user = CommCareUser.create(domain, username, password, commit=False, **kwargs)
+                    user = CommCareUser.create(domain, username, password, created_by=upload_user,
+                                               created_via=USER_CHANGE_VIA_BULK_IMPORTER, commit=False, **kwargs)
                     status_row['flag'] = 'created'
 
                 if phone_number:

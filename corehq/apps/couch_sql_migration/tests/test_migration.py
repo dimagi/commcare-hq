@@ -1095,7 +1095,7 @@ class MigrationTestCase(BaseMigrationTestCase):
 
     def test_delete_user_during_migration(self):
         from corehq.apps.users.models import CommCareUser
-        user = CommCareUser.create(self.domain_name, "mobile-user", "123")
+        user = CommCareUser.create(self.domain_name, "mobile-user", "123", None, None)
         # NOTE user is deleted when domain is deleted in tearDown
         with self.patch_migration_chunk_size(1):
             self.do_migration(live=True, diffs=IGNORE)

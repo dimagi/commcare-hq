@@ -41,6 +41,10 @@ class PoshanProgressReport(object):
             den = row[all_cols.index(v[1])]
             extra_number = v[2] if len(v) > 2 else None
             row[all_cols.index(k)] = calculate_percent(num, den, extra_number)
+            # calculation is done on decimal values
+            # and then round off to nearest integer
+            row[all_cols.index(v[0])] = round(row[all_cols.index(v[0])])
+            row[all_cols.index(v[1])] = round(row[all_cols.index(v[1])])
         return row
 
     def quarter_wise(self, filters, order_by, aggregation_level):
@@ -99,6 +103,9 @@ class PoshanProgressReport(object):
         for k, v in row_data_dict.items():
             row = v[:]
             row_data_dict[k] = self.__calculate_percentage_in_rows(row, all_cols)
+            # rounding remaining values
+            for col in ['num_launched_districts', 'num_launched_blocks']:
+                row_data_dict[k][all_cols.index(col)] = round(row_data_dict[k][all_cols.index(col)])
 
         if self.layout != 'comprehensive':
             headers = headers_summary

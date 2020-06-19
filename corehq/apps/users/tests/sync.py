@@ -13,7 +13,7 @@ class SyncWebUserTestCase(TestCase):
         username = "mr-danny@dimagi.com"
         password = "s3cr3t"
         self.domain_obj = create_domain(domain)
-        self.web_user = WebUser.create(domain, username, password)
+        self.web_user = WebUser.create(domain, username, password, None, None)
         self.web_user.save()
 
     def test_couch_to_django(self):
@@ -55,7 +55,7 @@ class SyncCommCareUserTestCase(TestCase):
         self.username = "mr-danny@test.commcarehq.org"
         self.password = "s3cr3t"
         self.domain_obj = create_domain(self.domain)
-        self.commcare_user = CommCareUser.create(self.domain, self.username, self.password)
+        self.commcare_user = CommCareUser.create(self.domain, self.username, self.password, None, None)
         self.commcare_user.save()
 
     def test_couch_to_django(self):
@@ -87,7 +87,7 @@ class SyncCommCareUserTestCase(TestCase):
         self.commcare_user.retire()
         self.assertEqual(User.objects.filter(username=self.commcare_user.username).count(), 0)
 
-        self.commcare_user = CommCareUser.create(self.domain, self.username, self.password)
+        self.commcare_user = CommCareUser.create(self.domain, self.username, self.password, None, None)
         self.commcare_user.save()
 
     def tearDown(self):

@@ -461,6 +461,17 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
         vm.sddTableData['children'].unshift(snForAtleast25Days);
     }
 
+    if (haveAccessToFeatures) {
+        var numberOfVHSNDConducted = {
+            'mData': 'vhnd_conducted',
+            'heading': 'Number of VHSND conducted',
+            'tooltipValue': 'Number of Village Health Sanitation and Nutrition Days (VHSNDs) organised by an AWC in a month',
+            'columnValueType': 'raw',
+            'columnValueIndicator': 'vhnd_conducted',
+        };
+        vm.sddTableData['pw_lw_children']['awc'].splice(5, 0, numberOfVHSNDConducted);
+    }
+
     vm.getTableData = function () {
         var isPwLwChildren = vm.isPwLwChildrenTab();
         var isAwc = vm.isAwcDataShown();

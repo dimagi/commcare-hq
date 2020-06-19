@@ -5,7 +5,6 @@ import mock
 from django.core.serializers.json import DjangoJSONEncoder
 from django.test.testcases import TestCase
 
-
 from custom.icds_reports.const import (
     THR_REPORT_CONSOLIDATED,
     THR_REPORT_BENEFICIARY_TYPE,
@@ -4173,8 +4172,8 @@ class TestExportData(TestCase):
                 [
                     "AWW Activity Report", [
                     [
-                        "State", "District", "Block", "Supervisor name", "Awc Name", "AWC site code",
-                        "AWC launch date", "Last submission date", "Days since start", "Days inactive"
+                        "State", "District", "Block", "Supervisor name", "AWC Name", "AWC site code",
+                        "First submission date", "Last submission date", "Days since start", "Days inactive"
                     ],
                     ['st1', 'd1', 'b1', 's1', 'a1', 'awca1', 'Data Not Entered', 'Data Not Entered',
                      'Data Not Entered', 'Data Not Entered'],
@@ -4612,8 +4611,8 @@ class TestExportData(TestCase):
                 ['Total', 4, 5, 22, '118.18%', 379, 3, '0.79%', 991, 66, '6.66%', 989, 695, '70.27%', 79, 57,
                  '72.15%', 989, 32, '3.24%', 276, 146,
                  '52.90%', 991, 16, '1.61%']]], ['Export Info', [['Generated at', self.now],
-                                                             ['Report Layout', 'Comprehensive'],
-                                                             ['Data Period', 'Month']]]]
+                                                                 ['Report Layout', 'Comprehensive'],
+                                                                 ['Data Period', 'Month']]]]
         )
 
     def test_ppr_summary_month(self):
@@ -4686,15 +4685,12 @@ class TestExportData(TestCase):
                  'No. of children between 3-6 years ',
                  'No of children between 3-6 years provided SNP for atleast 21+ days',
                  '% of children between 3-6 years provided SNP for atleast 21+ days'],
-                ['st2', 'd2', 0.67, 0.67, 4.0, '78.00%', 89.0, 0.0, '0.00%', 133.67, 17.67, '13.22%', 168.33,
-                 123.67, '73.47%',
-                 11.0, 6.67, '60.64%', 168.33, 4.0, '2.38%', 69.0, 32.0, '46.38%', 133.67, 1.0, '0.75%'],
-                ['st2', 'd3', 0.67, 0.67, 3.33, '64.06%', 66.67, 0.0, '0.00%', 199.33, 10.33, '5.18%', 177.33,
-                 119.67,
-                 '67.48%', 12.0, 6.67, '55.58%', 177.33, 6.0, '3.38%', 36.67, 8.0, '21.82%', 199.33, 3.0, '1.51%'],
+                ['st2', 'd2', 1, 1, 4, '78.00%', 89, 0, '0.00%', 134, 18, '13.22%', 168,
+                 124, '73.47%', 11, 7, '60.61%', 168, 4, '2.38%', 69, 32, '46.38%', 134, 1, '0.75%'],
+                ['st2', 'd3', 1, 1, 3, '64.00%', 67, 0, '0.00%', 199, 10, '5.18%', 177,
+                 120, '67.48%', 12, 7, '55.56%', 177, 6, '3.38%', 37, 8, '21.82%', 199, 3, '1.51%'],
                 ['Total', 'Total', 4, 4, 22, '71.64%', 467, 0, '0.00%', 999, 84, '8.41%', 1037, 730, '70.40%', 69,
-                 40,
-                 '57.97%', 1037, 30, '2.89%', 317, 120, '37.85%', 999, 12, '1.20%']]], ['Export Info', [
+                 40, '57.97%', 1037, 30, '2.89%', 317, 120, '37.85%', 999, 12, '1.20%']]], ['Export Info', [
                 ['Generated at', self.now], ['State', 'st2'], ['Report Layout', 'Comprehensive'],
                 ['Data Period', 'Quarter']]]]
         )
@@ -4722,15 +4718,13 @@ class TestExportData(TestCase):
                  '% of trimester three women counselled on immediate and EBF', 'Height Measurement Efficiency',
                  '% of children between 6 months -3 years, P&LW provided THR for atleast ' '21+ days',
                  '% of children between 3-6 years provided SNP for atleast 21+ days'],
-                ['st1', 0.67, 1.33, 6.67, '97.15%', '0.66%', '2.52%', '67.39%', '60.33%', '1.44%', '16.73%',
-                 '1.16%'],
-                ['st2', 1.33, 1.33, 7.33, '71.67%', '0.00%', '8.41%', '70.39%', '57.96%', '2.89%', '37.85%',
-                 '1.20%'],
-                ['st3', 0.0, 0.0, 0.0, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
-                ['st4', 0.0, 0.0, 0.0, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
-                ['st5', 0.0, 0.0, 0.0, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
-                ['st6', 0.0, 0.0, 0.0, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
-                ['st7', 0.67, 0.67, 0.67, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
+                ['st1', 1, 1, 7, '97.20%', '0.66%', '2.52%', '67.39%', '60.32%', '1.44%', '16.73%', '1.16%'],
+                ['st2', 1, 1, 7, '71.64%', '0.00%', '8.41%', '70.40%', '57.97%', '2.89%', '37.85%', '1.20%'],
+                ['st3', 0, 0, 0, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
+                ['st4', 0, 0, 0, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
+                ['st5', 0, 0, 0, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
+                ['st6', 0, 0, 0, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
+                ['st7', 1, 1, 1, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
                 ['Total', 8, 10, 44, '80.00%', '0.32%', '5.53%', '68.91%', '59.09%', '2.19%', '28.40%', '1.18%']]],
              ['Export Info',
               [['Generated at', self.now], ['Report Layout', 'Summary'], ['Data Period', 'Quarter']]]]

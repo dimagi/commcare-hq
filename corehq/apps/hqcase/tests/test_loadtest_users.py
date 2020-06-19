@@ -21,7 +21,7 @@ class LoadtestUserTest(TestCase):
         super(LoadtestUserTest, cls).setUpClass()
         cls.domain = Domain(name='foo')
         cls.domain.save()
-        cls.user = CommCareUser.create(cls.domain.name, 'somebody', 'password')
+        cls.user = CommCareUser.create(cls.domain.name, 'somebody', 'password', None, None)
         cls.user_id = cls.user._id
         cls.factory = CaseFactory(domain='foo', case_defaults={'owner_id': cls.user_id})
         ENABLE_LOADTEST_USERS.set('foo', True, namespace='domain')

@@ -1,7 +1,7 @@
 from copy import deepcopy
 from datetime import date
 
-from django.db.models import Count, Sum
+from django.db.models import Sum
 
 from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import (
@@ -24,6 +24,10 @@ def calculate_percentage_single_row(row, truncate_out=True):
         den = row[v[1]]
         extra_number = v[2] if len(v) > 2 else None
         row[k] = calculate_percent(num, den, extra_number, truncate_out)
+        # calculation is done on decimal values
+        # and then round off to nearest integer
+        row[v[0]] = round(row[v[0]])
+        row[v[1]] = round(row[v[1]])
     return row
 
 
@@ -33,12 +37,16 @@ def calculate_aggregated_row(data, aggregation_level, data_format):
     if data_format == 'quarter':
         for k, v in data.items():
             aggregated_row[k] = handle_average(v) if v else 0
+
     else:
         for k, v in data.items():
             aggregated_row[k] = v if v else 0
 
     aggregated_row = calculate_percentage_single_row(deepcopy(aggregated_row))
-    aggregated_row = prepare_structure_aggregated_row(deepcopy(aggregated_row), aggregated_row['count'],
+    # rounding values
+    for col in ['num_launched_districts', 'num_launched_blocks', 'num_launched_states']:
+        aggregated_row[col] = round(aggregated_row[col])
+    aggregated_row = prepare_structure_aggregated_row(deepcopy(aggregated_row), aggregated_row['num_launched_states'],
                                                       aggregation_level)
     return aggregated_row
 
@@ -175,7 +183,7 @@ def get_poshan_progress_dashboard_data(domain, year, month, quarter, data_format
 
     if step == 'aggregated':
         data = queryset.aggregate(
-            count=Count('state_name'),
+            num_launched_states=Sum('num_launched_states'),
             num_launched_districts=Sum('num_launched_districts'),
             num_launched_blocks=Sum('num_launched_blocks'),
             num_launched_awcs=Sum('num_launched_awcs'),

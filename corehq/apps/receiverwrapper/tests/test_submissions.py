@@ -26,7 +26,7 @@ class BaseSubmissionTest(TestCase):
     def setUp(self):
         super(BaseSubmissionTest, self).setUp()
         self.domain = create_domain("submit")
-        self.couch_user = CommCareUser.create(self.domain.name, "test", "foobar")
+        self.couch_user = CommCareUser.create(self.domain.name, "test", "foobar", None, None)
         self.client = Client()
         self.client.login(**{'username': 'test', 'password': 'foobar'})
         self.url = reverse("receiver_post", args=[self.domain])

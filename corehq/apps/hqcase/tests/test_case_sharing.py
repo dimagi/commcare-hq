@@ -22,7 +22,7 @@ class CaseSharingTest(TestCase):
         password = "****"
 
         def create_user(username):
-            return CommCareUser.create(self.domain, format_username(username, self.domain), password)
+            return CommCareUser.create(self.domain, format_username(username, self.domain), password, None, None)
 
         def create_group(name, *users):
             group = Group(users=[user.user_id for user in users], name=name, domain=self.domain,

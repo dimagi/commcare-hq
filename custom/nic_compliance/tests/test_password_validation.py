@@ -12,7 +12,7 @@ class TestUsedPasswordsRestriction(TestCase):
         self.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
         self.username = 'auser@qwerty.commcarehq.org'
         self.password = 'apassword'
-        self.user = WebUser.create(self.domain.name, self.username, self.password).get_django_user()
+        self.user = WebUser.create(self.domain.name, self.username, self.password, None, None).get_django_user()
 
     def tearDown(self):
         self.user.delete()
