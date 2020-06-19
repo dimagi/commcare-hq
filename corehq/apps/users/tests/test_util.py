@@ -10,7 +10,7 @@ class TestUsernameToUserID(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestUsernameToUserID, cls).setUpClass()
-        cls.user = CommCareUser.create('scale-domain', 'scale', 'dude')
+        cls.user = CommCareUser.create('scale-domain', 'scale', 'dude', None, None)
         cache.clear()
 
     @classmethod
@@ -32,12 +32,12 @@ class TestUserIdToUsernameToUserName(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestUserIdToUsernameToUserName, cls).setUpClass()
-        cls.user_without_name = CommCareUser.create('test-domain', 'no_name', 'a_secret')
-        cls.user_with_first_name = CommCareUser.create('test-domain', 'first_name', 'a_secret',
+        cls.user_without_name = CommCareUser.create('test-domain', 'no_name', 'a_secret', None, None)
+        cls.user_with_first_name = CommCareUser.create('test-domain', 'first_name', 'a_secret', None, None,
                                                        first_name='Alice')
-        cls.user_with_last_name = CommCareUser.create('test-domain', 'last_name', 'a_secret',
+        cls.user_with_last_name = CommCareUser.create('test-domain', 'last_name', 'a_secret', None, None,
                                                       last_name='Jones')
-        cls.user_with_full_name = CommCareUser.create('test-domain', 'full_name', 'a_secret',
+        cls.user_with_full_name = CommCareUser.create('test-domain', 'full_name', 'a_secret', None, None,
                                                       first_name='Alice', last_name='Jones')
         cls.users = [
             cls.user_without_name,

@@ -281,6 +281,7 @@ class ServiceDeliveryMonthly(models.Model):
     num_launched_awcs = models.IntegerField(help_text='Number of AWC launched')
     num_awcs_conducted_cbe = models.IntegerField(help_text='Number of AWC conducted atleast one CBE')
     num_awcs_conducted_vhnd = models.IntegerField(help_text='Number of AWC conducted atleast one VHSND visits')
+    vhnd_conducted = models.IntegerField(help_text='Number of vhsnd conducted by AWCs')
     gm_0_3 = models.IntegerField(
         blank=True, null=True,
         help_text="weighing efficiency for 0-3 years of children"
@@ -1152,6 +1153,9 @@ class SystemUsageReportView(models.Model):
     district_name = models.TextField(blank=True, null=True)
     state_id = models.TextField(blank=True, null=True)
     state_name = models.TextField(blank=True, null=True)
+    block_map_location_name = models.TextField(blank=True, null=True)
+    district_map_location_name = models.TextField(blank=True, null=True)
+    state_map_location_name = models.TextField(blank=True, null=True)
     aggregation_level = models.IntegerField(blank=True, null=True)
     contact_phone_number = models.TextField(blank=True, null=True)
     awc_days_open = models.IntegerField(
@@ -1204,6 +1208,10 @@ class SystemUsageReportView(models.Model):
     )
     num_supervisor_launched = models.IntegerField(blank=True, null=True)
     month = models.DateField(blank=True, null=True)
+    num_launched_states = models.IntegerField(blank=True, null=True)
+    num_launched_districts = models.IntegerField(blank=True, null=True)
+    num_launched_blocks = models.IntegerField(blank=True, null=True)
+    num_launched_supervisors = models.IntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_reports'

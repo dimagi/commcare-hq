@@ -211,6 +211,7 @@ DEFAULT_APPS = (
     'ws4redis',
     'statici18n',
     'django_user_agents',
+    'logentry_admin',
 )
 
 CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'
@@ -470,6 +471,14 @@ RETURN_PATH_EMAIL = None
 # This will trigger a periodic task to check the RETURN_PATH_EMAIL inbox for
 # SES bounce and complaint notifications.
 RETURN_PATH_EMAIL_PASSWORD = None
+
+# Allows reception of SES Events to the log_email_event endpoint to update
+# MessagingSubEvent status This configuration set should be set up for each
+# environment here:
+# https://console.aws.amazon.com/ses/home?region=us-east-1#configuration-set-list:
+
+SES_CONFIGURATION_SET = None
+SNS_EMAIL_EVENT_SECRET = None
 
 ENABLE_SOFT_ASSERT_EMAILS = True
 IS_DIMAGI_ENVIRONMENT = True

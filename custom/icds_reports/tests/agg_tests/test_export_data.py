@@ -4173,8 +4173,8 @@ class TestExportData(TestCase):
                 [
                     "AWW Activity Report", [
                     [
-                        "State", "District", "Block", "Supervisor name", "Awc Name", "AWC site code",
-                        "AWC launch date", "Last submission date", "Days since start", "Days inactive"
+                        "State", "District", "Block", "Supervisor name", "AWC Name", "AWC site code",
+                        "First submission date", "Last submission date", "Days since start", "Days inactive"
                     ],
                     ['st1', 'd1', 'b1', 's1', 'a1', 'awca1', 'Data Not Entered', 'Data Not Entered',
                      'Data Not Entered', 'Data Not Entered'],

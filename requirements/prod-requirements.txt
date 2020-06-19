@@ -41,6 +41,7 @@ django-countries==4.6     # via -r requirements/requirements.in
 django-crispy-forms==1.7.0  # via -r requirements/requirements.in
 django-cte==1.1.4         # via -r requirements/requirements.in
 django-formtools==2.1     # via -r requirements/requirements.in, django-two-factor-auth
+django-logentry-admin==1.0.6  # via -r requirements/requirements.in
 django-otp==0.3.13        # via -r requirements/requirements.in, django-two-factor-auth
 django-partial-index==0.6.0  # via -r requirements/requirements.in
 django-phonenumber-field==1.3.0  # via django-two-factor-auth
@@ -55,7 +56,7 @@ django-transfer==0.4      # via -r requirements/requirements.in
 django-two-factor-auth==1.6.2  # via -r requirements/requirements.in
 django-user-agents==0.3.2  # via -r requirements/requirements.in
 django-websocket-redis==0.5.2  # via -r requirements/requirements.in
-django==1.11.29           # via -r requirements/requirements.in, django-angular, django-appconf, django-bulk-update, django-formtools, django-otp, django-phonenumber-field, django-prbac, django-ranged-response, django-redis, django-simple-captcha, django-statici18n, django-two-factor-auth, django-user-agents, djangorestframework, jsonfield
+django==1.11.29           # via -r requirements/requirements.in, django-angular, django-appconf, django-bulk-update, django-formtools, django-logentry-admin, django-otp, django-phonenumber-field, django-prbac, django-ranged-response, django-redis, django-simple-captcha, django-statici18n, django-two-factor-auth, django-user-agents, djangorestframework, jsonfield
 djangorestframework==3.11.0  # via -r requirements/requirements.in
 dnspython==1.15.0         # via -r requirements/requirements.in, email-validator, eventlet
 docutils==0.15.2          # via botocore
@@ -86,7 +87,7 @@ jdcal==1.4.1              # via openpyxl
 jinja2==2.10.3            # via -r requirements/requirements.in
 jmespath==0.9.4           # via boto3, botocore
 json-delta==2.0           # via -r requirements/requirements.in
-jsonfield==1.0.3          # via -r requirements/requirements.in, django-prbac
+jsonfield==2.1.1          # via -r requirements/requirements.in, django-prbac
 jsonobject-couchdbkit==1.0.1  # via -r requirements/requirements.in
 jsonobject==0.9.9         # via -r requirements/requirements.in, jsonobject-couchdbkit
 jsonpath-rw==1.4.0        # via -r requirements/requirements.in
@@ -154,7 +155,7 @@ sh==1.09                  # via -r requirements/requirements.in
 simpleeval==0.9.8         # via -r requirements/requirements.in
 simplegeneric==0.8.1      # via ipython
 simplejson==3.16.0        # via -r requirements/requirements.in, datadog, django-prbac
-six==1.13.0               # via -r requirements/requirements.in, cryptography, django-appconf, django-prbac, django-simple-captcha, django-transfer, django-websocket-redis, dropbox, errand-boy, ethiopian-date-converter, eulxml, eventlet, faker, ghdiff, html5lib, jsonobject, jsonobject-couchdbkit, jsonpath-rw, mock, prompt-toolkit, pyopenssl, python-dateutil, pyzxcvbn, qrcode, quickcache, traitlets, twilio
+six==1.13.0               # via -r requirements/requirements.in, cryptography, django-appconf, django-prbac, django-simple-captcha, django-transfer, django-websocket-redis, dropbox, errand-boy, ethiopian-date-converter, eulxml, eventlet, faker, ghdiff, html5lib, jsonfield, jsonobject, jsonobject-couchdbkit, jsonpath-rw, mock, prompt-toolkit, pyopenssl, python-dateutil, pyzxcvbn, qrcode, quickcache, traitlets, twilio
 smartypants==2.0.1        # via pycco
 socketpool==0.5.3         # via -r requirements/requirements.in
 sqlagg==0.16.1            # via -r requirements/requirements.in

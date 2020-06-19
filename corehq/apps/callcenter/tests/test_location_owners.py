@@ -34,7 +34,7 @@ class CallCenterLocationOwnerTest(TestCase):
         cls.domain.save()
 
         # Create user
-        cls.user = CommCareUser.create(TEST_DOMAIN, 'user1', '***')
+        cls.user = CommCareUser.create(TEST_DOMAIN, 'user1', '***', None, None)
 
         # Create locations
         LocationType.objects.get_or_create(

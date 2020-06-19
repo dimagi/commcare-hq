@@ -32,11 +32,11 @@ In order for the tests to run the __development server needs to be running on po
 
 To run all javascript tests in all the apps:
 
-    $ grunt mocha
+    $ grunt test
 
 To run the javascript tests for a particular app run:
 
-    $ grunt mocha:<app_name> // (e.g. grunt mocha:app_manager)
+    $ grunt test:<app_name> // (e.g. grunt test:app_manager)
 
 To list all the apps available to run:
 
@@ -51,7 +51,7 @@ To run tests from the browser (useful for debugging) visit this url:
 http://localhost:8000/mocha/<app_name>
 ```
 
-Occasionally you will see an app specified with a `#`, like `app_manager#b3`. The string after `#` specifies that the test uses an alternate configuration. To visit this suite in the browser go to:
+Occasionally you will see an app specified with a `/`, like `app_manager/b3`. The string after `/` specifies that the test uses an alternate configuration. To visit this suite in the browser go to:
 
 ```
 http://localhost:8000/mocha/<app_name>/<config>  // (e.g. http://localhost:8000/mocha/app_manager/b3)
@@ -71,7 +71,7 @@ There are three steps to adding a new app to test:
 Occasionally there's a need to use a different mocha template to run tests for the same app. An example of this is if the app uses javascript that depends on bootstrap2 libraries and javascript that depends on bootstrap3 libraries. In order to create multiple configurations, specify the app in the `Gruntfile.js` like this:
 
 ```
-<app>#<config>  // (e.g. app_manager#b3)
+<app>/<config>  // (e.g. app_manager/b3)
 ```
 
 Now mocha will look for that template in `corehq/apps/<app>/templates/<app>/spec/<config>/mocha.html`

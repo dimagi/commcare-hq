@@ -165,6 +165,9 @@ class RebuildTableTest(TestCase):
             len([c for c in insp.get_columns(table_name) if c['name'] == 'new_date']), 0
         )
 
+        # re-fetch from DB to bust object caches
+        self.config = DataSourceConfiguration.get(self.config.data_source_id)
+
         # add the column to the config
         self.config.configured_indicators.append({
             "column_id": "new_date",
@@ -233,13 +236,12 @@ class RebuildTableTest(TestCase):
             "property_name": "owner_id",
             "is_primary_key": True
         })
+        config.sql_settings.primary_key = ['pk_key', 'doc_id']
         config.save()
+
+        get_case_pillow(ucr_configs=[config])
         adapter = get_indicator_adapter(config)
         engine = adapter.engine
-        config.sql_settings.primary_key = ['pk_key', 'doc_id']
-
-        # rebuild table
-        get_case_pillow(ucr_configs=[config])
         insp = reflection.Inspector.from_engine(engine)
         table_name = get_table_name(self.config.domain, self.config.table_id)
         pk = insp.get_pk_constraint(table_name)
