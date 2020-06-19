@@ -58,7 +58,7 @@ from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER
 from dimagi.utils.django.request import mutable_querydict
-from dimagi.utils.logging import notify_exception
+from dimagi.utils.logging import notify_exception, notify_error
 from dimagi.utils.web import get_site_domain, get_url_base, json_response
 from soil import DownloadBase
 from soil import views as soil_views
@@ -613,13 +613,36 @@ def jserror(request):
             browser_version = parsed_agent['browser'].get('version', TAG_UNKNOWN)
             browser_name = parsed_agent['browser'].get('name', TAG_UNKNOWN)
 
+    url = request.POST.get('page', None)
+    domain = '_unknown'
+    if url:
+        parts = url.split('/')
+        if parts[1] == '' and parts[3] == 'a' and len(parts) > 4:
+            domain = parts[4]
+
     metrics_counter('commcare.jserror.count', tags={
         'os': os,
         'browser_version': browser_version,
         'browser_name': browser_name,
-        'url': sanitize_url(request.POST.get('page', None)),
+        'url': sanitize_url(url),
         'file': request.POST.get('filename'),
         'bot': bot,
+        'domain': domain,
+    })
+
+    notify_error(message=f'[JS] {request.POST.get("message")}', details={
+        'message': request.POST.get('message'),
+        'domain': domain,
+        'page': url,
+        'file': request.POST.get('file'),
+        'line': request.POST.get('line'),
+        'stack': request.POST.get('stack'),
+        'meta': {
+            'os': os,
+            'browser_version': browser_version,
+            'browser_name': browser_name,
+            'bot': bot,
+        }
     })
 
     return HttpResponse('')
