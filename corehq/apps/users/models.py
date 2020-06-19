@@ -2965,6 +2965,9 @@ class HQApiKey(models.Model):
     created = models.DateTimeField(default=timezone.now)
     ip_allowlist = ArrayField(models.GenericIPAddressField(), default=list)
 
+    class Meta(object):
+        unique_together = ('user', 'name')
+
     def save(self, *args, **kwargs):
         if not self.key:
             self.key = self.generate_key()

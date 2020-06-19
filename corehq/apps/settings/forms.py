@@ -10,7 +10,7 @@ from django.utils.translation import ugettext_lazy
 
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
-from crispy_forms.bootstrap import InlineField, StrictButton
+from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout
 from two_factor.forms import (
@@ -25,6 +25,7 @@ from two_factor.utils import totp_digits
 
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQFormHelper
+from corehq.apps.settings.exceptions import DuplicateApiKeyName
 from corehq.apps.settings.validators import validate_international_phonenumber
 from corehq.apps.users.models import CouchUser, HQApiKey
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
@@ -289,14 +290,16 @@ class HQApiKeyForm(forms.Form):
         )
 
     def create_key(self, user):
-        new_key = HQApiKey.objects.create(
-            name=self.cleaned_data['name'],
-            ip_allowlist=self.cleaned_data['ip_allowlist'],
-            user=user,
-        )
-        new_key.key = new_key.generate_key()
-        new_key.save()
-        return new_key
+        try:
+            HQApiKey.objects.get(name=self.cleaned_data['name'], user=user)
+            raise DuplicateApiKeyName
+        except HQApiKey.DoesNotExist:
+            new_key = HQApiKey.objects.create(
+                name=self.cleaned_data['name'],
+                ip_allowlist=self.cleaned_data['ip_allowlist'],
+                user=user,
+            )
+            return new_key
 
 
 class HQEmptyForm(forms.Form):

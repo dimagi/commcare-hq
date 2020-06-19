@@ -40,6 +40,7 @@ from corehq import toggles
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.utils import sign, update_session_language
 from corehq.apps.hqwebapp.views import BaseSectionPageView, CRUDPaginatedViewMixin
+from corehq.apps.settings.exceptions import DuplicateApiKeyName
 from corehq.apps.settings.forms import (
     HQApiKeyForm,
     HQDeviceValidationForm,
@@ -557,7 +558,10 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
         return HQApiKeyForm()
 
     def get_create_item_data(self, create_form):
-        new_api_key = create_form.create_key(self.request.user)
+        try:
+            new_api_key = create_form.create_key(self.request.user)
+        except DuplicateApiKeyName:
+            return {'error': _(f"Api Key with name \"{create_form.cleaned_data['name']}\" already exists.")}
         copy_key_message = _("Copy this in a secure place. It will not be shown again.")
         return {
             'itemData': {
