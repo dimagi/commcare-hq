@@ -24,7 +24,7 @@ class GetICDSSmsUsageTest(BaseICDSTest):
         cls.domain_obj = create_domain(cls.domain)
 
         def make_user(name, location):
-            user = CommCareUser.create(cls.domain, name, 'password')
+            user = CommCareUser.create(cls.domain, name, 'password', None, None)
             user.set_location(location)
             return user
 

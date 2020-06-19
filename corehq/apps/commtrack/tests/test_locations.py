@@ -38,7 +38,8 @@ class LocationsTest(TestCase):
 
     def setUp(self):
         super(LocationsTest, self).setUp()
-        self.user = CommCareUser.create(domain=self.domain, username='d.abernathy', password='123')
+        self.user = CommCareUser.create(domain=self.domain, username='d.abernathy', password='123',
+                                        created_by=None, created_via=None)
         self.loc = make_loc('mariposa_saloon', domain=self.domain)
         self.user.set_location(self.loc)
 

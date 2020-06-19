@@ -49,7 +49,7 @@ def create_domain_and_user(domain_name, username):
     user = CommCareUser.get_by_username(username)
     if user:
         user.delete()
-    user = CommCareUser.create(domain_name, username, '***')
+    user = CommCareUser.create(domain_name, username, '***', None, None)
 
     domain.call_center_config.enabled = True
     domain.call_center_config.case_owner_id = user.user_id
@@ -168,7 +168,7 @@ class CallCenterTests(BaseCCTests):
         super(CallCenterTests, cls).setUpClass()
         cls.cc_domain, cls.cc_user = create_domain_and_user(cls.domain_name, 'user1')
         load_data(cls.cc_domain.name, cls.cc_user.user_id)
-        cls.cc_user_no_data = CommCareUser.create(cls.cc_domain.name, 'user3', '***')
+        cls.cc_user_no_data = CommCareUser.create(cls.cc_domain.name, 'user3', '***', None, None)
 
         cls.aarohi_domain, cls.aarohi_user = create_domain_and_user('aarohi', 'user2')
         load_custom_data(cls.aarohi_domain.name, cls.aarohi_user.user_id, xmlns=AAROHI_MOTHER_FORM)
@@ -450,7 +450,8 @@ class CallCenterSupervisorGroupTest(BaseCCTests):
     def setUp(self):
         super(CallCenterSupervisorGroupTest, self).setUp()
         self.domain = create_domain(self.domain_name)
-        self.supervisor = CommCareUser.create(self.domain_name, 'supervisor@' + self.domain_name, '***')
+        self.supervisor = CommCareUser.create(self.domain_name, 'supervisor@' + self.domain_name, '***',
+                                              None, None)
 
         self.supervisor_group = Group(
             domain=self.domain_name,
@@ -465,7 +466,7 @@ class CallCenterSupervisorGroupTest(BaseCCTests):
         self.domain.call_center_config.case_type = 'cc_flw'
         self.domain.save()
 
-        self.user = CommCareUser.create(self.domain_name, 'user@' + self.domain_name, '***')
+        self.user = CommCareUser.create(self.domain_name, 'user@' + self.domain_name, '***', None, None)
         sync_call_center_user_case(self.user)
 
         load_data(self.domain_name, self.user.user_id)
@@ -500,14 +501,15 @@ class CallCenterCaseSharingTest(BaseCCTests):
     def setUp(self):
         super(CallCenterCaseSharingTest, self).setUp()
         self.domain = create_domain(self.domain_name)
-        self.supervisor = CommCareUser.create(self.domain_name, 'supervisor@' + self.domain_name, '***')
+        self.supervisor = CommCareUser.create(self.domain_name, 'supervisor@' + self.domain_name, '***',
+                                              None, None)
 
         self.domain.call_center_config.enabled = True
         self.domain.call_center_config.case_owner_id = self.supervisor.get_id
         self.domain.call_center_config.case_type = 'cc_flw'
         self.domain.save()
 
-        self.user = CommCareUser.create(self.domain_name, 'user@' + self.domain_name, '***')
+        self.user = CommCareUser.create(self.domain_name, 'user@' + self.domain_name, '***', None, None)
         sync_call_center_user_case(self.user)
 
         self.group = Group(
@@ -557,14 +559,15 @@ class CallCenterTestOpenedClosed(BaseCCTests):
     def setUp(self):
         super(CallCenterTestOpenedClosed, self).setUp()
         self.domain = create_domain(self.domain_name)
-        self.supervisor = CommCareUser.create(self.domain_name, 'supervisor@' + self.domain_name, '***')
+        self.supervisor = CommCareUser.create(self.domain_name, 'supervisor@' + self.domain_name, '***',
+                                              None, None)
 
         self.domain.call_center_config.enabled = True
         self.domain.call_center_config.case_owner_id = self.supervisor.get_id
         self.domain.call_center_config.case_type = 'cc_flw'
         self.domain.save()
 
-        self.user = CommCareUser.create(self.domain_name, 'user@' + self.domain_name, '***')
+        self.user = CommCareUser.create(self.domain_name, 'user@' + self.domain_name, '***', None, None)
         sync_call_center_user_case(self.user)
 
         load_data(self.domain_name, self.user.user_id, case_opened_by='not me', case_closed_by='not me')
