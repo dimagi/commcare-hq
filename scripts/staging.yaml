@@ -58,7 +58,7 @@ branches:
   - nh/charset  # Norman May 27
   - revert-27725-jls/kill-configurable-timeout # Jenny June 9
   - nemanja1040:aws_pinpoint_fees  # Nemanja Stancic June 17
-  #- jls/linked-domain-fixtures # Jenny June 18
+  - jls/linked-domain-fixtures # Jenny June 18
   - fr/multiple-api-keys
   - dmr/sqlagg-bump-version  # Danny Jun 19
 
