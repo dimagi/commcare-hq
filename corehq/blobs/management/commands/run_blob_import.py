@@ -1,6 +1,6 @@
-import asyncio
-import sys
 import tarfile
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 
 from django.core.management import BaseCommand
 
@@ -17,63 +17,35 @@ class Command(BaseCommand):
         parser.add_argument('filename')
 
     def handle(self, filename, **options):
-        asyncio_run(import_blobs_from_tgz(filename))
+        import_blobs_from_tgz(filename)
 
 
-async def import_blobs_from_tgz(filename):
+def import_blobs_from_tgz(filename):
+    with ThreadPoolExecutor(max_workers=NUM_WORKERS) as executor:
+        func = partial(worker, filename)
+        futures = executor.map(func, range(NUM_WORKERS))
+        list(futures)  # Resolves results and exceptions from workers
+
+
+def worker(filename, worker_number):
     """
-    Creates worker tasks to consume queue, and adds blobs to queue only
-    as fast as they are consumed.
+    Each worker claims the ``worker_number``th file in the ``filename``
+    tar.gz file, and copies it to blob_db.
+
+    Iterated file handles for blobs cannot be passed to coroutines or
+    futures, because as soon as the caller iterates to the next blob,
+    the previous handle is closed. We could read the data and pass that,
+    but blobs can be too big to read at once.
+
+    So threaded workers all need to read the same tar.gz file and
+    iterate the files inside it, picking out the ones that belong to
+    them.
     """
-    loop = asyncio.get_event_loop()
-    queue = asyncio.Queue(maxsize=NUM_WORKERS)
-    worker_tasks = [loop.create_task(worker(queue))
-                    for __ in range(NUM_WORKERS)]
-
-    for fileobj, key in get_blobs(filename):
-        await queue.put((fileobj, key))
-    await queue.join()
-
-    for task in worker_tasks:
-        task.cancel()
-    await asyncio.gather(*worker_tasks, return_exceptions=True)
-
-
-def get_blobs(filename):
-    """
-    Generator to iterate blobs in tar.gz file
-    """
-    with tarfile.open(filename, 'r:gz') as tgzfile:
-        for tarinfo in tgzfile:
-            key = tarinfo.name
-            fileobj = tgzfile.extractfile(tarinfo)
-            yield (fileobj, key)
-
-
-async def worker(queue):
-    """
-    Coroutine that pulls blobs off ``queue`` and copies them to blob DB.
-    """
-    loop = asyncio.get_event_loop()
+    # ^^^ Yeah, not great. Maybe filesystem caching helps.
     blob_db = get_blob_db()
-    while True:
-        fileobj, key = await queue.get()
-        try:
-            # Run blob_db.copy_blob(fileobj, key) in a separate thread
-            await loop.run_in_executor(None, blob_db.copy_blob, fileobj, key)
-        finally:
-            fileobj.close()
-            queue.task_done()
-
-
-def asyncio_run(future):
-    """
-    Utility function for Python < 3.7
-    """
-    if sys.version_info >= (3, 7, 0):
-        return asyncio.run(future)
-    loop = asyncio.get_event_loop()
-    try:
-        return loop.run_until_complete(future)
-    finally:
-        loop.close()
+    with tarfile.open(filename, 'r:gz') as tgzfile:
+        for i, tarinfo in enumerate(tgzfile):
+            if i % NUM_WORKERS == worker_number:
+                key = tarinfo.name
+                fileobj = tgzfile.extractfile(tarinfo)
+                blob_db.copy_blob(fileobj, key)
