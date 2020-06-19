@@ -17,14 +17,14 @@ hqDefine('hqwebapp/js/inactivity', [
         console.log("[" + (new Date()).toLocaleTimeString() + "] " + message);  // eslint-disable-line no-console
     };
 
-    var calculateDelayAndWarning = function (timeout, lastRequest) {
-        var millisLeft = timeout,
+    var calculateDelayAndWarning = function (expiryDate) {
+        var millisLeft = 1000 * 60 * 1,
             response = {show_warning: false};
 
         // Figure out when the session is going to expire
-        if (lastRequest) {
-            millisLeft = timeout - (new Date() - new Date(lastRequest));
-            log("last request was " + lastRequest + ", so there are " + (millisLeft / 1000 / 60) + " minutes left in the session");
+        if (expiryDate) {
+            millisLeft = new Date(expiryDate) - new Date();
+            log("expiry date is " + expiryDate + ", so there are " + (millisLeft / 1000 / 60) + " minutes left in the session");
 
             // Prevent runaway polling if the page is loaded and secure sessions is then turned OFF, which
             // will result in the user never getting logged out and eventually a negative number of millisLeft.
@@ -32,7 +32,7 @@ hqDefine('hqwebapp/js/inactivity', [
             // time passes.
             millisLeft = Math.abs(millisLeft);
         } else {
-            log("no last request, so there are " + (millisLeft / 1000 / 60) + " minutes left in the session");
+            log("expiry date unknown, trying pinging for it in " + (millisLeft / 1000 / 60) + " minutes");
         }
 
         if (millisLeft < 30 * 1000) {
@@ -56,8 +56,7 @@ hqDefine('hqwebapp/js/inactivity', [
     };
 
     $(function () {
-        var timeout = initialPageData.get('secure_timeout') * 60 * 1000,    // convert from minutes to milliseconds
-            $modal = $("#inactivityModal"),     // won't be present on app preview or pages without a domain
+        var $modal = $("#inactivityModal"),     // won't be present on app preview or pages without a domain
             $warningModal = $("#inactivityWarningModal");
 
         // Avoid popping up the warning modal when the user is actively doing something with the keyboard or mouse.
@@ -68,9 +67,7 @@ hqDefine('hqwebapp/js/inactivity', [
         var keyboardOrMouseActive = false,
             shouldShowWarning = false;
 
-        log("page loaded, timeout length is " + timeout / 1000 / 60 + " minutes");
-        if (timeout === undefined || !$modal.length) {
-            log("couldn't find popup or no timeout was set, therefore returning early");
+        if (!$modal.length) {
             return;
         }
 
@@ -78,8 +75,8 @@ hqDefine('hqwebapp/js/inactivity', [
           * Determine when to poll next. Poll more frequently as expiration approaches, to
           * increase the chance the modal pops up before the user takes an action and gets rejected.
           */
-        var getDelayAndWarnIfNeeded = function (lastRequest) {
-            var response = calculateDelayAndWarning(timeout, lastRequest);
+        var getDelayAndWarnIfNeeded = function (expiryDate) {
+            var response = calculateDelayAndWarning(expiryDate);
             if (response.show_warning) {
                 showWarningModal();
             }
@@ -134,7 +131,7 @@ hqDefine('hqwebapp/js/inactivity', [
                         hideWarningModal(true);
                     } else {
                         log("ping_login succeeded, time to re-calculate when the next poll should be, data was " + JSON.stringify(data));
-                        _.delay(pollToShowModal, getDelayAndWarnIfNeeded(data.last_request));
+                        _.delay(pollToShowModal, getDelayAndWarnIfNeeded(data.session_expiry));
                     }
                 },
             });
@@ -211,14 +208,14 @@ hqDefine('hqwebapp/js/inactivity', [
 
         // Send no-op request to server to extend session when there's client-side user activity on this page.
         // _.throttle will prevent this from happening too often.
-        var keepAliveTimeout = 60 * 1000;
+        var keepAliveTimeout = 5 * 60 * 1000;
         log("page loaded, will send a keep-alive request to server every click/keypress, at most once every " + (keepAliveTimeout / 1000 / 60) + " minutes");
         $("body").on("keypress click", _.throttle(function () {
             extendSession();
         }, keepAliveTimeout));
 
         // Start polling
-        _.delay(pollToShowModal, getDelayAndWarnIfNeeded());
+        _.delay(pollToShowModal, getDelayAndWarnIfNeeded());    // TODO: get initial expiry date
     });
 
     return {
