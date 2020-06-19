@@ -11,7 +11,7 @@ class SpreadsheetErrorsTest(SimpleTestCase):
             with open_any_workbook(get_file('badext', 'ext')):
                 pass
         self.assertRegex(str(cxt.exception),
-                                 r'File .*/ext/badext.ext does not end in .xls or .xlsx')
+                                 r'File .*/ext/badext.ext does not end in .csv or .xls or .xlsx')
 
 
 @run_on_all_adapters(SpreadsheetErrorsTest)
