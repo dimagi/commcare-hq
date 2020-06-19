@@ -99,7 +99,7 @@ class FixtureDataTest(TestCase):
         )
         self.data_item.save()
 
-        self.user = CommCareUser.create(self.domain, 'to_delete', '***')
+        self.user = CommCareUser.create(self.domain, 'to_delete', '***', None, None)
 
         self.fixture_ownership = FixtureOwnership(
             domain=self.domain,
@@ -301,7 +301,7 @@ class FixtureDataTest(TestCase):
         sandwich = self.make_data_type("sandwich", is_global=True)
         self.make_data_item(sandwich, "7.39")
         frank = self.user.to_ota_restore_user()
-        sammy = CommCareUser.create(self.domain, 'sammy', '***').to_ota_restore_user()
+        sammy = CommCareUser.create(self.domain, 'sammy', '***', None, None).to_ota_restore_user()
 
         fixtures = call_fixture_generator(frank)
         self.assertEqual({item.attrib['user_id'] for item in fixtures}, {frank.user_id})
@@ -349,7 +349,7 @@ class TestFixtureOrdering(TestCase):
     def setUpClass(cls):
         super(TestFixtureOrdering, cls).setUpClass()
         cls.domain = "TestFixtureOrdering"
-        cls.user = CommCareUser.create(cls.domain, 'george', '***')
+        cls.user = CommCareUser.create(cls.domain, 'george', '***', None, None)
 
         cls.data_type = FixtureDataType(
             domain=cls.domain,
