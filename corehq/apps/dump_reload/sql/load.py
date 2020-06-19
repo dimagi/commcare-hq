@@ -25,29 +25,6 @@ from corehq.sql_db.routers import HINT_PARTITION_VALUE
 CHUNK_SIZE = 200
 
 
-class DefaultDictWithKey(defaultdict):
-    """
-    A defaultdict that passes ``key`` to its factory
-    """
-    def __missing__(self, key):
-        self[key] = value = self.default_factory(key)
-        return value
-
-
-class LoadStat(object):
-    """Simple object for keeping track of stats"""
-    def __init__(self, db_alias, model_counter):
-        self.db_alias = db_alias
-        self.model_counter = model_counter
-
-    def update(self, stat):
-        """
-        :type stat: LoadStat
-        """
-        assert self.db_alias == stat.db_alias
-        self.model_counter += stat.model_counter
-
-
 class SqlDataLoader(DataLoader):
     slug = 'sql'
 
@@ -225,3 +202,25 @@ def get_db_alias(obj: dict) -> str:
 
         router_hints[HINT_PARTITION_VALUE] = partition_value
     return router.db_for_write(model, **router_hints)
+
+
+class DefaultDictWithKey(defaultdict):
+    """
+    A defaultdict that passes ``key`` to its factory
+    """
+    def __missing__(self, key):
+        self[key] = value = self.default_factory(key)
+        return value
+
+
+class LoadStat:
+    """
+    Simple object for keeping track of stats
+    """
+    def __init__(self, db_alias, model_counter):
+        self.db_alias = db_alias
+        self.model_counter = model_counter
+
+    def update(self, stat: 'LoadStat'):
+        assert self.db_alias == stat.db_alias
+        self.model_counter += stat.model_counter
