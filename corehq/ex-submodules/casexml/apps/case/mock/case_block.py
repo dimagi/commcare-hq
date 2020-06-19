@@ -35,7 +35,7 @@ class CaseBlock(object):
         self.update = copy.copy(update) if update else {}
         now = datetime.utcnow()
         self.date_modified = date_modified or now
-        self.date_opened = (now.date() if create and date_opened is CaseBlock.undefined
+        self.date_opened = (now if create and date_opened is CaseBlock.undefined
                             else date_opened)
 
         self.case_type = "" if create and case_type is CaseBlock.undefined else case_type
