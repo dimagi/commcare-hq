@@ -13,7 +13,6 @@ from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests.test_view import ConfigurableReportTestMixin
 from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.util.test_utils import softer_assert
 
 
 class ConfigurableReportAggregationTestMixin(ConfigurableReportTestMixin):
