@@ -18,7 +18,7 @@ hqDefine('hqwebapp/js/inactivity', [
     };
 
     var calculateDelayAndWarning = function (expiryDate) {
-        var millisLeft = 1000 * 60 * 1,
+        var millisLeft = 1000 * 60 * 10,
             response = {show_warning: false};
 
         // Figure out when the session is going to expire
@@ -65,9 +65,12 @@ hqDefine('hqwebapp/js/inactivity', [
         // The shouldShowWarning flag is active if the user's session is 2 minutes from expiring, but keyboard or
         // mouse activity is preventing us from actually showing it. It'll be shown at the next 0.5-sec break.
         var keyboardOrMouseActive = false,
-            shouldShowWarning = false;
+            shouldShowWarning = false,
+            sessionExpiry = initialPageData.get('session_expiry');
 
+        log("Page loaded, session expires at " + sessionExpiry);
         if (!$modal.length) {
+            log("Could not find modal, returning");
             return;
         }
 
@@ -215,7 +218,7 @@ hqDefine('hqwebapp/js/inactivity', [
         }, keepAliveTimeout));
 
         // Start polling
-        _.delay(pollToShowModal, getDelayAndWarnIfNeeded());    // TODO: get initial expiry date
+        _.delay(pollToShowModal, getDelayAndWarnIfNeeded(sessionExpiry));
     });
 
     return {
