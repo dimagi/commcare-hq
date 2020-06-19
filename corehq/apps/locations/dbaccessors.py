@@ -84,7 +84,7 @@ def get_users_location_ids(domain, user_ids):
               .domain(domain)
               .user_ids(user_ids)
               .non_null('assigned_location_ids')
-              .fields(['assigned_location_ids'])
+              .source(['assigned_location_ids'])
               .run())
     location_ids = [r['assigned_location_ids'] for r in result.hits if 'assigned_location_ids' in r]
     return list(chain(*location_ids))

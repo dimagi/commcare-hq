@@ -20,7 +20,7 @@ SQLAlchemy. Here's an example usage:
          .xmlns(self.xmlns)
          .submitted(gte=self.datespan.startdate_param,
                     lt=self.datespan.enddateparam)
-         .fields(['xmlns', 'domain', 'app_id'])
+         .source(['xmlns', 'domain', 'app_id'])
          .sort('received_on', desc=False)
          .size(self.pagination.count)
          .start(self.pagination.start)
@@ -534,7 +534,7 @@ class ESQuerySet(object):
         """Return the doc from an item in the query response."""
         if query._exclude_source:
             return result['_id']
-        if query._legacy_fields:
+        if query._legacy_fields and not settings.ELASTICSEARCH_MAJOR_VERSION == 7:
             return flatten_field_dict(result, fields_property='_source')
         else:
             # ES7 scroll for some reason don't include _id in the source even if it's specified
