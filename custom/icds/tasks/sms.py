@@ -62,7 +62,7 @@ def send_monthly_sms_report():
 
 @receiver(post_save, sender=DailyOutboundSMSLimitReached)
 def send_sms_limit_exceeded_alert(sender, instance, **kwargs):
-    if is_icds_cas_project:
+    if is_icds_cas_project(instance.domain):
         domain_obj = Domain.get_by_name(instance.domain)
         subject = "SMS Daily Limit exceeded"
         recipients = [
