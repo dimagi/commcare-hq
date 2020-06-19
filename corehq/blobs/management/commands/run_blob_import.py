@@ -25,8 +25,9 @@ async def import_blobs_from_tgz(filename):
     Creates worker tasks to consume queue, and adds blobs to queue only
     as fast as they are consumed.
     """
+    loop = asyncio.get_event_loop()
     queue = asyncio.Queue(maxsize=NUM_WORKERS)
-    worker_tasks = [asyncio.create_task(worker(queue))
+    worker_tasks = [loop.create_task(worker(queue))
                     for __ in range(NUM_WORKERS)]
 
     for fileobj, key in get_blobs(filename):
@@ -53,7 +54,7 @@ async def worker(queue):
     """
     Coroutine that pulls blobs off ``queue`` and copies them to blob DB.
     """
-    loop = asyncio.get_running_loop()
+    loop = asyncio.get_event_loop()
     blob_db = get_blob_db()
     while True:
         fileobj, key = await queue.get()
