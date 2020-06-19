@@ -7,6 +7,7 @@ CREATE VIEW poshan_progress_report_view AS
         "awc_location_months"."state_name" AS "state_name",
         "awc_location_months"."month" AS "month",
         "awc_location_months"."aggregation_level" AS "aggregation_level",
+        COALESCE("agg_awc"."num_launched_states", 0) AS "num_launched_states",
         COALESCE("agg_awc"."num_launched_districts", 0) AS "num_launched_districts",
         COALESCE("agg_awc"."num_launched_blocks", 0) AS "num_launched_blocks",
         COALESCE("agg_awc"."num_launched_awcs", 0) AS "num_launched_awcs",

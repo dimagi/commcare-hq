@@ -36,10 +36,7 @@ def calculate_aggregated_row(data, aggregation_level, data_format):
     # for quarter we need to average summation
     if data_format == 'quarter':
         for k, v in data.items():
-            if k != 'count':
-                aggregated_row[k] = handle_average(v) if v else 0
-            else:
-                aggregated_row[k] = v if v else 0
+            aggregated_row[k] = handle_average(v) if v else 0
 
     else:
         for k, v in data.items():
@@ -47,9 +44,9 @@ def calculate_aggregated_row(data, aggregation_level, data_format):
 
     aggregated_row = calculate_percentage_single_row(deepcopy(aggregated_row))
     # rounding values
-    aggregated_row['num_launched_districts'] = round(aggregated_row['num_launched_districts'])
-    aggregated_row['num_launched_blocks'] = round(aggregated_row['num_launched_blocks'])
-    aggregated_row = prepare_structure_aggregated_row(deepcopy(aggregated_row), aggregated_row['count'],
+    for col in ['num_launched_districts', 'num_launched_blocks', 'num_launched_states']:
+        aggregated_row[col] = round(aggregated_row[col])
+    aggregated_row = prepare_structure_aggregated_row(deepcopy(aggregated_row), aggregated_row['num_launched_states'],
                                                       aggregation_level)
     return aggregated_row
 
@@ -186,7 +183,7 @@ def get_poshan_progress_dashboard_data(domain, year, month, quarter, data_format
 
     if step == 'aggregated':
         data = queryset.aggregate(
-            count=Count('state_name', distinct=True),
+            num_launched_states=Sum('num_launched_states'),
             num_launched_districts=Sum('num_launched_districts'),
             num_launched_blocks=Sum('num_launched_blocks'),
             num_launched_awcs=Sum('num_launched_awcs'),
