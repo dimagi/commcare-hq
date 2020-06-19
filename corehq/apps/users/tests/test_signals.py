@@ -61,6 +61,7 @@ class TestUserSignals(SimpleTestCase):
 @patch('corehq.apps.analytics.signals.update_hubspot_properties')
 @patch('corehq.apps.callcenter.tasks.sync_user_cases')
 @patch('corehq.apps.cachehq.signals.invalidate_document')
+@patch('corehq.apps.users.signals._should_sync_to_es', return_value=True)
 class TestUserSyncToEs(SimpleTestCase):
 
     @classmethod

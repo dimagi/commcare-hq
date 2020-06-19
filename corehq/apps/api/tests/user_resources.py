@@ -36,7 +36,7 @@ class TestCommCareUserResource(APIResourceTest):
         super().setUpClass()
 
     @patch('corehq.apps.users.signals._should_sync_to_es', return_value=True)
-    def test_get_list(self):
+    def test_get_list(self, patch):
 
         commcare_user = CommCareUser.create(domain=self.domain.name, username='fake_user', password='*****')
         self.addCleanup(commcare_user.delete)
