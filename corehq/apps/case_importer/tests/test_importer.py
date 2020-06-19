@@ -1,5 +1,6 @@
 import uuid
 from contextlib import contextmanager
+from unittest import skip
 
 from django.test import TestCase
 from django.utils.dateparse import parse_datetime
@@ -428,7 +429,7 @@ class ImporterTest(TestCase):
         case = CaseAccessors(self.domain).get_case(case.case_id)
         self.assertEqual(case.opened_on, PhoneTime(parse_datetime(new_date)).done())
 
-    @skip
+    @skip()
     @run_with_all_backends
     def test_columns_and_rows_align(self):
         case_owner = CommCareUser.create(self.domain, 'username', 'pw', None, None)
