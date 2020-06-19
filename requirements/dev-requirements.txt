@@ -198,7 +198,7 @@ sphinxcontrib-htmlhelp==1.0.2  # via sphinx
 sphinxcontrib-jsmath==1.0.1  # via sphinx
 sphinxcontrib-qthelp==1.0.2  # via sphinx
 sphinxcontrib-serializinghtml==1.1.3  # via sphinx
-sqlagg==0.16.1            # via -r requirements/requirements.in
+sqlagg==0.16.2            # via -r requirements/requirements.in
 sqlalchemy-postgres-copy==0.5.0  # via -r requirements/test-requirements.in
 sqlalchemy==1.3.10        # via -r requirements/requirements.in, alembic, sqlagg, sqlalchemy-postgres-copy
 sqlparse==0.3.0           # via django-debug-toolbar
