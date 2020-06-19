@@ -52,7 +52,7 @@
                 <tr>
                   <td data-bind="text: name"></td>
                   <td data-bind="text: last_update"></td>
-                  <td>
+                  <td data-bind="css: {'has-error': error}">
                     <button class="btn btn-danger" data-bind="visible: showUpdate() && !update_url, click: update">
                       {% trans "Overwrite" %}
                     </button>
@@ -62,9 +62,10 @@
                     <button class="btn btn-success disabled" data-bind="visible: hasSuccess">
                       <i class="fa fa-check"></i> {% trans "Success" %}
                     </button>
-                    <button class="btn btn-danger disabled" data-bind="visible: hasError">
+                    <button class="btn btn-danger disabled" data-bind="visible: error">
                       <i class="fa fa-times"></i> {% trans "Error" %}
                     </button>
+                    <span class="help-block" data-bind="text: error"></span>
                     <a data-bind="visible: showUpdate && update_url, attr: {href: update_url}">{% trans "Go to update page" %}</a>
                   </td>
                 </tr>

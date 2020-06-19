@@ -43,6 +43,7 @@ from corehq.apps.linked_domain.dbaccessors import (
     get_linked_domains,
 )
 from corehq.apps.linked_domain.decorators import require_linked_domain
+from corehq.apps.linked_domain.exceptions import UnsupportedActionError
 from corehq.apps.linked_domain.local_accessors import (
     get_custom_data_models,
     get_fixtures,
@@ -360,14 +361,19 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         detail_obj = wrap_detail(type_, detail) if detail else None
 
         master_link = get_domain_master_link(self.domain)
-        update_model_type(master_link, type_, detail_obj)
-        master_link.update_last_pull(type_, self.request.couch_user._id, model_details=detail_obj)
+        error = ""
+        try:
+            update_model_type(master_link, type_, detail_obj)
+            master_link.update_last_pull(type_, self.request.couch_user._id, model_details=detail_obj)
+        except UnsupportedActionError as e:
+            error = str(e)
 
         track_workflow(self.request.couch_user.username, "Linked domain: updated '{}' model".format(type_))
 
         timezone = get_timezone_for_request()
         return {
-            'success': True,
+            'success': not error,
+            'error': error,
             'last_update': server_to_user_time(master_link.last_pull, timezone)
         }
 
