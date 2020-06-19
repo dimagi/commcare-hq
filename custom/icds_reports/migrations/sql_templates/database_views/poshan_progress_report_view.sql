@@ -67,6 +67,7 @@ GROUP BY
     "awc_location_months"."state_name",
     "awc_location_months"."month",
     "awc_location_months"."aggregation_level",
+    "agg_awc"."num_launched_states",
     "agg_awc"."num_launched_districts",
     "agg_awc"."num_launched_blocks",
     "agg_awc"."num_launched_awcs",
