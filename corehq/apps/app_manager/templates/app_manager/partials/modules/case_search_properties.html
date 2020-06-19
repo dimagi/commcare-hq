@@ -11,10 +11,16 @@
       <td class="col-sm-4">
         <input class="form-control" type="text" data-bind="value: property.name"/>
       </td>
-      <td class="col-sm-6">
+      <td class="col-sm-5">
         <input class="form-control" type="text" data-bind="value: property.label"/>
       </td>
       <td class="col-sm-2">
+        <select class="form-control" data-bind="value: property.appearance">
+          <option value="">{% trans "Text" %}</option>
+          <option value="barcode_scan">{% trans "Barcode" %}</option>
+        </select>
+      </td>
+      <td class="col-sm-1">
         <i style="cursor: pointer;" class="fa fa-remove"
            data-bind="click: $parent.removeProperty"></i>
       </td>
@@ -31,8 +37,9 @@
         <table class="table table-condensed">
           <thead data-bind="visible: searchProperties().length > 0">
           <tr>
-            <th class="col-sm-5">{% trans "Case Property" %}</th>
-            <th class="col-sm-6">{% trans "Display Text" %}</th>
+            <th class="col-sm-4">{% trans "Case Property" %}</th>
+            <th class="col-sm-5">{% trans "Display Text" %}</th>
+            <th class="col-sm-2">{% trans "Format" %}</th>
             <th class="col-sm-1">&nbsp;</th>
           </tr>
           </thead>

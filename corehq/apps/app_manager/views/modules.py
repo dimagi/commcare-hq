@@ -762,7 +762,8 @@ def _update_search_properties(module, search_properties, lang='en'):
             label = {lang: prop['label']}
         yield {
             'name': prop['name'],
-            'label': label
+            'label': label,
+            'appearance': prop['appearance'],
         }
 
 
