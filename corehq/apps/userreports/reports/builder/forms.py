@@ -87,6 +87,7 @@ from corehq.toggles import (
 
 STATIC_CASE_PROPS = [
     "closed",
+    "closed_on",
     "modified_on",
     "name",
     "opened_on",
@@ -413,7 +414,7 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
                 self.app, [self.source_id], defaults=list(DEFAULT_CASE_PROPERTY_DATATYPES),
                 include_parent_properties=True,
             )
-            self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed'})
+            self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed', 'closed_on'})
 
     @property
     def uses_managed_data_source(self):

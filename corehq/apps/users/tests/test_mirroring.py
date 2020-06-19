@@ -29,8 +29,10 @@ class DomainPermissionsMirrorTest(TestCase):
         create_domain('county')
 
         # Set up users
-        cls.web_user_admin = WebUser.create('state', 'emma', 'badpassword', 'e@aol.com', is_admin=True)
-        cls.web_user_non_admin = WebUser.create('state', 'clementine', 'worsepassword', 'c@aol.com')
+        cls.web_user_admin = WebUser.create('state', 'emma', 'badpassword', None, None, email='e@aol.com',
+                                            is_admin=True)
+        cls.web_user_non_admin = WebUser.create('state', 'clementine', 'worsepassword', None, None,
+                                                email='c@aol.com')
         cls.api_key, _ = HQApiKey.objects.get_or_create(user=WebUser.get_django_user(cls.web_user_non_admin))
 
     def setUp(self):

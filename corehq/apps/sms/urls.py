@@ -29,6 +29,7 @@ from corehq.apps.sms.views import (
     upload_sms_translations,
 )
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
+from custom.icds.views.custom_sms_report import SMSUsageReport
 from corehq.messaging.smsbackends.telerivet.urls import \
     domain_specific as telerivet_urls
 
@@ -36,6 +37,7 @@ urlpatterns = [
     url(r'^$', default, name='sms_default'),
     url(r'^send_to_recipients/$', send_to_recipients, name='send_to_recipients'),
     url(r'^compose/$', ComposeMessageView.as_view(), name=ComposeMessageView.urlname),
+    url(r'^message_report/$', SMSUsageReport.as_view(), name=SMSUsageReport.urlname),
     url(r'^message_test/(?P<phone_number>\d+)/$',
         TestSMSMessageView.as_view(), name=TestSMSMessageView.urlname),
     url(r'^api/send_sms/$', api_send_sms, name='api_send_sms'),

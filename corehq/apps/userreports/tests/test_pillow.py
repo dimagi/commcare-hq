@@ -204,6 +204,7 @@ class ChunkedUCRProcessorTest(TestCase):
         delete_all_cases()
         delete_all_xforms()
         InvalidUCRData.objects.all().delete()
+        self.config = DataSourceConfiguration.get(self.config.data_source_id)
         self.config.validations = []
         self.config.save()
 
@@ -234,6 +235,7 @@ class ChunkedUCRProcessorTest(TestCase):
         return cases
 
     def _create_and_process_changes(self, docs=[]):
+        self.pillow = _get_pillow([self.config], processor_chunk_size=100)
         since = self.pillow.get_change_feed().get_latest_offsets()
         cases = self._create_cases(docs=docs)
         # run pillow and check changes
@@ -284,6 +286,9 @@ class ChunkedUCRProcessorTest(TestCase):
 
     @mock.patch('corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor.process_change')
     def test_invalid_data_bulk_processor(self, process_change):
+        # re-fetch from DB to bust object caches
+        self.config = DataSourceConfiguration.get(self.config.data_source_id)
+
         self.config.validations = [
             Validation.wrap({
                 "name": "impossible_condition",
@@ -311,6 +316,9 @@ class ChunkedUCRProcessorTest(TestCase):
 
     @mock.patch('corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor.process_changes_chunk')
     def test_invalid_data_serial_processor(self, process_changes_chunk):
+        # re-fetch from DB to bust object caches
+        self.config = DataSourceConfiguration.get(self.config.data_source_id)
+
         process_changes_chunk.side_effect = Exception
         self.config.validations = [
             Validation.wrap({
@@ -552,6 +560,7 @@ class ProcessRelatedDocTypePillowTest(TestCase):
         self.pillow.get_change_feed().get_latest_offsets()
 
     def tearDown(self):
+        self.config = DataSourceConfiguration.get(self.config.data_source_id)
         self.config.delete()
         self.adapter.drop_table()
         delete_all_cases()
@@ -720,6 +729,7 @@ class AsyncIndicatorTest(TestCase):
         delete_all_xforms()
         AsyncIndicator.objects.all().delete()
         InvalidUCRData.objects.all().delete()
+        self.config = DataSourceConfiguration.get(self.config.data_source_id)
         self.config.validations = []
         self.config.save()
 
@@ -809,6 +819,9 @@ class AsyncIndicatorTest(TestCase):
         self.assertEqual(indicators.count(), 1)
 
     def test_async_invalid_data(self):
+        # re-fetch from DB to bust object caches
+        self.config = DataSourceConfiguration.get(self.config.data_source_id)
+
         self.config.validations = [
             Validation.wrap({
                 "name": "impossible_condition",
