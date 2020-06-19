@@ -310,7 +310,6 @@ class TestReportAggregationSQL(ConfigurableReportAggregationTestMixin, TestCase)
             ]]
         )
 
-    @softer_assert("to add back post https://github.com/dimagi/sql-agg/pull/56")
     def test_aggregation_no_group_by(self):
         report_config = self._create_report(
             aggregation_columns=[],

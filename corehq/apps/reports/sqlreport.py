@@ -276,15 +276,6 @@ class SqlData(ReportDataSource):
         if self.keys is not None and not self.group_by:
             raise SqlReportException('Keys supplied without group_by.')
 
-        if not self.group_by:
-            try:
-                queries = self.get_sql_queries()
-            except NotImplementedError:
-                queries = "Not implemented"
-            soft_assert('mkangia@{}'.format('dimagi.com'))(
-                self.group_by, f'SqlAgg has no group by: {self.__class__.__name__}', queries
-            )
-
         qc = self.query_context(start=start, limit=limit)
         session_helper = connection_manager.get_session_helper(self.engine_id, readonly=True)
         with session_helper.session_context() as session:
