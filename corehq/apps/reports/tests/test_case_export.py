@@ -32,8 +32,10 @@ class CaseExportTest(TestCase):
 
     def testGroupFilters(self):
         domain = 'case-export-test'
-        active_user = CommCareUser.create(domain=domain, username='activeguy', password='secret')
-        inactive_user = CommCareUser.create(domain=domain, username='inactivegal', password='secret')
+        active_user = CommCareUser.create(domain=domain, username='activeguy', password='secret',
+                                          created_by=None, created_via=None)
+        inactive_user = CommCareUser.create(domain=domain, username='inactivegal', password='secret',
+                                            created_by=None, created_via=None)
         inactive_user.is_active = False
         inactive_user.save()
 

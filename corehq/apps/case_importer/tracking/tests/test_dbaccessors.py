@@ -31,7 +31,7 @@ class DbaccessorsTest(TestCase):
         super(DbaccessorsTest, cls).setUpClass()
         cls.domain_obj = create_domain('test-case-importer-dbaccessors')
         cls.domain = cls.domain_obj.name
-        cls.user = WebUser.create(cls.domain, 'username', 'password')
+        cls.user = WebUser.create(cls.domain, 'username', 'password', None, None)
         cls.case_upload_1 = CaseUploadRecord(
             upload_id=UUID('7ca20e75-8ba3-4d0d-9c9c-66371e8895dc'),
             task_id=UUID('a2ebc913-11e6-4b6b-b909-355a863e0682'),

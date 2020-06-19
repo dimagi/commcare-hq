@@ -17,7 +17,7 @@ class SessionDetailsViewTest(TestCase):
         super(SessionDetailsViewTest, cls).setUpClass()
         cls.domain = Domain(name="toyland", is_active=True)
         cls.domain.save()
-        cls.couch_user = CommCareUser.create(cls.domain.name, 'bunkey', '123')
+        cls.couch_user = CommCareUser.create(cls.domain.name, 'bunkey', '123', None, None)
         cls.sql_user = cls.couch_user.get_django_user()
 
         cls.expected_response = {
