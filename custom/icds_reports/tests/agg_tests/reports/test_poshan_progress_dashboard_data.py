@@ -190,7 +190,7 @@ class TestPPDData(TestCase):
                                           'Number of AWCs Launched': 15,
                                           'Number of Blocks Covered': 3,
                                           'Number of Districts Covered': 3,
-                                          'Number of States Covered': 7},
+                                          'Number of States Covered': 3},
                     'Service Delivery': {
                         '% of children between 3-6 years provided PSE for atleast 21+ days': '5.53%',
                         '% of children between 3-6 years provided SNP for atleast 21+ days': '1.18%',
