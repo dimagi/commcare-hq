@@ -18,7 +18,7 @@ from celery.schedules import crontab
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.sms.models import DailyOutboundSMSLimitReached
-from corehq.util.celery_utils import periodic_task_on_envs
+from corehq.util.celery_utils import periodic_task_on_envs, task
 from corehq.util.files import file_extention_from_filename
 from custom.icds.view_utils import is_icds_cas_project
 
@@ -52,7 +52,38 @@ def send_monthly_sms_report():
     except Exception as e:
         message = _("""
             Hi,
-            Could not generate the montly SMS report for ICDS.
+            Could not generate the monthly SMS report for ICDS.
+            The error has been notified. Please report as an issue for quick followup
+        """)
+        send_html_email_async.delay(subject, recipients, message,
+                                    email_from=settings.DEFAULT_FROM_EMAIL)
+        raise e
+
+
+@task
+def send_custom_sms_report(start_date, end_date, email):
+    subject = _('Monthly SMS report')
+    recipients = [email]
+    filename = call_command('get_icds_sms_usage', 'icds-cas', str(start_date), str(end_date))
+    try:
+        with open(filename, 'rb') as f:
+            cached_download = expose_cached_download(
+                f.read(), expiry=24 * 60 * 60, file_extension=file_extention_from_filename(filename),
+                mimetype=Format.from_format(Format.XLS_2007).mimetype,
+                content_disposition='attachment; filename="%s"' % filename)
+            path = reverse('retrieve_download', kwargs={'download_id': cached_download.download_id})
+            link = f"{web.get_url_base()}{path}?get_file"
+            message = _("""
+            Hi,
+            Please download the sms report for time frame {start_date} to {end_date} (inclusive) at {link}.
+            The report is available only for next 24 hours.
+            """).format(link=link, start_date=start_date, end_date=end_date)
+            send_html_email_async.delay(subject, recipients, message,
+                                        email_from=settings.DEFAULT_FROM_EMAIL)
+    except Exception as e:
+        message = _("""
+            Hi,
+            Could not generate the custom SMS report for ICDS.
             The error has been notified. Please report as an issue for quick followup
         """)
         send_html_email_async.delay(subject, recipients, message,
