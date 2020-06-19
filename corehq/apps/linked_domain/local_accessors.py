@@ -1,5 +1,6 @@
 from corehq import feature_previews, toggles
 from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
+from corehq.apps.fixtures.dbaccessors import get_fixture_data_types, get_fixture_items_for_data_type
 from corehq.apps.linked_domain.util import _clean_json
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
@@ -23,6 +24,17 @@ def get_custom_data_models(domain, limit_types=None):
         if model:
             fields[field_view.field_type] = model.to_json()['fields']
     return fields
+
+
+def get_fixtures(domain):
+    types = get_fixture_data_types(domain)
+    return {
+        "data_types": types,
+        "data_items": {
+            t._id: get_fixture_items_for_data_type(domain, t._id)
+            for t in types
+        },
+    }
 
 
 def get_user_roles(domain):
