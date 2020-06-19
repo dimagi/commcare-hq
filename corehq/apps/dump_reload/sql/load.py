@@ -82,7 +82,7 @@ class SqlDataLoader(DataLoader):
 
             for line in object_strings:
                 obj = self.line_to_object(line)
-                if obj:
+                if obj is not None:
                     enqueue_object(dbalias_to_workerqueue, obj)
             terminate_workers(dbalias_to_workerqueue)
             load_stats = collect_stats(dbalias_to_workerqueue)
