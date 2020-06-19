@@ -31,7 +31,7 @@ class LocationTypesViewTest(TestCase):
         super(LocationTypesViewTest, cls).setUpClass()
         cls.domain = "test-domain"
         cls.project = create_domain(cls.domain)
-        cls.couch_user = WebUser.create(cls.domain, "test", "foobar")
+        cls.couch_user = WebUser.create(cls.domain, "test", "foobar", None, None)
         cls.couch_user.add_domain_membership(cls.domain, is_admin=True)
         cls.couch_user.set_role(cls.domain, "admin")
         cls.couch_user.save()

@@ -281,6 +281,7 @@ class ServiceDeliveryMonthly(models.Model):
     num_launched_awcs = models.IntegerField(help_text='Number of AWC launched')
     num_awcs_conducted_cbe = models.IntegerField(help_text='Number of AWC conducted atleast one CBE')
     num_awcs_conducted_vhnd = models.IntegerField(help_text='Number of AWC conducted atleast one VHSND visits')
+    vhnd_conducted = models.IntegerField(help_text='Number of vhsnd conducted by AWCs')
     gm_0_3 = models.IntegerField(
         blank=True, null=True,
         help_text="weighing efficiency for 0-3 years of children"
@@ -1152,6 +1153,9 @@ class SystemUsageReportView(models.Model):
     district_name = models.TextField(blank=True, null=True)
     state_id = models.TextField(blank=True, null=True)
     state_name = models.TextField(blank=True, null=True)
+    block_map_location_name = models.TextField(blank=True, null=True)
+    district_map_location_name = models.TextField(blank=True, null=True)
+    state_map_location_name = models.TextField(blank=True, null=True)
     aggregation_level = models.IntegerField(blank=True, null=True)
     contact_phone_number = models.TextField(blank=True, null=True)
     awc_days_open = models.IntegerField(
@@ -1204,6 +1208,10 @@ class SystemUsageReportView(models.Model):
     )
     num_supervisor_launched = models.IntegerField(blank=True, null=True)
     month = models.DateField(blank=True, null=True)
+    num_launched_states = models.IntegerField(blank=True, null=True)
+    num_launched_districts = models.IntegerField(blank=True, null=True)
+    num_launched_blocks = models.IntegerField(blank=True, null=True)
+    num_launched_supervisors = models.IntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_reports'
@@ -1231,6 +1239,8 @@ class ServiceDeliveryReportView(models.Model):
     state_id = models.TextField(blank=True, null=True)
     state_name = models.TextField(blank=True, null=True)
     state_site_code = models.TextField(blank=True, null=True)
+    aww_name = models.TextField(blank=True, null=True)
+    contact_phone_number = models.TextField(blank=True, null=True)
     aggregation_level = models.IntegerField(
         blank=True, null=True, help_text="1 for state rows, 2 for district rows, and so on"
     )
@@ -1359,6 +1369,35 @@ class ServiceDeliveryReportView(models.Model):
         blank=True, null=True,
         help_text="beneficiaries who got >=25 days of THR"
     )
+
+    child_thr_eligible = models.IntegerField(null=True)
+    child_thr_0_days = models.IntegerField(null=True)
+    child_thr_1_7_days = models.IntegerField(null=True)
+    child_thr_8_14_days = models.IntegerField(null=True)
+    child_thr_15_20_days = models.IntegerField(null=True)
+    child_thr_21_days = models.IntegerField(null=True)
+    child_thr_21_24_days = models.IntegerField(null=True)
+    child_thr_25_days = models.IntegerField(null=True)
+
+    pw_thr_eligible = models.IntegerField(null=True)
+    pw_thr_0_days = models.IntegerField(null=True)
+    pw_thr_1_7_days = models.IntegerField(null=True)
+    pw_thr_8_14_days = models.IntegerField(null=True)
+    pw_thr_15_20_days = models.IntegerField(null=True)
+    pw_thr_21_days = models.IntegerField(null=True)
+    pw_thr_21_24_days = models.IntegerField(null=True)
+    pw_thr_25_days = models.IntegerField(null=True)
+
+    lw_thr_eligible = models.IntegerField(null=True)
+    lw_thr_0_days = models.IntegerField(null=True)
+    lw_thr_1_7_days = models.IntegerField(null=True)
+    lw_thr_8_14_days = models.IntegerField(null=True)
+    lw_thr_15_20_days = models.IntegerField(null=True)
+    lw_thr_21_days = models.IntegerField(null=True)
+    lw_thr_21_24_days = models.IntegerField(null=True)
+    lw_thr_25_days = models.IntegerField(null=True)
+    thr_distribution_image_count = models.IntegerField(null=True)
+
     third_fourth_month_of_pregnancy_count = models.IntegerField(null=True)
     annaprasan_diwas_count = models.IntegerField(null=True)
     suposhan_diwas_count = models.IntegerField(null=True)
@@ -1578,5 +1617,73 @@ class BiharAPIMotherView(models.Model):
     class Meta(object):
         app_label = 'icds_reports'
         db_table = 'bihar_api_mother_view'
+        managed = False
+
+
+class PoshanProgressReportView(models.Model):
+    """
+    Contains rows for Tabular Poshan Progress report.
+    """
+    district_id = models.TextField(blank=True, null=True)
+    district_name = models.TextField(blank=True, null=True)
+    state_id = models.TextField(blank=True, null=True)
+    state_name = models.TextField(blank=True, null=True)
+    month = models.DateField(blank=True, null=True)
+    aggregation_level = models.IntegerField(
+        blank=True, null=True, help_text="1 for state rows, 2 for district rows, and so on"
+    )
+    num_launched_districts = models.IntegerField(blank=True, null=True,
+        help_text="number of districts that have at least one Household registration form")
+    num_launched_blocks = models.IntegerField(blank=True, null=True,
+        help_text="number of blocks that have at least one Household registration form")
+    num_launched_awcs = models.IntegerField(
+        blank=True, null=True,
+        help_text="number of AWCs that have at least one Household registration form"
+    )
+    awc_days_open = models.IntegerField(blank=True, null=True)
+    wer_eligible = models.IntegerField(
+        blank=True, null=True, help_text="Number of children valid_in_month and age < 60 months"
+    )
+    wer_weighed = models.IntegerField(
+        blank=True, null=True, help_text="Number of children that have been weighed in the month"
+    )
+    expected_visits = models.IntegerField(help_text='Expected home visits')
+    valid_visits = models.IntegerField(help_text='Valid home visits')
+    thr_eligible = models.IntegerField(
+        blank=True, null=True,
+        help_text="Total number of beneficiaries eligible for THR"
+    )
+    thr_rations_21_plus_distributed = models.IntegerField(
+        blank=True, null=True,
+        help_text="beneficiaries who got >=21 days of THR"
+    )
+    pse_eligible = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children eligible for pse"
+    )
+    pse_attended_21_days = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children attended pse for atleast 21 days in the month"
+    )
+    lunch_eligible = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children eligible for SNP"
+    )
+    lunch_count_21_days = models.IntegerField(
+        blank=True, null=True,
+        help_text="Number of children had lunch for atleast 21 days in the month"
+    )
+    height_eligible = models.IntegerField(
+        blank=True, null=True, help_text="age < 60 months and valid_in_month"
+    )
+    height_measured_in_month = models.IntegerField(
+        blank=True, null=True, help_text="height_eligible and height_child recorded in this month"
+    )
+    trimester_3 = models.IntegerField(blank=True, null=True)
+    counsel_immediate_bf = models.IntegerField(blank=True, null=True)
+
+    class Meta(object):
+        app_label = 'icds_reports'
+        db_table = 'poshan_progress_report_view'
         managed = False
 

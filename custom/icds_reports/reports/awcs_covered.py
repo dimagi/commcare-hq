@@ -27,7 +27,7 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
             states=Sum('num_launched_states') if level <= 1 else Max('num_launched_states'),
             districts=Sum('num_launched_districts') if level <= 2 else Max('num_launched_districts'),
             blocks=Sum('num_launched_blocks') if level <= 3 else Max('num_launched_blocks'),
-            supervisors=Sum('num_launched_supervisors') if level <= 4 else Max('num_launched_supervisors'),
+            sectors=Sum('num_launched_supervisors') if level <= 4 else Max('num_launched_supervisors'),
             awcs=Sum('num_launched_awcs') if level <= 5 else Max('num_launched_awcs'),
         ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
 
@@ -37,7 +37,7 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
 
     data_for_map = defaultdict(lambda: {
         'awcs': [],
-        'supervisors': [],
+        'sectors': [],
         'blocks': [],
         'districts': [],
         'states': [],
@@ -48,13 +48,13 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
         name = row['%s_name' % loc_level]
         on_map_name = row['%s_map_location_name' % loc_level] or name
         awcs = row['awcs'] or 0
-        supervisors = row['supervisors'] or 0
+        sectors = row['sectors'] or 0
         blocks = row['blocks'] or 0
         districts = row['districts'] or 0
         states = row['states'] or 0
 
         data_for_map[on_map_name]['awcs'].append(awcs)
-        data_for_map[on_map_name]['supervisors'].append(supervisors)
+        data_for_map[on_map_name]['sectors'].append(sectors)
         data_for_map[on_map_name]['blocks'].append(blocks)
         data_for_map[on_map_name]['districts'].append(districts)
         data_for_map[on_map_name]['states'].append(states)
@@ -64,8 +64,8 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
         data_for_location['awcs'] = (
             sum(data_for_location['awcs']) if level <= 5 else max(data_for_location['awcs'])
         )
-        data_for_location['supervisors'] = (
-            sum(data_for_location['supervisors']) if level <= 4 else max(data_for_location['supervisors'])
+        data_for_location['sectors'] = (
+            sum(data_for_location['sectors']) if level <= 4 else max(data_for_location['sectors'])
         )
         data_for_location['blocks'] = (
             sum(data_for_location['blocks']) if level <= 3 else max(data_for_location['blocks'])
@@ -85,7 +85,7 @@ def get_awcs_covered_data_map(domain, config, loc_level, show_test=False):
     elif level == 3:
         prop = 'blocks'
     elif level == 4:
-        prop = 'supervisors'
+        prop = 'sectors'
     else:
         prop = 'awcs'
 
@@ -142,7 +142,7 @@ def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_te
         states=Sum('num_launched_states') if level <= 1 else Max('num_launched_states'),
         districts=Sum('num_launched_districts') if level <= 2 else Max('num_launched_districts'),
         blocks=Sum('num_launched_blocks') if level <= 3 else Max('num_launched_blocks'),
-        supervisors=Sum('num_launched_supervisors') if level <= 4 else Max('num_launched_supervisors'),
+        sectors=Sum('num_launched_supervisors') if level <= 4 else Max('num_launched_supervisors'),
         awcs=Sum('num_launched_awcs') if level <= 5 else Max('num_launched_awcs'),
     ).order_by('%s_name' % loc_level)
 
@@ -157,21 +157,21 @@ def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_te
         'districts': 0,
         'blocks': 0,
         'states': 0,
-        'supervisors': 0,
+        'sectors': 0,
         'awcs': 0
     })
 
     for row in data:
         name = row['%s_name' % loc_level]
         awcs = row['awcs'] or 0
-        supervisors = row['supervisors'] or 0
+        sectors = row['sectors'] or 0
         blocks = row['blocks'] or 0
         districts = row['districts'] or 0
         states = row['states'] or 0
 
         row_values = {
             'awcs': awcs,
-            'supervisors': supervisors,
+            'sectors': sectors,
             'blocks': blocks,
             'districts': districts,
             'states': states,
@@ -191,7 +191,7 @@ def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_te
     elif level == 3:
         prop = 'blocks'
     elif level == 4:
-        prop = 'supervisors'
+        prop = 'sectors'
     else:
         prop = 'awcs'
 
@@ -206,7 +206,12 @@ def get_awcs_covered_sector_data(domain, config, loc_level, location_id, show_te
         info = _(
             "{:s}<br /><br />"
             "Number of AWCs launched: {:d} <br />"
-            "Number of {:s} launched: {:d}".format(awcs_launched_help_text(), total_awcs, prop.title(), total)
+            "Number of {:s} launched: {:d}".format(
+                awcs_launched_help_text(),
+                total_awcs,
+                prop.title(),
+                total
+            )
         )
 
     return {

@@ -2,6 +2,10 @@ import re
 from datetime import datetime
 from xml.etree import cElementTree as ElementTree
 
+from django.conf import settings
+from django.core.mail.message import EmailMessage
+from django.template.defaultfilters import linebreaksbr
+
 from casexml.apps.case.mock import CaseBlock
 
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -83,7 +87,6 @@ def get_supervisor_id(domain, location_id):
         return new_location.parent.location_id
 
 
-# ToDo: make this as a async task
 def reassign_household(domain, household_case_id, old_owner_id, new_owner_id, supervisor_id,
                        deprecation_time=None, household_child_case_ids=None):
     from custom.icds.location_reassignment.tasks import process_ucr_changes
@@ -113,7 +116,6 @@ def reassign_household(domain, household_case_id, old_owner_id, new_owner_id, su
     process_ucr_changes.delay(domain, case_ids)
 
 
-# ToDo: make this as a async task
 def reassign_cases(domain, case_ids, new_owner_id):
     case_blocks = []
     for case_id in case_ids:
@@ -137,3 +139,28 @@ def split_location_name_and_site_code(name):
 
 def append_location_name_and_site_code(name, site_code):
     return f"{name.rstrip()} [{site_code}]"
+
+
+def notify_failure(e, subject, email, uploaded_filename):
+    notify_success(
+        subject=subject,
+        body=linebreaksbr(
+            f"The request could not be completed for file {uploaded_filename}. Something went wrong.\n"
+            f"Error raised : {e}.\n"
+            "Please report an issue if needed."
+        ),
+        email=email
+    )
+
+
+def notify_success(subject, body, email, filestream=None, filename=None):
+    email_message = EmailMessage(
+        subject=subject,
+        body=linebreaksbr(body),
+        to=[email],
+        from_email=settings.DEFAULT_FROM_EMAIL
+    )
+    if filestream and filename:
+        email_message.attach(filename=filename, content=filestream.read())
+    email_message.content_subtype = "html"
+    email_message.send()

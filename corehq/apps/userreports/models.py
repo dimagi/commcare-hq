@@ -98,6 +98,9 @@ def _check_ids(value):
 
 
 class DataSourceActionLog(models.Model):
+    """
+    Audit model that tracks changes to UCRs and their underlying tables.
+    """
     BUILD = 'build'
     MIGRATE = 'migrate'
     REBUILD = 'rebuild'

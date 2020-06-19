@@ -26,6 +26,7 @@ agg_awc.valid_visits AS valid_visits,
 agg_awc.expected_visits AS expected_visits,
 agg_awc.num_awcs_conducted_cbe AS num_awcs_conducted_cbe,
 agg_awc.num_awcs_conducted_vhnd AS num_awcs_conducted_vhnd,
+COALESCE(agg_awc.vhnd_conducted,0) as vhnd_conducted,
 SUM( CASE WHEN agg_child_health.age_tranche::integer <=36 THEN agg_child_health.nutrition_status_weighed ELSE 0 END)AS gm_0_3,
 SUM( CASE WHEN agg_child_health.age_tranche::integer >36 AND agg_child_health.age_tranche::integer <=60  THEN agg_child_health.nutrition_status_weighed ELSE 0 END)AS gm_3_5,
 SUM( CASE WHEN agg_child_health.age_tranche::integer <=36 THEN agg_child_health.valid_in_month ELSE 0 END ) as children_0_3,
@@ -105,6 +106,7 @@ GROUP BY
   agg_awc.valid_visits,
   agg_awc.expected_visits,
   agg_awc.num_awcs_conducted_vhnd,
+  agg_awc.vhnd_conducted,
   ccr.mother_thr,
   ccr.mother_thr_eligible
 

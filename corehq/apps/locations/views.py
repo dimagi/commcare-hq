@@ -559,8 +559,8 @@ class BaseEditLocationView(BaseLocationView):
         data = self.request.POST if self.request.method == 'POST' else None
         return LocationFormSet(
             self.location,
+            self.request,
             bound_data=data,
-            request_user=self.request.couch_user,
             is_new=self.creates_new_location,
         )
 
@@ -1055,7 +1055,7 @@ class DownloadLocationStatusView(BaseLocationView):
             next_url = reverse(FilteredLocationDownload.urlname, args=[self.domain])
             next_url_text = _("Go back to organization download")
         else:
-            next_url = reverse("location_export", args=[self.domain])
+            next_url = reverse(LocationsListView.urlname, args=[self.domain])
             next_url_text = _("Go back to organization structure")
         context.update({
             'domain': self.domain,

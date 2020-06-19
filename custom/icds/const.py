@@ -1,5 +1,8 @@
 from django.conf import settings
 
+ICDS_DOMAIN = 'icds-cas'
+IS_ICDS_ENVIRONMENT = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
+
 SUPERVISOR_APP_ID = '48cc1709b7f62ffea24cc6634a00660c'
 VHND_SURVEY_XMLNS = "http://openrosa.org/formdesigner/A1C9EF1B-8B42-43AB-BA81-9484DB9D8293"
 

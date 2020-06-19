@@ -75,7 +75,7 @@ from corehq.apps.hqwebapp.views import render_static
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.users.decorators import require_can_login_as
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.models import CommCareUser, CouchUser, DomainMembershipError
 from corehq.apps.users.util import format_username
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.form_processor.exceptions import XFormNotFound
@@ -124,9 +124,14 @@ class FormplayerMain(View):
         apps = filter(None, apps)
         apps = filter(lambda app: app.get('cloudcare_enabled') or self.preview, apps)
         apps = filter(lambda app: app_access.user_can_access_app(user, app), apps)
-        role = user.get_role(domain)
+        role = None
+        try:
+            role = user.get_role(domain)
+        except DomainMembershipError:
+            # User has access via domain mirroring
+            pass
         if role:
-            apps = [app for app in apps if role.permissions.view_web_app(app)]
+            apps = [_format_app(app) for app in apps if role.permissions.view_web_app(app)]
         apps = sorted(apps, key=lambda app: app['name'])
         return apps
 
@@ -267,7 +272,7 @@ class FormplayerPreviewSingleApp(View):
         context = {
             "domain": domain,
             "language": language,
-            "apps": [app],
+            "apps": [_format_app(app)],
             "maps_api_key": settings.GMAPS_API_KEY,
             "username": request.user.username,
             "formplayer_url": settings.FORMPLAYER_URL,
@@ -359,6 +364,11 @@ class LoginAsUsers(View):
             'location': user.sql_location.to_json() if user.sql_location else None,
         }
         return formatted_user
+
+
+def _format_app(app):
+    app['imageUri'] = app.get('logo_refs', {}).get('hq_logo_web_apps', {}).get('path', '')
+    return app
 
 
 @login_and_domain_required
@@ -484,6 +494,7 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
 
 
 @waf_allow('XSS_BODY')
+@location_safe
 @login_and_domain_required
 def report_formplayer_error(request, domain):
     data = json.loads(request.body)

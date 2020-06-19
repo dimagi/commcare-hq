@@ -1,8 +1,8 @@
+import copy
 from corehq.apps.locations.models import SQLLocation
 from custom.icds_reports.utils import india_now, DATA_NOT_ENTERED
 from custom.icds_reports.models.views import ServiceDeliveryReportView
-import copy
-
+from custom.icds_reports.utils import apply_exclude
 
 class ServiceDeliveryReport(object):
     def __init__(self, config, location, beta=False):
@@ -79,6 +79,18 @@ class ServiceDeliveryReport(object):
                 ('Number of beneficiaries enrolled for Anganwadi services', 'thr_eligible'),
                 ('Percentage of beneficiaries to whom THR was provided for at least 21 days', 'thr_21_days', 'thr_eligible'),
             ]
+            if self.beta:
+                headers = headers[:-3]
+                headers += [
+                    ('Number of beneficiaries to whom THR was provided for 21-24 days', 'thr_21_24_days'),
+                    ('Number of beneficiaries enrolled for Anganwadi services', 'thr_eligible'),
+                    ('Percentage of beneficiaries to whom THR was provided for 21-24 days', 'thr_21_24_days',
+                     'thr_eligible'),
+                    ('Number of beneficiaries to whom THR was provided for at least 25 days', 'thr_25_days'),
+                    ('Number of beneficiaries enrolled for Anganwadi services', 'thr_eligible'),
+                    ('Percentage of beneficiaries to whom THR was provided for at least 25 days', 'thr_25_days',
+                     'thr_eligible'),
+                ]
 
         else:
             headers += [
@@ -116,7 +128,34 @@ class ServiceDeliveryReport(object):
                 ('Total children enrolled for Anganwadi services', 'children_3_5'),
                 ('Percentage of children who were weighed', 'gm_3_5', 'children_3_5')
             ]
+            if self.beta:
+                index = headers.index(('Number of beneficiaries to whom hot cooked meal was provided for at'
+                                       ' least 21 days', 'lunch_21_days'))
+                headers[index] = ('Number of beneficiaries to whom hot cooked meal was provided for at'
+                                  ' 21-24 days', 'lunch_21_24_days')
+                headers[index + 1] = ('Number of beneficiaries enrolled for Anganwadi services', 'lunch_eligible')
+                headers[index + 2] = ('Percentage of beneficiaries to whom hot cooked meal was provided'
+                                      ' for 21-24 days', 'lunch_21_24_days', 'lunch_eligible')
+                headers.insert(index + 3, ('Number of beneficiaries to whom hot cooked meal was provided for at'
+                                           ' least 25 days', 'lunch_25_days'))
+                headers.insert(index + 4, ('Number of beneficiaries enrolled for Anganwadi services',
+                                           'lunch_eligible'))
+                headers.insert(index + 5, ('Percentage of beneficiaries to whom hot cooked meal was provided for'
+                                           ' at least 25 days', 'lunch_25_days', 'lunch_eligible'))
 
+                index = headers.index(('Number of beneficiaries who attended pre-school education for at'
+                                       ' least 21 days', 'pse_21_days'))
+                headers[index] = ('Number of beneficiaries who attended pre-school education for 21-24 days',
+                                  'pse_21_24_days')
+                headers[index + 1] = ('Number of beneficiaries enrolled for Anganwadi services', 'pse_eligible')
+                headers[index + 2] = ('Percentage of beneficiaries who attended pre-school education'
+                                      ' for 21-24 days', 'pse_21_24_days', 'pse_eligible')
+                headers.insert(index + 3, ('Number of beneficiaries who attended pre-school education for at'
+                                           ' least 25 days', 'pse_25_days'))
+                headers.insert(index + 4, ('Number of beneficiaries enrolled for Anganwadi services',
+                                           'pse_eligible'))
+                headers.insert(index + 5, ('Percentage of beneficiaries who attended pre-school education for at'
+                                           ' least 25 days', 'pse_25_days', 'pse_eligible'))
         return headers
 
     def get_excel_data(self):
@@ -173,6 +212,8 @@ class ServiceDeliveryReport(object):
         headers = [header[0] for header in self.headers_and_calculation]
 
         data = ServiceDeliveryReportView.objects.filter(**filters).order_by(*order_by).values(*values)
+
+        data = apply_exclude(self.config['domain'], data)
         excel_rows = [headers]
 
         for row in data:
