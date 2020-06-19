@@ -65,7 +65,7 @@
                     <button class="btn btn-danger disabled" data-bind="visible: error">
                       <i class="fa fa-times"></i> {% trans "Error" %}
                     </button>
-                    <span class="help-block" data-bind="text: error"></span>
+                    <span class="help-block" data-bind="visible: error, text: error"></span>
                     <a data-bind="visible: showUpdate && update_url, attr: {href: update_url}">{% trans "Go to update page" %}</a>
                   </td>
                 </tr>
