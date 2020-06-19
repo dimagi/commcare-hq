@@ -9,10 +9,9 @@ from corehq.apps.case_search.models import (
     CaseSearchQueryAddition,
 )
 from corehq.apps.custom_data_fields.models import (
-    CustomDataField,
-    CustomDataFieldsDefinition,
+    SQLField,
+    SQLCustomDataFieldsDefinition,
 )
-from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.linked_domain.const import (
     MODEL_CASE_SEARCH,
     MODEL_FLAGS,
@@ -91,8 +90,17 @@ def update_custom_data_models(domain_link, limit_types=None):
         master_results = local_custom_data_models(domain_link.master_domain, limit_types)
 
     for field_type, field_definitions in master_results.items():
-        model = CustomDataFieldsDefinition.get_or_create(domain_link.linked_domain, field_type)
-        model.fields = [CustomDataField.wrap(field_def) for field_def in field_definitions]
+        model = SQLCustomDataFieldsDefinition.get_or_create(domain_link.linked_domain, field_type)
+        model.set_fields([
+            SQLField(
+                slug=field_def['slug'],
+                is_required=field_def['is_required'],
+                label=field_def['label'],
+                choices=field_def['choices'],
+                regex=field_def['regex'],
+                regex_msg=field_def['regex_msg'],
+            ) for field_def in field_definitions
+        ])
         model.save()
 
 
