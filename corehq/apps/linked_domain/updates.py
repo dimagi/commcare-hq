@@ -1,4 +1,5 @@
 from functools import partial
+import textwrap
 
 from django.utils.translation import ugettext as _
 
@@ -147,7 +148,10 @@ def update_fixtures(domain_link):
     clear_fixture_cache(domain_link.linked_domain)
 
     if skipped:
-        raise UnsupportedActionError(_("Could not update non-global lookup tables: {}").format(", ".join(skipped)))
+        success_count = len(master_results["data_types"]) - len(skipped)
+        raise UnsupportedActionError(_(textwrap.dedent("""
+            Could not update non-global lookup tables: {}. {}
+        """)).format(", ".join(skipped), _("Updated all global tables.") if success_count else ""))
 
 
 def update_user_roles(domain_link):
