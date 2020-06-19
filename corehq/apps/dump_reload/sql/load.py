@@ -1,6 +1,6 @@
 import json
 from collections import Counter, defaultdict
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 import multiprocessing as mp
 
@@ -45,8 +45,7 @@ class SqlDataLoader(DataLoader):
                 queue.put(None)
 
         def collect_stats(dbalias_to_workerqueue):
-            worker_tasks = {wq[0] for wq in dbalias_to_workerqueue.values()}
-            return [t.result() for t in as_completed(worker_tasks)]
+            return [w.result() for w, q in dbalias_to_workerqueue.values()]
 
         num_aliases = len(settings.DATABASES)
         manager = mp.Manager()
