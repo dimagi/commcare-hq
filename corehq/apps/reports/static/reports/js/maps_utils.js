@@ -983,7 +983,7 @@ hqDefine("reports/js/maps_utils", function () {
 
                 count++;
                 sum += val;
-                // note: Math.min/max won't preserve dates
+                // note: Math.min/max will not preserve dates
                 min = (min == null || val < min ? val : min);
                 max = (max == null || val > max ? val : max);
             } else {

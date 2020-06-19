@@ -16,7 +16,7 @@ hqDefine('settings/js/edit_my_account', [
         });
 
         $('#generate-api-key').click(function () {
-            var apiDiv = $(this).parent().parent().parent();
+            var apiDiv = $(this).parent().parent().parent().parent();
             $.post(initialPageData.reverse('new_api_key'), '', function (data) {
                 apiDiv.find('.form-control-static').text(data);
             });

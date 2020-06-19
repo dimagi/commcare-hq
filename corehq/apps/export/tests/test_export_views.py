@@ -55,7 +55,7 @@ class ViewTestCase(TestCase):
 
         cls.username = 'bananafana'
         cls.password = '*******'
-        cls.user = WebUser.create(cls.domain.name, cls.username, cls.password)
+        cls.user = WebUser.create(cls.domain.name, cls.username, cls.password, None, None)
         cls.user.set_role(cls.domain.name, 'admin')
         cls.user.save()
 

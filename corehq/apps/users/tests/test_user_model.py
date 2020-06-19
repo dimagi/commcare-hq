@@ -25,6 +25,8 @@ class UserModelTest(TestCase):
             domain=self.domain,
             username='birdman',
             password='***',
+            created_by=None,
+            created_via=None,
         )
 
         self.metadata = TestFormMetadata(

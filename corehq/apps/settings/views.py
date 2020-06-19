@@ -1,3 +1,4 @@
+import datetime
 import json
 import re
 from base64 import b64encode
@@ -39,6 +40,7 @@ from corehq.apps.domain.decorators import (
     require_superuser,
     two_factor_exempt,
 )
+from corehq import toggles
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.utils import sign, update_session_language
 from corehq.apps.hqwebapp.views import BaseSectionPageView
@@ -123,7 +125,6 @@ class DefaultMySettingsView(BaseMyAccountView):
 class MyAccountSettingsView(BaseMyAccountView):
     urlname = 'my_account_settings'
     page_title = ugettext_lazy("My Information")
-    api_key = None
     template_name = 'settings/edit_my_account.html'
 
     @two_factor_exempt
@@ -132,18 +133,20 @@ class MyAccountSettingsView(BaseMyAccountView):
         # this is only here to add the login_required decorator
         return super(MyAccountSettingsView, self).dispatch(request, *args, **kwargs)
 
-    def get_or_create_api_key(self):
-        if not self.api_key:
-            with CriticalSection(['get-or-create-api-key-for-%d' % self.request.user.id]):
-                api_key, _ = ApiKey.objects.get_or_create(user=self.request.user)
-            self.api_key = api_key.key
-        return self.api_key
+    def get_api_key_status(self):
+        api_query = ApiKey.objects.filter(user=self.request.user)
+        if api_query.exists():
+            api_key = api_query.order_by('-created').first()
+            return ugettext_lazy("API Key has been active since {}").format(
+                api_key.created.strftime('%d %B %Y')
+            ), True
+        return ugettext_lazy("No API Key has been generated"), False
 
     @property
     @memoized
     def settings_form(self):
         language_choices = langcodes.get_all_langs_for_select()
-        api_key = self.get_or_create_api_key()
+        api_key_status, api_key_exists = self.get_api_key_status()
         from corehq.apps.users.forms import UpdateMyAccountInfoForm
         try:
             domain = self.request.domain
@@ -152,13 +155,15 @@ class MyAccountSettingsView(BaseMyAccountView):
         if self.request.method == 'POST':
             form = UpdateMyAccountInfoForm(
                 self.request.POST,
-                api_key=api_key,
+                api_key_status=api_key_status,
+                api_key_exists=api_key_exists,
                 domain=domain,
                 existing_user=self.request.couch_user,
             )
         else:
             form = UpdateMyAccountInfoForm(
-                api_key=api_key,
+                api_key_status=api_key_status,
+                api_key_exists=api_key_exists,
                 domain=domain,
                 existing_user=self.request.couch_user,
             )
@@ -171,7 +176,6 @@ class MyAccountSettingsView(BaseMyAccountView):
         return {
             'form': self.settings_form,
             'add_phone_number_form': AddPhoneNumberForm(),
-            'api_key': self.get_or_create_api_key(),
             'phonenumbers': user.phone_numbers_extended(user),
             'user_type': 'mobile' if user.is_commcare_user() else 'web',
         }
@@ -247,18 +251,12 @@ class MyProjectsList(BaseMyAccountView):
         return super(MyProjectsList, self).dispatch(request, *args, **kwargs)
 
     @property
-    def all_domains(self):
-        all_domains = self.request.couch_user.get_domains()
-        for d in all_domains:
-            yield {
-                'name': d,
-                'is_admin': self.request.couch_user.is_domain_admin(d)
-            }
-
-    @property
     def page_context(self):
         return {
-            'domains': self.all_domains,
+            'domains': [{
+                'name': d,
+                'is_admin': self.request.couch_user.is_domain_admin(d)
+            } for d in self.request.couch_user.get_domains()],
             'web_user': self.request.couch_user.is_web_user
         }
 
@@ -356,6 +354,12 @@ class TwoFactorSetupCompleteView(BaseMyAccountView, SetupCompleteView):
         # this is only here to add the login_required decorator
         return super(TwoFactorSetupCompleteView, self).dispatch(request, *args, **kwargs)
 
+    @property
+    def page_context(self):
+        return {
+            "link_to_webapps": _show_link_to_webapps(self.request.couch_user),
+        }
+
 
 class TwoFactorBackupTokensView(BaseMyAccountView, BackupTokensView):
     urlname = 'two_factor_backup_tokens'
@@ -366,6 +370,22 @@ class TwoFactorBackupTokensView(BaseMyAccountView, BackupTokensView):
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
         return super(TwoFactorBackupTokensView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        return {
+            "link_to_webapps": _show_link_to_webapps(self.request.couch_user),
+        }
+
+
+def _show_link_to_webapps(user):
+    if user and user.is_commcare_user():
+        if user.domain_memberships:
+            membership = user.domain_memberships[0]
+            if membership.role and membership.role.default_landing_page == "webapps":
+                if toggles.TWO_STAGE_USER_PROVISIONING.enabled(membership.domain):
+                    return True
+    return False
 
 
 class TwoFactorDisableView(BaseMyAccountView, DisableView):
@@ -455,10 +475,11 @@ class BaseProjectDataView(BaseDomainView):
 @require_POST
 @login_required
 def new_api_key(request):
-    api_key = ApiKey.objects.get(user=request.user)
+    api_key = ApiKey.objects.get_or_create(user=request.user)[0]
     api_key.key = api_key.generate_key()
+    api_key.created = datetime.datetime.now()
     api_key.save()
-    return HttpResponse(api_key.key)
+    return HttpResponse(_('{} (copy this in a secure place)').format(api_key.key))
 
 
 @quickcache(['data'])

@@ -3,7 +3,6 @@ from django.utils.translation import ugettext as _
 from couchdbkit import ResourceNotFound
 
 from corehq.motech.repeaters.dbaccessors import get_repeat_records_by_payload_id, _get_startkey_endkey_all_records
-from corehq.motech.repeaters.models import RepeatRecord
 from soil import DownloadBase
 
 from corehq.apps.casegroups.models import CommCareCaseGroup
@@ -11,7 +10,7 @@ from corehq.apps.hqcase.utils import get_case_by_identifier
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 
 
-def add_cases_to_case_group(domain, case_group_id, uploaded_data):
+def add_cases_to_case_group(domain, case_group_id, uploaded_data, progress_tracker):
     response = {
         'errors': [],
         'success': [],
@@ -22,20 +21,34 @@ def add_cases_to_case_group(domain, case_group_id, uploaded_data):
         response['errors'].append(_("The case group was not found."))
         return response
 
-    for row in uploaded_data:
+    num_rows = len(uploaded_data)
+    progress_tracker(0, num_rows)
+    for row_number, row in enumerate(uploaded_data):
         identifier = row.get('case_identifier')
         case = None
         if identifier is not None:
             case = get_case_by_identifier(domain, str(identifier))
         if not case:
-            response['errors'].append(_("Could not find case with identifier '%s'." % identifier))
+            response['errors'].append(
+                _("Could not find case with identifier '{}'.").format(identifier)
+            )
         elif case.doc_type != 'CommCareCase':
-            response['errors'].append(_("It looks like the case with identifier '%s' is deleted" % identifier))
+            response['errors'].append(
+                _("It looks like the case with identifier '{}' "
+                  "is marked as deleted.").format(identifier)
+            )
         elif case.case_id in case_group.cases:
-            response['errors'].append(_("A case with identifier %s already exists in this group." % identifier))
+            response['errors'].append(
+                _("A case with identifier '{}' already exists in this "
+                  "group.").format(identifier)
+            )
         else:
             case_group.cases.append(case.case_id)
-            response['success'].append(_("Case with identifier '%s' has been added to this group." % identifier))
+            response['success'].append(
+                _("Case with identifier '{}' has been added to this "
+                  "group.").format(identifier)
+            )
+        progress_tracker(row_number + 1, num_rows)
 
     if response['success']:
         case_group.save()
@@ -165,6 +178,7 @@ def _get_ids(data, domain):
     if data.get('payload_id', None):
         results = get_repeat_records_by_payload_id(domain, data['payload_id'])
     else:
+        from corehq.motech.repeaters.models import RepeatRecord
         kwargs = {
             'include_docs': True,
             'reduce': False,
@@ -178,6 +192,7 @@ def _get_ids(data, domain):
 
 
 def _validate_record(r, domain):
+    from corehq.motech.repeaters.models import RepeatRecord
     try:
         payload = RepeatRecord.get(r)
     except ResourceNotFound:

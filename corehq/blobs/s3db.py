@@ -1,20 +1,24 @@
-import os
-import weakref
 from contextlib import contextmanager
-from io import RawIOBase, UnsupportedOperation
-
-from corehq.blobs.exceptions import NotFound
-from corehq.blobs.interface import AbstractBlobDB
-from corehq.blobs.util import check_safe_key
-from corehq.util.datadog.gauges import datadog_counter, datadog_bucket_timer
-from dimagi.utils.logging import notify_exception
-
-from dimagi.utils.chunked import chunked
+from gzip import GzipFile
 
 import boto3
 from botocore.client import Config
 from botocore.exceptions import ClientError
 from botocore.utils import fix_s3_host
+
+from dimagi.utils.chunked import chunked
+from dimagi.utils.logging import notify_exception
+
+from corehq.blobs.exceptions import NotFound
+from corehq.blobs.interface import AbstractBlobDB
+from corehq.blobs.retry_s3db import retry_on_slow_down
+from corehq.blobs.util import (
+    BlobStream,
+    GzipStream,
+    check_safe_key,
+    get_content_size,
+)
+from corehq.util.metrics import metrics_counter, metrics_histogram_timer
 
 DEFAULT_S3_BUCKET = "blobdb"
 DEFAULT_BULK_DELETE_CHUNKSIZE = 1000
@@ -50,35 +54,58 @@ class S3BlobDB(AbstractBlobDB):
                     'key': key,
                 })
 
-        return datadog_bucket_timer('commcare.blobs.requests.timing', tags=[
-            'action:{}'.format(action),
-            's3_bucket_name:{}'.format(self.s3_bucket_name)
-        ], timing_buckets=(.03, .1, .3, 1, 3, 10, 30, 100), callback=record_long_request)
+        return metrics_histogram_timer(
+            'commcare.blobs.requests.timing',
+            timing_buckets=(.03, .1, .3, 1, 3, 10, 30, 100),
+            tags={
+                'action': action,
+                's3_bucket_name': self.s3_bucket_name
+            },
+            callback=record_long_request
+        )
 
     def put(self, content, **blob_meta_args):
         meta = self.metadb.new(**blob_meta_args)
         check_safe_key(meta.key)
         s3_bucket = self._s3_bucket(create=True)
         if isinstance(content, BlobStream) and content.blob_db is self:
-            obj = s3_bucket.Object(content.blob_key)
-            meta.content_length = obj.content_length
+            meta.content_length = content.content_length
+            meta.compressed_length = content.compressed_length
             self.metadb.put(meta)
             source = {"Bucket": self.s3_bucket_name, "Key": content.blob_key}
             with self.report_timing('put-via-copy', meta.key):
                 s3_bucket.copy(source, meta.key)
         else:
             content.seek(0)
-            meta.content_length = get_file_size(content)
-            self.metadb.put(meta)
+            if meta.is_compressed:
+                content = GzipStream(content)
+
+            chunk_sizes = []
+
+            def _track_transfer(bytes_sent):
+                chunk_sizes.append(bytes_sent)
+
             with self.report_timing('put', meta.key):
-                s3_bucket.upload_fileobj(content, meta.key)
+                s3_bucket.upload_fileobj(content, meta.key, Callback=_track_transfer)
+            meta.content_length, meta.compressed_length = get_content_size(content, chunk_sizes)
+            self.metadb.put(meta)
         return meta
 
-    def get(self, key):
+    @retry_on_slow_down
+    def get(self, key=None, type_code=None, meta=None):
+        key = self._validate_get_args(key, type_code, meta)
         check_safe_key(key)
         with maybe_not_found(throw=NotFound(key)), self.report_timing('get', key):
             resp = self._s3_bucket().Object(key).get()
-        return BlobStream(resp["Body"], self, key)
+        reported_content_length = resp['ContentLength']
+
+        body = resp["Body"]
+        if meta and meta.is_compressed:
+            content_length, compressed_length = meta.content_length, meta.compressed_length
+            body = GzipFile(key, mode='rb', fileobj=body)
+        else:
+            content_length, compressed_length = reported_content_length, None
+        return BlobStream(body, self, key, content_length, compressed_length)
 
     def size(self, key):
         check_safe_key(key)
@@ -129,7 +156,7 @@ class S3BlobDB(AbstractBlobDB):
                     self.db.meta.client.head_bucket(Bucket=self.s3_bucket_name)
             except ClientError as err:
                 if not is_not_found(err):
-                    datadog_counter('commcare.blobdb.notfound')
+                    metrics_counter('commcare.blobdb.notfound')
                     raise
                 with self.report_timing('create_bucket', self.s3_bucket_name):
                     self.db.create_bucket(Bucket=self.s3_bucket_name)
@@ -137,73 +164,9 @@ class S3BlobDB(AbstractBlobDB):
         return self.db.Bucket(self.s3_bucket_name)
 
 
-class BlobStream(RawIOBase):
-
-    def __init__(self, stream, blob_db, blob_key):
-        self._obj = stream
-        self._blob_db = weakref.ref(blob_db)
-        self.blob_key = blob_key
-
-    def readable(self):
-        return True
-
-    def read(self, *args, **kw):
-        return self._obj.read(*args, **kw)
-
-    read1 = read
-
-    def write(self, *args, **kw):
-        raise IOError
-
-    def tell(self):
-        return self._obj._amount_read
-
-    def seek(self, offset, from_what=os.SEEK_SET):
-        if from_what != os.SEEK_SET:
-            raise ValueError("seek mode not supported")
-        pos = self.tell()
-        if offset != pos:
-            raise ValueError("seek not supported")
-        return pos
-
-    def close(self):
-        self._obj.close()
-        return super(BlobStream, self).close()
-
-    def __getattr__(self, name):
-        return getattr(self._obj, name)
-
-    @property
-    def blob_db(self):
-        return self._blob_db()
-
-
 def is_not_found(err, not_found_codes=["NoSuchKey", "NoSuchBucket", "404"]):
     return (err.response["Error"]["Code"] in not_found_codes or
         err.response.get("Errors", {}).get("Error", {}).get("Code") in not_found_codes)
-
-
-def get_file_size(fileobj):
-    # botocore.response.StreamingBody has a '_content_length' attribute
-    length = getattr(fileobj, "_content_length", None)
-    if length is not None:
-        return int(length)
-
-    def tell_end(fileobj_):
-        pos = fileobj_.tell()
-        try:
-            fileobj_.seek(0, os.SEEK_END)
-            return fileobj_.tell()
-        finally:
-            fileobj_.seek(pos)
-
-    if not hasattr(fileobj, 'fileno'):
-        return tell_end(fileobj)
-    try:
-        fileno = fileobj.fileno()
-    except UnsupportedOperation:
-        return tell_end(fileobj)
-    return os.fstat(fileno).st_size
 
 
 @contextmanager
@@ -213,6 +176,6 @@ def maybe_not_found(throw=None):
     except ClientError as err:
         if not is_not_found(err):
             raise
-        datadog_counter('commcare.blobdb.notfound')
+        metrics_counter('commcare.blobdb.notfound')
         if throw is not None:
             raise throw

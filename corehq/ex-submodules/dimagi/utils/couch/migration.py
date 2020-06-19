@@ -1,4 +1,15 @@
+from collections import namedtuple
+
 from dimagi.utils.logging import notify_exception
+
+SubModelSpec = namedtuple('SubModelSpec', [
+    'sql_attr',
+    'sql_class',
+    'sql_fields',
+    'couch_attr',
+    'couch_class',
+    'couch_fields',
+])
 
 
 class SyncCouchToSQLMixin(object):
@@ -39,6 +50,14 @@ class SyncCouchToSQLMixin(object):
         be identical between the Couch and SQL models.
         """
         raise NotImplementedError()
+
+    @classmethod
+    def _migration_get_submodels(cls):
+        """
+        Should return a list of SubModelSpec tuples, one for each SchemaListProperty
+        in the couch class. Should be identical in the couch and sql mixins.
+        """
+        return []
 
     @classmethod
     def _migration_get_sql_model_class(cls):
@@ -84,6 +103,17 @@ class SyncCouchToSQLMixin(object):
         for field_name in self._migration_get_fields():
             value = getattr(self, field_name)
             setattr(sql_object, field_name, value)
+        for spec in self._migration_get_submodels():
+            sql_submodels = []
+            for couch_submodel in getattr(self, spec.couch_attr):
+                sql_fields = {
+                    sql_field: getattr(couch_submodel, couch_field)
+                    for couch_field, sql_field in zip(spec.couch_fields, spec.sql_fields)
+                }
+                sql_submodels.append(spec.sql_class(**sql_fields))
+            sql_attr = getattr(sql_object, spec.sql_attr)
+            sql_attr.all().delete()
+            sql_attr.set(sql_submodels, bulk=False)
         sql_object.save(sync_to_couch=False)
 
     def _migration_do_sync(self):
@@ -137,6 +167,14 @@ class SyncSQLToCouchMixin(object):
         raise NotImplementedError()
 
     @classmethod
+    def _migration_get_submodels(cls):
+        """
+        Should return a list of SubModelSpec tuples, one for each SchemaListProperty
+        in the couch class. Should be identical in the couch and sql mixins.
+        """
+        return []
+
+    @classmethod
     def _migration_get_couch_model_class(cls):
         """
         Should return the class of the Couch model.
@@ -147,7 +185,7 @@ class SyncSQLToCouchMixin(object):
         if not self._migration_couch_id:
             return None
         cls = self._migration_get_couch_model_class()
-        return cls.get(self._migration_couch_id)
+        return cls.get(str(self._migration_couch_id))
 
     def _migration_get_or_create_couch_object(self):
         cls = self._migration_get_couch_model_class()
@@ -159,15 +197,24 @@ class SyncSQLToCouchMixin(object):
             self.save(sync_to_couch=False)
         return obj
 
-    def _migration_sync_to_couch(self, couch_obj):
+    def _migration_sync_to_couch(self, couch_object):
         for field_name in self._migration_get_fields():
             value = getattr(self, field_name)
-            setattr(couch_obj, field_name, value)
-        couch_obj.save(sync_to_sql=False)
+            setattr(couch_object, field_name, value)
+        for spec in self._migration_get_submodels():
+            couch_submodels = []
+            for sql_submodel in getattr(self, spec.sql_attr).all():
+                couch_fields = {
+                    couch_field: getattr(sql_submodel, sql_field)
+                    for couch_field, sql_field in zip(spec.couch_fields, spec.sql_fields)
+                }
+                couch_submodels.append(spec.couch_class(**couch_fields))
+            setattr(couch_object, spec.couch_attr, couch_submodels)
+        couch_object.save(sync_to_sql=False)
 
     def _migration_do_sync(self):
-        couch_obj = self._migration_get_or_create_couch_object()
-        self._migration_sync_to_couch(couch_obj)
+        couch_object = self._migration_get_or_create_couch_object()
+        self._migration_sync_to_couch(couch_object)
 
     def save(self, *args, **kwargs):
         sync_to_couch = kwargs.pop('sync_to_couch', True)

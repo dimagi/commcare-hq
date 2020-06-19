@@ -136,10 +136,20 @@ describe('Month Modal Controller', function () {
         clock.restore();
     });
 
-    it('tests select current month', function () {
+    it('tests select current month date in first 2 days', function () {
         var fakeDate = new Date(2016, 9, 1);
         var clock = sinon.useFakeTimers(fakeDate.getTime());
 
+        var expected = new Date().getMonth();
+        assert.equal(controller.selectedMonth, expected);
+        clock.restore();
+    });
+
+    it('tests select current month date after first 2 days', function () {
+        var fakeDate = new Date(2016, 9, 6);
+        var clock = sinon.useFakeTimers(fakeDate.getTime());
+
+        refreshController();
         var expected = new Date().getMonth() + 1;
         assert.equal(controller.selectedMonth, expected);
         clock.restore();
@@ -168,8 +178,19 @@ describe('Month Modal Controller', function () {
         clock.restore();
     });
 
-    it('test change default date in invalid sdd navigation', function () {
+    it('test change default date in invalid sdd navigation for first 2 days of month', function () {
         var fakeDate = new Date(2016, 9, 1);
+        var clock = sinon.useFakeTimers(fakeDate.getTime());
+        injectSDDController();
+
+        assert.equal(controller.selectedYear, new Date().getFullYear());
+        assert.equal(controller.selectedMonth, new Date().getMonth());
+
+        clock.restore();
+    });
+
+    it('test change default date in invalid sdd navigation after first 2 days of month', function () {
+        var fakeDate = new Date(2016, 9, 3);
         var clock = sinon.useFakeTimers(fakeDate.getTime());
         injectSDDController();
 
@@ -191,6 +212,15 @@ describe('Month Modal Controller', function () {
     function injectSDDController() {
         $location.path('service_delivery_dashboard');
 
+        inject(function ($controller, _$location_) {
+            controller = $controller(MonthModalController, {
+                $location: $location,
+                $uibModalInstance: modalInstance,
+            });
+        });
+    }
+
+    function refreshController() {
         inject(function ($controller, _$location_) {
             controller = $controller(MonthModalController, {
                 $location: $location,

@@ -92,21 +92,41 @@ Histograms are recorded differently in the different providers.
 .. automethod:: corehq.util.metrics.prometheus.PrometheusMetrics._histogram
 
 
+Utilities
+=========
+
+.. autofunction:: corehq.util.metrics.create_metrics_event
+
+.. autofunction:: corehq.util.metrics.metrics_gauge_task
+
+.. autofunction:: corehq.util.metrics.metrics_histogram_timer
+
+.. autoclass:: corehq.util.metrics.metrics_track_errors
+
+
 Other Notes
 ===========
 
 * All metrics must use the prefix 'commcare.'
 """
+from contextlib import ContextDecorator
 from functools import wraps
-from typing import Iterable
+from typing import Iterable, Callable, Dict
 
 from celery.task import periodic_task
 
-import settings
-from corehq.util.metrics.const import COMMON_TAGS, ALERT_INFO
-from corehq.util.metrics.metrics import DebugMetrics, DelegatedMetrics, DEFAULT_BUCKETS, _enforce_prefix, \
-    metrics_logger
+from django.conf import settings
+from corehq.util.timer import TimingContext
 from dimagi.utils.modules import to_function
+from .const import COMMON_TAGS, ALERT_INFO
+from .metrics import (
+    DebugMetrics,
+    DelegatedMetrics,
+    DEFAULT_BUCKETS,
+    _enforce_prefix,
+    metrics_logger
+)
+from .utils import make_buckets_from_timedeltas, DAY_SCALE_TIME_BUCKETS, bucket_value
 
 __all__ = [
     'metrics_counter',
@@ -114,6 +134,10 @@ __all__ = [
     'metrics_histogram',
     'metrics_gauge_task',
     'create_metrics_event',
+    'metrics_histogram_timer',
+    'make_buckets_from_timedeltas',
+    'DAY_SCALE_TIME_BUCKETS',
+    'bucket_value',
 ]
 
 _metrics = []
@@ -136,22 +160,25 @@ def _get_metrics_provider():
     return _metrics[-1]
 
 
-def metrics_counter(name: str, value: float = 1, tags: dict = None, documentation: str = ''):
+def metrics_counter(name: str, value: float = 1, tags: Dict[str, str] = None, documentation: str = ''):
     provider = _get_metrics_provider()
-    provider.counter(name, value, tags, documentation)
+    provider.counter(name, value, tags=tags, documentation=documentation)
 
 
-def metrics_gauge(name: str, value: float, tags: dict = None, documentation: str = ''):
+def metrics_gauge(name: str, value: float, tags: Dict[str, str] = None, documentation: str = ''):
     provider = _get_metrics_provider()
-    provider.gauge(name, value, tags, documentation)
+    provider.gauge(name, value, tags=tags, documentation=documentation)
 
 
 def metrics_histogram(
         name: str, value: float,
         bucket_tag: str, buckets: Iterable[int] = DEFAULT_BUCKETS, bucket_unit: str = '',
-        tags: dict = None, documentation: str = ''):
+        tags: Dict[str, str] = None, documentation: str = ''):
     provider = _get_metrics_provider()
-    provider.histogram(name, value, bucket_tag, buckets, bucket_unit, tags, documentation)
+    provider.histogram(
+        name, value, bucket_tag,
+        buckets=buckets, bucket_unit=bucket_unit, tags=tags, documentation=documentation
+    )
 
 
 def metrics_gauge_task(name, fn, run_every):
@@ -181,9 +208,95 @@ def metrics_gauge_task(name, fn, run_every):
     return inner
 
 
-def create_metrics_event(title, text, alert_type=ALERT_INFO, tags=None, aggregation_key=None):
+def create_metrics_event(title: str, text: str, alert_type: str = ALERT_INFO,
+                         tags: Dict[str, str] = None, aggregation_key: str = None):
+    """
+    Send an event record to the monitoring provider.
+
+    Currently only implemented by the Datadog provider.
+
+    :param title: Title of the event
+    :param text: Event body
+    :param alert_type: Event type. One of 'success', 'info', 'warning', 'error'
+    :param tags: Event tags
+    :param aggregation_key: Key to use to group multiple events
+    """
     tags = COMMON_TAGS.update(tags or {})
     try:
         _get_metrics_provider().create_event(title, text, tags, alert_type, aggregation_key)
     except Exception as e:
         metrics_logger.exception('Error creating metrics event', e)
+
+
+def metrics_histogram_timer(metric: str, timing_buckets: Iterable[int], tags: Dict[str, str] = None,
+                            bucket_tag: str = 'duration', callback: Callable = None):
+    """
+    Create a context manager that times and reports to the metric providers as a histogram
+
+    Example Usage:
+
+    ::
+
+        timer = metrics_histogram_timer('commcare.some.special.metric', tags={
+            'type': type,
+        ], timing_buckets=(.001, .01, .1, 1, 10, 100))
+        with timer:
+            some_special_thing()
+
+    This will result it a call to `metrics_histogram` with the timer value.
+
+    Note: Histograms are implemented differently by each provider. See documentation for details.
+
+    :param metric: Name of the metric (must start with 'commcare.')
+    :param tags: metric tags to include
+    :param timing_buckets: sequence of numbers representing time thresholds, in seconds
+    :param bucket_tag: The name of the bucket tag to use (if used by the underlying provider)
+    :param callback: a callable which will be called when exiting the context manager with a single argument
+                     of the timer duratio
+    :return: A context manager that will perform the specified timing
+             and send the specified metric
+
+    """
+    timer = TimingContext()
+    original_stop = timer.stop
+
+    def new_stop(name=None):
+        original_stop(name)
+        if callback:
+            callback(timer.duration)
+        metrics_histogram(
+            metric, timer.duration,
+            bucket_tag=bucket_tag, buckets=timing_buckets, bucket_unit='s',
+            tags=tags
+        )
+
+    timer.stop = new_stop
+    return timer
+
+
+class metrics_track_errors(ContextDecorator):
+    """Record when something succeeds or errors in the configured metrics provider
+
+    Eg: This code will log to `commcare.myfunction.succeeded` when it completes
+    successfully, and to `commcare.myfunction.failed` when an exception is
+    raised.
+
+    ::
+
+        @metrics_track_errors('myfunction')
+        def myfunction():
+            pass
+    """
+
+    def __init__(self, name):
+        self.succeeded_name = "commcare.{}.succeeded".format(name)
+        self.failed_name = "commcare.{}.failed".format(name)
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if not exc_type:
+            metrics_counter(self.succeeded_name)
+        else:
+            metrics_counter(self.failed_name)

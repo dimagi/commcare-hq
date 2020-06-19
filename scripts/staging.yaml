@@ -50,11 +50,15 @@ trunk: master
 name: autostaging
 branches:
   - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
-  - nh/dhis2/te  # Norman Oct 2
-  - jls/migrate-DefaultConsumption-2 # Jenny March 6
-  #- jls/use-textinput # Jenny March 10
-  - mk/location-reassignment-1 # MK March 25
-  - mk/location-reassignment-3 # MK March 31
-  - jls/sql-invitation-uuid # Jenny March 25
-  - bmb/SAAS-10712-pt2  # Biyeun March 27
+  - jls/sync-mixins-hard-fail # Jenny May 24
+  - jls/migrate-CustomDataFieldsDefinition-2 # Jenny April 29
+  - rn_update_perfect_scrollbar # Rohit Negi May 4
+  - jls/migrate-MobileAuthKeyRecord-2 # Jenny May 16
+  - nh/repeaters_ui  # Norman May 28
+  - nh/charset  # Norman May 27
+  - ap/lazy-load-multimedia # Amit June 5
+  - revert-27725-jls/kill-configurable-timeout # Jenny June 9
+  - nemanja1040:aws_pinpoint_fees  # Nemanja Stancic June 17
+  #- jls/linked-domain-fixtures # Jenny June 18
+
 submodules: {}

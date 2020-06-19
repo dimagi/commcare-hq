@@ -50,7 +50,7 @@ from corehq.apps.domain.views.base import BaseDomainView, LoginAndDomainMixin
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.models import MobileRecoveryMeasure
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.toggles import NAMESPACE_DOMAIN
 from custom.openclinica.forms import OpenClinicaSettingsForm
 from custom.openclinica.models import OpenClinicaSettings
@@ -468,6 +468,23 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
 
 class CustomPasswordResetView(PasswordResetConfirmView):
     urlname = "password_reset_confirm"
+
+    def get_success_url(self):
+        if self.user:
+            # redirect mobile worker password reset to a domain-specific login with their username already set
+            couch_user = CouchUser.get_by_username(self.user.username)
+            if couch_user.is_commcare_user():
+                messages.success(
+                    self.request,
+                    _('Password for {} has successfully been reset. You can now login.').format(
+                        couch_user.raw_username
+                    )
+                )
+                return '{}?username={}'.format(
+                    reverse('domain_login', args=[couch_user.domain]),
+                    couch_user.raw_username,
+                )
+        return super().get_success_url()
 
     def get(self, request, *args, **kwargs):
         self.extra_context['hide_password_feedback'] = settings.ENABLE_DRACONIAN_SECURITY_FEATURES

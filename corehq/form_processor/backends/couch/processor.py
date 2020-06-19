@@ -13,10 +13,9 @@ from casexml.apps.case.util import get_case_xform_ids
 from casexml.apps.case.xform import get_case_updates
 from corehq.blobs.mixin import bulk_atomic_blobs
 from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
-from corehq.form_processor.exceptions import NotAllowed
 from corehq.form_processor.interfaces.processor import XFormQuestionValueIterator
 from corehq.form_processor.utils import extract_meta_instance_id
-from corehq.util.datadog.utils import case_load_counter, form_load_counter
+from corehq.util.metrics.load_counters import case_load_counter, form_load_counter
 from couchforms.models import (
     XFormInstance, XFormDeprecated, XFormDuplicate,
     doc_types, XFormError, SubmissionErrorLog,

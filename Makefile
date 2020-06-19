@@ -25,4 +25,4 @@ upgrade-requirements:
 	cp $(REQUIREMENTS_TXT_DIR)/*requirements.txt requirements-python3/  # TODO remove once commcare-cloud no longer depends on it
 
 docs:
-	cd docs && $(MAKE) html
+	cd docs && $(MAKE) html; cd -

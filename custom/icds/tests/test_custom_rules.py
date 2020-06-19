@@ -169,7 +169,7 @@ class CustomCriteriaTestCase(BaseCaseRuleTest):
 
     @classmethod
     def _make_user(cls, name, location):
-        user = CommCareUser.create(cls.domain, name, 'password')
+        user = CommCareUser.create(cls.domain, name, 'password', None, None)
         user.set_location(location)
         return user
 
@@ -277,9 +277,27 @@ class CustomCriteriaTestCase(BaseCaseRuleTest):
             self.assertFalse(rule.criteria_match(aww_uc, datetime.utcnow()))
             self.assertTrue(rule.criteria_match(ls_uc, datetime.utcnow()))
 
+    def test_child_health_case_that_is_availing_services(self):
+        rule = _create_empty_rule(self.domain, case_type='child_health')
+        rule.add_criteria(CustomMatchDefinition, name='ICDS_CHILD_HEALTH_CASE_CHILD_AVAILING_SERVICES')
+
+        with _with_case(self.domain, 'person', datetime.utcnow()) as child:
+            with _with_case(self.domain, 'child_health', datetime.utcnow()) as child_health:
+                set_parent_case(self.domain, child_health, child, relationship='extension')
+                self._set_case_props(child, {"registered_status": "registered"})
+                self._set_case_props(child, {"migration_status": "not_migrated"})
+                self.assertTrue(rule.criteria_match(child_health, datetime.utcnow()))
+
+        with _with_case(self.domain, 'person', datetime.utcnow()) as child:
+            with _with_case(self.domain, 'child_health', datetime.utcnow()) as child_health:
+                self._set_case_props(child, {"registered_status": "not_registered"})
+                self._set_case_props(child, {"migration_status": "not_migrated"})
+                set_parent_case(self.domain, child_health, child, relationship='extension')
+                self.assertFalse(rule.criteria_match(child_health, datetime.utcnow()))
+
     def test_ccs_record_case_that_is_availing_services(self):
         rule = _create_empty_rule(self.domain, case_type='ccs_record')
-        rule.add_criteria(CustomMatchDefinition, name='ICDS_CCS_RECORD_CASE_AVAILING_SERVICES')
+        rule.add_criteria(CustomMatchDefinition, name='ICDS_CCS_RECORD_CASE_CHILD_AVAILING_SERVICES')
 
         def check(case, add, match):
             case = self._set_case_props(case, {"add": add})

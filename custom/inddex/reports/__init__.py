@@ -1,15 +1,15 @@
-from custom.inddex.reports.gaps_report_by_item import GapsReportByItem
-from custom.inddex.reports.master_data_file import MasterDataFileSummaryReport
-from custom.inddex.reports.nutrient_intakes import NutrientIntakesReport
-from custom.inddex.reports.summary_statistics_report import SummaryStatisticsReport
-from custom.inddex.reports.gaps_summary_by_food_type import GapsSummaryByFoodTypeSummaryReport
+from custom.inddex.reports.r1_master_data import MasterDataReport
+from custom.inddex.reports.r2a_gaps_summary import GapsSummaryReport
+from custom.inddex.reports.r2b_gaps_detail import GapsDetailReport
+from custom.inddex.reports.r3_nutrient_intake import NutrientIntakeReport
+from custom.inddex.reports.r4_nutrient_stats import NutrientStatsReport
 
 CUSTOM_REPORTS = (
     ('Custom Reports', (
-        MasterDataFileSummaryReport,
-        GapsSummaryByFoodTypeSummaryReport,
-        GapsReportByItem,
-        NutrientIntakesReport,
-        SummaryStatisticsReport
+        MasterDataReport,
+        GapsSummaryReport,
+        GapsDetailReport,
+        NutrientIntakeReport,
+        NutrientStatsReport
     )),
 )

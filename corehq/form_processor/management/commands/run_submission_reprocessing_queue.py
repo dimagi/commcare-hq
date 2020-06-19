@@ -1,23 +1,22 @@
-from datetime import timedelta, datetime
+from datetime import datetime
 from time import sleep
 
 from django.core.management import BaseCommand
+from django.db import connection
 from django.db.models import F
-from django.db.models import Q
 
-from corehq.form_processor.tasks import reprocess_submission
-from corehq.util.datadog.gauges import datadog_gauge
 from couchforms.models import UnfinishedSubmissionStub
 from dimagi.utils.logging import notify_exception
 
-ENQUEUING_TIMEOUT = 14 * 24 * 60    # 14 days (in minutes)
+from corehq.form_processor.tasks import reprocess_submission
+from corehq.util.metrics import metrics_gauge
 
 BATCH_SIZE = 1000
 
 
 def _record_datadog_metrics():
     count = UnfinishedSubmissionStub.objects.count()
-    datadog_gauge('commcare.submission_reprocessing.queue_size', count)
+    metrics_gauge('commcare.submission_reprocessing.queue_size', count)
 
 
 class SubmissionReprocessingEnqueuingOperation(BaseCommand):
@@ -41,20 +40,34 @@ class SubmissionReprocessingEnqueuingOperation(BaseCommand):
 
     def get_items_to_be_processed(self):
         _record_datadog_metrics()
-        utcnow = datetime.utcnow()
-        queued_threshold = utcnow - timedelta(minutes=ENQUEUING_TIMEOUT)
-        min_processing_age = utcnow - timedelta(minutes=5)
-        filters = Q(date_queued__isnull=True) | Q(date_queued__lte=queued_threshold)
-
-        # wait 5 mins before processing to avoid processing during form submission
-        filters = Q(timestamp__lt=min_processing_age) & filters
-        query = UnfinishedSubmissionStub.objects.filter(filters).order_by('timestamp')
-        stub_ids = list(query.values_list('id', flat=True)[:BATCH_SIZE])
+        stub_ids = get_unfinished_stub_ids_to_process()
         if stub_ids:
             UnfinishedSubmissionStub.objects.filter(pk__in=stub_ids).update(
-                date_queued=utcnow, attempts=F('attempts') + 1
+                date_queued=datetime.utcnow(), attempts=F('attempts') + 1
             )
         return stub_ids
+
+
+def get_unfinished_stub_ids_to_process():
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """SELECT id from {table} WHERE
+            -- wait before processing to avoid processing during form submission
+            -- and hopefully after any current infra issues
+            timestamp < CURRENT_TIMESTAMP - interval '30 minutes'
+            AND attempts <= 7  -- limit to 7 retries = 247 days old
+            AND (
+                date_queued IS NULL
+                -- exponential back off. 3 and 7 chosen to make the back off steeper
+                -- and also to give some jitter to the timing of when retries are attempted
+                -- 7, 21, 63, 189, 567, 1701 hours (capped at 1701 ~= 71 days)
+                OR date_queued < (CURRENT_TIMESTAMP - interval '7 hours' * power(3, LEAST(attempts, 5)))
+            )
+            ORDER BY timestamp
+            LIMIT {batch_size}
+            """.format(table=UnfinishedSubmissionStub._meta.db_table, batch_size=BATCH_SIZE),
+        )
+        return [row[0] for row in cursor.fetchall()]
 
 
 class Command(SubmissionReprocessingEnqueuingOperation):

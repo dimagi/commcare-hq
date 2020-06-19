@@ -151,6 +151,25 @@ describe('Download Directive', function () {
             assert.equal(expected, result);
         });
 
+        it('tests get placeholder when state and child growth tracker list is selected', function () {
+            controller.selectedIndicator = 13;
+            var mockLocationType = [{"name": "state", "parents": ["state"], "level": 1}];
+
+            var expected = 'Select State';
+            var result = controller.getPlaceholder(mockLocationType);
+            assert.equal(expected, result);
+        });
+
+        it('tests get placeholder when state and aww activity report is selected', function () {
+            controller.selectedIndicator = 14;
+            var mockLocationType = [{"name": "state", "parents": ["state"], "level": 1}];
+
+            var expected = 'National';
+            var result = controller.getPlaceholder(mockLocationType);
+            assert.equal(expected, result);
+        });
+
+
         it('tests get locations for level', function () {
             var level = 0;
             var expected = [
@@ -174,6 +193,14 @@ describe('Download Directive', function () {
             assert.deepEqual(expected, result);
         });
 
+        it('tests get formats when child growth tracker list is selected', function () {
+            controller.selectedIndicator = 13;
+            var expected = [{"id": "csv", "name": "CSV"}, {"id": "xlsx", "name": "Excel"}];
+
+            var result = controller.getFormats();
+            assert.deepEqual(expected, result);
+        });
+
         it('tests get formats when child beneficiary list is not selected', function () {
             controller.selectedIndicator = 5;
             var expected = [{"id": "csv", "name": "CSV"}, {"id": "xlsx", "name": "Excel"}];
@@ -181,6 +208,25 @@ describe('Download Directive', function () {
             var result = controller.getFormats();
             assert.deepEqual(expected, result);
         });
+
+        it('tests on indicator select when child growth tracker list is selected', function () {
+            controller.selectedIndicator = 13;
+            var result = controller.isChildGrowthTrackerSelected();
+            assert.isTrue(result);
+        });
+
+        it('tests on indicator select when child growth tracker list is not selected', function () {
+            controller.selectedIndicator = 12;
+            var result = controller.isChildGrowthTrackerSelected();
+            assert.isFalse(result);
+        });
+
+        it('tests on indicator select when aww activity report is not selected', function () {
+            controller.selectedIndicator = 9;
+            var result = controller.isAwwActivityReportSelected();
+            assert.isFalse(result);
+        });
+
 
         it('tests on indicator select when child beneficiary list is selected', function () {
             controller.selectedIndicator = 6;
@@ -190,6 +236,13 @@ describe('Download Directive', function () {
             var result = controller.selectedFormat;
 
             assert.equal(expected, result);
+        });
+
+        it('tests on indicator select when aww activity report is selected', function () {
+            controller.selectedIndicator = 14;
+            var result = controller.isAwwActivityReportSelected();
+            assert.isTrue(result);
+
         });
 
         it('tests isDistrictOrBelowSelected - state selected', function () {
@@ -244,6 +297,18 @@ describe('Download Directive', function () {
         it('tests isTakeHomeRatioReportSelected - THR not selected', function () {
             controller.selectedIndicator = 9;
             var result = controller.isTakeHomeRationReportSelected();
+            assert.isFalse(result);
+        });
+
+        it('tests isPPRselecected - PPR selected', function () {
+            controller.selectedIndicator = 15;
+            var result = controller.isPPRSelected();
+            assert.isTrue(result);
+        });
+
+        it('tests isPPRselecected - PPR not selected', function () {
+            controller.selectedIndicator = 9;
+            var result = controller.isPPRSelected();
             assert.isFalse(result);
         });
 
@@ -380,7 +445,7 @@ describe('Download Directive', function () {
         it('tests that all users have access to ISSNIP monthly register', function () {
 
             var length = controller.indicators.length;
-            assert.equal(numberOfReports, length);
+            assert.equal(numberOfReports + 3, length);
         });
 
         it('tests first possible data choice on THR raport', function () {
@@ -537,7 +602,7 @@ describe('Download Directive', function () {
 
         it('tests that all users have access to ISSNIP monthly register', function () {
             var length = controller.indicators.length;
-            assert.equal(numberOfReports, length);
+            assert.equal(numberOfReports + 3, length);
         });
     });
 
@@ -589,7 +654,7 @@ describe('Download Directive', function () {
 
         it('tests that block user does not have access to dashboard usage report', function () {
             var length = controller.indicators.length;
-            assert.equal(numberOfReports - 1, length);
+            assert.equal(numberOfReports + 2, length);
         });
     });
 

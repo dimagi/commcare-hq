@@ -297,7 +297,7 @@
                                  data: column.tags,
                                  as: 'tag'
                                }">
-                <span data-bind="text: tag,
+                                <span data-bind="text: tag,
                                  attr: { class: $root.getTagCSSClass(tag) }"></span>
               </span>
 
@@ -393,11 +393,13 @@
           {% if allow_deid %}
             <td class="deid-column"
                 data-bind="visible: $root.isDeidColumnVisible()">
+              <!-- ko ifnot: column.formatProperty() === 'number' && $root.is_odata_config() -->
               <select class="form-control"
                       data-bind="value: deid_transform,
                                  options: getDeidOptions(),
                                  optionsText: getDeidOptionText">
               </select>
+              <!-- /ko -->
             </td>
           {% endif %}
           </tr>

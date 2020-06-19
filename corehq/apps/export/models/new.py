@@ -405,12 +405,9 @@ class ExportColumn(DocumentSchema):
     def is_deidentifed(self):
         return bool(self.deid_transform)
 
-    def get_headers(self, split_column=False, is_odata=False):
+    def get_headers(self, split_column=False):
         if self.is_deidentifed:
-            return ["{} {}".format(
-                self.label,
-                "*sensitive*" if is_odata else "[sensitive]"
-            )]
+            return [f"{self.label} *sensitive*"]
         else:
             return [self.label]
 
@@ -456,7 +453,7 @@ class DocRow(namedtuple("DocRow", ["doc", "row"])):
     """
 
 
-class TableConfiguration(DocumentSchema):
+class TableConfiguration(DocumentSchema, ReadablePathMixin):
     """
     The TableConfiguration represents one excel sheet in an export.
     It contains a list of columns and other presentation properties
@@ -487,7 +484,7 @@ class TableConfiguration(DocumentSchema):
         return headers
 
     def get_rows(self, document, row_number, split_columns=False,
-                 transform_dates=False, as_json=False, is_odata=False):
+                 transform_dates=False, as_json=False):
         """
         Return a list of ExportRows generated for the given document.
         :param document: dictionary representation of a form submission or case
@@ -523,7 +520,7 @@ class TableConfiguration(DocumentSchema):
                     transform_dates=transform_dates,
                 )
                 if as_json:
-                    for index, header in enumerate(col.get_headers(split_column=split_columns, is_odata=is_odata)):
+                    for index, header in enumerate(col.get_headers(split_column=split_columns)):
                         if isinstance(val, list):
                             row_data[header] = "{}".format(val[index])
                         else:
@@ -706,6 +703,11 @@ class ExportInstanceFilters(DocumentSchema):
                 request.domain, 'access_all_locations'):
             return True
         elif self.can_access_all_locations:
+            return False
+        elif not self.accessible_location_ids:
+            # if accessible_location_ids is empty, then in theory the user could
+            # have access to all data if can_access_all_locations was ever set
+            # to False. We need to prevent this from ever happening.
             return False
         else:  # It can be restricted by location
             users_accessible_locations = SQLLocation.active_objects.accessible_location_ids(
@@ -2773,7 +2775,7 @@ class DataFile(object):
     def get_blob(self):
         db = get_blob_db()
         try:
-            blob = db.get(key=self._meta.key)
+            blob = db.get(meta=self._meta)
         except (KeyError, NotFound) as err:
             raise NotFound(str(err))
         return blob

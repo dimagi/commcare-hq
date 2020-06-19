@@ -28,7 +28,7 @@ class CaseClaimTests(TestCase):
     def setUp(self):
         super(CaseClaimTests, self).setUp()
         self.domain = create_domain(DOMAIN)
-        self.user = CommCareUser.create(DOMAIN, USERNAME, PASSWORD)
+        self.user = CommCareUser.create(DOMAIN, USERNAME, PASSWORD, None, None)
         self.host_case_id = uuid4().hex
         self.host_case_name = 'Dmitri Bashkirov'
         self.host_case_type = 'person'

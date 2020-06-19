@@ -1,3 +1,4 @@
+from corehq.util.test_utils import softer_assert
 from custom.champ.tests.utils import ChampTestCase
 from custom.champ.views import PrevisionVsAchievementsTableView
 
@@ -7,6 +8,7 @@ import mock
 from django.urls import reverse
 
 
+@softer_assert("to add back post https://github.com/dimagi/sql-agg/pull/56")
 class TestPVATable(ChampTestCase):
 
     def setUp(self):

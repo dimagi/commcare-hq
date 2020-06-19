@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from django.db.models import (
     BigIntegerField,
+    NullBooleanField,
     CharField,
     DateTimeField,
     IntegerField,
@@ -55,6 +56,7 @@ class BlobMeta(PartitionedModel, Model):
         help_text="Blob type code. See `corehq.blobs.CODES`.",
     )
     content_length = BigIntegerField()
+    compressed_length = BigIntegerField(null=True)
     content_type = CharField(max_length=255, null=True)
     properties = NullJsonField(default=dict)
     created_on = DateTimeField(default=datetime.utcnow)
@@ -91,13 +93,22 @@ class BlobMeta(PartitionedModel, Model):
         """Use content type to check if blob is an image"""
         return (self.content_type or "").startswith("image/")
 
-    def open(self):
+    @property
+    def is_compressed(self):
+        return self.compressed_length is not None
+
+    @property
+    def stored_content_length(self):
+        return self.compressed_length if self.is_compressed else self.content_length
+
+    def open(self, db=None):
         """Get a file-like object containing blob content
 
         The returned object should be closed when it is no longer needed.
         """
         from . import get_blob_db
-        return get_blob_db().get(key=self.key)
+        db = db or get_blob_db()
+        return db.get(meta=self)
 
     def blob_exists(self):
         from . import get_blob_db

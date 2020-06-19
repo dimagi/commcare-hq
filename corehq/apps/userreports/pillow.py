@@ -5,9 +5,9 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 
+from corehq.util.metrics import metrics_counter, metrics_histogram_timer
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
-from pillowtop.dao.exceptions import DocumentMismatchError
 from pillowtop.exceptions import PillowConfigError
 from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import ConstructedPillow
@@ -42,7 +42,6 @@ from corehq.apps.userreports.sql import get_metadata
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager
-from corehq.util.datadog.gauges import datadog_bucket_timer, datadog_histogram
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
 
@@ -123,7 +122,7 @@ class ConfigurableReportTableManagerMixin(object):
                           Otherwise, do not attempt to change database
         """
         self.bootstrapped = False
-        self.last_bootstrapped = datetime.utcnow()
+        self.last_bootstrapped = self.last_imported = datetime.utcnow()
         self.data_source_providers = data_source_providers
         self.ucr_division = ucr_division
         self.include_ucrs = include_ucrs
@@ -164,6 +163,8 @@ class ConfigurableReportTableManagerMixin(object):
     def bootstrap_if_needed(self):
         if self.needs_bootstrap():
             self.bootstrap()
+        else:
+            self._pull_in_new_and_modified_data_sources()
 
     def bootstrap(self, configs=None):
         configs = self.get_filtered_configs(configs)
@@ -174,7 +175,7 @@ class ConfigurableReportTableManagerMixin(object):
 
         for config in configs:
             self.table_adapters_by_domain[config.domain].append(
-                get_indicator_adapter(config, raise_errors=True, load_source='change_feed')
+                self._get_indicator_adapter(config)
             )
 
         if self.run_migrations:
@@ -182,6 +183,9 @@ class ConfigurableReportTableManagerMixin(object):
 
         self.bootstrapped = True
         self.last_bootstrapped = datetime.utcnow()
+
+    def _get_indicator_adapter(self, config):
+        return get_indicator_adapter(config, raise_errors=True, load_source='change_feed')
 
     def rebuild_tables_if_necessary(self):
         self._rebuild_sql_tables([
@@ -212,7 +216,7 @@ class ConfigurableReportTableManagerMixin(object):
 
             tables_to_act_on = get_tables_rebuild_migrate(diffs)
             for table_name in tables_to_act_on.rebuild:
-                pillow_logging.debug("[rebuild] Rebuilding table: %s", table_name)
+                pillow_logging.info("[rebuild] Rebuilding table: %s", table_name)
                 sql_adapter = table_map[table_name]
                 table_diffs = [diff for diff in diffs if diff.table_name == table_name]
                 if not sql_adapter.config.is_static:
@@ -245,10 +249,34 @@ class ConfigurableReportTableManagerMixin(object):
             adapter.log_table_rebuild_skipped(source='pillowtop', diffs=diff_dicts)
             return
 
-        if config.is_static:
-            rebuild_indicators.delay(adapter.config.get_id, source='pillowtop', engine_id=adapter.engine_id)
-        else:
-            adapter.rebuild_table(source='pillowtop')
+        rebuild_indicators.delay(adapter.config.get_id, source='pillowtop', engine_id=adapter.engine_id)
+
+    def _pull_in_new_and_modified_data_sources(self):
+        """
+        Find any data sources that have been modified since the last time this was bootstrapped
+        and update the in-memory references.
+        """
+        new_last_imported = datetime.utcnow()
+        new_data_sources = [
+            source
+            for provider in self.data_source_providers
+            for source in provider.get_data_sources_modified_since(self.last_imported)
+        ]
+        self._add_data_sources_to_table_adapters(new_data_sources)
+        self.last_imported = new_last_imported
+
+    def _add_data_sources_to_table_adapters(self, new_data_sources):
+        for new_data_source in new_data_sources:
+            pillow_logging.info(f'updating modified data source: {new_data_source.domain}: {new_data_source._id}')
+            domain_adapters = self.table_adapters_by_domain[new_data_source.domain]
+            # remove any previous adapters if they existed
+            domain_adapters = [
+                adapter for adapter in domain_adapters if adapter.config._id != new_data_source._id
+            ]
+            # add a new one
+            domain_adapters.append(self._get_indicator_adapter(new_data_source))
+            # update dictionary
+            self.table_adapters_by_domain[new_data_source.domain] = domain_adapters
 
 
 class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, BulkPillowProcessor):
@@ -305,18 +333,18 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
         rows_to_save_by_adapter = defaultdict(list)
         async_configs_by_doc_id = defaultdict(list)
         to_update = {change for change in changes_chunk if not change.deleted}
-        with self._datadog_timing('extract'):
+        with self._metrics_timer('extract'):
             retry_changes, docs = bulk_fetch_changes_docs(to_update, domain)
         change_exceptions = []
 
-        with self._datadog_timing('single_batch_transform'):
+        with self._metrics_timer('single_batch_transform'):
             for doc in docs:
                 change = changes_by_id[doc['_id']]
                 doc_subtype = change.metadata.document_subtype
                 eval_context = EvaluationContext(doc)
-                with self._datadog_timing('single_doc_transform'):
+                with self._metrics_timer('single_doc_transform'):
                     for adapter in adapters:
-                        with self._datadog_timing('transform', adapter.config._id):
+                        with self._metrics_timer('transform', adapter.config._id):
                             if adapter.config.filter(doc, eval_context):
                                 if adapter.run_asynchronous:
                                     async_configs_by_doc_id[doc['_id']].append(adapter.config._id)
@@ -332,31 +360,31 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                                 # if the subtype matches our filters, but the full filter no longer applies
                                 to_delete_by_adapter[adapter].append(doc)
 
-        with self._datadog_timing('single_batch_delete'):
+        with self._metrics_timer('single_batch_delete'):
             # bulk delete by adapter
             to_delete = [{'_id': c.id} for c in changes_chunk if c.deleted]
             for adapter in adapters:
                 delete_docs = to_delete_by_adapter[adapter] + to_delete
                 if not delete_docs:
                     continue
-                with self._datadog_timing('delete', adapter.config._id):
+                with self._metrics_timer('delete', adapter.config._id):
                     try:
                         adapter.bulk_delete(delete_docs)
                     except Exception:
                         delete_ids = [doc['_id'] for doc in delete_docs]
                         retry_changes.update([c for c in changes_chunk if c.id in delete_ids])
 
-        with self._datadog_timing('single_batch_load'):
+        with self._metrics_timer('single_batch_load'):
             # bulk update by adapter
             for adapter, rows in rows_to_save_by_adapter.items():
-                with self._datadog_timing('load', adapter.config._id):
+                with self._metrics_timer('load', adapter.config._id):
                     try:
                         adapter.save_rows(rows)
                     except Exception:
                         retry_changes.update(to_update)
 
         if async_configs_by_doc_id:
-            with self._datadog_timing('async_config_load'):
+            with self._metrics_timer('async_config_load'):
                 doc_type_by_id = {
                     _id: changes_by_id[_id].metadata.document_type
                     for _id in async_configs_by_doc_id.keys()
@@ -365,16 +393,16 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
 
         return retry_changes, change_exceptions
 
-    def _datadog_timing(self, step, config_id=None):
-        tags = [
-            'action:{}'.format(step),
-            'index:ucr',
-        ]
+    def _metrics_timer(self, step, config_id=None):
+        tags = {
+            'action': step,
+            'index': 'ucr',
+        }
         if config_id and settings.ENTERPRISE_MODE:
-            tags.append('config_id:{}'.format(config_id))
-        return datadog_bucket_timer(
+            tags['config_id'] = config_id
+        return metrics_histogram_timer(
             'commcare.change_feed.processor.timing',
-            tags=tags, timing_buckets=(.03, .1, .3, 1, 3, 10)
+            timing_buckets=(.03, .1, .3, 1, 3, 10), tags=tags
         )
 
     def process_change(self, change):
@@ -432,9 +460,9 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                 break
 
         for domain, duration in top_half_domains.items():
-            datadog_histogram('commcare.change_feed.ucr_slow_log', duration, tags=[
-                'domain:{}'.format(domain)
-            ])
+            metrics_counter('commcare.change_feed.ucr_slow_log', duration, tags={
+                'domain': domain
+            })
         self.domain_timing_context.clear()
 
 

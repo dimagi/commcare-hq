@@ -14,8 +14,8 @@ class Command(PopulateSQLCommand):
 
     @classmethod
     def sql_class(self):
-        from corehq.apps.users.models import SQLInvitation
-        return SQLInvitation
+        from corehq.apps.users.models import Invitation
+        return Invitation
 
     @classmethod
     def commit_adding_migration(cls):

@@ -8,6 +8,16 @@
   since: "1.3"
   force: true
 
+- name: "Load video files lazily"
+  description: "Make OTA app updates skip download for video files at app update time."
+  id: "lazy-load-video-files"
+  toggle: LAZY_LOAD_MULTIMEDIA
+  values: ["true", "false"]
+  value_names: ["Yes", "No"]
+  default: "false"
+  since: "2.50"
+  force: true
+
 - disabled: true
   name: "Purge Frequency"
   description: "How often the phone should attempt to purge any cached storage which may have expired"
@@ -98,6 +108,14 @@
 - name: "Demo Logo"
   description: "Upload a file to serve as a demo logo on Android phones"
   id: "logo_android_demo"
+  widget: "image_uploader"
+  privilege: "commcare_logo_uploader"
+  supports_linked_app: true
+  force: true
+
+- name: "Web Apps Logo"
+  description: "Upload a file to serve as an app logo in Web Apps"
+  id: "logo_web_apps"
   widget: "image_uploader"
   privilege: "commcare_logo_uploader"
   supports_linked_app: true
@@ -353,3 +371,12 @@
   default: "none"
   since: "2.24"
   force: true
+
+- name: "Default Map Tileset"
+  description: "For mobile map displays, chooses a base tileset for the underlying map layer"
+  id: "cc-maps-default-layer"
+  values: ["normal", "satellite","terrain","hybrid"]
+  value_names: ["Normal","Satellite","Terrain","Hybrid"]
+  default: "normal"
+  since: "2.48"
+  force: false

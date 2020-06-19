@@ -6,7 +6,7 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 
-from corehq.util.metrics import metrics_gauge_task
+from corehq.util.metrics import metrics_gauge_task, metrics_counter, metrics_histogram_timer
 from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
@@ -23,11 +23,7 @@ from corehq.motech.repeaters.dbaccessors import (
     iterate_repeat_records,
 )
 from corehq.privileges import DATA_FORWARDING, ZAPIER_INTEGRATION
-from corehq.util.datadog.gauges import (
-    datadog_bucket_timer,
-    datadog_counter,
-)
-from corehq.util.datadog.utils import make_buckets_from_timedeltas
+from corehq.util.metrics import make_buckets_from_timedeltas
 from corehq.util.soft_assert import soft_assert
 
 _check_repeaters_buckets = make_buckets_from_timedeltas(
@@ -72,20 +68,19 @@ def check_repeaters():
         name=CHECK_REPEATERS_KEY,
     )
     if not check_repeater_lock.acquire(blocking=False):
-        datadog_counter("commcare.repeaters.check.locked_out")
+        metrics_counter("commcare.repeaters.check.locked_out")
         return
 
     try:
-        with datadog_bucket_timer(
+        with metrics_histogram_timer(
             "commcare.repeaters.check.processing",
-            tags=[],
             timing_buckets=_check_repeaters_buckets,
         ):
             for record in iterate_repeat_records(start):
                 if datetime.utcnow() > six_hours_later:
                     _soft_assert(False, "I've been iterating repeat records for six hours. I quit!")
                     break
-                datadog_counter("commcare.repeaters.check.attempt_forward")
+                metrics_counter("commcare.repeaters.check.attempt_forward")
                 record.attempt_forward_now()
     finally:
         check_repeater_lock.release()

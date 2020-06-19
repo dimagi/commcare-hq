@@ -3,23 +3,23 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 
-from celery.schedules import crontab
-from celery.task import periodic_task, task
-
-from corehq.apps.export.exceptions import RejectedStaleExport
-from corehq.celery_monitoring.signals import get_task_time_to_start
 from couchexport.models import Format
 from soil import DownloadBase
 from soil.progress import get_task_status
 from soil.util import expose_blob_download, process_email_request
 
+from celery.schedules import crontab
+from celery.task import periodic_task, task
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
+from corehq.apps.export.models.incremental import generate_and_send_incremental_export
+from corehq.apps.export.exceptions import RejectedStaleExport
 from corehq.apps.export.utils import get_export
 from corehq.apps.users.models import CouchUser
 from corehq.blobs import CODES, get_blob_db
-from corehq.util.datadog.gauges import datadog_track_errors, datadog_counter
+from corehq.celery_monitoring.signals import get_task_time_to_start
 from corehq.util.decorators import serial_task
 from corehq.util.files import TransientTempfile, safe_filename_header
+from corehq.util.metrics import metrics_counter, metrics_track_errors
 from corehq.util.quickcache import quickcache
 
 from .const import EXPORT_DOWNLOAD_QUEUE, SAVED_EXPORTS_QUEUE
@@ -28,7 +28,11 @@ from .dbaccessors import (
     get_daily_saved_export_ids_for_auto_rebuild,
     get_properly_wrapped_export_instance,
 )
-from .export import get_export_file, rebuild_export
+from .export import (
+    get_export_file,
+    rebuild_export,
+)
+from .models.incremental import IncrementalExport
 from .models.new import EmailExportWhenDoneRequest
 from .system_properties import MAIN_CASE_TABLE_PROPERTIES
 
@@ -50,12 +54,12 @@ def populate_export_download_task(domain, export_ids, exports_type, username, fi
     if settings.STALE_EXPORT_THRESHOLD is not None and not email_requests.count():
         delay = get_task_time_to_start(populate_export_download_task.request.id)
         if delay.total_seconds() > settings.STALE_EXPORT_THRESHOLD:
-            datadog_counter('commcare.exports.rejected_unfresh_export')
+            metrics_counter('commcare.exports.rejected_unfresh_export')
             raise RejectedStaleExport()
 
     export_instances = [get_export(exports_type, domain, export_id, username)
                         for export_id in export_ids]
-    with TransientTempfile() as temp_path, datadog_track_errors('populate_export_download_task'):
+    with TransientTempfile() as temp_path, metrics_track_errors('populate_export_download_task'):
         export_file = get_export_file(
             export_instances,
             filters,
@@ -122,7 +126,7 @@ def rebuild_saved_export(export_instance_id, manual=False):
     download_data = _get_saved_export_download_data(export_instance_id)
     status = get_task_status(download_data.task)
     if manual and status.missing() and download_data.task:
-        download_data.task.revoke()
+        download_data.task.revoke(terminate=True)
     if status.not_started() or status.started():
         return
 
@@ -208,3 +212,19 @@ def generate_schema_for_all_builds(self, schema_cls, domain, app_id, identifier)
         only_process_current_builds=False,
         task=self,
     )
+
+
+@periodic_task(run_every=crontab(hour="*", minute="30", day_of_week="*"),
+               queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def generate_incremental_exports():
+    incremental_exports = IncrementalExport.objects.filter(active=True)
+    for incremental_export in incremental_exports:
+        process_incremental_export.delay(incremental_export.id)
+
+
+@task
+def process_incremental_export(incremental_export_id):
+    incremental_export = IncrementalExport.objects.get(id=incremental_export_id)
+    last_valid_checkpoint = incremental_export.last_valid_checkpoint
+    last_doc_date = last_valid_checkpoint.last_doc_date if last_valid_checkpoint else None
+    generate_and_send_incremental_export(incremental_export, last_doc_date)

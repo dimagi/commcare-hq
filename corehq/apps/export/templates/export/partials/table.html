@@ -108,13 +108,14 @@
                              placeholder: '{% trans "Enter description here"|escapejs %}',
                              cols: 50"
                      data-apply-bindings="false"></inline-edit>
-
-        <div data-bind="ifnot: isLocationSafeForUser()"
-             class="text-warning">
-          {% blocktrans %}
-            This export is filtered to data you don't have access to.
-          {% endblocktrans %}
-        </div>
+        <!-- ko ifnot: isLocationSafeForUser() -->
+          <div class="alert alert-warning alert-small">
+            <i class="fa fa-warning"></i>
+            {% blocktrans %}
+              This export is filtered to data you don't have access to.
+            {% endblocktrans %}
+          </div>
+        <!-- /ko -->
 
         <!-- ko if: isOData -->
           <!-- ko with: odataFeedUrl -->
@@ -328,7 +329,7 @@
             <!-- /ko -->
           </div>
 
-          <div data-bind="if: isLocationSafeForUser">
+          <div data-bind="if: isLocationSafeForUser()">
             <p class="text-warning"
                data-bind="if: emailedExport.hasFile() && emailedExport.fileData.showExpiredWarning() && isAutoRebuildEnabled()">
               <i class="fa fa-exclamation-triangle"></i>
@@ -360,7 +361,7 @@
 
           </div>
 
-          <div data-bind="if: isLocationSafeForUser">
+          <div data-bind="if: isLocationSafeForUser()">
             <div data-bind="if: !emailedExport.hasFile() && emailedExport.taskStatus && !emailedExport.taskStatus.justFinished()">
               <div class="alert alert-warning"
                    data-bind="visible: emailedExport.prepareExportError()">
@@ -506,6 +507,13 @@
          class="btn btn-primary">
         {{ export_type_caps }}
       </a>
+      {% if request|toggle_enabled:"DATA_EXPORT_TOOL_SCHEMA_EXPORT" %}
+      <br>
+      <br>
+      <a data-bind="attr: {href: detSchemaUrl}" class="btn btn-default btn-xs">
+        {% trans "Download DET Config" %}
+      </a>
+      {% endif %}
       {% if has_edit_permissions %}
         <a class="btn btn-default"
            data-bind="visible: showSavedFilters && isLocationSafeForUser(),
@@ -533,6 +541,7 @@
 
     {% if is_daily_saved_export %}
       <td>
+        <!-- ko if: isLocationSafeForUser() -->
         <a class="btn btn-default"
            data-bind="attr: {
                         'data-target': '#modalEnableDisableAutoRefresh-' + id() + '-' + emailedExport.groupId(),
@@ -545,6 +554,7 @@
             {% trans "Disable" %}
           </span>
         </a>
+        <!-- /ko -->
       </td>
     {% endif %}
 
@@ -552,7 +562,7 @@
       <td>
         <div data-bind="if: $parent.showOwnership">
           <div data-bind="if: can_edit()">
-            <div data-bind="if: isLocationSafeForUser">
+            <div data-bind="if: isLocationSafeForUser()">
               <a class="btn btn-default"
                  {% if odata_feeds_over_limit %}
                  href="#odataFeedLimitReachedModal"
@@ -581,7 +591,7 @@
             </div>
           </div>
           <div data-bind="ifnot: can_edit()">
-            <div data-bind="if: isLocationSafeForUser">
+            <div data-bind="if: isLocationSafeForUser()">
               <a class="btn btn-default disabled"
                  data-bind="visible: $parent.myExports">
                 <div data-bind="ifnot: isOData()">
@@ -624,7 +634,7 @@
           </div>
         </div>
         <div data-bind="ifnot: $parent.showOwnership">
-          <div data-bind="if: isLocationSafeForUser">
+          <div data-bind="if: isLocationSafeForUser()">
             <a class="btn btn-default"
                     {% if odata_feeds_over_limit %}
                     href="#odataFeedLimitReachedModal"

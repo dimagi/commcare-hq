@@ -29,6 +29,7 @@ def get_user_import_validators(domain_obj, all_specs, allowed_groups=None, allow
         UsernameValidator(domain),
         BooleanColumnValidator(domain, 'is_active'),
         BooleanColumnValidator(domain, 'is_account_confirmed'),
+        BooleanColumnValidator(domain, 'send_confirmation_email'),
         RequiredFieldsValidator(domain),
         DuplicateValidator(domain, 'username', all_specs),
         DuplicateValidator(domain, 'user_id', all_specs),
@@ -182,9 +183,10 @@ class NewUserPasswordValidator(ImportValidator):
         user_id = spec.get('user_id')
         password = spec.get('password')
         is_account_confirmed = spec_value_to_boolean_or_none(spec, 'is_account_confirmed')
+        web_user = spec.get('web_user')
 
         # explicitly check is_account_confirmed against False because None is the default
-        if not user_id and not is_password(password) and is_account_confirmed is not False:
+        if not user_id and not is_password(password) and is_account_confirmed is not False and not web_user:
             return self.error_message
 
 

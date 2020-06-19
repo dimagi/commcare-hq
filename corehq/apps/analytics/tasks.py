@@ -18,8 +18,8 @@ from celery.schedules import crontab
 from celery.task import periodic_task
 from email_validator import EmailNotValidError, validate_email
 from memoized import memoized
-from requests import HTTPError
 
+from corehq.util.metrics import metrics_counter, metrics_gauge
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.accounting.models import (
@@ -41,14 +41,6 @@ from corehq.apps.es.forms import FormES
 from corehq.apps.es.users import UserES
 from corehq.apps.users.models import WebUser
 from corehq.toggles import deterministic_random
-from corehq.util.datadog.utils import (
-    DATADOG_DOMAINS_EXCEEDING_FORMS_GAUGE,
-    DATADOG_HUBSPOT_SENT_FORM_METRIC,
-    DATADOG_HUBSPOT_TRACK_DATA_POST_METRIC,
-    DATADOG_WEB_USERS_GAUGE,
-    count_by_response_code,
-    update_datadog_metrics,
-)
 from corehq.util.dates import unix_time
 from corehq.util.decorators import analytics_task
 from corehq.util.soft_assert import soft_assert
@@ -177,9 +169,10 @@ def _hubspot_post(url, data):
         response.raise_for_status()
 
 
-@count_by_response_code(DATADOG_HUBSPOT_TRACK_DATA_POST_METRIC)
 def _send_post_data(url, params, data, headers):
-    return requests.post(url, params=params, data=data, headers=headers)
+    response = requests.post(url, params=params, data=data, headers=headers)
+    metrics_counter('commcare.hubspot.track_data_post', tags={'status_code': response.status_code})
+    return response
 
 
 def _get_user_hubspot_id(webuser):
@@ -236,7 +229,6 @@ def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=N
         response.raise_for_status()
 
 
-@count_by_response_code(DATADOG_HUBSPOT_SENT_FORM_METRIC)
 def _send_hubspot_form_request(hubspot_id, form_id, data):
     # Submits a urlencoded form, not JSON.  data should use "true"/"false" for bools
     # https://developers.hubspot.com/docs/methods/forms/submit_form
@@ -244,7 +236,9 @@ def _send_hubspot_form_request(hubspot_id, form_id, data):
         hubspot_id=hubspot_id,
         form_id=form_id
     )
-    return requests.post(url, data=data)
+    response = requests.post(url, data=data)
+    metrics_counter('commcare.hubspot.sent_form', tags={'status_code': response.status_code})
+    return response
 
 
 @analytics_task(serializer='pickle', )
@@ -560,10 +554,10 @@ def track_periodic_data():
         submit_json = json.dumps(submit)
         submit_data_to_hub_and_kiss(submit_json)
 
-    update_datadog_metrics({
-        DATADOG_WEB_USERS_GAUGE: hubspot_number_of_users,
-        DATADOG_DOMAINS_EXCEEDING_FORMS_GAUGE: hubspot_number_of_domains_with_forms_gt_threshold
-    })
+    metrics_gauge('commcare.hubspot.web_users_processed', hubspot_number_of_users)
+    metrics_gauge(
+        'commcare.hubspot.domains_with_forms_gt_threshold', hubspot_number_of_domains_with_forms_gt_threshold
+    )
 
 
 def _email_is_valid(email):

@@ -105,7 +105,7 @@ def default_data_view_url(request, domain):
     if can_download_data_files(domain, request.couch_user):
         return reverse(DataFileDownloadList.urlname, args=[domain])
 
-    if request.couch_user.can_edit_data:
+    if request.couch_user.can_edit_data():
         return CaseReassignmentInterface.get_url(domain)
 
     raise Http404()
@@ -182,10 +182,6 @@ class CaseGroupListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
     @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain])
-
-    @property
-    def parameters(self):
-        return self.request.POST if self.request.method == 'POST' else self.request.GET
 
     @property
     @memoized
@@ -324,10 +320,6 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
         if self.is_case_group_update:
             return UpdateCaseGroupForm(self.request.POST, initial=initial)
         return UpdateCaseGroupForm(initial=initial)
-
-    @property
-    def parameters(self):
-        return self.request.POST if self.request.method == 'POST' else self.request.GET
 
     @property
     @memoized
@@ -610,7 +602,6 @@ def find_by_id(request, domain):
     })
 
 
-
 class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     template_name = 'data_interfaces/list_automatic_update_rules.html'
     urlname = 'automatic_update_rule_list'
@@ -627,10 +618,6 @@ class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     @method_decorator(requires_privilege_with_fallback(privileges.DATA_CLEANUP))
     def dispatch(self, *args, **kwargs):
         return super(AutomaticUpdateRuleListView, self).dispatch(*args, **kwargs)
-
-    @property
-    def parameters(self):
-        return self.request.POST if self.request.method == 'POST' else self.request.GET
 
     @property
     def allowed_actions(self):

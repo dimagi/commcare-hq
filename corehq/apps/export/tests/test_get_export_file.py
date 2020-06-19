@@ -829,7 +829,7 @@ class ExportTest(SimpleTestCase):
             {
                 'My table': {
                     'headers': [
-                        'DEID Date Transform column [sensitive]',
+                        'DEID Date Transform column *sensitive*',
                     ],
                     'rows': [
                         [MISSING_VALUE],
@@ -946,4 +946,4 @@ class TableHeaderTest(SimpleTestCase):
             label="my column",
             deid_transform="deid_id",
         )
-        self.assertEqual(col.get_headers(), ["my column [sensitive]"])
+        self.assertEqual(col.get_headers(), ["my column *sensitive*"])

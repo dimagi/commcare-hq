@@ -25,7 +25,7 @@ from casexml.apps.phone.restore import (
     RestoreConfig,
     RestoreParams,
 )
-from dimagi.utils.decorators.profile import profile_prod
+from dimagi.utils.decorators.profile import profile_dump
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_utc_datetime
 
@@ -34,7 +34,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app_cached,
     get_latest_released_app_version,
 )
-from corehq.apps.app_manager.util import LatestAppInfo
+from corehq.apps.app_manager.models import GlobalAppConfig
 from corehq.apps.builds.utils import get_default_build_spec
 from corehq.apps.case_search.models import QueryMergeException
 from corehq.apps.case_search.utils import CaseSearchCriteria
@@ -46,6 +46,7 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.case_search import flatten_result
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.ota.decorators import require_mobile_access
 from corehq.apps.ota.rate_limiter import rate_limit_restore
 from corehq.apps.users.models import CouchUser, UserReportingMetadataStaging
 from corehq.apps.users.util import (
@@ -75,6 +76,7 @@ PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 @location_safe
 @handle_401_response
 @mobile_auth_or_formplayer
+@require_mobile_access
 @check_domain_migration
 def restore(request, domain, app_id=None):
     """
@@ -194,7 +196,7 @@ def get_restore_params(request):
     }
 
 
-@profile_prod('commcare_ota_get_restore_response.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
+@profile_dump('commcare_ota_get_restore_response.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
 def get_restore_response(domain, couch_user, app_id=None, since=None, version='1.0',
                          state=None, items=False, force_cache=False,
                          cache_timeout=None, overwrite_cache=False,
@@ -301,16 +303,18 @@ def heartbeat(request, domain, app_build_id):
 
     info = {"app_id": app_id}
     try:
-        # mobile will send brief_app_id
-        info.update(LatestAppInfo(app_id, domain).get_info())
+        # mobile will send master app_id
+        config = GlobalAppConfig.by_app_id(domain, app_id)
     except (Http404, AssertionError):
-        # If it's not a valid 'brief' app id, find it by talking to couch
+        # If it's not a valid master app id, find it by talking to couch
         notify_exception(request, 'Received an invalid heartbeat request')
         app = get_app_cached(domain, app_build_id)
-        brief_app_id = app.master_id
-        info.update(LatestAppInfo(brief_app_id, domain).get_info())
-
+        config = GlobalAppConfig.by_app_id(domain, app.master_id)
     else:
+        info.update({
+            "latest_apk_version": config.get_latest_apk_version(),
+            "latest_ccz_version": config.get_latest_app_version(build_profile_id),
+        })
         if not toggles.SKIP_UPDATING_USER_REPORTING_METADATA.enabled(domain):
             update_user_reporting_data(app_build_id, app_id, build_profile_id, request.couch_user, request)
     if _should_force_log_submission(request):

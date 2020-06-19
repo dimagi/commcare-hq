@@ -8,10 +8,9 @@ from django.conf import settings
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
-from unidecode import unidecode
+from text_unidecode import unidecode
 
 from casexml.apps.case.xform import extract_case_blocks
-from corehq.util.datadog.gauges import datadog_gauge
 from couchforms.analytics import app_has_been_submitted_to_in_last_30_days
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
@@ -35,7 +34,9 @@ from corehq.elastic import (
 )
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.pillows.mappings.app_mapping import APP_INDEX
+from corehq.util.dates import get_timestamp_for_filename
 from corehq.util.files import TransientTempfile, safe_filename_header
+from corehq.util.metrics import metrics_gauge
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import absolute_reverse
 
@@ -43,6 +44,7 @@ from .analytics.esaccessors import (
     get_form_ids_having_multimedia,
     scroll_case_names,
 )
+
 
 logging = get_task_logger(__name__)
 EXPIRE_TIME = ONE_DAY
@@ -111,9 +113,9 @@ def run_datadog_user_stats():
 def datadog_report_user_stats(metric_name, commcare_users_by_domain):
     commcare_users_by_domain = summarize_user_counts(commcare_users_by_domain, n=50)
     for domain, user_count in commcare_users_by_domain.items():
-        datadog_gauge(metric_name, user_count, tags=[
-            'domain:{}'.format('_other' if domain is () else domain)
-        ])
+        metrics_gauge(metric_name, user_count, tags={
+            'domain': '_other' if domain is () else domain
+        })
 
 
 def summarize_user_counts(commcare_users_by_domain, n):
@@ -188,7 +190,7 @@ def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject
         # This uses the user's first domain to store the file in the blobdb
         report.domain = report.request.couch_user.get_domains()[0]
 
-    hash_id = _store_excel_in_blobdb(report_class, file, report.domain)
+    hash_id = _store_excel_in_blobdb(report_class, file, report.domain, report.slug)
     if not recipient_list:
         recipient_list = [report.request.couch_user.get_email()]
     for recipient in recipient_list:
@@ -220,13 +222,14 @@ def _send_email(user, report, hash_id, recipient, subject=None):
     send_report_download_email(report.name, recipient, link, subject)
 
 
-def _store_excel_in_blobdb(report_class, file, domain):
+def _store_excel_in_blobdb(report_class, file, domain, report_slug):
     key = uuid.uuid4().hex
     expired = 60 * 24 * 7  # 7 days
     db = get_blob_db()
 
     kw = {
         "domain": domain,
+        "name": f"{report_slug}-{get_timestamp_for_filename()}",
         "parent_id": key,
         "type_code": CODES.tempfile,
         "key": key,

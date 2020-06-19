@@ -211,6 +211,7 @@ DEFAULT_APPS = (
     'ws4redis',
     'statici18n',
     'django_user_agents',
+    'logentry_admin',
 )
 
 CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'
@@ -288,7 +289,10 @@ HQ_APPS = (
     'corehq.messaging.scheduling',
     'corehq.messaging.scheduling.scheduling_partitioned',
     'corehq.messaging.smsbackends.tropo',
+    'corehq.messaging.smsbackends.turn',
     'corehq.messaging.smsbackends.twilio',
+    'corehq.messaging.smsbackends.infobip',
+    'corehq.messaging.smsbackends.amazon_pinpoint',
     'corehq.apps.dropbox',
     'corehq.messaging.smsbackends.megamobile',
     'corehq.messaging.ivrbackends.kookoo',
@@ -300,6 +304,7 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.smsgh',
     'corehq.messaging.smsbackends.push',
     'corehq.messaging.smsbackends.starfish',
+    'corehq.messaging.smsbackends.trumpia',
     'corehq.messaging.smsbackends.apposit',
     'corehq.messaging.smsbackends.test',
     'corehq.apps.registration',
@@ -308,7 +313,6 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.vertex',
     'corehq.messaging.smsbackends.start_enterprise',
     'corehq.messaging.smsbackends.ivory_coast_mtn',
-    'corehq.messaging.smsbackends.karix',
     'corehq.messaging.smsbackends.airtel_tcl',
     'corehq.apps.reports.app_config.ReportsModule',
     'corehq.apps.reports_core',
@@ -468,11 +472,22 @@ RETURN_PATH_EMAIL = None
 # SES bounce and complaint notifications.
 RETURN_PATH_EMAIL_PASSWORD = None
 
+# Allows reception of SES Events to the log_email_event endpoint to update
+# MessagingSubEvent status This configuration set should be set up for each
+# environment here:
+# https://console.aws.amazon.com/ses/home?region=us-east-1#configuration-set-list:
+
+SES_CONFIGURATION_SET = None
+SNS_EMAIL_EVENT_SECRET = None
+
 ENABLE_SOFT_ASSERT_EMAILS = True
 IS_DIMAGI_ENVIRONMENT = True
 
-SERVER_ENVIRONMENT = 'localdev'
+LOCAL_SERVER_ENVIRONMENT = 'localdev'
+SERVER_ENVIRONMENT = LOCAL_SERVER_ENVIRONMENT
 ICDS_ENVS = ('icds',)
+# environments located in india, this should not even include staging
+INDIAN_ENVIRONMENTS = ('india', 'icds-cas', 'icds-staging')
 UNLIMITED_RULE_RESTART_ENVS = ('echis', 'pna', 'swiss')
 
 # minimum minutes between updates to user reporting metadata
@@ -542,6 +557,7 @@ CELERY_PERIODIC_QUEUE = 'celery_periodic'
 CELERY_REMINDER_RULE_QUEUE = 'reminder_rule_queue'
 CELERY_REMINDER_CASE_UPDATE_QUEUE = 'reminder_case_update_queue'
 CELERY_REPEAT_RECORD_QUEUE = 'repeat_record_queue'
+CELERY_LOCATION_REASSIGNMENT_QUEUE = 'celery'
 
 # Will cause a celery task to raise a SoftTimeLimitExceeded exception if
 # time limit is exceeded.
@@ -678,6 +694,7 @@ AUDIT_MODULES = [
     'corehq.apps.registration',
     'corehq.apps.hqadmin',
     'corehq.apps.accounting',
+    'corehq.apps.cloudcare',
     'tastypie',
 ]
 
@@ -762,13 +779,13 @@ MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 DIGEST_LOGIN_FACTORY = 'django_digest.NoEmailLoginFactory'
 
 # Django Compressor
-COMPRESS_PRECOMPILERS = (
+COMPRESS_PRECOMPILERS = AVAILABLE_COMPRESS_PRECOMPILERS = (
     ('text/less', 'corehq.apps.hqwebapp.precompilers.LessFilter'),
 )
 # if not overwritten in localsettings, these will be replaced by the value they return
 # using the local DEBUG value (which we don't have access to here yet)
-COMPRESS_ENABLED = lambda: not DEBUG
-COMPRESS_OFFLINE = lambda: not DEBUG
+COMPRESS_ENABLED = lambda: not DEBUG and not UNIT_TESTING  # noqa: E731
+COMPRESS_OFFLINE = lambda: not DEBUG and not UNIT_TESTING  # noqa: E731
 COMPRESS_JS_COMPRESSOR = 'corehq.apps.hqwebapp.uglify.JsUglifySourcemapCompressor'
 # use 'compressor.js.JsCompressor' for faster local compressing (will get rid of source maps)
 COMPRESS_CSS_FILTERS = ['compressor.filters.css_default.CssAbsoluteFilter',
@@ -857,9 +874,6 @@ LOAD_BALANCED_APPS = {}
 # Override with the PEM export of an RSA private key, for use with any
 # encryption or signing workflows.
 HQ_PRIVATE_KEY = None
-
-# Set to the list of domain names for which we will run the ICDS SMS indicators
-ICDS_SMS_INDICATOR_DOMAINS = []
 
 KAFKA_BROKERS = ['localhost:9092']
 KAFKA_API_VERSION = None
@@ -954,7 +968,6 @@ REQUIRE_TWO_FACTOR_FOR_SUPERUSERS = False
 # that adds messages to the partition with the fewest unprocessed messages
 USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
 
-
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
@@ -984,6 +997,23 @@ if callable(COMPRESS_ENABLED):
     COMPRESS_ENABLED = COMPRESS_ENABLED()
 if callable(COMPRESS_OFFLINE):
     COMPRESS_OFFLINE = COMPRESS_OFFLINE()
+
+# These default values can't be overridden.
+# Should you someday need to do so, use the lambda/if callable pattern above
+SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_HTTPONLY = CSRF_COOKIE_HTTPONLY = True
+
+
+if UNIT_TESTING:
+    # COMPRESS_COMPILERS overrides COMPRESS_ENABLED = False, so must be
+    # cleared to disable compression completely. CSS/less compression is
+    # very slow and should especially be avoided in tests. Tests that
+    # need to test compression should use
+    # @override_settings(
+    #     COMPRESS_ENABLED=True,
+    #     COMPRESS_PRECOMPILERS=settings.AVAILABLE_COMPRESS_PRECOMPILERS,
+    # )
+    COMPRESS_PRECOMPILERS = ()
 
 
 # Unless DISABLE_SERVER_SIDE_CURSORS has explicitly been set, default to True because Django >= 1.11.1 and our
@@ -1229,7 +1259,7 @@ LOGGING = {
             'propagate': False,
         },
         'accounting': {
-            'handlers': ['accountinglog', 'console', 'mail_admins'],
+            'handlers': ['accountinglog', 'console'],
             'level': 'INFO',
             'propagate': False,
         },
@@ -1491,18 +1521,21 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.megamobile.models.SQLMegamobileBackend',
     'corehq.messaging.smsbackends.push.models.PushBackend',
     'corehq.messaging.smsbackends.starfish.models.StarfishBackend',
+    'corehq.messaging.smsbackends.trumpia.models.TrumpiaBackend',
     'corehq.messaging.smsbackends.sislog.models.SQLSislogBackend',
     'corehq.messaging.smsbackends.smsgh.models.SQLSMSGHBackend',
     'corehq.messaging.smsbackends.telerivet.models.SQLTelerivetBackend',
     'corehq.messaging.smsbackends.test.models.SQLTestSMSBackend',
     'corehq.messaging.smsbackends.tropo.models.SQLTropoBackend',
+    'corehq.messaging.smsbackends.turn.models.SQLTurnWhatsAppBackend',
     'corehq.messaging.smsbackends.twilio.models.SQLTwilioBackend',
+    'corehq.messaging.smsbackends.infobip.models.InfobipBackend',
+    'corehq.messaging.smsbackends.amazon_pinpoint.models.PinpointBackend',
     'corehq.messaging.smsbackends.unicel.models.SQLUnicelBackend',
     'corehq.messaging.smsbackends.yo.models.SQLYoBackend',
     'corehq.messaging.smsbackends.vertex.models.VertexBackend',
     'corehq.messaging.smsbackends.start_enterprise.models.StartEnterpriseBackend',
     'corehq.messaging.smsbackends.ivory_coast_mtn.models.IvoryCoastMTNBackend',
-    'corehq.messaging.smsbackends.karix.models.KarixBackend',
     'corehq.messaging.smsbackends.airtel_tcl.models.AirtelTCLBackend',
 ]
 
@@ -1625,8 +1658,10 @@ AVAILABLE_CUSTOM_RULE_CRITERIA = {
         'custom.icds.rules.custom_criteria.person_case_is_under_19_years_old',
     'ICDS_CCS_RECORD_CASE_HAS_FUTURE_EDD':
         'custom.icds.rules.custom_criteria.ccs_record_case_has_future_edd',
-    'ICDS_CCS_RECORD_CASE_AVAILING_SERVICES':
+    'ICDS_CCS_RECORD_CASE_CHILD_AVAILING_SERVICES':
         'custom.icds.rules.custom_criteria.ccs_record_case_is_availing_services',
+    'ICDS_CHILD_HEALTH_CASE_CHILD_AVAILING_SERVICES':
+        'custom.icds.rules.custom_criteria.child_health_case_is_availing_services',
     'ICDS_IS_USERCASE_OF_AWW':
         'custom.icds.rules.custom_criteria.is_usercase_of_aww',
     'ICDS_IS_USERCASE_OF_LS':
@@ -1826,15 +1861,12 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_2.json'),
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_3.json'),
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_4.json'),
-    os.path.join('custom', 'abt', 'reports', 'supervisory_report.json'),
-    os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2.json'),
     os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2019.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'dashboard', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr', 'ucr_v2', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr', 'dashboard', '*.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr', 'ucr_v2', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls', '*.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'other', '*.json'),
     os.path.join('custom', 'echis_reports', 'ucr', 'reports', '*.json'),
@@ -1856,6 +1888,8 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'malaria_consortium.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'weekly_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ag_care_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ag_care_cases_monthly.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'awc_locations.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'awc_mgt_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases.json'),
@@ -1894,6 +1928,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'daily_feeding_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'migrations_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'availing_service_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'add_pregnancy_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'primary_private_school_form_ucr.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'cbe_form.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
@@ -1928,8 +1963,6 @@ COUCH_CACHE_BACKENDS = [
     'corehq.apps.cachehq.cachemodels.GroupGenerationCache',
     'corehq.apps.cachehq.cachemodels.UserRoleGenerationCache',
     'corehq.apps.cachehq.cachemodels.ReportGenerationCache',
-    'corehq.apps.cachehq.cachemodels.DefaultConsumptionGenerationCache',
-    'corehq.apps.cachehq.cachemodels.InvitationGenerationCache',
     'corehq.apps.cachehq.cachemodels.UserReportsDataSourceCache',
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
 ]
@@ -2030,12 +2063,15 @@ DOMAIN_MODULE_MAP = {
     'vectorlink-mali': 'custom.abt',
     'vectorlink-mozambique': 'custom.abt',
     'vectorlink-rwanda': 'custom.abt',
+    'vectorlink-senegal': 'custom.abt',
     'vectorlink-tanzania': 'custom.abt',
     'vectorlink-uganda': 'custom.abt',
     'vectorlink-zambia': 'custom.abt',
     'vectorlink-zimbabwe': 'custom.abt',
 
     'inddex-reports': 'custom.inddex',
+    'inddex-multilingual': 'custom.inddex',
+    'inddex-multi-vn': 'custom.inddex',
 
     'ccqa': 'custom.ccqa',
 }
@@ -2047,8 +2083,8 @@ THROTTLE_SCHED_REPORTS_PATTERNS = (
     'mvp-',
 )
 
-# Domains that we want to tag in datadog
-DATADOG_DOMAINS = {
+# Domains that we want to tag in metrics provider
+METRICS_TAGGED_DOMAINS = {
     # ("env", "domain"),
     ("production", "born-on-time-2"),
     ("production", "hki-nepal-suaahara-2"),
@@ -2115,8 +2151,6 @@ if SENTRY_DSN:
 else:
     SENTRY_CONFIGURED = False
 
-
-CSRF_COOKIE_HTTPONLY = True
 if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
     AUTH_PASSWORD_VALIDATORS = [
         {

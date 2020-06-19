@@ -16,7 +16,7 @@ from django.db.models import F
 import pytz
 from celery import chain
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+from celery.task import task
 from dateutil import parser as date_parser
 from dateutil.relativedelta import relativedelta
 from gevent.pool import Pool
@@ -27,10 +27,12 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import force_to_date, force_to_datetime
 from dimagi.utils.logging import notify_exception
 from pillowtop.feed.interface import ChangeMeta
-from pillow_retry.models import PillowError
 
 from corehq.apps.change_feed import data_sources, topics
 from corehq.apps.change_feed.producer import producer
+from corehq.apps.reports.analytics.esaccessors import (
+    get_case_ids_missing_from_elasticsearch,
+    get_form_ids_missing_from_elasticsearch)
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import (
     AsyncIndicator,
@@ -42,14 +44,12 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_all_user_id_username_pairs_by_domain,
 )
 from corehq.const import SERVER_DATE_FORMAT, SERVER_DATETIME_FORMAT
-from corehq.form_processor.change_publishers import publish_case_saved
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
 from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
 from corehq.util.celery_utils import periodic_task_on_envs
-from corehq.util.datadog.utils import case_load_counter
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
+from corehq.util.metrics import metrics_counter
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import reverse
 from custom.icds_reports.const import (
@@ -66,7 +66,10 @@ from custom.icds_reports.const import (
     THR_REPORT_EXPORT,
     THREE_MONTHS,
     DASHBOARD_USAGE_EXPORT,
-    SERVICE_DELIVERY_REPORT
+    SERVICE_DELIVERY_REPORT,
+    CHILD_GROWTH_TRACKER_REPORT,
+    POSHAN_PROGRESS_REPORT,
+    AWW_ACTIVITY_REPORT
 )
 from custom.icds_reports.models import (
     AggAwc,
@@ -107,7 +110,9 @@ from custom.icds_reports.models.aggregate import (
     AggServiceDeliveryReport,
     AggregateMigrationForms,
     AggregateAvailingServiceForms,
-    BiharAPIDemographics
+    BiharAPIDemographics,
+    ChildVaccines
+
 )
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.models.util import UcrReconciliationStatus
@@ -121,13 +126,16 @@ from custom.icds_reports.reports.service_delivery_report import ServiceDeliveryR
 from custom.icds_reports.sqldata.exports.awc_infrastructure import (
     AWCInfrastructureExport,
 )
+from custom.icds_reports.sqldata.exports.aww_activity_report import AwwActivityExport
 from custom.icds_reports.sqldata.exports.beneficiary import BeneficiaryExport
 from custom.icds_reports.sqldata.exports.children import ChildrenExport
 from custom.icds_reports.sqldata.exports.dashboard_usage import DashBoardUsage
 from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
+from custom.icds_reports.sqldata.exports.growth_tracker_report import GrowthTrackerExport
 from custom.icds_reports.sqldata.exports.lady_supervisor import (
     LadySupervisorExport,
 )
+from custom.icds_reports.sqldata.exports.poshan_progress_report import PoshanProgressReport
 from custom.icds_reports.sqldata.exports.pregnant_women import (
     PregnantWomenExport,
 )
@@ -145,14 +153,22 @@ from custom.icds_reports.utils import (
     track_time,
     zip_folder,
     get_dashboard_usage_excel_file,
-    create_service_delivery_report
+    create_service_delivery_report,
+    create_child_growth_tracker_report,
+    create_poshan_progress_report,
+    create_aww_activity_report
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     ChildHealthMonthlyAggregationDistributedHelper,
     AggAwcDistributedHelper,
     AggChildHealthAggregationDistributedHelper,
     GrowthMonitoringFormsAggregationDistributedHelper,
-    DailyFeedingFormsChildHealthAggregationDistributedHelper
+    DailyFeedingFormsChildHealthAggregationDistributedHelper,
+)
+from custom.icds_reports.utils.aggregation_helpers.distributed.location_reassignment import (
+    TempPrevUCRTables,
+    TempPrevIntermediateTables,
+    TempInfraTables
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed.mbt import (
     AwcMbtDistributedHelper,
@@ -215,11 +231,15 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
 
         update_aggregate_locations_tables()
 
+
         state_ids = list(SQLLocation.objects
                      .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
                      .values_list('location_id', flat=True))
 
         for monthly_date in monthly_dates:
+            TempPrevUCRTables().make_all_tables(monthly_date)
+            TempPrevIntermediateTables().make_all_tables(monthly_date)
+            TempInfraTables().make_all_tables(monthly_date)
             calculation_date = monthly_date.strftime('%Y-%m-%d')
             res_daily = icds_aggregation_task.delay(date=calculation_date, func_name='_daily_attendance_table')
             res_daily.get(disable_sync_subtasks=False)
@@ -341,6 +361,10 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
 
             res_sdr.get(disable_sync_subtasks=False)
 
+            res_inactive_aww = chain(icds_aggregation_task.si(date=calculation_date, func_name='_aggregate_inactive_aww_agg'),).apply_async()
+
+            res_inactive_aww.get(disable_sync_subtasks=False)
+
             res_awc = chain(icds_aggregation_task.si(date=calculation_date, func_name='_agg_awc_table'),
                             *res_ls_tasks
                             ).apply_async()
@@ -424,7 +448,8 @@ def icds_aggregation_task(self, date, func_name):
         '_agg_ccs_record_table': _agg_ccs_record_table,
         '_agg_awc_table': _agg_awc_table,
         'aggregate_awc_daily': aggregate_awc_daily,
-        'update_service_delivery_report': update_service_delivery_report
+        'update_service_delivery_report': update_service_delivery_report,
+        '_aggregate_inactive_aww_agg': _aggregate_inactive_aww_agg
     }[func_name]
 
     db_alias = get_icds_ucr_citus_db_alias()
@@ -547,6 +572,18 @@ def _aggregate_awc_infra_forms(state_id, day):
 @track_time
 def _aggregate_inactive_aww(day):
     AggregateInactiveAWW.aggregate(day)
+
+
+def _aggregate_inactive_aww_agg(day=None):
+    last_sync = IcdsFile.objects.filter(data_type='inactive_awws').order_by('-file_added').first()
+
+    # If last sync not exist then collect initial data
+    if not last_sync:
+        last_sync_date = datetime(2017, 3, 1).date()
+    else:
+        last_sync_date = last_sync.file_added
+
+    AggregateInactiveAWW.aggregate(last_sync_date)
 
 
 @track_time
@@ -935,19 +972,20 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             location=location,
             month=config['month'],
             loc_level=loc_level,
-            beta=beta
+            beta=beta,
+            report_type=config['thr_report_type']
         ).get_excel_data()
         export_info = excel_data[1][1]
         generated_timestamp = date_parser.parse(export_info[0][1])
         formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
         data_type = 'THR Report__{}'.format(formatted_timestamp)
-
         if file_format == 'xlsx':
             cache_key = create_thr_report_excel_file(
                 excel_data,
                 data_type,
                 config['month'].strftime("%B %Y"),
                 loc_level,
+                config['thr_report_type']
             )
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
@@ -983,14 +1021,84 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
                 excel_data,
                 data_type,
                 config,
+                beta
             )
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
 
         formatted_timestamp = datetime.now().strftime("%d-%m-%Y__%H-%M-%S")
         data_type = 'Service Delivery Report__{}'.format(formatted_timestamp)
+    elif indicator == CHILD_GROWTH_TRACKER_REPORT:
+        config.pop('aggregation_level', None)
+        data_type = 'Child_Growth_Tracker_list'
+        excel_data = GrowthTrackerExport(
+            config=config,
+            loc_level=aggregation_level,
+            show_test=include_test,
+            beta=beta
+        ).get_excel_data(location)
+        export_info = excel_data[1][1]
+        generated_timestamp = date_parser.parse(export_info[0][1])
+        formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
+        data_type = 'Child Growth Tracker Report__{}'.format(formatted_timestamp)
+
+        if file_format == 'xlsx':
+            cache_key = create_child_growth_tracker_report(
+                excel_data,
+                data_type,
+                config,
+                aggregation_level
+            )
+        else:
+            cache_key = create_excel_file(excel_data, data_type, file_format)
+
+    elif indicator == AWW_ACTIVITY_REPORT:
+        data_type = 'AWW_Activity_Report'
+        excel_data = AwwActivityExport(
+            config=config,
+            loc_level=aggregation_level,
+            show_test=include_test,
+            beta=beta
+        ).get_excel_data(location)
+        export_info = excel_data[1][1]
+        generated_timestamp = date_parser.parse(export_info[0][1])
+        formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
+        data_type = 'Aww_Activity_Report__{}'.format(formatted_timestamp)
+
+        if file_format == 'xlsx':
+            cache_key = create_aww_activity_report(
+                excel_data,
+                data_type,
+                config,
+                aggregation_level
+            )
+        else:
+            cache_key = create_excel_file(excel_data, data_type, file_format)
+
+    elif indicator == POSHAN_PROGRESS_REPORT:
+        data_type = 'Poshan_Progress_Report'
+        excel_data = PoshanProgressReport(
+            config=config,
+            loc_level=aggregation_level,
+            show_test=include_test,
+            beta=beta
+        ).get_excel_data(location)
+        export_info = excel_data[1][1]
+        generated_timestamp = date_parser.parse(export_info[0][1])
+        formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
+        report_layout = config['report_layout']
+        data_type = 'Poshan Progress Report {report_layout}__{formatted_timestamp}'.format(
+            report_layout=report_layout,
+            formatted_timestamp=formatted_timestamp)
+
+        if file_format == 'xlsx':
+            cache_key = create_poshan_progress_report(excel_data, data_type, config, aggregation_level)
+        else:
+            cache_key = create_excel_file(excel_data, data_type, file_format)
+
     if indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT, THR_REPORT_EXPORT, CHILDREN_EXPORT,
-                         DASHBOARD_USAGE_EXPORT, SERVICE_DELIVERY_REPORT):
+                         DASHBOARD_USAGE_EXPORT, SERVICE_DELIVERY_REPORT, CHILD_GROWTH_TRACKER_REPORT,
+                         AWW_ACTIVITY_REPORT, POSHAN_PROGRESS_REPORT):
         if file_format == 'xlsx' and beta:
             cache_key = create_excel_file_in_openpyxl(excel_data, data_type)
         else:
@@ -1623,6 +1731,7 @@ def setup_aggregation(agg_date):
     if db_alias:
         with connections[db_alias].cursor() as cursor:
             _create_aggregate_functions(cursor)
+            TempPrevUCRTables().make_all_tables(force_to_date(agg_date))
 
 
 def _child_health_monthly_aggregation(day, state_ids):
@@ -1687,7 +1796,8 @@ def email_location_changes(domain, old_location_blob_id, new_location_blob_id):
     )
 
 
-@periodic_task_on_envs(settings.ICDS_ENVS, run_every=crontab(hour=22, minute=0))
+# run before aggregation (which is run at at 18:00 UTC)
+@periodic_task_on_envs(settings.ICDS_ENVS, run_every=crontab(hour=16, minute=30))
 def create_reconciliation_records():
     # Setup yesterday's data to reduce noise in case we're behind by a lot in pillows
     UcrReconciliationStatus.setup_days_records(date.today() - timedelta(days=1))
@@ -1700,26 +1810,42 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
     status_record = UcrReconciliationStatus.objects.get(pk=reconciliation_status_pk)
     number_documents_missing = 0
 
-    data_not_in_ucr = get_data_not_in_ucr(status_record)
+    data_not_in_ucr = list(get_data_not_in_ucr(status_record))
     doc_ids_not_in_ucr = {data[0] for data in data_not_in_ucr}
-    doc_ids_in_pillow_error = set(
-        PillowError.objects.filter(doc_id__in=doc_ids_not_in_ucr).values_list('doc_id', flat=True))
-    invalid_doc_ids = set(
+    known_bad_doc_ids = set(
         InvalidUCRData.objects.filter(doc_id__in=doc_ids_not_in_ucr).values_list('doc_id', flat=True))
-    known_bad_doc_ids = doc_ids_in_pillow_error.intersection(invalid_doc_ids)
+
+    if status_record.is_form_ucr:
+        doc_ids_not_in_es = get_form_ids_missing_from_elasticsearch(doc_ids_not_in_ucr)
+    else:
+        doc_ids_not_in_es = get_case_ids_missing_from_elasticsearch(doc_ids_not_in_ucr)
 
     # republish_kafka_changes
     # running the data accessor again to avoid storing all doc ids in memory
     # since run time is relatively short and does not scale with number of errors
     # but the number of doc ids will increase with the number of errors
-    for doc_id, doc_subtype, sql_modified_on in get_data_not_in_ucr(status_record):
+    for doc_id, doc_subtype, sql_modified_on in data_not_in_ucr:
         if doc_id in known_bad_doc_ids:
-            # These docs will either get retried or are invalid
+            # These docs are invalid
             continue
         number_documents_missing += 1
-        celery_task_logger.info(f'doc_id {doc_id} from {sql_modified_on} not found in UCR data sources')
+        not_found_in_es = doc_id in doc_ids_not_in_es
+        celery_task_logger.info(f'doc_id {doc_id} from {sql_modified_on} not found in UCR data sources. '
+            f'Not found in ES: {not_found_in_es}')
         send_change_for_ucr_reprocessing(doc_id, doc_subtype, status_record.is_form_ucr)
 
+    metrics_counter(
+        "commcare.icds.ucr_reconciliation.published_change_count",
+        number_documents_missing,
+        tags={'config_id': status_record.table_id, 'doc_type': status_record.doc_type},
+        documentation="Number of docs that were not found in UCR that were republished"
+    )
+    metrics_counter(
+        "commcare.icds.ucr_reconciliation.partially_processed_count",
+        len(set(doc_ids_not_in_ucr) - set(doc_ids_not_in_es)),
+        tags={'config_id': status_record.table_id, 'doc_type': status_record.doc_type},
+        documentation="Number of docs that exists in Elasticsearch but are not found in UCR"
+    )
     status_record.last_processed_date = datetime.utcnow()
     status_record.documents_missing = number_documents_missing
     if number_documents_missing == 0:
@@ -1761,8 +1887,8 @@ def get_data_not_in_ucr(status_record):
         for doc_id, doc_subtype, sql_modified_on in chunk:
             if doc_id in doc_id_and_inserted_in_ucr:
                 # This is to handle the cases which are outdated. This condition also handles the time drift of 1 sec
-                # between main db and ucr db. i.e  doc will even be included when inserted_at-sql_modified_on <= 1 sec
-                if sql_modified_on - doc_id_and_inserted_in_ucr[doc_id] >= timedelta(seconds=-1):
+                # between main db and ucr db. i.e  doc will even be included when inserted_at-sql_modified_on < 2 sec
+                if sql_modified_on - doc_id_and_inserted_in_ucr[doc_id] > timedelta(seconds=-2):
                     yield (doc_id, doc_subtype, sql_modified_on.isoformat())
             else:
                 yield (doc_id, doc_subtype, sql_modified_on.isoformat())
@@ -1822,6 +1948,7 @@ def drop_gm_indices(agg_date):
     with get_cursor(AggregateGrowthMonitoringForms) as cursor:
         for query, params in helper.delete_queries():
             cursor.execute(query, params)
+    helper.create_temporary_prev_table('static-child_health_cases')
 
 
 def create_df_indices(agg_date):
@@ -1838,6 +1965,50 @@ def drop_df_indices(agg_date):
             cursor.execute(query, params)
         for query in helper.drop_index_queries():
             cursor.execute(query)
+
+
+def cf_pre_queries(agg_date):
+    helper = AggregateComplementaryFeedingForms._agg_helper_cls(None, agg_date)
+    helper.create_temporary_prev_table('static-child_health_cases')
+
+
+def ccs_cf_pre_queries(agg_date):
+    helper = AggregateCcsRecordComplementaryFeedingForms._agg_helper_cls(None, agg_date)
+    helper.create_temporary_prev_table('static-ccs_record_cases')
+
+
+def migration_pre_queries(agg_date):
+    helper = AggregateMigrationForms._agg_helper_cls(None, agg_date)
+    helper.create_temporary_prev_table('static-person_cases_v3', 'person_case_id')
+
+
+def availing_pre_queries(agg_date):
+    helper = AggregateAvailingServiceForms._agg_helper_cls(None, agg_date)
+    helper.create_temporary_prev_table('static-person_cases_v3', 'person_case_id')
+
+
+def ch_pnc_pre_queries(agg_date):
+    helper = AggregateChildHealthPostnatalCareForms._agg_helper_cls(None, agg_date)
+    helper.create_temporary_prev_table('static-child_health_cases')
+
+
+def ccs_pnc_pre_queries(agg_date):
+    helper = AggregateCcsRecordPostnatalCareForms._agg_helper_cls(None, agg_date)
+    helper.create_temporary_prev_table('static-ccs_record_cases')
+
+
+def bp_pre_queries(agg_date):
+    helper = AggregateBirthPreparednesForms._agg_helper_cls(None, agg_date)
+    helper.create_temporary_prev_table('static-ccs_record_cases')
+
+
+def ag_pre_queries(agg_date):
+    helper = AggregateAdolescentGirlsRegistrationForms._agg_helper_cls(None, agg_date)
+    helper.create_temporary_prev_table('static-person_cases_v3', 'person_case_id')
+
+
+def awc_infra_pre_queries(agg_date):
+    TempInfraTables().make_all_tables(agg_date)
 
 
 def update_governance_dashboard(target_date):
@@ -1861,4 +2032,14 @@ def update_service_delivery_report(target_date):
 
 def update_bihar_api_table(target_date):
     current_month = force_to_date(target_date).replace(day=1)
-    BiharAPIDemographics.aggregate(current_month)
+    _agg_bihar_api_demographics.delay(current_month)
+
+
+@task(queue='icds_aggregation_queue', serializer='pickle')
+def _agg_bihar_api_demographics(target_date):
+    BiharAPIDemographics.aggregate(target_date)
+
+
+def update_child_vaccine_table(target_date):
+    current_month = force_to_date(target_date).replace(day=1)
+    ChildVaccines.aggregate(current_month)

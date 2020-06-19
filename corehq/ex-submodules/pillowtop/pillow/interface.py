@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractproperty, abstractmethod
-from collections import Counter
+from collections import Counter, defaultdict
 from datetime import datetime
 
 from django.conf import settings
@@ -9,7 +9,7 @@ import sys
 
 from sentry_sdk import configure_scope
 
-from corehq.util.datadog.gauges import datadog_counter, datadog_gauge, datadog_histogram
+from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.timer import TimingContext
 from dimagi.utils.logging import notify_exception
 from kafka.common import TopicPartition
@@ -23,11 +23,11 @@ from pillowtop.logger import pillow_logging
 def _topic_for_ddog(topic):
     # can be a string for couch pillows, but otherwise is topic, partition
     if isinstance(topic, TopicPartition):
-        return 'topic:{}-{}'.format(topic.topic, topic.partition)
+        return '{}-{}'.format(topic.topic, topic.partition)
     elif isinstance(topic, tuple) and len(topic) == 2:
-        return 'topic:{}-{}'.format(topic[0], topic[1])
+        return '{}-{}'.format(topic[0], topic[1])
     else:
-        return 'topic:{}'.format(topic)
+        return topic
 
 
 class PillowRuntimeContext(object):
@@ -254,9 +254,7 @@ class PillowBase(metaclass=ABCMeta):
                 ))
                 raise
         if is_success:
-            self._record_change_success_in_datadog(change, processor)
-        else:
-            self._record_change_exception_in_datadog(change, processor)
+            self._record_change_success_in_datadog(change)
         return timer.duration
 
     @abstractmethod
@@ -291,46 +289,47 @@ class PillowBase(metaclass=ABCMeta):
         return sequence
 
     def _record_datadog_metrics(self, changes_chunk, processing_time):
-        tags = ["pillow_name:{}".format(self.get_name()), "mode:chunked"]
         change_count = len(changes_chunk)
-        if settings.ENTERPRISE_MODE:
-            type_counter = Counter([
-                change.metadata.document_subtype
-                for change in changes_chunk if change.metadata.document_type == 'CommCareCase'
-            ])
-            for case_type, type_count in type_counter.items():
-                tags_with_type = tags + ['case_type:{}'.format(case_type)]
-                datadog_counter('commcare.change_feed.changes.count', type_count, tags=tags_with_type)
+        by_data_source = defaultdict(list)
+        for change in changes_chunk:
+            by_data_source[change.metadata.data_source_name].append(change)
+        for data_source, changes in by_data_source.items():
+            tags = {"pillow_name": self.get_name(), 'datasource': data_source}
+            if settings.ENTERPRISE_MODE:
+                type_counter = Counter([
+                    change.metadata.document_subtype
+                    for change in changes_chunk if change.metadata.document_type == 'CommCareCase'
+                ])
+                for case_type, type_count in type_counter.items():
+                    metrics_counter('commcare.change_feed.changes.count', type_count,
+                                    tags={**tags, 'case_type': case_type})
 
-            remainder = change_count - sum(type_counter.values())
-            if remainder:
-                datadog_counter('commcare.change_feed.changes.count', remainder, tags=tags)
-        else:
-            datadog_counter('commcare.change_feed.changes.count', change_count, tags=tags)
+                remainder = change_count - sum(type_counter.values())
+                if remainder:
+                    metrics_counter('commcare.change_feed.changes.count', remainder,
+                                    tags={**tags, 'case_type': 'NA'})
+            else:
+                metrics_counter('commcare.change_feed.changes.count', change_count,
+                                tags={**tags, 'case_type': 'NA'})
 
+        tags = {"pillow_name": self.get_name()}
         max_change_lag = (datetime.utcnow() - changes_chunk[0].metadata.publish_timestamp).total_seconds()
-        min_change_lag = (datetime.utcnow() - changes_chunk[-1].metadata.publish_timestamp).total_seconds()
-        datadog_gauge('commcare.change_feed.chunked.min_change_lag', min_change_lag, tags=tags)
-        datadog_gauge('commcare.change_feed.chunked.max_change_lag', max_change_lag, tags=tags)
+        metrics_gauge('commcare.change_feed.chunked.max_change_lag', max_change_lag, tags=tags)
 
         # processing_time per change
-        datadog_histogram('commcare.change_feed.processing_time', processing_time / change_count, tags=tags)
-
-        if change_count == self.processor_chunk_size:
-            # don't report offset chunks to ease up datadog calculations
-            datadog_histogram('commcare.change_feed.chunked.processing_time_total', processing_time,
-                              tags=tags + ["chunk_size:{}".format(str(change_count))])
+        metrics_counter('commcare.change_feed.processing_time.total', processing_time / change_count, tags=tags)
+        metrics_counter('commcare.change_feed.processing_time.count', tags=tags)
 
     def _record_checkpoint_in_datadog(self):
-        datadog_counter('commcare.change_feed.change_feed.checkpoint', tags=[
-            'pillow_name:{}'.format(self.get_name()),
-        ])
+        metrics_counter('commcare.change_feed.change_feed.checkpoint', tags={
+            'pillow_name': self.get_name(),
+        })
         checkpoint_sequence = self._normalize_checkpoint_sequence()
         for topic, value in checkpoint_sequence.items():
-            datadog_gauge('commcare.change_feed.checkpoint_offsets', value, tags=[
-                'pillow_name:{}'.format(self.get_name()),
-                _topic_for_ddog(topic),
-            ])
+            metrics_gauge('commcare.change_feed.checkpoint_offsets', value, tags={
+                'pillow_name': self.get_name(),
+                'topic': _topic_for_ddog(topic),
+            })
 
     def _record_change_in_datadog(self, change, processing_time):
         self.__record_change_metric_in_datadog(
@@ -339,46 +338,44 @@ class PillowBase(metaclass=ABCMeta):
         )
 
     def _record_batch_exception_in_datadog(self, processor):
-        datadog_counter(
+        metrics_counter(
             "commcare.change_feed.batch_processor_exceptions",
-            tags=[
-                'pillow_name:{}'.format(self.get_name()),
-                'processor:{}'.format(processor.__class__.__name__ if processor else "all_processors"),
-            ])
+            tags={
+                'pillow_name': self.get_name(),
+                'processor': processor.__class__.__name__ if processor else "all_processors",
+            })
 
-    def _record_change_success_in_datadog(self, change, processor):
-        self.__record_change_metric_in_datadog('commcare.change_feed.changes.success', change, processor)
+    def _record_change_success_in_datadog(self, change):
+        self.__record_change_metric_in_datadog('commcare.change_feed.changes.success', change)
 
-    def _record_change_exception_in_datadog(self, change, processor):
-        self.__record_change_metric_in_datadog('commcare.change_feed.changes.exceptions', change, processor)
-
-    def __record_change_metric_in_datadog(self, metric, change, processor=None, processing_time=None,
+    def __record_change_metric_in_datadog(self, metric, change, processing_time=None,
                                           add_case_type_tag=False):
         if change.metadata is not None:
-            common_tags = [
-                'datasource:{}'.format(change.metadata.data_source_name),
-                'is_deletion:{}'.format(change.metadata.is_deletion),
-                'pillow_name:{}'.format(self.get_name()),
-                'processor:{}'.format(processor.__class__.__name__ if processor else "all_processors"),
-            ]
+            metric_tags = {
+                'datasource': change.metadata.data_source_name,
+                'pillow_name': self.get_name(),
+            }
 
-            metric_tags = list(common_tags)
-            if add_case_type_tag and settings.ENTERPRISE_MODE and change.metadata.document_type == 'CommCareCase':
-                metric_tags.append('case_type:{}'.format(change.metadata.document_subtype))
+            if add_case_type_tag:
+                metric_tags['case_type'] = 'NA'
+                if settings.ENTERPRISE_MODE and change.metadata.document_type == 'CommCareCase':
+                    metric_tags['case_type'] = change.metadata.document_subtype
 
-            datadog_counter(metric, tags=metric_tags)
+            metrics_counter(metric, tags=metric_tags)
 
             change_lag = (datetime.utcnow() - change.metadata.publish_timestamp).total_seconds()
-            datadog_gauge('commcare.change_feed.change_lag', change_lag, tags=[
-                'pillow_name:{}'.format(self.get_name()),
-                _topic_for_ddog(
+            metrics_gauge('commcare.change_feed.change_lag', change_lag, tags={
+                'pillow_name': self.get_name(),
+                'topic': _topic_for_ddog(
                     TopicPartition(change.topic, change.partition)
                     if change.partition is not None else change.topic
                 ),
-            ])
+            })
 
             if processing_time:
-                datadog_histogram('commcare.change_feed.processing_time', processing_time, tags=common_tags)
+                tags = {'pillow_name': self.get_name()}
+                metrics_counter('commcare.change_feed.processing_time.total', processing_time, tags=tags)
+                metrics_counter('commcare.change_feed.processing_time.count', tags=tags)
 
     @staticmethod
     def _deduplicate_changes(changes_chunk):
@@ -473,10 +470,10 @@ def handle_pillow_error(pillow, change, exception):
     ))
 
     exception_path = path_from_object(exception)
-    datadog_counter('commcare.change_feed.changes.exceptions', tags=[
-        f'pillow_name:{pillow.get_name()}',
-        f'exception_type:{exception_path}'
-    ])
+    metrics_counter('commcare.change_feed.changes.exceptions', tags={
+        'pillow_name': pillow.get_name(),
+        'exception_type': exception_path
+    })
 
     # keep track of error attempt count
     change.increment_attempt_count()

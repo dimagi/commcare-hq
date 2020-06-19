@@ -2,8 +2,6 @@ import csv
 import inspect
 import logging
 import os
-from datetime import datetime
-from logging.handlers import TimedRotatingFileHandler
 
 from django.core.mail import mail_admins
 from django.core.management import BaseCommand, CommandError
@@ -133,26 +131,18 @@ class Command(BaseCommand):
             '--notify', action='store_true', help='Send notification with recon summary')
 
     def handle(self, pre_logs, post_logs, include_current, notify, **options):
-        date_suffix_format = None
-        for handler in logger.handlers:
-            if isinstance(handler, TimedRotatingFileHandler):
-                date_suffix_format = handler.suffix
-
-        if not date_suffix_format:
-            raise CommandError('Could not find date format from log handler')
-
         num_logs_to_process = pre_logs + post_logs
-        if include_current:
-            num_logs_to_process -= 1
 
-        log_files = get_log_files(settings.KAFKA_PRODUCER_AUDIT_FILE, date_suffix_format)
+        KAFKA_PRODUCER_AUDIT_FILE = "%s/%s" % (settings.LOG_HOME, "commcarehq.kafka_audit.log")
+        log_files = get_log_files(KAFKA_PRODUCER_AUDIT_FILE)
         if len(log_files) < num_logs_to_process:
             raise CommandError(f'Not enough files to process. Only {len(log_files)} found.')
 
-        logs_to_process = log_files[-num_logs_to_process:]
-
+        start = 1
         if include_current:
-            logs_to_process.append(settings.KAFKA_PRODUCER_AUDIT_FILE)
+            start = 0
+        end = start + num_logs_to_process
+        logs_to_process = log_files[start:end]
 
         recon = Reconciliation()
 
@@ -214,22 +204,11 @@ class Command(BaseCommand):
             print(message)
 
 
-def get_log_files(current_log_path, date_suffix_format):
+def get_log_files(current_log_path):
     log_files = []
-    current_log_file = os.path.basename(current_log_path)
     log_root, log_filename = os.path.split(current_log_path)
     for path in os.listdir(log_root):
-        if os.path.isfile(path) and path.startswith(log_filename) and path != current_log_file:
+        if os.path.isfile(os.path.join(log_root, path)) and path.startswith(log_filename):
             log_files.append(os.path.join(log_root, path))
 
-    log_files_with_dates = []
-    for path in log_files:
-        date_part = path.split('.')[-1]
-        try:
-            date = datetime.strptime(date_part, date_suffix_format)
-        except ValueError:
-            pass  # log file format changed
-        else:
-            log_files_with_dates.append((date, path))
-
-    return [log[1] for log in sorted(log_files_with_dates, key=lambda x: x[0])]
+    return sorted(log_files)

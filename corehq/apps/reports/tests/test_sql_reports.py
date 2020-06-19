@@ -9,6 +9,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 from corehq.sql_db.connections import Session
 from corehq.util.dates import iso_string_to_date
+from corehq.util.test_utils import softer_assert
 
 from .sql_fixture import load_data
 from .sql_reports import RegionTestReport, UserTestReport, test_report
@@ -24,7 +25,7 @@ class BaseReportTest(unittest.TestCase):
         load_data()
 
         create_domain(DOMAIN)
-        cls.couch_user = WebUser.create(None, "report_test", "foobar")
+        cls.couch_user = WebUser.create(None, "report_test", "foobar", None, None)
         cls.couch_user.add_domain_membership(DOMAIN, is_admin=True)
         cls.couch_user.save()
 
@@ -66,11 +67,13 @@ class BaseReportTest(unittest.TestCase):
 
 class SimpleReportTest(BaseReportTest):
 
+    @softer_assert("to add back post https://github.com/dimagi/sql-agg/pull/56")
     def test_no_group_no_filter(self):
         html_data, sort_data = self._get_report_data(test_report(UserTestReport), "2013-01-01", "2013-02-01")
         self.assertEqual(len(sort_data), 1)
         self.assertEqual(sort_data[0], [2, 2, 66])
 
+    @softer_assert("to add back post https://github.com/dimagi/sql-agg/pull/56")
     def test_no_group_with_filter(self):
         filters = ["date > :startdate"]
         report = test_report(UserTestReport, filters=filters)

@@ -3,16 +3,18 @@ from datetime import timedelta
 
 from django import forms
 from django.urls import reverse
-from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
 import dateutil
+from crispy_forms import bootstrap as twbscrispy
+from corehq.apps.hqwebapp import crispy as hqcrispy
 from crispy_forms import layout as crispy
-from crispy_forms.layout import Layout
 
+from corehq import privileges
 from dimagi.utils.dates import DateSpan
 
+from corehq.motech.models import ConnectionSettings
 from corehq.apps.export.filters import (
     AND,
     NOT,
@@ -26,6 +28,7 @@ from corehq.apps.export.filters import (
     SmsReceivedRangeFilter,
     UserTypeFilter,
 )
+from corehq.apps.export.models import IncrementalExport
 from corehq.apps.export.models.new import (
     CaseExportInstance,
     CaseExportInstanceFilters,
@@ -219,7 +222,7 @@ class BaseFilterExportDownloadForm(forms.Form):
         self.helper = HQFormHelper()
         self.helper.form_tag = False
 
-        self.helper.layout = Layout(
+        self.helper.layout = crispy.Layout(
             *self.extra_fields
         )
 
@@ -325,10 +328,27 @@ class DashboardFeedFilterForm(forms.Form):
         widget=forms.DateInput(format="%Y-%m-%d", attrs={"placeholder": "YYYY-MM-DD"}),
         help_text="<small class='label label-default'>{}</small>".format(ugettext_lazy("YYYY-MM-DD")),
     )
+    update_location_restriction = forms.BooleanField(
+        label=ugettext_lazy("Update location restriction to match filters."),
+        required=False,
+    )
 
     def __init__(self, domain_object, *args, **kwargs):
         self.domain_object = domain_object
+        self.can_user_access_all_locations = True
+        if 'couch_user' in kwargs:
+            couch_user = kwargs.pop('couch_user')
+            self.can_user_access_all_locations = couch_user.has_permission(
+                domain_object.name, 'access_all_locations'
+            )
         super(DashboardFeedFilterForm, self).__init__(*args, **kwargs)
+
+        self.can_restrict_access_by_location = domain_object.has_privilege(
+            privileges.RESTRICT_ACCESS_BY_LOCATION
+        )
+
+        if not self.can_restrict_access_by_location or not self.can_user_access_all_locations:
+            del self.fields['update_location_restriction']
 
         self.fields['emwf_case_filter'].widget.set_url(
             reverse(CaseListFilter.options_url, args=(self.domain_object.name,))
@@ -339,7 +359,9 @@ class DashboardFeedFilterForm(forms.Form):
 
         self.helper = HQModalFormHelper()
         self.helper.form_tag = False
-        self.helper.layout = Layout(*self.layout_fields)
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-10 col-lg-10'
+        self.helper.layout = crispy.Layout(*self.layout_fields)
 
     def clean(self):
         cleaned_data = super(DashboardFeedFilterForm, self).clean()
@@ -373,7 +395,7 @@ class DashboardFeedFilterForm(forms.Form):
 
     @property
     def layout_fields(self):
-        return [
+        fields = [
             crispy.Div(
                 crispy.Field(
                     'emwf_case_filter',
@@ -407,8 +429,17 @@ class DashboardFeedFilterForm(forms.Form):
                     data_bind="value: endDate",
                 ),
                 data_bind="visible: showEndDate, css: {'has-error': endDateHasError}",
-            )
+            ),
         ]
+        if self.can_restrict_access_by_location and self.can_user_access_all_locations:
+            fields.append(crispy.Fieldset(
+                _("Location Management"),
+                crispy.Field(
+                    'update_location_restriction',
+                    data_bind='checked: updateLocationRestriction',
+                ),
+            ))
+        return fields
 
     def to_export_instance_filters(self, can_access_all_locations, accessible_location_ids, export_type):
         """
@@ -421,9 +452,16 @@ class DashboardFeedFilterForm(forms.Form):
         )
         assert(export_type == 'form' or export_type == 'case')
         if export_type == 'form':
-            return self._to_form_export_instance_filters(can_access_all_locations, accessible_location_ids)
+            filters = self._to_form_export_instance_filters(can_access_all_locations, accessible_location_ids)
         else:
-            return self._to_case_export_instance_filters(can_access_all_locations, accessible_location_ids)
+            filters = self._to_case_export_instance_filters(can_access_all_locations, accessible_location_ids)
+
+        if (self.can_user_access_all_locations
+                and self.can_restrict_access_by_location
+                and self.cleaned_data['update_location_restriction']):
+            filters.accessible_location_ids = filters.locations
+            filters.can_access_all_locations = not filters.locations
+        return filters
 
     def _to_case_export_instance_filters(self, can_access_all_locations, accessible_location_ids):
         emwf_selections = self.cleaned_data["emwf_case_filter"]
@@ -1076,3 +1114,98 @@ class FilterSmsESExportDownloadForm(BaseFilterExportDownloadForm):
                 data_bind='value: dateRange',
             ),
         ]
+
+
+class IncrementalExportForm(forms.ModelForm):
+
+    class Meta:
+        model = IncrementalExport
+        fields = [
+            'name',
+            'export_instance_id',
+            'connection_settings',
+            'active',
+        ]
+
+    def __init__(self, request, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.domain = request.domain
+        self.fields['export_instance_id'] = forms.ChoiceField(
+            label=_('Case Data Export'),
+            choices=_get_case_data_export_choices(request),
+        )
+        self.fields['connection_settings'].queryset = ConnectionSettings.objects.filter(domain=self.domain)
+
+        self.helper = HQFormHelper()
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _('Incremental Export'),
+                crispy.Field('name'),
+                crispy.Field('export_instance_id'),
+                crispy.Field('connection_settings'),
+                crispy.Field('active'),
+            )
+        )
+        self.helper.add_input(
+            crispy.Submit('submit', _('Save'))
+        )
+        self.helper.render_required_fields = True
+
+    def save(self, commit=True):
+        self.instance.domain = self.domain
+        return super().save(commit)
+
+
+class UpdateIncrementalExportForm(forms.ModelForm):
+
+    class Meta:
+        model = IncrementalExport
+        fields = [
+            'id',
+            'name',
+            'export_instance_id',
+            'connection_settings',
+            'active',
+        ]
+
+    def __init__(self, request, *args, **kwargs):
+        super(UpdateIncrementalExportForm, self).__init__(*args, **kwargs)
+        self.domain = request.domain
+        self.fields['id'] = forms.CharField(widget=forms.HiddenInput())
+        self.fields['export_instance_id'] = forms.ChoiceField(
+            label=_('Case Data Export'),
+            choices=_get_case_data_export_choices(request),
+        )
+        self.fields['connection_settings'].queryset = ConnectionSettings.objects.filter(domain=self.domain)
+        self.helper = HQFormHelper()
+        self.helper.layout = crispy.Layout(
+            crispy.Field('id'),
+            crispy.Field('name'),
+            crispy.Field('export_instance_id'),
+            crispy.Field('connection_settings'),
+            crispy.Field('active'),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    ugettext_lazy("Update"),
+                    css_class='btn btn-primary',
+                    type='submit',
+                ),
+                crispy.HTML('<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>'),
+                css_class="modal-footer",
+            )
+        )
+
+
+def _get_case_data_export_choices(request):
+    from corehq.apps.export.views.list import CaseExportListHelper
+    from corehq.apps.export.views.list import DailySavedExportListHelper
+
+    case_export_list_helper = CaseExportListHelper(request)
+    exports = [(exp['_id'], exp['name']) for exp in case_export_list_helper.get_saved_exports()]
+
+    daily_saved_list_helper = DailySavedExportListHelper(request)
+    exports.extend(
+        (exp['_id'], "{} - {}".format(exp['name'], _("Daily Saved Export")))
+        for exp in daily_saved_list_helper.get_saved_exports()
+    )
+    return exports

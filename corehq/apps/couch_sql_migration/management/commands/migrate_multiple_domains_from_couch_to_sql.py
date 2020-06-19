@@ -10,6 +10,7 @@ from corehq.form_processor.utils.general import (
 from corehq.util.markup import SimpleTableWriter, TableRowFormatter
 
 from ...couchsqlmigration import (
+    CleanBreak,
     MigrationRestricted,
     do_couch_to_sql_migration,
     setup_logging,
@@ -40,11 +41,13 @@ class Command(BaseCommand):
                 Can be set in environment: CCHQ_MIGRATION_STATE_DIR
             """)
         parser.add_argument('--strict', action='store_true', default=False,
-                            help="Abort domain migration even for diffs in deleted doc types")
+            help="Abort domain migration even for diffs in deleted doc types")
+        parser.add_argument('--live', action='store_true', default=False,
+            help="Do live migration, leave in live/unfinished state.")
 
     def handle(self, path, state_dir, **options):
         self.strict = options['strict']
-        setup_logging(state_dir, "multiple")
+        self.live_migrate = options["live"]
 
         if not os.path.isfile(path):
             raise CommandError("Couldn't locate domain list: {}".format(path))
@@ -55,13 +58,18 @@ class Command(BaseCommand):
         failed = []
         log.info("Processing {} domains\n".format(len(domains)))
         for domain in domains:
+            setup_logging(state_dir, f"migrate-{domain}")
             try:
                 success, reason = self.migrate_domain(domain, state_dir)
                 if not success:
                     failed.append((domain, reason))
+            except CleanBreak:
+                failed.append((domain, "stopped by operator"))
+                break
             except Exception as err:
                 log.exception("Error migrating domain %s", domain)
-                self.abort(domain, state_dir)
+                if not self.live_migrate:
+                    self.abort(domain, state_dir)
                 failed.append((domain, err))
 
         if failed:
@@ -79,18 +87,23 @@ class Command(BaseCommand):
             log.error("{} migration is in progress\n".format(domain))
             return False, "in progress"
 
-        set_couch_sql_migration_started(domain)
+        set_couch_sql_migration_started(domain, self.live_migrate)
         try:
-            do_couch_to_sql_migration(domain, state_dir, with_progress=False)
+            do_couch_to_sql_migration(
+                domain,
+                state_dir,
+                with_progress=self.live_migrate,
+                live_migrate=self.live_migrate,
+            )
         except MigrationRestricted as err:
             log.error("migration restricted: %s", err)
             set_couch_sql_migration_not_started(domain)
             return False, str(err)
 
-        stats = get_diff_stats(domain, state_dir, self.strict)
-        if stats:
-            header = "Migration has diffs: {}".format(domain)
-            log.error(format_diff_stats(stats, header))
+        has_diffs = self.check_diffs(domain, state_dir)
+        if self.live_migrate:
+            return True, None
+        if has_diffs:
             self.abort(domain, state_dir)
             return False, "has diffs"
 
@@ -98,6 +111,13 @@ class Command(BaseCommand):
         set_couch_sql_migration_complete(domain)
         log.info("Domain migrated: {}\n".format(domain))
         return True, None
+
+    def check_diffs(self, domain, state_dir):
+        stats = get_diff_stats(domain, state_dir, self.strict)
+        if stats:
+            header = "Migration has diffs: {}".format(domain)
+            log.error(format_diff_stats(stats, header))
+        return bool(stats)
 
     def abort(self, domain, state_dir):
         set_couch_sql_migration_not_started(domain)
@@ -112,10 +132,10 @@ def get_diff_stats(domain, state_dir, strict=True):
     for doc_type, counts in sorted(statedb.get_doc_counts().items()):
         if not strict and doc_type == "CommCareCase-Deleted":
             continue
-        if counts.diffs or counts.missing:
+        if counts.diffs or counts.changes or counts.missing:
             couch_count = counts.total
             sql_count = counts.total - counts.missing
-            stats[doc_type] = (couch_count, sql_count, counts.diffs)
+            stats[doc_type] = (couch_count, sql_count, counts.diffs + counts.changes)
     if "CommCareCase" not in stats:
         pending = statedb.count_undiffed_cases()
         if pending:

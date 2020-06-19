@@ -30,6 +30,7 @@ hqDefine("users/js/mobile_workers",[
     'zxcvbn/dist/zxcvbn',
     'locations/js/widgets',
     'hqwebapp/js/components.ko', // for pagination
+    'hqwebapp/js/validators.ko', // email address validation
 ], function (
     $,
     ko,
@@ -59,6 +60,7 @@ hqDefine("users/js/mobile_workers",[
         options = options || {};
         options = _.defaults(options, {
             creation_status: STATUS.NONE,
+            creation_error: "",
             username: '',
             first_name: '',
             last_name: '',
@@ -78,6 +80,10 @@ hqDefine("users/js/mobile_workers",[
             return ko.observable(value);
         });
         var self = ko.mapping.fromJS(options);
+
+        self.email.extend({
+            emailRFC2822: true,
+        });
 
         // used by two-stage provisioning
         self.emailRequired = ko.observable(self.force_account_confirmation());
@@ -287,22 +293,31 @@ hqDefine("users/js/mobile_workers",[
             return self.STATUS.WARNING;
         });
 
+        self.requiredEmailMissing = ko.computed(function () {
+            return self.stagedUser() && self.stagedUser().emailRequired() && !self.stagedUser().email();
+        });
+
+        self.emailIsInvalid = ko.computed(function () {
+            return self.stagedUser() && !self.stagedUser().email.isValid();
+        });
+
         self.emailStatus = ko.computed(function () {
 
             if (!self.stagedUser()) {
                 return self.STATUS.NONE;
             }
 
-            // todo: add email validation eventually
-            if (self.stagedUser().emailRequired() && !self.stagedUser().email()) {
+            if (self.requiredEmailMissing() || self.emailIsInvalid()) {
                 return self.STATUS.ERROR;
             }
         });
 
         self.emailStatusMessage = ko.computed(function () {
-            // todo: add email validation eventually
-            if (self.emailStatus() === self.STATUS.ERROR) {
+
+            if (self.requiredEmailMissing()) {
                 return gettext('Email address is required when users confirm their own accounts.');
+            } else if (self.emailIsInvalid()) {
+                return gettext('Please enter a valid email address.');
             }
             return "";
         });
@@ -445,7 +460,7 @@ hqDefine("users/js/mobile_workers",[
                     }
                 }
             }
-            if (self.stagedUser().emailRequired() && !self.stagedUser().email()) {
+            if (self.requiredEmailMissing() || self.emailIsInvalid()) {
                 return false;
             }
             if (options.require_location_id && !self.stagedUser().location_id()) {
@@ -483,6 +498,9 @@ hqDefine("users/js/mobile_workers",[
                     newUser.creation_status(STATUS.SUCCESS);
                 } else {
                     newUser.creation_status(STATUS.ERROR);
+                    if (data.error) {
+                        newUser.creation_error(data.error);
+                    }
                 }
             }).fail(function () {
                 newUser.creation_status(STATUS.ERROR);

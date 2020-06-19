@@ -9,7 +9,7 @@ from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query, estimate_row_count
 from corehq.util.celery_utils import periodic_task_on_envs
-from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
+from corehq.util.metrics import metrics_counter, metrics_gauge
 from custom.icds.tasks.sms import send_monthly_sms_report  # noqa imported for celery
 from custom.icds.tasks.hosted_ccz import setup_ccz_file_for_hosting  # noqa imported for celery
 
@@ -46,13 +46,13 @@ def delete_old_images_on_db(db_name, cutoff):
             bytes_deleted += meta.content_length or 0
         db.bulk_delete(metas=metas)
 
-        tags = [f'database:{db_name}']
+        tags = {'database': db_name}
         age = datetime.utcnow() - metas[-1].created_on
-        datadog_gauge('commcare.icds_images.max_age', value=age.total_seconds(), tags=tags)
+        metrics_gauge('commcare.icds_images.max_age', value=age.total_seconds(), tags=tags)
         row_estimate = estimate_row_count(query, db_name)
-        datadog_gauge('commcare.icds_images.count_estimate', value=row_estimate, tags=tags)
-        datadog_counter('commcare.icds_images.bytes_deleted', value=bytes_deleted)
-        datadog_counter('commcare.icds_images.count_deleted', value=len(metas))
+        metrics_gauge('commcare.icds_images.count_estimate', value=row_estimate, tags=tags)
+        metrics_counter('commcare.icds_images.bytes_deleted', value=bytes_deleted)
+        metrics_counter('commcare.icds_images.count_deleted', value=len(metas))
 
     runtime = datetime.utcnow() - cutoff
     if run_again and runtime.total_seconds() < MAX_RUNTIME:

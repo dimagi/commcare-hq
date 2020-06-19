@@ -3,10 +3,9 @@ import logging
 import re
 from abc import abstractmethod
 from collections import namedtuple
-from typing import List
+from typing import List, Dict
 
 from corehq.util.metrics.const import ALERT_INFO
-from corehq.util.soft_assert import soft_assert
 from prometheus_client.utils import INF
 
 METRIC_NAME_RE = re.compile(r'^[a-zA-Z_:.][a-zA-Z0-9_:.]*$')
@@ -19,6 +18,7 @@ metrics_logger = logging.getLogger('commcare.metrics')
 
 
 def _enforce_prefix(name, prefix):
+    from corehq.util.soft_assert import soft_assert
     soft_assert(fail_if_debug=True).call(
         not prefix or name.startswith(prefix),
         "Did you mean to call your metric 'commcare.{}'? ".format(name))
@@ -43,19 +43,19 @@ class HqMetrics(metaclass=abc.ABCMeta):
     def initialize(self):
         pass
 
-    def counter(self, name: str, value: float = 1, tags: dict = None, documentation: str = ''):
+    def counter(self, name: str, value: float = 1, tags: Dict[str, str] = None, documentation: str = ''):
         _enforce_prefix(name, 'commcare')
         _validate_tag_names(tags)
         self._counter(name, value, tags, documentation)
 
-    def gauge(self, name: str, value: float, tags: dict = None, documentation: str = ''):
+    def gauge(self, name: str, value: float, tags: Dict[str, str] = None, documentation: str = ''):
         _enforce_prefix(name, 'commcare')
         _validate_tag_names(tags)
         self._gauge(name, value, tags, documentation)
 
     def histogram(self, name: str, value: float,
                   bucket_tag: str, buckets: List[int] = DEFAULT_BUCKETS, bucket_unit: str = '',
-                  tags: dict = None, documentation: str = ''):
+                  tags: Dict[str, str] = None, documentation: str = ''):
         """Create a histogram metric. Histogram implementations differ between provider. See provider
         implementations for details.
         """
@@ -64,7 +64,7 @@ class HqMetrics(metaclass=abc.ABCMeta):
         self._histogram(name, value, bucket_tag, buckets, bucket_unit, tags, documentation)
 
     def create_event(self, title: str, text: str, alert_type: str = ALERT_INFO,
-                     tags: dict = None, aggregation_key: str = None):
+                     tags: Dict[str, str] = None, aggregation_key: str = None):
         _validate_tag_names(tags)
         self._create_event(title, text, alert_type, tags, aggregation_key)
 
@@ -81,12 +81,18 @@ class HqMetrics(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     def _create_event(self, title: str, text: str, alert_type: str = ALERT_INFO,
-                     tags: dict = None, aggregation_key: str = None):
+                     tags: Dict[str, str] = None, aggregation_key: str = None):
         """Optional API to implement"""
         pass
 
 
-Sample = namedtuple('Sample', ['type', 'name', 'tags', 'value'])
+class Sample(namedtuple('Sample', ['type', 'name', 'tags', 'value'])):
+    def match_tags(self, tags):
+        missing = object()
+        return all([
+            self.tags.get(tag, missing) == val
+            for tag, val in tags.items()
+        ])
 
 
 class DebugMetrics:
@@ -107,7 +113,7 @@ class DebugMetrics:
         raise AttributeError(item)
 
     def create_event(self, title: str, text: str, alert_type: str = ALERT_INFO,
-                     tags: dict = None, aggregation_key: str = None):
+                     tags: Dict[str, str] = None, aggregation_key: str = None):
         _validate_tag_names(tags)
         metrics_logger.debug('Metrics event: (%s) %s\n%s\n%s', alert_type, title, text, tags)
 

@@ -65,7 +65,7 @@ class TestPrevalenceOfSevere(TestCase):
                         'severe': 0,
                         'normal': 16,
                         'total_weighed': 378,
-                        'total_measured': 20,
+                        'total_measured': 24,
                         'total_height_eligible': 513,
                         'original_name': ['st2'],
                         'fillKey': '7%-100%'},
@@ -101,7 +101,7 @@ class TestPrevalenceOfSevere(TestCase):
             },
             loc_level='state'
         )
-        self.assertEqual(data['rightLegend']['average'], "29.63")
+        self.assertEqual(data['rightLegend']['average'], "25.81")
 
     def test_map_data_right_legend_extended_info(self):
         data = get_prevalence_of_severe_data_map(
@@ -117,11 +117,11 @@ class TestPrevalenceOfSevere(TestCase):
             [
                 {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '695'},
                 {'indicator': 'Total Children (0 - 5 years) with weight and height measured in given month:',
-                 'value': '27'},
+                 'value': '31'},
                 {'indicator': 'Number of children (0 - 5 years) unmeasured:', 'value': '294'},
                 {'indicator': '% Severely Acute Malnutrition (0 - 5 years):', 'value': '0.00%'},
-                {'indicator': '% Moderately Acute Malnutrition (0 - 5 years):', 'value': '29.63%'},
-                {'indicator': '% Normal (0 - 5 years):', 'value': '70.37%'}
+                {'indicator': '% Moderately Acute Malnutrition (0 - 5 years):', 'value': '25.81%'},
+                {'indicator': '% Normal (0 - 5 years):', 'value': '61.29%'}
             ]
         )
 
@@ -241,7 +241,7 @@ class TestPrevalenceOfSevere(TestCase):
             data['bottom_five'],
             [
                 {'loc_name': 'st7', 'percent': 0.0},
-                {'loc_name': 'st2', 'percent': 20.0},
+                {'loc_name': 'st2', 'percent': 16.666666666666668},
                 {'loc_name': 'st1', 'percent': 57.142857142857146}
             ]
         )
@@ -259,7 +259,7 @@ class TestPrevalenceOfSevere(TestCase):
             data['top_five'],
             [
                 {'loc_name': 'st7', 'percent': 0.0},
-                {'loc_name': 'st2', 'percent': 20.0},
+                {'loc_name': 'st2', 'percent': 16.666666666666668},
                 {'loc_name': 'st1', 'percent': 57.142857142857146}
             ]
         )
@@ -306,17 +306,17 @@ class TestPrevalenceOfSevere(TestCase):
                         'total_height_eligible': 0
                     },
                     {
-                        "y": 0.6666666666666666,
+                        "y": 0.5,
                         "x": 1491004800000,
                         "total_weighed": 690,
-                        'total_measured': 9,
+                        'total_measured': 12,
                         'total_height_eligible': 1021,
                     },
                     {
-                        "y": 0.7037037037037037,
+                        "y": 0.6129032258064516,
                         "x": 1493596800000,
                         "total_weighed": 695,
-                        'total_measured': 27,
+                        'total_measured': 31,
                         'total_height_eligible': 989,
                     }
                 ],
@@ -355,17 +355,17 @@ class TestPrevalenceOfSevere(TestCase):
                         'total_height_eligible': 0,
                     },
                     {
-                        "y": 0.1111111111111111,
+                        "y": 0.08333333333333333,
                         "x": 1491004800000,
                         "total_weighed": 690,
-                        'total_measured': 9,
+                        'total_measured': 12,
                         'total_height_eligible': 1021,
                     },
                     {
-                        "y": 0.2962962962962963,
+                        "y": 0.25806451612903225,
                         "x": 1493596800000,
                         "total_weighed": 695,
-                        'total_measured': 27,
+                        'total_measured': 31,
                         'total_height_eligible': 989,
                     }
                 ],
@@ -404,17 +404,17 @@ class TestPrevalenceOfSevere(TestCase):
                         'total_height_eligible': 0
                     },
                     {
-                        "y": 0.2222222222222222,
+                        "y": 0.16666666666666666,
                         "x": 1491004800000,
                         "total_weighed": 690,
-                        'total_measured': 9,
+                        'total_measured': 12,
                         'total_height_eligible': 1021,
                     },
                     {
                         "y": 0.0,
                         "x": 1493596800000,
                         "total_weighed": 695,
-                        'total_measured': 27,
+                        'total_measured': 31,
                         'total_height_eligible': 989,
                     }
                 ],
@@ -435,7 +435,7 @@ class TestPrevalenceOfSevere(TestCase):
             data['all_locations'],
             [
                 {'loc_name': 'st7', 'percent': 0.0},
-                {'loc_name': 'st2', 'percent': 20.0},
+                {'loc_name': 'st2', 'percent': 16.666666666666668},
                 {'loc_name': 'st1', 'percent': 57.142857142857146}
             ]
         )

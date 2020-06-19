@@ -26,14 +26,6 @@
       <fieldset>
         <div class="panel panel-appmanager">
           <div class="panel-body">
-            {% if request|toggle_enabled:"APP_BUILDER_CONDITIONAL_NAMES" %}
-              <div class="form-group">
-                <label class="{% css_label_class %} control-label">
-                  {% trans "Name Mapping" %}
-                </label>
-                <div class="{% css_field_class %}" id="name-enum-mapping"></div>
-              </div>
-            {% endif %}
             {% include "app_manager/partials/modules/module_filter.html" with ko_value="currentModuleFilter" %}
             {% include 'app_manager/partials/nav_menu_media.html' with ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
             {% include "app_manager/partials/modules/report_context_tile.html" with observable="reportContextTile" %}

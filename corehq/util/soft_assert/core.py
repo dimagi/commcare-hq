@@ -44,7 +44,7 @@ class SoftAssert(object):
         """
         if not assertion:
             if self.debug or is_hard_mode():
-                raise AssertionError(msg)
+                raise AssertionError(msg, obj)
             short_tb = get_traceback(skip=self.tb_skip, limit=self.key_limit)
             full_tb = get_traceback(skip=self.tb_skip)
             line = short_tb.strip().split('\n')[-1].strip()

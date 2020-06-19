@@ -80,6 +80,27 @@ hqDefine('hqwebapp/js/main', [
         },
     };
 
+    ko.bindingHandlers.runOnInit = {
+        // suggestion from https://github.com/knockout/knockout/issues/2446 to use
+        // instead of an anonymous template
+        init: function(elem, valueAccessor) {
+            valueAccessor();
+        }
+    };
+    ko.virtualElements.allowedBindings.runOnInit = true;
+
+    ko.bindingHandlers.allowDescendantBindings = {
+        // fixes an issue where we try to apply bindings to a parent element
+        // that has a child element with existing bindings.
+        // see: https://github.com/knockout/knockout/issues/1922
+        init: function(elem, valueAccessor) {
+            // Let bindings proceed as normal *only if* my value is false
+            var shouldAllowBindings = ko.unwrap(valueAccessor());
+            return { controlsDescendantBindings: !shouldAllowBindings };
+        }
+    };
+    ko.virtualElements.allowedBindings.allowDescendantBindings = true;
+
     var initBlock = function ($elem) {
         'use strict';
 
@@ -393,9 +414,16 @@ hqDefine('hqwebapp/js/main', [
                             $("#eulaModal").modal('hide');
                             $("body").removeClass("has-eula");
                         },
-                        error: function () {
-                            // do nothing, user will get the popup again on next page load
-                            $("body").removeClass("has-eula");
+                        error: function (xhr) {
+                            // if we got a 403 it may be due to two-factor settings.
+                            // force a page reload
+                            // https://dimagi-dev.atlassian.net/browse/SAAS-10785
+                            if (xhr.status === 403) {
+                                location.reload();
+                            } else {
+                                // do nothing, user will get the popup again on next page load
+                                $("body").removeClass("has-eula");
+                            }
                         },
                     });
                 });

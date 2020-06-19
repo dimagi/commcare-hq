@@ -8,6 +8,7 @@
         <div class="alert alert-info" ng-show="$ctrl.showWarning()">
             You are downloading data for the current calendar month. Data for this report is calculated using calendar months (for example, January 1st-January 31st). Data for this month will not be complete until the end of the month.
         </div>
+        <reassignment-message ng-show="$ctrl.showReassignmentMessage()" selected-location="$ctrl.selectedLocation" selected-date="$ctrl.selectedDate"></reassignment-message>
         <div class="alert alert-info" ng-show="$ctrl.isChildBeneficiaryListSelected()">
             This report contains growth monitoring information for children up to 5 years old.
         </div>
@@ -71,12 +72,26 @@
                     </div>
                 </div>
 
+                <div class="form-group" ng-if="($ctrl.isTakeHomeRationReportSelected() && $ctrl.haveAccessToFeatures)">
+                    <label class="control-label col-sm-2" for="format">Report Type: <i class="fa fa-info-circle" uib-popover="select the report type"
+                           popover-placement="top-right"
+                           popover-trigger="'mouseenter'"></i></label>
+                    <div class="col-sm-6">
+                        <ui-select ng-model="$ctrl.selectedTHRreportType" theme="bootstrap">
+                        <ui-select-match placeholder="Beneficiary"><span ng-bind="$select.selected.name"></span></ui-select-match>
+                          <ui-select-choices repeat="category.id as category in $ctrl.THRreportTypes | propsFilter: {name: $select.search}">
+                            <div ng-bind-html="category.name"></div>
+                          </ui-select-choices>
+                    </ui-select>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label class="control-label col-sm-2" for="format">Format: <i class="fa fa-info-circle" uib-popover="Select the desired format of the tabular report."
                            popover-placement="top-right"
                            popover-trigger="'mouseenter'"></i></label>
                     <div class="col-sm-6">
-                        <ui-select ng-model="$ctrl.selectedFormat" theme="bootstrap" ng-disabled="$ctrl.isChildBeneficiaryListSelected()">
+                        <ui-select ng-model="$ctrl.selectedFormat" theme="bootstrap" ng-disabled="$ctrl.isChildBeneficiaryListSelected() || $ctrl.isPPRSelected()">
                         <ui-select-match placeholder="Format"><span ng-bind="$select.selected.name"></span></ui-select-match>
                           <ui-select-choices repeat="format.id as format in $ctrl.getFormats() | propsFilter: {name: $select.search}">
                             <div ng-bind-html="format.name"></div>
@@ -84,6 +99,35 @@
                     </ui-select>
                     </div>
                 </div>
+
+                <div class="form-group" ng-if="($ctrl.isPPRSelected() && $ctrl.haveAccessToFeatures)">
+                    <label class="control-label col-sm-2" for="format">Report Layout: <i class="fa fa-info-circle" uib-popover="select the report layout"
+                           popover-placement="top-right"
+                           popover-trigger="'mouseenter'"></i></label>
+                    <div class="col-sm-6">
+                        <ui-select ng-model="$ctrl.selectedReportLayout" theme="bootstrap">
+                        <ui-select-match placeholder="Choose the Report Layout"><span ng-bind="$select.selected.name"></span></ui-select-match>
+                          <ui-select-choices repeat="category.id as category in $ctrl.reportLayouts | propsFilter: {name: $select.search}">
+                            <div ng-bind-html="category.name"></div>
+                          </ui-select-choices>
+                    </ui-select>
+                    </div>
+                </div>
+
+                <div class="form-group" ng-if="($ctrl.isPPRSelected() && $ctrl.haveAccessToFeatures)">
+                    <label class="control-label col-sm-2" for="format">Data Period: <i class="fa fa-info-circle" uib-popover="select the data period"
+                           popover-placement="top-right"
+                           popover-trigger="'mouseenter'"></i></label>
+                    <div class="col-sm-6">
+                        <ui-select ng-model="$ctrl.selectedDataPeriod" theme="bootstrap">
+                        <ui-select-match placeholder="Chose the data period"><span ng-bind="$select.selected.name"></span></ui-select-match>
+                          <ui-select-choices repeat="category.id as category in $ctrl.dataPeriods | propsFilter: {name: $select.search}">
+                            <div ng-bind-html="category.name"></div>
+                          </ui-select-choices>
+                    </ui-select>
+                    </div>
+                </div>
+
                 <div class="form-group" style="margin-bottom: 0px !important;" ng-if="($ctrl.showLocationFilter())">
                     <label class="control-label col-sm-2" for="location">Location: <i class="fa fa-info-circle" uib-popover="Select the location for which you want to download the tabular report."
                            popover-placement="top-right"
@@ -117,10 +161,23 @@
                            popover-placement="top-right"
                            popover-trigger="'mouseenter'"></i></label>
                     <div class="col-sm-6">
-                        <ui-select ng-model="$ctrl.selectedMonth" theme="bootstrap">
+                        <ui-select ng-model="$ctrl.selectedMonth" theme="bootstrap" on-select="$ctrl.onSelectMonth()">
                             <ui-select-match placeholder="Month"><span ng-bind="$select.selected.name"></span></ui-select-match>
                             <ui-select-choices repeat="month.id as month in $ctrl.months | propsFilter: {name: $select.search}">
                                 <div ng-bind-html="month.name | highlight: $select.search"></div>
+                            </ui-select-choices>
+                        </ui-select>
+                    </div>
+                </div>
+                <div class="form-group" ng-if="($ctrl.showQuarterFilter() && $ctrl.haveAccessToFeatures)">
+                    <label class="control-label col-sm-2" for="quarter">Quarter: <i class="fa fa-info-circle" uib-popover="Select the calendar quarter for which you want to download the tabular report."
+                           popover-placement="top-right"
+                           popover-trigger="'mouseenter'"></i></label>
+                    <div class="col-sm-6">
+                        <ui-select ng-model="$ctrl.selectedQuarter" theme="bootstrap">
+                            <ui-select-match placeholder="Quarter"><span ng-bind="$select.selected.name"></span></ui-select-match>
+                            <ui-select-choices repeat="quarter.id as quarter in $ctrl.quarters | propsFilter: {name: $select.search}">
+                                <div ng-bind-html="quarter.name | highlight: $select.search"></div>
                             </ui-select-choices>
                         </ui-select>
                     </div>
@@ -156,6 +213,12 @@
                                 popover-trigger="'mouseenter'"></i>
                         </label>
                         <div class="col-sm-6">
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" id="selectAll" ng-model="$ctrl.allFiltersSelected"
+                                           ng-change="$ctrl.selectAllFilters()">Select All
+                                </label>
+                            </div>
                             <div class="checkbox" ng-repeat="option in $ctrl.filterOptions">
                                 <label>
                                     <input ng-model="option.selected" type="checkbox">
@@ -214,7 +277,7 @@
                            popover-placement="top-right"
                            popover-trigger="'mouseenter'"></i></label>
                     <div class="col-sm-6">
-                        <ui-select ng-model="$ctrl.selectedMonth" theme="bootstrap">
+                        <ui-select ng-model="$ctrl.selectedMonth" theme="bootstrap" on-select="$ctrl.onSelectMonth()">
                             <ui-select-match placeholder="Month"><span ng-bind="$select.selected.name"></span></ui-select-match>
                             <ui-select-choices repeat="month.id as month in $ctrl.months | propsFilter: {name: $select.search}">
                                 <div ng-bind-html="month.name | highlight: $select.search"></div>
@@ -241,7 +304,7 @@
                     <form action="{% url 'icds_export_indicator' domain %}" method="POST">
                         <button type="button" ng-click="$ctrl.submitForm('{{ csrf_token }}')"
                                 class="btn btn-default normalButton orangeButton"
-                                ng-disabled="$ctrl.hasErrors() || $ctrl.hasErrorsISSNIPExport()">
+                                ng-disabled="$ctrl.hasErrors() || $ctrl.hasErrorsISSNIPExport() || $ctrl.showReassignmentMessage()">
                             Export
                         </button>
                         <button type="button" ng-click="$ctrl.resetForm()"

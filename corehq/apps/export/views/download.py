@@ -1,5 +1,6 @@
 import json
 from datetime import date
+from io import BytesIO
 
 from django.http import (
     Http404,
@@ -12,10 +13,14 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.views.generic import View
 from django.views.decorators.http import require_GET, require_POST
 
 from memoized import memoized
 
+from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
+from corehq.apps.export.det.exceptions import DETConfigError
+from corehq.apps.export.det.schema_generator import generate_from_export_instance
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from soil import DownloadBase
@@ -457,6 +462,7 @@ def prepare_form_multimedia(request, domain):
 
 
 @require_GET
+@location_safe
 @login_and_domain_required
 def has_multimedia(request, domain):
     """Checks to see if this form export has multimedia available to export
@@ -537,3 +543,22 @@ def add_export_email_request(request, domain):
     else:
         EmailExportWhenDoneRequest.objects.create(domain=domain, download_id=download_id, user_id=user_id)
     return HttpResponse(ugettext_lazy('Export e-mail request sent.'))
+
+
+@method_decorator(login_and_domain_required, name='dispatch')
+class DownloadDETSchemaView(View):
+    urlname = 'download-det-schema'
+
+    def get(self, request, domain, export_instance_id):
+        export_instance = get_properly_wrapped_export_instance(export_instance_id)
+        assert domain == export_instance.domain
+        output_file = BytesIO()
+        try:
+            generate_from_export_instance(export_instance, output_file)
+        except DETConfigError as e:
+            return HttpResponse(_('Sorry, something went wrong creating that file: {error}').format(error=e))
+
+        output_file.seek(0)
+        response = HttpResponse(output_file, content_type='application/vnd.ms-excel')
+        response['Content-Disposition'] = f'attachment; filename="{export_instance.name}-DET.xlsx"'
+        return response

@@ -70,7 +70,7 @@ class CaseActionBase(object):
                     if getattr(self, p) is not None)
 
     def __repr__(self):
-        return "CaseAction(block={})".format(self.raw_block)
+        return f"{type(self).__name__}(block={self.raw_block!r})"
 
     @classmethod
     def _from_block_and_mapping(cls, block, mapping):
@@ -225,12 +225,12 @@ class CaseIndex(object):
     A class that holds an index to a case.
     """
 
-    def __init__(self, identifier, referenced_type, referenced_id, relationship='child'):
+    def __init__(self, identifier, referenced_type, referenced_id, relationship=None):
         self.identifier = identifier
         self.referenced_type = referenced_type
         self.referenced_id = referenced_id
-        self.relationship = relationship
-    
+        self.relationship = relationship or "child"
+
 
 class CaseIndexAction(CaseActionBase):
     """

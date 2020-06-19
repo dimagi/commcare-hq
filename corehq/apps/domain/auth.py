@@ -2,17 +2,19 @@ import base64
 import re
 from functools import wraps
 
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.models import User
+from django.db.models import Q
 from django.http import HttpResponse
 from django.views.decorators.debug import sensitive_variables
 
 from tastypie.authentication import ApiKeyAuthentication
 
+from corehq.toggles import TWO_STAGE_USER_PROVISIONING
 from dimagi.utils.django.request import mutable_querydict
 
 from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, WebUser, CommCareUser
 from corehq.util.hmac_request import validate_request_hmac
 from no_exceptions.exceptions import Http400
 from python_digest import parse_digest_credentials
@@ -209,3 +211,25 @@ class ApiKeyFallbackBackend(object):
         else:
             request.skip_two_factor_check = True
             return user
+
+
+def get_active_users_by_email(email):
+    UserModel = get_user_model()
+    possible_users = UserModel._default_manager.filter(
+        Q(username__iexact=email) | Q(email__iexact=email),
+        is_active=True,
+    )
+    for user in possible_users:
+        # all exact username matches should be included
+        if user.username.lower() == email.lower():
+            yield user
+        else:
+            # also any mobile workers from TWO_STAGE_USER_PROVISIONING domains should be included
+            couch_user = CouchUser.get_by_username(user.username, strict=True)
+            if (couch_user
+                    and couch_user.is_commcare_user()
+                    and TWO_STAGE_USER_PROVISIONING.enabled(couch_user.domain)):
+                yield user
+            # intentionally excluded:
+            # - WebUsers who have changed their email address from their login (though could revisit this)
+            # - CommCareUsers not belonging to domains with TWO_STAGE_USER_PROVISIONING enabled

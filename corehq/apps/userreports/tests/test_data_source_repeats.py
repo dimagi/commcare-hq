@@ -5,6 +5,7 @@ import os
 from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.userreports.models import DataSourceConfiguration
+from corehq.apps.userreports.tests.utils import get_data_source_with_repeat
 from corehq.apps.userreports.util import get_indicator_adapter
 
 DOC_ID = 'repeat-id'
@@ -14,10 +15,7 @@ DAY_OF_WEEK = 'monday'
 class RepeatDataSourceTestMixin(object):
 
     def setUp(self):
-        folder = os.path.join(os.path.dirname(__file__), 'data', 'configs')
-        sample_file = os.path.join(folder, 'data_source_with_repeat.json')
-        with open(sample_file, encoding='utf-8') as f:
-            self.config = DataSourceConfiguration.wrap(json.loads(f.read()))
+        self.config = get_data_source_with_repeat()
 
 
 class RepeatDataSourceConfigurationTest(RepeatDataSourceTestMixin, SimpleTestCase):

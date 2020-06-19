@@ -6,7 +6,11 @@ from django.shortcuts import render
 from django.utils.datastructures import MultiValueDictKeyError
 from django.utils.html import format_html
 from django.utils.translation import ugettext as _
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+
+from corehq.apps.hqwebapp.decorators import waf_allow
+from dimagi.utils.web import json_response
 
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.app_manager.helpers.validators import validate_property
@@ -14,18 +18,20 @@ from corehq.apps.case_importer import base
 from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.base import location_safe_case_imports_enabled
 from corehq.apps.case_importer.const import MAX_CASE_IMPORTER_COLUMNS
-from corehq.apps.case_importer.exceptions import ImporterError
+from corehq.apps.case_importer.exceptions import ImporterError, ImporterRawError
 from corehq.apps.case_importer.suggested_fields import (
     get_suggested_case_fields,
 )
 from corehq.apps.case_importer.tracking.case_upload_tracker import CaseUpload
 from corehq.apps.case_importer.util import get_importer_error_message
+from corehq.apps.domain.decorators import api_auth
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es,
 )
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.util.view_utils import absolute_reverse
 from corehq.util.workbook_reading import SpreadsheetFileExtError
 
 require_can_edit_data = require_permission(Permissions.edit_data)
@@ -60,6 +66,7 @@ def _case_importer_breadcrumb_context(page_name, domain):
     }
 
 
+@waf_allow('XSS_BODY')
 @require_can_edit_data
 @conditionally_location_safe(location_safe_case_imports_enabled)
 def excel_config(request, domain):
@@ -76,7 +83,18 @@ def excel_config(request, domain):
         return render_error(request, domain, 'Please choose an Excel file to import.')
 
     uploaded_file_handle = request.FILES['file']
+    try:
+        case_upload, context = _process_file_and_get_upload(uploaded_file_handle, request, domain)
+    except ImporterError as e:
+        return render_error(request, domain, get_importer_error_message(e))
+    except SpreadsheetFileExtError:
+        return render_error(request, domain, _("Please upload file with extension .xls or .xlsx"))
 
+    context.update(_case_importer_breadcrumb_context(_('Case Options'), domain))
+    return render(request, "case_importer/excel_config.html", context)
+
+
+def _process_file_and_get_upload(uploaded_file_handle, request, domain):
     extension = os.path.splitext(uploaded_file_handle.name)[1][1:].strip().lower()
 
     # NOTE: We may not always be able to reference files from subsequent
@@ -84,11 +102,11 @@ def excel_config(request, domain):
     # using the soil framework.
 
     if extension not in importer_util.ALLOWED_EXTENSIONS:
-        return render_error(request, domain, _(
+        raise SpreadsheetFileExtError(
             'The file you chose could not be processed. '
             'Please check that it is saved as a Microsoft '
             'Excel file.'
-        ))
+        )
 
     # stash content in the default storage for subsequent views
     case_upload = CaseUpload.create(uploaded_file_handle,
@@ -96,12 +114,8 @@ def excel_config(request, domain):
                                     domain=domain)
 
     request.session[EXCEL_SESSION_ID] = case_upload.upload_id
-    try:
-        case_upload.check_file()
-    except ImporterError as e:
-        return render_error(request, domain, get_importer_error_message(e))
-    except SpreadsheetFileExtError:
-        return render_error(request, domain, _("Please upload file with extension .xls or .xlsx"))
+    
+    case_upload.check_file()
     invalid_column_names = set()
     with case_upload.get_spreadsheet() as spreadsheet:
         columns = spreadsheet.get_header_columns()
@@ -114,29 +128,26 @@ def excel_config(request, domain):
               "valid XML elements</a> and cannot start with a number or contain spaces or most special characters."
               " Please update the following: {}.").format(
                 ', '.join(invalid_column_names)))
-        return render_error(request, domain, error_message)
+        raise ImporterRawError(error_message)
 
     if row_count == 0:
-        return render_error(request, domain, _(
-            'Your spreadsheet is empty. Please try again with a different spreadsheet.'
-        ))
+        raise ImporterError('Your spreadsheet is empty. Please try again with a different spreadsheet.')
 
     if len(columns) > MAX_CASE_IMPORTER_COLUMNS:
-        return render_error(request, domain, _(
+        raise ImporterError(
             'Your spreadsheet has too many columns. '
             'A maximum of %(max_columns)s is supported.'
-        ) % {'max_columns': MAX_CASE_IMPORTER_COLUMNS})
+            % {'max_columns': MAX_CASE_IMPORTER_COLUMNS})
 
     case_types_from_apps = sorted(get_case_types_from_apps(domain))
     unrecognized_case_types = sorted([t for t in get_case_types_for_domain_es(domain)
                                       if t not in case_types_from_apps])
 
     if len(case_types_from_apps) == 0 and len(unrecognized_case_types) == 0:
-        return render_error(request, domain, _(
+        raise ImporterError(
             'No cases have been submitted to this domain and there are no '
             'applications yet. You cannot import case details from an Excel '
-            'file until you have existing cases or applications.'
-        ))
+            'file until you have existing cases or applications.')
 
     context = {
         'columns': columns,
@@ -145,8 +156,7 @@ def excel_config(request, domain):
         'domain': domain,
         'slug': base.ImportCases.slug,
     }
-    context.update(_case_importer_breadcrumb_context(_('Case Options'), domain))
-    return render(request, "case_importer/excel_config.html", context)
+    return case_upload, context
 
 
 @require_POST
@@ -257,3 +267,87 @@ def excel_commit(request, domain):
     request.session.pop(EXCEL_SESSION_ID, None)
 
     return HttpResponseRedirect(base.ImportCases.get_url(domain))
+
+
+@waf_allow('XSS_BODY')
+@csrf_exempt
+@require_POST
+@api_auth
+@require_can_edit_data
+def bulk_case_upload_api(request, domain, **kwargs):
+    try:
+        response = _bulk_case_upload_api(request, domain)
+        return response
+    except ImporterError as e:
+        error = get_importer_error_message(e)
+    except SpreadsheetFileExtError:
+        error = "Please upload file with extension .xls or .xlsx"
+    return json_response({'code': 500, 'message': _(error)}, status_code=500)
+
+
+def _bulk_case_upload_api(request, domain):
+    try:
+        upload_file = request.FILES["file"]
+        case_type = request.POST["case_type"]
+        if not upload_file or not case_type:
+            raise Exception
+    except Exception:
+        raise ImporterError("Invalid POST request. "
+        "Both 'file' and 'case_type' are required")
+
+    search_field = request.POST.get('search_field', 'case_id')
+    create_new_cases = request.POST.get('create_new_cases') == 'on'
+
+    if search_field == 'case_id':
+        default_search_column = 'case_id'
+    elif search_field == 'external_id':
+        default_search_column = 'external_id'
+    else:
+        raise ImporterError("Illegal value for search_field: %s" % search_field)
+
+    search_column = request.POST.get('search_column', default_search_column)
+    name_column = request.POST.get('name_column', 'name')
+
+    upload_comment = request.POST.get('comment')
+
+    case_upload, context = _process_file_and_get_upload(upload_file, request, domain)
+
+    case_upload.check_file()
+
+    with case_upload.get_spreadsheet() as spreadsheet:
+        columns = spreadsheet.get_header_columns()
+        excel_fields = columns
+
+    # hide search column and matching case fields from the update list
+    if search_column in excel_fields:
+        excel_fields.remove(search_column)
+
+    custom_fields = []
+    case_fields = []
+
+    #Create the field arrays for the importer in the same format
+    #as the "Step 2" Web UI from the manual process
+    for f in excel_fields:
+        if f == name_column:
+            custom_fields.append("")
+            case_fields.append("name")
+        else:
+            custom_fields.append(f)
+            case_fields.append("")
+
+    config = importer_util.ImporterConfig(
+            couch_user_id=request.couch_user._id,
+            excel_fields=excel_fields,
+            case_fields=case_fields,
+            custom_fields=custom_fields,
+            search_column=search_column,
+            case_type=case_type,
+            search_field=search_field,
+            create_new_cases=create_new_cases)
+
+    case_upload.trigger_upload(domain, config, comment=upload_comment)
+
+    upload_id = case_upload.upload_id
+    status_url = absolute_reverse('case_importer_upload_status', args=(domain, upload_id))
+
+    return json_response({"code": 200, "message": "success", "status_url": status_url})

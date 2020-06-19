@@ -24,27 +24,27 @@ from corehq.sql_db.connections import connection_manager
 
 
 def get_sample_report_config():
-    folder = os.path.join(os.path.dirname(__file__), 'data', 'configs')
-    sample_file = os.path.join(folder, 'sample_report_config.json')
-    with open(sample_file, encoding='utf-8') as f:
-        structure = json.loads(f.read())
-        return ReportConfiguration.wrap(structure)
+    return _get_sample_doc('sample_report_config.json', ReportConfiguration)
 
 
 def get_sample_data_source():
-    folder = os.path.join(os.path.dirname(__file__), 'data', 'configs')
-    sample_file = os.path.join(folder, 'sample_data_source.json')
-    with open(sample_file, encoding='utf-8') as f:
-        structure = json.loads(f.read())
-        return DataSourceConfiguration.wrap(structure)
+    return _get_sample_doc('sample_data_source.json', DataSourceConfiguration)
 
 
 def get_data_source_with_related_doc_type():
+    return _get_sample_doc('parent_child_data_source.json', DataSourceConfiguration)
+
+
+def get_data_source_with_repeat():
+    return _get_sample_doc('data_source_with_repeat.json', DataSourceConfiguration)
+
+
+def _get_sample_doc(filename, doc_class):
     folder = os.path.join(os.path.dirname(__file__), 'data', 'configs')
-    sample_file = os.path.join(folder, 'parent_child_data_source.json')
+    sample_file = os.path.join(folder, filename)
     with open(sample_file, encoding='utf-8') as f:
         structure = json.loads(f.read())
-        return DataSourceConfiguration.wrap(structure)
+        return doc_class.wrap(structure)
 
 
 def get_sample_doc_and_indicators(fake_time_now=None, owner_id='some-user-id'):

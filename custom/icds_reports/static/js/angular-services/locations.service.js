@@ -125,7 +125,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
         locationTypeIsVisible: function (selectedLocations, level) {
             // whether a location type is visible (should be selectable) from locations service
             // hard code reports that disallow drilling past a certain level
-            if (($location.path().indexOf('lady_supervisor') !== -1 || $location.path().indexOf('service_delivery_dashboard') !== -1) && level === sector_level) {
+            if (($location.path().indexOf('ls_launched') !== -1 || $location.path().indexOf('lady_supervisor') !== -1 || $location.path().indexOf('service_delivery_dashboard') !== -1) && level === sector_level) {
                 return false;
             }
             // otherwise
@@ -251,6 +251,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
             }
             var locationIndex = this.selectedLocationIndex(vm.selectedLocations);
             vm.selectedLocationId = vm.selectedLocations[locationIndex];
+            vm.selectedLocation = item;
             var levels = _.filter(vm.levels, function (value){return value.id > locationIndex;});
             vm.selectedLevel = locationIndex + 1;
             vm.groupByLevels = levels;
@@ -305,6 +306,14 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
         },
         
         resetLevelsBelow : function(level, vm) {
+            // for the reports like THR report which does not allow download
+            // below block level. So, if you switch from a report which does
+            // allow download below block level to THR report and does not change
+            // the location and directly click the export. The location_id which is sent
+            // is not the block level but the lower level location selected in previous report
+            if (vm.selectedLocationLevel > level && vm.selectedLocations[level]) {
+                vm.selectedLocationId = vm.selectedLocations[level];
+            }
             for (var i = level + 1; i <= vm.maxLevel; i++) {
                 vm.hierarchy[i].selected = null;
                 vm.selectedLocations[i] = null;

@@ -25,6 +25,7 @@ class PostnatalCareFormsCcsRecordAggregationDistributedHelper(StateBasedAggregat
         LAST_VALUE(latest_time_end) OVER w AS latest_time_end,
         MAX(counsel_methods) OVER w AS counsel_methods,
         LAST_VALUE(is_ebf) OVER w as is_ebf,
+        LAST_VALUE(new_ifa_tablets_total) OVER w as new_ifa_tablets_total,
         SUM(CASE WHEN (unscheduled_visit=0 AND days_visit_late < 8) OR
             (latest_time_end::DATE - next_visit) < 8 THEN 1 ELSE 0 END) OVER w as valid_visits
         from
@@ -37,6 +38,7 @@ class PostnatalCareFormsCcsRecordAggregationDistributedHelper(StateBasedAggregat
             LAST_VALUE(unscheduled_visit) OVER w as unscheduled_visit,
             LAST_VALUE(days_visit_late) OVER w as days_visit_late,
             LAST_VALUE(next_visit) OVER w as next_visit,
+            LAST_VALUE(new_ifa_tablets_total) OVER w as new_ifa_tablets_total,
             supervisor_id
             FROM "{ucr_tablename}"
             WHERE timeend >= %(current_month_start)s
@@ -71,8 +73,8 @@ class PostnatalCareFormsCcsRecordAggregationDistributedHelper(StateBasedAggregat
 
         return """
         INSERT INTO "{tablename}" (
-          state_id, supervisor_id, month, case_id, latest_time_end_processed, counsel_methods, is_ebf,
-          valid_visits
+          state_id, supervisor_id, month, case_id, latest_time_end_processed, counsel_methods,
+          new_ifa_tablets_total, is_ebf, valid_visits
         ) (
           SELECT
             %(state_id)s AS state_id,
@@ -81,11 +83,12 @@ class PostnatalCareFormsCcsRecordAggregationDistributedHelper(StateBasedAggregat
             COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
             GREATEST(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed,
             GREATEST(ucr.counsel_methods, prev_month.counsel_methods) AS counsel_methods,
+            COALESCE(ucr.new_ifa_tablets_total, prev_month.new_ifa_tablets_total) AS new_ifa_tablets_total,
             ucr.is_ebf as is_ebf,
             COALESCE(ucr.valid_visits, 0) as valid_visits
           FROM ({ucr_table_query}) ucr
           FULL OUTER JOIN (
-             SELECT * FROM "{tablename}" WHERE month = %(previous_month)s AND state_id = %(state_id)s
+             SELECT * FROM "{prev_tablename}" WHERE state_id = %(state_id)s
           ) prev_month
           ON ucr.case_id = prev_month.case_id AND ucr.supervisor_id = prev_month.supervisor_id
           WHERE coalesce(ucr.month, %(month)s) = %(month)s
@@ -94,5 +97,6 @@ class PostnatalCareFormsCcsRecordAggregationDistributedHelper(StateBasedAggregat
         )
         """.format(
             ucr_table_query=ucr_query,
-            tablename=self.aggregate_parent_table
+            tablename=self.aggregate_parent_table,
+            prev_tablename=self.prev_tablename
         ), query_params

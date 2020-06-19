@@ -11,6 +11,7 @@ from corehq.apps.case_search.const import (
 )
 from corehq.apps.case_search.filter_dsl import CaseFilterError
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.reports.filters.case_list import CaseListFilter
@@ -25,10 +26,11 @@ from corehq.apps.reports.standard.cases.filters import (
     XpathCaseSearchFilter,
 )
 from corehq.elastic import iter_es_docs_from_query
-from corehq.util.datadog.gauges import datadog_bucket_timer
+from corehq.util.metrics import metrics_histogram_timer
 from corehq.util.soft_assert import soft_assert
 
 
+@location_safe
 class CaseListExplorer(CaseListReport):
     name = _('Case List Explorer')
     slug = 'case_list_explorer'
@@ -55,9 +57,8 @@ class CaseListExplorer(CaseListReport):
     @property
     @memoized
     def es_results(self):
-        timer = datadog_bucket_timer(
+        timer = metrics_histogram_timer(
             'commcare.case_list_explorer_query.es_timings',
-            tags=[],
             timing_buckets=(0.01, 0.05, 1, 5),
         )
         with timer:
@@ -105,6 +106,12 @@ class CaseListExplorer(CaseListReport):
 
     @property
     def columns(self):
+        view_case_column = DataTablesColumn(
+            _("View Case"),
+            prop_name='_link',
+            sortable=False,
+        )
+
         if self._is_exporting:
             persistent_cols = [
                 DataTablesColumn(
@@ -113,6 +120,8 @@ class CaseListExplorer(CaseListReport):
                     sortable=True,
                 )
             ]
+        elif self.is_rendered_as_email:
+            persistent_cols = [view_case_column]
         else:
             persistent_cols = [
                 DataTablesColumn(
@@ -121,11 +130,7 @@ class CaseListExplorer(CaseListReport):
                     sortable=True,
                     visible=False,
                 ),
-                DataTablesColumn(
-                    _("View Case"),
-                    prop_name='_link',
-                    sortable=False,
-                )
+                view_case_column,
             ]
 
         return persistent_cols + [
@@ -168,9 +173,8 @@ class CaseListExplorer(CaseListReport):
         return self._get_rows(data)
 
     def _get_rows(self, data):
-        timer = datadog_bucket_timer(
+        timer = metrics_histogram_timer(
             'commcare.case_list_explorer_query.row_fetch_timings',
-            tags=[],
             timing_buckets=(0.01, 0.05, 1, 5),
         )
         with timer:

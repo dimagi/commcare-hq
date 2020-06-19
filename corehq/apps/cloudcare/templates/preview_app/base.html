@@ -29,8 +29,10 @@
   {% initial_page_data 'username' request.user.username %}
   {% registerurl 'list_case_exports' request.domain %}
   {% registerurl 'list_form_exports' request.domain %}
+  {% registerurl 'login_new_window' %}
   {% registerurl 'case_data' request.domain '---' %}
   {% registerurl 'render_form_data' request.domain '---' %}
+  {% registerurl 'report_formplayer_error' request.domain %}
 
   <section id="case-crumbs" style="width: 800px"></section>
   <section id="cases"></section>

@@ -30,7 +30,7 @@ monkey.patch_all()
 import os
 import re
 import sys
-from contextlib2 import ExitStack
+from contextlib import ExitStack
 
 import gevent
 import jsonobject
@@ -82,15 +82,17 @@ def fetch_remote(base_config, name="origin"):
             continue
         seen.add(path)
         git = get_git(path)
+        remotes = set(git.remote().split())
         print("  [{cwd}] fetching {name}".format(cwd=path, name=name))
         jobs.append(gevent.spawn(git.fetch, name))
         for branch in (b for b in config.branches if ":" in b):
             remote, branch = branch.split(":", 1)
-            if remote not in git.remote().split():
+            if remote not in remotes:
                 url = remote_url(git, remote)
                 print("  [{path}] adding remote: {remote} -> {url}"
                       .format(**locals()))
                 git.remote("add", remote, url)
+                remotes.add(remote)
             print("  [{path}] fetching {remote} {branch}".format(**locals()))
             jobs.append(gevent.spawn(git.fetch, remote, branch))
             fetched.add(remote)
@@ -358,9 +360,9 @@ red = _wrap_with('31')
 
 
 def main():
-    from sys import stdin
     import yaml
-    config = yaml.safe_load(stdin)
+    with open(sys.argv[1]) as staging_yaml:
+        config = yaml.safe_load(staging_yaml)
     config = BranchConfig.wrap(config)
     config.normalize()
     if not config.check_trunk_is_recent():

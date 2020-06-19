@@ -217,7 +217,7 @@
           {% for invitation in invitations %}
             <tr>
               <td>
-                {{ invitation.email }}
+                {{ invitation.email }}{% if invitation.email_marked_as_bounced %} <span class="label label-danger">{% trans "Blocked" %}</span>{% endif %}
               </td>
               <td>
                 {{ invitation.role_label }}
@@ -237,12 +237,12 @@
               <td>
                 <div>
                   <button type="button" class="resend-invite btn btn-default"
-                          data-invite={{ invitation.id }}>
+                          data-uuid={{ invitation.uuid }}>
                     <i class="fa fa-envelope-o"></i>
                     {% trans "Resend Invitation" %}
                   </button>
                   <button type="button" class="btn btn-danger delete-invitation"
-                          data-id={{ invitation.id }}>
+                          data-uuid={{ invitation.uuid }}>
                     <i class="fa fa-trash"></i>
                     {% trans "Delete Invitation" %}
                   </button>

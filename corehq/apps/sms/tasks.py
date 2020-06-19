@@ -7,7 +7,7 @@ from django.db import DataError, transaction
 
 from celery.schedules import crontab
 
-from corehq.util.metrics import metrics_gauge_task
+from corehq.util.metrics import metrics_gauge_task, metrics_counter
 from dimagi.utils.couch import (
     CriticalSection,
     get_redis_client,
@@ -51,7 +51,6 @@ from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.messaging.util import use_phone_entries
 from corehq.util.celery_utils import no_result_task
-from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.timezones.conversions import ServerTime
 
 MAX_TRIAL_SMS = 50
@@ -68,11 +67,16 @@ def remove_from_queue(queued_sms):
 
     sms.publish_change()
 
+    tags = {'backend': sms.backend_api, 'icds_indicator': ''}
+    if isinstance(sms.custom_metadata, dict) and 'icds_indicator' in sms.custom_metadata:
+        tags.update({
+            'icds_indicator': sms.custom_metadata['icds_indicator']
+        })
     if sms.direction == OUTGOING and sms.processed and not sms.error:
         create_billable_for_sms(sms)
-        datadog_counter('commcare.sms.outbound_succeeded')
+        metrics_counter('commcare.sms.outbound_succeeded', tags=tags)
     elif sms.direction == OUTGOING:
-        datadog_counter('commcare.sms.outbound_failed')
+        metrics_counter('commcare.sms.outbound_failed', tags=tags)
     elif sms.direction == INCOMING and sms.domain and domain_has_privilege(sms.domain, privileges.INBOUND_SMS):
         create_billable_for_sms(sms)
 
@@ -546,7 +550,7 @@ def sync_user_phone_numbers(self, couch_user_id):
 def _sync_user_phone_numbers(couch_user_id):
     couch_user = CouchUser.get_by_user_id(couch_user_id)
 
-    if not isinstance(couch_user, CommCareUser):
+    if not couch_user.is_commcare_user():
         # It isn't necessary to sync WebUser's phone numbers right now
         # and we need to think through how to support entries when a user
         # can belong to multiple domains

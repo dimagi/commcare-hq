@@ -9,8 +9,6 @@ from django.test.utils import override_settings
 from mock import patch
 from six.moves.urllib.parse import urlencode
 
-from dimagi.utils.couch.cache.cache_core import get_redis_client
-
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
@@ -26,7 +24,6 @@ from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.sms.models import (
     SMS,
     BackendMap,
-    MobileBackendInvitation,
     PhoneLoadBalancingMixin,
     QueuedSMS,
     SQLMobileBackend,
@@ -48,7 +45,6 @@ from corehq.messaging.smsbackends.icds_nic.models import SQLICDSBackend
 from corehq.messaging.smsbackends.ivory_coast_mtn.models import (
     IvoryCoastMTNBackend,
 )
-from corehq.messaging.smsbackends.karix.models import KarixBackend
 from corehq.messaging.smsbackends.mach.models import SQLMachBackend
 from corehq.messaging.smsbackends.megamobile.models import SQLMegamobileBackend
 from corehq.messaging.smsbackends.push.models import PushBackend
@@ -59,6 +55,8 @@ from corehq.messaging.smsbackends.start_enterprise.models import (
 )
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
+from corehq.messaging.smsbackends.trumpia.models import TrumpiaBackend
+from corehq.messaging.smsbackends.turn.models import SQLTurnWhatsAppBackend
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.messaging.smsbackends.unicel.models import (
     InboundParams,
@@ -66,6 +64,8 @@ from corehq.messaging.smsbackends.unicel.models import (
 )
 from corehq.messaging.smsbackends.vertex.models import VertexBackend
 from corehq.messaging.smsbackends.yo.models import SQLYoBackend
+from corehq.messaging.smsbackends.infobip.models import InfobipBackend
+from corehq.messaging.smsbackends.amazon_pinpoint.models import PinpointBackend
 from corehq.util.test_utils import create_test_case
 
 
@@ -124,6 +124,13 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
             hq_api_id=SQLGrapevineBackend.get_api_id()
         )
         cls.grapevine_backend.save()
+
+        cls.turn_backend = SQLTurnWhatsAppBackend(
+            name='TURN',
+            is_global=True,
+            hq_api_id=SQLTurnWhatsAppBackend.get_api_id()
+        )
+        cls.turn_backend.save()
 
         cls.twilio_backend = SQLTwilioBackend(
             name='TWILIO',
@@ -202,19 +209,33 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         )
         cls.ivory_coast_mtn_backend.save()
 
-        cls.karix_backend = KarixBackend(
-            name='KARIX',
-            is_global=True,
-            hq_api_id=KarixBackend.get_api_id()
-        )
-        cls.karix_backend.save()
-
         cls.airtel_tcl_backend = AirtelTCLBackend(
             name='AIRTEL_TCL',
             is_global=True,
             hq_api_id=AirtelTCLBackend.get_api_id()
         )
         cls.airtel_tcl_backend.save()
+
+        cls.trumpia_backend = TrumpiaBackend(
+            name='TRUMPIA',
+            is_global=True,
+            hq_api_id=TrumpiaBackend.get_api_id()
+        )
+        cls.trumpia_backend.save()
+
+        cls.infobip_backend = InfobipBackend(
+            name='INFOBIP',
+            is_global=True,
+            hq_api_id=InfobipBackend.get_api_id()
+        )
+        cls.infobip_backend.save()
+
+        cls.pinpoint_backend = PinpointBackend(
+            name='PINPOINT',
+            is_global=True,
+            hq_api_id=PinpointBackend.get_api_id()
+        )
+        cls.pinpoint_backend.save()
 
     @classmethod
     def tearDownClass(cls):
@@ -228,6 +249,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         cls.test_backend.delete()
         cls.grapevine_backend.delete()
         cls.twilio_backend.delete()
+        cls.turn_backend.delete()
         cls.megamobile_backend.delete()
         cls.smsgh_backend.delete()
         cls.apposit_backend.delete()
@@ -238,8 +260,10 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         cls.vertext_backend.delete()
         cls.start_enterprise_backend.delete()
         cls.ivory_coast_mtn_backend.delete()
-        cls.karix_backend.delete()
         cls.airtel_tcl_backend.delete()
+        cls.trumpia_backend.delete()
+        cls.infobip_backend.delete()
+        cls.pinpoint_backend.delete()
         clear_plan_version_cache()
         super(AllBackendTest, cls).tearDownClass()
 
@@ -321,6 +345,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
     @patch('corehq.messaging.smsbackends.test.models.SQLTestSMSBackend.send')
     @patch('corehq.messaging.smsbackends.grapevine.models.SQLGrapevineBackend.send')
     @patch('corehq.messaging.smsbackends.twilio.models.SQLTwilioBackend.send')
+    @patch('corehq.messaging.smsbackends.turn.models.SQLTurnWhatsAppBackend.send')
     @patch('corehq.messaging.smsbackends.megamobile.models.SQLMegamobileBackend.send')
     @patch('corehq.messaging.smsbackends.smsgh.models.SQLSMSGHBackend.send')
     @patch('corehq.messaging.smsbackends.apposit.models.SQLAppositBackend.send')
@@ -331,12 +356,16 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
     @patch('corehq.messaging.smsbackends.vertex.models.VertexBackend.send')
     @patch('corehq.messaging.smsbackends.start_enterprise.models.StartEnterpriseBackend.send')
     @patch('corehq.messaging.smsbackends.ivory_coast_mtn.models.IvoryCoastMTNBackend.send')
-    @patch('corehq.messaging.smsbackends.karix.models.KarixBackend.send')
     @patch('corehq.messaging.smsbackends.airtel_tcl.models.AirtelTCLBackend.send')
+    @patch('corehq.messaging.smsbackends.trumpia.models.TrumpiaBackend.send')
+    @patch('corehq.messaging.smsbackends.infobip.models.InfobipBackend.send')
+    @patch('corehq.messaging.smsbackends.amazon_pinpoint.models.PinpointBackend.send')
     def test_outbound_sms(
             self,
+            pinpoint_send,
+            infobip_send,
+            trumpia_send,
             airtel_tcl_send,
-            karix_send,
             ivory_coast_mtn_send,
             start_ent_send,
             vertex_send,
@@ -347,6 +376,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
             apposit_send,
             smsgh_send,
             megamobile_send,
+            turn_send,
             twilio_send,
             grapevine_send,
             test_send,
@@ -360,6 +390,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         self._test_outbound_backend(self.telerivet_backend, 'telerivet test', telerivet_send)
         self._test_outbound_backend(self.test_backend, 'test test', test_send)
         self._test_outbound_backend(self.grapevine_backend, 'grapevine test', grapevine_send)
+        self._test_outbound_backend(self.turn_backend, 'turn test', turn_send)
         self._test_outbound_backend(self.twilio_backend, 'twilio test', twilio_send)
         self._test_outbound_backend(self.megamobile_backend, 'megamobile test', megamobile_send)
         self._test_outbound_backend(self.smsgh_backend, 'smsgh test', smsgh_send)
@@ -371,8 +402,10 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         self._test_outbound_backend(self.vertext_backend, 'vertex_test', vertex_send)
         self._test_outbound_backend(self.start_enterprise_backend, 'start_ent_test', start_ent_send)
         self._test_outbound_backend(self.ivory_coast_mtn_backend, 'ivory_coast_mtn_test', ivory_coast_mtn_send)
-        self._test_outbound_backend(self.karix_backend, 'karix test', karix_send)
         self._test_outbound_backend(self.airtel_tcl_backend, 'airtel tcl test', airtel_tcl_send)
+        self._test_outbound_backend(self.trumpia_backend, 'trumpia test', trumpia_send)
+        self._test_outbound_backend(self.infobip_backend, 'infobip test', infobip_send)
+        self._test_outbound_backend(self.pinpoint_backend, 'pinpoint test', pinpoint_send)
 
     @run_with_all_backends
     def test_unicel_inbound_sms(self):
@@ -414,6 +447,25 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
             content_type='application/x-www-form-urlencoded', payload=payload)
 
         self._verify_inbound_request(self.grapevine_backend.get_api_id(), 'grapevine test')
+
+    @run_with_all_backends
+    def test_turn_inbound_sms(self):
+        url = '/turn/sms/%s' % self.turn_backend.inbound_api_key
+        payload = {"messages": [
+            {
+                "from": self.test_phone_number,
+                "id": "1234",
+                "timestamp": "message_timestamp",
+                "type": "text",
+                "text": {
+                    "body": "turn test"
+                }
+            }
+        ]}
+        self._simulate_inbound_request_with_payload(url, 'application/json', json.dumps(payload))
+
+        self._verify_inbound_request(self.turn_backend.get_api_id(), 'turn test',
+            backend_couch_id=self.turn_backend.couch_id)
 
     @run_with_all_backends
     def test_twilio_inbound_sms(self):
@@ -496,6 +548,62 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
 
         self._verify_inbound_request(self.push_backend.get_api_id(), 'push test',
             backend_couch_id=self.push_backend.couch_id)
+
+    @run_with_all_backends
+    def test_trumpia_inbound_sms(self):
+        text = 'trumpia test'
+        xml = urlencode({"xml":
+            '<?xml version="1.0" encoding="UTF-8" ?>'
+            '<TRUMPIA>'
+                '<PUSH_ID>1234561234567asdf123</PUSH_ID>'
+                '<INBOUND_ID>9996663330001</INBOUND_ID>'
+                f'<PHONENUMBER>{self.test_phone_number}</PHONENUMBER>'
+                '<KEYWORD />'
+                f'<CONTENTS><![CDATA[{text}]]></CONTENTS>'
+                '<ATTACHMENT />'
+            '</TRUMPIA>'})
+        self._simulate_inbound_request_with_payload(
+            f'/trumpia/sms/{self.trumpia_backend.inbound_api_key}/?{xml}',
+            content_type='text/xml',
+            payload="",
+        )
+        self._verify_inbound_request(
+            self.trumpia_backend.get_api_id(),
+            text,
+            backend_couch_id=self.trumpia_backend.couch_id,
+        )
+
+    @run_with_all_backends
+    def test_infobip_inbound_sms(self):
+        url = '/infobip/sms/%s' % self.infobip_backend.inbound_api_key
+        payload = {
+            "results": [
+                {
+                    "from": self.test_phone_number,
+                    "messageId": "message_id",
+                    "message": {
+                        "type": "TEXT",
+                        "text": "infobip test"
+                    }
+                }
+            ]
+        }
+        self._simulate_inbound_request_with_payload(url, 'application/json', json.dumps(payload))
+
+        self._verify_inbound_request(self.infobip_backend.get_api_id(), 'infobip test',
+            backend_couch_id=self.infobip_backend.couch_id)
+
+    @run_with_all_backends
+    def test_pinpoint_inbound_sms(self):
+        url = '/pinpoint/sms/%s' % self.pinpoint_backend.inbound_api_key
+        payload = {
+            "Message": "{\"originationNumber\":\"%s\",\"messageBody\":\"pinpoint test\","
+                       "\"inboundMessageId\":\"message_id\"}" % self.test_phone_number
+        }
+        self._simulate_inbound_request_with_payload(url, 'application/json', json.dumps(payload))
+
+        self._verify_inbound_request(self.pinpoint_backend.get_api_id(), 'pinpoint test',
+            backend_couch_id=self.pinpoint_backend.couch_id)
 
 
 class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):

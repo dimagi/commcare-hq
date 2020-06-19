@@ -1,3 +1,4 @@
+import uuid
 from contextlib import contextmanager
 
 from django.test import TestCase
@@ -13,6 +14,7 @@ from casexml.apps.case.tests.util import delete_all_cases
 from corehq.apps.case_importer import exceptions
 from corehq.apps.case_importer.do_import import do_import
 from corehq.apps.case_importer.tasks import bulk_import_async
+from corehq.apps.case_importer.tracking.models import CaseUploadRecord
 from corehq.apps.case_importer.util import ImporterConfig, WorksheetWrapper, \
     get_interned_exception
 from corehq.apps.commtrack.tests.util import make_loc
@@ -37,7 +39,7 @@ class ImporterTest(TestCase):
         self.domain = self.domain_obj.name
         self.default_case_type = 'importer-test-casetype'
 
-        self.couch_user = WebUser.create(None, "test", "foobar")
+        self.couch_user = WebUser.create(None, "test", "foobar", None, None)
         self.couch_user.add_domain_membership(self.domain, is_admin=True)
         self.couch_user.save()
 
@@ -68,8 +70,11 @@ class ImporterTest(TestCase):
 
     @run_with_all_backends
     @patch('corehq.apps.case_importer.tasks.bulk_import_async.update_state')
-    def testImportNone(self, update_state):
-        res = bulk_import_async.delay(self._config(['anything']), self.domain, None)
+    def testImportFileMissing(self, update_state):
+        # by using a made up upload_id, we ensure it's not referencing any real file
+        case_upload = CaseUploadRecord(upload_id=str(uuid.uuid4()), task_id=str(uuid.uuid4()))
+        case_upload.save()
+        res = bulk_import_async.delay(self._config(['anything']), self.domain, case_upload.upload_id)
         self.assertIsInstance(res.result, Ignore)
         update_state.assert_called_with(
             state=states.FAILURE,
@@ -425,7 +430,7 @@ class ImporterTest(TestCase):
 
     @run_with_all_backends
     def test_columns_and_rows_align(self):
-        case_owner = CommCareUser.create(self.domain, 'username', 'pw')
+        case_owner = CommCareUser.create(self.domain, 'username', 'pw', None, None)
         res = self.import_mock_file([
             ['case_id', 'name', '', 'favorite_color', 'owner_id'],
             ['', 'Jeff', '', 'blue', case_owner._id],
@@ -461,9 +466,9 @@ class ImporterTest(TestCase):
     def test_user_can_access_owner(self):
         with make_business_units(self.domain) as (inc, dsi, dsa), \
                 restrict_user_to_location(self, dsa):
-            inc_owner = CommCareUser.create(self.domain, 'inc', 'pw', location=inc)
-            dsi_owner = CommCareUser.create(self.domain, 'dsi', 'pw', location=dsi)
-            dsa_owner = CommCareUser.create(self.domain, 'dsa', 'pw', location=dsa)
+            inc_owner = CommCareUser.create(self.domain, 'inc', 'pw', None, None, location=inc)
+            dsi_owner = CommCareUser.create(self.domain, 'dsi', 'pw', None, None, location=dsi)
+            dsa_owner = CommCareUser.create(self.domain, 'dsa', 'pw', None, None, location=dsa)
 
             res = self.import_mock_file([
                 ['case_id', 'name', 'owner_id'],
@@ -504,7 +509,7 @@ def make_worksheet_wrapper(*rows):
 def restrict_user_to_location(test_case, location):
     orig_user = test_case.couch_user
 
-    restricted_user = WebUser.create(test_case.domain, "restricted", "s3cr3t")
+    restricted_user = WebUser.create(test_case.domain, "restricted", "s3cr3t", None, None)
     restricted_user.set_location(test_case.domain, location)
     restrict_user_by_location(test_case.domain, restricted_user)
     test_case.couch_user = restricted_user

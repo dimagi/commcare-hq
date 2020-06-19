@@ -26,6 +26,7 @@ from django.http import (
     HttpResponsePermanentRedirect,
     HttpResponseRedirect,
     HttpResponseServerError,
+    JsonResponse,
 )
 from django.shortcuts import redirect, render
 from django.template import loader
@@ -37,21 +38,25 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import LANGUAGE_SESSION_KEY
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
 from django.views.generic.base import View
 
 import httpagentparser
+import requests
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 from sentry_sdk import last_event_id
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from two_factor.views import LoginView
 
-from corehq.util.metrics import create_metrics_event
+from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.util.metrics import create_metrics_event, metrics_counter, metrics_gauge
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
+from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import get_site_domain, get_url_base, json_response
@@ -95,6 +100,7 @@ from corehq.apps.hqwebapp.utils import (
 )
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent
 from corehq.apps.users.landing_pages import (
     get_cloudcare_urlname,
     get_redirect_url,
@@ -108,10 +114,8 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.context_processors import commcare_hq_names
-from corehq.util.datadog.const import DATADOG_UNKNOWN
-from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
-from corehq.util.datadog.metrics import JSERROR_COUNT
-from corehq.util.datadog.utils import sanitize_url
+from corehq.util.metrics.const import TAG_UNKNOWN
+from corehq.util.metrics.utils import sanitize_url
 from corehq.util.view_utils import reverse
 from no_exceptions.exceptions import Http403
 
@@ -133,7 +137,7 @@ def format_traceback_the_way_python_does(type, exc, tb):
     return f'Traceback (most recent call last):\n{tb}{type.__name__}: {exc}'
 
 
-def server_error(request, template_name='500.html'):
+def server_error(request, template_name='500.html', exception=None):
     """
     500 error handler.
     """
@@ -174,7 +178,7 @@ def server_error(request, template_name='500.html'):
     ))
 
 
-def not_found(request, template_name='404.html'):
+def not_found(request, template_name='404.html', exception=None):
     """
     404 error handler.
     """
@@ -304,11 +308,11 @@ def server_up(req):
     failed_checks = [(check, status) for check, status in statuses if not status.success]
 
     for check_name, status in statuses:
-        tags = [
-            'status:{}'.format('failed' if not status.success else 'ok'),
-            'check:{}'.format(check_name)
-        ]
-        datadog_gauge('commcare.serverup.check', status.duration, tags=tags)
+        tags = {
+            'status': 'failed' if not status.success else 'ok',
+            'check': check_name
+        }
+        metrics_gauge('commcare.serverup.check', status.duration, tags=tags)
 
     if failed_checks and not is_deploy_in_progress():
         status_messages = [
@@ -337,7 +341,7 @@ def _no_permissions_message(request, template_name="403.html", message=None):
     )
 
 
-def no_permissions(request, redirect_to=None, template_name="403.html", message=None):
+def no_permissions(request, redirect_to=None, template_name="403.html", message=None, exception=None):
     """
     403 error handler.
     """
@@ -385,7 +389,6 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
-    context.update(extra_context)
     template_name = custom_login_page if custom_login_page else 'login_and_password/login.html'
     if not custom_login_page and domain_name:
         domain_obj = Domain.get_by_name(domain_name)
@@ -412,6 +415,7 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
     if settings.IS_SAAS_ENVIRONMENT:
         context['demo_workflow_ab_v2'] = demo_workflow_ab_v2.context
 
+    context.update(extra_context)
     response = auth_view.as_view(template_name=template_name, extra_context=context)(req)
 
     if settings.IS_SAAS_ENVIRONMENT:
@@ -447,6 +451,13 @@ def domain_login(req, domain, custom_template_name=None, extra_context=None):
     if custom_template_name is None:
         custom_template_name = get_custom_login_page(req.get_host())
     return _login(req, domain, custom_template_name, extra_context)
+
+
+@location_safe
+def iframe_domain_login(req, domain):
+    return domain_login(req, domain, custom_template_name="hqwebapp/iframe_domain_login.html", extra_context={
+        'current_page': {'page_name': _('Your session has expired')},
+    })
 
 
 class HQLoginView(LoginView):
@@ -485,6 +496,41 @@ def logout(req, default_domain_redirect='domain_login'):
         return HttpResponseRedirect('%s' % domain_login_url)
     else:
         return HttpResponseRedirect(reverse('login'))
+
+
+# ping_login and ping_session are both tiny views used in user inactivity and session expiration handling
+# They are identical except that ping_session extends the user's current session, while ping_login does not.
+# This difference is controlled in SelectiveSessionMiddleware, which makes ping_login bypass sessions.
+@location_safe
+@two_factor_exempt
+def ping_login(request):
+    return JsonResponse({
+        'success': request.user.is_authenticated,
+        'last_request': request.session.get('last_request'),
+        'username': request.user.username,
+    })
+
+
+@location_safe
+@two_factor_exempt
+def ping_session(request):
+    return JsonResponse({
+        'success': request.user.is_authenticated,
+        'last_request': request.session.get('last_request'),
+        'username': request.user.username,
+    })
+
+
+@location_safe
+@login_required
+def login_new_window(request):
+    return render_static(request, "hqwebapp/close_window.html", _("Thank you for logging in!"))
+
+
+@location_safe
+@login_required
+def iframe_domain_login_new_window(request):
+    return TemplateView.as_view(template_name='hqwebapp/iframe_close_window.html')(request)
 
 
 @login_and_domain_required
@@ -552,28 +598,29 @@ def debug_notify(request):
     return HttpResponse("Email should have been sent")
 
 
+@waf_allow('XSS_BODY')
 @require_POST
 def jserror(request):
     agent = request.META.get('HTTP_USER_AGENT', None)
-    os = browser_name = browser_version = bot = DATADOG_UNKNOWN
+    os = browser_name = browser_version = bot = TAG_UNKNOWN
     if agent:
         parsed_agent = httpagentparser.detect(agent)
         bot = parsed_agent.get('bot', False)
         if 'os' in parsed_agent:
-            os = parsed_agent['os'].get('name', DATADOG_UNKNOWN)
+            os = parsed_agent['os'].get('name', TAG_UNKNOWN)
 
         if 'browser' in parsed_agent:
-            browser_version = parsed_agent['browser'].get('version', DATADOG_UNKNOWN)
-            browser_name = parsed_agent['browser'].get('name', DATADOG_UNKNOWN)
+            browser_version = parsed_agent['browser'].get('version', TAG_UNKNOWN)
+            browser_name = parsed_agent['browser'].get('name', TAG_UNKNOWN)
 
-    datadog_counter(JSERROR_COUNT, tags=[
-        'os:{}'.format(os),
-        'browser_version:{}'.format(browser_version),
-        'browser_name:{}'.format(browser_name),
-        'url:{}'.format(sanitize_url(request.POST.get('page', None))),
-        'file:{}'.format(request.POST.get('filename')),
-        'bot:{}'.format(bot),
-    ])
+    metrics_counter('commcare.jserror.count', tags={
+        'os': os,
+        'browser_version': browser_version,
+        'browser_name': browser_name,
+        'url': sanitize_url(request.POST.get('page', None)),
+        'file': request.POST.get('filename'),
+        'bot': bot,
+    })
 
     return HttpResponse('')
 
@@ -581,7 +628,26 @@ def jserror(request):
 @method_decorator([login_required], name='dispatch')
 class BugReportView(View):
     def post(self, req, *args, **kwargs):
-        report = dict([(key, req.POST.get(key, '')) for key in (
+        email = self._get_email_message(
+            post_params=req.POST,
+            couch_user=req.couch_user,
+            uploaded_file=req.FILES.get('report_issue')
+        )
+
+        email.send(fail_silently=False)
+
+        if req.POST.get('five-hundred-report'):
+            messages.success(
+                req,
+                _("Your CommCare HQ Issue Report has been sent. We are working quickly to resolve this problem.")
+            )
+            return HttpResponseRedirect(reverse('homepage'))
+
+        return HttpResponse()
+
+    @staticmethod
+    def _get_email_message(post_params, couch_user, uploaded_file):
+        report = dict([(key, post_params.get(key, '')) for key in (
             'subject',
             'username',
             'domain',
@@ -595,7 +661,6 @@ class BugReportView(View):
         )])
 
         try:
-            couch_user = req.couch_user
             full_name = couch_user.full_name
             if couch_user.is_commcare_user():
                 email = report['email']
@@ -615,12 +680,15 @@ class BugReportView(View):
         else:
             domain = "<no domain>"
 
+        other_recipients = [el.strip() for el in report['cc'].split(",") if el]
+
         message = (
-            "username: {username}\n"
-            "full name: {full_name}\n"
-            "domain: {domain}\n"
-            "url: {url}\n"
-        ).format(**report)
+            f"username: {report['username']}\n"
+            f"full name: {report['full_name']}\n"
+            f"domain: {report['domain']}\n"
+            f"url: {report['url']}\n"
+            f"recipients: {', '.join(other_recipients)}\n"
+        )
 
         domain_object = Domain.get_by_name(domain) if report['domain'] else None
         debug_context = {
@@ -633,10 +701,9 @@ class BugReportView(View):
         }
         if domain_object:
             current_project_description = domain_object.project_description if domain_object else None
-            new_project_description = req.POST.get('project_description')
-            if (domain_object and
-                    req.couch_user.is_domain_admin(domain=domain) and
-                    new_project_description and current_project_description != new_project_description):
+            new_project_description = post_params.get('project_description')
+            if (domain_object and couch_user.is_domain_admin(domain=domain) and new_project_description
+                    and current_project_description != new_project_description):
                 domain_object.project_description = new_project_description
                 domain_object.save()
 
@@ -654,7 +721,6 @@ class BugReportView(View):
             })
 
         subject = '{subject} ({domain})'.format(subject=report['subject'], domain=domain)
-        cc = [el for el in report['cc'].strip().split(",") if el]
 
         if full_name and not any([c in full_name for c in '<>"']):
             reply_to = '"{full_name}" <{email}>'.format(**report)
@@ -667,7 +733,7 @@ class BugReportView(View):
             reply_to = settings.SERVER_EMAIL
 
         message += "Message:\n\n{message}\n".format(message=report['message'])
-        if req.POST.get('five-hundred-report'):
+        if post_params.get('five-hundred-report'):
             extra_message = ("This message was reported from a 500 error page! "
                              "Please fix this ASAP (as if you wouldn't anyway)...")
             extra_debug_info = (
@@ -687,10 +753,9 @@ class BugReportView(View):
             body=message,
             to=[settings.SUPPORT_EMAIL],
             headers={'Reply-To': reply_to},
-            cc=cc
+            cc=other_recipients
         )
 
-        uploaded_file = req.FILES.get('report_issue')
         if uploaded_file:
             filename = uploaded_file.name
             content = uploaded_file.read()
@@ -703,16 +768,7 @@ class BugReportView(View):
         else:
             email.from_email = settings.SUPPORT_EMAIL
 
-        email.send(fail_silently=False)
-
-        if req.POST.get('five-hundred-report'):
-            messages.success(
-                req,
-                "Your CommCare HQ Issue Report has been sent. We are working quickly to resolve this problem."
-            )
-            return HttpResponseRedirect(reverse('homepage'))
-
-        return HttpResponse()
+        return email
 
 
 def render_static(request, template, page_name):
@@ -841,7 +897,7 @@ class CRUDPaginatedViewMixin(object):
         """
         Specify GET or POST from a request object.
         """
-        raise NotImplementedError("you need to implement get_param_source")
+        return self.request.POST if self.request.method == 'POST' else self.request.GET
 
     @property
     @memoized
@@ -901,6 +957,7 @@ class CRUDPaginatedViewMixin(object):
                     'new_items': self.new_items_header,
                 },
                 'create_item_form': self.get_create_form_response(create_form) if create_form else None,
+                'create_item_form_class': self.create_item_form_class,
             }
         }
 
@@ -1011,6 +1068,8 @@ class CRUDPaginatedViewMixin(object):
         """
         pass
 
+    create_item_form_class = 'form form-inline'
+
     def get_create_form_response(self, create_form):
         return render_to_string(
             'hqwebapp/includes/create_item_form.html', {
@@ -1082,7 +1141,8 @@ def quick_find(request):
         return HttpResponseBadRequest('GET param "q" must be provided')
 
     def deal_with_doc(doc, domain, doc_info_fn):
-        if request.couch_user.is_superuser or (domain and request.couch_user.is_member_of(domain)):
+        is_member = domain and request.couch_user.is_member_of(domain, allow_mirroring=True)
+        if is_member or request.couch_user.is_superuser:
             doc_info = doc_info_fn(doc)
         else:
             raise Http404()
@@ -1204,7 +1264,7 @@ def redirect_to_dimagi(endpoint):
             'india',
             'staging',
             'changeme',
-            'localdev',
+            settings.LOCAL_SERVER_ENVIRONMENT,
         ]:
             return HttpResponsePermanentRedirect(
                 "https://www.dimagi.com/{}{}".format(
@@ -1220,3 +1280,64 @@ def temporary_google_verify(request):
     # will remove once google search console verify process completes
     # BMB 4/20/18
     return render(request, "google9633af922b8b0064.html")
+
+
+@waf_allow('XSS_BODY')
+@require_POST
+@csrf_exempt
+def log_email_event(request, secret):
+    # From Amazon SNS:
+    # https://docs.aws.amazon.com/ses/latest/DeveloperGuide/event-publishing-retrieving-sns-examples.html
+
+    if secret != settings.SNS_EMAIL_EVENT_SECRET:
+        return HttpResponse(f"Incorrect secret: {secret}", status=403, content_type='text/plain')
+
+    request_json = json.loads(request.body)
+
+    if request_json['Type'] == "SubscriptionConfirmation":
+        # When creating an SNS topic, the first message is a subscription
+        # confirmation, where we need to access the subscribe URL to confirm we
+        # are able to receive messages at this endpoint
+        subscribe_url = request_json['SubscribeURL']
+        requests.get(subscribe_url)
+        return HttpResponse()
+
+    message = json.loads(request_json['Message'])
+    headers = message.get('mail', {}).get('headers', [])
+
+    for header in headers:
+        if header["name"] == COMMCARE_MESSAGE_ID_HEADER:
+            subevent_id = header["value"]
+            break
+    else:
+        return HttpResponse()
+
+    try:
+        subevent = MessagingSubEvent.objects.get(id=subevent_id)
+    except MessagingSubEvent.DoesNotExist:
+        return HttpResponse()
+
+    event_type = message.get('eventType')
+    if event_type == 'Bounce':
+        additional_error_text = ''
+
+        bounce_type = message.get('bounce', {}).get('bounceType')
+        if bounce_type:
+            additional_error_text = f"{bounce_type}."
+        bounced_recipients = message.get('bounce', {}).get('bouncedRecipients', [])
+        recipient_addresses = []
+        for bounced_recipient in bounced_recipients:
+            recipient_addresses.append(bounced_recipient.get('emailAddress'))
+        if recipient_addresses:
+            additional_error_text = f"{additional_error_text} - {', '.join(recipient_addresses)}"
+
+        subevent.error(MessagingEvent.ERROR_EMAIL_BOUNCED, additional_error_text=additional_error_text)
+    elif event_type == 'Send':
+        subevent.status = MessagingEvent.STATUS_EMAIL_SENT
+    elif event_type == 'Delivery':
+        subevent.status = MessagingEvent.STATUS_EMAIL_DELIVERED
+        subevent.additional_error_text = message.get('delivery', {}).get('timestamp')
+
+    subevent.save()
+
+    return HttpResponse()

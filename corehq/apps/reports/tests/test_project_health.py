@@ -46,7 +46,7 @@ class SetupProjectPerformanceMixin(object):
     @classmethod
     def make_mobile_worker(cls, username, domain=None):
         domain = domain or cls.domain
-        user = CommCareUser.create(domain, username, '123')
+        user = CommCareUser.create(domain, username, '123', None, None)
         doc = user._doc
         doc['username.exact'] = doc['username']
         UserESFake.save_doc(doc)
@@ -205,7 +205,7 @@ class ProjectHealthDashboardTest(SetupProjectPerformanceMixin, TestCase):
 
     @classmethod
     def _setup_web_user(cls):
-        cls.web_user = WebUser.create(cls.DOMAIN_NAME, cls.WEB_USER, '*****')
+        cls.web_user = WebUser.create(cls.DOMAIN_NAME, cls.WEB_USER, '*****', None, None)
         cls.web_user.save()
         cls.request.couch_user = cls.web_user
 

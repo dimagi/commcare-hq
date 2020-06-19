@@ -30,6 +30,7 @@ from corehq.apps.linked_domain.applications import create_linked_app
 from corehq.apps.users.models import WebUser
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
+from corehq.util.test_utils import timelimit
 
 from .test_form_versioning import BLANK_TEMPLATE, INVALID_TEMPLATE
 
@@ -46,7 +47,7 @@ class TestViews(TestCase):
         cls.project.save()
         cls.username = 'cornelius'
         cls.password = 'fudge'
-        cls.user = WebUser.create(cls.project.name, cls.username, cls.password, is_active=True)
+        cls.user = WebUser.create(cls.project.name, cls.username, cls.password, None, None, is_active=True)
         cls.user.is_superuser = True
         cls.user.save()
         cls.build = add_build(version='2.7.0', build_number=20655)
@@ -146,6 +147,7 @@ class TestViews(TestCase):
         send_to_elasticsearch('apps', app.to_json())
         self.es.indices.refresh(APP_INDEX_INFO.index)
 
+    @timelimit(90)
     @patch('corehq.apps.app_manager.views.formdesigner.form_has_submissions', return_value=True)
     def test_basic_app(self, mock1, mock2):
         module = self.app.add_module(Module.new_module("Module0", "en"))

@@ -13,6 +13,7 @@ from django.db import (
 )
 from django.utils.encoding import force_text
 
+from corehq.apps.dump_reload.exceptions import DataLoadException
 from corehq.apps.dump_reload.interface import DataLoader
 from corehq.apps.dump_reload.util import get_model_label
 from corehq.sql_db.routers import HINT_PARTITION_VALUE
@@ -51,7 +52,9 @@ class SqlDataLoader(DataLoader):
             line = line.strip()
             if not line:
                 continue
-            chunk.append(json.loads(line))
+            obj = json.loads(line)
+            if self.filter_object(obj):
+                chunk.append(obj)
             if len(chunk) >= 1000:
                 _process_chunk(chunk)
                 chunk = []
@@ -67,6 +70,12 @@ class SqlDataLoader(DataLoader):
             loaded_model_counts.update(model_labels)
 
         return sum(total_object_counts), loaded_model_counts
+
+    def filter_object(self, object):
+        if not self.object_filter:
+            return True
+        model_label = object['model']
+        return self.object_filter.findall(model_label)
 
 
 def _reset_sequences(load_stats):
@@ -164,7 +173,14 @@ def _group_objects_by_db(objects):
                     field for field in model._meta.fields
                     if field.column == model.partition_attr
                 ][0]
-                partition_value = obj['fields'][field.name]
+                try:
+                    partition_value = obj['fields'][field.name]
+                except KeyError:
+                    if model.partition_attr == model._meta.pk.attname:
+                        partition_value = obj['pk']
+                    else:
+                        raise DataLoadException(f"Unable to find field {app_label}.{model.partition_attr}")
+
             router_hints[HINT_PARTITION_VALUE] = partition_value
         db_alias = router.db_for_write(model, **router_hints)
         objects_by_db[db_alias].append(obj)

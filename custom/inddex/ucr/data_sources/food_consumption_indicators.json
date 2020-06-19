@@ -1,5 +1,7 @@
 {
     "domains": [
+        "inddex-multilingual",
+        "inddex-multi-vn",
         "inddex-reports",
         "inddex-reports-test"
     ],
@@ -14,15 +16,27 @@
         "description": "",
         "display_name": "Food Consumption",
         "configured_filter": {
-            "type": "boolean_expression",
-            "operator": "eq",
-            "expression": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "expression": {
                 "type": "property_name",
-                "property_name": "type",
-                "datatype": null
+                "property_name": "type"
+              },
+              "property_value": "food"
             },
-            "property_value": "food",
-            "comment": null
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "expression": {
+                "type": "property_name",
+                "property_name": "food_status"
+              },
+              "property_value": "fourth_pass"
+            }
+          ]
         },
         "configured_indicators": [
             {
@@ -63,6 +77,16 @@
                 },
                 "column_id": "recall_case_id",
                 "datatype": "string"
+            },
+            {
+                "type": "expression",
+                "column_id": "owner_id",
+                "datatype": "string",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "owner_id",
+                    "datatype": null
+                }
             },
             {
                 "type": "expression",
@@ -339,8 +363,8 @@
             },
             {
                 "type": "expression",
-                "column_id": "recalled_date",
-                "datatype": "string",
+                "column_id": "visit_date",
+                "datatype": "date",
                 "expression": {
                     "type": "nested",
                     "argument_expression": {
@@ -352,13 +376,13 @@
                     },
                     "value_expression": {
                         "type": "property_name",
-                        "property_name": "recalled_date"
+                        "property_name": "visit_date"
                     }
                 }
             },
             {
                 "type": "expression",
-                "column_id": "opened_date",
+                "column_id": "opened_on",
                 "datatype": "datetime",
                 "expression": {
                     "type": "nested",
@@ -371,7 +395,7 @@
                     },
                     "value_expression": {
                         "type": "property_name",
-                        "property_name": "opened_date"
+                        "property_name": "opened_on"
                     }
                 }
             },
@@ -471,7 +495,7 @@
                 "datatype": "string",
                 "expression": {
                     "type": "property_name",
-                    "property_name": "name"
+                    "property_name": "food_name"
                 }
             },
             {

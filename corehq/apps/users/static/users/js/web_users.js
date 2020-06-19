@@ -103,10 +103,10 @@ hqDefine("users/js/web_users",[
 
         $('.resend-invite').click(function (e) {
             $(this).addClass('disabled').prop('disabled', true);
-            var id = this.getAttribute('data-invite');
+            var uuid = this.getAttribute('data-uuid');
             var self = this;
             $.post(url("reinvite_web_user"), {
-                invite: id,
+                uuid: uuid,
             },
             function (data) {
                 $(self).parent().text(data.response);
@@ -115,16 +115,12 @@ hqDefine("users/js/web_users",[
             e.preventDefault();
         });
 
-        function handleDeletion($el, title, body, postUrl) {
-            var id = $el.data('id');
+        function handleDeletion($el, data, title, body, postUrl) {
             $('#confirm-delete').off('click');
             $('#confirm-delete').on('click', function () {
                 var $button = $(this);
                 $button.addClass('disabled').prop('disabled', true);
-                $.post(postUrl, {
-                    id: id,
-                },
-                function () {
+                $.post(postUrl, data, function () {
                     $el.closest("tr").remove();
                     $button.removeClass('disabled').prop('disabled', false);
                     $('#modal-deletion').modal('hide');
@@ -137,6 +133,7 @@ hqDefine("users/js/web_users",[
 
         $('.delete-request').on('click', function (e) {
             handleDeletion($(this),
+                {id: $(this).data('id')},
                 gettext("Delete request"),
                 gettext("Are you sure you want to delete this request?"),
                 url("delete_request")
@@ -145,6 +142,7 @@ hqDefine("users/js/web_users",[
         });
         $('.delete-invitation').on('click', function (e) {
             handleDeletion($(this),
+                {uuid: $(this).data('uuid')},
                 gettext("Delete invitation"),
                 gettext("Are you sure you want to delete this invitation?"),
                 url("delete_invitation")

@@ -6,5 +6,8 @@
 ##### FEATURE FLAG
 <!--- If this is specific to a feature flag, which one? -->
 
+##### RISK ASSESSMENT / QA PLAN
+<!-- Does this need QA before or after merge? Link QA ticket. -->
+
 ##### PRODUCT DESCRIPTION
 <!--- For non-invisible changes, describe user-facing effects. -->

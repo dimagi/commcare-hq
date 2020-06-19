@@ -58,12 +58,9 @@ class ManageReleasesByLocation(BaseProjectSettingsView):
     def page_context(self):
         app_names = {app.id: app.name for app in get_brief_apps_in_domain(self.domain, include_remote=True)}
         q = AppReleaseByLocation.objects.filter(domain=self.domain)
-        location_id_slug = self.request.GET.get('location_id')
-        location_id = None
-        if location_id_slug:
-            location_id = self.form.extract_location_id(location_id_slug)
-            if location_id:
-                q = q.filter(location_id=location_id)
+        location_id = self.request.GET.get('location_id')
+        if location_id:
+            q = q.filter(location_id=location_id)
         if self.request.GET.get('app_id'):
             q = q.filter(app_id=self.request.GET.get('app_id'))
         version = self.request.GET.get('version')
@@ -83,7 +80,7 @@ class ManageReleasesByLocation(BaseProjectSettingsView):
             'manage_releases_by_location_form': self.form,
             'app_releases_by_location': app_releases_by_location,
             'selected_build_details': ({'id': version, 'text': version} if version else None),
-            'selected_location_details': ({'id': location_id_slug,
+            'selected_location_details': ({'id': location_id,
                                            'text': self._location_path_display(location_id)}
                                           if location_id else None),
         }

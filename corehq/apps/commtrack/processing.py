@@ -14,7 +14,7 @@ from corehq.form_processor.casedb_base import AbstractCaseDbCache
 from corehq.form_processor.exceptions import MissingFormXml
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.ledgers import get_stock_actions, get_ledger_case_action_intents
-from corehq.util.datadog.utils import ledger_load_counter
+from corehq.util.metrics.load_counters import ledger_load_counter
 
 logger = logging.getLogger('commtrack.incoming')
 

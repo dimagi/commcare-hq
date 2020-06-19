@@ -23,7 +23,8 @@
   ],
   "server_environment": [
     "india",
-    "icds"
+    "icds",
+    "icds-staging"
   ],
   "report_id": "static-mpr_2bi_preg_delivery_death_list",
   "data_source_table": "static-person_cases_v3",
@@ -258,7 +259,7 @@
           "type": "translation",
           "mobile_or_web": "mobile",
           "translations": {
-            "yes": {
+            "1": {
               "mar": "होय",
               "tel": "అవును",
               "hin": "हाँ",
@@ -276,7 +277,7 @@
               "kan": "ಹೌದು",
               "urd": "جی ہاں"
             },
-            "no": {
+            "0": {
               "mar": "नाही",
               "tel": "కాదు",
               "hin": "नहीं",
@@ -325,6 +326,10 @@
         "column_id": "date_death",
         "field": "date_death",
         "type": "field",
+        "transform": {
+          "type": "date_format",
+          "format": "%-d/%-m/%Y"
+        },
         "display": {
           "mar": "मृत्युची  तारीख",
           "tel": "మరణించిన తేదీ",

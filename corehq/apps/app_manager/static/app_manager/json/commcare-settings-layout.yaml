@@ -63,10 +63,13 @@
     - properties.logo_android_home
     - properties.logo_android_login
     - properties.logo_android_demo
+    - properties.logo_web_apps
     - hq.auto_gps_capture
+    - properties.lazy-load-video-files
     - properties.cc-login-duration-seconds
     - properties.cc-log-entity-detail-enabled
     - properties.cc-inflation-target-density
+    - properties.cc-maps-default-layer  
     - hq.use_grid_menus
     - hq.grid_form_menus
     - hq.target_commcare_flavor

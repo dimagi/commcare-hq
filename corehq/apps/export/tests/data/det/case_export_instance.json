@@ -1,0 +1,1767 @@
+{
+    "_id": "004dbf281e58c4873579c787a67dfb28",
+    "_rev": "2-8ce39675666b54143896d82717901ad3",
+    "app_id": null,
+    "auto_rebuild_enabled": true,
+    "case_type": "event",
+    "description": "",
+    "doc_type": "CaseExportInstance",
+    "domain": "sabbatical",
+    "export_format": "csv",
+    "external_blobs": {},
+    "filters": {
+        "accessible_location_ids": [],
+        "can_access_all_locations": true,
+        "date_period": null,
+        "doc_type": "CaseExportInstanceFilters",
+        "locations": [],
+        "reporting_groups": [],
+        "sharing_groups": [],
+        "show_all_data": true,
+        "show_deactivated_data": null,
+        "show_project_data": null,
+        "user_types": [],
+        "users": []
+    },
+    "is_daily_saved_export": false,
+    "is_deidentified": false,
+    "last_accessed": null,
+    "last_build_duration": 5901,
+    "last_updated": null,
+    "legacy_saved_export_schema_id": null,
+    "name": "event: 2017-10-03",
+    "owner_id": null,
+    "schema_id": "004dbf281e58c4873579c787a65c7431",
+    "sharing": "edit_and_export",
+    "split_multiselects": false,
+    "tables": [
+        {
+            "columns": [
+                {
+                    "deid_transform": null,
+                    "doc_type": "RowNumberColumn",
+                    "help_text": null,
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "number"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "number",
+                    "repeat": 0,
+                    "selected": true,
+                    "tags": [
+                        "row"
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": "The ID of the case",
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "_id"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "caseid",
+                    "selected": true,
+                    "tags": [
+                        "info"
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": "The name of the case",
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "name"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "name",
+                    "selected": true,
+                    "tags": []
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": null,
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ScalarItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": "activity_name",
+                        "last_occurrences": {
+                            "1c92b29059c9f7b217e4751a73ad159c": 82
+                        },
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "activity_name"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "activity_name",
+                    "selected": true,
+                    "tags": []
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": null,
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ScalarItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": "event_date",
+                        "last_occurrences": {
+                            "1c92b29059c9f7b217e4751a73ad159c": 82
+                        },
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "event_date"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "event_date",
+                    "selected": true,
+                    "tags": []
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": null,
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ScalarItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": "event_duration",
+                        "last_occurrences": {
+                            "1c92b29059c9f7b217e4751a73ad159c": 82
+                        },
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "event_duration"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "event_duration",
+                    "selected": true,
+                    "tags": []
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": null,
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ScalarItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": "event_score",
+                        "last_occurrences": {
+                            "1c92b29059c9f7b217e4751a73ad159c": 82
+                        },
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "event_score"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "event_score",
+                    "selected": true,
+                    "tags": []
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": null,
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ScalarItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": "location",
+                        "last_occurrences": {
+                            "1c92b29059c9f7b217e4751a73ad159c": 82
+                        },
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "location"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "location",
+                    "selected": true,
+                    "tags": []
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "CaseIndexExportColumn",
+                    "help_text": "The ID of the associated activity case type",
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "CaseIndexItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": "parent.activity",
+                        "last_occurrences": {
+                            "1c92b29059c9f7b217e4751a73ad159c": 82
+                        },
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "indices"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "activity"
+                            }
+                        ],
+                        "tag": "case",
+                        "transform": null
+                    },
+                    "label": "indices.activity",
+                    "selected": true,
+                    "tags": [
+                        "case"
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": "True if the case is closed, otherwise False",
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "closed"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "closed",
+                    "selected": true,
+                    "tags": [
+                        "info"
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": "The username of the user who closed the case",
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "closed_by"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": "username_transform"
+                    },
+                    "label": "closed_by_username",
+                    "selected": true,
+                    "tags": [
+                        "info"
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": "The date and time at which the case was closed",
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": "datetime",
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "closed_on"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "closed_date",
+                    "selected": true,
+                    "tags": [
+                        "info"
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": "The username of the user who last modified this case",
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "user_id"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": "username_transform"
+                    },
+                    "label": "last_modified_by_user_username",
+                    "selected": true,
+                    "tags": [
+                        "info"
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": "The date and time at which the case was last modified",
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "modified_on"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "last_modified_date",
+                    "selected": true,
+                    "tags": [
+                        "info"
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": "The username of the user who opened the case",
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "opened_by"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": "username_transform"
+                    },
+                    "label": "opened_by_username",
+                    "selected": true,
+                    "tags": [
+                        "info"
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": "The date and time at which the case was opened",
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "opened_on"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "opened_date",
+                    "selected": true,
+                    "tags": [
+                        "info"
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": "The username of the user who owns the case",
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "owner_id"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": "owner_id_transform"
+                    },
+                    "label": "owner_name",
+                    "selected": true,
+                    "tags": [
+                        "info"
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": "The type of the case",
+                    "is_advanced": true,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "type"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "case_type",
+                    "selected": false,
+                    "tags": [
+                        "info"
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": "The ID of the user who closed the case",
+                    "is_advanced": true,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "closed_by"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "closed_by_user_id",
+                    "selected": false,
+                    "tags": [
+                        "info"
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": "The external ID for this case",
+                    "is_advanced": true,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "external_id"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "external_id",
+                    "selected": false,
+                    "tags": [
+                        "info"
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": "The ID of the user who last modified this case",
+                    "is_advanced": true,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "user_id"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "last_modified_by_user_id",
+                    "selected": false,
+                    "tags": [
+                        "info"
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": "The ID of the user who opened the case",
+                    "is_advanced": true,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "opened_by"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "opened_by_user_id",
+                    "selected": false,
+                    "tags": [
+                        "info"
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": "The ID of the user who owns the case",
+                    "is_advanced": true,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "owner_id"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "owner_id",
+                    "selected": false,
+                    "tags": [
+                        "info"
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": "The date and time at which the server received the form that last modified the case",
+                    "is_advanced": true,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "server_modified_on"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": "username_transform"
+                    },
+                    "label": "server_last_modified_date",
+                    "selected": false,
+                    "tags": [
+                        "info"
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": null,
+                    "is_advanced": true,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "doc_type"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "state",
+                    "selected": false,
+                    "tags": [
+                        "server"
+                    ]
+                }
+            ],
+            "doc_type": "TableConfiguration",
+            "is_deleted": false,
+            "is_user_defined": false,
+            "label": "Cases",
+            "path": [],
+            "selected": true
+        },
+        {
+            "columns": [
+                {
+                    "deid_transform": null,
+                    "doc_type": "RowNumberColumn",
+                    "help_text": null,
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "number"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "number",
+                    "repeat": 1,
+                    "selected": false,
+                    "tags": [
+                        "row"
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": null,
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": true,
+                                "name": "indices"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "referenced_id"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "parent_case_id",
+                    "selected": false,
+                    "tags": [
+                        null
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": null,
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": true,
+                                "name": "indices"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "referenced_type"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "parent_case_type",
+                    "selected": false,
+                    "tags": [
+                        null
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": null,
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": true,
+                                "name": "indices"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "relationship"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "relationship_type",
+                    "selected": false,
+                    "tags": [
+                        null
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": null,
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": true,
+                                "name": "indices"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "doc_type"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "state",
+                    "selected": false,
+                    "tags": [
+                        "server"
+                    ]
+                }
+            ],
+            "doc_type": "TableConfiguration",
+            "is_deleted": false,
+            "is_user_defined": false,
+            "label": "Parent Cases",
+            "path": [
+                {
+                    "doc_type": "PathNode",
+                    "is_repeat": true,
+                    "name": "indices"
+                }
+            ],
+            "selected": false
+        },
+        {
+            "columns": [
+                {
+                    "deid_transform": null,
+                    "doc_type": "RowNumberColumn",
+                    "help_text": null,
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "number"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "number",
+                    "repeat": 1,
+                    "selected": false,
+                    "tags": [
+                        "row"
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": null,
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": true,
+                                "name": "actions"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "action_type"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "action_type",
+                    "selected": false,
+                    "tags": [
+                        null
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": null,
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": true,
+                                "name": "actions"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "user_id"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "user_id",
+                    "selected": false,
+                    "tags": [
+                        null
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": null,
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": true,
+                                "name": "actions"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "date"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "date",
+                    "selected": false,
+                    "tags": [
+                        null
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": null,
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": true,
+                                "name": "actions"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "server_date"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "server_date",
+                    "selected": false,
+                    "tags": [
+                        null
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": null,
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": true,
+                                "name": "actions"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "xform_id"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "xform_id",
+                    "selected": false,
+                    "tags": [
+                        null
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": null,
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": true,
+                                "name": "actions"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "xform_xmlns"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "xform_xmlns",
+                    "selected": false,
+                    "tags": [
+                        null
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": null,
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": true,
+                                "name": "actions"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "xform_name"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "xform_name",
+                    "selected": false,
+                    "tags": [
+                        null
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": null,
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": true,
+                                "name": "actions"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "deprecated"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "deprecated",
+                    "selected": false,
+                    "tags": [
+                        null
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": null,
+                    "is_advanced": true,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": true,
+                                "name": "actions"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "sync_log_id"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "sync_log_id",
+                    "selected": false,
+                    "tags": [
+                        null
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": null,
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ScalarItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": "type",
+                        "last_occurrences": {
+                            "1c92b29059c9f7b217e4751a73ad159c": 82
+                        },
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": true,
+                                "name": "actions"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "updated_known_properties"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "type"
+                            }
+                        ],
+                        "tag": "update",
+                        "transform": null
+                    },
+                    "label": "type",
+                    "selected": false,
+                    "tags": [
+                        "update"
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": null,
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ScalarItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": "name",
+                        "last_occurrences": {
+                            "1c92b29059c9f7b217e4751a73ad159c": 82
+                        },
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": true,
+                                "name": "actions"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "updated_known_properties"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "name"
+                            }
+                        ],
+                        "tag": "update",
+                        "transform": null
+                    },
+                    "label": "name",
+                    "selected": false,
+                    "tags": [
+                        "update"
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": null,
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ScalarItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": "external_id",
+                        "last_occurrences": {
+                            "1c92b29059c9f7b217e4751a73ad159c": 82
+                        },
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": true,
+                                "name": "actions"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "updated_known_properties"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "external_id"
+                            }
+                        ],
+                        "tag": "update",
+                        "transform": null
+                    },
+                    "label": "external_id",
+                    "selected": false,
+                    "tags": [
+                        "update"
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": null,
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ScalarItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": "user_id",
+                        "last_occurrences": {
+                            "1c92b29059c9f7b217e4751a73ad159c": 82
+                        },
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": true,
+                                "name": "actions"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "updated_known_properties"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "user_id"
+                            }
+                        ],
+                        "tag": "update",
+                        "transform": null
+                    },
+                    "label": "user_id",
+                    "selected": false,
+                    "tags": [
+                        "update"
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": null,
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ScalarItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": "owner_id",
+                        "last_occurrences": {
+                            "1c92b29059c9f7b217e4751a73ad159c": 82
+                        },
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": true,
+                                "name": "actions"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "updated_known_properties"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "owner_id"
+                            }
+                        ],
+                        "tag": "update",
+                        "transform": null
+                    },
+                    "label": "owner_id",
+                    "selected": false,
+                    "tags": [
+                        "update"
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": null,
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ScalarItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": "opened_on",
+                        "last_occurrences": {
+                            "1c92b29059c9f7b217e4751a73ad159c": 82
+                        },
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": true,
+                                "name": "actions"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "updated_known_properties"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "opened_on"
+                            }
+                        ],
+                        "tag": "update",
+                        "transform": null
+                    },
+                    "label": "opened_on",
+                    "selected": false,
+                    "tags": [
+                        "update"
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": null,
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ScalarItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": "event_date",
+                        "last_occurrences": {
+                            "1c92b29059c9f7b217e4751a73ad159c": 82
+                        },
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": true,
+                                "name": "actions"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "updated_unknown_properties"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "event_date"
+                            }
+                        ],
+                        "tag": "update",
+                        "transform": null
+                    },
+                    "label": "event_date",
+                    "selected": false,
+                    "tags": [
+                        "update"
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": null,
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ScalarItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": "activity_name",
+                        "last_occurrences": {
+                            "1c92b29059c9f7b217e4751a73ad159c": 82
+                        },
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": true,
+                                "name": "actions"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "updated_unknown_properties"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "activity_name"
+                            }
+                        ],
+                        "tag": "update",
+                        "transform": null
+                    },
+                    "label": "activity_name",
+                    "selected": false,
+                    "tags": [
+                        "update"
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": null,
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ScalarItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": "event_score",
+                        "last_occurrences": {
+                            "1c92b29059c9f7b217e4751a73ad159c": 82
+                        },
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": true,
+                                "name": "actions"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "updated_unknown_properties"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "event_score"
+                            }
+                        ],
+                        "tag": "update",
+                        "transform": null
+                    },
+                    "label": "event_score",
+                    "selected": false,
+                    "tags": [
+                        "update"
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": null,
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ScalarItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": "location",
+                        "last_occurrences": {
+                            "1c92b29059c9f7b217e4751a73ad159c": 82
+                        },
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": true,
+                                "name": "actions"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "updated_unknown_properties"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "location"
+                            }
+                        ],
+                        "tag": "update",
+                        "transform": null
+                    },
+                    "label": "location",
+                    "selected": false,
+                    "tags": [
+                        "update"
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
+                    "help_text": null,
+                    "is_advanced": false,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": null,
+                        "doc_type": "ScalarItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": "event_duration",
+                        "last_occurrences": {
+                            "1c92b29059c9f7b217e4751a73ad159c": 82
+                        },
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": true,
+                                "name": "actions"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "updated_unknown_properties"
+                            },
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "event_duration"
+                            }
+                        ],
+                        "tag": "update",
+                        "transform": null
+                    },
+                    "label": "event_duration",
+                    "selected": false,
+                    "tags": [
+                        "update"
+                    ]
+                }
+            ],
+            "doc_type": "TableConfiguration",
+            "is_deleted": false,
+            "is_user_defined": false,
+            "label": "Case History",
+            "path": [
+                {
+                    "doc_type": "PathNode",
+                    "is_repeat": true,
+                    "name": "actions"
+                }
+            ],
+            "selected": false
+        }
+    ],
+    "transform_dates": true,
+    "type": "case"
+}

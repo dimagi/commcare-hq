@@ -30,15 +30,11 @@ module.exports = {
         "d3": false,
     },
 
-    "plugins": [
-        "eslint-dimagi",
-    ],
-
     // http://eslint.org/docs/rules/
     // http://eslint.org/docs/user-guide/configuring#configuring-rules
     "rules": {
         // First option can be off, warn, or error
-        "brace-style": ["error", "1tbs"],
+        "brace-style": ["error", "1tbs", { "allowSingleLine": true }],
         "camelcase": ["error", {"properties": "never"}],
         "comma-dangle": ["warn", "always-multiline"],
         "curly": ["error"],
@@ -61,7 +57,5 @@ module.exports = {
         "space-before-blocks": ["error"],
         "space-in-parens": ["error", "never"],
         "space-infix-ops": ["error"],   // match flake8 E225
-
-        "eslint-dimagi/no-unblessed-new": ["error", ["Date", "Error", "FormData", "Option", "RegExp", "Clipboard", "MutationObserver"]],
     }
 };

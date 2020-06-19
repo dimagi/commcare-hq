@@ -11,7 +11,7 @@ from django.db.utils import DEFAULT_DB_ALIAS, DatabaseError
 from django.db.utils import InterfaceError as DjangoInterfaceError
 
 from corehq.sql_db.config import plproxy_config, plproxy_standby_config
-from corehq.util.datadog.utils import load_counter_for_model
+from corehq.util.metrics.load_counters import load_counter_for_model
 from corehq.util.quickcache import quickcache
 from memoized import memoized
 from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
@@ -89,7 +89,7 @@ def paginate_query(db_name, model_class, q_expression, annotate=None, query_size
     :return: A generator with the results
     """
 
-    track_load = load_counter_for_model(model_class)(load_source, None, extra_tags=['db:{}'.format(db_name)])
+    track_load = load_counter_for_model(model_class)(load_source, None)
     sort_col = 'pk'
 
     return_values = None

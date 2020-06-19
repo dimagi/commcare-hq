@@ -4,3 +4,7 @@ class DomainDumpError(Exception):
 
 class DataExistsException(Exception):
     pass
+
+
+class DataLoadException(Exception):
+    pass

@@ -13,10 +13,8 @@ from django.db.models import F
 from django.db.transaction import atomic
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
 
-from couchdbkit import PreconditionFailed
 from memoized import memoized
 
 from couchforms.analytics import domain_has_submission_in_last_30_days
@@ -44,6 +42,7 @@ from dimagi.utils.logging import log_signal_errors
 from dimagi.utils.next_available_name import next_available_name
 from dimagi.utils.web import get_url_base
 
+from corehq import toggles
 from corehq.apps.app_manager.const import (
     AMPLIFIES_NO,
     AMPLIFIES_NOT_SET,
@@ -391,6 +390,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     # If this is None, then the default is applied. See get_daily_outbound_sms_limit()
     custom_daily_outbound_sms_limit = IntegerProperty()
 
+    # Twilio Whatsapp-enabled phone number
+    twilio_whatsapp_phone_number = StringProperty()
+
     # Allowed number of case updates or closes from automatic update rules in the daily rule run.
     # If this value is None, the value in settings.MAX_RULE_UPDATES_IN_ONE_RUN is used.
     auto_case_update_limit = IntegerProperty()
@@ -433,7 +435,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     last_modified = DateTimeProperty(default=datetime(2015, 1, 1))
 
-    # when turned on, use SECURE_TIMEOUT for sessions of users who are members of this domain
+    # when turned on, use settings.SECURE_TIMEOUT for sessions of users who are members of this domain
     secure_sessions = BooleanProperty(default=False)
 
     two_factor_auth = BooleanProperty(default=False)
@@ -735,12 +737,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
             return "Snapshot of %s" % self.copied_from.display_name()
         return self.hr_name or self.name
 
-    def long_display_name(self):
-        if self.is_snapshot:
-            return format_html("Snapshot of {}", self.copied_from.display_name())
-        return self.hr_name or self.name
-
-    __str__ = long_display_name
+    __str__ = display_name
 
     def get_license_display(self):
         return LICENSES.get(self.license)

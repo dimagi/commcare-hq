@@ -13,7 +13,7 @@ from corehq.apps.receiverwrapper.rate_limiter import rate_limit_submission
 from corehq.util.timer import TimingContext
 from couchexport.export import SCALAR_NEVER_WAS
 from dimagi.utils.logging import notify_exception
-from soil.progress import set_task_progress
+from soil.progress import TaskProgressManager
 
 from corehq.apps.case_importer.exceptions import CaseRowError
 from corehq.apps.export.tasks import add_inferred_export_properties
@@ -24,7 +24,7 @@ from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.toggles import BULK_UPLOAD_DATE_OPENED
-from corehq.util.datadog.utils import case_load_counter, bucket_value
+from corehq.util.metrics.load_counters import case_load_counter
 from corehq.util.soft_assert import soft_assert
 from corehq.util.metrics import metrics_counter, metrics_histogram
 
@@ -56,18 +56,19 @@ class _Importer(object):
         self._unsubmitted_caseblocks = []
 
     def do_import(self, spreadsheet):
-        for row_num, row in enumerate(spreadsheet.iter_row_dicts(), start=1):
-            set_task_progress(self.task, row_num - 1, spreadsheet.max_row)
-            if row_num == 1:
-                continue  # skip first row (header row)
+        with TaskProgressManager(self.task, src="case_importer") as progress_manager:
+            for row_num, row in enumerate(spreadsheet.iter_row_dicts(), start=1):
+                progress_manager.set_progress(row_num - 1, spreadsheet.max_row)
+                if row_num == 1:
+                    continue  # skip first row (header row)
 
-            try:
-                self.import_row(row_num, row)
-            except exceptions.CaseRowError as error:
-                self.results.add_error(row_num, error)
+                try:
+                    self.import_row(row_num, row)
+                except exceptions.CaseRowError as error:
+                    self.results.add_error(row_num, error)
 
-        self.commit_caseblocks()
-        return self.results.to_json()
+            self.commit_caseblocks()
+            return self.results.to_json()
 
     def import_row(self, row_num, raw_row):
         search_id = _parse_search_id(self.config, raw_row)
@@ -105,7 +106,7 @@ class _Importer(object):
 
     @cached_property
     def user(self):
-        return CouchUser.get_by_user_id(self.config.couch_user_id, self.domain)
+        return CouchUser.get_by_user_id(self.config.couch_user_id)
 
     def add_caseblock(self, caseblock):
         self._unsubmitted_caseblocks.append(caseblock)

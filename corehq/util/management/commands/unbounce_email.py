@@ -14,6 +14,11 @@ class Command(BaseCommand):
         parser.add_argument('bounced_email')
 
     def handle(self, bounced_email, **options):
+        bounced_emails = bounced_email.split(',')
+        for email in bounced_emails:
+            self.unbounce_email(email)
+
+    def unbounce_email(self, bounced_email):
         is_bounced = BouncedEmail.objects.filter(email=bounced_email).exists()
 
         if not is_bounced:

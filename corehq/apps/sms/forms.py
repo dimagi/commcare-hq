@@ -20,6 +20,7 @@ from crispy_forms.layout import Div
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.django.fields import TrimmedCharField
 
+from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_built_app_ids
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import DayTimeWindow
@@ -29,16 +30,15 @@ from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.hqwebapp.widgets import SelectToggle
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reminders.forms import validate_time
-from corehq.apps.sms.models import (
-    SQLMobileBackend,
-)
+from corehq.apps.sms.models import SQLMobileBackend
 from corehq.apps.sms.util import (
     ALLOWED_SURVEY_DATE_FORMATS,
     get_sms_backend_classes,
+    is_superuser_or_contractor,
     strip_plus,
     validate_phone_number,
 )
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, CouchUser
 
 ENABLED = "ENABLED"
 DISABLED = "DISABLED"
@@ -137,9 +137,12 @@ class LoadBalancingBackendFormMixin(Form):
                 "number."))
 
         for phone_number in result:
-            validate_phone_number(phone_number)
+            self.validate_phone_number(phone_number)
 
         return result
+
+    def validate_phone_number(self, phone_number: str) -> None:
+        validate_phone_number(phone_number)
 
 
 class SettingsForm(Form):
@@ -266,6 +269,9 @@ class SettingsForm(Form):
     language_fallback = ChoiceField(
         choices=LANGUAGE_FALLBACK_CHOICES,
         label=ugettext_lazy("Backup behavior for missing translations"),
+    )
+    twilio_whatsapp_phone_number = CharField(
+        required=False,
     )
 
     # Internal settings
@@ -397,6 +403,16 @@ class SettingsForm(Form):
                 """),
             ),
         ]
+
+        if toggles.WHATSAPP_MESSAGING.enabled(self.domain):
+            fields.append(hqcrispy.FieldWithHelpBubble(
+                'twilio_whatsapp_phone_number',
+                help_bubble_text=_("""
+                    Whatsapp-enabled phone number for use with Twilio.
+                    This should be formatted as a full-length, numeric-only
+                    phone number, e.g., 16173481000.
+                """),
+            ))
 
         return crispy.Fieldset(
             _("Registration Settings"),
@@ -856,7 +872,8 @@ class BackendForm(Form):
     )
     authorized_domains = CharField(
         required=False,
-        label=ugettext_noop("List of authorized domains")
+        label=ugettext_noop("List of authorized domains"),
+        help_text=ugettext_lazy("A comma-separated list of domain names")
     )
     reply_to_phone_number = CharField(
         required=False,
@@ -1246,14 +1263,14 @@ class InitiateAddSMSBackendForm(Form):
         label="Gateway Type",
     )
 
-    def __init__(self, is_superuser=False, *args, **kwargs):
+    def __init__(self, user: CouchUser, *args, **kwargs):
         super(InitiateAddSMSBackendForm, self).__init__(*args, **kwargs)
 
         from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
         backend_classes = get_sms_backend_classes()
         backend_choices = []
         for api_id, klass in backend_classes.items():
-            if is_superuser or api_id == SQLTelerivetBackend.get_api_id():
+            if is_superuser_or_contractor(user) or api_id == SQLTelerivetBackend.get_api_id():
                 friendly_name = klass.get_generic_name()
                 backend_choices.append((api_id, friendly_name))
         backend_choices = sorted(backend_choices, key=lambda backend: backend[1])

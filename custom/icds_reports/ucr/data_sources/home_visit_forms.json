@@ -1,29 +1,32 @@
 {
   "domains": [
-    "icds-dashboard-qa",
-    "sankalp_cas",
-    "zohaib-sandbox",
     "akshita-sandbox",
-    "sunaina-sandbox",
-    "laurence-project-1",
-    "jessica-icds-cas",
-    "marissa-test",
-    "derek-icds-sandbox",
-    "priyanka-app",
-    "shrena-dev",
     "aparatest",
-    "reach-sandbox",
-    "reach-dashboard-qa",
-    "reach-test",
+    "cas-lab",
+    "ccqa",
+    "ccqa-downstream",
+    "derek-icds-sandbox",
+    "icds-cas",
+    "icds-cas-sandbox",
+    "icds-dashboard-qa",
     "icds-sql",
     "icds-test",
-    "icds-cas",
-    "cas-lab",
-    "icds-cas-sandbox"
+    "jessica-icds-cas",
+    "laurence-project-1",
+    "marissa-test",
+    "priyanka-app",
+    "reach-dashboard-qa",
+    "reach-sandbox",
+    "reach-test",
+    "sankalp_cas",
+    "shrena-dev",
+    "sunaina-sandbox",
+    "zohaib-sandbox"
   ],
   "server_environment": [
     "india",
-    "icds"
+    "icds",
+    "icds-staging"
   ],
   "config": {
     "table_id": "static-home_visit_forms",
@@ -114,6 +117,23 @@
         }
       },
       {
+        "display_name": "Next Due",
+        "transform": {},
+        "datatype": "date",
+        "type": "expression",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "next_due",
+        "expression": {
+          "datatype": "date",
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "next_due"
+          ]
+        }
+      },
+      {
         "filter": {
           "type": "and",
           "filters": [
@@ -128,10 +148,11 @@
                   "unscheduled_visit"
                 ]
               },
-              "property_value": "0"
+              "property_value": "0",
+              "comment": null
             },
             {
-              "operator": "lte",
+              "operator": "lt",
               "type": "boolean_expression",
               "expression": {
                 "datatype": null,
@@ -141,13 +162,41 @@
                   "days_visit_late"
                 ]
               },
-              "property_value": "3"
+              "property_value": "8",
+              "comment": null
+            },
+            {
+              "operator": "lt",
+              "type": "boolean_expression",
+              "expression": {
+                "type": "diff_days",
+                "from_date_expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "form",
+                    "next_visit_date"
+                  ],
+                  "datatype": null
+                },
+                "to_date_expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "form",
+                    "meta",
+                    "timeEnd"
+                  ],
+                  "datatype": null
+                }
+              },
+              "property_value": 8,
+              "comment": null
             }
           ]
         },
         "display_name": null,
         "type": "boolean",
-        "column_id": "visit_on_time"
+        "column_id": "visit_on_time",
+        "comment": null
       },
       {
         "type": "count",

@@ -6,7 +6,13 @@ from corehq.apps.locations.util import location_hierarchy_config
 from corehq.toggles import ICDS_DASHBOARD_SHOW_MOBILE_APK, NAMESPACE_USER
 from custom.icds_reports.const import NavigationSections
 from custom.icds_reports.const import SDDSections
-from custom.icds_reports.utils import icds_pre_release_features
+from custom.icds_reports.utils import (icds_pre_release_features,
+                                       get_latest_issue_tracker_build_id)
+from corehq.apps.cloudcare.utils import webapps_module
+from corehq.apps.users.models import UserRole
+
+
+from . import const
 
 import attr
 
@@ -40,12 +46,35 @@ def get_dashboard_template_context(domain, couch_user):
     if couch_user.is_web_user():
         context['is_web_user'] = True
 
+    beta = icds_pre_release_features(couch_user)
+
     context['nav_metadata'] = _get_nav_metadatada()
     context['sdd_metadata'] = _get_sdd_metadata()
-    context['nav_menu_items'] = _get_nav_menu_items()
+    context['nav_menu_items'] = _get_nav_menu_items(beta)
     context['fact_sheet_sections'] = _get_factsheet_sections()
     context['MAPBOX_ACCESS_TOKEN'] = settings.MAPBOX_ACCESS_TOKEN
+    context['support_email'] = settings.SUPPORT_EMAIL
+
+    if couch_user.is_commcare_user() and _has_helpdesk_role(domain, couch_user):
+        build_id = get_latest_issue_tracker_build_id()
+        context['report_an_issue_url'] = webapps_module(
+            domain=domain,
+            app_id=build_id,
+            module_id=0,
+        )
+
     return context
+
+
+def _has_helpdesk_role(domain, couch_user):
+    user_roles = UserRole.by_domain(domain)
+    helpdesk_roles_id = [
+        role.get_id
+        for role in user_roles
+        if role.name in const.HELPDESK_ROLES
+    ]
+    domain_membership = couch_user.get_domain_membership(domain)
+    return domain_membership.role_id in helpdesk_roles_id
 
 
 def _get_nav_metadatada():
@@ -154,7 +183,11 @@ def _get_factsheet_sections():
     ]))
 
 
-def _get_nav_menu_items():
+def _get_nav_menu_items(beta):
+    icds_reach_sub_pages = [NavMenuSubPages(_('AWCs Daily Status'), 'icds_cas_reach/awc_daily_status'),
+                            NavMenuSubPages(_('AWCs Launched'), 'icds_cas_reach/awcs_covered')]
+    if beta:
+        icds_reach_sub_pages.append(NavMenuSubPages(_('LSs Launched'), 'icds_cas_reach/ls_launched'))
     return attr.asdict(NavMenuSectionsList([
         NavMenuSection(_('Maternal and Child Nutrition'),
                        [NavMenuSubPages(_('Prevalence of Underweight (Weight-for-Age)'),
@@ -178,8 +211,7 @@ def _get_nav_menu_items():
                        'healthCollapsed', 'fa-child', 'mother.png'
                        ),
         NavMenuSection(_('ICDS-CAS Reach'),
-                       [NavMenuSubPages(_('AWCs Daily Status'), 'icds_cas_reach/awc_daily_status'),
-                        NavMenuSubPages(_('AWCs Launched'), 'icds_cas_reach/awcs_covered')],
+                       icds_reach_sub_pages,
                        'icdsCasReach', 'fa-bar-chart', 'stats-sidebar.png'
                        ),
         NavMenuSection(_('Demographics'),

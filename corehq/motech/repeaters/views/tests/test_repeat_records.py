@@ -23,7 +23,7 @@ class TestUtilities(TestCase):
             [],
             ['id_1', 'id_2'],
             ['id_1', 'id_2'],
-            ['', 'id_1', 'id_2'],
+            ['id_1', 'id_2'],
         ]
 
         for r in range(5):

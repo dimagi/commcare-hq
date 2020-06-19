@@ -13,7 +13,8 @@ function MonthModalController($location, $uibModalInstance, dateHelperService) {
 
     var startYear = dateHelperService.getStartingYear(isSDD);
 
-
+    var currentDate = new Date();
+    var maxYear = dateHelperService.checkAndGetValidDate(currentDate).getFullYear();
 
     window.angular.forEach(moment.months(), function (key, value) {
         vm.monthsCopy.push({
@@ -23,7 +24,7 @@ function MonthModalController($location, $uibModalInstance, dateHelperService) {
     });
 
 
-    for (var year = startYear; year <= new Date().getFullYear(); year++) {
+    for (var year = startYear; year <= maxYear; year++) {
         vm.years.push({
             name: year,
             id: year,
@@ -38,7 +39,7 @@ function MonthModalController($location, $uibModalInstance, dateHelperService) {
 
     if (isSDD && (fullselectedDate < reportStartDates['sdd'])) {
         vm.showMessage = true;
-        vm.selectedYear = new Date().getFullYear();
+        vm.selectedYear = maxYear;
     }
 
 
@@ -82,10 +83,12 @@ function MonthFilterController($scope, $location, $uibModal, storageService, dat
     var isSDD =  $location.path().indexOf('service_delivery_dashboard') !== -1;
     vm.startYear = dateHelperService.getStartingYear(isSDD);
     vm.startMonth = dateHelperService.getStartingMonth(isSDD);
+    vm.maxMonth = dateHelperService.checkAndGetValidDate(new Date()).getMonth() + 1;
+    vm.maxYear = dateHelperService.checkAndGetValidDate(new Date()).getFullYear();
 
     vm.selectedDate = dateHelperService.getSelectedDate();
     if (isSDD && vm.selectedDate < dateHelperService.getReportStartDates()['sdd']) {
-        vm.selectedDate = new Date();
+        vm.selectedDate = dateHelperService.checkAndGetValidDate(new Date());
     }
     vm.currentYear = new Date().getFullYear();
     vm.getPlaceholder = function () {
@@ -129,15 +132,12 @@ function MonthFilterController($scope, $location, $uibModal, storageService, dat
 
     $scope.$on('reset_filter_data', function () {
         $scope.$broadcast('reset_date',{});
-        vm.selectedDate = new Date();
+        vm.selectedDate = dateHelperService.checkAndGetValidDate(new Date());
     });
     // end mobile only helpers
 
     vm.init = function () {
-        var selectedMonth = parseInt($location.search()['month']) || new Date().getMonth() + 1;
-        var selectedYear =  parseInt($location.search()['year']) || new Date().getFullYear();
-
-        var selectedDate = new Date(selectedYear, selectedMonth - 1);
+        var selectedDate = dateHelperService.getValidSelectedDate();
 
         if ($location.path().indexOf('service_delivery_dashboard') !== -1 &&
             selectedDate < new Date(2019, 1) && !isMobile) {

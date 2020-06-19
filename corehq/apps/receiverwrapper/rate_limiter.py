@@ -9,9 +9,8 @@ from corehq.project_limits.rate_limiter import (
 from corehq.project_limits.shortcuts import get_standard_ratio_rate_definition
 from corehq.toggles import DO_NOT_RATE_LIMIT_SUBMISSIONS, \
     TEST_FORM_SUBMISSION_RATE_LIMIT_RESPONSE
-from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
-from corehq.util.datadog.utils import bucket_value
 from corehq.util.decorators import run_only_when, silence_and_report_error
+from corehq.util.metrics import metrics_counter, metrics_gauge, bucket_value
 from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
 
@@ -112,20 +111,20 @@ def _delay_and_report_rate_limit_submission(domain, max_wait, datadog_metric):
         duration_tag = 'quick_reject'
     else:
         duration_tag = 'delayed_reject'
-    datadog_counter(datadog_metric, tags=[
-        f'domain:{domain}',
-        f'duration:{duration_tag}',
-        f'throttle_method:{"delay" if acquired else "reject"}'
-    ])
+    metrics_counter(datadog_metric, tags={
+        'domain': domain,
+        'duration': duration_tag,
+        'throttle_method': "delay" if acquired else "reject"
+    })
     return acquired
 
 
 @quickcache([], timeout=60)  # Only report up to once a minute
 def _report_current_global_submission_thresholds():
     for window, value, threshold in global_submission_rate_limiter.iter_rates():
-        datadog_gauge('commcare.xform_submissions.global_threshold', threshold, tags=[
-            f'window:{window}'
-        ])
-        datadog_gauge('commcare.xform_submissions.global_usage', value, tags=[
-            f'window:{window}'
-        ])
+        metrics_gauge('commcare.xform_submissions.global_threshold', threshold, tags={
+            'window': window
+        })
+        metrics_gauge('commcare.xform_submissions.global_usage', value, tags={
+            'window': window
+        })

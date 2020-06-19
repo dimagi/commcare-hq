@@ -192,7 +192,7 @@ def get_app_view_context(request, app):
             if disable_if_true and getattr(app, setting['id']):
                 continue
             if is_linked_app(app):
-                if setting['id'] in app.SUPPORTED_SETTINGS:
+                if setting['id'] in app.supported_settings:
                     if setting['id'] not in app.linked_app_attrs:
                         setting['is_inherited'] = True
             new_settings.append(setting)
@@ -585,7 +585,9 @@ def app_exchange(request, domain):
     if request.method == "POST":
         clear_app_cache(request, domain)
         from_app_id = request.POST.get('from_app_id')
-        app_copy = import_app_util(from_app_id, domain)
+        app_copy = import_app_util(from_app_id, domain, {
+            'created_from_template': from_app_id,
+        })
         return back_to_main(request, domain, app_id=app_copy._id)
 
     return render(request, template, context)
@@ -852,7 +854,7 @@ def edit_app_attr(request, domain, app_id, attr):
                 value = transformation(value)
             if can_set_attr(attribute):
                 setattr(app, attribute, value)
-            if is_linked_app(app) and attribute in app.SUPPORTED_SETTINGS:
+            if is_linked_app(app) and attribute in app.supported_settings:
                 app.linked_app_attrs.update({
                     attribute: value,
                 })

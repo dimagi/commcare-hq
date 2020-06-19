@@ -12,10 +12,8 @@ from django.views.decorators.http import require_POST
 from memoized import memoized
 from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 
+from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from dimagi.utils.post import simple_post
-
-from corehq import toggles, privileges
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.settings import (
     BaseAdminProjectSettingsView,
@@ -26,21 +24,24 @@ from corehq.apps.users.decorators import (
     require_permission,
 )
 from corehq.apps.users.models import Permissions
-from corehq.motech.const import ALGO_AES, PASSWORD_PLACEHOLDER
+from corehq.motech.auth import HTTPBearerAuth
+from corehq.motech.const import (
+    ALGO_AES,
+    BASIC_AUTH,
+    BEARER_AUTH,
+    DIGEST_AUTH,
+    PASSWORD_PLACEHOLDER,
+)
 from corehq.motech.repeaters.forms import (
     CaseRepeaterForm,
     FormRepeaterForm,
     GenericRepeaterForm,
     OpenmrsRepeaterForm,
 )
-from corehq.motech.repeaters.models import (
-    BASIC_AUTH,
-    DIGEST_AUTH,
-    Repeater,
-    RepeatRecord,
-)
+from corehq.motech.repeaters.models import Repeater, RepeatRecord
 from corehq.motech.repeaters.repeater_generators import RegisterGenerator
 from corehq.motech.repeaters.utils import get_all_repeater_types
+from corehq.motech.requests import simple_post
 from corehq.motech.utils import b64_aes_encrypt
 
 RepeaterTypeInfo = namedtuple('RepeaterTypeInfo', 'class_name friendly_name has_config instances')
@@ -239,6 +240,13 @@ class AddDhis2RepeaterView(AddRepeaterView):
         return reverse(self.urlname, args=[self.domain])
 
 
+class AddDhis2EntityRepeaterView(AddDhis2RepeaterView):
+    urlname = 'new_dhis2_entity_repeater$'
+    repeater_form_class = GenericRepeaterForm
+    page_title = ugettext_lazy("Forward Cases to DHIS2 as Tracked Entities")
+    page_name = ugettext_lazy("Forward Cases to DHIS2 as Tracked Entities")
+
+
 class EditRepeaterView(BaseRepeaterView):
     urlname = 'edit_repeater'
     template_name = 'repeaters/add_form_repeater.html'
@@ -323,6 +331,11 @@ class EditDhis2RepeaterView(EditRepeaterView, AddDhis2RepeaterView):
     page_title = ugettext_lazy("Edit DHIS2 Anonymous Event Repeater")
 
 
+class EditDhis2EntityRepeaterView(EditRepeaterView, AddDhis2EntityRepeaterView):
+    urlname = 'edit_dhis2_entity_repeater'
+    page_title = ugettext_lazy("Edit DHIS2 Tracked Entity Repeater")
+
+
 @require_POST
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
@@ -361,7 +374,6 @@ def test_repeater(request, domain):
     repeater_type = request.POST['repeater_type']
     format = request.POST.get('format', None)
     repeater_class = get_all_repeater_types()[repeater_type]
-    auth_type = request.POST.get('auth_type')
 
     form = GenericRepeaterForm(
         {"url": url, "format": format},
@@ -372,22 +384,22 @@ def test_repeater(request, domain):
         url = form.cleaned_data["url"]
         format = format or RegisterGenerator.default_format_by_repeater(repeater_class)
         generator_class = RegisterGenerator.generator_class_by_repeater_format(repeater_class, format)
-        generator = generator_class(repeater_class())
+        repeater = repeater_class(
+            username=request.POST.get('username'),
+            password=request.POST.get('password'),
+            auth_type=request.POST.get('auth_type'),
+        )
+        generator = generator_class(repeater)
         fake_post = generator.get_test_payload(domain)
         headers = generator.get_headers()
-
-        username = request.POST.get('username')
-        password = request.POST.get('password')
         verify = not request.POST.get('skip_cert_verify') == 'true'
-        if auth_type == BASIC_AUTH:
-            auth = HTTPBasicAuth(username, password)
-        elif auth_type == DIGEST_AUTH:
-            auth = HTTPDigestAuth(username, password)
-        else:
-            auth = None
-
         try:
-            resp = simple_post(fake_post, url, headers=headers, auth=auth, verify=verify)
+            resp = simple_post(
+                domain, url, fake_post,
+                headers=headers,
+                auth_manager=repeater.get_auth_manager(),
+                verify=verify,
+            )
             if 200 <= resp.status_code < 300:
                 return HttpResponse(json.dumps({"success": True,
                                                 "response": resp.text,

@@ -16,6 +16,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.motech.const import BASIC_AUTH
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.openmrs.const import IMPORT_FREQUENCY_MONTHLY
 from corehq.motech.openmrs.models import OpenmrsImporter
@@ -25,7 +26,6 @@ from corehq.motech.openmrs.tasks import (
     import_patients_with_importer,
     poll_openmrs_atom_feeds,
 )
-from corehq.motech.repeaters.models import BASIC_AUTH
 
 TEST_DOMAIN = 'test-domain'
 
@@ -245,8 +245,8 @@ class OwnerTests(LocationHierarchyTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.web_user = WebUser.create(TEST_DOMAIN, 'user1', '***')
-        cls.mobile_worker = CommCareUser.create(TEST_DOMAIN, 'chw1', '***')
+        cls.web_user = WebUser.create(TEST_DOMAIN, 'user1', '***', None, None)
+        cls.mobile_worker = CommCareUser.create(TEST_DOMAIN, 'chw1', '***', None, None)
         cls.group = Group.wrap({
             'domain': TEST_DOMAIN,
             'name': 'group',
@@ -260,6 +260,19 @@ class OwnerTests(LocationHierarchyTestCase):
         })
         cls.bad_group.save()
 
+    def setUp(self):
+        self.send_mail_patcher = patch('corehq.motech.requests.send_mail_async')
+        self.send_mail_mock = self.send_mail_patcher.start()
+        self.import_patcher = patch('corehq.motech.openmrs.tasks.import_patients_of_owner')
+        self.import_mock = self.import_patcher.start()
+        self.decrypt_patcher = patch('corehq.motech.openmrs.tasks.b64_aes_decrypt')
+        self.decrypt_patcher.start()
+
+    def tearDown(self):
+        self.decrypt_patcher.stop()
+        self.import_patcher.stop()
+        self.send_mail_patcher.stop()
+
     @classmethod
     def tearDownClass(cls):
         cls.bad_group.delete()
@@ -272,64 +285,53 @@ class OwnerTests(LocationHierarchyTestCase):
         """
         Setting owner_id to a location should not throw an error
         """
-        with get_importer() as importer, \
-                patch('corehq.motech.openmrs.tasks.import_patients_of_owner') as import_mock, \
-                patch('corehq.motech.openmrs.tasks.b64_aes_decrypt'):
+        with get_importer() as importer:
             importer.owner_id = self.locations['Gardens'].location_id
             import_patients_with_importer(importer.to_json())
-            import_mock.assert_called()
+            self.import_mock.assert_called()
 
     def test_commcare_user_owner(self):
         """
         Setting owner_id to a mobile worker should not throw an error
         """
-        with get_importer() as importer, \
-                patch('corehq.motech.openmrs.tasks.import_patients_of_owner') as import_mock, \
-                patch('corehq.motech.openmrs.tasks.b64_aes_decrypt'):
+        with get_importer() as importer:
             importer.owner_id = self.mobile_worker.user_id
             import_patients_with_importer(importer.to_json())
-            import_mock.assert_called()
+            self.import_mock.assert_called()
 
     def test_web_user_owner(self):
         """
         Setting owner_id to a web user should not throw an error
         """
-        with get_importer() as importer, \
-                patch('corehq.motech.openmrs.tasks.import_patients_of_owner') as import_mock, \
-                patch('corehq.motech.openmrs.tasks.b64_aes_decrypt'):
+        with get_importer() as importer:
             importer.owner_id = self.web_user.user_id
             import_patients_with_importer(importer.to_json())
-            import_mock.assert_called()
+            self.import_mock.assert_called()
 
     def test_group_owner(self):
         """
         Setting owner_id to a case-sharing group should not throw an error
         """
-        with get_importer() as importer, \
-                patch('corehq.motech.openmrs.tasks.import_patients_of_owner') as import_mock, \
-                patch('corehq.motech.openmrs.tasks.b64_aes_decrypt'):
+        with get_importer() as importer:
             importer.owner_id = self.group._id
             import_patients_with_importer(importer.to_json())
-            import_mock.assert_called()
+            self.import_mock.assert_called()
 
     def test_bad_owner(self):
         """
         Notify on invalid owner_id
         """
-        with get_importer() as importer, \
-                patch('corehq.motech.requests.send_mail_async') as send_mail_mock, \
-                patch('corehq.motech.openmrs.tasks.b64_aes_decrypt'):
+        with get_importer() as importer:
             self.assertEqual(importer.owner_id, '123456')
             import_patients_with_importer(importer.to_json())
-            send_mail_mock.delay.assert_called_with(
+            self.send_mail_mock.delay.assert_called_with(
                 'MOTECH Error',
 
                 'Error importing patients for project space "test-domain" from '
                 'OpenMRS Importer "<OpenmrsImporter None admin@http://www.example.com/openmrs>": '
                 'owner_id "123456" is invalid.\r\n'
                 'Project space: test-domain\r\n'
-                'Remote API base URL: http://www.example.com/openmrs\r\n'
-                'Remote API username: admin',
+                'Remote API base URL: http://www.example.com/openmrs',
 
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=['admin@example.com'],
@@ -339,20 +341,17 @@ class OwnerTests(LocationHierarchyTestCase):
         """
         Notify if owner_id is set to a NON-case-sharing group
         """
-        with get_importer() as importer, \
-                patch('corehq.motech.requests.send_mail_async') as send_mail_mock, \
-                patch('corehq.motech.openmrs.tasks.b64_aes_decrypt'):
+        with get_importer() as importer:
             importer.owner_id = self.bad_group._id
             import_patients_with_importer(importer.to_json())
-            send_mail_mock.delay.assert_called_with(
+            self.send_mail_mock.delay.assert_called_with(
                 'MOTECH Error',
 
                 'Error importing patients for project space "test-domain" from '
                 'OpenMRS Importer "<OpenmrsImporter None admin@http://www.example.com/openmrs>": '
                 f'owner_id "{importer.owner_id}" is invalid.\r\n'
                 'Project space: test-domain\r\n'
-                'Remote API base URL: http://www.example.com/openmrs\r\n'
-                'Remote API username: admin',
+                'Remote API base URL: http://www.example.com/openmrs',
 
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=['admin@example.com'],
@@ -376,7 +375,7 @@ class OpenmrsAtomFeedsTests(TestCase):
             location_id='test_location',
             location_type=cls.location_type,
         )
-        cls.user = CommCareUser.create(TEST_DOMAIN, 'username', 'password', location=cls.location)
+        cls.user = CommCareUser.create(TEST_DOMAIN, 'username', 'password', None, None, location=cls.location)
         cls.repeater = OpenmrsRepeater.wrap({
             "domain": TEST_DOMAIN,
             "url": "https://demo.mybahmni.org/openmrs/",

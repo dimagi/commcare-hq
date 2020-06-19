@@ -146,6 +146,12 @@ class DiffTestCases(SimpleTestCase):
         }
         self._test_form_diff_filter(couch_doc, sql_doc, DELETION_DIFFS + REAL_DIFFS)
 
+    def test_filter_normal_form_deletion_fields(self):
+        self._test_form_diff_filter(
+            {'doc_type': 'XFormInstance', '-deletion_id': 'abc'},
+            {'doc_type': 'XFormInstance'},
+        )
+
     def test_filter_text_xmlns_fields(self):
         self._test_form_diff_filter(
             {'doc_type': 'XFormInstance'},
@@ -308,7 +314,17 @@ class DiffTestCases(SimpleTestCase):
         ])
 
     def test_filter_ledger_diffs(self):
-        ignored_diffs = _make_ignored_diffs('LedgerValue')
+        ignored_diffs = _make_ignored_diffs('LedgerValue') + [
+            FormJsonDiff(
+                diff_type='diff', path=('last_modified',),
+                old_value='2016-04-01T00:00:00.000000Z',
+                new_value='2016-04-01T15:39:19.711333Z',
+            ),
+            FormJsonDiff(
+                diff_type='type', path=('last_modified_form_id',),
+                old_value=None, new_value='7ab03ccc-e5b7-4c8f-b88f-43ee3b0543a5',
+            ),
+        ]
         filtered = filter_ledger_diffs(ignored_diffs + REAL_DIFFS)
         self.assertEqual(filtered, REAL_DIFFS)
 
@@ -630,6 +646,161 @@ class DiffTestCases(SimpleTestCase):
         sql_case = {
             "doc_type": "CommCareCase",
             "closed_by": "somebody",
+            "close_reason": "",
+        }
+        diffs = json_diff(couch_case, sql_case, track_list_indices=False)
+        filtered = filter_case_diffs(couch_case, sql_case, diffs)
+        self.assertEqual(filtered, [])
+
+    def test_case_with_empty_text_node(self):
+        couch_case = {
+            "doc_type": "CommCareCase",
+            "#text": "",
+        }
+        sql_case = {
+            "doc_type": "CommCareCase",
+        }
+        diffs = json_diff(couch_case, sql_case, track_list_indices=False)
+        filtered = filter_case_diffs(couch_case, sql_case, diffs)
+        self.assertEqual(filtered, [])
+
+    def test_user_owner_mapping_case_with_opened_and_user_diffs(self):
+        couch_case = {
+            "case_id": "user-owner-mapping-eca7a8",
+            "actions": [{"action_type": "create", "user_id": "somebody"}],
+            "doc_type": "CommCareCase",
+            "opened_by": "",
+            "user_id": "",
+        }
+        sql_case = {
+            "case_id": "user-owner-mapping-eca7a8",
+            "actions": [{"action_type": "create", "user_id": "somebody"}],
+            "doc_type": "CommCareCase",
+            "opened_by": "somebody",
+            "user_id": "somebody",
+        }
+        diffs = json_diff(couch_case, sql_case, track_list_indices=False)
+        filtered = filter_case_diffs(couch_case, sql_case, diffs)
+        self.assertEqual(filtered, [])
+
+    def test_non_user_owner_mapping_case_with_opened_and_user_diffs(self):
+        couch_case = {
+            "case_id": "eca7a8",
+            "actions": [{"action_type": "create", "user_id": "somebody"}],
+            "doc_type": "CommCareCase",
+            "opened_by": None,
+            "user_id": "",
+        }
+        sql_case = {
+            "case_id": "eca7a8",
+            "actions": [{"action_type": "create", "user_id": "somebody"}],
+            "doc_type": "CommCareCase",
+            "opened_by": "somebody",
+            "user_id": "somebody",
+        }
+        diffs = json_diff(couch_case, sql_case, track_list_indices=False)
+        filtered = filter_case_diffs(couch_case, sql_case, diffs)
+        self.assertEqual(filtered, [])
+
+    def test_weird_case_attributes(self):
+        couch_case = {
+            "case_id": "eca7a8",
+            "actions": [{"action_type": "create", "user_id": "person-2"}],
+            "doc_type": "CommCareCase",
+            "@user_id": "person-1",
+            "user_id": "person-2",
+            "@date_modified": "2016-02-12",
+            "modified_on": "2016-02-12T00:00:00.000000Z",
+        }
+        sql_case = {
+            "case_id": "eca7a8",
+            "actions": [{"action_type": "create", "user_id": "person-2"}],
+            "doc_type": "CommCareCase",
+            "user_id": "person-2",
+            "modified_on": "2016-02-12T10:00:00.000000Z",
+        }
+        diffs = json_diff(couch_case, sql_case, track_list_indices=False)
+        filtered = filter_case_diffs(couch_case, sql_case, diffs)
+        self.assertEqual(filtered, [])
+
+    def test_unsorted_form_history(self):
+        couch_form = {
+            "doc_type": "XFormInstance",
+            "history": [
+                {
+                    "date": "2018-07-05T04:30:52.514324Z",
+                    "doc_type": "XFormOperation",
+                    "operation": "edit",
+                    "user": "d2968d57c858409281551be7ea979d5e"
+                },
+                {
+                    "date": "2018-07-05T04:31:46.808364Z",
+                    "doc_type": "XFormOperation",
+                    "operation": "edit",
+                    "user": "unknown"
+                },
+                {
+                    "date": "2018-07-05T04:30:52.514324Z",
+                    "doc_type": "XFormOperation",
+                    "operation": "edit",
+                    "user": "d2968d57c858409281551be7ea979d5e"
+                },
+                {
+                    "date": "2018-07-05T04:31:46.808364Z",
+                    "doc_type": "XFormOperation",
+                    "operation": "edit",
+                    "user": "unknown"
+                },
+                {
+                    "date": "2018-07-05T04:33:38.949598Z",
+                    "doc_type": "XFormOperation",
+                    "operation": "edit",
+                    "user": "unknown"
+                }
+            ],
+        }
+        sql_form = {
+            "doc_type": "XFormInstance",
+            "history": [
+                {
+                    "date": "2018-07-05T04:30:52.514324Z",
+                    "operation": "edit",
+                    "user": "d2968d57c858409281551be7ea979d5e"
+                },
+                {
+                    "date": "2018-07-05T04:30:52.514324Z",
+                    "operation": "edit",
+                    "user": "d2968d57c858409281551be7ea979d5e"
+                },
+                {
+                    "date": "2018-07-05T04:31:46.808364Z",
+                    "operation": "edit",
+                    "user": "unknown"
+                },
+                {
+                    "date": "2018-07-05T04:31:46.808364Z",
+                    "operation": "edit",
+                    "user": "unknown"
+                },
+                {
+                    "date": "2018-07-05T04:33:38.949598Z",
+                    "operation": "edit",
+                    "user": "unknown"
+                }
+            ],
+        }
+        self._test_form_diff_filter(couch_form, sql_form)
+
+    def test_case_with_location_and_referrals(self):
+        couch_case = {
+            "doc_type": "CommCareCase",
+            "location_": [],
+            "referrals": [],
+        }
+        sql_case = {
+            "doc_type": "CommCareCase",
+            "location_": '[]',
+            "referrals": '[]',
         }
         diffs = json_diff(couch_case, sql_case, track_list_indices=False)
         filtered = filter_case_diffs(couch_case, sql_case, diffs)

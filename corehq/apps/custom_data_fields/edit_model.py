@@ -12,6 +12,7 @@ from django.utils.translation import ugettext_lazy
 from memoized import memoized
 
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
+from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
 from corehq.toggles import REGEX_FIELD_VALIDATION
 
 from .models import (
@@ -38,6 +39,16 @@ class CustomDataFieldsForm(forms.Form):
                              "unique.").format(slug))
         return errors
 
+    def verify_no_reserved_words(self, data_fields):
+        case_reserved_words = load_case_reserved_words()
+        errors = set()
+        slugs = [field['slug'].lower()
+                 for field in data_fields if 'slug' in field]
+        for slug in slugs:
+            if slug in case_reserved_words:
+                errors.add(_("Key '{}' is a reserved word in Commcare.").format(slug))
+        return errors
+
     def clean_data_fields(self):
         raw_data_fields = json.loads(self.cleaned_data['data_fields'])
         errors = set()
@@ -51,6 +62,7 @@ class CustomDataFieldsForm(forms.Form):
                                for error in data_field_form.errors.values()])
 
         errors.update(self.verify_no_duplicates(data_fields))
+        errors.update(self.verify_no_reserved_words(data_fields))
 
         if errors:
             raise ValidationError('<br/>'.join(sorted(errors)))

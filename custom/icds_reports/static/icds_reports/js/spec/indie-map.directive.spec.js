@@ -149,7 +149,7 @@ describe('Indie Map Directive', function () {
         controller.data = mockData;
         var expected = '<div class="secondary-location-selector">' +
             '<div class="modal-header"><button type="button" class="close" ' +
-            'ng-click="$ctrl.closePopup()" aria-label="Close"><span aria-hidden="true">&times;</span>' +
+            'ng-click="$ctrl.closePopup($event)" aria-label="Close"><span aria-hidden="true">&times;</span>' +
             '</button></div><div class="modal-body"><button class="btn btn-xs btn-default" ' +
             'ng-click="$ctrl.attemptToDrillToLocation(\'Uttar Pradesh\')">Uttar Pradesh</button>' +
             '</div></div>';

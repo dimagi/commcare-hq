@@ -1,8 +1,8 @@
+import copy
 from corehq.apps.locations.models import SQLLocation
 from custom.icds_reports.utils import india_now, DATA_NOT_ENTERED
 from custom.icds_reports.models.views import ServiceDeliveryReportView
-import copy
-
+from custom.icds_reports.utils import apply_exclude
 
 class ServiceDeliveryReport(object):
     def __init__(self, config, location, beta=False):
@@ -24,9 +24,9 @@ class ServiceDeliveryReport(object):
 
         def _location_name():
             location_and_col_names = [('State', 'state_name'),
-                                      ('District','district_name'),
-                                      ('Block','block_name'),
-                                      ('Sector','supervisor_name'),
+                                      ('District', 'district_name'),
+                                      ('Block', 'block_name'),
+                                      ('Sector', 'supervisor_name'),
                                       ('AWC', 'awc_name')]
             return location_and_col_names[:self.config['aggregation_level']]
 
@@ -79,6 +79,18 @@ class ServiceDeliveryReport(object):
                 ('Number of beneficiaries enrolled for Anganwadi services', 'thr_eligible'),
                 ('Percentage of beneficiaries to whom THR was provided for at least 21 days', 'thr_21_days', 'thr_eligible'),
             ]
+            if self.beta:
+                headers = headers[:-3]
+                headers += [
+                    ('Number of beneficiaries to whom THR was provided for 21-24 days', 'thr_21_24_days'),
+                    ('Number of beneficiaries enrolled for Anganwadi services', 'thr_eligible'),
+                    ('Percentage of beneficiaries to whom THR was provided for 21-24 days', 'thr_21_24_days',
+                     'thr_eligible'),
+                    ('Number of beneficiaries to whom THR was provided for at least 25 days', 'thr_25_days'),
+                    ('Number of beneficiaries enrolled for Anganwadi services', 'thr_eligible'),
+                    ('Percentage of beneficiaries to whom THR was provided for at least 25 days', 'thr_25_days',
+                     'thr_eligible'),
+                ]
 
         else:
             headers += [
@@ -116,28 +128,76 @@ class ServiceDeliveryReport(object):
                 ('Total children enrolled for Anganwadi services', 'children_3_5'),
                 ('Percentage of children who were weighed', 'gm_3_5', 'children_3_5')
             ]
+            if self.beta:
+                index = headers.index(('Number of beneficiaries to whom hot cooked meal was provided for at'
+                                       ' least 21 days', 'lunch_21_days'))
+                headers[index] = ('Number of beneficiaries to whom hot cooked meal was provided for at'
+                                  ' 21-24 days', 'lunch_21_24_days')
+                headers[index + 1] = ('Number of beneficiaries enrolled for Anganwadi services', 'lunch_eligible')
+                headers[index + 2] = ('Percentage of beneficiaries to whom hot cooked meal was provided'
+                                      ' for 21-24 days', 'lunch_21_24_days', 'lunch_eligible')
+                headers.insert(index + 3, ('Number of beneficiaries to whom hot cooked meal was provided for at'
+                                           ' least 25 days', 'lunch_25_days'))
+                headers.insert(index + 4, ('Number of beneficiaries enrolled for Anganwadi services',
+                                           'lunch_eligible'))
+                headers.insert(index + 5, ('Percentage of beneficiaries to whom hot cooked meal was provided for'
+                                           ' at least 25 days', 'lunch_25_days', 'lunch_eligible'))
 
+                index = headers.index(('Number of beneficiaries who attended pre-school education for at'
+                                       ' least 21 days', 'pse_21_days'))
+                headers[index] = ('Number of beneficiaries who attended pre-school education for 21-24 days',
+                                  'pse_21_24_days')
+                headers[index + 1] = ('Number of beneficiaries enrolled for Anganwadi services', 'pse_eligible')
+                headers[index + 2] = ('Percentage of beneficiaries who attended pre-school education'
+                                      ' for 21-24 days', 'pse_21_24_days', 'pse_eligible')
+                headers.insert(index + 3, ('Number of beneficiaries who attended pre-school education for at'
+                                           ' least 25 days', 'pse_25_days'))
+                headers.insert(index + 4, ('Number of beneficiaries enrolled for Anganwadi services',
+                                           'pse_eligible'))
+                headers.insert(index + 5, ('Percentage of beneficiaries who attended pre-school education for at'
+                                           ' least 25 days', 'pse_25_days', 'pse_eligible'))
         return headers
 
     def get_excel_data(self):
+
+        # cells under all location columns, these will be blank
+        location_column_list = [''] * self.config['aggregation_level']
+
+        # cells to contain actual grand total
+        actual_value_columns_list = [0] * (
+            len(self.headers_and_calculation) - self.config['aggregation_level']
+        )
+        total_sum_row = location_column_list + actual_value_columns_list
+
+        total_sum_row[0] = 'Grand Total'
+
         def evaulate_value(row, headers_with_columns):
             row_data = []
 
-            for header in headers_with_columns:
+            for index, header in enumerate(headers_with_columns):
                 if len(header) == 2:
                     if header[1] in (
                         'num_awcs_conducted_cbe',
                         'num_awcs_conducted_vhnd'
                     ) and self.config['aggregation_level'] == 5:
                         row_data.append('Yes' if row[header[1]] == 1 else 'No')
+                        total_sum_row[index] = 'N/A'
                     else:
+                        if header[1] not in self.location_columns:
+                            total_sum_row[index] += row[header[1]]
                         row_data.append(row[header[1]])
                 else:
                     if row[header[2]]:
                         percentage = row[header[1]]/row[header[2]] * 100
                     else:
                         percentage = 0
-                    row_data.append("%.2f" % percentage)
+                    row_data.append("{}%".format("%.2f" % percentage))
+
+                    if total_sum_row[index - 1]:
+                        percentage = (total_sum_row[index - 2] / total_sum_row[index - 1]) * 100
+                    else:
+                        percentage = 0
+                    total_sum_row[index] = "{}%".format("%.2f" % percentage)
 
             return row_data
 
@@ -152,10 +212,14 @@ class ServiceDeliveryReport(object):
         headers = [header[0] for header in self.headers_and_calculation]
 
         data = ServiceDeliveryReportView.objects.filter(**filters).order_by(*order_by).values(*values)
+
+        data = apply_exclude(self.config['domain'], data)
         excel_rows = [headers]
 
         for row in data:
             excel_rows.append(evaulate_value(row, self.headers_and_calculation))
+
+        excel_rows.append(total_sum_row)
 
         filters = [['Generated at', india_now()]]
         if self.location:

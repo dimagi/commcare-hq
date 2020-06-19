@@ -4,20 +4,20 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
-from django.utils.translation import ugettext as _
 
 from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.messages import percent_pregnant_women_enrolled_help_text
 from custom.icds_reports.models import AggCcsRecordMonthly
 from custom.icds_reports.utils import apply_exclude, indian_formatted_number
+from custom.icds_reports.utils import get_location_launched_status
 
 
-@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
-def get_enrolled_women_data_map(domain, config, loc_level, show_test=False):
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_features_flag'], timeout=30 * 60)
+def get_enrolled_women_data_map(domain, config, loc_level, show_test=False, icds_features_flag=False):
+    config['month'] = datetime(*config['month'])
 
     def get_data_for(filters):
-        filters['month'] = datetime(*filters['month'])
         queryset = AggCcsRecordMonthly.objects.filter(
             **filters
         ).values(
@@ -39,7 +39,16 @@ def get_enrolled_women_data_map(domain, config, loc_level, show_test=False):
     average = []
     total_valid = 0
     total = 0
+
+    if icds_features_flag:
+        location_launched_status = get_location_launched_status(config, loc_level)
+    else:
+        location_launched_status = None
     for row in get_data_for(config):
+        if location_launched_status:
+            launched_status = location_launched_status.get(row['%s_name' % loc_level])
+            if launched_status is None or launched_status <= 0:
+                continue
         valid = row['valid'] or 0
         all_pregnant = row['all'] or 0
         name = row['%s_name' % loc_level]
@@ -56,6 +65,8 @@ def get_enrolled_women_data_map(domain, config, loc_level, show_test=False):
 
     fills = OrderedDict()
     fills.update({'Women': MapColors.BLUE})
+    if icds_features_flag:
+        fills.update({'Not Launched': MapColors.GREY})
     fills.update({'defaultFill': MapColors.GREY})
 
     return {
@@ -88,8 +99,10 @@ def get_enrolled_women_data_map(domain, config, loc_level, show_test=False):
     }
 
 
-@icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
-def get_enrolled_women_sector_data(domain, config, loc_level, location_id, show_test=False):
+@icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test', 'icds_features_flag'],
+                 timeout=30 * 60)
+def get_enrolled_women_sector_data(domain, config, loc_level, location_id,
+                                   show_test=False, icds_features_flag=False):
     group_by = ['%s_name' % loc_level]
 
     config['month'] = datetime(*config['month'])
@@ -113,8 +126,15 @@ def get_enrolled_women_sector_data(domain, config, loc_level, location_id, show_
         'valid': 0,
         'all': 0
     })
-
+    if icds_features_flag:
+        location_launched_status = get_location_launched_status(config, loc_level)
+    else:
+        location_launched_status = None
     for row in data:
+        if location_launched_status:
+            launched_status = location_launched_status.get(row['%s_name' % loc_level])
+            if launched_status is None or launched_status <= 0:
+                continue
         valid = row['valid'] or 0
         all_pregnant = row['all'] or 0
         name = row['%s_name' % loc_level]
@@ -148,8 +168,8 @@ def get_enrolled_women_sector_data(domain, config, loc_level, location_id, show_
     }
 
 
-@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
-def get_enrolled_women_data_chart(domain, config, loc_level, show_test=False):
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_features_flag'], timeout=30 * 60)
+def get_enrolled_women_data_chart(domain, config, loc_level, show_test=False, icds_features_flag=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
@@ -179,7 +199,16 @@ def get_enrolled_women_data_chart(domain, config, loc_level, show_test=False):
         data['blue'][miliseconds] = {'y': 0, 'all': 0}
 
     best_worst = {}
+    if icds_features_flag:
+        location_launched_status = get_location_launched_status(config, loc_level)
+    else:
+        location_launched_status = None
     for row in chart_data:
+        if location_launched_status:
+            launched_status = location_launched_status.get(row['%s_name' % loc_level])
+            if launched_status is None or launched_status <= 0:
+                continue
+
         date = row['month']
         valid = row['valid'] or 0
         all_pregnant = row['all'] or 0

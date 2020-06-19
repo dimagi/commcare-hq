@@ -12,7 +12,7 @@ from corehq.apps.userreports.models import (
     StaticDataSourceConfiguration,
 )
 from corehq.apps.userreports.tests.utils import domain_lite
-from corehq.util.test_utils import TestFileMixin
+from corehq.util.test_utils import TestFileMixin, timelimit
 
 
 @patch('corehq.apps.callcenter.data_source.get_call_center_domains', MagicMock(return_value=[domain_lite('cc1')]))
@@ -58,6 +58,7 @@ class TestStaticDataSource(SimpleTestCase, TestFileMixin):
             # since this is a SimpleTest, this should fail if the call actually hits the DB
             example.deactivate()
 
+    @timelimit(60)
     def test_production_config(self):
         for data_source in StaticDataSourceConfiguration.all():
             data_source.validate()

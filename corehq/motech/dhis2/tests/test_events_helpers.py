@@ -17,7 +17,7 @@ from corehq.motech.dhis2.repeaters import Dhis2Repeater
 DOMAIN = "dhis2-test"
 
 
-class TestDhisHandler(TestCase):
+class TestDhis2EventsHelpers(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -34,7 +34,7 @@ class TestDhisHandler(TestCase):
             location_type=location_type,
             metadata={LOCATION_DHIS_ID: "dhis2_location_id"},
         )
-        cls.user = WebUser.create(DOMAIN, 'test', 'passwordtest')
+        cls.user = WebUser.create(DOMAIN, 'test', 'passwordtest', None, None)
         cls.user.set_location(DOMAIN, cls.location)
 
     @classmethod

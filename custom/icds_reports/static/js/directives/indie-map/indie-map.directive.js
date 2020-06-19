@@ -191,6 +191,21 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                         .translate([element.offsetWidth / 2, element.offsetHeight / div]);
                     path = d3.geo.path().projection(projection);
                 }
+                $(function () {
+                    // this function runs after the dom (map) is rendered.
+                    // Datamaps take "id" of a location and assign it as class in the canvas path element.
+                    // In certain cases where there is a space in the "id" of a location it will be added as multiple
+                    // classes to the path element. When map is being colored, it looks for path elements which has the
+                    // class same as the id. (for reference check line 1128 of this library file: datamaps.js).
+                    // But, since there is a space in "id", it looks for path element which has only the first part of
+                    // "id" as its class (this class name could conflict with other locations). So, we are explicitly
+                    // adding a class with all the spaces and special characters removed from "id" to uniquely
+                    // differentiate it from other locations before filling the colors.
+                    var svg = d3.select('#map svg');
+                    svg.selectAll(".datamaps-subunit").transition().style('fill', vm.map.fills.defaultFill);
+                    vm.addCombinedSelectorClassToMaps(document.getElementsByClassName("datamaps-subunit"));
+                    vm.colorMapBasedOnCombinedSelectorClass(svg);
+                });
                 return {path: path, projection: projection};
             },
         };
@@ -202,6 +217,27 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             };
         }
 
+        vm.addCombinedSelectorClassToMaps = function (locations) {
+            for (var i = 0; i < locations.length; i++) {
+                var combinedClass = "";
+                for (var j = 0; j < locations[i].classList.length; j++) {
+                    // removing all the special characters in strings before creating combined class
+                    // Reference: https://stackoverflow.com/a/6555220/12839195
+                    combinedClass += locations[i].classList[j].replace(/[^a-zA-Z0-9]/g, "");
+                }
+                locations[i].classList.add(combinedClass);
+            }
+        };
+        vm.colorMapBasedOnCombinedSelectorClass = function (svg) {
+            for (var locationId in vm.map.data) {
+                if (vm.map.data.hasOwnProperty(locationId)) {
+                    // removing all the special characters in locationId before checking for combined class
+                    // Reference: https://stackoverflow.com/a/6555220/12839195
+                    svg.selectAll('.datamapssubunit' + locationId.replace(/[^a-zA-Z0-9]/g, ""))
+                        .transition().style('fill', vm.map.data[locationId].fillKey);
+                }
+            }
+        };
         vm.mapPlugins = {
             bubbles: null,
         };
@@ -296,7 +332,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                 mapConfiguration(location, resp);
             });
         } else if (locationLevel === 1) {
-            topojsonService.getTopoJsonForDistrict(location.map_location_name, location.parent_map_name).then(
+            topojsonService.getBlockTopoJsonForState(location.parent_map_name).then(
                 function (resp) {
                     mapConfiguration(location, resp.topojson);
                 }
@@ -331,7 +367,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         var html = "";
         html += '<div class="secondary-location-selector">';
         html += '<div class="modal-header">';
-        html += '<button type="button" class="close" ng-click="$ctrl.closePopup()" aria-label="Close">' +
+        html += '<button type="button" class="close" ng-click="$ctrl.closePopup($event)" aria-label="Close">' +
             '<span aria-hidden="true">&times;</span></button>';
         html += "</div>";
         html += '<div class="modal-body">';

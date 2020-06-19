@@ -47,6 +47,7 @@ class NICIndicatorTest(TestCase):
         )
 
     def test_mwcd_indicators_data(self):
+        self.maxDiff = None
         data = get_mwcd_indicator_api_data(date(2017, 4, 1))
 
         self.assertCountEqual([{'state_name': 'ALL INDIA', 'state_id': '0', 'num_launched_awcs': 21,
@@ -64,9 +65,9 @@ class NICIndicatorTest(TestCase):
                               data['implementation_status']['dataarray'])
 
         self.assertCountEqual([{'state_name': 'st1', 'state_id': 'st1', 'month': 4, 'total_mothers': 134,
-                                'num_launched_awcs': 10, 'cases_child_health': 609, 'year': 2017},
+                                'num_launched_awcs': 10, 'cases_child_health': 608, 'year': 2017},
                                {'state_name': 'st2', 'state_id': 'st2', 'month': 4, 'total_mothers': 129,
-                                'num_launched_awcs': 11, 'cases_child_health': 652, 'year': 2017},
+                                'num_launched_awcs': 11, 'cases_child_health': 653, 'year': 2017},
                                {'state_name': 'st1', 'state_id': 'st1', 'month': 5, 'total_mothers': 157,
                                 'num_launched_awcs': 10, 'cases_child_health': 618, 'year': 2017},
                                {'state_name': 'st2', 'state_id': 'st2', 'month': 5, 'total_mothers': 164,

@@ -1,0 +1,3 @@
+doc_id,state_id,supervisor_id,case_load_ccs_record0,timeend,last_preg,inserted_at
+doc_1,st1,s3,08d215e7-81c7-4ad3-9c7d-1b27f0ed4bb5,2017-05-01,12,2017-05-01
+doc_1,st1,s2,f491263a-4846-4ffd-a64d-a6653c03dd03,2017-04-01,14,2017-04-01

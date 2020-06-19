@@ -1,5 +1,4 @@
 import datetime
-from collections import namedtuple
 
 from django.test import SimpleTestCase, TestCase
 
@@ -28,7 +27,16 @@ from corehq.apps.groups.models import Group
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.models import HQUserType
 
-DomainObject = namedtuple('DomainObject', ['uses_locations', 'name'])
+
+class FakeDomainObject(object):
+
+    def __init__(self, uses_locations, name, date_created=None):
+        self.uses_locations = uses_locations
+        self.name = name
+        self.date_created = date_created
+
+    def has_privilege(self, _priv):
+        return True
 
 
 class TestCreateExportTagForm(SimpleTestCase):
@@ -70,7 +78,7 @@ class TestDashboardFeedFilterForm(SimpleTestCase):
             'start_date': '1992-01-30',
             'end_date': '2016-10-01',
         }
-        form = DashboardFeedFilterForm(DomainObject([], 'my-domain'), data=data)
+        form = DashboardFeedFilterForm(FakeDomainObject([], 'my-domain'), data=data)
         self.assertTrue(form.is_valid())
 
     def test_missing_fields(self):
@@ -78,7 +86,7 @@ class TestDashboardFeedFilterForm(SimpleTestCase):
             'date_range': 'range',
             'start_date': '1992-01-30',
         }
-        form = DashboardFeedFilterForm(DomainObject([], 'my-domain'), data=data)
+        form = DashboardFeedFilterForm(FakeDomainObject([], 'my-domain'), data=data)
         self.assertFalse(form.is_valid())
 
     def test_bad_dates(self):
@@ -87,7 +95,7 @@ class TestDashboardFeedFilterForm(SimpleTestCase):
             'start_date': '1992-01-30',
             'end_date': 'banana',
         }
-        form = DashboardFeedFilterForm(DomainObject([], 'my-domain'), data=data)
+        form = DashboardFeedFilterForm(FakeDomainObject([], 'my-domain'), data=data)
         self.assertFalse(form.is_valid())
 
 
@@ -96,9 +104,8 @@ class TestEmwfFilterFormExport(TestCase):
     filter = form.dynamic_filter_class
 
     def setUp(self):
-        DomainObject = namedtuple('DomainObject', ['uses_locations', 'name', 'date_created'])
         self.domain = Domain(name="testapp", is_active=True)
-        self.project = DomainObject(False, "foo", datetime.datetime(2015, 1, 1))
+        self.project = FakeDomainObject(False, "foo", datetime.datetime(2015, 1, 1))
         self.subject = self.form
 
     def test_attributes(self):

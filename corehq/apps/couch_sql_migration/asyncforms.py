@@ -6,13 +6,11 @@ import attr
 import gevent
 from gevent.pool import Pool
 
+from casexml.apps.case.exceptions import CommCareCaseError
 from casexml.apps.case.xform import get_case_ids_from_form, get_case_updates
-from couchforms.models import XFormInstance, XFormOperation
+from couchforms.models import XFormInstance
 from dimagi.utils.chunked import chunked
 
-from corehq.apps.cleanup.management.commands.swap_duplicate_xforms import (
-    PROBLEM_TEMPLATE_START,
-)
 from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
 from corehq.form_processor.exceptions import MissingFormXml
 
@@ -72,12 +70,6 @@ class AsyncFormProcessor:
         """Process XFormInstance document asynchronously"""
         form_id = doc["_id"]
         log.debug('Processing doc: XFormInstance(%s)', form_id)
-        if doc.get('problem'):
-            if str(doc['problem']).startswith(PROBLEM_TEMPLATE_START):
-                doc = _fix_replacement_form_problem_in_couch(doc)
-            else:
-                self.statedb.add_problem_form(form_id)
-                return
         try:
             wrapped_form = XFormInstance.wrap(doc)
         except Exception:
@@ -90,6 +82,10 @@ class AsyncFormProcessor:
     def _try_to_process_form(self, wrapped_form, retries=0):
         try:
             case_ids = get_case_ids(wrapped_form)
+        except CommCareCaseError:
+            log.exception("Error migrating form %s", wrapped_form.form_id)
+            self.statedb.save_form_diffs(wrapped_form.to_json(), {})
+            return
         except Exception as err:
             self.retry.later(wrapped_form, retries + 1, err)
             return
@@ -355,40 +351,6 @@ class RetryForms:
 
 class TooManyUnprocessedForms(Exception):
     pass
-
-
-def _fix_replacement_form_problem_in_couch(doc):
-    """Fix replacement form created by swap_duplicate_xforms
-
-    The replacement form was incorrectly created with "problem" text,
-    which causes it to be counted as an error form, and that messes up
-    the diff counts at the end of this migration.
-
-    NOTE the replacement form's _id does not match instanceID in its
-    form.xml. That issue is not resolved here.
-
-    See:
-    - corehq/apps/cleanup/management/commands/swap_duplicate_xforms.py
-    - couchforms/_design/views/all_submissions_by_domain/map.js
-    """
-    problem = doc["problem"]
-    assert problem.startswith(PROBLEM_TEMPLATE_START), doc
-    assert doc["doc_type"] == "XFormInstance", doc
-    deprecated_id = problem[len(PROBLEM_TEMPLATE_START):].split(" on ", 1)[0]
-    form = XFormInstance.wrap(doc)
-    form.deprecated_form_id = deprecated_id
-    form.history.append(XFormOperation(
-        user="system",
-        date=datetime.utcnow(),
-        operation="Resolved bad duplicate form during couch-to-sql "
-        "migration. Original problem: %s" % problem,
-    ))
-    form.problem = None
-    old_form = XFormInstance.get(deprecated_id)
-    if old_form.initial_processing_complete and not form.initial_processing_complete:
-        form.initial_processing_complete = True
-    form.save()
-    return form.to_json()
 
 
 def get_case_ids(form):

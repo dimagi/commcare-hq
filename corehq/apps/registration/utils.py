@@ -28,7 +28,7 @@ from corehq.apps.accounting.models import (
     SubscriptionAdjustmentMethod,
     SubscriptionType,
 )
-from corehq.apps.accounting.tasks import ensure_community_or_paused_subscription
+from corehq.apps.accounting.utils.subscription import ensure_community_or_paused_subscription
 from corehq.apps.analytics.tasks import (
     HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID,
     send_hubspot_form,
@@ -51,13 +51,13 @@ _soft_assert_registration_issues = soft_assert(
 )
 
 
-def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
+def activate_new_user(form, created_by, created_via, is_domain_admin=True, domain=None, ip=None):
     username = form.cleaned_data['email']
     password = form.cleaned_data['password']
     full_name = form.cleaned_data['full_name']
     now = datetime.utcnow()
 
-    new_user = WebUser.create(domain, username, password, is_admin=is_domain_admin)
+    new_user = WebUser.create(domain, username, password, created_by, created_via, is_admin=is_domain_admin)
     new_user.first_name = full_name[0]
     new_user.last_name = full_name[1]
     new_user.email = username

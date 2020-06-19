@@ -211,6 +211,50 @@ class MultiKeyViewArgsProvider(PaginatedViewArgsProvider):
             }
 
 
+class MultiKwargViewArgsProvider(PaginatedViewArgsProvider):
+    """Argument provider for iterating over a view using a list of kwargs each with 'startkey' and 'endkey'.
+    :param keys: Sequence of view keys to iterate over. Each key should be a dict with 'startkey' and 'endkey'
+    """
+    def __init__(self, keys: dict, include_docs=False, chunk_size=1000):
+        self.keys = list(keys)
+        first_key = self.keys[0]
+        assert all(isinstance(key, dict) for key in self.keys), "All keys must be dictionaries"
+        expected_keys = {'startkey', 'endkey'}
+        assert all(expected_keys == set(key) for key in keys), "All keys must have 'startkey' and 'endkey' only"
+
+        view_kwargs = {
+            'limit': chunk_size,
+            'include_docs': include_docs,
+            'reduce': False,
+        }
+        view_kwargs.update(first_key)
+        super(MultiKwargViewArgsProvider, self).__init__(view_kwargs)
+
+    def get_next_args(self, result, *last_args, **last_view_kwargs):
+        try:
+            return super(MultiKwargViewArgsProvider, self).get_next_args(
+                result, *last_args, **last_view_kwargs
+            )
+        except StopIteration:
+            last_end_key = last_view_kwargs['endkey']
+            key_index = 0
+            for key_index, key in enumerate(self.keys):
+                if key['endkey'] == last_end_key:
+                    break
+
+            # all docs for the current key have been processed
+            # move on to the next key combo
+            self.keys = self.keys[key_index + 1:]
+            try:
+                next_key = self.keys[0]
+            except IndexError:
+                raise StopIteration
+            last_view_kwargs.pop('skip', None)
+            last_view_kwargs.pop("startkey_docid", None)
+            last_view_kwargs.update(next_key)
+        return last_args, last_view_kwargs
+
+
 def paginate_view(db, view_name, chunk_size, event_handler=PaginationEventHandler(), **view_kwargs):
     """
     intended as a more performant drop-in replacement for

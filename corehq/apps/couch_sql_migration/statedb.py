@@ -201,10 +201,10 @@ class StateDB(DiffDB):
             query = session.query(CaseForms.total_forms).filter_by(case_id=case_id)
             return query.scalar() or 0
 
-    def add_cases_to_diff(self, case_ids):
+    def add_cases_to_diff(self, case_ids, *, session=None):
         if not case_ids:
             return
-        with self.session() as session:
+        with self.session(session) as session:
             session.execute(
                 f"INSERT OR IGNORE INTO {CaseToDiff.__tablename__} (id) VALUES (:id)",
                 [{"id": x} for x in case_ids],
@@ -233,21 +233,38 @@ class StateDB(DiffDB):
         with self.session() as session:
             return session.query(CaseToDiff).count()
 
-    def iter_case_ids_with_diffs(self):
+    def iter_case_ids_with_diffs(self, changes=False):
+        model = DocChanges if changes else DocDiffs
         query = (
-            self.Session().query(DocDiffs.doc_id)
-            .filter(DocDiffs.kind == "CommCareCase")
+            self.Session().query(model.doc_id)
+            .filter(model.kind == "CommCareCase")
         )
-        for doc_id, in iter_large(query, DocDiffs.doc_id):
+        for doc_id, in iter_large(query, model.doc_id):
             yield doc_id
 
-    def count_case_ids_with_diffs(self):
+    def count_case_ids_with_diffs(self, changes=False):
+        model = DocChanges if changes else DocDiffs
         with self.session() as session:
             return (
-                session.query(DocDiffs.doc_id)
-                .filter(DocDiffs.kind == "CommCareCase")
+                session.query(model.doc_id)
+                .filter(model.kind == "CommCareCase")
                 .count()
             )
+
+    def add_patched_cases(self, case_ids):
+        if not case_ids:
+            return
+        with self.session() as session:
+            self.add_cases_to_diff(case_ids, session=session)
+            session.execute(
+                f"INSERT OR IGNORE INTO {PatchedCase.__tablename__} (id) VALUES (:id)",
+                [{"id": x} for x in case_ids],
+            )
+
+    def iter_patched_case_ids(self):
+        query = self.Session().query(PatchedCase.id)
+        for case_id, in iter_large(query, PatchedCase.id):
+            yield case_id
 
     def add_problem_form(self, form_id):
         """Add form to be migrated with "unprocessed" forms
@@ -396,6 +413,9 @@ class StateDB(DiffDB):
     def replace_case_changes(self, changes):
         self.replace_case_diffs(changes, _model=DocChanges)
 
+    def add_changes(self, *args):
+        self.add_diffs(*args, _model=DocChanges)
+
     def iter_diffs(self, *, _model=None):
         if _model is None:
             _model = DocDiffs
@@ -416,9 +436,9 @@ class StateDB(DiffDB):
         They are grouped with diffs of the corresponding case
         (kind="CommCareCase", doc_id=<case_id>).
 
-        :yeilds: two-tuples `(doc_id, diffs)`. The diffs yielded here are
-        `PlanningDiff` objects, which should not be confused with json
-        diffs (`<PlanningDiff>.json_diff`).
+        :yeilds: three-tuples `(kind, doc_id, diffs)`. The diffs yielded
+        here are `PlanningDiff` objects, which should not be confused
+        with json diffs (`<PlanningDiff>.json_diff`).
         """
         if _model is None:
             _model = DocDiffs
@@ -484,7 +504,7 @@ class StateDB(DiffDB):
             diffs=diffs.get(kind, 0),
             missing=missing.get(kind, 0),
             changes=changes.get(kind, 0),
-        ) for kind in set(totals) | set(missing) | set(diffs)}
+        ) for kind in set(totals) | set(diffs) | set(missing) | set(changes)}
 
     def iter_missing_doc_ids(self, kind):
         with self.session() as session:
@@ -509,6 +529,7 @@ class StateDB(DiffDB):
         - DocChanges - casediff w (case and stock kinds), main r/w
         - MissingDoc - casediff w, main r
         - NoActionCaseForm - main r/w
+        - PatchedCase - main r/w
         - ProblemForm - main r/w
         """
         def quote(value):
@@ -746,6 +767,12 @@ class MissingDoc(Base):
 
 class NoActionCaseForm(Base):
     __tablename__ = "noactioncaseform"
+
+    id = Column(String(50), nullable=False, primary_key=True)
+
+
+class PatchedCase(Base):
+    __tablename__ = 'patchedcase'
 
     id = Column(String(50), nullable=False, primary_key=True)
 

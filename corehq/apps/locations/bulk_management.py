@@ -315,14 +315,13 @@ class LocationExcelValidator(object):
         actual = set(type_sheet_reader.headers)
         expected = set(LOCATION_TYPE_SHEET_HEADERS.values())
         if actual != expected:
-            message = ugettext_lazy("'types' sheet should contain exactly '{expected}' as the sheet headers. "
-                                    "'{missing}' are missing")
-            if actual - expected:
-                message = format_lazy('{}{}', message, ugettext_lazy(" '{extra}' are not recognized"))
+            missing = ", ".join(expected - actual)
+            extra = ", ".join(actual - expected)
+            message = ugettext_lazy("'types' sheet should contain headers '{expected}'. {missing}{extra}")
             raise LocationExcelSheetError(message.format(
                 expected=", ".join(expected),
-                missing=", ".join(expected - actual),
-                extra=", ".join(actual - expected),
+                missing=ugettext_lazy("'{}' are missing. ").format(missing) if missing else '',
+                extra=ugettext_lazy("'{}' are not recognized. ").format(extra) if extra else '',
             ))
 
         type_data = [self._get_type_data(index, row)
@@ -336,14 +335,16 @@ class LocationExcelValidator(object):
                 actual = set(sheet_reader.fieldnames) - set(optional_headers)
                 expected = set(LOCATION_SHEET_HEADERS_BASE.values())
                 if actual != expected:
-                    raise LocationExcelSheetError(
-                        _("Locations sheet with title '{name}' should contain exactly '{expected}' "
-                          "as the sheet headers. '{missing}' are missing")
-                        .format(
-                            name=sheet_name,
-                            expected=", ".join(expected),
-                            missing=", ".join(expected - actual))
-                    )
+                    missing = ", ".join(expected - actual)
+                    extra = ", ".join(actual - expected)
+                    message = ugettext_lazy("Locations sheet with title '{name}' should contain exactly "
+                                            "'{expected}' as the sheet headers. {missing}{extra}")
+                    raise LocationExcelSheetError(message.format(
+                        name=sheet_name,
+                        expected=", ".join(expected),
+                        missing=ugettext_lazy("'{}' are missing. ").format(missing) if missing else '',
+                        extra=ugettext_lazy("'{}' are not recognized. ").format(extra) if extra else '',
+                    ))
                 location_data.extend([
                     self._get_location_data(index, row, sheet_name)
                     for index, row in enumerate(sheet_reader)

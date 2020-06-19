@@ -1,3 +1,6 @@
+from datetime import date
+
+
 def transform_day_to_month(day):
     return day.replace(day=1)
 
@@ -24,6 +27,14 @@ def get_child_health_temp_tablename(month):
 
 def get_agg_child_temp_tablename():
     return 'tmp_agg_child_health_5'
+
+
+def get_prev_agg_tablename(table_alias):
+    return f'{table_alias}_prev'
+
+
+def is_current_month(month):
+    return month == transform_day_to_month(date.today())
 
 
 class AggregationHelper(object):

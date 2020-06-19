@@ -358,10 +358,10 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
     @property
     @memoized
     def _unknown_forms(self):
-        nonmatching = set(self._nonmatching_app_forms)
-        fuzzy_forms = set(self._fuzzy_forms)
-
-        unknown = list(nonmatching.difference(fuzzy_forms))
+        unknown = set(self._nonmatching_app_forms)
+        if self._hide_fuzzy_results:
+            fuzzy_forms = set(self._fuzzy_forms)
+            unknown = list(unknown.difference(fuzzy_forms))
         return [u for u in unknown if u is not None]
 
     @property

@@ -137,7 +137,7 @@ class TestLocationView(TestCase):
             parent=cls.supervisor_3
         )
         cls.factory = RequestFactory()
-        cls.user = WebUser.create(cls.domain.name, 'test', 'passwordtest')
+        cls.user = WebUser.create(cls.domain.name, 'test', 'passwordtest', None, None)
         cls.user.is_authenticated = True
         cls.user.is_superuser = True
         cls.user.is_authenticated = True
@@ -182,7 +182,11 @@ class TestLocationView(TestCase):
                     'location_type_name': 'state',
                     'user_have_access': True,
                     'parent_id': None,
-                    'location_id': self.state.location_id
+                    'location_id': self.state.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test State 2',
@@ -190,7 +194,11 @@ class TestLocationView(TestCase):
                     'location_type_name': 'state',
                     'user_have_access': True,
                     'parent_id': None,
-                    'location_id': self.state_2.location_id
+                    'location_id': self.state_2.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test State 3',
@@ -198,7 +206,11 @@ class TestLocationView(TestCase):
                     'location_type_name': 'state',
                     'user_have_access': True,
                     'parent_id': None,
-                    'location_id': self.state_3.location_id
+                    'location_id': self.state_3.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 }
             ]
         }
@@ -221,7 +233,11 @@ class TestLocationView(TestCase):
                     'location_type_name': 'state',
                     'user_have_access': False,
                     'parent_id': None,
-                    'location_id': self.state_2.location_id
+                    'location_id': self.state_2.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 }
             ]
         }
@@ -250,6 +266,10 @@ class TestLocationView(TestCase):
             'location_type': 'state',
             'parent_map_name': None,
             'parent_name': None,
+            'archived_on': None,
+            'deprecated_to': [],
+            'deprecates': [],
+            'deprecates_at': None,
         }
         self.assertDictEqual(expected, json.loads(response.content))
 
@@ -273,6 +293,10 @@ class TestLocationView(TestCase):
             'location_type': 'block',
             'parent_name': 'Test District 3_1',
             'parent_map_name': 'Test District 3_1',
+            'archived_on': None,
+            'deprecated_to': [],
+            'deprecates': [],
+            'deprecates_at': None,
         }
         with mock.patch('corehq.apps.users.models.WebUser.has_permission', return_value=False):
             response = view(request, domain='icds-test')
@@ -298,7 +322,11 @@ class TestLocationView(TestCase):
                     'location_type_name': 'district',
                     'user_have_access': True,
                     'parent_id': self.state_3.location_id,
-                    'location_id': self.district_3_1.location_id
+                    'location_id': self.district_3_1.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test District 3_2',
@@ -306,7 +334,11 @@ class TestLocationView(TestCase):
                     'location_type_name': 'district',
                     'user_have_access': True,
                     'parent_id': self.state_3.location_id,
-                    'location_id': self.district_3_2.location_id
+                    'location_id': self.district_3_2.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 }
             ]
         }
@@ -331,7 +363,11 @@ class TestLocationView(TestCase):
                     'location_type_name': 'supervisor',
                     'user_have_access': False,
                     'parent_id': self.block_3.location_id,
-                    'location_id': self.supervisor_3.location_id
+                    'location_id': self.supervisor_3.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 }
             ]
         }
@@ -437,7 +473,7 @@ class TestLocationAncestorsView(TestCase):
             location_type=state
         )
         cls.factory = RequestFactory()
-        cls.user = WebUser.create(cls.domain.name, 'test', 'passwordtest')
+        cls.user = WebUser.create(cls.domain.name, 'test', 'passwordtest', None, None)
         cls.user.is_authenticated = True
         cls.user.is_superuser = True
         cls.user.is_authenticated = True
@@ -466,7 +502,11 @@ class TestLocationAncestorsView(TestCase):
                 'location_type_name': 'state',
                 'user_have_access': True,
                 'parent_id': None,
-                'location_id': self.state_3.location_id
+                'location_id': self.state_3.location_id,
+                'archived_on': None,
+                'deprecated_to': [],
+                'deprecates': [],
+                'deprecates_at': None,
             },
             'locations': [
                 {
@@ -475,7 +515,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'state',
                     'user_have_access': True,
                     'parent_id': None,
-                    'location_id': self.state.location_id
+                    'location_id': self.state.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test State 2',
@@ -483,7 +527,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'state',
                     'user_have_access': True,
                     'parent_id': None,
-                    'location_id': self.state_2.location_id
+                    'location_id': self.state_2.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test State 3',
@@ -491,7 +539,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'state',
                     'user_have_access': True,
                     'parent_id': None,
-                    'location_id': self.state_3.location_id
+                    'location_id': self.state_3.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 }
             ]
         }
@@ -515,7 +567,11 @@ class TestLocationAncestorsView(TestCase):
                 'location_type_name': 'district',
                 'user_have_access': True,
                 'parent_id': self.state.location_id,
-                'location_id': self.district.location_id
+                'location_id': self.district.location_id,
+                'archived_on': None,
+                'deprecated_to': [],
+                'deprecates': [],
+                'deprecates_at': None,
             },
             'locations': [
                 {
@@ -524,7 +580,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'district',
                     'user_have_access': True,
                     'parent_id': self.state.location_id,
-                    'location_id': self.district.location_id
+                    'location_id': self.district.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test District 2',
@@ -532,7 +592,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'district',
                     'user_have_access': True,
                     'parent_id': self.state.location_id,
-                    'location_id': self.district_2.location_id
+                    'location_id': self.district_2.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test State 2',
@@ -540,7 +604,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'state',
                     'user_have_access': True,
                     'parent_id': None,
-                    'location_id': self.state_2.location_id
+                    'location_id': self.state_2.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test State 3',
@@ -548,7 +616,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'state',
                     'user_have_access': True,
                     'parent_id': None,
-                    'location_id': self.state_3.location_id
+                    'location_id': self.state_3.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test State',
@@ -556,7 +628,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'state',
                     'user_have_access': True,
                     'parent_id': None,
-                    'location_id': self.state.location_id
+                    'location_id': self.state.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 }
             ]
         }
@@ -580,7 +656,12 @@ class TestLocationAncestorsView(TestCase):
                 'location_type_name': 'block',
                 'user_have_access': True,
                 'parent_id': self.district.location_id,
-                'location_id': self.block.location_id
+                'location_id': self.block.location_id,
+                'archived_on': None,
+                'deprecated_to': [],
+                'deprecates': [],
+                'deprecates_at': None,
+
             },
             'locations': [
                 {
@@ -589,7 +670,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'block',
                     'user_have_access': True,
                     'parent_id': self.district.location_id,
-                    'location_id': self.block.location_id
+                    'location_id': self.block.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test District 2',
@@ -597,7 +682,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'district',
                     'user_have_access': True,
                     'parent_id': self.state.location_id,
-                    'location_id': self.district_2.location_id
+                    'location_id': self.district_2.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test State 2',
@@ -605,7 +694,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'state',
                     'user_have_access': True,
                     'parent_id': None,
-                    'location_id': self.state_2.location_id
+                    'location_id': self.state_2.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test State 3',
@@ -613,7 +706,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'state',
                     'user_have_access': True,
                     'parent_id': None,
-                    'location_id': self.state_3.location_id
+                    'location_id': self.state_3.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test State',
@@ -621,7 +718,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'state',
                     'user_have_access': True,
                     'parent_id': None,
-                    'location_id': self.state.location_id
+                    'location_id': self.state.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test District',
@@ -629,7 +730,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'district',
                     'user_have_access': True,
                     'parent_id': self.state.location_id,
-                    'location_id': self.district.location_id
+                    'location_id': self.district.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 }
             ]
         }
@@ -653,7 +758,11 @@ class TestLocationAncestorsView(TestCase):
                 'location_type_name': 'supervisor',
                 'user_have_access': True,
                 'parent_id': self.block.location_id,
-                'location_id': self.supervisor.location_id
+                'location_id': self.supervisor.location_id,
+                'archived_on': None,
+                'deprecated_to': [],
+                'deprecates': [],
+                'deprecates_at': None,
             },
             'locations': [
                 {
@@ -662,7 +771,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'district',
                     'user_have_access': True,
                     'parent_id': self.state.location_id,
-                    'location_id': self.district_2.location_id
+                    'location_id': self.district_2.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test State 2',
@@ -670,7 +783,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'state',
                     'user_have_access': True,
                     'parent_id': None,
-                    'location_id': self.state_2.location_id
+                    'location_id': self.state_2.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test State 3',
@@ -678,7 +795,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'state',
                     'user_have_access': True,
                     'parent_id': None,
-                    'location_id': self.state_3.location_id
+                    'location_id': self.state_3.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test Supervisor',
@@ -686,7 +807,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'supervisor',
                     'user_have_access': True,
                     'parent_id': self.block.location_id,
-                    'location_id': self.supervisor.location_id
+                    'location_id': self.supervisor.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test State',
@@ -694,7 +819,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'state',
                     'user_have_access': True,
                     'parent_id': None,
-                    'location_id': self.state.location_id
+                    'location_id': self.state.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test District',
@@ -702,7 +831,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'district',
                     'user_have_access': True,
                     'parent_id': self.state.location_id,
-                    'location_id': self.district.location_id
+                    'location_id': self.district.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test Block',
@@ -710,7 +843,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'block',
                     'user_have_access': True,
                     'parent_id': self.district.location_id,
-                    'location_id': self.block.location_id
+                    'location_id': self.block.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 }
             ]
         }
@@ -734,7 +871,11 @@ class TestLocationAncestorsView(TestCase):
                 'location_type_name': 'awc',
                 'user_have_access': True,
                 'parent_id': self.supervisor.location_id,
-                'location_id': self.awc.location_id
+                'location_id': self.awc.location_id,
+                'archived_on': None,
+                'deprecated_to': [],
+                'deprecates': [],
+                'deprecates_at': None,
             },
             'locations': [
                 {
@@ -743,7 +884,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'awc',
                     'user_have_access': True,
                     'parent_id': self.supervisor.location_id,
-                    'location_id': self.awc.location_id
+                    'location_id': self.awc.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test District 2',
@@ -751,7 +896,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'district',
                     'user_have_access': True,
                     'parent_id': self.state.location_id,
-                    'location_id': self.district_2.location_id
+                    'location_id': self.district_2.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test State 2',
@@ -759,7 +908,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'state',
                     'user_have_access': True,
                     'parent_id': None,
-                    'location_id': self.state_2.location_id
+                    'location_id': self.state_2.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test State 3',
@@ -767,7 +920,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'state',
                     'user_have_access': True,
                     'parent_id': None,
-                    'location_id': self.state_3.location_id
+                    'location_id': self.state_3.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test State',
@@ -775,7 +932,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'state',
                     'user_have_access': True,
                     'parent_id': None,
-                    'location_id': self.state.location_id
+                    'location_id': self.state.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test District',
@@ -783,7 +944,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'district',
                     'user_have_access': True,
                     'parent_id': self.state.location_id,
-                    'location_id': self.district.location_id
+                    'location_id': self.district.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test Block',
@@ -791,7 +956,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'block',
                     'user_have_access': True,
                     'parent_id': self.district.location_id,
-                    'location_id': self.block.location_id
+                    'location_id': self.block.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test Supervisor',
@@ -799,7 +968,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'supervisor',
                     'user_have_access': True,
                     'parent_id': self.block.location_id,
-                    'location_id': self.supervisor.location_id
+                    'location_id': self.supervisor.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 }
             ]
         }
@@ -823,7 +996,11 @@ class TestLocationAncestorsView(TestCase):
                 'location_type_name': 'state',
                 'user_have_access': False,
                 'parent_id': None,
-                'location_id': self.state.location_id
+                'location_id': self.state.location_id,
+                'archived_on': None,
+                'deprecated_to': [],
+                'deprecates': [],
+                'deprecates_at': None,
             },
             'locations': [
                 {
@@ -832,7 +1009,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'state',
                     'user_have_access': False,
                     'parent_id': None,
-                    'location_id': self.state.location_id
+                    'location_id': self.state.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test District',
@@ -840,7 +1021,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'district',
                     'user_have_access': False,
                     'parent_id': self.state.location_id,
-                    'location_id': self.district.location_id
+                    'location_id': self.district.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test Block',
@@ -848,7 +1033,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'block',
                     'user_have_access': False,
                     'parent_id': self.district.location_id,
-                    'location_id': self.block.location_id
+                    'location_id': self.block.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test Supervisor',
@@ -856,7 +1045,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'supervisor',
                     'user_have_access': False,
                     'parent_id': self.block.location_id,
-                    'location_id': self.supervisor.location_id
+                    'location_id': self.supervisor.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test AWC',
@@ -864,7 +1057,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'awc',
                     'user_have_access': True,
                     'parent_id': self.supervisor.location_id,
-                    'location_id': self.awc.location_id
+                    'location_id': self.awc.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 }
             ]
         }
@@ -891,7 +1088,11 @@ class TestLocationAncestorsView(TestCase):
                 'location_type_name': 'district',
                 'user_have_access': False,
                 'parent_id': self.state.location_id,
-                'location_id': self.district.location_id
+                'location_id': self.district.location_id,
+                'archived_on': None,
+                'deprecated_to': [],
+                'deprecates': [],
+                'deprecates_at': None,
             },
             'locations': [
                 {
@@ -900,7 +1101,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'state',
                     'user_have_access': False,
                     'parent_id': None,
-                    'location_id': self.state.location_id
+                    'location_id': self.state.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test District',
@@ -908,7 +1113,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'district',
                     'user_have_access': False,
                     'parent_id': self.state.location_id,
-                    'location_id': self.district.location_id
+                    'location_id': self.district.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test Block',
@@ -916,7 +1125,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'block',
                     'user_have_access': False,
                     'parent_id': self.district.location_id,
-                    'location_id': self.block.location_id
+                    'location_id': self.block.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test Supervisor',
@@ -924,7 +1137,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'supervisor',
                     'user_have_access': False,
                     'parent_id': self.block.location_id,
-                    'location_id': self.supervisor.location_id
+                    'location_id': self.supervisor.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test AWC',
@@ -932,7 +1149,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'awc',
                     'user_have_access': True,
                     'parent_id': self.supervisor.location_id,
-                    'location_id': self.awc.location_id
+                    'location_id': self.awc.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 }
             ]
         }
@@ -959,7 +1180,11 @@ class TestLocationAncestorsView(TestCase):
                 'location_type_name': 'block',
                 'user_have_access': False,
                 'parent_id': self.district.location_id,
-                'location_id': self.block.location_id
+                'location_id': self.block.location_id,
+                'archived_on': None,
+                'deprecated_to': [],
+                'deprecates': [],
+                'deprecates_at': None,
             },
             'locations': [
                 {
@@ -968,7 +1193,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'state',
                     'user_have_access': False,
                     'parent_id': None,
-                    'location_id': self.state.location_id
+                    'location_id': self.state.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test District',
@@ -976,7 +1205,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'district',
                     'user_have_access': False,
                     'parent_id': self.state.location_id,
-                    'location_id': self.district.location_id
+                    'location_id': self.district.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test Block',
@@ -984,7 +1217,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'block',
                     'user_have_access': False,
                     'parent_id': self.district.location_id,
-                    'location_id': self.block.location_id
+                    'location_id': self.block.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test Supervisor',
@@ -992,7 +1229,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'supervisor',
                     'user_have_access': False,
                     'parent_id': self.block.location_id,
-                    'location_id': self.supervisor.location_id
+                    'location_id': self.supervisor.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test AWC',
@@ -1000,7 +1241,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'awc',
                     'user_have_access': True,
                     'parent_id': self.supervisor.location_id,
-                    'location_id': self.awc.location_id
+                    'location_id': self.awc.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 }
             ]
         }
@@ -1027,7 +1272,11 @@ class TestLocationAncestorsView(TestCase):
                 'location_type_name': 'supervisor',
                 'user_have_access': False,
                 'parent_id': self.block.location_id,
-                'location_id': self.supervisor.location_id
+                'location_id': self.supervisor.location_id,
+                'archived_on': None,
+                'deprecated_to': [],
+                'deprecates': [],
+                'deprecates_at': None,
             },
             'locations': [
                 {
@@ -1036,7 +1285,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'state',
                     'user_have_access': False,
                     'parent_id': None,
-                    'location_id': self.state.location_id
+                    'location_id': self.state.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test District',
@@ -1044,7 +1297,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'district',
                     'user_have_access': False,
                     'parent_id': self.state.location_id,
-                    'location_id': self.district.location_id
+                    'location_id': self.district.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test Block',
@@ -1052,7 +1309,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'block',
                     'user_have_access': False,
                     'parent_id': self.district.location_id,
-                    'location_id': self.block.location_id
+                    'location_id': self.block.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test Supervisor',
@@ -1060,7 +1321,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'supervisor',
                     'user_have_access': False,
                     'parent_id': self.block.location_id,
-                    'location_id': self.supervisor.location_id
+                    'location_id': self.supervisor.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test AWC',
@@ -1068,7 +1333,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'awc',
                     'user_have_access': True,
                     'parent_id': self.supervisor.location_id,
-                    'location_id': self.awc.location_id
+                    'location_id': self.awc.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 }
             ]
         }
@@ -1095,7 +1364,11 @@ class TestLocationAncestorsView(TestCase):
                 'location_type_name': 'awc',
                 'user_have_access': True,
                 'parent_id': self.supervisor.location_id,
-                'location_id': self.awc.location_id
+                'location_id': self.awc.location_id,
+                'archived_on': None,
+                'deprecated_to': [],
+                'deprecates': [],
+                'deprecates_at': None,
             },
             'locations': [
                 {
@@ -1104,7 +1377,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'state',
                     'user_have_access': False,
                     'parent_id': None,
-                    'location_id': self.state.location_id
+                    'location_id': self.state.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test District',
@@ -1112,7 +1389,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'district',
                     'user_have_access': False,
                     'parent_id': self.state.location_id,
-                    'location_id': self.district.location_id
+                    'location_id': self.district.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test Block',
@@ -1120,7 +1401,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'block',
                     'user_have_access': False,
                     'parent_id': self.district.location_id,
-                    'location_id': self.block.location_id
+                    'location_id': self.block.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test Supervisor',
@@ -1128,7 +1413,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'supervisor',
                     'user_have_access': False,
                     'parent_id': self.block.location_id,
-                    'location_id': self.supervisor.location_id
+                    'location_id': self.supervisor.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 },
                 {
                     'name': 'Test AWC',
@@ -1136,7 +1425,11 @@ class TestLocationAncestorsView(TestCase):
                     'location_type_name': 'awc',
                     'user_have_access': True,
                     'parent_id': self.supervisor.location_id,
-                    'location_id': self.awc.location_id
+                    'location_id': self.awc.location_id,
+                    'archived_on': None,
+                    'deprecated_to': [],
+                    'deprecates': [],
+                    'deprecates_at': None,
                 }
             ]
         }

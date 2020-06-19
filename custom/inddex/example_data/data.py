@@ -17,6 +17,7 @@ from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.toggles import BULK_UPLOAD_DATE_OPENED, NAMESPACE_DOMAIN
 from corehq.util.couch import IterDB
 from corehq.util.workbook_reading import make_worksheet
 
@@ -27,9 +28,7 @@ FOODRECALL_CASE_TYPE = 'foodrecall'
 
 def populate_inddex_domain(domain):
     user = _get_or_create_user(domain)
-    _import_cases(domain, FOODRECALL_CASE_TYPE, 'foodrecall_cases.csv', user)
-    _import_cases(domain, FOOD_CASE_TYPE, 'food_cases.csv', user)
-    _update_case_id_properties(domain, user)
+    _import_cases(domain, user)
     _import_fixtures(domain)
     _rebuild_datasource(domain)
 
@@ -38,11 +37,19 @@ def _get_or_create_user(domain):
     username = format_username('nick', domain)
     user = CommCareUser.get_by_username(username, strict=True)
     if not user:
-        user = CommCareUser.create(domain, username, 'secret')
+        user = CommCareUser.create(domain, username, 'secret', None, None)
     return user
 
 
-def _import_cases(domain, case_type, csv_filename, user):
+def _import_cases(domain, user):
+    BULK_UPLOAD_DATE_OPENED.set(domain, True, NAMESPACE_DOMAIN)
+    _import_case_type(domain, FOODRECALL_CASE_TYPE, 'foodrecall_cases.csv', user)
+    _import_case_type(domain, FOOD_CASE_TYPE, 'food_cases.csv', user)
+    BULK_UPLOAD_DATE_OPENED.set(domain, False, NAMESPACE_DOMAIN)
+    _update_case_id_properties(domain, user)
+
+
+def _import_case_type(domain, case_type, csv_filename, user):
     headers, rows = _read_csv(csv_filename)
     worksheet = WorksheetWrapper(make_worksheet([headers] + rows))
     config = _get_importer_config(case_type, headers, user._id)
@@ -98,17 +105,14 @@ def _get_importer_config(case_type, headers, user_id):
     )
 
 
-def get_expected_report():
-    headers, rows = _read_csv('expected_result.csv')
-    return [dict(zip(headers, row)) for row in rows]
-
-
 def _import_fixtures(domain):
     for fixture_name, filename in [
             ('recipes', 'recipes.csv'),
             ('conv_factors', 'conv_factors.csv'),
             ('food_list', 'food_list.csv'),
             ('food_composition_table', 'food_composition_table.csv'),
+            ('nutrients_lookup', 'nutrients_lookup.csv'),
+            ('languages', 'languages.csv'),
     ]:
         fields, rows = _read_csv(filename)
         data_type = FixtureDataType(
@@ -119,12 +123,12 @@ def _import_fixtures(domain):
         data_type.save()
 
         with IterDB(FixtureDataItem.get_db(), chunksize=1000) as iter_db:
-            for vals in rows:
-                fixture_data_item = _mk_fixture_data_item(domain, data_type._id, fields, vals)
+            for i, vals in enumerate(rows):
+                fixture_data_item = _mk_fixture_data_item(domain, data_type._id, fields, vals, i)
                 iter_db.save(fixture_data_item)
 
 
-def _mk_fixture_data_item(domain, data_type_id, fields, vals):
+def _mk_fixture_data_item(domain, data_type_id, fields, vals, i):
     """Fixtures are wicked slow, so just do it in JSON"""
     return {
         "_id": uuid.uuid4().hex,
@@ -143,7 +147,7 @@ def _mk_fixture_data_item(domain, data_type_id, fields, vals):
             for field_name, field_value in zip(fields, vals)
         },
         "item_attributes": {},
-        "sort_key": 0,
+        "sort_key": i,
     }
 
 

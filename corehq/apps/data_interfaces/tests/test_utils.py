@@ -29,7 +29,7 @@ class TestUtils(TestCase):
 
     @patch('corehq.apps.data_interfaces.utils.get_repeat_records_by_payload_id')
     @patch('corehq.apps.data_interfaces.utils._get_startkey_endkey_all_records')
-    @patch('corehq.apps.data_interfaces.utils.RepeatRecord')
+    @patch('corehq.motech.repeaters.models.RepeatRecord')
     def test__get_ids_payload_id_not_in_data(self, mock_RepeatRecord, mock__get_startkey_endkey_all_records,
                                              mock_get_repeat_records_by_payload_id):
         data = {
@@ -46,7 +46,7 @@ class TestUtils(TestCase):
         self.assertEqual(mock__get_startkey_endkey_all_records.call_count, 1)
         self.assertEqual(response, ['id_1', 'id_2'])
 
-    @patch('corehq.apps.data_interfaces.utils.RepeatRecord')
+    @patch('corehq.motech.repeaters.models.RepeatRecord')
     def test__validate_record_record_does_not_exist(self, mock_RepeatRecord):
         mock_RepeatRecord.get.side_effect = [ResourceNotFound]
         response = _validate_record('id_1', 'test_domain')
@@ -54,7 +54,7 @@ class TestUtils(TestCase):
         mock_RepeatRecord.get.assert_called_once()
         self.assertIsNone(response)
 
-    @patch('corehq.apps.data_interfaces.utils.RepeatRecord')
+    @patch('corehq.motech.repeaters.models.RepeatRecord')
     def test__validate_record_invalid_domain(self, mock_RepeatRecord):
         mock_payload = Mock()
         mock_payload.domain = 'domain'
@@ -64,7 +64,7 @@ class TestUtils(TestCase):
         mock_RepeatRecord.get.assert_called_once()
         self.assertIsNone(response)
 
-    @patch('corehq.apps.data_interfaces.utils.RepeatRecord')
+    @patch('corehq.motech.repeaters.models.RepeatRecord')
     def test__validate_record_success(self, mock_RepeatRecord):
         mock_payload = Mock()
         mock_payload.domain = 'test_domain'

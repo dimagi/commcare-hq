@@ -100,6 +100,13 @@ class Log(models.Model):
     # The MessagingSubEvent that this log is tied to
     messaging_subevent = models.ForeignKey('sms.MessagingSubEvent', null=True, on_delete=models.PROTECT)
 
+    def set_gateway_error(self, message):
+        """Set gateway error message or code
+
+        :param message: Non-retryable message or code returned by the gateway.
+        """
+        self.set_system_error(f"Gateway error: {message}")
+
     def set_system_error(self, message=None):
         self.error = True
         self.system_error_message = message
@@ -181,6 +188,7 @@ class SMSBase(UUIDGeneratorMixin, Log):
     ERROR_MESSAGE_TOO_LONG = 'MESSAGE_TOO_LONG'
     ERROR_CONTACT_IS_INACTIVE = 'CONTACT_IS_INACTIVE'
     ERROR_TRIAL_SMS_EXCEEDED = 'TRIAL_SMS_EXCEEDED'
+    ERROR_MESSAGE_FORMAT_INVALID = 'MESSAGE_FORMAT_INVALID'
 
     ERROR_MESSAGES = {
         ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS:
@@ -199,6 +207,8 @@ class SMSBase(UUIDGeneratorMixin, Log):
             ugettext_noop("The recipient has been deactivated."),
         ERROR_TRIAL_SMS_EXCEEDED:
             ugettext_noop("The number of SMS that can be sent on a trial plan has been exceeded."),
+        ERROR_MESSAGE_FORMAT_INVALID:
+            ugettext_noop("The message format was invalid.")
     }
 
     UUIDS_TO_GENERATE = ['couch_id']
@@ -846,8 +856,11 @@ class MessagingStatusMixin(object):
     def refresh(self):
         return self.__class__.objects.get(pk=self.pk)
 
-    def error(self, error_code, additional_error_text=None):
-        self.status = MessagingEvent.STATUS_ERROR
+    def error(self, error_code, additional_error_text=None, status=None):
+        if status is None:
+            self.status = MessagingEvent.STATUS_ERROR
+        else:
+            self.status = status
         self.error_code = error_code
         self.additional_error_text = additional_error_text
         self.save()
@@ -871,12 +884,16 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     STATUS_COMPLETED = 'CMP'
     STATUS_NOT_COMPLETED = 'NOT'
     STATUS_ERROR = 'ERR'
+    STATUS_EMAIL_SENT = 'SND'
+    STATUS_EMAIL_DELIVERED = 'DEL'
 
     STATUS_CHOICES = (
         (STATUS_IN_PROGRESS, ugettext_noop('In Progress')),
         (STATUS_COMPLETED, ugettext_noop('Completed')),
         (STATUS_NOT_COMPLETED, ugettext_noop('Not Completed')),
         (STATUS_ERROR, ugettext_noop('Error')),
+        (STATUS_EMAIL_SENT, ugettext_noop('Email Sent')),
+        (STATUS_EMAIL_DELIVERED, ugettext_noop('Email Delivered')),
     )
 
     SOURCE_BROADCAST = 'BRD'
@@ -976,6 +993,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     ERROR_GATEWAY_NOT_FOUND = 'GATEWAY_NOT_FOUND'
     ERROR_NO_EMAIL_ADDRESS = 'NO_EMAIL_ADDRESS'
     ERROR_TRIAL_EMAIL_LIMIT_REACHED = 'TRIAL_EMAIL_LIMIT_REACHED'
+    ERROR_EMAIL_BOUNCED = 'EMAIL_BOUNCED'
+    ERROR_EMAIL_GATEWAY = 'EMAIL_GATEWAY_ERROR'
 
     ERROR_MESSAGES = {
         ERROR_NO_RECIPIENT:
@@ -1027,6 +1046,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         ERROR_TRIAL_EMAIL_LIMIT_REACHED:
             ugettext_noop("Cannot send any more reminder emails. The limit for "
                 "sending reminder emails on a Trial plan has been reached."),
+        ERROR_EMAIL_BOUNCED: ugettext_noop("Email Bounced"),
+        ERROR_EMAIL_GATEWAY: ugettext_noop("Email Gateway Error"),
     }
 
     domain = models.CharField(max_length=126, null=False, db_index=True)
@@ -2841,3 +2862,22 @@ class DailyOutboundSMSLimitReached(models.Model):
             cls.objects.create(domain=domain, date=date)
         except IntegrityError:
             pass
+
+
+class Email(models.Model):
+    """
+    Represents an email that is associated with a messaging subevent.
+    """
+
+    domain = models.CharField(max_length=126, db_index=True)
+    date = models.DateTimeField(db_index=True)
+    couch_recipient_doc_type = models.CharField(max_length=126, db_index=True)
+    couch_recipient = models.CharField(max_length=126, db_index=True)
+
+    # The MessagingSubEvent that this email is tied to
+    messaging_subevent = models.ForeignKey('sms.MessagingSubEvent', on_delete=models.PROTECT)
+
+    # Email details
+    recipient_address = models.CharField(max_length=255, db_index=True)
+    subject = models.TextField(null=True)
+    body = models.TextField(null=True)
