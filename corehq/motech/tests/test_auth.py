@@ -54,7 +54,7 @@ class RepeaterAuthManagerTests(TestCase, DomainSubscriptionMixin):
         super().setUpClass()
         cls.domain = Domain(name=DOMAIN, is_active=True)
         cls.domain.save()
-        cls.user = WebUser.create(DOMAIN, 'admin', 'secret', is_admin=True)
+        cls.user = WebUser.create(DOMAIN, 'admin', 'secret', None, None, is_admin=True)
         cls.user.eula.signed = True
         cls.user.save()
         cls.setup_subscription(DOMAIN, SoftwarePlanEdition.PRO)

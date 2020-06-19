@@ -28,6 +28,7 @@ from corehq.apps.locations.permissions import LOCATION_ACCESS_DENIED
 from corehq.apps.locations.util import valid_location_site_code
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_display_string
+from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.util.quickcache import quickcache
 
 from .models import (
@@ -372,11 +373,12 @@ class LocationFormSet(object):
     _location_form_class = LocationForm
     _location_data_editor = CustomDataEditor
 
-    def __init__(self, location, request_user, is_new, bound_data=None, *args, **kwargs):
+    def __init__(self, location, request, is_new, bound_data=None, *args, **kwargs):
         self.location = location
         self.domain = location.domain
         self.is_new = is_new
-        self.request_user = request_user
+        self.request = request
+        self.request_user = request.couch_user
         self.location_form = self._location_form_class(location, bound_data, is_new=is_new)
         self.custom_location_data = self._get_custom_location_data(bound_data, is_new)
         self.forms = [self.location_form, self.custom_location_data]
@@ -414,6 +416,8 @@ class LocationFormSet(object):
             self.domain,
             username,
             password,
+            created_by=self.request.user,
+            created_via=USER_CHANGE_VIA_WEB,
             device_id="Generated from HQ",
             first_name=first_name,
             last_name=last_name,

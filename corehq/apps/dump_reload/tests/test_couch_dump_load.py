@@ -183,12 +183,16 @@ class CouchDumpLoadTest(TestCase):
             domain=self.domain_name,
             username='webuser_1',
             password='secret',
+            created_by=None,
+            created_via=None,
             email='webuser1@example.com',
         )
         other_user = WebUser.create(
             domain='other-domain',
             username='other_webuser',
             password='secret',
+            created_by=None,
+            created_via=None,
             email='webuser2@example.com',
         )
 

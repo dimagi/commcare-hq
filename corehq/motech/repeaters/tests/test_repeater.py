@@ -797,6 +797,8 @@ class UserRepeaterTest(TestCase, DomainSubscriptionMixin):
             self.domain,
             "{}@{}.commcarehq.org".format(username, self.domain),
             "123",
+            None,
+            None,
         )
         self.addCleanup(user.delete)
         return user

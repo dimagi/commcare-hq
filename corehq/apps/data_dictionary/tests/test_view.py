@@ -17,7 +17,7 @@ class UpdateCasePropertyViewTest(TestCase):
     def setUpClass(cls):
         super(UpdateCasePropertyViewTest, cls).setUpClass()
         cls.domain = create_domain(cls.domain_name)
-        cls.couch_user = WebUser.create(None, "test", "foobar")
+        cls.couch_user = WebUser.create(None, "test", "foobar", None, None)
         cls.couch_user.add_domain_membership(cls.domain_name, is_admin=True)
         cls.couch_user.save()
         cls.case_type_obj = CaseType(name='caseType', domain=cls.domain_name)

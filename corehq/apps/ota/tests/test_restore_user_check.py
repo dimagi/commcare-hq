@@ -18,7 +18,7 @@ class UserCheckSyncTests(TestCase):
     def setUpClass(cls):
         cls.domain = uuid.uuid4().hex
         cls.project = create_domain(cls.domain)
-        cls.user = CommCareUser.create(cls.domain, 'mtest', 'abc')
+        cls.user = CommCareUser.create(cls.domain, 'mtest', 'abc', None, None)
         cls.auth_header = _get_auth_header('mtest', 'abc')
         cls.restore_uri = reverse('ota_restore', args=[cls.domain])
 
@@ -37,7 +37,7 @@ class UserCheckSyncTests(TestCase):
         password = '123'
         auth_header = _get_auth_header(username, password)
 
-        original_user = CommCareUser.create(self.domain, username, password)
+        original_user = CommCareUser.create(self.domain, username, password, None, None)
         original_user_id = original_user.user_id
         original_user.delete()
 
@@ -45,7 +45,7 @@ class UserCheckSyncTests(TestCase):
         self._assert_restore_response_code(401, auth_header)
 
         # create new user with same username and password
-        new_user = CommCareUser.create(self.domain, username, password)
+        new_user = CommCareUser.create(self.domain, username, password, None, None)
 
         # restore OK since user_id not passed so can't do check
         self._assert_restore_response_code(200, auth_header)

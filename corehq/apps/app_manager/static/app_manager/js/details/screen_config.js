@@ -305,6 +305,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                     hasAutocomplete: false,
                     header: {},
                     model: screen.model,
+                    date_format: "",
                     time_ago_interval: detailScreenConfig.TIME_AGO.year,
                 };
                 _.each(_.keys(defaults), function (key) {
@@ -485,7 +486,7 @@ hqDefine('app_manager/js/details/screen_config', function () {
                 }, {
                     label: gettext('Oct 31, ') + yyyy,
                     value: '%b %d, %Y',
-                }]);
+                }]).val(self.original.date_format);
                 self.date_extra.ui.prepend($('<div/>').text(gettext(' Format ')));
 
                 self.late_flag_extra = uiElement.input().val(self.original.late_flag.toString());

@@ -136,7 +136,7 @@ class TestLinkedUCR(BaseLinkedAppsTest):
         create_domain(self.domain)
         self.addCleanup(delete_all_domains)
 
-        couch_user = WebUser.create(self.domain, "test", "foobar")
+        couch_user = WebUser.create(self.domain, "test", "foobar", None, None)
         django_user = couch_user.get_django_user()
         self.addCleanup(delete_all_users)
 

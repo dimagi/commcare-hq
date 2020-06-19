@@ -22,7 +22,7 @@ class IncomingTest(TestCase):
         cls.domain = Domain(name='test')
         cls.domain.save()
         cls.phone_number = "7777722222"
-        cls.couch_user = WebUser.create(cls.domain.name, "someone", "pw")
+        cls.couch_user = WebUser.create(cls.domain.name, "someone", "pw", None, None)
         cls.couch_user.add_phone_number(cls.phone_number)
         cls.couch_user.save()
 
