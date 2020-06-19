@@ -74,9 +74,9 @@ class CustomContentTest(BaseICDSTest):
         cls.awc1 = make_loc('awc1', domain=cls.domain, type=AWC_LOCATION_TYPE_CODE, parent=cls.ls1)
         cls.awc2 = make_loc('awc2', domain=cls.domain, type=AWC_LOCATION_TYPE_CODE, parent=None)
 
-        cls.user1 = CommCareUser.create(cls.domain, 'mobile-1', 'abc', location=cls.awc1)
-        cls.user2 = CommCareUser.create(cls.domain, 'mobile-2', 'abc', location=cls.awc2)
-        cls.user3 = CommCareUser.create(cls.domain, 'mobile-3', 'abc', location=cls.ls1)
+        cls.user1 = CommCareUser.create(cls.domain, 'mobile-1', 'abc', None, None, location=cls.awc1)
+        cls.user2 = CommCareUser.create(cls.domain, 'mobile-2', 'abc', None, None, location=cls.awc2)
+        cls.user3 = CommCareUser.create(cls.domain, 'mobile-3', 'abc', None, None, location=cls.ls1)
 
         cls.create_user_case(cls.user1)
         cls.create_user_case(cls.user2)

@@ -238,13 +238,13 @@ class UserReindexerTest(TestCase):
 
     def test_user_reindexer_v2(self):
         username = 'reindex-test-username-v2'
-        CommCareUser.create(DOMAIN, username, 'secret')
+        CommCareUser.create(DOMAIN, username, 'secret', None, None)
         reindex_and_clean('user')
         self._assert_user_in_es(username)
 
     def test_web_user_reindexer_v2(self):
         username = 'test-v2@example.com'
-        WebUser.create(DOMAIN, username, 'secret')
+        WebUser.create(DOMAIN, username, 'secret', None, None)
         reindex_and_clean('user')
         self._assert_user_in_es(username, is_webuser=True)
 

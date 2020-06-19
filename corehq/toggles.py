@@ -439,6 +439,13 @@ APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+LAZY_LOAD_MULTIMEDIA = StaticToggle(
+    'optional-media',
+    'ICDS: Lazy load multimedia files in Updates',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 APP_BUILDER_ADVANCED = StaticToggle(
     'advanced-app-builder',
     'Advanced Module in App-Builder',
@@ -1168,7 +1175,13 @@ SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER = StaticToggle(
     'This can be used to create report builder reports that are location-safe.',
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/internal/Demo+Mobile+Workers',
+)
+
+SHOW_IDS_IN_REPORT_BUILDER = StaticToggle(
+    'show_ids_in_report_builder',
+    'Allow adding Case IDs to report builder reports.',
+    TAG_SOLUTIONS_OPEN,
+    [NAMESPACE_DOMAIN],
 )
 
 MOBILE_USER_DEMO_MODE = StaticToggle(
@@ -1279,7 +1292,7 @@ ICDS = StaticToggle(
     "ICDS: Enable ICDS features (necessary since features are on India and ICDS envs)",
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    relevant_environments={'icds', 'india', 'staging'},
+    relevant_environments={'icds', 'india', 'staging', 'icds-staging'},
 )
 
 DATA_DICTIONARY = StaticToggle(
@@ -1559,7 +1572,7 @@ ICDS_DISHA_API = StaticToggle(
     'ICDS: Access DISHA API',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
-    relevant_environments={'icds', 'india'},
+    relevant_environments={'icds', 'india', 'icds-staging'},
 )
 
 
@@ -1568,7 +1581,7 @@ ICDS_NIC_INDICATOR_API = StaticToggle(
     'ICDS: Dashboard Indicator API for NIC',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
-    relevant_environments={'icds', 'india'},
+    relevant_environments={'icds', 'india', 'icds-staging'},
 )
 
 AP_WEBSERVICE = StaticToggle(
@@ -1576,7 +1589,7 @@ AP_WEBSERVICE = StaticToggle(
     'ICDS: ENABLE AP webservice',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
-    relevant_environments={'icds', 'india'},
+    relevant_environments={'icds', 'india', 'icds-staging'},
 )
 
 ALLOW_BLANK_CASE_TAGS = StaticToggle(
@@ -1766,7 +1779,7 @@ ICDS_GOVERNANCE_DASHABOARD_API = StaticToggle(
     'ICDS: Dashboard Governance dashboard API',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
-    relevant_environments={'icds', 'india'},
+    relevant_environments={'icds', 'india', 'icds-staging'},
 )
 
 DO_NOT_RATE_LIMIT_SUBMISSIONS = StaticToggle(
@@ -1885,7 +1898,7 @@ PERFORM_LOCATION_REASSIGNMENT = StaticToggle(
     'Ability to submit requests for location reassignment',
     TAG_CUSTOM,
     [NAMESPACE_USER],
-    relevant_environments={'icds', 'india', 'staging'},
+    relevant_environments={'icds', 'india', 'staging', 'icds-staging'},
 )
 
 DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE = StaticToggle(
@@ -1893,7 +1906,7 @@ DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE = StaticToggle(
     'Allow domain users to download location reassignment template',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
-    relevant_environments={'icds', 'india', 'staging'},
+    relevant_environments={'icds', 'india', 'staging', 'icds-staging'},
 )
 
 ICDS_BIHAR_DEMOGRAPHICS_API = StaticToggle(
@@ -1901,7 +1914,7 @@ ICDS_BIHAR_DEMOGRAPHICS_API = StaticToggle(
     'ICDS: Bihar Demographics API',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
-    relevant_environments={'icds', 'india'},
+    relevant_environments={'icds', 'india', 'icds-staging'},
 
 )
 
@@ -1910,7 +1923,7 @@ ICDS_LOCATION_REASSIGNMENT_AGG = StaticToggle(
     'ICDS: Use aggregation modifications for location reassignment',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    relevant_environments={'icds', 'india'},
+    relevant_environments={'icds', 'india', 'icds-staging'},
 )
 
 REFER_CASE_REPEATER = StaticToggle(
@@ -1953,11 +1966,4 @@ ONE_PHONE_NUMBER_MULTIPLE_CONTACTS = StaticToggle(
     Only use this feature if every form behind an SMS survey begins by identifying the contact.
     Otherwise the recipient has no way to know who they're supposed to be enter information about.
     """
-)
-
-LOGOUT_SENSITIVE_DOMAIN = StaticToggle(
-    'logout_sensitive_domain',
-    'Get details about clients that are not logged in',
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
 )

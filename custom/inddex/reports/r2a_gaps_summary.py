@@ -1,6 +1,7 @@
 import textwrap
 from collections import defaultdict
 
+from corehq.apps.reports.filters.case_list import CaseListFilter
 from custom.inddex import filters
 from custom.inddex.const import (
     FOOD_ITEM,
@@ -16,7 +17,7 @@ from .utils import MultiTabularReport, format_row
 
 
 class GapsSummaryReport(MultiTabularReport):
-    name = 'Output 2a - Gaps Summary by Food Type'
+    name = 'Report 2a - Gaps Summary by Food Type'
     slug = 'report_2a_gaps_summary_by_food_type'
     description = textwrap.dedent("""
         This report includes summaries of the existing conversion factor gaps
@@ -29,7 +30,7 @@ class GapsSummaryReport(MultiTabularReport):
     @property
     def fields(self):
         return [
-            filters.CaseOwnersFilter,
+            CaseListFilter,
             filters.DateRangeFilter,
             filters.GapTypeFilter,
             filters.RecallStatusFilter,

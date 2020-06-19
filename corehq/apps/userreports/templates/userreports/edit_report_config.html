@@ -3,6 +3,8 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
+{% requirejs_main "userreports/js/edit_report_config" %}
+
 {% block page_content %}
   <div class="pull-right page-actions-toolbar">
     <div class="btn-toolbar">
@@ -88,8 +90,7 @@
               <span class="asteriskField">*</span>
             </label>
             <div class="controls col-sm-9 col-md-9">
-              <select name="domain" class="select form-control" required="" id="domain-selector">
-                <option value="" selected="">{% trans "Select a project..." %}</option>
+              <select name="to_domains" class="form-control" required="" id="domain-selector" multiple>
                 {% for domain in linked_domain_list %}
                   <option value="{{ domain }}">{{ domain }}</option>
                 {% endfor %}

@@ -19,6 +19,7 @@ from corehq.apps.hqwebapp.views import (
     iframe_domain_login,
     iframe_domain_login_new_window,
     jserror,
+    log_email_event,
     login,
     login_new_window,
     logout,
@@ -86,6 +87,7 @@ urlpatterns = [
     url(r'^ping_session/$', ping_session, name='ping_session'),
     url(r'^relogin/$', login_new_window, name='login_new_window'),
     url(r'^relogin/iframe/$', iframe_domain_login_new_window, name='iframe_domain_login_new_window'),
+    url(r'^log_email_event/(?P<secret>[\w]+)/?$', log_email_event, name='log_email_event'),
 
 ]
 

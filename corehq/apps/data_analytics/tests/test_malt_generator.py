@@ -56,7 +56,7 @@ class MaltGeneratorTest(TestCase):
     def _setup_domain_user(cls):
         cls.domain = Domain(name=cls.DOMAIN_NAME)
         cls.domain.save()
-        cls.user = CommCareUser.create(cls.DOMAIN_NAME, cls.USERNAME, '*****')
+        cls.user = CommCareUser.create(cls.DOMAIN_NAME, cls.USERNAME, '*****', None, None)
         cls.user.save()
         cls.user_id = cls.user._id
 

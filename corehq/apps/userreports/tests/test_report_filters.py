@@ -736,7 +736,7 @@ class LocationDrilldownFilterTest(LocationHierarchyTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.user = CommCareUser.create(cls.domain, 'test1', 'test123')
+        cls.user = CommCareUser.create(cls.domain, 'test1', 'test123', None, None)
         super(LocationDrilldownFilterTest, cls).setUpClass()
 
     def test_filter(self):

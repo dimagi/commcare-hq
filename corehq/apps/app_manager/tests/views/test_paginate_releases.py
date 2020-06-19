@@ -27,7 +27,7 @@ class TestPaginateReleases(TestCase):
 
         cls.username = 'bananafana'
         cls.password = '*******'
-        cls.user = WebUser.create(cls.domain.name, cls.username, cls.password, is_admin=True)
+        cls.user = WebUser.create(cls.domain.name, cls.username, cls.password, None, None, is_admin=True)
         cls.user.eula.signed = True
         cls.user.save()
 

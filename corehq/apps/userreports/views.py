@@ -60,6 +60,7 @@ from corehq.apps.hqwebapp.decorators import (
     use_datatables,
     use_daterangepicker,
     use_jquery_ui,
+    use_multiselect,
     use_nvd3,
 )
 from corehq.apps.hqwebapp.tasks import send_mail_async
@@ -68,7 +69,7 @@ from corehq.apps.linked_domain.dbaccessors import get_linked_domains
 from corehq.apps.linked_domain.models import DomainLink, ReportLinkDetail
 from corehq.apps.linked_domain.ucr import create_linked_ucr
 from corehq.apps.linked_domain.util import is_linked_report
-from corehq.apps.locations.permissions import conditionally_location_safe, location_safe
+from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.saved_reports.models import ReportConfig
@@ -223,6 +224,10 @@ class UserConfigReportsHomeView(BaseUserConfigReportsView):
 class BaseEditConfigReportView(BaseUserConfigReportsView):
     template_name = 'userreports/edit_report_config.html'
 
+    @use_multiselect
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
     @property
     def report_id(self):
         return self.kwargs.get('report_id')
@@ -239,7 +244,7 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
             'form': self.edit_form,
             'report': self.config,
             'referring_apps': self.get_referring_apps(),
-            'linked_domain_list': [d.linked_domain for d in get_linked_domains(self.domain)],
+            'linked_domain_list': sorted([d.linked_domain for d in get_linked_domains(self.domain)]),
         }
 
     def get_referring_apps(self):
@@ -480,6 +485,7 @@ class ConfigureReport(ReportBuilderView):
     @use_jquery_ui
     @use_datatables
     @use_nvd3
+    @use_multiselect
     def dispatch(self, request, *args, **kwargs):
         if self.existing_report:
             self.source_type = get_source_type_from_report_config(self.existing_report)
@@ -620,7 +626,7 @@ class ConfigureReport(ReportBuilderView):
             'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, []),
             'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
             'date_range_options': [r._asdict() for r in get_simple_dateranges()],
-            'linked_domain_list': [d.linked_domain for d in get_linked_domains(self.domain)],
+            'linked_domain_list': sorted([d.linked_domain for d in get_linked_domains(self.domain)]),
         }
 
     def _get_bound_form(self, report_data):
@@ -1417,20 +1423,6 @@ def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
         return export_response(Temp(path), params.format, adapter.display_name)
 
 
-@location_safe
-@login_and_domain_required
-def data_source_status(request, domain, config_id):
-    config, _ = get_datasource_config_or_404(config_id, domain)
-    build = config.meta.build
-    # there appears to be a way that these can be built, but not have initiated set
-    if build.initiated or build.initiated_in_place:
-        return JsonResponse({
-            'isBuilt': build.finished or build.rebuilt_asynchronously or build.finished_in_place
-        })
-
-    return JsonResponse({'isBuilt': True})
-
-
 def _get_report_filter(domain, report_id, filter_id):
     report = get_report_config_or_404(report_id, domain)[0]
     report_filter = report.get_ui_filter(filter_id)
@@ -1566,31 +1558,31 @@ class DataSourceSummaryView(BaseUserConfigReportsView):
 @domain_admin_required
 def copy_report(request, domain):
     from_domain = domain
-    to_domain = request.POST.get("domain")
+    to_domains = request.POST.getlist("to_domains")
     report_id = request.POST.get("report_id")
-    domain_link = DomainLink.objects.get(master_domain=from_domain, linked_domain=to_domain)
-    try:
-        link_info = create_linked_ucr(domain_link, report_id)
-        domain_link.update_last_pull(
-            'report',
-            request.couch_user._id,
-            model_details=ReportLinkDetail(report_id=link_info.report.get_id)
-        )
-        messages.success(request, _(f"Successfully linked and copied {link_info.report.title} to {to_domain}. "
-                                    "We've redirected you to the new report."))
-        url = reverse(
-            ConfigurableReportView.slug,
-            args=[
-                link_info.report.domain,
-                link_info.report.get_id,
-            ],
-        )
-        if domain_link.is_remote:
-            url = f'{domain_link.remote_base_url}{url}'
-        return HttpResponseRedirect(url)
-    except Exception as err:
-        messages.error(request, _("Something went wrong linking your report"))
-        notify_exception(request, message=str(err))
-        return HttpResponseRedirect(
-            reverse(ConfigurableReportView.slug, args=[from_domain, report_id])
-        )
+    successes = []
+    failures = []
+    for to_domain in to_domains:
+        domain_link = DomainLink.objects.get(master_domain=from_domain, linked_domain=to_domain)
+        try:
+            link_info = create_linked_ucr(domain_link, report_id)
+            domain_link.update_last_pull(
+                'report',
+                request.couch_user._id,
+                model_details=ReportLinkDetail(report_id=link_info.report.get_id)
+            )
+            successes.append(to_domain)
+        except Exception as err:
+            failures.append(to_domain)
+            notify_exception(request, message=str(err))
+
+    if successes:
+        messages.success(
+            request,
+            _(f"Successfully linked and copied {link_info.report.title} to {', '.join(successes)}. "))
+    if failures:
+        messages.error(request, _(f"Due to errors, the report was not copied to {', '.join(failures)}"))
+
+    return HttpResponseRedirect(
+        reverse(ConfigurableReportView.slug, args=[from_domain, report_id])
+    )

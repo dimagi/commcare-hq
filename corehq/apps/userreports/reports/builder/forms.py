@@ -55,6 +55,7 @@ from corehq.apps.userreports.reports.builder.columns import (
 )
 from corehq.apps.userreports.reports.builder.const import (
     COMPUTED_OWNER_LOCATION_PROPERTY_ID,
+    COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID,
     COMPUTED_OWNER_NAME_PROPERTY_ID,
     COMPUTED_USER_NAME_PROPERTY_ID,
     PROPERTY_TYPE_CASE_PROP,
@@ -81,11 +82,12 @@ from corehq.toggles import (
     SHOW_RAW_DATA_SOURCES_IN_REPORT_BUILDER,
     SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER,
     OVERRIDE_EXPANDED_COLUMN_LIMIT_IN_REPORT_BUILDER,
-)
+    SHOW_IDS_IN_REPORT_BUILDER)
 
 
 STATIC_CASE_PROPS = [
     "closed",
+    "closed_on",
     "modified_on",
     "name",
     "opened_on",
@@ -169,7 +171,9 @@ class DataSourceProperty(object):
         elif self._type == PROPERTY_TYPE_META:
             return FormMetaColumnOption(self._id, self._data_types, self._text, self._source)
         elif self._type == PROPERTY_TYPE_CASE_PROP:
-            if self._id == COMPUTED_OWNER_NAME_PROPERTY_ID or self._id == COMPUTED_OWNER_LOCATION_PROPERTY_ID:
+            if self._id in (
+                    COMPUTED_OWNER_NAME_PROPERTY_ID, COMPUTED_OWNER_LOCATION_PROPERTY_ID,
+                    COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID):
                 return OwnernameComputedCasePropertyOption(self._id, self._data_types, self._text)
             elif self._id == COMPUTED_USER_NAME_PROPERTY_ID:
                 return UsernameComputedCasePropertyOption(self._id, self._data_types, self._text)
@@ -222,7 +226,7 @@ class DataSourceProperty(object):
             "display": configuration["display_text"],
             "type": filter_format
         }
-        if configuration['format'] == 'Date':
+        if configuration['format'] == const.FORMAT_DATE:
             filter.update({'compare_as_string': True})
         if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_OWNER_NAME_PROPERTY_ID:
             filter.update({"choice_provider": {"type": "owner"}})
@@ -230,6 +234,8 @@ class DataSourceProperty(object):
             filter.update({"choice_provider": {"type": "user"}})
         if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_OWNER_LOCATION_PROPERTY_ID:
             filter.update({"choice_provider": {"type": "location"}})
+        if filter_format == 'dynamic_choice_list' and self._id == COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID:
+            filter.update({"choice_provider": {"type": "location", "include_descendants": True}})
         if configuration.get('pre_value') or configuration.get('pre_operator'):
             filter.update({
                 'type': 'pre',  # type could have been "date"
@@ -408,7 +414,7 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
                 self.app, [self.source_id], defaults=list(DEFAULT_CASE_PROPERTY_DATATYPES),
                 include_parent_properties=True,
             )
-            self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed'})
+            self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed', 'closed_on'})
 
     @property
     def uses_managed_data_source(self):
@@ -552,6 +558,7 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
             'user_id': _('User ID Last Updating Case'),
             'owner_name': _('Case Owner'),
             'mobile worker': _('Mobile Worker Last Updating Case'),
+            'case_id': _('Case ID')
         }
 
         properties = OrderedDict()
@@ -571,9 +578,25 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
         properties[COMPUTED_OWNER_NAME_PROPERTY_ID] = self._get_owner_name_pseudo_property()
         properties[COMPUTED_USER_NAME_PROPERTY_ID] = self._get_user_name_pseudo_property()
 
+        if SHOW_IDS_IN_REPORT_BUILDER.enabled(self.domain):
+            properties['case_id'] = self._get_case_id_pseudo_property()
+
         if SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER.enabled(self.domain):
             properties[COMPUTED_OWNER_LOCATION_PROPERTY_ID] = self._get_owner_location_pseudo_property()
+            properties[COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID] = \
+                self._get_owner_location_with_descendants_pseudo_property()
+
         return properties
+
+    @staticmethod
+    def _get_case_id_pseudo_property():
+        return DataSourceProperty(
+            type=PROPERTY_TYPE_CASE_PROP,
+            id='case_id',
+            text=_('Case ID'),
+            source='case_id',
+            data_types=["string"],
+        )
 
     @staticmethod
     def _get_owner_name_pseudo_property():
@@ -597,6 +620,17 @@ class DataSourceBuilder(ReportBuilderDataSourceInterface):
             id=COMPUTED_OWNER_LOCATION_PROPERTY_ID,
             text=_('Case Owner (Location)'),
             source=COMPUTED_OWNER_LOCATION_PROPERTY_ID,
+            data_types=["string"],
+        )
+
+    @classmethod
+    def _get_owner_location_with_descendants_pseudo_property(cls):
+        # similar to the location property but also include descendants
+        return DataSourceProperty(
+            type=PROPERTY_TYPE_CASE_PROP,
+            id=COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID,
+            text=_('Case Owner (Location w/ Descendants)'),
+            source=COMPUTED_OWNER_LOCATION_WITH_DESENDANTS_PROPERTY_ID,
             data_types=["string"],
         )
 
@@ -1145,7 +1179,7 @@ class ConfigureNewReportBase(forms.Form):
                 property='timeEnd',
                 data_source_field=None,
                 display_text='Form completion time',
-                format='Date',
+                format=const.FORMAT_DATE,
             ),
         ]
 
@@ -1161,11 +1195,11 @@ class ConfigureNewReportBase(forms.Form):
             return self._get_default_filter_view_model_from_pre_filter(field, filter, exists)
         else:
             filter_type_map = {
-                'dynamic_choice_list': 'Choice',
+                'dynamic_choice_list': const.FORMAT_CHOICE,
                 # This exists to handle the `closed` filter that might exist
-                'choice_list': 'Choice',
-                'date': 'Date',
-                'numeric': 'Numeric'
+                'choice_list': const.FORMAT_CHOICE,
+                'date': const.FORMAT_DATE,
+                'numeric': const.FORMAT_NUMERIC
             }
             try:
                 format_ = filter_type_map[filter['type']]

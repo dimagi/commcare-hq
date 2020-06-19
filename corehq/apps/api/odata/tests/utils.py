@@ -38,7 +38,7 @@ class OdataTestMixin(object):
         clear_domain_names('test_domain')
         cls.domain = Domain(name='test_domain')
         cls.domain.save()
-        cls.web_user = WebUser.create(cls.domain.name, 'test_user', 'my_password')
+        cls.web_user = WebUser.create(cls.domain.name, 'test_user', 'my_password', None, None)
         cls._setup_user_permissions()
         cls.app_id = '1234'
         cls.instance = cls.get_instance(cls.domain.name)

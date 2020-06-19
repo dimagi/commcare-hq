@@ -420,7 +420,7 @@ class RegistrationAPITestCase(TestCase):
 
     @classmethod
     def setup_webuser(cls, username, domain, role):
-        user = WebUser.create(domain.name, username, '{}-password'.format(username))
+        user = WebUser.create(domain.name, username, '{}-password'.format(username), None, None)
         user.set_role(domain.name, role)
         user.save()
         return user

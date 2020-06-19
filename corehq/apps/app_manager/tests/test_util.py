@@ -1,8 +1,14 @@
 from django.http import Http404
 from django.test.testcases import TestCase
 
-from corehq.apps.app_manager.models import AdvancedModule, Application, Module
-from corehq.apps.app_manager.util import LatestAppInfo
+from corehq.apps.app_manager.models import (
+    AdvancedModule,
+    Application,
+    BuildProfile,
+    GlobalAppConfig,
+    LatestEnabledBuildProfiles,
+    Module,
+)
 from corehq.apps.app_manager.views.utils import get_default_followup_form_xml
 from corehq.apps.domain.models import Domain
 
@@ -29,38 +35,57 @@ class TestGetDefaultFollowupForm(TestCase):
         self.assertEqual(first_question['label'], " Default label message ")
 
 
-class TestLatestAppInfo(TestCase):
+class TestGlobalAppConfig(TestCase):
     domain = 'test-latest-app'
 
     @classmethod
     def setUpClass(cls):
-        super(TestLatestAppInfo, cls).setUpClass()
+        super(TestGlobalAppConfig, cls).setUpClass()
         cls.project = Domain(name=cls.domain)
         cls.project.save()
 
+        cls.build_profile_id = 'english'
         app = Application(
             domain=cls.domain,
             name='foo',
             langs=["en"],
             version=1,
-            modules=[Module()]
+            modules=[Module()],
+            build_profiles={
+                cls.build_profile_id: BuildProfile(langs=['en'], name='English only'),
+            }
         )  # app is v1
 
-        app.save()  # app is v2
+        app.save()  # app is now v2
+
         cls.v2_build = app.make_build()
         cls.v2_build.is_released = True
-        cls.v2_build.save()  # There is a starred build at v2
+        cls.v2_build.save()  # v2 is starred
 
-        app.save()  # app is v3
-        app.make_build().save()  # There is a build at v3
+        app.save()  # app is now v3
+        cls.v3_build = app.make_build()
+        cls.v3_build.is_released = True
+        cls.v3_build.save()  # v3 is starred
 
         app.save()  # app is v4
+
+        # Add a build-profile-specific release at v2
+        cls.latest_profile = LatestEnabledBuildProfiles(
+            domain=cls.domain,
+            app_id=app.get_id,
+            build_profile_id=cls.build_profile_id,
+            version=cls.v2_build.version,
+            build_id=cls.v2_build.get_id,
+            active=True,
+        )
+        cls.latest_profile.save()
+
         cls.app = app
 
     @classmethod
     def tearDownClass(cls):
         cls.project.delete()
-        super(TestLatestAppInfo, cls).tearDownClass()
+        super(TestGlobalAppConfig, cls).tearDownClass()
 
     def test_apk_prompt(self):
         from corehq.apps.builds.utils import get_default_build_spec
@@ -74,9 +99,9 @@ class TestLatestAppInfo(TestCase):
             app_config = self.app.global_app_config
             app_config.apk_prompt = config
             app_config.save()
-            latest_info = LatestAppInfo(self.app.master_id, self.domain)
+            config = GlobalAppConfig.by_app_id(self.domain, self.app.master_id)
             self.assertEqual(
-                latest_info.get_latest_apk_version(),
+                config.get_latest_apk_version(),
                 response
             )
 
@@ -94,25 +119,30 @@ class TestLatestAppInfo(TestCase):
             app_config = self.app.global_app_config
             app_config.apk_prompt = config
             app_config.save()
-            latest_info = LatestAppInfo(self.app.master_id, self.domain)
+            config = GlobalAppConfig.by_app_id(self.domain, self.app.master_id)
             self.assertEqual(
-                latest_info.get_latest_apk_version(),
+                config.get_latest_apk_version(),
                 response
             )
 
     def test_app_prompt(self):
+        app_config = self.app.global_app_config
+        app_config.save()
         test_cases = [
-            ('off', {}),
-            ('on', {'value': self.v2_build.version, 'force': False}),
-            ('forced', {'value': self.v2_build.version, 'force': True}),
+            ('off', '', {}),
+            ('on', '', {'value': self.v3_build.version, 'force': False}),
+            ('forced', '', {'value': self.v3_build.version, 'force': True}),
+            ('off', self.build_profile_id, {}),
+            ('on', self.build_profile_id, {'value': self.v2_build.version, 'force': False}),
+            ('forced', self.build_profile_id, {'value': self.v2_build.version, 'force': True}),
         ]
-        for config, response in test_cases:
+        for config, build_profile_id, response in test_cases:
             app_config = self.app.global_app_config
             app_config.app_prompt = config
             app_config.save()
-            latest_info = LatestAppInfo(self.app.master_id, self.domain)
+            config = GlobalAppConfig.by_app_id(self.domain, self.app.master_id)
             self.assertEqual(
-                latest_info.get_latest_app_version(),
+                config.get_latest_app_version(build_profile_id),
                 response
             )
 
@@ -130,16 +160,18 @@ class TestLatestAppInfo(TestCase):
             app_config = self.app.global_app_config
             app_config.app_prompt = config
             app_config.save()
-            latest_info = LatestAppInfo(self.app.master_id, self.domain)
+            config = GlobalAppConfig.by_app_id(self.domain, self.app.master_id)
             self.assertEqual(
-                latest_info.get_latest_app_version(),
+                config.get_latest_app_version(build_profile_id=''),
                 response
             )
 
     def test_args(self):
         with self.assertRaises(AssertionError):
             # should not be id of a copy
-            LatestAppInfo(self.v2_build.id, self.domain).get_info()
+            config = GlobalAppConfig.by_app_id(self.domain, self.v3_build.id)
+            config.get_latest_app_version(build_profile_id='')
 
         with self.assertRaises(Http404):
-            LatestAppInfo('wrong-id', self.domain).get_info()
+            config = GlobalAppConfig.by_app_id(self.domain, 'wrong-id')
+            config.get_latest_app_version(build_profile_id='')
