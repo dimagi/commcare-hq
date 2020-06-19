@@ -1,16 +1,15 @@
-import re
-from collections import namedtuple
-
 from corehq.apps.sms.api import MessageMetadata, send_sms_with_backend
 from corehq.apps.sms.models import SMS, MessagingEvent, SQLSMSBackend
 from corehq.apps.sms.util import clean_phone_number
-from corehq.messaging.smsbackends.turn.exceptions import WhatsAppTemplateStringException
 from corehq.messaging.smsbackends.turn.forms import TurnBackendForm
 from turn import TurnBusinessManagementClient, TurnClient
 from turn.exceptions import WhatsAppContactNotFound
-
-WA_TEMPLATE_STRING = "cc_wa_template"
-
+from corehq.messaging.whatsapputil import (
+    WhatsAppTemplateStringException,
+    is_whatsapp_template_message,
+    get_template_hsm_parts, WA_TEMPLATE_STRING,
+    extract_error_message_from_template_string
+)
 
 class SQLTurnWhatsAppBackend(SQLSMSBackend):
     class Meta(object):
@@ -114,32 +113,5 @@ class SQLTurnWhatsAppBackend(SQLSMSBackend):
                 template_text = component.get("text", "")
                 break
         num_params = template_text.count("{") // 2  # each parameter is bracketed by {{}}
-        parameters = ",".join([f"{{var{i}}}" for i in range(1, num_params + 1)])
+        parameters = ",".join(f"{{var{i}}}" for i in range(1, num_params + 1))
         return f"{WA_TEMPLATE_STRING}:{template['name']}:{template['language']}:{parameters}"
-
-def is_whatsapp_template_message(message_text):
-    return WA_TEMPLATE_STRING in message_text.lower()
-
-
-def extract_error_message_from_template_string(message_text):
-    """If message is labeled as "invalid_survey_response" then error message should be
-    extracted from template string
-    """
-    return message_text.split(WA_TEMPLATE_STRING)[0]
-
-
-def get_template_hsm_parts(message_text):
-    """The magic string users enter looks like: cc_wa_template:template_name:lang_code:{var1}{var2}{var3}
-    """
-    HsmParts = namedtuple("hsm_parts", "template_name lang_code params")
-    parts = message_text.split(":")
-
-    try:
-        params = re.findall("{(.+?)}+", parts[3])
-    except IndexError:
-        params = []
-
-    try:
-        return HsmParts(template_name=parts[1], lang_code=parts[2], params=params)
-    except IndexError:
-        raise WhatsAppTemplateStringException
