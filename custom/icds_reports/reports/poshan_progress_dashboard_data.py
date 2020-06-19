@@ -1,7 +1,7 @@
 from copy import deepcopy
 from datetime import date
 
-from django.db.models import Count, Sum
+from django.db.models import Sum
 
 from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import (
