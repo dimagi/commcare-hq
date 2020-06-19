@@ -31,7 +31,8 @@ class TestUserSignals(SimpleTestCase):
     @patch('corehq.apps.callcenter.tasks.sync_user_cases')
     @patch('corehq.apps.cachehq.signals.invalidate_document')
     @patch('corehq.apps.users.signals.send_to_elasticsearch')
-    def test_commcareuser_save(self, send_to_es, invalidate,
+    @patch('corehq.apps.users.signals._should_sync_to_es', return_value=True)
+    def test_commcareuser_save(self, _, send_to_es, invalidate,
                                sync_user_cases, update_hubspot_properties):
         CommCareUser(username='test').save()
 
@@ -44,7 +45,8 @@ class TestUserSignals(SimpleTestCase):
     @patch('corehq.apps.callcenter.tasks.sync_user_cases')
     @patch('corehq.apps.cachehq.signals.invalidate_document')
     @patch('corehq.apps.users.signals.send_to_elasticsearch')
-    def test_webuser_save(self, send_to_es, invalidate,
+    @patch('corehq.apps.users.signals._should_sync_to_es', return_value=True)
+    def test_webuser_save(self, _, send_to_es, invalidate,
                           sync_user_cases, update_hubspot_properties):
         WebUser().save()
 

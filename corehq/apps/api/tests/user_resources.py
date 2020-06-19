@@ -1,5 +1,6 @@
 import json
 from copy import deepcopy
+from mock import patch
 
 from django.urls import reverse
 from django.utils.http import urlencode
@@ -34,6 +35,7 @@ class TestCommCareUserResource(APIResourceTest):
         reset_es_index(USER_INDEX_INFO)
         super().setUpClass()
 
+    @patch('corehq.apps.users.signals._should_sync_to_es', return_value=True)
     def test_get_list(self):
 
         commcare_user = CommCareUser.create(domain=self.domain.name, username='fake_user', password='*****')
