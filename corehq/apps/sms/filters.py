@@ -38,6 +38,18 @@ class MessageTypeFilter(BaseMultipleOptionFilter):
         return options_var
 
 
+class ErrorCodeFilter(BaseMultipleOptionFilter):
+    label = ugettext_noop('Error')
+    default_text = ugettext_noop('Select Error...')
+    slug = 'error_code'
+
+    options = [
+        (code, message.split(".")[0])   # shorten multi-sentence messages
+        for code, message in MessagingEvent.ERROR_MESSAGES.items()
+        if code != MessagingEvent.ERROR_SUBEVENT_ERROR
+    ]
+
+
 class EventTypeFilter(BaseMultipleOptionFilter):
     label = ugettext_noop('Communication Type')
     default_text = ugettext_noop('Select Communication Type...')
@@ -46,8 +58,6 @@ class EventTypeFilter(BaseMultipleOptionFilter):
         (MessagingEvent.SOURCE_BROADCAST, ugettext_noop('Broadcast')),
         (MessagingEvent.SOURCE_KEYWORD, ugettext_noop('Keyword')),
         (MessagingEvent.SOURCE_REMINDER, ugettext_noop('Conditional Alert')),
-        (MessagingEvent.CONTENT_SMS_SURVEY, ugettext_noop('Survey')),
-        (MessagingEvent.CONTENT_SMS_CALLBACK, ugettext_noop('Callback')),
         (MessagingEvent.SOURCE_UNRECOGNIZED, ugettext_noop('Unrecognized')),
         (MessagingEvent.SOURCE_OTHER, ugettext_noop('Other')),
     ]
@@ -55,8 +65,22 @@ class EventTypeFilter(BaseMultipleOptionFilter):
         MessagingEvent.SOURCE_BROADCAST,
         MessagingEvent.SOURCE_KEYWORD,
         MessagingEvent.SOURCE_REMINDER,
-        MessagingEvent.CONTENT_SMS_SURVEY,
     ]
+
+
+class EventContentFilter(BaseMultipleOptionFilter):
+    label = ugettext_noop('Content Type')
+    default_text = ugettext_noop('All')
+    slug = 'content_type'
+
+    @property
+    def options(self):
+        return [
+            (MessagingEvent.CONTENT_SMS_SURVEY, ugettext_noop('SMS Survey')),
+            (MessagingEvent.CONTENT_SMS_CALLBACK, ugettext_noop('SMS Callback')),
+            (MessagingEvent.CONTENT_SMS, ugettext_noop('Other SMS')),
+            (MessagingEvent.CONTENT_EMAIL, ugettext_noop('Email')),
+        ]
 
 
 class EventStatusFilter(BaseSingleOptionFilter):

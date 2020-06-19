@@ -27,8 +27,8 @@ def get_service_delivery_data(domain, start, length, order, reversed_order, loca
     ).order_by(default_order).values(
         'state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name', 'num_launched_awcs',
         'valid_visits', 'expected_visits', 'gm_0_3', 'children_0_3', 'num_awcs_conducted_cbe',
-        'num_awcs_conducted_vhnd', 'thr_given_21_days', 'total_thr_candidates', 'lunch_count_21_days',
-        'children_3_6', 'pse_attended_21_days', 'gm_3_5', 'children_3_5'
+        'num_awcs_conducted_vhnd', 'vhnd_conducted', 'thr_given_21_days', 'total_thr_candidates',
+        'lunch_count_21_days', 'children_3_6', 'pse_attended_21_days', 'gm_3_5', 'children_3_5'
     )
     if not include_test:
         data = apply_exclude(domain, data)
@@ -60,6 +60,7 @@ def get_service_delivery_data(domain, start, length, order, reversed_order, loca
                 gm=percent_or_not_entered(row_data['gm_0_3'], row_data['children_0_3']),
                 num_awcs_conducted_cbe=get_value_or_data_not_entered(row_data, 'num_awcs_conducted_cbe'),
                 num_awcs_conducted_vhnd=get_value_or_data_not_entered(row_data, 'num_awcs_conducted_vhnd'),
+                vhnd_conducted=get_value_or_data_not_entered(row_data, 'vhnd_conducted'),
                 thr_given_21_days=get_value_or_data_not_entered(row_data, 'thr_given_21_days'),
                 total_thr_candidates=get_value_or_data_not_entered(row_data, 'total_thr_candidates'),
                 thr=percent_or_not_entered(row_data['thr_given_21_days'], row_data['total_thr_candidates']),

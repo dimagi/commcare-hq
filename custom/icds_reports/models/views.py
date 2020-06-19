@@ -281,6 +281,7 @@ class ServiceDeliveryMonthly(models.Model):
     num_launched_awcs = models.IntegerField(help_text='Number of AWC launched')
     num_awcs_conducted_cbe = models.IntegerField(help_text='Number of AWC conducted atleast one CBE')
     num_awcs_conducted_vhnd = models.IntegerField(help_text='Number of AWC conducted atleast one VHSND visits')
+    vhnd_conducted = models.IntegerField(help_text='Number of vhsnd conducted by AWCs')
     gm_0_3 = models.IntegerField(
         blank=True, null=True,
         help_text="weighing efficiency for 0-3 years of children"

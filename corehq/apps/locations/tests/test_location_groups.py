@@ -29,6 +29,8 @@ class LocationGroupTest(TestCase):
             cls.domain.name,
             'username',
             'password',
+            created_by=None,
+            created_via=None,
             first_name='Bob',
             last_name='Builder',
         )

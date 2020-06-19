@@ -51,6 +51,8 @@ from corehq.apps.reports.standard.message_event_display import (
 )
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.sms.filters import (
+    ErrorCodeFilter,
+    EventContentFilter,
     EventStatusFilter,
     EventTypeFilter,
     MessageTypeFilter,
@@ -630,7 +632,9 @@ class MessagingEventsReport(BaseMessagingEventReport):
     fields = [
         DatespanFilter,
         EventTypeFilter,
+        EventContentFilter,
         EventStatusFilter,
+        ErrorCodeFilter,
         PhoneNumberOrEmailFilter,
     ]
     ajax_pagination = True
@@ -664,6 +668,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
     def get_filters(self):
         source_filter = []
         content_type_filter = []
+        error_code_filter = ErrorCodeFilter.get_value(self.request, self.domain)
         event_status_filter = None
         event_type_filter = EventTypeFilter.get_value(self.request, self.domain)
 
@@ -688,12 +693,22 @@ class MessagingEventsReport(BaseMessagingEventReport):
                 else:
                     source_filter.append(source_type)
 
+        content_types = EventContentFilter.get_value(self.request, self.domain)
+
         for content_type, x in MessagingEvent.CONTENT_CHOICES:
-            if content_type in event_type_filter:
+            if content_type in content_types:
                 if content_type == MessagingEvent.CONTENT_SMS_SURVEY:
                     content_type_filter.extend([
                         MessagingEvent.CONTENT_SMS_SURVEY,
                         MessagingEvent.CONTENT_IVR_SURVEY,
+                    ])
+                if content_type == MessagingEvent.CONTENT_SMS:
+                    content_type_filter.extend([
+                        MessagingEvent.CONTENT_SMS,
+                        MessagingEvent.CONTENT_PHONE_VERIFICATION,
+                        MessagingEvent.CONTENT_ADHOC_SMS,
+                        MessagingEvent.CONTENT_API_SMS,
+                        MessagingEvent.CONTENT_CHAT_SMS
                     ])
                 else:
                     content_type_filter.append(content_type)
@@ -730,7 +745,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
                 Q(messagingsubevent__status=event_status)
             )
 
-        return source_filter, content_type_filter, event_status_filter
+        return source_filter, content_type_filter, event_status_filter, error_code_filter
 
     def _fmt_recipient(self, event, doc_info):
         if event.recipient_type in (
@@ -749,16 +764,25 @@ class MessagingEventsReport(BaseMessagingEventReport):
             )
 
     def get_queryset(self):
-        source_filter, content_type_filter, event_status_filter = self.get_filters()
+        source_filter, content_type_filter, event_status_filter, error_code_filter = self.get_filters()
 
         data = MessagingEvent.objects.filter(
             Q(domain=self.domain),
             Q(date__gte=self.datespan.startdate_utc),
             Q(date__lte=self.datespan.enddate_utc),
-            (Q(source__in=source_filter) |
-                Q(content_type__in=content_type_filter) |
-                Q(messagingsubevent__content_type__in=content_type_filter)),
+            Q(source__in=source_filter),
         )
+        if error_code_filter:
+            data = data.filter(
+                Q(error_code__in=error_code_filter)
+                | Q(messagingsubevent__error_code__in=error_code_filter)
+            )
+
+        if content_type_filter:
+            data = data.filter(
+                (Q(content_type__in=content_type_filter) |
+                 Q(messagingsubevent__content_type__in=content_type_filter))
+            )
 
         if event_status_filter:
             data = data.filter(event_status_filter)
@@ -786,7 +810,9 @@ class MessagingEventsReport(BaseMessagingEventReport):
             {'name': 'startdate', 'value': self.datespan.startdate.strftime('%Y-%m-%d')},
             {'name': 'enddate', 'value': self.datespan.enddate.strftime('%Y-%m-%d')},
             {'name': EventTypeFilter.slug, 'value': EventTypeFilter.get_value(self.request, self.domain)},
+            {'name': EventContentFilter.slug, 'value': EventContentFilter.get_value(self.request, self.domain)},
             {'name': EventStatusFilter.slug, 'value': EventStatusFilter.get_value(self.request, self.domain)},
+            {'name': ErrorCodeFilter.slug, 'value': ErrorCodeFilter.get_value(self.request, self.domain)},
             {'name': PhoneNumberOrEmailFilter.slug,
              'value': PhoneNumberOrEmailFilter.get_value(self.request, self.domain)},
         ]
