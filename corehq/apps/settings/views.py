@@ -519,7 +519,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
         return [
             _("Name"),
             _("API Key"),
-            _("IP Whitelist"),
+            _("IP Allowlist"),
             _("Created"),
             _("Delete"),
         ]
