@@ -101,6 +101,7 @@ class SqlDataLoader(DataLoader):
             obj = json.loads(line)
             if self.filter_object(obj):
                 return obj
+        return None
 
     def filter_object(self, object):
         if not self.object_filter:
