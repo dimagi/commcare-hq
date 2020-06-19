@@ -61,5 +61,6 @@ branches:
   - jls/linked-domain-fixtures # Jenny June 18
   - fr/multiple-api-keys
   - dmr/sqlagg-bump-version  # Danny Jun 19
+  - jls/turn-off-analytics-logging # Jenny June 19
 
 submodules: {}
