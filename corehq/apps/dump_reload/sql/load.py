@@ -211,10 +211,10 @@ def get_db_alias(obj: dict) -> str:
         except KeyError:
             # in the case of foreign keys the serialized field name is the
             # name of the foreign key attribute
-            field = [
+            field, = [
                 field for field in model._meta.fields
                 if field.column == model.partition_attr
-            ][0]
+            ]
             try:
                 partition_value = obj['fields'][field.name]
             except KeyError:
