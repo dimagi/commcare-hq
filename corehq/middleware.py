@@ -114,22 +114,51 @@ class LogLongRequestMiddleware(MiddlewareMixin):
 class TimeoutMiddleware(MiddlewareMixin):
 
     @classmethod
-    def update_secure_session(cls, session, is_secure, domain=None):
+    def update_secure_session(cls, session, is_secure, user, domain=None):
         session['secure_session'] = is_secure
-        timeout = cls._get_timeout(session, is_secure, domain)
+        timeout = cls._get_timeout(session, is_secure, user, domain)
         session['secure_session_timeout'] = timeout
         session.set_expiry(timeout * 60)
         session['session_expiry'] = session.get_expiry_date()
 
     @classmethod
-    def _get_timeout(cls, session, is_secure, domain=None):
+    def _get_timeout(cls, session, is_secure, user, domain=None):
         if not is_secure:
             return settings.INACTIVITY_TIMEOUT
+        domains = cls._get_relevant_domains(user, domain)
+
+        timeouts = list(map(Domain.secure_timeout, domains))
+        timeouts = list(filter(None, timeouts))
+
+        # Include timeout in current session, important for users who are not domain members
+        # (e.g., superusers) who visited a secure domain and are now looking at a non-secure domain
+        # or page that doesn't have a domain
+        if hasattr(session, 'secure_session_timeout'):
+            timeouts.append(session['secure_session_timeout'])
+
+        # Fallback: default secure session timeout
+        timeouts.append(settings.SECURE_TIMEOUT)
+
+        return min(timeouts)
+
+    @classmethod
+    def _get_relevant_domains(cls, couch_user, domain=None):
+        domains = []
+
+        # Include current domain, which user may not be a member of
         if domain:
-            domain_obj = Domain.get_by_name(domain)
-            if domain_obj and domain_obj.secure_timeout:
-                return domain_obj.secure_timeout
-        return session.get('secure_session_timeout') or settings.SECURE_TIMEOUT
+            domains.append(domain)
+
+        if not couch_user:
+            return domains
+
+        domains.extend(couch_user.get_domains())
+
+        from corehq.apps.users.models import DomainPermissionsMirror
+        for domain in domains:
+            domains.extend(DomainPermissionsMirror.mirror_domains(domain))
+
+        return domains
 
     @staticmethod
     def _session_expired(timeout, activity):
@@ -139,23 +168,6 @@ class TimeoutMiddleware(MiddlewareMixin):
         time = datetime.datetime.utcnow()
         time_since_activity = time - string_to_utc_datetime(activity)
         return time_since_activity > datetime.timedelta(minutes=timeout)
-
-    @staticmethod
-    def _user_requires_secure_session(couch_user):
-        if not couch_user:
-            return False
-
-        domains = couch_user.get_domains()
-        if any(Domain.is_secure_session_required(domain) for domain in domains):
-            return True
-
-        from corehq.apps.users.models import DomainPermissionsMirror
-        for domain in domains:
-            mirrors = DomainPermissionsMirror.mirror_domains(domain)
-            if any(Domain.is_secure_session_required(m) for m in mirrors):
-                return True
-
-        return False
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         if not request.user.is_authenticated:
@@ -170,22 +182,25 @@ class TimeoutMiddleware(MiddlewareMixin):
             not secure_session
             and (
                 (domain_obj and domain_obj.secure_sessions)
-                or self._user_requires_secure_session(request.couch_user)))
+                or any(filter(Domain.is_secure_session_required,
+                             self._get_relevant_domains(request.couch_user, domain)))
+            )
+        )
 
         secure_session = secure_session or change_to_secure_session
-        timeout = self._get_timeout(request.session, secure_session, domain)
+        timeout = self._get_timeout(request.session, secure_session, request.couch_user, domain)
         if change_to_secure_session:
             # force re-authentication if the user has been logged in longer than the secure timeout
             if self._session_expired(timeout, request.user.last_login):
                 LogoutView.as_view(template_name=settings.BASE_TEMPLATE)(request)
                 # this must be after logout so it is attached to the new session
-                self.update_secure_session(request.session, True, domain)
+                self.update_secure_session(request.session, True, request.couch_user, domain)
                 return HttpResponseRedirect(reverse('login') + '?next=' + request.path)
 
-            self.update_secure_session(request.session, True, domain)
+            self.update_secure_session(request.session, True, request.couch_user, domain)
 
         if not getattr(request, '_bypass_sessions', False):
-            self.update_secure_session(request.session, secure_session, domain)
+            self.update_secure_session(request.session, secure_session, request.couch_user, domain)
 
 
 def always_allow_browser_caching(fn):

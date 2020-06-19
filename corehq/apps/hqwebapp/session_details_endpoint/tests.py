@@ -5,6 +5,8 @@ from django.conf import settings
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
+from django.utils.dateparse import parse_datetime
+
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.util.hmac_request import get_hmac_digest
@@ -44,6 +46,11 @@ class SessionDetailsViewTest(TestCase):
         cls.couch_user.delete()
         cls.domain.delete()
         super(SessionDetailsViewTest, cls).tearDownClass()
+
+    def _assert_session_expiry_in_minutes(self, expected_minutes, actual_time_string):
+        delta = parse_datetime(actual_time_string) - datetime.datetime.utcnow()
+        diff_in_minutes = delta.days * 24 * 60 + delta.seconds / 60
+        self.assertEqual(expected_minutes, round(diff_in_minutes))
 
     @override_settings(DEBUG=True)
     @softer_assert()
@@ -132,7 +139,8 @@ class SessionDetailsViewTest(TestCase):
         self.assertEqual(200, response.status_code)
         data = json.loads(response.content)
         self.assertFalse(data['success'])
-        self.assertIsNone(data['last_request'])
+        self.assertIsNone(data['session_expiry'])
+        self.assertIsNone(data['secure_session_timeout'])
         self.assertFalse(data['secure_session'])
         self.assertEquals("", data['username'])
 
@@ -141,40 +149,43 @@ class SessionDetailsViewTest(TestCase):
         client = Client()
         client.login(username=self.couch_user.username, password='123')
 
-        # First ping after login: authorized but no previous request
+        # First ping after login via client.login: authorized but no session expiry
         response = client.get(reverse('ping_login'))
         self.assertEqual(200, response.status_code)
         data = json.loads(response.content)
         self.assertTrue(data['success'])
-        self.assertIsNone(data['last_request'])
+        self.assertIsNone(data['session_expiry'])
+        self.assertIsNone(data['secure_session_timeout'])
         self.assertFalse(data['secure_session'])
         self.assertEqual(self.couch_user.username, data['username'])
 
-        # Request a page and then re-ping: last_request should exist
+        # Request a page and then re-ping: session expiry should be based on INACTIVITY_TIMEOUT
         client.get(reverse('bsd_license'))
         response = client.get(reverse('ping_login'))
         data = json.loads(response.content)
         self.assertTrue(data['success'])
         self.assertEqual(self.couch_user.username, data['username'])
-        self.assertIsNotNone(data['last_request'])
-        last_request = data['last_request']
+        self.assertFalse(data['secure_session'])
+        self.assertEqual(settings.INACTIVITY_TIMEOUT, data['secure_session_timeout'])
+        self._assert_session_expiry_in_minutes(settings.INACTIVITY_TIMEOUT, data['session_expiry'])
 
-        # Ping some more, last_request should not change
+        # Ping some more, session_expiry should not change
+        session_expiry = data['session_expiry']
         client.get(reverse('ping_login'))
         response = client.get(reverse('ping_login'))
         data = json.loads(response.content)
         self.assertTrue(data['success'])
         self.assertEqual(self.couch_user.username, data['username'])
-        self.assertEqual(last_request, data['last_request'])
+        self.assertEqual(session_expiry, data['session_expiry'])
 
-        # Request a normal page, last_request should update
+        # Request a normal page, session_expiry should update
         client.get(reverse('bsd_license'))
         response = client.get(reverse('ping_login'))
         data = json.loads(response.content)
         self.assertTrue(data['success'])
         self.assertEqual(self.couch_user.username, data['username'])
-        self.assertIsNotNone(data['last_request'])
-        self.assertNotEqual(last_request, data['last_request'])
+        self.assertIsNotNone(data['session_expiry'])
+        self.assertNotEqual(session_expiry, data['session_expiry'])
 
     @override_settings(FORMPLAYER_INTERNAL_AUTH_KEY='123abc', DEBUG=False)
     def test_with_hmac_signing(self):
