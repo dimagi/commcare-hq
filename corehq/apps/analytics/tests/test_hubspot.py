@@ -33,7 +33,7 @@ class TestSendToHubspot(TestCase):
     def setUpClass(cls):
         super(TestSendToHubspot, cls).setUpClass()
         cls.domain_obj = create_domain(cls.domain)
-        cls.user = WebUser.create(cls.domain, "seamus@example.com", "*****")
+        cls.user = WebUser.create(cls.domain, "seamus@example.com", "*****", None, None)
         cls.user.save()
 
     @classmethod

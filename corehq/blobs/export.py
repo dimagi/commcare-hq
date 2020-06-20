@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 
 from dimagi.utils.couch.database import iter_docs
 
-from . import NotFound, get_blob_db
+from . import NotFound, get_blob_db, CODES
 from .migrate import PROCESSING_COMPLETE_MESSAGE
 from .models import BlobMeta
 from .targzipdb import TarGzipBlobDB
@@ -13,6 +13,7 @@ class BlobDbBackendExporter(object):
 
     def __init__(self, filename, extends):
         self.db = TarGzipBlobDB(filename, extends)
+        self.src_db = get_blob_db()
         self.total_blobs = 0
         self.not_found = 0
 
@@ -27,7 +28,7 @@ class BlobDbBackendExporter(object):
     def process_object(self, meta):
         self.total_blobs += 1
         try:
-            content = meta.open()
+            content = self.src_db.get(meta.key, CODES.maybe_compressed)
         except NotFound:
             self.not_found += 1
         else:

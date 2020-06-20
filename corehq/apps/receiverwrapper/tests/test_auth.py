@@ -40,6 +40,8 @@ class AuthTestMixin(object):
                 self.domain,
                 username=normalize_username('danny', self.domain),
                 password='1234',
+                created_by=None,
+                created_via=None,
             )
         except CommCareUser.Inconsistent:
             pass

@@ -211,6 +211,7 @@ DEFAULT_APPS = (
     'ws4redis',
     'statici18n',
     'django_user_agents',
+    'logentry_admin',
 )
 
 CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'
@@ -312,7 +313,6 @@ HQ_APPS = (
     'corehq.messaging.smsbackends.vertex',
     'corehq.messaging.smsbackends.start_enterprise',
     'corehq.messaging.smsbackends.ivory_coast_mtn',
-    'corehq.messaging.smsbackends.karix',
     'corehq.messaging.smsbackends.airtel_tcl',
     'corehq.apps.reports.app_config.ReportsModule',
     'corehq.apps.reports_core',
@@ -471,6 +471,14 @@ RETURN_PATH_EMAIL = None
 # This will trigger a periodic task to check the RETURN_PATH_EMAIL inbox for
 # SES bounce and complaint notifications.
 RETURN_PATH_EMAIL_PASSWORD = None
+
+# Allows reception of SES Events to the log_email_event endpoint to update
+# MessagingSubEvent status This configuration set should be set up for each
+# environment here:
+# https://console.aws.amazon.com/ses/home?region=us-east-1#configuration-set-list:
+
+SES_CONFIGURATION_SET = None
+SNS_EMAIL_EVENT_SECRET = None
 
 ENABLE_SOFT_ASSERT_EMAILS = True
 IS_DIMAGI_ENVIRONMENT = True
@@ -1528,7 +1536,6 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.vertex.models.VertexBackend',
     'corehq.messaging.smsbackends.start_enterprise.models.StartEnterpriseBackend',
     'corehq.messaging.smsbackends.ivory_coast_mtn.models.IvoryCoastMTNBackend',
-    'corehq.messaging.smsbackends.karix.models.KarixBackend',
     'corehq.messaging.smsbackends.airtel_tcl.models.AirtelTCLBackend',
 ]
 

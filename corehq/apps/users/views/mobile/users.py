@@ -15,10 +15,7 @@ from django.http import (
     HttpResponseBadRequest,
     HttpResponseRedirect,
 )
-from django.http.response import (
-    HttpResponseServerError,
-    JsonResponse,
-)
+from django.http.response import HttpResponseServerError, JsonResponse
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -115,7 +112,11 @@ from corehq.apps.users.views import (
     BaseUserSettingsView,
     get_domain_languages,
 )
-from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL, USER_DATE_FORMAT
+from corehq.const import (
+    GOOGLE_PLAY_STORE_COMMCARE_URL,
+    USER_DATE_FORMAT,
+    USER_CHANGE_VIA_WEB,
+)
 from corehq.toggles import (
     FILTERED_BULK_USER_DOWNLOAD,
     TWO_STAGE_USER_PROVISIONING,
@@ -179,6 +180,7 @@ class EditCommCareUserView(BaseEditUserView):
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
             'has_any_sync_logs': self.has_any_sync_logs,
+            'token': self.backup_token,
         })
         return context
 
@@ -779,6 +781,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             self.domain,
             username,
             password,
+            created_by=self.request.user,
+            created_via=USER_CHANGE_VIA_WEB,
             email=email,
             device_id="Generated from HQ",
             first_name=first_name,
@@ -975,6 +979,8 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
                 self.domain,
                 username,
                 password,
+                created_by=request.user,
+                created_via=USER_CHANGE_VIA_WEB,
                 phone_number=phone_number,
                 device_id="Generated from HQ",
                 user_data=self.custom_data.get_data_to_save(),
@@ -1447,6 +1453,8 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
                 self.domain,
                 self.form.cleaned_data.get('username'),
                 self.form.cleaned_data.get('password'),
+                created_by=None,
+                created_via=USER_CHANGE_VIA_WEB,
                 email=email,
                 phone_number=self.invitation.phone_number,
                 device_id='Generated from HQ',
@@ -1464,6 +1472,7 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
         return self.get(request, *args, **kwargs)
 
 
+@location_safe
 @method_decorator(TWO_STAGE_USER_PROVISIONING.required_decorator(), name='dispatch')
 class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
     template_name = "users/commcare_user_confirm_account.html"
