@@ -18,6 +18,7 @@ from corehq.apps.users.models import (
 from corehq.elastic import send_to_elasticsearch
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.elastic import reset_es_index
+from corehq.util.test_utils import sync_users_to_es
 
 from .utils import APIResourceTest
 
@@ -34,6 +35,7 @@ class TestCommCareUserResource(APIResourceTest):
         reset_es_index(USER_INDEX_INFO)
         super().setUpClass()
 
+    @sync_users_to_es()
     def test_get_list(self):
 
         commcare_user = CommCareUser.create(domain=self.domain.name, username='fake_user', password='*****',

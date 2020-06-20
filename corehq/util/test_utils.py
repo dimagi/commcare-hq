@@ -23,6 +23,10 @@ import mock
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.decorators import ContextDecorator
 
+# Patch (far) upstream to avoid circular import
+_sync_user_to_es_patch = mock.patch('pillowtop.processors.elastic.ElasticsearchInterface')
+_sync_user_to_es_patch.start()
+
 WrappedJsonFormPair = namedtuple('WrappedJsonFormPair', ['wrapped_form', 'json_form'])
 
 
@@ -754,3 +758,27 @@ def require_db_context(fn):
         if not isinstance(Domain.get_db(), mock.Mock):
             return fn(*args, **kwargs)
     return inner
+
+
+@contextmanager
+def sync_users_to_es():
+    """
+    Context manager to enable sync users to ES
+
+    Usage as context manager::
+
+        with sync_users_to_es():
+            ...  # do thing with users in ES
+
+    Usage as decorator::
+
+        @sync_users_to_es()
+        def test_something():
+            ...  # do thing with users in ES
+
+    """
+    _sync_user_to_es_patch.stop()
+    try:
+        yield
+    finally:
+        _sync_user_to_es_patch.start()

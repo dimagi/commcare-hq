@@ -9,7 +9,7 @@ from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.users.management.commands import add_multi_location_property
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.elastic import refresh_elasticsearch_index
-from corehq.util.test_utils import generate_cases
+from corehq.util.test_utils import generate_cases, sync_users_to_es
 
 
 class CCUserLocationAssignmentTest(TestCase):
@@ -99,6 +99,7 @@ class CCUserLocationAssignmentTest(TestCase):
         self.user.unset_location_by_id(self.loc1.location_id, fall_back_to_next=True)
         self.assertAssignedLocations([])
 
+    @sync_users_to_es()
     def test_deleting_location_updates_user(self):
         self.user.reset_locations(self.loc_ids)
         refresh_elasticsearch_index('users')
