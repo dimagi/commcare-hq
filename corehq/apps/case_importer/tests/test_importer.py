@@ -430,13 +430,13 @@ class ImporterTest(TestCase):
 
     @run_with_all_backends
     def test_columns_and_rows_align(self):
-        case_owner = CommCareUser.create(self.domain, 'username', 'pw')
-        res = self.import_mock_file([
-            ['case_id', 'name', '', 'favorite_color', 'owner_id'],
-            ['', 'Jeff', '', 'blue', case_owner._id],
-            ['', 'Caroline', '', 'yellow', case_owner._id],
-        ])
-        self.assertEqual(res['errors'], {})
+        with get_commcare_user(self.domain) as case_owner:
+            res = self.import_mock_file([
+                ['case_id', 'name', '', 'favorite_color', 'owner_id'],
+                ['', 'Jeff', '', 'blue', case_owner._id],
+                ['', 'Caroline', '', 'yellow', case_owner._id],
+            ])
+            self.assertEqual(res['errors'], {})
 
         case_ids = self.accessor.get_case_ids_in_domain()
         cases = {c.name: c for c in list(self.accessor.get_cases(case_ids))}
@@ -532,3 +532,12 @@ def make_business_units(domain, shares_cases=True):
     finally:
         for obj in dsa, dsi, inc, dimagi, bu:
             obj.delete()
+
+
+@contextmanager
+def get_commcare_user(domain_name):
+    user = CommCareUser.create(domain_name, 'username', 'pw')
+    try:
+        yield user
+    finally:
+        user.delete()
