@@ -333,7 +333,7 @@
       {% endif %}
     {% endif %}
 
-    {% if request.user.is_authenticated and request.session.secure_session %}
+    {% if request.user.is_authenticated and request.project and request.session.secure_session %}
       {% initial_page_data 'session_expiry'  request.session.session_expiry|date:"Y-m-d H:i:s T" %}
       {% initial_page_data 'secure_timeout_username' request.couch_user.username %}
       {% registerurl 'iframe_domain_login' request.project.name %}
