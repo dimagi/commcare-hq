@@ -1628,6 +1628,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             self.save()
 
     def log_user_create(self, created_by, created_via):
+        if settings.UNIT_TESTING and created_by is None and created_via is None:
+            return
         # fallback to self if not created by any user
         self_django_user = self.get_django_user(use_primary_db=True)
         created_by = created_by or self_django_user
