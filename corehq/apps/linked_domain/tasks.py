@@ -40,60 +40,24 @@ def push_models(master_domain, models, linked_domains, build_apps, username):
             continue
         domain_link = domain_links_by_linked_domain[linked_domain]
         for model in models:
+            error = None
             try:
-                found = False
-                updated_app = False
-                built_app = False
                 if model['type'] == MODEL_APP:
-                    app_id = model['detail']['app_id']
-                    for linked_app in get_apps_in_domain(linked_domain, include_remote=False):
-                        if is_linked_app(linked_app) and linked_app.family_id == app_id:
-                            found = True
-                            if toggles.MULTI_MASTER_LINKED_DOMAINS.enabled(linked_domain):
-                                errors_by_domain[linked_domain].append(textwrap.dedent(_("""
-                                    Could not update {} because multi master flag is in use
-                                """.strip()).format(model['name'])))
-                                continue
-                            app = update_linked_app(linked_app, app_id, user.user_id)
-                            updated_app = True
-                            if build_apps:
-                                build = app.make_build()
-                                build.is_released = True
-                                build.save(increment_version=False)
-                                built_app = True
+                    error = _handle_app(domain_link, model, user, build_apps)
                 elif model['type'] == MODEL_REPORT:
-                    report_id = model['detail']['report_id']
-                    for linked_report in get_report_configs_for_domain(linked_domain):
-                        if linked_report.report_meta.master_id == report_id:
-                            found = True
-                            update_linked_ucr(domain_link, linked_report.get_id)
-                elif (
-                    model['type'] == MODEL_CASE_SEARCH
-                    and not toggles.SYNC_SEARCH_CASE_CLAIM.enabled(linked_domain)
-                ):
-                    errors_by_domain[linked_domain].append(textwrap.dedent(_("""
-                        Could not update {} because case claim flag is not on
-                    """.strip()).format(model['name'])))
-                    continue
+                    error = _handle_report(domain_link, model)
+                elif model['type'] == MODEL_CASE_SEARCH:
+                    error = _handle_case_search(domain_link, model, user)
                 else:
-                    found = True
-                    update_model_type(domain_link, model['type'], model_detail=model['detail'])
-                    domain_link.update_last_pull(model['type'], user._id, model_details=model['detail'])
-                if found:
-                    successes_by_domain[linked_domain].append(_("{} was updated").format(model['name']))
-                else:
-                    errors_by_domain[linked_domain].append(_("Could not find {}").format(model['name']))
+                    error = _handle_model(domain_link, model, user)
             except Exception as e:   # intentionally broad
-                if model['type'] == MODEL_APP and updated_app and build_apps and not built_app:
-                    # Updating an app can be a 2-step process, make it clear which one failed
-                    errors_by_domain[linked_domain].append(textwrap.dedent(_("""
-                        Updated {} but could not make and release build: {}
-                    """.strip()).format(model['name'], str(e))))
-                else:
-                    errors_by_domain[linked_domain].append(textwrap.dedent(_("""
-                        Could not update {}: {}
-                    """.strip()).format(model['name'], str(e))))
+                error = str(e)
                 notify_exception(None, "Exception pushing linked domains: {}".format(e))
+
+            if error:
+                errors_by_domain[linked_domain].append(_("Could not update {}: {}").format(model['name'], error))
+            else:
+                successes_by_domain[linked_domain].append(_("Updated {} successfully").format(model['name']))
 
     subject = _("Linked project release complete.")
     if errors_by_domain:
@@ -121,3 +85,53 @@ The following linked project spaces received content:
             for msg in errors_by_domain[linked_domain] + successes_by_domain[linked_domain]:
                 message += "\n   - " + msg
     send_mail_async.delay(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email or user.username])
+
+
+def _handle_app(domain_link, model, user, build_and_release=False):
+    if toggles.MULTI_MASTER_LINKED_DOMAINS.enabled(domain_link.linked_domain):
+        return _("Multi master flag is in use")
+
+    app_id = model['detail']['app_id']
+    found = False
+    error_prefix = ""
+    try:
+        for linked_app in get_apps_in_domain(domain_link.linked_domain, include_remote=False):
+            if is_linked_app(linked_app) and linked_app.family_id == app_id:
+                found = True
+                app = update_linked_app(linked_app, app_id, user.user_id)
+
+        if not found:
+            return _("Could not find app")
+
+        if build_and_release:
+            error_prefix = _("Updated app but did not build or release: ")
+            build = app.make_build()
+            build.is_released = True
+            raise Exception("couldn't save!")
+            build.save(increment_version=False)
+    except Exception as e:  # intentionally broad
+        return error_prefix + str(e)
+
+
+def _handle_report(domain_link, model):
+    report_id = model['detail']['report_id']
+    found = False
+    for linked_report in get_report_configs_for_domain(domain_link.linked_domain):
+        if linked_report.report_meta.master_id == report_id:
+            found = True
+            update_linked_ucr(domain_link, linked_report.get_id)
+
+    if not found:
+        return _("Could not find report")
+
+
+def _handle_case_search(domain_link, model, user):
+    if not toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain_link.linked_domain):
+        return _("Case claim flag is not on")
+
+    return _handle_model(domain_link, model, user)
+
+
+def _handle_model(domain_link, model, user):
+    update_model_type(domain_link, model['type'], model_detail=model['detail'])
+    domain_link.update_last_pull(model['type'], user._id)
