@@ -1,5 +1,6 @@
 import uuid
 from contextlib import contextmanager
+from unittest import skip
 
 from django.test import TestCase
 from django.utils.dateparse import parse_datetime
@@ -428,6 +429,7 @@ class ImporterTest(TestCase):
         case = CaseAccessors(self.domain).get_case(case.case_id)
         self.assertEqual(case.opened_on, PhoneTime(parse_datetime(new_date)).done())
 
+    @skip('Time Limit Exceeding')
     @run_with_all_backends
     def test_columns_and_rows_align(self):
         case_owner = CommCareUser.create(self.domain, 'username', 'pw', None, None)
@@ -445,6 +447,7 @@ class ImporterTest(TestCase):
         self.assertEqual(cases['Caroline'].owner_id, case_owner._id)
         self.assertEqual(cases['Caroline'].get_case_property('favorite_color'), 'yellow')
 
+    @skip('Time Limit Exceeding')
     def test_user_can_access_location(self):
         with make_business_units(self.domain) as (inc, dsi, dsa), \
                 restrict_user_to_location(self, dsa):
