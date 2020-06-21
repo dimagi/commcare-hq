@@ -202,6 +202,72 @@ class ChildHealthMonthlyView(models.Model):
     alive_status_daily = models.SmallIntegerField(blank=True, null=True)
     duplicate_status_daily = models.SmallIntegerField(blank=True, null=True)
     seeking_services_status_daily = models.SmallIntegerField(blank=True, null=True)
+    wer_eligible = models.IntegerField(
+        blank=True, null=True, help_text="age <= 60 months and valid_in_month"
+    )
+    nutrition_status_weighed = models.IntegerField(
+        blank=True, null=True,
+        help_text="wer_eligible AND zscore_grading_wfa recorded in this month"
+    )
+    nutrition_status_normal = models.IntegerField(
+        blank=True, null=True, help_text="wer_eligible AND zscore_grading_wfa = 'green' or 'white'"
+    )
+    nutrition_status_moderately_underweight = models.IntegerField(
+        blank=True, null=True, help_text="wer_eligible AND zscore_grading_wfa = 'yellow'"
+    )
+    nutrition_status_severely_underweight = models.IntegerField(
+        blank=True, null=True, help_text="wer_eligible AND zscore_grading_wfa = 'red'"
+    )
+    age_tranche = models.TextField(
+        blank=True, null=True,
+        help_text="Either 0 (<= 28 days), 6 (<= 6 months), 12 (<= 12 months), 24, 36, 48, 60, 72"
+    )
+    height_eligible = models.IntegerField(
+        blank=True, null=True, help_text="age > 6 months < 60 months and valid_in_month"
+    )
+    wasting_moderate = models.IntegerField(blank=True, null=True)
+    wasting_severe = models.IntegerField(blank=True, null=True)
+    wasting_normal = models.IntegerField(blank=True, null=True)
+    weighed_and_height_measured_in_month = models.IntegerField(
+        blank=True, null=True, help_text="nutrition_status_weighed AND height_measured_in_month"
+    )
+    stunting_moderate = models.IntegerField(blank=True, null=True)
+    stunting_severe = models.IntegerField(blank=True, null=True)
+    stunting_normal = models.IntegerField(blank=True, null=True)
+    height_measured_in_month = models.IntegerField(
+        blank=True, null=True, help_text="height_eligible and height_child recorded in this month"
+    )
+    low_birth_weight_in_month = models.IntegerField(
+        blank=True, null=True, help_text="born_in_month AND low_birth_weight = 'yes'"
+    )
+    weighed_and_born_in_month = models.IntegerField(
+        blank=True, null=True, help_text="nutrition_status_weighed AND low_birth_weight_in_month"
+    )
+    born_in_month = models.IntegerField(blank=True, null=True, help_text="beneficiary with dob in this month")
+    bf_at_birth = models.IntegerField(
+        blank=True, null=True, help_text="born_in_month AND breastfed_within_first = 'yes'"
+    )
+    ebf_eligible = models.IntegerField(blank=True, null=True, help_text="valid_in_month AND <= 6 months")
+    ebf_in_month = models.IntegerField(
+        blank=True, null=True, help_text="ebf_eligible AND last EBF form is_ebf = 'yes'",
+    )
+    cf_initiation_eligible = models.IntegerField(
+        blank=True, null=True, help_text="valid_in_month AND > 6 months <= 8 months"
+    )
+    cf_initiation_in_month = models.IntegerField(
+        blank=True, null=True, help_text="cf_initiation_eligible AND comp_feeding = 'yes' in any form submitted"
+    )
+    fully_immunized_eligible = models.IntegerField(
+        blank=True, null=True, help_text="valid_in_month AND > 12 months"
+    )
+    fully_immunized_on_time = models.IntegerField(
+        blank=True, null=True,
+        help_text="fully_immunized_eligible AND task_case.immun_one_year_date before one year old"
+    )
+    fully_immunized_late = models.IntegerField(
+        blank=True, null=True,
+        help_text="fully_immunized_eligible AND task_case.immun_one_year_date after one year old"
+    )
 
     class Meta(object):
         app_label = 'icds_reports'
@@ -807,6 +873,7 @@ class CcsRecordMonthlyView(models.Model):
     where_born = models.PositiveSmallIntegerField(blank=True, null=True)
     num_children_del = models.PositiveSmallIntegerField(blank=True, null=True)
     still_live_birth = models.PositiveSmallIntegerField(blank=True, null=True)
+    delivered_in_month = models.IntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_reports'
