@@ -51,6 +51,6 @@ on, the domain can specify a number of minutes, which will be used in place of t
 ``SECURE_TIMEOUT``. When a user is affected by multiple domains, with different timeout durations, the minimum
 duration is used. As with the secure session flag itself, the relevant durations are the current domain, and other
 domains where the user is a member, and the duration value currently stored in the session. So a user who belongs
-to 2 secure domains, one with the standard 3-minute timeout and one with a 15-minute timeout, will always
-experience a 15-minute timeout. A user who belogns to no secure domains but who visits a domain with a 45-minute
+to two secure domains, one with the standard 30-minute timeout and one with a 15-minute timeout, will always
+experience a 15-minute timeout. A user who belongs to no secure domains but who visits a domain with a 45-minute
 timeout will then experience a 45-minute timeout until the next time they log out and back in.
