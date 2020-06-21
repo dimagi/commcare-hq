@@ -139,4 +139,4 @@ METRICS_PROVIDERS = [
 ]
 
 # timeout faster in tests
-ES_SEARCH_TIMEOUT = 5
+# ES_SEARCH_TIMEOUT = 5
