@@ -1,5 +1,6 @@
 import copy
 from datetime import datetime
+from mock import patch
 
 from django.test import TestCase
 
@@ -12,6 +13,7 @@ from corehq.elastic import refresh_elasticsearch_index
 from corehq.util.test_utils import generate_cases
 
 
+@patch('corehq.apps.users.signals._should_sync_to_es', return_value=True)
 class CCUserLocationAssignmentTest(TestCase):
 
     @classmethod
