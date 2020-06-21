@@ -89,6 +89,11 @@ def awcs_launched_help_text():
         'one Household Registration form. '
     )
 
+def ls_launched_help_text():
+    return _(
+        'Total number of Lady supervisors who have ever submitted any form in the LS app'
+    )
+
 
 def percent_aadhaar_seeded_beneficiaries_help_text():
     return _(
