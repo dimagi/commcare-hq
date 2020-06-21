@@ -15,7 +15,7 @@ from corehq.apps.fixtures.upload.run_upload import clear_fixture_quickcache
 from corehq.apps.fixtures.utils import clear_fixture_cache
 from corehq.apps.linked_domain.exceptions import UnsupportedActionError
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
-from corehq.apps.linked_domain.updates import update_fixtures
+from corehq.apps.linked_domain.updates import update_fixture
 
 
 class TestUpdateFixtures(BaseLinkedAppsTest):
@@ -75,11 +75,11 @@ class TestUpdateFixtures(BaseLinkedAppsTest):
         delete_all_fixture_data_types()
         super().tearDownClass()
 
-    def test_update_fixtures(self):
+    def test_update_fixture(self):
         self.assertEqual([], get_fixture_data_types(self.linked_domain))
 
         # Update linked domain
-        update_fixtures(self.domain_link)
+        update_fixture(self.domain_link, self.table.tag)
 
         # Linked domain should now have master domain's table and rows
         linked_types = get_fixture_data_types(self.linked_domain)
@@ -127,7 +127,7 @@ class TestUpdateFixtures(BaseLinkedAppsTest):
         ).save()
         clear_fixture_quickcache(self.domain, get_fixture_data_types(self.domain))
         clear_fixture_cache(self.domain)
-        update_fixtures(self.domain_link)
+        update_fixture(self.domain_link, self.table.tag)
 
         # Linked domain should still have one table, with the new rows
         linked_types = get_fixture_data_types(self.linked_domain)
@@ -152,27 +152,8 @@ class TestUpdateFixtures(BaseLinkedAppsTest):
             ],
         )
         other_table.save()
-        FixtureDataItem(
-            domain=self.domain,
-            data_type_id=self.table._id,
-            fields={
-                'name': FieldList(field_list=[FixtureItemField(field_value='Ganymede')]),
-                'planet': FieldList(field_list=[FixtureItemField(field_value='Jupiter')]),
-            },
-        ).save()
         clear_fixture_quickcache(self.domain, get_fixture_data_types(self.domain))
         clear_fixture_cache(self.domain)
 
         with self.assertRaises(UnsupportedActionError):
-            update_fixtures(self.domain_link)
-
-        # Despite the exception, the global table should have gotten updated
-        linked_types = get_fixture_data_types(self.linked_domain)
-        self.assertEqual({'moons'}, {t.tag for t in linked_types})
-        items = get_fixture_items_for_data_type(self.linked_domain, linked_types[0]._id)
-        self.assertEqual(4, len(items))
-        self.assertEqual([
-            'Callisto', 'Europa', 'Ganymede', 'Io', 'Jupiter', 'Jupiter', 'Jupiter', 'Jupiter',
-        ], sorted([
-            i.fields[field_name].field_list[0].field_value for i in items for field_name in i.fields.keys()
-        ]))
+            update_fixture(self.domain_link, 'jellyfish')

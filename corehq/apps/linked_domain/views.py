@@ -1,3 +1,4 @@
+from copy import copy
 from datetime import datetime
 
 from django.contrib import messages
@@ -34,10 +35,18 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.domain.views.settings import BaseAdminProjectSettingsView
+from corehq.apps.fixtures.dbaccessors import get_fixture_data_type_by_tag, get_fixture_data_types
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.decorators import use_multiselect
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import pretty_doc_info
-from corehq.apps.linked_domain.const import LINKED_MODELS, LINKED_MODELS_MAP, MODEL_CASE_SEARCH
+from corehq.apps.linked_domain.const import (
+    LINKED_MODELS,
+    LINKED_MODELS_MAP,
+    MODEL_APP,
+    MODEL_CASE_SEARCH,
+    MODEL_FIXTURE,
+    MODEL_REPORT,
+)
 from corehq.apps.linked_domain.dbaccessors import (
     get_domain_master_link,
     get_linked_domains,
@@ -46,7 +55,7 @@ from corehq.apps.linked_domain.decorators import require_linked_domain
 from corehq.apps.linked_domain.exceptions import UnsupportedActionError
 from corehq.apps.linked_domain.local_accessors import (
     get_custom_data_models,
-    get_fixtures,
+    get_fixture,
     get_toggles_previews,
     get_user_roles,
 )
@@ -54,6 +63,7 @@ from corehq.apps.linked_domain.models import (
     AppLinkDetail,
     DomainLink,
     DomainLinkHistory,
+    FixtureLinkDetail,
     ReportLinkDetail,
     wrap_detail,
 )
@@ -93,8 +103,8 @@ def custom_data_models(request, domain):
 
 @login_or_api_key
 @require_linked_domain
-def fixtures(request, domain):
-    return JsonResponse(get_fixtures(domain))
+def fixture(request, domain, tag):
+    return JsonResponse(get_fixture(domain, tag))
 
 
 @login_or_api_key
@@ -198,13 +208,14 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         master_link = get_domain_master_link(self.domain)
         linked_domains = [self._link_context(link, timezone) for link in get_linked_domains(self.domain)]
         (master_apps, linked_apps) = self._get_apps()
+        (master_fixtures, linked_fixtures) = self._get_fixtures()
         (master_reports, linked_reports) = self._get_reports()
 
         # Models belonging to this domain's master domain, for the purpose of pulling
-        model_status = self._get_model_status(master_link, linked_apps, linked_reports)
+        model_status = self._get_model_status(master_link, linked_apps, linked_fixtures, linked_reports)
 
         # Models belonging to this domain, for the purpose of pushing to linked domains
-        master_model_status = self._get_master_model_status(master_apps, master_reports)
+        master_model_status = self._get_master_model_status(master_apps, master_fixtures, master_reports)
 
         return {
             'domain': self.domain,
@@ -234,6 +245,11 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                 master_list[brief._id] = brief
         return (master_list, linked_list)
 
+    def _get_fixtures(self):
+        fixtures = get_fixture_data_types(self.domain)
+        fixtures_by_tag = {f.tag: f for f in fixtures}
+        return (fixtures_by_tag, copy(fixtures_by_tag))
+
     def _get_reports(self):
         master_list = {}
         linked_list = {}
@@ -254,14 +270,14 @@ class DomainLinkView(BaseAdminProjectSettingsView):
             'last_update': server_to_user_time(link.last_pull, timezone) if link.last_pull else 'Never',
         }
 
-    def _get_master_model_status(self, apps, reports, ignore_models=None):
+    def _get_master_model_status(self, apps, fixtures, reports, ignore_models=None):
         model_status = []
         ignore_models = ignore_models or []
 
         for model, name in LINKED_MODELS:
             if (
                 model not in ignore_models
-                and model not in ('app', 'report')
+                and model not in (MODEL_APP, MODEL_FIXTURE, MODEL_REPORT)
                 and (model != MODEL_CASE_SEARCH or toggles.SYNC_SEARCH_CASE_CLAIM.enabled(self.domain))
             ):
                 model_status.append({
@@ -275,17 +291,26 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         linked_models = dict(LINKED_MODELS)
         for app in apps.values():
             update = {
-                'type': 'app',
+                'type': MODEL_APP,
                 'name': '{} ({})'.format(linked_models['app'], app.name),
                 'last_update': None,
                 'detail': AppLinkDetail(app_id=app._id).to_json(),
                 'can_update': True
             }
             model_status.append(update)
+        for fixture in fixtures.values():
+            update = {
+                'type': MODEL_FIXTURE,
+                'name': '{} ({})'.format(linked_models['fixture'], fixture.tag),
+                'last_update': None,
+                'detail': FixtureLinkDetail(tag=fixture.tag).to_json(),
+                'can_update': True
+            }
+            model_status.append(update)
         for report in reports.values():
             report = ReportConfiguration.get(report.get_id)
             update = {
-                'type': 'report',
+                'type': MODEL_REPORT,
                 'name': f"{linked_models['report']} ({report.title})",
                 'last_update': None,
                 'detail': ReportLinkDetail(report_id=report.get_id).to_json(),
@@ -295,7 +320,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
 
         return model_status
 
-    def _get_model_status(self, master_link, apps, reports):
+    def _get_model_status(self, master_link, apps, fixtures, reports):
         model_status = []
         if not master_link:
             return model_status
@@ -334,6 +359,14 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                     update['can_update'] = False
                 update['name'] = '{} ({})'.format(name, app_name)
             model_status.append(update)
+            if action.model == 'fixture':
+                tag = action.wrapped_detail.tag
+                try:
+                    fixture = fixtures.get(tag)
+                    del fixtures[tag]
+                except KeyError:
+                    fixture = get_fixture_data_type_by_tag(self.domain, tag)
+                update['name'] = f'{name} ({fixture.tag})'
             if action.model == 'report':
                 report_id = action.wrapped_detail.report_id
                 try:
@@ -344,7 +377,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                 update['name'] = f'{name} ({report.title})'
 
         # Add in models and apps that have never been synced
-        model_status.extend(self._get_master_model_status(apps, reports, ignore_models=models_seen))
+        model_status.extend(self._get_master_model_status(apps, fixtures, reports, ignore_models=models_seen))
 
         return model_status
 
@@ -364,7 +397,7 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         error = ""
         try:
             update_model_type(master_link, type_, detail_obj)
-            master_link.update_last_pull(type_, self.request.couch_user._id, model_details=detail_obj)
+            master_link.update_last_pull(type_, self.request.couch_user._id, model_details=detail_obj.to_json())
         except UnsupportedActionError as e:
             error = str(e)
 
@@ -494,7 +527,7 @@ class DomainLinkHistoryReport(GenericTabularReport):
 
     def _make_model_cell(self, record):
         name = LINKED_MODELS_MAP[record.model]
-        if record.model == 'app':
+        if record.model == MODEL_APP:
             detail = record.wrapped_detail
             app_name = ugettext_lazy('Unknown App')
             if detail:
@@ -502,7 +535,16 @@ class DomainLinkHistoryReport(GenericTabularReport):
                 app_name = app_names.get(detail.app_id, detail.app_id)
             return '{} ({})'.format(name, app_name)
 
-        if record.model == 'report':
+        if record.model == MODEL_FIXTURE:
+            detail = record.wrapped_detail
+            tag = ugettext_lazy('Unknown')
+            if detail:
+                data_type = get_fixture_data_type_by_tag(self.selected_link.linked_domain, detail.tag)
+                if data_type:
+                    tag = data_type.tag
+            return '{} ({})'.format(name, tag)
+
+        if record.model == MODEL_REPORT:
             detail = record.wrapped_detail
             report_name = ugettext_lazy('Unknown Report')
             if detail:
