@@ -1,0 +1,80 @@
+{% load i18n %}
+<div cg-busy="[$ctrl.myPromise]">
+    <div class="row no-margin fixes-filters" ng-class="{'fixes-filters-with-alert': $ctrl.isAlertActive}">
+        <div class="col-md-5">
+            <div class="row">
+                <span class="breadcrumb-element" ng-bind="$ctrl.label"></span>
+            </div>
+            <div class="row">
+                <span class="location-breadcrumb" ng-click="$ctrl.haveAccessToAllLocations && $ctrl.moveToLocation('national', -1)">National </span>
+                <span class="location-breadcrumb" ng-click="$ctrl.getDisableIndex() < $index && $ctrl.moveToLocation(loc, $index)" ng-repeat="loc in $ctrl.selectedLocations | filter: { location_id: '!all'} track by $index">
+                    <i class="fa fa-chevron-right" aria-hidden="true"></i> {$ loc.name $}
+                </span>
+            </div>
+        </div>
+        <div class="col-md-7">
+            <filters filters="$ctrl.filters" data="$ctrl.filtersData" selected-locations="$ctrl.selectedLocations"></filters>
+        </div>
+    </div>
+    <info-message></info-message>
+    <reassignment-message ng-show="$ctrl.showReassignmentMessage()" selected-location="$ctrl.selectedLocation()" selected-date="$ctrl.selectedDate"></reassignment-message>
+    <div class="report-content report-content-without-message" ng-if="!$ctrl.showReassignmentMessage()">
+        <div ng-if="!$ctrl.data" class="text-center">
+            <h3 class="black">No Data</h3>
+        </div>
+        <div ng-if="$ctrl.data && $ctrl.step === 'overview'" class="black">
+            <div ng-repeat="(sectionHeader, sectionData) in $ctrl.data track by $index" style="margin-bottom: 50px">
+              <div class="row no-margin">
+                <p ng-bind="sectionHeader" class="col-xs-9 title no-margin"></p>
+                <p ng-if="$index==0" ng-bind="$ctrl.dateDisplayed" class="col-xs-3 text-center title no-margin"></p>
+              </div>
+              <hr class="mt-2 mb-3">
+              <div ng-repeat="(key, value) in sectionData">
+                <div class="row no-margin">
+                  <p ng-bind="key" class="col-xs-9 mb-2"></p>
+                  <p ng-bind="value" class="col-xs-3 text-center no-margin"></p>
+                </div>
+                <hr class="mt-2 mb-2">
+              </div>
+            </div>
+        </div>
+        <div ng-if="$ctrl.data && $ctrl.step === 'comparitive'" class="black">
+            <div ng-repeat="(sectionHeader, sectionData) in $ctrl.data" style="margin-bottom: 50px">
+              <p ng-bind="sectionHeader" class="title no-margin"></p>
+              <table class="table table-bordered table-striped table-responsive">
+                <tr>
+                  <th></th>
+                  <th class="text-center">Best Performers</th>
+                  <th class="text-center">Worst Performers</th>
+                  <th></th>
+                  <th class="text-center">Best Performers</th>
+                  <th class="text-center">Worst Performers</th>
+                </tr>
+                <tr ng-repeat-start="row in sectionData" ng-init="numberOfEntries = $ctrl.getRowSpan(row[0], row[1])">
+                  <td class="text-center title" style="vertical-align: middle" ng-bind="row[0]['indicator']" rowspan="{$ numberOfEntries $}"></td>
+                  <td class="text-center">{$ row[0]['Best performers'][0]['place'] $}<br>{$ row[0]['Best performers'][0]['value'] $}</td>
+                  <td class="text-center">{$ row[0]['Worst performers'][0]['place'] $}<br>{$ row[0]['Worst performers'][0]['value'] $}</td>
+                  <td class="text-center title" ng-if="row[1]" style="vertical-align: middle" ng-bind="row[1]['indicator']" rowspan="{$ numberOfEntries $}"></td>
+                  <td class="text-center" ng-if="row[1]">{$ row[1]['Best performers'][0]['place'] $}<br>{$ row[1]['Best performers'][0]['value'] $}</td>
+                  <td class="text-center" ng-if="row[1]">{$ row[1]['Worst performers'][0]['place'] $}<br>{$ row[1]['Worst performers'][0]['value'] $}</td>
+                </tr>
+                {# dynamically showing table rows (apart from first row) based on total number of rows, backend is sending   #}
+                <tr ng-init="numberOfEntries = $ctrl.getRowSpan(row[0], row[1])" ng-repeat-end
+                    ng-repeat="x in [].constructor(numberOfEntries) | limitTo : (1 - numberOfEntries) track by $index">
+                  <td class="text-center">{$ row[0]['Best performers'][$index + 1]['place'] $}<br>{$ row[0]['Best performers'][$index + 1]['value'] $}</td>
+                  <td class="text-center">{$ row[0]['Worst performers'][$index + 1]['place'] $}<br>{$ row[0]['Worst performers'][$index + 1]['value'] $}</td>
+                  <td class="text-center" ng-if="row[1]">{$ row[1]['Best performers'][$index + 1]['place'] $}<br>{$ row[1]['Best performers'][$index + 1]['value'] $}</td>
+                  <td class="text-center" ng-if="row[1]">{$ row[1]['Worst performers'][$index + 1]['place'] $}<br>{$ row[1]['Worst performers'][$index + 1]['value'] $}</td>
+                </tr>
+              </table>
+            </div>
+        </div>
+    </div>
+    <div class="row fixed-dots">
+        <div class="dot-menu">
+            <div class="dot-menu-item pointer" ng-repeat="step in $ctrl.steps">
+                <dot-link label="{$ step.label $}" route="{$ step.route $}"></dot-link>
+            </div>
+        </div>
+    </div>
+</div>
