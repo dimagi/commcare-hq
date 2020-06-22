@@ -1056,12 +1056,20 @@ class MessagingTab(UITab):
         messages_urls = []
 
         if self.can_use_outbound_sms:
+            from custom.icds.views.custom_sms_report import SMSUsageReport
             messages_urls.extend([
                 {
                     'title': _('Compose SMS Message'),
                     'url': reverse('sms_compose_message', args=[self.domain])
                 },
             ])
+            if toggles.ICDS_CUSTOM_SMS_REPORT.enabled(self.domain):
+                messages_urls.extend([
+                    {
+                        'title': _('Get Custom SMS Usage Report'),
+                        'url': reverse(SMSUsageReport.urlname, args=[self.domain])
+                    },
+                ])
 
         if self.can_access_reminders:
             messages_urls.extend([

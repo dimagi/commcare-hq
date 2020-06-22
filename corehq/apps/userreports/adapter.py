@@ -19,7 +19,7 @@ class IndicatorAdapter(object):
     def get_table(self):
         raise NotImplementedError
 
-    def rebuild_table(self, initiated_by=None, source=None, skip_log=False):
+    def rebuild_table(self, initiated_by=None, source=None, skip_log=False, diffs=None):
         raise NotImplementedError
 
     def drop_table(self, initiated_by=None, source=None, skip_log=False):
@@ -110,9 +110,9 @@ class IndicatorAdapter(object):
         from corehq.apps.userreports.models import DataSourceActionLog
         self._log_action(initiated_by, source, DataSourceActionLog.BUILD)
 
-    def log_table_rebuild(self, initiated_by, source, skip=False):
+    def log_table_rebuild(self, initiated_by, source, skip=False, diffs=None):
         from corehq.apps.userreports.models import DataSourceActionLog
-        self._log_action(initiated_by, source, DataSourceActionLog.REBUILD, skip=skip)
+        self._log_action(initiated_by, source, DataSourceActionLog.REBUILD, skip=skip, diffs=diffs)
 
     def log_table_rebuild_skipped(self, source, diffs):
         from corehq.apps.userreports.models import DataSourceActionLog
