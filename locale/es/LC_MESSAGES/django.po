@@ -9172,7 +9172,7 @@ msgid ""
 "                               Nest this menu under another for easier "
 "application navigation.\n"
 "                               <a href='https://confluence.dimagi.com/"
-"display/ccinternal/Sub-menus'>(More Information)</span>\n"
+"display/commcarepublic/Sub+Menus'>(More Information)</span>\n"
 "                               "
 msgstr ""
 
