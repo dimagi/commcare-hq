@@ -318,7 +318,7 @@ class _CaseImportRow(object):
         }
 
     def get_create_caseblock(self):
-        return CaseBlock.deprecated_init(
+        return CaseBlock(
             create=True,
             case_id=uuid.uuid4().hex,
             owner_id=self._get_owner_id(),
@@ -334,7 +334,7 @@ class _CaseImportRow(object):
             extras['owner_id'] = self._get_owner_id()
         if self.case_name is not None:
             extras['case_name'] = self.case_name
-        return CaseBlock.deprecated_init(
+        return CaseBlock(
             create=False,
             case_id=self.existing_case.case_id,
             close=self.to_close == 'yes',
