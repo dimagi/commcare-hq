@@ -181,6 +181,7 @@ class EditCommCareUserView(BaseEditUserView):
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
             'has_any_sync_logs': self.has_any_sync_logs,
+            'token': self.backup_token,
         })
         return context
 
@@ -1472,6 +1473,7 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
         return self.get(request, *args, **kwargs)
 
 
+@location_safe
 @method_decorator(TWO_STAGE_USER_PROVISIONING.required_decorator(), name='dispatch')
 class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
     template_name = "users/commcare_user_confirm_account.html"

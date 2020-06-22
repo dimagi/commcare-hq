@@ -439,6 +439,13 @@ APP_BUILDER_CUSTOM_PARENT_REF = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+LAZY_LOAD_MULTIMEDIA = StaticToggle(
+    'optional-media',
+    'ICDS: Lazy load multimedia files in Updates',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 APP_BUILDER_ADVANCED = StaticToggle(
     'advanced-app-builder',
     'Advanced Module in App-Builder',
@@ -1011,6 +1018,13 @@ ICDS_DASHBOARD_TEMPORARY_DOWNTIME = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+ICDS_CUSTOM_SMS_REPORT = StaticToggle(
+    'icds_custom_sms_report',
+    'ICDS: Generate a custom SMS report with in the given time range. '
+    'The report that is generated will be emailed to the user who requested it',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
 
 OPENMRS_INTEGRATION = StaticToggle(
     'openmrs_integration',

@@ -1,5 +1,6 @@
 import copy
 from datetime import datetime
+from mock import patch
 
 from django.test import TestCase
 
@@ -99,7 +100,8 @@ class CCUserLocationAssignmentTest(TestCase):
         self.user.unset_location_by_id(self.loc1.location_id, fall_back_to_next=True)
         self.assertAssignedLocations([])
 
-    def test_deleting_location_updates_user(self):
+    @patch('corehq.apps.users.signals._should_sync_to_es', return_value=True)
+    def test_deleting_location_updates_user(self, mock):
         self.user.reset_locations(self.loc_ids)
         refresh_elasticsearch_index('users')
         self.loc1.sql_location.full_delete()

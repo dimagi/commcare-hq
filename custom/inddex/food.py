@@ -206,10 +206,10 @@ class FoodRow:
         self.is_recipe = self.food_type in (STANDARD_RECIPE, NON_STANDARD_RECIPE)
         self.include_in_analysis = not self.is_recipe
 
-        self.measurement_amount = float(self.measurement_amount) if self.measurement_amount else None
-        self.portions = float(self.portions) if self.portions else None
-        self.nsr_consumed_cooked_fraction = (float(self.nsr_consumed_cooked_fraction)
-                                             if self.nsr_consumed_cooked_fraction else None)
+        self.measurement_amount = _maybe_float(self.measurement_amount)
+        self.portions = _maybe_float(self.portions)
+        self.nsr_consumed_cooked_fraction = _maybe_float(self.nsr_consumed_cooked_fraction)
+
         self.enrichment_complete = False
 
     def _set_ingredient_fields(self, ingredient):
@@ -418,7 +418,9 @@ class FoodData:
             if not master_recipe:
                 yield from self._non_recipe_rows(references + ingredients)
             else:
-                for recipe in [master_recipe] + references:
+                yield from self._recipe_rows(master_recipe, ingredients)
+                for recipe in references:
+                    recipe = _insert_nsr_cols(recipe, master_recipe)
                     yield from self._recipe_rows(recipe, ingredients)
 
     @property
@@ -468,6 +470,19 @@ class FoodData:
             yield row
 
 
+def _insert_nsr_cols(raw_recipe, master_recipe):
+    # nsr references are missing some values, insert them from the master recipe
+    nsr_cols = {col: master_recipe[col] for col in NSR_COLS_TO_COPY}
+    amount = _maybe_float(raw_recipe['measurement_amount'])
+    portions = _maybe_float(raw_recipe['portions'])
+    amount_post_cooking = _maybe_float(master_recipe['nsr_measurement_amount_post_cooking'])
+    if all(val is not None for val in [amount, portions, amount_post_cooking]):
+        nsr_cols['nsr_consumed_cooked_fraction'] = amount * portions / amount_post_cooking
+    else:
+        nsr_cols['nsr_consumed_cooked_fraction'] = None
+    return {**raw_recipe, **nsr_cols}
+
+
 def _calculate_total_grams(recipe, ingredients):
     if recipe.food_type == STANDARD_RECIPE:
         res = {}
@@ -493,3 +508,7 @@ def _multiply(*args):
         return reduce(operator.mul, args)
     except TypeError:
         return None
+
+
+def _maybe_float(val):
+    return float(val) if val not in (None, '') else None
