@@ -16,7 +16,7 @@ class SessionDetailsViewTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super(SessionDetailsViewTest, cls).setUpClass()
-        cls.couch_user = CommCareUser.create('toyland', 'bunkey', '123')
+        cls.couch_user = CommCareUser.create('toyland', 'bunkey', '123', None, None)
         cls.sql_user = cls.couch_user.get_django_user()
 
         cls.expected_response = {

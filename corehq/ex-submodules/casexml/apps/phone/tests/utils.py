@@ -29,6 +29,8 @@ def create_restore_user(
             domain=domain,
             username=username,
             password=password,
+            created_by=None,
+            created_via=None,
             first_name=first_name,
             user_data={
                 'something': 'arbitrary'

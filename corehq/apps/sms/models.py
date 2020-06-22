@@ -856,8 +856,11 @@ class MessagingStatusMixin(object):
     def refresh(self):
         return self.__class__.objects.get(pk=self.pk)
 
-    def error(self, error_code, additional_error_text=None):
-        self.status = MessagingEvent.STATUS_ERROR
+    def error(self, error_code, additional_error_text=None, status=None):
+        if status is None:
+            self.status = MessagingEvent.STATUS_ERROR
+        else:
+            self.status = status
         self.error_code = error_code
         self.additional_error_text = additional_error_text
         self.save()
@@ -881,12 +884,16 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     STATUS_COMPLETED = 'CMP'
     STATUS_NOT_COMPLETED = 'NOT'
     STATUS_ERROR = 'ERR'
+    STATUS_EMAIL_SENT = 'SND'
+    STATUS_EMAIL_DELIVERED = 'DEL'
 
     STATUS_CHOICES = (
         (STATUS_IN_PROGRESS, ugettext_noop('In Progress')),
         (STATUS_COMPLETED, ugettext_noop('Completed')),
         (STATUS_NOT_COMPLETED, ugettext_noop('Not Completed')),
         (STATUS_ERROR, ugettext_noop('Error')),
+        (STATUS_EMAIL_SENT, ugettext_noop('Email Sent')),
+        (STATUS_EMAIL_DELIVERED, ugettext_noop('Email Delivered')),
     )
 
     SOURCE_BROADCAST = 'BRD'
@@ -986,6 +993,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     ERROR_GATEWAY_NOT_FOUND = 'GATEWAY_NOT_FOUND'
     ERROR_NO_EMAIL_ADDRESS = 'NO_EMAIL_ADDRESS'
     ERROR_TRIAL_EMAIL_LIMIT_REACHED = 'TRIAL_EMAIL_LIMIT_REACHED'
+    ERROR_EMAIL_BOUNCED = 'EMAIL_BOUNCED'
+    ERROR_EMAIL_GATEWAY = 'EMAIL_GATEWAY_ERROR'
 
     ERROR_MESSAGES = {
         ERROR_NO_RECIPIENT:
@@ -1037,6 +1046,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         ERROR_TRIAL_EMAIL_LIMIT_REACHED:
             ugettext_noop("Cannot send any more reminder emails. The limit for "
                 "sending reminder emails on a Trial plan has been reached."),
+        ERROR_EMAIL_BOUNCED: ugettext_noop("Email Bounced"),
+        ERROR_EMAIL_GATEWAY: ugettext_noop("Email Gateway Error"),
     }
 
     domain = models.CharField(max_length=126, null=False, db_index=True)

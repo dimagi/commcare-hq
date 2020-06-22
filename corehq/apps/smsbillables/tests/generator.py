@@ -17,6 +17,7 @@ from corehq.apps.smsbillables.models import (
     SmsUsageFee,
 )
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
+from corehq.messaging.smsbackends.infobip.models import InfobipBackend
 from corehq.util.test_utils import unit_testing_only
 
 # arbitrarily generated once from http://www.generatedata.com/
@@ -85,7 +86,7 @@ def arbitrary_country_code_and_prefixes(
 def _available_gateway_fee_backends():
     return [
         backend for backend in get_sms_backend_classes().values()
-        if backend.get_api_id() != SQLTwilioBackend.get_api_id()
+        if backend.get_api_id() not in [SQLTwilioBackend.get_api_id(), InfobipBackend.get_api_id()]
     ]
 
 

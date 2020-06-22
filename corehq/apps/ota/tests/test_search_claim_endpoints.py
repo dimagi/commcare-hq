@@ -279,7 +279,7 @@ class CaseSearchTests(TestCase, ElasticTestMixin):
 class CaseClaimEndpointTests(TestCase):
     def setUp(self):
         self.domain = create_domain(DOMAIN)
-        self.user = CommCareUser.create(DOMAIN, USERNAME, PASSWORD)
+        self.user = CommCareUser.create(DOMAIN, USERNAME, PASSWORD, None, None)
         initialize_index_and_mapping(get_es_new(), CASE_SEARCH_INDEX_INFO)
         CaseSearchConfig.objects.get_or_create(pk=DOMAIN, enabled=True)
         delete_all_cases()
@@ -367,7 +367,7 @@ class CaseClaimEndpointTests(TestCase):
         client = Client()
         client.login(username=USERNAME, password=PASSWORD)
         other_user_username = 'other_user@{}.commcarehq.org'.format(DOMAIN)
-        other_user = CommCareUser.create(DOMAIN, other_user_username, PASSWORD)
+        other_user = CommCareUser.create(DOMAIN, other_user_username, PASSWORD, None, None)
 
         url = reverse('claim_case', kwargs={'domain': DOMAIN})
 
@@ -388,10 +388,10 @@ class CaseClaimEndpointTests(TestCase):
         client = Client()
         client.login(username=USERNAME, password=PASSWORD)
         other_user_username = 'other_user@{}.commcarehq.org'.format(DOMAIN)
-        other_user = CommCareUser.create(DOMAIN, other_user_username, PASSWORD)
+        other_user = CommCareUser.create(DOMAIN, other_user_username, PASSWORD, None, None)
 
         another_user_username = 'another_user@{}.commcarehq.org'.format(DOMAIN)
-        another_user = CommCareUser.create(DOMAIN, another_user_username, PASSWORD)
+        another_user = CommCareUser.create(DOMAIN, another_user_username, PASSWORD, None, None)
 
         url = reverse('claim_case', kwargs={'domain': DOMAIN})
 

@@ -14,7 +14,7 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
     vm.label = "Service Delivery Dashboard";
     vm.haveAccessToAllLocations = haveAccessToAllLocations;
     vm.tooltipPlacement = "right";
-    vm.filters = ['gender', 'age'];
+    vm.filters = ['gender', 'age', 'data_period'];
     vm.userLocationId = userLocationId;
     vm.dataNotEntered = "Data Not Entered";
     vm.showTable = true;
@@ -459,6 +459,17 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
         vm.sddTableData['children'].splice(0, 2);
         vm.sddTableData['children'].unshift(pseForAtleast25Days);
         vm.sddTableData['children'].unshift(snForAtleast25Days);
+    }
+
+    if (haveAccessToFeatures) {
+        var numberOfVHSNDConducted = {
+            'mData': 'vhnd_conducted',
+            'heading': 'Number of VHSND conducted',
+            'tooltipValue': 'Number of Village Health Sanitation and Nutrition Days (VHSNDs) organised by an AWC in a month',
+            'columnValueType': 'raw',
+            'columnValueIndicator': 'vhnd_conducted',
+        };
+        vm.sddTableData['pw_lw_children']['awc'].splice(5, 0, numberOfVHSNDConducted);
     }
 
     vm.getTableData = function () {

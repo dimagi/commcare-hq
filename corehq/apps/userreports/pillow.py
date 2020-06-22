@@ -216,7 +216,7 @@ class ConfigurableReportTableManagerMixin(object):
 
             tables_to_act_on = get_tables_rebuild_migrate(diffs)
             for table_name in tables_to_act_on.rebuild:
-                pillow_logging.debug("[rebuild] Rebuilding table: %s", table_name)
+                pillow_logging.info("[rebuild] Rebuilding table: %s", table_name)
                 sql_adapter = table_map[table_name]
                 table_diffs = [diff for diff in diffs if diff.table_name == table_name]
                 if not sql_adapter.config.is_static:
@@ -244,15 +244,12 @@ class ConfigurableReportTableManagerMixin(object):
             if config._rev != latest_rev:
                 raise StaleRebuildError('Tried to rebuild a stale table ({})! Ignoring...'.format(config))
 
+        diff_dicts = [diff.to_dict() for diff in diffs]
         if config.disable_destructive_rebuild and adapter.table_exists:
-            diff_dicts = [diff.to_dict() for diff in diffs]
             adapter.log_table_rebuild_skipped(source='pillowtop', diffs=diff_dicts)
             return
 
-        if config.is_static:
-            rebuild_indicators.delay(adapter.config.get_id, source='pillowtop', engine_id=adapter.engine_id)
-        else:
-            adapter.rebuild_table(source='pillowtop')
+        rebuild_indicators.delay(adapter.config.get_id, source='pillowtop', engine_id=adapter.engine_id, diffs=diff_dicts)
 
     def _pull_in_new_and_modified_data_sources(self):
         """

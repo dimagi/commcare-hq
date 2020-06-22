@@ -45,7 +45,7 @@ class UpNrhmTestCase(TestCase):
         self.domain = domain
         user = WebUser.get_by_username('test')
         if not user:
-            user = WebUser.create(domain.name, 'test', 'passwordtest')
+            user = WebUser.create(domain.name, 'test', 'passwordtest', None, None)
         user.is_authenticated = True
         user.is_superuser = True
         user.is_authenticated = True

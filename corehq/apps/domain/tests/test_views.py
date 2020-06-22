@@ -32,7 +32,7 @@ class TestDomainViews(TestCase, DomainSubscriptionMixin):
 
         self.username = 'bananafana'
         self.password = '*******'
-        self.user = WebUser.create(self.domain.name, self.username, self.password, is_admin=True)
+        self.user = WebUser.create(self.domain.name, self.username, self.password, None, None, is_admin=True)
         self.user.eula.signed = True
         self.user.save()
 
