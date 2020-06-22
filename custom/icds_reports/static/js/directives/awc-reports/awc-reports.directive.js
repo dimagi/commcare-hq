@@ -1710,7 +1710,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.haveAccessToFeatures = haveAccessToFeatures;
     vm.tooltipPlacement = "right";
     vm.step = $routeParams.step;
-    vm.filters = ['gender', 'age'];
+    vm.filters = ['gender', 'age', 'data_period'];
     vm.userLocationId = userLocationId;
     vm.dataNotEntered = "Data Not Entered";
     vm.isAlertActive = isAlertActive;

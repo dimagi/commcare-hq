@@ -33,7 +33,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     vm.data = {
         legendTitle: 'Percentage Children',
     };
-    vm.filters = [];
+    vm.filters = ['data_period'];
     vm.rightLegend = {
         info: 'Of the total children enrolled for Anganwadi services and weighed, the percentage of children between 0-5 years who were moderately/severely underweight in the current month. \n' +
         '\n' +

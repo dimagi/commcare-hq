@@ -180,6 +180,7 @@ class EditCommCareUserView(BaseEditUserView):
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
             'has_any_sync_logs': self.has_any_sync_logs,
+            'token': self.backup_token,
         })
         return context
 
