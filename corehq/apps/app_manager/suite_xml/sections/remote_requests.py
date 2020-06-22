@@ -153,7 +153,7 @@ class RemoteRequestFactory(object):
                 'key': prop.name,
                 'display': Display(text=Text(locale_id=id_strings.search_property_locale(self.module, prop.name))),
             }
-            if prop.appearance:
+            if prop.appearance and self.app.enable_search_prompt_appearance:
                 kwargs['appearance'] = prop.appearance
             prompts.append(QueryPrompt(**kwargs))
         return prompts
