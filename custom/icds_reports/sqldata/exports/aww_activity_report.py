@@ -42,8 +42,8 @@ class AwwActivityExport(object):
                                 'awc_site_code', 'first_submission', 'last_submission', 'no_of_days_since_start',
                                 'no_of_days_inactive')
 
-        headers = ['State', 'District', 'Block', 'Supervisor name', 'AWC Name', 'AWC site code',
-                   'First submission date', 'Last submission date', 'Days since start', 'Days inactive']
+        headers = ['State', 'District', 'Block', 'Supervisor Name', 'AWC Name', 'AWC Site Code',
+                   'First Submission Date', 'Last Submission Date', 'Days Since Start', 'Days Inactive']
 
         excel_rows = [headers]
 

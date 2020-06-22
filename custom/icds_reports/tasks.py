@@ -1063,7 +1063,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
         export_info = excel_data[1][1]
         generated_timestamp = date_parser.parse(export_info[0][1])
         formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
-        data_type = 'Aww_Activity_Report__{}'.format(formatted_timestamp)
+        data_type = 'AWW_Activity_Report__{}'.format(formatted_timestamp)
 
         if file_format == 'xlsx':
             cache_key = create_aww_activity_report(
