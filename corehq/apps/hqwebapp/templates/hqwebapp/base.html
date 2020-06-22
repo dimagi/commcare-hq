@@ -334,6 +334,7 @@
     {% endif %}
 
     {% if request.user.is_authenticated and request.project and request.session.secure_session %}
+      {% initial_page_data 'secure_session_timeout' request.session.secure_session_timeout %}
       {% initial_page_data 'session_expiry' request.session.session_expiry %}
       {% initial_page_data 'secure_timeout_username' request.couch_user.username %}
       {% registerurl 'iframe_domain_login' request.project.name %}

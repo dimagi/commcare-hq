@@ -69,7 +69,7 @@ hqDefine('hqwebapp/js/inactivity', [
             shouldShowWarning = false,
             sessionExpiry = initialPageData.get('session_expiry');
 
-        log("Page loaded, session expires at " + sessionExpiry);
+        log("Page loaded, timeout is " + initialPageData.get('secure_session_timeout') + ", session expires at " + sessionExpiry);
         if (!$modal.length) {
             log("Could not find modal, returning");
             return;
