@@ -216,8 +216,11 @@ class ConfigurableReportTableManagerMixin(object):
 
             tables_to_act_on = get_tables_rebuild_migrate(diffs)
             for table_name in tables_to_act_on.rebuild:
-                pillow_logging.info("[rebuild] Rebuilding table: %s", table_name)
                 sql_adapter = table_map[table_name]
+                pillow_logging.info(
+                    "[rebuild] Rebuilding table: %s, from config %s at rev %s",
+                    (table_name, sql_adapter.config._id, sql_adapter.config._rev)
+                )
                 table_diffs = [diff for diff in diffs if diff.table_name == table_name]
                 if not sql_adapter.config.is_static:
                     try:
