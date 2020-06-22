@@ -72,8 +72,13 @@ def format_value(str_value):
                 # The user has not indicated to use midnight, so this must be a date.
                 return parsed_datetime.date()
         elif parsed_datetime.date() == today_date:
-            # If the date is for today, but not for midnight, then it must either
-            # be a datetime or a time. We check its length to determine which one.
+            # We have already handled the case that the user specified a date (but
+            # not a time), so parsed_datetime is a datetime with a time of midnight.
+            # If the parsed_datetime has a date of today, but a time of not midnight,
+            # then either the user specified both the date and the time (meaning
+            # we should return the datetime), or the user specified only the time (so
+            # we should return only the time).
+
             # If the str_value is long, then this must be a datetime.
             if len(str_value) > 10:
                 return parsed_datetime
