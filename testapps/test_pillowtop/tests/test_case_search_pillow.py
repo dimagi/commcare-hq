@@ -187,7 +187,7 @@ class CaseSearchPillowTest(TestCase):
         results = CaseSearchES().run()
         self.assertEqual(0, results.total)
 
-    def _bootstrap_cases_in_es_for_domain(self, domain, create_case=False):
+    def _bootstrap_cases_in_es_for_domain(self, domain, create_case=True):
         case = self._make_case(domain) if create_case else None
         with patch('corehq.pillows.case_search.domains_needing_search_index',
                    MagicMock(return_value=[domain])):
@@ -199,7 +199,6 @@ class CaseSearchPillowTest(TestCase):
             self._make_case(domain, case)
         self._bootstrap_cases_in_es_for_domain(domain, create_case=False)
         self.elasticsearch.indices.refresh(CASE_SEARCH_INDEX)
-        import pdb; pdb.set_trace()
         self.assertItemsEqual(
             query.get_ids(),
             output
