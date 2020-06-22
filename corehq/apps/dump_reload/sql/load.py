@@ -99,32 +99,19 @@ def worker(queue, db_alias):
     """
     Pulls objects from queue and loads them into their DB.
     """
-    load_stat = LoadStat(db_alias, Counter())
-
-    def process(chunk_):
-        nonlocal load_stat
-        with transaction.atomic(using=db_alias):
-            stat = load_data_for_db(db_alias, chunk_)
-        load_stat.update(stat)
-        chunk_.clear()
-
-    chunk = []
+    coro = load_data_for_db(db_alias)
+    next(coro)
     while True:
         obj = queue.get()
-        if obj is None:  # None is used as a terminator
-            break
-        chunk.append(obj)
+        if obj is None:
+            # None is a terminator. Collect final stats
+            load_stat = coro.send(None)
+            queue.task_done()
+            return load_stat
         try:
-            if len(chunk) == CHUNK_SIZE:
-                process(chunk)
+            coro.send(obj)
         finally:
             queue.task_done()
-    try:
-        if chunk:
-            process(chunk)
-    finally:
-        queue.task_done()
-    return load_stat
 
 
 def _reset_sequences(load_stats):
@@ -141,40 +128,42 @@ def _reset_sequences(load_stats):
                         cursor.execute(line)
 
 
-def load_data_for_db(db_alias, objects):
+def load_data_for_db(db_alias):
     """
-    :param db_alias: Django alias for database to load objects into
-    :param objects: List of object dictionaries to load
-    :return: LoadStats object
+    A coroutine that is sent object dictionaries and loads them into the
+    database identified by ``db_alias``. When it is terminated with
+    ``None``, it yields a LoadStat object.
     """
-    connection = connections[db_alias]
-
-    model_counter = Counter()
-    with connection.constraint_checks_disabled():
-        for obj in PythonDeserializer(objects, using=db_alias):
-            if router.allow_migrate_model(db_alias, obj.object.__class__):
-                model_counter.update([obj.object.__class__])
-                try:
-                    obj.save(using=db_alias)
-                except (DatabaseError, IntegrityError) as e:
-                    e.args = ("Could not load %(app_label)s.%(object_name)s(pk=%(pk)s): %(error_msg)s" % {
-                        'app_label': obj.object._meta.app_label,
-                        'object_name': obj.object._meta.object_name,
-                        'pk': obj.object.pk,
-                        'error_msg': force_text(e)
-                    },)
-                    raise
-
-    # Since we disabled constraint checks, we must manually check for
-    # any invalid keys that might have been added
-    table_names = [model._meta.db_table for model in model_counter]
-    try:
-        connection.check_constraints(table_names=table_names)
-    except Exception as e:
-        e.args = ("Problem loading data: %s" % e,)
-        raise
-
-    return LoadStat(db_alias, model_counter)
+    with transaction.atomic(using=db_alias):
+        connection = connections[db_alias]
+        model_counter = Counter()
+        with connection.constraint_checks_disabled():
+            while True:
+                obj_dict = yield
+                if obj_dict is None:
+                    break
+                for obj in PythonDeserializer([obj_dict], using=db_alias):
+                    if router.allow_migrate_model(db_alias, obj.object.__class__):
+                        model_counter.update([obj.object.__class__])
+                        try:
+                            obj.save(using=db_alias)
+                        except (DatabaseError, IntegrityError) as e:
+                            e.args = ("Could not load %(app_label)s.%(object_name)s(pk=%(pk)s): %(error_msg)s" % {
+                                'app_label': obj.object._meta.app_label,
+                                'object_name': obj.object._meta.object_name,
+                                'pk': obj.object.pk,
+                                'error_msg': force_text(e)
+                            },)
+                            raise
+        # Since we disabled constraint checks, we must manually check for
+        # any invalid keys that might have been added
+        table_names = [model._meta.db_table for model in model_counter]
+        try:
+            connection.check_constraints(table_names=table_names)
+        except Exception as e:
+            e.args = ("Problem loading data: %s" % e,)
+            raise
+    yield LoadStat(db_alias, model_counter)
 
 
 def get_db_alias(obj: dict) -> str:
