@@ -393,9 +393,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             usage_num_delivery = ut.usage_num_delivery,
             usage_awc_num_active = ut.usage_awc_num_active,
             usage_num_due_list_ccs = ut.usage_num_due_list_ccs,
-            usage_num_due_list_child_health = ut.usage_num_due_list_child_health,
-            app_version = ut.app_version,
-            commcare_version = ut.commcare_version
+            usage_num_due_list_child_health = ut.usage_num_due_list_child_health
         FROM (
         SELECT
             awc_id,
@@ -415,8 +413,6 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             sum(ebf) AS usage_num_ebf,
             sum(cf) AS usage_num_cf,
             sum(delivery) AS usage_num_delivery,
-            LAST_VALUE(app_version) over w as app_version,
-            LAST_VALUE(commcare_version) over w as commcare_version,
             CASE WHEN (
                 sum(due_list_ccs) + sum(due_list_child) + sum(pse) + sum(gmp) + sum(thr)
                 + sum(home_visit) + sum(add_pregnancy) + sum(add_household)
@@ -424,11 +420,33 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             sum(due_list_ccs) AS usage_num_due_list_ccs,
             sum(due_list_child) AS usage_num_due_list_child_health
         FROM "{usage_table}"
-        WHERE month = %(start_date)s GROUP BY awc_id, month, supervisor_id, app_version, commcare_version, form_date WINDOW w as (
+        WHERE month = %(start_date)s GROUP BY awc_id, month, supervisor_id ) ut
+        WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id AND ut.supervisor_id = agg_awc.supervisor_id;
+        """.format(
+            tablename=self.temporary_tablename,
+            usage_table=get_table_name(self.domain, 'static-usage_forms'),
+        ), {
+            'start_date': self.month_start
+        }
+
+        yield """
+        UPDATE "{tablename}" agg_awc SET
+            app_version = ut.app_version,
+            commcare_version = ut.commcare_version
+        FROM (
+            SELECT distinct 
+                awc_id,
+                supervisor_id,
+                %(start_date)s::DATE AS month,
+                LAST_VALUE(app_version) over w as app_version,
+                LAST_VALUE(commcare_version) over w as commcare_version
+            FROM "{usage_table}" 
+            WHERE month = %(start_date)s WINDOW w as (
                 PARTITION BY awc_id, supervisor_id ORDER BY 
                 form_date RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-            )) ut
-        WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id AND ut.supervisor_id = agg_awc.supervisor_id;
+            )
+        ) ut
+        WHERE ut.awc_id = agg_awc.awc_id AND ut.supervisor_id = agg_awc.supervisor_id AND ut.month = agg_awc.month
         """.format(
             tablename=self.temporary_tablename,
             usage_table=get_table_name(self.domain, 'static-usage_forms'),
