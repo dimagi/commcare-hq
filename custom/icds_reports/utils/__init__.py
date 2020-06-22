@@ -461,8 +461,6 @@ def get_status(value, second_part='', normal_value='', exportable=False, data_en
         status = {'value': 'Moderately ' + second_part, 'color': 'black'}
     elif value in ['normal']:
         status = {'value': normal_value, 'color': 'black'}
-    elif value in ['N/A']:
-        return 'N/A'
     return status if not exportable else status['value']
 
 
