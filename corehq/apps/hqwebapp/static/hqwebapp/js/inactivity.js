@@ -166,7 +166,7 @@ hqDefine('hqwebapp/js/inactivity', [
                     } else {
                         $modal.modal('hide');
                         $button.text(gettext("Done"));
-                        _.delay(pollToShowModal, getDelayAndWarnIfNeeded());
+                        _.delay(pollToShowModal, getDelayAndWarnIfNeeded(data.session_expiry));
                     }
                 },
             });
