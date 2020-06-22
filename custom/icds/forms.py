@@ -4,9 +4,12 @@ from django.forms.widgets import Select
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
+from corehq.apps.hqwebapp.crispy import HQFormHelper
+from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
+from dateutil import parser
 
 from corehq.apps.app_manager.dbaccessors import (
     get_brief_apps_in_domain,
@@ -18,6 +21,7 @@ from corehq.apps.hqwebapp.crispy import HQFormHelper
 from custom.icds.models import HostedCCZ, HostedCCZLink
 from custom.icds.tasks.data_pulls import run_data_pull
 from custom.icds_reports.const import CUSTOM_DATA_PULLS
+from custom.icds.const import MAX_SMS_REPORT_DURATION
 
 
 class HostedCCZLinkForm(forms.ModelForm):
@@ -175,3 +179,60 @@ class CustomDataPullForm(forms.Form):
                             self.cleaned_data['month'],
                             self.cleaned_data['location_id'],
                             email)
+
+
+class CustomSMSReportRequestForm(forms.Form):
+
+    date_range = forms.CharField(
+        label=_('Select Date Range'),
+        widget=forms.TextInput(
+            attrs={'class': 'form-control', 'id': 'date_range_selector'}
+        ),
+        required=True
+    )
+
+    start_date = forms.CharField(widget=forms.HiddenInput(
+        attrs={'id': 'report_start_date'}
+    ), required=True)
+    end_date = forms.CharField(widget=forms.HiddenInput(
+        attrs={'id': 'report_end_date'}
+    ), required=True)
+
+    def __init__(self, *args, **kwargs):
+        super(CustomSMSReportRequestForm, self).__init__(*args, **kwargs)
+        self.helper = HQFormHelper()
+        self.helper.form_method = 'post'
+        self.helper.layout = crispy.Layout(
+            hqcrispy.Field('date_range'),
+            hqcrispy.Field('start_date'),
+            hqcrispy.Field('end_date'),
+            twbscrispy.StrictButton(
+                _('Generate Report'),
+                type='submit',
+                css_class='btn-primary',
+            )
+        )
+
+    def clean_start_date(self):
+        start_date = self.cleaned_data['start_date']
+        try:
+            start_date = parser.parse(start_date).date()
+        except ValueError:
+            raise forms.ValidationError(_("Invalid date"))
+        return start_date
+
+    def clean_end_date(self):
+        start_date = self.cleaned_data['start_date']
+        end_date = self.cleaned_data['end_date']
+        try:
+            end_date = parser.parse(end_date).date()
+        except ValueError:
+            raise forms.ValidationError(_("Invalid date"))
+        if start_date > end_date:
+            raise forms.ValidationError(_("Start date cannot be greater than end date"))
+        if (end_date - start_date).days > MAX_SMS_REPORT_DURATION:
+            raise forms.ValidationError(_(
+                "You can request SMS report for maximum 95 days, your request was for {requested_days} days"
+                .format(requested_days=(end_date - start_date).days)
+            ))
+        return end_date
