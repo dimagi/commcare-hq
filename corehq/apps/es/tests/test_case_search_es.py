@@ -250,15 +250,9 @@ class TestCaseSearchLookups(TestCase):
     def _make_case(self, domain, case_properties):
         # make a case
         case_properties = case_properties or {}
-        if '_id' in case_properties:
-            case_id = case_properties.pop('_id')
-        else:
-            case_id = uuid.uuid4().hex
+        case_id = case_properties.pop('_id')
         case_name = 'case-name-{}'.format(uuid.uuid4().hex)
-        if 'owner_id' in case_properties:
-            owner_id = case_properties.pop('owner_id')
-        else:
-            owner_id = None
+        owner_id = case_properties.pop('owner_id', None)
         case = create_and_save_a_case(domain, case_id, case_name, case_properties, owner_id=owner_id)
         return case
 
