@@ -260,21 +260,37 @@ def reverse_index_case_query(case_ids, identifier=None):
 
 
 def case_property_missing(case_property_name):
-    """case_property_name isn't set or is the empty string
+    """case_property_name is the empty string
 
     """
-    return filters.OR(
-        filters.NOT(
-            queries.nested(
-                CASE_PROPERTIES_PATH,
-                queries.filtered(
-                    queries.match_all(),
-                    filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
+    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+        return filters.OR(
+            filters.NOT(
+                queries.nested(
+                    CASE_PROPERTIES_PATH,
+                    queries.BOOL_CLAUSE({
+                        "filter": [
+                            filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
+                        ],
+                        queries.MUST: queries.match_all()
+                    })
                 )
-            )
-        ),
-        exact_case_property_text_query(case_property_name, '')
-    )
+            ),
+            exact_case_property_text_query(case_property_name, '')
+        )
+    else:
+        return filters.OR(
+            filters.NOT(
+                queries.nested(
+                    CASE_PROPERTIES_PATH,
+                    queries.filtered(
+                        queries.match_all(),
+                        filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
+                    )
+                )
+            ),
+            exact_case_property_text_query(case_property_name, '')
+        )
 
 
 def _base_property_query(case_property_name, query):

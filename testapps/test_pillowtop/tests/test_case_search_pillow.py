@@ -15,6 +15,7 @@ from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
 from corehq.apps.change_feed.topics import get_multi_topic_offset
 from corehq.apps.es import CaseSearchES
 from corehq.apps.userreports.tests.utils import doc_to_change
+from corehq.apps.es.case_search import case_property_missing
 from corehq.elastic import get_es_new
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case import get_case_pillow
@@ -258,4 +259,16 @@ class CaseSearchPillowTest(TestCase):
             ],
             CaseSearchES().domain(self.domain).blacklist_owner_id('123'),
             ['c2']
+        )
+
+    def test_missing_case_property(self):
+        self._assert_query_runs_correctly(
+            self.domain,
+            [
+                {'_id': 'c2', 'name': 'blackbeard'},
+                {'_id': 'c3', 'name': ''},
+                {'_id': 'c4'},
+            ],
+            CaseSearchES().domain(self.domain).filter(case_property_missing('name')),
+            ['c3'] # todo; flag farid
         )
