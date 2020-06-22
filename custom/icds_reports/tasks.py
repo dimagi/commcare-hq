@@ -985,7 +985,8 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
                 data_type,
                 config['month'].strftime("%B %Y"),
                 loc_level,
-                config['thr_report_type']
+                config['thr_report_type'],
+                beta=beta
             )
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
