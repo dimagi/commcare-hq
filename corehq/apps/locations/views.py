@@ -559,8 +559,8 @@ class BaseEditLocationView(BaseLocationView):
         data = self.request.POST if self.request.method == 'POST' else None
         return LocationFormSet(
             self.location,
+            self.request,
             bound_data=data,
-            request_user=self.request.couch_user,
             is_new=self.creates_new_location,
         )
 

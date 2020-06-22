@@ -1,70 +1,15 @@
-from datetime import date
-
 from corehq.apps.locations.models import SQLLocation
+from custom.icds_reports.const import (
+    PPR_HEADERS_COMPREHENSIVE,
+    PPR_HEADERS_SUMMARY,
+    PPR_COLS_COMPREHENSIVE,
+    PPR_COLS_SUMMARY,
+    PPR_COLS_TO_FETCH,
+    PPR_COLS_PERCENTAGE_RELATIONS
+)
 from custom.icds_reports.models.views import PoshanProgressReportView
+from custom.icds_reports.utils import generate_quarter_months, calculate_percent, handle_average, apply_exclude
 from custom.icds_reports.utils import india_now
-
-HEADERS_COMPREHENSIVE = [
-    "State Name", "District Name", "Number of Districts Covered", "Number of Blocks Covered",
-    "Number of AWCs Launched", "% Number of Days AWC Were opened", "Expected Home Visits",
-    "Actual Home Visits", "% of Home Visits", "Total Number of Children (3-6 yrs)",
-    "No. of children between 3-6 years provided PSE for atleast 21+ days",
-    "% of children between 3-6 years provided PSE for atleast 21+ days",
-    "Children Eligible to have their weight Measured", "Total number of children that were weighed in the month",
-    "Weighing efficiency", "Number of women in third trimester",
-    "Number of trimester three women counselled on immediate and EBF",
-    "% of trimester three women counselled on immediate and EBF",
-    "Children Eligible to have their height Measured",
-    "Total number of children that had their height measured in the month",
-    "Height Measurement Efficiency", "Number of children between 6 months -3 years, P&LW",
-    "No of children between 6 months -3 years, P&LW provided THR for atleast 21+ days",
-    "% of children between 6 months -3 years, P&LW provided THR for atleast 21+ days",
-    "No. of children between 3-6 years ", "No of children between 3-6 years provided SNP for atleast 21+ days",
-    "% of children between 3-6 years provided SNP for atleast 21+ days"]
-
-COLS_COMPREHENSIVE = [
-    'state_name', 'district_name', 'num_launched_districts', 'num_launched_blocks', 'num_launched_awcs',
-    'avg_days_awc_open_percent', 'expected_visits', 'valid_visits', 'visits_percent', 'pse_eligible',
-    'pse_attended_21_days', 'pse_attended_21_days_percent', 'wer_eligible', 'wer_weighed', 'weighed_percent',
-    'trimester_3', 'counsel_immediate_bf', 'counsel_immediate_bf_percent', 'height_eligible',
-    'height_measured_in_month', 'height_measured_in_month_percent', 'thr_eligible',
-    'thr_rations_21_plus_distributed', 'thr_percent', 'lunch_eligible', 'lunch_count_21_days',
-    'lunch_count_21_days_percent']
-
-HEADERS_SUMMARY = [
-    "State Name", "District Name", "Number of Districts Covered", "Number of Blocks Covered",
-    "Number of AWCs Launched", "% Number of Days AWC Were opened", "% of Home Visits",
-    "% of children between 3-6 years provided PSE for atleast 21+ days", "Weighing efficiency",
-    "% of trimester three women counselled on immediate and EBF",
-    "Height Measurement Efficiency",
-    "% of children between 6 months -3 years, P&LW provided THR for atleast 21+ days",
-    "% of children between 3-6 years provided SNP for atleast 21+ days"]
-
-COLS_SUMMARY = [
-    'state_name', 'district_name', 'num_launched_districts', 'num_launched_blocks', 'num_launched_awcs',
-    'avg_days_awc_open_percent', 'visits_percent', 'pse_attended_21_days_percent', 'weighed_percent',
-    'counsel_immediate_bf_percent', 'height_measured_in_month_percent', 'thr_percent',
-    'lunch_count_21_days_percent'
-]
-
-COLS_TO_FETCH = [
-    'state_name', 'district_name', 'num_launched_districts', 'num_launched_blocks', 'num_launched_awcs',
-    'awc_days_open', 'expected_visits', 'valid_visits', 'pse_eligible', 'pse_attended_21_days', 'wer_eligible',
-    'wer_weighed', 'trimester_3', 'counsel_immediate_bf', 'height_eligible',
-    'height_measured_in_month', 'thr_eligible', 'thr_rations_21_plus_distributed',
-    'lunch_eligible', 'lunch_count_21_days'
-]
-
-COLS_PERCENTAGE_RELATIONS = {
-    'avg_days_awc_open_percent': ['awc_days_open', 'num_launched_awcs', 25],
-    'visits_percent': ['valid_visits', 'expected_visits'],
-    'pse_attended_21_days_percent': ['pse_attended_21_days', 'pse_eligible'],
-    'weighed_percent': ['wer_weighed', 'wer_eligible'],
-    'counsel_immediate_bf_percent': ['counsel_immediate_bf', 'trimester_3'],
-    'height_measured_in_month_percent': ['height_measured_in_month', 'height_eligible'],
-    'thr_percent': ['thr_rations_21_plus_distributed', 'thr_eligible'],
-    'lunch_count_21_days_percent': ['lunch_count_21_days', 'lunch_eligible']
-}
 
 
 class PoshanProgressReport(object):
@@ -78,7 +23,8 @@ class PoshanProgressReport(object):
         self.layout = self.config['report_layout']
         self.report_type = self.config['data_period']
         self.row_constants = [
-            HEADERS_COMPREHENSIVE[:], COLS_COMPREHENSIVE[:], HEADERS_SUMMARY[:], COLS_SUMMARY[:], COLS_TO_FETCH[:]]
+            PPR_HEADERS_COMPREHENSIVE[:], PPR_COLS_COMPREHENSIVE[:], PPR_HEADERS_SUMMARY[:], PPR_COLS_SUMMARY[:],
+            PPR_COLS_TO_FETCH[:]]
         if self.report_type == 'quarter':
             self.quarter = self.config['quarter']
             self.year = self.config['year']
@@ -89,36 +35,16 @@ class PoshanProgressReport(object):
             self.row_constants[3].remove('district_name')
             self.row_constants[4].remove('district_name')
 
-    def _generate_quarter_years(self):
-        months = []
-        end_month = self.quarter * 3
-        for i in range(end_month - 2, end_month + 1):
-            months.append(date(self.year, i, 1))
-        return months
-
-    def __handle_average(self, number):
-        if number is None:
-            ret = 0
-        else:
-            ret = "%.2f" % (number / 3)
-        return float(ret)
-
-    def __calculate_percent(self, num, den, extra_number):
-        if den == 0:
-            ret = 0
-        else:
-            ret = (num / den) * 100
-
-        if extra_number:
-            ret = ret / extra_number
-        return "{}%".format("%.2f" % ret)
-
     def __calculate_percentage_in_rows(self, row, all_cols):
-        for k, v in COLS_PERCENTAGE_RELATIONS.items():
+        for k, v in PPR_COLS_PERCENTAGE_RELATIONS.items():
             num = row[all_cols.index(v[0])]
             den = row[all_cols.index(v[1])]
             extra_number = v[2] if len(v) > 2 else None
-            row[all_cols.index(k)] = self.__calculate_percent(num, den, extra_number)
+            row[all_cols.index(k)] = calculate_percent(num, den, extra_number)
+            # calculation is done on decimal values
+            # and then round off to nearest integer
+            row[all_cols.index(v[0])] = round(row[all_cols.index(v[0])])
+            row[all_cols.index(v[1])] = round(row[all_cols.index(v[1])])
         return row
 
     def quarter_wise(self, filters, order_by, aggregation_level):
@@ -129,6 +55,8 @@ class PoshanProgressReport(object):
         """
         headers_comprehensive, cols_comprehensive, headers_summary, cols_summary, cols_to_fetch = self.row_constants
         query_set = PoshanProgressReportView.objects.filter(**filters).order_by(*order_by)
+        if not self.show_test:
+            query_set = apply_exclude(self.config['domain'], query_set)
         all_cols = list(set(cols_comprehensive + cols_to_fetch))
 
         # it used to uniquely identify the row
@@ -163,7 +91,7 @@ class PoshanProgressReport(object):
             for col in all_cols:
                 if col not in ['state_name', 'district_name', unique_id]:
                     val = v[all_cols.index(col)]
-                    row_data_dict[k][all_cols.index(col)] = self.__handle_average(val)
+                    row_data_dict[k][all_cols.index(col)] = handle_average(val)
                     total_row[all_cols.index(col)] += val if val else 0
                 elif col in ['state_name', 'district_name']:
                     total_row[all_cols.index(col)] = 'Total'
@@ -175,6 +103,9 @@ class PoshanProgressReport(object):
         for k, v in row_data_dict.items():
             row = v[:]
             row_data_dict[k] = self.__calculate_percentage_in_rows(row, all_cols)
+            # rounding remaining values
+            for col in ['num_launched_districts', 'num_launched_blocks']:
+                row_data_dict[k][all_cols.index(col)] = round(row_data_dict[k][all_cols.index(col)])
 
         if self.layout != 'comprehensive':
             headers = headers_summary
@@ -196,6 +127,8 @@ class PoshanProgressReport(object):
         :return: excel_rows
         """
         query_set = PoshanProgressReportView.objects.filter(**filters).order_by(*order_by)
+        if not self.show_test:
+            query_set = apply_exclude(self.config['domain'], query_set)
         headers_comprehensive, cols_comprehensive, headers_summary, cols_summary, cols_to_fetch = self.row_constants
         data = query_set.values(*cols_to_fetch)
         all_cols = list(set(cols_comprehensive + cols_to_fetch))
@@ -211,6 +144,7 @@ class PoshanProgressReport(object):
                 else:
                     total_row[all_cols.index(col)] = 'Total'
             excel_rows.append(row_data)
+        excel_rows.append(total_row)
         # calcuating percentage for all rows
         for i in range(1, len(excel_rows)):
             row = excel_rows[i][:]
@@ -248,7 +182,7 @@ class PoshanProgressReport(object):
             filters['month'] = self.config['month']
             excel_rows = self.month_wise(filters, order_by)
         else:
-            filters['month__in'] = self._generate_quarter_years()
+            filters['month__in'] = generate_quarter_months(self.quarter, self.year)
             excel_rows = self.quarter_wise(filters, order_by, aggregation_level)
 
         export_filters.append(['Report Layout', self.layout.title()])

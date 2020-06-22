@@ -122,7 +122,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
 
     def create_mobile_worker(self, username, password, phone_number, save_vn=True):
         processed_username = process_username(username, self.domain)
-        user = CommCareUser.create(self.domain, processed_username, password,
+        user = CommCareUser.create(self.domain, processed_username, password, None, None,
             phone_number=phone_number)
         if save_vn:
             entry = user.get_or_create_phone_entry(phone_number)
@@ -153,7 +153,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         post_case_blocks([case_block], {'domain': self.domain})
 
     def create_web_user(self, username, password):
-        user = WebUser.create(self.domain, username, password)
+        user = WebUser.create(self.domain, username, password, None, None)
         self.users.append(user)
         return user
 

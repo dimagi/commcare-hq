@@ -16,7 +16,7 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
     vm.data = {
         legendTitle: 'Number of Women',
     };
-    vm.filters = ['age', 'gender'];
+    vm.filters = ['age', 'gender', 'data_period'];
 
 
     vm.rightLegend = {
