@@ -23,8 +23,9 @@ hqDefine('hqwebapp/js/inactivity', [
 
         // Figure out when the session is going to expire
         if (expiryDate) {
-            millisLeft = new Date(expiryDate) - new Date();
-            log("expiry date is " + expiryDate + ", so there are " + (millisLeft / 1000 / 60) + " minutes left in the session");
+            expiryDate = new Date(expiryDate);
+            millisLeft = expiryDate - new Date();
+            log("expiry date is " + expiryDate.toLocaleTimeString() + ", so there are " + (millisLeft / 1000 / 60) + " minutes left in the session");
 
             // Prevent runaway polling if the page is loaded and secure sessions is then turned OFF, which
             // will result in the user never getting logged out and eventually a negative number of millisLeft.
