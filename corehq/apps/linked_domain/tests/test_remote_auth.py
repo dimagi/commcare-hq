@@ -22,7 +22,7 @@ class RemoteAuthTest(TestCase):
         cls.linked_domain = uuid.uuid4().hex
 
         cls.domain = create_domain(cls.master_domain)
-        cls.couch_user = WebUser.create(cls.master_domain, "test", "foobar")
+        cls.couch_user = WebUser.create(cls.master_domain, "test", "foobar", None, None)
         cls.django_user = cls.couch_user.get_django_user()
         cls.api_key, _ = ApiKey.objects.get_or_create(user=cls.django_user)
 

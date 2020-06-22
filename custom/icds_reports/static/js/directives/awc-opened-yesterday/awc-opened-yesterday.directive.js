@@ -5,7 +5,7 @@ function AwcOpenedYesterdayController($routeParams, $location, storageService, s
     var vm = this;
     vm.data = {};
     vm.step = $routeParams.step;
-    vm.filters = [];
+    vm.filters = ['data_period'];
     vm.isAlertActive = isAlertActive;
 
     if (Object.keys($location.search()).length === 0) {

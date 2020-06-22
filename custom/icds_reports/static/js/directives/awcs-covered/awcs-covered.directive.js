@@ -22,7 +22,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
         info: 'Total AWCs that have launched ICDS-CAS. ' +
         'AWCs are considered launched after submitting at least one Household Registration form.',
     };
-    vm.filters = ['age', 'gender'];
+    vm.filters = ['age', 'gender', 'data_period'];
 
     vm.getPopupSubheading = function () {
         return vm.rightLegend.info;

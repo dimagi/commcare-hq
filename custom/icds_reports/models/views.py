@@ -1636,6 +1636,7 @@ class PoshanProgressReportView(models.Model):
     aggregation_level = models.IntegerField(
         blank=True, null=True, help_text="1 for state rows, 2 for district rows, and so on"
     )
+    num_launched_states = models.IntegerField(blank=True, null=True)
     num_launched_districts = models.IntegerField(blank=True, null=True,
         help_text="number of districts that have at least one Household registration form")
     num_launched_blocks = models.IntegerField(blank=True, null=True,
