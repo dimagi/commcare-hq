@@ -1,6 +1,5 @@
 from django.test import TestCase
 from mock import patch
-from nose.plugins.attrib import attr
 
 from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.domain.shortcuts import create_domain
