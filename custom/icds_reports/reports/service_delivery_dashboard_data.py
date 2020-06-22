@@ -62,7 +62,7 @@ def get_service_delivery_report_data(domain, start, length, order, reversed_orde
                                       'children_0_3', 'num_awcs_conducted_cbe', 'num_awcs_conducted_vhnd',
                                       'thr_21_days', 'thr_25_days', 'thr_eligible', 'lunch_21_days',
                                       'lunch_25_days', 'pse_eligible', 'pse_21_days', 'pse_25_days',
-                                      'gm_3_5', 'children_3_5']
+                                      'gm_3_5', 'children_3_5', 'vhnd_conducted']
     data = ServiceDeliveryReportView .objects.filter(
         month=date(year, month, 1),
         **location_filters
@@ -124,7 +124,8 @@ def get_service_delivery_report_data(domain, start, length, order, reversed_orde
                 num_awcs_conducted_vhnd=get_value_or_data_not_entered(row_data, 'num_awcs_conducted_vhnd'),
                 thr_21_days=get_value_or_data_not_entered(row_data, 'thr_21_days'),
                 thr_25_days=get_value_or_data_not_entered(row_data, 'thr_25_days'),
-                thr_eligible=get_value_or_data_not_entered(row_data, 'thr_eligible')
+                thr_eligible=get_value_or_data_not_entered(row_data, 'thr_eligible'),
+                vhnd_conducted=get_value_or_data_not_entered(row_data, 'vhnd_conducted')
             )
             return_dict = get_pw_lw_percents(return_dict, row_data)
         else:
