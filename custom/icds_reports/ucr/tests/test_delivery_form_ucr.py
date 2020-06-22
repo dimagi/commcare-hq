@@ -24,6 +24,7 @@ class TestDeliveryForms(BaseFormsTest):
                     {
                         "doc_id": None,
                         "case_load_ccs_record0": "57d6bf6b-b33e-4e6b-bfa5-18f01b29e1ef",
+                        'completed_on': datetime.datetime(2018, 1, 7, 7, 13, 19, 820000),
                         "timeend": None,
                         "add": datetime.date(2018, 1, 7),
                         "where_born": 2,
