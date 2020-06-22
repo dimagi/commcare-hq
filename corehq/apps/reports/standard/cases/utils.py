@@ -5,7 +5,7 @@ from corehq.apps.es import forms as form_es
 from corehq.apps.es.es_query import HQESQuery
 from corehq.apps.locations.dbaccessors import (
     get_users_location_ids,
-    user_ids_at_locations,
+    mobile_user_ids_at_locations,
     user_ids_at_locations_and_descendants,
 )
 from corehq.apps.locations.models import SQLLocation
@@ -163,7 +163,7 @@ def _get_location_accessible_ids(request):
         request.domain,
         request.couch_user
     ))
-    accessible_user_ids = user_ids_at_locations(accessible_location_ids)
+    accessible_user_ids = mobile_user_ids_at_locations(accessible_location_ids)
     accessible_ids = accessible_user_ids + list(accessible_location_ids)
     return accessible_ids
 
