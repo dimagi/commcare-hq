@@ -344,7 +344,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                 eval_context = EvaluationContext(doc)
                 with self._metrics_timer('single_doc_transform'):
                     for adapter in adapters:
-                        with self._metrics_timer('transform', adapter.config._id):
+                        with self._per_config_metrics_timer('transform', adapter.config._id):
                             if adapter.config.filter(doc, eval_context):
                                 if adapter.run_asynchronous:
                                     async_configs_by_doc_id[doc['_id']].append(adapter.config._id)
@@ -367,7 +367,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                 delete_docs = to_delete_by_adapter[adapter] + to_delete
                 if not delete_docs:
                     continue
-                with self._metrics_timer('delete', adapter.config._id):
+                with self._per_config_metrics_timer('delete', adapter.config._id):
                     try:
                         adapter.bulk_delete(delete_docs)
                     except Exception:
@@ -377,7 +377,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
         with self._metrics_timer('single_batch_load'):
             # bulk update by adapter
             for adapter, rows in rows_to_save_by_adapter.items():
-                with self._metrics_timer('load', adapter.config._id):
+                with self._per_config_metrics_timer('load', adapter.config._id):
                     try:
                         adapter.save_rows(rows)
                     except Exception:
@@ -402,6 +402,17 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
             tags['config_id'] = config_id
         return metrics_histogram_timer(
             'commcare.change_feed.processor.timing',
+            timing_buckets=(.03, .1, .3, 1, 3, 10), tags=tags
+        )
+
+    def _per_config_metrics_timer(self, step, config_id):
+        tags = {
+            'action': step,
+        }
+        if settings.ENTERPRISE_MODE:
+            tags['config_id'] = config_id
+        return metrics_histogram_timer(
+            'commcare.change_feed.urc.timing',
             timing_buckets=(.03, .1, .3, 1, 3, 10), tags=tags
         )
 
