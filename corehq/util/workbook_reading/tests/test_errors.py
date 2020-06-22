@@ -10,8 +10,11 @@ class SpreadsheetErrorsTest(SimpleTestCase):
         with self.assertRaises(SpreadsheetFileExtError) as cxt:
             with open_any_workbook(get_file('badext', 'ext')):
                 pass
-        self.assertRegex(str(cxt.exception),
-                                 r'File .*/ext/badext.ext does not end in .csv or .xls or .xlsx')
+        expected_error = (
+            r'File .*/ext/badext.ext does not have a valid extension. Valid '
+            'extensions are: csv, xls, xlsx'
+        )
+        self.assertRegex(str(cxt.exception), expected_error)
 
 
 @run_on_all_adapters(SpreadsheetErrorsTest)
