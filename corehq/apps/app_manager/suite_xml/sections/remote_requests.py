@@ -12,6 +12,7 @@ from corehq.apps.app_manager.suite_xml.sections.details import (
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Command,
     Display,
+    Itemset,
     PushFrame,
     QueryData,
     QueryPrompt,
@@ -86,6 +87,8 @@ class RemoteRequestFactory(object):
         # we use the module's case list/details view to select the datum so also
         # need these instances to be available
         instances |= get_instances_for_module(self.app, self.module)
+        instances |= self._get_instances_for_selects()
+
         # sorted list to prevent intermittent test failures
         return sorted(list(instances), key=lambda i: i.id)
 
@@ -155,8 +158,21 @@ class RemoteRequestFactory(object):
             }
             if prop.appearance and self.app.enable_search_prompt_appearance:
                 kwargs['appearance'] = prop.appearance
+            if prop.input_:
+                kwargs['input_'] = prop.input_
+            if prop.itemset:
+                kwargs['itemset'] = Itemset(
+                    nodeset=f"instance('{prop.itemset.id}')/{prop.itemset.path}",
+                    label_ref=prop.itemset.label,
+                    value_ref=prop.itemset.value,
+                    sort_ref=prop.itemset.sort,
+                )
             prompts.append(QueryPrompt(**kwargs))
         return prompts
+
+    def _get_instances_for_selects(self):
+        # TODO: Do this
+        pass
 
     def _build_stack(self):
         stack = Stack()

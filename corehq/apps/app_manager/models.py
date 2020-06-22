@@ -2044,6 +2044,15 @@ class CaseList(IndexedSchema, NavMenuItemMediaMixin):
         return self._module.get_app()
 
 
+class Itemset(DocumentSchema):
+    id = StringProperty()
+    path = StringProperty()
+
+    label = StringProperty()
+    value = StringProperty()
+    sort = StringProperty()
+
+
 class CaseSearchProperty(DocumentSchema):
     """
     Case properties available to search on.
@@ -2051,6 +2060,9 @@ class CaseSearchProperty(DocumentSchema):
     name = StringProperty()
     label = DictProperty()
     appearance = StringProperty()
+    input_ = StringProperty()
+
+    itemset = SchemaProperty(Itemset)
 
 
 class DefaultCaseSearchProperty(DocumentSchema):
