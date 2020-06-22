@@ -54,6 +54,8 @@ from corehq.util.celery_utils import no_result_task
 from corehq.util.timezones.conversions import ServerTime
 
 from corehq.apps.sms.const import DEFAULT_SMS_DAILY_LIMIT
+from custom.icds.utils.sms import get_next_available_time
+from custom.icds.view_utils import is_icds_cas_project
 
 MAX_TRIAL_SMS = 50
 
@@ -103,8 +105,11 @@ def handle_successful_processing_attempt(msg):
     remove_from_queue(msg)
 
 
-def delay_processing(msg, minutes):
-    msg.datetime_to_process += timedelta(minutes=minutes)
+def delay_processing(msg, minutes, update_process_time_to=None):
+    if update_process_time_to:
+        msg.datetime_to_process = update_process_time_to
+    else:
+        msg.datetime_to_process += timedelta(minutes=minutes)
     msg.save()
 
 
@@ -141,7 +146,11 @@ def handle_domain_specific_delays(msg, domain_object, utcnow):
 
     if len(domain_object.restricted_sms_times) > 0:
         if not time_within_windows(domain_now, domain_object.restricted_sms_times):
-            delay_processing(msg, settings.SMS_QUEUE_DOMAIN_RESTRICTED_RETRY_INTERVAL)
+            if is_icds_cas_project(domain_object.name):
+                delay_processing(msg, settings.SMS_QUEUE_DOMAIN_RESTRICTED_RETRY_INTERVAL,
+                                 get_next_available_time(domain_object, domain_now))
+            else:
+                delay_processing(msg, settings.SMS_QUEUE_DOMAIN_RESTRICTED_RETRY_INTERVAL)
             return True
 
     if msg.chat_user_id is None and len(domain_object.sms_conversation_times) > 0:
