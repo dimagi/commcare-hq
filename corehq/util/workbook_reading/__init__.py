@@ -9,7 +9,7 @@ from corehq.util.workbook_reading.exceptions import (
 from .datamodels import Workbook, Worksheet, Cell
 from .adapters import (
     open_csv_workbook, open_xls_workbook, open_xlsx_workbook, open_any_workbook,
-    make_worksheet
+    make_worksheet, valid_extensions
 )
 
 
@@ -19,6 +19,7 @@ __all__ = [
     'open_xlsx_workbook',
     'open_any_workbook',
     'make_worksheet',
+    'valid_extensions',
 
     'SpreadsheetFileError',
     'SpreadsheetFileExtError',
