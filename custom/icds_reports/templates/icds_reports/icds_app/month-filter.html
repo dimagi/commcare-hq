@@ -1,20 +1,33 @@
 <script type="text/ng-template" id="monthModalContent.html">
     <div class="modal-header">
-        <h3 class="modal-title" id="modal-title">Select Month and Year<i style="float: right;" ng-click="$ctrl.close()" class="fa fa-close pointer"></i></h3>
+        <h3 class="modal-title" ng-if="!$ctrl.isPPD || !$ctrl.isQuarterlyDataPeriodSelected" id="modal-title">Select Month and Year<i style="float: right;" ng-click="$ctrl.close()" class="fa fa-close pointer"></i></h3>
+        <h3 class="modal-title" ng-if="$ctrl.isPPD && $ctrl.isQuarterlyDataPeriodSelected" id="modal-title">Select Quarter and Year<i style="float: right;" ng-click="$ctrl.close()" class="fa fa-close pointer"></i></h3>
     </div>
     <div class="modal-body" id="modal-body">
           <div class="alert alert-info" ng-show="$ctrl.showMessage">
             Service Delivery Dashboard is only available from February 2019 onwards
           </div>
+          <div class="alert alert-info" ng-show="$ctrl.showPPDMessage">
+            Poshan Progress Dashboard is only available from April 2019 onwards
+          </div>
           <div class="alert alert-info" ng-show="$ctrl.showAdolescentGirlMessage">
             Out of School Adolescent girls data is only available from April 2019 onwards
           </div>
-        <div class="form-group" style="margin: 20px 50px;">
+        <div class="form-group" style="margin: 20px 50px;" ng-if="!$ctrl.isPPD || !$ctrl.isQuarterlyDataPeriodSelected">
             <label for="email">Month:</label>
             <ui-select ng-model="$ctrl.selectedMonth" theme="bootstrap" on-select="$ctrl.onSelectMonth($item)">
                 <ui-select-match placeholder="Month"><span ng-bind="$select.selected.name"></span></ui-select-match>
                   <ui-select-choices repeat="month.id as month in $ctrl.months | propsFilter: {name: $select.search}">
                     <div ng-bind-html="month.name | highlight: $select.search"></div>
+                  </ui-select-choices>
+            </ui-select>
+        </div>
+        <div class="form-group" style="margin: 20px 50px;" ng-if="$ctrl.isPPD && $ctrl.isQuarterlyDataPeriodSelected">
+            <label for="email">Quarter:</label>
+            <ui-select ng-model="$ctrl.selectedQuarter" theme="bootstrap">
+                <ui-select-match placeholder="Quarter"><span ng-bind="$select.selected.name"></span></ui-select-match>
+                  <ui-select-choices repeat="quarter.id as quarter in $ctrl.quartersOfYearDisplayed | propsFilter: {name: $select.search}">
+                    <div ng-bind-html="quarter.name | highlight: $select.search"></div>
                   </ui-select-choices>
             </ui-select>
         </div>
