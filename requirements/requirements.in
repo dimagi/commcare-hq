@@ -59,7 +59,7 @@ openpyxl~=2.6
 six~=1.11
 socketpool==0.5.3
 markdown==2.2.1
-sqlagg==0.17.0b0
+sqlagg==0.17.2
 django-redis~=4.9
 redis==2.10.6
 redis-py-cluster==1.3.6
