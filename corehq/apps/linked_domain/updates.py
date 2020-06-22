@@ -33,7 +33,7 @@ from corehq.apps.linked_domain.exceptions import UnsupportedActionError
 from corehq.apps.linked_domain.local_accessors import \
     get_custom_data_models as local_custom_data_models
 from corehq.apps.linked_domain.local_accessors import \
-    get_fixture as local_fixtures
+    get_fixture as local_fixture
 from corehq.apps.linked_domain.local_accessors import \
     get_toggles_previews as local_toggles_previews
 from corehq.apps.linked_domain.local_accessors import \
@@ -43,7 +43,7 @@ from corehq.apps.linked_domain.remote_accessors import \
 from corehq.apps.linked_domain.remote_accessors import \
     get_custom_data_models as remote_custom_data_models
 from corehq.apps.linked_domain.remote_accessors import \
-    get_fixture as remote_fixtures
+    get_fixture as remote_fixture
 from corehq.apps.linked_domain.remote_accessors import \
     get_toggles_previews as remote_toggles_previews
 from corehq.apps.linked_domain.remote_accessors import \
@@ -111,9 +111,9 @@ def update_custom_data_models(domain_link, limit_types=None):
 
 def update_fixture(domain_link, tag):
     if domain_link.is_remote:
-        master_results = remote_fixtures(domain_link, tag)
+        master_results = remote_fixture(domain_link, tag)
     else:
-        master_results = local_fixtures(domain_link.master_domain, tag)
+        master_results = local_fixture(domain_link.master_domain, tag)
 
     master_data_type = master_results["data_type"]
     if not master_data_type.is_global:
