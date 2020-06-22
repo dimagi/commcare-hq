@@ -172,6 +172,8 @@ class TimeoutMiddleware(MiddlewareMixin):
         secure_session = request.session.get('secure_session')
         domain = getattr(request, "domain", None)
         domain_obj = Domain.get_by_name(domain) if domain else None
+        if not domain:
+            domain_obj = getattr(request, "project", None)
 
         # figure out if we want to switch to secure_sessions
         change_to_secure_session = (
