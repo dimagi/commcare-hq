@@ -233,11 +233,14 @@ class ConfigurableReportTableManagerMixin(object):
             self.migrate_tables(engine, diffs, tables_to_act_on.migrate, table_map)
 
     def migrate_tables(self, engine, diffs, table_names, adapters_by_table):
-        pillow_logging.debug("[rebuild] Application migrations to tables: %s", table_names)
         migration_diffs = [diff for diff in diffs if diff.table_name in table_names]
         changes = migrate_tables(engine, migration_diffs)
         for table, diffs in changes.items():
             adapter = adapters_by_table[table]
+            pillow_logging.info(
+                "[rebuild] Migrating table: %s, from config %s at rev %s",
+                (table, adapter.config._id, adapter.config._rev)
+            )
             adapter.log_table_migrate(source='pillowtop', diffs=diffs)
 
     def rebuild_table(self, adapter, diffs=None):
