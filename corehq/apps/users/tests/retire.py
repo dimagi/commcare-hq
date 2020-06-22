@@ -78,7 +78,7 @@ class RetireUserTestCase(TestCase):
             ).as_text())
         xform = submit_case_blocks(caseblocks, self.domain, user_id=owner_id)[0]
 
-        self.commcare_user.retire()
+        self.commcare_user.retire(deleted_by=None)
         cases = CaseAccessors(self.domain).get_cases(case_ids)
         self.assertTrue(all([c.is_deleted for c in cases]))
         self.assertEqual(len(cases), 3)
@@ -123,7 +123,7 @@ class RetireUserTestCase(TestCase):
         xform_2 = submit_case_blocks(caseblocks[1:], self.domain, user_id=SYSTEM_USER_ID)[0]
 
         # Both forms should be deleted on `retire()`
-        self.commcare_user.retire()
+        self.commcare_user.retire(deleted_by=None)
         form_1 = FormAccessors(self.domain).get_form(xform_1.form_id)
         self.assertTrue(form_1.is_deleted)
         form_2 = FormAccessors(self.domain).get_form(xform_2.form_id)
@@ -189,7 +189,7 @@ class RetireUserTestCase(TestCase):
         casexml = ElementTree.tostring(caseblock.as_xml()).decode('utf-8')
         submit_case_blocks(casexml, self.domain, user_id=self.other_user._id)
 
-        self.other_user.retire()
+        self.other_user.retire(deleted_by=None)
 
         detail = UserArchivedRebuild(user_id=self.other_user.user_id)
         rebuild_case.assert_called_once_with(self.domain, case_id, detail)
@@ -209,7 +209,7 @@ class RetireUserTestCase(TestCase):
         casexml = ElementTree.tostring(caseblock.as_xml()).decode('utf-8')
         submit_case_blocks(casexml, self.domain, user_id=self.commcare_user._id)
 
-        self.other_user.retire()
+        self.other_user.retire(deleted_by=None)
 
         self.assertEqual(rebuild_case.call_count, 0)
 
@@ -229,7 +229,7 @@ class RetireUserTestCase(TestCase):
         casexmls = [ElementTree.tostring(caseblock.as_xml()).decode('utf-8') for caseblock in caseblocks]
         submit_case_blocks(casexmls, self.domain, user_id=self.other_user._id)
 
-        self.other_user.retire()
+        self.other_user.retire(deleted_by=None)
 
         detail = UserArchivedRebuild(user_id=self.other_user.user_id)
         expected_call_args = [mock.call(self.domain, case_id, detail) for case_id in case_ids]
@@ -259,7 +259,7 @@ class RetireUserTestCase(TestCase):
             )
             submit_case_blocks(caseblock.as_text(), self.domain, user_id=self.other_user._id)
 
-        self.other_user.retire()
+        self.other_user.retire(deleted_by=None)
 
         detail = UserArchivedRebuild(user_id=self.other_user.user_id)
         expected_call_args = [mock.call(self.domain, case_id, detail) for case_id in case_ids[1:]]
@@ -290,7 +290,7 @@ class RetireUserTestCase(TestCase):
         user_case = self.commcare_user.get_usercase()
         self.assertEqual(2, len(user_case.xform_ids))
 
-        self.commcare_user.retire()
+        self.commcare_user.retire(deleted_by=None)
 
         for form_id in user_case.xform_ids:
             self.assertTrue(FormAccessors(self.domain).get_form(form_id).is_deleted)
@@ -323,12 +323,12 @@ class RetireUserTestCase(TestCase):
             ).as_text()
         ], self.domain, user_id=self.other_user._id)
 
-        self.commcare_user.retire()
+        self.commcare_user.retire(deleted_by=None)
 
         self.assertTrue(FormAccessors(self.domain).get_form(xform.form_id).is_deleted)
         self.assertFalse(FormAccessors(self.domain).get_form(double_case_xform.form_id).is_deleted)
 
         # When the other user is deleted then the form should get deleted since it no-longer touches
         # any 'live' cases.
-        self.other_user.retire()
+        self.other_user.retire(deleted_by=None)
         self.assertTrue(FormAccessors(self.domain).get_form(double_case_xform.form_id).is_deleted)

@@ -23,7 +23,7 @@ class GroupTest(TestCase):
         cls.inactive_user.save()
         cls.deleted_user = CommCareUser.create(domain=DOMAIN, username='goner', password='secret',
                                                created_by=None, created_via=None)
-        cls.deleted_user.retire()
+        cls.deleted_user.retire(deleted_by=None)
 
     def tearDown(self):
         for group in Group.by_domain(DOMAIN):

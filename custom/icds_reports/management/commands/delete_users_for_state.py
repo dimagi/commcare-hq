@@ -33,7 +33,7 @@ class Command(BaseCommand):
                     continue
                 if not mobile_user.reporting_metadata.last_submission_for_user.submission_date and\
                         not mobile_user.reporting_metadata.last_sync_for_user.sync_date:
-                    mobile_user.retire(deleted_by=None, deleted_via=__name__)
+                    mobile_user.retire(deleted_by=__name__, deleted_via=__name__)
                 else:
                     users_submitted_forms.append(mobile_user)
 

@@ -84,7 +84,7 @@ class SyncCommCareUserTestCase(TestCase):
         self.assertEqual(len(self.commcare_user.first_name), 50)
 
     def test_retire(self):
-        self.commcare_user.retire()
+        self.commcare_user.retire(deleted_by=None)
         self.assertEqual(User.objects.filter(username=self.commcare_user.username).count(), 0)
 
         self.commcare_user = CommCareUser.create(self.domain, self.username, self.password, None, None)

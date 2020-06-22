@@ -99,7 +99,7 @@ class AllCommCareUsersTest(TestCase):
             created_via=None,
             email='retired_user_email@example.com',
         )
-        cls.retired_user.retire()
+        cls.retired_user.retire(deleted_by=None)
 
     @classmethod
     def tearDownClass(cls):
@@ -183,7 +183,7 @@ class AllCommCareUsersTest(TestCase):
             created_via=None,
             email='deleted_email@example.com',
         )
-        deleted_user.retire()
+        deleted_user.retire(deleted_by=None)
         self.assertNotIn(
             deleted_user.username,
             [user.username for user in
