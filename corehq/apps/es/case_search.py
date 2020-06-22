@@ -164,27 +164,16 @@ def exact_case_property_text_query(case_property_name, value):
     letter casing and punctuation.
 
     """
-    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-        return queries.nested(
-            CASE_PROPERTIES_PATH,
-            queries.BOOL_CLAUSE({
-                "filter": [
-                    filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
-                    filters.term('{}.{}.exact'.format(CASE_PROPERTIES_PATH, VALUE), value),
-                ],
-                queries.MUST: queries.match_all()
-            }))
-    else:
-        return queries.nested(
-            CASE_PROPERTIES_PATH,
-            queries.filtered(
-                queries.match_all(),
-                filters.AND(
-                    filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
-                    filters.term('{}.{}.exact'.format(CASE_PROPERTIES_PATH, VALUE), value),
-                )
+    return queries.nested(
+        CASE_PROPERTIES_PATH,
+        queries.filtered(
+            queries.match_all(),
+            filters.AND(
+                filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
+                filters.term('{}.{}.exact'.format(CASE_PROPERTIES_PATH, VALUE), value),
             )
         )
+    )
 
 
 def case_property_text_query(case_property_name, value, fuzziness='0'):
@@ -263,34 +252,18 @@ def case_property_missing(case_property_name):
     """case_property_name is the empty string
 
     """
-    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-        return filters.OR(
-            filters.NOT(
-                queries.nested(
-                    CASE_PROPERTIES_PATH,
-                    queries.BOOL_CLAUSE({
-                        "filter": [
-                            filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
-                        ],
-                        queries.MUST: queries.match_all()
-                    })
+    return filters.OR(
+        filters.NOT(
+            queries.nested(
+                CASE_PROPERTIES_PATH,
+                queries.filtered(
+                    queries.match_all(),
+                    filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
                 )
-            ),
-            exact_case_property_text_query(case_property_name, '')
-        )
-    else:
-        return filters.OR(
-            filters.NOT(
-                queries.nested(
-                    CASE_PROPERTIES_PATH,
-                    queries.filtered(
-                        queries.match_all(),
-                        filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
-                    )
-                )
-            ),
-            exact_case_property_text_query(case_property_name, '')
-        )
+            )
+        ),
+        exact_case_property_text_query(case_property_name, '')
+    )
 
 
 def _base_property_query(case_property_name, query):
