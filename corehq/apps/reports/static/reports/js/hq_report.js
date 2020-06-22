@@ -40,7 +40,8 @@ hqDefine("reports/js/hq_report", [
         self.getReportBaseUrl = options.getReportBaseUrl || getReportBaseUrl;
         self.getReportParams = options.getReportParams || getReportParams;
 
-        self.datespanCookie = self.domain + ".hqreport.filterSetting.test.datespan";
+        self.cookieDatespanStart = 'hqreport.filterSetting.datespan.startdate';
+        self.cookieDatespanEnd = 'hqreport.filterSetting.datespan.enddate';
 
         self.initialLoad = true;
 
@@ -93,7 +94,7 @@ hqDefine("reports/js/hq_report", [
         };
 
         self.handleTabularReportCookies = function (reportDatatable) {
-            var defaultRowsCookieName = self.domain + '.hqreport.tabularSetting.defaultRows',
+            var defaultRowsCookieName = 'hqreport.tabularSetting.defaultRows',
                 savedPath = window.location.pathname;
             var defaultRowsCookie = '' + $.cookie(defaultRowsCookieName);
             reportDatatable.defaultRows = parseInt(defaultRowsCookie) || reportDatatable.defaultRows;
@@ -109,11 +110,11 @@ hqDefine("reports/js/hq_report", [
         self.saveDatespanToCookie = function () {
             var validDate = /^\d{4}-\d{2}-\d{2}$/;
             if (self.datespan && validDate.test(self.datespan.startdate) && validDate.test(self.datespan.enddate)) {
-                $.cookie(self.datespanCookie + '.startdate', self.datespan.startdate, {
+                $.cookie(self.cookieDatespanStart, self.datespan.startdate, {
                     path: self.urlRoot,
                     expires: 1,
                 });
-                $.cookie(self.datespanCookie + '.enddate', self.datespan.enddate, {
+                $.cookie(self.cookieDatespanEnd, self.datespan.enddate, {
                     path: self.urlRoot,
                     expires: 1,
                 });
@@ -122,8 +123,8 @@ hqDefine("reports/js/hq_report", [
 
         self.loadDatespanFromCookie = function () {
             if (self.datespan) {
-                var cookie_startdate = $.cookie(self.datespanCookie + '.startdate'),
-                    cookie_enddate = $.cookie(self.datespanCookie + '.enddate'),
+                var cookie_startdate = $.cookie(self.cookieDatespanStart),
+                    cookie_enddate = $.cookie(self.cookieDatespanEnd),
                     load_success = false;
 
                 if (cookie_enddate && cookie_startdate) {

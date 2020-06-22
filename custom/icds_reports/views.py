@@ -173,6 +173,11 @@ from custom.icds_reports.reports.lactating_enrolled_women import (
 from custom.icds_reports.reports.lady_supervisor import (
     get_lady_supervisor_data,
 )
+from custom.icds_reports.reports.ls_launched import (
+    get_ls_launched_data_chart,
+    get_ls_launched_data_map,
+    get_ls_launched_sector_data,
+)
 from custom.icds_reports.reports.medicine_kit import (
     get_medicine_kit_data_chart,
     get_medicine_kit_data_map,
@@ -259,6 +264,8 @@ from . import const
 from .exceptions import InvalidLocationTypeException, TableauTokenException
 
 # checks required to view the dashboard
+from custom.icds_reports.reports.poshan_progress_dashboard_data import get_poshan_progress_dashboard_data
+
 DASHBOARD_CHECKS = [
     toggles.DASHBOARD_ICDS_REPORT.required_decorator(),
     require_permission(Permissions.view_report, 'custom.icds_reports.reports.reports.DashboardReport',
@@ -1545,6 +1552,38 @@ class AWCsCoveredView(BaseReportView):
 
 
 @method_decorator(DASHBOARD_CHECKS, name='dispatch')
+class LSsLaunchedView(BaseReportView):
+    def get(self, request, *args, **kwargs):
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
+
+        config = {
+            'month': tuple(selected_month.timetuple())[:3],
+            'aggregation_level': 1,
+        }
+        config.update(get_location_filter(location, self.kwargs['domain']))
+        loc_level = get_location_level(config.get('aggregation_level'))
+
+        data = {}
+        if step == "map":
+            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+                data = get_ls_launched_sector_data(domain, config, loc_level, location, include_test)
+            else:
+                data = get_ls_launched_data_map(domain, config.copy(), loc_level, include_test)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_ls_launched_sector_data(
+                        domain, config, loc_level, location, include_test
+                    )
+                    data.update(sector)
+        elif step == "chart":
+            data = get_ls_launched_data_chart(domain, config, loc_level, include_test)
+
+        return JsonResponse(data={
+            'report_data': data,
+        })
+
+
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class RegisteredHouseholdView(BaseReportView):
     def get(self, request, *args, **kwargs):
         step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
@@ -2775,3 +2814,44 @@ class BiharMotherDetailsAPI(BaseCasAPIView):
         }
 
         return JsonResponse(data=response_json)
+
+
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
+class PoshanProgressDashboardView(BaseReportView):
+    def get_settings(self, request, *args, **kwargs):
+        step = kwargs.get('step')
+        now = datetime.utcnow()
+        month = int(request.GET.get('month', now.month))
+        year = int(request.GET.get('year', now.year))
+
+        include_test = request.GET.get('include_test', False)
+        domain = self.kwargs['domain']
+        location = request.GET.get('location_id')
+        if location == 'null' or location == 'undefined':
+            location = None
+        data_format = request.GET.get('data_format', 'month')
+        quarter = int(request.GET.get('quarter', 1))
+
+        return step, month, year, include_test, domain, data_format, quarter, location
+
+    def get(self, request, *args, **kwargs):
+        step, month, year, include_test, domain, data_format, quarter, location = \
+            self.get_settings(request, *args, **kwargs)
+
+        location_filters = get_location_filter(location, domain)
+        location_filters['aggregation_level'] = location_filters.get('aggregation_level', 1)
+
+        icds_features_flag = icds_pre_release_features(self.request.couch_user)
+        data = {}
+        if icds_features_flag:
+            data = get_poshan_progress_dashboard_data(
+                domain,
+                year,
+                month,
+                quarter,
+                data_format,
+                step,
+                location_filters,
+                include_test
+            )
+        return JsonResponse(data=data)

@@ -179,6 +179,8 @@ class ScheduledReportSendingTest(TestCase):
             domain=cls.domain,
             username='dummy@example.com',
             password='secret',
+            created_by=None,
+            created_via=None,
         )
 
     @classmethod
