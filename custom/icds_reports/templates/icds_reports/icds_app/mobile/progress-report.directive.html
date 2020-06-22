@@ -1,4 +1,4 @@
-{% load staticfiles %}
+{% load static %}
 <div cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
   <div class="app-bg h-100vh overflow-hidden" ng-show="!$ctrl.filtersOpen">
       <div class="top-section p-3" ng-style="{ 'paddingBottom' : (!$ctrl.report) ? '25vh' : '1rem' }">
