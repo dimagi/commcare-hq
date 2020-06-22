@@ -44,7 +44,7 @@ A user's session is marked secure is any of the following are true:
 * The session has already been marked secure by a previous request.
 
 This behavior makes secure sessions "sticky", following the user around after they visit a secure domain. Note that
-the session is cleared when the user logs out.
+the session is cleared when the user logs out or is forced out due to inactivity.
 
 The feature flag ``SECURE_SESSION_TIMEOUT`` allows domains to customize the length of their timeout. When this is
 on, the domain can specify a number of minutes, which will be used in place of the default 30-minute
