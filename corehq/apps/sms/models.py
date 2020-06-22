@@ -2875,7 +2875,7 @@ class Email(models.Model):
     couch_recipient = models.CharField(max_length=126, db_index=True)
 
     # The MessagingSubEvent that this email is tied to
-    messaging_subevent = models.ForeignKey('sms.MessagingSubEvent', on_delete=models.PROTECT)
+    messaging_subevent = models.ForeignKey('sms.MessagingSubEvent', null=True, on_delete=models.PROTECT)
 
     # Email details
     recipient_address = models.CharField(max_length=255, db_index=True)
