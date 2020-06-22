@@ -2,7 +2,7 @@ CREATE UNLOGGED TABLE "tmp_ls_usage" AS SELECT
     supervisor_id,
     count(*) as form_count
     FROM "{ls_usage_ucr}" ls_usage_ucr
-    WHERE timeend<{next_month_start}
+    WHERE timeend<'{next_month_start}'
     GROUP BY supervisor_id;
 
 UPDATE "{tablename}" agg_ls

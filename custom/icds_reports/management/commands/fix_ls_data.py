@@ -10,18 +10,18 @@ from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
 
 
 @transaction.atomic
-def _run_custom_sql_script(commmand):
+def _run_custom_sql_script(command):
     db_alias = get_icds_ucr_citus_db_alias()
     if not db_alias:
         return
     with connections[db_alias].cursor() as cursor:
-        cursor.execute(commmand, [])
+        cursor.execute(command, [])
 
 
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
-        parser.add_agrument(
+        parser.add_argument(
             'start_date',
             type=date_type,
             help='The start date (inclusive). format YYYY-MM-DD',
