@@ -150,7 +150,7 @@ class TestCommCareCaseResource(APIResourceTest):
         parent_case_id = uuid.uuid4().hex
         parent_type = 'parent_case_type'
         parent_case = submit_case_blocks(
-            CaseBlock(
+            CaseBlock.deprecated_init(
                 case_id=parent_case_id,
                 create=True,
                 case_type=parent_type,
@@ -159,7 +159,7 @@ class TestCommCareCaseResource(APIResourceTest):
         )[1][0]
         child_case_id = uuid.uuid4().hex
         child_case = submit_case_blocks(
-            CaseBlock(
+            CaseBlock.deprecated_init(
                 case_id=child_case_id,
                 create=True,
                 index={'parent': (parent_type, parent_case_id)}

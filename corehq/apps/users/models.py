@@ -2178,7 +2178,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         if not location.location_type_object.administrative:
             if mapping and location.location_id in [loc.location_id for loc in self.locations]:
-                caseblock = CaseBlock(
+                caseblock = CaseBlock.deprecated_init(
                     create=False,
                     case_id=mapping._id,
                     index=self.supply_point_index_mapping(sp, True)
@@ -2212,7 +2212,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 index.update(self.supply_point_index_mapping(sp))
 
         from corehq.apps.commtrack.util import location_map_case_id
-        caseblock = CaseBlock(
+        caseblock = CaseBlock.deprecated_init(
             create=True,
             case_type=USER_LOCATION_OWNER_MAP_TYPE,
             case_id=location_map_case_id(self),
