@@ -566,4 +566,4 @@ def _message_to_sentry_thread_topic(message):
     ... 'If this error persists please report a bug to CommCareHQ.')
     'EntityScreen EntityScreen [Detail=org.commcare.suite.model.Detail@[...], selection=null] could not select case [...]. If this error persists please report a bug to CommCareHQ.'
     """
-    return re.sub(r'[a-f-0-9]{8,}', '[...]', message)
+    return re.sub(r'[a-f0-9-]{8,}', '[...]', message)
