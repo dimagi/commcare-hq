@@ -272,3 +272,16 @@ class HQApiKeyAuthentication(ApiKeyAuthentication):
         request.user = user
 
         return True
+
+    def get_identifier(self, request):
+        """Returns {domain}_{api_key} for use in rate limiting api key.
+
+        Each api key can currently be used on multiple domains, and rates
+        are domain specific.
+
+        """
+        try:
+            api_key = self.extract_credentials(request)[1]
+        except ValueError:
+            api_key = ''
+        return f"{request.domain}_{api_key}"
