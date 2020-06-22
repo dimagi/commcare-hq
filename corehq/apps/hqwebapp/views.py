@@ -616,9 +616,9 @@ def jserror(request):
     url = request.POST.get('page', None)
     domain = '_unknown'
     if url:
-        parts = url.split('/')
-        if parts[1] == '' and parts[3] == 'a' and len(parts) > 4:
-            domain = parts[4]
+        path = urlparse(url).path
+        if path:
+            domain = get_domain_from_url(path)
 
     metrics_counter('commcare.jserror.count', tags={
         'os': os,
