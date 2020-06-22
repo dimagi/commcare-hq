@@ -420,7 +420,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             sum(due_list_ccs) AS usage_num_due_list_ccs,
             sum(due_list_child) AS usage_num_due_list_child_health
         FROM "{usage_table}"
-        WHERE month = %(start_date)s GROUP BY awc_id, month, supervisor_id ) ut
+        WHERE month = %(start_date)s GROUP BY awc_id, month, supervisor_id) ut
         WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id AND ut.supervisor_id = agg_awc.supervisor_id;
         """.format(
             tablename=self.temporary_tablename,
@@ -440,8 +440,7 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
                 %(start_date)s::DATE AS month,
                 LAST_VALUE(app_version) over w as app_version,
                 LAST_VALUE(commcare_version) over w as commcare_version
-            FROM "{usage_table}" 
-            WHERE month = %(start_date)s WINDOW w as (
+            FROM "{usage_table}" WINDOW w as (
                 PARTITION BY awc_id, supervisor_id ORDER BY 
                 form_date RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
             )
