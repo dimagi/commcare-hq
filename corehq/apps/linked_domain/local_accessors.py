@@ -1,6 +1,6 @@
 from corehq import feature_previews, toggles
 from corehq.apps.custom_data_fields.models import SQLCustomDataFieldsDefinition
-from corehq.apps.fixtures.dbaccessors import get_fixture_data_types, get_fixture_items_for_data_type
+from corehq.apps.fixtures.dbaccessors import get_fixture_data_type_by_tag, get_fixture_items_for_data_type
 from corehq.apps.linked_domain.util import _clean_json
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
@@ -35,14 +35,11 @@ def get_custom_data_models(domain, limit_types=None):
     return fields
 
 
-def get_fixtures(domain):
-    types = get_fixture_data_types(domain)
+def get_fixture(domain, tag):
+    data_type = get_fixture_data_type_by_tag(domain, tag)
     return {
-        "data_types": types,
-        "data_items": {
-            t._id: get_fixture_items_for_data_type(domain, t._id)
-            for t in types
-        },
+        "data_type": data_type,
+        "data_items": get_fixture_items_for_data_type(domain, data_type._id),
     }
 
 

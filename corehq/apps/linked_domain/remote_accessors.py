@@ -28,7 +28,7 @@ def get_custom_data_models(domain_link, limit_types=None):
     return _do_request_to_remote_hq_json(url, domain_link.remote_details, domain_link.linked_domain, params)
 
 
-def get_fixtures(domain_link):
+def get_fixture(domain_link):
     return _do_simple_request('linked_domain:fixtures', domain_link)
 
 
