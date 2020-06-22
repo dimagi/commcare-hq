@@ -218,8 +218,7 @@ class ConfigurableReportTableManagerMixin(object):
             for table_name in tables_to_act_on.rebuild:
                 sql_adapter = table_map[table_name]
                 pillow_logging.info(
-                    "[rebuild] Rebuilding table: %s, from config %s at rev %s",
-                    (table_name, sql_adapter.config._id, sql_adapter.config._rev)
+                    f"[rebuild] Rebuilding table: {table_name}, from config {sql_adapter.config._id} at rev {sql_adapter.config._rev}"
                 )
                 table_diffs = [diff for diff in diffs if diff.table_name == table_name]
                 if not sql_adapter.config.is_static:
@@ -238,8 +237,7 @@ class ConfigurableReportTableManagerMixin(object):
         for table, diffs in changes.items():
             adapter = adapters_by_table[table]
             pillow_logging.info(
-                "[rebuild] Migrating table: %s, from config %s at rev %s",
-                (table, adapter.config._id, adapter.config._rev)
+                f"[rebuild] Migrating table: {table}, from config {adapter.config._id} at rev {adapter.config._rev}"
             )
             adapter.log_table_migrate(source='pillowtop', diffs=diffs)
 
