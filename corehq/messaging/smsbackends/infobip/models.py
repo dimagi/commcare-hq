@@ -83,11 +83,20 @@ class InfobipBackend(SQLSMSBackend):
             'voice': {'text': msg.text},
             'sms': {'text': msg.text}
         }
+        url = f'https://{config.personalized_subdomain}.{INFOBIP_DOMAIN}/omni/1/advanced'
+
         if is_whatsapp_template_message(msg.text):
+            if msg.invalid_survey_response:
+                error_message = extract_error_message_from_template_string(msg.text)
+                if error_message:
+                    payload['whatsApp'] = {'text': error_message}
+                    requests.post(url, json=payload, headers=headers)
+
             try:
                 parts = get_template_hsm_parts(msg.text)
             except WhatsAppTemplateStringException:
                 msg.set_system_error(SMS.ERROR_MESSAGE_FORMAT_INVALID)
+
             payload['whatsApp'] = {
                 'templateName': parts.template_name,
                 'language': parts.lang_code,
@@ -96,7 +105,6 @@ class InfobipBackend(SQLSMSBackend):
         else:
             payload['whatsApp'] = {'text': msg.text}
 
-        url = f'https://{config.personalized_subdomain}.{INFOBIP_DOMAIN}/omni/1/advanced'
         response = requests.post(url, json=payload, headers=headers)
         self.handle_response(response, msg)
 
