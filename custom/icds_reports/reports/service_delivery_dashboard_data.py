@@ -161,11 +161,11 @@ def get_service_delivery_report_data(domain, start, length, order, reversed_orde
         # setting location params to all
         for location in location_fields:
             all_row[location] = 'All'
-        all_row['cbe_sector_percent'] = percent_or_not_entered(all_row['num_awcs_conducted_cbe'], data_length)
-        all_row['vhnd_sector_value'] = get_value_or_data_not_entered(all_row, 'num_awcs_conducted_vhnd')
         # Calculating percentages for all row
         if step == 'pw_lw_children':
             get_pw_lw_percents(all_row, all_row)
+            all_row['cbe_sector_percent'] = percent_or_not_entered(all_row['num_awcs_conducted_cbe'], data_length)
+            all_row['vhnd_sector_value'] = get_value_or_data_not_entered(all_row, 'num_awcs_conducted_vhnd')
         else:
             get_children_percents(all_row, all_row)
 
