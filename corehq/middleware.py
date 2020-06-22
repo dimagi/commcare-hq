@@ -119,7 +119,7 @@ class TimeoutMiddleware(MiddlewareMixin):
         timeout = cls._get_timeout(session, is_secure, user, domain)
         session['secure_session_timeout'] = timeout
         session.set_expiry(timeout * 60)
-        session['session_expiry'] = session.get_expiry_date()
+        session['session_expiry'] = json_format_datetime(session.get_expiry_date())
 
     @classmethod
     def _get_timeout(cls, session, is_secure, user, domain=None):
