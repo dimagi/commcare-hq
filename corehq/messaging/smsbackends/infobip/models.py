@@ -3,11 +3,14 @@ import json
 from corehq.apps.sms.models import SQLSMSBackend, SMS
 from corehq.apps.sms.util import clean_phone_number
 from corehq.messaging.smsbackends.infobip.forms import InfobipBackendForm
-from corehq.messaging.smsbackends.turn.models import is_whatsapp_template_message, get_template_hsm_parts
-from corehq.messaging.smsbackends.turn.exceptions import WhatsAppTemplateStringException
+from corehq.messaging.whatsapputil import (
+    WhatsAppTemplateStringException,
+    is_whatsapp_template_message,
+    get_template_hsm_parts, WA_TEMPLATE_STRING,
+    extract_error_message_from_template_string
+)
 
 INFOBIP_DOMAIN = "api.infobip.com"
-WA_TEMPLATE_STRING = "cc_wa_template"
 
 
 class InfobipRetry(Exception):
@@ -131,12 +134,7 @@ class InfobipBackend(SQLSMSBackend):
         url = f'https://{self.config.personalized_subdomain}.{INFOBIP_DOMAIN}' \
             f'/whatsapp/1/senders/{self.config.reply_to_phone_number}/templates'
         response = requests.get(url, headers=headers)
-        templates = []
-        try:
-            templates = json.loads(response.content).get('templates')
-        except Exception:
-            raise
-        return templates
+        return json.loads(response.content).get('templates')
 
     @classmethod
     def generate_template_string(cls, template):
@@ -145,5 +143,5 @@ class InfobipBackend(SQLSMSBackend):
 
         template_text = template.get("body", "")
         num_params = template_text.count("{") // 2  # each parameter is bracketed by {{}}
-        parameters = ",".join([f"{{var{i}}}" for i in range(1, num_params + 1)])
+        parameters = ",".join(f"{{var{i}}}" for i in range(1, num_params + 1))
         return f"{WA_TEMPLATE_STRING}:{template['name']}:{template['language']}:{parameters}"
