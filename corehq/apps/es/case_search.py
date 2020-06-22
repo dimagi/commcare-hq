@@ -167,13 +167,13 @@ def exact_case_property_text_query(case_property_name, value):
     if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
         return queries.nested(
             CASE_PROPERTIES_PATH,
-            queries.BOOL_CLAUSE(
-                {"filter": [
+            queries.BOOL_CLAUSE({
+                "filter": [
                     filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
                     filters.term('{}.{}.exact'.format(CASE_PROPERTIES_PATH, VALUE), value),
-                ]},
-                queries.match_all()
-            ))
+                ],
+                queries.MUST: queries.match_all()
+            }))
     else:
         return queries.nested(
             CASE_PROPERTIES_PATH,
