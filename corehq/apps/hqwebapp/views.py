@@ -614,11 +614,12 @@ def jserror(request):
             browser_name = parsed_agent['browser'].get('name', TAG_UNKNOWN)
 
     url = request.POST.get('page', None)
-    domain = '_unknown'
+    domain = None
     if url:
         path = urlparse(url).path
         if path:
             domain = get_domain_from_url(path)
+    domain = domain or '_unknown'
 
     metrics_counter('commcare.jserror.count', tags={
         'os': os,
