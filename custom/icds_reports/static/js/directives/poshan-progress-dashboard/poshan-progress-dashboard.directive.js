@@ -2,16 +2,24 @@
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function LadySupervisorController($scope, $http, $log, $routeParams, $location, storageService, userLocationId, haveAccessToAllLocations, isAlertActive, dateHelperService) {
+function PoshanProgressController($scope, $http, $log, $routeParams, $location, storageService, userLocationId,
+                                  haveAccessToAllLocations, isAlertActive, dateHelperService) {
     var vm = this;
     vm.data = {};
-    vm.label = "LS Indicators";
+    vm.label = "Poshan Progress Dashboard";
     vm.haveAccessToAllLocations = haveAccessToAllLocations;
-    vm.filters = ['gender', 'age', 'data_period'];
+    vm.filters = ['gender', 'age'];
     vm.userLocationId = userLocationId;
     vm.selectedLocations = [];
     vm.currentMonth = moment().format("MMMM");
     vm.isAlertActive = isAlertActive;
+
+    vm.steps = {
+        'overview': {route: '/poshan_progress_dashboard/overview', label: 'Overview'},
+        'comparative': {route: '/poshan_progress_dashboard/comparative', label: 'Comparative Analysis'},
+    };
+
+    vm.step = $routeParams.step;
 
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
@@ -21,18 +29,33 @@ function LadySupervisorController($scope, $http, $log, $routeParams, $location, 
     vm.filtersData = $location.search();
     vm.selectedLocationLevel = storageService.getKey('search')['selectedLocationLevel'] || 0;
 
-    vm.getData = function () {
-        if (parseInt(vm.selectedLocationLevel) !== 3) {
-            return;
+    vm.getRowSpan = function (firstIndicator, secondIndicator) {
+        var firstIndicatorDataLength = firstIndicator['Best performers'].length;
+        var secondIndicatorDataLength = 0;
+        if (secondIndicator) {
+            secondIndicatorDataLength = secondIndicator['Best performers'].length;
         }
-        var getUrl = url('lady_supervisor');
+        var maxLength = Math.max(firstIndicatorDataLength, secondIndicatorDataLength);
+        if (maxLength) {
+            return maxLength;
+        } else {
+            return 1;
+        }
+    };
+
+    vm.getData = function () {
+        vm.selectedDate = dateHelperService.getSelectedDate();
+        vm.dateDisplayed = vm.selectedDate.toLocaleString('default', { month: 'short'}) + ' ' + vm.selectedDate.getFullYear();
+
+        var step = (vm.step === 'overview') ? 'aggregated' : vm.step;
+        var getUrl = url('poshan_progress_dashboard', step);
         vm.myPromise = $http({
             method: "GET",
             url: getUrl,
             params: $location.search(),
         }).then(
             function (response) {
-                vm.data = response.data.records;
+                vm.data = response.data;
             },
             function (error) {
                 $log.error(error);
@@ -78,14 +101,15 @@ function LadySupervisorController($scope, $http, $log, $routeParams, $location, 
     };
 }
 
-LadySupervisorController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'isAlertActive', 'dateHelperService'];
+PoshanProgressController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService',
+    'userLocationId', 'haveAccessToAllLocations', 'isAlertActive', 'dateHelperService'];
 
-window.angular.module('icdsApp').directive('ladySupervisor', function () {
+window.angular.module('icdsApp').directive('poshanProgressDashboard', function () {
     return {
         restrict: 'E',
-        templateUrl: url('icds-ng-template', 'lady-supervisor.directive'),
+        templateUrl: url('icds-ng-template', 'poshan-progress-dashboard.directive'),
         bindToController: true,
-        controller: LadySupervisorController,
+        controller: PoshanProgressController,
         controllerAs: '$ctrl',
     };
 });
