@@ -16,7 +16,7 @@ function PoshanProgressController($scope, $http, $log, $routeParams, $location, 
 
     vm.steps = {
         'overview': {route: '/poshan_progress_dashboard/overview', label: 'Overview'},
-        'comparitive': {route: '/poshan_progress_dashboard/comparitive', label: 'Comparative Analysis'},
+        'comparative': {route: '/poshan_progress_dashboard/comparative', label: 'Comparative Analysis'},
     };
 
     vm.step = $routeParams.step;
