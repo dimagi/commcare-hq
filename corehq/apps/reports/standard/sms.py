@@ -51,10 +51,12 @@ from corehq.apps.reports.standard.message_event_display import (
 )
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.sms.filters import (
+    ErrorCodeFilter,
+    EventContentFilter,
     EventStatusFilter,
     EventTypeFilter,
     MessageTypeFilter,
-    PhoneNumberFilter,
+    PhoneNumberOrEmailFilter,
     PhoneNumberReportFilter,
 )
 from corehq.apps.sms.mixin import apply_leniency
@@ -67,6 +69,7 @@ from corehq.apps.sms.models import (
     MessagingSubEvent,
     PhoneBlacklist,
     PhoneNumber,
+    Email
 )
 from corehq.apps.sms.util import get_backend_name
 from corehq.apps.smsforms.models import SQLXFormsSession
@@ -629,8 +632,10 @@ class MessagingEventsReport(BaseMessagingEventReport):
     fields = [
         DatespanFilter,
         EventTypeFilter,
+        EventContentFilter,
         EventStatusFilter,
-        PhoneNumberFilter,
+        ErrorCodeFilter,
+        PhoneNumberOrEmailFilter,
     ]
     ajax_pagination = True
 
@@ -653,8 +658,8 @@ class MessagingEventsReport(BaseMessagingEventReport):
 
     @property
     @memoized
-    def phone_number_filter(self):
-        value = PhoneNumberFilter.get_value(self.request, self.domain)
+    def phone_number_or_email_filter(self):
+        value = PhoneNumberOrEmailFilter.get_value(self.request, self.domain)
         if isinstance(value, str):
             return value.strip()
 
@@ -663,6 +668,7 @@ class MessagingEventsReport(BaseMessagingEventReport):
     def get_filters(self):
         source_filter = []
         content_type_filter = []
+        error_code_filter = ErrorCodeFilter.get_value(self.request, self.domain)
         event_status_filter = None
         event_type_filter = EventTypeFilter.get_value(self.request, self.domain)
 
@@ -687,12 +693,22 @@ class MessagingEventsReport(BaseMessagingEventReport):
                 else:
                     source_filter.append(source_type)
 
+        content_types = EventContentFilter.get_value(self.request, self.domain)
+
         for content_type, x in MessagingEvent.CONTENT_CHOICES:
-            if content_type in event_type_filter:
+            if content_type in content_types:
                 if content_type == MessagingEvent.CONTENT_SMS_SURVEY:
                     content_type_filter.extend([
                         MessagingEvent.CONTENT_SMS_SURVEY,
                         MessagingEvent.CONTENT_IVR_SURVEY,
+                    ])
+                if content_type == MessagingEvent.CONTENT_SMS:
+                    content_type_filter.extend([
+                        MessagingEvent.CONTENT_SMS,
+                        MessagingEvent.CONTENT_PHONE_VERIFICATION,
+                        MessagingEvent.CONTENT_ADHOC_SMS,
+                        MessagingEvent.CONTENT_API_SMS,
+                        MessagingEvent.CONTENT_CHAT_SMS
                     ])
                 else:
                     content_type_filter.append(content_type)
@@ -723,8 +739,13 @@ class MessagingEventsReport(BaseMessagingEventReport):
                 (Q(messagingsubevent__xforms_session__session_is_open=False) &
                  Q(messagingsubevent__xforms_session__submission_id__isnull=True))
             )
+        elif event_status == MessagingEvent.STATUS_EMAIL_DELIVERED:
+            event_status_filter = (
+                Q(status=event_status) |
+                Q(messagingsubevent__status=event_status)
+            )
 
-        return source_filter, content_type_filter, event_status_filter
+        return source_filter, content_type_filter, event_status_filter, error_code_filter
 
     def _fmt_recipient(self, event, doc_info):
         if event.recipient_type in (
@@ -743,22 +764,35 @@ class MessagingEventsReport(BaseMessagingEventReport):
             )
 
     def get_queryset(self):
-        source_filter, content_type_filter, event_status_filter = self.get_filters()
+        source_filter, content_type_filter, event_status_filter, error_code_filter = self.get_filters()
 
         data = MessagingEvent.objects.filter(
             Q(domain=self.domain),
             Q(date__gte=self.datespan.startdate_utc),
             Q(date__lte=self.datespan.enddate_utc),
-            (Q(source__in=source_filter) |
-                Q(content_type__in=content_type_filter) |
-                Q(messagingsubevent__content_type__in=content_type_filter)),
+            Q(source__in=source_filter),
         )
+        if error_code_filter:
+            data = data.filter(
+                Q(error_code__in=error_code_filter)
+                | Q(messagingsubevent__error_code__in=error_code_filter)
+            )
+
+        if content_type_filter:
+            data = data.filter(
+                (Q(content_type__in=content_type_filter) |
+                 Q(messagingsubevent__content_type__in=content_type_filter))
+            )
 
         if event_status_filter:
             data = data.filter(event_status_filter)
 
-        if self.phone_number_filter:
-            data = data.filter(messagingsubevent__sms__phone_number__contains=self.phone_number_filter)
+        if self.phone_number_or_email_filter:
+            phone_qs = data.filter(
+                messagingsubevent__sms__phone_number__contains=self.phone_number_or_email_filter)
+            email_qs = data.filter(
+                messagingsubevent__email__recipient_address__icontains=self.phone_number_or_email_filter)
+            data = (email_qs | phone_qs) if self.phone_number_or_email_filter.isdigit() else email_qs
 
         # We need to call distinct() on this because it's doing an
         # outer join to sms_messagingsubevent in order to filter on
@@ -776,8 +810,11 @@ class MessagingEventsReport(BaseMessagingEventReport):
             {'name': 'startdate', 'value': self.datespan.startdate.strftime('%Y-%m-%d')},
             {'name': 'enddate', 'value': self.datespan.enddate.strftime('%Y-%m-%d')},
             {'name': EventTypeFilter.slug, 'value': EventTypeFilter.get_value(self.request, self.domain)},
+            {'name': EventContentFilter.slug, 'value': EventContentFilter.get_value(self.request, self.domain)},
             {'name': EventStatusFilter.slug, 'value': EventStatusFilter.get_value(self.request, self.domain)},
-            {'name': PhoneNumberFilter.slug, 'value': PhoneNumberFilter.get_value(self.request, self.domain)},
+            {'name': ErrorCodeFilter.slug, 'value': ErrorCodeFilter.get_value(self.request, self.domain)},
+            {'name': PhoneNumberOrEmailFilter.slug,
+             'value': PhoneNumberOrEmailFilter.get_value(self.request, self.domain)},
         ]
 
     @property
@@ -837,11 +874,17 @@ class MessageEventDetailReport(BaseMessagingEventReport):
 
     @property
     def headers(self):
+        EMAIL_ADDRRESS = _('Email Address')
+        PHONE_NUMBER = _('Phone Number')
+        if self.messaging_event and self.messaging_event.content_type == MessagingEvent.CONTENT_EMAIL:
+            contact_column = EMAIL_ADDRRESS
+        else:
+            contact_column = PHONE_NUMBER
         return DataTablesHeader(
             DataTablesColumn(_('Date')),
             DataTablesColumn(_('Recipient')),
             DataTablesColumn(_('Content')),
-            DataTablesColumn(_('Phone Number')),
+            DataTablesColumn(contact_column),
             DataTablesColumn(_('Direction')),
             DataTablesColumn(_('Gateway')),
             DataTablesColumn(_('Status')),
@@ -941,13 +984,21 @@ class MessageEventDetailReport(BaseMessagingEventReport):
             elif messaging_subevent.content_type == MessagingEvent.CONTENT_EMAIL:
                 timestamp = ServerTime(messaging_subevent.date).user_time(self.timezone).done()
                 status = get_status_display(messaging_subevent)
+                content = '-'
+                recipient_address = '-'
+                try:
+                    email = Email.objects.get(messaging_subevent=messaging_subevent.pk)
+                    content = email.body
+                    recipient_address = email.recipient_address
+                except Email.DoesNotExist:
+                    pass
                 result.append([
                     self._fmt_timestamp(timestamp),
                     self._fmt_contact_link(messaging_subevent.recipient_id, doc_info),
-                    self._fmt('-'),
-                    self._fmt('-'),
-                    self._fmt_direction('-'),
-                    self._fmt('-'),
+                    self._fmt(content),
+                    self._fmt(recipient_address),
+                    self._fmt_direction(OUTGOING),
+                    self._fmt(_('Email')),
                     self._fmt(status),
                 ])
         return result

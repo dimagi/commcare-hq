@@ -36,5 +36,22 @@ window.angular.module('icdsApp').factory('icdsCasReachService', ['$http', functi
                 }
             );
         },
+        getLSLaunchedData: function (step, params) {
+            gtag.event('ICDS CAS Reach Service', 'Fetching data started', 'LS launched');
+            var getUrl = url('ls_launched', step);
+            return  $http({
+                method: "GET",
+                url: getUrl,
+                params: params,
+            }).then(
+                function (response) {
+                    gtag.event('ICDS CAS Reach Service', 'Fetching data succeeded', 'LS launched');
+                    return response;
+                },
+                function () {
+                    gtag.event('ICDS CAS Reach Service', 'Fetching data failed', 'LS launched');
+                }
+            );
+        },
     };
 }]);

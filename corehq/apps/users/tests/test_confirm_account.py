@@ -22,6 +22,8 @@ class TestAccountConfirmation(TestCase):
             self.domain,
             self.username,
             self.password,
+            None,
+            None,
             email='mw1@example.com',
             is_account_confirmed=False,
         )

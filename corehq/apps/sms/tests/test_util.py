@@ -22,7 +22,7 @@ class UtilTestCase(TestCase):
     
     def setUp(self):
         self.domain = 'test-domain'
-        self.user = CommCareUser.create(self.domain, 'test-user', '123')
+        self.user = CommCareUser.create(self.domain, 'test-user', '123', None, None)
 
     def tearDown(self):
         self.user.delete()

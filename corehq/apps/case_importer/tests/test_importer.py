@@ -39,7 +39,7 @@ class ImporterTest(TestCase):
         self.domain = self.domain_obj.name
         self.default_case_type = 'importer-test-casetype'
 
-        self.couch_user = WebUser.create(None, "test", "foobar")
+        self.couch_user = WebUser.create(None, "test", "foobar", None, None)
         self.couch_user.add_domain_membership(self.domain, is_admin=True)
         self.couch_user.save()
 
@@ -466,9 +466,9 @@ class ImporterTest(TestCase):
     def test_user_can_access_owner(self):
         with make_business_units(self.domain) as (inc, dsi, dsa), \
                 restrict_user_to_location(self, dsa):
-            inc_owner = CommCareUser.create(self.domain, 'inc', 'pw', location=inc)
-            dsi_owner = CommCareUser.create(self.domain, 'dsi', 'pw', location=dsi)
-            dsa_owner = CommCareUser.create(self.domain, 'dsa', 'pw', location=dsa)
+            inc_owner = CommCareUser.create(self.domain, 'inc', 'pw', None, None, location=inc)
+            dsi_owner = CommCareUser.create(self.domain, 'dsi', 'pw', None, None, location=dsi)
+            dsa_owner = CommCareUser.create(self.domain, 'dsa', 'pw', None, None, location=dsa)
 
             res = self.import_mock_file([
                 ['case_id', 'name', 'owner_id'],
@@ -509,7 +509,7 @@ def make_worksheet_wrapper(*rows):
 def restrict_user_to_location(test_case, location):
     orig_user = test_case.couch_user
 
-    restricted_user = WebUser.create(test_case.domain, "restricted", "s3cr3t")
+    restricted_user = WebUser.create(test_case.domain, "restricted", "s3cr3t", None, None)
     restricted_user.set_location(test_case.domain, location)
     restrict_user_by_location(test_case.domain, restricted_user)
     test_case.couch_user = restricted_user
@@ -536,7 +536,7 @@ def make_business_units(domain, shares_cases=True):
 
 @contextmanager
 def get_commcare_user(domain_name):
-    user = CommCareUser.create(domain_name, 'username', 'pw')
+    user = CommCareUser.create(domain_name, 'username', 'pw', None, None)
     try:
         yield user
     finally:
