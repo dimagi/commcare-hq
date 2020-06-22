@@ -437,13 +437,12 @@ class ImporterTest(TestCase):
                 ['', 'Caroline', '', 'yellow', case_owner._id],
             ])
             self.assertEqual(res['errors'], {})
-
-        case_ids = self.accessor.get_case_ids_in_domain()
-        cases = {c.name: c for c in list(self.accessor.get_cases(case_ids))}
-        self.assertEqual(cases['Jeff'].owner_id, case_owner._id)
-        self.assertEqual(cases['Jeff'].get_case_property('favorite_color'), 'blue')
-        self.assertEqual(cases['Caroline'].owner_id, case_owner._id)
-        self.assertEqual(cases['Caroline'].get_case_property('favorite_color'), 'yellow')
+            case_ids = self.accessor.get_case_ids_in_domain()
+            cases = {c.name: c for c in list(self.accessor.get_cases(case_ids))}
+            self.assertEqual(cases['Jeff'].owner_id, case_owner._id)
+            self.assertEqual(cases['Jeff'].get_case_property('favorite_color'), 'blue')
+            self.assertEqual(cases['Caroline'].owner_id, case_owner._id)
+            self.assertEqual(cases['Caroline'].get_case_property('favorite_color'), 'yellow')
 
     def test_user_can_access_location(self):
         with make_business_units(self.domain) as (inc, dsi, dsa), \
