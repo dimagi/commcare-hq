@@ -7,7 +7,7 @@ function LadySupervisorController($scope, $http, $log, $routeParams, $location, 
     vm.data = {};
     vm.label = "LS Indicators";
     vm.haveAccessToAllLocations = haveAccessToAllLocations;
-    vm.filters = ['gender', 'age'];
+    vm.filters = ['gender', 'age', 'data_period'];
     vm.userLocationId = userLocationId;
     vm.selectedLocations = [];
     vm.currentMonth = moment().format("MMMM");

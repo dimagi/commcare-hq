@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.signals import user_logged_in
 from django.db.models.signals import post_save
 from django.dispatch import Signal, receiver
@@ -30,13 +31,20 @@ def django_user_post_save_signal(sender, instance, created, raw=False, **kwargs)
     return CouchUser.django_user_post_save_signal(sender, instance, created)
 
 
+def _should_sync_to_es():
+    # this method is useful to disable update_user_in_es in all tests
+    #   but still enable it when necessary via mock
+    return not settings.UNIT_TESTING
+
+
 def update_user_in_es(sender, couch_user, **kwargs):
     """
     Automatically sync the user to elastic directly on save or delete
     """
     from corehq.pillows.user import transform_user_for_elasticsearch
-    send_to_elasticsearch("users", transform_user_for_elasticsearch(couch_user.to_json()),
-                          delete=couch_user.to_be_deleted())
+    if _should_sync_to_es():
+        send_to_elasticsearch("users", transform_user_for_elasticsearch(couch_user.to_json()),
+                              delete=couch_user.to_be_deleted())
 
 
 def sync_user_phone_numbers(sender, couch_user, **kwargs):

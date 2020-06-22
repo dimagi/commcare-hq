@@ -211,6 +211,7 @@ DEFAULT_APPS = (
     'ws4redis',
     'statici18n',
     'django_user_agents',
+    'logentry_admin',
 )
 
 CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'

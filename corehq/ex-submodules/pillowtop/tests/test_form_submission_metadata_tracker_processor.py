@@ -24,7 +24,9 @@ class MarkLatestSubmissionTest(TestCase):
         cls.user = CommCareUser.create(
             cls.domain,
             cls.username,
-            cls.password
+            cls.password,
+            None,
+            None,
         )
 
     def tearDown(self):

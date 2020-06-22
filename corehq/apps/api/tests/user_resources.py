@@ -1,5 +1,6 @@
 import json
 from copy import deepcopy
+from mock import patch
 
 from django.urls import reverse
 from django.utils.http import urlencode
@@ -34,9 +35,11 @@ class TestCommCareUserResource(APIResourceTest):
         reset_es_index(USER_INDEX_INFO)
         super().setUpClass()
 
-    def test_get_list(self):
+    @patch('corehq.apps.users.signals._should_sync_to_es', return_value=True)
+    def test_get_list(self, patch):
 
-        commcare_user = CommCareUser.create(domain=self.domain.name, username='fake_user', password='*****')
+        commcare_user = CommCareUser.create(domain=self.domain.name, username='fake_user', password='*****',
+                                            created_by=None, created_via=None)
         self.addCleanup(commcare_user.delete)
         backend_id = commcare_user.get_id
         update_analytics_indexes()
@@ -63,7 +66,8 @@ class TestCommCareUserResource(APIResourceTest):
     @flaky
     def test_get_single(self):
 
-        commcare_user = CommCareUser.create(domain=self.domain.name, username='fake_user', password='*****')
+        commcare_user = CommCareUser.create(domain=self.domain.name, username='fake_user', password='*****',
+                                            created_by=None, created_via=None)
         self.addCleanup(commcare_user.delete)
         backend_id = commcare_user._id
 
@@ -130,7 +134,8 @@ class TestCommCareUserResource(APIResourceTest):
 
     def test_update(self):
 
-        user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234")
+        user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
+                                   created_by=None, created_via=None)
         group = Group({"name": "test"})
         group.save()
 
@@ -238,7 +243,7 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(len(api_users), 1)
         self._check_user_data(self.user, api_users[0])
 
-        another_user = WebUser.create(self.domain.name, 'anotherguy', '***')
+        another_user = WebUser.create(self.domain.name, 'anotherguy', '***', None, None)
         another_user.set_role(self.domain.name, 'field-implementer')
         another_user.save()
         self.addCleanup(another_user.delete)
@@ -356,7 +361,8 @@ class TestWebUserResource(APIResourceTest):
         self.assertEqual(response.content.decode('utf-8'), '{"error": "Please assign role for non admin user"}')
 
     def test_update(self):
-        user = WebUser.create(domain=self.domain.name, username="test", password="qwer1234")
+        user = WebUser.create(domain=self.domain.name, username="test", password="qwer1234",
+                              created_by=None, created_via=None)
         self.addCleanup(user.delete)
         user_json = deepcopy(self.default_user_json)
         user_json.pop('username')

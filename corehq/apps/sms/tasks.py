@@ -53,6 +53,8 @@ from corehq.messaging.util import use_phone_entries
 from corehq.util.celery_utils import no_result_task
 from corehq.util.timezones.conversions import ServerTime
 
+from corehq.apps.sms.const import DEFAULT_SMS_DAILY_LIMIT
+
 MAX_TRIAL_SMS = 50
 
 
@@ -317,7 +319,7 @@ class OutboundDailyCounter(object):
             # If the message isn't tied to a domain, still impose a limit.
             # Outbound messages not tied to a domain can happen when unregistered
             # contacts opt in or out from a gateway.
-            return 10000
+            return DEFAULT_SMS_DAILY_LIMIT
 
     def can_send_outbound_sms(self, queued_sms):
         """
@@ -331,10 +333,11 @@ class OutboundDailyCounter(object):
             # processing the backlog right away.
             self.decrement()
             delay_processing(queued_sms, 60)
-
-            # Log the fact that we reached this limit
+            domain = self.domain_object.name if self.domain_object else ''
+            # Log the fact that we reached this limit and send alert on first breach
+            # via Django Signals if needed
             DailyOutboundSMSLimitReached.create_for_domain_and_date(
-                self.domain_object.name if self.domain_object else '',
+                domain,
                 self.date
             )
             return False
