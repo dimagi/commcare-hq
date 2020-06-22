@@ -9,7 +9,7 @@ from custom.icds_reports.utils.migrations import get_view_migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0198_update_sdd_view'),
+        ('icds_reports', '0199_update_ppr_view'),
     ]
 
     operations = [
