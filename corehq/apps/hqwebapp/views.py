@@ -511,6 +511,9 @@ def ping_response(request):
         'secure_session_timeout': request.session.get('secure_session_timeout'),
         'username': request.user.username,
         'last_path': request.session.get('last_path'),
+        'original_secure_session_timeout': request.session.get('original_secure_session_timeout'),
+        'original_secure_session': request.session.get('original_secure_session_timeout'),
+        'domain': request.session.get('domain'),
     })
 
 
