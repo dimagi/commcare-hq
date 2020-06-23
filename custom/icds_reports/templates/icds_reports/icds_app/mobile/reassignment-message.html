@@ -1,6 +1,6 @@
-<div class="col-xs-10 text-center filter-alert" ng-if="selectedLocation.deprecated_at">
+<div class="col-xs-10 text-center filter-alert" ng-if="selectedLocation.archived_on">
   <p class="font-14 font-montserrat font-weight-500 mb-0">
-    {$ selectedLocation.name $} was inactive in the selected month. It was replaced by {$ selectedLocation.deprecated_to.join(' & ') $} on {$ selectedLocation.deprecated_at $}.
+    {$ selectedLocation.name $} was inactive in the selected month. It was replaced by {$ selectedLocation.deprecated_to.join(' & ') $} on {$ selectedLocation.archived_on $}.
   </p>
 </div>
 <div class="col-xs-10 text-center filter-alert" ng-if="selectedLocation.deprecates_at">

@@ -2,6 +2,8 @@ import jsonfield
 import uuid
 from memoized import memoized
 from django.db import models, transaction
+
+from corehq import toggles
 from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.apps.reminders.util import get_one_way_number_for_recipient, get_two_way_number_for_recipient
 from corehq.apps.sms.api import MessageMetadata, send_sms, send_sms_to_verified_number
@@ -128,6 +130,9 @@ class Schedule(models.Model):
 
         if self.total_iterations_complete(instance):
             instance.active = False
+
+    def set_next_event_due_timestamp(self, instance):
+        raise NotImplementedError()
 
     def move_to_next_event_not_in_the_past(self, instance):
         while instance.active and instance.next_event_due < util.utcnow():
@@ -385,7 +390,7 @@ class Content(models.Model):
         return r
 
     @classmethod
-    def get_two_way_entry_or_phone_number(cls, recipient, try_user_case=True):
+    def get_two_way_entry_or_phone_number(cls, recipient, try_user_case=True, domain_for_toggles=None):
         """
         If recipient has a two-way number, returns it as a PhoneNumber entry.
         If recipient does not have a two-way number but has a phone number configured,
@@ -402,13 +407,20 @@ class Content(models.Model):
 
         phone_number = get_one_way_number_for_recipient(recipient)
 
+        if toggles.INBOUND_SMS_LENIENCY.enabled(domain_for_toggles) and \
+                toggles.ONE_PHONE_NUMBER_MULTIPLE_CONTACTS.enabled(domain_for_toggles):
+            phone_entry = PhoneNumber.get_phone_number_for_owner(recipient.get_id, phone_number)
+            if phone_entry:
+                return phone_entry
+
         # Avoid processing phone numbers that are obviously fake (len <= 3) to
         # save on processing time
         if phone_number and len(phone_number) > 3:
             return phone_number
 
         if try_user_case and isinstance(recipient, CommCareUser) and recipient.memoized_usercase:
-            return cls.get_two_way_entry_or_phone_number(recipient.memoized_usercase)
+            return cls.get_two_way_entry_or_phone_number(recipient.memoized_usercase,
+                                                         domain_for_toggles=domain_for_toggles)
 
         return None
 

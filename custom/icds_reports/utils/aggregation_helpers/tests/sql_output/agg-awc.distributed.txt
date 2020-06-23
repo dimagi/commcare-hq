@@ -176,12 +176,13 @@
                  )
             WHERE (opened_on <= %(end_date)s AND
               (closed_on IS NULL OR closed_on >= %(start_date)s )) AND
-              (agg_migration.is_migrated IS DISTINCT FROM 1 OR agg_migration.migration_date::date >= %(start_date)s)
+              (agg_migration.is_migrated IS DISTINCT FROM 1 OR agg_migration.migration_date::date >= %(start_date)s) AND
+              (%(month_end_11yr)s > dob AND %(month_start_14yr)s <= dob)
               GROUP BY ucr.awc_id, ucr.supervisor_id
         )ut
         where agg_awc.awc_id = ut.awc_id and ut.supervisor_id=agg_awc.supervisor_id;
         
-{"end_date": "2019-01-31T23:59:59", "start_date": "2019-01-01T00:00:00"}
+{"end_date": "2019-01-31T23:59:59", "month_end_11yr": "2008-01-31T23:59:59", "month_start_14yr": "2005-01-01T00:00:00", "start_date": "2019-01-01T00:00:00"}
 
         UPDATE "tmp_agg_awc_2019-01-01_5" agg_awc SET
             cases_person_has_aadhaar_v2 = ut.child_has_aadhar,

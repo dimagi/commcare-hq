@@ -1,8 +1,6 @@
-import csv
-
 from django.core.management.base import BaseCommand
 
-from auditcare.utils.export import get_all_log_events, write_generic_log_event
+from auditcare.utils.export import write_export_from_all_log_events
 from corehq.util.argparse_types import date_type
 
 
@@ -28,7 +26,4 @@ class Command(BaseCommand):
 
     def handle(self, filename=None, **options):
         with open(filename, 'w') as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerow(['Date', 'Type', 'User', 'Domain', 'IP Address', 'Action', 'Resource', 'Description'])
-            for event in get_all_log_events(options['start'], options['end']):
-                write_generic_log_event(writer, event)
+            write_export_from_all_log_events(csvfile, start=options['start'], end=options['end'])

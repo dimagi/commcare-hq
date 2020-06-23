@@ -125,9 +125,8 @@ class TestMoveOperation(TestOperation):
 
 
 class TestTransition(BaseTest):
-    @patch('custom.icds.location_reassignment.tasks.update_usercase.delay')
     @patch('custom.icds.location_reassignment.models.deactivate_users_at_location')
-    def test_perform(self, deactivate_users_mock, update_usercase_mock):
+    def test_perform(self, deactivate_users_mock):
         transition = Transition(domain=self.domain, location_type_code='city', operation=MoveOperation.type)
         transition.add(
             old_site_code=self.locations['Boston'].site_code,
@@ -150,11 +149,9 @@ class TestTransition(BaseTest):
         self.assertEqual(new_location.metadata[LGD_CODE], 'New Boston LGD Code')
         self.assertEqual(new_location.metadata[MAP_LOCATION_NAME], 'New Boston Sub District')
         deactivate_users_mock.assert_called_with(self.locations['Boston'].location_id)
-        update_usercase_mock.assert_called_with(self.domain, "ethan", "aquaman")
 
-    @patch('custom.icds.location_reassignment.tasks.update_usercase.delay')
     @patch('custom.icds.location_reassignment.models.deactivate_users_at_location')
-    def test_invalid_operation(self, deactivate_users_mock, update_usercase_mock):
+    def test_invalid_operation(self, deactivate_users_mock):
         transition = Transition(domain=self.domain, location_type_code='city', operation=MoveOperation.type)
         transition.add(
             old_site_code='missing_old_location',
@@ -175,9 +172,7 @@ class TestTransition(BaseTest):
         self.assertEqual(SQLLocation.objects.filter(domain=self.domain, site_code='new_boston').count(), 0,
                          "Unexpected new location created")
         deactivate_users_mock.assert_not_called()
-        update_usercase_mock.assert_not_called()
 
-    @patch('custom.icds.location_reassignment.tasks.update_usercase.delay')
     @patch('custom.icds.location_reassignment.models.deactivate_users_at_location')
     def test_can_perform_deprecation(self, *mocks):
         transition = Transition(domain=self.domain, location_type_code='city', operation=MoveOperation.type)

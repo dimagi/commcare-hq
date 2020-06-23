@@ -25,7 +25,7 @@ class BaseReportTest(unittest.TestCase):
         load_data()
 
         create_domain(DOMAIN)
-        cls.couch_user = WebUser.create(None, "report_test", "foobar")
+        cls.couch_user = WebUser.create(None, "report_test", "foobar", None, None)
         cls.couch_user.add_domain_membership(DOMAIN, is_admin=True)
         cls.couch_user.save()
 

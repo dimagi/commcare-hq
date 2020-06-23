@@ -50,18 +50,18 @@ trunk: master
 name: autostaging
 branches:
   - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
-  - bmb/odata-qa-feedback  # Biyeun April 15
-  - dmr/require_can_edit_or_view_commcare_users-download_commcare_users  # Danny April 27
-  - sr-es-alias # Sravan April 29
+  - jls/sync-mixins-hard-fail # Jenny May 24
+  - jls/migrate-CustomDataFieldsDefinition-2+jls/linked-domain-fixtures
   - jls/migrate-CustomDataFieldsDefinition-2 # Jenny April 29
-  - bmb/SAAS-10813  # Biyeun April 30
-  - mk/location-reassignment-realign # MK May 4
-  - mk/location-reassignment-add-view # MK May 3
   - rn_update_perfect_scrollbar # Rohit Negi May 4
-  - bmb/SAAS-10674  # Biyeun May 4
-  - dmr/case-upload-success-result-followup  # Danny May 5
-  - ce/refer-case-repeater # Cal May 7
-  - dmr/formplayer-browser-errors-extra-info  # Danny May 8
-  - dmr/consistently-add-username-to-sentry-reports  # Danny May 8
+  - jls/migrate-MobileAuthKeyRecord-2 # Jenny May 16
+  - nh/repeaters_ui  # Norman May 28
+  - nh/charset  # Norman May 27
+  - revert-27725-jls/kill-configurable-timeout-debug # Jenny June 9
+  - nemanja1040:aws_pinpoint_fees  # Nemanja Stancic June 17
+  - jls/linked-domain-fixtures # Jenny June 18
+  - fr/multiple-api-keys
+  - dmr/sqlagg-bump-version  # Danny Jun 19
+  - jls/turn-off-analytics-logging # Jenny June 19
 
 submodules: {}

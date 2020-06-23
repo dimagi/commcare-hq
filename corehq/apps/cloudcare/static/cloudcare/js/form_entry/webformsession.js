@@ -239,8 +239,12 @@ WebFormSession.prototype.handleSuccess = function (resp, action, callback) {
 WebFormSession.prototype.handleFailure = function (resp, action, textStatus, failureCallback) {
     var self = this;
     var errorMessage = null;
+    var isHTML = false;
     if (resp.status === 423) {
         errorMessage = Formplayer.Errors.LOCK_TIMEOUT_ERROR;
+    } else if (resp.status === 401) {
+        errorMessage = Formplayer.Utils.reloginErrorHtml();
+        isHTML = true;
     } else if (textStatus === 'timeout') {
         errorMessage = Formplayer.Errors.TIMEOUT_ERROR;
     } else if (!window.navigator.onLine) {
@@ -270,6 +274,7 @@ WebFormSession.prototype.handleFailure = function (resp, action, textStatus, fai
     }
     this.onerror({
         human_readable_message: errorMessage,
+        is_html: isHTML,
     });
     this.onLoadingComplete();
 };

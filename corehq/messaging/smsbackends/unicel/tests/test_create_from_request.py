@@ -37,7 +37,7 @@ class IncomingPostTest(TestCase):
         self.user = 'username-unicel'
         self.password = 'password'
         self.number = 5555551234
-        self.couch_user = WebUser.create(self.domain.name, self.user, self.password)
+        self.couch_user = WebUser.create(self.domain.name, self.user, self.password, None, None)
         self.couch_user.add_phone_number(self.number)
         self.couch_user.save()
         self.message_ascii = 'It Works'

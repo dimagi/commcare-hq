@@ -2,7 +2,6 @@ from collections import OrderedDict, defaultdict
 from datetime import datetime
 
 from django.db.models.aggregates import Sum
-from django.utils.translation import ugettext as _
 
 from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
@@ -11,12 +10,14 @@ from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, match_age, chosen_filters_to_labels, \
     indian_formatted_number
 
+from custom.icds_reports.utils import get_location_launched_status
 
-@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
-def get_enrolled_children_data_map(domain, config, loc_level, show_test=False):
+
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_features_flag'], timeout=30 * 60)
+def get_enrolled_children_data_map(domain, config, loc_level, show_test=False, icds_features_flag=False):
+    config['month'] = datetime(*config['month'])
 
     def get_data_for(filters):
-        filters['month'] = datetime(*filters['month'])
         queryset = AggChildHealthMonthly.objects.filter(
             **filters
         ).values(
@@ -27,6 +28,7 @@ def get_enrolled_children_data_map(domain, config, loc_level, show_test=False):
         ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
         if not show_test:
             queryset = apply_exclude(domain, queryset)
+
         return queryset
 
     data_for_map = defaultdict(lambda: {
@@ -38,7 +40,15 @@ def get_enrolled_children_data_map(domain, config, loc_level, show_test=False):
     average = []
     total_valid = 0
     total = 0
+    if icds_features_flag:
+        location_launched_status = get_location_launched_status(config, loc_level)
+    else:
+        location_launched_status = None
     for row in get_data_for(config):
+        if location_launched_status:
+            launched_status = location_launched_status.get(row['%s_name' % loc_level])
+            if launched_status is None or launched_status <= 0:
+                continue
         valid = row['valid'] or 0
         name = row['%s_name' % loc_level]
         all_children = row['all'] or 0
@@ -53,6 +63,8 @@ def get_enrolled_children_data_map(domain, config, loc_level, show_test=False):
 
     fills = OrderedDict()
     fills.update({'Children': MapColors.BLUE})
+    if icds_features_flag:
+        fills.update({'Not Launched': MapColors.GREY})
     fills.update({'defaultFill': MapColors.GREY})
 
     gender_ignored, age_label, chosen_filters = chosen_filters_to_labels(config, default_interval='0 - 6 years')
@@ -91,8 +103,8 @@ def get_enrolled_children_data_map(domain, config, loc_level, show_test=False):
     }
 
 
-@icds_quickcache(['domain', 'config', 'loc_level', 'show_test'], timeout=30 * 60)
-def get_enrolled_children_data_chart(domain, config, loc_level, show_test=False):
+@icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_features_flag'], timeout=30 * 60)
+def get_enrolled_children_data_chart(domain, config, loc_level, show_test=False, icds_features_flag=False):
     config['month'] = datetime(*config['month'])
 
     chart_data = AggChildHealthMonthly.objects.filter(
@@ -115,7 +127,15 @@ def get_enrolled_children_data_chart(domain, config, loc_level, show_test=False)
 
     all = 0
     best_worst = {}
+    if icds_features_flag:
+        location_launched_status = get_location_launched_status(config, loc_level)
+    else:
+        location_launched_status = None
     for row in chart_data:
+        if icds_features_flag:
+            launched_status = location_launched_status.get(row['%s_name' % loc_level])
+            if launched_status is None or launched_status <= 0:
+                continue
         location = row['%s_name' % loc_level]
 
         if not row['age_tranche']:
@@ -151,8 +171,8 @@ def get_enrolled_children_data_chart(domain, config, loc_level, show_test=False)
     }
 
 
-@icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test'], timeout=30 * 60)
-def get_enrolled_children_sector_data(domain, config, loc_level, location_id, show_test=False):
+@icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test', 'icds_features_flag'], timeout=30 * 60)
+def get_enrolled_children_sector_data(domain, config, loc_level, location_id, show_test=False, icds_features_flag=False):
     group_by = ['%s_name' % loc_level]
 
     config['month'] = datetime(*config['month'])
@@ -176,8 +196,15 @@ def get_enrolled_children_sector_data(domain, config, loc_level, location_id, sh
         'valid': 0,
         'all': 0
     })
-
+    if icds_features_flag:
+        location_launched_status = get_location_launched_status(config, loc_level)
+    else:
+        location_launched_status = None
     for row in data:
+        if location_launched_status:
+            launched_status = location_launched_status.get(row['%s_name' % loc_level])
+            if launched_status is None or launched_status <= 0:
+                continue
         valid = row['valid'] or 0
         all_children = row['all'] or 0
         name = row['%s_name' % loc_level]

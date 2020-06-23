@@ -14,12 +14,10 @@ from casexml.apps.case import const
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
 from casexml.apps.phone.xml import get_case_xml
-from dimagi.utils.couch.database import retry_on_couch_error
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.tzmigration.timezonemigration import MISSING
 from corehq.blobs import get_blob_db
-from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import (
     Attachment,
@@ -31,7 +29,7 @@ from corehq.util.metrics import metrics_counter
 from .casediff import get_domain
 from .casedifftool import format_diffs
 from .couchsqlmigration import get_case_and_ledger_updates, save_migrated_models
-from .util import retry_on_sql_error
+from .retrydb import get_couch_case
 
 log = logging.getLogger(__name__)
 
@@ -130,9 +128,17 @@ class PatchCase:
         if not diffs:
             return
         for diff in diffs:
-            if diff.path != ["indices", "[*]"] or diff.new_value is not MISSING:
+            if diff.path != ["indices", "[*]"]:
                 raise CannotPatch([diff])
-            yield CommCareCaseIndex.wrap(diff.old_value)
+            if diff.new_value is MISSING and isinstance(diff.old_value, dict):
+                yield CommCareCaseIndex.wrap(diff.old_value)
+            elif diff.old_value is MISSING and isinstance(diff.new_value, dict):
+                yield CommCareCaseIndex(
+                    identifier=diff.new_value["identifier"],
+                    referenced_type="",
+                )
+            else:
+                raise CannotPatch([diff])
 
 
 def has_illegal_props(diffs):
@@ -194,12 +200,13 @@ STATIC_PROPS = {
     "user_id",
     "xform_ids",
 
-    # renamed Couch properties
+    # renamed/obsolete Couch properties
     "-deletion_date",   # deleted_on
     "-deletion_id",     # deletion_id
     "@date_modified",   # modified_on
     "@user_id",         # user_id
     "hq_user_id",       # external_id
+    "#text",            # ignore that junk
 }
 
 
@@ -244,7 +251,7 @@ def process_patch(patch_form):
     add_form_xml(sql_form, patch_form)
     add_patch_operation(sql_form)
     case_stock_result = get_case_and_ledger_updates(patch_form.domain, sql_form)
-    save_sql_form(sql_form, case_stock_result)
+    save_migrated_models(sql_form, case_stock_result)
 
 
 def add_form_xml(sql_form, patch_form):
@@ -314,16 +321,6 @@ class CannotPatch(Exception):
     def __init__(self, json_diffs):
         super().__init__(repr(json_diffs))
         self.diffs = json_diffs
-
-
-@retry_on_couch_error
-def get_couch_case(case_id):
-    return CaseAccessorCouch.get_case(case_id)
-
-
-@retry_on_sql_error
-def save_sql_form(sql_form, case_stock_result):
-    save_migrated_models(sql_form, case_stock_result)
 
 
 def is_missing_in_sql(diffs):

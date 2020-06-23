@@ -2079,7 +2079,7 @@ def export_report(request, domain, export_hash, format):
             response = HttpResponse(file, Format.FORMAT_DICT[format])
             response['Content-Length'] = file.size
             response['Content-Disposition'] = 'attachment; filename="{filename}.{extension}"'.format(
-                filename=export_hash,
+                filename=meta.name or export_hash,
                 extension=Format.FORMAT_DICT[format]['extension']
             )
             return response

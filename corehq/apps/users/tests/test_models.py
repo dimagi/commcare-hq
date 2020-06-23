@@ -5,7 +5,7 @@ from django.test import SimpleTestCase, TestCase
 from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
-    SQLInvitation,
+    Invitation,
     WebUser,
 )
 
@@ -35,25 +35,25 @@ class InvitationTest(TestCase):
     def setUpClass(cls):
         super(InvitationTest, cls).setUpClass()
         cls.invitations = [
-            SQLInvitation(domain='domain_1', email='email1@email.com', invited_by='friend@email.com',
-                          invited_on=datetime.utcnow()),
-            SQLInvitation(domain='domain_1', email='email1@email.com', invited_by='friend@email.com',
-                          invited_on=datetime.utcnow(), is_accepted=True),
-            SQLInvitation(domain='domain_2', email='email2@email.com', invited_by='friend@email.com',
-                          invited_on=datetime.utcnow()),
+            Invitation(domain='domain_1', email='email1@email.com', invited_by='friend@email.com',
+                       invited_on=datetime.utcnow()),
+            Invitation(domain='domain_1', email='email1@email.com', invited_by='friend@email.com',
+                       invited_on=datetime.utcnow(), is_accepted=True),
+            Invitation(domain='domain_2', email='email2@email.com', invited_by='friend@email.com',
+                       invited_on=datetime.utcnow()),
         ]
         for inv in cls.invitations:
             inv.save()
 
     def test_by_domain(self):
-        self.assertEqual(len(SQLInvitation.by_domain('domain_1')), 1)
-        self.assertEqual(len(SQLInvitation.by_domain('domain_2')), 1)
-        self.assertEqual(len(SQLInvitation.by_domain('domain_3')), 0)
+        self.assertEqual(len(Invitation.by_domain('domain_1')), 1)
+        self.assertEqual(len(Invitation.by_domain('domain_2')), 1)
+        self.assertEqual(len(Invitation.by_domain('domain_3')), 0)
 
     def test_by_email(self):
-        self.assertEqual(len(SQLInvitation.by_email('email1@email.com')), 1)
-        self.assertEqual(len(SQLInvitation.by_email('email2@email.com')), 1)
-        self.assertEqual(len(SQLInvitation.by_email('email3@email.com')), 0)
+        self.assertEqual(len(Invitation.by_email('email1@email.com')), 1)
+        self.assertEqual(len(Invitation.by_email('email2@email.com')), 1)
+        self.assertEqual(len(Invitation.by_email('email3@email.com')), 0)
 
     @classmethod
     def tearDownClass(cls):

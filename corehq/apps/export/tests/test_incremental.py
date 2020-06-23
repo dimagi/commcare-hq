@@ -17,8 +17,6 @@ from corehq.apps.export.models import (
 from corehq.apps.export.models.incremental import (
     IncrementalExport,
     IncrementalExportStatus,
-)
-from corehq.apps.export.tasks import (
     _generate_incremental_export,
     _send_incremental_export,
 )
@@ -49,10 +47,12 @@ class TestIncrementalExport(TestCase):
 
         cls.domain = uuid.uuid4().hex
         create_domain(cls.domain)
-        now = datetime.utcnow()
+        cls.now = datetime.utcnow()
         cases = [
-            new_case(domain=cls.domain, foo="apple", bar="banana", server_modified_on=now - timedelta(hours=3)),
-            new_case(domain=cls.domain, foo="orange", bar="pear", server_modified_on=now - timedelta(hours=2)),
+            new_case(domain=cls.domain, foo="apple", bar="banana",
+                     server_modified_on=cls.now - timedelta(hours=3)),
+            new_case(domain=cls.domain, foo="orange", bar="pear",
+                     server_modified_on=cls.now - timedelta(hours=2)),
         ]
 
         for case in cases:
@@ -140,11 +140,21 @@ class TestIncrementalExport(TestCase):
         self.es.indices.refresh(CASE_INDEX_INFO.index)
         self.addCleanup(self._cleanup_case(case.case_id))
 
-        checkpoint = _generate_incremental_export(self.incremental_export)
+        checkpoint = _generate_incremental_export(self.incremental_export, last_doc_date=checkpoint.last_doc_date)
         data = checkpoint.get_blob().read().decode('utf-8-sig')
         expected = "Foo column,Bar column\r\npeach,plumb\r\n"
         self.assertEqual(data, expected)
         self.assertEqual(checkpoint.doc_count, 1)
+
+        checkpoint = _generate_incremental_export(
+            self.incremental_export, last_doc_date=self.now - timedelta(hours=2, minutes=1)
+        )
+        data = checkpoint.get_blob().read().decode("utf-8-sig")
+        expected = "Foo column,Bar column\r\norange,pear\r\npeach,plumb\r\n"
+        self.assertEqual(data, expected)
+        self.assertEqual(checkpoint.doc_count, 2)
+
+        self.assertEqual(self.incremental_export.checkpoints.count(), 3)
 
     def test_sending_success(self):
         self._test_sending(200, IncrementalExportStatus.SUCCESS)
@@ -183,7 +193,7 @@ class TestIncrementalExport(TestCase):
         health_department = SQLLocation.objects.filter(domain=self.domain, name='HealthDepartment1').first()
         self.addCleanup(delete_all_locations)
 
-        user = CommCareUser.create(self.domain, 'm2', 'abc', location=team1)
+        user = CommCareUser.create(self.domain, 'm2', 'abc', None, None, location=team1)
         send_to_elasticsearch('users', user.to_json())
         self.es.indices.refresh(USER_INDEX_INFO.index)
         self.addCleanup(delete_all_users)

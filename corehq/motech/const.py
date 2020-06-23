@@ -2,11 +2,23 @@ BASIC_AUTH = "basic"
 DIGEST_AUTH = "digest"
 OAUTH1 = "oauth1"
 BEARER_AUTH = "bearer"
+OAUTH2_PWD = "oauth2_pwd"
+AUTH_TYPES = (
+    (BASIC_AUTH, "HTTP Basic"),
+    (DIGEST_AUTH, "HTTP Digest"),
+    (BEARER_AUTH, "Bearer Token"),
+    (OAUTH1, "OAuth1"),
+    (OAUTH2_PWD, "OAuth 2.0 Password Grant")
+)
 
 PASSWORD_PLACEHOLDER = '*' * 16
 
-# If any remote service does not respond within 5 minutes, time out
-REQUEST_TIMEOUT = 5 * 60
+CONNECT_TIMEOUT = 60
+# If any remote service does not respond within 5 minutes, time out.
+# (Some OpenMRS reports can take a long time. Cut them a little slack,
+# but not too much.)
+READ_TIMEOUT = 5 * 60
+REQUEST_TIMEOUT = (CONNECT_TIMEOUT, READ_TIMEOUT)
 
 ALGO_AES = 'aes'
 

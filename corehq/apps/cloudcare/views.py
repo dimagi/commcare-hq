@@ -1,12 +1,14 @@
 import json
+import re
 import string
 from xml.etree import cElementTree as ElementTree
 
+import sentry_sdk
 from django.conf import settings
+from django.contrib import messages
 from django.http import (
     Http404,
     HttpResponse,
-    HttpResponseBadRequest,
     HttpResponseRedirect,
     JsonResponse,
 )
@@ -23,13 +25,10 @@ from django.views.generic.base import TemplateView
 import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
-from couchdbkit import ResourceConflict
-from unidecode import unidecode
+from text_unidecode import unidecode
 
-from casexml.apps.phone.fixtures import generator
 from corehq.util.metrics import metrics_counter
 from dimagi.utils.logging import notify_error
-from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.web import get_url_base, json_response
 
 from corehq import privileges, toggles
@@ -71,11 +70,12 @@ from corehq.apps.hqwebapp.decorators import (
     use_datatables,
     use_jquery_ui,
     use_legacy_jquery,
-)
+    waf_allow)
+from corehq.apps.hqwebapp.views import render_static
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
-from corehq.apps.users.decorators import require_can_edit_commcare_users
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.decorators import require_can_login_as
+from corehq.apps.users.models import CommCareUser, CouchUser, DomainMembershipError
 from corehq.apps.users.util import format_username
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.form_processor.exceptions import XFormNotFound
@@ -124,9 +124,14 @@ class FormplayerMain(View):
         apps = filter(None, apps)
         apps = filter(lambda app: app.get('cloudcare_enabled') or self.preview, apps)
         apps = filter(lambda app: app_access.user_can_access_app(user, app), apps)
-        role = user.get_role(domain)
+        role = None
+        try:
+            role = user.get_role(domain)
+        except DomainMembershipError:
+            # User has access via domain mirroring
+            pass
         if role:
-            apps = [app for app in apps if role.permissions.view_web_app(app)]
+            apps = [_format_app(app) for app in apps if role.permissions.view_web_app(app)]
         apps = sorted(apps, key=lambda app: app['name'])
         return apps
 
@@ -154,6 +159,22 @@ class FormplayerMain(View):
                 def set_cookie(response):  # overwrite the default noop set_cookie
                     response.delete_cookie(cookie_name)
                     return response
+
+        elif request.couch_user.has_permission(domain, 'limited_login_as'):
+            login_as_users = login_as_user_query(
+                domain,
+                request.couch_user,
+                search_string='',
+                limit=1,
+                offset=0
+            ).run()
+            if login_as_users.total == 1:
+                def set_cookie(response):
+                    response.set_cookie(cookie_name, user.raw_username)
+                    return response
+
+                user = CouchUser.get_by_username(login_as_users.hits[0]['username'])
+                return user, set_cookie
 
         return request.couch_user, set_cookie
 
@@ -251,7 +272,7 @@ class FormplayerPreviewSingleApp(View):
         context = {
             "domain": domain,
             "language": language,
-            "apps": [app],
+            "apps": [_format_app(app)],
             "maps_api_key": settings.GMAPS_API_KEY,
             "username": request.user.username,
             "formplayer_url": settings.FORMPLAYER_URL,
@@ -285,7 +306,7 @@ class LoginAsUsers(View):
     urlname = 'login_as_users'
 
     @method_decorator(login_and_domain_required)
-    @method_decorator(require_can_edit_commcare_users)
+    @method_decorator(require_can_login_as)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
     def dispatch(self, *args, **kwargs):
         return super(LoginAsUsers, self).dispatch(*args, **kwargs)
@@ -343,6 +364,11 @@ class LoginAsUsers(View):
             'location': user.sql_location.to_json() if user.sql_location else None,
         }
         return formatted_user
+
+
+def _format_app(app):
+    app['imageUri'] = app.get('logo_refs', {}).get('hq_logo_web_apps', {}).get('path', '')
+    return app
 
 
 @login_and_domain_required
@@ -467,10 +493,16 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
         return json_response({'success': 1})
 
 
+@waf_allow('XSS_BODY')
+@location_safe
 @login_and_domain_required
 def report_formplayer_error(request, domain):
     data = json.loads(request.body)
     error_type = data.get('type')
+
+    with sentry_sdk.configure_scope() as scope:
+        scope.set_tag("cloudcare_error_type", error_type)
+
     if error_type == 'webformsession_request_failure':
         metrics_counter('commcare.formplayer.webformsession_request_failure', tags={
             'request': data.get('request'),
@@ -478,20 +510,26 @@ def report_formplayer_error(request, domain):
             'state': data.get('state'),
             'status': data.get('status'),
             'domain': domain,
+            'cloudcare_env': data.get('cloudcareEnv'),
         })
-        notify_error(message='Formplayer: request failure in web form session', details=data)
+        message = data.get("readableErrorMessage") or "request failure in web form session"
+        thread_topic = _message_to_sentry_thread_topic(message)
+        notify_error(message=f'[Cloudcare] {thread_topic}', details=data)
     elif error_type == 'show_error_notification':
         message = data.get('message')
+        thread_topic = _message_to_sentry_thread_topic(message)
         metrics_counter('commcare.formplayer.show_error_notification', tags={
             'message': _message_to_tag_value(message or 'no_message'),
             'domain': domain,
+            'cloudcare_env': data.get('cloudcareEnv'),
         })
-        notify_error(message=f'Formplayer: showed error to user: {message}', details=data)
+        notify_error(message=f'[Cloudcare] {thread_topic}', details=data)
     else:
         metrics_counter('commcare.formplayer.unknown_error_type', tags={
             'domain': domain,
+            'cloudcare_env': data.get('cloudcareEnv'),
         })
-        notify_error(message=f'Formplayer: unknown error type', details=data)
+        notify_error(message=f'[Cloudcare] unknown error type', details=data)
     return JsonResponse({'status': 'ok'})
 
 
@@ -508,7 +546,24 @@ def _message_to_tag_value(message, allowed_chars=string.ascii_lowercase + string
     'another_process_prevented_us'
     >>> _message_to_tag_value('509 Unknown Status Code')
     '509_unknown_status_code'
+    >>> _message_to_tag_value(
+    ... 'EntityScreen EntityScreen [Detail=org.commcare.suite.model.Detail@1f984e3c, '
+    ... 'selection=null] could not select case 8854f3583f6f46e69af59fddc9f9428d. '
+    ... 'If this error persists please report a bug to CommCareHQ.')
+    'entityscreen_entityscreen_detail_org'
     """
-    message_tag = '_'.join(unidecode(message).split(' ')[:4]).lower()
-    message_tag = ''.join(c for c in message_tag if c in allowed_chars)
-    return message_tag
+    message_tag = unidecode(message)
+    message_tag = ''.join((c if c in allowed_chars else ' ') for c in message_tag.lower())
+    message_tag = '_'.join(re.split(r' +', message_tag)[:4])
+    return message_tag[:59]
+
+
+def _message_to_sentry_thread_topic(message):
+    """
+    >>> _message_to_sentry_thread_topic(
+    ... 'EntityScreen EntityScreen [Detail=org.commcare.suite.model.Detail@1f984e3c, '
+    ... 'selection=null] could not select case 8854f3583f6f46e69af59fddc9f9428d. '
+    ... 'If this error persists please report a bug to CommCareHQ.')
+    'EntityScreen EntityScreen [Detail=org.commcare.suite.model.Detail@[...], selection=null] could not select case [...]. If this error persists please report a bug to CommCareHQ.'
+    """
+    return re.sub(r'[a-f0-9-]{8,}', '[...]', message)

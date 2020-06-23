@@ -64,7 +64,6 @@ class Transition(object):
 
     @transaction.atomic()
     def perform(self):
-        from custom.icds.location_reassignment.tasks import update_usercase
         if not self.valid():
             raise InvalidTransitionError(", ".join(self.errors))
         new_locations_created = self._create_missing_new_locations()
@@ -73,8 +72,6 @@ class Transition(object):
         if self.operation_obj.deactivates_old_users:
             for old_location in self.operation_obj.old_locations:
                 deactivate_users_at_location(old_location.location_id)
-        for old_username, new_username in self.user_transitions.items():
-            update_usercase.delay(self.domain, old_username, new_username)
 
     def valid(self):
         return self.operation_obj.valid()
@@ -198,7 +195,7 @@ class MergeOperation(BaseOperation):
     expected_old_locations = MANY
 
     def perform(self):
-        from custom.icds.location_reassignment.tasks import reassign_household_and_child_cases_for_owner
+        from custom.icds.location_reassignment.tasks import reassign_cases_for_owner
         timestamp = datetime.utcnow()
         new_location = self.new_locations[0]
         for old_location in self.old_locations:
@@ -214,8 +211,8 @@ class MergeOperation(BaseOperation):
         new_location.metadata[DEPRECATES_VIA] = self.type
         new_location.save()
         for old_location in self.old_locations:
-            reassign_household_and_child_cases_for_owner.delay(self.domain, old_location.location_id,
-                                                               new_location.location_id, timestamp)
+            reassign_cases_for_owner.delay(self.domain, old_location.location_id, new_location.location_id,
+                                           timestamp)
 
 
 class SplitOperation(BaseOperation):
@@ -263,7 +260,7 @@ class MoveOperation(BaseOperation):
     type = MOVE_OPERATION
 
     def perform(self):
-        from custom.icds.location_reassignment.tasks import reassign_household_and_child_cases_for_owner
+        from custom.icds.location_reassignment.tasks import reassign_cases_for_owner
         timestamp = datetime.utcnow()
         old_location = self.old_locations[0]
         new_location = self.new_locations[0]
@@ -278,5 +275,5 @@ class MoveOperation(BaseOperation):
         new_location.metadata[DEPRECATES_AT] = timestamp
         new_location.metadata[DEPRECATES_VIA] = self.type
         new_location.save()
-        reassign_household_and_child_cases_for_owner.delay(self.domain, old_location.location_id,
-                                                           new_location.location_id, timestamp)
+        reassign_cases_for_owner.delay(self.domain, old_location.location_id, new_location.location_id,
+                                       timestamp)

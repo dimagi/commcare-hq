@@ -321,10 +321,19 @@ class BouncedEmailManager(object):
 
     def _handle_raw_bounced_recipients(self, recipients, uid):
         for recipient in recipients:
-            exists = BouncedEmail.objects.filter(
+            if recipient.startswith('<'):
+                # clean
+                recipient = recipient.replace('<', '').replace('>', '')
+            bounce_exists = BouncedEmail.objects.filter(
                 email=recipient,
             ).exists()
-            if not exists and re.search(EMAIL_REGEX_VALIDATION, recipient):
+            transient_exists = TransientBounceEmail.objects.filter(
+                email=recipient
+            ).exists()
+            if (
+                not (bounce_exists or transient_exists)
+                and re.search(EMAIL_REGEX_VALIDATION, recipient)
+            ):
                 # an email will only show up here if there was no prior
                 # SNS notification for it. add the email to the bounce list and
                 # mark the email in the bounces inbox for further investigation
@@ -341,7 +350,7 @@ class BouncedEmailManager(object):
                     f'[{settings.SERVER_ENVIRONMENT}] '
                     f'An email bounced that was not caught by SNS: {recipient}'
                 )
-            elif not exists:
+            elif not (bounce_exists or transient_exists):
                 # this email failed to validate, find out why
                 metrics_counter('commcare.bounced_email_manager.validation_failed')
                 self._label_problem_email(

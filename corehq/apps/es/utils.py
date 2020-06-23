@@ -1,3 +1,7 @@
+from django.conf import settings
+from corehq.util.metrics import metrics_counter
+
+
 def values_list(hits, *fields, **kwargs):
     """modeled after django's QuerySet.values_list"""
     flat = kwargs.pop('flat', False)
@@ -32,3 +36,13 @@ def flatten_field_dict(results, fields_property='fields'):
             new_val = val[0]
         field_dict[key] = new_val
     return field_dict
+
+
+def track_es_report_load(domain, report_slug, owner_count):
+    # Intended mainly for ICDs to track load of user filter counts when hitting ES
+    if hasattr(settings, 'TRACK_ES_REPORT_LOAD'):
+        metrics_counter(
+            'commcare.es.user_filter_count',
+            owner_count,
+            tags={'report_slug': report_slug, 'domain': domain}
+        )

@@ -7,7 +7,7 @@ from io import StringIO
 
 from django.contrib.admin.utils import NestedObjects
 from django.core import serializers
-from django.db.models.signals import post_save
+from django.db.models.signals import post_delete, post_save
 from django.test import TestCase
 from django.test.utils import override_settings
 
@@ -26,6 +26,11 @@ from corehq.apps.dump_reload.sql.dump import (
 )
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.products.models import SQLProduct
+from corehq.apps.zapier.consts import EventTypes
+from corehq.apps.zapier.models import ZapierSubscription
+from corehq.apps.zapier.signals.receivers import (
+    zapier_subscription_post_delete,
+)
 from corehq.blobs.models import BlobMeta
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import (
@@ -50,6 +55,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import AlertSched
 class BaseDumpLoadTest(TestCase):
     @classmethod
     def setUpClass(cls):
+        post_delete.disconnect(zapier_subscription_post_delete, sender=ZapierSubscription)
         super(BaseDumpLoadTest, cls).setUpClass()
         cls.domain_name = uuid.uuid4().hex
         cls.domain = Domain(name=cls.domain_name)
@@ -63,6 +69,7 @@ class BaseDumpLoadTest(TestCase):
     def tearDownClass(cls):
         cls.domain.delete()
         super(BaseDumpLoadTest, cls).tearDownClass()
+        post_delete.connect(zapier_subscription_post_delete, sender=ZapierSubscription)
 
     def delete_sql_data(self):
         for model_class, builder in get_model_iterator_builders_to_dump(self.domain_name, []):
@@ -77,10 +84,11 @@ class BaseDumpLoadTest(TestCase):
         self.delete_sql_data()
         super(BaseDumpLoadTest, self).tearDown()
 
-    def _dump_and_load(self, expected_object_counts):
-        expected_object_counts.update(self.default_objects_counts)
+    def _dump_and_load(self, expected_dump_counts, load_filter=None, expected_load_counts=None):
+        expected_load_counts = expected_load_counts or expected_dump_counts
+        expected_dump_counts.update(self.default_objects_counts)
 
-        models = list(expected_object_counts)
+        models = list(expected_dump_counts)
         self._check_signals_handle_raw(models)
 
         output_stream = StringIO()
@@ -94,18 +102,23 @@ class BaseDumpLoadTest(TestCase):
         counts = Counter(object_classes)
         self.assertEqual([], objects_remaining, 'Not all data deleted: {}'.format(counts))
 
+        # Dump
         dump_output = output_stream.getvalue().split('\n')
         dump_lines = [line.strip() for line in dump_output if line.strip()]
-        total_object_count, loaded_model_counts = SqlDataLoader().load_objects(dump_lines)
 
-        expected_model_counts = _normalize_object_counter(expected_object_counts)
+        expected_model_counts = _normalize_object_counter(expected_dump_counts)
         actual_model_counts = Counter([json.loads(line)['model'] for line in dump_lines])
-        expected_total_objects = sum(expected_object_counts.values())
         self.assertDictEqual(dict(expected_model_counts), dict(actual_model_counts))
-        expected_loaded_counts = _normalize_object_counter(expected_object_counts, for_loaded=True)
-        self.assertDictEqual(dict(expected_loaded_counts), dict(loaded_model_counts))
-        self.assertEqual(expected_total_objects, sum(loaded_model_counts.values()))
-        self.assertEqual(expected_total_objects, total_object_count)
+
+        # Load
+        loader = SqlDataLoader(object_filter=load_filter)
+        total_object_count, loaded_model_counts = loader.load_objects(dump_lines)
+
+        normalized_expected_loaded_counts = _normalize_object_counter(expected_load_counts, for_loaded=True)
+        self.assertDictEqual(dict(normalized_expected_loaded_counts), dict(loaded_model_counts))
+        expected_total_load_objects = sum(expected_load_counts.values())
+        self.assertEqual(expected_total_load_objects, sum(loaded_model_counts.values()))
+        self.assertEqual(expected_total_load_objects, total_object_count)
 
         return dump_lines
 
@@ -256,7 +269,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         ]
         for fuzzy in fuzzies:
             fuzzy.save()
-        pre_config.fuzzy_properties = fuzzies
+        pre_config.fuzzy_properties.set(fuzzies)
         pre_config.save()
 
         self._dump_and_load(expected_object_counts)
@@ -276,18 +289,24 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             domain=self.domain_name,
             username='user_1',
             password='secret',
+            created_by=None,
+            created_via=None,
             email='email@example.com',
         )
         ccuser_2 = CommCareUser.create(
             domain=self.domain_name,
             username='user_2',
             password='secret',
+            created_by=None,
+            created_via=None,
             email='email1@example.com',
         )
         web_user = WebUser.create(
             domain=self.domain_name,
             username='webuser_t1',
             password='secret',
+            created_by=None,
+            created_via=None,
             email='webuser@example.com',
         )
         self.addCleanup(ccuser_1.delete)
@@ -314,6 +333,8 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             domain=self.domain_name,
             username='user_1',
             password='secret',
+            created_by=None,
+            created_via=None,
             email='email@example.com',
             uuid='428d454aa9abc74e1964e16d3565d6b6'  # match ID in devicelog.xml
         )
@@ -340,6 +361,8 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             domain=self.domain_name,
             username='user_1',
             password='secret',
+            created_by=None,
+            created_via=None,
             email='email@example.com',
             uuid=user_id
         )
@@ -506,6 +529,36 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         ).save()
         self._dump_and_load({AlertScheduleInstance: 1})
 
+    def test_case_importer(self):
+        from corehq.apps.case_importer.tracking.models import (
+            CaseUploadFileMeta,
+            CaseUploadFormRecord,
+            CaseUploadRecord,
+        )
+
+        upload_file_meta = CaseUploadFileMeta.objects.create(
+            identifier=uuid.uuid4().hex,
+            filename='picture.jpg',
+            length=1024,
+        )
+        case_upload_record = CaseUploadRecord.objects.create(
+            domain=self.domain_name,
+            upload_id=uuid.uuid4(),
+            task_id=uuid.uuid4(),
+            couch_user_id=uuid.uuid4().hex,
+            case_type='person',
+            upload_file_meta=upload_file_meta,
+        )
+        CaseUploadFormRecord.objects.create(
+            case_upload_record=case_upload_record,
+            form_id=uuid.uuid4().hex,
+        )
+        self._dump_and_load(Counter({
+            CaseUploadFileMeta: 1,
+            CaseUploadRecord: 1,
+            CaseUploadFormRecord: 1,
+        }))
+
     def test_transifex(self):
         from corehq.apps.translations.models import TransifexProject, TransifexOrganization
         org = TransifexOrganization.objects.create(slug='test', name='demo', api_token='123')
@@ -513,6 +566,18 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             organization=org, slug='testp', name='demop', domain=self.domain_name
         )
         self._dump_and_load(Counter({TransifexOrganization: 1, TransifexProject: 1}))
+
+    def test_filtered_dump_load(self):
+        from corehq.apps.locations.tests.test_location_types import make_loc_type
+        from corehq.apps.products.models import SQLProduct
+        from corehq.apps.locations.models import LocationType
+
+        make_loc_type('state', domain=self.domain_name)
+        SQLProduct.objects.create(domain=self.domain_name, product_id='test1', name='test1')
+        expected_object_counts = Counter({LocationType: 1, SQLProduct: 1})
+
+        self._dump_and_load(expected_object_counts, load_filter='sqlproduct', expected_load_counts=Counter({SQLProduct: 1}))
+        self.assertEqual(0, LocationType.objects.count())
 
     def test_sms_content(self):
         from corehq.messaging.scheduling.models import AlertSchedule, SMSContent, AlertEvent
@@ -530,6 +595,16 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
 
         self.addCleanup(lambda: delete_alert_schedule_instances_for_schedule(AlertScheduleInstance, schedule.schedule_id))
         self._dump_and_load(Counter({AlertSchedule: 1, AlertEvent: 2, SMSContent: 2}))
+
+    def test_zapier_subscription(self):
+        ZapierSubscription.objects.create(
+            domain=self.domain_name,
+            case_type='case_type',
+            event_name=EventTypes.NEW_CASE,
+            url='example.com',
+            user_id='user_id',
+        )
+        self._dump_and_load(Counter({ZapierSubscription: 1}))
 
 
 def _normalize_object_counter(counter, for_loaded=False):

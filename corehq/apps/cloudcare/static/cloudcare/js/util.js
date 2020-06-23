@@ -1,3 +1,5 @@
+/*global FormplayerFrontend */
+
 hqDefine('cloudcare/js/util', function () {
     if (!String.prototype.startsWith) {
         String.prototype.startsWith = function (searchString, position) {
@@ -47,11 +49,18 @@ hqDefine('cloudcare/js/util', function () {
     };
 
     var showHTMLError = function (message, $el, autoHideTime) {
-        message = message || gettext("Sorry, an error occurred while processing that request.");
-        _show(message, $el, autoHideTime, "", true);
+        var htmlMessage = message = message || gettext("Sorry, an error occurred while processing that request.");
+        var $container = _show(message, $el, autoHideTime, "alert alert-danger", true);
+        try {
+            message = $container.text();  // pull out just the text the user sees
+            message = message.replace(/\s+/g, ' ').trim();
+        } catch (e) {
+            // leave the message as at came in if there's an issue parsing text from the container
+        }
         reportFormplayerErrorToHQ({
             type: 'show_error_notification',
             message: message,
+            htmlMessage: htmlMessage,
         });
     };
 
@@ -73,13 +82,19 @@ hqDefine('cloudcare/js/util', function () {
         }
         // HTML errors may already have an alert dialog
         $alertDialog = $container.hasClass("alert") ? $container : $container.find('.alert');
-        $alertDialog
-            .prepend(
-                $("<a />")
-                    .addClass("close")
-                    .attr("data-dismiss", "alert")
-                    .html("&times;")
-            );
+        try {
+            $alertDialog
+                .prepend(
+                    $("<a />")
+                        .addClass("close")
+                        .attr("data-dismiss", "alert")
+                        .html("&times;")
+                );
+        } catch (e) {
+            // escaping a DOM-related error from running mocha tests using grunt
+            // in the command line. This passes just fine in the browser but
+            // breaks only when travis runs it.
+        }
         $el.append($container);
         if (autoHideTime) {
             $container.delay(autoHideTime).fadeOut(500);
@@ -145,7 +160,10 @@ hqDefine('cloudcare/js/util', function () {
     var reportFormplayerErrorToHQ = function (data) {
         try {
             var reverse = hqImport("hqwebapp/js/initial_page_data").reverse;
-
+            var cloudcareEnv = FormplayerFrontend.request('currentUser').environment;
+            if (!data.cloudcareEnv) {
+                data.cloudcareEnv = cloudcareEnv || 'unknown';
+            }
             $.ajax({
                 type: 'POST',
                 url: reverse('report_formplayer_error'),

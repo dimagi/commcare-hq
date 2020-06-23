@@ -30,7 +30,8 @@ function LocationModalController($uibModalInstance, $location, locationsService,
     vm.selectedDate = dateHelperService.getSelectedDate();
 
     vm.showReassignmentMessage = function () {
-        return vm.selectedLocation() && (Date.parse(vm.selectedLocation().deprecated_at) < vm.selectedDate || Date.parse(vm.selectedLocation().deprecates_at) > vm.selectedDate);
+        var utcSelectedDate = Date.UTC(vm.selectedDate.getFullYear(), vm.selectedDate.getMonth());
+        return vm.selectedLocation() && (Date.parse(vm.selectedLocation().archived_on) <= utcSelectedDate || Date.parse(vm.selectedLocation().deprecates_at) > utcSelectedDate);
     };
 
     vm.errors = function () {
@@ -361,6 +362,21 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
                 if ($location.path().indexOf('awc_reports') === -1 && selectedLocationIndex() === 4) {
                     vm.onSelect(vm.selectedLocations[3], 3);
                     vm.selectedLocationId = vm.selectedLocations[3].location_id;
+                    vm.location_id = vm.selectedLocationId;
+                    locations = vm.getLocationsForLevel(selectedLocationIndex());
+                    var loc = _.filter(locations, function (loc) {
+                        return loc.location_id === vm.selectedLocationId;
+                    });
+                    $location.search('location_name', loc[0]['name']);
+                    $location.search('location_id', vm.selectedLocationId);
+                    $location.search('selectedLocationLevel', selectedLocationIndex());
+                    storageService.setKey('search', $location.search());
+                    $scope.$emit('filtersChange');
+                }
+                if ($location.path().indexOf('poshan_progress_dashboard') !== -1 && selectedLocationIndex() > 0) {
+                    // if selected location is above state level when navigated to PPD, location is reset to state level
+                    vm.onSelect(vm.selectedLocations[0], 0);
+                    vm.selectedLocationId = vm.selectedLocations[0].location_id;
                     vm.location_id = vm.selectedLocationId;
                     locations = vm.getLocationsForLevel(selectedLocationIndex());
                     var loc = _.filter(locations, function (loc) {

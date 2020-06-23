@@ -89,7 +89,7 @@ def _build_indicators(config, document_store, relevant_ids):
 
 
 @task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True)
-def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1, source=None, engine_id=None):
+def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1, source=None, engine_id=None, diffs=None):
     config = _get_config_by_id(indicator_config_id)
     success = _('Your UCR table {} has finished rebuilding in {}').format(config.table_id, config.domain)
     failure = _('There was an error rebuilding Your UCR table {} in {}.').format(config.table_id, config.domain)
@@ -117,7 +117,7 @@ def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1, source=
             config.save()
 
         skip_log = bool(limit > 0)  # don't store log for temporary report builder UCRs
-        adapter.rebuild_table(initiated_by=initiated_by, source=source, skip_log=skip_log)
+        adapter.rebuild_table(initiated_by=initiated_by, source=source, skip_log=skip_log, diffs=diffs)
         _iteratively_build_table(config, limit=limit)
 
 
@@ -347,7 +347,7 @@ def queue_async_indicators():
             break
 
 
-def _queue_indicators(async_indicators):
+def _queue_indicators(async_indicators, use_agg_queue=False):
     """
         Extract doc ids for the passed AsyncIndicators and queue task to process indicators for them.
         Mark date_queued on all AsyncIndicator passed to utcnow.
@@ -358,7 +358,15 @@ def _queue_indicators(async_indicators):
         # AsyncIndicator have doc_id as a unique column, so this update would only
         # update the passed AsyncIndicators
         AsyncIndicator.objects.filter(doc_id__in=indicator_doc_ids).update(date_queued=now)
-        build_async_indicators.delay(indicator_doc_ids)
+        if use_agg_queue:
+            build_indicators_with_agg_queue.delay(indicator_doc_ids)
+        else:
+            build_async_indicators.delay(indicator_doc_ids)
+
+
+@task(queue='icds_aggregation_queue', ignore_result=True, acks_late=True)
+def build_indicators_with_agg_queue(indicator_doc_ids):
+    build_async_indicators(indicator_doc_ids)
 
 
 @task(serializer='pickle', queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)

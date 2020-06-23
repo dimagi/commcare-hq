@@ -1,9 +1,12 @@
 #modified version of django-axes axes/decorator.py
 #for more information see: http://code.google.com/p/django-axes/
 import csv
+from argparse import ArgumentTypeError
+
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.contenttypes.models import ContentType
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 from auditcare.utils import login_template
@@ -18,32 +21,38 @@ from auditcare.models import AccessAudit
 
 import logging
 
+from auditcare.utils.export import write_export_from_all_log_events
+from corehq.util.argparse_types import date_type
 
 LOCKOUT_TEMPLATE = getattr(settings, 'AXES_LOCKOUT_TEMPLATE', None)
 LOCKOUT_URL = getattr(settings, 'AXES_LOCKOUT_URL', None)
 VERBOSE = getattr(settings, 'AXES_VERBOSE', True)
 
 
+@login_required
+@user_passes_test(lambda u: u.is_superuser)
 def export_all(request):
-    auditEvents = AccessAudit.view("auditcare/by_date_access_events", descending=True, include_docs=True).all()
+    try:
+        start = date_type(request.GET.get('start'))
+        end = date_type(request.GET.get('end'))
+    except ArgumentTypeError as e:
+        if 'start' in locals():
+            return HttpResponseBadRequest(f'[end] {e}')
+        else:
+            return HttpResponseBadRequest(f'[start] {e}')
+
     response = HttpResponse()
     response['Content-Disposition'] = 'attachment; filename="AuditAll.csv"'
-    writer = csv.writer(response)
-    writer.writerow(['User', 'Access Type', 'Date'])
-    for a in auditEvents:
-        writer.writerow([a.user, a.access_type, a.event_date])
+    write_export_from_all_log_events(response, start=start, end=end)
     return response
-
-from django.contrib.auth import views as auth_views
 
 
 @csrf_protect
 @never_cache
 def audited_login(request, *args, **kwargs):
-    func = auth_views.login
     kwargs['template_name'] = login_template()
     # call the login function
-    response = func(request, *args, **kwargs)
+    response = LoginView.as_view(*args, **kwargs)(request)
     if request.method == 'POST':
         # see if the login was successful
         login_unsuccessful = (
@@ -71,8 +80,6 @@ def audited_views(request, *args, **kwargs):
 
 def audited_logout(request, *args, **kwargs):
     # share some useful information
-    func = auth_views.logout
-    logging.info("Function: %s" %(func.__name__))
     logging.info("Logged logout for user %s" % (request.user.username))
     user = request.user
     # it's a successful login.
@@ -93,7 +100,7 @@ def audited_logout(request, *args, **kwargs):
     attempt.save()
 
     # call the logout function
-    response = func(request, *args, **kwargs)
+    response = LogoutView.as_view(*args, **kwargs)(request)
     return response
 
 

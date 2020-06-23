@@ -45,7 +45,7 @@ def get_per_domain_context(project, request=None):
 
     def allow_report_issue(user, domain):
         if toggles.ICDS.enabled(domain) and user.is_commcare_user():
-            role = user.get_domain_membership(domain).role
+            role = user.get_domain_membership(domain, allow_mirroring=True).role
             if not role:
                 return False
         return user.has_permission(domain, 'report_an_issue')
@@ -66,6 +66,7 @@ def get_per_domain_context(project, request=None):
         'CUSTOM_LOGO_URL': custom_logo_url,
         'allow_report_an_issue': allow_report_an_issue,
         'EULA_COMPLIANCE': getattr(settings, 'EULA_COMPLIANCE', False),
+        'SECURE_TIMEOUT': settings.SECURE_TIMEOUT if project and project.secure_sessions else None,
     }
 
 
@@ -107,7 +108,7 @@ def current_url_name(request):
         url_name = None
 
     return {
-        'current_url_name': url_name
+        'current_url_name': url_name,
     }
 
 
@@ -205,7 +206,7 @@ def mobile_experience(request):
     mobile_ux_cookie_name = ''
     if (hasattr(request, 'couch_user') and
             hasattr(request, 'user_agent') and
-            settings.SERVER_ENVIRONMENT in ['production', 'staging', 'localdev']):
+            settings.SERVER_ENVIRONMENT in ['production', 'staging', settings.LOCAL_SERVER_ENVIRONMENT]):
         mobile_ux_cookie_name = '{}-has-seen-mobile-ux-warning'.format(request.couch_user.get_id)
         show_mobile_ux_warning = (
             not request.COOKIES.get(mobile_ux_cookie_name) and

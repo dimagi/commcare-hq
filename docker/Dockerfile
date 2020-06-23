@@ -1,4 +1,4 @@
-FROM dimagi/commcarehq_base_new:latest
+FROM dimagi/commcarehq_base:latest
 # When changing this file, also update docker/Dockerfile-py3
 
 VOLUME /mnt/commcare-hq-ro /mnt/lib

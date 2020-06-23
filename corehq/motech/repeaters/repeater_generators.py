@@ -349,8 +349,8 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
             self._set_constant_properties(case, config)
             self._set_referral_properties(case, original_id)
             case_blocks.append(case.to_xml(V2).decode('utf-8'))
-            case_blocks = ''.join(case_blocks)
-            return case_blocks
+        case_blocks = ''.join(case_blocks)
+        return case_blocks
 
     def _get_updated_case_id(self, original_case_id, case_id_map):
         if original_case_id in case_id_map:
@@ -377,6 +377,8 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
             case.case_json[name] = value
 
     def _set_referral_properties(self, case, original_case_id):
+        # make sure new case is open
+        case.closed = False
         case.case_json['cchq_referral_source_domain'] = self.repeater.domain
         case.case_json['cchq_referral_source_case_id'] = original_case_id
 
