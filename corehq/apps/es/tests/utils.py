@@ -6,8 +6,29 @@ from django.conf import settings
 from django.test import override_settings
 from importlib import reload
 
+from corehq.elastic import get_es_new
+from corehq.util.elastic import ensure_index_deleted
+from pillowtop.es_utils import initialize_index_and_mapping
+from pillowtop.tests.utils import TEST_INDEX_INFO
+
 
 class ElasticTestMixin(object):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.es = get_es_new()
+        initialize_index_and_mapping(cls.es, TEST_INDEX_INFO)
+
+    @classmethod
+    def tearDownClass(cls):
+        ensure_index_deleted(TEST_INDEX_INFO.index)
+
+    def validate_query(self, query):
+        # only query portion can be validated using ES validate API
+        query = {'query': query.pop('query', {})}
+        validation = self.es.indices.validate_query(body=query, index=TEST_INDEX_INFO.index, params={'explain': 'true'})
+        self.assertTrue(validation['valid'])
+
 
     def checkQuery(self, query, json_output, is_raw_query=False):
         if is_raw_query:
@@ -20,6 +41,7 @@ class ElasticTestMixin(object):
         )
         # NOTE: This method thinks [a, b, c] != [b, c, a]
         self.assertEqual(raw_query, json_output, msg=msg)
+        self.validate_query(raw_query)
 
 
 def reload_modules():
