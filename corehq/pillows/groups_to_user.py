@@ -2,7 +2,7 @@ from collections import namedtuple
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed import topics
 from corehq.apps.groups.models import Group
-from corehq.elastic import stream_es_query, get_es_new, ES_META, send_to_elasticsearch
+from corehq.elastic import send_to_elasticsearch
 from corehq.apps.es import UserES
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.pillows.group import get_group_to_elasticsearch_processor
