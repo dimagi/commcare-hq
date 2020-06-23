@@ -132,7 +132,7 @@ class TimeoutMiddleware(MiddlewareMixin):
 
         # Include timeout in current session, important for users who are not domain members
         # (e.g., superusers) who visited a secure domain and are now looking at a non-secure domain
-        if hasattr(session, 'secure_session_timeout'):
+        if 'secure_session_timeout' in session:
             timeouts.append(session['secure_session_timeout'])
 
         return min(timeouts) if timeouts else settings.SECURE_TIMEOUT
