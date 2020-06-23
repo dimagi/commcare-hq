@@ -520,13 +520,15 @@ WebFormSession.prototype.submitForm = function (form) {
                 },
                 function (resp) {
                     form.isSubmitting(false);
-                    if (resp.status == 'success') {
+                    if (resp.status === 'success') {
                         self.onsubmit(resp);
                     } else {
                         $.each(resp.errors, function (ix, error) {
                             self.serverError(getForIx(form, ix), error);
                         });
-                        if (resp.notification) {
+                        if (resp.status === 'too-many-requests') {
+                            alert("Contact your administrator.");
+                        } else if (resp.notification) {
                             alert("Form submission failed with error: \n\n" +
                                 resp.notification.message + ". \n\n " +
                                 "This must be corrected before the form can be submitted.");
