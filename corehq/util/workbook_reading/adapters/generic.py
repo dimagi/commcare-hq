@@ -28,6 +28,6 @@ def open_any_workbook(filename):
     if not file_has_valid_extension:
         error = 'File {} does not have a valid extension. Valid extensions are: {}'.format(
             filename,
-            ', '.join(extensions_to_functions_dict.keys())
+            ', '.join(valid_extensions),
         )
         raise SpreadsheetFileExtError(error)
