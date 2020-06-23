@@ -18,7 +18,6 @@ from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.utils import send_confirmation_email
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.users.models import Invitation
-from corehq.apps.domain.middleware import get_last_visited_domain, set_last_visited_domain
 from corehq.util.quickcache import quickcache
 
 
@@ -57,7 +56,7 @@ def select(request, do_not_redirect=False, next_view=None):
     }
 
     domain_select_template = "domain/select.html"
-    last_visited_domain = get_last_visited_domain(request.couch_user)
+    last_visited_domain = request.session.get('last_visited_domain')
     if open_invitations \
        or do_not_redirect \
        or not last_visited_domain:
@@ -77,7 +76,7 @@ def select(request, do_not_redirect=False, next_view=None):
                 except Http404:
                     pass
 
-        set_last_visited_domain(request.couch_user, None)
+        del request.session['last_visited_domain']
         return render(request, domain_select_template, additional_context)
 
 
