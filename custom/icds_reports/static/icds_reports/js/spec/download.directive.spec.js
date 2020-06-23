@@ -164,7 +164,7 @@ describe('Download Directive', function () {
             controller.selectedIndicator = 14;
             var mockLocationType = [{"name": "state", "parents": ["state"], "level": 1}];
 
-            var expected = 'National';
+            var expected = 'Select State';
             var result = controller.getPlaceholder(mockLocationType);
             assert.equal(expected, result);
         });
