@@ -124,7 +124,6 @@ class TimeoutMiddleware(MiddlewareMixin):
         session.set_expiry(timeout * 60)
         session['session_expiry'] = json_format_datetime(session.get_expiry_date())
         session['last_path'] = path
-        session.save()
 
     @classmethod
     def _get_timeout(cls, session, is_secure, user, domain=None):
@@ -137,7 +136,7 @@ class TimeoutMiddleware(MiddlewareMixin):
 
         # Include timeout in current session, important for users who are not domain members
         # (e.g., superusers) who visited a secure domain and are now looking at a non-secure domain
-        if hasattr(session, 'secure_session_timeout'):
+        if 'secure_session_timeout' in session:
             timeouts.append(session['secure_session_timeout'])
 
         return min(timeouts) if timeouts else settings.SECURE_TIMEOUT
