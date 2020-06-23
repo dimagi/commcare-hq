@@ -1,4 +1,3 @@
-from copy import copy
 from datetime import datetime
 
 from django.contrib import messages
@@ -208,7 +207,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         master_link = get_domain_master_link(self.domain)
         linked_domains = [self._link_context(link, timezone) for link in get_linked_domains(self.domain)]
         (master_apps, linked_apps) = self._get_apps()
-        (master_fixtures, linked_fixtures) = self._get_fixtures()
+        (master_fixtures, linked_fixtures) = self._get_fixtures(master_link)
         (master_reports, linked_reports) = self._get_reports()
 
         # Models belonging to this domain's master domain, for the purpose of pulling
@@ -245,10 +244,14 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                 master_list[brief._id] = brief
         return (master_list, linked_list)
 
-    def _get_fixtures(self):
-        fixtures = get_fixture_data_types(self.domain)
-        fixtures_by_tag = {f.tag: f for f in fixtures if f.is_global}
-        return (fixtures_by_tag, copy(fixtures_by_tag))
+    def _get_fixtures(self, master_link):
+        master_list = self._get_fixtures_for_domain(self.domain)
+        linked_list = self._get_fixtures_for_domain(master_link.master_domain) if master_link else {}
+        return (master_list, linked_list)
+
+    def _get_fixtures_for_domain(self, domain):
+        fixtures = get_fixture_data_types(domain)
+        return {f.tag: f for f in fixtures if f.is_global}
 
     def _get_reports(self):
         master_list = {}
