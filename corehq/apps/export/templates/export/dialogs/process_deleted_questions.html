@@ -7,14 +7,27 @@
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
-        <h4 class="modal-title">{% trans "Show Deleted Questions" %}</h4>
+        <h4 class="modal-title">
+          {% if export_instance.type == 'form' %}
+            {% trans "Show Deleted Questions" %}
+          {% else %}
+            {% trans "Show Deleted Properties" %}
+          {% endif %}
+        </h4>
       </div>
       <div class="modal-body">
         <p>
-          {% blocktrans %}
-            In order to show you your deleted questions, we need to process all of your old applications that have
-            had submissions. This operation can sometimes take a few minutes.
-          {% endblocktrans %}
+          {% if export_instance.type == 'form' %}
+            {% blocktrans %}
+              In order to show you your deleted questions, we need to process all of your old applications that have
+              had submissions. This operation can sometimes take a few minutes.
+            {% endblocktrans %}
+          {% else %}
+            {% blocktrans %}
+              In order to show you your deleted properties, we need to process all of your old applications that have
+              had submissions. This operation can sometimes take a few minutes.
+            {% endblocktrans %}
+          {% endif %}
         </p>
         <div class="spacer"></div>
         <p data-bind="visible: errorOnBuildSchema, css: { 'text-danger': errorOnBuildSchema }">
