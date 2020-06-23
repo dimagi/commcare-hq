@@ -15,7 +15,7 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
     vm.data = {
         legendTitle: 'Percentage beneficiary',
     };
-    vm.filters = ['age', 'gender'];
+    vm.filters = ['age', 'gender', 'data_period'];
     vm.rightLegend = {
         info: 'Of the total number of ICDS beneficiaries, the percentage whose Aadhaar identification has been captured. ',
     };
