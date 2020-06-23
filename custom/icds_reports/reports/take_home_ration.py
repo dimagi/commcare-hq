@@ -8,6 +8,7 @@ from custom.icds_reports.const import (
     THR_21_DAYS_THRESHOLD_DATE
 )
 
+
 class TakeHomeRationExport(object):
     title = 'Take Home Ration'
 
@@ -86,21 +87,23 @@ class TakeHomeRationExport(object):
         ]
 
     def get_consolidated_data(self, filters, order_by):
-        headers = ['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name', 'AWW Phone No.',
-                   'Total No. of Beneficiaries eligible for THR',
-                   'Total No. of beneficiaries received THR in given month',
-                   'Total No of Pictures taken by AWW']
-
         if self.beta:
-            thr_column = 'thr_21_days' if self.month <= THR_21_DAYS_THRESHOLD_DATE else 'thr_25_days'
+            thr_days = 21 if self.month <= THR_21_DAYS_THRESHOLD_DATE else 25
+            thr_column = f'thr_{thr_days}_days'
             launched_column = 'num_launched_awcs'
             thr_eligible_column = 'thr_eligible'
             class_model = ServiceDeliveryReportView
         else:
+            thr_days = 21
             thr_column = 'thr_given_21_days'
             launched_column = 'is_launched'
             thr_eligible_column = 'total_thr_candidates'
             class_model = TakeHomeRationMonthly
+
+        headers = ['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name', 'AWW Phone No.',
+                   'Total No. of Beneficiaries eligible for THR',
+                   f'Total No. of beneficiaries received THR for at least {thr_days} days in given month',
+                   'Total No of Pictures taken by AWW']
 
         columns = [
             'state_name', 'district_name', 'block_name',

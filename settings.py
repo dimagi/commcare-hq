@@ -1021,7 +1021,7 @@ if UNIT_TESTING:
 # https://docs.djangoproject.com/en/1.11/releases/1.11.1/#allowed-disabling-server-side-cursors-on-postgresql
 for database in DATABASES.values():
     if (
-        database['ENGINE'] == 'django.db.backends.postgresql_psycopg2' and
+        database['ENGINE'] == 'django.db.backends.postgresql' and
         database.get('DISABLE_SERVER_SIDE_CURSORS') is None
     ):
         database['DISABLE_SERVER_SIDE_CURSORS'] = True
