@@ -247,7 +247,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
 
     def _get_fixtures(self):
         fixtures = get_fixture_data_types(self.domain)
-        fixtures_by_tag = {f.tag: f for f in fixtures}
+        fixtures_by_tag = {f.tag: f for f in fixtures if f.is_global}
         return (fixtures_by_tag, copy(fixtures_by_tag))
 
     def _get_reports(self):
@@ -304,7 +304,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                 'name': '{} ({})'.format(linked_models['fixture'], fixture.tag),
                 'last_update': None,
                 'detail': FixtureLinkDetail(tag=fixture.tag).to_json(),
-                'can_update': True
+                'can_update': fixture.is_global,
             }
             model_status.append(update)
         for report in reports.values():
@@ -367,6 +367,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                 except KeyError:
                     fixture = get_fixture_data_type_by_tag(self.domain, tag)
                 update['name'] = f'{name} ({fixture.tag})'
+                update['can_update'] = fixture.is_global
             if action.model == 'report':
                 report_id = action.wrapped_detail.report_id
                 try:
