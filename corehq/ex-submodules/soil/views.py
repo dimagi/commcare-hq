@@ -6,7 +6,7 @@ import uuid
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponse, HttpResponseServerError
-from django.shortcuts import render_to_response, render
+from django.shortcuts import render
 from django.template.context import RequestContext
 from django.utils.translation import ugettext_lazy as _
 
@@ -68,4 +68,4 @@ def retrieve_download(request, download_id, template="soil/file_download.html", 
             raise Http404
         return download.toHttpResponse()
 
-    return render_to_response(template, context=context.flatten())
+    return render(request, template, context=context.flatten())
