@@ -275,8 +275,7 @@
                 %(start_date)s::DATE AS month,
                 LAST_VALUE(app_version) over w as app_version,
                 LAST_VALUE(commcare_version) over w as commcare_version
-            FROM "ucr_icds-cas_static-usage_forms_92fbe2aa" 
-            WHERE month = %(start_date)s WINDOW w as (
+            FROM "ucr_icds-cas_static-usage_forms_92fbe2aa" WINDOW w as (
                 PARTITION BY awc_id, supervisor_id ORDER BY 
                 form_date RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
             )
