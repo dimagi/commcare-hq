@@ -203,7 +203,7 @@ def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lt
             case_property_name,
             queries.range_query("{}.{}.numeric".format(CASE_PROPERTIES_PATH, VALUE), **kwargs)
         )
-    except ValueError:
+    except (ValueError, TypeError):
         pass
 
     # if its a date, use it
@@ -267,13 +267,26 @@ def case_property_missing(case_property_name):
 
 
 def _base_property_query(case_property_name, query):
-    return queries.nested(
-        CASE_PROPERTIES_PATH,
-        queries.filtered(
-            query,
-            filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
+    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+        return filters.AND(queries.nested(
+            CASE_PROPERTIES_PATH,
+            {
+                "bool": {
+                    "filter": [
+                        filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
+                    ],
+                    "must": query
+                },
+            }
+        ))
+    else:
+        return queries.nested(
+            CASE_PROPERTIES_PATH,
+            queries.filtered(
+                query,
+                filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
+            )
         )
-    )
 
 
 def blacklist_owner_id(owner_id):

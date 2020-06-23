@@ -1,5 +1,6 @@
 import uuid
 
+from datetime import date
 from django.test.testcases import SimpleTestCase
 from django.test import TestCase
 from mock import MagicMock, patch
@@ -8,7 +9,10 @@ from nose.plugins.attrib import attr
 from corehq.apps.case_search.const import RELEVANCE_SCORE
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
 from corehq.apps.es.tests.utils import ElasticTestMixin
-from corehq.apps.es.case_search import case_property_missing
+from corehq.apps.es.case_search import (
+    case_property_missing,
+    case_property_text_query
+)
 from corehq.elastic import get_es_new, SIZE_LIMIT
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import CaseSearchReindexerFactory
@@ -333,4 +337,41 @@ class TestCaseSearchLookups(TestCase):
             ],
             CaseSearchES().domain(self.domain).filter(case_property_missing('name')),
             ['c3'] # todo; flag farid
+        )
+
+    def test_full_text_query(self):
+        self._assert_query_runs_correctly(
+            self.domain,
+            [
+                {'_id': 'c1', 'description': 'redbeards are red'},
+                {'_id': 'c2', 'description': 'blackbeards are black'},
+            ],
+            CaseSearchES().domain(self.domain).filter(case_property_text_query('description', 'red')),
+            ['c1']
+        )
+
+    def test_numeric_range_query(self):
+        self._assert_query_runs_correctly(
+            self.domain,
+            [
+                {'_id': 'c1', 'num': '1'},
+                {'_id': 'c2', 'num': '2'},
+                {'_id': 'c3', 'num': '3'},
+                {'_id': 'c4', 'num': '4'},
+            ],
+            CaseSearchES().domain(self.domain).numeric_range_case_property_query('num', gte=2, lte=3),
+            ['c2', 'c3']
+        )
+
+    def test_date_range_query(self):
+        self._assert_query_runs_correctly(
+            self.domain,
+            [
+                {'_id': 'c1', 'dob': date(2020, 3, 1)},
+                {'_id': 'c2', 'dob': date(2020, 3, 2)},
+                {'_id': 'c3', 'dob': date(2020, 3, 3)},
+                {'_id': 'c4', 'dob': date(2020, 3, 4)},
+            ],
+            CaseSearchES().domain(self.domain).date_range_case_property_query('dob', gte='2020-03-02', lte='2020-03-03'),
+            ['c2', 'c3']
         )
