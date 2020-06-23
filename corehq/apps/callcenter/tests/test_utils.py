@@ -78,7 +78,7 @@ class CallCenterUtilsTests(TestCase):
 
     def test_sync_full_name(self):
         other_user = CommCareUser.create(TEST_DOMAIN, 'user7', '***', None, None)
-        self.addCleanup(other_user.delete)
+        self.addCleanup(other_user.delete, deleted_by=None)
         name = 'Ricky Bowwood'
         other_user.set_full_name(name)
         sync_call_center_user_case(other_user)
@@ -108,7 +108,7 @@ class CallCenterUtilsTests(TestCase):
 
     def test_sync_update_update(self):
         other_user = CommCareUser.create(TEST_DOMAIN, 'user2', '***', None, None)
-        self.addCleanup(other_user.delete)
+        self.addCleanup(other_user.delete, deleted_by=None)
         sync_call_center_user_case(other_user)
         case = self._get_user_case(other_user._id)
         self.assertIsNotNone(case)
@@ -375,7 +375,7 @@ class CallCenterUtilsUserCaseTests(TestCase):
         self.assertEqual(2, len(old_user_case.xform_ids))
 
         new_user = CommCareUser.get_by_username(format_username('the_bunk', TEST_DOMAIN))
-        self.addCleanup(new_user.delete)
+        self.addCleanup(new_user.delete, deleted_by=None)
         new_user_case = accessor.get_case_by_domain_hq_user_id(new_user._id, USERCASE_TYPE)
         self.assertEqual(new_user_case.owner_id, new_user.get_id)
         self.assertEqual(1, len(new_user_case.xform_ids))
