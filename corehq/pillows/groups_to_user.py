@@ -2,7 +2,7 @@ from collections import namedtuple
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed import topics
 from corehq.apps.groups.models import Group
-from corehq.elastic import stream_es_query, get_es_new, ES_META
+from corehq.elastic import stream_es_query, get_es_new, ES_META, send_to_elasticsearch
 from corehq.apps.es import UserES
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.pillows.group import get_group_to_elasticsearch_processor
@@ -24,14 +24,11 @@ class GroupsToUsersProcessor(PillowProcessor):
       - UserES index
     """
 
-    def __init__(self):
-        self._es = get_es_new()
-
     def process_change(self, change):
         if change.deleted:
-            remove_group_from_users(change.get_document(), self._es)
+            remove_group_from_users(change.get_document())
         else:
-            update_es_user_with_groups(change.get_document(), self._es)
+            update_es_user_with_groups(change.get_document())
 
 
 def get_group_to_user_pillow(pillow_id='GroupToUserPillow', num_processes=1, process_num=0, **kwargs):
@@ -85,7 +82,7 @@ def get_group_pillow(pillow_id='group-pillow', num_processes=1, process_num=0, *
     )
 
 
-def remove_group_from_users(group_doc, es_client):
+def remove_group_from_users(group_doc):
     if group_doc is None:
         return
 
@@ -99,26 +96,27 @@ def remove_group_from_users(group_doc, es_client):
             made_changes = True
         if made_changes:
             doc = {"__group_ids": list(user_source.group_ids), "__group_names": list(user_source.group_names)}
-            es_client.update(USER_INDEX, ES_META['users'].type, user_source.user_id, body={"doc": doc})
+            doc["_id"] = user_source.user_id
+            send_to_elasticsearch('users', doc, es_merge_update=True)
 
 
-def update_es_user_with_groups(group_doc, es_client=None):
-    if not es_client:
-        es_client = get_es_new()
-
+def update_es_user_with_groups(group_doc):
     for user_source in stream_user_sources(group_doc.get("users", [])):
         if group_doc["name"] not in user_source.group_names or group_doc["_id"] not in user_source.group_ids:
             user_source.group_ids.add(group_doc["_id"])
             user_source.group_names.add(group_doc["name"])
             doc = {"__group_ids": list(user_source.group_ids), "__group_names": list(user_source.group_names)}
-            es_client.update(USER_INDEX, ES_META['users'].type, user_source.user_id, body={"doc": doc})
+            doc["_id"] = user_source.user_id
+            send_to_elasticsearch('users', doc, es_merge_update=True)
 
     for user_source in stream_user_sources(group_doc.get("removed_users", [])):
         if group_doc["name"] in user_source.group_names or group_doc["_id"] in user_source.group_ids:
             user_source.group_ids.remove(group_doc["_id"])
             user_source.group_names.remove(group_doc["name"])
             doc = {"__group_ids": list(user_source.group_ids), "__group_names": list(user_source.group_names)}
-            es_client.update(USER_INDEX, ES_META['users'].type, user_source.user_id, body={"doc": doc})
+            doc["_id"] = user_source.user_id
+            send_to_elasticsearch('users', doc, es_merge_update=True)
+
 
 
 UserSource = namedtuple('UserSource', ['user_id', 'group_ids', 'group_names'])
@@ -131,7 +129,6 @@ def stream_user_sources(user_ids):
         .fields(['_id', '__group_ids', '__group_names'])
         .scroll()
     )
-
     for result in results:
         group_ids = result.get('__group_ids', [])
         group_ids = set(group_ids) if isinstance(group_ids, list) else {group_ids}
