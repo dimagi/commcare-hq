@@ -24,6 +24,8 @@ class ElasticTestMixin(object):
         ensure_index_deleted(TEST_INDEX_INFO.index)
 
     def validate_query(self, query):
+        if 'query' not in query:
+            return
         # only query portion can be validated using ES validate API
         query = {'query': query.pop('query', {})}
         validation = self.es.indices.validate_query(body=query, index=TEST_INDEX_INFO.index, params={'explain': 'true'})
@@ -39,7 +41,9 @@ class ElasticTestMixin(object):
             json.dumps(json_output, indent=4),
             json.dumps(raw_query, indent=4),
         )
-        # NOTE: This method thinks [a, b, c] != [b, c, a]
+        # NOTE: This makes it [a, b, c] == [b, c, a] which shouldn't matter in ES queries
+        json_output = json.loads(json.dumps(json_output))
+        raw_query = json.loads(json.dumps(raw_query))
         self.assertEqual(raw_query, json_output, msg=msg)
         self.validate_query(raw_query)
 
