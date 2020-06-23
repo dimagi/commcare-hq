@@ -10,11 +10,12 @@ from django.views.decorators.debug import sensitive_variables
 
 from tastypie.authentication import ApiKeyAuthentication
 
-from corehq.toggles import TWO_STAGE_USER_PROVISIONING
 from dimagi.utils.django.request import mutable_querydict
+from dimagi.utils.web import get_ip
 
 from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
-from corehq.apps.users.models import CouchUser, WebUser, CommCareUser
+from corehq.apps.users.models import CouchUser, HQApiKey
+from corehq.toggles import TWO_STAGE_USER_PROVISIONING
 from corehq.util.hmac_request import validate_request_hmac
 from no_exceptions.exceptions import Http400
 from python_digest import parse_digest_credentials
@@ -32,7 +33,7 @@ FORMPLAYER = 'formplayer'
 def _is_api_key_authentication(request):
     authorization_header = request.META.get('HTTP_AUTHORIZATION', '')
 
-    api_key_authentication = ApiKeyAuthentication()
+    api_key_authentication = HQApiKeyAuthentication()
     try:
         username, api_key = api_key_authentication.extract_credentials(request)
     except ValueError:
@@ -205,7 +206,7 @@ class ApiKeyFallbackBackend(object):
             return None
 
         try:
-            user = User.objects.get(username=username, api_key__key=password)
+            user = User.objects.get(username=username, api_keys__key=password)
         except (User.DoesNotExist, User.MultipleObjectsReturned):
             return None
         else:
@@ -233,3 +234,54 @@ def get_active_users_by_email(email):
             # intentionally excluded:
             # - WebUsers who have changed their email address from their login (though could revisit this)
             # - CommCareUsers not belonging to domains with TWO_STAGE_USER_PROVISIONING enabled
+
+
+class HQApiKeyAuthentication(ApiKeyAuthentication):
+    def is_authenticated(self, request):
+        """Follows what tastypie does, then tests for IP whitelisting
+        """
+        try:
+            username, api_key = self.extract_credentials(request)
+        except ValueError:
+            return self._unauthorized()
+
+        if not username or not api_key:
+            return self._unauthorized()
+
+        User = get_user_model()
+
+        lookup_kwargs = {User.USERNAME_FIELD: username}
+        try:
+            user = User.objects.prefetch_related("api_keys").get(**lookup_kwargs)
+        except (User.DoesNotExist, User.MultipleObjectsReturned):
+            return self._unauthorized()
+
+        if not self.check_active(user):
+            return False
+
+        # ensure API Key exists
+        try:
+            key = user.api_keys.get(key=api_key)
+        except HQApiKey.DoesNotExist:
+            return self._unauthorized()
+
+        # ensure the IP address is in the allowlist, if that exists
+        if key.ip_allowlist and (get_ip(request) not in key.ip_allowlist):
+            return self._unauthorized()
+
+        request.user = user
+
+        return True
+
+    def get_identifier(self, request):
+        """Returns {domain}_{api_key} for use in rate limiting api key.
+
+        Each api key can currently be used on multiple domains, and rates
+        are domain specific.
+
+        """
+        try:
+            api_key = self.extract_credentials(request)[1]
+        except ValueError:
+            api_key = ''
+        return f"{request.domain}_{api_key}"
