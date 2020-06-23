@@ -16,12 +16,12 @@ class TestTimeout(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.domain = Domain(name="cosmos", is_active=True)
-        cls.domain.save()
+        cls.insecure_domain = Domain(name="cosmos", is_active=True)
+        cls.insecure_domain.save()
 
         cls.username = 'elle'
         cls.password = '*******'
-        cls.user = WebUser.create(cls.domain.name, cls.username, cls.password, None, None, is_admin=True)
+        cls.user = WebUser.create(cls.insecure_domain.name, cls.username, cls.password, None, None, is_admin=True)
 
         cls.secure_domain1 = Domain(name="fortress-1", is_active=True)
         cls.secure_domain1.secure_sessions = True
@@ -40,7 +40,7 @@ class TestTimeout(TestCase):
     def tearDown(self):
         self.user = WebUser.get_by_username(self.user.username)
         domains = set(self.user.domains)
-        domains.remove(self.domain.name)
+        domains.remove(self.insecure_domain.name)
         if domains:
             for domain in domains:
                 self.user.delete_domain_membership(domain)
@@ -49,7 +49,7 @@ class TestTimeout(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.user.delete()
-        cls.domain.delete()
+        cls.insecure_domain.delete()
         cls.secure_domain1.delete()
         cls.secure_domain2.delete()
         super().tearDownClass()
@@ -67,7 +67,7 @@ class TestTimeout(TestCase):
             self.client.get(reverse('my_account_settings'))
 
     def test_insecure(self):
-        self._get_page(self.domain)
+        self._get_page(self.insecure_domain)
         self.assertFalse(self.client.session.get('secure_session'))
         self._assert_session_expiry_in_minutes(settings.INACTIVITY_TIMEOUT, self.client.session)
 
@@ -87,7 +87,7 @@ class TestTimeout(TestCase):
         self.user = WebUser.get_by_username(self.user.username)
         self.user.add_as_web_user(self.secure_domain1.name, 'admin')
 
-        self._get_page(self.domain)
+        self._get_page(self.insecure_domain)
         self.assertTrue(self.client.session.get('secure_session'))
         self._assert_session_expiry_in_minutes(settings.SECURE_TIMEOUT, self.client.session)
 
