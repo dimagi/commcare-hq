@@ -58,8 +58,7 @@ class TestKafkaAuditLogging(SimpleTestCase):
             kafka_producer.send_change(topics.CASE, meta)
             future.failure(Exception())
 
-        # 2 from initial attempt + 2 from retry
-        self._check_logs(logs, meta.document_id, [CHANGE_PRE_SEND, CHANGE_ERROR, CHANGE_PRE_SEND, CHANGE_SENT])
+        self._check_logs(logs, meta.document_id, [CHANGE_PRE_SEND, CHANGE_ERROR])
 
     def _test_success(self, auto_flush):
         kafka_producer = ChangeProducer(auto_flush=auto_flush)
@@ -73,7 +72,7 @@ class TestKafkaAuditLogging(SimpleTestCase):
 
     def _check_logs(self, captured_logs, doc_id, events):
         lines = captured_logs.get_output().splitlines()
-        self.assertEqual(len(events), len(lines), lines)
+        self.assertEqual(len(events), len(lines))
         for event, line in zip(events, lines):
             self.assertIn(doc_id, line)
             self.assertIn(event, line)
