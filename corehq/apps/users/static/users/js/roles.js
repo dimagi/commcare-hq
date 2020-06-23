@@ -82,7 +82,7 @@ hqDefine('users/js/roles',[
                     if (!String.prototype.trim) {
                         String.prototype.trim = function () {
                             return this.replace(/^\s+|\s+$/g,'');
-                        }
+                        };
                     }
                     data.name = data.name.trim();
                 }
