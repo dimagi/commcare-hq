@@ -77,6 +77,16 @@ hqDefine('users/js/roles',[
             unwrap: function (self) {
                 var data = ko.mapping.toJS(self);
 
+                if (data.name) {
+                    // some older browsers don't use the String.prototype.trim() function. Explicity declare it in this case:
+                    if (!String.prototype.trim) {
+                        String.prototype.trim = function () {
+                            return this.replace(/^\s+|\s+$/g,'');
+                        }
+                    }
+                    data.name = data.name.trim();
+                }
+
                 data.permissions.view_report_list = ko.utils.arrayMap(ko.utils.arrayFilter(data.reportPermissions.specific, function (report) {
                     return report.value;
                 }), function (report) {
