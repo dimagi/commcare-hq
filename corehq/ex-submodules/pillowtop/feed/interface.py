@@ -14,7 +14,6 @@ class ChangeMeta(jsonobject.JsonObject):
     This is only used in kafka-based pillows.
     """
     _allow_dynamic_properties = False
-    _producer_retries = 0
 
     document_id = DefaultProperty(required=True)
 
@@ -37,13 +36,6 @@ class ChangeMeta(jsonobject.JsonObject):
 
     # track of retry attempts
     attempts = jsonobject.IntegerProperty(default=0)
-
-    @property
-    def producer_retry_count(self):
-        return self._producer_retries
-
-    def add_retry(self):
-        self._producer_retries += 1
 
 
 class Change(object):
