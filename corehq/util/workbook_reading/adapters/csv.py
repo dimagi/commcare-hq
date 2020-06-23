@@ -6,7 +6,6 @@ import csv
 import os
 
 from corehq.util.workbook_reading import (
-    SpreadsheetFileEncrypted,
     SpreadsheetFileInvalidError,
     SpreadsheetFileNotFound,
     Workbook,
@@ -21,13 +20,11 @@ def open_csv_workbook(filename):
             raise SpreadsheetFileInvalidError('File is empty')
         with open(filename, "r") as csv_file:
             yield _CSVWorkbookAdaptor(csv_file).to_workbook()
-    except UnicodeDecodeError as error:
-        raise SpreadsheetFileEncrypted(str(error))
-    except csv.Error as error:
-        if str(error) == 'line contains NUL':
-            raise SpreadsheetFileEncrypted('Workbook is encrypted')
-        else:
-            raise SpreadsheetFileInvalidError(str(error))
+    except (UnicodeDecodeError, csv.Error) as error:
+        # Rather than trying to determine why the file is not readable (invalid
+        # characters, file is encrypted, etc.), just raise an error that the file
+        # is not readable.
+        raise SpreadsheetFileInvalidError(str(error))
     except IOError as error:
         raise SpreadsheetFileNotFound(str(error))
     except FileNotFoundError as error:
