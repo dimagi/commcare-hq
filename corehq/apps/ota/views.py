@@ -48,7 +48,7 @@ from corehq.apps.es.case_search import flatten_result
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.decorators import require_mobile_access
 from corehq.apps.ota.rate_limiter import rate_limit_restore
-from corehq.apps.users.models import CouchUser, UserReportingMetadataStaging
+from corehq.apps.users.models import CouchUser, UserReportingMetadataStaging, DomainMembershipError
 from corehq.apps.users.util import (
     update_device_meta,
     update_last_sync,
@@ -265,11 +265,20 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     app = get_app_cached(domain, app_id) if app_id else None
 
     #For ICDS only allow users who have access the specific app
-    if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
-        role = couch_user.get_role(domain)
-        has_access_to_app = role.permissions.view_web_app(app)
-        if not has_access_to_app:
-            return HttpResponse('User not allowed on this app', status=406), None
+    if (
+        settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
+        and toggles.ROLE_WEBAPPS_PERMISSIONS.enabled(domain)
+    ):
+        has_access_to_app = False
+        try:
+            role = couch_user.get_role(domain)
+            if role is None:
+                return HttpResponse('User does not have any role assigned to it', status=406), None
+            has_access_to_app = role.permissions.view_web_app(app)
+            if not has_access_to_app:
+                return HttpResponse('User is not allowed on this app', status=406), None
+        except DomainMembershipError:
+            return HttpResponse('User does not belong to this domain', status=406), None
 
     restore_config = RestoreConfig(
         project=project,
