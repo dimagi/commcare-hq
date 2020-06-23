@@ -43,6 +43,35 @@ function PoshanProgressController($scope, $http, $log, $routeParams, $location, 
         }
     };
 
+    vm.reformatAggregatedData = function (data) {
+        var formattedData = [];
+        var datacopy = window.angular.copy(data);
+        for (var sectionHeader in datacopy) {
+            var sectionData = datacopy[sectionHeader];
+            var section = {};
+            section['heading'] = sectionHeader;
+            section['indicators'] = [];
+            var indicatorsSubList = [];
+            for (var key in sectionData) {
+                indicatorsSubList.push(
+                    {
+                        'name': key,
+                        'value': sectionData[key]
+                    }
+                );
+                if (indicatorsSubList.length === 2) {
+                    section['indicators'].push(indicatorsSubList);
+                    indicatorsSubList = [];
+                }
+            }
+            if (indicatorsSubList.length) {
+                section['indicators'].push(indicatorsSubList);
+            }
+            formattedData.push(section);
+        }
+        return formattedData;
+    }
+
     vm.getData = function () {
         vm.selectedDate = dateHelperService.getSelectedDate();
         vm.dateDisplayed = vm.selectedDate.toLocaleString('default', { month: 'short'}) + ' ' + vm.selectedDate.getFullYear();
@@ -56,6 +85,9 @@ function PoshanProgressController($scope, $http, $log, $routeParams, $location, 
         }).then(
             function (response) {
                 vm.data = response.data;
+                if (vm.step === 'overview' && vm.data) {
+                    vm.data = vm.reformatAggregatedData(vm.data);
+                }
             },
             function (error) {
                 $log.error(error);
