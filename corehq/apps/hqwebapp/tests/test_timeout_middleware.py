@@ -55,7 +55,7 @@ class TestTimeout(TestCase):
         super().tearDownClass()
 
     def _assert_session_expiry_in_minutes(self, expected_minutes, session):
-        self.assertEqual(expected_minutes, self.client.session.get('secure_session_timeout'))
+        self.assertEqual(expected_minutes, session.get('secure_session_timeout'))
         delta = session.get_expiry_date() - datetime.utcnow()
         diff_in_minutes = delta.days * 24 * 60 + delta.seconds / 60
         self.assertEqual(expected_minutes, round(diff_in_minutes))
