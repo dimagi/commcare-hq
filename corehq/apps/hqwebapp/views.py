@@ -510,6 +510,7 @@ def ping_response(request):
         'secure_session': request.session.get('secure_session'),
         'secure_session_timeout': request.session.get('secure_session_timeout'),
         'username': request.user.username,
+        'last_path': request.session.get('last_path'),
     })
 
 

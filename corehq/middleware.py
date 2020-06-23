@@ -114,12 +114,13 @@ class LogLongRequestMiddleware(MiddlewareMixin):
 class TimeoutMiddleware(MiddlewareMixin):
 
     @classmethod
-    def update_secure_session(cls, session, is_secure, user, domain=None):
+    def update_secure_session(cls, session, is_secure, user, domain=None, path=None):
         session['secure_session'] = is_secure
         timeout = cls._get_timeout(session, is_secure, user, domain)
         session['secure_session_timeout'] = timeout
         session.set_expiry(timeout * 60)
         session['session_expiry'] = json_format_datetime(session.get_expiry_date())
+        session['last_path'] = path
 
     @classmethod
     def _get_timeout(cls, session, is_secure, user, domain=None):
@@ -192,13 +193,13 @@ class TimeoutMiddleware(MiddlewareMixin):
             if self._session_expired(timeout, request.user.last_login):
                 LogoutView.as_view(template_name=settings.BASE_TEMPLATE)(request)
                 # this must be after logout so it is attached to the new session
-                self.update_secure_session(request.session, True, request.couch_user, domain)
+                self.update_secure_session(request.session, True, request.couch_user, domain, request.path)
                 return HttpResponseRedirect(reverse('login') + '?next=' + request.path)
 
-            self.update_secure_session(request.session, True, request.couch_user, domain)
+            self.update_secure_session(request.session, True, request.couch_user, domain, request.path)
 
         if not getattr(request, '_bypass_sessions', False):
-            self.update_secure_session(request.session, secure_session, request.couch_user, domain)
+            self.update_secure_session(request.session, secure_session, request.couch_user, domain, request.path)
 
 
 def always_allow_browser_caching(fn):
