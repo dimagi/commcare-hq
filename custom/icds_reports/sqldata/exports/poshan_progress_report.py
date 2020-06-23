@@ -106,6 +106,11 @@ class PoshanProgressReport(object):
             # rounding remaining values
             for col in ['num_launched_districts', 'num_launched_blocks']:
                 row_data_dict[k][all_cols.index(col)] = round(row_data_dict[k][all_cols.index(col)])
+            # marking all the unlaunched states as Not Launched
+            if row_data_dict[k][all_cols.index('num_launched_awcs')] == 0:
+                for col in all_cols:
+                    if col not in ['state_name', 'district_name', unique_id]:
+                        row_data_dict[k][all_cols.index(col)] = "Not Launched"
 
         if self.layout != 'comprehensive':
             headers = headers_summary
@@ -149,6 +154,11 @@ class PoshanProgressReport(object):
         for i in range(1, len(excel_rows)):
             row = excel_rows[i][:]
             excel_rows[i] = self.__calculate_percentage_in_rows(row, all_cols)
+            # marking all the unlaunched states as Not Launched
+            if excel_rows[i][all_cols.index('num_launched_awcs')] == 0:
+                for col in all_cols:
+                    if col not in ['state_name', 'district_name']:
+                        excel_rows[i][all_cols.index(col)] = "Not Launched"
         if self.layout != 'comprehensive':
             excel_rows[0] = headers_summary
             for i in range(1, len(excel_rows)):
