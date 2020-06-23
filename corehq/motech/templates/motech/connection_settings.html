@@ -1,6 +1,74 @@
-{% extends "hqwebapp/base_section.html" %}
-{% load crispy_forms_tags %}
+{% extends 'hqwebapp/base_paginated_crud.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
 
-{% block page_content %}
-  {% crispy form helper %}
+{% requirejs_main "motech/js/connection_settings" %}
+
+{% block pagination_templates %}
+  <script type="text/html" id="connection-settings-template">
+    <td>
+      <a data-bind="attr: {href: editUrl}">
+        <span data-bind="text: name"></span>
+      </a>
+    </td>
+    <td data-bind="text: url"></td>
+    <td data-bind="text: notifyAddresses"></td>
+    <td>
+      <!-- ko if: usedBy -->
+      <span data-bind="text: usedBy"></span>
+      <!-- /ko -->
+      <!-- ko ifnot: usedBy -->
+      <button type="button"
+              class="btn btn-danger"
+              data-bind="attr: {'data-target': '#delete-connection-settings-' + id}"
+              data-toggle="modal">
+        <i class="fa fa-remove"></i> {% trans "Delete" %}
+      </button>
+      <!-- /ko -->
+      <div class="modal fade"
+           data-bind="attr: {'id': 'delete-connection-settings-' + id}">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h3>
+                {% trans "Delete Connection Settings" %} <strong data-bind="text: name"></strong>?
+              </h3>
+            </div>
+            <div class="modal-footer">
+              <button type="button"
+                      class="btn btn-default"
+                      data-dismiss="modal">
+                {% trans "Cancel" %}
+              </button>
+              <button type="button"
+                      class="btn btn-danger delete-item-confirm"
+                      data-loading-text="{% trans 'Deleting Connection Settings' %}">
+                <i class="fa fa-remove"></i> {% trans "Delete" %}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </td>
+  </script>
+
+  <script type="text/html" id="connection-settings-deleted-template">
+    <td data-bind="text: name"></td>
+    <td data-bind="text: url"></td>
+    <td data-bind="text: notifyAddresses"></td>
+    <td>{% trans 'Deleted' %}</td>
+  </script>
+{% endblock %}
+
+{% block pagination_footer %}
+  <div class="row" style="margin-top: 50px;">
+    <div class="col-sm-12">
+      <a href="{% url 'connection_settings_detail_view' domain %}">
+        <button type="button" class="btn btn-primary">
+          {% trans "Add Connection Settings" %}
+        </button>
+      </a>
+    </div>
+  </div>
 {% endblock %}
