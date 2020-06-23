@@ -14,7 +14,6 @@ CHANGE_PRE_SEND = 'PRE-SEND'
 CHANGE_ERROR = 'ERROR'
 CHANGE_SENT = 'SENT'
 KAFKA_AUDIT_LOGGER = 'kafka_producer_audit'
-MAX_PRODUCER_RETRIES = 3
 
 logger = logging.getLogger(KAFKA_AUDIT_LOGGER)
 
@@ -62,7 +61,7 @@ class ChangeProducer(object):
 
         if not self.auto_flush:
             on_success = partial(_on_success, change_meta)
-            on_error = partial(_on_error, topic, change_meta)
+            on_error = partial(_on_error, change_meta)
             future.add_callback(on_success).add_errback(on_error)
 
     def flush(self, timeout=None):
@@ -73,17 +72,12 @@ def _on_success(change_meta, record_metadata):
     _audit_log(CHANGE_SENT, change_meta)
 
 
-def _on_error(topic, change_meta, exc_info):
+def _on_error(change_meta, exc_info):
     _audit_log(CHANGE_ERROR, change_meta)
-    meta_json = change_meta.to_json()
-    meta_json['producer_retries'] = change_meta.producer_retry_count
     notify_exception(
         None, 'Problem sending change to Kafka (async)',
-        details=meta_json, exec_info=exc_info
+        details=change_meta.to_json(), exec_info=exc_info
     )
-    if change_meta.producer_retry_count <= MAX_PRODUCER_RETRIES:
-        change_meta.add_retry()
-        producer.send_change(topic, change_meta)
 
 
 def _audit_log(stage, change_meta):
