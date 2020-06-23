@@ -377,7 +377,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
             vm.selectedMonth = vm.selectedMonth >= 3 ? vm.selectedMonth : 3;
         } else {
             vm.months = vm.monthsCopy;
-            vm.quarters = v.quartersCopy;
+            vm.quarters = vm.quartersCopy;
         }
         vm.excludeCurrentMonthIfInitialThreeDays();
     };
