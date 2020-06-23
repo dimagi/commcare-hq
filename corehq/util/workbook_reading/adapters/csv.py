@@ -1,7 +1,6 @@
 import ast
 from contextlib import contextmanager
 import datetime
-from dateutil.parser import parse
 import csv
 import os
 
@@ -10,6 +9,7 @@ from corehq.util.workbook_reading import (
     SpreadsheetFileNotFound,
     Workbook,
 )
+from dimagi.utils.parsing import string_to_boolean, string_to_datetime
 from .raw_data import make_worksheet
 
 
@@ -49,7 +49,7 @@ def format_value(str_value):
 
     # Try to see if the str_value is a date or a time.
     try:
-        parsed_datetime = parse(str_value)
+        parsed_datetime = string_to_datetime(str_value)
         # Because dateutil.parser.parse always returns a datetime, we do some guessing
         # for whether the value is a datetime, a date, or a time.
         today_midnight = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -89,10 +89,10 @@ def format_value(str_value):
         pass
 
     # Try to see if the str_value is a boolean.
-    if str_value.lower() in ["true", "t", "yes", "y"]:
-        return True
-    elif str_value.lower() in ["false", "f", "no", "n"]:
-        return False
+    try:
+        return string_to_boolean(str_value)
+    except ValueError:
+        pass
 
     # Try to see if the str_value is a percent.
     if "%" in str_value:
