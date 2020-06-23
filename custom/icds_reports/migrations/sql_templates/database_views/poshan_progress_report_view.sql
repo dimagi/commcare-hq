@@ -7,6 +7,7 @@ CREATE VIEW poshan_progress_report_view AS
         "awc_location_months"."state_name" AS "state_name",
         "awc_location_months"."month" AS "month",
         "awc_location_months"."aggregation_level" AS "aggregation_level",
+        COALESCE("agg_awc"."num_launched_states", 0) AS "num_launched_states",
         COALESCE("agg_awc"."num_launched_districts", 0) AS "num_launched_districts",
         COALESCE("agg_awc"."num_launched_blocks", 0) AS "num_launched_blocks",
         COALESCE("agg_awc"."num_launched_awcs", 0) AS "num_launched_awcs",
@@ -15,8 +16,8 @@ CREATE VIEW poshan_progress_report_view AS
         COALESCE("agg_awc"."wer_weighed", 0) AS "wer_weighed",
         COALESCE("agg_awc"."expected_visits", 0) AS "expected_visits",
         COALESCE("agg_awc"."valid_visits", 0) AS "valid_visits",
-        COALESCE("agg_awc"."thr_eligible_child", 0) + COALESCE("agg_awc"."thr_eligible_ccs", 0) AS "thr_eligible",
-        COALESCE("agg_awc"."thr_rations_21_plus_distributed_child", 0) + COALESCE("agg_awc"."thr_rations_21_plus_distributed_ccs", 0) AS "thr_rations_21_plus_distributed",
+        COALESCE(SUM("agg_child_health"."thr_eligible"), 0) + COALESCE("agg_ccs_record"."mother_thr_eligible", 0) AS "thr_eligible",
+        COALESCE(SUM("agg_child_health"."rations_21_plus_distributed"), 0) + COALESCE("agg_ccs_record"."mother_thr", 0) AS "thr_rations_21_plus_distributed",
         COALESCE(SUM("agg_child_health"."pse_eligible"), 0) AS "pse_eligible",
         COALESCE(SUM("agg_child_health"."pse_attended_21_days"), 0) AS "pse_attended_21_days",
         COALESCE(SUM("agg_child_health"."pse_eligible"), 0) AS "lunch_eligible",
@@ -48,7 +49,9 @@ CREATE VIEW poshan_progress_report_view AS
             aggregation_level,
             month,
             SUM(trimester_3) AS trimester_3,
-            SUM(counsel_immediate_bf) AS counsel_immediate_bf
+            SUM(counsel_immediate_bf) AS counsel_immediate_bf,
+            SUM(rations_21_plus_distributed) as mother_thr,
+            SUM(thr_eligible) as mother_thr_eligible
             FROM "public"."agg_ccs_record"
             WHERE aggregation_level <= 2
             GROUP BY state_id, district_id, aggregation_level, month
@@ -66,6 +69,7 @@ GROUP BY
     "awc_location_months"."state_name",
     "awc_location_months"."month",
     "awc_location_months"."aggregation_level",
+    "agg_awc"."num_launched_states",
     "agg_awc"."num_launched_districts",
     "agg_awc"."num_launched_blocks",
     "agg_awc"."num_launched_awcs",
@@ -79,4 +83,6 @@ GROUP BY
     "agg_awc"."thr_rations_21_plus_distributed_child",
     "agg_awc"."thr_rations_21_plus_distributed_ccs",
     "agg_ccs_record"."trimester_3",
-    "agg_ccs_record"."counsel_immediate_bf";
+    "agg_ccs_record"."counsel_immediate_bf",
+    "agg_ccs_record"."mother_thr",
+    "agg_ccs_record"."mother_thr_eligible";

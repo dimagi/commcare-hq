@@ -16,7 +16,7 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
     vm.data = {
         legendTitle: 'Total AWCs that have launched ICDS CAS',
     };
-    vm.filters = ['age', 'gender'];
+    vm.filters = ['age', 'gender', 'data_period'];
     vm.rightLegend = {
         info: 'Total AWCs that have launched ICDS CAS',
     };

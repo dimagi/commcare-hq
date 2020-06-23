@@ -96,8 +96,8 @@ class IndicatorSqlAdapter(IndicatorAdapter):
                 raise ValueError("unknown distribution type: %r" % config.distribution_type)
             return True
 
-    def rebuild_table(self, initiated_by=None, source=None, skip_log=False):
-        self.log_table_rebuild(initiated_by, source, skip=skip_log)
+    def rebuild_table(self, initiated_by=None, source=None, skip_log=False, diffs=None):
+        self.log_table_rebuild(initiated_by, source, skip=skip_log, diffs=diffs)
         self.session_helper.Session.remove()
         try:
             rebuild_table(self.engine, self.get_table())
@@ -367,9 +367,9 @@ class MultiDBSqlAdapter(object):
         for adapter in self.all_adapters:
             adapter.build_table(initiated_by=initiated_by, source=source)
 
-    def rebuild_table(self, initiated_by=None, source=None, skip_log=False):
+    def rebuild_table(self, initiated_by=None, source=None, skip_log=False, diffs=None):
         for adapter in self.all_adapters:
-            adapter.rebuild_table(initiated_by=initiated_by, source=source, skip_log=skip_log)
+            adapter.rebuild_table(initiated_by=initiated_by, source=source, skip_log=skip_log, diffs=diffs)
 
     def drop_table(self, initiated_by=None, source=None, skip_log=False):
         for adapter in self.all_adapters:
