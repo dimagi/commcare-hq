@@ -56,7 +56,7 @@ def test_xlsx_types(self, open_workbook, ext):
                         ['Empty', None],
                         ['Percent', 0.49],
                         ['Calculation', 2],
-                        ['Styled', 'Styled'],
+                        ['Styled', 'Sطαйλד' if ext == 'csv' else 'Styled'],
                         ['Empty Date', None],
                     ]),
                 ]
