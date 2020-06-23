@@ -34,5 +34,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(_migrate_web_apps_permissions)
+        migrations.RunPython(_migrate_web_apps_permissions, migrations.RunPython.noop)
     ]
