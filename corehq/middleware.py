@@ -116,8 +116,8 @@ class TimeoutMiddleware(MiddlewareMixin):
     @classmethod
     def update_secure_session(cls, session, is_secure, user, domain=None, path=None):
         session['domain'] = domain
-        session['original_secure_session_timeout'] = session['secure_session_timeout']
-        session['original_secure_session'] = session['secure_session']
+        session['original_secure_session_timeout'] = session.get('secure_session_timeout')
+        session['original_secure_session'] = session.get('secure_session')
         session['secure_session'] = is_secure
         timeout = cls._get_timeout(session, is_secure, user, domain)
         session['secure_session_timeout'] = timeout
