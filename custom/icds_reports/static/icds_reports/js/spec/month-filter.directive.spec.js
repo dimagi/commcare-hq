@@ -2,6 +2,7 @@
 "use strict";
 
 var pageData = hqImport('hqwebapp/js/initial_page_data');
+var utils = hqImport('icds_reports/js/spec/utils');
 
 
 describe('Month Filter Controller', function () {
