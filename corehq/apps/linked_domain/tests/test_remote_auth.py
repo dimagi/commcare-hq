@@ -3,12 +3,11 @@ import uuid
 
 from django.test import TestCase
 
-from tastypie.models import ApiKey
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.linked_domain.decorators import REMOTE_REQUESTER_HEADER
 from corehq.apps.linked_domain.models import DomainLink
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import HQApiKey, WebUser
 from corehq.util import reverse
 from corehq.util.view_utils import absolute_reverse
 
@@ -24,7 +23,7 @@ class RemoteAuthTest(TestCase):
         cls.domain = create_domain(cls.master_domain)
         cls.couch_user = WebUser.create(cls.master_domain, "test", "foobar", None, None)
         cls.django_user = cls.couch_user.get_django_user()
-        cls.api_key, _ = ApiKey.objects.get_or_create(user=cls.django_user)
+        cls.api_key, _ = HQApiKey.objects.get_or_create(user=cls.django_user)
 
         cls.auth_headers = {'HTTP_AUTHORIZATION': 'apikey test:%s' % cls.api_key.key}
 
