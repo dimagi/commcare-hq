@@ -1464,7 +1464,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     def create(cls, domain, username, password, created_by, created_via, email=None, uuid='', date='',
                first_name='', last_name='', **kwargs):
         try:
-            django_user = User.objects.get(username=username)
+            django_user = User.objects.using(router.db_for_write(User)).get(username=username)
         except User.DoesNotExist:
             django_user = create_user(
                 username, password=password, email=email,
@@ -1628,6 +1628,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             self.save()
 
     def log_user_create(self, created_by, created_via):
+        if settings.UNIT_TESTING and created_by is None and created_via is None:
+            return
         # fallback to self if not created by any user
         self_django_user = self.get_django_user(use_primary_db=True)
         created_by = created_by or self_django_user
