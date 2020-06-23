@@ -46,6 +46,9 @@ class CCHQPRBACMiddleware(MiddlewareMixin):
 class DomainHistoryMiddleware(MiddlewareMixin):
 
     def process_response(self, request, response):
+        if getattr(request, '_bypass_sessions', False):
+            return response
+
         if hasattr(request, 'domain') and getattr(response, '_remember_domain', True):
             self.remember_domain_visit(request)
         return response
