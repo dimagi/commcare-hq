@@ -218,8 +218,11 @@ class ConfigurableReportTableManagerMixin(object):
             for table_name in tables_to_act_on.rebuild:
                 sql_adapter = table_map[table_name]
                 pillow_logging.info(
-                    f"[rebuild] Rebuilding table: {table_name}, from config {sql_adapter.config._id} at rev {sql_adapter.config._rev}"
+                    f"[rebuild] Rebuilding table: %s, from config %s at rev %s",
+                    table_name, sql_adapter.config._id, sql_adapter.config._rev
                 )
+                pillow_logging.info("[rebuild] Using config: %s", adapter.config)
+                pillow_logging.info("[rebuild] sqlalchemy metadata: %s", get_metadata(engine_id)[table_name])
                 table_diffs = [diff for diff in diffs if diff.table_name == table_name]
                 if not sql_adapter.config.is_static:
                     try:
@@ -233,11 +236,16 @@ class ConfigurableReportTableManagerMixin(object):
 
     def migrate_tables(self, engine, diffs, table_names, adapters_by_table):
         migration_diffs = [diff for diff in diffs if diff.table_name in table_names]
+        for table in table_names:
+            adapter = adapters_by_table[table]
+            pillow_logging.info("[rebuild] Using config: %s", adapter.config)
+            pillow_logging.info("[rebuild] sqlalchemy metadata: %s", get_metadata(adapter.engine_id)[table])
         changes = migrate_tables(engine, migration_diffs)
         for table, diffs in changes.items():
             adapter = adapters_by_table[table]
             pillow_logging.info(
-                f"[rebuild] Migrating table: {table}, from config {adapter.config._id} at rev {adapter.config._rev}"
+                f"[rebuild] Migrating table: %s, from config %s at rev %s",
+                table, adapter.config._id, adapter.config._rev
             )
             adapter.log_table_migrate(source='pillowtop', diffs=diffs)
 
