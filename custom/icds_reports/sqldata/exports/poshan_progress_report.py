@@ -233,10 +233,10 @@ class PoshanProgressReport(object):
         if self.report_type == 'month':
             date = self.config['month']
             export_filters.append(['Month', date.strftime("%B")])
+            export_filters.append(['Year', date.year])
         else:
             export_filters.append(['Quarter', self._quarter_name(int(self.quarter))])
-
-        export_filters.append(['Year', self.year])
+            export_filters.append(['Year', self.year])
 
         return [
             [
