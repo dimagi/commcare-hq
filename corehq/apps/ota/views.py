@@ -310,13 +310,14 @@ def heartbeat(request, domain, app_build_id):
         notify_exception(request, 'Received an invalid heartbeat request')
         app = get_app_cached(domain, app_build_id)
         config = GlobalAppConfig.by_app_id(domain, app.master_id)
-    else:
-        info.update({
-            "latest_apk_version": config.get_latest_apk_version(),
-            "latest_ccz_version": config.get_latest_app_version(build_profile_id),
-        })
-        if not toggles.SKIP_UPDATING_USER_REPORTING_METADATA.enabled(domain):
-            update_user_reporting_data(app_build_id, app_id, build_profile_id, request.couch_user, request)
+
+    info.update({
+        "latest_apk_version": config.get_latest_apk_version(),
+        "latest_ccz_version": config.get_latest_app_version(build_profile_id),
+    })
+    if not toggles.SKIP_UPDATING_USER_REPORTING_METADATA.enabled(domain):
+        update_user_reporting_data(app_build_id, app_id, build_profile_id, request.couch_user, request)
+
     if _should_force_log_submission(request):
         info['force_logs'] = True
     return JsonResponse(info)
