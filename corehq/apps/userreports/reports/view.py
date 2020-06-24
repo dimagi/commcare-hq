@@ -350,7 +350,7 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
         context.update(self.pop_report_builder_context_data())
         if isinstance(self.spec, ReportConfiguration) and self.spec.report_meta.builder_report_type == 'map':
             context['report_table']['default_rows'] = 100
-        if self.request.couch_user.is_staff:
+        if self.request.couch_user.is_staff and hasattr(self.data_source, 'data_source'):
             context['queries'] = self.data_source.data_source.get_query_strings()
         return context
 

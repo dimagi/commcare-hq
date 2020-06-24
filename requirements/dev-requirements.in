@@ -6,7 +6,7 @@ fixture==1.5.11
 sniffer==0.4.0
 psutil>5.1.3  # for memory profiling
 django-extensions
-ipython==5.2.2
+ipython==7.15.0
 ipdb==0.11
 wheel==0.29.0
 transifex-client==0.12.4
