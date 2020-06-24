@@ -1313,7 +1313,7 @@ def log_email_event(request, secret):
     # https://docs.aws.amazon.com/ses/latest/DeveloperGuide/event-publishing-retrieving-sns-examples.html
 
     if secret != settings.SNS_EMAIL_EVENT_SECRET:
-        return HttpResponse(f"Incorrect secret", status=403, content_type='text/plain')
+        return HttpResponse("Incorrect secret", status=403, content_type='text/plain')
 
     request_json = json.loads(request.body)
 
