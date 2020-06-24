@@ -56,7 +56,7 @@ function PoshanProgressController($scope, $http, $log, $routeParams, $location, 
                 indicatorsSubList.push(
                     {
                         'name': key,
-                        'value': sectionData[key]
+                        'value': sectionData[key],
                     }
                 );
                 if (indicatorsSubList.length === 2) {
@@ -70,7 +70,7 @@ function PoshanProgressController($scope, $http, $log, $routeParams, $location, 
             formattedData.push(section);
         }
         return formattedData;
-    }
+    };
 
     vm.getData = function () {
         vm.selectedDate = dateHelperService.getSelectedDate();
