@@ -536,33 +536,18 @@ class ServiceDeliveryDashboardView(BaseReportView):
         start, length, order_by_number_column, order_by_name_column, order_dir = \
             get_datatables_ordering_info(request)
         reversed_order = True if order_dir == 'desc' else False
-        icds_features_flag = icds_pre_release_features(self.request.couch_user)
-        if icds_features_flag:
-            data = get_service_delivery_report_data(
-                domain,
-                start,
-                length,
-                order_by_name_column,
-                reversed_order,
-                location_filters,
-                year,
-                month,
-                step,
-                include_test
-            )
-        else:
-            data = get_service_delivery_data(
-                domain,
-                start,
-                length,
-                order_by_name_column,
-                reversed_order,
-                location_filters,
-                year,
-                month,
-                step,
-                include_test
-            )
+        data = get_service_delivery_report_data(
+            domain,
+            start,
+            length,
+            order_by_name_column,
+            reversed_order,
+            location_filters,
+            year,
+            month,
+            step,
+            include_test
+        )
         return JsonResponse(data=data)
 
 
