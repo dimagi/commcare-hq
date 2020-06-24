@@ -22,12 +22,7 @@ ANALYZERS = {
     "comma": {
         "type": "pattern",
         "pattern": r"\s*,\s*"
-    },
-    "sortable_exact": {
-        "type": "custom",
-        "tokenizer": "keyword",
-        "filter": ["lowercase"]
-    },
+    }
 }
 
 REMOVE_SETTING = None
@@ -45,7 +40,7 @@ ES_META = {
     'default': {
         "settings": {
             "number_of_replicas": 0,
-            "analysis": _get_analysis('default', 'sortable_exact'),
+            "analysis": _get_analysis('default'),
         },
     },
     # Default settings for aliases on all environments (overrides default settings)
