@@ -43,8 +43,7 @@ class Command(BaseCommand):
                     INNER JOIN "ucr_icds-cas_static-child_health_cases_a46c129f" ucr
                     ON (
                         child_health_monthly.case_id=ucr.doc_id AND
-                        child_health_monthly.supervisor_id=ucr.supervisor_id AND
-                        month>='2020-01-01' AND month<'2020-04-01'
+                        child_health_monthly.supervisor_id=ucr.supervisor_id
                     )
                     WHERE
                         pse_eligible=1 AND
