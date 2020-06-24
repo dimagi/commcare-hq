@@ -13,7 +13,7 @@ function ProgramSummaryController($scope, $http, $log, $routeParams, $location, 
     vm.data = {};
     vm.label = "Program Summary";
     vm.haveAccessToAllLocations = haveAccessToAllLocations;
-    vm.filters = ['gender', 'age'];
+    vm.filters = ['gender', 'age', 'data_period'];
     vm.step = $routeParams.step;
     vm.userLocationId = userLocationId;
     vm.selectedLocations = [];

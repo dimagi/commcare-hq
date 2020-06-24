@@ -18,7 +18,7 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
     vm.data = {
         legendTitle: 'Percentage AWCs',
     };
-    vm.filters = ['month', 'age', 'gender'];
+    vm.filters = ['month', 'age', 'gender', 'data_period'];
     vm.rightLegend = {
         info: 'Of the total number of AWCs, the percentage of AWCs that were open yesterday.',
     };

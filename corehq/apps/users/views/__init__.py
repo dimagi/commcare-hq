@@ -590,7 +590,7 @@ class DomainPermissionsMirrorView(BaseUserSettingsView):
     @property
     def page_context(self):
         return {
-            'mirrors': DomainPermissionsMirror.mirror_domains(self.domain),
+            'mirrors': sorted(DomainPermissionsMirror.mirror_domains(self.domain)),
         }
 
 
