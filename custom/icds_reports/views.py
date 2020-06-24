@@ -211,9 +211,6 @@ from custom.icds_reports.reports.registered_household import (
     get_registered_household_data_map,
     get_registered_household_sector_data,
 )
-from custom.icds_reports.reports.service_delivery_dashboard import (
-    get_service_delivery_data,
-)
 from custom.icds_reports.reports.service_delivery_dashboard_data import (
     get_service_delivery_report_data,
     get_service_delivery_details,
