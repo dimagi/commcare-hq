@@ -1,6 +1,7 @@
 import uuid
 
 from datetime import date
+from django.conf import settings
 from django.test.testcases import SimpleTestCase
 from django.test import TestCase
 from mock import MagicMock, patch
