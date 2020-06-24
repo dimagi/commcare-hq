@@ -79,15 +79,19 @@ class RemoteRequestFactory(object):
     def _build_instances(self):
         query_xpaths = [datum.ref for datum in self._get_remote_request_query_datums()]
         claim_relevant_xpaths = [self.module.search_config.relevant]
+        prompt_select_instances = [
+            f"instance('{prop.itemset.id}')/{prop.itemset.path}"
+            for prop in self.module.search_config.properties
+            if prop.itemset
+        ]
 
         instances, unknown_instances = get_all_instances_referenced_in_xpaths(
             self.app,
-            query_xpaths + claim_relevant_xpaths
+            query_xpaths + claim_relevant_xpaths + prompt_select_instances
         )
         # we use the module's case list/details view to select the datum so also
         # need these instances to be available
         instances |= get_instances_for_module(self.app, self.module)
-        instances |= self._get_instances_for_selects()
 
         # sorted list to prevent intermittent test failures
         return sorted(list(instances), key=lambda i: i.id)
@@ -160,7 +164,7 @@ class RemoteRequestFactory(object):
                 kwargs['appearance'] = prop.appearance
             if prop.input_:
                 kwargs['input_'] = prop.input_
-            if prop.itemset:
+            if prop.itemset.id:
                 kwargs['itemset'] = Itemset(
                     nodeset=f"instance('{prop.itemset.id}')/{prop.itemset.path}",
                     label_ref=prop.itemset.label,
@@ -169,10 +173,6 @@ class RemoteRequestFactory(object):
                 )
             prompts.append(QueryPrompt(**kwargs))
         return prompts
-
-    def _get_instances_for_selects(self):
-        # TODO: Do this
-        pass
 
     def _build_stack(self):
         stack = Stack()
