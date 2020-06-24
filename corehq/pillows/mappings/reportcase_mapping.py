@@ -1,8 +1,8 @@
-from corehq.util.elastic import es_index
+from corehq.util.elastic import prefix_for_tests
 from pillowtop.es_utils import ElasticsearchIndexInfo
 
 
-REPORT_CASE_INDEX = es_index("report_cases_czei39du507m9mmpqk3y01x72a3ux4p0")
+REPORT_CASE_INDEX = prefix_for_tests("report_cases_czei39du507m9mmpqk3y01x72a3ux4p0")
 
 REPORT_CASE_MAPPING={'_meta': {'comment': '2013-11-05 dmyung',
            'created': None},
@@ -126,7 +126,7 @@ REPORT_CASE_MAPPING={'_meta': {'comment': '2013-11-05 dmyung',
                 'version': {'type': 'string'},
                 'xform_ids': {'index': 'not_analyzed', 'type': 'string'}}}
 
-REPORT_CASE_ES_ALIAS = "report_cases"
+REPORT_CASE_ES_ALIAS = prefix_for_tests("report_cases")
 REPORT_CASE_ES_TYPE = "report_case"
 
 REPORT_CASE_INDEX_INFO = ElasticsearchIndexInfo(
