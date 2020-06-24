@@ -1,10 +1,11 @@
 from django.db import migrations
 
-from corehq.apps.smsbillables.models import add_infobip_gateway_fee
-
+from corehq.apps.smsbillables.management.commands.bootstrap_infobip_gateway import (
+    bootstrap_infobip_gateway,
+)
 
 def add_infobip_gateway_fee_for_migration(apps, schema_editor):
-    add_infobip_gateway_fee(apps)
+    bootstrap_infobip_gateway(apps)
 
 
 class Migration(migrations.Migration):

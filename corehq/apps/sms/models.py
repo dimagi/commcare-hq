@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from django.db import IntegrityError, connection, models, transaction
 from django.http import Http404
 from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.decorators import classproperty
 
 import jsonfield
 from memoized import memoized
@@ -2395,6 +2396,13 @@ class SQLSMSBackend(SQLMobileBackend):
 
     def send(self, msg, *args, **kwargs):
         raise NotImplementedError("Please implement this method.")
+
+    @classproperty
+    def using_api_to_get_fees(cls):
+        """
+        Override in case backend is fetching gateway fees through provider API
+        """
+        return False
 
     @classmethod
     def get_opt_in_keywords(cls):
