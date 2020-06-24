@@ -32,6 +32,7 @@ def push_models(master_domain, models, linked_domains, build_apps, username):
     user = CouchUser.get_by_username(username)
     manager = ReleaseManager(master_domain, user)
     manager.release(models, linked_domains, build_apps)
+    manager.send_email()
 
 
 def _handle_app(domain_link, model, user, build_and_release=False):
@@ -88,18 +89,22 @@ class ReleaseManager():
     def __init__(self, master_domain, user):
         self.master_domain = master_domain
         self.user = user
+        self.linked_domains = []
+        self.models = []
+        self.errors_by_domain = defaultdict(list)
+        self.successes_by_domain = defaultdict(list)
 
     def release(self, models, linked_domains, build_apps):
+        self.linked_domains = linked_domains
+        self.models = models
         domain_links_by_linked_domain = {link.linked_domain: link for link in get_linked_domains(self.master_domain)}
-        errors_by_domain = defaultdict(list)
-        successes_by_domain = defaultdict(list)
-        for linked_domain in linked_domains:
+        for linked_domain in self.linked_domains:
             if linked_domain not in domain_links_by_linked_domain:
-                errors_by_domain[linked_domain].append(_("Project space {} is no longer linked to {}. No content "
-                                                         "was released to it.").format(self.master_domain, linked_domain))
+                self.errors_by_domain[linked_domain].append(_("Project space {} is no longer linked to {}. No content "
+                                                              "was released to it.").format(self.master_domain, linked_domain))
                 continue
             domain_link = domain_links_by_linked_domain[linked_domain]
-            for model in models:
+            for model in self.models:
                 error = None
                 try:
                     if model['type'] == MODEL_APP:
@@ -115,16 +120,17 @@ class ReleaseManager():
                     notify_exception(None, "Exception pushing linked domains: {}".format(e))
 
                 if error:
-                    errors_by_domain[linked_domain].append(_("Could not update {}: {}").format(model['name'], error))
+                    self.errors_by_domain[linked_domain].append(_("Could not update {}: {}").format(model['name'], error))
                 else:
-                    successes_by_domain[linked_domain].append(_("Updated {} successfully").format(model['name']))
+                    self.successes_by_domain[linked_domain].append(_("Updated {} successfully").format(model['name']))
 
+    def send_email(self):
         subject = _("Linked project release complete.")
-        if errors_by_domain:
+        if self.errors_by_domain:
             subject += _(" Errors occurred.")
 
-        error_domain_count = len(errors_by_domain)
-        success_domain_count = len(linked_domains) - error_domain_count
+        error_domain_count = len(self.errors_by_domain)
+        success_domain_count = len(self.linked_domains) - error_domain_count
         message = _("""
 Release complete. {} project(s) succeeded. {}
 
@@ -135,13 +141,13 @@ The following linked project spaces received content:
         """).format(
             success_domain_count,
             _("{} project(s) encountered errors.").format(error_domain_count) if error_domain_count else "",
-            "\n".join(["- " + m['name'] for m in models])
+            "\n".join(["- " + m['name'] for m in self.models])
         )
-        for linked_domain in linked_domains:
-            if linked_domain not in errors_by_domain:
+        for linked_domain in self.linked_domains:
+            if linked_domain not in self.errors_by_domain:
                 message += _("\n- {} updated successfully").format(linked_domain)
             else:
                 message += _("\n- {} encountered errors:").format(linked_domain)
-                for msg in errors_by_domain[linked_domain] + successes_by_domain[linked_domain]:
+                for msg in self.errors_by_domain[linked_domain] + self.successes_by_domain[linked_domain]:
                     message += "\n   - " + msg
         send_mail_async.delay(subject, message, settings.DEFAULT_FROM_EMAIL, [self.user.email or self.user.username])
