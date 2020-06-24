@@ -75,3 +75,11 @@ class TestReleaseManager(BaseLinkedAppsTest):
         self._assert_error_domains({self.linked_domain})
         self._assert_error(self.linked_domain, 'Case claim flag is not on')
         self._assert_success_domains(set())
+
+    def test_bad_domain(self):
+        self.manager.release([
+            self._model_status(MODEL_FLAGS),
+        ], [self.linked_domain, 'not-a-domain'])
+        self._assert_error_domains({'not-a-domain'})
+        self._assert_error('not-a-domain', 'no longer linked')
+        self._assert_success_domains({self.linked_domain})
