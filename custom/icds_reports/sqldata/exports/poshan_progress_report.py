@@ -201,7 +201,7 @@ class PoshanProgressReport(object):
         elif quarter == 3:
             quarter_months = 'July-September'
         elif quarter == 4:
-            quarter_months = 'July-September'
+            quarter_months = 'October-December'
         return quarter_months
 
     def get_excel_data(self, location):
