@@ -3,7 +3,6 @@ from django.urls import reverse
 from django.utils.http import urlencode
 
 from tastypie import fields
-from tastypie.models import ApiKey
 from tastypie.resources import Resource
 
 from corehq.apps.accounting.models import (
@@ -22,7 +21,7 @@ from corehq.apps.api.fields import (
 from corehq.apps.api.resources import v0_4, v0_5
 from corehq.apps.api.util import get_obj
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, HQApiKey, WebUser
 
 from .utils import APIResourceTest, FakeXFormES
 
@@ -476,7 +475,7 @@ class TestApiKey(APIResourceTest):
         other_user.save()
         self.addCleanup(other_user.delete)
         django_user = WebUser.get_django_user(other_user)
-        other_api_key, _ = ApiKey.objects.get_or_create(user=django_user)
+        other_api_key, _ = HQApiKey.objects.get_or_create(user=django_user)
         self.addCleanup(other_api_key.delete)
 
         endpoint = "%s?%s" % (self.single_endpoint(self.user._id),
