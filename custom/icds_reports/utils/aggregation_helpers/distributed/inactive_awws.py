@@ -19,10 +19,12 @@ class InactiveAwwsAggregationDistributedHelper(BaseICDSAggregationDistributedHel
         delete_extra_record_query = self.delete_extra_record_query()
         missing_location_query = self.missing_location_query()
         aggregation_query, agg_params = self.aggregate_query()
+        update_days_query = self.update_days_query()
 
         cursor.execute(delete_extra_record_query)
         cursor.execute(missing_location_query)
         cursor.execute(aggregation_query, agg_params)
+        cursor.execute(update_days_query)
 
     def delete_extra_record_query(self):
         return """
@@ -91,15 +93,7 @@ class InactiveAwwsAggregationDistributedHelper(BaseICDSAggregationDistributedHel
             CREATE TEMPORARY TABLE "tmp_usage" AS ({ucr_table_query});
             UPDATE "{table_name}" AS agg_table SET
                 first_submission = LEAST(agg_table.first_submission, ut.first_submission),
-                last_submission = GREATEST(agg_table.last_submission, ut.last_submission),
-                no_of_days_since_start = CASE
-                    WHEN LEAST(agg_table.first_submission, ut.first_submission) IS DISTINCT FROM NULL
-                    THEN '{now}'::DATE - LEAST(agg_table.first_submission, ut.first_submission)::DATE
-                    ELSE NULL END,
-                no_of_days_inactive = CASE
-                    WHEN GREATEST(agg_table.last_submission, ut.last_submission) IS DISTINCT FROM NULL
-                    THEN '{now}'::DATE - GREATEST(agg_table.last_submission, ut.last_submission)::DATE
-                    ELSE NULL END
+                last_submission = GREATEST(agg_table.last_submission, ut.last_submission)
             FROM (
               SELECT
                 loc.doc_id as awc_id,
@@ -117,3 +111,19 @@ class InactiveAwwsAggregationDistributedHelper(BaseICDSAggregationDistributedHel
             awc_location_table_name='awc_location_local',
             now=datetime.date.today()
         ), params
+
+    def update_days_query(self):
+        return """
+            UPDATE "{table_name}" SET
+                no_of_days_since_start = CASE
+                    WHEN first_submission IS DISTINCT FROM NULL
+                    THEN '{now}'::DATE - first_submission::DATE
+                    ELSE NULL END,
+                no_of_days_inactive = CASE
+                    WHEN last_submission IS DISTINCT FROM NULL
+                    THEN '{now}'::DATE - last_submission::DATE
+                    ELSE NULL END
+        """.format(
+            table_name=self.aggregate_parent_table,
+            now=datetime.date.today()
+        )

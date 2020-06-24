@@ -11,6 +11,7 @@ architect==0.5.6          # via -r requirements/requirements.in
 argparse==1.4.0           # via unittest2
 attrs==18.2.0             # via -r requirements/requirements.in
 babel==2.7.0              # via django-phonenumber-field, sphinx
+backcall==0.2.0           # via ipython
 beautifulsoup4==4.8.1     # via -r requirements/test-requirements.in
 billiard==3.5.0.4         # via -r requirements/requirements.in, celery
 boto3==1.10.14            # via -r requirements/requirements.in
@@ -98,9 +99,10 @@ idna==2.8                 # via email-validator, requests
 imagesize==1.1.0          # via sphinx
 ipdb==0.11                # via -r requirements/dev-requirements.in
 ipython-genutils==0.2.0   # via traitlets
-ipython==5.2.2            # via -r requirements/dev-requirements.in, ipdb
+ipython==7.15.0           # via -r requirements/dev-requirements.in, ipdb
 iso8601==0.1.12           # via -r requirements/requirements.in
 jdcal==1.4.1              # via openpyxl
+jedi==0.17.1              # via ipython
 jenkinsapi==0.2.28        # via -r requirements/dev-requirements.in
 jinja2==2.10.3            # via -r requirements/requirements.in, sphinx
 jmespath==0.9.4           # via boto3, botocore
@@ -126,6 +128,7 @@ nose==1.3.7               # via -r requirements/test-requirements.in, django-nos
 oauthlib==3.1.0           # via requests-oauthlib
 openpyxl==2.6.4           # via -r requirements/requirements.in, commcaretranslationchecker
 packaging==19.2           # via sphinx
+parso==0.7.0              # via jedi
 pbr==5.4.3                # via mock
 pdfrw==0.4                # via weasyprint
 pexpect==4.7.0            # via ipython
@@ -136,7 +139,7 @@ pip-tools==5.1.0          # via -r requirements/test-requirements.in
 ply==3.11                 # via eulxml, jsonpath-rw
 polib==1.1.0              # via -r requirements/requirements.in
 prometheus-client==0.7.1  # via -r requirements/requirements.in
-prompt-toolkit==1.0.18    # via ipython
+prompt-toolkit==3.0.5     # via ipython
 psutil==5.7.0             # via -r requirements/dev-requirements.in
 psycogreen==1.0.1         # via -r requirements/requirements.in
 psycopg2==2.8.5           # via -r requirements/requirements.in, sqlalchemy-postgres-copy
@@ -181,9 +184,8 @@ schema==0.7.1             # via -r requirements/requirements.in
 sentry-sdk==0.14.4        # via -r requirements/requirements.in
 sh==1.09                  # via -r requirements/requirements.in
 simpleeval==0.9.8         # via -r requirements/requirements.in
-simplegeneric==0.8.1      # via ipython
 simplejson==3.16.0        # via -r requirements/requirements.in, datadog, django-prbac
-six==1.13.0               # via -r requirements/requirements.in, django-appconf, django-extensions, django-prbac, django-simple-captcha, django-transfer, django-websocket-redis, dropbox, ethiopian-date-converter, eulxml, faker, fixture, freezegun, ghdiff, html5lib, jsonfield, jsonobject, jsonobject-couchdbkit, jsonpath-rw, mock, packaging, pip-tools, prompt-toolkit, python-dateutil, pyzxcvbn, qrcode, quickcache, requests-mock, sqlalchemy-postgres-copy, traitlets, transifex-client, twilio, unittest2
+six==1.13.0               # via -r requirements/requirements.in, django-appconf, django-extensions, django-prbac, django-simple-captcha, django-transfer, django-websocket-redis, dropbox, ethiopian-date-converter, eulxml, faker, fixture, freezegun, ghdiff, html5lib, jsonfield, jsonobject, jsonobject-couchdbkit, jsonpath-rw, mock, packaging, pip-tools, python-dateutil, pyzxcvbn, qrcode, quickcache, requests-mock, sqlalchemy-postgres-copy, traitlets, transifex-client, twilio, unittest2
 smartypants==2.0.1        # via pycco
 sniffer==0.4.0            # via -r requirements/dev-requirements.in
 snowballstemmer==2.0.0    # via sphinx

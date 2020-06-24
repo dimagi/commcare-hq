@@ -182,7 +182,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
         child_id, parent_id, index_id, parent_ref = self._initialize_parent_child()
         # update the child's index (parent type)
         updated_type = "updated_type"
-        self.device.post_changes(CaseBlock(
+        self.device.post_changes(CaseBlock.deprecated_init(
             create=False, case_id=child_id, user_id=self.user_id,
             index={index_id: (updated_type, parent_id)},
         ))
@@ -241,7 +241,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
     def test_delete_only_index(self):
         child_id, parent_id, index_id, parent_ref = self._initialize_parent_child()
         # delete the first index
-        self.device.post_changes(CaseBlock(
+        self.device.post_changes(CaseBlock.deprecated_init(
             create=False,
             case_id=child_id,
             user_id=self.user_id,
@@ -284,7 +284,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
                                                 child_id: [parent_ref_1, parent_ref_2]})
 
         # delete the first index
-        self.device.post_changes(CaseBlock(
+        self.device.post_changes(CaseBlock.deprecated_init(
             create=False,
             case_id=child_id,
             user_id=self.user_id,
@@ -343,7 +343,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
             {parent_id: [], child_id: [index_ref]})
 
         # close the mother case
-        close = CaseBlock(create=False, case_id=parent_id, user_id=self.user_id, close=True)
+        close = CaseBlock.deprecated_init(create=False, case_id=parent_id, user_id=self.user_id, close=True)
         self.device.post_changes(close)
         self._testUpdate(self.device.last_sync.log.get_id, {child_id: [index_ref]},
                          {parent_id: []})
@@ -379,7 +379,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
         # assign the child to a new owner
         new_owner = "not_mine"
         self.device.post_changes(
-            CaseBlock(create=False, case_id=child_id, user_id=self.user_id, owner_id=new_owner),
+            CaseBlock.deprecated_init(create=False, case_id=child_id, user_id=self.user_id, owner_id=new_owner),
         )
 
         # child should be moved, parent should still be there
@@ -394,7 +394,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
         self.device.change_cases(case_id=case_id, create=True)
         self.assertEqual(self.device.sync().cases, {})
 
-        self.device.change_cases(CaseBlock(
+        self.device.change_cases(CaseBlock.deprecated_init(
             create=False,
             case_id=case_id,
             user_id=self.user_id,
@@ -1238,7 +1238,7 @@ class SyncTokenCachingTest(BaseSyncTest):
         # posting a case associated with this sync token should invalidate the cache
         # submitting a case not with the token will not touch the cache for that token
         case_id = "cache_noninvalidation"
-        post_case_blocks([CaseBlock(
+        post_case_blocks([CaseBlock.deprecated_init(
             create=True,
             case_id=case_id,
             user_id=self.user.user_id,
@@ -1367,7 +1367,7 @@ class MultiUserSyncTest(BaseSyncTest):
         # sync to the other's phone to be able to edit
         self.assertIn(case_id, self.ferrel.sync().cases)
 
-        self.ferrel.post_changes(CaseBlock(
+        self.ferrel.post_changes(CaseBlock.deprecated_init(
             create=True,
             case_id=mother_id,
             date_modified=time,
@@ -1379,7 +1379,7 @@ class MultiUserSyncTest(BaseSyncTest):
         self.assertNotIn(mother_id, self.guy.sync().cases)
 
         # update the original case from another, adding an indexed case
-        self.ferrel.post_changes(CaseBlock(
+        self.ferrel.post_changes(CaseBlock.deprecated_init(
             case_id=case_id,
             user_id=self.ferrel.user_id,
             owner_id=self.guy.user_id,
@@ -1414,7 +1414,7 @@ class MultiUserSyncTest(BaseSyncTest):
         self.ferrel.sync()
 
         # update case from same user
-        self.guy.post_changes(CaseBlock(
+        self.guy.post_changes(CaseBlock.deprecated_init(
             date_modified=time,
             case_id=case_id,
             user_id=self.user_id,
@@ -1422,7 +1422,7 @@ class MultiUserSyncTest(BaseSyncTest):
         ))
 
         # update from another user
-        self.ferrel.post_changes(CaseBlock(
+        self.ferrel.post_changes(CaseBlock.deprecated_init(
             date_modified=time,
             case_id=case_id,
             user_id=self.user_id,
@@ -1443,7 +1443,7 @@ class MultiUserSyncTest(BaseSyncTest):
         self.guy.post_changes(create=True, case_id=case_id)
 
         # sync then close case from another user
-        self.ferrel.post_changes(CaseBlock(
+        self.ferrel.post_changes(CaseBlock.deprecated_init(
             case_id=case_id,
             user_id=self.user_id,
             close=True
@@ -1468,7 +1468,7 @@ class MultiUserSyncTest(BaseSyncTest):
         fsync = self.ferrel.sync()
         self.assertIn(case_id, fsync.cases)
 
-        self.ferrel.post_changes(CaseBlock(
+        self.ferrel.post_changes(CaseBlock.deprecated_init(
             case_id=case_id,
             user_id=self.ferrel.user_id,
             update={'greeting': 'hello'},
@@ -1486,7 +1486,7 @@ class MultiUserSyncTest(BaseSyncTest):
             case_id=parent_id,
             owner_id=self.user_id,
         )
-        self.guy.post_changes(CaseBlock(
+        self.guy.post_changes(CaseBlock.deprecated_init(
             create=True,
             case_id=case_id,
             user_id=self.user_id,
@@ -1500,7 +1500,7 @@ class MultiUserSyncTest(BaseSyncTest):
         self.assertNotIn(parent_id, fsync.cases)
 
         # assign just the child case to a second user
-        self.guy.post_changes(CaseBlock(
+        self.guy.post_changes(CaseBlock.deprecated_init(
             create=False,
             case_id=case_id,
             user_id=self.user_id,
@@ -1520,7 +1520,7 @@ class MultiUserSyncTest(BaseSyncTest):
         self.guy.change_cases(case_id=parent_id, create=True)
         self.guy.sync()
 
-        self.guy.change_cases(CaseBlock(
+        self.guy.change_cases(CaseBlock.deprecated_init(
             create=True,
             case_id=case_id,
             user_id=self.user_id,
@@ -1532,7 +1532,7 @@ class MultiUserSyncTest(BaseSyncTest):
         self.assertNotIn(parent_id, gsync.cases)
 
         # assign the parent case away from same user
-        self.guy.change_cases(CaseBlock(
+        self.guy.change_cases(CaseBlock.deprecated_init(
             case_id=parent_id,
             user_id=self.user_id,
             owner_id=self.ferrel.user_id,
@@ -1547,7 +1547,7 @@ class MultiUserSyncTest(BaseSyncTest):
         # make sure the other user gets the reassigned case
         self.assertIn(parent_id, self.ferrel.sync().cases)
         # update the parent case from another user
-        self.ferrel.post_changes(CaseBlock(
+        self.ferrel.post_changes(CaseBlock.deprecated_init(
             case_id=parent_id,
             user_id=self.ferrel.user_id,
             update={"greeting2": "hi"},
@@ -1584,13 +1584,13 @@ class MultiUserSyncTest(BaseSyncTest):
 
         # change the child's owner from another user
         # also change the parent from the second user
-        child_reassignment = CaseBlock(
+        child_reassignment = CaseBlock.deprecated_init(
             case_id=case_id,
             user_id=self.ferrel.user_id,
             owner_id=self.ferrel.user_id,
             update={"childgreeting": "hi!"},
         )
-        other_parent_update = CaseBlock(
+        other_parent_update = CaseBlock.deprecated_init(
             case_id=parent_id,
             user_id=self.ferrel.user_id,
             owner_id=self.ferrel.user_id,
@@ -1612,7 +1612,7 @@ class MultiUserSyncTest(BaseSyncTest):
         self.assertNotIn(parent_id, gsync.cases)
 
         # change the parent again from the second user
-        self.ferrel.post_changes(CaseBlock(
+        self.ferrel.post_changes(CaseBlock.deprecated_init(
             case_id=parent_id,
             user_id=self.ferrel.user_id,
             owner_id=self.ferrel.user_id,
@@ -1623,7 +1623,7 @@ class MultiUserSyncTest(BaseSyncTest):
         self.assertFalse(self.guy.sync().cases)
 
         # change the child again from the second user
-        self.ferrel.post_changes(CaseBlock(
+        self.ferrel.post_changes(CaseBlock.deprecated_init(
             case_id=case_id,
             user_id=self.ferrel.user_id,
             owner_id=self.ferrel.user_id,
@@ -1634,7 +1634,7 @@ class MultiUserSyncTest(BaseSyncTest):
         self.assertFalse(self.guy.sync().cases)
 
         # change owner of child back to orginal user from second user
-        self.ferrel.post_changes(CaseBlock(
+        self.ferrel.post_changes(CaseBlock.deprecated_init(
             case_id=case_id,
             user_id=self.ferrel.user_id,
             owner_id=self.user.user_id,
@@ -1799,14 +1799,14 @@ class MultiUserSyncTest(BaseSyncTest):
         self.assertEqual(set(alice.last_sync.log.case_ids_on_phone), all_cases)
         self.assertEqual(set(bob.last_sync.log.case_ids_on_phone), all_cases)
 
-        close_e1 = CaseBlock(
+        close_e1 = CaseBlock.deprecated_init(
             create=False,
             case_id=e1.case_id,
             user_id=bob.user_id,
             owner_id=None,
             close=True,
         )
-        e3 = CaseBlock(
+        e3 = CaseBlock.deprecated_init(
             create=True,
             case_id='episode-3',
             user_id=bob.user_id,
@@ -1816,7 +1816,7 @@ class MultiUserSyncTest(BaseSyncTest):
         bob.change_cases([close_e1, e3])
         bob.sync()
 
-        a1 = CaseBlock(
+        a1 = CaseBlock.deprecated_init(
             create=True,
             case_id='adherence-1',
             user_id=alice.user_id,
@@ -2026,7 +2026,7 @@ class SyncTokenReprocessingTest(BaseSyncTest):
         sync_log.test_only_clear_cases_on_phone()
         sync_log.save()
 
-        self.device.post_changes(CaseBlock(
+        self.device.post_changes(CaseBlock.deprecated_init(
             case_id=case_id,
             user_id=self.user_id,
             owner_id=self.user_id,
@@ -2057,7 +2057,7 @@ class LooseSyncTokenValidationTest(BaseSyncTest):
     def test_submission_with_bad_log_toggle_enabled(self):
         # this is just asserting that an exception is not raised when there's no synclog
         post_case_blocks(
-            [CaseBlock(create=True, case_id='bad-log-toggle-enabled').as_xml()],
+            [CaseBlock.deprecated_init(create=True, case_id='bad-log-toggle-enabled').as_xml()],
             form_extras={"last_sync_token": 'not-a-valid-synclog-id'},
             domain='submission-domain-with-toggle',
         )
