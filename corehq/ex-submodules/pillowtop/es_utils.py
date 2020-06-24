@@ -40,7 +40,7 @@ ES_ENV_SETTINGS = {
     },
 }
 
-ES_META = {
+ES_INDEX_SETTINGS = {
     # Default settings for all indexes on ElasticSearch
     'default': {
         "settings": {
@@ -84,19 +84,22 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
 
     @property
     def meta(self):
-        meta_settings = deepcopy(ES_META['default'])
+        from corehq.util.elastic import TEST_ES_PREFIX
+        # the setting overrides are defined without prefix, so look them without prefix
+        alias = self.alias.replace(TEST_ES_PREFIX, '')
+        meta_settings = deepcopy(ES_INDEX_SETTINGS['default'])
         meta_settings.update(
-            ES_META.get(self.alias, {})
+            ES_INDEX_SETTINGS.get(alias, {})
         )
         meta_settings.update(
-            ES_META.get(settings.SERVER_ENVIRONMENT, {}).get(self.alias, {})
+            ES_INDEX_SETTINGS.get(settings.SERVER_ENVIRONMENT, {}).get(alias, {})
         )
 
         overrides = copy(ES_ENV_SETTINGS)
         if settings.ES_SETTINGS is not None:
             overrides.update({settings.SERVER_ENVIRONMENT: settings.ES_SETTINGS})
 
-        for alias in ['default', self.alias]:
+        for alias in ['default', alias]:
             for key, value in overrides.get(settings.SERVER_ENVIRONMENT, {}).get(alias, {}).items():
                 if value is REMOVE_SETTING:
                     del meta_settings['settings'][key]
@@ -133,18 +136,12 @@ def create_index_and_set_settings_normal(es, index, metadata=None):
     set_index_normal_settings(es, index)
 
 
-def completely_initialize_pillow_index(pillow):
-    """
-    This utility can be used to initialize the elastic index and mapping for a pillow
-    """
-    return initialize_index_and_mapping(pillow.get_es_new(), get_index_info_from_pillow(pillow))
-
-
 def initialize_index_and_mapping(es, index_info):
     index_exists = es.indices.exists(index_info.index)
     if not index_exists:
         initialize_index(es, index_info)
     initialize_mapping_if_necessary(es, index_info)
+    assume_alias(es, index_info.index, index_info.alias)
 
 
 def initialize_index(es, index_info):
