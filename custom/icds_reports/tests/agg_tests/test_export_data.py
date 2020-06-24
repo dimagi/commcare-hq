@@ -4593,18 +4593,26 @@ class TestExportData(TestCase):
                 ['st2', 2, 2, 11, '106.91%', 193, 0, '0.00%', 507, 59, '11.64%', 513, 378, '73.68%', 42, 30,
                  '71.43%', 513, 25,
                  '4.87%', 318, 181, '56.92%', 507, 12, '2.37%'],
-                ['st3', 0, 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0,
-                 '0.00%', 0, 0,
-                 '0.00%', 0, 0, '0.00%'],
-                ['st4', 0, 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0,
-                 '0.00%', 0, 0,
-                 '0.00%', 0, 0, '0.00%'],
-                ['st5', 0, 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0,
-                 '0.00%', 0, 0,
-                 '0.00%', 0, 0, '0.00%'],
-                ['st6', 0, 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0,
-                 '0.00%', 0, 0,
-                 '0.00%', 0, 0, '0.00%'],
+                ['st3', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched'],
+                ['st4', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched'],
+                ['st5', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched'],
+                ['st6', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched'],
                 ['st7', 1, 1, 1, '0.00%', 1, 0, '0.00%', 1, 0, '0.00%', 1, 0, '0.00%', 0, 0, '0.00%', 1, 0,
                  '0.00%', 1, 0,
                  '0.00%', 1, 0, '0.00%'],
@@ -4612,7 +4620,9 @@ class TestExportData(TestCase):
                  '72.15%', 989, 32, '3.24%', 598, 261,
                  '43.65%', 991, 16, '1.61%']]], ['Export Info', [['Generated at', self.now],
                                                                  ['Report Layout', 'Comprehensive'],
-                                                                 ['Data Period', 'Month']]]]
+                                                                 ['Data Period', 'Month'],
+                                                                 ['Month', 'May'],
+                                                                 ['Year', 2017]]]]
         )
 
     def test_ppr_summary_month(self):
@@ -4638,14 +4648,19 @@ class TestExportData(TestCase):
                  '% of children between 3-6 years provided SNP for atleast 21+ days'],
                 ['st1', 1, 2, 10, '142.40%', '1.62%', '1.45%', '66.74%', '72.97%', '1.47%', '28.67%', '0.83%'],
                 ['st2', 2, 2, 11, '106.91%', '0.00%', '11.64%', '73.68%', '71.43%', '4.87%', '56.92%', '2.37%'],
-                ['st3', 0, 0, 0, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
-                ['st4', 0, 0, 0, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
-                ['st5', 0, 0, 0, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
-                ['st6', 0, 0, 0, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
+                ['st3', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched'],
+                ['st4', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched'],
+                ['st5', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched'],
+                ['st6', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched'],
                 ['st7', 1, 1, 1, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
                 ['Total', 4, 5, 22, '118.18%', '0.79%', '6.66%', '70.27%', '72.15%', '3.24%', '43.65%', '1.61%']]],
              ['Export Info', [
-                 ['Generated at', self.now], ['Report Layout', 'Summary'], ['Data Period', 'Month']]]]
+                 ['Generated at', self.now], ['Report Layout', 'Summary'], ['Data Period', 'Month'],
+                 ['Month', 'May'], ['Year', 2017]]]]
 
         )
 
@@ -4665,7 +4680,7 @@ class TestExportData(TestCase):
         self.assertListEqual(
             data,
             [['Poshan Progress Report', [
-                ['State Name', 'District Name', 'Number of Districts Covered', 'Number of Blocks Covered',
+                ['State Name', 'District Name', 'Number of Blocks Covered',
                  'Number of AWCs Launched', '% Number of Days AWC Were opened', 'Expected Home Visits',
                  'Actual Home Visits',
                  '% of Home Visits', 'Total Number of Children (3-6 yrs)',
@@ -4685,14 +4700,14 @@ class TestExportData(TestCase):
                  'No. of children between 3-6 years ',
                  'No of children between 3-6 years provided SNP for atleast 21+ days',
                  '% of children between 3-6 years provided SNP for atleast 21+ days'],
-                ['st2', 'd2', 1, 1, 4, '78.00%', 89, 0, '0.00%', 134, 18, '13.22%', 168,
+                ['st2', 'd2', 1, 4, '78.00%', 89, 0, '0.00%', 134, 18, '13.22%', 168,
                  124, '73.47%', 11, 7, '60.61%', 168, 4, '2.38%', 118, 51, '43.10%', 134, 1, '0.75%'],
-                ['st2', 'd3', 1, 1, 3, '64.00%', 67, 0, '0.00%', 199, 10, '5.18%', 177,
+                ['st2', 'd3', 1, 3, '64.00%', 67, 0, '0.00%', 199, 10, '5.18%', 177,
                  120, '67.48%', 12, 7, '55.56%', 177, 6, '3.38%', 85, 20, '23.14%', 199, 3, '1.51%'],
-                ['Total', 'Total', 4, 4, 22, '71.64%', 467, 0, '0.00%', 999, 84, '8.41%', 1037, 730, '70.40%', 69,
-                 40, '57.97%', 1037, 30, '2.89%', 610, 212, '34.75%', 999, 12, '1.20%']]], ['Export Info', [
+                ['Total', 'Total', 2, 7, '74.86%', 156, 0, '0.00%', 333, 28, '8.41%', 345, 244, '70.72%', 23,
+                 14, '60.87%', 345, 10, '2.90%', 203, 71, '34.98%', 333, 4, '1.20%']]], ['Export Info', [
                 ['Generated at', self.now], ['State', 'st2'], ['Report Layout', 'Comprehensive'],
-                ['Data Period', 'Quarter']]]]
+                ['Data Period', 'Quarter'], ['Quarter', 'April-June'], ['Year', 2017]]]]
         )
 
     def test_ppr_summary_quarter(self):
@@ -4720,14 +4735,19 @@ class TestExportData(TestCase):
                  '% of children between 3-6 years provided SNP for atleast 21+ days'],
                 ['st1', 1, 1, 7, '97.20%', '0.66%', '2.52%', '67.39%', '60.32%', '1.44%', '14.60%', '1.16%'],
                 ['st2', 1, 1, 7, '71.64%', '0.00%', '8.41%', '70.40%', '57.97%', '2.89%', '34.75%', '1.20%'],
-                ['st3', 0, 0, 0, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
-                ['st4', 0, 0, 0, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
-                ['st5', 0, 0, 0, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
-                ['st6', 0, 0, 0, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
+                ['st3', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched'],
+                ['st4', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched'],
+                ['st5', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched'],
+                ['st6', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched'],
                 ['st7', 1, 1, 1, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
-                ['Total', 8, 10, 44, '80.00%', '0.32%', '5.53%', '68.91%', '59.09%', '2.19%', '25.17%', '1.18%']]],
+                ['Total', 3, 3, 15, '78.13%', '0.32%', '5.54%', '68.81%', '59.09%', '2.24%', '25.32%', '1.23%']]],
              ['Export Info',
-              [['Generated at', self.now], ['Report Layout', 'Summary'], ['Data Period', 'Quarter']]]]
+              [['Generated at', self.now], ['Report Layout', 'Summary'], ['Data Period', 'Quarter'],
+               ['Quarter', 'April-June'], ['Year', 2017]]]]
         )
 
     def test_sdr_report_pw_lw_children(self):
