@@ -27,6 +27,7 @@ from corehq.apps.app_manager.views.utils import (
     overwrite_app,
     update_linked_app,
 )
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqmedia.models import (
     CommCareAudio,
     CommCareImage,
@@ -53,14 +54,16 @@ class BaseLinkedAppsTest(TestCase, TestXmlMixin):
     @classmethod
     def setUpClass(cls):
         super(BaseLinkedAppsTest, cls).setUpClass()
-        cls.domain = 'domain'
+        cls.domain_obj = create_domain('domain')
+        cls.domain = cls.domain_obj.name
         cls.master_app_with_report_modules = Application.new_app(cls.domain, "Master Application")
         module = cls.master_app_with_report_modules.add_module(ReportModule.new_module('Reports', None))
         module.report_configs = [
             ReportAppConfig(report_id='master_report_id', header={'en': 'CommBugz'}),
         ]
 
-        cls.linked_domain = 'domain-2'
+        cls.linked_domain_obj = create_domain('domain-2')
+        cls.linked_domain = cls.linked_domain_obj.name
         cls.master1 = Application.new_app(cls.domain, "First Master Application")
         cls.master1.linked_whitelist = [cls.linked_domain]
         cls.master1.save()
@@ -80,6 +83,8 @@ class BaseLinkedAppsTest(TestCase, TestXmlMixin):
         cls.master1.delete()
         cls.master2.delete()
         cls.domain_link.delete()
+        cls.domain_obj.delete()
+        cls.linked_domain_obj.delete()
         super(BaseLinkedAppsTest, cls).tearDownClass()
 
     def setUp(self):

@@ -94,7 +94,7 @@ class ReleaseManager():
         self.errors_by_domain = defaultdict(list)
         self.successes_by_domain = defaultdict(list)
 
-    def release(self, models, linked_domains, build_apps):
+    def release(self, models, linked_domains, build_apps=False):
         self.linked_domains = linked_domains
         self.models = models
         domain_links_by_linked_domain = {link.linked_domain: link for link in get_linked_domains(self.master_domain)}
