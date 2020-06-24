@@ -91,12 +91,16 @@ class ReleaseManager():
         self.user = user
         self.linked_domains = []
         self.models = []
+        self._reset()
+
+    def _reset(self, models=None, linked_domains=None):
         self.errors_by_domain = defaultdict(list)
         self.successes_by_domain = defaultdict(list)
+        self.models = models or []
+        self.linked_domains = linked_domains or []
 
     def release(self, models, linked_domains, build_apps=False):
-        self.linked_domains = linked_domains
-        self.models = models
+        self._reset(models, linked_domains)
         domain_links_by_linked_domain = {link.linked_domain: link for link in get_linked_domains(self.master_domain)}
         for linked_domain in self.linked_domains:
             if linked_domain not in domain_links_by_linked_domain:
