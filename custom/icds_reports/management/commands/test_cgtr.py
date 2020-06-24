@@ -16,7 +16,7 @@ class Command(BaseCommand):
                 'month': date(2020, 1, 1),
                 'district_id': district_id
             },
-            loc_level=2).get_excel_data('d1')
+            loc_level=2).get_excel_data(district_id)
         return t
 
     def handle(self, district_id, *args, **options):
