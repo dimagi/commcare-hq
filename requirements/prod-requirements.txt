@@ -9,6 +9,7 @@ amqp==2.5.2               # via kombu
 architect==0.5.6          # via -r requirements/requirements.in
 attrs==18.2.0             # via -r requirements/requirements.in
 babel==2.7.0              # via django-phonenumber-field, flower
+backcall==0.2.0           # via ipython
 billiard==3.5.0.4         # via -r requirements/requirements.in, celery
 boto3==1.10.14            # via -r requirements/requirements.in
 botocore==1.13.14         # via boto3, s3transfer
@@ -81,9 +82,10 @@ html5lib==1.0.1           # via weasyprint
 httpagentparser==1.9.0    # via -r requirements/requirements.in
 idna==2.8                 # via -r requirements/prod-requirements.in, email-validator, requests
 ipython-genutils==0.2.0   # via traitlets
-ipython==5.2.2            # via -r requirements/prod-requirements.in
+ipython==7.15.0           # via -r requirements/prod-requirements.in
 iso8601==0.1.12           # via -r requirements/requirements.in
 jdcal==1.4.1              # via openpyxl
+jedi==0.17.1              # via ipython
 jinja2==2.10.3            # via -r requirements/requirements.in
 jmespath==0.9.4           # via boto3, botocore
 json-delta==2.0           # via -r requirements/requirements.in
@@ -103,6 +105,7 @@ msgpack-python==0.5.6     # via ddtrace
 ndg-httpsclient==0.5.1    # via -r requirements/prod-requirements.in
 oauthlib==3.1.0           # via requests-oauthlib
 openpyxl==2.6.4           # via -r requirements/requirements.in, commcaretranslationchecker
+parso==0.7.0              # via jedi
 pbr==5.4.3                # via mock
 pdfrw==0.4                # via weasyprint
 pexpect==4.7.0            # via ipython
@@ -112,7 +115,7 @@ pillow==6.2.2             # via -r requirements/requirements.in, cairosvg, djang
 ply==3.11                 # via eulxml, jsonpath-rw
 polib==1.1.0              # via -r requirements/requirements.in
 prometheus-client==0.7.1  # via -r requirements/requirements.in
-prompt-toolkit==1.0.18    # via ipython
+prompt-toolkit==3.0.5     # via ipython
 psycogreen==1.0.1         # via -r requirements/requirements.in
 psycopg2==2.8.5           # via -r requirements/requirements.in
 ptyprocess==0.6.0         # via pexpect
@@ -153,9 +156,8 @@ sentry-sdk==0.14.4        # via -r requirements/requirements.in
 setproctitle==1.1.9       # via -r requirements/prod-requirements.in
 sh==1.09                  # via -r requirements/requirements.in
 simpleeval==0.9.8         # via -r requirements/requirements.in
-simplegeneric==0.8.1      # via ipython
 simplejson==3.16.0        # via -r requirements/requirements.in, datadog, django-prbac
-six==1.13.0               # via -r requirements/requirements.in, cryptography, django-appconf, django-prbac, django-simple-captcha, django-transfer, django-websocket-redis, dropbox, errand-boy, ethiopian-date-converter, eulxml, eventlet, faker, ghdiff, html5lib, jsonfield, jsonobject, jsonobject-couchdbkit, jsonpath-rw, mock, prompt-toolkit, pyopenssl, python-dateutil, pyzxcvbn, qrcode, quickcache, traitlets, twilio
+six==1.13.0               # via -r requirements/requirements.in, cryptography, django-appconf, django-prbac, django-simple-captcha, django-transfer, django-websocket-redis, dropbox, errand-boy, ethiopian-date-converter, eulxml, eventlet, faker, ghdiff, html5lib, jsonfield, jsonobject, jsonobject-couchdbkit, jsonpath-rw, mock, pyopenssl, python-dateutil, pyzxcvbn, qrcode, quickcache, traitlets, twilio
 smartypants==2.0.1        # via pycco
 socketpool==0.5.3         # via -r requirements/requirements.in
 sqlagg==0.16.2            # via -r requirements/requirements.in
