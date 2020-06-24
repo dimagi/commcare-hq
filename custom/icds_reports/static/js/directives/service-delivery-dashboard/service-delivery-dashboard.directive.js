@@ -85,7 +85,9 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
         }
     };
 
+    // with "stateSave" being enabled, it will retain pagination and the sorted column number and order of sorting etc.
     vm.dtOptions = DTOptionsBuilder.newOptions()
+        .withOption('stateSave', !vm.isDetailsDisplayed)
         .withOption('ajax', {
             url: url(vm.isDetailsDisplayed ? 'service_delivery_dashboard_details' : 'service_delivery_dashboard', vm.step),
             data: $location.search(),
