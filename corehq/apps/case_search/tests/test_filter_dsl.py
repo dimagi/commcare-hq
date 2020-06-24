@@ -737,9 +737,7 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
                                         "filter": (
                                             {
                                                 "terms": {
-                                                    "indices.referenced_id": [
-                                                        "mace"
-                                                    ]
+                                                    "indices.referenced_id": [self.parent_case_id]
                                                 }
                                             },
                                             {
@@ -805,9 +803,7 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
                                         "filter": (
                                             {
                                                 "terms": {
-                                                    "indices.referenced_id": [
-                                                        "mace"
-                                                    ]
+                                                    "indices.referenced_id": [self.parent_case_id]
                                                 }
                                             },
                                             {

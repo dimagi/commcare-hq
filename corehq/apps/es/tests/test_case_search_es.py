@@ -31,12 +31,15 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
     def setUp(self):
         self.es = CaseSearchES()
 
+    def is_es7(self):
+        return settings.ELASTICSEARCH_MAJOR_VERSION == 7
+
     def test_simple_case_property_query(self):
-        json_output = {
-            "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
+        if self.is_es7():
+            json_output = {
+                "query": {
+                    "bool": {
+                        "filter": [
                             {
                                 "term": {
                                     "domain.exact": "swashbucklers"
@@ -45,154 +48,326 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
                             {
                                 "match_all": {}
                             }
-                        ]
-                    },
-                    "query": {
-                        "bool": {
-                            "must": [
-                                {
-                                    "nested": {
-                                        "path": "case_properties",
-                                        "query": {
-                                            "filtered": {
-                                                "query": {
-                                                    "match_all": {
-                                                    }
-                                                },
-                                                "filter": {
-                                                    "and": (
+                        ],
+                        "must": {
+                            "bool": {
+                                "must": [
+                                    {
+                                        "nested": {
+                                            "path": "case_properties",
+                                            "query": {
+                                                "bool": {
+                                                    "filter": [
                                                         {
-                                                            "term": {
-                                                                "case_properties.key.exact": "name"
-                                                            }
-                                                        },
-                                                        {
-                                                            "term": {
-                                                                "case_properties.value.exact": "redbeard"
+                                                            "bool": {
+                                                                "filter": [
+                                                                    {
+                                                                        "term": {
+                                                                            "case_properties.key.exact": "name"
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "term": {
+                                                                            "case_properties.value.exact": "redbeard"
+                                                                        }
+                                                                    }
+                                                                ]
                                                             }
                                                         }
-                                                    )
+                                                    ],
+                                                    "must": {
+                                                        "match_all": {}
+                                                    }
                                                 }
                                             }
                                         }
                                     }
-                                }
-                            ]
+                                ]
+                            }
                         }
                     }
-                }
-            },
-            "size": SIZE_LIMIT
-        }
-
-        query = self.es.domain('swashbucklers').case_property_query("name", "redbeard")
-
-        self.checkQuery(query, json_output)
-
-    def test_multiple_case_search_queries(self):
-        json_output = {
-            "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {
-                                "term": {
-                                    "domain.exact": "swashbucklers"
-                                }
-                            },
-                            {
-                                "match_all": {}
-                            }
-                        ]
-                    },
-                    "query": {
-                        "bool": {
-                            "must": [
+                },
+                "size": SIZE_LIMIT
+            }
+        else:
+            json_output = {
+                "query": {
+                    "filtered": {
+                        "filter": {
+                            "and": [
                                 {
-                                    "nested": {
-                                        "path": "case_properties",
-                                        "query": {
-                                            "filtered": {
-                                                "filter": {
-                                                    "and": (
-                                                        {
-                                                            "term": {
-                                                                "case_properties.key.exact": "name"
-                                                            }
-                                                        },
-                                                        {
-                                                            "term": {
-                                                                "case_properties.value.exact": "redbeard"
-                                                            }
-                                                        }
-                                                    )
-                                                },
-                                                "query": {
-                                                    "match_all": {
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            ],
-                            "should": [
-                                {
-                                    "nested": {
-                                        "path": "case_properties",
-                                        "query": {
-                                            "filtered": {
-                                                "filter": {
-                                                    "term": {
-                                                        "case_properties.key.exact": "parrot_name"
-                                                    }
-                                                },
-                                                "query": {
-                                                    "match": {
-                                                        "case_properties.value": {
-                                                            "query": "polly",
-                                                            "fuzziness": "AUTO"
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
+                                    "term": {
+                                        "domain.exact": "swashbucklers"
                                     }
                                 },
                                 {
-                                    "nested": {
-                                        "path": "case_properties",
-                                        "query": {
-                                            "filtered": {
-                                                "filter": {
-                                                    "term": {
-                                                        "case_properties.key.exact": "parrot_name"
+                                    "match_all": {}
+                                }
+                            ]
+                        },
+                        "query": {
+                            "bool": {
+                                "must": [
+                                    {
+                                        "nested": {
+                                            "path": "case_properties",
+                                            "query": {
+                                                "filtered": {
+                                                    "query": {
+                                                        "match_all": {
+                                                        }
+                                                    },
+                                                    "filter": {
+                                                        "and": (
+                                                            {
+                                                                "term": {
+                                                                    "case_properties.key.exact": "name"
+                                                                }
+                                                            },
+                                                            {
+                                                                "term": {
+                                                                    "case_properties.value.exact": "redbeard"
+                                                                }
+                                                            }
+                                                        )
                                                     }
-                                                },
-                                                "query": {
-                                                    "match": {
-                                                        "case_properties.value": {
-                                                            "query": "polly",
-                                                            "fuzziness": "0"
+                                                }
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "size": SIZE_LIMIT
+            }
+
+        query = self.es.domain('swashbucklers').case_property_query("name", "redbeard")
+
+        self.checkQuery(query, json_output, validate_query=False)
+
+    def test_multiple_case_search_queries(self):
+        if self.is_es7():
+            json_output = {
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "term": {
+                                    "domain.exact": "swashbucklers"
+                                }
+                            },
+                            {
+                                "match_all": {}
+                            }
+                        ],
+                        "must": {
+                            "bool": {
+                                "must": [
+                                    {
+                                        "nested": {
+                                            "path": "case_properties",
+                                            "query": {
+                                                "bool": {
+                                                    "filter": [
+                                                        {
+                                                            "bool": {
+                                                                "filter": [
+                                                                    {
+                                                                        "term": {
+                                                                            "case_properties.key.exact": "name"
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "term": {
+                                                                            "case_properties.value.exact": "redbeard"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        }
+                                                    ],
+                                                    "must": {
+                                                        "match_all": {}
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                ],
+                                "should": [
+                                    {
+                                        "bool": {
+                                            "filter": [
+                                                {
+                                                    "nested": {
+                                                        "path": "case_properties",
+                                                        "query": {
+                                                            "bool": {
+                                                                "filter": [
+                                                                    {
+                                                                        "term": {
+                                                                            "case_properties.key.exact": "parrot_name"
+                                                                        }
+                                                                    }
+                                                                ],
+                                                                "must": {
+                                                                    "match": {
+                                                                        "case_properties.value": {
+                                                                            "query": "polly",
+                                                                            "fuzziness": "AUTO"
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "bool": {
+                                            "filter": [
+                                                {
+                                                    "nested": {
+                                                        "path": "case_properties",
+                                                        "query": {
+                                                            "bool": {
+                                                                "filter": [
+                                                                    {
+                                                                        "term": {
+                                                                            "case_properties.key.exact": "parrot_name"
+                                                                        }
+                                                                    }
+                                                                ],
+                                                                "must": {
+                                                                    "match": {
+                                                                        "case_properties.value": {
+                                                                            "query": "polly",
+                                                                            "fuzziness": "0"
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "size": SIZE_LIMIT
+            }
+        else:
+            json_output = {
+                "query": {
+                    "filtered": {
+                        "filter": {
+                            "and": [
+                                {
+                                    "term": {
+                                        "domain.exact": "swashbucklers"
+                                    }
+                                },
+                                {
+                                    "match_all": {}
+                                }
+                            ]
+                        },
+                        "query": {
+                            "bool": {
+                                "must": [
+                                    {
+                                        "nested": {
+                                            "path": "case_properties",
+                                            "query": {
+                                                "filtered": {
+                                                    "filter": {
+                                                        "and": (
+                                                            {
+                                                                "term": {
+                                                                    "case_properties.key.exact": "name"
+                                                                }
+                                                            },
+                                                            {
+                                                                "term": {
+                                                                    "case_properties.value.exact": "redbeard"
+                                                                }
+                                                            }
+                                                        )
+                                                    },
+                                                    "query": {
+                                                        "match_all": {
                                                         }
                                                     }
                                                 }
                                             }
                                         }
                                     }
-                                }
-                            ]
+                                ],
+                                "should": [
+                                    {
+                                        "nested": {
+                                            "path": "case_properties",
+                                            "query": {
+                                                "filtered": {
+                                                    "filter": {
+                                                        "term": {
+                                                            "case_properties.key.exact": "parrot_name"
+                                                        }
+                                                    },
+                                                    "query": {
+                                                        "match": {
+                                                            "case_properties.value": {
+                                                                "query": "polly",
+                                                                "fuzziness": "AUTO"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "nested": {
+                                            "path": "case_properties",
+                                            "query": {
+                                                "filtered": {
+                                                    "filter": {
+                                                        "term": {
+                                                            "case_properties.key.exact": "parrot_name"
+                                                        }
+                                                    },
+                                                    "query": {
+                                                        "match": {
+                                                            "case_properties.value": {
+                                                                "query": "polly",
+                                                                "fuzziness": "0"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
                         }
                     }
-                }
-            },
-            "size": SIZE_LIMIT
-        }
+                },
+                "size": SIZE_LIMIT
+            }
 
         query = (self.es.domain('swashbucklers')
                  .case_property_query("name", "redbeard")
                  .case_property_query("parrot_name", "polly", clause="should", fuzzy=True))
-        self.checkQuery(query, json_output)
+        self.checkQuery(query, json_output, validate_query=False)
 
     def test_flatten_result(self):
         expected = {'name': 'blah', 'foo': 'bar', 'baz': 'buzz', RELEVANCE_SCORE: "1.095"}
@@ -218,20 +393,28 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
 
     def test_blacklisted_owner_ids(self):
         query = self.es.domain('swashbucklers').blacklist_owner_id('123').owner('234')
-        expected = {'query':
-                    {'filtered':
-                     {'filter':
-                      {'and': [
-                          {'term': {'domain.exact': 'swashbucklers'}},
-                          {'not': {'term': {'owner_id': '123'}}},
-                          {'term': {'owner_id': '234'}},
-                          {'match_all': {}}
-                      ]},
-                      "query": {
-                          "match_all": {}
-                      }}},
+        if self.is_es7():
+            expected = {'query': {'bool': {'filter': [{'term': {'domain.exact': 'swashbucklers'}},
+                               {'bool': {'must_not': {'term': {'owner_id': '123'}}}},
+                               {'term': {'owner_id': '234'}},
+                               {'match_all': {}}],
+                    'must': {'match_all': {}}}},
                     'size': SIZE_LIMIT}
-        self.checkQuery(query, expected)
+        else:
+            expected = {'query':
+                        {'filtered':
+                        {'filter':
+                        {'and': [
+                            {'term': {'domain.exact': 'swashbucklers'}},
+                            {'not': {'term': {'owner_id': '123'}}},
+                            {'term': {'owner_id': '234'}},
+                            {'match_all': {}}
+                        ]},
+                        "query": {
+                            "match_all": {}
+                        }}},
+                        'size': SIZE_LIMIT}
+        self.checkQuery(query, expected, validate_query=False)
 
 
 @attr(es_test=True)
