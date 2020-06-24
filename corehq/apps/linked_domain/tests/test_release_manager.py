@@ -2,12 +2,14 @@ from mock import patch
 
 from corehq.apps.linked_domain.const import (
     LINKED_MODELS_MAP,
+    MODEL_CASE_SEARCH,
     MODEL_FLAGS,
     MODEL_USER_DATA,
 )
 from corehq.apps.linked_domain.tasks import ReleaseManager
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
 from corehq.apps.users.models import WebUser
+from corehq.util.test_utils import flag_enabled
 
 
 class TestReleaseManager(BaseLinkedAppsTest):
@@ -57,3 +59,19 @@ class TestReleaseManager(BaseLinkedAppsTest):
         self._assert_error_domains({self.linked_domain})
         self._assert_error(self.linked_domain, 'Boom!')
         self._assert_success_domains({self.linked_domain})
+
+    @flag_enabled('SYNC_SEARCH_CASE_CLAIM')
+    def test_case_claim_on(self):
+        self.manager.release([
+            self._model_status(MODEL_CASE_SEARCH),
+        ], [self.linked_domain])
+        self._assert_error_domains(set())
+        self._assert_success_domains({self.linked_domain})
+
+    def test_case_claim_off(self):
+        self.manager.release([
+            self._model_status(MODEL_CASE_SEARCH),
+        ], [self.linked_domain])
+        self._assert_error_domains({self.linked_domain})
+        self._assert_error(self.linked_domain, 'Case claim flag is not on')
+        self._assert_success_domains(set())
