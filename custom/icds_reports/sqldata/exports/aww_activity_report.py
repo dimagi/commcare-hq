@@ -42,8 +42,8 @@ class AwwActivityExport(object):
                                 'awc_site_code', 'first_submission', 'last_submission', 'no_of_days_since_start',
                                 'no_of_days_inactive')
 
-        headers = ['State', 'District', 'Block', 'Supervisor name', 'Awc Name', 'AWC site code',
-                   'AWC launch date', 'Last submission date', 'Days since start', 'Days inactive']
+        headers = ['State', 'District', 'Block', 'Supervisor Name', 'AWC Name', 'AWC Site Code',
+                   'First Submission Date', 'Last Submission Date', 'Days Since Start', 'Days Inactive']
 
         excel_rows = [headers]
 
@@ -54,12 +54,18 @@ class AwwActivityExport(object):
                 row['block_name'],
                 row['supervisor_name'],
                 row['awc_name'],
-                row['awc_site_code'],
-                _format_date(_format_infrastructure_data(row['first_submission'])),
-                _format_date(_format_infrastructure_data(row['last_submission'])),
-                _format_infrastructure_data(row['no_of_days_since_start']),
-                _format_infrastructure_data(row['no_of_days_inactive'])
+                row['awc_site_code']
             ]
+            if not row['first_submission'] or row['first_submission'] == '':
+                # if there is no form submitted then AWC is not launched
+                row_data.extend(["Not Launched" for _ in range(0, 4)])
+            else:
+                row_data.extend([
+                    _format_date(_format_infrastructure_data(row['first_submission'])),
+                    _format_date(_format_infrastructure_data(row['last_submission'])),
+                    _format_infrastructure_data(row['no_of_days_since_start']),
+                    _format_infrastructure_data(row['no_of_days_inactive'])
+                ])
 
             excel_rows.append(row_data)
 

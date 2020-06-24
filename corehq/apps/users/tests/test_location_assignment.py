@@ -1,5 +1,6 @@
 import copy
 from datetime import datetime
+from mock import patch
 
 from django.test import TestCase
 
@@ -9,6 +10,7 @@ from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.users.management.commands import add_multi_location_property
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.elastic import refresh_elasticsearch_index
+from corehq.util.es.testing import sync_users_to_es
 from corehq.util.test_utils import generate_cases
 
 
@@ -36,6 +38,8 @@ class CCUserLocationAssignmentTest(TestCase):
             domain=self.domain,
             username='cc1',
             password='***',
+            created_by=None,
+            created_via=None,
             last_login=datetime.now()
         )
 
@@ -97,6 +101,7 @@ class CCUserLocationAssignmentTest(TestCase):
         self.user.unset_location_by_id(self.loc1.location_id, fall_back_to_next=True)
         self.assertAssignedLocations([])
 
+    @sync_users_to_es()
     def test_deleting_location_updates_user(self):
         self.user.reset_locations(self.loc_ids)
         refresh_elasticsearch_index('users')
@@ -115,6 +120,8 @@ class CCUserLocationAssignmentTest(TestCase):
             domain=self.domain,
             username='cc2',
             password='***',
+            created_by=None,
+            created_via=None,
             last_login=datetime.now(),
             location=self.loc1,
         )
@@ -163,6 +170,8 @@ class WebUserLocationAssignmentTest(TestCase):
             domain=self.domain,
             username='web1',
             password='***',
+            created_by=None,
+            created_via=None,
             last_login=datetime.now()
         )
 

@@ -117,7 +117,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
     vm.showWarning = function () {
         return (
             vm.now === vm.selectedMonth &&
-            new Date().getFullYear() === vm.selectedYear && !vm.isDashboardUsageSelected()
+            new Date().getFullYear() === vm.selectedYear && !vm.isDashboardUsageSelected() && !vm.isAwwActivityReportSelected()
         );
     };
     vm.levels = [
@@ -249,7 +249,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
     init();
 
     vm.disallowNational = function () {
-        return vm.isChildBeneficiaryListSelected() || vm.isChildGrowthTrackerSelected();
+        return vm.isChildBeneficiaryListSelected() || vm.isChildGrowthTrackerSelected() || vm.isAwwActivityReportSelected();
     };
 
     vm.getPlaceholder = function (locationTypes) {
@@ -377,7 +377,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
             vm.selectedMonth = vm.selectedMonth >= 3 ? vm.selectedMonth : 3;
         } else {
             vm.months = vm.monthsCopy;
-            vm.quarters = v.quartersCopy;
+            vm.quarters = vm.quartersCopy;
         }
         vm.excludeCurrentMonthIfInitialThreeDays();
     };
@@ -552,7 +552,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
         if (!vm.haveAccessToFeatures) {
             ladySupervisorReportErrors = vm.isLadySupervisorSelected() && !vm.isStateSelected();
         }
-        var awwActvityReportErrors = vm.isAwwActivityReportSelected() && !vm.isStateSelected();
+        var awwActvityReportErrors = vm.isAwwActivityReportSelected() && (vm.selectedLevel === 5 || vm.selectedLevel === 0);
         return beneficiaryListErrors || incentiveReportErrors || ladySupervisorReportErrors || growthListErrors || awwActvityReportErrors || PPRErrors;
     };
 

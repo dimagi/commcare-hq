@@ -23,6 +23,8 @@ class TemplatingTestCase(TestCase):
             cls.domain,
             'mobile1@templating-test',
             '12345',
+            None,
+            None,
             first_name='Mobile',
             last_name='User'
         )
@@ -33,6 +35,8 @@ class TemplatingTestCase(TestCase):
             cls.domain,
             'web1@templating-test',
             '12345',
+            created_by=None,
+            created_via=None,
             first_name='Web',
             last_name='User'
         )

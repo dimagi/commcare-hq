@@ -44,15 +44,7 @@
         );
             UPDATE "icds_reports_aggregateinactiveaww" AS agg_table SET
                 first_submission = LEAST(agg_table.first_submission, ut.first_submission),
-                last_submission = GREATEST(agg_table.last_submission, ut.last_submission),
-                no_of_days_since_start = CASE
-                    WHEN LEAST(agg_table.first_submission, ut.first_submission) IS DISTINCT FROM NULL
-                    THEN '2019-01-11'::DATE - LEAST(agg_table.first_submission, ut.first_submission)::DATE
-                    ELSE NULL END,
-                no_of_days_inactive = CASE
-                    WHEN GREATEST(agg_table.last_submission, ut.last_submission) IS DISTINCT FROM NULL
-                    THEN '2019-01-11'::DATE - GREATEST(agg_table.last_submission, ut.last_submission)::DATE
-                    ELSE NULL END
+                last_submission = GREATEST(agg_table.last_submission, ut.last_submission)
             FROM (
               SELECT
                 loc.doc_id as awc_id,
@@ -66,3 +58,15 @@
             DROP TABLE "tmp_usage";
         
 {"last_sync": "2019-01-05T00:00:00", "now": "2019-01-11T00:00:00", "six_months_ago": "2018-07-11T00:00:00"}
+
+            UPDATE "icds_reports_aggregateinactiveaww" SET
+                no_of_days_since_start = CASE
+                    WHEN first_submission IS DISTINCT FROM NULL
+                    THEN '2019-01-11'::DATE - first_submission::DATE
+                    ELSE NULL END,
+                no_of_days_inactive = CASE
+                    WHEN last_submission IS DISTINCT FROM NULL
+                    THEN '2019-01-11'::DATE - last_submission::DATE
+                    ELSE NULL END
+        
+{}
