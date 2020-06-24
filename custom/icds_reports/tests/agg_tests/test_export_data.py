@@ -4622,7 +4622,7 @@ class TestExportData(TestCase):
                                                                  ['Report Layout', 'Comprehensive'],
                                                                  ['Data Period', 'Month'],
                                                                  ['Month', 'May'],
-                                                                 ['Year', '2017']]]]
+                                                                 ['Year', 2017]]]]
         )
 
     def test_ppr_summary_month(self):
@@ -4660,7 +4660,7 @@ class TestExportData(TestCase):
                 ['Total', 4, 5, 22, '118.18%', '0.79%', '6.66%', '70.27%', '72.15%', '3.24%', '43.65%', '1.61%']]],
              ['Export Info', [
                  ['Generated at', self.now], ['Report Layout', 'Summary'], ['Data Period', 'Month'],
-                 ['Month', 'May'], ['Year', '2017']]]]
+                 ['Month', 'May'], ['Year', 2017]]]]
 
         )
 
@@ -4707,7 +4707,7 @@ class TestExportData(TestCase):
                 ['Total', 'Total', 2, 7, '71.86%', 156, 0, '0.00%', 333, 28, '8.41%', 345, 244, '70.72%', 23,
                  14, '60.87%', 345, 10, '2.90%', 203, 71, '34.98%', 333, 4, '1.20%']]], ['Export Info', [
                 ['Generated at', self.now], ['State', 'st2'], ['Report Layout', 'Comprehensive'],
-                ['Data Period', 'Quarter'], ['Quarter', 'April-June'], ['Year', '2017']]]]
+                ['Data Period', 'Quarter'], ['Quarter', 'April-June'], ['Year', 2017]]]]
         )
 
     def test_ppr_summary_quarter(self):
@@ -4747,7 +4747,7 @@ class TestExportData(TestCase):
                 ['Total', 3, 3, 15, '78.13%', '0.32%', '5.54%', '68.81%', '59.09%', '2.24%', '25.32%', '1.23%']]],
              ['Export Info',
               [['Generated at', self.now], ['Report Layout', 'Summary'], ['Data Period', 'Quarter'],
-               ['Quarter', 'April-June'], ['Year', '2017']]]]
+               ['Quarter', 'April-June'], ['Year', 2017]]]]
         )
 
     def test_sdr_report_pw_lw_children(self):
