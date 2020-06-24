@@ -322,3 +322,23 @@ class CustomCriteriaTestCase(BaseCaseRuleTest):
                         (True, '2020-01-01'),   # match
                     ]:
                         check(ccs, add, match)
+
+    def test_ccs_record_mother_case_availing_services_has_phone_number(self):
+        rule = _create_empty_rule(self.domain, case_type='ccs_record')
+        rule.add_criteria(CustomMatchDefinition,
+                          name='ICDS_CCS_RECORD_MOTHER_CASE_AVAILING_SERVICES_HAS_CONTACT_PHONE_NUMBER')
+
+        with _with_case(self.domain, 'person', datetime.utcnow()) as mother:
+            with _with_case(self.domain, 'ccs_record', datetime.utcnow()) as ccs_record:
+                set_parent_case(self.domain, ccs_record, mother, identifier='parent')
+                self.assertFalse(rule.criteria_match(ccs_record, datetime.utcnow()))
+
+                # refresh case to avoid cache fetch for parent
+                ccs_record = CaseAccessors(self.domain).get_case(ccs_record.case_id)
+                self._set_case_props(mother, {'contact_phone_number': '9999999999'})
+                self.assertTrue(rule.criteria_match(ccs_record, datetime.utcnow()))
+
+                # refresh case to avoid cache fetch for parent
+                ccs_record = CaseAccessors(self.domain).get_case(ccs_record.case_id)
+                self._set_case_props(mother, {'migration_status': 'migrated'})
+                self.assertFalse(rule.criteria_match(ccs_record, datetime.utcnow()))
