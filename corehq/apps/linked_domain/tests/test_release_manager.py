@@ -7,7 +7,7 @@ from corehq.apps.linked_domain.const import (
     MODEL_FLAGS,
     MODEL_USER_DATA,
 )
-from corehq.apps.linked_domain.models import AppLinkDetail
+from corehq.apps.linked_domain.models import AppLinkDetail, DomainLink
 from corehq.apps.linked_domain.tasks import ReleaseManager
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
 from corehq.apps.users.models import WebUser
@@ -20,10 +20,13 @@ class TestReleaseManager(BaseLinkedAppsTest):
         super().setUpClass()
         cls.user = WebUser.create(cls.domain, 'fionaa', 'secret', None, None)
         cls.manager = ReleaseManager(cls.domain, cls.user)
+        cls.extra_domain = 'antarctica'
+        cls.extra_domain_link = DomainLink.link_domains(cls.extra_domain, cls.domain)
 
     @classmethod
     def tearDownClass(cls):
         super().tearDownClass()
+        cls.extra_domain_link.delete()
 
     def _assert_domain_outcomes(self, success_domains, error_domains):
         self.assertEqual(set(self.manager.successes_by_domain.keys()), success_domains)
@@ -85,3 +88,17 @@ class TestReleaseManager(BaseLinkedAppsTest):
         ], [self.linked_domain])
         self._assert_domain_outcomes(set(), {self.linked_domain})
         self._assert_error(self.linked_domain, "Could not find app")
+
+    @flag_enabled('MULTI_MASTER_LINKED_DOMAINS')
+    def test_multi_master_app_fail(self):
+        self.manager.release([
+            self._model_status(MODEL_APP, detail=AppLinkDetail(app_id='123').to_json()),
+        ], [self.linked_domain])
+        self._assert_domain_outcomes(set(), {self.linked_domain})
+        self._assert_error(self.linked_domain, "Multi master flag is in use")
+
+    def test_multiple_domains(self):
+        self.manager.release([
+            self._model_status(MODEL_FLAGS),
+        ], [self.linked_domain, self.extra_domain])
+        self._assert_domain_outcomes({self.linked_domain, self.extra_domain}, set())
