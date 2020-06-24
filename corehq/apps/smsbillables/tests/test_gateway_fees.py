@@ -16,9 +16,13 @@ from corehq.apps.smsbillables.models import (
     SmsGatewayFee,
     SmsGatewayFeeCriteria,
     SmsUsageFee,
-    SmsUsageFeeCriteria,
-    add_twilio_gateway_fee,
+    SmsUsageFeeCriteria
 )
+
+from corehq.apps.smsbillables.management.commands.bootstrap_twilio_gateway import (
+    bootstrap_twilio_gateway,
+)
+
 from corehq.apps.smsbillables.tests import generator
 from corehq.apps.smsbillables.tests.utils import FakeTwilioMessageFactory
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
@@ -258,7 +262,7 @@ class TestGatewayFee(TestCase):
         lambda self, message_id: FakeTwilioMessageFactory.get_message(message_id)
     )
     def test_twilio_global_backend(self):
-        add_twilio_gateway_fee(apps)
+        bootstrap_twilio_gateway(apps)
         twilio_backend = SQLTwilioBackend.objects.create(
             name='TWILIO',
             is_global=True,
@@ -297,7 +301,7 @@ class TestGatewayFee(TestCase):
         lambda self, message_id: FakeTwilioMessageFactory.get_message(message_id)
     )
     def test_twilio_domain_level_backend(self, mock_log_smsbillables_error):
-        add_twilio_gateway_fee(apps)
+        bootstrap_twilio_gateway(apps)
         bootstrap_usage_fees(apps)
         twilio_backend = SQLTwilioBackend.objects.create(
             name='TWILIO',

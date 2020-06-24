@@ -87,11 +87,7 @@ def arbitrary_country_code_and_prefixes(
 def _available_gateway_fee_backends():
     return [
         backend for backend in get_sms_backend_classes().values()
-        if backend.get_api_id() not in [
-            SQLTwilioBackend.get_api_id(),
-            InfobipBackend.get_api_id(),
-            PinpointBackend.get_api_id()
-        ]
+        if not backend.using_api_to_get_fees
     ]
 
 

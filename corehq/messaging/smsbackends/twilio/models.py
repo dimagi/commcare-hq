@@ -5,6 +5,7 @@ from twilio.base.exceptions import TwilioRestException
 from twilio.rest import Client
 
 from dimagi.utils.logging import notify_exception
+from django.utils.decorators import classproperty
 
 from corehq import toggles
 from corehq.apps.domain.models import Domain
@@ -26,6 +27,10 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
     class Meta(object):
         app_label = 'sms'
         proxy = True
+
+    @classproperty
+    def using_api_to_get_fees(cls):
+        return True
 
     @classmethod
     def get_available_extra_fields(cls):

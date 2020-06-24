@@ -1,10 +1,11 @@
 from django.db import migrations
 
-from corehq.apps.smsbillables.models import add_pinpoint_gateway_fee
-
+from corehq.apps.smsbillables.management.commands.bootstrap_pinpoint_gateway import (
+    bootstrap_pinpoint_gateway,
+)
 
 def add_pinpoint_gateway_fee_for_migration(apps, schema_editor):
-    add_pinpoint_gateway_fee(apps)
+    bootstrap_pinpoint_gateway(apps)
 
 
 class Migration(migrations.Migration):

@@ -1,5 +1,6 @@
 import requests
 import json
+from django.utils.decorators import classproperty
 from corehq.apps.sms.models import SQLSMSBackend, SMS
 from corehq.apps.sms.util import clean_phone_number
 from corehq.messaging.smsbackends.infobip.forms import InfobipBackendForm
@@ -23,6 +24,10 @@ class InfobipBackend(SQLSMSBackend):
     class Meta(object):
         app_label = 'sms'
         proxy = True
+
+    @classproperty
+    def using_api_to_get_fees(cls):
+        return True
 
     @classmethod
     def get_available_extra_fields(cls):

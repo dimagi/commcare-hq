@@ -1,7 +1,6 @@
 from collections import namedtuple
 from decimal import Decimal
 
-from django.conf import settings
 from django.db import models
 
 from corehq import toggles
@@ -10,8 +9,6 @@ from corehq.apps.accounting.models import Currency
 from corehq.apps.accounting.utils import EXCHANGE_RATE_DECIMAL_PLACES
 from corehq.apps.sms.models import (
     DIRECTION_CHOICES,
-    INCOMING,
-    OUTGOING,
     SQLMobileBackend,
 )
 from corehq.apps.sms.phonenumbers_helper import (
@@ -26,9 +23,6 @@ from corehq.apps.smsbillables.utils import (
     log_smsbillables_error,
 )
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
-from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
-from corehq.messaging.smsbackends.infobip.models import InfobipBackend
-from corehq.messaging.smsbackends.amazon_pinpoint.models import PinpointBackend
 
 
 class SmsGatewayFeeCriteria(models.Model):
@@ -331,7 +325,7 @@ class SmsBillable(models.Model):
             message_log.backend_api, message_log.backend_id, phone_number, direction, log_id,
             message_log.backend_message_id, domain
         )
-        billable.gateway_fee = gateway_charge_info.gateway_fee
+        billable.gateway_fee = gateway_charge_info.fixed_gateway_fee
         billable.gateway_fee_conversion_rate = gateway_charge_info.conversion_rate
         billable.direct_gateway_fee = gateway_charge_info.direct_gateway_fee
         billable.multipart_count = gateway_charge_info.multipart_count or multipart_count
@@ -357,59 +351,65 @@ class SmsBillable(models.Model):
         is_gateway_billable = backend_id is None or backend_instance.is_global\
                               or toggles.ENABLE_INCLUDE_SMS_GATEWAY_CHARGING.enabled(domain)
 
+        direct_gateway_fee = fixed_gateway_fee = multipart_count = conversion_rate = None
+
         if is_gateway_billable:
-            if hasattr(backend_instance, "get_provider_charges"):
+            if backend_instance.using_api_to_get_fees:
                 if backend_message_id:
-                    status, price, multipart_count = backend_instance.get_provider_charges(backend_message_id)
-                    if status is None or status.lower() in [
-                        'accepted',
-                        'queued',
-                        'sending',
-                        'receiving',
-                    ] or price is None:
-                        raise RetryBillableTaskException("backend_message_id=%s" % backend_message_id)
-                    provider_charges = _ProviderChargeInfo(
-                        abs(Decimal(price)),
-                        SmsGatewayFee.get_by_criteria(
-                            backend_api_id,
-                            direction,
-                        ),
-                        multipart_count
+                    direct_gateway_fee, multipart_count = \
+                        cls.get_charge_details_through_api(backend_instance, backend_message_id)
+
+                    fixed_gateway_fee = SmsGatewayFee.get_by_criteria(
+                        backend_api_id,
+                        direction,
                     )
                 else:
                     log_smsbillables_error(
                         "Could not create gateway fee for message %s: no backend_message_id" % couch_id
                     )
-                    provider_charges = _ProviderChargeInfo(None, None, None)
-
-                gateway_fee = provider_charges.gateway_fee
-                direct_gateway_fee = provider_charges.provider_gateway_fee
-                multipart_count = provider_charges.multipart_count
             else:
-                gateway_fee = SmsGatewayFee.get_by_criteria(
+                fixed_gateway_fee = SmsGatewayFee.get_by_criteria(
                     backend_api_id,
                     direction,
-                    backend_instance=backend_instance,
+                    backend_instance=backend_id,
                     country_code=country_code,
                     national_number=national_number,
                 )
-                direct_gateway_fee = None
-                multipart_count = None
-            if gateway_fee:
-                conversion_rate = gateway_fee.currency.rate_to_default
-                if conversion_rate != 0:
-                    return _GatewayChargeInfo(gateway_fee, conversion_rate, direct_gateway_fee, multipart_count)
-                else:
-                    log_smsbillables_error(
-                        "Gateway fee conversion rate for currency %s is 0"
-                        % gateway_fee.currency.code
-                    )
-                    return _GatewayChargeInfo(gateway_fee, None, direct_gateway_fee, multipart_count)
+            if fixed_gateway_fee:
+                conversion_rate = cls.get_conversion_rate(fixed_gateway_fee)
             else:
                 log_smsbillables_error(
                     "No matching gateway fee criteria for SMS %s" % couch_id
                 )
-        return _GatewayChargeInfo(None, None, None, None)
+        return _ProviderChargeInfo(
+            direct_gateway_fee,
+            fixed_gateway_fee,
+            multipart_count,
+            conversion_rate
+        )
+
+    @classmethod
+    def get_conversion_rate(cls, fixed_gateway_fee):
+        conversion_rate = fixed_gateway_fee.currency.rate_to_default
+        if not conversion_rate:
+            log_smsbillables_error(
+                "Gateway fee conversion rate for currency %s is 0"
+                % fixed_gateway_fee.currency.code
+            )
+        return conversion_rate
+
+    @classmethod
+    def get_charge_details_through_api(cls, backend_instance, backend_message_id):
+        status, price, multipart_count = backend_instance.get_provider_charges(backend_message_id)
+        if status is None or status.lower() in [
+            'accepted',
+            'queued',
+            'sending',
+            'receiving',
+        ] or price is None:
+            raise RetryBillableTaskException("backend_message_id=%s" % backend_message_id)
+
+        return abs(Decimal(price)), multipart_count
 
     @classmethod
     def _get_usage_fee(cls, domain, direction):
@@ -423,59 +423,5 @@ class SmsBillable(models.Model):
             )
         return usage_fee
 
-_ProviderChargeInfo = namedtuple('_ProviderCharges', ['provider_gateway_fee', 'gateway_fee', 'multipart_count'])
-_GatewayChargeInfo = namedtuple('_GatewayChargeInfo', ['gateway_fee', 'conversion_rate', 'direct_gateway_fee', 'multipart_count'])
 
-
-def add_twilio_gateway_fee(apps):
-    default_currency, _ = apps.get_model(
-        'accounting', 'Currency'
-    ).objects.get_or_create(
-        code=settings.DEFAULT_CURRENCY
-    )
-
-    for direction in [INCOMING, OUTGOING]:
-        SmsGatewayFee.create_new(
-            SQLTwilioBackend.get_api_id(),
-            direction,
-            None,
-            fee_class=apps.get_model('smsbillables', 'SmsGatewayFee'),
-            criteria_class=apps.get_model('smsbillables', 'SmsGatewayFeeCriteria'),
-            currency=default_currency,
-        )
-
-
-def add_infobip_gateway_fee(apps):
-    default_currency, _ = apps.get_model(
-        'accounting', 'Currency'
-    ).objects.get_or_create(
-        code=settings.DEFAULT_CURRENCY
-    )
-
-    for direction in [INCOMING, OUTGOING]:
-        SmsGatewayFee.create_new(
-            InfobipBackend.get_api_id(),
-            direction,
-            None,
-            fee_class=apps.get_model('smsbillables', 'SmsGatewayFee'),
-            criteria_class=apps.get_model('smsbillables', 'SmsGatewayFeeCriteria'),
-            currency=default_currency,
-        )
-
-
-def add_pinpoint_gateway_fee(apps):
-    default_currency, _ = apps.get_model(
-        'accounting', 'Currency'
-    ).objects.get_or_create(
-        code=settings.DEFAULT_CURRENCY
-    )
-
-    for direction in [INCOMING, OUTGOING]:
-        SmsGatewayFee.create_new(
-            PinpointBackend.get_api_id(),
-            direction,
-            None,
-            fee_class=apps.get_model('smsbillables', 'SmsGatewayFee'),
-            criteria_class=apps.get_model('smsbillables', 'SmsGatewayFeeCriteria'),
-            currency=default_currency,
-        )
+_ProviderChargeInfo = namedtuple('_ProviderCharges', ['direct_gateway_fee', 'fixed_gateway_fee', 'multipart_count', 'conversion_rate'])
