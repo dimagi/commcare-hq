@@ -44,7 +44,7 @@ GROUP_MAPPING = {
         "name": {
             "fields": {
                 "exact": {
-                    "index": "not_analyzed",
+                    "index": "analyzed",
                     "type": "string",
                     "analyzer": "sortable_exact"
                 },
