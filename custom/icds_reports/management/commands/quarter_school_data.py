@@ -70,7 +70,7 @@ class Command(BaseCommand):
         self.write_to_file(final_state_data)
 
     def write_to_file(self, state_json_data):
-        with open('/home/cchq/preschool_quarter_data.csv', 'w') as fout:
+        with open('preschool_quarter_data.csv', 'w') as fout:
             writer = csv.writer(fout)
             state_data_in_list = [
                 'state_name',
