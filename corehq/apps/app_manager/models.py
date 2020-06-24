@@ -5788,6 +5788,7 @@ class GlobalAppConfig(models.Model):
 
     @quickcache(['self.app_id'])
     def get_latest_apk_version(self):
+        self.app  # noqa validate app
         if self.apk_prompt == "off":
             return {}
         else:
@@ -5801,6 +5802,7 @@ class GlobalAppConfig(models.Model):
 
     @quickcache(['self.app_id', 'build_profile_id'])
     def get_latest_app_version(self, build_profile_id):
+        self.app  # noqa validate app
         if self.app_prompt == "off":
             return {}
         else:
