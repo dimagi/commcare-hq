@@ -1,14 +1,48 @@
 hqDefine("app_manager/js/details/case_claim", function () {
+
+    var generateSemiRandomId = function () {
+        // https://stackoverflow.com/a/2117523
+        return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, function (c) {
+            return (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16);
+        });
+    };
+
     var searchViewModel = function (searchProperties, includeClosed, defaultProperties, lang,
         searchButtonDisplayCondition, blacklistedOwnerIdsExpression, saveButton) {
         var self = {},
             DEFAULT_CLAIM_RELEVANT = "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0";
 
-        var searchProperty = function (name, label, appearance) {
+        var itemSet = function (nodeset, label, value, sort) {
             var self = {};
+            self.nodeset = ko.observable(nodeset);
+            self.label = ko.observable(label);
+            self.value = ko.observable(value);
+            self.sort = ko.observable(sort);
+
+            self.nodeset.subscribe(function () {
+                saveButton.fire('change');
+            });
+            self.label.subscribe(function () {
+                saveButton.fire('change');
+            });
+            self.value.subscribe(function () {
+                saveButton.fire('change');
+            });
+            self.sort.subscribe(function () {
+                saveButton.fire('change');
+            });
+
+            return self;
+        };
+
+        var searchProperty = function (name, label, appearance, itemSet) {
+            var self = {};
+            self.uniqueId = generateSemiRandomId();
             self.name = ko.observable(name);
             self.label = ko.observable(label);
             self.appearance = ko.observable(appearance);
+
+            self.itemSet = itemSet;
 
             self.name.subscribe(function () {
                 saveButton.fire('change');
@@ -47,17 +81,29 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.blacklistedOwnerIdsExpression = ko.observable(blacklistedOwnerIdsExpression);
 
         if (searchProperties.length > 0) {
+            console.log(searchProperties);
             for (var i = 0; i < searchProperties.length; i++) {
                 // property labels come in keyed by lang.
                 var label = searchProperties[i].label[lang];
+                var appearance = searchProperties[i].appearance;
+                if (searchProperties[i].input_ === "select1") {
+                    appearance = "fixture";
+                }
+                var propItemSet = itemSet(
+                    searchProperties[i].itemset.instance,
+                    searchProperties[i].itemset.label,
+                    searchProperties[i].itemset.value,
+                    searchProperties[i].itemset.sort,
+                );
                 self.searchProperties.push(searchProperty(
                     searchProperties[i].name,
                     label,
-                    searchProperties[i].appearance,
+                    appearance,
+                    propItemSet,
                 ));
             }
         } else {
-            self.searchProperties.push(searchProperty('', '', ''));
+            self.searchProperties.push(searchProperty('', '', '', '', '', ''));
         }
 
         self.addProperty = function () {
@@ -78,6 +124,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         name: p.name(),
                         label: p.label().length ? p.label() : p.name(),  // If label isn't set, use name
                         appearance: p.appearance(),
+                        fixture: ko.toJSON(p.itemSet),
                     };
                 }
             );

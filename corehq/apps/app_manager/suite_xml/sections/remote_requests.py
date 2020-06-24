@@ -80,9 +80,9 @@ class RemoteRequestFactory(object):
         query_xpaths = [datum.ref for datum in self._get_remote_request_query_datums()]
         claim_relevant_xpaths = [self.module.search_config.relevant]
         prompt_select_instances = [
-            f"instance('{prop.itemset.id}')/{prop.itemset.path}"
+            prop.itemset.nodeset
             for prop in self.module.search_config.properties
-            if prop.itemset
+            if prop.itemset.nodeset
         ]
 
         instances, unknown_instances = get_all_instances_referenced_in_xpaths(
@@ -164,9 +164,9 @@ class RemoteRequestFactory(object):
                 kwargs['appearance'] = prop.appearance
             if prop.input_:
                 kwargs['input_'] = prop.input_
-            if prop.itemset.id:
+            if prop.itemset.nodeset:
                 kwargs['itemset'] = Itemset(
-                    nodeset=f"instance('{prop.itemset.id}')/{prop.itemset.path}",
+                    nodeset=prop.itemset.nodeset,
                     label_ref=prop.itemset.label,
                     value_ref=prop.itemset.value,
                     sort_ref=prop.itemset.sort,

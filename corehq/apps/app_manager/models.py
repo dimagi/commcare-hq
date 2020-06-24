@@ -2045,8 +2045,7 @@ class CaseList(IndexedSchema, NavMenuItemMediaMixin):
 
 
 class Itemset(DocumentSchema):
-    id = StringProperty()
-    path = StringProperty()
+    nodeset = StringProperty()
 
     label = StringProperty()
     value = StringProperty()
