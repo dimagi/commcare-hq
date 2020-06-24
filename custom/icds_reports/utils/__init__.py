@@ -2166,7 +2166,7 @@ def create_aww_activity_report(excel_data, data_type, config, aggregation_level)
     worksheet.merge_cells('B2:{0}2'.format(last_column))
     title_cell = worksheet['B2']
     title_cell.fill = PatternFill("solid", fgColor="4472C4")
-    title_cell.value = "Aww Activity Report"
+    title_cell.value = "AWW Activity Report"
     title_cell.font = Font(size=18, color="FFFFFF")
     title_cell.alignment = Alignment(horizontal="center")
 
