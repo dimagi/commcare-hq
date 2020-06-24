@@ -8,9 +8,14 @@ from pillowtop.logger import pillow_logging
 
 
 def _get_analysis(*names):
-    return {
+    analysis = {
         "analyzer": {name: ANALYZERS[name] for name in names}
     }
+    if "sortable_exact" in names and settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+        analysis.update({
+            "normalizer": {"sortable_exact": NORMALIZERS["sortable_exact"]}
+        })
+    return analysis
 
 
 ANALYZERS = {
@@ -28,6 +33,14 @@ ANALYZERS = {
         "tokenizer": "keyword",
         "filter": ["lowercase"]
     },
+}
+
+NORMALIZERS = {
+    "sortable_exact": {
+        "type": "custom",
+        "char_filter": [],
+        "filter": ["lowercase"]
+    }
 }
 
 REMOVE_SETTING = None

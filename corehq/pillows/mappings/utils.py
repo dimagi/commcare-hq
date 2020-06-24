@@ -54,6 +54,11 @@ def _transform_types(mapping):
             elif ("index", "not_analyzed") in items:
                 mapping["type"] = "keyword"
                 mapping.pop("index")
+                if ("analyzer", "sortable_exact") in items:
+                    # keywords don't support analyzers in ES7 anymore
+                    #   for this normalizers are introduced
+                    mapping.pop("analyzer")
+                    mapping["normalizer"] = "sortable_exact"
             else:
                 mapping["type"] = "text"
             if "null_value" in mapping:
