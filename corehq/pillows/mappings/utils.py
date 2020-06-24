@@ -1,6 +1,5 @@
 import json
 import os
-import copy
 
 from django.conf import settings
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
