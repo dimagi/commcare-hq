@@ -192,6 +192,18 @@ class PoshanProgressReport(object):
 
         return excel_rows
 
+    def _quarter_name(self, quarter):
+        quarter_months = ''
+        if quarter == 1:
+            quarter_months = 'January-March'
+        elif quarter == 2:
+            quarter_months = 'April-June'
+        elif quarter == 3:
+            quarter_months = 'July-September'
+        elif quarter == 4:
+            quarter_months = 'July-September'
+        return quarter_months
+
     def get_excel_data(self, location):
         aggregation_level = self.loc_level
         filters = {}
@@ -218,6 +230,13 @@ class PoshanProgressReport(object):
 
         export_filters.append(['Report Layout', self.layout.title()])
         export_filters.append(['Data Period', self.report_type.title()])
+        if self.report_type == 'month':
+            date = self.config['month']
+            export_filters.append(['Month', date.strftime("%B")])
+        else:
+            export_filters.append(['Quarter', self._quarter_name(int(self.quarter))])
+
+        export_filters.append(['Year', self.year])
 
         return [
             [
