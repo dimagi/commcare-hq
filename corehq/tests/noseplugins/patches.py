@@ -13,6 +13,7 @@ class PatchesPlugin(Plugin):
 
     def begin(self):
         patch_assertItemsEqual()
+        patch_django_TestCase_databases()
         fix_freezegun_bugs()
         patch_es_user_signals()
 
@@ -20,6 +21,16 @@ class PatchesPlugin(Plugin):
 def patch_assertItemsEqual():
     import unittest
     unittest.TestCase.assertItemsEqual = unittest.TestCase.assertCountEqual
+
+
+def patch_django_TestCase_databases():
+    """Lift restriction on database access in tests introduced in Django 2.2
+
+    For test performance it may be better to remove this and tag each
+    test with the databases it will query.
+    """
+    from django.test import TestCase
+    TestCase.databases = "__all__"
 
 
 GLOBAL_FREEZEGUN_IGNORE_LIST = ["kafka."]
