@@ -105,7 +105,7 @@ def reassign_household(domain, household_case_id, old_owner_id, new_owner_id, su
         }
         if supervisor_id:
             updates['location_reassignment_last_supervisor_id'] = supervisor_id
-        case_block = CaseBlock(case_id,
+        case_block = CaseBlock.deprecated_init(case_id,
                                update=updates,
                                owner_id=new_owner_id,
                                user_id=SYSTEM_USER_ID)
@@ -119,7 +119,7 @@ def reassign_household(domain, household_case_id, old_owner_id, new_owner_id, su
 def reassign_cases(domain, case_ids, new_owner_id):
     case_blocks = []
     for case_id in case_ids:
-        case_block = CaseBlock(case_id,
+        case_block = CaseBlock.deprecated_init(case_id,
                                owner_id=new_owner_id,
                                user_id=SYSTEM_USER_ID)
         case_block = ElementTree.tostring(case_block.as_xml()).decode('utf-8')
