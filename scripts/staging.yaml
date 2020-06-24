@@ -62,5 +62,6 @@ branches:
   - fr/multiple-api-keys
   - jls/turn-off-analytics-logging # Jenny June 19
   - nemanja1040:gateways_refactor  # Nemanja Stancic June 23
+  - sr-es-alias # Sravan June 24
 
 submodules: {}
