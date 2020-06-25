@@ -20,8 +20,8 @@ class AuthenticateAsFormTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.mobile_worker.delete()
-        cls.regular.delete()
+        cls.mobile_worker.delete(deleted_by=None)
+        cls.regular.delete(deleted_by=None)
         cls.domain.delete()
         super(AuthenticateAsFormTest, cls).tearDownClass()
 
@@ -82,8 +82,8 @@ class AuthenticateAsIntegrationTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.user.delete(deleted_by=None)
-        cls.mobile_worker.delete()
-        cls.regular.delete()
+        cls.mobile_worker.delete(deleted_by=None)
+        cls.regular.delete(deleted_by=None)
         cls.domain.delete()
         super(AuthenticateAsIntegrationTest, cls).tearDownClass()
 

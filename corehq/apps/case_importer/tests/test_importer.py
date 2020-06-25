@@ -539,4 +539,4 @@ def get_commcare_user(domain_name):
     try:
         yield user
     finally:
-        user.delete()
+        user.delete(deleted_by=None)
