@@ -9,7 +9,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sms', '0041_email'),
+        ('sms', '0042_infobip_pinpoint_backends'),
     ]
 
     operations = [
