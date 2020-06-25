@@ -200,4 +200,4 @@ def get_maintenance_alert_active():
 
 
 metrics_gauge_task('commcare.maintenance_alerts.active', get_maintenance_alert_active,
-                   run_every=crontab(minute=1))
+                   run_every=crontab(minute=1), multiprocess_mode='max')

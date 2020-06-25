@@ -186,7 +186,7 @@ def metrics_histogram(
     )
 
 
-def metrics_gauge_task(name, fn, run_every):
+def metrics_gauge_task(name, fn, run_every, multiprocess_mode='all'):
     """
     Helper for easily registering gauges to run periodically
 
@@ -199,6 +199,8 @@ def metrics_gauge_task(name, fn, run_every):
             'commcare.my.metric', my_calculation_function, run_every=crontab(minute=0)
         )
 
+    kwargs:
+        multiprocess_mode: See PrometheusMetrics._gauge for documentation.
     """
     _enforce_prefix(name, 'commcare')
 

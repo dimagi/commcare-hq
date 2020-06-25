@@ -596,4 +596,4 @@ def queued_sms():
     return QueuedSMS.objects.count()
 
 
-metrics_gauge_task('commcare.sms.queued', queued_sms, run_every=crontab())
+metrics_gauge_task('commcare.sms.queued', queued_sms, run_every=crontab(), multiprocess_mode='max')
