@@ -157,6 +157,7 @@ def refresh_elasticsearch_index(index_name):
     es.indices.refresh(index=es_meta.alias)
 
 
+# Todo; These names can be migrated to use hq_index_name attribute constants in future
 ES_META = {
     "forms": XFORM_INDEX_INFO,
     "cases": CASE_INDEX_INFO,
