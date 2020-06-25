@@ -24,7 +24,7 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
         legendTitle: 'Percentage Children',
     };
     vm.filters = ['age', 'data_period'];
-    vm.rightLegend.info = 'Of the total number of children enrolled for Anganwadi Services who are between 1-2 years old, the percentage of children who have received the complete immunization as per the National Immunization Schedule of India that is required by age 1.<br/><br/>This includes the following immunizations:<br/>If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1'
+    vm.rightLegend.info = 'Of the total number of children enrolled for Anganwadi Services who are between 1-2 years old, the percentage of children who have received the complete immunization as per the National Immunization Schedule of India that is required by age 1.<br/><br/>This includes the following immunizations:<br/>If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1';
 
 
     vm.getPopupData = function (row) {
@@ -72,14 +72,14 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
                 indicator_name: 'Total number of ICDS Child beneficiaries between 1-2 years old: ',
                 indicator_value: $filter('indiaNumbers')(dataInMonth.all),
             },
-                {
-                    indicator_name: 'Total number of children between 1-2 years old who have received complete immunizations required by age 1: ',
-                    indicator_value: $filter('indiaNumbers')(dataInMonth.in_month),
-                },
-                {
-                    indicator_name: '% of children between 1-2 years old who have received complete immunizations required by age 1: ',
-                    indicator_value: d3.format('.2%')(dataInMonth.y),
-                }]
+            {
+                indicator_name: 'Total number of children between 1-2 years old who have received complete immunizations required by age 1: ',
+                indicator_value: $filter('indiaNumbers')(dataInMonth.in_month),
+            },
+            {
+                indicator_name: '% of children between 1-2 years old who have received complete immunizations required by age 1: ',
+                indicator_value: d3.format('.2%')(dataInMonth.y),
+            }]
         );
     };
 }

@@ -76,7 +76,7 @@ def get_immunization_coverage_data_map(domain, config, loc_level, show_test=Fals
             "extended_info": [
                 {
                     'indicator': 'Total number of ICDS Child beneficiaries between 1-2 years old{}:'
-                        .format(chosen_filters),
+                    .format(chosen_filters),
                     'value': indian_formatted_number(valid_total)
                 },
                 {

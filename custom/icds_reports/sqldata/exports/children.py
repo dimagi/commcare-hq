@@ -376,22 +376,21 @@ class ChildrenExport(ExportableMixin, IcdsSqlData):
                                              AliasColumn('weighed_and_born_in_month'),
                                              slug='weighed_and_born_in_month'))
 
-        agg_columns.insert(37,  AggregateColumn('No. of children between 1-2 years old who completed 1'
-                                                ' year immunization',
-                                                lambda x, y: ((x or 0) + (y or 0)),
-                                                [
-                                                    SumWhen(
-                                                        whens=[["age_tranche <= :age_24",
-                                                                'fully_immunized_on_time']],
-                                                        alias='fully_immunized_on_time_num'
-                                                        ),
-                                                    SumWhen(
-                                                        whens=[["age_tranche <= :age_24",
-                                                                'fully_immunized_late']],
-                                                        alias='fully_immunized_late_num'
-                                                        )
-                                                ],
-                                                slug='num_immun_children'))
+        agg_columns.insert(37, AggregateColumn('No. of children between 1-2 years old who completed 1'
+                                               ' year immunization',
+                                               lambda x, y: ((x or 0) + (y or 0)),
+                                               [
+                                                   SumWhen(
+                                                       whens=[["age_tranche <= :age_24",
+                                                               'fully_immunized_on_time']],
+                                                       alias='fully_immunized_on_time_num'
+                                                       ),
+                                                   SumWhen(
+                                                       whens=[["age_tranche <= :age_24",
+                                                               'fully_immunized_late']],
+                                                       alias='fully_immunized_late_num'
+                                                      )
+                                                ], slug='num_immun_children'))
         agg_columns.insert(38, DatabaseColumn('Total no. of children from age >12 months and <= 24',
                                               SumWhen(
                                                   whens=[["age_tranche <= :age_24",
