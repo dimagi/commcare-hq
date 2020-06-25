@@ -36,8 +36,10 @@ class _CSVWorkbookAdaptor(object):
     def to_workbook(self):
         rows = []
 
-        # Loop through the rows, and add each row's contents to rows.
+        # Loop through the rows, and add each row's contents to rows, making sure
+        # not escape '\u' characters.
         for row in csv.reader(self._file, delimiter=","):
-            rows.append(row)
+            row_decoded = [column.encode().decode('unicode-escape') for column in row]
+            rows.append(row_decoded)
 
         return Workbook(worksheets=[make_worksheet(rows, title='Sheet1')])

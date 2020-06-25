@@ -65,7 +65,7 @@ def test_xlsx_types(self, open_workbook, ext):
         )
 
 
-@run_on_csv_adapter
+@run_on_csv_adapter(SpreadsheetCellTypeTest)
 def test_csv_types(self, open_workbook, ext):
     with open_workbook(get_file('types', ext)) as workbook:
         self.assert_workbooks_equal(
@@ -86,8 +86,8 @@ def test_csv_types(self, open_workbook, ext):
                         ['Empty', ''],
                         ['Percent', '49%'],
                         ['Calculation', '2'],
-                        ['Styled', 'Sطαйλד'],
-                        ['Empty Date', None],
+                        ['Styled', 'Sطαйλד tэξţ'],
+                        ['Empty Date', ''],
                     ]),
                 ]
             )
