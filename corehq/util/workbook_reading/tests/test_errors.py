@@ -3,7 +3,10 @@ from django.test import SimpleTestCase
 from corehq.util.workbook_reading import SpreadsheetFileNotFound, SpreadsheetFileInvalidError, \
     SpreadsheetFileExtError, open_any_workbook, SpreadsheetFileEncrypted
 from corehq.util.workbook_reading.tests.utils import (
-    run_on_all_adapters, run_on_csv_adapter, run_on_all_adapters_except_csv, get_file
+    get_file,
+    run_on_all_adapters,
+    run_on_all_adapters_except_csv,
+    run_on_csv_adapter,
 )
 
 
