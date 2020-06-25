@@ -112,7 +112,7 @@ def _get_form_designer_view(request, domain, app, module, form):
         ))
         return back_to_main(request, domain, app_id=app.id)
 
-    if form.no_vellum:
+    if form.form_type == "shadow_form":
         messages.warning(request, _(
             "You tried to edit this form in the Form Builder. "
             "However, your administrator has locked this form against editing "

@@ -11,7 +11,7 @@
     </a>
 
     <a id="view_form_{{ module.unique_id }}_{{ form.unique_id }}_sidebar"
-       {% if form.no_vellum %}
+       {% if form.form_type == 'shadow_form' %}
        href="{% url "view_form" domain app.id form.unique_id %}"
        {% else %}
        href="{% url "form_source" domain app.id form.unique_id %}"
@@ -23,7 +23,7 @@
        data-label="Edit Pen"
        class="appnav-title
               track-usage-link
-              {% if not form.no_vellum %}appnav-title-secondary {% endif %}
+              {% if form.form_type != 'shadow_form' %}appnav-title-secondary {% endif %}
               appnav-responsive">
             <i class="drag_handle appnav-drag-icon"></i>
         <i
@@ -50,7 +50,7 @@
         </span>
     </a>
 
-    {% if not form.no_vellum %}
+    {% if form.form_type != 'shadow_form' %}
     <a href="{% url "view_form" domain app.id form.unique_id %}"
        data-moduleid="{{ module.id }}"
        data-formid="{{ form.id }}"
