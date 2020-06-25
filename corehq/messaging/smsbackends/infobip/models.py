@@ -3,11 +3,15 @@ import json
 from corehq.apps.sms.models import SQLSMSBackend, SMS
 from corehq.apps.sms.util import clean_phone_number
 from corehq.messaging.smsbackends.infobip.forms import InfobipBackendForm
-from corehq.messaging.smsbackends.turn.models import is_whatsapp_template_message, get_template_hsm_parts
-from corehq.messaging.smsbackends.turn.exceptions import WhatsAppTemplateStringException
+from corehq.apps.smsbillables.exceptions import RetryBillableTaskException
+from corehq.messaging.whatsapputil import (
+    WhatsAppTemplateStringException,
+    is_whatsapp_template_message,
+    get_template_hsm_parts, WA_TEMPLATE_STRING,
+    extract_error_message_from_template_string
+)
 
 INFOBIP_DOMAIN = "api.infobip.com"
-WA_TEMPLATE_STRING = "cc_wa_template"
 
 
 class InfobipRetry(Exception):
@@ -19,6 +23,8 @@ class InfobipBackend(SQLSMSBackend):
     class Meta(object):
         app_label = 'sms'
         proxy = True
+
+    using_api_to_get_fees = True
 
     @classmethod
     def get_available_extra_fields(cls):
@@ -80,11 +86,20 @@ class InfobipBackend(SQLSMSBackend):
             'voice': {'text': msg.text},
             'sms': {'text': msg.text}
         }
+        url = f'https://{config.personalized_subdomain}.{INFOBIP_DOMAIN}/omni/1/advanced'
+
         if is_whatsapp_template_message(msg.text):
+            if msg.invalid_survey_response:
+                error_message = extract_error_message_from_template_string(msg.text)
+                if error_message:
+                    payload['whatsApp'] = {'text': error_message}
+                    requests.post(url, json=payload, headers=headers)
+
             try:
                 parts = get_template_hsm_parts(msg.text)
             except WhatsAppTemplateStringException:
                 msg.set_system_error(SMS.ERROR_MESSAGE_FORMAT_INVALID)
+
             payload['whatsApp'] = {
                 'templateName': parts.template_name,
                 'language': parts.lang_code,
@@ -93,7 +108,6 @@ class InfobipBackend(SQLSMSBackend):
         else:
             payload['whatsApp'] = {'text': msg.text}
 
-        url = f'https://{config.personalized_subdomain}.{INFOBIP_DOMAIN}/omni/1/advanced'
         response = requests.post(url, json=payload, headers=headers)
         self.handle_response(response, msg)
 
@@ -131,12 +145,7 @@ class InfobipBackend(SQLSMSBackend):
         url = f'https://{self.config.personalized_subdomain}.{INFOBIP_DOMAIN}' \
             f'/whatsapp/1/senders/{self.config.reply_to_phone_number}/templates'
         response = requests.get(url, headers=headers)
-        templates = []
-        try:
-            templates = json.loads(response.content).get('templates')
-        except Exception:
-            raise
-        return templates
+        return json.loads(response.content).get('templates')
 
     @classmethod
     def generate_template_string(cls, template):
@@ -145,5 +154,39 @@ class InfobipBackend(SQLSMSBackend):
 
         template_text = template.get("body", "")
         num_params = template_text.count("{") // 2  # each parameter is bracketed by {{}}
-        parameters = ",".join([f"{{var{i}}}" for i in range(1, num_params + 1)])
+        parameters = ",".join(f"{{var{i}}}" for i in range(1, num_params + 1))
         return f"{WA_TEMPLATE_STRING}:{template['name']}:{template['language']}:{parameters}"
+
+    def get_message(self, backend_message_id):
+        try:
+            config = self.config
+            api_channel = '/sms/1'
+            api_suffix = '/reports'
+            if config.scenario_key:
+                api_channel = '/omni/1'
+
+            headers = {
+                'Authorization': f'App {config.auth_token}',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+            parameters = {
+                'messageId': backend_message_id
+            }
+            messages = self._get_message_details(api_channel, api_suffix, config, headers, parameters)
+            if not messages:
+                api_suffix = '/logs'
+                messages = self._get_message_details(api_channel, api_suffix, config, headers, parameters)
+            return messages[0]
+        except Exception as e:
+            raise RetryBillableTaskException(str(e))
+
+    def _get_message_details(self, api_channel, api_suffix, config, headers, parameters):
+        url = f'https://{config.personalized_subdomain}.{INFOBIP_DOMAIN}{api_channel}{api_suffix}'
+        response = requests.get(url, params=parameters, headers=headers)
+        return response.json()['results']
+
+    def get_provider_charges(self, backend_message_id):
+        message = self.get_message(backend_message_id)
+        segments = message['messageCount'] if 'messageCount' in message else message['smsCount']
+        return message['status']['name'], message['price']['pricePerMessage'], int(segments)

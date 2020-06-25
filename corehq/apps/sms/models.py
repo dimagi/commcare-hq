@@ -2406,6 +2406,9 @@ class SQLSMSBackend(SQLMobileBackend):
     def send(self, msg, *args, **kwargs):
         raise NotImplementedError("Please implement this method.")
 
+    # Override in case backend is fetching gateway fees through provider API
+    using_api_to_get_fees = False
+
     @classmethod
     def get_opt_in_keywords(cls):
         """
