@@ -36,7 +36,7 @@ class Command(BaseCommand):
             sql_to_execute = sql_file.read()
             sql_to_execute = sql_to_execute.format(ls_usage_ucr=ls_usage_ucr, tablename=tablename,
                                                    next_month_start=next_month_start)
-            sql_to_execute = sql_to_execute.split(';')
+            sql_to_execute = sql_to_execute.split(';')[:-1]
             for j in range(0, len(sql_to_execute)):
                 _run_custom_sql_script(sql_to_execute[j])
 
@@ -46,14 +46,14 @@ class Command(BaseCommand):
             _run_custom_sql_script(query)
 
     def handle(self, *args, **kwargs):
-        start_date = kwargs['start_date'] if kwargs['start_date'] else date(2017, 3, 1)
-        end_date = date(2020, 1, 1)
+        start_date = kwargs['start_date'] if kwargs['start_date'] else date(2018, 11, 1)
+        end_date = date(2019, 11, 1)
         month = start_date
         while month < end_date:
             next_month_start = month + relativedelta(months=1)
-            month = month + relativedelta(months=1)
             self.fix_intial_table(month, next_month_start)
             self.rollup_query_data(month)
+            month = month + relativedelta(months=1)
 
     def _tablename_func(self, agg_level, month):
         return "{}_{}_{}".format('agg_ls', month.strftime("%Y-%m-%d"), agg_level)
