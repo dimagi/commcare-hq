@@ -1,7 +1,10 @@
-from corehq.util.workbook_reading import (
-    open_csv_workbook, open_xls_workbook, open_xlsx_workbook, open_any_workbook
-)
 from corehq.util.test_utils import generate_cases, make_make_path
+from corehq.util.workbook_reading import (
+    open_any_workbook,
+    open_csv_workbook,
+    open_xls_workbook,
+    open_xlsx_workbook,
+)
 
 _make_path = make_make_path(__file__)
 
