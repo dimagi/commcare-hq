@@ -404,7 +404,7 @@ def timelimit(limit):
     if callable(limit):
         return timelimit((limit, timedelta(seconds=1)))
     if not isinstance(limit, tuple):
-        limit = timedelta(seconds=100000000)
+        limit = timedelta(seconds=limit)
         return lambda func: timelimit((func, limit))
     func, limit = limit
     @wraps(func)
