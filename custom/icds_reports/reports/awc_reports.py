@@ -374,24 +374,20 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
             age_filters,
             wfh_recorded_in_month_column(icds_feature_flag)
         )
-        fully_immunized_on_time = 'fully_immunized_on_time'
-        fully_immunized_late = 'fully_immunized_late'
-        fully_immunized_eligible = 'fully_immunized_eligible'
 
-        if icds_feature_flag:
-            immunization_age_filter = {'age_tranche__lte': 24}
-            fully_immunized_on_time = include_records_by_age_for_column(
-                immunization_age_filter,
-                fully_immunized_on_time
-            )
-            fully_immunized_late = include_records_by_age_for_column(
-                immunization_age_filter,
-                fully_immunized_late
-            )
-            fully_immunized_eligible = include_records_by_age_for_column(
-                immunization_age_filter,
-                fully_immunized_eligible
-            )
+        immunization_age_filter = {'age_tranche__lte': 24}
+        fully_immunized_on_time = include_records_by_age_for_column(
+            immunization_age_filter,
+            'fully_immunized_on_time'
+        )
+        fully_immunized_late = include_records_by_age_for_column(
+            immunization_age_filter,
+            'fully_immunized_late'
+        )
+        fully_immunized_eligible = include_records_by_age_for_column(
+            immunization_age_filter,
+            'fully_immunized_eligible'
+        )
 
         queryset = AggChildHealthMonthly.objects.filter(
             month=date, **config
@@ -647,13 +643,12 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Immunization Coverage (at age 1 year)'),
                     'help_text': _((
-                        "Of the total number of children enrolled for Anganwadi Services who are over a year old, "
-                        "the percentage of children who have received the complete immunization as per the "
-                        "National Immunization Schedule of India that is required by age 1."
-                        "<br/><br/> "
-                        "This includes the following immunizations:<br/> "
-                        "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/> "
-                        "If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1"
+                        "Of the total number of children enrolled for Anganwadi Services who are between"
+                        " 1-2 years old, the percentage of children who have received the complete immunization"
+                        " as per the National Immunization Schedule of India that is required by age 1."
+                        "<br/><br/> This includes the following immunizations:<br/> If Pentavalent path: Penta1/2/3,"
+                        " OPV1/2/3, BCG, Measles, VitA1<br/> If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3,"
+                        " BCG, Measles, VitA1"
                     )),
                     'percent': percent_diff(
                         'immunized',
@@ -698,14 +693,6 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
             ]
         ]
     }
-    if icds_feature_flag:
-        kpi_dict['kpi'][4][0]['help_text'] = _((
-            "Of the total number of children enrolled for Anganwadi Services who are between"
-            " 1-2 years old, the percentage of children who have received the complete immunization"
-            " as per the National Immunization Schedule of India that is required by age 1."
-            "<br/><br/> This includes the following immunizations:<br/> If Pentavalent path: Penta1/2/3,"
-            " OPV1/2/3, BCG, Measles, VitA1<br/> If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3,"
-            " BCG, Measles, VitA1"))
     return kpi_dict
 
 

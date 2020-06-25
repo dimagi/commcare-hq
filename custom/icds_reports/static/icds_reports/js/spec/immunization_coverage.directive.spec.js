@@ -214,7 +214,7 @@ describe('Immunization Coverage Directive', function () {
 
 });
 
-describe('Immunization Coverage Directive feature flag enable', function () {
+describe('Immunization Coverage Directive 1-2 years', function () {
 
     var $scope, $httpBackend, $location, controller, controllermapOrSectorView;
 
@@ -224,7 +224,7 @@ describe('Immunization Coverage Directive feature flag enable', function () {
 
     beforeEach(module('icdsApp', function ($provide) {
         utils.provideDefaultConstants($provide, {includeGenders: true});
-        $provide.constant("haveAccessToFeatures", true);
+        $provide.constant("haveAccessToFeatures", false);
 
     }));
 
