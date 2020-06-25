@@ -55,7 +55,6 @@ def _handle_app(domain_link, model, user, build_and_release=False):
             error_prefix = _("Updated app but did not build or release: ")
             build = app.make_build()
             build.is_released = True
-            raise Exception("couldn't save!")
             build.save(increment_version=False)
     except Exception as e:  # intentionally broad
         return error_prefix + str(e)
