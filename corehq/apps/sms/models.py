@@ -189,6 +189,7 @@ class SMSBase(UUIDGeneratorMixin, Log):
     ERROR_CONTACT_IS_INACTIVE = 'CONTACT_IS_INACTIVE'
     ERROR_TRIAL_SMS_EXCEEDED = 'TRIAL_SMS_EXCEEDED'
     ERROR_MESSAGE_FORMAT_INVALID = 'MESSAGE_FORMAT_INVALID'
+    STATUS_PENDING = 'STATUS_PENDING'
 
     ERROR_MESSAGES = {
         ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS:
@@ -271,6 +272,15 @@ class SMSBase(UUIDGeneratorMixin, Log):
             smsutil.clean_phone_number(self.phone_number),
             domain=self.domain
         )
+
+    def set_status_pending(self):
+        """Mark message as sent with backend status pending"""
+        self.error = False
+        self.system_error_message = SMSBase.STATUS_PENDING
+        self.save()
+
+    def is_status_pending(self):
+        return not self.error and self.system_error_message == SMSBase.STATUS_PENDING
 
 
 class SMS(SMSBase):

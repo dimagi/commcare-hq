@@ -110,9 +110,9 @@ class InfobipBackend(SQLSMSBackend):
         self.handle_response(response, msg)
 
     def handle_response(self, response, msg):
+        if response.status_code == 500:
+            raise InfobipRetry("Gateway 500 error")
         if response.status_code != 200:
-            if response.status_code == 500:
-                raise InfobipRetry("Gateway 500 error")
             msg.set_gateway_error(response.status_code)
             return
         data = json.loads(response.content)
