@@ -1,3 +1,4 @@
+from django.conf import settings
 from nose.plugins import Plugin
 
 from corehq.util.es.testing import patch_es_user_signals
@@ -30,7 +31,16 @@ def patch_django_TestCase_databases():
     test with the databases it will query.
     """
     from django.test import TestCase
-    TestCase.databases = "__all__"
+    # According to the docs it should be possible to allow tests to
+    # access all databases with `TestCase.databses = '_all__'`
+    # https://docs.djangoproject.com/en/2.2/topics/testing/tools/#multi-database-support
+    #
+    # Unfortunately support for '__all__' appears to be buggy:
+    # django.db.utils.ConnectionDoesNotExist: The connection _ doesn't exist
+    #
+    # Similar error reported elsewhere:
+    # https://code.djangoproject.com/ticket/30541
+    TestCase.databases = settings.DATABASES.keys()
 
 
 GLOBAL_FREEZEGUN_IGNORE_LIST = ["kafka."]
