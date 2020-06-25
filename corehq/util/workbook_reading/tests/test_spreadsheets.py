@@ -1,14 +1,15 @@
-from datetime import datetime, date, time
-from django.test import SimpleTestCase
-from corehq.util.workbook_reading import (
-    Workbook,
-    Worksheet,
-    make_worksheet,
-)
-from corehq.util.workbook_reading.tests.utils import get_file, run_on_all_adapters
-from corehq.util.test_utils import make_make_path
+from datetime import date, datetime, time
 from itertools import zip_longest
 
+from django.test import SimpleTestCase
+
+from corehq.util.test_utils import make_make_path
+from corehq.util.workbook_reading import Workbook, Worksheet, make_worksheet
+from corehq.util.workbook_reading.tests.utils import (
+    get_file,
+    run_on_all_adapters_except_csv,
+    run_on_csv_adapter,
+)
 
 _make_path = make_make_path(__file__)
 
@@ -35,7 +36,7 @@ class SpreadsheetCellTypeTest(SimpleTestCase):
             self.assertEqual(self_row, other_row)
 
 
-@run_on_all_adapters(SpreadsheetCellTypeTest)
+@run_on_all_adapters_except_csv(SpreadsheetCellTypeTest)
 def test_xlsx_types(self, open_workbook, ext):
     with open_workbook(get_file('types', ext)) as workbook:
         self.assert_workbooks_equal(
@@ -56,7 +57,36 @@ def test_xlsx_types(self, open_workbook, ext):
                         ['Empty', None],
                         ['Percent', 0.49],
                         ['Calculation', 2],
-                        ['Styled', 'Sطαйλד' if ext == 'csv' else 'Styled'],
+                        ['Styled', 'Styled'],
+                        ['Empty Date', None],
+                    ]),
+                ]
+            )
+        )
+
+
+@run_on_csv_adapter
+def test_csv_types(self, open_workbook, ext):
+    with open_workbook(get_file('types', ext)) as workbook:
+        self.assert_workbooks_equal(
+            workbook,
+            Workbook(
+                worksheets=[
+                    make_worksheet(title='Sheet1', rows=[
+                        ['String', 'Danny'],
+                        ['Date', '7/7/1988'],
+                        ['Date Time', '1/1/2016 12:00'],
+                        ['Time', '12:00 PM'],
+                        ['Midnight', '12:00 AM'],
+                        ['Int', '28'],
+                        ['Int.0', '5.0'],
+                        ['Float', '5.1'],
+                        ['Bool-F', 'FALSE'],
+                        ['Bool-T', 'TRUE'],
+                        ['Empty', ''],
+                        ['Percent', '49%'],
+                        ['Calculation', '2'],
+                        ['Styled', 'Sطαйλד'],
                         ['Empty Date', None],
                     ]),
                 ]

@@ -8,7 +8,6 @@ from corehq.util.workbook_reading import (
     Workbook,
 )
 from .raw_data import make_worksheet
-from .utils import format_str_to_its_type
 
 
 @contextmanager
@@ -37,11 +36,8 @@ class _CSVWorkbookAdaptor(object):
     def to_workbook(self):
         rows = []
 
-        # Loop through the rows, and change any string to its appropriate type.
+        # Loop through the rows, and add each row's contents to rows.
         for row in csv.reader(self._file, delimiter=","):
-            formatted_row = []
-            for column in row:
-                formatted_row.append(format_str_to_its_type(column))
-            rows.append(formatted_row)
+            rows.append(row)
 
         return Workbook(worksheets=[make_worksheet(rows, title='Sheet1')])
