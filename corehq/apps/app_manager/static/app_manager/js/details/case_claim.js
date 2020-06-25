@@ -53,7 +53,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 self.searchProperties.push(searchProperty(
                     searchProperties[i].name,
                     label,
-                    searchProperties[i].appearance,
+                    searchProperties[i].appearance
                 ));
             }
         } else {
