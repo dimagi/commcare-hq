@@ -558,10 +558,14 @@ function DateTimeEntryBase(question, options) {
         isPhoneMode = ko.utils.unwrapObservable(displayOpts.phoneMode);
 
     EntrySingleAnswer.call(self, question, options);
+
+    // Set year ranges
+    yearEnd = thisYear + 10
+    yearStart = thisYear - 100
     // Set max date to 10 years in the future
-    maxDate = moment(thisYear + 10, 'YYYY').toDate();
+    maxDate = moment(yearEnd, 'YYYY').toDate();
     // Set min date to 100 years in the past
-    minDate = moment(thisYear - 100, 'YYYY').toDate();
+    minDate = moment(yearStart, 'YYYY').toDate();
 
     self.afterRender = function () {
         self.$picker = $('#' + self.entryId);
@@ -574,8 +578,8 @@ function DateTimeEntryBase(question, options) {
             value: self.answer() ? self.convertServerToClientFormat(self.answer()) : self.answer(),
             maxDate: maxDate,
             minDate: minDate,
-            yearStart: thisYear - 100,
-            yearEnd: thisYear + 10,
+            yearEnd: yearEnd,
+            yearStart: yearStart,
             scrollInput: false,
             onChangeDateTime: function (newDate) {
                 if (!newDate) {
