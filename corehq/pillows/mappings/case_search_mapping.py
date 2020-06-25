@@ -1,7 +1,7 @@
 from corehq.pillows.mappings.case_mapping import CASE_ES_TYPE
 from corehq.pillows.mappings.utils import mapping_from_json
 from corehq.util.elastic import prefix_for_tests
-from pillowtop.es_utils import ElasticsearchIndexInfo
+from pillowtop.es_utils import ElasticsearchIndexInfo, CASE_SEARCH_HQ_INDEX_NAME
 
 
 CASE_SEARCH_INDEX = prefix_for_tests("case_search_2018-05-29")
@@ -15,4 +15,5 @@ CASE_SEARCH_INDEX_INFO = ElasticsearchIndexInfo(
     alias=CASE_SEARCH_ALIAS,
     type=CASE_ES_TYPE,
     mapping=CASE_SEARCH_MAPPING,
+    hq_index_name=CASE_SEARCH_HQ_INDEX_NAME,
 )

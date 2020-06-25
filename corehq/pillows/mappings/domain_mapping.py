@@ -1,5 +1,5 @@
 from corehq.util.elastic import prefix_for_tests
-from pillowtop.es_utils import ElasticsearchIndexInfo
+from pillowtop.es_utils import ElasticsearchIndexInfo, DOMAIN_HQ_INDEX_NAME
 
 DOMAIN_INDEX = prefix_for_tests("hqdomains_2020-02-10")
 DOMAIN_ES_ALIAS = prefix_for_tests('hqdomains')
@@ -263,4 +263,5 @@ DOMAIN_INDEX_INFO = ElasticsearchIndexInfo(
     alias=DOMAIN_ES_ALIAS,
     type='hqdomain',
     mapping=DOMAIN_MAPPING,
+    hq_index_name=DOMAIN_HQ_INDEX_NAME
 )

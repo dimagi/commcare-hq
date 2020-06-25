@@ -1,5 +1,5 @@
 from corehq.util.elastic import prefix_for_tests
-from pillowtop.es_utils import ElasticsearchIndexInfo
+from pillowtop.es_utils import ElasticsearchIndexInfo, GROUP_HQ_INDEX_NAME
 
 GROUP_INDEX = prefix_for_tests("hqgroups_2017-05-29")
 GROUP_ES_ALIAS = prefix_for_tests('hqgroups')
@@ -70,4 +70,5 @@ GROUP_INDEX_INFO = ElasticsearchIndexInfo(
     alias=GROUP_ES_ALIAS,
     type='group',
     mapping=GROUP_MAPPING,
+    hq_index_name=GROUP_HQ_INDEX_NAME
 )

@@ -40,6 +40,17 @@ ES_ENV_SETTINGS = {
     },
 }
 
+XFORM_HQ_INDEX_NAME = "forms"
+CASE_HQ_INDEX_NAME = "cases"
+USER_HQ_INDEX_NAME = "users"
+DOMAIN_HQ_INDEX_NAME = "domains"
+APP_HQ_INDEX_NAME = "apps"
+GROUP_HQ_INDEX_NAME = "groups"
+SMS_HQ_INDEX_NAME = "sms"
+REPORT_CASE_HQ_INDEX_NAME = "report_cases"
+REPORT_XFORM_HQ_INDEX_NAME = "report_xforms"
+CASE_SEARCH_HQ_INDEX_NAME = "case_search"
+
 ES_INDEX_SETTINGS = {
     # Default settings for all indexes on ElasticSearch
     'default': {
@@ -49,21 +60,21 @@ ES_INDEX_SETTINGS = {
         },
     },
     # Default settings for aliases on all environments (overrides default settings)
-    'hqdomains': {
+    DOMAIN_HQ_INDEX_NAME: {
         "settings": {
             "number_of_replicas": 0,
             "analysis": _get_analysis('default', 'comma'),
         },
     },
 
-    'hqapps': {
+    APP_HQ_INDEX_NAME: {
         "settings": {
             "number_of_replicas": 0,
             "analysis": _get_analysis('default'),
         },
     },
 
-    'hqusers': {
+    USER_HQ_INDEX_NAME: {
         "settings": {
             "number_of_shards": 2,
             "number_of_replicas": 0,
@@ -78,6 +89,7 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
     alias = jsonobject.StringProperty()
     type = jsonobject.StringProperty()
     mapping = jsonobject.DictProperty()
+    hq_index_name = jsonobject.StringProperty()
 
     def __str__(self):
         return '{} ({})'.format(self.alias, self.index)
@@ -86,21 +98,20 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
     def meta(self):
         from corehq.util.elastic import TEST_ES_PREFIX
         # the setting overrides are defined without prefix, so look them without prefix
-        alias = self.alias.replace(TEST_ES_PREFIX, '')
         meta_settings = deepcopy(ES_INDEX_SETTINGS['default'])
         meta_settings.update(
-            ES_INDEX_SETTINGS.get(alias, {})
+            ES_INDEX_SETTINGS.get(self.hq_index_name, {})
         )
         meta_settings.update(
-            ES_INDEX_SETTINGS.get(settings.SERVER_ENVIRONMENT, {}).get(alias, {})
+            ES_INDEX_SETTINGS.get(settings.SERVER_ENVIRONMENT, {}).get(self.hq_index_name, {})
         )
 
         overrides = copy(ES_ENV_SETTINGS)
         if settings.ES_SETTINGS is not None:
             overrides.update({settings.SERVER_ENVIRONMENT: settings.ES_SETTINGS})
 
-        for alias in ['default', alias]:
-            for key, value in overrides.get(settings.SERVER_ENVIRONMENT, {}).get(alias, {}).items():
+        for hq_index_name in ['default', self.hq_index_name]:
+            for key, value in overrides.get(settings.SERVER_ENVIRONMENT, {}).get(self.hq_index_name, {}).items():
                 if value is REMOVE_SETTING:
                     del meta_settings['settings'][key]
                 else:

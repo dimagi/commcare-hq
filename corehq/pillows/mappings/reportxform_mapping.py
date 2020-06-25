@@ -1,6 +1,6 @@
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
 from corehq.util.elastic import prefix_for_tests
-from pillowtop.es_utils import ElasticsearchIndexInfo
+from pillowtop.es_utils import ElasticsearchIndexInfo, REPORT_XFORM_HQ_INDEX_NAME
 
 REPORT_XFORM_INDEX = prefix_for_tests("report_xforms_20160824_1708")
 
@@ -163,4 +163,5 @@ REPORT_XFORM_INDEX_INFO = ElasticsearchIndexInfo(
     alias=REPORT_XFORM_ALIAS,
     type=REPORT_XFORM_TYPE,
     mapping=REPORT_XFORM_MAPPING,
+    hq_index_name=REPORT_XFORM_HQ_INDEX_NAME
 )
