@@ -96,8 +96,6 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
 
     @property
     def meta(self):
-        from corehq.util.elastic import TEST_ES_PREFIX
-        # the setting overrides are defined without prefix, so look them without prefix
         meta_settings = deepcopy(ES_INDEX_SETTINGS['default'])
         meta_settings.update(
             ES_INDEX_SETTINGS.get(self.hq_index_name, {})
