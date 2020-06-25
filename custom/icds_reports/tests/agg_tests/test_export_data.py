@@ -466,6 +466,81 @@ class TestExportData(TestCase):
              'Percentage of children receiving complementary feeding with appropriate handwashing before feeding']
         )
 
+    def test_children_export_headers_with_Age_1_2_ff(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+            beta=True
+        ).get_excel_data('b1')[0][1][0]
+        self.assertListEqual(
+            data,
+            ['State',
+             'Total no. of children weighed',
+             'Total no. of children eligible to be weighed',
+             'Weighing efficiency (in month)',
+             'Total no. of children whose height was measured',
+             'Total no. of children  eligible for measuring height',
+             'Height measurement efficiency (in month)',
+             'Total number of unweighed children (0-5 Years)',
+             'No. of severely underweight children',
+             'Total No. of children weighed',
+             'Percentage of severely underweight children',
+             'No. of moderately underweight children ',
+             'Total No. of children weighed',
+             'Percentage of moderately underweight children',
+             'No. of  children with normal weight for age',
+             'Total No. of children weighed',
+             'Percentage of normal weight-for-age children',
+             'No. of Children with severe wasting',
+             'Total number of children whose height and weight is measured',
+             'Percentage of children with severe wasting',
+             'No. of moderately wasted children',
+             'Total number of children whose height and weight is measured',
+             'Percentage of children with moderate wasting',
+             'No. of children with normal weight-for-height',
+             'Total no. of children  whose height and weight is measured',
+             'Percentage of children with normal weight-for-height',
+             'No. of severely stunted children',
+             'Total no. of children whose height has been measured',
+             'Percentage of children with severe stunting',
+             'No. of moderately stunted children',
+             'Total no. of children whose height has been measured',
+             'Percentage of children with moderate stunting',
+             'No. of children with normal height for age',
+             'Total no. of children whose height has been measured',
+             'Percentage of children with normal height-for-age',
+             'No. of newborns with low birth weight',
+             'Total no. of children born and weighed in the current month',
+             'Percent of newborns with low birth weight',
+             'No. of children between 1-2 years old who completed 1 year immunization',
+             'Total no. of children from age >12 months and <= 24',
+             'Percentage of children between 1-2 years who completed 1 year immunizations',
+             'No. of children breastfed at birth',
+             'Total no. of children enrolled in ICDS-CAS system and born in last month',
+             'Percentage of children breastfed at birth',
+             'No. of children exclusively breastfed',
+             'Total number of children (0-6 months) of age enrolled in ICDS-CAS system',
+             'Percentage of children exclusively breastfeeding',
+             'No. of children initiated complementary feeding (in the past 30 days)',
+             'Total no. of children (6-8 ) months of age enrolled with ICDS-CAS',
+             'Percentage of children initiated complementary feeding (in the past 30 days)',
+             'No. of children initiated appropriate complementary feeding',
+             'No.of children (6-24) months of age enrolled with ICDS-CAS',
+             'Percentage of children initiated appropriate complementary feeding',
+             'No.of children receiving complementary feeding with adequate diet diversity',
+             'Total number of children (6 months - 2 yrs) of age enrolled with ICDS-CAS',
+             'Percentage of children receiving complementary feeding with adequate diet diversity',
+             'No. of children initiated complementary feeding with adequate diet quantity',
+             'No.of children (6-24) months of age enrolled with ICDS-CAS',
+             'Percentage of children receiving complementary feeding with adequate diet quantity',
+             'Total Number of children receiving complementary feeding with appropriate handwashing'
+             ' before feeding',
+             'No.of children (6-24) months of age enrolled with ICDS-CAS',
+             'Percentage of children receiving complementary feeding with appropriate handwashing'
+             ' before feeding']
+        )
+
     def test_children_export_child_one(self):
         data = ChildrenExport(
             config={
@@ -490,6 +565,41 @@ class TestExportData(TestCase):
                 2, 14, '14.29 %',
                 1, 2, '50.00 %',
                 162, 1127, '14.37%',
+                1, 5, '20.00 %',
+                28, 56, '50.00 %',
+                21, 32, '65.62 %',
+                76, 142, '53.52 %',
+                49, 142, '34.51 %',
+                56, 142, '39.44 %',
+                68, 142, '47.89 %'
+            ]
+        )
+
+    def test_children_export_child_one_with_age_1_2_ff(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+            beta=True
+        ).get_excel_data('b1')[0][1][1]
+        self.assertListEqual(
+            data,
+            [
+                'st1',
+                655, 972, '67.39 %',
+                14, 972, '1.44 %',
+                317,
+                17, 655, '2.60 %',
+                152, 655, '23.21 %',
+                486, 655, '74.20 %',
+                1, 14, '7.14 %',
+                5, 14, '35.71 %',
+                7, 14, '50.00 %',
+                5, 14, '35.71 %',
+                6, 14, '42.86 %',
+                2, 14, '14.29 %',
+                1, 2, '50.00 %',
+                7, 86, '8.14%',
                 1, 5, '20.00 %',
                 28, 56, '50.00 %',
                 21, 32, '65.62 %',
@@ -591,7 +701,7 @@ class TestExportData(TestCase):
                 6, 14, '42.86 %',
                 2, 14, '14.29 %',
                 1, 2, '50.00 %',
-                162, 1127, '14.37%',
+                7, 86, '8.14%',
                 1, 5, '20.00 %',
                 28, 56, '50.00 %',
                 21, 32, '65.62 %',
@@ -658,6 +768,40 @@ class TestExportData(TestCase):
                 15, 30, '50.00 %',
                 0, 4, '0.00 %',
                 88, 1217, '7.23%',
+                3, 6, '50.00 %',
+                13, 52, '25.00 %',
+                24, 40, '60.00 %',
+                94, 185, '50.81 %',
+                87, 185, '47.03 %',
+                62, 185, '33.51 %',
+                88, 185, '47.57 %']
+        )
+
+    def test_children_export_child_six_with_age_1_2_ff(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+            beta=True
+        ).get_excel_data('b1')[0][1][6]
+        self.assertListEqual(
+            data,
+            [
+                'st2',
+                730, 1037, '70.40 %',
+                30, 1037, '2.89 %',
+                307,
+                18, 730, '2.47 %',
+                136, 730, '18.63 %',
+                576, 730, '78.90 %',
+                1, 29, '3.45 %',
+                4, 29, '13.79 %',
+                18, 29, '62.07 %',
+                11, 30, '36.67 %',
+                6, 30, '20.00 %',
+                15, 30, '50.00 %',
+                0, 4, '0.00 %',
+                11, 117, '9.40%',
                 3, 6, '50.00 %',
                 13, 52, '25.00 %',
                 24, 40, '60.00 %',
