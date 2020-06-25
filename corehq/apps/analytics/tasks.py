@@ -554,9 +554,9 @@ def track_periodic_data():
         submit_json = json.dumps(submit)
         submit_data_to_hub_and_kiss(submit_json)
 
-    metrics_gauge('commcare.hubspot.web_users_processed', hubspot_number_of_users)
+    metrics_gauge('commcare.hubspot.web_users_processed', hubspot_number_of_users, multiprocess_mode='livesum')
     metrics_gauge(
-        'commcare.hubspot.domains_with_forms_gt_threshold', hubspot_number_of_domains_with_forms_gt_threshold
+        'commcare.hubspot.domains_with_forms_gt_threshold', hubspot_number_of_domains_with_forms_gt_threshold, multiprocess_mode='max'
     )
 
 

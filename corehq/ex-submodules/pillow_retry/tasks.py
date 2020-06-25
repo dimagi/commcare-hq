@@ -18,4 +18,4 @@ def record_pillow_error_queue_size():
             'pillow_name': row['pillow'],
             'host': 'celery',
             'group': 'celery'
-        })
+        }, multiprocess_mode='max')

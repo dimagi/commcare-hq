@@ -26,7 +26,8 @@ def pillow_datadog_metrics():
 
         metrics_gauge(
             'commcare.change_feed.seconds_since_last_update',
-            pillow['seconds_since_last'], tags=tags
+            pillow['seconds_since_last'], tags=tags,
+            multiprocess_mode='min'
         )
 
         for topic_name, offset in pillow['offsets'].items():
@@ -49,14 +50,17 @@ def pillow_datadog_metrics():
 
             metrics_gauge(
                 'commcare.change_feed.current_offsets',
-                offset, tags=tags_with_topic
+                offset, tags=tags_with_topic,
+                multiprocess_mode='max'
             )
             metrics_gauge(
                 'commcare.change_feed.processed_offsets',
-                processed_offset, tags=tags_with_topic
+                processed_offset, tags=tags_with_topic,
+                multiprocess_mode='max'
             )
             needs_processing = offset - processed_offset
             metrics_gauge(
                 'commcare.change_feed.need_processing',
-                needs_processing, tags=tags_with_topic
+                needs_processing, tags=tags_with_topic,
+                multiprocess_mode='max'
             )

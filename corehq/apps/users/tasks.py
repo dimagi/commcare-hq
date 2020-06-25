@@ -349,7 +349,8 @@ def gauge_pending_user_confirmations():
             metric_name, stats['domain__count'], tags={
                 'domain': stats['domain'],
                 'user_type': 'web',
-            }
+            },
+            multiprocess_mode='max'
         )
 
     from corehq.apps.users.analytics import get_inactive_commcare_users_in_domain
@@ -362,5 +363,6 @@ def gauge_pending_user_confirmations():
                 metric_name, num_unconfirmed, tags={
                     'domain': domain_name,
                     'user_type': 'mobile',
-                }
+                },
+                multiprocess_mode='max'
             )

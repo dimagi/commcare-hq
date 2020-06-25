@@ -17,9 +17,11 @@ from corehq.util.quickcache import quickcache
 @quickcache([], timeout=9 * 60)  # Protect from many runs after recovering from a backlog
 def send_unknown_user_type_stats():
     metrics_gauge('commcare.fix_user_types.unknown_user_count',
-                  _get_unknown_user_type_user_ids_approx_count())
+                  _get_unknown_user_type_user_ids_approx_count(),
+                  multiprocess_mode='max')
     metrics_gauge('commcare.fix_user_types.unknown_user_form_count',
-                  FormES().user_type(UNKNOWN_USER_TYPE).count())
+                  FormES().user_type(UNKNOWN_USER_TYPE).count(),
+                  multiprocess_mode='max')
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0))

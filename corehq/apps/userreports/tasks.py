@@ -546,30 +546,31 @@ def async_indicators_metrics():
     oldest_indicator = AsyncIndicator.objects.order_by('date_queued').first()
     if oldest_indicator and oldest_indicator.date_queued:
         lag = (now - oldest_indicator.date_queued).total_seconds()
-        metrics_gauge('commcare.async_indicator.oldest_queued_indicator', lag)
+        metrics_gauge('commcare.async_indicator.oldest_queued_indicator', lag, multiprocess_mode='min')
 
     oldest_100_indicators = AsyncIndicator.objects.all()[:100]
     if oldest_100_indicators.exists():
         oldest_indicator = oldest_100_indicators[0]
         lag = (now - oldest_indicator.date_created).total_seconds()
-        metrics_gauge('commcare.async_indicator.oldest_created_indicator', lag)
+        metrics_gauge('commcare.async_indicator.oldest_created_indicator', lag, multiprocess_mode='min')
 
         lags = [
             (now - indicator.date_created).total_seconds()
             for indicator in oldest_100_indicators
         ]
         avg_lag = sum(lags) / len(lags)
-        metrics_gauge('commcare.async_indicator.oldest_created_indicator_avg', avg_lag)
+        metrics_gauge('commcare.async_indicator.oldest_created_indicator_avg', avg_lag, multiprocess_mode='max')
 
     for config_id, metrics in _indicator_metrics().items():
         tags = {"config_id": config_id}
-        metrics_gauge('commcare.async_indicator.indicator_count', metrics['count'], tags=tags)
+        metrics_gauge('commcare.async_indicator.indicator_count', metrics['count'], tags=tags, multiprocess_mode='max')
         metrics_gauge('commcare.async_indicator.lag', metrics['lag'], tags=tags,
-            documentation="Lag of oldest created indicator including failed indicators")
+            documentation="Lag of oldest created indicator including failed indicators",
+            multiprocess_mode='max')
 
     # Don't use ORM summing because it would attempt to get every value in DB
     unsuccessful_attempts = sum(AsyncIndicator.objects.values_list('unsuccessful_attempts', flat=True).all()[:100])
-    metrics_gauge('commcare.async_indicator.unsuccessful_attempts', unsuccessful_attempts)
+    metrics_gauge('commcare.async_indicator.unsuccessful_attempts', unsuccessful_attempts, multiprocess_mode='livesum')
 
     oldest_unprocessed = AsyncIndicator.objects.filter(unsuccessful_attempts=0).first()
     if oldest_unprocessed:
@@ -579,12 +580,14 @@ def async_indicators_metrics():
     metrics_gauge(
         'commcare.async_indicator.true_lag',
         lag,
-        documentation="Lag of oldest created indicator that didn't get ever queued"
+        documentation="Lag of oldest created indicator that didn't get ever queued",
+        multiprocess_mode='max'
     )
     metrics_gauge(
         'commcare.async_indicator.fully_failed_count',
         AsyncIndicator.objects.filter(unsuccessful_attempts=ASYNC_INDICATOR_MAX_RETRIES).count(),
-        documentation="Number of indicators that failed max-retry number of times"
+        documentation="Number of indicators that failed max-retry number of times",
+        multiprocess_mode='livesum'
     )
 
 

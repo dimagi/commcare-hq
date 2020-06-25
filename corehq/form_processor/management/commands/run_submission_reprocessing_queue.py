@@ -16,7 +16,7 @@ BATCH_SIZE = 1000
 
 def _record_datadog_metrics():
     count = UnfinishedSubmissionStub.objects.count()
-    metrics_gauge('commcare.submission_reprocessing.queue_size', count)
+    metrics_gauge('commcare.submission_reprocessing.queue_size', count, multiprocess_mode='max')
 
 
 class SubmissionReprocessingEnqueuingOperation(BaseCommand):

@@ -39,7 +39,7 @@ def reprocess_archive_stubs():
     from corehq.form_processor.interfaces.dbaccessors import FormAccessors
     from couchforms.models import UnfinishedArchiveStub
     stubs = UnfinishedArchiveStub.objects.filter(attempts__lt=3)
-    metrics_gauge('commcare.unfinished_archive_stubs', len(stubs))
+    metrics_gauge('commcare.unfinished_archive_stubs', len(stubs), multiprocess_mode='max')
     start = time.time()
     cutoff = start + timedelta(minutes=4).total_seconds()
     for stub in stubs:
