@@ -4,6 +4,7 @@ from corehq.apps.smsbillables.management.commands.bootstrap_pinpoint_gateway imp
     bootstrap_pinpoint_gateway,
 )
 
+
 def add_pinpoint_gateway_fee_for_migration(apps, schema_editor):
     bootstrap_pinpoint_gateway(apps)
 

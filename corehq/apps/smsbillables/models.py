@@ -348,7 +348,8 @@ class SmsBillable(models.Model):
             include_deleted=True,
         )
 
-        is_gateway_billable = backend_id is None or backend_instance.is_global\
+        is_gateway_billable = backend_id is None\
+                              or backend_instance.is_global\
                               or toggles.ENABLE_INCLUDE_SMS_GATEWAY_CHARGING.enabled(domain)
 
         direct_gateway_fee = fixed_gateway_fee = multipart_count = conversion_rate = None
@@ -424,4 +425,9 @@ class SmsBillable(models.Model):
         return usage_fee
 
 
-_ProviderChargeInfo = namedtuple('_ProviderCharges', ['direct_gateway_fee', 'fixed_gateway_fee', 'multipart_count', 'conversion_rate'])
+_ProviderChargeInfo = namedtuple('_ProviderCharges', [
+    'direct_gateway_fee',
+    'fixed_gateway_fee',
+    'multipart_count',
+    'conversion_rate'
+])

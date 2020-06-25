@@ -2151,8 +2151,15 @@ class WhatsAppTemplatesView(BaseMessagingSectionView):
             )
         else:
             wa_active_backend = turn_backend.get() if turn_backend.count() else infobip_backend.get()
-            templates = wa_active_backend.get_all_templates()
-            for template in templates:
-                template['template_string'] = wa_active_backend.generate_template_string(template)
-            context.update({'wa_templates': templates})
+            try:
+                templates = wa_active_backend.get_all_templates()
+                for template in templates:
+                    template['template_string'] = wa_active_backend.generate_template_string(template)
+                context.update({'wa_templates': templates})
+            except Exception:
+                messages.error(
+                    self.request,
+                    wa_active_backend.get_generic_name() +
+                    _(" failed to fetch templates. Please make sure the gateway is configured properly.")
+                )
         return context

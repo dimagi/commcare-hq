@@ -87,12 +87,14 @@ def _available_gateway_fee_backends():
         if not backend.using_api_to_get_fees
     ]
 
+
 @unit_testing_only
 def _available_direct_fee_backends():
     return [
         backend for backend in get_sms_backend_classes().values()
         if backend.using_api_to_get_fees
     ]
+
 
 @unit_testing_only
 def arbitrary_fees_by_prefix(backend_ids, country_codes_and_prefixes):
