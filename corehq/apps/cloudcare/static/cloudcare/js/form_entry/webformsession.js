@@ -526,8 +526,11 @@ WebFormSession.prototype.submitForm = function (form) {
                         $.each(resp.errors, function (ix, error) {
                             self.serverError(getForIx(form, ix), error);
                         });
+                        // todo: mark all these messages for translation
                         if (resp.status === 'too-many-requests') {
-                            alert("Contact your administrator.");
+                            alert("We’re unable to submit this form right now due to high system usage. \n\n" +
+                                "Please keep this window open and try again in a minute, " +
+                                "or come back to this form in Incomplete Forms later.");
                         } else if (resp.notification) {
                             alert("Form submission failed with error: \n\n" +
                                 resp.notification.message + ". \n\n " +
