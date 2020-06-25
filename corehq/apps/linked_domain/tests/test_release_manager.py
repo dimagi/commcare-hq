@@ -1,5 +1,7 @@
 from mock import patch
 
+from corehq.apps.app_manager.models import LinkedApplication, Module
+from corehq.apps.app_manager.views.utils import get_blank_form_xml
 from corehq.apps.linked_domain.const import (
     LINKED_MODELS_MAP,
     MODEL_APP,
@@ -18,8 +20,10 @@ class TestReleaseManager(BaseLinkedAppsTest):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.user = WebUser.create(cls.domain, 'fionaa', 'secret', None, None)
+        cls.user = WebUser.create(cls.domain, 'fiona', 'secret', None, None)
         cls.manager = ReleaseManager(cls.domain, cls.user)
+        master1_module = cls.master1.add_module(Module.new_module('Module for master1', None))
+        master1_module.new_form('Form for master1', 'en', get_blank_form_xml('Form for master1'))
         cls.extra_domain = 'antarctica'
         cls.extra_domain_link = DomainLink.link_domains(cls.extra_domain, cls.domain)
 
@@ -96,6 +100,27 @@ class TestReleaseManager(BaseLinkedAppsTest):
         ], [self.linked_domain])
         self._assert_domain_outcomes(set(), {self.linked_domain})
         self._assert_error(self.linked_domain, "Multi master flag is in use")
+
+    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    def test_app_build_and_release(self, *args):
+        self._make_master1_build(True)
+        original_version = self.linked_app.version
+        self.manager.release([
+            self._model_status(MODEL_APP, detail=AppLinkDetail(app_id=self.master1._id).to_json()),
+        ], [self.linked_domain], True)
+        self._assert_domain_outcomes({self.linked_domain}, set())
+        self.linked_application = LinkedApplication.get(self.linked_app._id)
+        self.assertEqual(original_version + 1, self.linked_application.version)
+        self.assertTrue(self.linked_application.is_released)
+
+    def test_app_update_then_fail(self):
+        self._make_master1_build(True)
+        # The missing validate_xform patch means this test will fail on travis, but make sure it also fails locally
+        with patch('corehq.apps.app_manager.models.ApplicationBase.make_build', side_effect=Exception('Boom!')):
+            self.manager.release([
+                self._model_status(MODEL_APP, detail=AppLinkDetail(app_id=self.master1._id).to_json()),
+            ], [self.linked_domain], True)
+            self._assert_error(self.linked_domain, "Updated app but did not build or release: Boom!")
 
     def test_multiple_domains(self):
         self.manager.release([

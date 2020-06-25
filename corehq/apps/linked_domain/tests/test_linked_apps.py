@@ -73,6 +73,7 @@ class BaseLinkedAppsTest(TestCase, TestXmlMixin):
         cls.master2.save()
 
         cls.linked_app = LinkedApplication.new_app(cls.linked_domain, "Linked Application")
+        cls.linked_app.family_id = cls.master1._id
         cls.linked_app.save()
 
         cls.domain_link = DomainLink.link_domains(cls.linked_domain, cls.domain)
@@ -100,8 +101,6 @@ class BaseLinkedAppsTest(TestCase, TestXmlMixin):
         return {form['xmlns']: form.unique_id
                 for form in app.get_forms() if form.form_type != 'shadow_form'}
 
-
-class TestLinkedApps(BaseLinkedAppsTest):
     def _make_master1_build(self, release):
         return self._make_build(self.master1, release)
 
@@ -119,6 +118,8 @@ class TestLinkedApps(BaseLinkedAppsTest):
         self.addCleanup(copy.delete)
         return copy
 
+
+class TestLinkedApps(BaseLinkedAppsTest):
     def _pull_linked_app(self, upstream_app_id):
         update_linked_app(self.linked_app, upstream_app_id, 'TestLinkedApps user')
         self.linked_app = LinkedApplication.get(self.linked_app._id)
