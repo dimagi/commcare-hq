@@ -2159,7 +2159,7 @@ class WhatsAppTemplatesView(BaseMessagingSectionView):
             except Exception:
                 messages.error(
                     self.request,
-                    wa_active_backend.get_generic_name() +
-                    _(" failed to fetch templates. Please make sure the gateway is configured properly.")
+                    wa_active_backend.get_generic_name()
+                    + _(" failed to fetch templates. Please make sure the gateway is configured properly.")
                 )
         return context

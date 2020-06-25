@@ -1,6 +1,5 @@
 import requests
 import json
-from django.utils.decorators import classproperty
 from corehq.apps.sms.models import SQLSMSBackend, SMS
 from corehq.apps.sms.util import clean_phone_number
 from corehq.messaging.smsbackends.infobip.forms import InfobipBackendForm

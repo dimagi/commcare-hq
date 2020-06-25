@@ -8,7 +8,6 @@ from datetime import datetime, timedelta
 from django.db import IntegrityError, connection, models, transaction
 from django.http import Http404
 from django.utils.translation import ugettext_lazy, ugettext_noop
-from django.utils.decorators import classproperty
 
 import jsonfield
 from memoized import memoized

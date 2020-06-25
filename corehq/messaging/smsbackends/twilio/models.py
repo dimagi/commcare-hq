@@ -5,7 +5,6 @@ from twilio.base.exceptions import TwilioRestException
 from twilio.rest import Client
 
 from dimagi.utils.logging import notify_exception
-from django.utils.decorators import classproperty
 
 from corehq import toggles
 from corehq.apps.domain.models import Domain
