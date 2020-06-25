@@ -78,7 +78,6 @@ class TestRemoteLinkedCaseClaim(BaseLinkedCaseClaimTest):
     @classmethod
     def setUpClass(cls):
         super(TestRemoteLinkedCaseClaim, cls).setUpClass()
-        cls.domain_obj = create_domain(cls.domain)
         cls.couch_user = WebUser.create(cls.domain, "test", "foobar", None, None)
         cls.django_user = cls.couch_user.get_django_user()
         cls.api_key, _ = HQApiKey.objects.get_or_create(user=cls.django_user)
@@ -90,7 +89,6 @@ class TestRemoteLinkedCaseClaim(BaseLinkedCaseClaimTest):
         cls.couch_user.delete()
         cls.api_key.delete()
         super(TestRemoteLinkedCaseClaim, cls).tearDownClass()
-        cls.domain_obj.delete()  # deleting the domain before other things causes failures
 
     @patch('corehq.apps.linked_domain.updates.remote_get_case_search_config')
     def test_remote_linked_app(self, fake_case_search_config_getter):
