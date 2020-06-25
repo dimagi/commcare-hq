@@ -22,7 +22,6 @@
     "cas-lab"
   ],
   "server_environment": [
-    "india",
     "icds",
     "icds-staging"
   ],

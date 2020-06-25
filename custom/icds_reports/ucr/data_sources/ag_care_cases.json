@@ -24,7 +24,6 @@
     "zohaib-sandbox"
   ],
   "server_environment": [
-    "india",
     "icds",
     "icds-staging"
   ],

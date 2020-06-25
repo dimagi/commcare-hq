@@ -20,7 +20,6 @@
     "reach-test"
   ],
   "server_environment": [
-    "india",
     "icds",
     "icds-staging"
   ],
