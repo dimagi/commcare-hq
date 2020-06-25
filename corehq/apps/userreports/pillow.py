@@ -221,7 +221,7 @@ class ConfigurableReportTableManagerMixin(object):
                     "[rebuild] Rebuilding table: %s, from config %s at rev %s",
                     table_name, sql_adapter.config._id, sql_adapter.config._rev
                 )
-                pillow_logging.info("[rebuild] Using config: %s", adapter.config)
+                pillow_logging.info("[rebuild] Using config: %r", adapter.config)
                 pillow_logging.info("[rebuild] sqlalchemy metadata: %r", get_metadata(engine_id).tables[table_name])
                 pillow_logging.info("[rebuild] sqlalchemy table: %r", adapter.get_table())
                 table_diffs = [diff for diff in diffs if diff.table_name == table_name]
@@ -239,7 +239,7 @@ class ConfigurableReportTableManagerMixin(object):
         migration_diffs = [diff for diff in diffs if diff.table_name in table_names]
         for table in table_names:
             adapter = adapters_by_table[table]
-            pillow_logging.info("[rebuild] Using config: %s", adapter.config)
+            pillow_logging.info("[rebuild] Using config: %r", adapter.config)
             pillow_logging.info("[rebuild] sqlalchemy metadata: %r", get_metadata(adapter.engine_id).tables[table])
             pillow_logging.info("[rebuild] sqlalchemy table: %r", adapter.get_table())
         changes = migrate_tables(engine, migration_diffs)
