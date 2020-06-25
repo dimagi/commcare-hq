@@ -88,11 +88,15 @@ def get_sms_status_display(sms):
         return _('Queued')
     if sms.direction == INCOMING:
         return _('Received')
+    if sms.is_status_pending():
+        detail = " " + _("message ID: {id}").format(id=sms.backend_message_id)
+    else:
+        detail = ""
     if sms.direction == OUTGOING:
         if sms.workflow == WORKFLOW_FORWARD:
-            return _('Forwarded')
-        return _('Sent')
-    return _('Unknown')
+            return _('Forwarded') + detail
+        return _('Sent') + detail
+    return _('Unknown') + detail
 
 
 def _get_keyword_display(keyword_id, content_cache):

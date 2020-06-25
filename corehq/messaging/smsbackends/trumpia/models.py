@@ -64,6 +64,9 @@ class TrumpiaBackend(SQLSMSBackend):
             data = self.get_message_details(data["requestID"])
             if is_success(data):
                 return  # success
+            if data.get("message") == "In progress":
+                msg.set_status_pending()
+                return
             if "statuscode" in data:
                 message = f"status {data['statuscode']}: {data.get('message')}"
             else:
@@ -75,16 +78,18 @@ class TrumpiaBackend(SQLSMSBackend):
     def get_message_details(self, request_id):
         """Get message status for the given SMS object
 
-        Note: could register for a push notification to get a detailed
-        message status report. Deferring that for now since none of our
-        other gateways do that. We may want to do that if we frequently
-        get a status code like MRCE4001 (request is being processed).
+        To manually check the status of a message simply load this URL
+        in a browser with `request_id={sms.backend_message_id}`:
+        https://api.trumpia.com/http/v2/checkresponse?request_id=...
 
-        :returns: Report dict, which is empty if the msg object had no
-        backend message id.
+        The backend message ID will be displayed in the message history
+        details if Trumpia responded with an "In progress" status after
+        the message was sent.
+
+        :returns: Status dict.
         """
         response = requests.get(
-            "http://api.trumpia.com/http/v2/checkresponse",
+            "https://api.trumpia.com/http/v2/checkresponse",
             params={"request_id": request_id},
             headers={"Accept": "application/json"},
         )
