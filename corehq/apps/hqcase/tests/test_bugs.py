@@ -27,7 +27,7 @@ class OtaRestoreBugTest(TestCase):
 
         def _submit_case(domain):
             case_id = uuid.uuid4().hex
-            case_block = CaseBlock(
+            case_block = CaseBlock.deprecated_init(
                 create=True,
                 case_id=case_id,
                 case_name='donald',

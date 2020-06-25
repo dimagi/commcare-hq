@@ -133,7 +133,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         return user
 
     def update_case_owner(self, case, owner):
-        case_block = CaseBlock(
+        case_block = CaseBlock.deprecated_init(
             create=False,
             case_id=case.case_id,
             case_type='participant',
@@ -143,7 +143,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         post_case_blocks([case_block], {'domain': self.domain})
 
     def add_parent_access(self, user, case):
-        case_block = CaseBlock(
+        case_block = CaseBlock.deprecated_init(
             create=True,
             case_id=uuid.uuid4().hex,
             case_type='magic_map',

@@ -65,7 +65,7 @@ class DomainLink(models.Model):
         self.save()
         history = DomainLinkHistory(link=self, date=self.last_pull, user_id=user_id, model=model)
         if model_details:
-            history.model_detail = model_details.to_json()
+            history.model_detail = model_details
         history.save()
 
     def save(self, *args, **kwargs):
@@ -148,6 +148,10 @@ class AppLinkDetail(jsonobject.JsonObject):
     app_id = jsonobject.StringProperty()
 
 
+class FixtureLinkDetail(jsonobject.JsonObject):
+    tag = jsonobject.StringProperty()
+
+
 class ReportLinkDetail(jsonobject.JsonObject):
     report_id = jsonobject.StringProperty()
 
@@ -155,5 +159,6 @@ class ReportLinkDetail(jsonobject.JsonObject):
 def wrap_detail(model, detail_json):
     return {
         'app': AppLinkDetail,
+        'fixture': FixtureLinkDetail,
         'report': ReportLinkDetail,
     }[model].wrap(detail_json)

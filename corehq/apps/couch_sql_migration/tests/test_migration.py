@@ -490,7 +490,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         form_id = uuid.uuid4().hex
         case_id = uuid.uuid4().hex
         owner_id = uuid.uuid4().hex
-        case_block = CaseBlock(
+        case_block = CaseBlock.deprecated_init(
             create=True,
             case_id=case_id,
             case_type='person',
@@ -502,7 +502,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         submit_case_blocks(case_block, domain=self.domain_name, form_id=form_id)
 
         # submit a new form with a different case update
-        case_block = CaseBlock(
+        case_block = CaseBlock.deprecated_init(
             create=True,
             case_id=case_id,
             case_type='newtype',
@@ -642,7 +642,7 @@ class MigrationTestCase(BaseMigrationTestCase):
     def test_basic_case_migration_case_name(self):
         case_id = uuid.uuid4().hex
         submit_case_blocks(
-            CaseBlock(
+            CaseBlock.deprecated_init(
                 case_id,
                 case_type='migrate',
                 create=True,
@@ -652,7 +652,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         )
 
         submit_case_blocks(
-            CaseBlock(
+            CaseBlock.deprecated_init(
                 case_id,
                 update={'name': 'test21'},
             ).as_text(),

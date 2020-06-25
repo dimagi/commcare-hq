@@ -25,7 +25,11 @@ class CaseBlock(object):
     def __init__(self, case_id, date_modified=None, user_id=undefined,
                  owner_id=undefined, external_id=undefined, case_type=undefined,
                  case_name=undefined, create=False, date_opened=undefined, update=None,
-                 close=False, index=None, strict=True):
+                 close=False, index=None, strict=True, date_opened_deprecated_behavior=False):
+        """
+        When `date_opened_deprecated_behavior`, a date_opened YYYY-MM-DD value is inserted on new cases.
+        This is deprecated behavior, because it prevents the superior default behavior from kicking in.
+        """
         if isinstance(case_id, bytes):
             case_id = case_id.decode('utf-8')
         if isinstance(user_id, bytes):
@@ -35,9 +39,11 @@ class CaseBlock(object):
         self.update = copy.copy(update) if update else {}
         now = datetime.utcnow()
         self.date_modified = date_modified or now
-        self.date_opened = (now.date() if create and date_opened is CaseBlock.undefined
-                            else date_opened)
-
+        if date_opened_deprecated_behavior:
+            self.date_opened = (now.date() if create and date_opened is CaseBlock.undefined
+                                else date_opened)
+        else:
+            self.date_opened = date_opened
         self.case_type = "" if create and case_type is CaseBlock.undefined else case_type
         self.case_name = "" if create and case_name is CaseBlock.undefined else case_name
         self.owner_id = "" if create and owner_id is CaseBlock.undefined else owner_id
@@ -50,6 +56,10 @@ class CaseBlock(object):
             self._check_for_duplicate_properties()
         self.index = {key: self._make_index_attrs(value)
                       for key, value in index.items()} if index else {}
+
+    @classmethod
+    def deprecated_init(cls, *args, **kwargs):
+        return cls(date_opened_deprecated_behavior=True, *args, **kwargs)
 
     def _updatable_built_ins(self):
         return [(name, getattr(self, name)) for name in self._built_ins]

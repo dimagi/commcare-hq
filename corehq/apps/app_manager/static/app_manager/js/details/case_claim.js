@@ -4,15 +4,19 @@ hqDefine("app_manager/js/details/case_claim", function () {
         var self = {},
             DEFAULT_CLAIM_RELEVANT = "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0";
 
-        var searchProperty = function (name, label) {
+        var searchProperty = function (name, label, appearance) {
             var self = {};
             self.name = ko.observable(name);
             self.label = ko.observable(label);
+            self.appearance = ko.observable(appearance);
 
             self.name.subscribe(function () {
                 saveButton.fire('change');
             });
             self.label.subscribe(function () {
+                saveButton.fire('change');
+            });
+            self.appearance.subscribe(function () {
                 saveButton.fire('change');
             });
 
@@ -48,11 +52,12 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 var label = searchProperties[i].label[lang];
                 self.searchProperties.push(searchProperty(
                     searchProperties[i].name,
-                    label
+                    label,
+                    searchProperties[i].appearance
                 ));
             }
         } else {
-            self.searchProperties.push(searchProperty('', ''));
+            self.searchProperties.push(searchProperty('', '', ''));
         }
 
         self.addProperty = function () {
@@ -72,6 +77,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     return {
                         name: p.name(),
                         label: p.label().length ? p.label() : p.name(),  // If label isn't set, use name
+                        appearance: p.appearance(),
                     };
                 }
             );

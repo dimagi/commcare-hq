@@ -40,7 +40,7 @@ class CaseClaimTests(TestCase):
         super(CaseClaimTests, self).tearDown()
 
     def create_case(self):
-        case_block = CaseBlock(
+        case_block = CaseBlock.deprecated_init(
             create=True,
             case_id=self.host_case_id,
             case_name=self.host_case_name,
@@ -112,7 +112,7 @@ class CaseClaimTests(TestCase):
         self.assertIsNone(first_claim)
 
     def _close_case(self, case_id):
-        case_block = CaseBlock(
+        case_block = CaseBlock.deprecated_init(
             create=False,
             case_id=case_id,
             close=True

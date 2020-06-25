@@ -969,6 +969,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
     elif indicator == THR_REPORT_EXPORT:
         loc_level = aggregation_level if location else 0
         excel_data = TakeHomeRationExport(
+            domain=config['domain'],
             location=location,
             month=config['month'],
             loc_level=loc_level,

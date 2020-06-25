@@ -10,7 +10,7 @@ from django.utils.translation import ugettext_noop
 
 from memoized import memoized_property
 from tastypie import fields, http
-from tastypie.authentication import ApiKeyAuthentication
+from corehq.apps.domain.auth import HQApiKeyAuthentication
 from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.bundle import Bundle
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
@@ -816,7 +816,7 @@ class UserDomainsResource(Resource):
 
     class Meta(object):
         resource_name = 'user_domains'
-        authentication = ApiKeyAuthentication()
+        authentication = HQApiKeyAuthentication()
         object_class = UserDomain
         include_resource_uri = False
 
@@ -863,7 +863,7 @@ class DomainForms(Resource):
 
     class Meta(object):
         resource_name = 'domain_forms'
-        authentication = ApiKeyAuthentication()
+        authentication = HQApiKeyAuthentication()
         object_class = Form
         include_resource_uri = False
         allowed_methods = ['get']
@@ -911,7 +911,7 @@ class DomainCases(Resource):
 
     class Meta(object):
         resource_name = 'domain_cases'
-        authentication = ApiKeyAuthentication()
+        authentication = HQApiKeyAuthentication()
         object_class = CaseType
         include_resource_uri = False
         allowed_methods = ['get']
@@ -944,7 +944,7 @@ class DomainUsernames(Resource):
 
     class Meta(object):
         resource_name = 'domain_usernames'
-        authentication = ApiKeyAuthentication()
+        authentication = HQApiKeyAuthentication()
         object_class = User
         include_resource_uri = False
         allowed_methods = ['get']

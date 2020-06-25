@@ -284,7 +284,7 @@ class CaseClaimEndpointTests(TestCase):
         CaseSearchConfig.objects.get_or_create(pk=DOMAIN, enabled=True)
         delete_all_cases()
         self.case_id = uuid4().hex
-        _, [self.case] = post_case_blocks([CaseBlock(
+        _, [self.case] = post_case_blocks([CaseBlock.deprecated_init(
             create=True,
             case_id=self.case_id,
             case_type=CASE_TYPE,

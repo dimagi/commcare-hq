@@ -77,7 +77,7 @@ class TestZapierCaseForwarding(TestCase):
         case_id = uuid.uuid4().hex
         post_case_blocks(
             [
-                CaseBlock(
+                CaseBlock.deprecated_init(
                     create=True,
                     case_id=case_id,
                     case_type=case_type,
@@ -94,7 +94,7 @@ class TestZapierCaseForwarding(TestCase):
         # update case and run checks
         post_case_blocks(
             [
-                CaseBlock(
+                CaseBlock.deprecated_init(
                     create=False,
                     case_id=case_id,
                 ).as_xml()
