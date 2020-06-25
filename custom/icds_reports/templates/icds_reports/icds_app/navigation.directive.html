@@ -48,6 +48,12 @@
                     <div class="col-sm-9">{% trans "LS Dashboard" %}</div>
                 </a>
             </li>
+            <li ng-class="{'active': $location.path().indexOf('/poshan_progress_dashboard') !== -1}" ng-if="haveAccessToFeatures && (stateLevelAccess === true || haveAccessToAllLocations === true)">
+                <a class="row pointer" href="{$ goToStep('poshan_progress_dashboard', $location.search()) $}" style="width: 100%" ng-click="resetCollapseParameters();">
+                    <div class="col-sm-1"><i class="fa fa-tasks" aria-hidden="true"></i></div>
+                    <div class="col-sm-9">{% trans "Poshan Progress Dashboard" %}</div>
+                </a>
+            </li>
             <li ng-class="{'active': $location.path().indexOf('/fact_sheets') !== -1}">
                 <a class="row pointer" href="{$ goToStep('fact_sheets', $location.search()) $}" style="width: 100%" ng-click="resetCollapseParameters();">
                     <div class="col-sm-1"><i class="fa fa-file-text-o" aria-hidden="true"></i></div>

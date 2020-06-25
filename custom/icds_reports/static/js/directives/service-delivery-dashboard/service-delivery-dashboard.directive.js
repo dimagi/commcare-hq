@@ -14,7 +14,7 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
     vm.label = "Service Delivery Dashboard";
     vm.haveAccessToAllLocations = haveAccessToAllLocations;
     vm.tooltipPlacement = "right";
-    vm.filters = ['gender', 'age'];
+    vm.filters = ['gender', 'age', 'data_period'];
     vm.userLocationId = userLocationId;
     vm.dataNotEntered = "Data Not Entered";
     vm.showTable = true;
@@ -85,7 +85,9 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
         }
     };
 
+    // with "stateSave" being enabled, it will retain pagination and the sorted column number and order of sorting etc.
     vm.dtOptions = DTOptionsBuilder.newOptions()
+        .withOption('stateSave', !vm.isDetailsDisplayed)
         .withOption('ajax', {
             url: url(vm.isDetailsDisplayed ? 'service_delivery_dashboard_details' : 'service_delivery_dashboard', vm.step),
             data: $location.search(),
@@ -469,7 +471,7 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
             'columnValueType': 'raw',
             'columnValueIndicator': 'vhnd_conducted',
         };
-        vm.sddTableData['pw_lw_children']['awc'].splice(5, 0, numberOfVHSNDConducted);
+        vm.sddTableData['pw_lw_children']['awc'].splice(4, 0, numberOfVHSNDConducted);
     }
 
     vm.getTableData = function () {
@@ -626,12 +628,23 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
 
     }
 
+    function isAllRow(rowData) {
+        return (rowData['state_name'] === 'All' && rowData['district_name'] === 'All' && rowData['block_name'] === 'All'
+            && rowData['awc_name'] === 'All' && rowData['supervisor_name'] === 'All');
+    }
+
     function simpleRender(full, indicator, outputType) {
         var output;
         if (outputType === 'raw') {
             output = full[indicator] !== vm.dataNotEntered ? full[indicator] : vm.dataNotEntered;
         } else if (outputType === 'booleanRaw') {
-            output = full[indicator] !== vm.dataNotEntered ? (full[indicator] ? 'Yes' : 'No') : vm.dataNotEntered;
+            if (vm.isAwcDataShown() && isAllRow(full) && indicator==='num_awcs_conducted_cbe') {
+                output = full['cbe_sector_percent'];
+            } else if (vm.isAwcDataShown() && isAllRow(full) && indicator==='num_awcs_conducted_vhnd') {
+                output = full['vhnd_sector_value'];
+            } else {
+                output = full[indicator] !== vm.dataNotEntered ? (full[indicator] ? 'Yes' : 'No') : vm.dataNotEntered;
+            }
         }
         return isMobile ? output : '<div>' + output + '</div>';
     }

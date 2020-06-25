@@ -4,6 +4,9 @@ from django.test import SimpleTestCase
 
 import requests_mock
 
+from corehq.apps.reports.standard.message_event_display import (
+    get_sms_status_display,
+)
 from corehq.apps.sms.models import QueuedSMS
 from corehq.messaging.smsbackends.trumpia.models import (
     TrumpiaBackend,
@@ -33,6 +36,17 @@ class TestTrumpiaBackend(SimpleTestCase):
         self.assertEqual(msg.backend_message_id, "1234561234567asdf123")
         self.assertIsNone(msg.system_error_message)
         self.assertFalse(msg.error)
+        self.assertEqual(get_sms_status_display(msg), "Sent")
+
+    def test_success_status_pending(self):
+        msg = self.mock_send(report={
+            "requestID": "1234561234567asdf123",
+            "message": "In progress",
+        })
+        self.assertEqual(msg.backend_message_id, "1234561234567asdf123")
+        self.assertTrue(msg.is_status_pending())
+        self.assertEqual(get_sms_status_display(msg),
+            "Sent message ID: 1234561234567asdf123")
 
     def test_fail_missing_requestID(self):
         msg = self.mock_send(response={"boo": "hoo"})
@@ -85,7 +99,11 @@ class TestTrumpiaBackend(SimpleTestCase):
             self.backend.get_message_details(request_id)
 
     def mock_send(self, status_code=200, response=None, report=None):
-        msg = QueuedSMS(phone_number='+15554443333', text="the message")
+        msg = QueuedSMS(
+            phone_number='+15554443333',
+            text="the message",
+            direction="O",
+        )
         msg.save = lambda: None  # prevent db access in SimpleTestCase
         query = querystring({
             "apikey": API_KEY,
@@ -118,7 +136,7 @@ class TestTrumpiaBackend(SimpleTestCase):
                 "taskID": "123456",
             }
         mock.get(
-            "http://api.trumpia.com/http/v2/checkresponse" + query,
+            "https://api.trumpia.com/http/v2/checkresponse" + query,
             request_headers={"Accept": "application/json"},
             status_code=200,
             json=report
