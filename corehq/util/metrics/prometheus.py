@@ -21,6 +21,10 @@ class PrometheusMetrics(HqMetrics):
     def __init__(self):
         self._metrics = {}
 
+    @property
+    def accepted_gauge_params(self):
+        return ['multiprocess_mode']
+
     def _counter(self, name: str, value: float = 1, tags: Dict[str, str] = None, documentation: str = ''):
         """See https://prometheus.io/docs/concepts/metric_types/#counter"""
         try:
@@ -28,10 +32,19 @@ class PrometheusMetrics(HqMetrics):
         except ValueError:
             pass
 
-    def _gauge(self, name: str, value: float, tags: Dict[str, str] = None, documentation: str = ''):
-        """See https://prometheus.io/docs/concepts/metric_types/#histogram"""
+    def _gauge(self, name: str, value: float, tags: Dict[str, str] = None, documentation: str = '', multiprocess_mode='all'):
+        """
+        See https://prometheus.io/docs/concepts/metric_types/#histogram
+
+        multiprocess_mode: can be one of below values
+            'all': Default. Return a timeseries per process alive or dead.
+            'liveall': Return a timeseries per process that is still alive.
+            'livesum': Return a single timeseries that is the sum of the values of alive processes.
+            'max': Return a single timeseries that is the maximum of the values of all processes, alive or dead.
+            'min': Return a single timeseries that is the minimum of the values of all processes, alive or dead.
+        """
         try:
-            self._get_metric(PGauge, name, tags, documentation).set(value)
+            self._get_metric(PGauge, name, tags, documentation, multiprocess_mode=multiprocess_mode).set(value)
         except ValueError:
             pass
 

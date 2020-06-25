@@ -165,9 +165,14 @@ def metrics_counter(name: str, value: float = 1, tags: Dict[str, str] = None, do
     provider.counter(name, value, tags=tags, documentation=documentation)
 
 
-def metrics_gauge(name: str, value: float, tags: Dict[str, str] = None, documentation: str = ''):
+def metrics_gauge(name: str, value: float, tags: Dict[str, str] = None, documentation: str = '', multiprocess_mode='all'):
+    """
+    kwargs:
+        multiprocess_mode: See PrometheusMetrics._gauge for documentation. This is only passed
+            to PrometheusMetrics since it is one of PrometheusMetrics.accepted_gauge_params
+    """
     provider = _get_metrics_provider()
-    provider.gauge(name, value, tags=tags, documentation=documentation)
+    provider.gauge(name, value, tags=tags, documentation=documentation, multiprocess_mode='all')
 
 
 def metrics_histogram(
