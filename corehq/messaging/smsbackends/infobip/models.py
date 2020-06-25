@@ -185,9 +185,7 @@ class InfobipBackend(SQLSMSBackend):
     def _get_message_details(self, api_channel, api_suffix, config, headers, parameters):
         url = f'https://{config.personalized_subdomain}.{INFOBIP_DOMAIN}{api_channel}{api_suffix}'
         response = requests.get(url, params=parameters, headers=headers)
-        response_content = json.loads(response.content)
-        messages = response_content['results']
-        return messages
+        return response.json()['results']
 
     def get_provider_charges(self, backend_message_id):
         message = self.get_message(backend_message_id)
