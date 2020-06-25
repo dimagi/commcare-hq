@@ -30,7 +30,7 @@ function LSLaunchedController($scope, $routeParams, $location, $filter, icdsCasR
         return [
             {
                 indicator_name: 'Number of LSs Launched: ',
-                indicator_value: lss ? lss : 'Not Launched', //displaying "Not launched" in popup if lss value is 0
+                indicator_value: (lss == 0) ? 'Not Launched' : lss, //displaying "Not launched" in popup if lss value is 0
             },
         ];
     };
