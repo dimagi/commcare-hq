@@ -173,6 +173,8 @@ def get_poshan_progress_dashboard_data(domain, year, month, quarter, data_format
         else:
             unique_id = 'district_id'
             value_fields.append('district_id')
+    # including only launched states and districts
+    filters['num_launched_awcs__gt'] = 0
     order_by = ('state_name', 'district_name')
     if aggregation_level == 1:
         value_fields.remove('district_name')
