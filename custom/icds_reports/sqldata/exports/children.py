@@ -389,8 +389,8 @@ class ChildrenExport(ExportableMixin, IcdsSqlData):
                                                        whens=[["age_tranche <= :age_24",
                                                                'fully_immunized_late']],
                                                        alias='fully_immunized_late_num'
-                                                      )
-                                                ], slug='num_immun_children'))
+                                                       )
+                                               ], slug='num_immun_children'))
         agg_columns.insert(38, DatabaseColumn('Total no. of children from age >12 months and <= 24',
                                               SumWhen(
                                                   whens=[["age_tranche <= :age_24",
