@@ -147,14 +147,16 @@ class RemoteRequestFactory(object):
         return default_query_datums + extra_query_datums
 
     def _build_query_prompts(self):
-        return [
-            QueryPrompt(
-                key=p.name,
-                display=Display(
-                    text=Text(locale_id=id_strings.search_property_locale(self.module, p.name)),
-                ),
-            ) for p in self.module.search_config.properties
-        ]
+        prompts = []
+        for prop in self.module.search_config.properties:
+            kwargs = {
+                'key': prop.name,
+                'display': Display(text=Text(locale_id=id_strings.search_property_locale(self.module, prop.name))),
+            }
+            if prop.appearance and self.app.enable_search_prompt_appearance:
+                kwargs['appearance'] = prop.appearance
+            prompts.append(QueryPrompt(**kwargs))
+        return prompts
 
     def _build_stack(self):
         stack = Stack()
