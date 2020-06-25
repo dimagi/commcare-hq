@@ -1,6 +1,6 @@
 from django.db import migrations
 
-from corehq.apps.smsbillables.management.commands.bootstrap_infobip_gateway import (
+from corehq.apps.smsbillables.management.commands.bootstrap_gateway_fees import (
     bootstrap_infobip_gateway,
 )
 

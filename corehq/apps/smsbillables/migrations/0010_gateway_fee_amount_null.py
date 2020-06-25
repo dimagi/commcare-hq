@@ -1,6 +1,6 @@
 from django.db import migrations, models
 
-from corehq.apps.smsbillables.management.commands.bootstrap_twilio_gateway import (
+from corehq.apps.smsbillables.management.commands.bootstrap_gateway_fees import (
     bootstrap_twilio_gateway,
 )
 
