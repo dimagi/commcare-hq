@@ -49,13 +49,27 @@ class ReleaseManager():
         self.models = models or []
         self.linked_domains = linked_domains or []
 
+    def _add_error(self, domain, message):
+        self.errors_by_domain[domain].append(message)
+
+    def _add_success(self, domain, message):
+        self.successes_by_domain[domain].append(message)
+
+    def _get_errors(self, domain):
+        return self.errors_by_domain[domain]
+
+    def _get_successes(self, domain):
+        return self.successes_by_domain[domain]
+
     def release(self, models, linked_domains, build_apps=False):
         self._reset(models, linked_domains)
-        domain_links_by_linked_domain = {link.linked_domain: link for link in get_linked_domains(self.master_domain)}
+        domain_links_by_linked_domain = {
+            link.linked_domain: link for link in get_linked_domains(self.master_domain)
+        }
         for linked_domain in self.linked_domains:
             if linked_domain not in domain_links_by_linked_domain:
-                self.errors_by_domain[linked_domain].append(_("Project space {} is no longer linked to {}. No content "
-                                                              "was released to it.").format(self.master_domain, linked_domain))
+                self._add_error(linked_domain, _("Project space {} is no longer linked to {}. No content "
+                                                 "was released to it.").format(self.master_domain, linked_domain))
                 continue
             domain_link = domain_links_by_linked_domain[linked_domain]
             for model in self.models:
@@ -74,9 +88,9 @@ class ReleaseManager():
                     notify_exception(None, "Exception pushing linked domains: {}".format(e))
 
                 if error:
-                    self.errors_by_domain[linked_domain].append(_("Could not update {}: {}").format(model['name'], error))
+                    self._add_error(linked_domain, _("Could not update {}: {}").format(model['name'], error))
                 else:
-                    self.successes_by_domain[linked_domain].append(_("Updated {} successfully").format(model['name']))
+                    self._add_success(linked_domain, _("Updated {} successfully").format(model['name']))
 
     def send_email(self):
         subject = _("Linked project release complete.")
@@ -98,13 +112,14 @@ The following linked project spaces received content:
             "\n".join(["- " + m['name'] for m in self.models])
         )
         for linked_domain in self.linked_domains:
-            if linked_domain not in self.errors_by_domain:
+            if not self._get_errors(linked_domain):
                 message += _("\n- {} updated successfully").format(linked_domain)
             else:
                 message += _("\n- {} encountered errors:").format(linked_domain)
-                for msg in self.errors_by_domain[linked_domain] + self.successes_by_domain[linked_domain]:
+                for msg in self._get_errors(linked_domain) + self._get_successes(linked_domain):
                     message += "\n   - " + msg
-        send_mail_async.delay(subject, message, settings.DEFAULT_FROM_EMAIL, [self.user.email or self.user.username])
+        email = self.user.email or self.user.username
+        send_mail_async.delay(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
 
     def _release_app(self, domain_link, model, user, build_and_release=False):
         if toggles.MULTI_MASTER_LINKED_DOMAINS.enabled(domain_link.linked_domain):
