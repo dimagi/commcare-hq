@@ -560,8 +560,8 @@ function DateTimeEntryBase(question, options) {
     EntrySingleAnswer.call(self, question, options);
 
     // Set year ranges
-    yearEnd = thisYear + 10
-    yearStart = thisYear - 100
+    yearEnd = thisYear + 10;
+    yearStart = thisYear - 100;
     // Set max date to 10 years in the future
     maxDate = moment(yearEnd, 'YYYY').toDate();
     // Set min date to 100 years in the past
