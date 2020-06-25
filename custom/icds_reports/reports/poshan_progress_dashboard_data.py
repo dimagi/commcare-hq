@@ -31,11 +31,11 @@ def calculate_percentage_single_row(row, truncate_out=True):
     return row
 
 
-def calculate_aggregated_row(data, aggregation_level, data_format, unique_id):
+def calculate_aggregated_row(data, aggregation_level, data_period, unique_id):
     aggregated_row = {}
     # for quarter we need to average summation
-    if data_format == 'quarter':
-        data = prepare_quarter_dict(data, data_format, unique_id)
+    if data_period == 'quarter':
+        data = prepare_quarter_dict(data, data_period, unique_id)
         cols = ['num_launched_states', 'num_launched_districts', 'num_launched_blocks', 'num_launched_awcs',
                 'awc_days_open', 'expected_visits', 'valid_visits', 'pse_eligible', 'pse_attended_21_days',
                 'wer_eligible', 'wer_weighed', 'trimester_3', 'counsel_immediate_bf', 'height_eligible',
@@ -46,7 +46,7 @@ def calculate_aggregated_row(data, aggregation_level, data_format, unique_id):
                 if col not in aggregated_row.keys():
                     aggregated_row[col] = row[col]
                 else:
-                    aggregated_row[row] += row[col]
+                    aggregated_row[col] += row[col]
     else:
         for k, v in data.items():
             aggregated_row[k] = v if v else 0
@@ -108,11 +108,12 @@ def prepare_structure_comparative(data, aggregation_level):
     return data
 
 
-def prepare_quarter_dict(data, data_format, unique_id):
-    latest_value_cols = ['num_launched_districts', 'num_launched_blocks', 'num_launched_awcs']
+def prepare_quarter_dict(data, data_period, unique_id):
+    latest_value_cols = ['num_launched_districts', 'num_launched_blocks', 'num_launched_awcs',
+                         'num_launched_states']
     # for quarter we need to average summation
     quarter_comparative_dict = {}
-    if data_format == 'quarter':
+    if data_period == 'quarter':
         for i in range(0, len(data)):
             key = data[i][unique_id]
             if key not in quarter_comparative_dict.keys():
@@ -137,9 +138,9 @@ def prepare_quarter_dict(data, data_format, unique_id):
     return data
 
 
-def calculate_comparative_rows(data, aggregation_level, data_format, unique_id):
-    if data_format == 'quarter':
-        data = prepare_quarter_dict(data, data_format, unique_id)
+def calculate_comparative_rows(data, aggregation_level, data_period, unique_id):
+    if data_period == 'quarter':
+        data = prepare_quarter_dict(data, data_period, unique_id)
     response = []
     for i in range(0, len(data)):
         response.append(calculate_percentage_single_row(deepcopy(data[i]), False))
@@ -177,13 +178,13 @@ def get_top_worst_cases(data, key, aggregation_level, indicator_name):
 @icds_quickcache([
     'domain', 'location_filters', 'year', 'month', 'step', 'quarter', 'include_test'
 ], timeout=30 * 60)
-def get_poshan_progress_dashboard_data(domain, year, month, quarter, data_format, step, location_filters,
+def get_poshan_progress_dashboard_data(domain, year, month, quarter, data_period, step, location_filters,
                                        include_test=False):
     aggregation_level = location_filters.get('aggregation_level', 1)
     filters = location_filters
     value_fields = PPR_COLS_TO_FETCH[:]
     unique_id = ''
-    if data_format == 'month':
+    if data_period == 'month':
         filters['month'] = date(year, month, 1)
     else:
         filters['month__in'] = generate_quarter_months(quarter, year)
@@ -204,7 +205,7 @@ def get_poshan_progress_dashboard_data(domain, year, month, quarter, data_format
         queryset = apply_exclude(domain, queryset)
 
     if step == 'aggregated':
-        if data_format == 'month':
+        if data_period == 'month':
             data = queryset.aggregate(
                 num_launched_states=Sum('num_launched_states'),
                 num_launched_districts=Sum('num_launched_districts'),
@@ -227,9 +228,10 @@ def get_poshan_progress_dashboard_data(domain, year, month, quarter, data_format
                 lunch_count_21_days=Sum('lunch_count_21_days'),
             )
         else:
+            value_fields.append('num_launched_states')
             data = queryset.values(*value_fields)
-        response = calculate_aggregated_row(data, aggregation_level, data_format, unique_id)
+        response = calculate_aggregated_row(data, aggregation_level, data_period, unique_id)
     elif step == 'comparative':
         data = queryset.values(*value_fields)
-        response = calculate_comparative_rows(deepcopy(data), aggregation_level, data_format, unique_id)
+        response = calculate_comparative_rows(deepcopy(data), aggregation_level, data_period, unique_id)
     return response

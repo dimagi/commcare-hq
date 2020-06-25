@@ -2829,13 +2829,13 @@ class PoshanProgressDashboardView(BaseReportView):
         location = request.GET.get('location_id')
         if location == 'null' or location == 'undefined':
             location = None
-        data_format = request.GET.get('data_format', 'month')
+        data_period = request.GET.get('data_period', 'month')
         quarter = int(request.GET.get('quarter', 1))
 
-        return step, month, year, include_test, domain, data_format, quarter, location
+        return step, month, year, include_test, domain, data_period, quarter, location
 
     def get(self, request, *args, **kwargs):
-        step, month, year, include_test, domain, data_format, quarter, location = \
+        step, month, year, include_test, domain, data_period, quarter, location = \
             self.get_settings(request, *args, **kwargs)
 
         location_filters = get_location_filter(location, domain)
@@ -2849,7 +2849,7 @@ class PoshanProgressDashboardView(BaseReportView):
                 year,
                 month,
                 quarter,
-                data_format,
+                data_period,
                 step,
                 location_filters,
                 include_test
