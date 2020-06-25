@@ -554,6 +554,8 @@ function DateTimeEntryBase(question, options) {
         thisYear = new Date().getFullYear(),
         minDate,
         maxDate,
+        yearEnd,
+        yearStart,
         displayOpts = _getDisplayOptions(question),
         isPhoneMode = ko.utils.unwrapObservable(displayOpts.phoneMode);
 
