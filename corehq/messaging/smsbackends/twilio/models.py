@@ -28,9 +28,7 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
         app_label = 'sms'
         proxy = True
 
-    @classproperty
-    def using_api_to_get_fees(cls):
-        return True
+    using_api_to_get_fees = True
 
     @classmethod
     def get_available_extra_fields(cls):
