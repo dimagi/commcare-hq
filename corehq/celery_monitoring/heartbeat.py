@@ -67,13 +67,15 @@ class Heartbeat(object):
         metrics_gauge(
             'commcare.celery.heartbeat.blockage_duration',
             blockage_duration.total_seconds(),
-            tags={'celery_queue': self.queue}
+            tags={'celery_queue': self.queue},
+            multiprocess_mode='max'
         )
         if self.threshold:
             metrics_gauge(
                 'commcare.celery.heartbeat.blockage_ok',
                 1 if blockage_duration.total_seconds() <= self.threshold else 0,
-                tags={'celery_queue': self.queue}
+                tags={'celery_queue': self.queue},
+                multiprocess_mode='max'
             )
         return blockage_duration
 

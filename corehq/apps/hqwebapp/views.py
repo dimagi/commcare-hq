@@ -312,7 +312,7 @@ def server_up(req):
             'status': 'failed' if not status.success else 'ok',
             'check': check_name
         }
-        metrics_gauge('commcare.serverup.check', status.duration, tags=tags)
+        metrics_gauge('commcare.serverup.check', status.duration, tags=tags, multiprocess_mode='max')
 
     if failed_checks and not is_deploy_in_progress():
         status_messages = [

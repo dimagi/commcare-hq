@@ -53,7 +53,7 @@ def get_valid_recipients(recipients):
             email_domain = bounced_email
         metrics_gauge('commcare.bounced_email', 1, tags={
             'email_domain': email_domain,
-        })
+        }, multiprocess_mode='livesum')
     return [recipient for recipient in recipients if recipient not in bounced_emails]
 
 

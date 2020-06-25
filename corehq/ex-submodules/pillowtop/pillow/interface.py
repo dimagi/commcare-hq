@@ -314,7 +314,7 @@ class PillowBase(metaclass=ABCMeta):
 
         tags = {"pillow_name": self.get_name()}
         max_change_lag = (datetime.utcnow() - changes_chunk[0].metadata.publish_timestamp).total_seconds()
-        metrics_gauge('commcare.change_feed.chunked.max_change_lag', max_change_lag, tags=tags)
+        metrics_gauge('commcare.change_feed.chunked.max_change_lag', max_change_lag, tags=tags, multiprocess_mode='max')
 
         # processing_time per change
         metrics_counter('commcare.change_feed.processing_time.total', processing_time / change_count, tags=tags)
@@ -329,7 +329,7 @@ class PillowBase(metaclass=ABCMeta):
             metrics_gauge('commcare.change_feed.checkpoint_offsets', value, tags={
                 'pillow_name': self.get_name(),
                 'topic': _topic_for_ddog(topic),
-            })
+            }, multiprocess_mode='max')
 
     def _record_change_in_datadog(self, change, processing_time):
         self.__record_change_metric_in_datadog(
@@ -370,7 +370,7 @@ class PillowBase(metaclass=ABCMeta):
                     TopicPartition(change.topic, change.partition)
                     if change.partition is not None else change.topic
                 ),
-            })
+            }, multiprocess_mode='max')
 
             if processing_time:
                 tags = {'pillow_name': self.get_name()}

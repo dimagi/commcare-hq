@@ -164,7 +164,7 @@ def _report_current_global_two_factor_setup_rate_limiter():
     for window, value, threshold in global_two_factor_setup_rate_limiter.iter_rates():
         metrics_gauge('commcare.two_factor.global_two_factor_setup_threshold', threshold, tags={
             'window': window
-        })
+        }, multiprocess_mode='max')
         metrics_gauge('commcare.two_factor.global_two_factor_setup_usage', value, tags={
             'window': window
-        })
+        }, multiprocess_mode='max')
