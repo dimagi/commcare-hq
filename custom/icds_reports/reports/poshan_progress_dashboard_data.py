@@ -120,11 +120,11 @@ def prepare_quarter_dict(data, data_period, unique_id):
                 quarter_comparative_dict[key] = data[i]
             else:
                 for k, v in data[i].items():
-                    if k not in ['state_name', 'district_name', unique_id]:
-                        quarter_comparative_dict[key][k] += data[i][k] if data[i][k] else 0
-                    elif k in latest_value_cols:
+                    if k in latest_value_cols:
                         quarter_comparative_dict[key][k] = max(quarter_comparative_dict[key][k],
                                                                data[i][k] if data[i][k] else 0)
+                    if k not in ['state_name', 'district_name', unique_id]:
+                        quarter_comparative_dict[key][k] += data[i][k] if data[i][k] else 0
                     else:
                         quarter_comparative_dict[key][k] = data[i][k]
         data = []
