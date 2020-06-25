@@ -40,13 +40,13 @@ ES_ENV_SETTINGS = {
     },
 }
 
-XFORM_HQ_INDEX_NAME = "forms"
-CASE_HQ_INDEX_NAME = "cases"
-USER_HQ_INDEX_NAME = "users"
-DOMAIN_HQ_INDEX_NAME = "domains"
-APP_HQ_INDEX_NAME = "apps"
-GROUP_HQ_INDEX_NAME = "groups"
-SMS_HQ_INDEX_NAME = "sms"
+XFORM_HQ_INDEX_NAME = "xforms"
+CASE_HQ_INDEX_NAME = "hqcases"
+USER_HQ_INDEX_NAME = "hqusers"
+DOMAIN_HQ_INDEX_NAME = "hqdomains"
+APP_HQ_INDEX_NAME = "hqapps"
+GROUP_HQ_INDEX_NAME = "hqgroups"
+SMS_HQ_INDEX_NAME = "smslogs"
 REPORT_CASE_HQ_INDEX_NAME = "report_cases"
 REPORT_XFORM_HQ_INDEX_NAME = "report_xforms"
 CASE_SEARCH_HQ_INDEX_NAME = "case_search"
