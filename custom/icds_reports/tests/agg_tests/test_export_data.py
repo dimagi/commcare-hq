@@ -85,6 +85,7 @@ class TestExportData(TestCase):
     def test_thr_report_with_feature_flag(self):
         location = 'b1'
         data = TakeHomeRationExport(
+            domain='icds-cas',
             location=location,
             month=date(2017, 5, 1),
             loc_level=3,
@@ -140,6 +141,7 @@ class TestExportData(TestCase):
     def test_thr_report_beneficiary_wise(self):
         location = 'b1'
         data = TakeHomeRationExport(
+            domain='icds-cas',
             location=location,
             month=date(2017, 5, 1),
             loc_level=3,
@@ -241,6 +243,7 @@ class TestExportData(TestCase):
     def test_thr_report_days_beneficiary_wise(self):
         location = 'b1'
         data = TakeHomeRationExport(
+            domain='icds-cas',
             location=location,
             month=date(2017, 5, 1),
             loc_level=3,
@@ -4537,6 +4540,7 @@ class TestExportData(TestCase):
         location = 'b1'
 
         data = TakeHomeRationExport(
+            domain='icds-cas',
             location=location,
             month=date(2017, 5, 1),
             loc_level=3
@@ -4590,6 +4594,7 @@ class TestExportData(TestCase):
     def test_thr_report_export_info_national_level(self):
         location = ''
         data = TakeHomeRationExport(
+            domain='icds-cas',
             location=location,
             month=date(2017, 5, 1),
             loc_level=0
