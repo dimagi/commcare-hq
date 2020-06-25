@@ -574,8 +574,8 @@ function DateTimeEntryBase(question, options) {
             value: self.answer() ? self.convertServerToClientFormat(self.answer()) : self.answer(),
             maxDate: maxDate,
             minDate: minDate,
-            yearStart: thisYear - 120,
-            yearEnd: thisYear + 30,
+            yearStart: thisYear - 100,
+            yearEnd: thisYear + 10,
             scrollInput: false,
             onChangeDateTime: function (newDate) {
                 if (!newDate) {
