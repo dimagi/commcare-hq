@@ -2050,6 +2050,7 @@ class CaseSearchProperty(DocumentSchema):
     """
     name = StringProperty()
     label = DictProperty()
+    appearance = StringProperty()
 
 
 class DefaultCaseSearchProperty(DocumentSchema):
