@@ -50,6 +50,7 @@ SMS_HQ_INDEX_NAME = "smslogs"
 REPORT_CASE_HQ_INDEX_NAME = "report_cases"
 REPORT_XFORM_HQ_INDEX_NAME = "report_xforms"
 CASE_SEARCH_HQ_INDEX_NAME = "case_search"
+TEST_HQ_INDEX_NAME = "pillowtop_tests"
 
 ES_INDEX_SETTINGS = {
     # Default settings for all indexes on ElasticSearch
