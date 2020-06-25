@@ -160,9 +160,7 @@ def refresh_elasticsearch_index(index_name):
 ES_META = {
     "forms": XFORM_INDEX_INFO,
     "cases": CASE_INDEX_INFO,
-    "active_cases": CASE_INDEX_INFO,
     "users": USER_INDEX_INFO,
-    "users_all": USER_INDEX_INFO,
     "domains": DOMAIN_INDEX_INFO,
     "apps": APP_INDEX_INFO,
     "groups": GROUP_INDEX_INFO,
