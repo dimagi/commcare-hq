@@ -15,7 +15,7 @@ class XFormManagementTest(TestCase):
     def setUpClass(cls):
         reset_es_index(XFORM_INDEX_INFO)
         cls.domain = create_domain('xform-management-test')
-        cls.web_user = WebUser.create('xform-management-test', 'test', 'test',
+        cls.web_user = WebUser.create('xform-management-test', 'test', 'test', None, None,
                                       is_superuser=True)
         Client().force_login(cls.web_user.get_django_user())
 

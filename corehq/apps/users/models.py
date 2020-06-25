@@ -1,7 +1,7 @@
 import json
 import logging
 import re
-from datetime import datetime, timedelta
+from datetime import datetime
 from uuid import uuid4
 from xml.etree import cElementTree as ElementTree
 
@@ -23,6 +23,8 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
 from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
 from corehq.apps.users.exceptions import IllegalAccountConfirmation
+from corehq.util.model_log import log_model_change
+from corehq.util.models import BouncedEmail
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateProperty,
@@ -55,7 +57,6 @@ from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import (
     domain_restricts_superusers,
     guess_domain_language,
-    normalize_domain_name,
 )
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
@@ -128,6 +129,7 @@ class Permissions(DocumentSchema):
     edit_shared_exports = BooleanProperty(default=False)
     access_all_locations = BooleanProperty(default=True)
     access_api = BooleanProperty(default=True)
+    access_web_apps = BooleanProperty(default=False)
 
     view_reports = BooleanProperty(default=False)
     view_report_list = StringListProperty(default=[])
@@ -295,7 +297,10 @@ class UserRole(QuickCachedDocumentMixin, Document):
         choices=[page.id for page in ALL_LANDING_PAGES],
     )
     permissions = SchemaProperty(Permissions)
+    # role can be assigned by all non-admins
     is_non_admin_editable = BooleanProperty(default=False)
+    # role assignable by specific non-admins
+    assignable_by = StringListProperty(default=[])
     is_archived = BooleanProperty(default=False)
 
     def get_qualified_id(self):
@@ -406,6 +411,9 @@ class UserRole(QuickCachedDocumentMixin, Document):
     @classmethod
     def preset_permissions_names(cls):
         return {details['name'] for role, details in PERMISSIONS_PRESETS.items()}
+
+    def accessible_by_non_admin_role(self, role_id):
+        return self.is_non_admin_editable or (role_id and role_id in self.assignable_by)
 
 
 PERMISSIONS_PRESETS = {
@@ -1453,10 +1461,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         return cls.get_by_username(django_user.username, strict=strict)
 
     @classmethod
-    def create(cls, domain, username, password, email=None, uuid='', date='',
+    def create(cls, domain, username, password, created_by, created_via, email=None, uuid='', date='',
                first_name='', last_name='', **kwargs):
         try:
-            django_user = User.objects.get(username=username)
+            django_user = User.objects.using(router.db_for_write(User)).get(username=username)
         except User.DoesNotExist:
             django_user = create_user(
                 username, password=password, email=email,
@@ -1619,6 +1627,22 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             self.has_built_app = True
             self.save()
 
+    def log_user_create(self, created_by, created_via):
+        if settings.UNIT_TESTING and created_by is None and created_via is None:
+            return
+        # fallback to self if not created by any user
+        self_django_user = self.get_django_user(use_primary_db=True)
+        created_by = created_by or self_django_user
+        if isinstance(created_by, CouchUser):
+            created_by = created_by.get_django_user()
+        log_model_change(
+            created_by,
+            self_django_user,
+            message={'created_via': created_via},
+            fields_changed=None,
+            is_create=True
+        )
+
 
 class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin):
 
@@ -1707,6 +1731,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                domain,
                username,
                password,
+               created_by,
+               created_via,
                email=None,
                uuid='',
                date='',
@@ -1725,7 +1751,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         elif not is_account_confirmed:
             assert not kwargs['is_active'], \
                 "it's illegal to create a user with is_active=True and is_account_confirmed=False"
-        commcare_user = super(CommCareUser, cls).create(domain, username, password, email, uuid, date, **kwargs)
+        commcare_user = super(CommCareUser, cls).create(domain, username, password, created_by, created_via,
+                                                        email, uuid, date, **kwargs)
         if phone_number is not None:
             commcare_user.add_phone_number(phone_number)
 
@@ -1742,7 +1769,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         if commit:
             commcare_user.save(**get_safe_write_kwargs())
-
+            commcare_user.log_user_create(created_by, created_via)
         return commcare_user
 
     @property
@@ -2153,7 +2180,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         if not location.location_type_object.administrative:
             if mapping and location.location_id in [loc.location_id for loc in self.locations]:
-                caseblock = CaseBlock(
+                caseblock = CaseBlock.deprecated_init(
                     create=False,
                     case_id=mapping._id,
                     index=self.supply_point_index_mapping(sp, True)
@@ -2187,7 +2214,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 index.update(self.supply_point_index_mapping(sp))
 
         from corehq.apps.commtrack.util import location_map_case_id
-        caseblock = CaseBlock(
+        caseblock = CaseBlock.deprecated_init(
             create=True,
             case_type=USER_LOCATION_OWNER_MAP_TYPE,
             case_id=location_map_case_id(self),
@@ -2347,11 +2374,14 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         return self.is_superuser
 
     @classmethod
-    def create(cls, domain, username, password, email=None, uuid='', date='', **kwargs):
-        web_user = super(WebUser, cls).create(domain, username, password, email, uuid, date, **kwargs)
+    def create(cls, domain, username, password, created_by, created_via, email=None, uuid='', date='',
+               **kwargs):
+        web_user = super(WebUser, cls).create(domain, username, password, created_by, created_via, email, uuid,
+                                              date, **kwargs)
         if domain:
             web_user.add_domain_membership(domain, **kwargs)
         web_user.save()
+        web_user.log_user_create(created_by, created_via)
         return web_user
 
     def is_commcare_user(self):
@@ -2606,15 +2636,19 @@ class Invitation(models.Model):
     def is_expired(self):
         return self.invited_on.date() + relativedelta(months=1) < datetime.utcnow().date()
 
+    @property
+    def email_marked_as_bounced(self):
+        return BouncedEmail.get_hard_bounced_emails([self.email])
+
     def send_activation_email(self, remaining_days=30):
         inviter = CouchUser.get_by_user_id(self.invited_by)
         url = absolute_reverse("domain_accept_invitation", args=[self.domain, self.uuid])
         params = {
             "domain": self.domain,
             "url": url,
-            'days': remaining_days,
+            "days": remaining_days,
             "inviter": inviter.formatted_name,
-            'url_prefix': get_static_url_prefix(),
+            "url_prefix": get_static_url_prefix(),
         }
 
         domain_request = DomainRequest.by_email(self.domain, self.email, is_approved=True)

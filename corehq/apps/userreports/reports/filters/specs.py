@@ -76,6 +76,21 @@ class FilterSpec(JsonObject):
     def get_display(self):
         return self.display or self.slug
 
+    @classmethod
+    def wrap(cls, *args, **kwargs):
+        # Because pre_value is set to DefaultProperty, pre_value is automatically
+        # interpreted to be a datatype when it's fetched by jsonobject.
+        # This fails hard when the spec expects a string
+        # and gets something else...like a date.
+        doc = args[0]
+        if 'pre_value' in doc:
+            pre_value = doc['pre_value']
+            data_type = doc.get('datatype')
+            if data_type == 'string':
+                doc['pre_value'] = str(pre_value)
+
+        return super().wrap(*args, **kwargs)
+
 
 class DateFilterSpec(FilterSpec):
     compare_as_string = BooleanProperty(default=False)

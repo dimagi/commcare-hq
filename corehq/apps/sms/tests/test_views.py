@@ -109,7 +109,7 @@ class GatewayViewTests(TestCase):
 
 @contextmanager
 def normal_user():
-    user = WebUser.create(DOMAIN_NAME, USERNAME, PASSWORD)
+    user = WebUser.create(DOMAIN_NAME, USERNAME, PASSWORD, None, None)
     try:
         yield
     finally:
@@ -118,7 +118,7 @@ def normal_user():
 
 @contextmanager
 def domain_admin():
-    user = WebUser.create(DOMAIN_NAME, USERNAME, PASSWORD)
+    user = WebUser.create(DOMAIN_NAME, USERNAME, PASSWORD, None, None)
     user.add_domain_membership(DOMAIN_NAME, is_admin=True)
     user.set_role(DOMAIN_NAME, "admin")
     user.save()
@@ -136,7 +136,7 @@ def contractor():
 
 @contextmanager
 def superuser():
-    user = WebUser.create(DOMAIN_NAME, USERNAME, PASSWORD, is_superuser=True)
+    user = WebUser.create(DOMAIN_NAME, USERNAME, PASSWORD, None, None, is_superuser=True)
     try:
         yield
     finally:

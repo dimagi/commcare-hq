@@ -23,5 +23,3 @@ class Migration(migrations.Migration):
         migrations.RunSQL("ALTER TABLE child_health_monthly ADD COLUMN duplicate_status_daily smallint"),
         migrations.RunSQL("ALTER TABLE child_health_monthly ADD COLUMN seeking_services_status_daily smallint"),
     ]
-
-    operations.extend(get_view_migrations())

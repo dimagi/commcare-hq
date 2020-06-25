@@ -16,7 +16,7 @@ class SessionDetailsViewTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super(SessionDetailsViewTest, cls).setUpClass()
-        cls.couch_user = CommCareUser.create('toyland', 'bunkey', '123')
+        cls.couch_user = CommCareUser.create('toyland', 'bunkey', '123', None, None)
         cls.sql_user = cls.couch_user.get_django_user()
 
         cls.expected_response = {
@@ -68,6 +68,59 @@ class SessionDetailsViewTest(TestCase):
         response = Client().post(self.url, data, content_type="application/json")
         self.assertEqual(200, response.status_code)
         self.assertGreater(self.session.get_expiry_date(), expired_date)
+
+    @override_settings(DEBUG=True)
+    def test_ping_login_unauth_user(self):
+        client = Client()
+        client.login(username='jackalope', password='456')
+        response = client.get(reverse('ping_login'))
+        self.assertEqual(200, response.status_code)
+        self.assertJSONEqual(response.content, {
+            "success": False,
+            "last_request": None,
+            "username": "",
+        })
+
+    @override_settings(DEBUG=True)
+    def test_ping_login_auth_user(self):
+        client = Client()
+        client.login(username=self.couch_user.username, password='123')
+
+        # First ping after login: authorized but no previous request
+        response = client.get(reverse('ping_login'))
+        self.assertEqual(200, response.status_code)
+        data = json.loads(response.content)
+        self.assertJSONEqual(response.content, {
+            "success": True,
+            "last_request": None,
+            "username": self.couch_user.username
+        })
+
+        # Request a page and then re-ping: last_request should exist
+        client.get(reverse('bsd_license'))
+        response = client.get(reverse('ping_login'))
+        data = json.loads(response.content)
+        self.assertTrue(data['success'])
+        self.assertEqual(self.couch_user.username, data['username'])
+        self.assertIsNotNone(data['last_request'])
+        last_request = data['last_request']
+
+        # Ping some more, last_request should not change
+        client.get(reverse('ping_login'))
+        response = client.get(reverse('ping_login'))
+        data = json.loads(response.content)
+        self.assertTrue(data['success'])
+        self.assertEqual(self.couch_user.username, data['username'])
+        self.assertEqual(last_request, data['last_request'])
+
+        # Request a normal page, last_request should update
+        client.get(reverse('bsd_license'))
+        response = client.get(reverse('ping_login'))
+        data = json.loads(response.content)
+        self.assertTrue(data['success'])
+        self.assertEqual(self.couch_user.username, data['username'])
+        self.assertIsNotNone(data['last_request'])
+        self.assertNotEqual(last_request, data['last_request'])
 
     @override_settings(FORMPLAYER_INTERNAL_AUTH_KEY='123abc', DEBUG=False)
     def test_with_hmac_signing(self):

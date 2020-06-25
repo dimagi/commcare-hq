@@ -69,7 +69,7 @@ class UserPillowTest(UserPillowTestBase):
 
     def _make_and_test_user_kafka_pillow(self, username):
         # make a user
-        user = CommCareUser.create(TEST_DOMAIN, username, 'secret')
+        user = CommCareUser.create(TEST_DOMAIN, username, 'secret', None, None)
 
         # send to kafka
         since = get_topic_offset(topics.COMMCARE_USER)

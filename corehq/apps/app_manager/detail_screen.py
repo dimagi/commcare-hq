@@ -336,9 +336,7 @@ class Plain(FormattedDetailColumn):
 
 @register_format_type('date')
 class Date(FormattedDetailColumn):
-
-    XPATH_FUNCTION = "if({xpath} = '', '', format_date(date(if({xpath} = '', 0, {xpath})),'short'))"
-
+    XPATH_FUNCTION = "if({xpath} = '', '', format-date(date({xpath}), '{column.date_format}'))"
     SORT_XPATH_FUNCTION = "{xpath}"
 
 

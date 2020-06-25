@@ -122,7 +122,7 @@ class ConfigurableReportTableManagerMixin(object):
                           Otherwise, do not attempt to change database
         """
         self.bootstrapped = False
-        self.last_bootstrapped = datetime.utcnow()
+        self.last_bootstrapped = self.last_imported = datetime.utcnow()
         self.data_source_providers = data_source_providers
         self.ucr_division = ucr_division
         self.include_ucrs = include_ucrs
@@ -163,6 +163,8 @@ class ConfigurableReportTableManagerMixin(object):
     def bootstrap_if_needed(self):
         if self.needs_bootstrap():
             self.bootstrap()
+        else:
+            self._pull_in_new_and_modified_data_sources()
 
     def bootstrap(self, configs=None):
         configs = self.get_filtered_configs(configs)
@@ -173,7 +175,7 @@ class ConfigurableReportTableManagerMixin(object):
 
         for config in configs:
             self.table_adapters_by_domain[config.domain].append(
-                get_indicator_adapter(config, raise_errors=True, load_source='change_feed')
+                self._get_indicator_adapter(config)
             )
 
         if self.run_migrations:
@@ -181,6 +183,9 @@ class ConfigurableReportTableManagerMixin(object):
 
         self.bootstrapped = True
         self.last_bootstrapped = datetime.utcnow()
+
+    def _get_indicator_adapter(self, config):
+        return get_indicator_adapter(config, raise_errors=True, load_source='change_feed')
 
     def rebuild_tables_if_necessary(self):
         self._rebuild_sql_tables([
@@ -211,8 +216,14 @@ class ConfigurableReportTableManagerMixin(object):
 
             tables_to_act_on = get_tables_rebuild_migrate(diffs)
             for table_name in tables_to_act_on.rebuild:
-                pillow_logging.debug("[rebuild] Rebuilding table: %s", table_name)
                 sql_adapter = table_map[table_name]
+                pillow_logging.info(
+                    "[rebuild] Rebuilding table: %s, from config %s at rev %s",
+                    table_name, sql_adapter.config._id, sql_adapter.config._rev
+                )
+                pillow_logging.info("[rebuild] Using config: %s", adapter.config)
+                pillow_logging.info("[rebuild] sqlalchemy metadata: %s", get_metadata(engine_id).tables[table_name])
+                pillow_logging.info("[rebuild] sqlalchemy table: %s", adapter.get_table())
                 table_diffs = [diff for diff in diffs if diff.table_name == table_name]
                 if not sql_adapter.config.is_static:
                     try:
@@ -225,11 +236,19 @@ class ConfigurableReportTableManagerMixin(object):
             self.migrate_tables(engine, diffs, tables_to_act_on.migrate, table_map)
 
     def migrate_tables(self, engine, diffs, table_names, adapters_by_table):
-        pillow_logging.debug("[rebuild] Application migrations to tables: %s", table_names)
         migration_diffs = [diff for diff in diffs if diff.table_name in table_names]
+        for table in table_names:
+            adapter = adapters_by_table[table]
+            pillow_logging.info("[rebuild] Using config: %s", adapter.config)
+            pillow_logging.info("[rebuild] sqlalchemy metadata: %s", get_metadata(adapter.engine_id).tables[table])
+            pillow_logging.info("[rebuild] sqlalchemy table: %s", adapter.get_table())
         changes = migrate_tables(engine, migration_diffs)
         for table, diffs in changes.items():
             adapter = adapters_by_table[table]
+            pillow_logging.info(
+                "[rebuild] Migrating table: %s, from config %s at rev %s",
+                table, adapter.config._id, adapter.config._rev
+            )
             adapter.log_table_migrate(source='pillowtop', diffs=diffs)
 
     def rebuild_table(self, adapter, diffs=None):
@@ -239,15 +258,39 @@ class ConfigurableReportTableManagerMixin(object):
             if config._rev != latest_rev:
                 raise StaleRebuildError('Tried to rebuild a stale table ({})! Ignoring...'.format(config))
 
+        diff_dicts = [diff.to_dict() for diff in diffs]
         if config.disable_destructive_rebuild and adapter.table_exists:
-            diff_dicts = [diff.to_dict() for diff in diffs]
             adapter.log_table_rebuild_skipped(source='pillowtop', diffs=diff_dicts)
             return
 
-        if config.is_static:
-            rebuild_indicators.delay(adapter.config.get_id, source='pillowtop', engine_id=adapter.engine_id)
-        else:
-            adapter.rebuild_table(source='pillowtop')
+        rebuild_indicators.delay(adapter.config.get_id, source='pillowtop', engine_id=adapter.engine_id, diffs=diff_dicts)
+
+    def _pull_in_new_and_modified_data_sources(self):
+        """
+        Find any data sources that have been modified since the last time this was bootstrapped
+        and update the in-memory references.
+        """
+        new_last_imported = datetime.utcnow()
+        new_data_sources = [
+            source
+            for provider in self.data_source_providers
+            for source in provider.get_data_sources_modified_since(self.last_imported)
+        ]
+        self._add_data_sources_to_table_adapters(new_data_sources)
+        self.last_imported = new_last_imported
+
+    def _add_data_sources_to_table_adapters(self, new_data_sources):
+        for new_data_source in new_data_sources:
+            pillow_logging.info(f'updating modified data source: {new_data_source.domain}: {new_data_source._id}')
+            domain_adapters = self.table_adapters_by_domain[new_data_source.domain]
+            # remove any previous adapters if they existed
+            domain_adapters = [
+                adapter for adapter in domain_adapters if adapter.config._id != new_data_source._id
+            ]
+            # add a new one
+            domain_adapters.append(self._get_indicator_adapter(new_data_source))
+            # update dictionary
+            self.table_adapters_by_domain[new_data_source.domain] = domain_adapters
 
 
 class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, BulkPillowProcessor):

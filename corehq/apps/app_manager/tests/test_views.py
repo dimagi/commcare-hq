@@ -47,7 +47,7 @@ class TestViews(TestCase):
         cls.project.save()
         cls.username = 'cornelius'
         cls.password = 'fudge'
-        cls.user = WebUser.create(cls.project.name, cls.username, cls.password, is_active=True)
+        cls.user = WebUser.create(cls.project.name, cls.username, cls.password, None, None, is_active=True)
         cls.user.is_superuser = True
         cls.user.save()
         cls.build = add_build(version='2.7.0', build_number=20655)
