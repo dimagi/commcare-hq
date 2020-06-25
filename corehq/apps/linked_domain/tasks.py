@@ -35,55 +35,6 @@ def push_models(master_domain, models, linked_domains, build_apps, username):
     manager.send_email()
 
 
-def _handle_app(domain_link, model, user, build_and_release=False):
-    if toggles.MULTI_MASTER_LINKED_DOMAINS.enabled(domain_link.linked_domain):
-        return _("Multi master flag is in use")
-
-    app_id = model['detail']['app_id']
-    found = False
-    error_prefix = ""
-    try:
-        for linked_app in get_apps_in_domain(domain_link.linked_domain, include_remote=False):
-            if is_linked_app(linked_app) and linked_app.family_id == app_id:
-                found = True
-                app = update_linked_app(linked_app, app_id, user.user_id)
-
-        if not found:
-            return _("Could not find app")
-
-        if build_and_release:
-            error_prefix = _("Updated app but did not build or release: ")
-            build = app.make_build()
-            build.is_released = True
-            build.save(increment_version=False)
-    except Exception as e:  # intentionally broad
-        return error_prefix + str(e)
-
-
-def _handle_report(domain_link, model):
-    report_id = model['detail']['report_id']
-    found = False
-    for linked_report in get_report_configs_for_domain(domain_link.linked_domain):
-        if linked_report.report_meta.master_id == report_id:
-            found = True
-            update_linked_ucr(domain_link, linked_report.get_id)
-
-    if not found:
-        return _("Could not find report")
-
-
-def _handle_case_search(domain_link, model, user):
-    if not toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain_link.linked_domain):
-        return _("Case claim flag is not on")
-
-    return _handle_model(domain_link, model, user)
-
-
-def _handle_model(domain_link, model, user):
-    update_model_type(domain_link, model['type'], model_detail=model['detail'])
-    domain_link.update_last_pull(model['type'], user._id)
-
-
 class ReleaseManager():
     def __init__(self, master_domain, user):
         self.master_domain = master_domain
@@ -111,13 +62,13 @@ class ReleaseManager():
                 error = None
                 try:
                     if model['type'] == MODEL_APP:
-                        error = _handle_app(domain_link, model, self.user, build_apps)
+                        error = self._release_app(domain_link, model, self.user, build_apps)
                     elif model['type'] == MODEL_REPORT:
-                        error = _handle_report(domain_link, model)
+                        error = self._release_report(domain_link, model)
                     elif model['type'] == MODEL_CASE_SEARCH:
-                        error = _handle_case_search(domain_link, model, self.user)
+                        error = self._release_case_search(domain_link, model, self.user)
                     else:
-                        error = _handle_model(domain_link, model, self.user)
+                        error = self._release_model(domain_link, model, self.user)
                 except Exception as e:   # intentionally broad
                     error = str(e)
                     notify_exception(None, "Exception pushing linked domains: {}".format(e))
@@ -154,3 +105,48 @@ The following linked project spaces received content:
                 for msg in self.errors_by_domain[linked_domain] + self.successes_by_domain[linked_domain]:
                     message += "\n   - " + msg
         send_mail_async.delay(subject, message, settings.DEFAULT_FROM_EMAIL, [self.user.email or self.user.username])
+
+    def _release_app(self, domain_link, model, user, build_and_release=False):
+        if toggles.MULTI_MASTER_LINKED_DOMAINS.enabled(domain_link.linked_domain):
+            return _("Multi master flag is in use")
+
+        app_id = model['detail']['app_id']
+        found = False
+        error_prefix = ""
+        try:
+            for linked_app in get_apps_in_domain(domain_link.linked_domain, include_remote=False):
+                if is_linked_app(linked_app) and linked_app.family_id == app_id:
+                    found = True
+                    app = update_linked_app(linked_app, app_id, user.user_id)
+
+            if not found:
+                return _("Could not find app")
+
+            if build_and_release:
+                error_prefix = _("Updated app but did not build or release: ")
+                build = app.make_build()
+                build.is_released = True
+                build.save(increment_version=False)
+        except Exception as e:  # intentionally broad
+            return error_prefix + str(e)
+
+    def _release_report(self, domain_link, model):
+        report_id = model['detail']['report_id']
+        found = False
+        for linked_report in get_report_configs_for_domain(domain_link.linked_domain):
+            if linked_report.report_meta.master_id == report_id:
+                found = True
+                update_linked_ucr(domain_link, linked_report.get_id)
+
+        if not found:
+            return _("Could not find report")
+
+    def _release_case_search(self, domain_link, model, user):
+        if not toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain_link.linked_domain):
+            return _("Case claim flag is not on")
+
+        return self._release_model(domain_link, model, user)
+
+    def _release_model(self, domain_link, model, user):
+        update_model_type(domain_link, model['type'], model_detail=model['detail'])
+        domain_link.update_last_pull(model['type'], user._id)
