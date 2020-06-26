@@ -154,7 +154,7 @@ def save_match_ids(case, case_config, patient):
                 kwargs['external_id'] = value
             else:
                 case_update[case_property] = value
-    case_block = CaseBlock(
+    case_block = CaseBlock.deprecated_init(
         case_id=case.get_id,
         create=False,
         update=case_update,
@@ -433,7 +433,7 @@ def delete_case_property(
         case_block_kwargs = {case_property: None}
     else:
         case_block_kwargs = {"update": {case_property: None}}
-    case_block = CaseBlock(case_id=case_id, create=False, **case_block_kwargs)
+    case_block = CaseBlock.deprecated_init(case_id=case_id, create=False, **case_block_kwargs)
     submit_case_blocks([case_block.as_text()], domain, xmlns=XMLNS_OPENMRS)
 
 

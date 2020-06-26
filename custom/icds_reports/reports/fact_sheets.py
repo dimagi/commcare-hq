@@ -525,7 +525,22 @@ class FactSheetsReport(object):
                 ]
             }
         ]
-
+        if self.beta:
+            fact_sheet_data_config[1]['sections'][0] = {
+                'section_title': 'Nutrition Status of Children',
+                'slug': 'nutrition_status_of_children',
+                'order': 1,
+                'rows_config': [
+                    {
+                        'data_source': 'AggChildHealthMonthlyDataSource',
+                        'header': 'Children between 1-2 years old who have received complete '
+                                  'immunization required by age 1.',
+                        'slug': 'fully_immunized',
+                        'average': [],
+                        'format': 'percent'
+                    }
+                ]
+            }
         return fact_sheet_data_config
 
     def data_sources(self, config):

@@ -148,11 +148,13 @@ WebFormSession.prototype.isOneQuestionPerScreen = function () {
 /**
  * Sends a request to the touchforms server
  * @param {Object} requestParams - request parameters to be sent
- * @param {function} callback - function to be called on success
+ * @param {function} successCallback - function to be called on success
  * @param {boolean} blocking - one of Formplayer.Const.BLOCK_*, defaults to BLOCK_NONE
  * @param {function} failureCallback - function to be called on failure
+ * @param {function} errorResponseCallback - function to be called on a "success" response with .status = 'error'
+ *      this function should return true to also run default behavior afterwards, or false to prevent it
  */
-WebFormSession.prototype.serverRequest = function (requestParams, callback, blocking, failureCallback) {
+WebFormSession.prototype.serverRequest = function (requestParams, successCallback, blocking, failureCallback, errorResponseCallback) {
     var self = this;
     var url = self.urls.xform;
     if (requestParams.action === Formplayer.Const.SUBMIT && self.NUM_PENDING_REQUESTS) {
@@ -190,7 +192,7 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
             withCredentials: true,
         },
         success: function (resp) {
-            self.handleSuccess(resp, requestParams.action, callback);
+            self.handleSuccess(resp, requestParams.action, successCallback, errorResponseCallback);
         },
         error: function (resp, textStatus) {
             self.handleFailure(resp, requestParams.action, textStatus, failureCallback);
@@ -203,10 +205,13 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
  * @param {Object} response - touchforms response object
  * @param {function} callback - callback to be called if no errors occured
  */
-WebFormSession.prototype.handleSuccess = function (resp, action, callback) {
+WebFormSession.prototype.handleSuccess = function (resp, action, successCallback, errorResponseCallback) {
     var self = this;
+    errorResponseCallback = errorResponseCallback || function () { return true; };
     if (resp.status === 'error' || resp.error) {
-        self.onerror(resp);
+        if (errorResponseCallback()) {
+            self.onerror(resp);
+        }
     } else {
         // ignore responses older than the most-recently handled
         if (resp.seq_id && resp.seq_id < self.lastRequestHandled) {
@@ -215,7 +220,7 @@ WebFormSession.prototype.handleSuccess = function (resp, action, callback) {
         self.lastRequestHandled = resp.seq_id;
 
         try {
-            callback(resp);
+            successCallback(resp);
         } catch (err) {
             console.error(err);
             self.onerror({
@@ -520,13 +525,18 @@ WebFormSession.prototype.submitForm = function (form) {
                 },
                 function (resp) {
                     form.isSubmitting(false);
-                    if (resp.status == 'success') {
+                    if (resp.status === 'success') {
                         self.onsubmit(resp);
                     } else {
                         $.each(resp.errors, function (ix, error) {
                             self.serverError(getForIx(form, ix), error);
                         });
-                        if (resp.notification) {
+                        // todo: mark all these messages for translation
+                        if (resp.status === 'too-many-requests') {
+                            alert("We’re unable to submit this form right now due to high system usage. \n\n" +
+                                "Please keep this window open and try again in a minute, " +
+                                "or come back to this form in Incomplete Forms later.");
+                        } else if (resp.notification) {
                             alert("Form submission failed with error: \n\n" +
                                 resp.notification.message + ". \n\n " +
                                 "This must be corrected before the form can be submitted.");
@@ -536,7 +546,12 @@ WebFormSession.prototype.submitForm = function (form) {
                         }
                     }
                 },
-                Formplayer.Const.BLOCK_ALL
+                Formplayer.Const.BLOCK_ALL,
+                undefined,
+                function () {
+                    form.isSubmitting(false);
+                    return true;
+                }
             );
         }, 250);
 };

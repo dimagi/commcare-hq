@@ -498,6 +498,7 @@ class QueryPrompt(DisplayNode):
     ROOT_NAME = 'prompt'
 
     key = StringField('@key')
+    appearance = StringField('@appearance', required=False)
 
 
 class RemoteRequestPost(XmlObject):

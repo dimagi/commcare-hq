@@ -61,6 +61,24 @@ class TestImmunizationCoverage(TestCase):
             }
         )
 
+    def test_map_data_with_age_1_2_ff(self):
+        data = get_immunization_coverage_data_map(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state',
+            icds_features_flag=True
+        )
+        self.assertDictEqual(
+            data['data'],
+            {
+                'st1': {'all': 44, 'original_name': ['st1'], 'children': 4, 'fillKey': '0%-20%'},
+                'st2': {'all': 57, 'original_name': ['st2'], 'children': 6, 'fillKey': '0%-20%'}
+            }
+        )
+
     def test_map_data_right_legend_info(self):
         data = get_immunization_coverage_data_map(
             'icds-cas',
@@ -120,6 +138,40 @@ class TestImmunizationCoverage(TestCase):
                         '% of children who have recieved complete immunizations required by age 1:'
                     ),
                     'value': '10.79%'
+                }
+            ]
+        )
+
+    def test_map_data_right_legend_extended_info_with_age_1_2_ff(self):
+        data = get_immunization_coverage_data_map(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state',
+            icds_features_flag=True
+        )
+        self.assertListEqual(
+            data['rightLegend']['extended_info'],
+            [
+                {
+                    'indicator': 'Total number of ICDS Child beneficiaries between 1-2 years old:',
+                    'value': "101"
+                },
+                {
+                    'indicator': (
+                        'Total number of children between 1-2 years old who have received '
+                        'complete immunizations required by age 1:'
+                    ),
+                    'value': "10"
+                },
+                {
+                    'indicator': (
+                        '% of children between 1-2 years old who have received complete'
+                        ' immunizations required by age 1:'
+                    ),
+                    'value': '9.90%'
                 }
             ]
         )
@@ -273,6 +325,68 @@ class TestImmunizationCoverage(TestCase):
             }
         )
 
+    def test_chart_data_with_age_1_2_ff(self):
+        self.assertDictEqual(
+            get_immunization_coverage_data_chart(
+                'icds-cas',
+                config={
+                    'month': (2017, 5, 1),
+                    'aggregation_level': 1
+                },
+                loc_level='state',
+                icds_features_flag=True
+            ),
+            {
+                'chart_data': [
+                    {
+                        'values': [
+                            {
+                                'x': 1485907200000,
+                                'y': 0,
+                                'all': 0,
+                                'in_month': 0
+                            },
+                            {
+                                'x': 1488326400000,
+                                'y': 0,
+                                'all': 0,
+                                'in_month': 0
+                            },
+                            {
+                                'x': 1491004800000,
+                                'y': 0.0784313725490196,
+                                'all': 102,
+                                'in_month': 8
+                            },
+                            {
+                                'x': 1493596800000,
+                                'y': 0.09900990099009901,
+                                'all': 101,
+                                'in_month': 10
+                            }
+                        ],
+                        'key': '% Children between 1-2 years old who received complete immunizations by 1 year',
+                        'strokeWidth': 2,
+                        'classed': 'dashed',
+                        'color': '#005ebd'
+                    }
+                ],
+                'all_locations': [
+                    {'loc_name': 'st2', 'percent': 10.526315789473685},
+                    {'loc_name': 'st1', 'percent': 9.090909090909092}
+                ],
+                'top_five': [
+                    {'loc_name': 'st2', 'percent': 10.526315789473685},
+                    {'loc_name': 'st1', 'percent': 9.090909090909092}
+                ],
+                'bottom_five': [
+                    {'loc_name': 'st2', 'percent': 10.526315789473685},
+                    {'loc_name': 'st1', 'percent': 9.090909090909092}
+                ],
+                'location_type': 'State'
+            }
+        )
+
     def test_sector_data(self):
         self.assertDictEqual(
             get_immunization_coverage_sector_data(
@@ -325,4 +439,59 @@ class TestImmunizationCoverage(TestCase):
                 ]
             }
 
+        )
+
+    def test_sector_data_with_age_1_2_ff(self):
+        self.assertDictEqual(
+            get_immunization_coverage_sector_data(
+                'icds-cas',
+                config={
+                    'month': (2017, 5, 1),
+                    'state_id': 'st1',
+                    'district_id': 'd1',
+                    'block_id': 'b1',
+                    'aggregation_level': 4
+                },
+                location_id='b1',
+                loc_level='supervisor',
+                icds_features_flag=True
+            ),
+            {
+                "info": "Of the total number of children enrolled for Anganwadi Services who are between"
+                        " 1-2 years old, "
+                        "the percentage of children who have received the complete immunization as per the "
+                        "National Immunization Schedule of India that is required by age 1."
+                        "<br/><br/>"
+                        "This includes the following immunizations:<br/>"
+                        "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"
+                        "If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1",
+                "tooltips_data": {
+                    "s2": {
+                        "all": 12,
+                        "children": 3
+                    },
+                    "s1": {
+                        "all": 1,
+                        "children": 0
+                    }
+                },
+                "chart_data": [
+                    {
+                        "color": MapColors.BLUE,
+                        "classed": "dashed",
+                        "strokeWidth": 2,
+                        "values": [
+                            [
+                                "s1",
+                                0.0
+                            ],
+                            [
+                                "s2",
+                                0.25
+                            ]
+                        ],
+                        "key": ""
+                    }
+                ]
+            }
         )
