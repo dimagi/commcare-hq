@@ -94,13 +94,14 @@ class PoshanProgressReport(object):
         # calculating average and getting total row
         # m1+m2+m3/3
         for k, v in row_data_dict.items():
+            launched = True if v[all_cols.index('num_launched_awcs')] > 0 else False
             for col in all_cols:
                 if col not in named_cols:
                     val = v[all_cols.index(col)]
                     if col not in latest_value_cols:
                         val = handle_average(val)
                     row_data_dict[k][all_cols.index(col)] = val
-                    total_row[all_cols.index(col)] += round(val) if val else 0
+                    total_row[all_cols.index(col)] += round(val) if (val and launched is True) else 0
                 else:
                     total_row[all_cols.index(col)] = 'Total'
 
@@ -156,10 +157,11 @@ class PoshanProgressReport(object):
         total_row = [0 for _ in range(0, len(all_cols))]
         for row in data:
             row_data = dummy_row[:]
+            launched = True if row['num_launched_awcs'] > 0 else False
             for col in cols_to_fetch:
                 row_data[all_cols.index(col)] = row[col]
                 if col not in ['state_name', 'district_name']:
-                    total_row[all_cols.index(col)] += row[col] if row[col] else 0
+                    total_row[all_cols.index(col)] += row[col] if (row[col] and launched is True) else 0
                 else:
                     total_row[all_cols.index(col)] = 'Total'
             excel_rows.append(row_data)
