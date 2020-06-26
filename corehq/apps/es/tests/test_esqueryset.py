@@ -35,7 +35,7 @@ class TestESQuerySet(TestCase):
                 }
             ],
             'max_score': 1.0,
-            'total': 5247
+            'total': 5247 if settings.ELASTICSEARCH_MAJOR_VERSION !=7 else {'value': 5247}
             },
         'timed_out': False,
         'took': 4
