@@ -11,7 +11,7 @@ from xml.etree import cElementTree as ElementTree
 
 def _create_tech_issue_delegate_for_escalation(tech_issue, owner_id):
     case_id = uuid.uuid4().hex
-    caseblock = CaseBlock(
+    caseblock = CaseBlock.deprecated_init(
         case_id,
         case_type='tech_issue_delegate',
         create=True,

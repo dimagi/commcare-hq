@@ -114,11 +114,8 @@ function _run_tests() {
         ./manage.py migrate --noinput
         ./manage.py runserver 0.0.0.0:8000 &> commcare-hq.log &
         /mnt/wait.sh 127.0.0.1:8000
-        # HACK curl to avoid
-        # Warning: PhantomJS timed out, possibly due to a missing Mocha run() call.
-        curl http://localhost:8000/mocha/app_manager/ &> /dev/null
-        echo "grunt mocha $@"
-        grunt mocha "$@"
+         echo "grunt test $@"
+         grunt test "$@"
     elif [ "$TEST" != "javascript" ]; then
         ./manage.py create_kafka_topics
         echo "coverage run manage.py test $@ $TESTS"
@@ -127,11 +124,8 @@ function _run_tests() {
         ./manage.py migrate --noinput
         ./manage.py runserver 0.0.0.0:8000 &> commcare-hq.log &
         host=127.0.0.1 /mnt/wait.sh hq:8000
-        # HACK curl to avoid
-        # Warning: PhantomJS timed out, possibly due to a missing Mocha run() call.
-        curl http://localhost:8000/mocha/app_manager/ &> /dev/null
-        echo "grunt mocha $@"
-        grunt mocha "$@"
+         echo "grunt test $@"
+         grunt test "$@"
     fi
 }
 

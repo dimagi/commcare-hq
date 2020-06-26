@@ -28,12 +28,35 @@
         <div ng-if="$ctrl.data">
             <div class="row black">
                 <div ng-if="$ctrl.showTable" class="col-md-12">
+                    <div class="d-flex justify-content-between" ng-if="$ctrl.isDetailsDisplayed">
+                      <b><span ng-bind="$ctrl.detailsTableHeading"></span></b>
+                      <button class="btn btn-info btn-sm right" ng-click="$ctrl.closeDetails()">Back</button>
+                    </div>
                     <table
-                            id="serviceDeliveryDashboardTable"
+                            ng-if="$ctrl.step==='pw_lw_children'"
+                            id="sddPwLwChildrenTable"
                             datatable=""
                             dt-options="$ctrl.dtOptions"
                             dt-columns="$ctrl.dtColumns"
-                            class="table table-striped table-bordered"
+                            class="table table-striped table-bordered serviceDeliveryDashboardTable"
+                    >
+                    </table>
+                    <table
+                            ng-if="$ctrl.step==='children'"
+                            id="sddChildrenTable"
+                            datatable=""
+                            dt-options="$ctrl.dtOptions"
+                            dt-columns="$ctrl.dtColumns"
+                            class="table table-striped table-bordered serviceDeliveryDashboardTable"
+                    >
+                    </table>
+                    <table
+                            ng-if="$ctrl.step!=='children' && $ctrl.step!=='pw_lw_children'"
+                            id="sddDetailsTable"
+                            datatable=""
+                            dt-options="$ctrl.dtOptions"
+                            dt-columns="$ctrl.dtColumns"
+                            class="table table-striped table-bordered serviceDeliveryDashboardTable"
                     >
                     </table>
                 </div>

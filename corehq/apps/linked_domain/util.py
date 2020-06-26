@@ -93,3 +93,7 @@ def _get_missing_multimedia(app, old_multimedia_ids=None):
 def _add_domain_access(domain, media):
     if domain not in media.valid_domains:
         media.add_domain(domain)
+
+
+def is_linked_report(report):
+    return report.report_meta.master_id

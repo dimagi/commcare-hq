@@ -1,16 +1,32 @@
+from django.http import HttpResponseForbidden
+
 from tastypie import fields
 from tastypie.bundle import Bundle
 from tastypie.constants import ALL
+from tastypie.exceptions import ImmediateHttpResponse
 from tastypie.resources import ModelResource
 
+from corehq import privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.api.resources import HqBaseResource
-from corehq.apps.api.resources.auth import DomainAdminAuthentication
+from corehq.apps.api.resources.auth import (
+    DomainAdminAuthentication,
+    RequirePermissionAuthentication,
+)
+from corehq.apps.users.models import Permissions
 from corehq.util.view_utils import absolute_reverse
 
 from ..models import LocationType, SQLLocation
 
 
-class LocationTypeResource(ModelResource, HqBaseResource):
+class BaseLocationsResource(ModelResource, HqBaseResource):
+    def dispatch(self, request_type, request, **kwargs):
+        if not domain_has_privilege(request.domain, privileges.LOCATIONS):
+            raise ImmediateHttpResponse(HttpResponseForbidden())
+        return super().dispatch(request_type, request, **kwargs)
+
+
+class LocationTypeResource(BaseLocationsResource):
     parent = fields.ForeignKey('self', 'parent_type', null=True)
 
     class Meta(object):
@@ -31,11 +47,11 @@ class LocationTypeResource(ModelResource, HqBaseResource):
             "domain": ('exact',),
         }
 
-    def get_resource_uri(self, bundle_or_obj=None):
+    def get_resource_uri(self, bundle_or_obj=None, url_name='api_dispatch_list'):
         if isinstance(bundle_or_obj, Bundle):
             obj = bundle_or_obj.obj
         elif bundle_or_obj is None:
-            return None
+            return super().get_resource_uri(bundle_or_obj, url_name)
         else:
             obj = bundle_or_obj
 
@@ -47,7 +63,7 @@ class LocationTypeResource(ModelResource, HqBaseResource):
         })
 
 
-class LocationResource(ModelResource, HqBaseResource):
+class LocationResource(BaseLocationsResource):
     location_data = fields.DictField('metadata')
     location_type = fields.ForeignKey(LocationTypeResource, 'location_type')
     parent = fields.ForeignKey('self', 'parent', null=True)
@@ -56,7 +72,7 @@ class LocationResource(ModelResource, HqBaseResource):
         resource_name = 'location'
         detail_uri_name = 'location_id'
         queryset = SQLLocation.objects.filter(is_archived=False).all()
-        authentication = DomainAdminAuthentication()
+        authentication = RequirePermissionAuthentication(Permissions.edit_locations)
         allowed_methods = ['get']
         fields = [
             'id',
@@ -80,11 +96,11 @@ class LocationResource(ModelResource, HqBaseResource):
             'longitude': ALL,
         }
 
-    def get_resource_uri(self, bundle_or_obj=None):
+    def get_resource_uri(self, bundle_or_obj=None, url_name='api_dispatch_list'):
         if isinstance(bundle_or_obj, Bundle):
             obj = bundle_or_obj.obj
         elif bundle_or_obj is None:
-            return None
+            return super().get_resource_uri(bundle_or_obj, url_name)
         else:
             obj = bundle_or_obj
 

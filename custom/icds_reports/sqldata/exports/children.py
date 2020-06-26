@@ -216,19 +216,6 @@ class ChildrenExport(ExportableMixin, IcdsSqlData):
                 slug='newborn_low_birth_weight'
             ),
             AggregateColumn(
-                'Percentage of children with completed 1 year immunizations',
-                lambda x, y, z: '%.2f%%' % (((x or 0) + (y or 0)) * 100 / float(z or 1)),
-                [
-                    SumColumn('fully_immunized_on_time',
-                              alias='fully_immunized_on_time'),
-                    SumColumn('fully_immunized_late',
-                              alias='fully_immunized_late'),
-                    SumColumn('fully_immunized_eligible',
-                              alias='fully_immunized_eligible')
-                ],
-                slug='percent_completed_1year_immunizations'
-            ),
-            AggregateColumn(
                 'Percentage of children breastfed at birth',
                 percent,
                 [
@@ -388,16 +375,77 @@ class ChildrenExport(ExportableMixin, IcdsSqlData):
         agg_columns.insert(35, DatabaseColumn('Total no. of children born and weighed in the current month',
                                              AliasColumn('weighed_and_born_in_month'),
                                              slug='weighed_and_born_in_month'))
+        if not self.beta:
+            agg_columns.insert(37, AggregateColumn('No. of children completed 1 year immunization',
+                                                   lambda x, y: ((x or 0) + (y or 0)), [
+                                                       AliasColumn('fully_immunized_on_time'),
+                                                       AliasColumn('fully_immunized_late')
+                                                   ],
+                                                   slug='num_immun_children'))
+            agg_columns.insert(38, DatabaseColumn('Total no. of children from age >12 months',
+                                                  AliasColumn('fully_immunized_eligible'),
+                                                  slug='fully_immunized_eligible'))
+            agg_columns.insert(39, AggregateColumn('Percentage of children with completed 1 year immunizations',
+                                                   lambda x, y, z:
+                                                   '%.2f%%' % (((x or 0) + (y or 0)) * 100 / float(z or 1)),
+                                                   [
+                                                       SumColumn('fully_immunized_on_time',
+                                                                 alias='fully_immunized_on_time'),
+                                                       SumColumn('fully_immunized_late',
+                                                                 alias='fully_immunized_late'),
+                                                       SumColumn('fully_immunized_eligible',
+                                                                 alias='fully_immunized_eligible')
+                                                   ],
+                                                   slug='percent_completed_1year_immunizations'
+                                                   ))
+        else:
+            agg_columns.insert(37,  AggregateColumn('No. of children between 1-2 years old who completed 1'
+                                                    ' year immunization',
+                                                    lambda x, y: ((x or 0) + (y or 0)),
+                                                    [
+                                                        SumWhen(
+                                                            whens=[["age_tranche <= :age_24",
+                                                                    'fully_immunized_on_time']],
+                                                            alias='fully_immunized_on_time_num'
+                                                            ),
+                                                        SumWhen(
+                                                            whens=[["age_tranche <= :age_24",
+                                                                    'fully_immunized_late']],
+                                                            alias='fully_immunized_late_num'
+                                                            )
+                                                    ],
+                                                    slug='num_immun_children'))
+            agg_columns.insert(38, DatabaseColumn('Total no. of children from age >12 months and <= 24',
+                                                  SumWhen(
+                                                      whens=[["age_tranche <= :age_24",
+                                                              'fully_immunized_eligible']],
+                                                      alias='fully_immunized_eligible_num'
+                                                  ),
+                                                  slug='fully_immunized_eligible'))
 
-        agg_columns.insert(37,  AggregateColumn('No. of children completed 1 year immunization',
-                                                lambda x, y: ((x or 0) + (y or 0)), [
-                                                    AliasColumn('fully_immunized_on_time'),
-                                                    AliasColumn('fully_immunized_late')
-                                                ],
-                                                slug='num_immun_children'))
-        agg_columns.insert(38, DatabaseColumn('Total no. of children from age >12 months',
-                                             AliasColumn('fully_immunized_eligible'),
-                                             slug='fully_immunized_eligible'))
+            agg_columns.insert(39, AggregateColumn('Percentage of children between 1-2 years who completed'
+                                                   ' 1 year immunizations',
+                                                   lambda x, y, z:
+                                                   '%.2f%%' % (((x or 0) + (y or 0)) * 100 / float(z or 1)),
+                                                   [
+                                                       SumWhen(
+                                                           whens=[["age_tranche <= :age_24",
+                                                                   'fully_immunized_on_time']],
+                                                           alias='fully_immunized_on_time'
+                                                       ),
+                                                       SumWhen(
+                                                           whens=[["age_tranche <= :age_24",
+                                                                   'fully_immunized_late']],
+                                                           alias='fully_immunized_late'
+                                                       ),
+                                                       SumWhen(
+                                                           whens=[["age_tranche <= :age_24",
+                                                                   'fully_immunized_eligible']],
+                                                           alias='fully_immunized_eligible'
+                                                       )
+                                                   ],
+                                                   slug='percent_completed_1year_immunizations'
+                                                   ))
 
         agg_columns.insert(40, DatabaseColumn('No. of children breastfed at birth',
                                              AliasColumn('bf_at_birth'),

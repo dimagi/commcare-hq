@@ -23,7 +23,7 @@ class TestLocationHierarchy(LocationHierarchyTestCase):
 
     def setUp(self):
         super(TestLocationHierarchy, self).setUp()
-        self.web_user = WebUser.create(self.domain, 'test', 'test')
+        self.web_user = WebUser.create(self.domain, 'test', 'test', None, None)
 
     def tearDown(self):
         delete_all_users()

@@ -210,4 +210,116 @@ describe('Immunization Coverage Directive', function () {
 
         assert.equal(controller.filtersData.gender, null);
     });
+
+
+});
+
+describe('Immunization Coverage Directive feature flag enable', function () {
+
+    var $scope, $httpBackend, $location, controller, controllermapOrSectorView;
+
+    pageData.registerUrl('icds-ng-template', 'template');
+    pageData.registerUrl('immunization_coverage', 'immunization_coverage');
+    pageData.registerUrl('icds_locations', 'icds_locations');
+
+    beforeEach(module('icdsApp', function ($provide) {
+        utils.provideDefaultConstants($provide, {includeGenders: true});
+        $provide.constant("haveAccessToFeatures", true);
+
+    }));
+
+
+    beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {
+        $scope = $rootScope.$new();
+        $httpBackend = _$httpBackend_;
+        $location = _$location_;
+
+        $httpBackend.expectGET('template').respond(200, '<div></div>');
+        $httpBackend.expectGET('immunization_coverage').respond(200, {
+            report_data: ['report_test_data'],
+        });
+        $httpBackend.expectGET('icds_locations').respond(200, {
+            location_type: 'state',
+        });
+        var element = window.angular.element("<immunization-coverage data='test'></immunization-coverage>");
+        var compiled = $compile(element)($scope);
+        var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");
+        var mapOrSectorViewCompiled = $compile(mapOrSectorViewElement)($scope);
+
+        $httpBackend.flush();
+        $scope.$digest();
+        controller = compiled.controller('immunizationCoverage');
+        controller.step = 'map';
+        controllermapOrSectorView = mapOrSectorViewCompiled.controller('mapOrSectorView');
+        controllermapOrSectorView.data = _.clone(utils.controllerMapOrSectorViewData);
+    }));
+
+    it('tests template popup', function () {
+        var result = controller.templatePopup({properties: {name: 'test'}}, {all: 10, children: 5});
+        var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
+            '<p>test</p>'
+            + '<div>Total number of ICDS Child beneficiaries between 1-2 years old: <strong>10</strong></div>'
+            + '<div>Total number of children between 1-2 years old who have received complete immunizations required by age 1: <strong>5</strong></div>'
+            + '<div>% of children between 1-2 years old who have received complete immunizations required by age 1: <strong>50.00%</strong></div></div>';
+        assert.equal(result, expected);
+    });
+
+    it('tests chart options', function () {
+        var chart = controller.chartOptions.chart;
+        var caption = controller.chartOptions.caption;
+        assert.notEqual(chart, null);
+        assert.notEqual(caption, null);
+        assert.equal(controller.chartOptions.chart.type, 'lineChart');
+        assert.deepEqual(controller.chartOptions.chart.margin, {
+            top: 20,
+            right: 60,
+            bottom: 60,
+            left: 80,
+        });
+        assert.equal(controller.chartOptions.chart.clipVoronoi, false);
+        assert.equal(controller.chartOptions.chart.tooltips, true);
+        assert.equal(controller.chartOptions.chart.xAxis.axisLabel, '');
+        assert.equal(controller.chartOptions.chart.xAxis.showMaxMin, true);
+        assert.equal(controller.chartOptions.chart.xAxis.axisLabelDistance, -100);
+        assert.equal(controller.chartOptions.chart.yAxis.axisLabel, '');
+        assert.equal(controller.chartOptions.chart.yAxis.axisLabelDistance, 20);
+        assert.equal(controller.chartOptions.caption.enable, true);
+        assert.deepEqual(controller.chartOptions.caption.css, {
+            'text-align': 'center',
+            'margin': '0 auto',
+            'width': '900px',
+        });
+        var expected = '<i class="fa fa-info-circle"></i> '
+            + 'Of the total number of children enrolled for Anganwadi Services who are between 1-2 years old, the percentage of children who have received the complete immunization as per the National Immunization Schedule of India that is required by age 1. <br/><br/>'
+            + 'This includes the following immunizations:<br/>If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1'
+            + '<br/>If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1';
+        assert.equal(controller.chartOptions.caption.html, expected);
+    });
+
+    it('tests chart tooltip content', function () {
+        var data = {in_month: 5, y: 0.72, all: 10};
+        var month = {value: "Jul 2017", series: []};
+
+        var expected = '<p><strong>Jul 2017</strong></p><br/>'
+            + '<div>Total number of ICDS Child beneficiaries between 1-2 years old: <strong>10</strong></div>'
+            + '<div>Total number of children between 1-2 years old who have received complete immunizations required by age 1: <strong>5</strong></div>'
+            + '<div>% of children between 1-2 years old who have received complete immunizations required by age 1: <strong>72.00%</strong></div>';
+
+        var result = controller.tooltipContent(month.value, data);
+        assert.equal(expected, result);
+    });
+
+    it('tests horizontal chart tooltip content', function () {
+        var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
+            '<p>Ambah</p>' +
+            '<div>Total number of ICDS Child beneficiaries between 1-2 years old: <strong>25</strong></div>' +
+            '<div>Total number of children between 1-2 years old who have received complete immunizations required by age 1: <strong>0</strong></div>' +
+            '<div>% of children between 1-2 years old who have received complete immunizations required by age 1: <strong>NaN%</strong></div></div>';
+        controllermapOrSectorView.templatePopup = function (d) {
+            return controller.templatePopup(d.loc, d.row);
+        };
+        var result = controllermapOrSectorView.chartOptions.chart.tooltip.contentGenerator(utils.d);
+        assert.equal(expected, result);
+    });
+
 });
