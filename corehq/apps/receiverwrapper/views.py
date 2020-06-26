@@ -18,12 +18,14 @@ from corehq.apps.domain.auth import (
     BASIC,
     DIGEST,
     NOAUTH,
+    API_KEY,
     determine_authtype_from_request,
 )
 from corehq.apps.domain.decorators import (
     check_domain_migration,
     login_or_basic_ex,
     login_or_digest_ex,
+    login_or_api_key_ex,
     two_factor_exempt,
 )
 from corehq.apps.locations.permissions import location_safe
@@ -309,6 +311,18 @@ def _secure_post_basic(request, domain, app_id=None):
         authenticated=True,
     )
 
+@login_or_api_key_ex()
+def _secure_post_api_key(request, domain, app_id=None):
+    """only ever called from secure post"""
+    return _process_form(
+        request=request,
+        domain=domain,
+        app_id=app_id,
+        user_id=request.couch_user.get_id,
+        authenticated=True,
+    )
+
+
 
 @waf_allow('XSS_BODY')
 @location_safe
@@ -320,6 +334,7 @@ def secure_post(request, domain, app_id=None):
         DIGEST: _secure_post_digest,
         BASIC: _secure_post_basic,
         NOAUTH: _noauth_post,
+        API_KEY: _secure_post_api_key,
     }
 
     if request.GET.get('authtype'):
