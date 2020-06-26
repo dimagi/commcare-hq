@@ -176,7 +176,7 @@ def get_top_worst_cases(data, key, aggregation_level, indicator_name):
 
 
 @icds_quickcache([
-    'domain', 'location_filters', 'year', 'month', 'step', 'quarter', 'include_test'
+    'domain', 'year', 'month', 'quarter', 'data_period', 'step', 'location_filters', 'include_test'
 ], timeout=30 * 60)
 def get_poshan_progress_dashboard_data(domain, year, month, quarter, data_period, step, location_filters,
                                        include_test=False):
