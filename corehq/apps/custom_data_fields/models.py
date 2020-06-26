@@ -142,3 +142,9 @@ class CustomDataFieldsDefinition(models.Model):
                 uncategorized_data[k] = v
 
         return model_data, uncategorized_data
+
+
+class CustomDataFieldsProfile(models.Model):
+    name = models.CharField(max_length=126)
+    fields = JSONField(default=list, null=True)
+    definition = models.ForeignKey('CustomDataFieldsDefinition', on_delete=models.CASCADE)
