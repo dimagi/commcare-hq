@@ -115,7 +115,7 @@
         <% if (!imageUrl) { %>
           <i class="fcc fcc-flower appicon-icon" aria-hidden="true"></i>
         <% } %>
-        <% if (imageUrl) { %>
+        <% else { %>
           <i class="fcc appicon-custom appicon-icon" style="background-image: url('<%= imageUrl %>');" aria-hidden="true"></i>
         <% } %>
         <div class="appicon-title">
@@ -132,7 +132,7 @@
     <% if (!imageUrl) { %>
       <i class="fcc fcc-flower appicon-icon" aria-hidden="true"></i>
     <% } %>
-    <% if (imageUrl) { %>
+    <% else { %>
       <i class="fcc appicon-custom appicon-icon" style="background-image: url('<%= imageUrl %>');" aria-hidden="true"></i>
     <% } %>
     <div class="appicon-title">

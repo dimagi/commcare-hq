@@ -23,6 +23,8 @@
       font-size: @icon-height;
     }
     .appicon-custom {
+      // the default icons have internal padding in the image itself.
+      // this prevents users from needing to replicate that
       top: 0.05*@icon-height + 10;
       height: @icon-height - 10;
     }
