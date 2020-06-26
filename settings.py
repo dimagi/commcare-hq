@@ -1021,7 +1021,7 @@ if UNIT_TESTING:
 # https://docs.djangoproject.com/en/1.11/releases/1.11.1/#allowed-disabling-server-side-cursors-on-postgresql
 for database in DATABASES.values():
     if (
-        database['ENGINE'] == 'django.db.backends.postgresql_psycopg2' and
+        database['ENGINE'] == 'django.db.backends.postgresql' and
         database.get('DISABLE_SERVER_SIDE_CURSORS') is None
     ):
         database['DISABLE_SERVER_SIDE_CURSORS'] = True
@@ -1666,6 +1666,8 @@ AVAILABLE_CUSTOM_RULE_CRITERIA = {
         'custom.icds.rules.custom_criteria.is_usercase_of_aww',
     'ICDS_IS_USERCASE_OF_LS':
         'custom.icds.rules.custom_criteria.is_usercase_of_ls',
+    'ICDS_CCS_RECORD_MOTHER_CASE_AVAILING_SERVICES_HAS_CONTACT_PHONE_NUMBER':
+        'custom.icds.rules.custom_criteria.ccs_record_mother_case_availing_services_has_phone_number'
 }
 
 AVAILABLE_CUSTOM_RULE_ACTIONS = {

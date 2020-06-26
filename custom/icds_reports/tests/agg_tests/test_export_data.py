@@ -85,6 +85,7 @@ class TestExportData(TestCase):
     def test_thr_report_with_feature_flag(self):
         location = 'b1'
         data = TakeHomeRationExport(
+            domain='icds-cas',
             location=location,
             month=date(2017, 5, 1),
             loc_level=3,
@@ -95,7 +96,7 @@ class TestExportData(TestCase):
             data,
             [['Take Home Ration', [['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name',
                                     'AWW Phone No.', 'Total No. of Beneficiaries eligible for THR',
-                                    'Total No. of beneficiaries received THR in given month',
+                                    'Total No. of beneficiaries received THR for at least 21 days in given month',
                                     'Total No of Pictures taken by AWW'],
                                    ['st1', 'd1', 'b1', 's1', 'a1', 'AWC Not Launched', 'AWC Not Launched',
                                     'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
@@ -140,6 +141,7 @@ class TestExportData(TestCase):
     def test_thr_report_beneficiary_wise(self):
         location = 'b1'
         data = TakeHomeRationExport(
+            domain='icds-cas',
             location=location,
             month=date(2017, 5, 1),
             loc_level=3,
@@ -241,6 +243,7 @@ class TestExportData(TestCase):
     def test_thr_report_days_beneficiary_wise(self):
         location = 'b1'
         data = TakeHomeRationExport(
+            domain='icds-cas',
             location=location,
             month=date(2017, 5, 1),
             loc_level=3,
@@ -466,6 +469,81 @@ class TestExportData(TestCase):
              'Percentage of children receiving complementary feeding with appropriate handwashing before feeding']
         )
 
+    def test_children_export_headers_with_Age_1_2_ff(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+            beta=True
+        ).get_excel_data('b1')[0][1][0]
+        self.assertListEqual(
+            data,
+            ['State',
+             'Total no. of children weighed',
+             'Total no. of children eligible to be weighed',
+             'Weighing efficiency (in month)',
+             'Total no. of children whose height was measured',
+             'Total no. of children  eligible for measuring height',
+             'Height measurement efficiency (in month)',
+             'Total number of unweighed children (0-5 Years)',
+             'No. of severely underweight children',
+             'Total No. of children weighed',
+             'Percentage of severely underweight children',
+             'No. of moderately underweight children ',
+             'Total No. of children weighed',
+             'Percentage of moderately underweight children',
+             'No. of  children with normal weight for age',
+             'Total No. of children weighed',
+             'Percentage of normal weight-for-age children',
+             'No. of Children with severe wasting',
+             'Total number of children whose height and weight is measured',
+             'Percentage of children with severe wasting',
+             'No. of moderately wasted children',
+             'Total number of children whose height and weight is measured',
+             'Percentage of children with moderate wasting',
+             'No. of children with normal weight-for-height',
+             'Total no. of children  whose height and weight is measured',
+             'Percentage of children with normal weight-for-height',
+             'No. of severely stunted children',
+             'Total no. of children whose height has been measured',
+             'Percentage of children with severe stunting',
+             'No. of moderately stunted children',
+             'Total no. of children whose height has been measured',
+             'Percentage of children with moderate stunting',
+             'No. of children with normal height for age',
+             'Total no. of children whose height has been measured',
+             'Percentage of children with normal height-for-age',
+             'No. of newborns with low birth weight',
+             'Total no. of children born and weighed in the current month',
+             'Percent of newborns with low birth weight',
+             'No. of children between 1-2 years old who completed 1 year immunization',
+             'Total no. of children from age >12 months and <= 24',
+             'Percentage of children between 1-2 years who completed 1 year immunizations',
+             'No. of children breastfed at birth',
+             'Total no. of children enrolled in ICDS-CAS system and born in last month',
+             'Percentage of children breastfed at birth',
+             'No. of children exclusively breastfed',
+             'Total number of children (0-6 months) of age enrolled in ICDS-CAS system',
+             'Percentage of children exclusively breastfeeding',
+             'No. of children initiated complementary feeding (in the past 30 days)',
+             'Total no. of children (6-8 ) months of age enrolled with ICDS-CAS',
+             'Percentage of children initiated complementary feeding (in the past 30 days)',
+             'No. of children initiated appropriate complementary feeding',
+             'No.of children (6-24) months of age enrolled with ICDS-CAS',
+             'Percentage of children initiated appropriate complementary feeding',
+             'No.of children receiving complementary feeding with adequate diet diversity',
+             'Total number of children (6 months - 2 yrs) of age enrolled with ICDS-CAS',
+             'Percentage of children receiving complementary feeding with adequate diet diversity',
+             'No. of children initiated complementary feeding with adequate diet quantity',
+             'No.of children (6-24) months of age enrolled with ICDS-CAS',
+             'Percentage of children receiving complementary feeding with adequate diet quantity',
+             'Total Number of children receiving complementary feeding with appropriate handwashing'
+             ' before feeding',
+             'No.of children (6-24) months of age enrolled with ICDS-CAS',
+             'Percentage of children receiving complementary feeding with appropriate handwashing'
+             ' before feeding']
+        )
+
     def test_children_export_child_one(self):
         data = ChildrenExport(
             config={
@@ -490,6 +568,41 @@ class TestExportData(TestCase):
                 2, 14, '14.29 %',
                 1, 2, '50.00 %',
                 162, 1127, '14.37%',
+                1, 5, '20.00 %',
+                28, 56, '50.00 %',
+                21, 32, '65.62 %',
+                76, 142, '53.52 %',
+                49, 142, '34.51 %',
+                56, 142, '39.44 %',
+                68, 142, '47.89 %'
+            ]
+        )
+
+    def test_children_export_child_one_with_age_1_2_ff(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+            beta=True
+        ).get_excel_data('b1')[0][1][1]
+        self.assertListEqual(
+            data,
+            [
+                'st1',
+                655, 972, '67.39 %',
+                14, 972, '1.44 %',
+                317,
+                17, 655, '2.60 %',
+                152, 655, '23.21 %',
+                486, 655, '74.20 %',
+                1, 14, '7.14 %',
+                5, 14, '35.71 %',
+                7, 14, '50.00 %',
+                5, 14, '35.71 %',
+                6, 14, '42.86 %',
+                2, 14, '14.29 %',
+                1, 2, '50.00 %',
+                7, 86, '8.14%',
                 1, 5, '20.00 %',
                 28, 56, '50.00 %',
                 21, 32, '65.62 %',
@@ -591,7 +704,7 @@ class TestExportData(TestCase):
                 6, 14, '42.86 %',
                 2, 14, '14.29 %',
                 1, 2, '50.00 %',
-                162, 1127, '14.37%',
+                7, 86, '8.14%',
                 1, 5, '20.00 %',
                 28, 56, '50.00 %',
                 21, 32, '65.62 %',
@@ -658,6 +771,40 @@ class TestExportData(TestCase):
                 15, 30, '50.00 %',
                 0, 4, '0.00 %',
                 88, 1217, '7.23%',
+                3, 6, '50.00 %',
+                13, 52, '25.00 %',
+                24, 40, '60.00 %',
+                94, 185, '50.81 %',
+                87, 185, '47.03 %',
+                62, 185, '33.51 %',
+                88, 185, '47.57 %']
+        )
+
+    def test_children_export_child_six_with_age_1_2_ff(self):
+        data = ChildrenExport(
+            config={
+                'domain': 'icds-cas'
+            },
+            beta=True
+        ).get_excel_data('b1')[0][1][6]
+        self.assertListEqual(
+            data,
+            [
+                'st2',
+                730, 1037, '70.40 %',
+                30, 1037, '2.89 %',
+                307,
+                18, 730, '2.47 %',
+                136, 730, '18.63 %',
+                576, 730, '78.90 %',
+                1, 29, '3.45 %',
+                4, 29, '13.79 %',
+                18, 29, '62.07 %',
+                11, 30, '36.67 %',
+                6, 30, '20.00 %',
+                15, 30, '50.00 %',
+                0, 4, '0.00 %',
+                11, 117, '9.40%',
                 3, 6, '50.00 %',
                 13, 52, '25.00 %',
                 24, 40, '60.00 %',
@@ -4172,61 +4319,61 @@ class TestExportData(TestCase):
                 [
                     "AWW Activity Report", [
                     [
-                        "State", "District", "Block", "Supervisor name", "AWC Name", "AWC site code",
-                        "First submission date", "Last submission date", "Days since start", "Days inactive"
+                        "State", "District", "Block", "Supervisor Name", "AWC Name", "AWC Site Code",
+                        "First Submission Date", "Last Submission Date", "Days Since Start", "Days Inactive"
                     ],
-                    ['st1', 'd1', 'b1', 's1', 'a1', 'awca1', 'Data Not Entered', 'Data Not Entered',
-                     'Data Not Entered', 'Data Not Entered'],
-                    ['st1', 'd1', 'b1', 's1', 'a17', 'awca17', 'Data Not Entered', 'Data Not Entered',
-                     'Data Not Entered', 'Data Not Entered'],
-                    ['st1', 'd1', 'b1', 's1', 'a25', 'awca25', 'Data Not Entered', 'Data Not Entered',
-                     'Data Not Entered', 'Data Not Entered'],
-                    ['st1', 'd1', 'b1', 's1', 'a33', 'awca33', 'Data Not Entered', 'Data Not Entered',
-                     'Data Not Entered', 'Data Not Entered'],
-                    ['st1', 'd1', 'b1', 's1', 'a41', 'awca41', 'Data Not Entered', 'Data Not Entered',
-                     'Data Not Entered', 'Data Not Entered'],
-                    ['st1', 'd1', 'b1', 's1', 'a49', 'awca49', 'Data Not Entered', 'Data Not Entered',
-                     'Data Not Entered', 'Data Not Entered'],
-                    ['st1', 'd1', 'b1', 's1', 'a9', 'awca9', 'Data Not Entered', 'Data Not Entered',
-                     'Data Not Entered', 'Data Not Entered'],
-                    ['st1', 'd1', 'b1', 's2', 'a10', 'awca10', 'Data Not Entered', 'Data Not Entered',
-                     'Data Not Entered', 'Data Not Entered'],
-                    ['st1', 'd1', 'b1', 's2', 'a18', 'awca18', 'Data Not Entered', 'Data Not Entered',
-                     'Data Not Entered', 'Data Not Entered'],
-                    ['st1', 'd1', 'b1', 's2', 'a2', 'awca2', 'Data Not Entered', 'Data Not Entered',
-                     'Data Not Entered', 'Data Not Entered'],
-                    ['st1', 'd1', 'b1', 's2', 'a26', 'awca26', 'Data Not Entered', 'Data Not Entered',
-                     'Data Not Entered', 'Data Not Entered'],
-                    ['st1', 'd1', 'b1', 's2', 'a34', 'awca34', 'Data Not Entered', 'Data Not Entered',
-                     'Data Not Entered', 'Data Not Entered'],
-                    ['st1', 'd1', 'b1', 's2', 'a42', 'awca42', 'Data Not Entered', 'Data Not Entered',
-                     'Data Not Entered', 'Data Not Entered'],
-                    ['st1', 'd1', 'b1', 's2', 'a50', 'awca50', 'Data Not Entered', 'Data Not Entered',
-                     'Data Not Entered', 'Data Not Entered'],
-                    ['st1', 'd1', 'b2', 's3', 'a11', 'awca11', 'Data Not Entered', 'Data Not Entered',
-                     'Data Not Entered', 'Data Not Entered'],
-                    ['st1', 'd1', 'b2', 's3', 'a19', 'awca19', 'Data Not Entered', 'Data Not Entered',
-                     'Data Not Entered', 'Data Not Entered'],
-                    ['st1', 'd1', 'b2', 's3', 'a27', 'awca27', 'Data Not Entered', 'Data Not Entered',
-                     'Data Not Entered', 'Data Not Entered'],
-                    ['st1', 'd1', 'b2', 's3', 'a3', 'awca3', 'Data Not Entered', 'Data Not Entered',
-                     'Data Not Entered', 'Data Not Entered'],
-                    ['st1', 'd1', 'b2', 's3', 'a35', 'awca35', 'Data Not Entered', 'Data Not Entered',
-                     'Data Not Entered', 'Data Not Entered'],
-                    ['st1', 'd1', 'b2', 's3', 'a43', 'awca43', 'Data Not Entered', 'Data Not Entered',
-                     'Data Not Entered', 'Data Not Entered'],
-                    ['st1', 'd1', 'b2', 's4', 'a12', 'awca12', 'Data Not Entered', 'Data Not Entered',
-                     'Data Not Entered', 'Data Not Entered'],
-                    ['st1', 'd1', 'b2', 's4', 'a20', 'awca20', 'Data Not Entered', 'Data Not Entered',
-                     'Data Not Entered', 'Data Not Entered'],
-                    ['st1', 'd1', 'b2', 's4', 'a28', 'awca28', 'Data Not Entered', 'Data Not Entered',
-                     'Data Not Entered', 'Data Not Entered'],
-                    ['st1', 'd1', 'b2', 's4', 'a36', 'awca36', 'Data Not Entered', 'Data Not Entered',
-                     'Data Not Entered', 'Data Not Entered'],
-                    ['st1', 'd1', 'b2', 's4', 'a4', 'awca4', 'Data Not Entered', 'Data Not Entered',
-                     'Data Not Entered', 'Data Not Entered'],
-                    ['st1', 'd1', 'b2', 's4', 'a44', 'awca44', 'Data Not Entered', 'Data Not Entered',
-                     'Data Not Entered', 'Data Not Entered']
+                    ['st1', 'd1', 'b1', 's1', 'a1', 'awca1', 'Not Launched', 'Not Launched',
+                     'Not Launched', 'Not Launched'],
+                    ['st1', 'd1', 'b1', 's1', 'a17', 'awca17', 'Not Launched', 'Not Launched',
+                     'Not Launched', 'Not Launched'],
+                    ['st1', 'd1', 'b1', 's1', 'a25', 'awca25', 'Not Launched', 'Not Launched',
+                     'Not Launched', 'Not Launched'],
+                    ['st1', 'd1', 'b1', 's1', 'a33', 'awca33', 'Not Launched', 'Not Launched',
+                     'Not Launched', 'Not Launched'],
+                    ['st1', 'd1', 'b1', 's1', 'a41', 'awca41', 'Not Launched', 'Not Launched',
+                     'Not Launched', 'Not Launched'],
+                    ['st1', 'd1', 'b1', 's1', 'a49', 'awca49', 'Not Launched', 'Not Launched',
+                     'Not Launched', 'Not Launched'],
+                    ['st1', 'd1', 'b1', 's1', 'a9', 'awca9', 'Not Launched', 'Not Launched',
+                     'Not Launched', 'Not Launched'],
+                    ['st1', 'd1', 'b1', 's2', 'a10', 'awca10', 'Not Launched', 'Not Launched',
+                     'Not Launched', 'Not Launched'],
+                    ['st1', 'd1', 'b1', 's2', 'a18', 'awca18', 'Not Launched', 'Not Launched',
+                     'Not Launched', 'Not Launched'],
+                    ['st1', 'd1', 'b1', 's2', 'a2', 'awca2', 'Not Launched', 'Not Launched',
+                     'Not Launched', 'Not Launched'],
+                    ['st1', 'd1', 'b1', 's2', 'a26', 'awca26', 'Not Launched', 'Not Launched',
+                     'Not Launched', 'Not Launched'],
+                    ['st1', 'd1', 'b1', 's2', 'a34', 'awca34', 'Not Launched', 'Not Launched',
+                     'Not Launched', 'Not Launched'],
+                    ['st1', 'd1', 'b1', 's2', 'a42', 'awca42', 'Not Launched', 'Not Launched',
+                     'Not Launched', 'Not Launched'],
+                    ['st1', 'd1', 'b1', 's2', 'a50', 'awca50', 'Not Launched', 'Not Launched',
+                     'Not Launched', 'Not Launched'],
+                    ['st1', 'd1', 'b2', 's3', 'a11', 'awca11', 'Not Launched', 'Not Launched',
+                     'Not Launched', 'Not Launched'],
+                    ['st1', 'd1', 'b2', 's3', 'a19', 'awca19', 'Not Launched', 'Not Launched',
+                     'Not Launched', 'Not Launched'],
+                    ['st1', 'd1', 'b2', 's3', 'a27', 'awca27', 'Not Launched', 'Not Launched',
+                     'Not Launched', 'Not Launched'],
+                    ['st1', 'd1', 'b2', 's3', 'a3', 'awca3', 'Not Launched', 'Not Launched',
+                     'Not Launched', 'Not Launched'],
+                    ['st1', 'd1', 'b2', 's3', 'a35', 'awca35', 'Not Launched', 'Not Launched',
+                     'Not Launched', 'Not Launched'],
+                    ['st1', 'd1', 'b2', 's3', 'a43', 'awca43', 'Not Launched', 'Not Launched',
+                     'Not Launched', 'Not Launched'],
+                    ['st1', 'd1', 'b2', 's4', 'a12', 'awca12', 'Not Launched', 'Not Launched',
+                     'Not Launched', 'Not Launched'],
+                    ['st1', 'd1', 'b2', 's4', 'a20', 'awca20', 'Not Launched', 'Not Launched',
+                     'Not Launched', 'Not Launched'],
+                    ['st1', 'd1', 'b2', 's4', 'a28', 'awca28', 'Not Launched', 'Not Launched',
+                     'Not Launched', 'Not Launched'],
+                    ['st1', 'd1', 'b2', 's4', 'a36', 'awca36', 'Not Launched', 'Not Launched',
+                     'Not Launched', 'Not Launched'],
+                    ['st1', 'd1', 'b2', 's4', 'a4', 'awca4', 'Not Launched', 'Not Launched',
+                     'Not Launched', 'Not Launched'],
+                    ['st1', 'd1', 'b2', 's4', 'a44', 'awca44', 'Not Launched', 'Not Launched',
+                     'Not Launched', 'Not Launched']
                 ]
                 ],
                 ["Export Info",
@@ -4393,6 +4540,7 @@ class TestExportData(TestCase):
         location = 'b1'
 
         data = TakeHomeRationExport(
+            domain='icds-cas',
             location=location,
             month=date(2017, 5, 1),
             loc_level=3
@@ -4401,7 +4549,7 @@ class TestExportData(TestCase):
             data,
             [['Take Home Ration', [['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name',
                                     'AWW Phone No.', 'Total No. of Beneficiaries eligible for THR',
-                                    'Total No. of beneficiaries received THR in given month',
+                                    'Total No. of beneficiaries received THR for at least 21 days in given month',
                                     'Total No of Pictures taken by AWW'],
                                    ['st1', 'd1', 'b1', 's1', 'a1', 'AWC Not Launched', 'AWC Not Launched',
                                     'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
@@ -4446,6 +4594,7 @@ class TestExportData(TestCase):
     def test_thr_report_export_info_national_level(self):
         location = ''
         data = TakeHomeRationExport(
+            domain='icds-cas',
             location=location,
             month=date(2017, 5, 1),
             loc_level=0
@@ -4456,7 +4605,7 @@ class TestExportData(TestCase):
             [['Take Home Ration', [
                 ['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name', 'AWW Phone No.',
                  'Total No. of Beneficiaries eligible for THR',
-                 'Total No. of beneficiaries received THR in given month',
+                 'Total No. of beneficiaries received THR for at least 21 days in given month',
                  'Total No of Pictures taken by AWW'],
                 ['st1', 'd1', 'b1', 's1', 'a1', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
                  'AWC Not Launched', 'AWC Not Launched'],
@@ -4593,18 +4742,26 @@ class TestExportData(TestCase):
                 ['st2', 2, 2, 11, '106.91%', 193, 0, '0.00%', 507, 59, '11.64%', 513, 378, '73.68%', 42, 30,
                  '71.43%', 513, 25,
                  '4.87%', 318, 181, '56.92%', 507, 12, '2.37%'],
-                ['st3', 0, 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0,
-                 '0.00%', 0, 0,
-                 '0.00%', 0, 0, '0.00%'],
-                ['st4', 0, 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0,
-                 '0.00%', 0, 0,
-                 '0.00%', 0, 0, '0.00%'],
-                ['st5', 0, 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0,
-                 '0.00%', 0, 0,
-                 '0.00%', 0, 0, '0.00%'],
-                ['st6', 0, 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0,
-                 '0.00%', 0, 0,
-                 '0.00%', 0, 0, '0.00%'],
+                ['st3', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched'],
+                ['st4', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched'],
+                ['st5', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched'],
+                ['st6', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched'],
                 ['st7', 1, 1, 1, '0.00%', 1, 0, '0.00%', 1, 0, '0.00%', 1, 0, '0.00%', 0, 0, '0.00%', 1, 0,
                  '0.00%', 1, 0,
                  '0.00%', 1, 0, '0.00%'],
@@ -4612,7 +4769,9 @@ class TestExportData(TestCase):
                  '72.15%', 989, 32, '3.24%', 598, 261,
                  '43.65%', 991, 16, '1.61%']]], ['Export Info', [['Generated at', self.now],
                                                                  ['Report Layout', 'Comprehensive'],
-                                                                 ['Data Period', 'Month']]]]
+                                                                 ['Data Period', 'Month'],
+                                                                 ['Month', 'May'],
+                                                                 ['Year', 2017]]]]
         )
 
     def test_ppr_summary_month(self):
@@ -4638,14 +4797,19 @@ class TestExportData(TestCase):
                  '% of children between 3-6 years provided SNP for atleast 21+ days'],
                 ['st1', 1, 2, 10, '142.40%', '1.62%', '1.45%', '66.74%', '72.97%', '1.47%', '28.67%', '0.83%'],
                 ['st2', 2, 2, 11, '106.91%', '0.00%', '11.64%', '73.68%', '71.43%', '4.87%', '56.92%', '2.37%'],
-                ['st3', 0, 0, 0, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
-                ['st4', 0, 0, 0, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
-                ['st5', 0, 0, 0, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
-                ['st6', 0, 0, 0, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
+                ['st3', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched'],
+                ['st4', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched'],
+                ['st5', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched'],
+                ['st6', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched'],
                 ['st7', 1, 1, 1, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
                 ['Total', 4, 5, 22, '118.18%', '0.79%', '6.66%', '70.27%', '72.15%', '3.24%', '43.65%', '1.61%']]],
              ['Export Info', [
-                 ['Generated at', self.now], ['Report Layout', 'Summary'], ['Data Period', 'Month']]]]
+                 ['Generated at', self.now], ['Report Layout', 'Summary'], ['Data Period', 'Month'],
+                 ['Month', 'May'], ['Year', 2017]]]]
 
         )
 
@@ -4665,7 +4829,7 @@ class TestExportData(TestCase):
         self.assertListEqual(
             data,
             [['Poshan Progress Report', [
-                ['State Name', 'District Name', 'Number of Districts Covered', 'Number of Blocks Covered',
+                ['State Name', 'District Name', 'Number of Blocks Covered',
                  'Number of AWCs Launched', '% Number of Days AWC Were opened', 'Expected Home Visits',
                  'Actual Home Visits',
                  '% of Home Visits', 'Total Number of Children (3-6 yrs)',
@@ -4685,14 +4849,14 @@ class TestExportData(TestCase):
                  'No. of children between 3-6 years ',
                  'No of children between 3-6 years provided SNP for atleast 21+ days',
                  '% of children between 3-6 years provided SNP for atleast 21+ days'],
-                ['st2', 'd2', 1, 1, 4, '78.00%', 89, 0, '0.00%', 134, 18, '13.22%', 168,
+                ['st2', 'd2', 1, 6, '52.00%', 89, 0, '0.00%', 134, 18, '13.22%', 168,
                  124, '73.47%', 11, 7, '60.61%', 168, 4, '2.38%', 118, 51, '43.10%', 134, 1, '0.75%'],
-                ['st2', 'd3', 1, 1, 3, '64.00%', 67, 0, '0.00%', 199, 10, '5.18%', 177,
+                ['st2', 'd3', 1, 5, '42.67%', 67, 0, '0.00%', 199, 10, '5.18%', 177,
                  120, '67.48%', 12, 7, '55.56%', 177, 6, '3.38%', 85, 20, '23.14%', 199, 3, '1.51%'],
-                ['Total', 'Total', 4, 4, 22, '71.64%', 467, 0, '0.00%', 999, 84, '8.41%', 1037, 730, '70.40%', 69,
-                 40, '57.97%', 1037, 30, '2.89%', 610, 212, '34.75%', 999, 12, '1.20%']]], ['Export Info', [
+                ['Total', 'Total', 2, 11, '47.64%', 156, 0, '0.00%', 333, 28, '8.41%', 345, 244, '70.72%', 23,
+                 14, '60.87%', 345, 10, '2.90%', 203, 71, '34.98%', 333, 4, '1.20%']]], ['Export Info', [
                 ['Generated at', self.now], ['State', 'st2'], ['Report Layout', 'Comprehensive'],
-                ['Data Period', 'Quarter']]]]
+                ['Data Period', 'Quarter'], ['Quarter', 'April-June'], ['Year', 2017]]]]
         )
 
     def test_ppr_summary_quarter(self):
@@ -4718,16 +4882,21 @@ class TestExportData(TestCase):
                  '% of trimester three women counselled on immediate and EBF', 'Height Measurement Efficiency',
                  '% of children between 6 months -3 years, P&LW provided THR for atleast ' '21+ days',
                  '% of children between 3-6 years provided SNP for atleast 21+ days'],
-                ['st1', 1, 1, 7, '97.20%', '0.66%', '2.52%', '67.39%', '60.32%', '1.44%', '14.60%', '1.16%'],
-                ['st2', 1, 1, 7, '71.64%', '0.00%', '8.41%', '70.40%', '57.97%', '2.89%', '34.75%', '1.20%'],
-                ['st3', 0, 0, 0, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
-                ['st4', 0, 0, 0, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
-                ['st5', 0, 0, 0, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
-                ['st6', 0, 0, 0, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
+                ['st1', 1, 2, 10, '64.80%', '0.66%', '2.52%', '67.39%', '60.32%', '1.44%', '14.60%', '1.16%'],
+                ['st2', 2, 2, 11, '47.76%', '0.00%', '8.41%', '70.40%', '57.97%', '2.89%', '34.75%', '1.20%'],
+                ['st3', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched'],
+                ['st4', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched'],
+                ['st5', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched'],
+                ['st6', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched',
+                 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched', 'Not Launched'],
                 ['st7', 1, 1, 1, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
-                ['Total', 8, 10, 44, '80.00%', '0.32%', '5.53%', '68.91%', '59.09%', '2.19%', '25.17%', '1.18%']]],
+                ['Total', 4, 5, 22, '53.27%', '0.32%', '5.54%', '68.81%', '59.09%', '2.24%', '25.32%', '1.23%']]],
              ['Export Info',
-              [['Generated at', self.now], ['Report Layout', 'Summary'], ['Data Period', 'Quarter']]]]
+              [['Generated at', self.now], ['Report Layout', 'Summary'], ['Data Period', 'Quarter'],
+               ['Quarter', 'April-June'], ['Year', 2017]]]]
         )
 
     def test_sdr_report_pw_lw_children(self):

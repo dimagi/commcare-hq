@@ -70,7 +70,8 @@ class PoshanProgressReport(object):
         data = query_set.values(*cols)
         row_data_dict = {}
         dummy_row = [0 for _ in range(0, len(all_cols))]
-        headers = headers_comprehensive
+
+        latest_value_cols = ['num_launched_districts', 'num_launched_blocks', 'num_launched_awcs']
         # update the dict
         # {'unique_id': [contains the excel row with sum of col values for all months eg. m1+m2+m3]}
         for row in data:
@@ -80,38 +81,56 @@ class PoshanProgressReport(object):
             for k, v in row.items():
                 if k in ['state_name', 'district_name']:
                     row_data[all_cols.index(k)] = v
+                elif k in latest_value_cols:
+                    row_data[all_cols.index(k)] = max(row_data[all_cols.index(k)], v if v else 0)
                 elif k != unique_id:
                     row_data[all_cols.index(k)] += v if v else 0
             row_data_dict[row[unique_id]] = row_data
 
-        # calculating average
-        # m1+m2+m3/3
+        # stores names and ids not numbers like state_name, id
+        named_cols = ['state_name', 'district_name', unique_id]
         total_row = [0 for _ in range(0, len(all_cols))]
+
+        # calculating average and getting total row
+        # m1+m2+m3/3
         for k, v in row_data_dict.items():
             for col in all_cols:
-                if col not in ['state_name', 'district_name', unique_id]:
+                if col not in named_cols:
                     val = v[all_cols.index(col)]
-                    row_data_dict[k][all_cols.index(col)] = handle_average(val)
-                    total_row[all_cols.index(col)] += val if val else 0
-                elif col in ['state_name', 'district_name']:
+                    if col not in latest_value_cols:
+                        val = handle_average(val)
+                    row_data_dict[k][all_cols.index(col)] = val
+                    total_row[all_cols.index(col)] += round(val) if val else 0
+                else:
                     total_row[all_cols.index(col)] = 'Total'
 
-        row_data_dict["total_row"] = total_row
+        row_data_dict['total_row'] = total_row
 
         # calculating percentage
         # percent(current col) = 100 * (actual_value(prev col) / expected_value(prev prev col))
         for k, v in row_data_dict.items():
             row = v[:]
             row_data_dict[k] = self.__calculate_percentage_in_rows(row, all_cols)
-            # rounding remaining values
-            for col in ['num_launched_districts', 'num_launched_blocks']:
-                row_data_dict[k][all_cols.index(col)] = round(row_data_dict[k][all_cols.index(col)])
+            # marking all the unlaunched states as Not Launched
+            if row_data_dict[k][all_cols.index('num_launched_awcs')] == 0:
+                for col in all_cols:
+                    if col not in named_cols:
+                        row_data_dict[k][all_cols.index(col)] = 'Not Launched'
+
+        # for district wise the number of launched districts are always one
+        # so removing this column from report
+        if aggregation_level == 2:
+            headers_summary.remove('Number of Districts Covered')
+            headers_comprehensive.remove('Number of Districts Covered')
+            cols_summary.remove('num_launched_districts')
+            cols_comprehensive.remove('num_launched_districts')
 
         if self.layout != 'comprehensive':
             headers = headers_summary
             for k, v in row_data_dict.items():
                 row_data_dict[k] = [v[all_cols.index(column)] for column in cols_summary]
         else:
+            headers = headers_comprehensive
             for k, v in row_data_dict.items():
                 row_data_dict[k] = [v[all_cols.index(column)] for column in cols_comprehensive]
 
@@ -120,7 +139,7 @@ class PoshanProgressReport(object):
             excel_rows.append(v)
         return excel_rows
 
-    def month_wise(self, filters, order_by):
+    def month_wise(self, filters, order_by, aggregation_level):
         """
         :param filters: monthwise filter [month=month]
         :param order_by: order by columns
@@ -149,17 +168,43 @@ class PoshanProgressReport(object):
         for i in range(1, len(excel_rows)):
             row = excel_rows[i][:]
             excel_rows[i] = self.__calculate_percentage_in_rows(row, all_cols)
+            # marking all the unlaunched states as Not Launched
+            if excel_rows[i][all_cols.index('num_launched_awcs')] == 0:
+                for col in all_cols:
+                    if col not in ['state_name', 'district_name']:
+                        excel_rows[i][all_cols.index(col)] = 'Not Launched'
+        # for district wise the number of launched districts are always one
+        # so removing this column from report
+        if aggregation_level == 2:
+            headers_summary.remove('Number of Districts Covered')
+            headers_comprehensive.remove('Number of Districts Covered')
+            cols_summary.remove('num_launched_districts')
+            cols_comprehensive.remove('num_launched_districts')
+
         if self.layout != 'comprehensive':
             excel_rows[0] = headers_summary
             for i in range(1, len(excel_rows)):
                 val = excel_rows[i][:]
                 excel_rows[i] = [val[all_cols.index(column)] for column in cols_summary]
         else:
+            excel_rows[0] = headers_comprehensive
             for i in range(1, len(excel_rows)):
                 val = excel_rows[i][:]
                 excel_rows[i] = [val[all_cols.index(column)] for column in cols_comprehensive]
 
         return excel_rows
+
+    def _quarter_name(self, quarter):
+        quarter_months = ''
+        if quarter == 1:
+            quarter_months = 'January-March'
+        elif quarter == 2:
+            quarter_months = 'April-June'
+        elif quarter == 3:
+            quarter_months = 'July-September'
+        elif quarter == 4:
+            quarter_months = 'October-December'
+        return quarter_months
 
     def get_excel_data(self, location):
         aggregation_level = self.loc_level
@@ -180,13 +225,20 @@ class PoshanProgressReport(object):
         order_by = ('state_name', 'district_name')
         if self.report_type == 'month':
             filters['month'] = self.config['month']
-            excel_rows = self.month_wise(filters, order_by)
+            excel_rows = self.month_wise(filters, order_by, aggregation_level)
         else:
             filters['month__in'] = generate_quarter_months(self.quarter, self.year)
             excel_rows = self.quarter_wise(filters, order_by, aggregation_level)
 
         export_filters.append(['Report Layout', self.layout.title()])
         export_filters.append(['Data Period', self.report_type.title()])
+        if self.report_type == 'month':
+            date = self.config['month']
+            export_filters.append(['Month', date.strftime("%B")])
+            export_filters.append(['Year', date.year])
+        else:
+            export_filters.append(['Quarter', self._quarter_name(int(self.quarter))])
+            export_filters.append(['Year', self.year])
 
         return [
             [
