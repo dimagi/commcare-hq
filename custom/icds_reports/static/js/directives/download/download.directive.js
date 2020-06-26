@@ -422,7 +422,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
 
     vm.onIndicatorSelect = function () {
         vm.handleViewByShift();
-        if (vm.isChildBeneficiaryListSelected()) {
+        if (vm.isChildBeneficiaryListSelected() || vm.isChildGrowthTrackerSelected()) {
             init();
             vm.selectedFormat = vm.formats[0].id;
         } else if (vm.isIncentiveReportSelected()) {
