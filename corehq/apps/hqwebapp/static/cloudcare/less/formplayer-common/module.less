@@ -91,6 +91,11 @@
   }
 }
 
+.module-caselist-table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
 .module-table .module-caselist-header {
   background-color: @cc-brand-low;
   color: white;
@@ -190,12 +195,16 @@
 }
 
 .module-casedetail-modal, .module-modal {
+  .modal-content {
+    overflow-x: hidden;
+  }
   .modal-header {
     border-bottom: none;
   }
   .modal-body {
     padding-bottom: 0;
     padding-top: 0;
+    overflow-x: auto;
   }
   .modal-footer {
     border-top: none;
@@ -257,10 +266,6 @@
 }
 
 @media(max-width: @screen-sm-max) {
-  .module-caselist-table-container {
-    width: 100%;
-    overflow-x: scroll;
-  }
   #formplayer-progress .progress-container {
     .progress-title {
       h1, h2 {
