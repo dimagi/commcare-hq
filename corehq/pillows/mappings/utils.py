@@ -47,17 +47,16 @@ def _transform_types(mapping):
     if isinstance(mapping, dict):
         items = mapping.items()
         if ("type", "string") in items:
-            if ("index", "analyzed") in items:
-                mapping["type"] = "text"
-                mapping.pop("index")
-            elif ("index", "not_analyzed") in items:
+            if ("index", "not_analyzed") in items:
                 mapping["type"] = "keyword"
                 mapping.pop("index")
             else:
+                # for {"index": "analyzed"}
                 mapping["type"] = "text"
-            if "null_value" in mapping:
-                # null_value is not supported for text types
-                mapping.pop("null_value")
+                mapping.pop("index", None)
+                if "null_value" in mapping:
+                    # null_value is not supported for text types
+                    mapping.pop("null_value")
         elif ("type", "multi_field") in items:
             # multi_field is replaced by just fields
             mapping["type"] = "text"
