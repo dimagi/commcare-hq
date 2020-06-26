@@ -2841,17 +2841,14 @@ class PoshanProgressDashboardView(BaseReportView):
         location_filters = get_location_filter(location, domain)
         location_filters['aggregation_level'] = location_filters.get('aggregation_level', 1)
 
-        icds_features_flag = icds_pre_release_features(self.request.couch_user)
-        data = {}
-        if icds_features_flag:
-            data = get_poshan_progress_dashboard_data(
-                domain,
-                year,
-                month,
-                quarter,
-                data_period,
-                step,
-                location_filters,
-                include_test
-            )
+        data = get_poshan_progress_dashboard_data(
+            domain,
+            year,
+            month,
+            quarter,
+            data_period,
+            step,
+            location_filters,
+            include_test
+        )
         return JsonResponse(data=data)
