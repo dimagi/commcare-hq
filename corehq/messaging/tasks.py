@@ -1,6 +1,7 @@
 from corehq import toggles
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.sms import tasks as sms_tasks
+from corehq.apps.es import CaseES
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL
@@ -147,22 +148,17 @@ def run_messaging_rule(domain, rule_id):
     rule = _get_cached_rule(domain, rule_id)
     if not rule:
         return
-
     progress_helper = MessagingRuleProgressHelper(rule_id)
+    total_cases_count = CaseES().domain(domain).case_type(rule.case_type).count()
+    progress_helper.set_total_cases_to_be_processed(total_cases_count)
 
     def _run_rule_sequentially():
-        incr = 0
         progress_helper.set_initial_progress()
         for case_id in get_case_ids_for_messaging_rule(domain, rule.case_type):
             sync_case_for_messaging_rule.delay(domain, case_id, rule_id)
-            incr += 1
-            if incr >= 1000:
-                progress_helper.increase_total_case_count(incr)
-                incr = 0
-                if progress_helper.is_canceled():
-                    break
+            if progress_helper.is_canceled():
+                break
 
-        progress_helper.increase_total_case_count(incr)
 
         # By putting this task last in the queue, the rule should be marked
         # complete at about the time that the last tasks are finishing up.
@@ -194,7 +190,6 @@ def run_messaging_rule_for_shard(domain, rule_id, db_alias):
     if not progress_helper.is_canceled():
         for case_id_chunk in chunked(paginated_case_ids(domain, rule.case_type, db_alias), chunk_size):
             sync_case_chunk_for_messaging_rule.delay(domain, case_id_chunk, rule_id)
-            progress_helper.increase_total_case_count(len(case_id_chunk))
             if progress_helper.is_canceled():
                 break
     all_shards_complete = progress_helper.mark_shard_complete(db_alias)
