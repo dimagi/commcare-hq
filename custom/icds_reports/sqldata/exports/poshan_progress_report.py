@@ -94,7 +94,7 @@ class PoshanProgressReport(object):
         # calculating average and getting total row
         # m1+m2+m3/3
         for k, v in row_data_dict.items():
-            launched = True if v['num_launched_awcs'] > 0 else False
+            launched = True if v[all_cols.index('num_launched_awcs')] > 0 else False
             for col in all_cols:
                 if col not in named_cols:
                     val = v[all_cols.index(col)]
