@@ -7,6 +7,7 @@ from corehq.util.workbook_reading.exceptions import (
     SpreadsheetFileNotFound,
 )
 
+from .datamodels import Cell, Workbook, Worksheet
 from .adapters import (
     make_worksheet,
     open_any_workbook,
@@ -15,7 +16,7 @@ from .adapters import (
     open_xlsx_workbook,
     valid_extensions,
 )
-from .datamodels import Cell, Workbook, Worksheet
+
 
 __all__ = [
     'open_csv_workbook',
