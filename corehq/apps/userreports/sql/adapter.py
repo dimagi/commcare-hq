@@ -453,7 +453,7 @@ def get_indicator_table(indicator_config, metadata, override_table_name=None):
     constraints = [PrimaryKeyConstraint(*indicator_config.pk_columns)]
     columns_and_indices = sql_columns + extra_indices + constraints
     current_table = metadata.tables.get(table_name)
-    if current_table:
+    if current_table is not None:
         metadata.remove(current_table)
     return sqlalchemy.Table(
         table_name,
