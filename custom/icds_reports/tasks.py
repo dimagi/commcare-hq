@@ -1835,7 +1835,7 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
             continue
         num_docs_retried += 1
         not_found_in_es = doc_id in doc_ids_not_in_es
-        if not inserted_at or (sql_modified_on - inserted_at).seconds > 3600 :
+        if not inserted_at or (sql_modified_on - inserted_at).seconds > 3600:
             num_docs_unporcessed += 1
 
         celery_task_logger.info(f'doc_id {doc_id} from {sql_modified_on} not found in UCR data sources. '
