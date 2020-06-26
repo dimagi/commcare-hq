@@ -365,7 +365,7 @@ class QueuedSMS(SMSBase):
     def get_queued_sms(cls):
         return cls.objects.filter(
             datetime_to_process__lte=datetime.utcnow(),
-        )
+        ).order_by('datetime_to_process')
 
 
 class SQLLastReadMessage(UUIDGeneratorMixin, models.Model):

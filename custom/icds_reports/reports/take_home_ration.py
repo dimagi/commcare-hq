@@ -7,12 +7,13 @@ from custom.icds_reports.const import (
     THR_REPORT_DAY_BENEFICIARY_TYPE,
     THR_21_DAYS_THRESHOLD_DATE
 )
-
+from custom.icds_reports.utils import apply_exclude
 
 class TakeHomeRationExport(object):
     title = 'Take Home Ration'
 
-    def __init__(self, location, month, loc_level=0, beta=False, report_type='consolidated'):
+    def __init__(self, domain, location, month, loc_level=0, beta=False, report_type='consolidated'):
+        self.domain = domain
         self.location = location
         self.loc_level = loc_level
         self.month = month
@@ -20,7 +21,6 @@ class TakeHomeRationExport(object):
         self.report_type = report_type
 
     def get_excel_data(self):
-
         def _format_report_data(column, value, is_launched):
             location_names = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
             AWC_NOT_LAUNCHED = 'AWC Not Launched'
@@ -55,6 +55,8 @@ class TakeHomeRationExport(object):
         else:
             headers, data = self.get_consolidated_data(filters, order_by)
 
+        #Exclude test states
+        data = apply_exclude(self.domain, data)
         excel_rows = [headers]
 
         for row in data:

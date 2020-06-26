@@ -1264,7 +1264,7 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
                 worksheet.merge_cells(f'{cell}:{next_cell}')
                 set_beneficiary_columns(column_index, column_index + column_deviation_2,
                                         table_header_position_row + data_start_row_diff - 1)
-            elif value == 'Total No. of beneficiaries received THR in given month':
+            elif value == f'Total No. of beneficiaries received THR {thr_days_info} in given month':
                 next_deviated_column += column_deviation_17
                 next_cell = "{}{}".format(columns[column_index + column_deviation_17], table_header_position_row)
                 worksheet.merge_cells(f'{cell}:{next_cell}')
