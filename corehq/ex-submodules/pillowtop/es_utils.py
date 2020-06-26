@@ -110,7 +110,7 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
             overrides.update({settings.SERVER_ENVIRONMENT: settings.ES_SETTINGS})
 
         for hq_index_name in ['default', self.hq_index_name]:
-            for key, value in overrides.get(settings.SERVER_ENVIRONMENT, {}).get(self.hq_index_name, {}).items():
+            for key, value in overrides.get(settings.SERVER_ENVIRONMENT, {}).get(hq_index_name, {}).items():
                 if value is REMOVE_SETTING:
                     del meta_settings['settings'][key]
                 else:
