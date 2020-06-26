@@ -486,7 +486,6 @@ WebFormSession.prototype.switchLanguage = function (lang) {
 
 WebFormSession.prototype.submitForm = function (form) {
     var self = this,
-        answers,
         accumulate_answers,
         prevalidated = true;
 
@@ -514,17 +513,18 @@ WebFormSession.prototype.submitForm = function (form) {
         _accumulate_answers(o);
         return _answers;
     };
-    answers = accumulate_answers(form);
 
     form.isSubmitting(true);
     var submitAttempts = 0,
         timer = setInterval(function () {
+            var answers;
             if (form.blockSubmit() && submitAttempts < 10) {
                 submitAttempts++;
                 return;
             }
             clearInterval(timer);
 
+            answers = accumulate_answers(form);
             self.serverRequest(
                 {
                     'action': Formplayer.Const.SUBMIT,
