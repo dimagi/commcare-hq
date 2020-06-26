@@ -1,4 +1,3 @@
-from corehq import toggles
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.sms import tasks as sms_tasks
 from corehq.apps.es import CaseES
@@ -158,7 +157,6 @@ def run_messaging_rule(domain, rule_id):
             sync_case_for_messaging_rule.delay(domain, case_id, rule_id)
             if progress_helper.is_canceled():
                 break
-
 
         # By putting this task last in the queue, the rule should be marked
         # complete at about the time that the last tasks are finishing up.
