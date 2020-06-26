@@ -452,7 +452,7 @@ def get_indicator_table(indicator_config, metadata, override_table_name=None):
             logger.error(f"Invalid index specified on {table_name} ({index.column_ids})")
     constraints = [PrimaryKeyConstraint(*indicator_config.pk_columns)]
     columns_and_indices = sql_columns + extra_indices + constraints
-    current_table = metadata.tables[table_name]
+    current_table = metadata.tables.get(table_name)
     if current_table:
         metadata.remove(current_table)
     return sqlalchemy.Table(
