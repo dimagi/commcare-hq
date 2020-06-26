@@ -49,11 +49,6 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.decorators import require_mobile_access
 from corehq.apps.ota.rate_limiter import rate_limit_restore
 from corehq.apps.users.models import CouchUser, UserReportingMetadataStaging
-from corehq.apps.users.util import (
-    update_device_meta,
-    update_last_sync,
-    update_latest_builds,
-)
 from corehq.const import ONE_DAY, OPENROSA_VERSION_MAP
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.utils.xform import adjust_text_to_datetime
