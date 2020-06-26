@@ -51,7 +51,7 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
     vm.currentStepMeta = vm.steps[vm.step];
 
     vm.isDetailsDisplayed = (vm.step === 'cbe' || vm.step === 'thr' ||
-        vm.step === 'sn' || vm.step === 'pse') && haveAccessToFeatures;
+        vm.step === 'sn' || vm.step === 'pse');
 
     if (vm.isDetailsDisplayed) {
         if (vm.step === 'cbe') {
@@ -212,6 +212,13 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
                     'tooltipValue': 'If the AWC conducted at least 1 VHSND in the current month then Yes otherwise No.',
                     'columnValueType': 'booleanRaw',
                     'columnValueIndicator': 'num_awcs_conducted_vhnd',
+                },
+                {
+                    'mData': 'vhnd_conducted',
+                    'heading': 'Number of VHSND conducted',
+                    'tooltipValue': 'Number of Village Health Sanitation and Nutrition Days (VHSNDs) organised by an AWC in a month',
+                    'columnValueType': 'raw',
+                    'columnValueIndicator': 'vhnd_conducted',
                 },
                 {
                     'mData': 'thr',
@@ -453,7 +460,7 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
         'detailsURL': '/service_delivery_dashboard/pse',
     };
 
-    if (haveAccessToFeatures && vm.selectedDate >= new Date(2020, 3, 1)) {
+    if (vm.selectedDate >= new Date(2020, 3, 1)) {
         vm.sddTableData['pw_lw_children']['non-awc'].pop();
         vm.sddTableData['pw_lw_children']['non-awc'].push(thrForAtleast25Days);
         vm.sddTableData['pw_lw_children']['awc'].pop();
@@ -461,17 +468,6 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
         vm.sddTableData['children'].splice(0, 2);
         vm.sddTableData['children'].unshift(pseForAtleast25Days);
         vm.sddTableData['children'].unshift(snForAtleast25Days);
-    }
-
-    if (haveAccessToFeatures) {
-        var numberOfVHSNDConducted = {
-            'mData': 'vhnd_conducted',
-            'heading': 'Number of VHSND conducted',
-            'tooltipValue': 'Number of Village Health Sanitation and Nutrition Days (VHSNDs) organised by an AWC in a month',
-            'columnValueType': 'raw',
-            'columnValueIndicator': 'vhnd_conducted',
-        };
-        vm.sddTableData['pw_lw_children']['awc'].splice(4, 0, numberOfVHSNDConducted);
     }
 
     vm.getTableData = function () {
@@ -542,7 +538,7 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
 
     function renderHeaderTooltip(header, tooltipContent, detailsURL, displaySeeMore) {
         var seeMore = '';
-        if (detailsURL && haveAccessToFeatures && displaySeeMore) {
+        if (detailsURL && displaySeeMore) {
             seeMore = '<div class="d-flex justify-content-end">' +
                 '<span ng-click="goToDetailsPage(\''+ detailsURL +'\')"' +
                 ' class="sdd-details-link">See more</span></div>'
@@ -594,9 +590,9 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
                         case "homeVisits": return renderPercentageAndPartials(full.home_visits, full.valid_visits, full.expected_visits, 'Home visits');
                         case "gm03": return  renderPercentageAndPartials(full.gm, full.gm_0_3, full.children_0_3, 'Weight measurement');
                         case "gm36": return renderPercentageAndPartials(full.gm, full.gm_3_5, full.children_3_5, 'Weight measurement');
-                        case "thr": return renderPercentageAndPartials(full.thr, haveAccessToFeatures ? full.thr_21_days : full.thr_given_21_days, haveAccessToFeatures ? full.thr_eligible : full.total_thr_candidates, 'THR');
-                        case "pse": return renderPercentageAndPartials(full.pse, haveAccessToFeatures ? full.pse_21_days : full.pse_attended_21_days, haveAccessToFeatures ? full.pse_eligible : full.children_3_6, 'beneficiaries');
-                        case "supNutrition": return renderPercentageAndPartials(full.sn, haveAccessToFeatures ? full.lunch_21_days : full.lunch_count_21_days, haveAccessToFeatures ? full.pse_eligible : full.children_3_6, 'beneficiaries');
+                        case "thr": return renderPercentageAndPartials(full.thr,  full.thr_21_days, full.thr_eligible, 'THR');
+                        case "pse": return renderPercentageAndPartials(full.pse, full.pse_21_days, full.pse_eligible, 'beneficiaries');
+                        case "supNutrition": return renderPercentageAndPartials(full.sn, full.lunch_21_days, full.pse_eligible, 'beneficiaries');
                         case "thrAtleast25": return renderPercentageAndPartials(full.thr, full.thr_25_days, full.thr_eligible, 'THR');
                         case "pseAtleast25": return renderPercentageAndPartials(full.pse, full.pse_25_days, full.pse_eligible, 'beneficiaries');
                         case "snAtleast25": return renderPercentageAndPartials(full.sn, full.lunch_25_days, full.pse_eligible, 'beneficiaries');
