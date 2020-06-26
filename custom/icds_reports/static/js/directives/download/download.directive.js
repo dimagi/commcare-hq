@@ -413,7 +413,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
     };
 
     vm.getFormats = function () {
-        if (vm.isChildBeneficiaryListSelected()) {
+        if (vm.isChildBeneficiaryListSelected() || vm.isChildGrowthTrackerSelected()) {
             return [vm.formats[0]];
         } else {
             return vm.formats;
