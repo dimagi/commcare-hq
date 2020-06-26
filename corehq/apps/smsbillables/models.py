@@ -325,7 +325,7 @@ class SmsBillable(models.Model):
             message_log.backend_api, message_log.backend_id, phone_number, direction, log_id,
             message_log.backend_message_id, domain
         )
-        billable.gateway_fee = gateway_charge_info.fixed_gateway_fee
+        billable.gateway_fee = gateway_charge_info.gateway_fee
         billable.gateway_fee_conversion_rate = gateway_charge_info.conversion_rate
         billable.direct_gateway_fee = gateway_charge_info.direct_gateway_fee
         billable.multipart_count = gateway_charge_info.multipart_count or multipart_count
@@ -352,7 +352,7 @@ class SmsBillable(models.Model):
                               or backend_instance.is_global\
                               or toggles.ENABLE_INCLUDE_SMS_GATEWAY_CHARGING.enabled(domain)
 
-        direct_gateway_fee = fixed_gateway_fee = multipart_count = conversion_rate = None
+        direct_gateway_fee = gateway_fee = multipart_count = conversion_rate = None
 
         if is_gateway_billable:
             if backend_instance.using_api_to_get_fees:
@@ -360,7 +360,7 @@ class SmsBillable(models.Model):
                     direct_gateway_fee, multipart_count = \
                         cls.get_charge_details_through_api(backend_instance, backend_message_id)
 
-                    fixed_gateway_fee = SmsGatewayFee.get_by_criteria(
+                    gateway_fee = SmsGatewayFee.get_by_criteria(
                         backend_api_id,
                         direction,
                     )
@@ -369,33 +369,33 @@ class SmsBillable(models.Model):
                         "Could not create gateway fee for message %s: no backend_message_id" % couch_id
                     )
             else:
-                fixed_gateway_fee = SmsGatewayFee.get_by_criteria(
+                gateway_fee = SmsGatewayFee.get_by_criteria(
                     backend_api_id,
                     direction,
                     backend_instance=backend_id,
                     country_code=country_code,
                     national_number=national_number,
                 )
-            if fixed_gateway_fee:
-                conversion_rate = cls.get_conversion_rate(fixed_gateway_fee)
+            if gateway_fee:
+                conversion_rate = cls.get_conversion_rate(gateway_fee)
             else:
                 log_smsbillables_error(
                     "No matching gateway fee criteria for SMS %s" % couch_id
                 )
         return _ProviderChargeInfo(
             direct_gateway_fee,
-            fixed_gateway_fee,
+            gateway_fee,
             multipart_count,
             conversion_rate
         )
 
     @classmethod
-    def get_conversion_rate(cls, fixed_gateway_fee):
-        conversion_rate = fixed_gateway_fee.currency.rate_to_default
+    def get_conversion_rate(cls, gateway_fee):
+        conversion_rate = gateway_fee.currency.rate_to_default
         if not conversion_rate:
             log_smsbillables_error(
                 "Gateway fee conversion rate for currency %s is 0"
-                % fixed_gateway_fee.currency.code
+                % gateway_fee.currency.code
             )
         return conversion_rate
 
@@ -427,7 +427,7 @@ class SmsBillable(models.Model):
 
 _ProviderChargeInfo = namedtuple('_ProviderCharges', [
     'direct_gateway_fee',
-    'fixed_gateway_fee',
+    'gateway_fee',
     'multipart_count',
     'conversion_rate'
 ])
