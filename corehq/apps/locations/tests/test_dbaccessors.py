@@ -49,7 +49,7 @@ class TestUsersByLocation(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.george.delete()
+        cls.george.delete(deleted_by=None)
         cls.domain_obj.delete()
         super(TestUsersByLocation, cls).tearDownClass()
 
