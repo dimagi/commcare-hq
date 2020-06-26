@@ -15,7 +15,7 @@ def open_csv_workbook(filename):
     try:
         if os.stat(filename).st_size <= 1:
             raise SpreadsheetFileInvalidError('File is empty')
-        with open(filename, "r") as csv_file:
+        with open(filename, "r", encoding="utf-8") as csv_file:
             yield _CSVWorkbookAdaptor(csv_file).to_workbook()
     except (UnicodeDecodeError, csv.Error) as error:
         # Rather than trying to determine why the file is not readable (invalid
@@ -36,10 +36,8 @@ class _CSVWorkbookAdaptor(object):
     def to_workbook(self):
         rows = []
 
-        # Loop through the rows, and add each row's contents to rows, making sure
-        # not escape '\u' characters.
+        # Loop through the rows, and add each row's contents to rows.
         for row in csv.reader(self._file, delimiter=","):
-            row_decoded = [column.encode().decode('unicode-escape') for column in row]
-            rows.append(row_decoded)
+            rows.append(row)
 
         return Workbook(worksheets=[make_worksheet(rows, title='Sheet1')])
