@@ -486,28 +486,36 @@ WebFormSession.prototype.switchLanguage = function (lang) {
 
 WebFormSession.prototype.submitForm = function (form) {
     var self = this,
-        answers = {},
+        answers,
         accumulate_answers,
         prevalidated = true;
 
     accumulate_answers = function (o) {
-        if (ko.utils.unwrapObservable(o.type) !== 'question') {
-            if (o.hasOwnProperty("children")) {
-                $.each(o.children(), function (i, val) {
-                    accumulate_answers(val);
-                });
-            }
-        } else {
-            if (o.isValid()) {
-                if (ko.utils.unwrapObservable(o.datatype) !== "info") {
-                    answers[getIx(o)] = ko.utils.unwrapObservable(o.answer);
+        var _answers = {},
+            _accumulate_answers;
+
+        _accumulate_answers = function (o) {
+            if (ko.utils.unwrapObservable(o.type) !== 'question') {
+                if (o.hasOwnProperty("children")) {
+                    $.each(o.children(), function (i, val) {
+                        _accumulate_answers(val);
+                    });
                 }
             } else {
-                prevalidated = false;
+                if (o.isValid()) {
+                    if (ko.utils.unwrapObservable(o.datatype) !== "info") {
+                        _answers[getIx(o)] = ko.utils.unwrapObservable(o.answer);
+                    }
+                } else {
+                    prevalidated = false;
+                }
             }
-        }
+        };
+        _accumulate_answers(o);
+        return _answers;
     };
-    accumulate_answers(form);
+    answers = accumulate_answers(form);
+
     form.isSubmitting(true);
     var submitAttempts = 0,
         timer = setInterval(function () {
