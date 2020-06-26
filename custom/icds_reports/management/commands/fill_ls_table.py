@@ -39,4 +39,5 @@ class Command(BaseCommand):
 
             res_ls_tasks.append(icds_aggregation_task.si(date=calculation_date, func_name='_agg_ls_table'))
             c = chain(*res_ls_tasks).apply_async()
+            c.get(disable_sync_subtasks=False)
             start_date = start_date + relativedelta(months=1)
