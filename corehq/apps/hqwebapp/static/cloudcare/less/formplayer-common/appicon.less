@@ -22,6 +22,10 @@
       line-height: @icon-height;
       font-size: @icon-height;
     }
+    .appicon-custom {
+      top: 0.05*@icon-height + 8;
+      height: @icon-height - 8;
+    }
   }
   .appicon-default .appicon-icon {
     font-size: @icon-height * .9;
@@ -52,8 +56,6 @@
 
 .appicon, .gridicon {
   background-color: @cc-neutral-mid;
-  background-repeat: no-repeat;
-  background-position: center top;
   text-align: center;
   color: white;
   position: relative;
@@ -76,6 +78,12 @@
       overflow: hidden;
       font-weight: 300;
     }
+  }
+
+  .appicon-custom {
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center top;
   }
 
   .appicon-icon, .gridicon-icon {
