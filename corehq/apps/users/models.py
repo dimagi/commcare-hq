@@ -242,6 +242,7 @@ class Permissions(DocumentSchema):
             edit_motech=True,
             edit_data=True,
             edit_apps=True,
+            edit_reports=True,
             view_reports=True,
             edit_billing=True,
             edit_shared_exports=True,
@@ -2736,6 +2737,9 @@ class AnonymousCouchUser(object):
         return False
 
     def can_edit_apps(self):
+        return False
+
+    def can_edit_reports(self):
         return False
 
     def is_eula_signed(self, version=None):
