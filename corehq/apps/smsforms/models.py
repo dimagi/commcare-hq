@@ -296,7 +296,7 @@ class XFormsSessionSynchronization:
         """
         channel = session.get_channel()
         with cls._critical_section(channel):
-            if cls.channel_is_available_for_session(session):
+            if cls.channel_is_available_for_session(session) or cls._clear_stale_channel_claim(channel):
                 cls._set_running_session_info_for_channel(
                     channel,
                     RunningSessionInfo(session.session_id, session.connection_id),
@@ -348,15 +348,19 @@ class XFormsSessionSynchronization:
     @classmethod
     def clear_stale_channel_claim(cls, channel):
         with cls._critical_section(channel):
-            running_session_info = cls.get_running_session_info_for_channel(channel)
-            if running_session_info.session_id:
-                session = SQLXFormsSession.by_session_id(running_session_info.session_id)
-                if not (session and session.session_is_open):
-                    # Just clear it so there's a fresh start
-                    # This is an unusual circumstance that can only arise as an edge case or malfunction
-                    # but is an important escape hatch
-                    cls._delete_running_session_info_for_channel(channel)
-                    return True
+            return cls._clear_stale_channel_claim(channel)
+
+    @classmethod
+    def _clear_stale_channel_claim(cls, channel):
+        running_session_info = cls.get_running_session_info_for_channel(channel)
+        if running_session_info.session_id:
+            session = SQLXFormsSession.by_session_id(running_session_info.session_id)
+            if not (session and session.session_is_open):
+                # Just clear it so there's a fresh start
+                # This is an unusual circumstance that can only arise as an edge case or malfunction
+                # but is an important escape hatch
+                cls._delete_running_session_info_for_channel(channel)
+                return True
         return False
 
     @classmethod
