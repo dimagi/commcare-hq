@@ -360,7 +360,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
             vm.setPPRYears();
 
         } else if (year.id === latest.getFullYear()) {
-            const maxQuarter = Math.floor((latest.getMonth() + 1)/4);
+            var maxQuarter = Math.floor(latest.getMonth() / 3);
             vm.months = _.filter(vm.monthsCopy, function (month) {
                 return month.id <= latest.getMonth() + 1;
             });
@@ -421,6 +421,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
     };
 
     vm.onIndicatorSelect = function () {
+        var latest = new Date();
         vm.handleViewByShift();
         if (vm.isChildBeneficiaryListSelected() || vm.isChildGrowthTrackerSelected()) {
             init();
@@ -473,7 +474,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
         var levels = _.filter(vm.levels, function (value){return value.id > locationIndex;});
         vm.groupByLevels = levels;
         vm.selectedLevel = locationIndex + 1;
-    }
+    };
 
     /**
      * To adjust selectedLevel for the reports that do not have viewBy filter. These
@@ -547,7 +548,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
         var beneficiaryListErrors = vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
         var growthListErrors = vm.isChildGrowthTrackerSelected() && !vm.isDistrictOrBelowSelected();
         var incentiveReportErrors = vm.isIncentiveReportSelected() && !vm.isStateSelected();
-        var PPRErrors = vm.isPPRSelected() && vm.isDistrictOrBelowSelected();
+        var PPRErrors = vm.isPPRSelected() && (vm.isDistrictOrBelowSelected() || vm.selectedLevel === 0);
         var ladySupervisorReportErrors = false;
         if (!vm.haveAccessToFeatures) {
             ladySupervisorReportErrors = vm.isLadySupervisorSelected() && !vm.isStateSelected();
