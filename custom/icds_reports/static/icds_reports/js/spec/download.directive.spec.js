@@ -195,7 +195,7 @@ describe('Download Directive', function () {
 
         it('tests get formats when child growth tracker list is selected', function () {
             controller.selectedIndicator = 13;
-            var expected = [{"id": "csv", "name": "CSV"}, {"id": "xlsx", "name": "Excel"}];
+            var expected = [{"id": "csv", "name": "CSV"}];
 
             var result = controller.getFormats();
             assert.deepEqual(expected, result);
