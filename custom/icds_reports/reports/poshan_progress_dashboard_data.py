@@ -44,9 +44,9 @@ def calculate_aggregated_row(data, aggregation_level, data_period, unique_id):
         for row in data:
             for col in cols:
                 if col not in aggregated_row.keys():
-                    aggregated_row[col] = row[col]
+                    aggregated_row[col] = round(row[col])
                 else:
-                    aggregated_row[col] += row[col]
+                    aggregated_row[col] += round(row[col])
     else:
         for k, v in data.items():
             aggregated_row[k] = v if v else 0

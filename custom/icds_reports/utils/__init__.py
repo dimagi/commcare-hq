@@ -2015,7 +2015,7 @@ def create_poshan_progress_report(excel_data, data_type, config, aggregation_lev
     workbook = Workbook()
     worksheet = workbook.active
     # sheet title
-    worksheet.title = "Poshan Progress Report {}".format(layout)
+    worksheet.title = "PPR {}".format(layout)
     worksheet.sheet_view.showGridLines = False
     amount_of_columns = 1 + len(excel_data[0])
     last_column = get_column_letter(amount_of_columns+1)
