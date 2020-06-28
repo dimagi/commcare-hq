@@ -75,6 +75,7 @@ class PoshanProgressReport(object):
         # update the dict
         # {'unique_id': [contains the excel row with sum of col values for all months eg. m1+m2+m3]}
         for row in data:
+            launched = True if row['num_launched_awcs'] > 0 else False
             if row[unique_id] not in row_data_dict.keys():
                 row_data_dict[row[unique_id]] = dummy_row[:]
             row_data = row_data_dict[row[unique_id]][:]
@@ -82,9 +83,9 @@ class PoshanProgressReport(object):
                 if k in ['state_name', 'district_name']:
                     row_data[all_cols.index(k)] = v
                 elif k in latest_value_cols:
-                    row_data[all_cols.index(k)] = max(row_data[all_cols.index(k)], v if v else 0)
+                    row_data[all_cols.index(k)] = max(row_data[all_cols.index(k)], v if (v and launched is True) else 0)
                 elif k != unique_id:
-                    row_data[all_cols.index(k)] += v if v else 0
+                    row_data[all_cols.index(k)] += v if (v and launched is True) else 0
             row_data_dict[row[unique_id]] = row_data
 
         # stores names and ids not numbers like state_name, id
