@@ -346,14 +346,7 @@ class XFormsSessionSynchronization:
         with cls._critical_section(channel):
             running_session_info = cls.get_running_session_info_for_channel(channel)
             if cls._channel_is_available_for_session(session):
-                # Drop the session_id but keep the contact_id
-                # This will let incoming SMS keep affinity with that contact_id until a new session starts
-                running_session_info = running_session_info._replace(session_id=None)
-                cls._set_running_session_info_for_channel(
-                    channel, running_session_info,
-                    # Keep affinity for 30 days
-                    30 * 24 * 60 * 60
-                )
+                cls._release_running_session_info_for_channel(running_session_info, channel)
 
     @classmethod
     def clear_stale_channel_claim(cls, channel):
@@ -366,10 +359,7 @@ class XFormsSessionSynchronization:
         if running_session_info.session_id:
             session = SQLXFormsSession.by_session_id(running_session_info.session_id)
             if not (session and session.session_is_open):
-                # Just clear it so there's a fresh start
-                # This is an unusual circumstance that can only arise as an edge case or malfunction
-                # but is an important escape hatch
-                cls._delete_running_session_info_for_channel(channel)
+                cls._release_running_session_info_for_channel(running_session_info, channel)
                 return True
         return False
 
@@ -387,9 +377,15 @@ class XFormsSessionSynchronization:
         cache.set(key, running_session_info, expiry)
 
     @classmethod
-    def _delete_running_session_info_for_channel(cls, channel):
-        key = cls._channel_affinity_cache_key(channel)
-        cache.delete(key)
+    def _release_running_session_info_for_channel(cls, running_session_info, channel):
+        # Drop the session_id but keep the contact_id
+        # This will let incoming SMS keep affinity with that contact_id until a new session starts
+        running_session_info = running_session_info._replace(session_id=None)
+        cls._set_running_session_info_for_channel(
+            channel, running_session_info,
+            # Keep affinity for 30 days
+            30 * 24 * 60 * 60
+        )
 
     @staticmethod
     def _channel_affinity_cache_key(channel):
