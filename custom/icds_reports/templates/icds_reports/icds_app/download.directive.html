@@ -72,7 +72,7 @@
                     </div>
                 </div>
 
-                <div class="form-group" ng-if="($ctrl.isTakeHomeRationReportSelected() && $ctrl.haveAccessToFeatures)">
+                <div class="form-group" ng-if="($ctrl.isTakeHomeRationReportSelected())">
                     <label class="control-label col-sm-2" for="format">Report Type: <i class="fa fa-info-circle" uib-popover="select the report type"
                            popover-placement="top-right"
                            popover-trigger="'mouseenter'"></i></label>
@@ -100,7 +100,7 @@
                     </div>
                 </div>
 
-                <div class="form-group" ng-if="($ctrl.isPPRSelected() && $ctrl.haveAccessToFeatures)">
+                <div class="form-group" ng-if="($ctrl.isPPRSelected())">
                     <label class="control-label col-sm-2" for="format">Report Layout: <i class="fa fa-info-circle" uib-popover="select the report layout"
                            popover-placement="top-right"
                            popover-trigger="'mouseenter'"></i></label>
@@ -114,7 +114,7 @@
                     </div>
                 </div>
 
-                <div class="form-group" ng-if="($ctrl.isPPRSelected() && $ctrl.haveAccessToFeatures)">
+                <div class="form-group" ng-if="($ctrl.isPPRSelected())">
                     <label class="control-label col-sm-2" for="format">Data Period: <i class="fa fa-info-circle" uib-popover="select the data period"
                            popover-placement="top-right"
                            popover-trigger="'mouseenter'"></i></label>
@@ -169,7 +169,7 @@
                         </ui-select>
                     </div>
                 </div>
-                <div class="form-group" ng-if="($ctrl.showQuarterFilter() && $ctrl.haveAccessToFeatures)">
+                <div class="form-group" ng-if="($ctrl.showQuarterFilter())">
                     <label class="control-label col-sm-2" for="quarter">Quarter: <i class="fa fa-info-circle" uib-popover="Select the calendar quarter for which you want to download the tabular report."
                            popover-placement="top-right"
                            popover-trigger="'mouseenter'"></i></label>
