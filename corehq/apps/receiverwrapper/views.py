@@ -7,6 +7,8 @@ from django.views.decorators.http import require_POST
 import couchforms
 from casexml.apps.case.xform import get_case_updates, is_device_report
 from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import Permissions
 from couchforms import openrosa_response
 from couchforms.const import MAGIC_PROPERTY, BadRequest
 from couchforms.getters import MultimediaBug
@@ -312,6 +314,8 @@ def _secure_post_basic(request, domain, app_id=None):
     )
 
 @login_or_api_key_ex()
+@require_permission(Permissions.edit_data)
+@require_permission(Permissions.access_api)
 def _secure_post_api_key(request, domain, app_id=None):
     """only ever called from secure post"""
     return _process_form(
