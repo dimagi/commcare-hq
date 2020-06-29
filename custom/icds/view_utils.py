@@ -1,8 +1,9 @@
 from functools import wraps
 
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import ugettext_lazy, ugettext as _
 from django.conf import settings
+from django.http import HttpResponse
 
 from corehq import toggles
 from corehq.apps.hqwebapp.views import no_permissions
@@ -28,7 +29,7 @@ def is_icds_cas_project(domain):
     return IS_ICDS_ENVIRONMENT and domain == ICDS_DOMAIN
 
 
-def check_authorization_errors(domain, user, app):
+def check_app_access(domain, user, app):
     if (
         settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
         and toggles.ROLE_WEBAPPS_PERMISSIONS.enabled(domain)
@@ -36,8 +37,8 @@ def check_authorization_errors(domain, user, app):
         try:
             role = user.get_role(domain)
         except DomainMembershipError:
-            return 'User is not a member of this project', 404
+            return HttpResponse(_('User is not a member of this project'), 404), None
         else:
             if not (role and role.permissions.view_web_app(app)):
-                return 'User is not allowed on this app', 406
-    return None, None
+                return HttpResponse(_('User is not allowed on this app'), 406), None
+    return None

@@ -54,7 +54,7 @@ from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.utils.xform import adjust_text_to_datetime
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.util.quickcache import quickcache
-from custom.icds.view_utils import check_authorization_errors
+from custom.icds.view_utils import check_app_access
 
 from .models import DeviceLogRequest, MobileRecoveryMeasure, SerialIdBucket
 from .utils import (
@@ -260,9 +260,9 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
 
     app = get_app_cached(domain, app_id) if app_id else None
 
-    error_msg, status_code = check_authorization_errors(domain, couch_user, app)
-    if error_msg:
-        return HttpResponse(_(error_msg), status=status_code), None
+    error_response = check_app_access(domain, couch_user, app)
+    if error_response:
+        return error_response
     restore_config = RestoreConfig(
         project=project,
         restore_user=restore_user,
