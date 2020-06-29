@@ -310,7 +310,7 @@
         "column_ids": ["state_id", "timeend"]
       },
       {
-        "column_ids": ["state_id", "completed_on"]
+        "column_ids": ["state_id", "timeend_with_time"]
       }
     ],
     "sql_settings": {
