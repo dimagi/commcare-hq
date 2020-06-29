@@ -91,6 +91,6 @@ class SyncCommCareUserTestCase(TestCase):
         self.commcare_user.save()
 
     def tearDown(self):
-        CommCareUser.get_by_user_id(self.commcare_user.user_id).delete()
+        CommCareUser.get_by_user_id(self.commcare_user.user_id).delete(deleted_by=None)
         self.domain_obj.delete()
         super(SyncCommCareUserTestCase, self).tearDown()
