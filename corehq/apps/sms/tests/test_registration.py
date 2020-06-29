@@ -432,15 +432,19 @@ class RegistrationAPITestCase(TestCase):
         for obj in [
             cls.subscription1,
             cls.account1,
-            cls.admin_user1,
-            cls.read_only_user1,
             cls.domain1,
             cls.subscription2,
             cls.account2,
-            cls.admin_user2,
             cls.domain2,
         ]:
             obj.delete()
+
+        for obj in [
+            cls.admin_user1,
+            cls.read_only_user1,
+            cls.admin_user2,
+        ]:
+            obj.delete(deleted_by=None)
 
         super(RegistrationAPITestCase, cls).tearDownClass()
 
