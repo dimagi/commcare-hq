@@ -1,6 +1,8 @@
 hqDefine('users/js/roles',[
+    'jquery',
     'knockout',
-], function (ko) {
+    'hqwebapp/js/alert_user',
+], function ($, ko, alertUser) {
     var RolesViewModel = function (o) {
         'use strict';
         var self, root;
@@ -74,6 +76,10 @@ hqDefine('users/js/roles',[
             },
             unwrap: function (self) {
                 var data = ko.mapping.toJS(self);
+
+                if (data.name) {
+                    data.name = data.name.trim();
+                }
 
                 data.permissions.view_report_list = ko.utils.arrayMap(ko.utils.arrayFilter(data.reportPermissions.specific, function (report) {
                     return report.value;
@@ -156,7 +162,6 @@ hqDefine('users/js/roles',[
             var roleCopy = UserRole.wrap(UserRole.unwrap(role));
             roleCopy.modalTitle = title;
             self.roleBeingEdited(roleCopy);
-            self.modalSaveButton.state('save');
         };
         self.unsetRoleBeingEdited = function () {
             self.roleBeingEdited(undefined);
@@ -179,21 +184,6 @@ hqDefine('users/js/roles',[
         self.unsetRoleBeingDeleted = function () {
             self.roleBeingDeleted(undefined);
         };
-        self.modalSaveButton = {
-            state: ko.observable(),
-            saveOptions: function () {
-                return {
-                    url: o.saveUrl,
-                    type: 'post',
-                    data: JSON.stringify(UserRole.unwrap(self.roleBeingEdited)),
-                    dataType: 'json',
-                    success: function (data) {
-                        self.addOrReplaceRole(data);
-                        self.unsetRoleBeingEdited();
-                    },
-                };
-            },
-        };
         self.modalDeleteButton = {
             state: ko.observable(),
             saveOptions: function () {
@@ -208,6 +198,22 @@ hqDefine('users/js/roles',[
                     },
                 };
             },
+        };
+        self.submitNewRole = function () {
+            // moved saveOptions inline
+            $.ajax({
+                method: 'POST',
+                url: o.saveUrl,
+                data: JSON.stringify(UserRole.unwrap(self.roleBeingEdited)),
+                dataType: 'json',
+                success: function (data) {
+                    self.addOrReplaceRole(data);
+                    self.unsetRoleBeingEdited();
+                },
+                error: function (response) {
+                    alertUser.alert_user(response.responseJSON.message, 'danger');
+                }
+            });
         };
 
         return self;

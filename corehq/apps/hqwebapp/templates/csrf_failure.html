@@ -4,9 +4,15 @@
 {% block tabs %}{% endblock tabs %}
 {% block page_name %}{% trans "Cookies must be enabled to use CommCareHQ" %}{% endblock %}
 {% block page_content %}
-  <p>
-    {% blocktrans %}
-      If you believe this is a mistake, please contact {{ SUPPORT_EMAIL }}.
-    {% endblocktrans %}
-  </p>
+  {% blocktrans %}
+    <p>
+      Please try refreshing your browser or clicking the blue "flower" icon in the top left hand corner.
+    </p>
+    <p>
+      No luck? Please clear your browser’s cache, close your browser, and reopen your browser.
+    </p>
+    <p>
+      If you believe you received this error as a mistake, please contact <a href="mailto:{{ SUPPORT_EMAIL }}">{{ SUPPORT_EMAIL }}</a>.
+    </p>
+  {% endblocktrans %}
 {% endblock %}

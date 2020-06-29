@@ -327,7 +327,7 @@ class TestFactSheetReportMaternalAndChildNutritionICDS(TestCase):
 
 
 class TestFactSheetReportInterventions(TestCase):
-    def get_data(self):
+    def get_data(self, beta=False):
         config = {
             'aggregation_level': 1,
             'month': datetime(2017, 6, 1).date(),
@@ -339,7 +339,7 @@ class TestFactSheetReportInterventions(TestCase):
         }
 
         loc_level = get_location_level(config.get('aggregation_level'))
-        return FactSheetsReport(config=config, loc_level=loc_level).get_data()
+        return FactSheetsReport(config=config, loc_level=loc_level, beta=beta).get_data()
 
     def test_section_amount(self):
         self.assertEqual(len(self.get_data()['config']['sections']), 3)
@@ -347,7 +347,7 @@ class TestFactSheetReportInterventions(TestCase):
     def test_nutrition_status_of_children_amount_of_config_rows(self):
         self.assertEqual(len(self.get_data()['config']['sections'][0]['rows_config']), 1)
 
-    def test_nutrition_status_of_children(self):
+    def test_nutrition_status_of_children_with_age_1_2(self):
         self.assertDictEqual(
             self.get_data()['config']['sections'][0],
             {
@@ -356,19 +356,20 @@ class TestFactSheetReportInterventions(TestCase):
                 'rows_config': [
                     {
                         'average': {
-                            'html': 10.79258010118044,
-                            'sort_key': 10.79258010118044
+                            'html': 9.900990099009901,
+                            'sort_key': 9.900990099009901
                         },
                         'data': [
-                            {'html': 'Children 1 year+ who have recieved complete immunization'
-                                     ' required by age 1.'},
-                            {'html': 10.526315789473685, 'sort_key': 10.526315789473685},
-                            {'html': 10.79258010118044, 'sort_key': 10.79258010118044},
+                            {'html': 'Children between 1-2 years old who have received complete'
+                                     ' immunization required by age 1.'},
+                            {'html': 7.8431372549019605, 'sort_key': 7.8431372549019605},
+                            {'html': 9.900990099009901, 'sort_key': 9.900990099009901},
                             {'html': 0}
                         ],
                         'data_source': 'AggChildHealthMonthlyDataSource',
                         'format': 'percent',
-                        'header': 'Children 1 year+ who have recieved complete immunization required by age 1.',
+                        'header': 'Children between 1-2 years old who have received complete'
+                                  ' immunization required by age 1.',
                         'slug': 'fully_immunized'
                     }
                 ],

@@ -41,7 +41,7 @@ class BaseICDSTest(TestCase):
         if owner_id:
             kwargs['owner_id'] = owner_id
 
-        caseblock = CaseBlock(
+        caseblock = CaseBlock.deprecated_init(
             uuid.uuid4().hex,
             case_type=case_type,
             create=True,

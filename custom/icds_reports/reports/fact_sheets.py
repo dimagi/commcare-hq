@@ -170,7 +170,7 @@ class FactSheetsReport(object):
                         'rows_config': [
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
-                                'header': 'Children 1 year+ who have recieved complete '
+                                'header': 'Children between 1-2 years old who have received complete '
                                           'immunization required by age 1.',
                                 'slug': 'fully_immunized',
                                 'average': [],
@@ -525,7 +525,6 @@ class FactSheetsReport(object):
                 ]
             }
         ]
-
         return fact_sheet_data_config
 
     def data_sources(self, config):

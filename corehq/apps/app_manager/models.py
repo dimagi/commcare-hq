@@ -192,6 +192,7 @@ ANDROID_LOGO_PROPERTY_MAPPING = {
     'hq_logo_android_home': 'brand-banner-home',
     'hq_logo_android_login': 'brand-banner-login',
     'hq_logo_android_demo': 'brand-banner-home-demo',
+    'hq_logo_web_apps': 'brand-banner-web-apps',
 }
 
 
@@ -2049,6 +2050,7 @@ class CaseSearchProperty(DocumentSchema):
     """
     name = StringProperty()
     label = DictProperty()
+    appearance = StringProperty()
 
 
 class DefaultCaseSearchProperty(DocumentSchema):
@@ -5758,18 +5760,17 @@ class GlobalAppConfig(models.Model):
 
     @classmethod
     def by_app(cls, app):
-        model, created = cls.objects.get_or_create(app_id=app.master_id, domain=app.domain, defaults={
-            'apk_version': LATEST_APK_VALUE,
-            'app_version': LATEST_APP_VALUE,
-        })
+        model = cls.by_app_id(app.domain, app.master_id)
         model._app = app
         return model
 
     @classmethod
     def by_app_id(cls, domain, app_id):
-        app = get_app(domain, app_id, latest=True, target='release')
-        assert app_id == app.master_id, "this class doesn't handle copy app ids"
-        return cls.by_app(app)
+        model, created = cls.objects.get_or_create(app_id=app_id, domain=domain, defaults={
+            'apk_version': LATEST_APK_VALUE,
+            'app_version': LATEST_APP_VALUE,
+        })
+        return model
 
     def save(self, force_insert=False, force_update=False, using=DEFAULT_DB_ALIAS, update_fields=None):
         if self.pk:
@@ -5778,8 +5779,17 @@ class GlobalAppConfig(models.Model):
             force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields
         )
 
+    @property
+    def app(self):
+        if not self._app:
+            app = get_app(self.domain, self.app_id, latest=True, target='release')
+            assert self.app_id == app.master_id, "this class doesn't handle copy app ids"
+            self._app = app
+        return self._app
+
     @quickcache(['self.app_id'])
     def get_latest_apk_version(self):
+        self.app  # noqa validate app
         if self.apk_prompt == "off":
             return {}
         else:
@@ -5793,6 +5803,7 @@ class GlobalAppConfig(models.Model):
 
     @quickcache(['self.app_id', 'build_profile_id'])
     def get_latest_app_version(self, build_profile_id):
+        self.app  # noqa validate app
         if self.app_prompt == "off":
             return {}
         else:
@@ -5801,10 +5812,10 @@ class GlobalAppConfig(models.Model):
             if app_version != LATEST_APP_VALUE:
                 return {"value": app_version, "force": force}
             else:
-                if not self._app or not self._app.is_released:
+                if not self.app or not self.app.is_released:
                     return {}
                 else:
-                    version = self._app.version
+                    version = self.app.version
                     if build_profile_id:
                         latest = LatestEnabledBuildProfiles.for_app_and_profile(self.app_id, build_profile_id)
                         if latest:
@@ -5812,7 +5823,7 @@ class GlobalAppConfig(models.Model):
                     return {"value": version, "force": force}
 
     def clear_version_caches(self):
-        build_profile_ids = self._app.build_profiles.keys()
+        build_profile_ids = self.app.build_profiles.keys()
         self.get_latest_app_version.clear(self, '')
         self.get_latest_apk_version.clear(self)
         for build_profile_id in build_profile_ids:
