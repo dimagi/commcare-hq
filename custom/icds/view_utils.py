@@ -31,7 +31,7 @@ def is_icds_cas_project(domain):
 
 def check_app_access(domain, user, app):
     if (
-        settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
+        settings.SERVER_ENVIRONMENT == 'icds-staging'
         and toggles.ROLE_WEBAPPS_PERMISSIONS.enabled(domain)
     ):
         try:
