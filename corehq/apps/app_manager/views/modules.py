@@ -182,6 +182,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
         'js_options': {
             'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
             'is_search_enabled': case_search_enabled_for_domain(app.domain),
+            'search_prompt_appearance_enabled': app.enable_search_prompt_appearance,
             'search_properties': module.search_config.properties if module_offers_search(module) else [],
             'include_closed': module.search_config.include_closed if module_offers_search(module) else False,
             'default_properties': module.search_config.default_properties if module_offers_search(module) else [],
@@ -762,7 +763,8 @@ def _update_search_properties(module, search_properties, lang='en'):
             label = {lang: prop['label']}
         yield {
             'name': prop['name'],
-            'label': label
+            'label': label,
+            'appearance': prop.get('appearance', ''),
         }
 
 

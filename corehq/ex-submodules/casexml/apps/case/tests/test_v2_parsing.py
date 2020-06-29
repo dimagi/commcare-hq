@@ -125,7 +125,7 @@ class Version2CaseParsingTest(TestCase):
         user_id = "bar-user-id"
         for prereq in ["some_referenced_id", "some_other_referenced_id"]:
             post_case_blocks([
-                CaseBlock(
+                CaseBlock.deprecated_init(
                     create=True, case_id=prereq,
                     user_id=user_id
                 ).as_xml()
