@@ -108,7 +108,7 @@
         }
       },
       {
-        "column_id": "completed_on",
+        "column_id": "timeend_with_time",
         "datatype": "datetime",
         "type": "expression",
         "expression": {
