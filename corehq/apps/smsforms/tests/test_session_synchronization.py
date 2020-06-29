@@ -65,8 +65,14 @@ def test_auto_clear_stale_session_on_claim():
     assert not XFormsSessionSynchronization.claim_channel_for_session(session_a_2)
     # Set the current active session to closed manually, leaving a dangling/stale session claim
     session_a_1.session_is_open = False
-    # Claim for the channel now succeeds
+    # Channel is now available
     assert XFormsSessionSynchronization.channel_is_available_for_session(session_a_2)
+    # And the call above cleared the channel claim but left the contact
+    assert (
+        XFormsSessionSynchronization.get_running_session_info_for_channel(session_a_2.get_channel())
+        == RunningSessionInfo(session_id=None, contact_id='Alpha')
+    )
+    # Claim for the channel now succeeds
     assert XFormsSessionSynchronization.claim_channel_for_session(session_a_2)
     # And it is now the active session for the channel
     assert (
