@@ -87,7 +87,7 @@ def back_to_main(request, domain, app_id, module_id=None, form_id=None,
             raise Http404()
 
     if form is not None:
-        view_name = 'view_form' if form.form_type == 'shadow_form' else 'form_source'
+        view_name = 'form_source' if form.can_edit_in_vellum else 'view_form'
         args.append(form.unique_id)
     elif module is not None:
         view_name = 'view_module'

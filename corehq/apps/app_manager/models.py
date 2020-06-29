@@ -1071,6 +1071,10 @@ class FormBase(DocumentSchema):
             or self.form_type == 'advanced_form'
         )
 
+    @property
+    def can_edit_in_vellum(self):
+        return self.form_type != 'shadow_form'
+
     @case_references.setter
     def case_references(self, case_references):
         self.case_references_data = case_references
