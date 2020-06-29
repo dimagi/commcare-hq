@@ -49,15 +49,27 @@
                 </tr>
                 <tr ng-repeat-start="row in sectionData" ng-init="numberOfEntries = $ctrl.getRowSpan(row[0], row[1])">
                   <td class="text-center title col-xs-2 divider-bottom" style="vertical-align: middle" rowspan="{$ numberOfEntries $}">
-                    <p class="section-header" ng-bind="row[0]['indicator']"></p>
+                    <p class="section-header no-margin" ng-bind="row[0]['indicator']"></p>
                   </td>
-                  <td class="text-center col-xs-2">{$ row[0]['Best performers'][0]['place'] $}<br>{$ row[0]['Best performers'][0]['value'] $}</td>
-                  <td class="text-center col-xs-2">{$ row[0]['Worst performers'][0]['place'] $}<br>{$ row[0]['Worst performers'][0]['value'] $}</td>
+                  <td class="text-center col-xs-2 vertical-align-middle" ng-class="{'divider-bottom': (numberOfEntries == 1)}">
+                    {$ row[0]['Best performers'].length ? row[0]['Best performers'][0]['place'] : 'Not Launched' $}<br>
+                    {$ row[0]['Best performers'].length ? row[0]['Best performers'][0]['value'] : null $}
+                  </td>
+                  <td class="text-center col-xs-2 vertical-align-middle" ng-class="{'divider-bottom': (numberOfEntries == 1)}">
+                    {$ row[0]['Worst performers'].length ? row[0]['Worst performers'][0]['place'] : 'Not Launched' $}<br>
+                    {$ row[0]['Worst performers'].length ? row[0]['Worst performers'][0]['value'] : null $}
+                  </td>
                   <td class="text-center title col-xs-2 divider-bottom-left" ng-if="row[1]" style="vertical-align: middle" rowspan="{$ numberOfEntries $}">
-                    <p class="section-header" ng-bind="row[1]['indicator']"></p>
+                    <p class="section-header no-margin" ng-bind="row[1]['indicator']"></p>
                   </td>
-                  <td class="text-center col-xs-2" ng-if="row[1]">{$ row[1]['Best performers'][0]['place'] $}<br>{$ row[1]['Best performers'][0]['value'] $}</td>
-                  <td class="text-center col-xs-2" ng-if="row[1]">{$ row[1]['Worst performers'][0]['place'] $}<br>{$ row[1]['Worst performers'][0]['value'] $}</td>
+                  <td class="text-center col-xs-2 vertical-align-middle" ng-class="{'divider-bottom': (numberOfEntries == 1)}" ng-if="row[1]">
+                    {$ row[1]['Best performers'].length ? row[1]['Best performers'][0]['place'] : 'Not Launched' $}<br>
+                    {$ row[1]['Best performers'].length ? row[1]['Best performers'][0]['value'] : null $}
+                  </td>
+                  <td class="text-center col-xs-2 vertical-align-middle" ng-class="{'divider-bottom': (numberOfEntries == 1)}" ng-if="row[1]">
+                    {$ row[1]['Worst performers'].length ? row[1]['Worst performers'][0]['place'] : 'Not Launched' $}<br>
+                    {$ row[1]['Worst performers'].length ? row[1]['Worst performers'][0]['value'] : null $}
+                  </td>
                 </tr>
                 {# dynamically showing table rows (apart from first row) based on total number of rows, backend is sending   #}
                 <tr ng-init="numberOfEntries = $ctrl.getRowSpan(row[0], row[1])" ng-repeat-end
