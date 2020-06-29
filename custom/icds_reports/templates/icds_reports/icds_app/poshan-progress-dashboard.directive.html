@@ -29,7 +29,9 @@
                 <tr ng-repeat="indicators in section.indicators">
                   <td ng-repeat="indicator in indicators" class="d-flex justify-content-between col-xs-6 px-0">
                     <p ng-bind="indicator.name" class="col-xs-8 no-margin"></p>
-                    <p ng-bind="indicator.value" class="col-xs-4 text-center no-margin"></p>
+                    <p class="col-xs-4 text-center no-margin">
+                      {$ (indicator.value == 0 || indicator.value == '0.00%' || !indicator.value) ? 'Not Launched' : indicator.value $}
+                    </p>
                   </td>
                 </tr>
               </table>
