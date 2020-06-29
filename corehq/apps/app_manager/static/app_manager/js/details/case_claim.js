@@ -131,13 +131,13 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     searchProperties[i].itemset.label,
                     searchProperties[i].itemset.value,
                     searchProperties[i].itemset.sort,
-                    searchProperties[i].itemset.filter,
+                    searchProperties[i].itemset.filter
                 );
                 self.searchProperties.push(searchProperty(
                     searchProperties[i].name,
                     label,
                     appearance,
-                    propItemSet,
+                    propItemSet
                 ));
             }
         } else {
