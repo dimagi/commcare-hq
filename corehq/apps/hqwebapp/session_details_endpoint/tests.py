@@ -1,5 +1,6 @@
 import datetime
 import json
+import pytz
 
 from django.conf import settings
 from django.test import Client, TestCase, override_settings
@@ -48,7 +49,7 @@ class SessionDetailsViewTest(TestCase):
         super(SessionDetailsViewTest, cls).tearDownClass()
 
     def _assert_session_expiry_in_minutes(self, expected_minutes, actual_time_string):
-        delta = parse_datetime(actual_time_string) - datetime.datetime.utcnow()
+        delta = parse_datetime(actual_time_string) - datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
         diff_in_minutes = delta.days * 24 * 60 + delta.seconds / 60
         self.assertEqual(expected_minutes, round(diff_in_minutes))
 
