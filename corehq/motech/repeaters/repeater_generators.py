@@ -239,7 +239,7 @@ class CaseRepeaterXMLPayloadGenerator(BasePayloadGenerator):
 
     def get_test_payload(self, domain):
         from casexml.apps.case.mock import CaseBlock
-        return CaseBlock(
+        return CaseBlock.deprecated_init(
             case_id='test-case-%s' % uuid4().hex,
             create=True,
             case_type='test',

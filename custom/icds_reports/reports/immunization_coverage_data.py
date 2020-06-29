@@ -1,3 +1,4 @@
+import copy
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
@@ -17,8 +18,10 @@ from custom.icds_reports.utils import get_location_launched_status
 @icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_features_flag'], timeout=30 * 60)
 def get_immunization_coverage_data_map(domain, config, loc_level, show_test=False, icds_features_flag=False):
     config['month'] = datetime(*config['month'])
-    def get_data_for(filters):
 
+    def get_data_for(filters):
+        # Retrieving children of age 1-2 years
+        filters['age_tranche__lte'] = '24'
         queryset = AggChildHealthMonthly.objects.filter(
             **filters
         ).values(
@@ -55,7 +58,6 @@ def get_immunization_coverage_data_map(domain, config, loc_level, show_test=Fals
     fills.update({'defaultFill': MapColors.GREY})
 
     gender_ignored, age_ignored, chosen_filters = chosen_filters_to_labels(config)
-
     return {
         "slug": "institutional_deliveries",
         "label": "Percent Immunization Coverage at 1 year{}".format(chosen_filters),
@@ -63,9 +65,9 @@ def get_immunization_coverage_data_map(domain, config, loc_level, show_test=Fals
         "rightLegend": {
             "average": average,
             "info": _((
-                "Of the total number of children enrolled for Anganwadi Services who are over a year old, "
-                "the percentage of children who have received the complete immunization as per the National "
-                "Immunization Schedule of India that is required by age 1."
+                "Of the total number of children enrolled for Anganwadi Services who are between"
+                " 1-2 years old, the percentage of children who have received the complete immunization"
+                " as per the National Immunization Schedule of India that is required by age 1."
                 "<br/><br/>"
                 "This includes the following immunizations:<br/>"
                 "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"
@@ -73,21 +75,21 @@ def get_immunization_coverage_data_map(domain, config, loc_level, show_test=Fals
             )),
             "extended_info": [
                 {
-                    'indicator': 'Total number of ICDS Child beneficiaries older than '
-                                 '1 year{}:'.format(chosen_filters),
+                    'indicator': 'Total number of ICDS Child beneficiaries between 1-2 years old{}:'
+                    .format(chosen_filters),
                     'value': indian_formatted_number(valid_total)
                 },
                 {
                     'indicator': (
-                        'Total number of children who have recieved complete immunizations required '
-                        'by age 1{}:'.format(chosen_filters)
+                        'Total number of children between 1-2 years old who have received complete'
+                        ' immunizations required by age 1{}:'.format(chosen_filters)
                     ),
                     'value': indian_formatted_number(in_month_total)
                 },
                 {
                     'indicator': (
-                        '% of children who have recieved complete immunizations required by age 1{}:'
-                        .format(chosen_filters)
+                        '% of children between 1-2 years old who have received'
+                        ' complete immunizations required by age 1{}:'.format(chosen_filters)
                     ),
                     'value': '%.2f%%' % (in_month_total * 100 / float(valid_total or 1))
                 }
@@ -104,6 +106,8 @@ def get_immunization_coverage_sector_data(domain, config, loc_level, location_id
     group_by = ['%s_name' % loc_level]
 
     config['month'] = datetime(*config['month'])
+    # Retrieving children of age 1-2 years
+    config['age_tranche__lte'] = '24'
     data = AggChildHealthMonthly.objects.filter(
         **config
     ).values(
@@ -156,9 +160,9 @@ def get_immunization_coverage_sector_data(domain, config, loc_level, location_id
     return {
         "tooltips_data": dict(tooltips_data),
         "info": _((
-            "Of the total number of children enrolled for Anganwadi Services who are over a year old, the "
-            "percentage of children who have received the complete immunization as per the National Immunization "
-            "Schedule of India that is required by age 1."
+            "Of the total number of children enrolled for Anganwadi Services who are between"
+            " 1-2 years old, the percentage of children who have received the complete immunization"
+            " as per the National Immunization Schedule of India that is required by age 1."
             "<br/><br/>"
             "This includes the following immunizations:<br/>"
             "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"
@@ -182,6 +186,8 @@ def get_immunization_coverage_data_chart(domain, config, loc_level, show_test=Fa
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
     config['month__range'] = (three_before, month)
+    # Retrieving children of age 1-2 years
+    config['age_tranche__lte'] = '24'
     del config['month']
 
     chart_data = AggChildHealthMonthly.objects.filter(
@@ -247,7 +253,6 @@ def get_immunization_coverage_data_chart(domain, config, loc_level, show_test=Fa
     all_locations_sorted_by_name = sorted(all_locations, key=lambda x: x['loc_name'])
     all_locations_sorted_by_percent_and_name = sorted(
         all_locations_sorted_by_name, key=lambda x: x['percent'], reverse=True)
-
     return {
         "chart_data": [
             {
@@ -259,7 +264,7 @@ def get_immunization_coverage_data_chart(domain, config, loc_level, show_test=Fa
                         'in_month': value['in_month']
                     } for key, value in data['blue'].items()
                 ],
-                "key": "% Children received complete immunizations by 1 year",
+                "key": "% Children between 1-2 years old who received complete immunizations by 1 year",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ChartColors.BLUE

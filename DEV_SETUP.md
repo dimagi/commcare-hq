@@ -518,7 +518,7 @@ run the Python tests when saving py files as follows:
 
 ### Sniffer Installation instructions
 https://github.com/jeffh/sniffer/
-(recommended to install pyinotify or macfsevents for this to actually be worthwhile otherwise it takes a long time to see the change)
+(recommended to install pywatchman or macfsevents for this to actually be worthwhile otherwise it takes a long time to see the change)
 
 ## Other links
 

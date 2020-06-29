@@ -184,7 +184,7 @@ def _get_update_or_close_case_block(case_id, case_properties=None, close=False, 
     if owner_id:
         kwargs['owner_id'] = owner_id
 
-    return CaseBlock(case_id, **kwargs)
+    return CaseBlock.deprecated_init(case_id, **kwargs)
 
 
 def update_case(domain, case_id, case_properties=None, close=False,
