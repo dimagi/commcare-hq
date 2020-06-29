@@ -4600,8 +4600,7 @@ class TestExportData(TestCase):
                 'month': date(2017, 5, 1),
                 'beneficiary_category': 'pw_lw_children'
             },
-            location='',
-            beta=True
+            location=''
         ).get_excel_data()
         self.assertListEqual(
             data,
@@ -4677,8 +4676,7 @@ class TestExportData(TestCase):
                 'state_id': 'st1',
                 'beneficiary_category': 'children_3_6'
             },
-            location='st1',
-            beta=True
+            location='st1'
         ).get_excel_data()
         self.assertListEqual(
             data,
