@@ -20,14 +20,15 @@ from custom.icds_reports.utils import apply_exclude, generate_quarter_months, ca
 
 def calculate_percentage_single_row(row, truncate_out=True):
     for k, v in PPR_COLS_PERCENTAGE_RELATIONS.items():
-        num = row[v[0]]
-        den = row[v[1]]
+        num = row.get(v[0], 0)
+        den = row.get(v[1], 1)  # to avoid 0/0 division error
         extra_number = v[2] if len(v) > 2 else None
         row[k] = calculate_percent(num, den, extra_number, truncate_out)
         # calculation is done on decimal values
         # and then round off to nearest integer
-        row[v[0]] = round(row[v[0]])
-        row[v[1]] = round(row[v[1]])
+        # and if not present defaulting them to zero
+        row[v[0]] = round(row.get(v[0], 0))
+        row[v[1]] = round(row.get(v[1], 0))
     return row
 
 
@@ -54,7 +55,7 @@ def calculate_aggregated_row(data, aggregation_level, data_period, unique_id):
     aggregated_row = calculate_percentage_single_row(deepcopy(aggregated_row))
     # rounding values
     for col in ['num_launched_districts', 'num_launched_blocks', 'num_launched_states']:
-        aggregated_row[col] = round(aggregated_row[col])
+        aggregated_row[col] = round(aggregated_row.get(col, 0))
     aggregated_row = prepare_structure_aggregated_row(deepcopy(aggregated_row),
                                                       aggregated_row['num_launched_states'],
                                                       aggregation_level)
