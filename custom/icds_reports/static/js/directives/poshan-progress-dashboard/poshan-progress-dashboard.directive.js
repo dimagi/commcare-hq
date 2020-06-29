@@ -86,6 +86,10 @@ function PoshanProgressController($scope, $http, $log, $routeParams, $location, 
             function (response) {
                 vm.data = response.data;
                 if (vm.step === 'overview' && vm.data) {
+                    if (vm.data['ICDS CAS Coverage'] && vm.data['ICDS CAS Coverage']['Number of AWCs Launched'] &&
+                        (vm.data['ICDS CAS Coverage']['Number of AWCs Launched'] >= 1)) {
+                        vm.isLaunched = true;
+                    }
                     vm.data = vm.reformatAggregatedData(vm.data);
                 }
             },
