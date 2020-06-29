@@ -83,7 +83,7 @@ class ExploreCaseDataReport(BaseReport):
     def has_permission(self):
         return ((toggles.EXPLORE_CASE_DATA.enabled_for_request(self.request)
                  or self.can_view_ecd_preview)
-                and self.request.couch_user.can_edit_reports())
+                and self.request.couch_user.can_edit_data())
 
     @property
     def initial_report_filters(self):
