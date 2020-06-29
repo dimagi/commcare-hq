@@ -908,8 +908,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
         excel_data = SystemUsageExport(
             config=config,
             loc_level=aggregation_level,
-            show_test=include_test,
-            beta=beta
+            show_test=include_test
         ).get_excel_data(
             location,
             system_usage_num_launched_awcs_formatting_at_awc_level=aggregation_level > 4 and beta,
@@ -979,7 +978,9 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
         export_info = excel_data[1][1]
         generated_timestamp = date_parser.parse(export_info[0][1])
         formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
-        data_type = 'THR Report__{}'.format(formatted_timestamp)
+
+        data_type = 'THR Report__{}__{}'.format(config['thr_report_type'],
+                                                formatted_timestamp)
         if file_format == 'xlsx':
             cache_key = create_thr_report_excel_file(
                 excel_data,
@@ -1022,8 +1023,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             cache_key = create_service_delivery_report(
                 excel_data,
                 data_type,
-                config,
-                beta
+                config
             )
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)

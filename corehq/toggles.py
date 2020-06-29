@@ -741,14 +741,6 @@ LIVEQUERY_SYNC = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-NO_VELLUM = StaticToggle(
-    'no_vellum',
-    'Allow disabling Form Builder per form '
-    '(for custom forms that Vellum breaks)',
-    TAG_INTERNAL,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 HIPAA_COMPLIANCE_CHECKBOX = StaticToggle(
     'hipaa_compliance_checkbox',
     'Show HIPAA compliance checkbox',

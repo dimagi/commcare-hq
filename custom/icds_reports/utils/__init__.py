@@ -472,6 +472,8 @@ def get_status(value, second_part='', normal_value='', exportable=False, data_en
         status = {'value': 'Moderately ' + second_part, 'color': 'black'}
     elif value in ['normal']:
         status = {'value': normal_value, 'color': 'black'}
+    elif value in ['N/A']:
+        return 'N/A'
     return status if not exportable else status['value']
 
 
@@ -1461,7 +1463,7 @@ def create_child_report_excel_file(excel_data, data_type, month, aggregation_lev
     return file_hash
 
 
-def create_service_delivery_report(excel_data, data_type, config, beta=False):
+def create_service_delivery_report(excel_data, data_type, config):
 
     export_info = excel_data[1][1]
     location_padding_columns = ([''] * config['aggregation_level'])
@@ -1485,11 +1487,8 @@ def create_service_delivery_report(excel_data, data_type, config, beta=False):
                          'Provided for 1-7 days',
                          'Provided for 8-14 days',
                          'Provided for 15-20 days',
-                         'Provided for at least 21 days (>=21 days)']
-    if beta:
-        secondary_headers.pop()
-        secondary_headers += ['Provided for 21-24 days',
-                              'Provided for at least 25 days (>=25 days)']
+                         'Provided for 21-24 days',
+                         'Provided for at least 25 days (>=25 days)']
 
     workbook = Workbook()
     worksheet = workbook.active
@@ -1545,11 +1544,8 @@ def create_service_delivery_report(excel_data, data_type, config, beta=False):
                                                    get_column_letter(current_column_location + merging_width)))
             current_column_location += merging_width+1
         else:
-            offset_count = 14
-            if beta:
-                offset_count = 17
             worksheet.merge_cells('{}1:{}1'.format(get_column_letter(current_column_location),
-                                                   get_column_letter(current_column_location + offset_count)))
+                                                   get_column_letter(current_column_location + 17)))
 
             current_column_location_sec_header = current_column_location
             for sec_header in secondary_headers:
@@ -1564,7 +1560,7 @@ def create_service_delivery_report(excel_data, data_type, config, beta=False):
                                                        get_column_letter(current_column_location_sec_header + 2)))
                 current_column_location_sec_header += 3
 
-            current_column_location += offset_count + 1
+            current_column_location += 18
 
     # Secondary Header
     headers = excel_data[0][1][0]
@@ -2015,7 +2011,7 @@ def create_poshan_progress_report(excel_data, data_type, config, aggregation_lev
     workbook = Workbook()
     worksheet = workbook.active
     # sheet title
-    worksheet.title = "Poshan Progress Report {}".format(layout)
+    worksheet.title = "PPR {}".format(layout)
     worksheet.sheet_view.showGridLines = False
     amount_of_columns = 1 + len(excel_data[0])
     last_column = get_column_letter(amount_of_columns+1)
