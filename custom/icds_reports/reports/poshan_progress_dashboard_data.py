@@ -44,9 +44,9 @@ def calculate_aggregated_row(data, aggregation_level, data_period, unique_id):
         for row in data:
             for col in cols:
                 if col not in aggregated_row.keys():
-                    aggregated_row[col] = row[col]
+                    aggregated_row[col] = round(row[col])
                 else:
-                    aggregated_row[col] += row[col]
+                    aggregated_row[col] += round(row[col])
     else:
         for k, v in data.items():
             aggregated_row[k] = v if v else 0
@@ -176,7 +176,7 @@ def get_top_worst_cases(data, key, aggregation_level, indicator_name):
 
 
 @icds_quickcache([
-    'domain', 'location_filters', 'year', 'month', 'step', 'quarter', 'include_test'
+    'domain', 'year', 'month', 'quarter', 'data_period', 'step', 'location_filters', 'include_test'
 ], timeout=30 * 60)
 def get_poshan_progress_dashboard_data(domain, year, month, quarter, data_period, step, location_filters,
                                        include_test=False):

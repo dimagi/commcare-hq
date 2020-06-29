@@ -91,7 +91,7 @@
                            popover-placement="top-right"
                            popover-trigger="'mouseenter'"></i></label>
                     <div class="col-sm-6">
-                        <ui-select ng-model="$ctrl.selectedFormat" theme="bootstrap" ng-disabled="$ctrl.isChildBeneficiaryListSelected() || $ctrl.isPPRSelected()">
+                        <ui-select ng-model="$ctrl.selectedFormat" theme="bootstrap" ng-disabled="$ctrl.isChildBeneficiaryListSelected() || $ctrl.isPPRSelected() || $ctrl.isChildGrowthTrackerSelected()">
                         <ui-select-match placeholder="Format"><span ng-bind="$select.selected.name"></span></ui-select-match>
                           <ui-select-choices repeat="format.id as format in $ctrl.getFormats() | propsFilter: {name: $select.search}">
                             <div ng-bind-html="format.name"></div>
