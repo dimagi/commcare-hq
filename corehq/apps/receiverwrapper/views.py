@@ -313,6 +313,7 @@ def _secure_post_basic(request, domain, app_id=None):
         authenticated=True,
     )
 
+
 @login_or_api_key_ex()
 @require_permission(Permissions.edit_data)
 @require_permission(Permissions.access_api)
