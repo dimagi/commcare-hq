@@ -84,12 +84,12 @@ class CustomDataFieldForm(forms.Form):
     """
     label = forms.CharField(
         required=True,
-        error_messages={'required': ugettext_lazy('All fields are required')}
+        error_messages={'required': ugettext_lazy('A label is required for each field.')}
     )
     slug = XmlSlugField(
         required=True,
         error_messages={
-            'required': ugettext_lazy('All fields are required'),
+            'required': ugettext_lazy('A property name is required for each field.'),
             'invalid': ugettext_lazy('Properties must start with a letter and '
                          'consist only of letters, numbers, underscores or hyphens.'),
         }
@@ -116,6 +116,26 @@ class CustomDataFieldForm(forms.Form):
             except Exception:
                 raise ValidationError(_("Not a valid regular expression"))
         return regex
+
+
+class CustomDataFieldsProfileForm(forms.Form):
+    """
+    Sub-form for editing a single profile
+    """
+    name = forms.CharField(
+        required=True,
+        error_messages={'required': ugettext_lazy('All fields are required')}
+    )
+    fields = forms.CharField(
+        required=True,
+        error_messages={'required': ugettext_lazy('At least one field is required')}
+    )
+
+    def clean_fields(self):
+        fields = self.data.get('fields')
+        if fields:
+            return json.dumps(fields)
+        return fields
 
 
 class CustomDataModelMixin(object):
