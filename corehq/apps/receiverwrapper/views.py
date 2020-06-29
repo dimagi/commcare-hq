@@ -328,7 +328,6 @@ def _secure_post_api_key(request, domain, app_id=None):
     )
 
 
-
 @waf_allow('XSS_BODY')
 @location_safe
 @csrf_exempt
