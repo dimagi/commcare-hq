@@ -211,10 +211,10 @@ def get_poshan_progress_dashboard_data(domain, year, month, quarter, data_period
     response = {}
 
     if step == 'aggregated':
+        value_fields.append('num_launched_states')
         if data_period == 'month':
             data = fetch_month_data(value_fields, order_by, filters, include_test, domain)
         else:
-            value_fields.append('num_launched_states')
             data = fetch_quarter_data(value_fields, order_by, filters, include_test, domain, months, data_period,
                                       unique_id)
         response = calculate_aggregated_row(data, aggregation_level)
