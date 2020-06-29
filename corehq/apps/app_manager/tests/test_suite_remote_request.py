@@ -205,8 +205,9 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def test_prompt_itemset(self):
         self.module.search_config.properties[0].input_ = 'select1'
         self.module.search_config.properties[0].itemset = Itemset(
-            nodeset="instance('states')/state_list/state",
-            uri="jr://fixture/item-list:states",
+            instance_id='states',
+            instance_uri="jr://fixture/item-list:states",
+            nodeset="instance('states')/state_list/state[@state_name = 'Uttar Pradesh']",
             label='name',
             value='id',
             sort='id',
@@ -220,7 +221,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 <locale id="search_property.m0.name"/>
               </text>
             </display>
-            <itemset nodeset="instance('item-list:states')/state_list/state">
+            <itemset nodeset="instance('states')/state_list/state[@state_name = 'Uttar Pradesh']">
               <label ref="name"/>
               <value ref="id"/>
               <sort ref="id"/>
@@ -238,5 +239,5 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlPartialEqual(
             expected_instance,
             suite,
-            "./remote-request[1]/instance[@id='item-list:states']",
+            "./remote-request[1]/instance[@id='states']",
         )

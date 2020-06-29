@@ -771,6 +771,8 @@ def _update_search_properties(module, search_properties, lang='en'):
             ret['input_'] = 'select1'
             fixture_props = json.loads(prop['fixture'])
             ret['itemset'] = {
+                'instance_uri': fixture_props['instance_uri'],
+                'instance_id': fixture_props['instance_id'],
                 'nodeset': fixture_props['nodeset'],
                 'label': fixture_props['label'],
                 'value': fixture_props['value'],

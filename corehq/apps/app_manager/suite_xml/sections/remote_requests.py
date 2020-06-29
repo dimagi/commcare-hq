@@ -12,6 +12,7 @@ from corehq.apps.app_manager.suite_xml.sections.details import (
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Command,
     Display,
+    Instance,
     Itemset,
     PushFrame,
     QueryData,
@@ -80,21 +81,21 @@ class RemoteRequestFactory(object):
         query_xpaths = [datum.ref for datum in self._get_remote_request_query_datums()]
         claim_relevant_xpaths = [self.module.search_config.relevant]
         prompt_select_instances = [
-            prop.itemset.nodeset
+            Instance(id=prop.itemset.instance_id, src=prop.itemset.instance_uri)
             for prop in self.module.search_config.properties
-            if prop.itemset.nodeset
+            if prop.itemset.instance_id
         ]
 
         instances, unknown_instances = get_all_instances_referenced_in_xpaths(
             self.app,
-            query_xpaths + claim_relevant_xpaths + prompt_select_instances
+            query_xpaths + claim_relevant_xpaths
         )
         # we use the module's case list/details view to select the datum so also
         # need these instances to be available
         instances |= get_instances_for_module(self.app, self.module)
 
         # sorted list to prevent intermittent test failures
-        return sorted(list(instances), key=lambda i: i.id)
+        return sorted(list(instances) + prompt_select_instances, key=lambda i: i.id)
 
     def _build_session(self):
         return RemoteRequestSession(
