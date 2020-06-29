@@ -296,7 +296,7 @@ class XFormsSessionSynchronization:
         """
         channel = session.get_channel()
         with cls._critical_section(channel):
-            if cls._channel_is_available_for_session(session) or cls._clear_stale_channel_claim(channel):
+            if cls._channel_is_available_for_session(session):
                 cls._set_running_session_info_for_channel(
                     channel,
                     RunningSessionInfo(session.session_id, session.connection_id),
