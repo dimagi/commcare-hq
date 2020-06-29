@@ -1001,7 +1001,6 @@ class FormBase(DocumentSchema):
         default=None,
     )
     auto_gps_capture = BooleanProperty(default=False)
-    no_vellum = BooleanProperty(default=False)
     form_links = SchemaListProperty(FormLink)
     schedule_form_id = StringProperty()
     custom_assertions = SchemaListProperty(CustomAssertion)
@@ -1071,6 +1070,10 @@ class FormBase(DocumentSchema):
             or self.get_action_type() != 'none'
             or self.form_type == 'advanced_form'
         )
+
+    @property
+    def can_edit_in_vellum(self):
+        return self.form_type != 'shadow_form'
 
     @case_references.setter
     def case_references(self, case_references):
@@ -2933,7 +2936,6 @@ class AdvancedModule(ModuleBase):
         name = name if name else _("Untitled Form")
         form = ShadowForm(
             name={lang: name},
-            no_vellum=True,
         )
         form.schedule = FormSchedule(enabled=False)
 
