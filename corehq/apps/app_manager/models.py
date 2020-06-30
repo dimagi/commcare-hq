@@ -5831,7 +5831,7 @@ class GlobalAppConfig(models.Model):
         }
 
     def clear_version_caches(self):
-        build_profile_ids = [''] + self.app.build_profiles.keys()
+        build_profile_ids = [''] + list(self.app.build_profiles.keys())
         for build_profile_id in build_profile_ids:
             GlobalAppConfig.get_latest_version_info.clear(
                 GlobalAppConfig, self.domain, self.app_id, build_profile_id
