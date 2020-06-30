@@ -101,7 +101,7 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain):
     # views if your worker changes, so we have to store it elsewhere
     # using the soil framework.
 
-    if extension not in importer_util.ALLOWED_EXTENSIONS:
+    if extension not in valid_extensions:
         raise SpreadsheetFileExtError(
             'The file you chose could not be processed. '
             'Please check that it is saved as a Microsoft '

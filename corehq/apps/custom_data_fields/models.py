@@ -1,6 +1,8 @@
 import re
 
 from django.core.exceptions import ValidationError
+from django.contrib.postgres.fields import JSONField
+from django.db import models
 from django.utils.translation import ugettext as _
 
 from dimagi.ext.couchdbkit import (
@@ -11,6 +13,7 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 from dimagi.ext.jsonobject import JsonObject
+from dimagi.utils.couch.migration import SyncCouchToSQLMixin, SyncSQLToCouchMixin
 
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 
@@ -43,16 +46,86 @@ def is_system_key(slug):
     return False
 
 
+class SQLField(models.Model):
+    slug = models.CharField(max_length=127)
+    is_required = models.BooleanField(default=False)
+    label = models.CharField(max_length=255)
+    choices = JSONField(default=list, null=True)
+    regex = models.CharField(max_length=127, null=True)
+    regex_msg = models.CharField(max_length=255, null=True)
+    definition = models.ForeignKey('SQLCustomDataFieldsDefinition', on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = "custom_data_fields_field"
+        order_with_respect_to = "definition"
+
+
 class CustomDataField(JsonObject):
     slug = StringProperty()
-    is_required = BooleanProperty()
-    label = StringProperty()
+    is_required = BooleanProperty(default=False)
+    label = StringProperty(default='')
     choices = StringListProperty()
     regex = StringProperty()
     regex_msg = StringProperty()
 
 
-class CustomDataFieldsDefinition(QuickCachedDocumentMixin, Document):
+class SQLCustomDataFieldsDefinition(SyncSQLToCouchMixin, models.Model):
+    field_type = models.CharField(max_length=126)
+    domain = models.CharField(max_length=255, null=True)
+    couch_id = models.CharField(max_length=126, null=True, db_index=True)
+
+    class Meta:
+        db_table = "custom_data_fields_customdatafieldsdefinition"
+        unique_together = ('domain', 'field_type')
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "domain",
+            "field_type",
+        ]
+
+    def _migration_sync_to_couch(self, couch_obj):
+        for field_name in self._migration_get_fields():
+            value = getattr(self, field_name)
+            setattr(couch_obj, field_name, value)
+        couch_obj.fields = [
+            CustomDataField(
+                slug=field.slug,
+                is_required=field.is_required,
+                label=field.label,
+                choices=field.choices,
+                regex=field.regex,
+                regex_msg=field.regex_msg,
+            ) for field in self.get_fields()
+        ]
+        couch_obj.save(sync_to_sql=False)
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return CustomDataFieldsDefinition
+
+    @classmethod
+    def get_or_create(cls, domain, field_type):
+        existing = cls.objects.filter(domain=domain, field_type=field_type).first()
+        if existing:
+            return existing
+        else:
+            new = cls(domain=domain, field_type=field_type)
+            new.save()
+            return new
+
+    def get_fields(self):
+        order = self.get_sqlfield_order()
+        return [SQLField.objects.get(id=o) for o in order]
+
+    def set_fields(self, fields):
+        self.sqlfield_set.all().delete()
+        self.sqlfield_set.set(fields, bulk=False)
+        self.set_sqlfield_order([f.id for f in fields])
+
+
+class CustomDataFieldsDefinition(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
     """
     Per-project user-defined fields such as custom user data.
     """
@@ -60,6 +133,33 @@ class CustomDataFieldsDefinition(QuickCachedDocumentMixin, Document):
     base_doc = "CustomDataFieldsDefinition"
     domain = StringProperty()
     fields = SchemaListProperty(CustomDataField)
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "domain",
+            "field_type",
+        ]
+
+    def _migration_sync_to_sql(self, sql_object):
+        for field_name in self._migration_get_fields():
+            value = getattr(self, field_name)
+            setattr(sql_object, field_name, value)
+        sql_object.set_fields([
+            SQLField(
+                slug=field.slug,
+                is_required=field.is_required,
+                label=field.label,
+                choices=field.choices,
+                regex=field.regex,
+                regex_msg=field.regex_msg,
+            ) for field in self.fields
+        ])
+        sql_object.save(sync_to_couch=False)
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        return SQLCustomDataFieldsDefinition
 
     def get_fields(self, required_only=False, include_system=True):
         def _is_match(field):

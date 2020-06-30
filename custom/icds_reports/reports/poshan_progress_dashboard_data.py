@@ -1,8 +1,6 @@
 from copy import deepcopy
 from datetime import date
 
-from django.db.models import Sum
-
 from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.const import (
     PPR_HEADERS_COMPREHENSIVE,
@@ -18,43 +16,56 @@ from custom.icds_reports.models.views import PoshanProgressReportView
 from custom.icds_reports.utils import apply_exclude, generate_quarter_months, calculate_percent, handle_average
 
 
+def fetch_month_data(value_fields, order_by, filters, include_test, domain):
+    queryset = PoshanProgressReportView.objects.filter(**filters).order_by(*order_by)
+    if not include_test:
+        queryset = apply_exclude(domain, queryset)
+    data = queryset.values(*value_fields)
+    return data
+
+
+def fetch_quarter_data(value_fields, order_by, filters, include_test, domain, months, data_period, unique_id):
+    data = []
+    for month in months:
+        filters['month'] = month
+        data += list(fetch_month_data(value_fields, order_by, filters, include_test, domain))
+    # for quarter we need to average summation
+    data = prepare_quarter_dict(data, data_period, unique_id)
+    return data
+
+
 def calculate_percentage_single_row(row, truncate_out=True):
     for k, v in PPR_COLS_PERCENTAGE_RELATIONS.items():
-        num = row[v[0]]
-        den = row[v[1]]
+        num = row.get(v[0], 0)
+        den = row.get(v[1], 1)  # to avoid 0/0 division error
         extra_number = v[2] if len(v) > 2 else None
         row[k] = calculate_percent(num, den, extra_number, truncate_out)
         # calculation is done on decimal values
         # and then round off to nearest integer
-        row[v[0]] = round(row[v[0]])
-        row[v[1]] = round(row[v[1]])
+        # and if not present defaulting them to zero
+        row[v[0]] = round(row.get(v[0], 0))
+        row[v[1]] = round(row.get(v[1], 0))
     return row
 
 
-def calculate_aggregated_row(data, aggregation_level, data_period, unique_id):
+def calculate_aggregated_row(data, aggregation_level):
     aggregated_row = {}
-    # for quarter we need to average summation
-    if data_period == 'quarter':
-        data = prepare_quarter_dict(data, data_period, unique_id)
-        cols = ['num_launched_states', 'num_launched_districts', 'num_launched_blocks', 'num_launched_awcs',
-                'awc_days_open', 'expected_visits', 'valid_visits', 'pse_eligible', 'pse_attended_21_days',
-                'wer_eligible', 'wer_weighed', 'trimester_3', 'counsel_immediate_bf', 'height_eligible',
-                'height_measured_in_month', 'thr_eligible', 'thr_rations_21_plus_distributed', 'lunch_eligible',
-                'lunch_count_21_days']
-        for row in data:
-            for col in cols:
-                if col not in aggregated_row.keys():
-                    aggregated_row[col] = round(row[col])
-                else:
-                    aggregated_row[col] += round(row[col])
-    else:
-        for k, v in data.items():
-            aggregated_row[k] = v if v else 0
+    cols = ['num_launched_states', 'num_launched_districts', 'num_launched_blocks', 'num_launched_awcs',
+            'awc_days_open', 'expected_visits', 'valid_visits', 'pse_eligible', 'pse_attended_21_days',
+            'wer_eligible', 'wer_weighed', 'trimester_3', 'counsel_immediate_bf', 'height_eligible',
+            'height_measured_in_month', 'thr_eligible', 'thr_rations_21_plus_distributed', 'lunch_eligible',
+            'lunch_count_21_days']
+    for row in data:
+        for col in cols:
+            if col not in aggregated_row.keys():
+                aggregated_row[col] = round(row[col]) if row[col] else 0
+            else:
+                aggregated_row[col] += round(row[col]) if row[col] else 0
 
     aggregated_row = calculate_percentage_single_row(deepcopy(aggregated_row))
     # rounding values
     for col in ['num_launched_districts', 'num_launched_blocks', 'num_launched_states']:
-        aggregated_row[col] = round(aggregated_row[col])
+        aggregated_row[col] = round(aggregated_row.get(col, 0))
     aggregated_row = prepare_structure_aggregated_row(deepcopy(aggregated_row),
                                                       aggregated_row['num_launched_states'],
                                                       aggregation_level)
@@ -138,9 +149,7 @@ def prepare_quarter_dict(data, data_period, unique_id):
     return data
 
 
-def calculate_comparative_rows(data, aggregation_level, data_period, unique_id):
-    if data_period == 'quarter':
-        data = prepare_quarter_dict(data, data_period, unique_id)
+def calculate_comparative_rows(data, aggregation_level):
     response = []
     for i in range(0, len(data)):
         response.append(calculate_percentage_single_row(deepcopy(data[i]), False))
@@ -187,7 +196,7 @@ def get_poshan_progress_dashboard_data(domain, year, month, quarter, data_period
     if data_period == 'month':
         filters['month'] = date(year, month, 1)
     else:
-        filters['month__in'] = generate_quarter_months(quarter, year)
+        months = generate_quarter_months(quarter, year)
         if aggregation_level == 1:
             unique_id = 'state_id'
             value_fields.append('state_id')
@@ -200,38 +209,20 @@ def get_poshan_progress_dashboard_data(domain, year, month, quarter, data_period
     if aggregation_level == 1:
         value_fields.remove('district_name')
     response = {}
-    queryset = PoshanProgressReportView.objects.filter(**filters).order_by(*order_by)
-    if not include_test:
-        queryset = apply_exclude(domain, queryset)
 
     if step == 'aggregated':
+        value_fields.append('num_launched_states')
         if data_period == 'month':
-            data = queryset.aggregate(
-                num_launched_states=Sum('num_launched_states'),
-                num_launched_districts=Sum('num_launched_districts'),
-                num_launched_blocks=Sum('num_launched_blocks'),
-                num_launched_awcs=Sum('num_launched_awcs'),
-                awc_days_open=Sum('awc_days_open'),
-                expected_visits=Sum('expected_visits'),
-                valid_visits=Sum('valid_visits'),
-                pse_eligible=Sum('pse_eligible'),
-                pse_attended_21_days=Sum('pse_attended_21_days'),
-                wer_eligible=Sum('wer_eligible'),
-                wer_weighed=Sum('wer_weighed'),
-                trimester_3=Sum('trimester_3'),
-                counsel_immediate_bf=Sum('counsel_immediate_bf'),
-                height_eligible=Sum('height_eligible'),
-                height_measured_in_month=Sum('height_measured_in_month'),
-                thr_eligible=Sum('thr_eligible'),
-                thr_rations_21_plus_distributed=Sum('thr_rations_21_plus_distributed'),
-                lunch_eligible=Sum('lunch_eligible'),
-                lunch_count_21_days=Sum('lunch_count_21_days'),
-            )
+            data = fetch_month_data(value_fields, order_by, filters, include_test, domain)
         else:
-            value_fields.append('num_launched_states')
-            data = queryset.values(*value_fields)
-        response = calculate_aggregated_row(data, aggregation_level, data_period, unique_id)
+            data = fetch_quarter_data(value_fields, order_by, filters, include_test, domain, months, data_period,
+                                      unique_id)
+        response = calculate_aggregated_row(data, aggregation_level)
     elif step == 'comparative':
-        data = queryset.values(*value_fields)
-        response = calculate_comparative_rows(deepcopy(data), aggregation_level, data_period, unique_id)
+        if data_period == 'month':
+            data = fetch_month_data(value_fields, order_by, filters, include_test, domain)
+        else:
+            data = fetch_quarter_data(value_fields, order_by, filters, include_test, domain, months, data_period,
+                                      unique_id)
+        response = calculate_comparative_rows(data, aggregation_level)
     return response
