@@ -18,6 +18,7 @@ from couchdbkit import BulkSaveError, ResourceConflict
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xform import get_case_ids_from_form
 from corehq.util.metrics import metrics_gauge
+from corehq.util.metrics.const import MPM_MAX
 from couchforms.exceptions import UnexpectedDeletedXForm
 from dimagi.utils.couch.bulk import BulkFetchException
 from dimagi.utils.logging import notify_exception
@@ -350,7 +351,7 @@ def gauge_pending_user_confirmations():
                 'domain': stats['domain'],
                 'user_type': 'web',
             },
-            multiprocess_mode='max'
+            multiprocess_mode=MPM_MAX
         )
 
     from corehq.apps.users.analytics import get_inactive_commcare_users_in_domain
@@ -364,5 +365,5 @@ def gauge_pending_user_confirmations():
                     'domain': domain_name,
                     'user_type': 'mobile',
                 },
-                multiprocess_mode='max'
+                multiprocess_mode=MPM_MAX
             )

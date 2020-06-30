@@ -173,7 +173,8 @@ def metrics_gauge(name: str, value: float, tags: Dict[str, str] = None, document
             to PrometheusMetrics since it is one of PrometheusMetrics.accepted_gauge_params
     """
     provider = _get_metrics_provider()
-    provider.gauge(name, value, tags=tags, documentation=documentation, multiprocess_mode='all')
+    provider.gauge(name, value, tags=tags, documentation=documentation,
+        multiprocess_mode=MPM_ALL)
 
 
 def metrics_histogram(
@@ -187,7 +188,7 @@ def metrics_histogram(
     )
 
 
-def metrics_gauge_task(name, fn, run_every, multiprocess_mode='all'):
+def metrics_gauge_task(name, fn, run_every, multiprocess_mode=MPM_ALL):
     """
     Helper for easily registering gauges to run periodically
 

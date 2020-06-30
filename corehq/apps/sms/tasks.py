@@ -8,6 +8,7 @@ from django.db import DataError, transaction
 from celery.schedules import crontab
 
 from corehq.util.metrics import metrics_gauge_task, metrics_counter
+from corehq.util.metrics.const import MPM_MAX
 from dimagi.utils.couch import (
     CriticalSection,
     get_redis_client,
@@ -596,4 +597,5 @@ def queued_sms():
     return QueuedSMS.objects.count()
 
 
-metrics_gauge_task('commcare.sms.queued', queued_sms, run_every=crontab(), multiprocess_mode='max')
+metrics_gauge_task('commcare.sms.queued', queued_sms, run_every=crontab(),
+    multiprocess_mode=MPM_MAX)

@@ -16,6 +16,7 @@ from celery.task import periodic_task, task
 from couchdbkit import ResourceConflict, ResourceNotFound
 from corehq.util.es.elasticsearch import ConnectionTimeout
 from corehq.util.metrics import metrics_counter, metrics_gauge, metrics_histogram_timer
+from corehq.util.metrics.const import MPM_MAX, MPM_MIN, MPM_LIVESUM
 from corehq.util.queries import paginated_queryset
 
 from couchexport.models import Format
@@ -546,27 +547,31 @@ def async_indicators_metrics():
     oldest_indicator = AsyncIndicator.objects.order_by('date_queued').first()
     if oldest_indicator and oldest_indicator.date_queued:
         lag = (now - oldest_indicator.date_queued).total_seconds()
-        metrics_gauge('commcare.async_indicator.oldest_queued_indicator', lag, multiprocess_mode='min')
+        metrics_gauge('commcare.async_indicator.oldest_queued_indicator', lag,
+            multiprocess_mode=MPM_MIN)
 
     oldest_100_indicators = AsyncIndicator.objects.all()[:100]
     if oldest_100_indicators.exists():
         oldest_indicator = oldest_100_indicators[0]
         lag = (now - oldest_indicator.date_created).total_seconds()
-        metrics_gauge('commcare.async_indicator.oldest_created_indicator', lag, multiprocess_mode='min')
+        metrics_gauge('commcare.async_indicator.oldest_created_indicator', lag,
+            multiprocess_mode=MPM_MIN)
 
         lags = [
             (now - indicator.date_created).total_seconds()
             for indicator in oldest_100_indicators
         ]
         avg_lag = sum(lags) / len(lags)
-        metrics_gauge('commcare.async_indicator.oldest_created_indicator_avg', avg_lag, multiprocess_mode='max')
+        metrics_gauge('commcare.async_indicator.oldest_created_indicator_avg', avg_lag,
+            multiprocess_mode=MPM_MAX)
 
     for config_id, metrics in _indicator_metrics().items():
         tags = {"config_id": config_id}
-        metrics_gauge('commcare.async_indicator.indicator_count', metrics['count'], tags=tags, multiprocess_mode='max')
+        metrics_gauge('commcare.async_indicator.indicator_count', metrics['count'], tags=tags,
+            multiprocess_mode=MPM_MAX)
         metrics_gauge('commcare.async_indicator.lag', metrics['lag'], tags=tags,
             documentation="Lag of oldest created indicator including failed indicators",
-            multiprocess_mode='max')
+            multiprocess_mode=MPM_MAX)
 
     # Don't use ORM summing because it would attempt to get every value in DB
     unsuccessful_attempts = sum(AsyncIndicator.objects.values_list('unsuccessful_attempts', flat=True).all()[:100])
@@ -581,13 +586,13 @@ def async_indicators_metrics():
         'commcare.async_indicator.true_lag',
         lag,
         documentation="Lag of oldest created indicator that didn't get ever queued",
-        multiprocess_mode='max'
+        multiprocess_mode=MPM_MAX
     )
     metrics_gauge(
         'commcare.async_indicator.fully_failed_count',
         AsyncIndicator.objects.filter(unsuccessful_attempts=ASYNC_INDICATOR_MAX_RETRIES).count(),
         documentation="Number of indicators that failed max-retry number of times",
-        multiprocess_mode='livesum'
+        multiprocess_mode=MPM_LIVESUM
     )
 
 

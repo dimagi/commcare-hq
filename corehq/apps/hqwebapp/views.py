@@ -114,7 +114,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.context_processors import commcare_hq_names
-from corehq.util.metrics.const import TAG_UNKNOWN
+from corehq.util.metrics.const import TAG_UNKNOWN, MPM_MAX
 from corehq.util.metrics.utils import sanitize_url
 from corehq.util.view_utils import reverse
 from no_exceptions.exceptions import Http403
@@ -312,7 +312,7 @@ def server_up(req):
             'status': 'failed' if not status.success else 'ok',
             'check': check_name
         }
-        metrics_gauge('commcare.serverup.check', status.duration, tags=tags, multiprocess_mode='max')
+        metrics_gauge('commcare.serverup.check', status.duration, tags=tags, multiprocess_mode=MPM_MAX)
 
     if failed_checks and not is_deploy_in_progress():
         status_messages = [

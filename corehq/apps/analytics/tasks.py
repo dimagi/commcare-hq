@@ -20,6 +20,7 @@ from email_validator import EmailNotValidError, validate_email
 from memoized import memoized
 
 from corehq.util.metrics import metrics_counter, metrics_gauge
+from corehq.util.metrics.const import MPM_LIVESUM, MPM_MAX
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.accounting.models import (
@@ -554,9 +555,11 @@ def track_periodic_data():
         submit_json = json.dumps(submit)
         submit_data_to_hub_and_kiss(submit_json)
 
-    metrics_gauge('commcare.hubspot.web_users_processed', hubspot_number_of_users, multiprocess_mode='livesum')
+    metrics_gauge('commcare.hubspot.web_users_processed', hubspot_number_of_users,
+        multiprocess_mode=MPM_LIVESUM)
     metrics_gauge(
-        'commcare.hubspot.domains_with_forms_gt_threshold', hubspot_number_of_domains_with_forms_gt_threshold, multiprocess_mode='max'
+        'commcare.hubspot.domains_with_forms_gt_threshold', hubspot_number_of_domains_with_forms_gt_threshold,
+        multiprocess_mode=MPM_MAX
     )
 
 

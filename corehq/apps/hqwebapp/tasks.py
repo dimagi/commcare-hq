@@ -11,6 +11,7 @@ from celery.task import task, periodic_task
 
 from corehq.util.bounced_email_manager import BouncedEmailManager
 from corehq.util.metrics import metrics_gauge_task, metrics_track_errors
+from corehq.util.metrics.const import MPM_MAX
 from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER, SES_CONFIGURATION_SET_HEADER
 from dimagi.utils.logging import notify_exception
 
@@ -200,4 +201,4 @@ def get_maintenance_alert_active():
 
 
 metrics_gauge_task('commcare.maintenance_alerts.active', get_maintenance_alert_active,
-                   run_every=crontab(minute=1), multiprocess_mode='max')
+                   run_every=crontab(minute=1), multiprocess_mode=MPM_MAX)

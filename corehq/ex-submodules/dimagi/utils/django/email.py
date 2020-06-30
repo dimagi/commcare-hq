@@ -7,6 +7,7 @@ from dimagi.utils.logging import notify_exception
 from django.utils.translation import ugettext as _
 
 from corehq.util.metrics import metrics_gauge
+from corehq.util.metrics.const import MPM_LIVESUM
 
 NO_HTML_EMAIL_MESSAGE = """
 Your email client is trying to display the plaintext version of an email that
@@ -53,7 +54,7 @@ def get_valid_recipients(recipients):
             email_domain = bounced_email
         metrics_gauge('commcare.bounced_email', 1, tags={
             'email_domain': email_domain,
-        }, multiprocess_mode='livesum')
+        }, multiprocess_mode=MPM_LIVESUM)
     return [recipient for recipient in recipients if recipient not in bounced_emails]
 
 
