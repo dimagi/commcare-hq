@@ -37,8 +37,8 @@ def check_app_access(domain, user, app):
         try:
             role = user.get_role(domain)
         except DomainMembershipError:
-            return HttpResponse(_('User is not a member of this project'), 404), None
+            return HttpResponse(_('User is not a member of this project'), status=404), None
         else:
             if not (role and role.permissions.view_web_app(app)):
-                return HttpResponse(_('User is not allowed on this app'), 406), None
+                return HttpResponse(_('User is not allowed on this app'), status=406), None
     return None
