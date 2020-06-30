@@ -71,6 +71,7 @@ from corehq.apps.users.permissions import (
     can_download_data_files,
     can_view_sms_exports,
 )
+from corehq.apps.widget.views import DialerSettingsView
 from corehq.feature_previews import (
     EXPLORE_CASE_DATA_PREVIEW,
     is_eligible_for_ecd_preview,
@@ -1917,6 +1918,12 @@ def _get_integration_section(domain):
         integration.append({
             'title': _(OpenmrsImporterView.page_title),
             'url': reverse(OpenmrsImporterView.urlname, args=[domain])
+        })
+
+    if toggles.WIDGET_DIALER.enabled(domain):
+        integration.append({
+            'title': _(DialerSettingsView.page_title),
+            'url': reverse(DialerSettingsView.urlname, args=[domain])
         })
 
     return integration
