@@ -206,7 +206,7 @@ class TestStaleDataInESSQL(TestCase):
 
     def _submit_form(self, domain, new_cases=0, update_cases=()):
         case_blocks = [
-            CaseBlock(
+            CaseBlock.deprecated_init(
                 case_id=str(uuid.uuid4()),
                 case_type=self.case_type,
                 create={'name': str(uuid.uuid4())[:5]},
@@ -214,7 +214,7 @@ class TestStaleDataInESSQL(TestCase):
             for i in range(new_cases)
         ]
         case_blocks += [
-            CaseBlock(
+            CaseBlock.deprecated_init(
                 case_id=case.case_id,
                 update={}
             )

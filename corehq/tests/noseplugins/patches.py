@@ -1,5 +1,7 @@
 from nose.plugins import Plugin
 
+from corehq.util.es.testing import patch_es_user_signals
+
 
 class PatchesPlugin(Plugin):
     """Patches various things before tests are run"""
@@ -12,6 +14,7 @@ class PatchesPlugin(Plugin):
     def begin(self):
         patch_assertItemsEqual()
         fix_freezegun_bugs()
+        patch_es_user_signals()
 
 
 def patch_assertItemsEqual():

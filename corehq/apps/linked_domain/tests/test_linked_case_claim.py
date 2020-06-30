@@ -1,7 +1,6 @@
 import json
 
 from mock import patch
-from tastypie.models import ApiKey
 
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
@@ -13,7 +12,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.linked_domain.decorators import REMOTE_REQUESTER_HEADER
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
 from corehq.apps.linked_domain.updates import update_case_search_config
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import HQApiKey, WebUser
 from corehq.util import reverse
 
 
@@ -79,10 +78,9 @@ class TestRemoteLinkedCaseClaim(BaseLinkedCaseClaimTest):
     @classmethod
     def setUpClass(cls):
         super(TestRemoteLinkedCaseClaim, cls).setUpClass()
-        cls.domain_obj = create_domain(cls.domain)
         cls.couch_user = WebUser.create(cls.domain, "test", "foobar", None, None)
         cls.django_user = cls.couch_user.get_django_user()
-        cls.api_key, _ = ApiKey.objects.get_or_create(user=cls.django_user)
+        cls.api_key, _ = HQApiKey.objects.get_or_create(user=cls.django_user)
         cls.auth_headers = {'HTTP_AUTHORIZATION': 'apikey test:%s' % cls.api_key.key}
         cls.domain_link.save()
 
@@ -91,7 +89,6 @@ class TestRemoteLinkedCaseClaim(BaseLinkedCaseClaimTest):
         cls.couch_user.delete()
         cls.api_key.delete()
         super(TestRemoteLinkedCaseClaim, cls).tearDownClass()
-        cls.domain_obj.delete()  # deleting the domain before other things causes failures
 
     @patch('corehq.apps.linked_domain.updates.remote_get_case_search_config')
     def test_remote_linked_app(self, fake_case_search_config_getter):

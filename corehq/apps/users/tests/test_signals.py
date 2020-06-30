@@ -2,7 +2,6 @@ import uuid
 
 from django.test import SimpleTestCase
 
-from corehq.util.es.elasticsearch import ConnectionError
 from mock import MagicMock, patch
 
 from dimagi.utils.couch.undo import DELETED_SUFFIX
@@ -13,6 +12,8 @@ from pillowtop.es_utils import initialize_index_and_mapping
 from corehq.apps.reports.analytics.esaccessors import get_user_stubs
 from corehq.elastic import doc_exists_in_es, get_es_new
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
+from corehq.util.es.elasticsearch import ConnectionError
+from corehq.util.es.testing import sync_users_to_es
 from corehq.util.test_utils import mock_out_couch, trap_extra_setup
 
 from ..models import CommCareUser, WebUser
@@ -31,7 +32,8 @@ class TestUserSignals(SimpleTestCase):
     @patch('corehq.apps.callcenter.tasks.sync_user_cases')
     @patch('corehq.apps.cachehq.signals.invalidate_document')
     @patch('corehq.apps.users.signals.send_to_elasticsearch')
-    def test_commcareuser_save(self, send_to_es, invalidate,
+    @patch('corehq.apps.users.signals._should_sync_to_es', return_value=True)
+    def test_commcareuser_save(self, _, send_to_es, invalidate,
                                sync_user_cases, update_hubspot_properties):
         CommCareUser(username='test').save()
 
@@ -44,7 +46,8 @@ class TestUserSignals(SimpleTestCase):
     @patch('corehq.apps.callcenter.tasks.sync_user_cases')
     @patch('corehq.apps.cachehq.signals.invalidate_document')
     @patch('corehq.apps.users.signals.send_to_elasticsearch')
-    def test_webuser_save(self, send_to_es, invalidate,
+    @patch('corehq.apps.users.signals._should_sync_to_es', return_value=True)
+    def test_webuser_save(self, _, send_to_es, invalidate,
                           sync_user_cases, update_hubspot_properties):
         WebUser().save()
 
@@ -59,6 +62,7 @@ class TestUserSignals(SimpleTestCase):
 @patch('corehq.apps.analytics.signals.update_hubspot_properties')
 @patch('corehq.apps.callcenter.tasks.sync_user_cases')
 @patch('corehq.apps.cachehq.signals.invalidate_document')
+@patch('corehq.apps.users.signals._should_sync_to_es', return_value=True)
 class TestUserSyncToEs(SimpleTestCase):
 
     @classmethod
@@ -70,6 +74,7 @@ class TestUserSyncToEs(SimpleTestCase):
         with trap_extra_setup(ConnectionError):
             initialize_index_and_mapping(cls.es, USER_INDEX_INFO)
 
+    @sync_users_to_es()
     def test_sync_to_es_create_update_delete(self, *mocks):
         domain = 'user_es_domain'
         user = CommCareUser(
