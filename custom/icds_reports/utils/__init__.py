@@ -1149,7 +1149,7 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
             total_column_count = 11
             data_start_row_diff = 1
 
-        if parse(month).date() <= THR_21_DAYS_THRESHOLD_DATE or not beta:
+        if parse(month).date() <= THR_21_DAYS_THRESHOLD_DATE:
             thr_days_info = "for at least 21 days"
         else:
             thr_days_info = "for at least 25 days"
