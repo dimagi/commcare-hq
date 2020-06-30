@@ -48,7 +48,7 @@ class _UserCaseHelper(object):
             transaction.form.archive()
 
     def create_user_case(self, commcare_user, fields):
-        self.case_blocks.append(CaseBlock(
+        self.case_blocks.append(CaseBlock.deprecated_init(
             create=True,
             case_id=uuid.uuid4().hex,
             owner_id=fields.pop('owner_id'),
@@ -60,7 +60,7 @@ class _UserCaseHelper(object):
         self._user_case_changed(fields)
 
     def update_user_case(self, case, fields, close):
-        self.case_blocks.append(CaseBlock(
+        self.case_blocks.append(CaseBlock.deprecated_init(
             create=False,
             case_id=case.case_id,
             owner_id=fields.pop('owner_id', CaseBlock.undefined),

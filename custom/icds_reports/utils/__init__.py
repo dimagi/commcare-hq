@@ -46,7 +46,8 @@ from custom.icds_reports.const import (
     AggregationLevels,
     THR_REPORT_CONSOLIDATED,
     THR_REPORT_BENEFICIARY_TYPE,
-    THR_REPORT_DAY_BENEFICIARY_TYPE
+    THR_REPORT_DAY_BENEFICIARY_TYPE,
+    THR_21_DAYS_THRESHOLD_DATE
 )
 
 from custom.icds_reports.exceptions import InvalidLocationTypeException
@@ -471,6 +472,8 @@ def get_status(value, second_part='', normal_value='', exportable=False, data_en
         status = {'value': 'Moderately ' + second_part, 'color': 'black'}
     elif value in ['normal']:
         status = {'value': normal_value, 'color': 'black'}
+    elif value in ['N/A']:
+        return 'N/A'
     return status if not exportable else status['value']
 
 
@@ -1098,7 +1101,8 @@ def create_excel_file_in_openpyxl(excel_data, data_type):
     return file_hash
 
 
-def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level, report_type='consolidated'):
+def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level, report_type='consolidated',
+                                 beta=False):
     export_info = excel_data[1][1]
     national = 'National Level' if aggregation_level == 0 else ''
     state = export_info[1][1] if aggregation_level > 0 else ''
@@ -1125,6 +1129,7 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
     worksheet.title = "THR Report"
     worksheet.sheet_view.showGridLines = False
 
+    thr_days_info = ""
     if report_type == THR_REPORT_DAY_BENEFICIARY_TYPE:
         total_column_count = 30
         data_start_row_diff = 3
@@ -1134,12 +1139,20 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
                              'Provided for 15-20 days',
                              'Provided for 21-24 days',
                              'Provided for at least 25 days (>=25 days)']
-    elif report_type == THR_REPORT_BENEFICIARY_TYPE:
-        total_column_count = 15
-        data_start_row_diff = 2
+
     else:
-        total_column_count = 11
-        data_start_row_diff = 1
+        if report_type == THR_REPORT_BENEFICIARY_TYPE:
+            total_column_count = 15
+            data_start_row_diff = 2
+
+        else:
+            total_column_count = 11
+            data_start_row_diff = 1
+
+        if parse(month).date() <= THR_21_DAYS_THRESHOLD_DATE or not beta:
+            thr_days_info = "for at least 21 days"
+        else:
+            thr_days_info = "for at least 25 days"
 
     if report_type != THR_REPORT_CONSOLIDATED:
         beneficiary_type_columns = [
@@ -1194,7 +1207,7 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
     headers = ["S.No"]
     main_headers = ['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name', 'AWW Phone No.',
                    'Total No. of Beneficiaries eligible for THR',
-                   'Total No. of beneficiaries received THR in given month',
+                   f'Total No. of beneficiaries received THR {thr_days_info} in given month',
                    'Total No of Pictures taken by AWW']
     headers.extend(main_headers[aggregation_level:])
 
@@ -1234,7 +1247,7 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
 
         if report_type == THR_REPORT_BENEFICIARY_TYPE:
             if value in ('Total No. of Beneficiaries eligible for THR',
-                         'Total No. of beneficiaries received THR in given month'):
+                         f'Total No. of beneficiaries received THR {thr_days_info} in given month'):
                 next_deviated_column += column_deviation_2
                 next_cell = "{}{}".format(columns[column_index + column_deviation_2],
                                           table_header_position_row + data_start_row_diff - 2)
@@ -1253,7 +1266,7 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
                 worksheet.merge_cells(f'{cell}:{next_cell}')
                 set_beneficiary_columns(column_index, column_index + column_deviation_2,
                                         table_header_position_row + data_start_row_diff - 1)
-            elif value == 'Total No. of beneficiaries received THR in given month':
+            elif value == f'Total No. of beneficiaries received THR {thr_days_info} in given month':
                 next_deviated_column += column_deviation_17
                 next_cell = "{}{}".format(columns[column_index + column_deviation_17], table_header_position_row)
                 worksheet.merge_cells(f'{cell}:{next_cell}')
@@ -1450,7 +1463,7 @@ def create_child_report_excel_file(excel_data, data_type, month, aggregation_lev
     return file_hash
 
 
-def create_service_delivery_report(excel_data, data_type, config, beta=False):
+def create_service_delivery_report(excel_data, data_type, config):
 
     export_info = excel_data[1][1]
     location_padding_columns = ([''] * config['aggregation_level'])
@@ -1474,11 +1487,8 @@ def create_service_delivery_report(excel_data, data_type, config, beta=False):
                          'Provided for 1-7 days',
                          'Provided for 8-14 days',
                          'Provided for 15-20 days',
-                         'Provided for at least 21 days (>=21 days)']
-    if beta:
-        secondary_headers.pop()
-        secondary_headers += ['Provided for 21-24 days',
-                              'Provided for at least 25 days (>=25 days)']
+                         'Provided for 21-24 days',
+                         'Provided for at least 25 days (>=25 days)']
 
     workbook = Workbook()
     worksheet = workbook.active
@@ -1534,11 +1544,8 @@ def create_service_delivery_report(excel_data, data_type, config, beta=False):
                                                    get_column_letter(current_column_location + merging_width)))
             current_column_location += merging_width+1
         else:
-            offset_count = 14
-            if beta:
-                offset_count = 17
             worksheet.merge_cells('{}1:{}1'.format(get_column_letter(current_column_location),
-                                                   get_column_letter(current_column_location + offset_count)))
+                                                   get_column_letter(current_column_location + 17)))
 
             current_column_location_sec_header = current_column_location
             for sec_header in secondary_headers:
@@ -1553,7 +1560,7 @@ def create_service_delivery_report(excel_data, data_type, config, beta=False):
                                                        get_column_letter(current_column_location_sec_header + 2)))
                 current_column_location_sec_header += 3
 
-            current_column_location += offset_count + 1
+            current_column_location += 18
 
     # Secondary Header
     headers = excel_data[0][1][0]
@@ -1983,11 +1990,11 @@ def create_child_growth_tracker_report(excel_data, data_type, config, aggregatio
 def create_poshan_progress_report(excel_data, data_type, config, aggregation_level):
     export_info = excel_data[1][1]
     layout = config['report_layout']
-    national = 'National Level' if len(export_info) == 3 else ''
-    state = export_info[1][1] if len(export_info) > 3 else ''
-    district = export_info[2][1] if len(export_info) > 4 else ''
-    block = export_info[3][1] if len(export_info) > 5 else ''
-    supervisor = export_info[3][1] if len(export_info) > 6 else ''
+    national = 'National Level' if len(export_info) == 5 else ''
+    state = export_info[1][1] if len(export_info) > 5 else ''
+    district = export_info[2][1] if len(export_info) > 6 else ''
+    block = export_info[3][1] if len(export_info) > 7 else ''
+    supervisor = export_info[3][1] if len(export_info) > 8 else ''
 
     excel_data = excel_data[0][1]
     thin_border = Border(
@@ -2004,7 +2011,7 @@ def create_poshan_progress_report(excel_data, data_type, config, aggregation_lev
     workbook = Workbook()
     worksheet = workbook.active
     # sheet title
-    worksheet.title = "Poshan Progress Report {}".format(layout)
+    worksheet.title = "PPR {}".format(layout)
     worksheet.sheet_view.showGridLines = False
     amount_of_columns = 1 + len(excel_data[0])
     last_column = get_column_letter(amount_of_columns+1)
@@ -2155,7 +2162,7 @@ def create_aww_activity_report(excel_data, data_type, config, aggregation_level)
     worksheet.merge_cells('B2:{0}2'.format(last_column))
     title_cell = worksheet['B2']
     title_cell.fill = PatternFill("solid", fgColor="4472C4")
-    title_cell.value = "Aww Activity Report"
+    title_cell.value = "AWW Activity Report"
     title_cell.font = Font(size=18, color="FFFFFF")
     title_cell.alignment = Alignment(horizontal="center")
 

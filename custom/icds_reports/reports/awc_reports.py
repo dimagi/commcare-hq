@@ -383,6 +383,20 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
             wfh_recorded_in_month_column(icds_feature_flag)
         )
 
+        immunization_age_filter = {'age_tranche__lte': 24}
+        fully_immunized_on_time = include_records_by_age_for_column(
+            immunization_age_filter,
+            'fully_immunized_on_time'
+        )
+        fully_immunized_late = include_records_by_age_for_column(
+            immunization_age_filter,
+            'fully_immunized_late'
+        )
+        fully_immunized_eligible = include_records_by_age_for_column(
+            immunization_age_filter,
+            'fully_immunized_eligible'
+        )
+
         queryset = AggChildHealthMonthly.objects.filter(
             month=date, **config
         ).values(
@@ -393,9 +407,9 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
             ),
             valid_weighed=Sum(nutrition_status_weighed),
             immunized=(
-                Sum('fully_immunized_on_time') + Sum('fully_immunized_late')
+                Sum(fully_immunized_on_time) + Sum(fully_immunized_late)
             ),
-            eligible=Sum('fully_immunized_eligible'),
+            eligible=Sum(fully_immunized_eligible),
             wasting=Sum(wasting_moderate) + Sum(wasting_severe),
             height_measured_in_month=Sum(height_measured_in_month),
             weighed_and_height_measured_in_month=Sum(weighed_and_height_measured_in_month),
@@ -453,7 +467,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
         default_interval=default_age_interval(icds_feature_flag)
     )
 
-    return {
+    kpi_dict = {
         'kpi': [
             [
                 {
@@ -637,13 +651,12 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Immunization Coverage (at age 1 year)'),
                     'help_text': _((
-                        "Of the total number of children enrolled for Anganwadi Services who are over a year old, "
-                        "the percentage of children who have received the complete immunization as per the "
-                        "National Immunization Schedule of India that is required by age 1."
-                        "<br/><br/> "
-                        "This includes the following immunizations:<br/> "
-                        "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/> "
-                        "If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1"
+                        "Of the total number of children enrolled for Anganwadi Services who are between"
+                        " 1-2 years old, the percentage of children who have received the complete immunization"
+                        " as per the National Immunization Schedule of India that is required by age 1."
+                        "<br/><br/> This includes the following immunizations:<br/> If Pentavalent path:"
+                        " Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/> If DPT/HepB path: DPT1/2/3, HepB1/2/3,"
+                        " OPV1/2/3, BCG, Measles, VitA1"
                     )),
                     'percent': percent_diff(
                         'immunized',
@@ -688,6 +701,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
             ]
         ]
     }
+    return kpi_dict
 
 
 @icds_quickcache(['domain', 'config', 'now_date', 'month', 'show_test', 'beta'], timeout=30 * 60)

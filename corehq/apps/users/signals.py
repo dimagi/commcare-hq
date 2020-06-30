@@ -42,9 +42,11 @@ def update_user_in_es(sender, couch_user, **kwargs):
     Automatically sync the user to elastic directly on save or delete
     """
     from corehq.pillows.user import transform_user_for_elasticsearch
-    if _should_sync_to_es():
-        send_to_elasticsearch("users", transform_user_for_elasticsearch(couch_user.to_json()),
-                              delete=couch_user.to_be_deleted())
+    send_to_elasticsearch(
+        "users",
+        transform_user_for_elasticsearch(couch_user.to_json()),
+        delete=couch_user.to_be_deleted()
+    )
 
 
 def sync_user_phone_numbers(sender, couch_user, **kwargs):

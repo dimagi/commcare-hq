@@ -18,7 +18,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.xform import (
-    CaseBlock,
+    XFormCaseBlock,
     XForm,
     _make_elem,
     autoset_owner_id_for_advanced_action,
@@ -170,7 +170,7 @@ class CaseBlockIndexRelationshipTest(SimpleTestCase, TestXmlMixin):
         self.form.actions.open_cases.append(self.subcase)
         self.xform = XForm(self.get_xml('original'))
         path = 'subcase_0/'
-        self.subcase_block = CaseBlock(self.xform, path)
+        self.subcase_block = XFormCaseBlock(self.xform, path)
 
     def add_subcase_block(self):
 

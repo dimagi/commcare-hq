@@ -6,7 +6,7 @@ var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 describe('Download Directive', function () {
 
-    var numberOfReports = 12;
+    var numberOfReports = 15;
     describe('Download Directive main functionalities', function() {
         var $scope, $httpBackend, controller;
 
@@ -164,7 +164,7 @@ describe('Download Directive', function () {
             controller.selectedIndicator = 14;
             var mockLocationType = [{"name": "state", "parents": ["state"], "level": 1}];
 
-            var expected = 'National';
+            var expected = 'Select State';
             var result = controller.getPlaceholder(mockLocationType);
             assert.equal(expected, result);
         });
@@ -195,7 +195,7 @@ describe('Download Directive', function () {
 
         it('tests get formats when child growth tracker list is selected', function () {
             controller.selectedIndicator = 13;
-            var expected = [{"id": "csv", "name": "CSV"}, {"id": "xlsx", "name": "Excel"}];
+            var expected = [{"id": "csv", "name": "CSV"}];
 
             var result = controller.getFormats();
             assert.deepEqual(expected, result);
@@ -445,7 +445,7 @@ describe('Download Directive', function () {
         it('tests that all users have access to ISSNIP monthly register', function () {
 
             var length = controller.indicators.length;
-            assert.equal(numberOfReports + 3, length);
+            assert.equal(numberOfReports, length);
         });
 
         it('tests first possible data choice on THR raport', function () {
@@ -550,7 +550,7 @@ describe('Download Directive', function () {
 
         it('tests that all users have access to ISSNIP monthly register', function () {
             var length = controller.indicators.length;
-            assert.equal(numberOfReports - 1, length);
+            assert.equal(numberOfReports, length);
         });
     });
 
@@ -602,7 +602,7 @@ describe('Download Directive', function () {
 
         it('tests that all users have access to ISSNIP monthly register', function () {
             var length = controller.indicators.length;
-            assert.equal(numberOfReports + 3, length);
+            assert.equal(numberOfReports, length);
         });
     });
 
@@ -654,7 +654,7 @@ describe('Download Directive', function () {
 
         it('tests that block user does not have access to dashboard usage report', function () {
             var length = controller.indicators.length;
-            assert.equal(numberOfReports + 2, length);
+            assert.equal(numberOfReports - 1, length);
         });
     });
 
