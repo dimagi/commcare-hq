@@ -407,7 +407,7 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         error = ""
         try:
             update_model_type(master_link, type_, detail_obj)
-            master_link.update_last_pull(type_, self.request.couch_user._id, model_details=detail_obj.to_json())
+            master_link.update_last_pull(type_, self.request.couch_user._id, model_detail=detail_obj.to_json())
         except UnsupportedActionError as e:
             error = str(e)
 
