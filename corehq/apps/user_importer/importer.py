@@ -358,6 +358,8 @@ def create_or_update_users_and_groups(domain, user_specs, upload_user, group_mem
 
                     if is_password(password):
                         user.set_password(password)
+                        # overwrite password in results so we do not save it to the db
+                        status_row['row']['password'] = 'UPDATED'
                     status_row['flag'] = 'updated'
                 else:
                     kwargs = {}
