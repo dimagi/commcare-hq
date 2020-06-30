@@ -1,9 +1,14 @@
 from django.db.models.aggregates import Count
 
 from couchexport.models import Format
+from corehq.apps.accounting.models import (
+    BillingAccount,
+    Subscription
+)
+
 from dimagi.utils.dates import DateSpan
 
-from corehq.apps.accounting.filters import DateCreatedFilter
+from corehq.apps.accounting.filters import DateCreatedFilter, NameFilter
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.sms.models import INCOMING, OUTGOING
@@ -40,6 +45,7 @@ class SMSBillablesInterface(GenericTabularReport):
         'corehq.apps.smsbillables.interface.DateSentFilter',
         'corehq.apps.accounting.interface.DateCreatedFilter',
         'corehq.apps.smsbillables.interface.ShowBillablesFilter',
+        'corehq.apps.accounting.interface.NameFilter',
         'corehq.apps.smsbillables.interface.DomainFilter',
         'corehq.apps.smsbillables.interface.HasGatewayFeeFilter',
         'corehq.apps.smsbillables.interface.GatewayTypeFilter',
@@ -49,6 +55,7 @@ class SMSBillablesInterface(GenericTabularReport):
     def headers(self):
         return DataTablesHeader(
             DataTablesColumn("Date of Message"),
+            DataTablesColumn("Account Name"),
             DataTablesColumn("Project Space"),
             DataTablesColumn("Direction"),
             DataTablesColumn("SMS parts"),
@@ -93,6 +100,10 @@ class SMSBillablesInterface(GenericTabularReport):
                     'value': ShowBillablesFilter.get_value(self.request, self.domain)
                 },
                 {
+                   'name': NameFilter.slug,
+                   'value': NameFilter.get_value(self.request, self.domain)
+                },
+                {
                     'name': DomainFilter.slug,
                     'value': DomainFilter.get_value(self.request, self.domain)
                 },
@@ -129,6 +140,7 @@ class SMSBillablesInterface(GenericTabularReport):
         return [
             [
                 sms_billable.date_sent,
+                BillingAccount.get_account_by_domain(sms_billable.domain).name,
                 sms_billable.domain,
                 {
                     INCOMING: "Incoming",
@@ -166,6 +178,16 @@ class SMSBillablesInterface(GenericTabularReport):
         if show_billables:
             selected_billables = selected_billables.filter(
                 is_valid=(show_billables == ShowBillablesFilter.VALID),
+            )
+        account_name = NameFilter.get_value(self.request, self.domain)
+        if account_name:
+            account = BillingAccount.objects.filter(name=account_name).first()
+            domains = Subscription.visible_objects.filter(
+                account=account
+            ).values_list('subscriber__domain', flat=True).distinct()
+            domains = set(domains).union([account.created_by_domain])
+            selected_billables = selected_billables.filter(
+                domain__in=domains
             )
         domain = DomainFilter.get_value(self.request, self.domain)
         if domain:
