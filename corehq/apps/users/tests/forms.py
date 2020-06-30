@@ -15,7 +15,7 @@ class TestStrongSetUserPasswordForm(TestCase):
         self.user = get_user_model().objects.create_user('tswift')
 
     def tearDown(self):
-        self.user.delete(deleted_by=None)
+        self.user.delete()
         super(TestStrongSetUserPasswordForm, self).tearDown()
 
     def form(self, password):
