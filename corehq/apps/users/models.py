@@ -541,7 +541,10 @@ class DomainMembership(Membership):
             return None
 
     def has_permission(self, permission, data=None):
-        return self.is_admin or self.permissions.has(permission, data)
+        if permission in ('edit_commcare_users', 'edit_web_users', 'edit_locations'):
+            return False
+        else:
+            return self.is_admin or self.permissions.has(permission, data)
 
     def viewable_reports(self):
         return self.permissions.view_report_list
@@ -696,6 +699,8 @@ class _AuthorizableMixin(IsMemberOfMixin):
 
     @memoized
     def has_permission(self, domain, permission, data=None, restrict_global_admin=False):
+        if permission in ('edit_commcare_users', 'edit_web_users', 'edit_locations'):
+            return False
         if not restrict_global_admin:
             # is_admin is the same as having all the permissions set
             if self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
