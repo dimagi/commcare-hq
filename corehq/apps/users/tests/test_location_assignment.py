@@ -111,7 +111,7 @@ class CCUserLocationAssignmentTest(TestCase):
         self.assertEqual(saved_user.get_sql_location(self.domain), None)
 
     def test_create_with_location(self):
-        self.addCleanup(self.user.delete)
+        self.addCleanup(self.user.delete, deleted_by=None)
         self.user = CommCareUser.create(
             domain=self.domain,
             username='cc2',
