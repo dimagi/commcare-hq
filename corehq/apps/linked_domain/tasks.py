@@ -164,4 +164,4 @@ The following linked project spaces received content:
 
     def _release_model(self, domain_link, model, user):
         update_model_type(domain_link, model['type'], model_detail=model['detail'])
-        domain_link.update_last_pull(model['type'], user._id)
+        domain_link.update_last_pull(model['type'], user._id, model_details=model['detail'])

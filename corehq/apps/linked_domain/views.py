@@ -363,14 +363,20 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                 update['name'] = '{} ({})'.format(name, app_name)
             model_status.append(update)
             if action.model == 'fixture':
-                tag = action.wrapped_detail.tag
-                try:
-                    fixture = fixtures.get(tag)
-                    del fixtures[tag]
-                except KeyError:
-                    fixture = get_fixture_data_type_by_tag(self.domain, tag)
-                update['name'] = f'{name} ({fixture.tag})'
-                update['can_update'] = fixture.is_global
+                tag_name = ugettext('Unknown Table')
+                can_update = False
+                if action.model_detail:
+                    detail = action.wrapped_detail
+                    tag = action.wrapped_detail.tag
+                    try:
+                        fixture = fixtures.get(tag)
+                        del fixtures[tag]
+                    except KeyError:
+                        fixture = get_fixture_data_type_by_tag(self.domain, tag)
+                    tag_name = fixture.tag
+                    can_update = fixture.is_global
+                update['name'] = f'{name} ({tag_name})'
+                update['can_update'] = can_update
             if action.model == 'report':
                 report_id = action.wrapped_detail.report_id
                 try:
