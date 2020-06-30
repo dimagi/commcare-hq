@@ -16,12 +16,11 @@ class UserUploadRecord(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
 
     def get_file(self):
-        f = BytesIO()
-        with open(f, 'w') as csvfile:
-            fieldnames = list(self.status['rows']['row'][0].keys())
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writeheader()
-            for row in self.status['rows']:
-                writer.writerow(row['row'])
+        csvfile = StringIO()
+        fieldnames = list(self.status['rows']['row'][0].keys())
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in self.status['rows']:
+            writer.writerow(row['row'])
         f.seek(0)
         return f
