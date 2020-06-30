@@ -1,0 +1,60 @@
+#!/bin/bash
+
+function get_branch() {
+    git branch | grep '^\*' | sed 's/* //'
+}
+
+function abort () {
+    echo $1
+    echo "Aborting."
+    exit 1
+}
+
+filename=scripts/icds-staging.yaml
+branch=$(get_branch)
+COMMIT_MESSAGE='update icds-staging.yaml'
+
+if [[ $branch != 'master' ]]
+then
+    abort "You may only commit icds-staging.yaml changes to master."
+fi
+
+# add icds-staging.yaml if the user hasn't
+git add $filename
+
+
+# make sure the only thing about to be committed is scripts/icds-staging.yaml
+staged_files=$(git diff --staged --stat | grep '|' | cut -d '|' -f1 | cut -d ' ' -f2)
+if [[ 'scripts/icds-staging.yaml' != $staged_files ]]
+then
+    if [[ '' = $staged_files ]]
+    then
+        abort "You have no changes to commit."
+    else
+        abort "You have staged changes to more files than just $filename."
+    fi
+fi
+
+
+# make sure icds-staging.yaml parses as yaml
+python scripts/checkyaml.py $filename
+if [[ $? -ne 0 ]]
+then
+    abort "Fix staging.yml and try again"
+fi
+
+# make sure local is not ahead of origin
+git fetch
+if [[ -n $(git log --max-count=1 origin/$branch..$branch) ]]
+then
+    abort "Your local $branch is ahead of origin/$branch."
+fi
+
+# have the commit follow a certain template
+git commit --edit --message="$COMMIT_MESSAGE" --message "[ci skip]"
+
+# push if using --push option
+if [[ $1 = '--push' ]]
+then
+    git push origin $branch
+fi

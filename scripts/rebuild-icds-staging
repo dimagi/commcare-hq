@@ -1,0 +1,83 @@
+#!/bin/bash
+
+function usage() {
+    cat << EOF
+usage: $0 [-h|--help] [-v|--verbose] [--deploy|--no-push] [--skip-fetch]
+
+rebuild staging from yaml configuration (scripts/icds-staging.yaml)
+
+    -h --help       print this help text
+    -v --verbose    display debugging output
+    --deploy        deploy after rebuild is complete
+    --no-push       do not push changes (cannot be used with --deploy)
+    --skip-fetch    assume local copy is already update date with remote
+    --enterprise    rebuild the enterprise branch
+EOF
+}
+
+while [[ $# > 0 ]]
+do
+    key="$1"
+    shift
+
+    case $key in
+      --deploy)
+        deploy=y
+        ;;
+      -h|--help)
+        usage
+        exit
+        ;;
+      -v|--verbose)
+        verbose=y
+        ;;
+      --skip-fetch)
+        skip_fetch=y
+        echo skip-fetch
+        ;;
+      --no-push)
+        no_push=y
+        echo no-push
+        ;;
+      --enterprise)
+        enterprise=y
+        echo enterprise
+        ;;
+      *)
+        usage
+        exit 1
+        ;;
+    esac
+done
+
+function rebuildstaging() {
+    echo "rebuilding staging branch, this might take a while..."
+    python scripts/rebuildstaging.py scripts/icds-staging.yaml "$@"
+}
+
+args=''
+
+[[ $verbose = 'y' ]] && args="$args -v"
+[[ $no_push = 'y' ]] && args="$args --no-push"
+
+[[ $skip_fetch = 'y' ]] && args="$args sync rebuild"
+
+# if icds-staging.yaml isn't up-to-date, warn and quit
+git fetch origin master
+if [[ -n $(git diff origin/master -- scripts/icds-staging.yaml) && $no_push != 'y' ]]
+then
+    echo "scripts/icds-staging.yaml on this branch different from the one on master"
+    echo "Aborting."
+    exit 1
+fi
+
+if [[ $deploy = 'y' && $no_push != 'y' && $enterprise != 'y' ]]
+then
+    rebuildstaging $args && {
+        which commcare-cloud \
+        && commcare-cloud icds-staging deploy --quiet \
+        || echo 'Could not auto-deploy for you. Run `commcare-cloud icds-staging deploy` to deploy.'
+    }
+else
+    rebuildstaging $args
+fi
