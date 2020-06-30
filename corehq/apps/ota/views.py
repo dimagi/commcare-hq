@@ -49,16 +49,12 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.decorators import require_mobile_access
 from corehq.apps.ota.rate_limiter import rate_limit_restore
 from corehq.apps.users.models import CouchUser, UserReportingMetadataStaging
-from corehq.apps.users.util import (
-    update_device_meta,
-    update_last_sync,
-    update_latest_builds,
-)
 from corehq.const import ONE_DAY, OPENROSA_VERSION_MAP
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.utils.xform import adjust_text_to_datetime
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.util.quickcache import quickcache
+from custom.icds.view_utils import check_app_access
 
 from .models import DeviceLogRequest, MobileRecoveryMeasure, SerialIdBucket
 from .utils import (
@@ -263,6 +259,10 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     )
 
     app = get_app_cached(domain, app_id) if app_id else None
+
+    error_response = check_app_access(domain, couch_user, app)
+    if error_response:
+        return error_response
     restore_config = RestoreConfig(
         project=project,
         restore_user=restore_user,
