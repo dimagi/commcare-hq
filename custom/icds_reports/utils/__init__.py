@@ -1,3 +1,4 @@
+import copy
 import csv
 import json
 import os
@@ -2506,3 +2507,12 @@ def handle_average(val):
     else:
         ret = val / 3
     return ret
+
+
+def get_filters_from_config_for_chart_view(config):
+    config_filter = copy.deepcopy(config)
+    if 'gender' in config_filter:
+        config_filter['sex'] = config_filter['gender']
+        del config_filter['gender']
+    del config_filter['aggregation_level']
+    return config_filter
