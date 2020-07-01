@@ -61,4 +61,4 @@ To use these packages in HQ you need to find where the js file you are looking f
 <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
 ```
 
-Note: The `bower_components` bit is intentionally left off the path. Django already knows to look in that folder.
+Note: The `node_modules` bit is intentionally left off the path. Django already knows to look in that folder.

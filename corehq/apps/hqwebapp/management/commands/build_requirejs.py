@@ -143,7 +143,7 @@ def _r_js(local=False, no_optimize=False):
 
     _save_r_js_config(config)
 
-    ret = call(["node", "bower_components/r.js/dist/r.js", "-o", BUILD_JS_FILENAME])
+    ret = call(["node", "node_modules/r.js/dist/r.js", "-o", BUILD_JS_FILENAME])
     if ret:
         exit(1)
 
