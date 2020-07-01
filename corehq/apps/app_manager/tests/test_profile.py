@@ -21,9 +21,8 @@ class ProfileTest(SimpleTestCase, TestXmlMixin):
 
     def setUp(self):
         self.build_profile_id = uuid.uuid4().hex
-        self.app = Application(build_spec=BuildSpec(
-            version='2.7.0'
-            ),
+        self.app = Application(
+            build_spec=BuildSpec(version='2.7.2'),
             name="TÉST ÁPP",
             domain="potter",
             langs=['en'],
@@ -120,6 +119,7 @@ class ProfileTest(SimpleTestCase, TestXmlMixin):
         root = profile_xml.find('.')
         self.assertEqual(root.get('requiredMajor'), '2')
         self.assertEqual(root.get('requiredMinor'), '7')
+        self.assertEqual(root.get('requiredMinimal'), '2')
 
     @flag_enabled('MOBILE_RECOVERY_MEASURES')
     def test_mobile_recovery_measure(self):

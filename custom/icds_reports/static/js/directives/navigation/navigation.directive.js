@@ -27,7 +27,7 @@ function NavigationController($window, $rootScope, $scope, $route, $routeParams,
 
     $scope.systemUsageCollapsed = true;
     $scope.healthCollapsed = checkCollapse(['underweight_children', 'wasting', 'stunting', 'low_birth', 'early_initiation', 'exclusive_breastfeeding', 'children_initiated', 'institutional_deliveries', 'immunization_coverage']);
-    $scope.icdsCasReach = checkCollapse(['awc_daily_status', 'awcs_covered']);
+    $scope.icdsCasReach = checkCollapse(['awc_daily_status', 'awcs_covered', 'ls_launched']);
     $scope.demographics = checkCollapse(['registered_household', 'enrolled_children', 'enrolled_women', 'lactating_enrolled_women', 'adolescent_girls', 'adhaar']);
     $scope.infrastructure = checkCollapse(['clean_water', 'functional_toilet', 'medicine_kit', 'infants_weight_scale', 'adult_weight_scale', 'infantometer', 'stadiometer']);
 

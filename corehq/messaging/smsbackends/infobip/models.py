@@ -10,7 +10,11 @@ INFOBIP_DOMAIN = "api.infobip.com"
 WA_TEMPLATE_STRING = "cc_wa_template"
 
 
-class SQLInfobipBackend(SQLSMSBackend):
+class InfobipRetry(Exception):
+    pass
+
+
+class InfobipBackend(SQLSMSBackend):
 
     class Meta(object):
         app_label = 'sms'
@@ -91,7 +95,7 @@ class SQLInfobipBackend(SQLSMSBackend):
 
         url = f'https://{config.personalized_subdomain}.{INFOBIP_DOMAIN}/omni/1/advanced'
         response = requests.post(url, json=payload, headers=headers)
-        return response.content
+        self.handle_response(response, msg)
 
     def _send_sms(self, config, to, msg, headers):
         payload = {
@@ -103,7 +107,20 @@ class SQLInfobipBackend(SQLSMSBackend):
         }
         url = f'https://{config.personalized_subdomain}.{INFOBIP_DOMAIN}/sms/2/text/advanced'
         response = requests.post(url, json=payload, headers=headers)
-        return response.content
+        self.handle_response(response, msg)
+
+    def handle_response(self, response, msg):
+        if response.status_code == 500:
+            raise InfobipRetry("Gateway 500 error")
+        if response.status_code != 200:
+            msg.set_gateway_error(response.status_code)
+            return
+        data = json.loads(response.content)
+        if "messages" in data:
+            msg.backend_message_id = data["messages"][0]["messageId"]
+        else:
+            message = repr(data)
+            msg.set_gateway_error(message)
 
     def get_all_templates(self):
         headers = {

@@ -40,7 +40,7 @@ class TestUsersByLocation(TestCase):
         bootstrap_location_types(cls.domain)
 
         def make_user(name, location):
-            user = CommCareUser.create(cls.domain, name, 'password')
+            user = CommCareUser.create(cls.domain, name, 'password', None, None)
             user.set_location(location)
             return user
 
@@ -54,7 +54,9 @@ class TestUsersByLocation(TestCase):
         cls.george = WebUser.create(
             cls.domain,
             username="George RR Martin",
-            password='password'
+            password='password',
+            created_by=None,
+            created_via=None,
         )
         cls.george.set_location(cls.domain, cls.meereen)
 
@@ -106,7 +108,7 @@ class TestUsersByLocation(TestCase):
         domain2.delete()
 
     def test_get_users_assigned_to_locations(self):
-        other_user = CommCareUser.create(self.domain, 'other', 'password')
+        other_user = CommCareUser.create(self.domain, 'other', 'password', None, None)
         users = get_users_assigned_to_locations(self.domain)
         self.assertItemsEqual(
             [u._id for u in users],

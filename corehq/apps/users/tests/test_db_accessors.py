@@ -57,6 +57,8 @@ class AllCommCareUsersTest(TestCase):
             domain=cls.ccdomain.name,
             username='ccuser_1',
             password='secret',
+            created_by=None,
+            created_via=None,
             email='email@example.com',
         )
         cls.ccuser_1.set_location(cls.loc1)
@@ -65,6 +67,8 @@ class AllCommCareUsersTest(TestCase):
             domain=cls.ccdomain.name,
             username='ccuser_2',
             password='secret',
+            created_by=None,
+            created_via=None,
             email='email1@example.com',
         )
         cls.ccuser_2.set_role(cls.ccdomain.name, cls.custom_role.get_qualified_id())
@@ -75,18 +79,24 @@ class AllCommCareUsersTest(TestCase):
             domain=cls.ccdomain.name,
             username='webuser',
             password='secret',
+            created_by=None,
+            created_via=None,
             email='webuser@example.com',
         )
         cls.ccuser_other_domain = CommCareUser.create(
             domain=cls.other_domain.name,
             username='cc_user_other_domain',
             password='secret',
+            created_by=None,
+            created_via=None,
             email='email_other_domain@example.com',
         )
         cls.retired_user = CommCareUser.create(
             domain=cls.ccdomain.name,
             username='retired_user',
             password='secret',
+            created_by=None,
+            created_via=None,
             email='retired_user_email@example.com',
         )
         cls.retired_user.retire()
@@ -169,6 +179,8 @@ class AllCommCareUsersTest(TestCase):
             domain=self.ccdomain.name,
             username='deleted_user',
             password='secret',
+            created_by=None,
+            created_via=None,
             email='deleted_email@example.com',
         )
         deleted_user.retire()
@@ -188,7 +200,7 @@ class AllCommCareUsersTest(TestCase):
         )
 
     def test_get_existing_usernames(self):
-        users = [self.ccuser_1, self.web_user, self.ccuser_other_domain]
+        users = [self.ccuser_1, self.web_user, self.ccuser_other_domain, self.retired_user]
         usernames = [u.username for u in users] + ['nonexistant@username.com']
         self.assertItemsEqual(
             get_existing_usernames(usernames),

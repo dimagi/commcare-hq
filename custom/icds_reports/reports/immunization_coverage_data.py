@@ -1,3 +1,4 @@
+import copy
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
@@ -17,10 +18,14 @@ from custom.icds_reports.utils import get_location_launched_status
 @icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_features_flag'], timeout=30 * 60)
 def get_immunization_coverage_data_map(domain, config, loc_level, show_test=False, icds_features_flag=False):
     config['month'] = datetime(*config['month'])
-    def get_data_for(filters):
 
+    def get_data_for(filters):
+        agg_filters = copy.deepcopy(filters)
+        if icds_features_flag:
+            # Retrieving children of age 1-2 years
+            agg_filters['age_tranche__lte'] = '24'
         queryset = AggChildHealthMonthly.objects.filter(
-            **filters
+            **agg_filters
         ).values(
             '%s_name' % loc_level, '%s_map_location_name' % loc_level
         ).annotate(
@@ -50,49 +55,91 @@ def get_immunization_coverage_data_map(domain, config, loc_level, show_test=Fals
     fills.update({'0%-20%': MapColors.RED})
     fills.update({'20%-60%': MapColors.ORANGE})
     fills.update({'60%-100%': MapColors.PINK})
+    if icds_features_flag:
+        fills.update({'Not Launched': MapColors.GREY})
     fills.update({'defaultFill': MapColors.GREY})
 
     gender_ignored, age_ignored, chosen_filters = chosen_filters_to_labels(config)
-
-    return {
-        "slug": "institutional_deliveries",
-        "label": "Percent Immunization Coverage at 1 year{}".format(chosen_filters),
-        "fills": fills,
-        "rightLegend": {
-            "average": average,
-            "info": _((
-                "Of the total number of children enrolled for Anganwadi Services who are over a year old, "
-                "the percentage of children who have received the complete immunization as per the National "
-                "Immunization Schedule of India that is required by age 1."
-                "<br/><br/>"
-                "This includes the following immunizations:<br/>"
-                "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"
-                "If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1"
-            )),
-            "extended_info": [
-                {
-                    'indicator': 'Total number of ICDS Child beneficiaries older than '
-                                 '1 year{}:'.format(chosen_filters),
-                    'value': indian_formatted_number(valid_total)
-                },
-                {
-                    'indicator': (
-                        'Total number of children who have recieved complete immunizations required '
-                        'by age 1{}:'.format(chosen_filters)
-                    ),
-                    'value': indian_formatted_number(in_month_total)
-                },
-                {
-                    'indicator': (
-                        '% of children who have recieved complete immunizations required by age 1{}:'
-                        .format(chosen_filters)
-                    ),
-                    'value': '%.2f%%' % (in_month_total * 100 / float(valid_total or 1))
-                }
-            ]
-        },
-        "data": dict(data_for_map),
-    }
+    if not icds_features_flag:
+        return {
+            "slug": "institutional_deliveries",
+            "label": "Percent Immunization Coverage at 1 year{}".format(chosen_filters),
+            "fills": fills,
+            "rightLegend": {
+                "average": average,
+                "info": _((
+                    "Of the total number of children enrolled for Anganwadi Services who are over a year old, "
+                    "the percentage of children who have received the complete immunization as per the National "
+                    "Immunization Schedule of India that is required by age 1."
+                    "<br/><br/>"
+                    "This includes the following immunizations:<br/>"
+                    "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"
+                    "If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1"
+                )),
+                "extended_info": [
+                    {
+                        'indicator': 'Total number of ICDS Child beneficiaries older than '
+                                     '1 year{}:'.format(chosen_filters),
+                        'value': indian_formatted_number(valid_total)
+                    },
+                    {
+                        'indicator': (
+                            'Total number of children who have recieved complete immunizations required '
+                            'by age 1{}:'.format(chosen_filters)
+                        ),
+                        'value': indian_formatted_number(in_month_total)
+                    },
+                    {
+                        'indicator': (
+                            '% of children who have recieved complete immunizations required by age 1{}:'
+                            .format(chosen_filters)
+                        ),
+                        'value': '%.2f%%' % (in_month_total * 100 / float(valid_total or 1))
+                    }
+                ]
+            },
+            "data": dict(data_for_map),
+        }
+    else:
+        return {
+            "slug": "institutional_deliveries",
+            "label": "Percent Immunization Coverage at 1 year{}".format(chosen_filters),
+            "fills": fills,
+            "rightLegend": {
+                "average": average,
+                "info": _((
+                    "Of the total number of children enrolled for Anganwadi Services who are between"
+                    " 1-2 years old, the percentage of children who have received the complete immunization"
+                    " as per the National Immunization Schedule of India that is required by age 1."
+                    "<br/><br/>"
+                    "This includes the following immunizations:<br/>"
+                    "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"
+                    "If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1"
+                )),
+                "extended_info": [
+                    {
+                        'indicator': 'Total number of ICDS Child beneficiaries between 1-2 years old{}:'
+                            .format(chosen_filters),
+                        'value': indian_formatted_number(valid_total)
+                    },
+                    {
+                        'indicator': (
+                            'Total number of children between 1-2 years old who have received complete'
+                            ' immunizations required by age 1{}:'.format(chosen_filters)
+                        ),
+                        'value': indian_formatted_number(in_month_total)
+                    },
+                    {
+                        'indicator': (
+                            '% of children between 1-2 years old who have received'
+                            ' complete immunizations required by age 1{}:'.format(chosen_filters)
+                        ),
+                        'value': '%.2f%%' % (in_month_total * 100 / float(valid_total or 1))
+                    }
+                ]
+            },
+            "data": dict(data_for_map),
+        }
 
 
 @icds_quickcache(['domain', 'config', 'loc_level', 'location_id', 'show_test', 'icds_features_flag'],
@@ -102,6 +149,9 @@ def get_immunization_coverage_sector_data(domain, config, loc_level, location_id
     group_by = ['%s_name' % loc_level]
 
     config['month'] = datetime(*config['month'])
+    if icds_features_flag:
+        # Retrieving children of age 1-2 years
+        config['age_tranche__lte'] = '24'
     data = AggChildHealthMonthly.objects.filter(
         **config
     ).values(
@@ -150,28 +200,50 @@ def get_immunization_coverage_sector_data(domain, config, loc_level, location_id
         ])
 
     chart_data['blue'] = sorted(chart_data['blue'])
-
-    return {
-        "tooltips_data": dict(tooltips_data),
-        "info": _((
-            "Of the total number of children enrolled for Anganwadi Services who are over a year old, the "
-            "percentage of children who have received the complete immunization as per the National Immunization "
-            "Schedule of India that is required by age 1."
-            "<br/><br/>"
-            "This includes the following immunizations:<br/>"
-            "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"
-            "If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1"
-        )),
-        "chart_data": [
-            {
-                "values": chart_data['blue'],
-                "key": "",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": MapColors.BLUE
-            }
-        ]
-    }
+    if not icds_features_flag:
+        return {
+            "tooltips_data": dict(tooltips_data),
+            "info": _((
+                "Of the total number of children enrolled for Anganwadi Services who are over a year old,"
+                " the percentage of children who have received the complete immunization as per the"
+                " National Immunization Schedule of India that is required by age 1."
+                "<br/><br/>"
+                "This includes the following immunizations:<br/>"
+                "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"
+                "If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1"
+            )),
+            "chart_data": [
+                {
+                    "values": chart_data['blue'],
+                    "key": "",
+                    "strokeWidth": 2,
+                    "classed": "dashed",
+                    "color": MapColors.BLUE
+                }
+            ]
+        }
+    else:
+        return {
+            "tooltips_data": dict(tooltips_data),
+            "info": _((
+                "Of the total number of children enrolled for Anganwadi Services who are between"
+                " 1-2 years old, the percentage of children who have received the complete immunization"
+                " as per the National Immunization Schedule of India that is required by age 1."
+                "<br/><br/>"
+                "This includes the following immunizations:<br/>"
+                "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"
+                "If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1"
+            )),
+            "chart_data": [
+                {
+                    "values": chart_data['blue'],
+                    "key": "",
+                    "strokeWidth": 2,
+                    "classed": "dashed",
+                    "color": MapColors.BLUE
+                }
+            ]
+        }
 
 
 @icds_quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_features_flag'], timeout=30 * 60)
@@ -180,6 +252,9 @@ def get_immunization_coverage_data_chart(domain, config, loc_level, show_test=Fa
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
     config['month__range'] = (three_before, month)
+    if icds_features_flag:
+        # Retrieving children of age 1-2 years
+        config['age_tranche__lte'] = '24'
     del config['month']
 
     chart_data = AggChildHealthMonthly.objects.filter(
@@ -245,26 +320,49 @@ def get_immunization_coverage_data_chart(domain, config, loc_level, show_test=Fa
     all_locations_sorted_by_name = sorted(all_locations, key=lambda x: x['loc_name'])
     all_locations_sorted_by_percent_and_name = sorted(
         all_locations_sorted_by_name, key=lambda x: x['percent'], reverse=True)
-
-    return {
-        "chart_data": [
-            {
-                "values": [
-                    {
-                        'x': key,
-                        'y': value['y'],
-                        'all': value['all'],
-                        'in_month': value['in_month']
-                    } for key, value in data['blue'].items()
-                ],
-                "key": "% Children received complete immunizations by 1 year",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": ChartColors.BLUE
-            }
-        ],
-        "all_locations": all_locations_sorted_by_percent_and_name,
-        "top_five": all_locations_sorted_by_percent_and_name[:5],
-        "bottom_five": all_locations_sorted_by_percent_and_name[-5:],
-        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'Sector'
-    }
+    if not icds_features_flag:
+        return {
+            "chart_data": [
+                {
+                    "values": [
+                        {
+                            'x': key,
+                            'y': value['y'],
+                            'all': value['all'],
+                            'in_month': value['in_month']
+                        } for key, value in data['blue'].items()
+                    ],
+                    "key": "% Children received complete immunizations by 1 year",
+                    "strokeWidth": 2,
+                    "classed": "dashed",
+                    "color": ChartColors.BLUE
+                }
+            ],
+            "all_locations": all_locations_sorted_by_percent_and_name,
+            "top_five": all_locations_sorted_by_percent_and_name[:5],
+            "bottom_five": all_locations_sorted_by_percent_and_name[-5:],
+            "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'Sector'
+        }
+    else:
+        return {
+            "chart_data": [
+                {
+                    "values": [
+                        {
+                            'x': key,
+                            'y': value['y'],
+                            'all': value['all'],
+                            'in_month': value['in_month']
+                        } for key, value in data['blue'].items()
+                    ],
+                    "key": "% Children between 1-2 years old who received complete immunizations by 1 year",
+                    "strokeWidth": 2,
+                    "classed": "dashed",
+                    "color": ChartColors.BLUE
+                }
+            ],
+            "all_locations": all_locations_sorted_by_percent_and_name,
+            "top_five": all_locations_sorted_by_percent_and_name[:5],
+            "bottom_five": all_locations_sorted_by_percent_and_name[-5:],
+            "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'Sector'
+        }

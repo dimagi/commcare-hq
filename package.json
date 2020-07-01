@@ -5,13 +5,18 @@
   "description": "CommcareHQ Javascript tests",
   "dependencies": {
     "eslint-plugin-eslint-dimagi": "^1.0.0",
-    "grunt": "^0.4.5",
-    "grunt-cli": "^0.1.13",
-    "grunt-contrib-watch": "^0.6.1",
-    "grunt-mocha": "^0.4.13",
     "js-xpath": "dimagi/js-xpath#v0.0.2-rc1",
     "less": "~3.10.3",
-    "mocha": "^2.3.3",
+    "npm": "^6.14.5",
     "uglify-js": "^2.6.1"
+  },
+  "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-cli": "^0.1.13",
+    "chai": "^4.2.0",
+    "colors": "^1.4.0",
+    "lodash": "^4.17.15",
+    "mocha": "^2.5.3",
+    "mocha-headless-chrome": "^3.0.0"
   }
 }

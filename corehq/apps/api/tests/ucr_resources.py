@@ -139,7 +139,7 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
     def test_auth(self):
 
         wrong_domain = Domain.get_or_create_with_name('dvorak', is_active=True)
-        new_user = WebUser.create(wrong_domain.name, 'test', 'testpass')
+        new_user = WebUser.create(wrong_domain.name, 'test', 'testpass', None, None)
         new_user.save()
         self.addCleanup(wrong_domain.delete)
 
@@ -184,7 +184,7 @@ class TestConfigurableReportDataResource(APIResourceTest):
         cls.cases = []
         for val in cls.case_property_values:
             id = uuid.uuid4().hex
-            case_block = CaseBlock(
+            case_block = CaseBlock.deprecated_init(
                 create=True,
                 case_id=id,
                 case_type=case_type,
@@ -373,7 +373,7 @@ class TestConfigurableReportDataResource(APIResourceTest):
         wrong_domain = Domain.get_or_create_with_name(wrong_domain_name, is_active=True)
         self.addCleanup(wrong_domain.delete)
         user_in_wrong_domain = WebUser.create(
-            wrong_domain_name, user_in_wrong_domain_name, user_in_wrong_domain_password
+            wrong_domain_name, user_in_wrong_domain_name, user_in_wrong_domain_password, None, None
         )
 
         user_in_wrong_domain_credentials = self._get_basic_credentials(

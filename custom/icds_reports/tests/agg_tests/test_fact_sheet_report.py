@@ -327,7 +327,7 @@ class TestFactSheetReportMaternalAndChildNutritionICDS(TestCase):
 
 
 class TestFactSheetReportInterventions(TestCase):
-    def get_data(self):
+    def get_data(self, beta=False):
         config = {
             'aggregation_level': 1,
             'month': datetime(2017, 6, 1).date(),
@@ -339,7 +339,7 @@ class TestFactSheetReportInterventions(TestCase):
         }
 
         loc_level = get_location_level(config.get('aggregation_level'))
-        return FactSheetsReport(config=config, loc_level=loc_level).get_data()
+        return FactSheetsReport(config=config, loc_level=loc_level, beta=beta).get_data()
 
     def test_section_amount(self):
         self.assertEqual(len(self.get_data()['config']['sections']), 3)
@@ -369,6 +369,37 @@ class TestFactSheetReportInterventions(TestCase):
                         'data_source': 'AggChildHealthMonthlyDataSource',
                         'format': 'percent',
                         'header': 'Children 1 year+ who have recieved complete immunization required by age 1.',
+                        'slug': 'fully_immunized'
+                    }
+                ],
+                'section_title': 'Nutrition Status of Children',
+                'slug': 'nutrition_status_of_children'
+            }
+        )
+
+    def test_nutrition_status_of_children_with_age_1_2_ff(self):
+        self.assertDictEqual(
+            self.get_data(beta=True)['config']['sections'][0],
+            {
+                'months': ['Apr 2017', 'May 2017', 'Jun 2017'],
+                'order': 1,
+                'rows_config': [
+                    {
+                        'average': {
+                            'html': 9.900990099009901,
+                            'sort_key': 9.900990099009901
+                        },
+                        'data': [
+                            {'html': 'Children between 1-2 years old who have received complete'
+                                     ' immunization required by age 1.'},
+                            {'html': 7.8431372549019605, 'sort_key': 7.8431372549019605},
+                            {'html': 9.900990099009901, 'sort_key': 9.900990099009901},
+                            {'html': 0}
+                        ],
+                        'data_source': 'AggChildHealthMonthlyDataSource',
+                        'format': 'percent',
+                        'header': 'Children between 1-2 years old who have received complete'
+                                  ' immunization required by age 1.',
                         'slug': 'fully_immunized'
                     }
                 ],

@@ -106,6 +106,12 @@ class CaseListExplorer(CaseListReport):
 
     @property
     def columns(self):
+        view_case_column = DataTablesColumn(
+            _("View Case"),
+            prop_name='_link',
+            sortable=False,
+        )
+
         if self._is_exporting:
             persistent_cols = [
                 DataTablesColumn(
@@ -114,6 +120,8 @@ class CaseListExplorer(CaseListReport):
                     sortable=True,
                 )
             ]
+        elif self.is_rendered_as_email:
+            persistent_cols = [view_case_column]
         else:
             persistent_cols = [
                 DataTablesColumn(
@@ -122,11 +130,7 @@ class CaseListExplorer(CaseListReport):
                     sortable=True,
                     visible=False,
                 ),
-                DataTablesColumn(
-                    _("View Case"),
-                    prop_name='_link',
-                    sortable=False,
-                )
+                view_case_column,
             ]
 
         return persistent_cols + [

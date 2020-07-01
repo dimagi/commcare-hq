@@ -204,6 +204,7 @@ class LocaleResource(AbstractResource):
 class MediaResource(AbstractResource):
     ROOT_NAME = 'media'
     path = StringField('@path')
+    lazy = SimpleBooleanField('resource/@lazy', true="true", false="false")
 
 
 class PracticeUserRestoreResource(AbstractResource):
@@ -497,6 +498,7 @@ class QueryPrompt(DisplayNode):
     ROOT_NAME = 'prompt'
 
     key = StringField('@key')
+    appearance = StringField('@appearance', required=False)
 
 
 class RemoteRequestPost(XmlObject):

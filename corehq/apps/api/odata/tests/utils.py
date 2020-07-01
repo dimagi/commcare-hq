@@ -5,7 +5,6 @@ from django.test import Client
 from django.urls import reverse
 
 from corehq.apps.domain.utils import clear_domain_names
-from tastypie.models import ApiKey
 
 from corehq.apps.accounting.models import (
     BillingAccount,
@@ -21,7 +20,7 @@ from corehq.apps.export.models import (
     FormExportInstance,
     CaseExportInstance,
     ExportColumn, TableConfiguration)
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import HQApiKey, WebUser
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted, reset_es_index
@@ -37,7 +36,7 @@ class OdataTestMixin(object):
         clear_domain_names('test_domain')
         cls.domain = Domain(name='test_domain')
         cls.domain.save()
-        cls.web_user = WebUser.create(cls.domain.name, 'test_user', 'my_password')
+        cls.web_user = WebUser.create(cls.domain.name, 'test_user', 'my_password', None, None)
         cls._setup_user_permissions()
         cls.app_id = '1234'
         cls.instance = cls.get_instance(cls.domain.name)
@@ -149,7 +148,7 @@ class FormOdataTestMixin(OdataTestMixin):
 
 
 def generate_api_key_from_web_user(web_user):
-    api_key = ApiKey.objects.get_or_create(user=web_user.get_django_user())[0]
+    api_key = HQApiKey.objects.get_or_create(user=web_user.get_django_user())[0]
     api_key.key = api_key.generate_key()
     api_key.save()
     return api_key

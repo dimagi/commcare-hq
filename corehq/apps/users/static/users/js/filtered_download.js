@@ -18,26 +18,31 @@ hqDefine('users/js/filtered_download', [
         };
     }
 
+    function countUsers(currentFilters) {
+        var countUsersUrl = initialPageData.get('count_users_url');
+        $.get({
+            url: countUsersUrl,
+            data: currentFilters,
+            success: function (data) {
+                var count = data.count;
+                var template = count === 1 ? gettext("Download <%= count %> user") : gettext("Download <%= count %> users");
+                $('.submit_button').text(_.template(template)({count: count}));
+            },
+            error: function () {
+                alert("Error determining number of matching users");
+            },
+        });
+    }
+
     $(function () {
         var prevFilters = getFilters();
-        var countUsersUrl = initialPageData.get('count_users_url');
-        setInterval(function () {
+        $("#user-filters").change(function () {
             var currentFilters = getFilters();
             if (!_.isEqual(currentFilters, prevFilters)) {
-                $.get({
-                    url: countUsersUrl,
-                    data: currentFilters,
-                    success: function (data) {
-                        var count = data.count;
-                        var template = count === 1 ? gettext("Download <%= count %> user") : gettext("Download <%= count %> users");
-                        $('.submit_button').text(_.template(template)({count: count}));
-                    },
-                    error: function () {
-                        alert("Error determining number of matching users");
-                    },
-                });
+                countUsers(currentFilters);
             }
             prevFilters = currentFilters;
-        }, 1000);
+        });
+        countUsers(getFilters());
     });
 });

@@ -38,12 +38,6 @@ logger = get_task_logger(__name__)
 
 
 @task(serializer='pickle')
-def bulk_upload_async(domain, user_specs, group_specs):
-    # remove this after deploying `import_users_and_groups`
-    return import_users_and_groups(domain, user_specs, group_specs)
-
-
-@task(serializer='pickle')
 def bulk_download_usernames_async(domain, download_id, user_filters):
     from corehq.apps.users.bulk_download import dump_usernames
     dump_usernames(domain, download_id, user_filters, bulk_download_usernames_async)
@@ -201,7 +195,7 @@ def remove_indices_from_deleted_cases(domain, case_ids):
     deleted_ids = set(case_ids)
     indexes_referencing_deleted_cases = CaseAccessors(domain).get_all_reverse_indices_info(list(case_ids))
     case_updates = [
-        CaseBlock(
+        CaseBlock.deprecated_init(
             case_id=index_info.case_id,
             index={
                 index_info.identifier: (index_info.referenced_type, '')  # blank string = delete index

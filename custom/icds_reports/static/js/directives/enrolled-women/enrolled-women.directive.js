@@ -16,7 +16,7 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
     vm.data = {
         legendTitle: 'Number of Women',
     };
-    vm.filters = ['gender', 'age'];
+    vm.filters = ['gender', 'age', 'data_period'];
 
     vm.rightLegend = {
         info: 'Of the total number of pregnant women, the percentage of pregnant women enrolled for Anganwadi Services',

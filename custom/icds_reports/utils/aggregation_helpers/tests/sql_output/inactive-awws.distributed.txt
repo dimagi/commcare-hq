@@ -58,3 +58,15 @@
             DROP TABLE "tmp_usage";
         
 {"last_sync": "2019-01-05T00:00:00", "now": "2019-01-11T00:00:00", "six_months_ago": "2018-07-11T00:00:00"}
+
+            UPDATE "icds_reports_aggregateinactiveaww" SET
+                no_of_days_since_start = CASE
+                    WHEN first_submission IS DISTINCT FROM NULL
+                    THEN '2019-01-11'::DATE - first_submission::DATE
+                    ELSE NULL END,
+                no_of_days_inactive = CASE
+                    WHEN last_submission IS DISTINCT FROM NULL
+                    THEN '2019-01-11'::DATE - last_submission::DATE
+                    ELSE NULL END
+        
+{}

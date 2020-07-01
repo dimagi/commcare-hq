@@ -14,12 +14,17 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
     vm.label = "Service Delivery Dashboard";
     vm.haveAccessToAllLocations = haveAccessToAllLocations;
     vm.tooltipPlacement = "right";
-    vm.filters = ['gender', 'age'];
+    vm.filters = ['gender', 'age', 'data_period'];
     vm.userLocationId = userLocationId;
     vm.dataNotEntered = "Data Not Entered";
     vm.showTable = true;
     vm.dataAggregationLevel = 1;
     vm.isAlertActive = isAlertActive;
+
+    vm.isCbeSeeMoreDisplayed = true;
+    vm.isTHRSeeMoreDisplayed = true;
+    vm.isSNSeeMoreDisplayed = true;
+    vm.isPSESeeMoreDisplayed = true;
 
     vm.totalNumberOfEntries = 0; // total number of records in table
     vm.selectedDate = dateHelperService.getSelectedDate();
@@ -66,9 +71,23 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
         } else if (vm.step === 'sn' || vm.step === 'pse') {
             $location.path('/service_delivery_dashboard/children');
         }
-    }
+    };
 
+    vm.displaySeeMore = function (detailsUrl) {
+        if (detailsUrl === '/service_delivery_dashboard/cbe') {
+            return vm.isCbeSeeMoreDisplayed;
+        } else if (detailsUrl === '/service_delivery_dashboard/thr') {
+            return vm.isTHRSeeMoreDisplayed;
+        } else if (detailsUrl === '/service_delivery_dashboard/sn') {
+            return vm.isSNSeeMoreDisplayed;
+        } else if (detailsUrl === '/service_delivery_dashboard/pse') {
+            return vm.isPSESeeMoreDisplayed;
+        }
+    };
+
+    // with "stateSave" being enabled, it will retain pagination and the sorted column number and order of sorting etc.
     vm.dtOptions = DTOptionsBuilder.newOptions()
+        .withOption('stateSave', !vm.isDetailsDisplayed)
         .withOption('ajax', {
             url: url(vm.isDetailsDisplayed ? 'service_delivery_dashboard_details' : 'service_delivery_dashboard', vm.step),
             data: $location.search(),
@@ -444,6 +463,17 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
         vm.sddTableData['children'].unshift(snForAtleast25Days);
     }
 
+    if (haveAccessToFeatures) {
+        var numberOfVHSNDConducted = {
+            'mData': 'vhnd_conducted',
+            'heading': 'Number of VHSND conducted',
+            'tooltipValue': 'Number of Village Health Sanitation and Nutrition Days (VHSNDs) organised by an AWC in a month',
+            'columnValueType': 'raw',
+            'columnValueIndicator': 'vhnd_conducted',
+        };
+        vm.sddTableData['pw_lw_children']['awc'].splice(4, 0, numberOfVHSNDConducted);
+    }
+
     vm.getTableData = function () {
         var isPwLwChildren = vm.isPwLwChildrenTab();
         var isAwc = vm.isAwcDataShown();
@@ -481,7 +511,7 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
         var dataTableColumns = [];
         for (var i = 0; i < tableData.length; i++) {
             dataTableColumns.push(DTColumnBuilder.newColumn(tableData[i]['mData'])
-                .withTitle(renderHeaderTooltip(tableData[i]['heading'], tableData[i]['tooltipValue'], tableData[i]['detailsURL']))
+                .withTitle(renderHeaderTooltip(tableData[i]['heading'], tableData[i]['tooltipValue'], tableData[i]['detailsURL'], vm.displaySeeMore(tableData[i]['detailsURL'])))
                 .renderWith(renderCellValue(tableData[i]['columnValueType'],tableData[i]['columnValueIndicator']))
                 .withClass('medium-col'));
         }
@@ -494,7 +524,7 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
         vm.dtColumns = [DTColumnBuilder.newColumn(
             locationLevelNameField
         ).withTitle(
-            locationLevelName
+            locationLevelName.toUpperCase()
         ).renderWith(renderCellValue('raw', locationLevelNameField)
         ).withClass('medium-col')];
         vm.dtColumns = vm.dtColumns.concat(vm.buildDataTable());
@@ -510,15 +540,15 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
         $compile(window.angular.element(row).contents())($scope);
     }
 
-    function renderHeaderTooltip(header, tooltipContent, detailsURL) {
+    function renderHeaderTooltip(header, tooltipContent, detailsURL, displaySeeMore) {
         var seeMore = '';
-        if (detailsURL && haveAccessToFeatures) {
+        if (detailsURL && haveAccessToFeatures && displaySeeMore) {
             seeMore = '<div class="d-flex justify-content-end">' +
                 '<span ng-click="goToDetailsPage(\''+ detailsURL +'\')"' +
                 ' class="sdd-details-link">See more</span></div>'
         }
         return '<i class="fa fa-info-circle headerTooltip" style="float: right;" >' +
-            '<div class="headerTooltipText">' + tooltipContent + '</div></i><span>' + header + '</span>' + seeMore;
+            '<div class="headerTooltipText">' + tooltipContent + '</div></i><span>' + header.toUpperCase() + '</span>' + seeMore;
     }
 
     function isZeroNullUnassignedOrDataNotEntered(value) {
@@ -567,9 +597,9 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
                         case "thr": return renderPercentageAndPartials(full.thr, haveAccessToFeatures ? full.thr_21_days : full.thr_given_21_days, haveAccessToFeatures ? full.thr_eligible : full.total_thr_candidates, 'THR');
                         case "pse": return renderPercentageAndPartials(full.pse, haveAccessToFeatures ? full.pse_21_days : full.pse_attended_21_days, haveAccessToFeatures ? full.pse_eligible : full.children_3_6, 'beneficiaries');
                         case "supNutrition": return renderPercentageAndPartials(full.sn, haveAccessToFeatures ? full.lunch_21_days : full.lunch_count_21_days, haveAccessToFeatures ? full.pse_eligible : full.children_3_6, 'beneficiaries');
-                        case "thrAtleast25": return renderPercentageAndPartials(full.thr, full.thr_25_days, full.thr_eligible);
-                        case "pseAtleast25": return renderPercentageAndPartials(full.pse, full.pse_25_days, full.pse_eligible);
-                        case "snAtleast25": return renderPercentageAndPartials(full.sn, full.lunch_25_days, full.pse_eligible);
+                        case "thrAtleast25": return renderPercentageAndPartials(full.thr, full.thr_25_days, full.thr_eligible, 'THR');
+                        case "pseAtleast25": return renderPercentageAndPartials(full.pse, full.pse_25_days, full.pse_eligible, 'beneficiaries');
+                        case "snAtleast25": return renderPercentageAndPartials(full.sn, full.lunch_25_days, full.pse_eligible, 'beneficiaries');
                         case "num_awcs_conducted_cbe": return renderPercentageAndPartials(full.cbe, full.num_awcs_conducted_cbe, full.num_launched_awcs, 'CBE');
                         case "pse0": return renderPercentageAndPartials(full.pse_0_days_val, full.pse_0_days, full.pse_eligible, 'beneficiaries');
                         case "pse17": return renderPercentageAndPartials(full.pse_1_7_days_val, full.pse_1_7_days, full.pse_eligible, 'beneficiaries');
@@ -598,12 +628,23 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
 
     }
 
+    function isAllRow(rowData) {
+        return (rowData['state_name'] === 'All' && rowData['district_name'] === 'All' && rowData['block_name'] === 'All'
+            && rowData['awc_name'] === 'All' && rowData['supervisor_name'] === 'All');
+    }
+
     function simpleRender(full, indicator, outputType) {
         var output;
         if (outputType === 'raw') {
             output = full[indicator] !== vm.dataNotEntered ? full[indicator] : vm.dataNotEntered;
         } else if (outputType === 'booleanRaw') {
-            output = full[indicator] !== vm.dataNotEntered ? (full[indicator] ? 'Yes' : 'No') : vm.dataNotEntered;
+            if (vm.isAwcDataShown() && isAllRow(full) && indicator==='num_awcs_conducted_cbe') {
+                output = full['cbe_sector_percent'];
+            } else if (vm.isAwcDataShown() && isAllRow(full) && indicator==='num_awcs_conducted_vhnd') {
+                output = full['vhnd_sector_value'];
+            } else {
+                output = full[indicator] !== vm.dataNotEntered ? (full[indicator] ? 'Yes' : 'No') : vm.dataNotEntered;
+            }
         }
         return isMobile ? output : '<div>' + output + '</div>';
     }
@@ -775,6 +816,18 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
         }).then(
             function (response) {
                 vm.data = response.data.data;
+                var dataAvailable = vm.data && vm.data.length !== 0;
+                var isAwcsLaunched = dataAvailable && !isZeroNullUnassignedOrDataNotEntered(vm.data[0]['num_launched_awcs']);
+                var beneficiariesExpected = dataAvailable && !isZeroNullUnassignedOrDataNotEntered(vm.data[0]['pse_eligible']);
+
+                vm.isCbeSeeMoreDisplayed = isAwcsLaunched;
+                vm.isTHRSeeMoreDisplayed = isAwcsLaunched && (vm.step === 'pw_lw_children') &&
+                    !isZeroNullUnassignedOrDataNotEntered(vm.data[0]['thr_eligible']);
+                vm.isSNSeeMoreDisplayed = isAwcsLaunched && (vm.step === 'children') &&
+                    beneficiariesExpected;
+                vm.isPSESeeMoreDisplayed = isAwcsLaunched && (vm.step === 'children') &&
+                    beneficiariesExpected;
+
                 vm.dataAggregationLevel = response.data.aggregationLevel;
                 vm.totalNumberOfEntries = response.data.recordsTotal;
                 vm.setDtColumns();

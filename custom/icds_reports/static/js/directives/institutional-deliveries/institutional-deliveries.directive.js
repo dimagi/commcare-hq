@@ -16,7 +16,7 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
     vm.data = {
         legendTitle: 'Percentage Children',
     };
-    vm.filters = ['gender', 'age'];
+    vm.filters = ['gender', 'age', 'data_period'];
     vm.rightLegend = {
         info: 'Of the total number of women enrolled for Anganwadi services who gave birth in the given month, the percentage who delivered in a public or private medical facility.\n' +
         '\n' +

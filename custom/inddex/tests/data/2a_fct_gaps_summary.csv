@@ -3,19 +3,19 @@ fct_gap_code,fct_gap_desc,food_type,fct_gap_food_type_total
 1,FCT data available,non_std_food_item,0
 1,FCT data available,std_recipe,0
 1,FCT data available,non_std_recipe,0
-2,Using FCT data from base term food code,food_item,3
-2,Using FCT data from base term food code,non_std_food_item,0
-2,Using FCT data from base term food code,std_recipe,0
-2,Using FCT data from base term food code,non_std_recipe,0
-3,Using FCT data from reference food code,food_item,3
-3,Using FCT data from reference food code,non_std_food_item,0
-3,Using FCT data from reference food code,std_recipe,0
-3,Using FCT data from reference food code,non_std_recipe,0
-7,Ingredients contain FCT data gaps,food_item,0
-7,Ingredients contain FCT data gaps,non_std_food_item,0
-7,Ingredients contain FCT data gaps,std_recipe,2
-7,Ingredients contain FCT data gaps,non_std_recipe,1
-8,No FCT data available,food_item,0
-8,No FCT data available,non_std_food_item,2
-8,No FCT data available,std_recipe,0
-8,No FCT data available,non_std_recipe,2
+3,using FCT data from base term food code,food_item,3
+3,using FCT data from base term food code,non_std_food_item,0
+3,using FCT data from base term food code,std_recipe,0
+3,using FCT data from base term food code,non_std_recipe,0
+5,using FCT data from reference food code,food_item,3
+5,using FCT data from reference food code,non_std_food_item,0
+5,using FCT data from reference food code,std_recipe,0
+5,using FCT data from reference food code,non_std_recipe,0
+7,ingredient(s) contain FCT data gaps,food_item,0
+7,ingredient(s) contain FCT data gaps,non_std_food_item,0
+7,ingredient(s) contain FCT data gaps,std_recipe,2
+7,ingredient(s) contain FCT data gaps,non_std_recipe,1
+9,no FCT data available,food_item,0
+9,no FCT data available,non_std_food_item,2
+9,no FCT data available,std_recipe,0
+9,no FCT data available,non_std_recipe,1
