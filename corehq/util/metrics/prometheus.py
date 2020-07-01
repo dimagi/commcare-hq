@@ -36,7 +36,7 @@ class PrometheusMetrics(HqMetrics):
             pass
 
     def _gauge(self, name: str, value: float, tags: Dict[str, str]=None, documentation: str = '',
-               multiprocess_mode: Literal[MPM_ALL, MPM_LIVEALL, MPM_LIVESUM, MPM_MAX, MPM_MIN]=MPM_ALL):
+               multiprocess_mode: str=MPM_ALL):
         """
         See https://prometheus.io/docs/concepts/metric_types/#histogram
 

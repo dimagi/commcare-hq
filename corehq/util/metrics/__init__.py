@@ -166,7 +166,7 @@ def metrics_counter(name: str, value: float = 1, tags: Dict[str, str] = None, do
 
 
 def metrics_gauge(name: str, value: float, tags: Dict[str, str] = None, documentation: str = '',
-                  multiprocess_mode: Literal[MPM_ALL, MPM_LIVEALL, MPM_LIVESUM, MPM_MAX, MPM_MIN]=MPM_ALL):
+                  multiprocess_mode: str=MPM_ALL):
     """
     kwargs:
         multiprocess_mode: See PrometheusMetrics._gauge for documentation. This is only passed
