@@ -119,7 +119,7 @@
                            popover-placement="top-right"
                            popover-trigger="'mouseenter'"></i></label>
                     <div class="col-sm-6">
-                        <ui-select ng-model="$ctrl.selectedDataPeriod" theme="bootstrap">
+                        <ui-select ng-model="$ctrl.selectedDataPeriod" theme="bootstrap" on-select="$ctrl.onDataPeriodSelect($item)">
                         <ui-select-match placeholder="Chose the data period"><span ng-bind="$select.selected.name"></span></ui-select-match>
                           <ui-select-choices repeat="category.id as category in $ctrl.dataPeriods | propsFilter: {name: $select.search}">
                             <div ng-bind-html="category.name"></div>
