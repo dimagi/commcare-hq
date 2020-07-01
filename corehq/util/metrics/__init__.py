@@ -118,7 +118,7 @@ from celery.task import periodic_task
 from django.conf import settings
 from corehq.util.timer import TimingContext
 from dimagi.utils.modules import to_function
-from .const import COMMON_TAGS, ALERT_INFO, MPM_ALL, MPM_LIVEALL, MPM_LIVESUM, MPM_MAX, MPM_MIN
+from .const import COMMON_TAGS, ALERT_INFO, MPM_ALL
 from .metrics import (
     DebugMetrics,
     DelegatedMetrics,
@@ -166,7 +166,7 @@ def metrics_counter(name: str, value: float = 1, tags: Dict[str, str] = None, do
 
 
 def metrics_gauge(name: str, value: float, tags: Dict[str, str] = None, documentation: str = '',
-                  multiprocess_mode: str=MPM_ALL):
+                  multiprocess_mode: str = MPM_ALL):
     """
     kwargs:
         multiprocess_mode: See PrometheusMetrics._gauge for documentation. This is only passed

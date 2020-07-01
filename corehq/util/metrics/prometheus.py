@@ -9,7 +9,7 @@ from prometheus_client import CollectorRegistry, multiprocess, push_to_gateway
 from corehq.util.soft_assert import soft_assert
 from corehq.util.metrics.metrics import HqMetrics
 
-from .const import MPM_ALL, MPM_LIVEALL, MPM_LIVESUM, MPM_MAX, MPM_MIN
+from .const import MPM_ALL
 
 
 prometheus_soft_assert = soft_assert(to=[
@@ -36,7 +36,7 @@ class PrometheusMetrics(HqMetrics):
             pass
 
     def _gauge(self, name: str, value: float, tags: Dict[str, str]=None, documentation: str = '',
-               multiprocess_mode: str=MPM_ALL):
+               multiprocess_mode: str = MPM_ALL):
         """
         See https://prometheus.io/docs/concepts/metric_types/#histogram
 
