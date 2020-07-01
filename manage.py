@@ -90,9 +90,11 @@ def _set_source_root_parent(source_root_parent):
 
     """
     filedir = os.path.dirname(__file__)
-    if not os.path.exists(filedir):
+    dir = os.path.join(filedir, source_root_parent)
+    if not os.path.exists(dir):
         return
-    submodules_list = os.listdir(os.path.join(filedir, source_root_parent))
+
+    submodules_list = os.listdir(dir)
     for d in submodules_list:
         if d == "__init__.py" or d == '.' or d == '..':
             continue
