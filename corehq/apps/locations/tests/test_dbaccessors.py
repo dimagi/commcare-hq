@@ -5,9 +5,8 @@ from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, WebUser
 
-from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.elastic import get_es_new
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO, USER_INDEX
-from corehq.pillows.user import transform_user_for_elasticsearch
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.es.testing import sync_users_to_es
 from pillowtop.es_utils import initialize_index_and_mapping
