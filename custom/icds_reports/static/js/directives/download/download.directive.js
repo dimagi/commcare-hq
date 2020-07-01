@@ -161,35 +161,34 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
         vm.indicators.push({id: 11, name: 'Dashboard Activity Report'});
     }
 
-    if (haveAccessToFeatures) {
-        vm.indicators.push({id: 12, name: 'Service Delivery Report'});
-        vm.indicators.push({id: 13, name: 'Child Growth Tracking Report'});
-        vm.indicators.push({id: 14, name: 'AWW Activity Report'});
-        vm.indicators.push({id: 15, name: 'Poshan Progress Report'});
-        vm.reportLayouts = [
-            {id: 'comprehensive', name: 'Comprehensive'},
-            {id: 'summary', name: 'Summary'},
-        ];
-        vm.dataPeriods = [
-            {id: 'month', name: 'Monthly'},
-            {id: 'quarter', name: 'Quarterly'},
-        ];
-        vm.beneficiaryCategories = [
-            {id: 'pw_lw_children', name: 'PW, LW & Children 0-3 years'},
-            {id: 'children_3_6', name: 'Children 3-6 years'},
-        ];
-        vm.quarters = [
-            {id: 1, name: 'Jan-Mar'},
-            {id: 2, name: 'Apr-Jun'},
-            {id: 3, name: 'Jul-Sep'},
-            {id: 4, name: 'Oct-Dec'},
-        ];
-        vm.quartersCopy = vm.quarters;
-        vm.selectedBeneficiaryCategory = 'pw_lw_children';
-        vm.selectedReportLayout = 'comprehensive';
-        vm.selectedDataPeriod = 'month';
-        vm.selectedQuarter = 1;
-    }
+    vm.indicators.push({id: 12, name: 'Service Delivery Report'});
+    vm.indicators.push({id: 13, name: 'Child Growth Tracking Report'});
+    vm.indicators.push({id: 14, name: 'AWW Activity Report'});
+    vm.indicators.push({id: 15, name: 'Poshan Progress Report'});
+    vm.reportLayouts = [
+        {id: 'comprehensive', name: 'Comprehensive'},
+        {id: 'summary', name: 'Summary'},
+    ];
+    vm.dataPeriods = [
+        {id: 'month', name: 'Monthly'},
+        {id: 'quarter', name: 'Quarterly'},
+    ];
+    vm.beneficiaryCategories = [
+        {id: 'pw_lw_children', name: 'PW, LW & Children 0-3 years'},
+        {id: 'children_3_6', name: 'Children 3-6 years'},
+    ];
+    vm.quarters = [
+        {id: 1, name: 'Jan-Mar'},
+        {id: 2, name: 'Apr-Jun'},
+        {id: 3, name: 'Jul-Sep'},
+        {id: 4, name: 'Oct-Dec'},
+    ];
+    vm.quartersCopy = vm.quarters;
+    vm.selectedBeneficiaryCategory = 'pw_lw_children';
+    vm.selectedReportLayout = 'comprehensive';
+    vm.selectedDataPeriod = 'month';
+    vm.selectedQuarter = 1;
+
     vm.THRreportTypes = [
         {id: 'consolidated', name: 'Consolidated'},
         {id: 'beneficiary_wise', name: 'Beneficiary wise'},
@@ -498,13 +497,12 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
             'pdfformat': vm.selectedPDFFormat,
             'selected_awcs': awcs.join(','),
         };
-        if (haveAccessToFeatures) {
-            taskConfig['beneficiary_category'] = vm.selectedBeneficiaryCategory;
-            taskConfig['thr_report_type'] = vm.selectedTHRreportType;
-            taskConfig['report_layout'] = vm.selectedReportLayout;
-            taskConfig['data_period'] = vm.selectedDataPeriod;
-            taskConfig['quarter'] = vm.selectedQuarter;
-        }
+        taskConfig['beneficiary_category'] = vm.selectedBeneficiaryCategory;
+        taskConfig['thr_report_type'] = vm.selectedTHRreportType;
+        taskConfig['report_layout'] = vm.selectedReportLayout;
+        taskConfig['data_period'] = vm.selectedDataPeriod;
+        taskConfig['quarter'] = vm.selectedQuarter;
+
         var selectedFilters = vm.selectedFilterOptions();
         if (vm.isChildBeneficiaryListSelected()) {
             taskConfig['filter[]'] = [];
