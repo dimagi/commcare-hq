@@ -62,5 +62,6 @@ branches:
   - sr-es-alias # Sravan June 24
   - ml/SAAS-11011-account-name-filter  # Michelle Jun 30
   - ce/user-upload-record # Cal June 30
+  - bmb/bower-to-yarn # Biyeun Jul 1
 
 submodules: {}
