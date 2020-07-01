@@ -1,23 +1,24 @@
+/* global Uint8Array */
 hqDefine("app_manager/js/details/case_claim", function () {
 
     var get = hqImport('hqwebapp/js/initial_page_data').get,
         generateSemiRandomId = function () {
         // https://stackoverflow.com/a/2117523
-        return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, function (c) {
-            return (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16);
-        });
-    };
+            return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, function (c) {
+                return (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16);
+            });
+        };
 
     var searchViewModel = function (searchProperties, includeClosed, defaultProperties, lang,
         searchButtonDisplayCondition, blacklistedOwnerIdsExpression, saveButton) {
         var self = {},
             DEFAULT_CLAIM_RELEVANT = "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0";
 
-        var itemSet = function (instance_id, instance_uri, nodeset, label, value, sort, filter) {
+        var itemSet = function (instanceId, instanceUri, nodeset, label, value, sort) {
             var self = {};
 
-            self.instance_id = ko.observable(instance_id);
-            self.instance_uri = ko.observable(instance_uri);
+            self.instance_id = ko.observable(instanceId);
+            self.instance_uri = ko.observable(instanceUri);
             self.nodeset = ko.observable(nodeset);
 
             self.label = ko.observable(label);
@@ -41,17 +42,17 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 },
                 read: function () {
                     // is the nodeset a lookup table that we know about?
-                        var itemLists = get('js_options').item_lists,
-                            itemListNodesets = _.map(itemLists, function (item) {
-                                return "instance('" + item.id + "')" + item.path;
-                            });
-                    if (itemListNodesets.indexOf(self.nodeset()) !== -1 ){
+                    var itemLists = get('js_options').item_lists,
+                        itemListNodesets = _.map(itemLists, function (item) {
+                            return "instance('" + item.id + "')" + item.path;
+                        });
+                    if (itemListNodesets.indexOf(self.nodeset()) !== -1) {
 
                         return self.nodeset();
                     } else {
                         return '';
                     }
-                }
+                },
             });
 
             // Nodeset: if the nodeset is in the list,
