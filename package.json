@@ -1,8 +1,9 @@
 {
-  "name": "CommcareHQ",
+  "name": "commcare-hq",
   "version": "0.0.1",
   "repository": "https://github.com/dimagi/commcare-hq",
-  "description": "CommcareHQ Javascript tests",
+  "description": "CommCare HQ Javascript Libraries",
+  "private": true,
   "dependencies": {
     "eslint-plugin-eslint-dimagi": "^1.0.0",
     "js-xpath": "dimagi/js-xpath#v0.0.2-rc1",
