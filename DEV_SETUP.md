@@ -232,40 +232,23 @@ names to the aliases.
 
     $ ./manage.py ptop_es_manage --flip_all_aliases
 
-### Installing Bower
+### Installing Yarn
 
-We use Bower to manage our JavaScript dependencies. In order to download the required JavaScript packages,
-you'll need to install `bower` and run `bower install`. Follow these steps to install:
+We use Yarn to manage our JavaScript dependencies. In order to download the required JavaScript packages,
+you'll need to install `yarn` and run `yarn install`. Follow these steps to install:
 
-1. If you do not already have npm:
+1. Follow [these steps](https://classic.yarnpkg.com/en/docs/install#mac-stable) to install Yarn.
 
-    For Ubuntu: In Ubuntu this is now bundled with NodeJS. An up-to-date version is available on the NodeSource
-    repository. Run the following commands:
+2. Run Yarn with:
 
-        $ curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
-        $ sudo apt-get install -y nodejs
-
-    For macOS: Install with Homebrew:
-
-        $ brew install node
-
-    For others: install [npm](https://www.npmjs.com/)
-
-2. Install Bower:
-
-        $ sudo npm -g install bower
-
-3. Run Bower with:
-
-        $ bower install
-
-
+        $ yarn install
+        
 ### Install JS-XPATH
 
 This is required for the server side xpath validation. See [package.json](package.json) for exact version.
 
 ```
-npm install dimagi/js-xpath#v0.0.2-rc1
+yarn add dimagi/js-xpath#v0.0.2-rc1
 ```
 
 ### Using LESS: 2 Options
@@ -450,11 +433,11 @@ See https://github.com/nose-devs/nose/blob/master/nose/plugins/testid.py
 
 ### Setup
 
-In order to run the JavaScript tests you'll need to install the required npm packages:
+In order to run the JavaScript tests you'll need to install the required `yarn`/`npm` packages:
 
-    $ npm install
+    $ yarn install
 
-It's recommended to install grunt globally in order to use grunt from the command line:
+It's recommended to install grunt globally (with `npm`) in order to use grunt from the command line:
 
     $ npm install -g grunt
     $ npm install -g grunt-cli
