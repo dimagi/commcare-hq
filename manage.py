@@ -67,6 +67,7 @@ def _patch_gevent_if_required(args, gevent_commands):
 
 def init_hq_python_path():
     _set_source_root_parent('submodules')
+    _set_source_root_parent('extra')
     _set_source_root(os.path.join('corehq', 'ex-submodules'))
     _set_source_root(os.path.join('custom', '_legacy'))
 
@@ -89,6 +90,8 @@ def _set_source_root_parent(source_root_parent):
 
     """
     filedir = os.path.dirname(__file__)
+    if not os.path.exists(filedir):
+        return
     submodules_list = os.listdir(os.path.join(filedir, source_root_parent))
     for d in submodules_list:
         if d == "__init__.py" or d == '.' or d == '..':
