@@ -374,7 +374,7 @@ def update_linked_app(app, master_app_id_or_build, user_id):
         app.reapply_overrides()
         app.save()
 
-    app.domain_link.update_last_pull('app', user_id, model_details=AppLinkDetail(app_id=app._id).to_json())
+    app.domain_link.update_last_pull('app', user_id, model_detail=AppLinkDetail(app_id=app._id).to_json())
     return app
 
 
