@@ -108,6 +108,31 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
         .withDOM('ltipr')
         .withOption('initComplete', function() {
              $compile(angular.element('thead').contents())($scope);
+        })
+        .withOption('fnDrawCallback', function () {
+            // At any given time, only one table is available. Either children table
+            if (storageService.getKey('resetChildrenTable') && vm.step === 'children') {
+                $('#sddChildrenTable').DataTable().page(0).draw(false);
+                storageService.setKey('resetChildrenTable', false);
+            }
+            if (storageService.getKey('resetPwLwChildrenTable') && vm.step === 'pw_lw_children') {
+                $('#sddPwLwChildrenTable').DataTable().page(0).draw(false);
+                storageService.setKey('resetPwLwChildrenTable', false);
+            }
+            var currentLocationId = $location.search()['location_id'];
+            if (currentLocationId !== storageService.getKey('currentLocationId')) {
+                storageService.setKey('currentLocationId', currentLocationId);
+                if (vm.step === 'pw_lw_children') {
+                    $('#sddPwLwChildrenTable').DataTable().page(0).draw(false);
+                    storageService.setKey('resetChildrenTable', true);
+                } else if (vm.step === 'children') {
+                    $('#sddChildrenTable').DataTable().page(0).draw(false);
+                    storageService.setKey('resetPwLwChildrenTable', true);
+                } else if (vm.step !== 'pw_lw_children' && vm.step !== 'children') {
+                    storageService.setKey('resetChildrenTable', true);
+                    storageService.setKey('resetPwLwChildrenTable', true);
+                }
+            }
         });
 
     vm.getLocationLevelNameAndField = function () {
