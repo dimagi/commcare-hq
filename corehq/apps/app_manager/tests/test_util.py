@@ -179,5 +179,4 @@ class TestGlobalAppConfig(TestCase):
     def _fresh_config(self, app_id):
         config = GlobalAppConfig.by_app_id(self.domain, app_id)
         config.app_prompt = 'on'
-        config.get_latest_app_version.clear(config, build_profile_id='')
         return config
