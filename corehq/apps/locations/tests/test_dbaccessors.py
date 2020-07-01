@@ -1,5 +1,5 @@
+import mock
 from django.test import TestCase
-from mock import patch
 
 from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.domain.shortcuts import create_domain
@@ -9,6 +9,7 @@ from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO, USER_INDEX
 from corehq.pillows.user import transform_user_for_elasticsearch
 from corehq.util.elastic import ensure_index_deleted
+from corehq.util.es.testing import sync_users_to_es
 from pillowtop.es_utils import initialize_index_and_mapping
 
 
@@ -32,6 +33,8 @@ from .util import make_loc
 class TestUsersByLocation(TestCase):
 
     @classmethod
+    @sync_users_to_es()
+    @mock.patch('corehq.pillows.user.get_group_id_name_map_by_user', mock.Mock(return_value=[]))
     def setUpClass(cls):
         super(TestUsersByLocation, cls).setUpClass()
         initialize_index_and_mapping(get_es_new(), USER_INDEX_INFO)
@@ -60,13 +63,6 @@ class TestUsersByLocation(TestCase):
         )
         cls.george.set_location(cls.domain, cls.meereen)
 
-        for user in [cls.varys, cls.tyrion, cls.daenerys, cls.george]:
-            cls._send_user_to_es(user)
-
-    @classmethod
-    def _send_user_to_es(cls, user):
-        with patch('corehq.pillows.user.get_group_id_name_map_by_user', return_value=[]):
-            send_to_elasticsearch('users', transform_user_for_elasticsearch(user.to_json()))
         get_es_new().indices.refresh(USER_INDEX)
 
     @classmethod
