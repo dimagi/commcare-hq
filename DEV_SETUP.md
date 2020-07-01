@@ -325,13 +325,13 @@ Prerequisites:
 To get set up, download the settings file and `formplayer.jar`. You may run this
 in the commcare-hq repo root.
 
-    $ curl https://raw.githubusercontent.com/dimagi/formplayer/master/config/application.example.properties -o formplayer.properties
+    $ curl https://raw.githubusercontent.com/dimagi/formplayer/master/config/application.example.properties -o application.properties
     $ curl https://s3.amazonaws.com/dimagi-formplayer-jars/latest-successful/formplayer.jar -o formplayer.jar
 
 Thereafter, to run Formplayer, navigate to the dir where you installed them
 above (probably the repo root), and run:
 
-    $ java -jar formplayer.jar --spring.config.name=formplayer
+    $ java -jar formplayer.jar
 
 This starts a process in the foreground, so you'll need to keep it open as long
 as you plan on using Formplayer. If Formplayer stops working, you can try
