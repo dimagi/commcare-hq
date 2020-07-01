@@ -34,7 +34,7 @@ def state_details():
                 ON (
                 awc.supervisor_id = l.supervisor_id
                 AND l.aggregation_level=awc.aggregation_level )
-            WHERE l.month='2020-04-01' AND l.aggregation_level=4 AND awc.supervisor_is_test<>1 AND awc.state_is_test<>1
+            WHERE l.month='2020-06-01' AND l.aggregation_level=4 AND awc.supervisor_is_test<>1 AND awc.state_is_test<>1
         """
     return _run_custom_sql_script(query)
 
@@ -57,7 +57,7 @@ class Command(BaseCommand):
 
     def handle(self, **options):
 
-        query = FormES().domain('icds-cas').xmlns('http://openrosa.org/formdesigner/327e11f3c04dfc0a7fea9ee57d7bb7be83475309').submitted(gte=datetime(2020,5,1), lt=datetime(2020,6,1))
+        query = FormES().domain('icds-cas').xmlns('http://openrosa.org/formdesigner/327e11f3c04dfc0a7fea9ee57d7bb7be83475309').submitted(gte=datetime(2020,6,1), lt=datetime(2020,7,1))
         forms_list = query.run().hits
 
         users = []
@@ -128,7 +128,7 @@ class Command(BaseCommand):
             fast_rows.update({location[2]: row})
         query = FormES().domain('icds-cas').xmlns(
             'http://openrosa.org/formdesigner/b8273b657bb097eb6ba822663b7191ff6bc276ff').submitted(
-            gte=datetime(2020, 5, 1), lt=datetime(2020, 6, 1))
+            gte=datetime(2020, 6, 1), lt=datetime(2020, 7, 1))
         forms_list = query.run().hits
         users = []
         for form in forms_list:

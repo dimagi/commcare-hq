@@ -4,8 +4,8 @@ CREATE TABLE "temp_visit_table_2_months" AS (
         COUNT (DISTINCT awc_id) as unique_visits_2_months
     FROM "ucr_icds-cas_static-awc_mgt_forms_ad1b11f0"
     WHERE
-        submitted_on>= '2020-04-01'
-        AND submitted_on<'2020-06-01'
+        submitted_on>= '2020-05-01'
+        AND submitted_on<'2020-07-01'
         AND location_entered IS NOT NULL
         AND location_entered <> ''
     GROUP BY location_id
@@ -28,19 +28,6 @@ CREATE TABLE "temp_visit_table_2_months" AS (
 --                                  Filter: ((location_entered IS NOT NULL) AND (submitted_on >= '2020-02-01'::date) AND (submitted_on < '2020-04-01'::date) AND (location_entered <> ''::text))
 -- (13 rows)
 
-CREATE TABLE "temp_visit_table_april" AS (
-    SELECT
-        location_id as supervisor_id,
-        COUNT (DISTINCT awc_id) as unique_visits_april_month
-    FROM "ucr_icds-cas_static-awc_mgt_forms_ad1b11f0"
-    WHERE
-        submitted_on>= '2020-04-01'
-        AND submitted_on<'2020-05-01'
-        AND location_entered IS NOT NULL
-        AND location_entered <> ''
-    GROUP BY location_id
-);
-
 CREATE TABLE "temp_visit_table_may" AS (
     SELECT
         location_id as supervisor_id,
@@ -49,6 +36,19 @@ CREATE TABLE "temp_visit_table_may" AS (
     WHERE
         submitted_on>= '2020-05-01'
         AND submitted_on<'2020-06-01'
+        AND location_entered IS NOT NULL
+        AND location_entered <> ''
+    GROUP BY location_id
+);
+
+CREATE TABLE "temp_visit_table_june" AS (
+    SELECT
+        location_id as supervisor_id,
+        COUNT (DISTINCT awc_id) as unique_visits_june_month
+    FROM "ucr_icds-cas_static-awc_mgt_forms_ad1b11f0"
+    WHERE
+        submitted_on>= '2020-06-01'
+        AND submitted_on<'2020-07-01'
         AND location_entered IS NOT NULL
         AND location_entered <> ''
     GROUP BY location_id
@@ -63,8 +63,8 @@ COPY(SELECT
     CASE WHEN al.num_supervisor_launched>0 THEN 'Launched' ELSE 'UnLaunched' END as supervisor_launched_status,
     awc.num_awcs as total_awcs,
     ucr.unique_visits_2_months as visited_awcs,
-    ucr_april.unique_visits_april_month as visited_awcs_april,
     ucr_may.unique_visits_may_month as visited_awcs_may,
+    ucr_june.unique_visits_june_month as visited_awcs_june,
     CASE
         WHEN awc.num_awcs = ucr.unique_visits THEN 'YES'
         ELSE 'NO'
@@ -72,19 +72,19 @@ COPY(SELECT
     FROM "agg_ls" al
     LEFT JOIN "temp_visit_table_2_months" ucr
         ON al.supervisor_id = ucr.supervisor_id
-    LEFT JOIN "temp_visit_table_april" ucr_april
-        ON al.supervisor_id = ucr_april.supervisor_id
     LEFT JOIN "temp_visit_table_may" ucr_may
         ON al.supervisor_id = ucr_may.supervisor_id
+    LEFT JOIN "temp_visit_table_june" ucr_june
+        ON al.supervisor_id = ucr_june.supervisor_id
     LEFT JOIN "awc_location_local" t
         ON (t.supervisor_id = al.supervisor_id
         AND t.aggregation_level=al.aggregation_level
         AND t.aggregation_level=4)
-    LEFT JOIN "agg_awc_2020-05-01_4" awc
+    LEFT JOIN "agg_awc_2020-06-01_4" awc
         ON (
             awc.supervisor_id = al.supervisor_id
-            AND al.aggregation_level=awc.aggregation_level AND awc.aggregation_level=4 AND awc.month='2020-05-01')
-    WHERE t.state_is_test<>1 AND t.supervisor_is_test<>1 AND al.aggregation_level=4 AND al.month='2020-05-01') TO '/tmp/ls_data_pull_may.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
+            AND al.aggregation_level=awc.aggregation_level AND awc.aggregation_level=4 AND awc.month='2020-06-01')
+    WHERE t.state_is_test<>1 AND t.supervisor_is_test<>1 AND al.aggregation_level=4 AND al.month='2020-06-01') TO '/tmp/ls_data_pull_june.csv' DELIMITER ',' CSV HEADER ENCODING 'UTF-8';
 -- QUERY PLAN
 -- ------------------------------------------------------------------------------------------------------------------------------------
 --  Hash Right Join  (cost=7269.36..19669.66 rows=26789 width=115)
