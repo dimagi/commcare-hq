@@ -12,7 +12,7 @@ from corehq.apps.hqwebapp.crispy import HQFormHelper, HQModalFormHelper
 
 from .models import (
     CUSTOM_DATA_FIELD_PREFIX,
-    SQLCustomDataFieldsDefinition,
+    CustomDataFieldsDefinition,
     is_system_key,
 )
 
@@ -59,10 +59,11 @@ class CustomDataEditor(object):
     @property
     @memoized
     def model(self):
-        return SQLCustomDataFieldsDefinition.get_or_create(
+        definition = CustomDataFieldsDefinition.get_or_create(
             self.domain,
             self.field_view.field_type,
         )
+        return definition or CustomDataFieldsDefinition()
 
     def is_valid(self):
         return not self.errors
@@ -181,8 +182,10 @@ class CustomDataEditor(object):
 
         msg = """
         <strong>Warning!</strong>
-        This data is not part of the specified user fields and will be deleted when you save.
-        You can add the fields back <a href="{}">here</a> to prevent this deletion.
+        This data is not part of the specified user fields and will be
+        deleted when you re-save this user.
+        You can add the fields back <a href="{}">here</a> to prevent this
+        deletion.
         """.format(reverse(
             self.field_view.urlname, args=[self.domain]
         ))

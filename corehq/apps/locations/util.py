@@ -111,8 +111,8 @@ def parent_child(domain):
 
 def get_location_data_model(domain):
     from .views import LocationFieldsView
-    from corehq.apps.custom_data_fields.models import SQLCustomDataFieldsDefinition
-    return SQLCustomDataFieldsDefinition.get_or_create(
+    from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
+    return CustomDataFieldsDefinition.get_or_create(
         domain,
         LocationFieldsView.field_type,
     )
@@ -207,7 +207,7 @@ class LocationExporter(object):
         ])
         for loc_type in self.location_types:
             additional_headers = []
-            additional_headers.extend('data: {}'.format(f.slug) for f in self.data_model.get_fields())
+            additional_headers.extend('data: {}'.format(f.slug) for f in self.data_model.fields)
             if self.include_consumption_flag and loc_type.name not in self.administrative_types:
                 additional_headers.extend('consumption: {}'.format(code) for code in self.product_codes)
             additional_headers.append(LOCATION_SHEET_HEADERS_OPTIONAL['uncategorized_data'])
@@ -240,7 +240,7 @@ class LocationExporter(object):
                     'do_delete': '',
                 }
                 row = [row_data[attr] for attr in LOCATION_SHEET_HEADERS_BASE.keys()]
-                for field in self.data_model.get_fields():
+                for field in self.data_model.fields:
                     row.append(model_data.get(field.slug, ''))
 
                 if include_consumption:

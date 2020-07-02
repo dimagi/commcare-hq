@@ -28,7 +28,7 @@ from corehq.apps.commtrack.util import (
 from corehq.apps.commtrack.views import BaseCommTrackManageView
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.custom_data_fields.edit_model import CustomDataModelMixin
-from corehq.apps.custom_data_fields.models import SQLCustomDataFieldsDefinition
+from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
@@ -357,11 +357,11 @@ def product_importer_job_poll(request, domain, download_id,
 
 def download_products(request, domain):
     def _parse_custom_properties(product):
-        product_data_model = SQLCustomDataFieldsDefinition.get_or_create(
+        product_data_model = CustomDataFieldsDefinition.get_or_create(
             domain,
             ProductFieldsView.field_type
         )
-        product_data_fields = [f.slug for f in product_data_model.get_fields()]
+        product_data_fields = [f.slug for f in product_data_model.fields]
 
         model_data = {}
         uncategorized_data = {}
