@@ -557,17 +557,6 @@ class FactSheetsReport(object):
         ]
         return fact_sheet_data_config
 
-    def data_sources(self, config):
-        fact_sheet_datasources = dict()
-        for datasource_name, datasource_class in FACT_SHEET_DATASOURCES_NAMES.items():
-            fact_sheet_datasources[datasource_name] = datasource_class(
-                config=config,
-                loc_level=self.loc_level,
-                show_test=self.show_test,
-                beta=self.beta
-            )
-        return fact_sheet_datasources
-
     def _get_collected_sections(self, config_list):
         sections_by_slug = OrderedDict()
         for config in config_list:
