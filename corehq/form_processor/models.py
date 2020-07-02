@@ -151,6 +151,7 @@ class Attachment(IsImageMixin):
             return BytesIO(self.content)
         fileobj = self.raw_content.open()
 
+        # TODO remove when Django 1 is no longer supported
         if fileobj is None:
             assert not isinstance(self.raw_content, BlobMeta), repr(self)
             # work around Django 1.11 bug, fixed in 2.0
