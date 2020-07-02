@@ -81,7 +81,6 @@
     "nvd3": "1.1.10",
     "nvd3-1.8.6": "npm:nvd3#1.8.6",
     "perfect-scrollbar": "^1.5.0",
-    "phantomjs-prebuilt": "^2.1.16",
     "quicksearch": "DeuxHuitHuit/quicksearch#2.2.1",
     "r.js": "^1.0.3",
     "requirejs": "~2.3.1",
