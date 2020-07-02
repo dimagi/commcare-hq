@@ -315,7 +315,7 @@ Prerequisites:
 
       $ sudo apt install default-jre
 
-+ [Initialize formplayer database](https://github.com/dimagi/formplayer#building-and-running).
++ [Initialize Formplayer database](https://github.com/dimagi/formplayer#building-and-running).
   The password for the "commcarehq" user is in the localsettings.py file
   in the `DATABASES` dictionary.
 
