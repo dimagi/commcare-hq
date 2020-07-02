@@ -623,21 +623,34 @@ class FactSheetsReport(object):
 
         needed_data_sources = self._get_needed_data_sources(config)
 
-        data_sources = [
-            data_source.get_data()
-            for k, data_source in self.data_sources(self.config).items()
-            if k in needed_data_sources
-        ]
-
-        all_data = self._get_all_data(data_sources)
-
-        sql_location = self.config.get('sql_location')
+        data_sources = list()
         months = [
             dt.strftime("%b %Y") for dt in rrule(
                 MONTHLY,
                 dtstart=self.config['two_before'],
                 until=self.config['month'])
         ]
+
+        for data_source_name in needed_data_sources:
+            data_row = list()
+            for month in months:
+                selected_month = parse(month).date().replace(day=1)
+                month_config = self.config.copy()
+                month_config['month'] = selected_month
+
+                data_source = FACT_SHEET_DATASOURCES_NAMES[data_source_name](
+                    config=month_config,
+                    loc_level=self.loc_level,
+                    show_test=self.show_test,
+                    beta=self.beta
+                )
+                data_row += data_source.get_data()
+
+            data_sources.append(data_row)
+
+        all_data = self._get_all_data(data_sources)
+
+        sql_location = self.config.get('sql_location')
 
         for month in months:
             data_for_month = False
