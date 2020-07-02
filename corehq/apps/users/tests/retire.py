@@ -50,10 +50,10 @@ class RetireUserTestCase(TestCase):
         self.other_username = 'other-user@test.commcarehq.org'
         self.password = "s3cr3t"
 
-        self.commcare_user = CommCareUser.create(self.domain, self.username, self.password)
+        self.commcare_user = CommCareUser.create(self.domain, self.username, self.password, None, None)
         self.commcare_user.save()
 
-        self.other_user = CommCareUser.create(self.domain, self.other_username, self.password)
+        self.other_user = CommCareUser.create(self.domain, self.other_username, self.password, None, None)
         self.other_user.save()
 
     def tearDown(self):

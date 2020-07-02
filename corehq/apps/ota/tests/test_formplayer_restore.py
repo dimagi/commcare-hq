@@ -25,7 +25,7 @@ class FormplayerRestoreTest(TestCase):
         super(FormplayerRestoreTest, cls).setUpClass()
         create_domain(cls.domain)
         create_domain(cls.wrong_domain)
-        cls.commcare_user = CommCareUser.create(cls.domain, cls.username, '123')
+        cls.commcare_user = CommCareUser.create(cls.domain, cls.username, '123', None, None)
         cls.uri = reverse('ota_restore', args=[cls.domain])
         cls.uri_wrong_domain = reverse('ota_restore', args=[cls.wrong_domain])
 

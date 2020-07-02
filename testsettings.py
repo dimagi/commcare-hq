@@ -137,3 +137,6 @@ METRICS_PROVIDERS = [
     'corehq.util.metrics.datadog.DatadogMetrics',
     'corehq.util.metrics.prometheus.PrometheusMetrics',
 ]
+
+# timeout faster in tests
+ES_SEARCH_TIMEOUT = 5

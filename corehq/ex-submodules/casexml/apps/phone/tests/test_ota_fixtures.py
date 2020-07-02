@@ -26,7 +26,7 @@ class OtaFixtureTest(TestCase):
     def setUpClass(cls):
         super(OtaFixtureTest, cls).setUpClass()
         cls.domain = Domain.get_or_create_with_name(DOMAIN, is_active=True)
-        cls.user = CommCareUser.create(DOMAIN, 'bob', 'mechanic')
+        cls.user = CommCareUser.create(DOMAIN, 'bob', 'mechanic', None, None)
         cls.group1 = Group(domain=DOMAIN, name='group1', case_sharing=True, users=[cls.user._id])
         cls.group1.save()
         cls.group2 = Group(domain=DOMAIN, name='group2', case_sharing=True, users=[cls.user._id])

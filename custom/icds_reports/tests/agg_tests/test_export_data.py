@@ -1,26 +1,33 @@
-from datetime import date, datetime
 import json
+from datetime import date, datetime
 
+import mock
 from django.core.serializers.json import DjangoJSONEncoder
 from django.test.testcases import TestCase
-import mock
 
+from custom.icds_reports.const import (
+    THR_REPORT_CONSOLIDATED,
+    THR_REPORT_BENEFICIARY_TYPE,
+    THR_REPORT_DAY_BENEFICIARY_TYPE
+)
+from custom.icds_reports.reports.incentive import IncentiveReport
+from custom.icds_reports.reports.service_delivery_report import ServiceDeliveryReport
+from custom.icds_reports.reports.take_home_ration import TakeHomeRationExport
 from custom.icds_reports.sqldata.exports.awc_infrastructure import AWCInfrastructureExport
+from custom.icds_reports.sqldata.exports.aww_activity_report import AwwActivityExport
 from custom.icds_reports.sqldata.exports.beneficiary import BeneficiaryExport
 from custom.icds_reports.sqldata.exports.children import ChildrenExport
 from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
 from custom.icds_reports.sqldata.exports.growth_tracker_report import GrowthTrackerExport
 from custom.icds_reports.sqldata.exports.lady_supervisor import LadySupervisorExport
+from custom.icds_reports.sqldata.exports.poshan_progress_report import PoshanProgressReport
 from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExport
 from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
-from custom.icds_reports.reports.incentive import IncentiveReport
-from custom.icds_reports.reports.take_home_ration import TakeHomeRationExport
-from custom.icds_reports.utils import india_now
+from custom.icds_reports.tasks import _aggregate_inactive_aww_agg
 
 
 class TestExportData(TestCase):
     maxDiff = None
-
 
     @classmethod
     def setUpClass(cls):
@@ -31,6 +38,16 @@ class TestExportData(TestCase):
             new=mock.Mock(return_value=cls.now)
         )
         cls.india_now_mock_gtr.start()
+        cls.india_now_mock_ppr = mock.patch(
+            'custom.icds_reports.sqldata.exports.poshan_progress_report.india_now',
+            new=mock.Mock(return_value=cls.now)
+        )
+        cls.india_now_mock_ppr.start()
+        cls.india_now_mock_aww_activity = mock.patch(
+            'custom.icds_reports.sqldata.exports.aww_activity_report.india_now',
+            new=mock.Mock(return_value=cls.now)
+        )
+        cls.india_now_mock_aww_activity.start()
         cls.india_now_mock_thr = mock.patch(
             'custom.icds_reports.reports.take_home_ration.india_now',
             new=mock.Mock(return_value=cls.now)
@@ -41,11 +58,19 @@ class TestExportData(TestCase):
             new=mock.Mock(return_value=cls.now)
         )
         cls.other_india_now_mock.start()
+        cls.india_now_mock_sdr = mock.patch(
+            'custom.icds_reports.reports.service_delivery_report.india_now',
+            new=mock.Mock(return_value=cls.now)
+        )
+        cls.india_now_mock_sdr.start()
 
     @classmethod
     def tearDownClass(cls):
         cls.india_now_mock_gtr.stop()
+        cls.india_now_mock_ppr.stop()
+        cls.india_now_mock_aww_activity.stop()
         cls.india_now_mock_thr.stop()
+        cls.india_now_mock_sdr.stop()
         cls.other_india_now_mock.stop()
         super(TestExportData, cls).tearDownClass()
 
@@ -56,6 +81,281 @@ class TestExportData(TestCase):
             },
         ).get_excel_data('b1')[0][0]
         self.assertEqual(data, "Children")
+
+    def test_thr_report_with_feature_flag(self):
+        location = 'b1'
+        data = TakeHomeRationExport(
+            location=location,
+            month=date(2017, 5, 1),
+            loc_level=3,
+            report_type=THR_REPORT_CONSOLIDATED,
+            beta=True
+        ).get_excel_data()
+        self.assertListEqual(
+            data,
+            [['Take Home Ration', [['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name',
+                                    'AWW Phone No.', 'Total No. of Beneficiaries eligible for THR',
+                                    'Total No. of beneficiaries received THR in given month',
+                                    'Total No of Pictures taken by AWW'],
+                                   ['st1', 'd1', 'b1', 's1', 'a1', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's1', 'a17', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's1', 'a25', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's1', 'a33', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's1', 'a41', 'Data Not Entered',
+                                    'Data Not Entered', 2, 0, 0],
+                                   ['st1', 'd1', 'b1', 's1', 'a49', 'Data Not Entered', 'Data Not Entered',
+                                    11, 0, 0],
+                                   ['st1', 'd1', 'b1', 's1', 'a9', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's2', 'a10', 'Data Not Entered', 'Data Not Entered',
+                                    10, 0, 0],
+                                   ['st1', 'd1', 'b1', 's2', 'a18', 'Data Not Entered', 'Data Not Entered',
+                                    15, 1, 4],
+                                   ['st1', 'd1', 'b1', 's2', 'a2', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's2', 'a26', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's2', 'a34', 'Data Not Entered', 'Data Not Entered',
+                                    7, 0, 0],
+                                   ['st1', 'd1', 'b1', 's2', 'a42', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's2', 'a50', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched']]],
+             ['Export Info', [
+                 ['Generated at', self.now],
+                 ['State', 'st1'],
+                 ['District', 'd1'],
+                 ['Block', 'b1'],
+                 ['Month', 'May'],
+                 ['Year', 2017]]
+              ]
+
+             ]
+        )
+
+    def test_thr_report_beneficiary_wise(self):
+        location = 'b1'
+        data = TakeHomeRationExport(
+            location=location,
+            month=date(2017, 5, 1),
+            loc_level=3,
+            report_type=THR_REPORT_BENEFICIARY_TYPE,
+            beta=True
+        ).get_excel_data()
+        self.assertListEqual(
+            data,
+            [[
+                'Take Home Ration',
+                [
+                    [
+                        'State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name', 'AWW Phone No.',
+                        'Total No. of PW eligible for THR', 'Total No. of LW eligible for THR',
+                        'Total No. of Children(6-36 months) eligible for THR',
+                        'Total No. of PW received THR>=21 days in given month',
+                        'Total No. of LW received THR>=21 days in given month',
+                        'Total No. of Children(6-36 months) received THR>=21 days in given month',
+                        'Total No of Pictures taken by AWW'
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's1', 'a1', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's1', 'a17', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's1', 'a25', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's1', 'a33', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's1', 'a41', 'Data Not Entered', 'Data Not Entered', 2,
+                        0, 0, 0, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's1', 'a49', 'Data Not Entered', 'Data Not Entered', 3,
+                        5, 3, 0, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's1', 'a9', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's2', 'a10', 'Data Not Entered', 'Data Not Entered', 0,
+                        2, 8, 0, 0, 0, 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's2', 'a18', 'Data Not Entered', 'Data Not Entered', 5,
+                        6, 4, 1, 0, 0, 4
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's2', 'a2', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's2', 'a26', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's2', 'a34', 'Data Not Entered', 'Data Not Entered', 4,
+                        3, 'Data Not Entered', 0, 0, 'Data Not Entered', 0
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's2', 'a42', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'
+                    ],
+                    [
+                        'st1', 'd1', 'b1', 's2', 'a50', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                        'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'
+                    ]]
+            ],
+                ['Export Info',
+                 [
+                     ['Generated at', self.now],
+                     ['State', 'st1'],
+                     ['District', 'd1'],
+                     ['Block', 'b1'],
+                     ['Month', 'May'],
+                     ['Year', 2017]
+                 ]
+                 ]]
+        )
+
+    def test_thr_report_days_beneficiary_wise(self):
+        location = 'b1'
+        data = TakeHomeRationExport(
+            location=location,
+            month=date(2017, 5, 1),
+            loc_level=3,
+            report_type=THR_REPORT_DAY_BENEFICIARY_TYPE,
+            beta=True
+        ).get_excel_data()
+        self.assertListEqual(
+            data,
+            [['Take Home Ration', [['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name',
+                                    'AWW Phone No.',
+                                    'Total No. of PW eligible for THR', 'Total No. of LW eligible for THR',
+                                    'Total No. of Children (0-3 years) eligible for THR',
+                                    'Total No. of PW did not received THR in given month',
+                                    'Total No. of LW did not received THR in given month',
+                                    'Total No. of Children (0-3 years) did not received THR in given month',
+                                    'Total No. of PW received THR for 1-7 days in given month',
+                                    'Total No. of LW received THR for 1-7 days in given month',
+                                    'Total No. of Children (0-3 years) received THR for 1-7 days in given month',
+                                    'Total No. of PW received THR for 8-14 days in given month',
+                                    'Total No. of LW received THR for 8-14 days in given month',
+                                    'Total No. of Children (0-3 years) received THR for 8-14 days in given month',
+                                    'Total No. of PW received THR for 15-20 days in given month',
+                                    'Total No. of LW received THR for 15-20 days in given month',
+                                    'Total No. of Children (0-3 years) received THR for 15-20 days in given month',
+                                    'Total No. of PW received THR for 21-24 days in given month',
+                                    'Total No. of LW received THR for 21-24 days in given month',
+                                    'Total No. of Children (0-3 years) received THR for 21-24 days in given month',
+                                    'Total No. of PW received THR>=25 days in given month',
+                                    'Total No. of LW received THR>=25 days in given month',
+                                    'Total No. of Children(0-3 years) received THR>=25 days in given month',
+                                    'Total No of Pictures taken by AWW'],
+                                   ['st1', 'd1', 'b1', 's1', 'a1', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's1', 'a17', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's1', 'a25', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's1', 'a33', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's1', 'a41', 'Data Not Entered', 'Data Not Entered',
+                                    2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                                   ['st1', 'd1', 'b1', 's1', 'a49', 'Data Not Entered', 'Data Not Entered',
+                                    3, 5, 3, 0, 1, 0, 0, 2, 1, 3, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                                   ['st1', 'd1', 'b1', 's1', 'a9', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's2', 'a10', 'Data Not Entered', 'Data Not Entered',
+                                    0, 2, 8, 0, 0, 1, 0, 1, 6, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                                   ['st1', 'd1', 'b1', 's2', 'a18', 'Data Not Entered', 'Data Not Entered',
+                                    5, 6, 4, 0, 0, 0, 0, 1, 0, 1, 0, 1, 3, 5, 3, 0, 0, 0, 1, 0, 0, 4],
+                                   ['st1', 'd1', 'b1', 's2', 'a2', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's2', 'a26', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's2', 'a34', 'Data Not Entered', 'Data Not Entered', 4, 3,
+                                    'Data Not Entered', 0, 0, 'Data Not Entered', 2, 3, 'Data Not Entered', 2, 0,
+                                    'Data Not Entered', 0, 0, 'Data Not Entered', 0, 0, 'Data Not Entered', 0, 0,
+                                    'Data Not Entered', 0],
+                                   ['st1', 'd1', 'b1', 's2', 'a42', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched'],
+                                   ['st1', 'd1', 'b1', 's2', 'a50', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
+                                    'AWC Not Launched', 'AWC Not Launched']]],
+             ['Export Info', [
+                 ['Generated at', self.now],
+                 ['State', 'st1'],
+                 ['District', 'd1'],
+                 ['Block', 'b1'],
+                 ['Month', 'May'],
+                 ['Year', 2017]
+             ]]]
+        )
 
     def test_children_export_info(self):
         data = ChildrenExport(
@@ -518,52 +818,87 @@ class TestExportData(TestCase):
                     'Percentage of women eating extra meal during pregnancy',
                     'Percentage of trimester 3 women counselled on immediate breastfeeding'
                 ],
-                ['st1', 171, 120, 31, '20.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.00 %', '75.83 %', '60.32 %'],
-                ['st1', 171, 120, 31, '20.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.00 %', '75.83 %', '60.32 %'],
-                ['st1', 171, 120, 31, '20.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.00 %', '75.83 %', '60.32 %'],
-                ['st1', 171, 120, 31, '20.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.00 %', '75.83 %', '60.32 %'],
-                ['st1', 171, 120, 31, '20.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.00 %', '75.83 %', '60.32 %'],
-                ['st2', 154, 139, 30, '20.14%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.54 %', '74.82 %', '57.97 %'],
-                ['st2', 154, 139, 30, '20.14%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.54 %', '74.82 %', '57.97 %'],
-                ['st2', 154, 139, 30, '20.14%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.54 %', '74.82 %', '57.97 %'],
-                ['st2', 154, 139, 30, '20.14%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.54 %', '74.82 %', '57.97 %'],
-                ['st2', 154, 139, 30, '20.14%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.54 %', '74.82 %', '57.97 %'],
-                ['st3', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st3', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st3', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st3', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st3', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st4', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st4', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st4', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st4', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st4', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st5', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st5', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st5', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st5', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st5', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st6', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st6', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st6', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st6', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st6', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st7', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st7', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st7', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st7', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %'],
-                ['st7', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %']
-                ]],
-                [
-                    'Export Info',
-                    [
-                        ['Generated at', self.now],
-                        ['State', 'st1'],
-                        ['District', 'd1'],
-                        ['Block', 'b1']
-                    ]
-                ]
-            ]
+                ['st1', 171, 120, 31, '20.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.00 %',
+                 '75.83 %', '60.32 %'],
+                ['st1', 171, 120, 31, '20.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.00 %',
+                 '75.83 %', '60.32 %'],
+                ['st1', 171, 120, 31, '20.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.00 %',
+                 '75.83 %', '60.32 %'],
+                ['st1', 171, 120, 31, '20.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.00 %',
+                 '75.83 %', '60.32 %'],
+                ['st1', 171, 120, 31, '20.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.00 %',
+                 '75.83 %', '60.32 %'],
+                ['st2', 154, 139, 30, '20.14%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.54 %',
+                 '74.82 %', '57.97 %'],
+                ['st2', 154, 139, 30, '20.14%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.54 %',
+                 '74.82 %', '57.97 %'],
+                ['st2', 154, 139, 30, '20.14%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.54 %',
+                 '74.82 %', '57.97 %'],
+                ['st2', 154, 139, 30, '20.14%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.54 %',
+                 '74.82 %', '57.97 %'],
+                ['st2', 154, 139, 30, '20.14%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '75.54 %',
+                 '74.82 %', '57.97 %'],
+                ['st3', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st3', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st3', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st3', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st3', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st4', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st4', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st4', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st4', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st4', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st5', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st5', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st5', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st5', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st5', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st6', 0, 0, 0, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st6', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st6', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st6', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st6', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st7', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st7', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st7', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st7', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %'],
+                ['st7', 2, 0, 1, '0.00%', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %', '0.00 %',
+                 '0.00 %']
+            ]],
+             [
+                 'Export Info',
+                 [
+                     ['Generated at', self.now],
+                     ['State', 'st1'],
+                     ['District', 'd1'],
+                     ['Block', 'b1']
+                 ]
+             ]
+             ]
         )
 
     def test_demographics_export(self):
@@ -593,77 +928,87 @@ class TestExportData(TestCase):
                             'Number of adolescent girls (11-14 years)',
                             'Number of out of school adolescent girls (11-14 years)',
                             'Number of adolescent girls 15 to 18 years old'],
-                           ['st1', 2637, 858, 369, 1517, '24.32 %', 120, 120, 171, 171, 1226, 1226, 56, 244, 926, 26, 0, 10],
-                           ['st1', 2637, 858, 369, 1517, '24.32 %', 120, 120, 171, 171, 1226, 1226, 56, 244, 926, 26, 0, 10],
-                           ['st1', 2637, 858, 369, 1517, '24.32 %', 120, 120, 171, 171, 1226, 1226, 56, 244, 926, 26, 0, 10],
-                           ['st1', 2637, 858, 369, 1517, '24.32 %', 120, 120, 171, 171, 1226, 1226, 56, 244, 926, 26, 0, 10],
-                           ['st1', 2637, 858, 369, 1517, '24.32 %', 120, 120, 171, 171, 1226, 1226, 56, 244, 926, 26, 0, 10],
-                           ['st2', 2952, 1058, 275, 1614, '17.04 %', 139, 139, 154, 154, 1321, 1321, 52, 301, 968, 25, 0, 20],
-                           ['st2', 2952, 1058, 275, 1614, '17.04 %', 139, 139, 154, 154, 1321, 1321, 52, 301, 968, 25, 0, 20],
-                           ['st2', 2952, 1058, 275, 1614, '17.04 %', 139, 139, 154, 154, 1321, 1321, 52, 301, 968, 25, 0, 20],
-                           ['st2', 2952, 1058, 275, 1614, '17.04 %', 139, 139, 154, 154, 1321, 1321, 52, 301, 968, 25, 0, 20],
-                           ['st2', 2952, 1058, 275, 1614, '17.04 %', 139, 139, 154, 154, 1321, 1321, 52, 301, 968, 25, 0, 20],
-                           ['st3', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st3', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st3', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st3', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st3', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st4', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st4', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st4', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st4', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st4', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st5', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st5', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st5', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st5', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st5', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st6', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st6', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st6', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st6', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st6', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
-                            'Data Not Entered', 0, 0, 0],
-                           ['st7', 2, 8, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1,
-                            6, 4, 0],
-                           ['st7', 2, 8, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1,
-                            6, 4, 0],
-                           ['st7', 2, 8, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1,
-                            6, 4, 0],
-                           ['st7', 2, 8, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1,
-                            6, 4, 0],
-                           ['st7', 2, 8, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1,
-                            6, 4, 0]]],
-             [
-                 'Export Info',
-                 [
-                     [
-                         'Generated at', self.now
-                     ],
-                     [
-                         'State', 'st1'
-                     ]
-                 ]
-             ]
+                        ['st1', 2637, 858, 369, 1517, '24.32 %', 120, 120, 171, 171, 1226, 1226, 56, 244, 926, 26,
+                         0, 10],
+                        ['st1', 2637, 858, 369, 1517, '24.32 %', 120, 120, 171, 171, 1226, 1226, 56, 244, 926, 26,
+                         0, 10],
+                        ['st1', 2637, 858, 369, 1517, '24.32 %', 120, 120, 171, 171, 1226, 1226, 56, 244, 926, 26,
+                         0, 10],
+                        ['st1', 2637, 858, 369, 1517, '24.32 %', 120, 120, 171, 171, 1226, 1226, 56, 244, 926, 26,
+                         0, 10],
+                        ['st1', 2637, 858, 369, 1517, '24.32 %', 120, 120, 171, 171, 1226, 1226, 56, 244, 926, 26,
+                         0, 10],
+                        ['st2', 2952, 1058, 275, 1614, '17.04 %', 139, 139, 154, 154, 1321, 1321, 52, 301, 968, 25,
+                         0, 20],
+                        ['st2', 2952, 1058, 275, 1614, '17.04 %', 139, 139, 154, 154, 1321, 1321, 52, 301, 968, 25,
+                         0, 20],
+                        ['st2', 2952, 1058, 275, 1614, '17.04 %', 139, 139, 154, 154, 1321, 1321, 52, 301, 968, 25,
+                         0, 20],
+                        ['st2', 2952, 1058, 275, 1614, '17.04 %', 139, 139, 154, 154, 1321, 1321, 52, 301, 968, 25,
+                         0, 20],
+                        ['st2', 2952, 1058, 275, 1614, '17.04 %', 139, 139, 154, 154, 1321, 1321, 52, 301, 968, 25,
+                         0, 20],
+                        ['st3', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st3', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st3', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st3', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st3', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st4', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st4', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st4', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st4', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st4', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st5', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st5', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st5', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st5', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st5', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st6', 0, 0, 0, 0, '0.00 %', 0, 0, 0, 0, 0, 0, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st6', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st6', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st6', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st6', 2, 0, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered',
+                         'Data Not Entered', 0, 0, 0],
+                        ['st7', 2, 8, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1,
+                         6, 4, 0],
+                        ['st7', 2, 8, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1,
+                         6, 4, 0],
+                        ['st7', 2, 8, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1,
+                         6, 4, 0],
+                        ['st7', 2, 8, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1,
+                         6, 4, 0],
+                        ['st7', 2, 8, 0, 3, '0.00 %', 0, 0, 2, 2, 1, 1, 'Data Not Entered', 'Data Not Entered', 1,
+                         6, 4, 0]]],
+                [
+                    'Export Info',
+                    [
+                        [
+                            'Generated at', self.now
+                        ],
+                        [
+                            'State', 'st1'
+                        ]
+                    ]
+                ]
             ]
         )
 
@@ -3810,6 +4155,89 @@ class TestExportData(TestCase):
             ])
         )
 
+    def test_aww_activity_export(self):
+        _aggregate_inactive_aww_agg()
+        self.assertJSONEqual(
+            json.dumps(
+                AwwActivityExport(
+                    config={
+                        'domain': 'icds-cas',
+                        'beta': False
+                    },
+                    loc_level=1
+                ).get_excel_data('st1'),
+                cls=DjangoJSONEncoder
+            ),
+            json.dumps([
+                [
+                    "AWW Activity Report", [
+                    [
+                        "State", "District", "Block", "Supervisor name", "AWC Name", "AWC site code",
+                        "First submission date", "Last submission date", "Days since start", "Days inactive"
+                    ],
+                    ['st1', 'd1', 'b1', 's1', 'a1', 'awca1', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b1', 's1', 'a17', 'awca17', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b1', 's1', 'a25', 'awca25', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b1', 's1', 'a33', 'awca33', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b1', 's1', 'a41', 'awca41', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b1', 's1', 'a49', 'awca49', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b1', 's1', 'a9', 'awca9', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b1', 's2', 'a10', 'awca10', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b1', 's2', 'a18', 'awca18', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b1', 's2', 'a2', 'awca2', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b1', 's2', 'a26', 'awca26', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b1', 's2', 'a34', 'awca34', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b1', 's2', 'a42', 'awca42', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b1', 's2', 'a50', 'awca50', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b2', 's3', 'a11', 'awca11', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b2', 's3', 'a19', 'awca19', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b2', 's3', 'a27', 'awca27', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b2', 's3', 'a3', 'awca3', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b2', 's3', 'a35', 'awca35', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b2', 's3', 'a43', 'awca43', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b2', 's4', 'a12', 'awca12', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b2', 's4', 'a20', 'awca20', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b2', 's4', 'a28', 'awca28', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b2', 's4', 'a36', 'awca36', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b2', 's4', 'a4', 'awca4', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered'],
+                    ['st1', 'd1', 'b2', 's4', 'a44', 'awca44', 'Data Not Entered', 'Data Not Entered',
+                     'Data Not Entered', 'Data Not Entered']
+                ]
+                ],
+                ["Export Info",
+                 [
+                     ["Generated at", self.now],
+                     ["State", "st1"]
+                 ]
+                 ]
+            ])
+        )
+
     def test_lady_supervisor_export(self):
         data = LadySupervisorExport(
             config={
@@ -3939,20 +4367,21 @@ class TestExportData(TestCase):
                'AWC not launched', 'AWC not launched', 'AWC not launched', 'AWC not launched'],
               ['st1', 'd1', 'b2', 's3', 'a3', 'AWC not launched', 'AWC not launched', 'AWC not launched',
                'AWC not launched', 'AWC not launched', 'AWC not launched', 'AWC not launched'],
-              ['st1', 'd1', 'b2', 's3', 'a35', 'Data Not Entered', 'Data Not Entered', '0.00%', 'No expected weight measurement',
+              ['st1', 'd1', 'b2', 's3', 'a35', 'Data Not Entered', 'Data Not Entered', '0.00%',
+               'No expected weight measurement',
                'No', 12, 'No'],
               ['st1', 'd1', 'b2', 's3', 'a43', 'Data Not Entered', 'Data Not Entered', '0.00%', '100.00%',
                'No', 13, 'No']]],
             ['Export Info',
-                [
-                    ['Grouped By', 'AWC'],
-                    ['Month', 5],
-                    ['Year', 2017],
-                    ['Disclaimer',
-                     'The information in the report is based on the self-reported '
-                     'data entered by the Anganwadi Worker in ICDS-CAS mobile application'
-                     ' and is subject to timely data submissions.']
-                ]
+             [
+                 ['Grouped By', 'AWC'],
+                 ['Month', 5],
+                 ['Year', 2017],
+                 ['Disclaimer',
+                  'The information in the report is based on the self-reported '
+                  'data entered by the Anganwadi Worker in ICDS-CAS mobile application'
+                  ' and is subject to timely data submissions.']
+             ]
              ]
         ]
         self.assertListEqual(
@@ -3965,14 +4394,14 @@ class TestExportData(TestCase):
 
         data = TakeHomeRationExport(
             location=location,
-            month=datetime(2017, 5, 1),
+            month=date(2017, 5, 1),
             loc_level=3
         ).get_excel_data()
         self.assertListEqual(
             data,
             [['Take Home Ration', [['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name',
                                     'AWW Phone No.', 'Total No. of Beneficiaries eligible for THR',
-                                    'Total No. of Beneficiaries received THR>=21 days in given month',
+                                    'Total No. of beneficiaries received THR in given month',
                                     'Total No of Pictures taken by AWW'],
                                    ['st1', 'd1', 'b1', 's1', 'a1', 'AWC Not Launched', 'AWC Not Launched',
                                     'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
@@ -4018,7 +4447,7 @@ class TestExportData(TestCase):
         location = ''
         data = TakeHomeRationExport(
             location=location,
-            month=datetime(2017, 5, 1),
+            month=date(2017, 5, 1),
             loc_level=0
         ).get_excel_data()
 
@@ -4027,7 +4456,7 @@ class TestExportData(TestCase):
             [['Take Home Ration', [
                 ['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name', 'AWW Phone No.',
                  'Total No. of Beneficiaries eligible for THR',
-                 'Total No. of Beneficiaries received THR>=21 days in given month',
+                 'Total No. of beneficiaries received THR in given month',
                  'Total No of Pictures taken by AWW'],
                 ['st1', 'd1', 'b1', 's1', 'a1', 'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched',
                  'AWC Not Launched', 'AWC Not Launched'],
@@ -4120,4 +4549,329 @@ class TestExportData(TestCase):
                  ['Year', 2017]]
               ]
              ]
+        )
+
+    def test_ppr_comprehensive_month(self):
+        location = ''
+        data = PoshanProgressReport(
+            config={
+                'domain': 'icds-cas',
+                'month': date(2017, 5, 1),
+                'report_layout': 'comprehensive',
+                'data_period': 'month'
+            },
+            loc_level=1
+        ).get_excel_data(location)
+
+        self.assertListEqual(
+            data,
+            [['Poshan Progress Report', [
+                ['State Name', 'Number of Districts Covered', 'Number of Blocks Covered',
+                 'Number of AWCs Launched',
+                 '% Number of Days AWC Were opened', 'Expected Home Visits', 'Actual Home Visits',
+                 '% of Home Visits',
+                 'Total Number of Children (3-6 yrs)',
+                 'No. of children between 3-6 years provided PSE for atleast 21+ days',
+                 '% of children between 3-6 years provided PSE for atleast 21+ days',
+                 'Children Eligible to have their weight Measured',
+                 'Total number of children that were weighed in the month',
+                 'Weighing efficiency', 'Number of women in third trimester',
+                 'Number of trimester three women counselled on immediate and EBF',
+                 '% of trimester three women counselled on immediate and EBF',
+                 'Children Eligible to have their height Measured',
+                 'Total number of children that had their height measured in the month',
+                 'Height Measurement Efficiency',
+                 'Number of children between 6 months -3 years, P&LW',
+                 'No of children between 6 months -3 years, P&LW provided THR for atleast ' '21+ days',
+                 '% of children between 6 months -3 years, P&LW provided THR for atleast ' '21+ days',
+                 'No. of children between 3-6 years ',
+                 'No of children between 3-6 years provided SNP for atleast 21+ days',
+                 '% of children between 3-6 years provided SNP for atleast 21+ days'],
+                ['st1', 1, 2, 10, '142.40%', 185, 3, '1.62%', 483, 7, '1.45%', 475, 317, '66.74%', 37, 27,
+                 '72.97%', 475, 7,
+                 '1.47%', 279, 80, '28.67%', 483, 4, '0.83%'],
+                ['st2', 2, 2, 11, '106.91%', 193, 0, '0.00%', 507, 59, '11.64%', 513, 378, '73.68%', 42, 30,
+                 '71.43%', 513, 25,
+                 '4.87%', 318, 181, '56.92%', 507, 12, '2.37%'],
+                ['st3', 0, 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0,
+                 '0.00%', 0, 0,
+                 '0.00%', 0, 0, '0.00%'],
+                ['st4', 0, 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0,
+                 '0.00%', 0, 0,
+                 '0.00%', 0, 0, '0.00%'],
+                ['st5', 0, 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0,
+                 '0.00%', 0, 0,
+                 '0.00%', 0, 0, '0.00%'],
+                ['st6', 0, 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0,
+                 '0.00%', 0, 0,
+                 '0.00%', 0, 0, '0.00%'],
+                ['st7', 1, 1, 1, '0.00%', 1, 0, '0.00%', 1, 0, '0.00%', 1, 0, '0.00%', 0, 0, '0.00%', 1, 0,
+                 '0.00%', 1, 0,
+                 '0.00%', 1, 0, '0.00%'],
+                ['Total', 4, 5, 22, '118.18%', 379, 3, '0.79%', 991, 66, '6.66%', 989, 695, '70.27%', 79, 57,
+                 '72.15%', 989, 32, '3.24%', 598, 261,
+                 '43.65%', 991, 16, '1.61%']]], ['Export Info', [['Generated at', self.now],
+                                                                 ['Report Layout', 'Comprehensive'],
+                                                                 ['Data Period', 'Month']]]]
+        )
+
+    def test_ppr_summary_month(self):
+        location = ''
+        data = PoshanProgressReport(
+            config={
+                'domain': 'icds-cas',
+                'month': date(2017, 5, 1),
+                'report_layout': 'summary',
+                'data_period': 'month'
+            },
+            loc_level=1
+        ).get_excel_data(location)
+        self.assertListEqual(
+            data,
+            [['Poshan Progress Report', [
+                ['State Name', 'Number of Districts Covered', 'Number of Blocks Covered',
+                 'Number of AWCs Launched',
+                 '% Number of Days AWC Were opened', '% of Home Visits',
+                 '% of children between 3-6 years provided PSE for atleast 21+ days', 'Weighing efficiency',
+                 '% of trimester three women counselled on immediate and EBF', 'Height Measurement Efficiency',
+                 '% of children between 6 months -3 years, P&LW provided THR for atleast ' '21+ days',
+                 '% of children between 3-6 years provided SNP for atleast 21+ days'],
+                ['st1', 1, 2, 10, '142.40%', '1.62%', '1.45%', '66.74%', '72.97%', '1.47%', '28.67%', '0.83%'],
+                ['st2', 2, 2, 11, '106.91%', '0.00%', '11.64%', '73.68%', '71.43%', '4.87%', '56.92%', '2.37%'],
+                ['st3', 0, 0, 0, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
+                ['st4', 0, 0, 0, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
+                ['st5', 0, 0, 0, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
+                ['st6', 0, 0, 0, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
+                ['st7', 1, 1, 1, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
+                ['Total', 4, 5, 22, '118.18%', '0.79%', '6.66%', '70.27%', '72.15%', '3.24%', '43.65%', '1.61%']]],
+             ['Export Info', [
+                 ['Generated at', self.now], ['Report Layout', 'Summary'], ['Data Period', 'Month']]]]
+
+        )
+
+    def test_ppr_comprehensive_quarter(self):
+        location = 'st2'
+        data = PoshanProgressReport(
+            config={
+                'domain': 'icds-cas',
+                'month': date(2017, 5, 1),
+                'report_layout': 'comprehensive',
+                'data_period': 'quarter',
+                'quarter': 2,
+                'year': 2017
+            },
+            loc_level=2
+        ).get_excel_data(location)
+        self.assertListEqual(
+            data,
+            [['Poshan Progress Report', [
+                ['State Name', 'District Name', 'Number of Districts Covered', 'Number of Blocks Covered',
+                 'Number of AWCs Launched', '% Number of Days AWC Were opened', 'Expected Home Visits',
+                 'Actual Home Visits',
+                 '% of Home Visits', 'Total Number of Children (3-6 yrs)',
+                 'No. of children between 3-6 years provided PSE for atleast 21+ days',
+                 '% of children between 3-6 years provided PSE for atleast 21+ days',
+                 'Children Eligible to have their weight Measured',
+                 'Total number of children that were weighed in the month',
+                 'Weighing efficiency', 'Number of women in third trimester',
+                 'Number of trimester three women counselled on immediate and EBF',
+                 '% of trimester three women counselled on immediate and EBF',
+                 'Children Eligible to have their height Measured',
+                 'Total number of children that had their height measured in the month',
+                 'Height Measurement Efficiency',
+                 'Number of children between 6 months -3 years, P&LW',
+                 'No of children between 6 months -3 years, P&LW provided THR for atleast ' '21+ days',
+                 '% of children between 6 months -3 years, P&LW provided THR for atleast ' '21+ days',
+                 'No. of children between 3-6 years ',
+                 'No of children between 3-6 years provided SNP for atleast 21+ days',
+                 '% of children between 3-6 years provided SNP for atleast 21+ days'],
+                ['st2', 'd2', 1, 1, 4, '78.00%', 89, 0, '0.00%', 134, 18, '13.22%', 168,
+                 124, '73.47%', 11, 7, '60.61%', 168, 4, '2.38%', 118, 51, '43.10%', 134, 1, '0.75%'],
+                ['st2', 'd3', 1, 1, 3, '64.00%', 67, 0, '0.00%', 199, 10, '5.18%', 177,
+                 120, '67.48%', 12, 7, '55.56%', 177, 6, '3.38%', 85, 20, '23.14%', 199, 3, '1.51%'],
+                ['Total', 'Total', 4, 4, 22, '71.64%', 467, 0, '0.00%', 999, 84, '8.41%', 1037, 730, '70.40%', 69,
+                 40, '57.97%', 1037, 30, '2.89%', 610, 212, '34.75%', 999, 12, '1.20%']]], ['Export Info', [
+                ['Generated at', self.now], ['State', 'st2'], ['Report Layout', 'Comprehensive'],
+                ['Data Period', 'Quarter']]]]
+        )
+
+    def test_ppr_summary_quarter(self):
+        location = ''
+        data = PoshanProgressReport(
+            config={
+                'domain': 'icds-cas',
+                'month': date(2017, 5, 1),
+                'report_layout': 'summary',
+                'data_period': 'quarter',
+                'quarter': 2,
+                'year': 2017
+            },
+            loc_level=1
+        ).get_excel_data(location)
+        self.assertListEqual(
+            data,
+            [['Poshan Progress Report', [
+                ['State Name', 'Number of Districts Covered', 'Number of Blocks Covered',
+                 'Number of AWCs Launched',
+                 '% Number of Days AWC Were opened', '% of Home Visits',
+                 '% of children between 3-6 years provided PSE for atleast 21+ days', 'Weighing efficiency',
+                 '% of trimester three women counselled on immediate and EBF', 'Height Measurement Efficiency',
+                 '% of children between 6 months -3 years, P&LW provided THR for atleast ' '21+ days',
+                 '% of children between 3-6 years provided SNP for atleast 21+ days'],
+                ['st1', 1, 1, 7, '97.20%', '0.66%', '2.52%', '67.39%', '60.32%', '1.44%', '14.60%', '1.16%'],
+                ['st2', 1, 1, 7, '71.64%', '0.00%', '8.41%', '70.40%', '57.97%', '2.89%', '34.75%', '1.20%'],
+                ['st3', 0, 0, 0, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
+                ['st4', 0, 0, 0, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
+                ['st5', 0, 0, 0, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
+                ['st6', 0, 0, 0, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
+                ['st7', 1, 1, 1, '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%'],
+                ['Total', 8, 10, 44, '80.00%', '0.32%', '5.53%', '68.91%', '59.09%', '2.19%', '25.17%', '1.18%']]],
+             ['Export Info',
+              [['Generated at', self.now], ['Report Layout', 'Summary'], ['Data Period', 'Quarter']]]]
+        )
+
+    def test_sdr_report_pw_lw_children(self):
+        data = ServiceDeliveryReport(
+            config={
+                'domain': 'icds-cas',
+                'aggregation_level': 1,
+                'month': date(2017, 5, 1),
+                'beneficiary_category': 'pw_lw_children'
+            },
+            location='',
+            beta=True
+        ).get_excel_data()
+        self.assertListEqual(
+            data,
+            [['SDR - PW,LM & Children (0-3 years)',
+              [[
+                  'State', 'Number of AWCs launched', 'Number of home visits conducted by AWW',
+                  'Number of expected home visits to be conducted by the AWW',
+                  'Percentage of home visits conducted by the AWW',
+                  'Number of children (0-3 years) enrolled for Anganwadi services who were weighed',
+                  'Total children (0-3 years) enrolled for Anganwadi services',
+                  'Percentage of children (0-3 years) enrolled for Anganwadi services who were weighed',
+                  'Number of Anganwadi centers who have conducted at least 2 CBE',
+                  'Total number of launched Anganwadi centers',
+                  'Percentage of Anganwadi centers who have conducted at least 2 CBE',
+                  'Number of anganwadi centers who have conducted at least 1 VHSND',
+                  'Number of beneficiaries to whom THR was not provided',
+                  'Number of beneficiaries enrolled for Anganwadi services',
+                  'Percentage of beneficiaries to whom THR was not provided',
+                  'Number of beneficiaries to whom THR was provided for 1-7 days',
+                  'Number of beneficiaries enrolled for Anganwadi services',
+                  'Percentage of beneficiaries to whom THR was provided for 1-7 days',
+                  'Number of beneficiaries to whom THR was provided for 8-14 days',
+                  'Number of beneficiaries enrolled for Anganwadi services',
+                  'Percentage of beneficiaries to whom THR was provided for 8-14 days',
+                  'Number of beneficiaries to whom THR was provided for 15-20 days',
+                  'Number of beneficiaries enrolled for Anganwadi services',
+                  'Percentage of beneficiaries to whom THR was provided for 15-20 days',
+                  'Number of beneficiaries to whom THR was provided for 21-24 days',
+                  'Number of beneficiaries enrolled for Anganwadi services',
+                  'Percentage of beneficiaries to whom THR was provided for 21-24 days',
+                  'Number of beneficiaries to whom THR was provided for at least 25 days',
+                  'Number of beneficiaries enrolled for Anganwadi services',
+                  'Percentage of beneficiaries to whom THR was provided for at least 25 days'],
+                  ['st1', 10, 3, 185, '1.62%', 83, 143, '58.04%', 0, 10, '0.00%', 2, 50, 279, '17.92%',
+                   62, 279, '22.22%',
+                   35, 279, '12.54%', 52, 279, '18.64%', 56, 279, '20.07%', 24, 279, '8.60%'],
+                  ['st2', 11, 0, 193, '0.00%', 139, 171, '81.29%', 1, 11, '9.09%', 6, 34, 318, '10.69%',
+                   29, 318, '9.12%',
+                   23, 318, '7.23%', 51, 318, '16.04%', 25, 318, '7.86%', 156, 318, '49.06%'],
+                  ['st3', 0, 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, 0, '0.00%',
+                   0, 0, '0.00%',
+                   0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%'],
+                  ['st4', 0, 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, 0, '0.00%',
+                   0, 0, '0.00%',
+                   0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%'],
+                  ['st5', 0, 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, 0, '0.00%',
+                   0, 0, '0.00%',
+                   0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%'],
+                  ['st6', 0, 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, 0, '0.00%',
+                   0, 0, '0.00%',
+                   0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%', 0, 0, '0.00%'],
+                  ['st7', 1, 0, 1, '0.00%', 0, 0, '0.00%', 0, 1, '0.00%', 0, 1, 1, '100.00%', 0, 1, '0.00%',
+                   0, 1,
+                   '0.00%', 0, 1, '0.00%', 0, 1, '0.00%', 0, 1, '0.00%'],
+                  ['Grand Total', 22, 3, 379, '0.79%', 222, 314, '70.70%', 1, 22, '4.55%', 8, 85, 598,
+                   '14.21%', 91, 598,
+                   '15.22%', 58, 598, '9.70%', 103, 598, '17.22%', 81, 598, '13.55%', 180, 598, '30.10%']]],
+             ['Export Info',
+              [[
+                  'Generated at', self.now
+              ],
+                  ['Location', 'National'],
+                  ['Month', 'May'],
+                  ['Year', 2017]]]]
+        )
+
+    def test_sdr_report_children_3_6(self):
+        data = ServiceDeliveryReport(
+            config={
+                'aggregation_level': 1,
+                'domain': 'icds-cas',
+                'month': date(2017, 5, 1),
+                'state_id': 'st1',
+                'beneficiary_category': 'children_3_6'
+            },
+            location='st1',
+            beta=True
+        ).get_excel_data()
+        self.assertListEqual(
+            data,
+            [['SDR - Children (3-6 years)', [
+                ['State', 'Number of beneficiaries to whom hot cooked meal was not provided',
+                 'Number of beneficiaries enrolled for Anganwadi services',
+                 'Percentage of beneficiaries to whom hot cooked meal was not provided',
+                 'Number of beneficiaries to whom hot cooked meal was provided for 1-7 days',
+                 'Number of beneficiaries enrolled for Anganwadi services',
+                 'Percentage of beneficiaries to whom hot cooked meal was provided for 1-7 days',
+                 'Number of beneficiaries to whom hot cooked meal was provided for 8-14 days',
+                 'Number of beneficiaries enrolled for Anganwadi services',
+                 'Percentage of beneficiaries to whom hot cooked meal was provided for 8-14 days',
+                 'Number of beneficiaries to whom hot cooked meal was provided for 15-20 days',
+                 'Number of beneficiaries enrolled for Anganwadi services',
+                 'Percentage of beneficiaries to whom hot cooked meal was provided for 15-20 days',
+                 'Number of beneficiaries to whom hot cooked meal was provided for at 21-24 days',
+                 'Number of beneficiaries enrolled for Anganwadi services',
+                 'Percentage of beneficiaries to whom hot cooked meal was provided for 21-24 days',
+                 'Number of beneficiaries to whom hot cooked meal was provided for at least 25 days',
+                 'Number of beneficiaries enrolled for Anganwadi services',
+                 'Percentage of beneficiaries to whom hot cooked meal was provided for at least 25 days',
+                 'Number of beneficiaries who did not attend pre-school education',
+                 'Number of beneficiaries enrolled for Anganwadi services',
+                 'Percentage of beneficiaries who did not attend pre-school education',
+                 'Number of beneficiaries who attended pre-school education for 1-7 days',
+                 'Number of beneficiaries enrolled for Anganwadi services',
+                 'Percentage of beneficiaries who attended pre-school education for 1-7 days',
+                 'Number of beneficiaries who attended pre-school education for 8-14 days',
+                 'Number of beneficiaries enrolled for Anganwadi services',
+                 'Percentage of beneficiaries who attended pre-school education for 8-14 days',
+                 'Number of beneficiaries who attended pre-school education for 15-20 days',
+                 'Number of beneficiaries enrolled for Anganwadi services',
+                 'Percentage of beneficiaries who attended pre-school education for 15-20 days',
+                 'Number of beneficiaries who attended pre-school education for 21-24 days',
+                 'Number of beneficiaries enrolled for Anganwadi services',
+                 'Percentage of beneficiaries who attended pre-school education for 21-24 days',
+                 'Number of beneficiaries who attended pre-school education for at least 25 days',
+                 'Number of beneficiaries enrolled for Anganwadi services',
+                 'Percentage of beneficiaries who attended pre-school education for at least 25 days',
+                 'Number of children who were weighed', 'Total children enrolled for Anganwadi services',
+                 'Percentage of children who were weighed'],
+                ['st1', 477, 483, '98.76%', 1, 483, '0.21%', 1, 483, '0.21%', 0, 483, '0.00%', 4, 483,
+                 '0.83%', 0, 483,
+                 '0.00%', 38, 483, '7.87%', 168, 483, '34.78%', 191, 483, '39.54%', 79, 483, '16.36%',
+                 7, 483, '1.45%',
+                 0, 483, '0.00%', 234, 332, '70.48%'],
+                ['Grand Total', 477, 483, '98.76%', 1, 483, '0.21%', 1, 483, '0.21%', 0, 483, '0.00%',
+                 4, 483, '0.83%',
+                 0, 483, '0.00%', 38, 483, '7.87%', 168, 483, '34.78%', 191, 483, '39.54%', 79, 483,
+                 '16.36%', 7, 483,
+                 '1.45%', 0, 483, '0.00%', 234, 332, '70.48%']]],
+             ['Export Info',
+              [['Generated at', self.now],
+               ['State', 'st1'],
+               ['Month', 'May'],
+               ['Year', 2017]]]]
         )

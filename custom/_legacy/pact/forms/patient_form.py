@@ -45,7 +45,7 @@ class PactPatientForm(Form):
     patient_notes = forms.CharField(widget = widgets.Textarea(attrs={'cols':80,'rows':5}), required=False)
 
     def __init__(self, request, casedoc, *args, **kwargs):
-        super(PactPatientForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.casedoc = casedoc
         self.fields['hp'].choices = get_hp_choices()
         self.case_es = ReportCaseES(request.domain)

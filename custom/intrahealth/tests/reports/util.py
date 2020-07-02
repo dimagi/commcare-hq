@@ -18,7 +18,7 @@ class ReportTestCase(TestCase):
         cls.domain = create_domain('test-domain')
         cls.web_user = WebUser.get_by_username('test')
         if not cls.web_user:
-            cls.web_user = WebUser.create('test-domain', 'test', 'test')
+            cls.web_user = WebUser.create('test-domain', 'test', 'test', None, None)
 
         SQLProduct.objects.create(
             domain=cls.domain.name,

@@ -24,7 +24,7 @@ function ProgressReportController($scope, $location, progressReportService,
     vm.selectedLocations = [];
 
     vm.filtersData = $location.search();
-    vm.filters = ['gender', 'age'];
+    vm.filters = ['gender', 'age', 'data_period'];
     vm.label = "ICDS-CAS Fact Sheets";
     vm.haveAccessToAllLocations = haveAccessToAllLocations;
     vm.data = [];

@@ -1,3 +1,4 @@
+from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -14,8 +15,10 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name
+from corehq.apps.hqwebapp.utils import send_confirmation_email
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.users.models import Invitation
+from corehq.apps.domain.middleware import get_last_visited_domain, set_last_visited_domain
 from corehq.util.quickcache import quickcache
 
 
@@ -48,13 +51,13 @@ def select(request, do_not_redirect=False, next_view=None):
         'domain_links': domain_links,
         'invitation_links': [{
             'display_name': i.domain,
-            'url': reverse("domain_accept_invitation", args=[i.domain, i.uuid]),
+            'url': reverse("domain_accept_invitation", args=[i.domain, i.uuid]) + '?no_redirect=true',
         } for i in open_invitations] if show_invitations else [],
         'current_page': {'page_name': _('Select A Project')},
     }
 
     domain_select_template = "domain/select.html"
-    last_visited_domain = request.session.get('last_visited_domain')
+    last_visited_domain = get_last_visited_domain(request.couch_user)
     if open_invitations \
        or do_not_redirect \
        or not last_visited_domain:
@@ -74,8 +77,26 @@ def select(request, do_not_redirect=False, next_view=None):
                 except Http404:
                     pass
 
-        del request.session['last_visited_domain']
+        set_last_visited_domain(request.couch_user, None)
         return render(request, domain_select_template, additional_context)
+
+
+@login_required
+def accept_all_invitations(request):
+    def _invite(invitation, user):
+        user.add_as_web_user(invitation.domain, role=invitation.role,
+                             location_id=invitation.supply_point, program_id=invitation.program)
+        invitation.is_accepted = True
+        invitation.save()
+        send_confirmation_email(invitation)
+
+    user = request.couch_user
+    invites = Invitation.by_email(user.username)
+    for invitation in invites:
+        if not invitation.is_expired:
+            _invite(invitation, user)
+            messages.success(request, _(f'You have been added to the "{invitation.domain}" project space.'))
+    return HttpResponseRedirect(reverse('domain_select_redirect'))
 
 
 @quickcache(['couch_user.username'])

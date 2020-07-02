@@ -195,10 +195,10 @@ class Repeater(QuickCachedDocumentMixin, Document):
     _has_config = False
 
     def __str__(self):
-        return self.name
+        return f'{self.__class__.__name__}: {self.name}'
 
     def __repr__(self):
-        return f"<{self.__class__.__name__} {self._id} {self.name}>"
+        return f"<{self.__class__.__name__} {self._id} {self.name!r}>"
 
     @property
     def connection_settings(self):
@@ -366,6 +366,8 @@ class Repeater(QuickCachedDocumentMixin, Document):
 
     @property
     def plaintext_password(self):
+        if self.password is None:
+            return ''
         if self.password.startswith('${algo}$'.format(algo=ALGO_AES)):
             ciphertext = self.password.split('$', 2)[2]
             return b64_aes_decrypt(ciphertext)
