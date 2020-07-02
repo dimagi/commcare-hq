@@ -50,7 +50,7 @@ hqDefine("reports/js/filters/select2s", [
                 width: '100%',
             },
             allowClear: true,
-            placeholder: $filter.data('placeholder')
+            placeholder: $filter.data('placeholder'),
         });
         var initial = $filter.data("selected");
         if (initial) {
