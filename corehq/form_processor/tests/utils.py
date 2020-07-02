@@ -218,8 +218,11 @@ def patch_shard_db_transactions(cls):
     This means that changes to shard dbs will not be rolled back at the
     end of each test; test cleanup must be done manually.
 
-    :param cls: A subclass of `django.test.TestCase`
+    :param cls: A test class.
     """
+    from django.test import TestCase
+    if not issubclass(cls, TestCase):
+        return cls
     assert hasattr(cls, "_enter_atomics") and hasattr(cls, "_rollback_atomics"), cls
     shard_cfg = getattr(settings, "PARTITION_DATABASE_CONFIG", None)
     if not shard_cfg:
