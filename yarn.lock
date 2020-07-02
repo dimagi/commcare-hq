@@ -3198,7 +3198,7 @@ mocha@^1.21.5:
     jade "0.26.3"
     mkdirp "0.5.0"
 
-mocha@^2.3.3:
+mocha@^2.5.3:
   version "2.5.3"
   resolved "https://registry.yarnpkg.com/mocha/-/mocha-2.5.3.tgz#161be5bdeb496771eb9b35745050b622b5aefc58"
   integrity sha1-FhvlvetJZ3HrmzV0UFC2IrWu/Fg=
