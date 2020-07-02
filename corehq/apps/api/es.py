@@ -311,59 +311,6 @@ class XFormES(ESView):
         return es_results
 
 
-class UserES(ESView):
-    """
-    self.run_query accepts a structured elasticsearch query
-    """
-    index = USER_INDEX
-    doc_type = "CommCareUser"
-
-    def validate_query(self, query):
-        if 'password' in query['fields']:
-            raise ESUserError("You cannot include password in the results")
-
-    def run_query(self, es_query, es_type=None, security_check=True):
-        """
-        Must be called with a "fields" parameter
-        Returns the raw query json back, or None if there's an error
-        """
-
-        logger.info("ESlog: [%s.%s] ESquery: %s" % (
-            self.__class__.__name__, self.domain, json.dumps(es_query)))
-
-        self.validate_query(es_query)
-
-        try:
-            es_results = self.es_interface.search(self.index, es_type, body=es_query)
-            report_and_fail_on_shard_failures(es_results)
-        except ElasticsearchException as e:
-            msg = "Error in elasticsearch query [%s]: %s\nquery: %s" % (
-                self.index, str(e), es_query)
-            notify_exception(None, message=msg)
-            return None
-
-        hits = []
-        for res in es_results['hits']['hits']:
-            if '_source' in res:
-                raise ESUserError(
-                    "This query does not support full document lookups")
-
-            # security check
-            if security_check:
-                res_domain = res['fields'].get('domain_memberships.domain', None)
-
-                if res_domain == self.domain:
-                    hits.append(res)
-                else:
-                    logger.info(
-                        "Requester domain %s does not match result domain %s" % (
-                        self.domain, res_domain))
-            else:
-                hits.append(res)
-        es_results['hits']['hits'] = hits
-        return es_results
-
-
 def report_term_filter(terms, mapping):
     """convert terms to correct #value term queries based upon the mapping
     does it match up with pre-defined stuff in the mapping?
