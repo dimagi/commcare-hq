@@ -5,7 +5,7 @@ from django.utils.translation import ugettext_lazy
 
 from corehq import toggles
 from corehq.apps.hqwebapp.views import no_permissions
-from custom.icds.const import ICDS_DOMAIN, IS_ICDS_ENVIRONMENT
+from custom.icds_core.const import ICDS_DOMAIN, IS_ICDS_ENVIRONMENT
 
 DATA_INTERFACE_ACCESS_DENIED = mark_safe(ugettext_lazy(
     "This project has blocked access to interfaces that edit data for forms and cases"
