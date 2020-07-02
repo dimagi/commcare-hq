@@ -68,17 +68,17 @@ class TestPPDData(TestCase):
             False
         )
         expected = {'ICDS CAS Coverage': [[{'Best performers': [{'place': 'st1',
-                                                                 'value': '97.20%'},
+                                                                 'value': '64.80%'},
                                                                 {'place': 'st2',
-                                                                 'value': '71.64%'},
+                                                                 'value': '47.76%'},
                                                                 {'place': 'st7',
                                                                  'value': '0.00%'}],
                                             'Worst performers': [{'place': 'st7',
                                                                   'value': '0.00%'},
                                                                  {'place': 'st2',
-                                                                  'value': '71.64%'},
+                                                                  'value': '47.76%'},
                                                                  {'place': 'st1',
-                                                                  'value': '97.20%'}],
+                                                                  'value': '64.80%'}],
                                             'indicator': 'AWC Open'},
                                            {'Best performers': [{'place': 'st1', 'value': '0.66%'},
                                                                 {'place': 'st2', 'value': '0.00%'},
@@ -185,17 +185,17 @@ class TestPPDData(TestCase):
             },
             False
         )
-        expected = {'ICDS CAS Coverage': {'% Number of Days AWC Were opened': '80.00%',
+        expected = {'ICDS CAS Coverage': {'% Number of Days AWC Were opened': '53.27%',
                                           '% of Home Visits': '0.32%',
-                                          'Number of AWCs Launched': 15,
-                                          'Number of Blocks Covered': 3,
-                                          'Number of Districts Covered': 3,
-                                          'Number of States Covered': 2},
+                                          'Number of AWCs Launched': 22,
+                                          'Number of Blocks Covered': 5,
+                                          'Number of Districts Covered': 4,
+                                          'Number of States Covered': 3},
                     'Service Delivery': {
-                        '% of children between 3-6 years provided PSE for atleast 21+ days': '5.53%',
-                        '% of children between 3-6 years provided SNP for atleast 21+ days': '1.18%',
-                        '% of children between 6 months -3 years, P&LW provided THR for atleast 21+ days': '25.17%',
+                        '% of children between 3-6 years provided PSE for atleast 21+ days': '5.54%',
+                        '% of children between 3-6 years provided SNP for atleast 21+ days': '1.23%',
+                        '% of children between 6 months -3 years, P&LW provided THR for atleast 21+ days': '25.32%',
                         '% of trimester three women counselled on immediate and EBF': '59.09%',
-                        'Height Measurement Efficiency': '2.19%',
-                        'Weighing efficiency': '68.91%'}}
+                        'Height Measurement Efficiency': '2.24%',
+                        'Weighing efficiency': '68.81%'}}
         self.assertDictEqual(expected, data)

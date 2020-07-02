@@ -290,8 +290,8 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             ("current_month_wasting",
                 "CASE "
                 "WHEN NOT {} THEN NULL "
-                "WHEN date_trunc('MONTH', gm.zscore_grading_wfh_last_recorded) != %(start_date)s "
-                "   THEN 'unmeasured' "
+                "WHEN date_trunc('MONTH', gm.zscore_grading_wfh_last_recorded) != %(start_date)s OR "
+                "date_trunc('MONTH', gm.height_child_last_recorded) is distinct from %(start_date)s THEN 'unmeasured' "
                 "WHEN gm.zscore_grading_wfh = 1 THEN 'severe' "
                 "WHEN gm.zscore_grading_wfh = 2 THEN 'moderate' "
                 "WHEN gm.zscore_grading_wfh = 3 THEN 'normal' "

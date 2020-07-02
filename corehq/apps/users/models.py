@@ -1678,10 +1678,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if not data.get('user_data', {}).get('commcare_project'):
             data['user_data'] = dict(data['user_data'], **{'commcare_project': data['domain']})
 
-        # Todo; remove after migration
-        from corehq.apps.users.management.commands import add_multi_location_property
-        add_multi_location_property.Command().migrate_user(data)
-
         return super(CommCareUser, cls).wrap(data)
 
     def _is_demo_user_cached_value_is_stale(self):

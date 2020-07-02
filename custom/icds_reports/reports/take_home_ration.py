@@ -7,12 +7,13 @@ from custom.icds_reports.const import (
     THR_REPORT_DAY_BENEFICIARY_TYPE,
     THR_21_DAYS_THRESHOLD_DATE
 )
-
+from custom.icds_reports.utils import apply_exclude
 
 class TakeHomeRationExport(object):
     title = 'Take Home Ration'
 
-    def __init__(self, location, month, loc_level=0, beta=False, report_type='consolidated'):
+    def __init__(self, domain, location, month, loc_level=0, beta=False, report_type='consolidated'):
+        self.domain = domain
         self.location = location
         self.loc_level = loc_level
         self.month = month
@@ -20,7 +21,6 @@ class TakeHomeRationExport(object):
         self.report_type = report_type
 
     def get_excel_data(self):
-
         def _format_report_data(column, value, is_launched):
             location_names = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
             AWC_NOT_LAUNCHED = 'AWC Not Launched'
@@ -48,13 +48,15 @@ class TakeHomeRationExport(object):
         else:
             order_by = ('state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name')
 
-        if self.report_type == THR_REPORT_BENEFICIARY_TYPE and self.beta:
+        if self.report_type == THR_REPORT_BENEFICIARY_TYPE:
             headers, data = self.get_beneficiary_wise_data(filters, order_by)
-        elif self.report_type == THR_REPORT_DAY_BENEFICIARY_TYPE and self.beta:
+        elif self.report_type == THR_REPORT_DAY_BENEFICIARY_TYPE:
             headers, data = self.get_beneficiary_and_days_wise_data(filters, order_by)
         else:
             headers, data = self.get_consolidated_data(filters, order_by)
 
+        #Exclude test states
+        data = apply_exclude(self.domain, data)
         excel_rows = [headers]
 
         for row in data:
@@ -87,18 +89,11 @@ class TakeHomeRationExport(object):
         ]
 
     def get_consolidated_data(self, filters, order_by):
-        if self.beta:
-            thr_days = 21 if self.month <= THR_21_DAYS_THRESHOLD_DATE else 25
-            thr_column = f'thr_{thr_days}_days'
-            launched_column = 'num_launched_awcs'
-            thr_eligible_column = 'thr_eligible'
-            class_model = ServiceDeliveryReportView
-        else:
-            thr_days = 21
-            thr_column = 'thr_given_21_days'
-            launched_column = 'is_launched'
-            thr_eligible_column = 'total_thr_candidates'
-            class_model = TakeHomeRationMonthly
+        thr_days = 21 if self.month <= THR_21_DAYS_THRESHOLD_DATE else 25
+        thr_column = f'thr_{thr_days}_days'
+        launched_column = 'num_launched_awcs'
+        thr_eligible_column = 'thr_eligible'
+        class_model = ServiceDeliveryReportView
 
         headers = ['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name', 'AWW Phone No.',
                    'Total No. of Beneficiaries eligible for THR',
