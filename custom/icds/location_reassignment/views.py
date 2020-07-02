@@ -49,14 +49,16 @@ from custom.icds.location_reassignment.tasks import (
     process_location_reassignment,
     process_other_cases_reassignment,
 )
-from custom.icds_core.const import LocationReassignmentDownloadOnlyView_section_name, \
-    LocationReassignmentDownloadOnlyView_urlname
+from custom.icds_core.const import (
+    LocationReassignmentDownloadOnlyView_urlname,
+    LocationReassignmentView_urlname,
+)
 
 
 @location_safe
 @method_decorator([toggles.PERFORM_LOCATION_REASSIGNMENT.required_decorator()], name='dispatch')
 class LocationReassignmentDownloadOnlyView(BaseProjectReportSectionView):
-    section_name = LocationReassignmentDownloadOnlyView_section_name
+    section_name = ugettext_lazy("Download Location Reassignment Template")
     urlname = LocationReassignmentDownloadOnlyView_urlname
     page_title = ugettext_lazy('Location Reassignment')
     template_name = 'icds/location_reassignment.html'
@@ -79,9 +81,8 @@ class LocationReassignmentDownloadOnlyView(BaseProjectReportSectionView):
 @method_decorator(require_can_edit_locations, name='dispatch')
 class LocationReassignmentView(BaseLocationView):
     section_name = ugettext_lazy("Locations")
-
     page_title = ugettext_lazy('Location Reassignment')
-    urlname = 'location_reassignment'
+    urlname = LocationReassignmentView_urlname
     template_name = 'icds/location_reassignment.html'
 
     def dispatch(self, *args, **kwargs):

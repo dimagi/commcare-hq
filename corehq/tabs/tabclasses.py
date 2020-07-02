@@ -98,11 +98,9 @@ from corehq.tabs.utils import (
 )
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
 from custom.icds_core.const import (
-    LocationReassignmentDownloadOnlyView_section_name,
     LocationReassignmentDownloadOnlyView_urlname,
-    ManageHostedCCZ_page_title,
+    LocationReassignmentView_urlname,
     ManageHostedCCZ_urlname,
-    ManageHostedCCZLink_page_title,
     ManageHostedCCZLink_urlname,
     SMSUsageReport_urlname,
 )
@@ -169,7 +167,7 @@ class ProjectReportsTab(UITab):
             })
         if toggles.PERFORM_LOCATION_REASSIGNMENT.enabled(self.couch_user.username):
             tools.append({
-                'title': _(LocationReassignmentDownloadOnlyView_section_name),
+                'title': _("Download Location Reassignment Template"),
                 'url': reverse(LocationReassignmentDownloadOnlyView_urlname, args=[self.domain]),
                 'icon': 'icon-tasks fa fa-download',
             })
@@ -952,7 +950,7 @@ class ApplicationsTab(UITab):
             ))
         if toggles.MANAGE_CCZ_HOSTING.enabled_for_request(self._request):
             submenu_context.append(dropdown_dict(
-                ManageHostedCCZ_page_title,
+                _("Manage CCZ Hosting"),
                 url=reverse(ManageHostedCCZ_urlname, args=[self.domain])
             ))
         return submenu_context
@@ -1538,10 +1536,9 @@ class ProjectUsersTab(UITab):
             })
 
         if toggles.PERFORM_LOCATION_REASSIGNMENT.enabled(self.couch_user.username):
-            from custom.icds.location_reassignment.views import LocationReassignmentView
             menu.append({
                 'title': _("Location Reassignment"),
-                'url': reverse(LocationReassignmentView.urlname, args=[self.domain])
+                'url': reverse(LocationReassignmentView_urlname, args=[self.domain])
             })
 
         return menu
@@ -1611,10 +1608,10 @@ class HostedCCZTab(UITab):
         items = super(HostedCCZTab, self).sidebar_items
         items.append((_('Manage CCZ Hostings'), [
             {'url': reverse(ManageHostedCCZLink_urlname, args=[self.domain]),
-             'title': ManageHostedCCZLink_page_title
+             'title': _("Manage CCZ Hosting Links")
              },
             {'url': reverse(ManageHostedCCZ_urlname, args=[self.domain]),
-             'title': ManageHostedCCZ_page_title
+             'title': _("Manage CCZ Hosting")
              },
         ]))
         return items
