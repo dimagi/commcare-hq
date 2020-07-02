@@ -93,7 +93,7 @@ LOCALE_PATHS = (
     os.path.join(FILEPATH, 'locale'),
 )
 
-BOWER_COMPONENTS = os.path.join(FILEPATH, 'bower_components')
+YARN_COMPONENTS = os.path.join(FILEPATH, 'node_modules')
 
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
@@ -102,7 +102,7 @@ STATICFILES_FINDERS = (
 )
 
 STATICFILES_DIRS = [
-    BOWER_COMPONENTS,
+    YARN_COMPONENTS,
 ]
 
 # bleh, why did this submodule have to be removed?
