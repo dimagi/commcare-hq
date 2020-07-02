@@ -43,9 +43,7 @@ RUN npm -g install \
     yarn \
     grunt-cli \
     uglify-js \
- && npm -g install \
     puppeteer \
     mocha-headless-chrome \
  && cd /vendor \
- && npm shrinkwrap \
- && npm -g install
+ && npm shrinkwrap
