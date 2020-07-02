@@ -99,7 +99,7 @@ from corehq.tabs.utils import (
 )
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
 from custom.icds_core.const import ManageHostedCCZ_page_title, ManageHostedCCZ_urlname, \
-    ManageHostedCCZLink_urlname, ManageHostedCCZLink_page_title
+    ManageHostedCCZLink_urlname, ManageHostedCCZLink_page_title, SMSUsageReport_urlname
 from custom.icds_core.view_utils import is_icds_cas_project
 
 
@@ -1057,7 +1057,6 @@ class MessagingTab(UITab):
         messages_urls = []
 
         if self.can_use_outbound_sms:
-            from custom.icds.views.custom_sms_report import SMSUsageReport
             messages_urls.extend([
                 {
                     'title': _('Compose SMS Message'),
@@ -1068,7 +1067,7 @@ class MessagingTab(UITab):
                 messages_urls.extend([
                     {
                         'title': _('Get Custom SMS Usage Report'),
-                        'url': reverse(SMSUsageReport.urlname, args=[self.domain])
+                        'url': reverse(SMSUsageReport_urlname, args=[self.domain])
                     },
                 ])
 
