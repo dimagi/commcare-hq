@@ -50,4 +50,5 @@ RUN npm -g install \
  && echo '{ "allow_root": true }' > /root/.bowerrc \
  && cd /vendor \
  && npm shrinkwrap \
+ && yarn global add phantomjs-prebuilt \
  && npm -g install
