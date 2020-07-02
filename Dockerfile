@@ -40,13 +40,12 @@ RUN git config --global url."https://".insteadOf git:// \
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
 
 RUN npm -g install \
-    bower \
+    yarn \
     grunt-cli \
     uglify-js \
  && npm -g install \
     puppeteer \
     mocha-headless-chrome \
- && echo '{ "allow_root": true }' > /root/.bowerrc \
  && cd /vendor \
  && npm shrinkwrap \
  && npm -g install
