@@ -3,6 +3,7 @@ from functools import wraps
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy
 
+from corehq import toggles
 from corehq.apps.hqwebapp.views import no_permissions
 from custom.icds.const import ICDS_DOMAIN, IS_ICDS_ENVIRONMENT
 
@@ -23,3 +24,7 @@ def check_data_interfaces_blocked_for_domain(view_func):
 
 def is_icds_cas_project(domain):
     return IS_ICDS_ENVIRONMENT and domain == ICDS_DOMAIN
+
+
+def icds_pre_release_features(user):
+    return toggles.ICDS_DASHBOARD_REPORT_FEATURES.enabled(user.username)

@@ -233,7 +233,6 @@ from custom.icds_reports.utils import (
     get_datatables_ordering_info,
     get_location_filter,
     get_location_level,
-    icds_pre_release_features,
     india_now,
     filter_cas_data_export,
     get_deprecation_info,
@@ -241,6 +240,7 @@ from custom.icds_reports.utils import (
     timestamp_string_to_date_string,
     datetime_to_date_string
 )
+from ..icds_core.view_utils import icds_pre_release_features
 from custom.icds_reports.utils.data_accessor import (
     get_awc_covered_data_with_retrying,
     get_inc_indicator_api_data,
