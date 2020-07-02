@@ -33,9 +33,16 @@ class Command(BaseCommand):
             'dbname',
             help='Django db alias'
         )
+        parser.add_argument(
+            '--minval',
+            type=int,
+            dest='minval',
+            help='print only tables where the max value is more than this provided minvalue'
+        )
 
     def handle(self, **options):
         dbname = options['dbname']
+        minval = options['minval']
         cursor = connections[dbname].cursor()
         tables = get_tables_with_id_column(cursor)
         select_statements = [
@@ -48,5 +55,5 @@ class Command(BaseCommand):
         result = dict(zip(tables, result))
         print('table_name, max(id)')
         for table, max_id in result.items():
-            if max_id:
+            if max_id and max_id > minval:
                 print(table, ", ", max_id)
