@@ -75,6 +75,26 @@ class TestAWCReport(TestCase):
         self.assertEqual(data['person_name'], 'Name 3483')
         self.assertEqual(data['mother_name'], 'रींकीकुँवर')
 
+    def test_beneficiary_details_status_active(self):
+        data = get_beneficiary_details(
+            case_id='411c4234-8475-415a-9c28-911b85868aa5',
+            awc_id='a15',
+            selected_month=(2017, 6, 1)
+        )
+        self.assertEqual(data['beneficiary_status'], 'Active')
+
+    def test_beneficiary_details_status_migrated(self):
+        data = get_beneficiary_details(
+            case_id='625adb33-c67e-4151-93c7-64f28c988388',
+            awc_id='a7',
+            selected_month=(2017, 5, 1)
+        )
+        self.assertEqual(data['age_in_months'], 47)
+        self.assertEqual(data['sex'], 'M')
+        self.assertEqual(data['person_name'], 'Name 1783')
+        self.assertEqual(data['mother_name'], 'रेरवा')
+        self.assertEqual(data['beneficiary_status'], 'Migrated')
+
     def test_awc_reports_system_usage_AWC_days_open(self):
         self.assertDictEqual(
             get_awc_reports_system_usage(
@@ -1344,7 +1364,7 @@ class TestAWCReport(TestCase):
             }
         )
 
-    def test_awc_reports_maternal_child_immunization_coverage_at_age_1_year(self):
+    def test_awc_reports_maternal_child_immunization_coverage_at_age_1_year_with_age_1_2(self):
         data = get_awc_reports_maternal_child(
             'icds-cas',
             {
@@ -1355,7 +1375,7 @@ class TestAWCReport(TestCase):
                 'aggregation_level': 5
             },
             (2017, 5, 1),
-            (2017, 4, 1),
+            (2017, 4, 1)
         )
         self.assertDictEqual(
             data['kpi'][4][0],
@@ -1368,9 +1388,9 @@ class TestAWCReport(TestCase):
                 "value": 0,
                 "label": "Immunization Coverage (at age 1 year)",
                 'help_text': (
-                    "Of the total number of children enrolled for Anganwadi Services who are over a year old, "
-                    "the percentage of children who have received the complete immunization as per the National "
-                    "Immunization Schedule of India that is required by age 1."
+                    "Of the total number of children enrolled for Anganwadi Services who are between"
+                    " 1-2 years old, the percentage of children who have received the complete immunization"
+                    " as per the National Immunization Schedule of India that is required by age 1."
                     "<br/><br/>"
                     " This includes the following immunizations:<br/>"
                     " If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"
@@ -1907,7 +1927,8 @@ class TestAWCReport(TestCase):
                     'fully_immunized': 'No',
                     'person_name': 'Name 1237',
                     'aww_phone_number': None,
-                    'mother_phone_number': None
+                    'mother_phone_number': None,
+                    'beneficiary_status': 'Active'
                 },
                 cls=DjangoJSONEncoder
             )
@@ -1932,7 +1953,8 @@ class TestAWCReport(TestCase):
                     'fully_immunized': 'No',
                     'person_name': 'Name 1303',
                     'aww_phone_number': None,
-                    'mother_phone_number': None
+                    'mother_phone_number': None,
+                    'beneficiary_status': 'Active'
                 },
                 cls=DjangoJSONEncoder
             )
@@ -1957,7 +1979,8 @@ class TestAWCReport(TestCase):
                     'fully_immunized': 'No',
                     'person_name': 'Name 1305',
                     'aww_phone_number': None,
-                    'mother_phone_number': None
+                    'mother_phone_number': None,
+                    'beneficiary_status': 'Active'
                 },
                 cls=DjangoJSONEncoder
             )
@@ -1982,7 +2005,8 @@ class TestAWCReport(TestCase):
                     'fully_immunized': 'No',
                     'person_name': 'Name 1341',
                     'aww_phone_number': None,
-                    'mother_phone_number': None
+                    'mother_phone_number': None,
+                    'beneficiary_status': 'Active'
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2007,7 +2031,8 @@ class TestAWCReport(TestCase):
                     'fully_immunized': 'No',
                     'person_name': 'Name 2617',
                     'aww_phone_number': None,
-                    'mother_phone_number': None
+                    'mother_phone_number': None,
+                    'beneficiary_status': 'Active'
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2032,7 +2057,8 @@ class TestAWCReport(TestCase):
                     'fully_immunized': 'No',
                     'person_name': 'Name 2917',
                     'aww_phone_number': None,
-                    'mother_phone_number': None
+                    'mother_phone_number': None,
+                    'beneficiary_status': 'Active'
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2057,7 +2083,9 @@ class TestAWCReport(TestCase):
                     'fully_immunized': 'No',
                     'person_name': 'Name 4398',
                     'aww_phone_number': None,
-                    'mother_phone_number': None},
+                    'mother_phone_number': None,
+                    'beneficiary_status': 'Active'
+                },
                 cls=DjangoJSONEncoder
             )
         )
@@ -2081,7 +2109,8 @@ class TestAWCReport(TestCase):
                     'fully_immunized': 'No',
                     'person_name': 'Name 4399',
                     'aww_phone_number': None,
-                    'mother_phone_number': None
+                    'mother_phone_number': None,
+                    'beneficiary_status': 'Active'
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2106,7 +2135,8 @@ class TestAWCReport(TestCase):
                     'fully_immunized': 'No',
                     'person_name': 'Name 4400',
                     'aww_phone_number': None,
-                    'mother_phone_number': None
+                    'mother_phone_number': None,
+                    'beneficiary_status': 'Active'
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2131,7 +2161,8 @@ class TestAWCReport(TestCase):
                     'fully_immunized': 'No',
                     'person_name': 'Name 1191',
                     'aww_phone_number': None,
-                    'mother_phone_number': None
+                    'mother_phone_number': None,
+                    'beneficiary_status': 'Active'
                 },
                 cls=DjangoJSONEncoder
             )

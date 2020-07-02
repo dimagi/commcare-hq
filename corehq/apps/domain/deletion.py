@@ -11,14 +11,10 @@ from dimagi.utils.chunked import chunked
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.accounting.utils import get_change_status
-from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
 from corehq.apps.domain.utils import silence_during_tests
-from corehq.apps.locations.views import LocationFieldsView
-from corehq.apps.products.views import ProductFieldsView
 from corehq.apps.userreports.dbaccessors import (
     delete_all_ucr_tables_for_domain,
 )
-from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
 from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
@@ -164,15 +160,6 @@ def _delete_data_files(domain_name):
     )))
 
 
-def _delete_custom_data_fields(domain_name):
-    # The CustomDataFieldsDefinition instances are cleaned up as part of the
-    # bulk couch delete, but we also need to clear the cache
-    logger.info('Deleting custom data fields...')
-    for field_view in [LocationFieldsView, ProductFieldsView, UserFieldsView]:
-        get_by_domain_and_type.clear(domain_name, field_view.field_type)
-    logger.info('Deleting custom data fields complete.')
-
-
 # We use raw queries instead of ORM because Django queryset delete needs to
 # fetch objects into memory to send signals and handle cascades. It makes deletion very slow
 # if we have a millions of rows in stock data tables.
@@ -222,6 +209,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('cloudcare', 'ApplicationAccess', 'domain'),
     ModelDeletion('commtrack', 'SQLCommtrackConfig', 'domain'),
     ModelDeletion('consumption', 'DefaultConsumption', 'domain'),
+    ModelDeletion('custom_data_fields', 'SQLCustomDataFieldsDefinition', 'domain'),
     ModelDeletion('data_analytics', 'GIRRow', 'domain_name'),
     ModelDeletion('data_analytics', 'MALTRow', 'domain_name'),
     ModelDeletion('data_dictionary', 'CaseType', 'domain'),
@@ -235,6 +223,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('export', 'EmailExportWhenDoneRequest', 'domain'),
     CustomDeletion('export', _delete_data_files),
     ModelDeletion('locations', 'LocationFixtureConfiguration', 'domain'),
+    ModelDeletion('mobile_auth', 'SQLMobileAuthKeyRecord', 'domain'),
     ModelDeletion('ota', 'MobileRecoveryMeasure', 'domain'),
     ModelDeletion('ota', 'SerialIdBucket', 'domain'),
     ModelDeletion('phone', 'OwnershipCleanlinessFlag', 'domain'),
@@ -253,7 +242,6 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('dhis2', 'Dhis2Connection', 'domain'),
     ModelDeletion('motech', 'RequestLog', 'domain'),
     ModelDeletion('couchforms', 'UnfinishedSubmissionStub', 'domain'),
-    CustomDeletion('custom_data_fields', _delete_custom_data_fields),
     CustomDeletion('ucr', delete_all_ucr_tables_for_domain),
 ]
 

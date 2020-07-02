@@ -6,7 +6,7 @@ from soil import DownloadBase
 
 
 @task(serializer='pickle')
-def import_users_and_groups(domain, user_specs, group_specs):
+def import_users_and_groups(domain, user_specs, group_specs, upload_user):
     from corehq.apps.user_importer.importer import create_or_update_users_and_groups, create_or_update_groups
     task = import_users_and_groups
     DownloadBase.set_progress(task, 0, 100)
@@ -24,6 +24,7 @@ def import_users_and_groups(domain, user_specs, group_specs):
     user_results = create_or_update_users_and_groups(
         domain,
         user_specs,
+        upload_user=upload_user,
         group_memoizer=group_memoizer,
         update_progress=functools.partial(_update_progress, start=len(group_specs))
     )

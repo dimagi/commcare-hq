@@ -333,15 +333,26 @@
       {% endif %}
     {% endif %}
 
+    {% if request.user.is_authenticated and request.project and request.session.secure_session %}
+      {% initial_page_data 'session_expiry' request.session.session_expiry %}
+      {% initial_page_data 'secure_timeout_username' request.couch_user.username %}
+      {% registerurl 'iframe_domain_login' request.project.name %}
+      {% registerurl 'iframe_domain_login_new_window' %}
+      {% registerurl 'ping_login' %}
+      {% registerurl 'ping_session' %}
+      {% include 'hqwebapp/includes/inactivity_modal.html' %}
+    {% endif %}
+    {% registerurl 'login_new_window' %}
+
     {# 30 Day Trial #}
     {% include 'hqwebapp/includes/modal_30_day_trial.html' %}
 
 
     {% block additional_initial_page_data %}
       {% comment %}
-                    fallback place to put initial page data for templates where it's
-                    awkward or impossible to include it in another block
-                {% endcomment %}
+        fallback place to put initial page data for templates where it's
+        awkward or impossible to include it in another block
+      {% endcomment %}
     {% endblock %}
     {% initial_page_data 'mobile_ux_cookie_name' mobile_ux_cookie_name %}
     {% initial_page_data 'show_mobile_ux_warning' show_mobile_ux_warning %}
@@ -519,7 +530,7 @@
     {% endif %}
 
     {# Knockout component templates #}
-    {% include 'hqwebapp/ko_pagination.html' %}
+    {% include 'hqwebapp/partials/ko_pagination.html' %}
     {% include 'hqwebapp/partials/ko_inline_edit.html' %}
     {% include 'hqwebapp/partials/ko_search_box.html' %}
     {% include 'hqwebapp/partials/ko_select_toggle.html' %}

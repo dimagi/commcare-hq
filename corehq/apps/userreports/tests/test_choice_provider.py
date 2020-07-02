@@ -138,7 +138,7 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
         ]
         choice_tuples.sort()
         choices = [choice for name, choice in choice_tuples]
-        cls.web_user = WebUser.create(cls.domain, 'blah', 'password')
+        cls.web_user = WebUser.create(cls.domain, 'blah', 'password', None, None)
         cls.choice_provider = LocationChoiceProvider(report, None)
         cls.choice_provider.configure({
             "include_descendants": False,

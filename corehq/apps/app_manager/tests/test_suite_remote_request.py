@@ -166,3 +166,37 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             get_url_base_patch.return_value = 'https://www.example.com'
             suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('search_config_blacklisted_owners'), suite, "./remote-request[1]")
+
+    def test_prompt_appearance(self, *args):
+        """Setting the appearance to "barcode"
+        """
+        # Shouldn't be included for versions before 2.50
+        self.module.search_config.properties[0].appearance = 'barcode_scan'
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+        self.app.build_spec = BuildSpec(version='2.50.0', build_number=1)
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name" appearance="barcode_scan">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")

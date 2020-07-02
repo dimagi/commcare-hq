@@ -12,7 +12,7 @@ from corehq.apps.user_importer.importer import (
 )
 from corehq.apps.user_importer.tasks import import_users_and_groups
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.apps.users.models import CommCareUser, Permissions, UserRole
+from corehq.apps.users.models import CommCareUser, Permissions, UserRole, WebUser
 
 
 class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
@@ -22,6 +22,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         delete_all_users()
         cls.domain_name = 'mydomain'
         cls.domain = Domain.get_or_create_with_name(name=cls.domain_name)
+        cls.other_domain = Domain.get_or_create_with_name(name='other-domain')
 
         permissions = Permissions(edit_apps=True, view_reports=True)
         cls.role = UserRole.get_or_create_with_permissions(cls.domain.name, permissions, 'edit-apps')
@@ -29,6 +30,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
     @classmethod
     def tearDownClass(cls):
         cls.domain.delete()
+        cls.other_domain.delete()
         super().tearDownClass()
 
     def tearDown(self):
@@ -61,6 +63,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(user_id='missing')],
             [],
+            None
         )
 
         self.assertIsNone(self.user)
@@ -74,6 +77,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(location_code=self.loc1.site_code)],
             [],
+            None
         )
         self.assertEqual(self.user.location_id, self.loc1._id)
         self.assertEqual(self.user.location_id, self.user.user_data.get('commcare_location_id'))
@@ -89,6 +93,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         result = create_or_update_users_and_groups(
             self.domain.name,
             [self._get_spec(location_code='unknownsite')],
+            None
         )
         self.assertEqual(len(result["rows"]), 1)
 
@@ -99,6 +104,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(location_code=[a.site_code for a in [self.loc1, self.loc2]])],
             [],
+            None
         )
         # first location should be primary location
         self.assertEqual(self.user.location_id, self.loc1._id)
@@ -116,6 +122,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(location_code=[a.site_code for a in [self.loc1, self.loc2]])],
             [],
+            None
         )
 
         # deassign all locations
@@ -123,6 +130,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(location_code=[], user_id=self.user._id)],
             [],
+            None
         )
 
         # user should have no locations
@@ -137,6 +145,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         create_or_update_users_and_groups(
             self.domain.name,
             [self._get_spec(location_code=[a.site_code for a in [self.loc1, self.loc2]])],
+            None
         )
 
         # user's primary location should be loc1
@@ -149,6 +158,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         create_or_update_users_and_groups(
             self.domain.name,
             [self._get_spec(location_code=[self.loc2.site_code], user_id=self.user._id)],
+            None
         )
 
         # user's location should now be loc2
@@ -164,13 +174,15 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         # first assign to loc1
         create_or_update_users_and_groups(
             self.domain.name,
-            [self._get_spec(location_code=[self.loc1.site_code])]
+            [self._get_spec(location_code=[self.loc1.site_code])],
+            None
         )
 
         # reassign to loc2
         create_or_update_users_and_groups(
             self.domain.name,
-            [self._get_spec(location_code=[self.loc2.site_code], user_id=self.user._id)]
+            [self._get_spec(location_code=[self.loc2.site_code], user_id=self.user._id)],
+            None
         )
 
         # user's location should now be loc2
@@ -190,6 +202,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(name=1234)],
             [],
+            None
         )
         self.assertEqual(self.user.full_name, "1234")
 
@@ -202,6 +215,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(name=None)],
             [],
+            None
         )
         self.assertEqual(self.user.full_name, "")
 
@@ -214,6 +228,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(email=email)],
             [],
+            None
         )
         self.assertEqual(self.user.email, email.lower())
 
@@ -222,6 +237,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(role=self.role.name)],
             [],
+            None
         )
         self.assertEqual(self.user.get_role(self.domain_name).name, self.role.name)
 
@@ -230,6 +246,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(is_active='')],
             [],
+            None
         )
         self.assertTrue(self.user.is_active)
 
@@ -238,6 +255,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec()],
             [],
+            None
         )
         self.assertIsNotNone(self.user)
 
@@ -245,6 +263,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(user_id=self.user._id, username='')],
             [],
+            None
         )
 
     def test_update_user_numeric_username(self):
@@ -252,6 +271,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(username=123)],
             [],
+            None
         )
         self.assertIsNotNone(
             CommCareUser.get_by_username('{}@{}.commcarehq.org'.format('123', self.domain.name))
@@ -262,6 +282,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(delete_keys=['is_active'], is_account_confirmed='False')],
             [],
+            None
         )
         user = self.user
         self.assertIsNotNone(user)
@@ -292,9 +313,67 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
                 ),
             ],
             [],
+            None
         )
         self.assertEqual(mock_account_confirm_email.call_count, 1)
         self.assertEqual('with_email', mock_account_confirm_email.call_args[0][0].raw_username)
+
+    @mock.patch('corehq.apps.user_importer.importer.Invitation')
+    def test_upload_invite_web_user(self, mock_invitation_class):
+        mock_invite = mock_invitation_class.return_value
+        import_users_and_groups(
+            self.domain.name,
+            [
+                self._get_spec(
+                    web_user='a@a.com',
+                    is_account_confirmed='False',
+                    send_confirmation_email='True',
+                    role=self.role.name
+                )
+            ],
+            [],
+            mock.MagicMock()
+        )
+        self.assertTrue(mock_invite.send_activation_email.called)
+
+    @mock.patch('corehq.apps.user_importer.importer.Invitation')
+    def test_upload_add_web_user(self, mock_invitation_class):
+        username = 'a@a.com'
+        web_user = WebUser.create(self.other_domain.name, username, 'password', None, None)
+        mock_invite = mock_invitation_class.return_value
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(web_user='a@a.com', is_account_confirmed='True', role=self.role.name)],
+            [],
+            mock.MagicMock()
+        )
+        web_user = WebUser.get_by_username(username)
+        self.assertFalse(mock_invite.send_activation_email.called)
+        self.assertTrue(web_user.is_member_of(self.domain.name))
+
+    def test_upload_edit_web_user(self):
+        username = 'a@a.com'
+        web_user = WebUser.create(self.domain.name, username, 'password', None, None)
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(web_user='a@a.com', role=self.role.name)],
+            [],
+            mock.MagicMock()
+        )
+        web_user = WebUser.get_by_username(username)
+        self.assertEqual(web_user.get_role(self.domain.name).name, self.role.name)
+
+    def test_remove_web_user(self):
+        username = 'a@a.com'
+        web_user = WebUser.create(self.domain.name, username, 'password', None, None)
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(web_user='a@a.com', remove_web_user='True')],
+            [],
+            mock.MagicMock()
+        )
+        web_user = WebUser.get_by_username(username)
+        self.assertFalse(web_user.is_member_of(self.domain.name))
 
 
 class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
@@ -336,6 +415,7 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             list(user_spec + self.user_specs),
             [],
+            None
         )['messages']['rows']
         self.assertEqual(rows[0]['flag'], "'password' values must be unique")
 
@@ -347,5 +427,6 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             list([updated_user_spec]),
             [],
+            None
         )['messages']['rows']
         self.assertEqual(rows[0]['flag'], 'Password is not strong enough. Try making your password more complex.')

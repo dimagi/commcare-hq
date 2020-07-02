@@ -7,10 +7,11 @@ from datetime import datetime, timedelta
 from django.conf import settings
 from django.contrib.auth import logout
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.template import RequestContext
 from auditcare import models
 from auditcare.models import AccessAudit
+from dimagi.utils.web import get_ip
 
 # see if the user has overridden the failure limit
 FAILURE_LIMIT = getattr(settings, 'AXES_LOGIN_FAILURE_LIMIT', 3)
@@ -56,7 +57,7 @@ def get_user_attempt(request):
     Returns access attempt record if it exists.
     Otherwise return None.
     """
-    ip = request.META.get('REMOTE_ADDR', '')
+    ip = get_ip(request)
     if USE_USER_AGENT:
         ua = request.META.get('HTTP_USER_AGENT', '<unknown>')
 
@@ -106,7 +107,7 @@ def watch_logout(func):
         log.info("Logged logout for user %s", request.user.username)
         user = request.user
         #it's a successful login.
-        ip = request.META.get('REMOTE_ADDR', '')
+        ip = get_ip(request)
         ua = request.META.get('HTTP_USER_AGENT', '<unknown>')
         attempt = AccessAudit()
         attempt.doc_type=AccessAudit.__name__
@@ -185,7 +186,7 @@ def lockout_response(request):
             'cooloff_time': COOLOFF_TIME,
             'failure_limit': FAILURE_LIMIT,
         })
-        return render_to_response(LOCKOUT_TEMPLATE, context)
+        return render(request, LOCKOUT_TEMPLATE, context)
 
     if LOCKOUT_URL:
         return HttpResponseRedirect(LOCKOUT_URL)
@@ -242,7 +243,7 @@ def log_request(request, login_unsuccessful):
             log.info('AXES: Repeated login failure by %s. Updating access '
                      'record. Count = %s', attempt.ip_address, failures)
         else:
-            ip = request.META.get('REMOTE_ADDR', '')
+            ip = get_ip(request)
             ua = request.META.get('HTTP_USER_AGENT', '<unknown>')
             attempt = AccessAudit()
             attempt.event_date = datetime.utcnow()

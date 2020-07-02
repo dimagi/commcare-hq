@@ -97,7 +97,7 @@ class LoginAndDomainAuthentication(Authentication):
             return response
 
     def get_identifier(self, request):
-        return request.couch_user.username
+        return f"{request.domain}_{request.couch_user.username}"
 
 
 class RequirePermissionAuthentication(LoginAndDomainAuthentication):

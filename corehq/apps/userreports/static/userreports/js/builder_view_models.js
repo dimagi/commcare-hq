@@ -82,6 +82,9 @@ hqDefine('userreports/js/builder_view_models', function () {
         // PropertyListItem is representing columns
 
         self.format = ko.observable("");
+        self.acceptsFormatValue = ko.computed(function () {
+            return self.format() !== "Is Empty" && self.format() !== "Exists";
+        });
 
         var constants = hqImport('userreports/js/constants');
         self.calculationOptions = ko.pureComputed(function () {

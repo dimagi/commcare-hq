@@ -50,7 +50,7 @@ class CallCenterUtilsTests(TestCase):
     def setUpClass(cls):
         super(CallCenterUtilsTests, cls).setUpClass()
         cls.domain = create_domain(TEST_DOMAIN)
-        cls.user = CommCareUser.create(TEST_DOMAIN, 'user1', '***')
+        cls.user = CommCareUser.create(TEST_DOMAIN, 'user1', '***', None, None)
         cls.user_id = cls.user.user_id
 
         cls.domain.call_center_config.enabled = True
@@ -77,7 +77,7 @@ class CallCenterUtilsTests(TestCase):
         self.assertIsNotNone(case.get_case_property('phone_number'))
 
     def test_sync_full_name(self):
-        other_user = CommCareUser.create(TEST_DOMAIN, 'user7', '***')
+        other_user = CommCareUser.create(TEST_DOMAIN, 'user7', '***', None, None)
         self.addCleanup(other_user.delete)
         name = 'Ricky Bowwood'
         other_user.set_full_name(name)
@@ -107,7 +107,7 @@ class CallCenterUtilsTests(TestCase):
         self.assertTrue(case.closed)
 
     def test_sync_update_update(self):
-        other_user = CommCareUser.create(TEST_DOMAIN, 'user2', '***')
+        other_user = CommCareUser.create(TEST_DOMAIN, 'user2', '***', None, None)
         self.addCleanup(other_user.delete)
         sync_call_center_user_case(other_user)
         case = self._get_user_case(other_user._id)
@@ -211,7 +211,7 @@ class CallCenterUtilsUserCaseTests(TestCase):
         cls.domain.save()
 
     def setUp(self):
-        self.user = CommCareUser.create(TEST_DOMAIN, 'user1', '***', commit=False)  # Don't commit yet
+        self.user = CommCareUser.create(TEST_DOMAIN, 'user1', '***', None, None, commit=False)  # Don't commit yet
 
     def tearDown(self):
         self.user.delete()
@@ -365,6 +365,7 @@ class CallCenterUtilsUserCaseTests(TestCase):
         results = create_or_update_users_and_groups(
             TEST_DOMAIN,
             list(user_upload),
+            None
         )
         self.assertEqual(results['errors'], [])
 

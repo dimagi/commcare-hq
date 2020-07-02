@@ -67,7 +67,9 @@ from custom.icds_reports.const import (
     THREE_MONTHS,
     DASHBOARD_USAGE_EXPORT,
     SERVICE_DELIVERY_REPORT,
-    CHILD_GROWTH_TRACKER_REPORT
+    CHILD_GROWTH_TRACKER_REPORT,
+    POSHAN_PROGRESS_REPORT,
+    AWW_ACTIVITY_REPORT
 )
 from custom.icds_reports.models import (
     AggAwc,
@@ -124,6 +126,7 @@ from custom.icds_reports.reports.service_delivery_report import ServiceDeliveryR
 from custom.icds_reports.sqldata.exports.awc_infrastructure import (
     AWCInfrastructureExport,
 )
+from custom.icds_reports.sqldata.exports.aww_activity_report import AwwActivityExport
 from custom.icds_reports.sqldata.exports.beneficiary import BeneficiaryExport
 from custom.icds_reports.sqldata.exports.children import ChildrenExport
 from custom.icds_reports.sqldata.exports.dashboard_usage import DashBoardUsage
@@ -132,6 +135,7 @@ from custom.icds_reports.sqldata.exports.growth_tracker_report import GrowthTrac
 from custom.icds_reports.sqldata.exports.lady_supervisor import (
     LadySupervisorExport,
 )
+from custom.icds_reports.sqldata.exports.poshan_progress_report import PoshanProgressReport
 from custom.icds_reports.sqldata.exports.pregnant_women import (
     PregnantWomenExport,
 )
@@ -150,7 +154,9 @@ from custom.icds_reports.utils import (
     zip_folder,
     get_dashboard_usage_excel_file,
     create_service_delivery_report,
-    create_child_growth_tracker_report
+    create_child_growth_tracker_report,
+    create_poshan_progress_report,
+    create_aww_activity_report
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     ChildHealthMonthlyAggregationDistributedHelper,
@@ -355,6 +361,10 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
 
             res_sdr.get(disable_sync_subtasks=False)
 
+            res_inactive_aww = chain(icds_aggregation_task.si(date=calculation_date, func_name='_aggregate_inactive_aww_agg'),).apply_async()
+
+            res_inactive_aww.get(disable_sync_subtasks=False)
+
             res_awc = chain(icds_aggregation_task.si(date=calculation_date, func_name='_agg_awc_table'),
                             *res_ls_tasks
                             ).apply_async()
@@ -438,7 +448,8 @@ def icds_aggregation_task(self, date, func_name):
         '_agg_ccs_record_table': _agg_ccs_record_table,
         '_agg_awc_table': _agg_awc_table,
         'aggregate_awc_daily': aggregate_awc_daily,
-        'update_service_delivery_report': update_service_delivery_report
+        'update_service_delivery_report': update_service_delivery_report,
+        '_aggregate_inactive_aww_agg': _aggregate_inactive_aww_agg
     }[func_name]
 
     db_alias = get_icds_ucr_citus_db_alias()
@@ -561,6 +572,18 @@ def _aggregate_awc_infra_forms(state_id, day):
 @track_time
 def _aggregate_inactive_aww(day):
     AggregateInactiveAWW.aggregate(day)
+
+
+def _aggregate_inactive_aww_agg(day=None):
+    last_sync = IcdsFile.objects.filter(data_type='inactive_awws').order_by('-file_added').first()
+
+    # If last sync not exist then collect initial data
+    if not last_sync:
+        last_sync_date = datetime(2017, 3, 1).date()
+    else:
+        last_sync_date = last_sync.file_added
+
+    AggregateInactiveAWW.aggregate(last_sync_date)
 
 
 @track_time
@@ -885,8 +908,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
         excel_data = SystemUsageExport(
             config=config,
             loc_level=aggregation_level,
-            show_test=include_test,
-            beta=beta
+            show_test=include_test
         ).get_excel_data(
             location,
             system_usage_num_launched_awcs_formatting_at_awc_level=aggregation_level > 4 and beta,
@@ -946,22 +968,27 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
     elif indicator == THR_REPORT_EXPORT:
         loc_level = aggregation_level if location else 0
         excel_data = TakeHomeRationExport(
+            domain=config['domain'],
             location=location,
             month=config['month'],
             loc_level=loc_level,
-            beta=beta
+            beta=beta,
+            report_type=config['thr_report_type']
         ).get_excel_data()
         export_info = excel_data[1][1]
         generated_timestamp = date_parser.parse(export_info[0][1])
         formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
-        data_type = 'THR Report__{}'.format(formatted_timestamp)
 
+        data_type = 'THR Report__{}__{}'.format(config['thr_report_type'],
+                                                formatted_timestamp)
         if file_format == 'xlsx':
             cache_key = create_thr_report_excel_file(
                 excel_data,
                 data_type,
                 config['month'].strftime("%B %Y"),
                 loc_level,
+                config['thr_report_type'],
+                beta=beta
             )
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
@@ -1027,11 +1054,53 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
 
-        formatted_timestamp = datetime.now().strftime("%d-%m-%Y__%H-%M-%S")
-        data_type = 'Child Growth Tracker Report__{}'.format(formatted_timestamp)
+    elif indicator == AWW_ACTIVITY_REPORT:
+        data_type = 'AWW_Activity_Report'
+        excel_data = AwwActivityExport(
+            config=config,
+            loc_level=aggregation_level,
+            show_test=include_test,
+            beta=beta
+        ).get_excel_data(location)
+        export_info = excel_data[1][1]
+        generated_timestamp = date_parser.parse(export_info[0][1])
+        formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
+        data_type = 'AWW_Activity_Report__{}'.format(formatted_timestamp)
+
+        if file_format == 'xlsx':
+            cache_key = create_aww_activity_report(
+                excel_data,
+                data_type,
+                config,
+                aggregation_level
+            )
+        else:
+            cache_key = create_excel_file(excel_data, data_type, file_format)
+
+    elif indicator == POSHAN_PROGRESS_REPORT:
+        data_type = 'Poshan_Progress_Report'
+        excel_data = PoshanProgressReport(
+            config=config,
+            loc_level=aggregation_level,
+            show_test=include_test,
+            beta=beta
+        ).get_excel_data(location)
+        export_info = excel_data[1][1]
+        generated_timestamp = date_parser.parse(export_info[0][1])
+        formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
+        report_layout = config['report_layout']
+        data_type = 'Poshan Progress Report {report_layout}__{formatted_timestamp}'.format(
+            report_layout=report_layout,
+            formatted_timestamp=formatted_timestamp)
+
+        if file_format == 'xlsx':
+            cache_key = create_poshan_progress_report(excel_data, data_type, config, aggregation_level)
+        else:
+            cache_key = create_excel_file(excel_data, data_type, file_format)
 
     if indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT, THR_REPORT_EXPORT, CHILDREN_EXPORT,
-                         DASHBOARD_USAGE_EXPORT, SERVICE_DELIVERY_REPORT, CHILD_GROWTH_TRACKER_REPORT):
+                         DASHBOARD_USAGE_EXPORT, SERVICE_DELIVERY_REPORT, CHILD_GROWTH_TRACKER_REPORT,
+                         AWW_ACTIVITY_REPORT, POSHAN_PROGRESS_REPORT):
         if file_format == 'xlsx' and beta:
             cache_key = create_excel_file_in_openpyxl(excel_data, data_type)
         else:
@@ -1729,7 +1798,8 @@ def email_location_changes(domain, old_location_blob_id, new_location_blob_id):
     )
 
 
-@periodic_task_on_envs(settings.ICDS_ENVS, run_every=crontab(hour=22, minute=0))
+# run before aggregation (which is run at at 18:00 UTC)
+@periodic_task_on_envs(settings.ICDS_ENVS, run_every=crontab(hour=16, minute=30))
 def create_reconciliation_records():
     # Setup yesterday's data to reduce noise in case we're behind by a lot in pillows
     UcrReconciliationStatus.setup_days_records(date.today() - timedelta(days=1))
@@ -1740,7 +1810,8 @@ def create_reconciliation_records():
 @task(queue='dashboard_comparison_queue')
 def reconcile_data_not_in_ucr(reconciliation_status_pk):
     status_record = UcrReconciliationStatus.objects.get(pk=reconciliation_status_pk)
-    number_documents_missing = 0
+    num_docs_retried = 0
+    num_docs_unporcessed = 0
 
     data_not_in_ucr = list(get_data_not_in_ucr(status_record))
     doc_ids_not_in_ucr = {data[0] for data in data_not_in_ucr}
@@ -1756,21 +1827,30 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
     # running the data accessor again to avoid storing all doc ids in memory
     # since run time is relatively short and does not scale with number of errors
     # but the number of doc ids will increase with the number of errors
-    for doc_id, doc_subtype, sql_modified_on in data_not_in_ucr:
+    for doc_id, doc_subtype, sql_modified_on, inserted_at in data_not_in_ucr:
         if doc_id in known_bad_doc_ids:
             # These docs are invalid
             continue
-        number_documents_missing += 1
+        num_docs_retried += 1
         not_found_in_es = doc_id in doc_ids_not_in_es
+        if not inserted_at or (sql_modified_on - inserted_at).seconds > 3600:
+            num_docs_unporcessed += 1
+
         celery_task_logger.info(f'doc_id {doc_id} from {sql_modified_on} not found in UCR data sources. '
             f'Not found in ES: {not_found_in_es}')
         send_change_for_ucr_reprocessing(doc_id, doc_subtype, status_record.is_form_ucr)
 
     metrics_counter(
         "commcare.icds.ucr_reconciliation.published_change_count",
-        number_documents_missing,
+        num_docs_retried,
         tags={'config_id': status_record.table_id, 'doc_type': status_record.doc_type},
-        documentation="Number of docs that were not found in UCR that were republished"
+        documentation="Number of docs that were republished"
+    )
+    metrics_counter(
+        "commcare.icds.ucr_reconciliation.fully_missing_count",
+        num_docs_unporcessed,
+        tags={'config_id': status_record.table_id, 'doc_type': status_record.doc_type},
+        documentation="Number of docs that were not found in UCR or not fresh than 1 hour"
     )
     metrics_counter(
         "commcare.icds.ucr_reconciliation.partially_processed_count",
@@ -1779,12 +1859,12 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
         documentation="Number of docs that exists in Elasticsearch but are not found in UCR"
     )
     status_record.last_processed_date = datetime.utcnow()
-    status_record.documents_missing = number_documents_missing
-    if number_documents_missing == 0:
+    status_record.documents_missing = num_docs_retried
+    if num_docs_retried == 0:
         status_record.verified_date = datetime.utcnow()
     status_record.save()
 
-    return number_documents_missing
+    return num_docs_retried
 
 
 def send_change_for_ucr_reprocessing(doc_id, doc_subtype, is_form):
@@ -1818,12 +1898,12 @@ def get_data_not_in_ucr(status_record):
         doc_id_and_inserted_in_ucr = _get_docs_in_ucr(domain, status_record.table_id, doc_ids)
         for doc_id, doc_subtype, sql_modified_on in chunk:
             if doc_id in doc_id_and_inserted_in_ucr:
-                # This is to handle the cases which are outdated. This condition also handles the time drift of 1 sec
-                # between main db and ucr db. i.e  doc will even be included when inserted_at-sql_modified_on <= 1 sec
-                if sql_modified_on - doc_id_and_inserted_in_ucr[doc_id] >= timedelta(seconds=-1):
-                    yield (doc_id, doc_subtype, sql_modified_on.isoformat())
+                # This is to handle the cases which are outdated. This condition also handles the time drift of 2 sec
+                # between main db and ucr db. i.e  doc will even be included when inserted_at-sql_modified_on < 2 sec
+                if sql_modified_on - doc_id_and_inserted_in_ucr[doc_id] > timedelta(seconds=-2):
+                    yield (doc_id, doc_subtype, sql_modified_on.isoformat(), doc_id_and_inserted_in_ucr[doc_id])
             else:
-                yield (doc_id, doc_subtype, sql_modified_on.isoformat())
+                yield (doc_id, doc_subtype, sql_modified_on.isoformat(), None)
 
 
 def _get_docs_in_ucr(domain, table_id, doc_ids):

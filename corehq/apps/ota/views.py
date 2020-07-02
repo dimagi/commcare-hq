@@ -34,7 +34,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app_cached,
     get_latest_released_app_version,
 )
-from corehq.apps.app_manager.util import LatestAppInfo
+from corehq.apps.app_manager.models import GlobalAppConfig
 from corehq.apps.builds.utils import get_default_build_spec
 from corehq.apps.case_search.models import QueryMergeException
 from corehq.apps.case_search.utils import CaseSearchCriteria
@@ -49,11 +49,6 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.decorators import require_mobile_access
 from corehq.apps.ota.rate_limiter import rate_limit_restore
 from corehq.apps.users.models import CouchUser, UserReportingMetadataStaging
-from corehq.apps.users.util import (
-    update_device_meta,
-    update_last_sync,
-    update_latest_builds,
-)
 from corehq.const import ONE_DAY, OPENROSA_VERSION_MAP
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.utils.xform import adjust_text_to_datetime
@@ -301,20 +296,19 @@ def heartbeat(request, domain, app_build_id):
     app_id = request.GET.get('app_id', '')
     build_profile_id = request.GET.get('build_profile_id', '')
 
-    info = {"app_id": app_id}
     try:
-        # mobile will send brief_app_id
-        info.update(LatestAppInfo(app_id, domain).get_info())
+        info = GlobalAppConfig.get_latest_version_info(domain, app_id, build_profile_id)
     except (Http404, AssertionError):
-        # If it's not a valid 'brief' app id, find it by talking to couch
+        # If it's not a valid master app id, find it by talking to couch
         notify_exception(request, 'Received an invalid heartbeat request')
         app = get_app_cached(domain, app_build_id)
-        brief_app_id = app.master_id
-        info.update(LatestAppInfo(brief_app_id, domain).get_info())
+        info = GlobalAppConfig.get_latest_version_info(domain, app.master_id, build_profile_id)
 
-    else:
-        if not toggles.SKIP_UPDATING_USER_REPORTING_METADATA.enabled(domain):
-            update_user_reporting_data(app_build_id, app_id, build_profile_id, request.couch_user, request)
+    info["app_id"] = app_id
+
+    if not toggles.SKIP_UPDATING_USER_REPORTING_METADATA.enabled(domain):
+        update_user_reporting_data(app_build_id, app_id, build_profile_id, request.couch_user, request)
+
     if _should_force_log_submission(request):
         info['force_logs'] = True
     return JsonResponse(info)

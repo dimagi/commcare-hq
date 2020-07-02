@@ -6,11 +6,11 @@ from dateutil.rrule import rrule, MONTHLY
 from django.db.models.aggregates import Sum
 
 from custom.icds_reports.cache import icds_quickcache
-from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
+from custom.icds_reports.const import LocationTypes, ChartColors, MapColors, AggregationLevels
 from custom.icds_reports.messages import children_initiated_appropriate_complementary_feeding_help_text
-from custom.icds_reports.models import AggChildHealthMonthly
+from custom.icds_reports.models import AggChildHealthMonthly, ChildHealthMonthlyView
 from custom.icds_reports.utils import apply_exclude, generate_data_for_map, chosen_filters_to_labels, \
-    indian_formatted_number
+    indian_formatted_number, get_filters_from_config_for_chart_view
 from custom.icds_reports.utils import get_location_launched_status
 
 
@@ -50,6 +50,8 @@ def get_children_initiated_data_map(domain, config, loc_level, show_test=False, 
     fills.update({'0%-20%': MapColors.RED})
     fills.update({'20%-60%': MapColors.ORANGE})
     fills.update({'60%-100%': MapColors.PINK})
+    if icds_features_flag:
+        fills.update({'Not Launched': MapColors.GREY})
     fills.update({'defaultFill': MapColors.GREY})
 
     gender_ignored, age_ignored, chosen_filters = chosen_filters_to_labels(config)
@@ -93,10 +95,14 @@ def get_children_initiated_data_chart(domain, config, loc_level, show_test=False
 
     config['month__range'] = (three_before, month)
     del config['month']
+    # using child health monthly while querying for sector level due to performance issues
+    if icds_features_flag and config['aggregation_level'] >= AggregationLevels.SUPERVISOR:
+        chm_filter = get_filters_from_config_for_chart_view(config)
+        chm_queryset = ChildHealthMonthlyView.objects.filter(**chm_filter)
+    else:
+        chm_queryset = AggChildHealthMonthly.objects.filter(**config)
 
-    chart_data = AggChildHealthMonthly.objects.filter(
-        **config
-    ).values(
+    chart_data = chm_queryset.values(
         'month', '%s_name' % loc_level
     ).annotate(
         in_month=Sum('cf_initiation_in_month'),

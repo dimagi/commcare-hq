@@ -21,7 +21,10 @@ from corehq.apps.hqwebapp.urls import legacy_prelogin
 from corehq.apps.hqwebapp.views import (
     apache_license,
     bsd_license,
+    no_permissions,
+    not_found,
     redirect_to_dimagi,
+    server_error,
 )
 from corehq.apps.registration.tasks import PRICING_LINK
 from corehq.apps.reports.views import ReportNotificationUnsubscribeView
@@ -38,10 +41,9 @@ except ImportError:
 
 admin.autodiscover()
 
-handler500 = 'corehq.apps.hqwebapp.views.server_error'
-handler404 = 'corehq.apps.hqwebapp.views.not_found'
-handler403 = 'corehq.apps.hqwebapp.views.no_permissions'
-
+handler500 = server_error
+handler404 = not_found
+handler403 = no_permissions
 
 
 domain_specific = [
@@ -112,11 +114,13 @@ urlpatterns = [
     url(r'^smsgh/', include('corehq.messaging.smsbackends.smsgh.urls')),
     url(r'^push/', include('corehq.messaging.smsbackends.push.urls')),
     url(r'^starfish/', include('corehq.messaging.smsbackends.starfish.urls')),
+    url(r'^trumpia/', include('corehq.messaging.smsbackends.trumpia.urls')),
     url(r'^apposit/', include('corehq.messaging.smsbackends.apposit.urls')),
     url(r'^tropo/', include('corehq.messaging.smsbackends.tropo.urls')),
     url(r'^turn/', include('corehq.messaging.smsbackends.turn.urls')),
     url(r'^twilio/', include('corehq.messaging.smsbackends.twilio.urls')),
     url(r'^infobip/', include('corehq.messaging.smsbackends.infobip.urls')),
+    url(r'^pinpoint/', include('corehq.messaging.smsbackends.amazon_pinpoint.urls')),
     url(r'^dropbox/', include('corehq.apps.dropbox.urls')),
     url(r'^start_enterprise/', include('corehq.messaging.smsbackends.start_enterprise.urls')),
     url(r'^telerivet/', include('corehq.messaging.smsbackends.telerivet.urls')),
