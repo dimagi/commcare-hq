@@ -16,7 +16,6 @@ xforms/
 submissions/
 /formplayer_build
 /export/
-/bower_components
 bad/
 *.log*
 /CommCare.ja*
@@ -65,4 +64,5 @@ node_modules/
 /sharedfiles/
 docker/data
 *.lock
+!yarn.lock
 fab/config.py

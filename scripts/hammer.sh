@@ -5,5 +5,5 @@ function hammer() {
     pip install -r requirements/dev-requirements.txt &&
     find . -name '*.pyc' -delete &&
     ./manage.py migrate &&
-    bower install
+    yarn install
 }
