@@ -358,5 +358,10 @@ class NoClose(object):
     def __getattr__(self, name):
         return getattr(self.fileobj, name)
 
+    def open(self, *args, **kw):
+        # compatible with django.core.files.base.File.open()
+        obj = self.fileobj.open(*args, **kw)
+        return self if obj is self.fileobj else obj
+
     def close(self):
         pass
