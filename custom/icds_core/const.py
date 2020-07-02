@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.utils.translation import ugettext_lazy
 
 ManageHostedCCZ_urlname = "manage_hosted_ccz"
 ManageHostedCCZLink_urlname = "manage_hosted_ccz_links"
