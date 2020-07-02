@@ -112,6 +112,7 @@ from corehq.motech.const import (
     DIGEST_AUTH,
     OAUTH1,
 )
+from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import Requests, simple_post
 from corehq.motech.utils import b64_aes_decrypt
 from corehq.util.metrics import metrics_counter
@@ -174,17 +175,18 @@ class Repeater(QuickCachedDocumentMixin, Document):
     base_doc = 'Repeater'
 
     domain = StringProperty()
-
-    # TODO: (2020-03-06) Migrate to ConnectionSettings
+    name = StringProperty(default="")
+    connection_settings_id = IntegerProperty(required=False, default=None)
+    # TODO: Delete the following properties once all Repeaters have been
+    #       migrated to ConnectionSettings. (2020-05-16)
     url = StringProperty()
-    format = StringProperty()
-
     auth_type = StringProperty(choices=(BASIC_AUTH, DIGEST_AUTH, OAUTH1, BEARER_AUTH), required=False)
     username = StringProperty()
     password = StringProperty()  # See also plaintext_password()
     skip_cert_verify = BooleanProperty(default=False)  # See also verify()
     notify_addresses_str = StringProperty(default="")  # See also notify_addresses()
 
+    format = StringProperty()
     friendly_name = _("Data")
     paused = BooleanProperty(default=False)
 
@@ -193,8 +195,16 @@ class Repeater(QuickCachedDocumentMixin, Document):
     _has_config = False
 
     def __str__(self):
-        url = "@".join((self.username, self.url)) if self.username else self.url
-        return f"<{self.__class__.__name__} {self._id} {url}>"
+        return self.name
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__} {self._id} {self.name}>"
+
+    @property
+    def connection_settings(self):
+        if not self.connection_settings_id:
+            return self.create_connection_settings()
+        return ConnectionSettings.objects.get(pk=self.connection_settings_id)
 
     @classmethod
     def available_for_domain(cls, domain):
@@ -343,7 +353,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
 
     def get_url(self, repeat_record):
         # to be overridden
-        return self.url
+        return self.connection_settings.url
 
     def allow_retries(self, response):
         """Whether to requeue the repeater when it fails
@@ -443,6 +453,26 @@ class Repeater(QuickCachedDocumentMixin, Document):
         """
         return self.__class__.__name__
 
+    def create_connection_settings(self):
+        if self.connection_settings_id:
+            return  # Nothing to do
+        conn = ConnectionSettings(
+            domain=self.domain,
+            name=self.url,
+            url=self.url,
+            auth_type=self.auth_type,
+            username=self.username,
+            skip_cert_verify=self.skip_cert_verify,
+            notify_addresses_str=self.notify_addresses_str,
+        )
+        # Allow ConnectionSettings to encrypt old Repeater passwords:
+        conn.plaintext_password = self.plaintext_password
+        conn.save()
+        self.name = conn.name
+        self.connection_settings_id = conn.id
+        self.save()
+        return conn
+
 
 class FormRepeater(Repeater):
     """
@@ -495,9 +525,6 @@ class FormRepeater(Repeater):
         })
         return headers
 
-    def __str__(self):
-        return "forwarding forms to: %s" % self.url
-
 
 class CaseRepeater(Repeater):
     """
@@ -542,9 +569,6 @@ class CaseRepeater(Repeater):
             "server-modified-on": self.payload_doc(repeat_record).server_modified_on.isoformat()+"Z"
         })
         return headers
-
-    def __str__(self):
-        return "forwarding cases to: %s" % self.url
 
 
 class CreateCaseRepeater(CaseRepeater):
@@ -591,7 +615,7 @@ class ReferCaseRepeater(CreateCaseRepeater):
 
     def get_url(self, repeat_record):
         new_domain = self.payload_doc(repeat_record).get_case_property('new_domain')
-        return self.url.format(domain=new_domain)
+        return self.connection_settings.url.format(domain=new_domain)
 
 
 class ShortFormRepeater(Repeater):
@@ -619,9 +643,6 @@ class ShortFormRepeater(Repeater):
         })
         return headers
 
-    def __str__(self):
-        return "forwarding short form to: %s" % self.url
-
 
 class AppStructureRepeater(Repeater):
     friendly_name = _("Forward App Schema Changes")
@@ -641,9 +662,6 @@ class UserRepeater(Repeater):
     def payload_doc(self, repeat_record):
         return CommCareUser.get(repeat_record.payload_id)
 
-    def __str__(self):
-        return "forwarding users to: %s" % self.url
-
 
 class LocationRepeater(Repeater):
     friendly_name = _("Forward Locations")
@@ -653,9 +671,6 @@ class LocationRepeater(Repeater):
     @memoized
     def payload_doc(self, repeat_record):
         return SQLLocation.objects.get(location_id=repeat_record.payload_id)
-
-    def __str__(self):
-        return "forwarding locations to: %s" % self.url
 
 
 class RepeatRecordAttempt(DocumentSchema):
@@ -960,27 +975,6 @@ def _is_response(duck):
     instance that this module uses, otherwise False.
     """
     return hasattr(duck, 'status_code') and hasattr(duck, 'reason')
-
-
-# TODO: Repeaters to use ConnectionSettings
-def get_requests(
-    repeater: Repeater,
-    payload_id: Optional[str] = None,
-) -> Requests:
-    """
-    Returns a Requests object instantiated with properties of the given
-    Repeater. ``payload_id`` specifies the payload that the object will
-    be used for sending, if applicable.
-    """
-    auth_manager = repeater.get_auth_manager()
-    return Requests(
-        repeater.domain,
-        repeater.url,
-        verify=repeater.verify,
-        auth_manager=auth_manager,
-        notify_addresses=repeater.notify_addresses,
-        payload_id=payload_id,
-    )
 
 
 # import signals
