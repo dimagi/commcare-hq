@@ -42,7 +42,6 @@ from corehq.apps.hqadmin.reports import (
 from corehq.apps.hqadmin.views.system import GlobalThresholds
 from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
-from corehq.apps.linked_domain.dbaccessors import is_linked_domain
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.receiverwrapper.rate_limiter import (
     SHOULD_RATE_LIMIT_SUBMISSIONS,
@@ -98,8 +97,15 @@ from corehq.tabs.utils import (
     sidebar_to_dropdown,
 )
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
-from custom.icds_core.const import ManageHostedCCZ_page_title, ManageHostedCCZ_urlname, \
-    ManageHostedCCZLink_urlname, ManageHostedCCZLink_page_title, SMSUsageReport_urlname
+from custom.icds_core.const import (
+    LocationReassignmentDownloadOnlyView_section_name,
+    LocationReassignmentDownloadOnlyView_urlname,
+    ManageHostedCCZ_page_title,
+    ManageHostedCCZ_urlname,
+    ManageHostedCCZLink_page_title,
+    ManageHostedCCZLink_urlname,
+    SMSUsageReport_urlname,
+)
 from custom.icds_core.view_utils import is_icds_cas_project
 
 
@@ -162,10 +168,9 @@ class ProjectReportsTab(UITab):
                 'icon': 'icon-tasks fa fa-wrench',
             })
         if toggles.PERFORM_LOCATION_REASSIGNMENT.enabled(self.couch_user.username):
-            from custom.icds.location_reassignment.views import LocationReassignmentDownloadOnlyView
             tools.append({
-                'title': _(LocationReassignmentDownloadOnlyView.section_name),
-                'url': reverse(LocationReassignmentDownloadOnlyView.urlname, args=[self.domain]),
+                'title': _(LocationReassignmentDownloadOnlyView_section_name),
+                'url': reverse(LocationReassignmentDownloadOnlyView_urlname, args=[self.domain]),
                 'icon': 'icon-tasks fa fa-download',
             })
         return [(_("Tools"), tools)]
