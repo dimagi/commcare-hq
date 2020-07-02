@@ -130,12 +130,11 @@ def get_awc_reports_system_usage(domain, config, month, prev_month, two_before, 
     }
 
 
-@icds_quickcache(['config', 'month', 'domain', 'show_test'], timeout=30 * 60)
-def get_awc_reports_pse(config, month, domain, show_test=False, **kwargs):
+@icds_quickcache(['config', 'month', 'domain', 'show_test', 'now_date'], timeout=30 * 60)
+def get_awc_reports_pse(config, month, domain, show_test=False, now_date=None):
     selected_month = datetime(*month)
     last_months = (selected_month - relativedelta(months=1))
     last_day_of_selected_month = (selected_month + relativedelta(months=1)) - relativedelta(days=1)
-    now_date = kwargs.get('now_date')
     if now_date:
         ninety_days_ago = datetime(*now_date) - timedelta(days=90)
     else:
