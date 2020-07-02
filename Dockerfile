@@ -22,16 +22,9 @@ RUN apt-get update \
      wget \
   && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
   && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
-  && curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
-  && echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
   && apt-get update \
-  && apt-get install -y --no-install-recommends \
-     yarn \
-     google-chrome-unstable \
-     fonts-ipafont-gothic \
-     fonts-wqy-zenhei \
-     fonts-thai-tlwg \
-     fonts-kacst ttf-freefont \
+  && apt-get install -y google-chrome-unstable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst ttf-freefont \
+    --no-install-recommends \
   && rm -rf /var/lib/apt/lists/* /src/*.deb
 
 COPY requirements/test-requirements.txt package.json /vendor/
@@ -47,6 +40,7 @@ RUN git config --global url."https://".insteadOf git:// \
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
 
 RUN npm -g install \
+    yarn \
     grunt-cli \
     uglify-js \
     puppeteer \
