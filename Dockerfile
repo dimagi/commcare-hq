@@ -41,6 +41,7 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
 
 RUN npm -g install \
     yarn \
+    bower \
     grunt-cli \
     uglify-js \
     puppeteer \
