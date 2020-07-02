@@ -128,7 +128,7 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
                 } else if (vm.step === 'children') {
                     $('#sddChildrenTable').DataTable().page(0).draw(false);
                     storageService.setKey('resetPwLwChildrenTable', true);
-                } else if (vm.step !== 'pw_lw_children' && vm.step !== 'children') {
+                } else {
                     storageService.setKey('resetChildrenTable', true);
                     storageService.setKey('resetPwLwChildrenTable', true);
                 }
