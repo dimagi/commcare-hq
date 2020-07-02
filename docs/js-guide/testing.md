@@ -19,7 +19,7 @@ TODO
 
 In order to run the javascript tests you'll need to install the required npm packages:
 
-    $ npm install
+    $ yarn install
 
 It's recommended to install grunt globally in order to use grunt from the command line:
 
