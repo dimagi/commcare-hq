@@ -98,7 +98,7 @@ from corehq.tabs.utils import (
     sidebar_to_dropdown,
 )
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
-from custom.icds.view_utils import is_icds_cas_project
+from custom.icds_core.view_utils import is_icds_cas_project
 from custom.icds.views.hosted_ccz import ManageHostedCCZ, ManageHostedCCZLink
 
 
