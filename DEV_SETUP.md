@@ -313,7 +313,7 @@ Then you need to have Formplayer running.
 Prerequisites:
 + Install Java
 
-      $ sudo apt install openjdk-8-jre
+      $ sudo apt install default-jre
 
 + [Initialize formplayer database](https://github.com/dimagi/formplayer#building-and-running).
   The password for the "commcarehq" user is in the localsettings.py file
