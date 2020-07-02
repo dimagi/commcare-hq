@@ -604,9 +604,10 @@ class ConfigureReport(ReportBuilderView):
             self.domain, self.page_name, self.app_id, self.source_type, self.source_id, self.existing_report
         )
         temp_ds_id = report_form.create_temp_data_source_if_necessary(self.request.user.username)
-        linked_report_domain_dict = linked_downstream_reports_by_domain(
-            self.domain, self.existing_report.get_id
-        ) if self.existing_report else {}
+        linked_report_domains = linked_downstream_reports_by_domain(
+            self.domain,
+            self.existing_report.get_id if self.existing_report else None,
+        )
         return {
             'existing_report': self.existing_report,
             'report_description': self.report_description,
@@ -630,7 +631,7 @@ class ConfigureReport(ReportBuilderView):
             'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, []),
             'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
             'date_range_options': [r._asdict() for r in get_simple_dateranges()],
-            'linked_report_domain_list': linked_report_domain_dict,
+            'linked_report_domain_list': linked_report_domains,
         }
 
     def _get_bound_form(self, report_data):

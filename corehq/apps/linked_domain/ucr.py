@@ -145,7 +145,7 @@ def get_linked_report_configs(domain, report_id):
     return existing_linked_reports
 
 
-def linked_downstream_reports_by_domain(master_domain, report_id):
+def linked_downstream_reports_by_domain(master_domain, report_id=None):
     """A dict of all downstream domains with and if this is already linked to `report_id`
     """
     from corehq.apps.linked_domain.dbaccessors import get_linked_domains
@@ -153,5 +153,5 @@ def linked_downstream_reports_by_domain(master_domain, report_id):
     for domain_link in get_linked_domains(master_domain):
         linked_domains[domain_link.linked_domain] = any(
             r for r in get_linked_report_configs(domain_link.linked_domain, report_id)
-        )
+        ) if report_id else False
     return linked_domains
