@@ -42,6 +42,7 @@ python_env-3.6
 services
 KEEP_UNTIL__*
 formplayer.properties
+application.properties
 formplayer.jar
 .vscode/*
 
