@@ -1,7 +1,7 @@
 import openpyxl
 import os
 
-from datetime import date
+from datetime import date, datetime
 from django.core.management import call_command
 from openpyxl.utils import get_column_letter
 
@@ -57,6 +57,8 @@ class GetICDSSmsUsageTest(BaseICDSTest):
         cls.sms_list.append(SMS.objects.create(
             domain=cls.domain,
             date=date(2017, 4, 10),
+            datetime_to_process=datetime(2017, 4, 10, 0, 0, 0),
+            processed_timestamp=datetime(2017, 4, 10, 1, 0, 0),
             backend_api=AirtelTCLBackend.get_api_id(),
             direction='O',
             processed=True,
@@ -66,6 +68,8 @@ class GetICDSSmsUsageTest(BaseICDSTest):
         cls.sms_list.append(SMS.objects.create(
             domain=cls.domain,
             date=date(2017, 4, 10),
+            datetime_to_process=datetime(2017, 4, 10, 0, 0, 0),
+            processed_timestamp=datetime(2017, 4, 10, 1, 0, 0),
             backend_api=AirtelTCLBackend.get_api_id(),
             direction='O',
             processed=True,
@@ -75,6 +79,8 @@ class GetICDSSmsUsageTest(BaseICDSTest):
         cls.sms_list.append(SMS.objects.create(
             domain=cls.domain,
             date=date(2017, 4, 10),
+            datetime_to_process=datetime(2017, 4, 10, 0, 0, 0),
+            processed_timestamp=datetime(2017, 4, 10, 1, 0, 0),
             backend_api=AirtelTCLBackend.get_api_id(),
             direction='O',
             processed=True,
@@ -84,6 +90,8 @@ class GetICDSSmsUsageTest(BaseICDSTest):
         cls.sms_list.append(SMS.objects.create(
             domain=cls.domain,
             date=date(2017, 4, 10),
+            datetime_to_process=datetime(2017, 4, 10, 0, 0, 0),
+            processed_timestamp=datetime(2017, 4, 10, 1, 0, 0),
             backend_api=AirtelTCLBackend.get_api_id(),
             direction='O',
             processed=True,

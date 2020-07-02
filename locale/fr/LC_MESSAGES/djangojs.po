@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-06-17 19:37+0000\n"
+"POT-Creation-Date: 2020-07-01 20:55+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -153,7 +153,7 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_app_profile.js:45
 #: corehq/apps/app_manager/static/app_manager/js/manage_releases_by_location.js:35
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
-#: submodules/formdesigner/_build/src/main-components.js:24
+#: submodules/formdesigner/_build/src/main-components.js:23
 #: submodules/formdesigner/src/javaRosa/itextBlock.js:187
 msgid "Add"
 msgstr ""
@@ -248,97 +248,97 @@ msgstr ""
 msgid "Select One"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:378
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:379
 msgid "Tab Name"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:379
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:380
 msgid "Nodeset"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:380
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:381
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
 #: submodules/formdesigner/_build/src/main-components.js:11
-#: submodules/formdesigner/_build/src/main-components.js:25
+#: submodules/formdesigner/_build/src/main-components.js:24
 #: submodules/formdesigner/src/commtrack.js:207
 #: submodules/formdesigner/src/mugs.js:938
 msgid "Display Condition"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:425
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:426
 msgid "Markdown"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:486
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:487
 msgid "Oct 31, "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:489
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:490
 msgid " Format "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:493
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:494
 msgid " Days late "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:502
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:503
 msgid "Years since date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:505
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:506
 msgid "Months since date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:508
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:509
 msgid "Weeks since date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:511
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:512
 msgid "Days since date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:514
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:515
 msgid "Days until date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:517
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:518
 msgid "Weeks until date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:520
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:521
 msgid "Months until date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:523
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:524
 msgid " Measuring "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:788
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:789
 msgid "You have unsaved detail screen configurations."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:830
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:831
 msgid "There is an error in your tab: "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:833
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:834
 msgid "There is an error in your property name: "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:838
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:839
 msgid "All properties must be below a tab."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:842
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:843
 msgid "There are errors in your configuration."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1175
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1176
 msgid "Plain"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1178
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1179
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
@@ -351,54 +351,54 @@ msgstr ""
 msgid "Date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1181
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1182
 msgid "Time Since or Until Date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1184
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1185
 msgid "Phone Number"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1187
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1188
 msgid "ID Mapping"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1190
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1191
 msgid "Late Flag"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1193
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1194
 msgid "Search Only"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1196
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1197
 msgid "Address"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1199
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1200
 msgid "Distance from current location"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1205
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1206
 msgid "Picture"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1208
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1209
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:34
-#: submodules/formdesigner/_build/src/main-components.js:34
+#: submodules/formdesigner/_build/src/main-components.js:33
 #: submodules/formdesigner/src/uploader.js:44
 msgid "Audio"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1216
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1217
 msgid "Icon"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1222
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1223
 msgid "Conditional ID Mapping"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1226
+#: corehq/apps/app_manager/static/app_manager/js/details/screen_config.js:1227
 msgid ""
 "Must begin with a letter and contain only letters, numbers, '-', and '_'"
 msgstr ""
@@ -490,6 +490,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_config_ui.js:91
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
+#: submodules/formdesigner/_build/src/main-components.js:22
 #: submodules/formdesigner/_build/src/main-components.js:23
 #: submodules/formdesigner/src/itemset.js:95
 #: submodules/formdesigner/src/itemset.js:512
@@ -999,7 +1000,7 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:1
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
 #: submodules/formdesigner/_build/src/main-components.js:1
-#: submodules/formdesigner/_build/src/main-components.js:22
+#: submodules/formdesigner/_build/src/main-components.js:21
 #: submodules/formdesigner/src/core.js:1830
 msgid "Expression Editor"
 msgstr ""
@@ -1082,18 +1083,18 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:7
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-input-map.js:25
-#: submodules/formdesigner/_build/src/main-components.js:7
+#: submodules/formdesigner/_build/src/main-components.js:6
 msgid "key"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:7
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-input-map.js:26
-#: submodules/formdesigner/_build/src/main-components.js:7
+#: submodules/formdesigner/_build/src/main-components.js:6
 msgid "value"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:7
-#: submodules/formdesigner/_build/src/main-components.js:7
+#: submodules/formdesigner/_build/src/main-components.js:6
 msgid "Add Key&rarr;Value Pair"
 msgstr ""
 
@@ -1141,6 +1142,7 @@ msgid "no formatting"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
+#: submodules/formdesigner/_build/src/main-components.js:10
 #: submodules/formdesigner/_build/src/main-components.js:11
 #: submodules/formdesigner/src/widgets.js:642
 #: submodules/formdesigner/src/widgets.js:644
@@ -1190,6 +1192,7 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
 #: submodules/formdesigner/_build/src/main-components.js:11
+#: submodules/formdesigner/_build/src/main-components.js:23
 #: submodules/formdesigner/_build/src/main-components.js:24
 #: submodules/formdesigner/src/commtrack.js:83
 #: submodules/formdesigner/src/javaRosa/plugin.js:110
@@ -1727,8 +1730,7 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 #: submodules/formdesigner/_build/src/main-components.js:20
-#: submodules/formdesigner/_build/src/main-components.js:21
-#: submodules/formdesigner/_build/src/main-components.js:23
+#: submodules/formdesigner/_build/src/main-components.js:22
 msgid "Guide to Common Logic and Calculations"
 msgstr ""
 
@@ -1748,25 +1750,24 @@ msgid "Result is"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
-#: submodules/formdesigner/_build/src/main-components.js:21
+#: submodules/formdesigner/_build/src/main-components.js:20
 msgid "Expression"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
-#: submodules/formdesigner/_build/src/main-components.js:21
+#: submodules/formdesigner/_build/src/main-components.js:20
 msgid "Add Expression"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:613
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:621
 #: corehq/apps/export/static/export/js/models.js:357
 #: corehq/apps/export/static/export/js/models.js:359
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:281
-#: submodules/formdesigner/_build/src/main-components.js:21
+#: submodules/formdesigner/_build/src/main-components.js:20
 #: submodules/formdesigner/_build/src/main-components.js:22
-#: submodules/formdesigner/_build/src/main-components.js:23
 #: submodules/formdesigner/src/core.js:2141
 msgid "Save"
 msgstr ""
@@ -1774,69 +1775,70 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/util.js:25
+#: submodules/formdesigner/_build/src/main-components.js:20
 #: submodules/formdesigner/_build/src/main-components.js:21
-#: submodules/formdesigner/_build/src/main-components.js:23
+#: submodules/formdesigner/_build/src/main-components.js:22
 #: submodules/formdesigner/src/core.js:680
 msgid "Cancel"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
-#: submodules/formdesigner/_build/src/main-components.js:21
+#: submodules/formdesigner/_build/src/main-components.js:20
 #: submodules/formdesigner/src/expressionEditor.js:45
 #: submodules/formdesigner/src/expressionEditor.js:46
 msgid "Drag question here"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
-#: submodules/formdesigner/_build/src/main-components.js:21
+#: submodules/formdesigner/_build/src/main-components.js:20
 #: submodules/formdesigner/src/expressionEditor.js:89
 msgid "is equal to"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
-#: submodules/formdesigner/_build/src/main-components.js:21
+#: submodules/formdesigner/_build/src/main-components.js:20
 #: submodules/formdesigner/src/expressionEditor.js:90
 msgid "is not equal to"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
-#: submodules/formdesigner/_build/src/main-components.js:21
+#: submodules/formdesigner/_build/src/main-components.js:20
 #: submodules/formdesigner/src/expressionEditor.js:91
 msgid "is less than"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
-#: submodules/formdesigner/_build/src/main-components.js:21
+#: submodules/formdesigner/_build/src/main-components.js:20
 #: submodules/formdesigner/src/expressionEditor.js:92
 msgid "is less than or equal to"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
-#: submodules/formdesigner/_build/src/main-components.js:21
+#: submodules/formdesigner/_build/src/main-components.js:20
 #: submodules/formdesigner/src/expressionEditor.js:93
 msgid "is greater than"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
-#: submodules/formdesigner/_build/src/main-components.js:21
+#: submodules/formdesigner/_build/src/main-components.js:20
 #: submodules/formdesigner/src/expressionEditor.js:94
 msgid "is greater than or equal to"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
-#: submodules/formdesigner/_build/src/main-components.js:21
+#: submodules/formdesigner/_build/src/main-components.js:20
 #: submodules/formdesigner/src/expressionEditor.js:95
 msgid "has selected value"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
-#: submodules/formdesigner/_build/src/main-components.js:21
+#: submodules/formdesigner/_build/src/main-components.js:20
 #: submodules/formdesigner/src/expressionEditor.js:422
 msgid "True when ALL of the expressions are true."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
-#: submodules/formdesigner/_build/src/main-components.js:21
+#: submodules/formdesigner/_build/src/main-components.js:20
 #: submodules/formdesigner/src/expressionEditor.js:423
 msgid "True when ANY of the expressions are true."
 msgstr ""
@@ -2068,7 +2070,6 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:26
 #: submodules/formdesigner/_build/src/main-components.js:21
 #: submodules/formdesigner/_build/src/main-components.js:25
-#: submodules/formdesigner/_build/src/main-components.js:26
 #: submodules/formdesigner/src/core.js:818
 #: submodules/formdesigner/src/saveToCase.js:625
 msgid "Close"
@@ -2098,7 +2099,6 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/util.js:24
 #: submodules/formdesigner/_build/src/main-components.js:21
-#: submodules/formdesigner/_build/src/main-components.js:22
 #: submodules/formdesigner/src/core.js:1297
 #: submodules/formdesigner/src/core.js:1848
 msgid "OK"
@@ -2369,39 +2369,39 @@ msgid "Document Template"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
-#: submodules/formdesigner/_build/src/main-components.js:23
+#: submodules/formdesigner/_build/src/main-components.js:22
 msgid "Edit Data Source"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
-#: submodules/formdesigner/_build/src/main-components.js:23
+#: submodules/formdesigner/_build/src/main-components.js:22
 msgid "Query Expression"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
-#: submodules/formdesigner/_build/src/main-components.js:23
+#: submodules/formdesigner/_build/src/main-components.js:22
 msgid "Optional Instance Properties"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
-#: submodules/formdesigner/_build/src/main-components.js:23
+#: submodules/formdesigner/_build/src/main-components.js:22
 msgid "Instance ID"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
-#: submodules/formdesigner/_build/src/main-components.js:23
+#: submodules/formdesigner/_build/src/main-components.js:22
 msgid "Instance URI"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
-#: submodules/formdesigner/_build/src/main-components.js:23
+#: submodules/formdesigner/_build/src/main-components.js:22
 #: submodules/formdesigner/src/dataSourceWidgets.js:139
 msgid "Lookup table was not found in the project"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 #: corehq/apps/reports/static/reports/js/project_health_dashboard.js:130
-#: submodules/formdesigner/_build/src/main-components.js:23
+#: submodules/formdesigner/_build/src/main-components.js:22
 #: submodules/formdesigner/src/dataSourceWidgets.js:171
 msgid "Loading..."
 msgstr ""
@@ -2522,25 +2522,25 @@ msgid "Turn On Text Formatting"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
-#: submodules/formdesigner/_build/src/main-components.js:24
+#: submodules/formdesigner/_build/src/main-components.js:23
 #: submodules/formdesigner/src/javaRosa/itextBlock.js:178
 msgid "custom..."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
-#: submodules/formdesigner/_build/src/main-components.js:24
+#: submodules/formdesigner/_build/src/main-components.js:23
 #: submodules/formdesigner/src/javaRosa/itextBlock.js:185
 msgid "New Content Type"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
-#: submodules/formdesigner/_build/src/main-components.js:24
+#: submodules/formdesigner/_build/src/main-components.js:23
 #: submodules/formdesigner/src/javaRosa/itextBlock.js:196
 msgid "Content Type"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
-#: submodules/formdesigner/_build/src/main-components.js:24
+#: submodules/formdesigner/_build/src/main-components.js:23
 #: submodules/formdesigner/src/javaRosa/plugin.js:212
 msgid ""
 "You have languages in your form that are not specified in the \"Languages\" "
@@ -2741,86 +2741,86 @@ msgid "Product"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
-#: submodules/formdesigner/_build/src/main-components.js:25
+#: submodules/formdesigner/_build/src/main-components.js:24
 #: submodules/formdesigner/src/commtrack.js:188
 msgid "A reference to a product ID, e.g., \"/data/products/current_product\""
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
-#: submodules/formdesigner/_build/src/main-components.js:25
+#: submodules/formdesigner/_build/src/main-components.js:24
 #: submodules/formdesigner/src/commtrack.js:191
 msgid "Quantity"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
-#: submodules/formdesigner/_build/src/main-components.js:25
+#: submodules/formdesigner/_build/src/main-components.js:24
 #: submodules/formdesigner/src/commtrack.js:198
 msgid "A reference to an integer question in this form."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
 #: corehq/apps/userreports/static/userreports/js/data_source_select.js:9
-#: submodules/formdesigner/_build/src/main-components.js:25
+#: submodules/formdesigner/_build/src/main-components.js:24
 #: submodules/formdesigner/src/commtrack.js:243
 msgid "Case"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
-#: submodules/formdesigner/_build/src/main-components.js:25
+#: submodules/formdesigner/_build/src/main-components.js:24
 #: submodules/formdesigner/src/commtrack.js:250
 msgid "XPath expression for the case ID associated with this balance."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
-#: submodules/formdesigner/_build/src/main-components.js:25
+#: submodules/formdesigner/_build/src/main-components.js:24
 #: submodules/formdesigner/src/commtrack.js:260
 msgid "Transfer must have both Source Case and Destination Case defined."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
-#: submodules/formdesigner/_build/src/main-components.js:25
+#: submodules/formdesigner/_build/src/main-components.js:24
 #: submodules/formdesigner/src/commtrack.js:276
 msgid "Cannot change $1 to $2"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
-#: submodules/formdesigner/_build/src/main-components.js:25
+#: submodules/formdesigner/_build/src/main-components.js:24
 #: submodules/formdesigner/src/commtrack.js:320
 msgid "Source Case"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
-#: submodules/formdesigner/_build/src/main-components.js:25
+#: submodules/formdesigner/_build/src/main-components.js:24
 #: submodules/formdesigner/src/commtrack.js:327
 msgid "XPath expression for the case ID issuing the transaction."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
-#: submodules/formdesigner/_build/src/main-components.js:25
+#: submodules/formdesigner/_build/src/main-components.js:24
 #: submodules/formdesigner/src/commtrack.js:331
 msgid "Destination Case"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
-#: submodules/formdesigner/_build/src/main-components.js:25
+#: submodules/formdesigner/_build/src/main-components.js:24
 #: submodules/formdesigner/src/commtrack.js:338
 msgid "XPath expression for the case ID receiving the transaction."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
-#: submodules/formdesigner/_build/src/main-components.js:25
+#: submodules/formdesigner/_build/src/main-components.js:24
 #: submodules/formdesigner/src/commtrack.js:355
 msgid "Dispense must have a Source Case."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
-#: submodules/formdesigner/_build/src/main-components.js:25
+#: submodules/formdesigner/_build/src/main-components.js:24
 #: submodules/formdesigner/src/commtrack.js:371
 msgid "Receive must have a Destination Case."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
-#: submodules/formdesigner/_build/src/main-components.js:25
+#: submodules/formdesigner/_build/src/main-components.js:24
 #: submodules/formdesigner/src/modeliteration.js:321
 msgid "Model Iteration ID Query"
 msgstr ""
@@ -3037,131 +3037,131 @@ msgid "Attachments"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:26
-#: submodules/formdesigner/_build/src/main-components.js:26
+#: submodules/formdesigner/_build/src/main-components.js:25
 msgid "Upload"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:26
-#: submodules/formdesigner/_build/src/main-components.js:26
+#: submodules/formdesigner/_build/src/main-components.js:25
 msgid "Select new"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:26
-#: submodules/formdesigner/_build/src/main-components.js:26
+#: submodules/formdesigner/_build/src/main-components.js:25
 msgid "Select File"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:26
-#: submodules/formdesigner/_build/src/main-components.js:26
+#: submodules/formdesigner/_build/src/main-components.js:25
 msgid "Current"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:26
-#: submodules/formdesigner/_build/src/main-components.js:26
+#: submodules/formdesigner/_build/src/main-components.js:25
 msgid "Multimedia Sharing Options"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:26
-#: submodules/formdesigner/_build/src/main-components.js:26
+#: submodules/formdesigner/_build/src/main-components.js:25
 msgid "License"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:26
-#: submodules/formdesigner/_build/src/main-components.js:26
+#: submodules/formdesigner/_build/src/main-components.js:25
 msgid "Creative Commons Attribution, Non-Commercial"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:26
-#: submodules/formdesigner/_build/src/main-components.js:26
+#: submodules/formdesigner/_build/src/main-components.js:25
 msgid "Creative Commons Attribution, No Derivatives"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:26
-#: submodules/formdesigner/_build/src/main-components.js:26
+#: submodules/formdesigner/_build/src/main-components.js:25
 msgid "Creative Commons Attribution"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:26
-#: submodules/formdesigner/_build/src/main-components.js:26
+#: submodules/formdesigner/_build/src/main-components.js:25
 msgid "Creative Commons Attribution, Non-Commercial, and Share Alike"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:26
-#: submodules/formdesigner/_build/src/main-components.js:26
+#: submodules/formdesigner/_build/src/main-components.js:25
 msgid "Creative Commons Attribution, Non-Commercial, and No Derivatives"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:26
-#: submodules/formdesigner/_build/src/main-components.js:26
+#: submodules/formdesigner/_build/src/main-components.js:25
 msgid "Creative Commons Attribution, Share Alike"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:26
-#: submodules/formdesigner/_build/src/main-components.js:26
+#: submodules/formdesigner/_build/src/main-components.js:25
 msgid "Author"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:26
-#: submodules/formdesigner/_build/src/main-components.js:26
+#: submodules/formdesigner/_build/src/main-components.js:25
 msgid "Enter the name of the author."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:26
-#: submodules/formdesigner/_build/src/main-components.js:26
+#: submodules/formdesigner/_build/src/main-components.js:25
 msgid "Attribution Notes"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:26
-#: submodules/formdesigner/_build/src/main-components.js:26
+#: submodules/formdesigner/_build/src/main-components.js:25
 msgid "Begin Upload"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:26
-#: submodules/formdesigner/_build/src/main-components.js:26
+#: submodules/formdesigner/_build/src/main-components.js:25
 msgid "Replace"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:26
-#: submodules/formdesigner/_build/src/main-components.js:26
+#: submodules/formdesigner/_build/src/main-components.js:25
 msgid "No Reference"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:26
-#: submodules/formdesigner/_build/src/main-components.js:26
+#: submodules/formdesigner/_build/src/main-components.js:25
 msgid "Advanced: Show Path"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:26
-#: submodules/formdesigner/_build/src/main-components.js:26
+#: submodules/formdesigner/_build/src/main-components.js:25
 msgid "Hide Path"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:34
-#: submodules/formdesigner/_build/src/main-components.js:34
+#: submodules/formdesigner/_build/src/main-components.js:33
 #: submodules/formdesigner/src/uploader.js:38
 msgid "Image"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:34
-#: submodules/formdesigner/_build/src/main-components.js:34
+#: submodules/formdesigner/_build/src/main-components.js:33
 #: submodules/formdesigner/src/uploader.js:50
 msgid "Video"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:34
-#: submodules/formdesigner/_build/src/main-components.js:34
+#: submodules/formdesigner/_build/src/main-components.js:33
 #: submodules/formdesigner/src/uploader.js:56
 msgid "Inline Video"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:34
-#: submodules/formdesigner/_build/src/main-components.js:34
+#: submodules/formdesigner/_build/src/main-components.js:33
 #: submodules/formdesigner/src/uploader.js:62
 msgid "Audio with a Seekbar"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:34
-#: submodules/formdesigner/_build/src/main-components.js:34
+#: submodules/formdesigner/_build/src/main-components.js:33
 #: submodules/formdesigner/src/uploader.js:68
 msgid "HTML"
 msgstr ""
@@ -3350,7 +3350,7 @@ msgstr ""
 msgid "You have been logged out because of inactivity."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:383
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:388
 msgid "We were unable to save this answer. Please try again later."
 msgstr ""
 
@@ -3777,11 +3777,11 @@ msgstr ""
 msgid "Show All Dates"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:159
+#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:160
 msgid "Could not authenticate, please log in and try again"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:167
+#: corehq/apps/hqwebapp/static/hqwebapp/js/inactivity.js:168
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-key-val-list.js:38
 msgid "Done"
 msgstr ""
@@ -3906,8 +3906,12 @@ msgstr ""
 msgid "Not a valid email"
 msgstr ""
 
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:80
-#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:102
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:49
+msgid "Error updating."
+msgstr ""
+
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:84
+#: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:106
 msgid ""
 "Something unexpected happened.\n"
 "Please try again, or report an issue if the problem persists."
@@ -4406,23 +4410,23 @@ msgstr ""
 msgid "Issue connecting to server. Check Internet connection."
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:154
+#: corehq/apps/users/static/users/js/roles.js:160
 msgid "Edit Role: "
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:154
+#: corehq/apps/users/static/users/js/roles.js:160
 msgid "View Role: "
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:155
+#: corehq/apps/users/static/users/js/roles.js:161
 msgid "New Role"
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:166
+#: corehq/apps/users/static/users/js/roles.js:171
 msgid "Delete Role: "
 msgstr ""
 
-#: corehq/apps/users/static/users/js/roles.js:169
+#: corehq/apps/users/static/users/js/roles.js:174
 msgid "Are you sure you want to delete the role <%= role %>?"
 msgstr ""
 

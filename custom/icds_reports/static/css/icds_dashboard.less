@@ -954,11 +954,13 @@ hr {
     min-width: 150px;
 }
 
-#serviceDeliveryDashboardTable .headerTooltip {
+#sddPwLwChildrenTable .headerTooltip, #sddChildrenTable .headerTooltip, #sddDetailsTable .headerTooltip {
     position: relative;
     display: inline-block;
 }
-#serviceDeliveryDashboardTable .headerTooltip .headerTooltipText {
+#sddPwLwChildrenTable .headerTooltip .headerTooltipText,
+#sddChildrenTable .headerTooltip .headerTooltipText,
+#sddDetailsTable .headerTooltip .headerTooltipText {
     opacity: 0;
     display: none;
     transition: opacity 1s;
@@ -978,9 +980,15 @@ hr {
     right: 105%;
     z-index: 1;
 }
-#serviceDeliveryDashboardTable .headerTooltip:hover .headerTooltipText {
+#sddPwLwChildrenTable .headerTooltip:hover .headerTooltipText,
+#sddChildrenTable .headerTooltip:hover .headerTooltipText,
+#sddDetailsTable .headerTooltip:hover .headerTooltipText {
     opacity: 1;
     display: block;
+}
+
+.serviceDeliveryDashboardTable thead tr th {
+  vertical-align: baseline !important;
 }
 
 .d-flex {
@@ -1040,4 +1048,7 @@ hr {
 .divider-bottom-left {
   border-bottom: 2px solid black !important;
   border-left: 2px solid black !important;
+}
+.vertical-align-middle {
+  vertical-align: middle !important;
 }

@@ -16,13 +16,14 @@ from custom.utils.utils import clean_IN_filter_value
 class AggCCSRecordMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
     table_name = 'agg_ccs_record_monthly'
 
-    def __init__(self, config=None, loc_level='state', show_test=False):
+    def __init__(self, config=None, loc_level='state', show_test=False, beta=False):
         super(AggCCSRecordMonthlyDataSource, self).__init__(config)
         self.loc_key = '%s_id' % loc_level
         self.excluded_states = get_test_state_locations_id(self.domain)
         self.config['excluded_states'] = self.excluded_states
         clean_IN_filter_value(self.config, 'excluded_states')
         self.show_test = show_test
+        self.beta = beta
 
     @property
     def domain(self):
