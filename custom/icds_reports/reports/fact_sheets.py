@@ -28,16 +28,13 @@ def get_data_for_national_aggregatation(domain, previous_month, data_source_name
         'domain': domain,
         'previous_month': parse(previous_month),
     }
-    datasource_argument = {
-        'config': national_config,
-        'loc_level': loc_level,
-        'show_test': show_test,
-    }
 
-    if data_source_name != 'AggCCSRecordMonthlyDataSource':
-        datasource_argument['beta'] = beta
-
-    fact_sheet_datasource = FACT_SHEET_DATASOURCES_NAMES[data_source_name](**datasource_argument)
+    fact_sheet_datasource = FACT_SHEET_DATASOURCES_NAMES[data_source_name](
+        config=national_config,
+        loc_level=loc_level,
+        show_test=show_test,
+        beta=beta
+    )
 
     return NationalAggregationDataSource(
         national_config,
@@ -562,19 +559,13 @@ class FactSheetsReport(object):
 
     def data_sources(self, config):
         fact_sheet_datasources = dict()
-        datasource_arguments = {
-            'config': config,
-            'loc_level': self.loc_level,
-            'show_test': self.show_test
-        }
         for datasource_name, datasource_class in FACT_SHEET_DATASOURCES_NAMES.items():
-            arguments = datasource_arguments.copy()
-            if datasource_name != 'AggCCSRecordMonthlyDataSource':
-                arguments.update({
-                    'beta': self.beta
-                })
-            fact_sheet_datasources[datasource_name] = datasource_class(**arguments)
-
+            fact_sheet_datasources[datasource_name] = datasource_class(
+                config=config,
+                loc_level=self.loc_level,
+                show_test=self.show_test,
+                beta=self.beta
+            )
         return fact_sheet_datasources
 
     def _get_collected_sections(self, config_list):
