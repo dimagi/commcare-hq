@@ -334,11 +334,12 @@ above (probably the repo root), and run:
     $ java -jar formplayer.jar
 
 This starts a process in the foreground, so you'll need to keep it open as long
-as you plan on using Formplayer. If Formplayer stops working, you can try
-re-fetching it using the same command above. Feel free to add it to your
-`hammer` command or wherever.
+as you plan on using Formplayer.
 
-    $ curl https://s3.amazonaws.com/dimagi-formplayer-jars/latest-successful/formplayer.jar -o formplayer.jar
+To keep Formplayer up to date with the version used in production, you can add
+the `curl` commands above to your `hammer` command, or whatever script you use
+for updating your dev environment.
+
 
 #### Browser Settings
 
