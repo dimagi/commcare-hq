@@ -75,7 +75,8 @@ def _replace_master_app_ids(linked_domain, datasource_json):
 
 
 def _get_or_create_report_link(domain_link, report, datasource):
-    existing_linked_reports = get_linked_report_configs(domain_link.linked_domain, report.get_id)
+    domain_reports = get_report_configs_for_domain(domain_link.linked_domain)
+    existing_linked_reports = [r for r in domain_reports if r.report_meta.master_id == report.get_id]
     if existing_linked_reports:
         return existing_linked_reports[0]
 
@@ -137,21 +138,3 @@ def _update_linked_report(master_report, linked_report):
 
     linked_report_json.update(master_report_json)
     ReportConfiguration.wrap(linked_report_json).save()
-
-
-def get_linked_report_configs(domain, report_id):
-    domain_reports = get_report_configs_for_domain(domain)
-    existing_linked_reports = [r for r in domain_reports if r.report_meta.master_id == report_id]
-    return existing_linked_reports
-
-
-def linked_downstream_reports_by_domain(master_domain, report_id):
-    """A dict of all downstream domains with and if this is already linked to `report_id`
-    """
-    from corehq.apps.linked_domain.dbaccessors import get_linked_domains
-    linked_domains = {}
-    for domain_link in get_linked_domains(master_domain):
-        linked_domains[domain_link.linked_domain] = any(
-            r for r in get_linked_report_configs(domain_link.linked_domain, report_id)
-        )
-    return linked_domains

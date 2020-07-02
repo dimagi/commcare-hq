@@ -91,11 +91,8 @@
             </label>
             <div class="controls col-sm-9 col-md-9">
               <select name="to_domains" class="form-control" required="" id="domain-selector" multiple>
-                {% for domain, already_linked in linked_report_domain_list.items %}
-                  <option value="{{ domain }}" {% if already_linked %} disabled {% endif %}>
-                    {{ domain }}
-                    {% if already_linked %} ({% trans "Already Linked" %}) {% endif %}
-                  </option>
+                {% for domain in linked_domain_list %}
+                  <option value="{{ domain }}">{{ domain }}</option>
                 {% endfor %}
               </select>
             </div>
