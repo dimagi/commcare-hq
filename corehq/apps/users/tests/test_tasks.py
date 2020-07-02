@@ -21,15 +21,7 @@ class TasksTest(TestCase):
         cls.mirror = DomainPermissionsMirror(source=cls.domain.name, mirror=cls.mirror_domain.name)
         cls.mirror.save()
 
-        # Set up users
-        cls.active_user = CommCareUser.create(
-            domain='test',
-            username='active',
-            password='secret',
-            created_by=None,
-            created_via=None,
-            is_active=True,
-        )
+        # Set up user
         cls.web_user = WebUser.create(
             domain='test',
             username='web',
@@ -59,12 +51,6 @@ class TasksTest(TestCase):
         update_domain_date(self.web_user.user_id, self.domain.name)
         self.web_user = WebUser.get_by_username(self.web_user.username)
         self.assertEqual(self._last_accessed(self.web_user, self.domain.name), self.today)
-
-    def test_update_domain_date_commcare_user(self):
-        self.assertIsNone(self._last_accessed(self.active_user, self.domain.name))
-        update_domain_date(self.active_user.user_id, self.domain.name)
-        self.active_user = CommCareUser.get_by_username(self.active_user.username)
-        self.assertEqual(self._last_accessed(self.active_user, self.domain.name), self.today)
 
     def test_update_domain_date_web_user_mirror(self):
         # Mirror domain access shouldn't be updated because user doesn't have a real membership
