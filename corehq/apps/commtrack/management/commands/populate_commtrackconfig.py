@@ -114,7 +114,7 @@ class Command(PopulateSQLCommand):
             ))
         model.set_actions(sql_actions)
 
-        model.save(sync_to_couch=False)
+        model.save()
         for spec in self.one_to_one_submodels():
             submodel = getattr(model, spec['sql_class'].__name__.lower())
             submodel.commtrack_config = model
