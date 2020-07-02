@@ -50,7 +50,6 @@ from custom.icds_reports.const import (
     THR_21_DAYS_THRESHOLD_DATE
 )
 
-from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.queries import get_test_state_locations_id, get_test_district_locations_id
 from couchexport.export import export_from_tables
@@ -61,7 +60,6 @@ import uuid
 from sqlagg.filters import EQ, NOT
 from pillowtop.models import KafkaCheckpoint
 from custom.icds_reports.cache import icds_quickcache
-from custom.icds_reports.models import AggAwcMonthly
 
 OPERATORS = {
     "==": operator.eq,
@@ -2349,6 +2347,7 @@ class AggLevelInfo(object):
 
 
 def _construct_replacement_map_from_awc_location(loc_level, replacement_location_ids):
+    from custom.icds_reports.models.aggregate import AwcLocation
 
     def _full_hierarchy_name(loc):
         loc_names = [loc[f'{level}_name'] for level in levels.keys() if loc[f'{level}_name']]
@@ -2428,6 +2427,7 @@ def get_location_replacement_name(location, field, replacement_names):
 
 @icds_quickcache(['filters', 'loc_name'], timeout=30 * 60)
 def get_location_launched_status(filters, loc_name):
+    from custom.icds_reports.models import AggAwcMonthly
 
     def select_location_filter(filters):
         location_filters = dict()
