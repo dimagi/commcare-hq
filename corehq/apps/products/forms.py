@@ -83,7 +83,7 @@ class ProductForm(forms.Form):
         sms_codes = all_sms_codes(self.product.domain)
         if code in sms_codes:
             conflict = sms_codes[code]
-            if conflict[0] == 'product' and conflict[1].id == self.product.id:
+            if conflict[0] == 'product' and conflict[1]._id == self.product._id:
                 conflict = None
 
         if conflict:

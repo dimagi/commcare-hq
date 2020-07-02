@@ -18,7 +18,7 @@ class Command(PopulateSQLCommand):
 
     @classmethod
     def commit_adding_migration(cls):
-        return "ff0443ec554edf75015f03842441fc8553cf6d88"
+        return None
 
     def update_or_create_sql_object(self, doc):
         model, created = self.sql_class().objects.update_or_create(

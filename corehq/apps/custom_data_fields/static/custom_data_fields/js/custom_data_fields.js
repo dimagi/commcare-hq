@@ -17,8 +17,8 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         self.value = ko.observable(choice);
     }
 
-    function Field() {
-        var self = {};
+    function CustomDataField() {
+        var self = this;
         self.slug = ko.observable();
         self.label = ko.observable();
         self.is_required = ko.observable();
@@ -59,7 +59,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         self.serialize = function () {
             var choices = [],
                 regex = null,
-                regexMsg = null;
+                regex_msg = null;
             if (self.validationMode() === 'choice') {
                 var choicesToRemove = [];
                 _.each(self.choices(), function (choice) {
@@ -74,7 +74,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
                 });
             } else if (self.validationMode() === 'regex') {
                 regex = self.regex();
-                regexMsg = self.regex_msg();
+                regex_msg = self.regex_msg();
             }
 
             return {
@@ -83,11 +83,9 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
                 'is_required': self.is_required(),
                 'choices': choices,
                 'regex': regex,
-                'regex_msg': regexMsg,
+                'regex_msg': regex_msg,
             };
         };
-
-        return self;
     }
 
     function CustomDataFieldsModel() {
@@ -98,7 +96,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         self.modalField = ko.observable();
 
         self.addField = function () {
-            self.data_fields.push(Field());
+            self.data_fields.push(new CustomDataField());
         };
 
         self.removeField = function (field) {
@@ -116,10 +114,10 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
 
         self.init = function (initialFields) {
             _.each(initialFields, function (field) {
-                var customField = Field();
-                customField.init(field);
-                self.data_fields.push(customField);
-                customField.choices.subscribe(function () {
+                var custom_field = new CustomDataField();
+                custom_field.init(field);
+                self.data_fields.push(custom_field);
+                custom_field.choices.subscribe(function () {
                     $("#save-custom-fields").prop("disabled", false);
                 });
             });
