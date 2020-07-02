@@ -161,6 +161,7 @@ from corehq.util.view_utils import (
     request_as_dict,
     reverse,
 )
+from custom.icds.const import IS_ICDS_ENVIRONMENT
 from no_exceptions.exceptions import Http403
 
 from .dispatcher import ProjectReportDispatcher
@@ -1065,6 +1066,11 @@ class CaseDataView(BaseProjectReportSectionView):
         repeat_records = get_repeat_records_by_payload_id(self.domain, self.case_id)
 
         can_edit_data = self.request.couch_user.can_edit_data
+        show_properties_edit = (
+            can_edit_data
+            and has_privilege(self.request, privileges.DATA_CLEANUP)
+            and not IS_ICDS_ENVIRONMENT
+        )
 
         context = {
             "case_id": self.case_id,
@@ -1076,7 +1082,7 @@ class CaseDataView(BaseProjectReportSectionView):
             "default_properties_as_table": default_properties,
             "dynamic_properties": dynamic_data,
             "dynamic_properties_as_table": dynamic_properties,
-            "show_properties_edit": can_edit_data and has_privilege(self.request, privileges.DATA_CLEANUP),
+            "show_properties_edit": show_properties_edit,
             "case_actions": mark_safe(json.dumps(wrapped_case.actions())),
             "timezone": timezone,
             "tz_abbrev": tz_abbrev,
@@ -1622,6 +1628,7 @@ def _get_display_options(request, domain, user, form, support_enabled):
         user_can_edit
         and has_privilege(request, privileges.DATA_CLEANUP)
         and not form.is_deprecated
+        and not IS_ICDS_ENVIRONMENT
     )
 
     show_resave = (
