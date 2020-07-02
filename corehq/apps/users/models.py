@@ -135,6 +135,7 @@ class Permissions(DocumentSchema):
     access_api = BooleanProperty(default=True)
     access_web_apps = BooleanProperty(default=False)
 
+    edit_reports = BooleanProperty(default=False)
     view_reports = BooleanProperty(default=False)
     view_report_list = StringListProperty(default=[])
 
