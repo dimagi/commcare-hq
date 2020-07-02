@@ -37,14 +37,16 @@ from custom.icds.models import (
     HostedCCZSupportingFile,
 )
 from custom.icds.tasks.hosted_ccz import setup_ccz_file_for_hosting
+from custom.icds_core.const import ManageHostedCCZ_urlname, ManageHostedCCZ_page_title, \
+    ManageHostedCCZLink_urlname, ManageHostedCCZLink_page_title
 from custom.nic_compliance.utils import verify_password
 
 
 @location_safe
 @method_decorator([login_and_domain_required, toggles.MANAGE_CCZ_HOSTING.required_decorator()], name='dispatch')
 class ManageHostedCCZLink(BaseDomainView):
-    urlname = "manage_hosted_ccz_links"
-    page_title = ugettext_lazy("Manage CCZ Hosting Links")
+    urlname = ManageHostedCCZLink_urlname
+    page_title = ManageHostedCCZLink_page_title
     template_name = 'icds/manage_hosted_ccz_links.html'
     section_name = ugettext_lazy("CCZ Hosting Links")
 
@@ -139,8 +141,8 @@ class EditHostedCCZLink(ManageHostedCCZLink):
 @location_safe
 @method_decorator([login_and_domain_required, toggles.MANAGE_CCZ_HOSTING.required_decorator()], name='dispatch')
 class ManageHostedCCZ(BaseDomainView):
-    urlname = "manage_hosted_ccz"
-    page_title = ugettext_lazy("Manage CCZ Hosting")
+    urlname = ManageHostedCCZ_urlname
+    page_title = ManageHostedCCZ_page_title
     template_name = 'icds/manage_hosted_ccz.html'
     section_name = ugettext_noop('CCZ Hostings')
 

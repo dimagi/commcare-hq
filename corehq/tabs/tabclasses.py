@@ -98,8 +98,9 @@ from corehq.tabs.utils import (
     sidebar_to_dropdown,
 )
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
+from custom.icds_core.const import ManageHostedCCZ_page_title, ManageHostedCCZ_urlname, \
+    ManageHostedCCZLink_urlname, ManageHostedCCZLink_page_title
 from custom.icds_core.view_utils import is_icds_cas_project
-from custom.icds.views.hosted_ccz import ManageHostedCCZ, ManageHostedCCZLink
 
 
 class ProjectReportsTab(UITab):
@@ -946,8 +947,8 @@ class ApplicationsTab(UITab):
             ))
         if toggles.MANAGE_CCZ_HOSTING.enabled_for_request(self._request):
             submenu_context.append(dropdown_dict(
-                ManageHostedCCZ.page_title,
-                url=reverse(ManageHostedCCZ.urlname, args=[self.domain])
+                ManageHostedCCZ_page_title,
+                url=reverse(ManageHostedCCZ_urlname, args=[self.domain])
             ))
         return submenu_context
 
@@ -1605,11 +1606,11 @@ class HostedCCZTab(UITab):
     def sidebar_items(self):
         items = super(HostedCCZTab, self).sidebar_items
         items.append((_('Manage CCZ Hostings'), [
-            {'url': reverse(ManageHostedCCZLink.urlname, args=[self.domain]),
-             'title': ManageHostedCCZLink.page_title
+            {'url': reverse(ManageHostedCCZLink_urlname, args=[self.domain]),
+             'title': ManageHostedCCZLink_page_title
              },
-            {'url': reverse(ManageHostedCCZ.urlname, args=[self.domain]),
-             'title': ManageHostedCCZ.page_title
+            {'url': reverse(ManageHostedCCZ_urlname, args=[self.domain]),
+             'title': ManageHostedCCZ_page_title
              },
         ]))
         return items
