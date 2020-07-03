@@ -13,8 +13,12 @@ from corehq.apps.api.resources import v0_3, v0_4
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import WebUser
+from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.pillows.case import transform_case_for_elasticsearch
+from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
+from corehq.util.elastic import reset_es_index
+from pillowtop.es_utils import initialize_index_and_mapping
 
 from .utils import APIResourceTest, FakeXFormES
 
@@ -22,13 +26,12 @@ from .utils import APIResourceTest, FakeXFormES
 class TestCommCareCaseResource(APIResourceTest):
     resource = v0_4.CommCareCaseResource
 
-    def _setup_fake_es(self):
-        # The actual infrastructure involves saving to CouchDB, having PillowTop
-        # read the changes and write it to ElasticSearch.
+    def setUp(self):
+        self.es = get_es_new()
+        reset_es_index(CASE_INDEX_INFO)
+        initialize_index_and_mapping(self.es, CASE_INDEX_INFO)
 
-        # the pillow is set to offline mode - elasticsearch not needed to validate
-        fake_case_es = FakeXFormES()
-        v0_3.MOCK_CASE_ES = fake_case_es
+    def _setup_case(self):
 
         modify_date = datetime.utcnow()
 
@@ -38,14 +41,15 @@ class TestCommCareCaseResource(APIResourceTest):
 
         translated_doc = transform_case_for_elasticsearch(backend_case.to_json())
 
-        fake_case_es.add_doc(translated_doc['_id'], translated_doc)
+        send_to_elasticsearch('cases', translated_doc)
+        self.es.indices.refresh(CASE_INDEX_INFO.index)
         return backend_case
 
     def test_get_list(self):
         """
         Any case in the appropriate domain should be in the list from the API.
         """
-        backend_case = self._setup_fake_es()
+        backend_case = self._setup_case()
         response = self._assert_auth_get_resource(self.list_endpoint)
         self.assertEqual(response.status_code, 200)
 
@@ -59,7 +63,7 @@ class TestCommCareCaseResource(APIResourceTest):
         """
         Any case in the appropriate domain should be in the list from the API.
         """
-        backend_case = self._setup_fake_es()
+        backend_case = self._setup_case()
 
         # Get XML response
         response = self._assert_auth_get_resource(self.list_endpoint, headers={'HTTP_ACCEPT': 'application/xml'})
