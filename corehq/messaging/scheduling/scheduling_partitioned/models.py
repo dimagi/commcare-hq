@@ -329,10 +329,11 @@ class ScheduleInstance(PartitionedModel):
             if lock.acquire(blocking=False):
                 try:
                     content.send(recipient, logged_event)
-                except:
+                except Exception as e:
                     # Release the lock if an error happened so that we can try sending
                     # to this recipient again later.
                     lock.release()
+                    logged_event.error(MessagingEvent.ERROR_INTERNAL_SERVER_ERROR, additional_error_text=str(e))
                     raise
 
         # Update the MessagingEvent for reporting
