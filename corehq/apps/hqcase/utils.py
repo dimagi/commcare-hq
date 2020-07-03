@@ -123,8 +123,8 @@ def get_case_id_by_domain_hq_user_id(domain, user_id, case_type):
 
 def get_case_by_identifier(domain, identifier):
     # circular import
-    from corehq.apps.api.es import CaseES
-    case_es = CaseES(domain)
+    from corehq.apps.api.es import CaseESView
+    case_es = CaseESView(domain)
     case_accessors = CaseAccessors(domain)
 
     def _query_by_type(i_type):

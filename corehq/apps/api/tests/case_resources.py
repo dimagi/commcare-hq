@@ -151,7 +151,7 @@ class TestCommCareCaseResourceQueries(APIResourceTest):
 
     def _test_es_query(self, url_params, expected_query, fake_es=None):
         fake_es = fake_es or FakeXFormES()
-        v0_3.MOCK_CASE_ES = fake_es
+        v0_3.MOCK_CASE_ES_VIEW = fake_es
 
         response = self._assert_auth_get_resource('%s?%s' % (self.list_endpoint, urlencode(url_params)))
         self.assertEqual(response.status_code, 200)

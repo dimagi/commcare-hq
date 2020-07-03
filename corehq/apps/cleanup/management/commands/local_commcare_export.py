@@ -10,7 +10,7 @@ from requests import ConnectionError
 from tastypie.bundle import Bundle
 
 from corehq.apps.api.es import (
-    CaseES,
+    CaseESView,
     ElasticAPIQuerySet,
     XFormES,
     es_search_by_params,
@@ -39,7 +39,7 @@ def _get_case_mock(project, params):
     query_set = ElasticAPIQuerySet(
         payload=es_query,
         model=ESCase,
-        es_client=CaseES(project),
+        es_client=CaseESView(project),
     ).order_by('server_modified_on')
 
     return MockApi(

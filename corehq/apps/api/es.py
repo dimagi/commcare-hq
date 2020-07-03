@@ -243,7 +243,7 @@ class ESView(View):
         return response
 
 
-class CaseES(ESView):
+class CaseESView(ESView):
     """
     Expressive CaseES interface. Yes, this is redundant with pieces of the v0_1.py CaseAPI - todo to merge these applications
     Which this should be the final say on ES access for Casedocs
