@@ -34,7 +34,7 @@ class Command(BaseCommand):
             '--minval',
             type=int,
             dest='minval',
-            help='print only tables where the max value is more than this provided minvalue'
+            help='print only sequences where the last_value is more than this provided minvalue'
         )
 
     def handle(self, **options):
