@@ -1,7 +1,7 @@
 from django.urls import NoReverseMatch
 from django.utils import html
 
-from corehq.apps.api.es import ReportCaseES, ReportFormESView
+from corehq.apps.api.es import ReportCaseESView, ReportFormESView
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.users.models import CommCareUser
@@ -72,7 +72,7 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
         'pact.reports.patient_list.HPStatusField',
         'pact.reports.patient_list.DOTStatus',
     ]
-    case_es = ReportCaseES(PACT_DOMAIN)
+    case_es = ReportCaseESView(PACT_DOMAIN)
     xform_es = ReportFormESView(PACT_DOMAIN)
 
     def get_pact_cases(self):

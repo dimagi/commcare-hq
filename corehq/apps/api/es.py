@@ -253,7 +253,7 @@ class CaseESView(ESView):
     model = ESCase
 
 
-class ReportCaseES(ESView):
+class ReportCaseESView(ESView):
     index = REPORT_CASE_INDEX
     doc_type = "CommCareCase"
     model = ESCase

@@ -1,6 +1,6 @@
 from django.urls import NoReverseMatch, reverse
 from django.http import Http404
-from corehq.apps.api.es import ReportCaseES, ReportFormESView
+from corehq.apps.api.es import ReportCaseESView, ReportFormESView
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.users.models import CommCareUser
 from django.utils.safestring import mark_safe
@@ -17,7 +17,7 @@ class PactCHWProfileReport(PactDrilldownReportMixin, PactElasticTabularReportMix
     view_mode = 'info'
     ajax_pagination = True
     xform_es = ReportFormESView(PACT_DOMAIN)
-    case_es = ReportCaseES(PACT_DOMAIN)
+    case_es = ReportCaseESView(PACT_DOMAIN)
     default_sort = {"received_on": "desc"}
 
     name = "CHW Profile"

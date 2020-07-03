@@ -7,7 +7,7 @@ from django.urls import reverse, NoReverseMatch
 from django.utils.translation import ugettext as _
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 
-from corehq.apps.api.es import ReportCaseES
+from corehq.apps.api.es import ReportCaseESView
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
@@ -107,7 +107,7 @@ class BaseHNBCReport(CustomProjectReport, CaseListReport):
     @property
     @memoized
     def case_es(self):
-        return ReportCaseES(self.domain)
+        return ReportCaseESView(self.domain)
 
     def build_es_query(self, case_type=None, afilter=None, status=None):
 

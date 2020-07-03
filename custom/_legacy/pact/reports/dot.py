@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, time
 import uuid
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.api.es import ReportCaseES, ReportFormESView
+from corehq.apps.api.es import ReportCaseESView, ReportFormESView
 from corehq.apps.hqcase.analytics import get_number_of_cases_in_domain_of_type
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.reports.generic import GenericTabularReport
@@ -36,7 +36,7 @@ class PactDOTPatientField(BaseSingleOptionFilter):
     @classmethod
     def get_pact_cases(cls):
         # query couch to get reduce count of all PACT cases
-        case_es = ReportCaseES(PACT_DOMAIN)
+        case_es = ReportCaseESView(PACT_DOMAIN)
         # why 'or 100'??
         total_count = \
             get_number_of_cases_in_domain_of_type('pact', case_type=PACT_CASE_TYPE) or 100
