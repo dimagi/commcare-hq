@@ -30,17 +30,24 @@ class TestCommCareCaseResource(APIResourceTest):
         reset_es_index(CASE_INDEX_INFO)
         initialize_index_and_mapping(self.es, CASE_INDEX_INFO)
 
-    def _setup_case(self):
+    def _setup_case(self, cases=None):
 
         modify_date = datetime.utcnow()
 
-        backend_case = CommCareCase(server_modified_on=modify_date, domain=self.domain.name)
-        backend_case.save()
-        self.addCleanup(backend_case.delete)
+        cases = cases or [(None, None)]
+        for owner_id, case_id in cases:
+            kwargs = {}
+            if owner_id:
+                kwargs['owner_id'] = owner_id
+            if case_id:
+                kwargs['_id'] = case_id
+            backend_case = CommCareCase(server_modified_on=modify_date, domain=self.domain.name, **kwargs)
+            backend_case.save()
+            self.addCleanup(backend_case.delete)
 
-        translated_doc = transform_case_for_elasticsearch(backend_case.to_json())
+            translated_doc = transform_case_for_elasticsearch(backend_case.to_json())
 
-        send_to_elasticsearch('cases', translated_doc)
+            send_to_elasticsearch('cases', translated_doc)
         self.es.indices.refresh(CASE_INDEX_INFO.index)
         return backend_case
 
@@ -57,6 +64,20 @@ class TestCommCareCaseResource(APIResourceTest):
 
         api_case = api_cases[0]
         self.assertEqual(api_case['server_date_modified'], json_format_datetime(backend_case.server_modified_on))
+
+    def test_get_by_owner(self):
+        self._setup_case([('owner1', 'id1'), ('owner2', 'id2')])
+
+        response = self._assert_auth_get_resource(self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
+        api_cases = json.loads(response.content)['objects']
+        self.assertEqual(len(api_cases), 2)
+
+        response = self._assert_auth_get_resource('%s?%s' % (self.list_endpoint, urlencode({'owner_id': 'owner1'})))
+        self.assertEqual(response.status_code, 200)
+        api_cases = json.loads(response.content)['objects']
+        self.assertEqual(len(api_cases), 1)
+        self.assertItemsEqual(api_cases[0]['case_id'], 'id1')
 
     def test_get_list_format(self):
         """
