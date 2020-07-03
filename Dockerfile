@@ -47,4 +47,6 @@ RUN npm -g install \
     puppeteer \
     mocha-headless-chrome \
  && cd /vendor \
- && npm shrinkwrap
+ && npm shrinkwrap \
+ && yarn global add phantomjs-prebuilt \
+ && npm -g install
