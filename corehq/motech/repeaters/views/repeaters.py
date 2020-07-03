@@ -389,7 +389,7 @@ def test_repeater(request, domain):
             resp = simple_post(
                 domain, url, fake_post,
                 headers=headers,
-                auth_manager=repeater.get_auth_manager(),
+                auth_manager=repeater.connection_settings.get_auth_manager(),
                 verify=verify,
             )
             if 200 <= resp.status_code < 300:

@@ -252,7 +252,7 @@ class RepeaterTest(BaseRepeaterTest):
 
         for repeat_record in repeat_records:
             with patch('corehq.motech.repeaters.models.simple_post') as mock_post, \
-                    patch.object(Repeater, 'get_auth_manager') as mock_manager:
+                    patch.object(ConnectionSettings, 'get_auth_manager') as mock_manager:
                 mock_post.return_value.status_code = 200
                 mock_manager.return_value = 'MockAuthManager'
                 repeat_record.fire()
@@ -774,7 +774,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
     def test_new_format_payload(self):
         repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
         with patch('corehq.motech.repeaters.models.simple_post') as mock_post, \
-                patch.object(Repeater, 'get_auth_manager') as mock_manager:
+                patch.object(ConnectionSettings, 'get_auth_manager') as mock_manager:
             mock_post.return_value.status_code = 200
             mock_manager.return_value = 'MockAuthManager'
             repeat_record.fire()
