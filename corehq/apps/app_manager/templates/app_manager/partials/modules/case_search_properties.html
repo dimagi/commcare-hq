@@ -55,21 +55,21 @@
                     </div>
                     <div class="form-group">
                       <label class="control-label">{% trans "Label Field" %}</label>
-                      <input class="form-control" type="text" data-bind="value: property.itemSet.label"/>
+                      <input class="form-control" type="text" data-bind="value: property.itemSet.label" placeholder="{% trans "name" %}"/>
                     </div>
                     <div class="form-group">
                       <label class="control-label">{% trans "Value Field" %}</label>
-                      <input class="form-control" type="text" data-bind="value: property.itemSet.value"/>
+                      <input class="form-control" type="text" data-bind="value: property.itemSet.value" placeholder="{% trans "id" %}"/>
                     </div>
                     <div class="form-group">
                       <label class="control-label">{% trans "Sort Field" %}</label>
-                      <input class="form-control" type="text" data-bind="value: property.itemSet.sort"/>
+                      <input class="form-control" type="text" data-bind="value: property.itemSet.sort" placeholder="{% trans "name" %}"/>
                     </div>
                     <div class="panel panel-default">
                       <div class="panel-heading">
-                        <h4 class="panel-title">
+                        <h3 class="panel-title panel-title-nolink">
                           {% trans "Advanced" %}
-                        </h4>
+                        </h3>
                       </div>
                       <div class="panel-body">
                         <div class="form-group">
@@ -96,7 +96,7 @@
                 </div>
                 <div class="modal-footer">
                   <button class="btn btn-primary" type="button" data-dismiss="modal">
-                    {% trans "Save" %}
+                    {% trans "Done" %}
                   </button>
                 </div>
                   </form>
