@@ -36,7 +36,7 @@ class Command(BaseCommand):
         }
 
         if options.get('profile'):
-            cProfile('get_time_taken(fconfig)')
+            cProfile.run('get_time_taken(fconfig)')
         else:
             for i in range(0, 10):
                 print(get_time_taken(fconfig))
