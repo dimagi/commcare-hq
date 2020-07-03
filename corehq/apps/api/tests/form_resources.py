@@ -10,12 +10,15 @@ from casexml.apps.case.mock import CaseBlock
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime
 
-from corehq.apps.api.models import ESXFormInstance
 from corehq.apps.api.resources import v0_4
 from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.reportxform import transform_xform_for_report_forms_index
 from corehq.pillows.xform import transform_xform_for_elasticsearch
+from corehq.util.elastic import reset_es_index
+from pillowtop.es_utils import initialize_index_and_mapping
 
 from .utils import APIResourceTest, FakeXFormES
 
@@ -27,6 +30,166 @@ class TestXFormInstanceResource(APIResourceTest):
     TODO: Provide tests for each version, especially for those aspects
     which differ between versions. They should call into reusable tests
     for the functionality that is not different.
+    """
+
+    resource = v0_4.XFormInstanceResource
+
+    def setUp(self):
+        self.es = get_es_new()
+        reset_es_index(XFORM_INDEX_INFO)
+        initialize_index_and_mapping(self.es, XFORM_INDEX_INFO)
+
+    @run_with_all_backends
+    def test_fetching_xform_cases(self):
+
+        # Create an xform that touches a case
+        case_id = uuid.uuid4().hex
+        form = submit_case_blocks(
+            CaseBlock.deprecated_init(
+                case_id=case_id,
+                create=True,
+            ).as_text(),
+            self.domain.name
+        )[0]
+
+        send_to_elasticsearch('forms', transform_xform_for_elasticsearch(form.to_json()))
+        self.es.indices.refresh(XFORM_INDEX_INFO.index)
+
+        # Fetch the xform through the API
+        response = self._assert_auth_get_resource(self.single_endpoint(form.form_id) + "?cases__full=true")
+        self.assertEqual(response.status_code, 200)
+        cases = json.loads(response.content)['cases']
+
+        # Confirm that the case appears in the resource
+        self.assertEqual(len(cases), 1)
+        self.assertEqual(cases[0]['id'], case_id)
+
+    def _send_forms(self, forms):
+        # list of form tuples [(xmlns, received_on)]
+        to_ret = []
+        for xmlns, received_on in forms:
+            backend_form = XFormInstance(
+                xmlns=xmlns or 'fake-xmlns',
+                domain=self.domain.name,
+                received_on=received_on or datetime.utcnow(),
+                edited_on=datetime.utcnow(),
+                form={
+                    '#type': 'fake-type',
+                    '@xmlns': xmlns or 'fake-xmlns',
+                    'meta': {'userID': 'metadata-user-id'},
+                },
+                auth_context={
+                    'user_id': 'auth-user-id',
+                    'domain': self.domain.name,
+                    'authenticated': True,
+                },
+            )
+            backend_form.save()
+            to_ret.append(backend_form)
+            self.addCleanup(backend_form.delete)
+            send_to_elasticsearch('forms', transform_xform_for_elasticsearch(backend_form.to_json()))
+        self.es.indices.refresh(XFORM_INDEX_INFO.index)
+        return to_ret
+
+    def test_get_list(self):
+        """
+        Any form in the appropriate domain should be in the list from the API.
+        """
+        xmlns = 'http://xmlns1'
+        received_on = datetime(2019, 1, 2)
+        self._send_forms([(xmlns, received_on)])
+
+        response = self._assert_auth_get_resource(self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
+
+        api_forms = json.loads(response.content)['objects']
+        self.assertEqual(len(api_forms), 1)
+
+        api_form = api_forms[0]
+        self.assertEqual(api_form['form']['@xmlns'], xmlns)
+        self.assertEqual(api_form['received_on'], json_format_datetime(received_on))
+        self.assertEqual(api_form['metadata']['userID'], 'metadata-user-id')
+        self.assertEqual(api_form['edited_by_user_id'], 'auth-user-id')
+
+    def test_get_by_xmlns(self):
+        xmlns1 = 'https://xmlns1'
+
+        self._send_forms([(xmlns1, None), ('https://xmlns2', None)])
+        response = self._assert_auth_get_resource(
+            '%s?%s' % (self.list_endpoint, urlencode({'xmlns': xmlns1})))
+        self.assertEqual(response.status_code, 200)
+        api_forms = json.loads(response.content)['objects']
+        self.assertEqual(len(api_forms), 1)
+        api_form = api_forms[0]
+        self.assertEqual(api_form['form']['@xmlns'], xmlns1)
+
+    def test_get_by_received_on(self):
+        date = datetime(2019, 1, 2)
+        xmlns1 = 'https://xmlns1'
+        self._send_forms([(xmlns1, date), (None, datetime(2019, 3, 1))])
+        params = {
+            'received_on_start': datetime(2019, 1, 1).strftime("%Y-%m-%dT%H:%M:%S"),
+            'received_on_end': datetime(2019, 1, 4).strftime("%Y-%m-%dT%H:%M:%S"),
+        }
+        response = self._assert_auth_get_resource(
+            '%s?%s' % (self.list_endpoint, urlencode(params)))
+        self.assertEqual(response.status_code, 200)
+        api_forms = json.loads(response.content)['objects']
+        self.assertEqual(len(api_forms), 1)
+        api_form = api_forms[0]
+        self.assertEqual(api_form['form']['@xmlns'], xmlns1)
+
+    def test_received_on_order(self):
+        date1 = datetime(2019, 1, 2)
+        xmlns1 = 'https://xmlns1'
+        date2 = datetime(2019, 1, 5)
+        xmlns2 = 'https://xmlns2'
+        self._send_forms([(xmlns1, date1), (xmlns2, date2)])
+
+        # test asc order
+        response = self._assert_auth_get_resource('%s?order_by=received_on' % self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
+        api_forms = json.loads(response.content)['objects']
+        self.assertEqual(len(api_forms), 2)
+        api_form = api_forms[0]
+        self.assertEqual(api_form['form']['@xmlns'], xmlns1)
+        # test desc order
+        response = self._assert_auth_get_resource('%s?order_by=-received_on' % self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
+        api_forms = json.loads(response.content)['objects']
+        self.assertEqual(len(api_forms), 2)
+        api_form = api_forms[0]
+        self.assertEqual(api_form['form']['@xmlns'], xmlns2)
+
+    def test_archived_forms(self):
+        xmlns1 = 'https://xmlns1'
+        xmlns2 = 'https://xmlns2'
+        forms = self._send_forms([(xmlns1, None), (xmlns2, None)])
+        # archive
+        update = forms[0].to_json()
+        update['doc_type'] = 'xformarchived'
+        send_to_elasticsearch('forms', transform_xform_for_elasticsearch(update))
+        self.es.indices.refresh(XFORM_INDEX_INFO.index)
+
+        # archived form should not be included by default
+        response = self._assert_auth_get_resource(self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
+        api_forms = json.loads(response.content)['objects']
+        self.assertEqual(len(api_forms), 1)
+        api_form = api_forms[0]
+        self.assertEqual(api_form['form']['@xmlns'], xmlns2)
+
+        # archived form should be included 
+        response = self._assert_auth_get_resource(
+            '%s?%s' % (self.list_endpoint, urlencode({'include_archived': 'true'})))
+        self.assertEqual(response.status_code, 200)
+        api_forms = json.loads(response.content)['objects']
+        self.assertEqual(len(api_forms), 2)
+
+
+class TestXFormInstanceResourceQueries(APIResourceTest):
+    """
+    Tests that urlparameters get converted to expected ES queries.
     """
     resource = v0_4.XFormInstanceResource
 
@@ -46,55 +209,6 @@ class TestXFormInstanceResource(APIResourceTest):
 
         response = self._assert_auth_get_resource('%s?%s' % (self.list_endpoint, urlencode(url_params)))
         self.assertEqual(response.status_code, 200)
-
-    def test_get_list(self):
-        """
-        Any form in the appropriate domain should be in the list from the API.
-        """
-        # The actual infrastructure involves saving to CouchDB, having PillowTop
-        # read the changes and write it to ElasticSearch.
-
-        # In order to test just the API code, we set up a fake XFormES (this should
-        # really be a parameter to the XFormInstanceResource constructor)
-        # and write the translated form directly; we are not trying to test
-        # the ptop infrastructure.
-
-        # the pillow is set to offline mode - elasticsearch not needed to validate
-        fake_xform_es = FakeXFormES()
-        v0_4.MOCK_XFORM_ES = fake_xform_es
-
-        backend_form = XFormInstance(
-            xmlns='fake-xmlns',
-            domain=self.domain.name,
-            received_on=datetime.utcnow(),
-            edited_on=datetime.utcnow(),
-            form={
-                '#type': 'fake-type',
-                '@xmlns': 'fake-xmlns',
-                'meta': {'userID': 'metadata-user-id'},
-            },
-            auth_context={
-                'user_id': 'auth-user-id',
-                'domain': self.domain.name,
-                'authenticated': True,
-            },
-        )
-        backend_form.save()
-        self.addCleanup(backend_form.delete)
-        translated_doc = transform_xform_for_elasticsearch(backend_form.to_json())
-        fake_xform_es.add_doc(translated_doc['_id'], translated_doc)
-
-        response = self._assert_auth_get_resource(self.list_endpoint)
-        self.assertEqual(response.status_code, 200)
-
-        api_forms = json.loads(response.content)['objects']
-        self.assertEqual(len(api_forms), 1)
-
-        api_form = api_forms[0]
-        self.assertEqual(api_form['form']['@xmlns'], backend_form.xmlns)
-        self.assertEqual(api_form['received_on'], json_format_datetime(backend_form.received_on))
-        self.assertEqual(api_form['metadata']['userID'], 'metadata-user-id')
-        self.assertEqual(api_form['edited_by_user_id'], 'auth-user-id')
 
     def test_get_list_xmlns(self):
         expected = [
@@ -169,32 +283,6 @@ class TestXFormInstanceResource(APIResourceTest):
             {'term': {'domain.exact': 'qwerty'}},
         ]
         self._test_es_query({'include_archived': 'true'}, expected)
-
-    @run_with_all_backends
-    def test_fetching_xform_cases(self):
-        fake_xform_es = FakeXFormES(ESXFormInstance)
-        v0_4.MOCK_XFORM_ES = fake_xform_es
-
-        # Create an xform that touches a case
-        case_id = uuid.uuid4().hex
-        form = submit_case_blocks(
-            CaseBlock.deprecated_init(
-                case_id=case_id,
-                create=True,
-            ).as_text(),
-            self.domain.name
-        )[0]
-
-        fake_xform_es.add_doc(form.form_id, transform_xform_for_elasticsearch(form.to_json()))
-
-        # Fetch the xform through the API
-        response = self._assert_auth_get_resource(self.single_endpoint(form.form_id) + "?cases__full=true")
-        self.assertEqual(response.status_code, 200)
-        cases = json.loads(response.content)['cases']
-
-        # Confirm that the case appears in the resource
-        self.assertEqual(len(cases), 1)
-        self.assertEqual(cases[0]['id'], case_id)
 
 
 class TestReportPillow(TestCase):
