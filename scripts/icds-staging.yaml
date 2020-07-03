@@ -53,5 +53,6 @@ trunk: master
 name: icds-autostaging
 branches:
   - ap/restrict-unauthorized-users
+  - mk/update-guj-resident-translations # MK July 3
 
 submodules: {}
