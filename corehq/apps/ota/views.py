@@ -260,9 +260,9 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
 
     app = get_app_cached(domain, app_id) if app_id else None
 
-    error_response = check_app_access(domain, couch_user, app)
-    if error_response:
-        return error_response
+    error_msg, status_code = check_app_access(domain, couch_user, app)
+    if error_msg:
+        return HttpResponse(_(error_msg), status=status_code), None
     restore_config = RestoreConfig(
         project=project,
         restore_user=restore_user,
