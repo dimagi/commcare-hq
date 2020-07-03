@@ -25,6 +25,7 @@ from corehq.apps.users.models import AnonymousCouchUser
 from corehq.sql_db.connections import Session
 from corehq.util.context_managers import drop_connected_signals
 
+
 class ConfigurableReportTestMixin(object):
     domain = "TEST_DOMAIN"
     case_type = "CASE_TYPE"
