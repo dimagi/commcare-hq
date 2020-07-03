@@ -1,6 +1,6 @@
 import re
 
-from django.http import Http404, JsonResponse
+from django.http import JsonResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
@@ -10,7 +10,7 @@ from django.views.generic.edit import ModelFormMixin, ProcessFormView
 
 from memoized import memoized
 
-from corehq import toggles, privileges
+from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
@@ -110,21 +110,13 @@ class MotechLogDetailView(BaseProjectSettingsView, DetailView):
         return reverse(self.urlname, args=[self.domain, pk])
 
 
+@method_decorator(requires_privilege_with_fallback(privileges.DATA_FORWARDING),
+                  name='dispatch')
 @method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
 class ConnectionSettingsListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
     urlname = 'connection_settings_list_view'
     page_title = _('Connection Settings')
     template_name = 'motech/connection_settings.html'
-
-    def dispatch(self, request, *args, **kwargs):
-        # TODO: When Repeaters use Connection Settings, drop, and use
-        # @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
-        if not (
-                toggles.DHIS2_INTEGRATION.enabled_for_request(request)
-                or toggles.INCREMENTAL_EXPORTS.enabled_for_request(request)
-        ):
-            raise Http404()
-        return super().dispatch(request, *args, **kwargs)
 
     @property
     def total(self):
@@ -186,6 +178,8 @@ class ConnectionSettingsListView(BaseProjectSettingsView, CRUDPaginatedViewMixin
         return self.paginate_crud_response
 
 
+@method_decorator(requires_privilege_with_fallback(privileges.DATA_FORWARDING),
+                  name='dispatch')
 @method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
 class ConnectionSettingsDetailView(BaseProjectSettingsView, ModelFormMixin, ProcessFormView):
     urlname = 'connection_settings_detail_view'
@@ -193,16 +187,6 @@ class ConnectionSettingsDetailView(BaseProjectSettingsView, ModelFormMixin, Proc
     template_name = 'motech/connection_settings_detail.html'
     model = ConnectionSettings
     form_class = ConnectionSettingsForm
-
-    def dispatch(self, request, *args, **kwargs):
-        # TODO: When Repeaters use Connection Settings, drop, and use
-        # @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
-        if not (
-                toggles.DHIS2_INTEGRATION.enabled_for_request(request)
-                or toggles.INCREMENTAL_EXPORTS.enabled_for_request(request)
-        ):
-            raise Http404()
-        return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         return super().get_queryset().filter(domain=self.domain)

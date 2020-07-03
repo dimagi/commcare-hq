@@ -90,14 +90,14 @@ class BaseRepeaterTest(TestCase, DomainSubscriptionMixin):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        case_block = CaseBlock(
+        case_block = CaseBlock.deprecated_init(
             case_id=CASE_ID,
             create=True,
             case_type="repeater_case",
             case_name="ABC 123",
         ).as_text()
 
-        update_case_block = CaseBlock(
+        update_case_block = CaseBlock.deprecated_init(
             case_id=CASE_ID,
             create=False,
             case_name="ABC 234",
@@ -252,7 +252,7 @@ class RepeaterTest(BaseRepeaterTest):
 
         for repeat_record in repeat_records:
             with patch('corehq.motech.repeaters.models.simple_post') as mock_post, \
-                    patch.object(Repeater, 'get_auth_manager') as mock_manager:
+                    patch.object(ConnectionSettings, 'get_auth_manager') as mock_manager:
                 mock_post.return_value.status_code = 200
                 mock_manager.return_value = 'MockAuthManager'
                 repeat_record.fire()
@@ -514,7 +514,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         self.repeater.white_listed_case_types = ['planet']
         self.repeater.save()
 
-        white_listed_case = CaseBlock(
+        white_listed_case = CaseBlock.deprecated_init(
             case_id="a_case_id",
             create=True,
             case_type="planet",
@@ -522,7 +522,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         CaseFactory(self.domain).post_case_blocks([white_listed_case])
         self.assertEqual(1, len(self.repeat_records(self.domain).all()))
 
-        non_white_listed_case = CaseBlock(
+        non_white_listed_case = CaseBlock.deprecated_init(
             case_id="b_case_id",
             create=True,
             case_type="cat",
@@ -537,7 +537,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         black_list_user_id = 'black_listed_user'
 
         # case-creations by black-listed users shouldn't be forwarded
-        black_listed_user_case = CaseBlock(
+        black_listed_user_case = CaseBlock.deprecated_init(
             case_id="b_case_id",
             create=True,
             case_type="planet",
@@ -555,7 +555,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         self.assertEqual(0, len(self.repeat_records(self.domain).all()))
 
         # case-creations by normal users should be forwarded
-        normal_user_case = CaseBlock(
+        normal_user_case = CaseBlock.deprecated_init(
             case_id="a_case_id",
             create=True,
             case_type="planet",
@@ -573,7 +573,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         self.assertEqual(1, len(self.repeat_records(self.domain).all()))
 
         # case-updates by black-listed users shouldn't be forwarded
-        black_listed_user_case = CaseBlock(
+        black_listed_user_case = CaseBlock.deprecated_init(
             case_id="b_case_id",
             case_type="planet",
             owner_id="owner",
@@ -589,7 +589,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
         self.assertEqual(1, len(self.repeat_records(self.domain).all()))
 
         # case-updates by normal users should be forwarded
-        normal_user_case = CaseBlock(
+        normal_user_case = CaseBlock.deprecated_init(
             case_id="a_case_id",
             case_type="planet",
             owner_id="owner",
@@ -774,7 +774,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
     def test_new_format_payload(self):
         repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
         with patch('corehq.motech.repeaters.models.simple_post') as mock_post, \
-                patch.object(Repeater, 'get_auth_manager') as mock_manager:
+                patch.object(ConnectionSettings, 'get_auth_manager') as mock_manager:
             mock_post.return_value.status_code = 200
             mock_manager.return_value = 'MockAuthManager'
             repeat_record.fire()

@@ -313,9 +313,9 @@ Then you need to have Formplayer running.
 Prerequisites:
 + Install Java
 
-      $ sudo apt install openjdk-8-jre
+      $ sudo apt install default-jre
 
-+ [Initialize formplayer database](https://github.com/dimagi/formplayer#building-and-running).
++ [Initialize Formplayer database](https://github.com/dimagi/formplayer#building-and-running).
   The password for the "commcarehq" user is in the localsettings.py file
   in the `DATABASES` dictionary.
 
@@ -325,20 +325,21 @@ Prerequisites:
 To get set up, download the settings file and `formplayer.jar`. You may run this
 in the commcare-hq repo root.
 
-    $ curl https://raw.githubusercontent.com/dimagi/formplayer/master/config/application.example.properties -o formplayer.properties
+    $ curl https://raw.githubusercontent.com/dimagi/formplayer/master/config/application.example.properties -o application.properties
     $ curl https://s3.amazonaws.com/dimagi-formplayer-jars/latest-successful/formplayer.jar -o formplayer.jar
 
 Thereafter, to run Formplayer, navigate to the dir where you installed them
 above (probably the repo root), and run:
 
-    $ java -jar formplayer.jar --spring.config.name=formplayer
+    $ java -jar formplayer.jar
 
 This starts a process in the foreground, so you'll need to keep it open as long
-as you plan on using Formplayer. If Formplayer stops working, you can try
-re-fetching it using the same command above. Feel free to add it to your
-`hammer` command or wherever.
+as you plan on using Formplayer.
 
-    $ curl https://s3.amazonaws.com/dimagi-formplayer-jars/latest-successful/formplayer.jar -o formplayer.jar
+To keep Formplayer up to date with the version used in production, you can add
+the `curl` commands above to your `hammer` command, or whatever script you use
+for updating your dev environment.
+
 
 #### Browser Settings
 
@@ -518,7 +519,7 @@ run the Python tests when saving py files as follows:
 
 ### Sniffer Installation instructions
 https://github.com/jeffh/sniffer/
-(recommended to install pyinotify or macfsevents for this to actually be worthwhile otherwise it takes a long time to see the change)
+(recommended to install pywatchman or macfsevents for this to actually be worthwhile otherwise it takes a long time to see the change)
 
 ## Other links
 

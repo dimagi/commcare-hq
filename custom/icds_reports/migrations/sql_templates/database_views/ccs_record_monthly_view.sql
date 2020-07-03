@@ -83,7 +83,8 @@ CREATE VIEW ccs_record_monthly_view AS
         "ccs_record_monthly"."migration_status" AS "migration_status",
         "ccs_record_monthly"."where_born" AS "where_born",
         "ccs_record_monthly"."num_children_del" AS "num_children_del",
-        "ccs_record_monthly"."still_live_birth" AS "still_live_birth"
+        "ccs_record_monthly"."still_live_birth" AS "still_live_birth",
+        "ccs_record_monthly"."delivered_in_month" AS "delivered_in_month"
     FROM "public"."awc_location_months" "awc_location_months"
     JOIN "public"."ccs_record_monthly" "ccs_record_monthly" ON (
         ("awc_location_months"."month" = "ccs_record_monthly"."month") AND

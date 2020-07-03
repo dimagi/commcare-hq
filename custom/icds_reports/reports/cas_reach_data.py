@@ -10,7 +10,7 @@ from custom.icds_reports.models.views import SystemUsageReportView
 from custom.icds_reports.utils import get_value, percent_increase, apply_exclude, get_color_with_green_positive
 
 
-def get_cas_reach_data(domain, now_date, config, show_test=False, show_prerelease_features=False):
+def get_cas_reach_data(domain, now_date, config, show_test=False):
     now_date = datetime(*now_date)
 
     def get_data_for_awc_monthly(month, filters):
@@ -156,52 +156,36 @@ def get_cas_reach_data(domain, now_date, config, show_test=False, show_prereleas
         'frequency': 'month',
     }
 
+    ls_launched_data = get_data_for_ls_launched(current_month, config)
+    number_of_lss_launched = {
+        'label': _('LSs Launched'),
+        'help_text': ls_launched_help_text(),
+        'color': None,
+        'percent': None,
+        'value': get_value(ls_launched_data, 'ls_launched'),
+        'all': None,
+        'format': 'number',
+        'frequency': 'month',
+        'redirect': 'icds_cas_reach/ls_launched'
+    }
+
     cas_reach_records = [
         [
             awcs_launched,
             number_of_awc_open_yesterday
         ],
         [
-            sectors_covered,
-            blocks_covered
+            number_of_lss_launched,
+            sectors_covered
         ],
         [
-            districts_covered,
+            blocks_covered,
+            districts_covered
+        ],
+        [
             states_covered
         ]
     ]
-
-    if show_prerelease_features:
-        ls_launched_data = get_data_for_ls_launched(current_month, config)
-        number_of_lss_launched = {
-            'label': _('LSs Launched'),
-            'help_text': ls_launched_help_text(),
-            'color': None,
-            'percent': None,
-            'value': get_value(ls_launched_data, 'ls_launched'),
-            'all': None,
-            'format': 'number',
-            'frequency': 'month',
-            'redirect': 'icds_cas_reach/ls_launched'
-        }
-
-        cas_reach_records = [
-            [
-                awcs_launched,
-                number_of_awc_open_yesterday
-            ],
-            [
-                number_of_lss_launched,
-                sectors_covered
-            ],
-            [
-                blocks_covered,
-                districts_covered
-            ],
-            [
-                states_covered
-            ]
-        ]
 
     return {
         'records': cas_reach_records

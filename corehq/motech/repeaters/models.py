@@ -373,30 +373,6 @@ class Repeater(QuickCachedDocumentMixin, Document):
             return b64_aes_decrypt(ciphertext)
         return self.password
 
-    def get_auth_manager(self):
-        if self.auth_type is None:
-            return AuthManager()
-        if self.auth_type == BASIC_AUTH:
-            return BasicAuthManager(
-                self.username,
-                self.plaintext_password,
-            )
-        if self.auth_type == DIGEST_AUTH:
-            return DigestAuthManager(
-                self.username,
-                self.plaintext_password,
-            )
-        if self.auth_type == OAUTH1:
-            raise NotImplementedError(_(
-                'OAuth1 authentication workflow not yet supported.'
-            ))
-        if self.auth_type == BEARER_AUTH:
-            return BearerAuthManager(
-                self.username,
-                self.plaintext_password,
-            )
-        # OAuth 2.0 coming when Repeaters use ConnectionSettings
-
     @property
     def verify(self):
         return not self.skip_cert_verify
@@ -410,7 +386,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
         return simple_post(
             self.domain, url, payload,
             headers=self.get_headers(repeat_record),
-            auth_manager=self.get_auth_manager(),
+            auth_manager=self.connection_settings.get_auth_manager(),
             verify=self.verify,
             notify_addresses=self.notify_addresses,
             payload_id=repeat_record.payload_id,

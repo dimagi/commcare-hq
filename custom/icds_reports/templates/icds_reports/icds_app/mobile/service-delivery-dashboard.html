@@ -1,4 +1,4 @@
-{% load staticfiles %}
+{% load static %}
 <div cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
   <div class="app-bg h-100vh overflow-hidden" ng-show="!$ctrl.filtersOpen && ($ctrl.selectedDate >= $ctrl.sddStartDate)" ng-click="$ctrl.showSortPopup = false">
       <div class="top-section p-3" style="padding-bottom: 25vh">
