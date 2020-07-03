@@ -56,7 +56,7 @@ def query_deactivated_data(query, domain):
                  .show_only_inactive()
                  .domain(domain)
                  .get_ids())
-    return case_es.owner(owner_ids)
+    return query.filter(case_es.owner(owner_ids))
 
 
 def get_case_owners(request, domain, mobile_user_and_group_slugs):
@@ -170,9 +170,9 @@ def _get_location_accessible_ids(request):
 
 def query_location_restricted_cases(query, request):
     accessible_ids = _get_location_accessible_ids(request)
-    return case_es.owner(accessible_ids)
+    return query.filter(case_es.owner(accessible_ids))
 
 
 def query_location_restricted_forms(query, request):
     accessible_ids = _get_location_accessible_ids(request)
-    return form_es.user_id(accessible_ids)
+    return query.filter(form_es.user_id(accessible_ids))
