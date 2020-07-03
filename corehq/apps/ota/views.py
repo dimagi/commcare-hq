@@ -310,19 +310,20 @@ def heartbeat(request, domain, app_build_id):
             "latest_ccz_version": config.get_latest_app_version(build_profile_id),
         }
 
+    app = get_app_cached(domain, app_build_id)
     try:
         version_info = _get_version_info(config)
         # mobile will send master app_id
     except (Http404, AssertionError):
         # If it's not a valid master app id, find it by talking to couch
         notify_exception(request, 'Received an invalid heartbeat request')
-        app = get_app_cached(domain, app_build_id)
         config = GlobalAppConfig.by_app_id(domain, app.master_id)
         version_info = _get_version_info(config)
 
     info.update(version_info)
 
-    if not toggles.SKIP_UPDATING_USER_REPORTING_METADATA.enabled(domain):
+    error_in_access = check_app_access(domain, request.couch_user, app)
+    if not toggles.SKIP_UPDATING_USER_REPORTING_METADATA.enabled(domain) and not error_in_access[0]:
         update_user_reporting_data(app_build_id, app_id, build_profile_id, request.couch_user, request)
 
     if _should_force_log_submission(request):
