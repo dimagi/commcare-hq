@@ -12,6 +12,7 @@ from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
 
+from corehq import toggles
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.dbaccessors import delete_all_report_configs
 from corehq.apps.userreports.models import (
@@ -20,9 +21,9 @@ from corehq.apps.userreports.models import (
 )
 from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.apps.users.models import AnonymousCouchUser
 from corehq.sql_db.connections import Session
 from corehq.util.context_managers import drop_connected_signals
-
 
 class ConfigurableReportTestMixin(object):
     domain = "TEST_DOMAIN"
@@ -51,7 +52,7 @@ class ConfigurableReportTestMixin(object):
 
 class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
 
-    def _build_report_and_view(self):
+    def _build_report_and_view(self, request=HttpRequest()):
         # Create report
         data_source_config = DataSourceConfiguration(
             domain=self.domain,
@@ -139,7 +140,7 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         report_config.save()
         self.addCleanup(report_config.delete)
 
-        view = ConfigurableReportView(request=HttpRequest())
+        view = ConfigurableReportView(request=request)
         view._domain = self.domain
         view._lang = "en"
         view._report_config_id = report_config._id
@@ -207,3 +208,30 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         report.save()
         request = HttpRequest()
         self.assertTrue(view.should_redirect_to_paywall(request))
+
+    def test_can_edit_report(self):
+        """
+        Test whether ConfigurableReportView.page_context allows report editing
+        """
+        cannot_edit = HttpRequest()
+        cannot_edit.can_access_all_locations = True
+        cannot_edit.couch_user = AnonymousCouchUser()
+        cannot_edit.session = {}
+        report, view = self._build_report_and_view(request=cannot_edit)
+        self.assertEqual(view.page_context['can_edit_report'], False)
+
+        class FakeUser(object):
+            username = 'fake_user'
+
+        class FakeCouchUser(AnonymousCouchUser):
+            def can_edit_reports(self):
+                return True
+
+        can_edit = HttpRequest()
+        can_edit.can_access_all_locations = True
+        can_edit.user = FakeUser()
+        can_edit.couch_user = FakeCouchUser()
+        toggles.USER_CONFIGURABLE_REPORTS.set(can_edit.user.username, True, toggles.NAMESPACE_USER)
+        can_edit.session = {}
+        report, view = self._build_report_and_view(request=can_edit)
+        self.assertEqual(view.page_context['can_edit_report'], True)

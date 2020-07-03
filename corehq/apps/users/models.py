@@ -2710,6 +2710,10 @@ class AnonymousCouchUser(object):
     def is_active(self):
         return True
 
+    @property
+    def is_staff(self):
+        return False
+
     def is_domain_admin(self):
         return False
 
