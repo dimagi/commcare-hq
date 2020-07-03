@@ -1,7 +1,9 @@
 import uuid
 from xml.etree import cElementTree as ElementTree
 
+from django.contrib.admin.models import LogEntry, DELETION
 from django.test import TestCase
+from django.utils.encoding import force_text
 
 import mock
 
@@ -13,7 +15,6 @@ from casexml.apps.case.mock import (
 )
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 
-from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
@@ -61,6 +62,17 @@ class RetireUserTestCase(TestCase):
         delete_all_cases()
         delete_all_xforms()
         super(RetireUserTestCase, self).tearDown()
+
+    @run_with_all_backends
+    def test_retire(self):
+        deleted_via = "Test test"
+        django_user = self.commcare_user.get_django_user()
+        other_django_user = self.other_user.get_django_user()
+
+        self.commcare_user.retire(deleted_by=other_django_user, deleted_via=deleted_via)
+        log_entry = LogEntry.objects.get(user_id=other_django_user.pk, action_flag=DELETION)
+        self.assertEqual(log_entry.object_repr, force_text(django_user))
+        self.assertEqual(log_entry.change_message, f"{'deleted_via': {deleted_via}}")
 
     @run_with_all_backends
     def test_unretire_user(self):
