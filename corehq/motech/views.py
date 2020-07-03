@@ -1,6 +1,5 @@
 import re
 
-from django.http import Http404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy
@@ -8,7 +7,8 @@ from django.views.generic import DetailView, FormView, ListView
 
 from memoized import memoized
 
-from corehq import toggles
+from corehq import privileges
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
@@ -101,20 +101,14 @@ class MotechLogDetailView(BaseProjectSettingsView, DetailView):
         return reverse(self.urlname, args=[self.domain, pk])
 
 
+@method_decorator(requires_privilege_with_fallback(privileges.DATA_FORWARDING),
+                  name='dispatch')
 @method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
 class ConnectionSettingsView(BaseProjectSettingsView, FormView):
     urlname = 'connection_settings_view'
     page_title = ugettext_lazy('Connection Settings')
     template_name = 'motech/connection_settings.html'
     form_class = ConnectionSettingsFormSet  # NOTE: form_class is a formset
-
-    def dispatch(self, request, *args, **kwargs):
-        if not (
-                toggles.DHIS2_INTEGRATION.enabled_for_request(request)
-                or toggles.INCREMENTAL_EXPORTS.enabled_for_request(request)
-        ):
-            raise Http404()
-        return super(ConnectionSettingsView, self).dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
