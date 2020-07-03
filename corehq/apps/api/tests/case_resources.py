@@ -8,7 +8,6 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from dimagi.utils.parsing import json_format_datetime
 
-from corehq.apps.api.models import ESCase
 from corehq.apps.api.resources import v0_3, v0_4
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -88,9 +87,6 @@ class TestCommCareCaseResource(APIResourceTest):
 
     @run_with_all_backends
     def test_parent_and_child_cases(self):
-        fake_case_es = FakeXFormES(ESCase)
-        v0_3.MOCK_CASE_ES = fake_case_es
-
         # Create cases
         parent_case_id = uuid.uuid4().hex
         parent_type = 'parent_case_type'
@@ -112,8 +108,11 @@ class TestCommCareCaseResource(APIResourceTest):
             self.domain.name
         )[1][0]
 
-        fake_case_es.add_doc(parent_case_id, transform_case_for_elasticsearch(parent_case.to_json()))
-        fake_case_es.add_doc(child_case_id, transform_case_for_elasticsearch(child_case.to_json()))
+        self.addCleanup(child_case.delete)
+        self.addCleanup(parent_case.delete)
+        send_to_elasticsearch('cases', transform_case_for_elasticsearch(parent_case.to_json()))
+        send_to_elasticsearch('cases', transform_case_for_elasticsearch(child_case.to_json()))
+        self.es.indices.refresh(CASE_INDEX_INFO.index)
 
         # Fetch the child case through the API
 
