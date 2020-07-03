@@ -152,11 +152,15 @@ def run_messaging_rule(domain, rule_id):
     progress_helper.set_total_cases_to_be_processed(total_cases_count)
 
     def _run_rule_sequentially():
+        incr = 0
         progress_helper.set_initial_progress()
         for case_id in get_case_ids_for_messaging_rule(domain, rule.case_type):
             sync_case_for_messaging_rule.delay(domain, case_id, rule_id)
-            if progress_helper.is_canceled():
-                break
+            incr += 1
+            if incr >= 1000:
+                incr = 0
+                if progress_helper.is_canceled():
+                    break
 
         # By putting this task last in the queue, the rule should be marked
         # complete at about the time that the last tasks are finishing up.
