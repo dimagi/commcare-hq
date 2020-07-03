@@ -73,6 +73,7 @@ def celery_add_time_sent(headers=None, body=None, **kwargs):
 @task_prerun.connect
 def celery_record_time_to_start(task_id=None, task=None, **kwargs):
     from corehq.util.metrics import metrics_counter, metrics_gauge
+    from corehq.util.metrics.const import MPM_MAX
 
     tags = {
         'celery_task_name': task.name,
@@ -85,7 +86,8 @@ def celery_record_time_to_start(task_id=None, task=None, **kwargs):
     except TimingNotAvailable:
         metrics_counter('commcare.celery.task.time_to_start_unavailable', tags=tags)
     else:
-        metrics_gauge('commcare.celery.task.time_to_start', time_to_start.total_seconds(), tags=tags)
+        metrics_gauge('commcare.celery.task.time_to_start', time_to_start.total_seconds(), tags=tags,
+            multiprocess_mode=MPM_MAX)
         get_task_time_to_start.set_cached_value(task_id).to(time_to_start)
 
     TimeToRunTimer(task_id).start_timing()
