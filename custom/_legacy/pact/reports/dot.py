@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, time
 import uuid
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.api.es import ReportCaseES, ReportXFormES
+from corehq.apps.api.es import ReportCaseES, ReportFormESView
 from corehq.apps.hqcase.analytics import get_number_of_cases_in_domain_of_type
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.reports.generic import GenericTabularReport
@@ -85,7 +85,7 @@ class PactDOTReport(GenericTabularReport, CustomProjectReport, ProjectReportPara
         ret['dot_calendar'] = dcal
 
         unique_visits = dcal.unique_xforms()
-        xform_es = ReportXFormES(PACT_DOMAIN)
+        xform_es = ReportFormESView(PACT_DOMAIN)
 
         q = xform_es.base_query(size=len(unique_visits))
         lvisits = list(unique_visits)

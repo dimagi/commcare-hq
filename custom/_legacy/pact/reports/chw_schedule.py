@@ -3,7 +3,7 @@ from dateutil.parser import parser
 from django.core.cache import cache
 import json
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.api.es import ReportXFormES
+from corehq.apps.api.es import ReportFormESView
 from corehq.util.dates import iso_string_to_datetime, iso_string_to_date
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.parsing import json_format_date
@@ -99,7 +99,7 @@ def dots_submissions_by_case(case_id, query_date, username=None):
     Actually run query for username submissions
     todo: do terms for the pact_ids instead of individual term?
     """
-    xform_es = ReportXFormES(PACT_DOMAIN)
+    xform_es = ReportFormESView(PACT_DOMAIN)
     script_fields = {
         "doc_id": get_report_script_field('_id', is_known=True),
         "pact_id": get_report_script_field("form.pact_id"),

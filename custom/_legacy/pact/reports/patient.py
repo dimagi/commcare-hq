@@ -3,7 +3,7 @@ from django.urls import reverse
 from django.http import Http404
 import json
 from django.utils.safestring import mark_safe
-from corehq.apps.api.es import ReportXFormES
+from corehq.apps.api.es import ReportFormESView
 from corehq.apps.hqwebapp.decorators import use_timeago
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.view_helpers import case_hierarchy_context
@@ -22,7 +22,7 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
     hide_filters = True
     filters = []
     ajax_pagination = True
-    xform_es = ReportXFormES(PACT_DOMAIN)
+    xform_es = ReportFormESView(PACT_DOMAIN)
 
     default_sort = {
         "received_on": "desc"
@@ -119,7 +119,7 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
         if not self.patient_id:
             return None
 
-        full_query = ReportXFormES.by_case_id_query(self.request.domain, self.patient_id)
+        full_query = ReportFormESView.by_case_id_query(self.request.domain, self.patient_id)
         full_query.update({
             "fields": [
                 "_id",

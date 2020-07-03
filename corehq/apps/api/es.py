@@ -334,7 +334,7 @@ def report_term_filter(terms, mapping):
     return ret_terms
 
 
-class ReportXFormES(FormESView):
+class ReportFormESView(FormESView):
     index = REPORT_XFORM_INDEX
     doc_type = "XFormInstance"
     model = ESXFormInstance
@@ -353,7 +353,7 @@ class ReportXFormES(FormESView):
         for k, v in raw_terms.items():
             query_terms['%s.%s' % (k, VALUE_TAG)] = v
 
-        return super(ReportXFormES, self).base_query(terms=raw_terms, fields=fields, start=start, size=size)
+        return super(ReportFormESView, self).base_query(terms=raw_terms, fields=fields, start=start, size=size)
 
     def run_query(self, es_query):
         es_results = super(FormESView, self).run_query(es_query)

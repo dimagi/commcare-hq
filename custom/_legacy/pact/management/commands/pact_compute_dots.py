@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 
-from corehq.apps.api.es import ReportXFormES
+from corehq.apps.api.es import ReportFormESView
 from pact.enums import PACT_DOMAIN
 from pact.utils import REPORT_XFORM_MISSING_DOTS_QUERY
 
@@ -14,7 +14,7 @@ class Command(BaseCommand):
     seen_doc_ids = {}
 
     def handle(self, **options):
-        xform_es = ReportXFormES(PACT_DOMAIN)
+        xform_es = ReportFormESView(PACT_DOMAIN)
         offset = 0
 
         q = REPORT_XFORM_MISSING_DOTS_QUERY
