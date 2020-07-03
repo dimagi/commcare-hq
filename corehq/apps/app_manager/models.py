@@ -4816,7 +4816,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
 
     @time_method()
     def create_profile(self, is_odk=False, with_media=False,
-                       template='app_manager/profile.xml', build_profile_id=None, commcare_flavor=None):
+                       build_profile_id=None, commcare_flavor=None):
         self__profile = self.profile
         app_profile = defaultdict(dict)
 
@@ -4874,7 +4874,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
             TARGET_COMMCARE: 'org.commcare.dalvik',
             TARGET_COMMCARE_LTS: 'org.commcare.lts',
         }.get(commcare_flavor)
-        return render_to_string(template, {
+        return render_to_string('app_manager/profile.xml', {
             'is_odk': is_odk,
             'app': self,
             'profile_url': profile_url,
