@@ -189,6 +189,7 @@ class SMSBase(UUIDGeneratorMixin, Log):
     ERROR_CONTACT_IS_INACTIVE = 'CONTACT_IS_INACTIVE'
     ERROR_TRIAL_SMS_EXCEEDED = 'TRIAL_SMS_EXCEEDED'
     ERROR_MESSAGE_FORMAT_INVALID = 'MESSAGE_FORMAT_INVALID'
+    STATUS_PENDING = 'STATUS_PENDING'
 
     ERROR_MESSAGES = {
         ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS:
@@ -271,6 +272,15 @@ class SMSBase(UUIDGeneratorMixin, Log):
             smsutil.clean_phone_number(self.phone_number),
             domain=self.domain
         )
+
+    def set_status_pending(self):
+        """Mark message as sent with backend status pending"""
+        self.error = False
+        self.system_error_message = SMSBase.STATUS_PENDING
+        self.save()
+
+    def is_status_pending(self):
+        return not self.error and self.system_error_message == SMSBase.STATUS_PENDING
 
 
 class SMS(SMSBase):
@@ -355,7 +365,7 @@ class QueuedSMS(SMSBase):
     def get_queued_sms(cls):
         return cls.objects.filter(
             datetime_to_process__lte=datetime.utcnow(),
-        )
+        ).order_by('datetime_to_process')
 
 
 class SQLLastReadMessage(UUIDGeneratorMixin, models.Model):
@@ -2875,7 +2885,7 @@ class Email(models.Model):
     couch_recipient = models.CharField(max_length=126, db_index=True)
 
     # The MessagingSubEvent that this email is tied to
-    messaging_subevent = models.ForeignKey('sms.MessagingSubEvent', on_delete=models.PROTECT)
+    messaging_subevent = models.ForeignKey('sms.MessagingSubEvent', null=True, on_delete=models.PROTECT)
 
     # Email details
     recipient_address = models.CharField(max_length=255, db_index=True)

@@ -195,7 +195,7 @@ def remove_indices_from_deleted_cases(domain, case_ids):
     deleted_ids = set(case_ids)
     indexes_referencing_deleted_cases = CaseAccessors(domain).get_all_reverse_indices_info(list(case_ids))
     case_updates = [
-        CaseBlock(
+        CaseBlock.deprecated_init(
             case_id=index_info.case_id,
             index={
                 index_info.identifier: (index_info.referenced_type, '')  # blank string = delete index

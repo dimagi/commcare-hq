@@ -21,7 +21,10 @@ from corehq.apps.hqwebapp.urls import legacy_prelogin
 from corehq.apps.hqwebapp.views import (
     apache_license,
     bsd_license,
+    no_permissions,
+    not_found,
     redirect_to_dimagi,
+    server_error,
 )
 from corehq.apps.registration.tasks import PRICING_LINK
 from corehq.apps.reports.views import ReportNotificationUnsubscribeView
@@ -38,10 +41,9 @@ except ImportError:
 
 admin.autodiscover()
 
-handler500 = 'corehq.apps.hqwebapp.views.server_error'
-handler404 = 'corehq.apps.hqwebapp.views.not_found'
-handler403 = 'corehq.apps.hqwebapp.views.no_permissions'
-
+handler500 = server_error
+handler404 = not_found
+handler403 = no_permissions
 
 
 domain_specific = [

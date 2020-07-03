@@ -1569,7 +1569,7 @@ def copy_report(request, domain):
             domain_link.update_last_pull(
                 'report',
                 request.couch_user._id,
-                model_details=ReportLinkDetail(report_id=link_info.report.get_id)
+                model_detail=ReportLinkDetail(report_id=link_info.report.get_id).to_json(),
             )
             successes.append(to_domain)
         except Exception as err:
