@@ -4888,6 +4888,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
             'locale': locale,
             'apk_heartbeat_url': apk_heartbeat_url,
             'target_package_id': target_package_id,
+            'support_email': settings.SUPPORT_EMAIL if not settings.IS_DIMAGI_ENVIRONMENT else None,
         }).encode('utf-8')
 
     @property

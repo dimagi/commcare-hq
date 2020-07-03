@@ -24,6 +24,9 @@
     {% if target_package_id %}
     <property key="target-package-id" value="{{ target_package_id }}" force="true"/>
     {% endif %}
+    {% if support_email %}
+    <property key="support-email-address" value="{{ support_email }}" force="true"/>
+    {% endif %}
 
     <!-- Properties configured on CommCare HQ 1.0 -->
     {% for key, value in app_profile.properties.items %}{% if value != None %}
