@@ -1,12 +1,8 @@
-import uuid
-
 from csv import DictWriter
 from io import StringIO
 
 from django.contrib.postgres.fields import JSONField
 from django.db import models
-
-from corehq.blobs import CODES, get_blob_db
 
 
 class UserUploadRecord(models.Model):

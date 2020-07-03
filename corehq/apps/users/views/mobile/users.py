@@ -1,7 +1,6 @@
 import io
 import json
 import re
-import uuid
 from collections import defaultdict
 from datetime import datetime
 
