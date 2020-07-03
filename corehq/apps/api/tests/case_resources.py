@@ -19,7 +19,7 @@ from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.util.elastic import reset_es_index
 from pillowtop.es_utils import initialize_index_and_mapping
 
-from .utils import APIResourceTest, FakeXFormES
+from .utils import APIResourceTest, FakeFormESView
 
 
 class TestCommCareCaseResource(APIResourceTest):
@@ -150,7 +150,7 @@ class TestCommCareCaseResourceQueries(APIResourceTest):
     resource = v0_4.CommCareCaseResource
 
     def _test_es_query(self, url_params, expected_query, fake_es=None):
-        fake_es = fake_es or FakeXFormES()
+        fake_es = fake_es or FakeFormESView()
         v0_3.MOCK_CASE_ES_VIEW = fake_es
 
         response = self._assert_auth_get_resource('%s?%s' % (self.list_endpoint, urlencode(url_params)))

@@ -12,7 +12,7 @@ from tastypie.bundle import Bundle
 from corehq.apps.api.es import (
     CaseESView,
     ElasticAPIQuerySet,
-    XFormES,
+    FormESView,
     es_search_by_params,
 )
 from corehq.apps.api.models import ESCase, ESXFormInstance
@@ -62,7 +62,7 @@ def _get_form_mock(project, params):
     query_set = ElasticAPIQuerySet(
         payload=es_query,
         model=ESXFormInstance,
-        es_client=XFormES(project),
+        es_client=FormESView(project),
     ).order_by('received_on')
     return MockApi(
         query_set, XFormInstanceResource(), XFormInstanceSerializer()

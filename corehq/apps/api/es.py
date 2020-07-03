@@ -259,7 +259,7 @@ class ReportCaseES(ESView):
     model = ESCase
 
 
-class XFormES(ESView):
+class FormESView(ESView):
     index = XFORM_INDEX
     doc_type = "XFormInstance"
     model = ESXFormInstance
@@ -275,10 +275,10 @@ class XFormES(ESView):
         if 'doc_type' not in new_terms:
             #let the terms override the kwarg - the query terms trump the magic
             new_terms['doc_type'] = doc_type
-        return super(XFormES, self).base_query(terms=new_terms, fields=use_fields, start=start, size=size)
+        return super(FormESView, self).base_query(terms=new_terms, fields=use_fields, start=start, size=size)
 
     def run_query(self, es_query, **kwargs):
-        es_results = super(XFormES, self).run_query(es_query)
+        es_results = super(FormESView, self).run_query(es_query)
         # hack, walk the results again, and if we have xmlns, populate human readable names
         # Note that `get_unknown_form_name` does not require the request, which is also
         # not necessarily available here. So `None` is passed here.
@@ -334,7 +334,7 @@ def report_term_filter(terms, mapping):
     return ret_terms
 
 
-class ReportXFormES(XFormES):
+class ReportXFormES(FormESView):
     index = REPORT_XFORM_INDEX
     doc_type = "XFormInstance"
     model = ESXFormInstance
@@ -356,7 +356,7 @@ class ReportXFormES(XFormES):
         return super(ReportXFormES, self).base_query(terms=raw_terms, fields=fields, start=start, size=size)
 
     def run_query(self, es_query):
-        es_results = super(XFormES, self).run_query(es_query)
+        es_results = super(FormESView, self).run_query(es_query)
         #hack, walk the results again, and if we have xmlns, populate human readable names
         # Note that `get_unknown_form_name` does not require the request, which is also
         # not necessarily available here. So `None` is passed here.

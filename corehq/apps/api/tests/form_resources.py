@@ -20,7 +20,7 @@ from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.util.elastic import reset_es_index
 from pillowtop.es_utils import initialize_index_and_mapping
 
-from .utils import APIResourceTest, FakeXFormES
+from .utils import APIResourceTest, FakeFormESView
 
 
 class TestXFormInstanceResource(APIResourceTest):
@@ -195,7 +195,7 @@ class TestXFormInstanceResourceQueries(APIResourceTest):
 
     def _test_es_query(self, url_params, expected_query):
 
-        fake_xform_es = FakeXFormES()
+        fake_xform_es = FakeFormESView()
 
         prior_run_query = fake_xform_es.run_query
 
@@ -252,7 +252,7 @@ class TestXFormInstanceResourceQueries(APIResourceTest):
         ascending.
         '''
 
-        fake_xform_es = FakeXFormES()
+        fake_xform_es = FakeFormESView()
 
         # A bit of a hack since none of Python's mocking libraries seem to do basic spies easily...
         prior_run_query = fake_xform_es.run_query

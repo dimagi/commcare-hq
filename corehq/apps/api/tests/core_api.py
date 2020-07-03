@@ -23,7 +23,7 @@ from corehq.apps.api.util import get_obj
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser, HQApiKey, WebUser
 
-from .utils import APIResourceTest, FakeXFormES
+from .utils import APIResourceTest, FakeFormESView
 
 
 class TestElasticAPIQuerySet(TestCase):
@@ -32,7 +32,7 @@ class TestElasticAPIQuerySet(TestCase):
     '''
 
     def test_slice(self):
-        es = FakeXFormES()
+        es = FakeFormESView()
         for i in range(0, 1300):
             es.add_doc(i, {'i': i})
 
@@ -58,7 +58,7 @@ class TestElasticAPIQuerySet(TestCase):
         self.assertEqual(len(qs_slice), 500)
 
     def test_order_by(self):
-        es = FakeXFormES()
+        es = FakeFormESView()
         for i in range(0, 1300):
             es.add_doc(i, {'i': i})
 
