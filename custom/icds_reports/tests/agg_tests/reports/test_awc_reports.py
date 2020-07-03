@@ -39,6 +39,8 @@ class SecondDayOfMay(date):
 
 
 class TestAWCReport(TestCase):
+    maxDiff = None
+
     def test_beneficiary_details_recorded_weight_none(self):
         data = get_beneficiary_details(
             case_id='6b234c5b-883c-4849-9dfd-b1571af8717b',
