@@ -46,7 +46,7 @@
                       <label class="control-label">
                         {% trans "Lookup Table" %}
                       </label>
-                      <select class="form-control" data-bind="value: property.itemSet.lookupTableNodeset" id="lookup-table-select">
+                      <select class="form-control" data-bind="value: property.itemSet.lookupTableNodeset">
                         <option value="">{% trans "Select a lookup table..." %}</option>
                         {% for item in  js_options.item_lists %}
                           <option value="instance('{{ item.id }}'){{ item.path }}">{{ item.name }}</option>
