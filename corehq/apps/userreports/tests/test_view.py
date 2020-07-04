@@ -13,6 +13,7 @@ from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
 
 from corehq import toggles
+from corehq.apps.domain.models import Domain
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.dbaccessors import delete_all_report_configs
 from corehq.apps.userreports.models import (
@@ -21,7 +22,8 @@ from corehq.apps.userreports.models import (
 )
 from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.apps.users.models import AnonymousCouchUser
+from corehq.apps.users.models import Permissions, UserRole, WebUser
+
 from corehq.sql_db.connections import Session
 from corehq.util.context_managers import drop_connected_signals
 
@@ -214,25 +216,46 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         """
         Test whether ConfigurableReportView.page_context allows report editing
         """
-        cannot_edit = HttpRequest()
-        cannot_edit.can_access_all_locations = True
-        cannot_edit.couch_user = AnonymousCouchUser()
-        cannot_edit.session = {}
-        report, view = self._build_report_and_view(request=cannot_edit)
-        self.assertEqual(view.page_context['can_edit_report'], False)
+        domain = Domain(name='test_domain', is_active=True)
+        domain.save()
 
-        class FakeUser(object):
-            username = 'fake_user'
+        def create_view(can_edit_reports):
+            rolename = 'edit_role' if can_edit_reports else 'view_role'
+            username = 'editor' if can_edit_reports else 'viewer'
+            toggles.USER_CONFIGURABLE_REPORTS.set(username, True, toggles.NAMESPACE_USER)
 
-        class FakeCouchUser(AnonymousCouchUser):
-            def can_edit_reports(self):
-                return True
+            user_role = UserRole(
+                domain=domain.name,
+                name=rolename,
+                permissions=Permissions(edit_commcare_users=True,
+                                        view_commcare_users=True,
+                                        edit_groups=True,
+                                        view_groups=True,
+                                        edit_locations=True,
+                                        view_locations=True,
+                                        access_all_locations=False,
+                                        edit_data=True,
+                                        edit_reports=can_edit_reports,
+                                        view_reports=True
+                )
+            )
+            user_role.save()
 
-        can_edit = HttpRequest()
-        can_edit.can_access_all_locations = True
-        can_edit.user = FakeUser()
-        can_edit.couch_user = FakeCouchUser()
-        toggles.USER_CONFIGURABLE_REPORTS.set(can_edit.user.username, True, toggles.NAMESPACE_USER)
-        can_edit.session = {}
-        report, view = self._build_report_and_view(request=can_edit)
-        self.assertEqual(view.page_context['can_edit_report'], True)
+            web_user = WebUser.create(domain.name, username, '***', None, None)
+            web_user.set_role(domain.name, user_role.get_qualified_id())
+            web_user.current_domain = domain.name
+            web_user.save()
+
+            request = HttpRequest()
+            request.can_access_all_locations = True
+            request.user = web_user
+            request.couch_user = web_user
+            request.session = {}
+            _, view = self._build_report_and_view(request=request)
+            return view
+
+        cannot_edit_view = create_view(False)
+        self.assertEqual(cannot_edit_view.page_context['can_edit_report'], False)
+
+        can_edit_view = create_view(True)
+        self.assertEqual(can_edit_view.page_context['can_edit_report'], True)
