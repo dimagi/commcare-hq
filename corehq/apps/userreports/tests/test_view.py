@@ -237,7 +237,7 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
                                         edit_data=True,
                                         edit_reports=can_edit_reports,
                                         view_reports=True
-                )
+                                        )
             )
             user_role.save()
 
