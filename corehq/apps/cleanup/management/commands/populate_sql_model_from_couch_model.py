@@ -43,6 +43,15 @@ class PopulateSQLCommand(BaseCommand):
         raise NotImplementedError()
 
     @classmethod
+    def diff_couch_and_sql(cls, couch, sql):
+        """
+        This should compare each attribute of the given couch document and sql object.
+        Return a human-reaedable string describing their differences, or None if the
+        two are equivalent.
+        """
+        raise NotImplementedError()
+
+    @classmethod
     def count_items_to_be_migrated(cls):
         couch_count = get_doc_count_by_type(cls.couch_db(), cls.couch_doc_type())
         sql_count = cls.sql_class().objects.count()
@@ -107,7 +116,20 @@ class PopulateSQLCommand(BaseCommand):
     def couch_db(cls):
         return couch_config.get_db(cls.couch_db_slug())
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--verify',
+            action='store_true',
+            dest='verify',
+            default=False,
+            help="""
+                Don't migrate anything, instead check if couch and sql data is identical.
+                Only works for migrations that use a couch_id on the sql model.
+            """,
+        )
+
     def handle(self, **options):
+        verify = options.get("verify", False)
 
         doc_count = get_doc_count_by_type(self.couch_db(), self.couch_doc_type())
         logger.info("Found {} {} docs and {} {} models".format(
@@ -116,15 +138,32 @@ class PopulateSQLCommand(BaseCommand):
             self.sql_class().objects.count(),
             self.sql_class().__name__,
         ))
+        diff_count = 0
         doc_index = 0
         for doc in get_all_docs_with_doc_types(self.couch_db(), [self.couch_doc_type()]):
             doc_index += 1
-            logger.info("Looking at {} doc #{} of {} with id {}".format(
-                self.couch_doc_type(),
-                doc_index,
-                doc_count,
-                doc["_id"]
-            ))
-            with transaction.atomic():
-                model, created = self.update_or_create_sql_object(doc)
-                logger.info("{} model for doc with id {}".format("Creating" if created else "Updated", doc["_id"]))
+            if verify:
+                try:
+                    obj = self.sql_class().objects.get(couch_id=doc["_id"])
+                    diff = self.diff_couch_and_sql(doc, obj)
+                    if diff:
+                        logger.info(f"Doc {obj.couch_id} has differences: {diff}")
+                        diff_count += 1
+                except self.sql_class().DoesNotExist:
+                    pass    # ignore, the difference in total object count has already been displayed
+            else:
+                logger.info("Looking at {} doc #{} of {} with id {}".format(
+                    self.couch_doc_type(),
+                    doc_index,
+                    doc_count,
+                    doc["_id"]
+                ))
+                with transaction.atomic():
+                    model, created = self.update_or_create_sql_object(doc)
+                    action = "Creating" if created else "Updated"
+                    logger.info("{} model for doc with id {}".format(action, doc["_id"]))
+
+        if verify:
+            logger.info(f"Found {diff_count} differences")
+        else:
+            logger.info(f"Processed {doc_index} documents")
