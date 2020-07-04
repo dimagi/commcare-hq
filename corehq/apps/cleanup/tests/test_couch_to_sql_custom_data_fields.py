@@ -1,3 +1,4 @@
+from django.core.management import call_command
 from django.test import TestCase
 
 from corehq.apps.custom_data_fields.management.commands.populate_custom_data_fields import Command
@@ -10,7 +11,7 @@ from corehq.apps.custom_data_fields.models import (
 from corehq.dbaccessors.couchapps.all_docs import get_all_docs_with_doc_types
 
 
-class TestCouchToSQL(TestCase):
+class TestCouchToSQLCustomDataFieldsDefinition(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -78,3 +79,97 @@ class TestCouchToSQL(TestCase):
         # Identical data
         obj.set_fields([SQLField(**field1_args), SQLField(**field2_args)])
         self.assertIsNone(Command.diff_couch_and_sql(doc, obj))
+
+    def test_sync_to_couch(self):
+        obj = SQLCustomDataFieldsDefinition(
+            domain='botswana',
+            field_type='UserFields',
+        )
+        obj.save(sync_to_couch=False)   # need to save for set_fields to work, but don't want to sync couch
+        obj.set_fields([
+            SQLField(
+                slug='color',
+                is_required=True,
+                label='Color',
+                choices=['red', 'orange', 'yellow'],
+                regex='',
+                regex_msg='',
+            ),
+            SQLField(
+                slug='size',
+                is_required=False,
+                label='Size',
+                choices=[],
+                regex='^[0-9]+$',
+                regex_msg='Εισαγάγετε',
+            ),
+        ])
+        obj.save()
+        self.assertIsNone(Command.diff_couch_and_sql(self.db.get(obj.couch_id), obj))
+
+        obj.field_type = 'ProductFields'
+        obj.save()
+        self.assertEquals('ProductFields', self.db.get(obj.couch_id)['field_type'])
+
+    def test_sync_to_sql(self):
+        doc = CustomDataFieldsDefinition(
+            domain='botswana',
+            field_type='UserFields',
+            fields=[
+                CustomDataField(
+                    slug='color',
+                    is_required=True,
+                    label='Color',
+                    choices=['red', 'orange', 'yellow'],
+                ),
+                CustomDataField(
+                    slug='size',
+                    is_required=False,
+                    label='Size',
+                    regex='^[0-9]+$',
+                    regex_msg='Εισαγάγετε',
+                ),
+            ],
+        )
+        doc.save()
+        self.assertIsNone(
+            Command.diff_couch_and_sql(doc.to_json(),
+            SQLCustomDataFieldsDefinition.objects.get(couch_id=doc.get_id))
+        )
+
+        doc.fields[0].label = 'Hue'
+        doc.save()
+        self.assertEquals(
+            'Hue',
+            SQLCustomDataFieldsDefinition.objects.get(couch_id=doc.get_id).get_fields()[0].label
+        )
+
+    def test_migration(self):
+        doc = CustomDataFieldsDefinition(
+            domain='botswana',
+            field_type='UserFields',
+            fields=[
+                CustomDataField(
+                    slug='color',
+                    is_required=True,
+                    label='Color',
+                    choices=['red', 'orange', 'yellow'],
+                ),
+            ],
+        )
+        doc.save(sync_to_sql=False)
+        call_command('populate_custom_data_fields')
+        self.assertIsNone(Command.diff_couch_and_sql(
+            doc.to_json(),
+            SQLCustomDataFieldsDefinition.objects.get(couch_id=doc.get_id)
+        ))
+
+        # Additional call should apply any updates
+        doc = CustomDataFieldsDefinition.get(doc.get_id)
+        doc.field_type = 'LocationFields'
+        doc.save(sync_to_sql=False)
+        call_command('populate_custom_data_fields')
+        self.assertIsNone(
+            Command.diff_couch_and_sql(doc.to_json(),
+            SQLCustomDataFieldsDefinition.objects.get(couch_id=doc.get_id))
+        )
