@@ -136,6 +136,10 @@ class AggregateTableDefinition(models.Model, AbstractUCRDataSource):
                 columns.append(column_name)
         return columns
 
+    @memoized
+    def get_secondary_tables(self):
+        return self.secondary_tables.all()
+
 
 class PrimaryColumn(models.Model):
     """

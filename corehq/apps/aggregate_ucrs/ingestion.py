@@ -118,7 +118,7 @@ def populate_aggregate_table_data_for_time_period(aggregate_table_adapter, windo
     all_query_columns = [
         pca.to_sqlalchemy_query_column(primary_table, aggregation_params) for pca in primary_column_adapters
     ]
-    for secondary_table in aggregate_table_adapter.config.secondary_tables.all():
+    for secondary_table in aggregate_table_adapter.config.get_secondary_tables():
         sqlalchemy_secondary_table = get_indicator_adapter(secondary_table.data_source).get_table()
         for column_adapter in secondary_table.get_column_adapters():
             all_query_columns.append(
@@ -131,7 +131,7 @@ def populate_aggregate_table_data_for_time_period(aggregate_table_adapter, windo
 
     # now construct join
     select_table = primary_table
-    for secondary_table in aggregate_table_adapter.config.secondary_tables.all():
+    for secondary_table in aggregate_table_adapter.config.get_secondary_tables():
         sqlalchemy_secondary_table = get_indicator_adapter(secondary_table.data_source).get_table()
         # apply join filters along with period start/end filters (if necessary) for related model
         join_conditions = [
@@ -186,5 +186,6 @@ def populate_aggregate_table_data_for_time_period(aggregate_table_adapter, windo
         }
 
     )
+
     with aggregate_table_adapter.session_helper.session_context() as session:
         session.execute(insert_statement)
