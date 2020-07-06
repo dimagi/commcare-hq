@@ -10,37 +10,41 @@ function abort () {
     exit 1
 }
 
-filename=scripts/icds-staging.yaml
+filename=$1
+
+if [[ '' = $filename ]]
+then
+    abort "No config file specified."
+fi
+
 branch=$(get_branch)
-COMMIT_MESSAGE='update icds-staging.yaml'
+COMMIT_MESSAGE="update $filename"
 
 if [[ $branch != 'master' ]]
 then
-    abort "You may only commit icds-staging.yaml changes to master."
+    abort "You may only commit staging.yaml or icds-staging.yaml changes to master."
 fi
 
-# add icds-staging.yaml if the user hasn't
+# add staging config file if the user hasn't
 git add $filename
 
 
-# make sure the only thing about to be committed is scripts/icds-staging.yaml
+# make sure the only thing about to be committed is scripts/<config_file>.yaml
 staged_files=$(git diff --staged --stat | grep '|' | cut -d '|' -f1 | cut -d ' ' -f2)
-if [[ 'scripts/icds-staging.yaml' != $staged_files ]]
+if [[ '' = $staged_files ]]
 then
-    if [[ '' = $staged_files ]]
-    then
-        abort "You have no changes to commit."
-    else
-        abort "You have staged changes to more files than just $filename."
-    fi
+    abort "You have no changes to commit."
+elif [[ $(basename $filename) != $(basename $staged_files) ]]
+then
+    abort "You have staged changes to more files than just $filename."
 fi
 
 
-# make sure icds-staging.yaml parses as yaml
+# make sure config file parses as yaml
 python scripts/checkyaml.py $filename
 if [[ $? -ne 0 ]]
 then
-    abort "Fix staging.yml and try again"
+    abort "Fix $filename and try again"
 fi
 
 # make sure local is not ahead of origin
@@ -54,7 +58,7 @@ fi
 git commit --edit --message="$COMMIT_MESSAGE" --message "[ci skip]"
 
 # push if using --push option
-if [[ $1 = '--push' ]]
+if [[ $2 = '--push' ]]
 then
     git push origin $branch
 fi

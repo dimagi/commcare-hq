@@ -2,9 +2,12 @@
 
 function usage() {
     cat << EOF
-usage: $0 [-h|--help] [-v|--verbose] [--deploy|--no-push] [--skip-fetch]
+usage: $0 <staging-config-file>.yaml [-h|--help] [-v|--verbose] [--deploy|--no-push] [--skip-fetch]
 
-rebuild staging from yaml configuration (scripts/icds-staging.yaml)
+rebuild staging from yaml configuration
+
+  For ICDS-Staging env = scripts/icds-staging.yaml
+  For Staging env = scripts/staging.yaml
 
     -h --help       print this help text
     -v --verbose    display debugging output
@@ -15,6 +18,13 @@ rebuild staging from yaml configuration (scripts/icds-staging.yaml)
 EOF
 }
 
+filename=$1
+if [[ '' = $filename ]]
+then
+    echo "No config file specified."
+    exit 1
+fi
+shift
 while [[ $# > 0 ]]
 do
     key="$1"
@@ -52,8 +62,23 @@ done
 
 function rebuildstaging() {
     echo "rebuilding staging branch, this might take a while..."
-    python scripts/rebuildstaging.py scripts/icds-staging.yaml "$@"
+    python scripts/rebuildstaging.py "$filename" "$@"
 }
+
+function get_deploy_env() {
+  if [[ $(basename $filename) == 'icds-staging.yaml' ]]
+  then
+    echo "icds-staging"
+  elif [[ $(basename $filename) == 'staging.yaml' ]]
+  then
+    echo "staging"
+  else
+    echo "Unknown config file."
+    echo "Aborting"
+    exit 1
+  fi
+}
+
 
 args=''
 
@@ -64,20 +89,19 @@ args=''
 
 # if icds-staging.yaml isn't up-to-date, warn and quit
 git fetch origin master
-if [[ -n $(git diff origin/master -- scripts/icds-staging.yaml) && $no_push != 'y' ]]
+if [[ -n $(git diff origin/master -- "$filename") && $no_push != 'y' ]]
 then
-    echo "scripts/icds-staging.yaml on this branch different from the one on master"
+    echo "$filename on this branch different from the one on master"
     echo "Aborting."
     exit 1
 fi
 
+
+rebuildstaging $args
 if [[ $deploy = 'y' && $no_push != 'y' && $enterprise != 'y' ]]
 then
-    rebuildstaging $args && {
-        which commcare-cloud \
-        && commcare-cloud icds-staging deploy --quiet \
-        || echo 'Could not auto-deploy for you. Run `commcare-cloud icds-staging deploy` to deploy.'
-    }
-else
-    rebuildstaging $args
+    deploy_env=$(get_deploy_env $filename)
+    which commcare-cloud \
+    && commcare-cloud $deploy_env deploy --quiet \
+    || echo 'Could not auto-deploy for you. Run `commcare-cloud icds-staging deploy` to deploy.'
 fi
