@@ -88,7 +88,7 @@ from corehq.messaging.scheduling.views import (
 from corehq.messaging.util import show_messaging_dashboard
 from corehq.motech.dhis2.views import DataSetMapView
 from corehq.motech.openmrs.views import OpenmrsImporterView
-from corehq.motech.views import ConnectionSettingsView, MotechLogListView
+from corehq.motech.views import ConnectionSettingsListView, MotechLogListView
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import (
@@ -1898,8 +1898,8 @@ def _get_integration_section(domain):
 
     if toggles.INCREMENTAL_EXPORTS.enabled(domain) or toggles.DHIS2_INTEGRATION.enabled(domain):
         integration.append({
-            'title': _(ConnectionSettingsView.page_title),
-            'url': reverse(ConnectionSettingsView.urlname, args=[domain])
+            'title': _(ConnectionSettingsListView.page_title),
+            'url': reverse(ConnectionSettingsListView.urlname, args=[domain])
         })
 
     if toggles.DHIS2_INTEGRATION.enabled(domain):
