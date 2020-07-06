@@ -174,7 +174,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                             var svg = d3.select('#map svg'); //selects svg in datamap component
                             var zoom = d3.behavior.zoom().scaleExtent([1, 10]).on('zoom', function () {
                                 // this function redraws the map rendered on zoom event
-                                // reference: bower_components/angular-datamaps/dist/angular-datamaps.js (line 27)
+                                // reference: node_modules/angular-datamaps/dist/angular-datamaps.js (line 27)
                                 svg.selectAll('g').attr("transform",
                                     "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
                             });
