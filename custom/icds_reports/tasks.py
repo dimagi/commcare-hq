@@ -910,7 +910,8 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
         excel_data = SystemUsageExport(
             config=config,
             loc_level=aggregation_level,
-            show_test=include_test
+            show_test=include_test,
+            beta=beta
         ).get_excel_data(
             location,
             system_usage_num_launched_awcs_formatting_at_awc_level=aggregation_level > 4 and beta,
