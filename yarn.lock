@@ -450,6 +450,11 @@ bcrypt-pbkdf@^1.0.0:
   dependencies:
     tweetnacl "^0.14.3"
 
+biginteger@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/biginteger/-/biginteger-1.0.3.tgz#111c682070b852d0677a1621fd33452aab674607"
+  integrity sha1-ERxoIHC4UtBnehYh/TNFKqtnRgc=
+
 bin-links@^1.1.2, bin-links@^1.1.7:
   version "1.1.8"
   resolved "https://registry.yarnpkg.com/bin-links/-/bin-links-1.1.8.tgz#bd39aadab5dc4bdac222a07df5baf1af745b2228"
@@ -2505,6 +2510,12 @@ jquery.cookie@dimagi/jquery-cookie#1.4.1:
 jquery.rmi@dimagi/jquery.rmi#8c34f32817:
   version "1.0.0"
   resolved "https://codeload.github.com/dimagi/jquery.rmi/tar.gz/8c34f328172bff19e8df6ac024de3613b75711e7"
+
+js-xpath@dimagi/js-xpath#v0.0.2-rc1:
+  version "0.0.2"
+  resolved "https://codeload.github.com/dimagi/js-xpath/tar.gz/8e91c37fd1f27a99aeefcec53f10c71c8ba34005"
+  dependencies:
+    biginteger "^1.0.3"
 
 js-yaml@~2.0.5:
   version "2.0.5"
