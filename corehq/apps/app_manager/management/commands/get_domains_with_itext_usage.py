@@ -18,7 +18,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             'itext_type',
-            help='audio, expanded-audio, video, etc.',
+            help='audio, video, etc.',
         )
         parser.add_argument(
             'log_file',
