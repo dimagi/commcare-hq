@@ -472,6 +472,8 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
 
     vm.handleViewByShift = function() {
         var locationIndex = locationsService.selectedLocationIndex(vm.selectedLocations);
+        // locationIndex might come -ve in case of national level or no location selected
+        locationIndex = locationIndex >= 0 ? locationIndex: 0;
         var levels = _.filter(vm.levels, function (value){return value.id > locationIndex;});
         vm.groupByLevels = levels;
         vm.selectedLevel = locationIndex + 1;
