@@ -123,7 +123,7 @@ services:
       POSTGRES_PASSWORD: commcarehq
   citus_manager:
     image: 'citusdata/membership-manager:0.2.0'
-    volumes: ['/var/run/docker.sock:/var/run/docker.sock']
+    volumes: ["${DOCKER_SOCK:-/var/run/docker.sock}:/var/run/docker.sock"]
     depends_on: { citus_master: { condition: service_healthy } }
     environment:
       CITUS_HOST: citus_master
