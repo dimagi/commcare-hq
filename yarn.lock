@@ -2511,12 +2511,6 @@ jquery.rmi@dimagi/jquery.rmi#8c34f32817:
   version "1.0.0"
   resolved "https://codeload.github.com/dimagi/jquery.rmi/tar.gz/8c34f328172bff19e8df6ac024de3613b75711e7"
 
-js-xpath@dimagi/js-xpath#v0.0.2-rc1:
-  version "0.0.2"
-  resolved "https://codeload.github.com/dimagi/js-xpath/tar.gz/8e91c37fd1f27a99aeefcec53f10c71c8ba34005"
-  dependencies:
-    biginteger "^1.0.3"
-
 js-yaml@~2.0.5:
   version "2.0.5"
   resolved "https://registry.yarnpkg.com/js-yaml/-/js-yaml-2.0.5.tgz#a25ae6509999e97df278c6719da11bd0687743a8"
@@ -5434,9 +5428,11 @@ xdg-basedir@^3.0.0:
   resolved "https://registry.yarnpkg.com/xdg-basedir/-/xdg-basedir-3.0.0.tgz#496b2cc109eca8dbacfe2dc72b603c17c5870ad4"
   integrity sha1-SWsswQnsqNus/i3HK2A8F8WHCtQ=
 
-xpath@dimagi/js-xpath#f4f0c78:
-  version "0.0.1"
-  resolved "https://codeload.github.com/dimagi/js-xpath/tar.gz/f4f0c78d1d73ffa128cb0e4703a8be04edfd961f"
+xpath@dimagi/js-xpath#0.0.3:
+  version "0.0.3"
+  resolved "https://codeload.github.com/dimagi/js-xpath/tar.gz/f9a249581249c2fda914cc2483291dac1f815d87"
+  dependencies:
+    biginteger "^1.0.3"
 
 xtend@^4.0.0, xtend@~4.0.1:
   version "4.0.2"
