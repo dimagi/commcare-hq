@@ -352,6 +352,7 @@ HQ_APPS = (
     'corehq.apps.case_search',
     'corehq.apps.zapier.apps.ZapierConfig',
     'corehq.apps.translations',
+    'corehq.plugins.app_config.PluginAppConfig',
 
     # custom reports
     'pact',
@@ -366,7 +367,7 @@ HQ_APPS = (
 
     'custom.common',
 
-    'custom.icds',
+    'custom.icds.app_config.IcdsAppConfig',
     'custom.icds.data_management',
     'custom.icds_reports',
     'custom.nic_compliance',

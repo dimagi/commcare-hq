@@ -10,7 +10,7 @@ from django_prbac.utils import has_privilege
 from memoized import memoized
 from six.moves.urllib.parse import urlencode
 
-from corehq import privileges, toggles
+from corehq import privileges, toggles, plugins
 from corehq.apps.accounting.dispatcher import (
     AccountingAdminInterfaceDispatcher,
 )
@@ -948,11 +948,14 @@ class ApplicationsTab(UITab):
                 _('Translations'),
                 url=(reverse('convert_translations', args=[self.domain])),
             ))
-        if toggles.MANAGE_CCZ_HOSTING.enabled_for_request(self._request):
-            submenu_context.append(dropdown_dict(
-                _("Manage CCZ Hosting"),
-                url=reverse(ManageHostedCCZ_urlname, args=[self.domain])
-            ))
+
+        tab_name = self.__class__.__name__
+        submenu_context.extend([
+            dropdown_dict(**response)
+            for response in plugins.get_contributions(
+                "uitab_dropdown_items", tab=tab_name, domain=self.domain, request=self._request
+            )
+        ])
         return submenu_context
 
     @property
