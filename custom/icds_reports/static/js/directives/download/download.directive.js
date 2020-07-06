@@ -283,6 +283,8 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
         locationsService.onSelectLocation($item, level, locationsCache, vm);
         if (vm.selectedIndicator == 15) {
             vm.groupByLevels = vm.groupByLevelValuesPPR();
+        } else if(vm.showViewBy()) {
+            vm.handleViewByShift();
         }
     };
 
@@ -547,6 +549,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
     };
 
     vm.hasErrors = function () {
+        var viewByErrors = vm.showViewBy() && (vm.selectedLevel <= 0 || vm.selectedLevel > 5);
         var beneficiaryListErrors = vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
         var growthListErrors = vm.isChildGrowthTrackerSelected() && !vm.isDistrictOrBelowSelected();
         var incentiveReportErrors = vm.isIncentiveReportSelected() && !vm.isStateSelected();
@@ -556,7 +559,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
             ladySupervisorReportErrors = vm.isLadySupervisorSelected() && !vm.isStateSelected();
         }
         var awwActvityReportErrors = vm.isAwwActivityReportSelected() && (vm.selectedLevel === 5 || vm.selectedLevel === 0);
-        return beneficiaryListErrors || incentiveReportErrors || ladySupervisorReportErrors || growthListErrors || awwActvityReportErrors || PPRErrors;
+        return beneficiaryListErrors || incentiveReportErrors || ladySupervisorReportErrors || growthListErrors || awwActvityReportErrors || PPRErrors || viewByErrors;
     };
 
     vm.isCombinedPDFSelected = function () {
