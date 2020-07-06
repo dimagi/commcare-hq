@@ -12,13 +12,7 @@ from custom.icds_reports.data_pull.data_pulls import (
 
 ISSUE_TRACKER_APP_ID = '48cc1709b7f62ffea24cc6634a005734'
 
-
 INDIA_TIMEZONE = pytz.timezone('Asia/Kolkata')
-
-TABLEAU_TICKET_URL = settings.TABLEAU_URL_ROOT + "trusted/"
-TABLEAU_VIEW_URL = settings.TABLEAU_URL_ROOT + "#/views/"
-TABLEAU_USERNAME = "reportviewer"
-TABLEAU_INVALID_TOKEN = '-1'
 
 BHD_ROLE = 'BHD (For VL Dashboard Testing)'
 
@@ -196,22 +190,22 @@ THR_REPORT_DAY_BENEFICIARY_TYPE = 'days_beneficiary_wise'
 THR_21_DAYS_THRESHOLD_DATE = date(2020, 3, 1)
 
 PPR_HEADERS_COMPREHENSIVE = [
-    "State Name", "District Name", "Number of Districts Covered", "Number of Blocks Covered",
-    "Number of AWCs Launched", "% Number of Days AWC Were opened", "Expected Home Visits",
-    "Actual Home Visits", "% of Home Visits", "Total Number of Children (3-6 yrs)",
-    "No. of children between 3-6 years provided PSE for atleast 21+ days",
-    "% of children between 3-6 years provided PSE for atleast 21+ days",
-    "Children Eligible to have their weight Measured", "Total number of children that were weighed in the month",
-    "Weighing efficiency", "Number of women in third trimester",
-    "Number of trimester three women counselled on immediate and EBF",
-    "% of trimester three women counselled on immediate and EBF",
-    "Children Eligible to have their height Measured",
-    "Total number of children that had their height measured in the month",
-    "Height Measurement Efficiency", "Number of children between 6 months -3 years, P&LW",
-    "No of children between 6 months -3 years, P&LW provided THR for atleast 21+ days",
-    "% of children between 6 months -3 years, P&LW provided THR for atleast 21+ days",
-    "No. of children between 3-6 years ", "No of children between 3-6 years provided SNP for atleast 21+ days",
-    "% of children between 3-6 years provided SNP for atleast 21+ days"]
+    'State Name', 'District Name', 'Number of Districts Covered', 'Number of Blocks Covered',
+    'Number of AWCs Launched', '% Number of Days AWC Were opened', 'Expected Home Visits',
+    'Actual Home Visits', '% of Home Visits', 'Total Number of Children (3-6 yrs)',
+    'No. of children between 3-6 years provided PSE for atleast 21+ days',
+    '% of children between 3-6 years provided PSE for atleast 21+ days',
+    'Children Eligible to have their weight Measured', 'Total number of children that were weighed in the month',
+    'Weighing efficiency', 'Number of women in third trimester',
+    'Number of trimester three women counselled on immediate and EBF',
+    '% of trimester three women counselled on immediate and EBF',
+    'Children Eligible to have their height Measured',
+    'Total number of children that had their height measured in the month',
+    'Height Measurement Efficiency', 'Number of children between 6 months -3 years, P&LW',
+    'No of children between 6 months -3 years, P&LW provided THR for atleast 21+ days',
+    '% of children between 6 months -3 years, P&LW provided THR for atleast 21+ days',
+    'No. of children between 3-6 years ', 'No of children between 3-6 years provided SNP for atleast 21+ days',
+    '% of children between 3-6 years provided SNP for atleast 21+ days']
 
 PPR_COLS_COMPREHENSIVE = [
     'state_name', 'district_name', 'num_launched_districts', 'num_launched_blocks', 'num_launched_awcs',
@@ -223,13 +217,13 @@ PPR_COLS_COMPREHENSIVE = [
     'lunch_count_21_days_percent']
 
 PPR_HEADERS_SUMMARY = [
-    "State Name", "District Name", "Number of Districts Covered", "Number of Blocks Covered",
-    "Number of AWCs Launched", "% Number of Days AWC Were opened", "% of Home Visits",
-    "% of children between 3-6 years provided PSE for atleast 21+ days", "Weighing efficiency",
-    "% of trimester three women counselled on immediate and EBF",
-    "Height Measurement Efficiency",
-    "% of children between 6 months -3 years, P&LW provided THR for atleast 21+ days",
-    "% of children between 3-6 years provided SNP for atleast 21+ days"]
+    'State Name', 'District Name', 'Number of Districts Covered', 'Number of Blocks Covered',
+    'Number of AWCs Launched', '% Number of Days AWC Were opened', '% of Home Visits',
+    '% of children between 3-6 years provided PSE for atleast 21+ days', 'Weighing efficiency',
+    '% of trimester three women counselled on immediate and EBF',
+    'Height Measurement Efficiency',
+    '% of children between 6 months -3 years, P&LW provided THR for atleast 21+ days',
+    '% of children between 3-6 years provided SNP for atleast 21+ days']
 
 PPR_COLS_SUMMARY = [
     'state_name', 'district_name', 'num_launched_districts', 'num_launched_blocks', 'num_launched_awcs',
@@ -258,24 +252,24 @@ PPR_COLS_PERCENTAGE_RELATIONS = {
 }
 
 PPD_ICDS_CAS_COVERAGE_OVERVIEW = [
-    "Number of States Covered", "Number of Districts Covered", "Number of Blocks Covered",
-    "Number of AWCs Launched", "% Number of Days AWC Were opened", "% of Home Visits"]
+    'Number of States Covered', 'Number of Districts Covered', 'Number of Blocks Covered',
+    'Number of AWCs Launched', '% Number of Days AWC Were opened', '% of Home Visits']
 
 PPD_SERVICE_DELIVERY_OVERVIEW = [
-    "% of children between 3-6 years provided PSE for atleast 21+ days", "Weighing efficiency",
-    "% of trimester three women counselled on immediate and EBF", "Height Measurement Efficiency",
-    "% of children between 6 months -3 years, P&LW provided THR for atleast 21+ days",
-    "% of children between 3-6 years provided SNP for atleast 21+ days"]
+    '% of children between 3-6 years provided PSE for atleast 21+ days', 'Weighing efficiency',
+    '% of trimester three women counselled on immediate and EBF', 'Height Measurement Efficiency',
+    '% of children between 6 months -3 years, P&LW provided THR for atleast 21+ days',
+    '% of children between 3-6 years provided SNP for atleast 21+ days']
 
 PPD_ICDS_CAS_COVERAGE_COMPARATIVE_MAPPING = {
-    "AWC Open": "avg_days_awc_open_percent",
-    "Home Visits": "visits_percent"
+    'AWC Open': 'avg_days_awc_open_percent',
+    'Home Visits': 'visits_percent'
 }
 PPD_SERVICE_DELIVERY_COMPARATIVE_MAPPING = {
-    "Pre-school Education": "pse_attended_21_days_percent",
-    "Weighing efficiency": "weighed_percent",
-    "Height Measurement Efficiency": "height_measured_in_month_percent",
-    "Counselling": "counsel_immediate_bf_percent",
-    "Take Home Ration": "thr_percent",
-    "Supplementary Nutrition": "lunch_count_21_days_percent"
+    'Pre-school Education': 'pse_attended_21_days_percent',
+    'Weighing efficiency': 'weighed_percent',
+    'Height Measurement Efficiency': 'height_measured_in_month_percent',
+    'Counselling': 'counsel_immediate_bf_percent',
+    'Take Home Ration': 'thr_percent',
+    'Supplementary Nutrition': 'lunch_count_21_days_percent'
 }

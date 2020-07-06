@@ -3,6 +3,7 @@
          update="{{ profile_url }}&amp;profile={{ build_profile_id }}"
          requiredMajor="{{ app.build_spec.major_release }}"
          requiredMinor="{{ app.build_spec.minor_release.1 }}"
+         requiredMinimal="{{ app.build_spec.patch_release.2 }}"
          uniqueid="{{ uniqueid }}"
          name="{{ name }}"
          descriptor="{{ descriptor }}">
@@ -22,6 +23,9 @@
     {% endif %}
     {% if target_package_id %}
     <property key="target-package-id" value="{{ target_package_id }}" force="true"/>
+    {% endif %}
+    {% if support_email %}
+    <property key="support-email-address" value="{{ support_email }}" force="true"/>
     {% endif %}
 
     <!-- Properties configured on CommCare HQ 1.0 -->

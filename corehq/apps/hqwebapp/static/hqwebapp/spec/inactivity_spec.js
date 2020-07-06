@@ -1,8 +1,7 @@
 /* eslint-env mocha */
 
 describe('inactivity', function () {
-    var module = hqImport("hqwebapp/js/inactivity"),
-        timeout = 10 * 60 * 1000;   // 10-minute timeout
+    var module = hqImport("hqwebapp/js/inactivity");
 
     var tolerantAssert = function (expected, actual) {
         expected = Math.round(expected / 10);
@@ -10,45 +9,45 @@ describe('inactivity', function () {
         assert.equal(expected, actual);
     };
 
+    var responseForFutureExpiration = function (minutes) {
+        return module.calculateDelayAndWarning(new Date() * 1 + minutes * 60 * 1000);
+    };
+
     describe('inactivityTimeout', function () {
-        it('should use timeout when lastRequest is not provided', function () {
-            // last request unknown => 10 minutes left
-            var response = module.calculateDelayAndWarning(timeout);
+        it('should ping in 10 minutes if expiryDate is unknown', function () {
+            // last request unknown => 8 minutes left
+            var response = module.calculateDelayAndWarning();
             tolerantAssert(response.delay, 8 * 60 * 1000);
             assert.isFalse(response.show_warning);
         });
 
         it('should ping when there are 2 minutes left', function () {
-            // last request 5 minutes ago => 1 minute left
-            var response = module.calculateDelayAndWarning(timeout, new Date() - 5 * 60 * 1000);
+            // expiring in 5 minutes => ping in 3 minutes
+            var response = responseForFutureExpiration(5);
             tolerantAssert(response.delay, 3 * 60 * 1000);
             assert.isFalse(response.show_warning);
         });
 
         it('should warn and ping every 10 seconds in the last 2 minutes', function () {
-            // last request 9 minutes ago => 1 minute left
-            var response = module.calculateDelayAndWarning(timeout, new Date() - 9 * 60 * 1000);
+            var response = responseForFutureExpiration(1);
             tolerantAssert(response.delay, 10 * 1000);
             assert.isTrue(response.show_warning);
         });
 
         it('should warn and ping every 3 seconds in the last 30 seconds', function () {
-            // last request 9:45 ago => 15 seconds left
-            var response = module.calculateDelayAndWarning(timeout, new Date() - 9.75 * 60 * 1000);
+            var response = responseForFutureExpiration(0.25);
             tolerantAssert(response.delay, 3 * 1000);
             assert.isTrue(response.show_warning);
         });
 
         it('should use absolute value in case session appears expired', function () {
-            // last request 15 minutes ago => -5 minutes left
-            var response = module.calculateDelayAndWarning(timeout, new Date() - 15 * 60 * 1000);
+            var response = responseForFutureExpiration(-5);
             tolerantAssert(response.delay, 3 * 60 * 1000);
             assert.isFalse(response.show_warning);
         });
 
         it('should use absolute value in case session is very expired', function () {
-            // last request 30 minutes ago => -20 minutes left
-            var response = module.calculateDelayAndWarning(timeout, new Date() - 30 * 60 * 1000);
+            var response = responseForFutureExpiration(-20);
             tolerantAssert(response.delay, 18 * 60 * 1000);
             assert.isFalse(response.show_warning);
         });
