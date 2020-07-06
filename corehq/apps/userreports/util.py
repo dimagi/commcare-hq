@@ -135,7 +135,6 @@ def number_of_ucr_reports(domain):
     return len(ucr_reports)
 
 
-@memoized
 def get_indicator_adapter(config, raise_errors=False, load_source="unknown"):
     from corehq.apps.userreports.sql.adapter import IndicatorSqlAdapter, ErrorRaisingIndicatorSqlAdapter, \
         MultiDBSqlAdapter, ErrorRaisingMultiDBAdapter
