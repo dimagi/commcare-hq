@@ -699,7 +699,7 @@ def process_incoming(msg):
 def _allow_load_handlers(v, is_two_way, has_domain_two_way_scope):
     return (
         (is_two_way or has_domain_two_way_scope)
-        and True
+        and is_contact_active(v.domain, v.owner_doc_type, v.owner_id)
     )
 
 
@@ -759,7 +759,7 @@ def _process_incoming(msg):
             # Opt the phone number in, and then process the message normally
             PhoneBlacklist.opt_in_sms(msg.phone_number, domain=domain)
 
-    handled = False
+        handled = False
 
     if _domain_accepts_inbound(msg):
         if v and v.pending_verification:
