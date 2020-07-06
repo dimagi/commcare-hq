@@ -7,11 +7,11 @@
 #     $ git checkout master
 # Update scripts/icds-staging.yaml and add your branch that you want to deploy
 # Push the updates of icds-staging.yaml to master by using
-#     $ scripts/commit-icds-staging
+#     $ scripts/commit-staging-util ./scripts/icds-staging.yaml --push
 # To check if your branch causes any conflicts before rebuilding
-#     $ scripts/rebuild-icds-staging --no-push
+#     $ scripts/rebuildstaging-util ./scripts/icds-staging.yaml --no-push
 # To rebuild from your new spec and deploy
-#     $ scripts/rebuild-icds-staging
+#     $ scripts/rebuildstaging-util ./scripts/icds-staging.yaml
 #     $ commcare-cloud icds-staging deploy --commcare-rev icds-autostaging
 # We will be removing --commcare-rev once we add default branch for icds-staging
 # on commcare-cloud
