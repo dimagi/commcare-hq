@@ -283,7 +283,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
         locationsService.onSelectLocation($item, level, locationsCache, vm);
         if (vm.selectedIndicator == 15) {
             vm.groupByLevels = vm.groupByLevelValuesPPR();
-        } else if(vm.showViewBy()) {
+        } else if (vm.showViewBy()) {
             vm.handleViewByShift();
         }
     };
