@@ -1,13 +1,13 @@
 """
     Toggles
-    
+
     Toggles, also known as feature flags, allow limiting access to a set of functionality.
-    
+
     Most toggles are configured by manually adding individual users or domains in the Feature Flags
     admin UI. These are defined by adding a new `StaticToggle` in this file. See `PredictablyRandomToggle`
     and `DynamicallyPredictablyRandomToggle` if you need a toggle to be defined for a random subset
     of users.
-    
+
     Namespaces define the type of access granted. NAMESPACE_DOMAIN allows the toggle to be enabled
     for individual project spaces. NAMESPACE_USER allows the toggle to be enabled for individual users,
     with the functionality visible to only that user but on any project space they visit.
@@ -15,13 +15,13 @@
     to experience different behavior. Domain-based flags are like a lightweight privilege that's
     independent of a software plan. User-based flags are more like a lightweight permission that's
     independent of user roles.
-    
+
     Tags define how a feature is supported. See descriptions below. When in doubt, use TAG_CUSTOM
     to limit your toggle's expected support burden.
-    
+
     When adding a new toggle, define it near related toggles - this file is frequently edited,
     so appending it to the end of the file invites merge conflicts.
-    
+
     To access your toggle:
     - In python, StaticToggle has `enabled` and `enabled_for_request` methods.
     - In HTML, there's a `toggle_enabled` template tag.
