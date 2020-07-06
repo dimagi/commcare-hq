@@ -180,6 +180,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
         'details': _get_module_details_context(request, app, module, case_property_builder, case_type),
         'case_list_form_options': _case_list_form_options(app, module, case_type, lang),
         'valid_parents_for_child_module': _get_valid_parents_for_child_module(app, module),
+        'shadow_parent': _get_shadow_parent(app, module),
         'js_options': {
             'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
             'is_search_enabled': case_search_enabled_for_domain(app.domain),
@@ -367,10 +368,17 @@ def _get_valid_parents_for_child_module(app, module):
         invalid_ids.remove(current_parent_id)
 
     # The current module is not allowed, but its parent is
-    # Shadow modules are not allowed
+    # Shadow modules are not allowed to be selected as parents
     return [parent_module for parent_module in app.modules if (parent_module.unique_id not in invalid_ids)
             and not parent_module == module and parent_module.doc_type != "ShadowModule"
             and not parent_module.is_training_module]
+
+
+def _get_shadow_parent(app, module):
+    # If this module is a shadow module and has a parent, return it
+    if module.module_type == 'shadow' and getattr(module, 'root_module_id', None):
+        return app.get_module_by_unique_id(module.root_module_id)
+    return None
 
 
 def _case_list_form_options(app, module, case_type_, lang=None):
