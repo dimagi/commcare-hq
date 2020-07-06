@@ -87,7 +87,7 @@ class MessagingRuleProgressHelper(object):
             if fail_hard:
                 raise
 
-    def update_total_key_expiry(self, value):
+    def update_total_key_expiry(self):
         self.client.expire(self.total_key, self.key_expiry)
 
     def cancel(self):
