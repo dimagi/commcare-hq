@@ -292,8 +292,8 @@ def remove_unused_custom_fields_from_users_task(domain):
 @task()
 def update_domain_date(user_id, domain):
     from corehq.apps.users.models import WebUser
-    user = WebUser.get_by_user_id(user_id, domain)
-    domain_membership = user.get_domain_membership(domain)
+    user = WebUser.get_by_user_id(user_id)
+    domain_membership = user.get_domain_membership(domain, allow_mirroring=False)
     today = datetime.today().date()
     if domain_membership and (
             not domain_membership.last_accessed or domain_membership.last_accessed < today):
