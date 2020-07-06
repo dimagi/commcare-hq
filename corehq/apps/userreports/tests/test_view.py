@@ -218,6 +218,7 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         """
         domain = Domain(name='test_domain', is_active=True)
         domain.save()
+        self.addCleanup(domain.delete)
 
         def create_view(can_edit_reports):
             rolename = 'edit_role' if can_edit_reports else 'view_role'
@@ -240,15 +241,17 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
                                         )
             )
             user_role.save()
+            # user_role should be deleted along with the domain.
 
             web_user = WebUser.create(domain.name, username, '***', None, None)
             web_user.set_role(domain.name, user_role.get_qualified_id())
             web_user.current_domain = domain.name
             web_user.save()
+            self.addCleanup(web_user.delete)
 
             request = HttpRequest()
             request.can_access_all_locations = True
-            request.user = web_user
+            request.user = web_user.get_django_user()
             request.couch_user = web_user
             request.session = {}
             _, view = self._build_report_and_view(request=request)
