@@ -193,6 +193,7 @@ def run_messaging_rule_for_shard(domain, rule_id, db_alias):
     if not progress_helper.is_canceled():
         for case_id_chunk in chunked(paginated_case_ids(domain, rule.case_type, db_alias), chunk_size):
             sync_case_chunk_for_messaging_rule.delay(domain, case_id_chunk, rule_id)
+            progress_helper.update_total_key_expiry()
             if progress_helper.is_canceled():
                 break
     all_shards_complete = progress_helper.mark_shard_complete(db_alias)
