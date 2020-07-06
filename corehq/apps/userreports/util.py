@@ -1,8 +1,6 @@
 import collections
 import hashlib
 
-from memoized import memoized
-
 from django_prbac.utils import has_privilege
 
 from corehq import privileges, toggles

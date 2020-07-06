@@ -139,7 +139,10 @@ class AggregateTableDefinition(models.Model, AbstractUCRDataSource):
 
     @memoized
     def get_secondary_tables(self):
-        return [(table, get_indicator_adapter(table.data_source).get_table()) for table in self.secondary_tables.all()]
+        return [
+            (table, get_indicator_adapter(table.data_source).get_table())
+            for table in self.secondary_tables.all()
+        ]
 
 
 class PrimaryColumn(models.Model):
