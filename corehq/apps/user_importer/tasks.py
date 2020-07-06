@@ -4,6 +4,8 @@ from celery.task import task
 
 from soil import DownloadBase
 
+from corehq.apps.user_importer.models import UserUploadRecord
+
 
 @task(serializer='pickle')
 def import_users_and_groups(domain, user_specs, group_specs, upload_user):
@@ -32,6 +34,9 @@ def import_users_and_groups(domain, user_specs, group_specs, upload_user):
         'errors': group_results['errors'] + user_results['errors'],
         'rows': user_results['rows']
     }
+    upload_record = UserUploadRecord.objects.get(task_id=import_users_and_groups.request.id)
+    upload_record.status = results
+    upload_record.save()
     DownloadBase.set_progress(task, total, total)
     return {
         'messages': results
