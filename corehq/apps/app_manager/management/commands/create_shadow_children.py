@@ -20,6 +20,9 @@ class Command(AppMigrationCommandBase):
 
         app = Application.wrap(app_doc)
         for child_module in child_modules_of_shadows:
+            if not child_shadow_will_be_unique(app, child_module['unique_id']):
+                continue
+
             new_shadow = ShadowModule.new_module(child_module['name']['en'], 'en')
             new_shadow.source_module_id = child_module['unique_id']
             new_shadow.root_module_id = source_module_ids[child_module['root_module_id']]
@@ -29,7 +32,6 @@ class Command(AppMigrationCommandBase):
 
         app.move_child_modules_after_parents()  # TODO: probably shouldn't do this blindly
         return app
-    # TODO: Don't re-create modules if they already exist (monotonic)
 
 
 def move_excluded_form_ids(app, new_shadow):
@@ -48,3 +50,12 @@ def move_excluded_form_ids(app, new_shadow):
 
     new_shadow.excluded_form_ids = list(set(shadow_parent.excluded_form_ids) & shadow_child_form_ids)
     shadow_parent.excluded_form_ids = list(set(shadow_parent.excluded_form_ids) - shadow_child_form_ids)
+
+
+def child_shadow_will_be_unique(app, source_module_id):
+    """Makes sure we don't make new child shadow modules that already exist
+    """
+    return not any(
+        m for m in app.get_modules()
+        if m.module_type == 'shadow' and m.source_module_id == source_module_id
+    )

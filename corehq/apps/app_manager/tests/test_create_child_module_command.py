@@ -4,11 +4,14 @@ from django.core.management import call_command
 
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.app_manager.tests.util import delete_all_apps
 
 
 class CreateShadowChildrenTest(TestCase):
     """Test the create_shadow_childrent management command
     """
+    def tearDown(self):
+        delete_all_apps()
 
     def test_command_creates_new_modules(self):
         domain = "test-domain"
@@ -34,6 +37,7 @@ class CreateShadowChildrenTest(TestCase):
         factory.app.save()
 
         call_command("create_shadow_children", domain=domain)
+
         app = Application.get(factory.app.get_id)
 
         # A new shadow module should be created whose module source is the child
@@ -48,3 +52,8 @@ class CreateShadowChildrenTest(TestCase):
             app.get_module_by_unique_id(shadow_module.unique_id).excluded_form_ids,
             [form0.unique_id],
         )
+
+        # Calling the command again should not make new modules
+        call_command("create_shadow_children", domain=domain)
+        app = Application.get(factory.app.get_id)
+        self.assertEqual(len(app.modules), 4)
