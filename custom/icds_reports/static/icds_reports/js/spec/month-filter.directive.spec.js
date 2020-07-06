@@ -94,7 +94,7 @@ describe('Month Filter Controller', function () {
         injectPPDController();
 
         var result = controller.getPlaceholder();
-        var expected = 'Apr-Jun 2019';
+        var expected = 'Oct-Dec 1969';
 
         assert.equal(expected, result);
 
