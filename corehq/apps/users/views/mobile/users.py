@@ -1,6 +1,7 @@
 import io
 import json
 import re
+import uuid
 from collections import defaultdict
 from datetime import datetime
 
@@ -70,6 +71,7 @@ from corehq.apps.registration.forms import MobileWorkerAccountConfirmationForm
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.user_importer.importer import UserUploadError, check_headers
+from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups
 from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary,
@@ -1067,6 +1069,11 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
             list(self.group_specs),
             request.couch_user
         )
+        upload_record = UserUploadRecord(
+            domain=self.domain,
+            task_id=task.id,
+        )
+        upload_record.save()
         task_ref.set_task(task)
         return HttpResponseRedirect(
             reverse(
