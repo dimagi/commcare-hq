@@ -44,7 +44,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import user_exists
 from corehq.apps.users.models import DomainMembershipError, UserRole
 from corehq.apps.users.util import cc_user_domain, format_username
 from corehq.toggles import TWO_STAGE_USER_PROVISIONING
-from custom.icds.view_utils import is_icds_cas_project
+from custom.icds_core.view_utils import is_icds_cas_project
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 
 mark_safe_lazy = lazy(mark_safe, str)

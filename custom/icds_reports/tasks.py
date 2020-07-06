@@ -149,7 +149,6 @@ from custom.icds_reports.utils import (
     create_pdf_file,
     create_thr_report_excel_file,
     get_performance_report_blob_key,
-    icds_pre_release_features,
     track_time,
     zip_folder,
     get_dashboard_usage_excel_file,
@@ -158,6 +157,7 @@ from custom.icds_reports.utils import (
     create_poshan_progress_report,
     create_aww_activity_report
 )
+from custom.icds_core.view_utils import icds_pre_release_features
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     ChildHealthMonthlyAggregationDistributedHelper,
     AggAwcDistributedHelper,

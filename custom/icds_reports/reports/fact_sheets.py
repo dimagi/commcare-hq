@@ -3,7 +3,6 @@ from collections import OrderedDict
 from dateutil.parser import parse
 from dateutil.rrule import rrule, MONTHLY
 from django.http.response import Http404
-from memoized import memoized
 
 from custom.icds_reports.const import AADHAR_SEEDED_BENEFICIARIES, \
     NUM_OF_ADOLESCENT_GIRLS_11_14_YEARS, NUM_OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS
@@ -12,6 +11,37 @@ from custom.icds_reports.sqldata.agg_ccs_record_monthly import AggCCSRecordMonth
 from custom.icds_reports.sqldata.agg_child_health_monthly import AggChildHealthMonthlyDataSource
 from custom.icds_reports.sqldata.national_aggregation import NationalAggregationDataSource
 from custom.icds_reports.utils import person_is_beneficiary_column, default_age_interval
+from custom.icds_reports.cache import icds_quickcache
+
+
+FACT_SHEET_DATASOURCES_NAMES = {
+            'AggChildHealthMonthlyDataSource': AggChildHealthMonthlyDataSource,
+            'AggCCSRecordMonthlyDataSource': AggCCSRecordMonthlyDataSource,
+            'AggAWCMonthlyDataSource': AggAWCMonthlyDataSource
+}
+
+
+@icds_quickcache(['domain', 'previous_month', 'data_source_name', 'loc_level', 'show_test', 'beta'],
+                 timeout=30 * 60)
+def get_data_for_national_aggregatation(domain, previous_month, data_source_name, loc_level, show_test, beta):
+    national_config = {
+        'domain': domain,
+        'previous_month': parse(previous_month),
+    }
+
+    fact_sheet_datasource = FACT_SHEET_DATASOURCES_NAMES[data_source_name](
+        config=national_config,
+        loc_level=loc_level,
+        show_test=show_test,
+        beta=beta
+    )
+
+    return NationalAggregationDataSource(
+        national_config,
+        fact_sheet_datasource,
+        show_test=show_test,
+        beta=beta
+    ).get_data()
 
 
 class FactSheetsReport(object):
@@ -528,38 +558,15 @@ class FactSheetsReport(object):
         return fact_sheet_data_config
 
     def data_sources(self, config):
-        return {
-            'AggChildHealthMonthlyDataSource': AggChildHealthMonthlyDataSource(
-                config=config,
-                loc_level=self.loc_level,
-                show_test=self.show_test,
-                beta=self.beta
-            ),
-            'AggCCSRecordMonthlyDataSource': AggCCSRecordMonthlyDataSource(
-                config=config,
-                loc_level=self.loc_level,
-                show_test=self.show_test,
-            ),
-            'AggAWCMonthlyDataSource': AggAWCMonthlyDataSource(
+        fact_sheet_datasources = dict()
+        for datasource_name, datasource_class in FACT_SHEET_DATASOURCES_NAMES.items():
+            fact_sheet_datasources[datasource_name] = datasource_class(
                 config=config,
                 loc_level=self.loc_level,
                 show_test=self.show_test,
                 beta=self.beta
             )
-        }
-
-    @memoized
-    def get_data_for_national_aggregatation(self, data_source_name):
-        national_config = {
-            'domain': self.config['domain'],
-            'previous_month': self.config['previous_month'],
-        }
-        return NationalAggregationDataSource(
-            national_config,
-            self.data_sources(config=national_config)[data_source_name],
-            show_test=self.show_test,
-            beta=self.beta
-        ).get_data()
+        return fact_sheet_datasources
 
     def _get_collected_sections(self, config_list):
         sections_by_slug = OrderedDict()
@@ -662,8 +669,13 @@ class FactSheetsReport(object):
                         row['data'].append({'html': 0})
 
                     if 'average' in row:
-                        data = self.get_data_for_national_aggregatation(
-                            row['data_source']
+                        data = get_data_for_national_aggregatation(
+                            self.config['domain'],
+                            self.config['previous_month'].strftime('%Y-%m-%d'),
+                            row['data_source'],
+                            self.loc_level,
+                            self.show_test,
+                            self.beta
                         )
                         row['average'] = data[0][row['slug']] if data else ''
 

@@ -6,8 +6,8 @@ from corehq.apps.locations.util import location_hierarchy_config
 from corehq.toggles import ICDS_DASHBOARD_SHOW_MOBILE_APK, NAMESPACE_USER
 from custom.icds_reports.const import NavigationSections
 from custom.icds_reports.const import SDDSections
-from custom.icds_reports.utils import (icds_pre_release_features,
-                                       get_latest_issue_tracker_build_id)
+from custom.icds_reports.utils import (get_latest_issue_tracker_build_id)
+from ..icds_core.view_utils import icds_pre_release_features
 from corehq.apps.cloudcare.utils import webapps_module
 from corehq.apps.users.models import UserRole
 

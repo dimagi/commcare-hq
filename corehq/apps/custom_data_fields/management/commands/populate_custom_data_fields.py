@@ -18,7 +18,7 @@ class Command(PopulateSQLCommand):
 
     @classmethod
     def commit_adding_migration(cls):
-        return None
+        return "bb82e5c3d2840d6e3e3a6f5ebf1a0c7e817f4613"
 
     def update_or_create_sql_object(self, doc):
         model, created = self.sql_class().objects.update_or_create(
@@ -39,5 +39,5 @@ class Command(PopulateSQLCommand):
             )
             for field in doc['fields']
         ])
-        model.save(sync_to_couch=False)
+        model.save()
         return (model, created)

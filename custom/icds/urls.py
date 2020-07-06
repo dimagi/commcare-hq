@@ -5,6 +5,7 @@ from custom.icds.location_reassignment.views import (
     LocationReassignmentView,
     download_location_reassignment_template,
 )
+from custom.icds.views.custom_sms_report import SMSUsageReport
 from custom.icds.views.data_pull import CustomDataPull
 from custom.icds.views.hosted_ccz import (
     EditHostedCCZLink,
@@ -42,4 +43,5 @@ urlpatterns = [
         name=LocationReassignmentView.urlname),
     url(r'^location_reassignment/download/$', download_location_reassignment_template,
         name='download_location_reassignment_template'),
+    url(r'^custom_message_report/$', SMSUsageReport.as_view(), name=SMSUsageReport.urlname),
 ]

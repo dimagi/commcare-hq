@@ -108,6 +108,15 @@
         }
       },
       {
+        "column_id": "timeend_with_time",
+        "datatype": "datetime",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "meta", "timeEnd"]
+        }
+      },
+      {
         "column_id": "add",
         "datatype": "date",
         "type": "expression",
@@ -299,6 +308,9 @@
     "sql_column_indexes": [
       {
         "column_ids": ["state_id", "timeend"]
+      },
+      {
+        "column_ids": ["state_id", "timeend_with_time"]
       }
     ],
     "sql_settings": {
