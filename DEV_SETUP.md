@@ -242,14 +242,6 @@ you'll need to install `yarn` and run `yarn install`. Follow these steps to inst
 2. Run Yarn with:
 
         $ yarn install
-        
-### Install JS-XPATH
-
-This is required for the server side xpath validation. See [package.json](package.json) for exact version.
-
-```
-yarn add dimagi/js-xpath#v0.0.2-rc1
-```
 
 ### Using LESS: 2 Options
 
