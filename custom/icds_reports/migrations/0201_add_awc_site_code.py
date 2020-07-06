@@ -3,12 +3,13 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
+from custom.icds_reports.utils.migrations import get_view_migrations
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0187_update_system_usage_report_view'),
+        ('icds_reports', '0200_update_chm_ccs_view'),
     ]
 
     operations = [
@@ -18,3 +19,5 @@ class Migration(migrations.Migration):
             field=models.TextField(blank=True, null=True),
         ),
     ]
+
+    operations.extend(get_view_migrations())

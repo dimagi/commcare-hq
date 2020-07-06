@@ -15,5 +15,3 @@ class Migration(migrations.Migration):
     dependencies = [
         ('icds_reports', '0199_update_ppr_view'),
     ]
-
-    operations = get_view_migrations()

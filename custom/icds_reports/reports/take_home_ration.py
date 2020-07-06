@@ -109,6 +109,10 @@ class TakeHomeRationExport(object):
             'thr_distribution_image_count'
         ]
 
+        if self.beta:
+            headers.insert(5, 'AWC Site Code')
+            columns.insert(5, 'awc_site_code')
+
         query_set = class_model.objects.filter(**filters).order_by(*order_by)
         data = query_set.values(*columns)
         return headers, data
@@ -136,6 +140,11 @@ class TakeHomeRationExport(object):
                    f'lw_thr_{thr_days}_days',
                    f'child_thr_{thr_days}_days',
                    'thr_distribution_image_count']
+
+        if self.beta:
+            headers.insert(5, 'AWC Site Code')
+            columns.insert(5, 'awc_site_code')
+
         query_set = ServiceDeliveryReportView.objects.filter(**filters).order_by(*order_by)
         data = query_set.values(*columns)
         return headers, data
@@ -191,6 +200,11 @@ class TakeHomeRationExport(object):
                    'child_thr_25_days',
                    'thr_distribution_image_count'
                    ]
+
+        if self.beta:
+            headers.insert(5, 'AWC Site Code')
+            columns.insert(5, 'awc_site_code')
+
         query_set = ServiceDeliveryReportView.objects.filter(**filters).order_by(*order_by)
         data = query_set.values(*columns)
         return headers, data

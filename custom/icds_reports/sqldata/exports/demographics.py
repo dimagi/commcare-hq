@@ -99,11 +99,12 @@ class DemographicsAWCMonthly(ExportableMixin, IcdsSqlData):
             columns.append(DatabaseColumn('Supervisor', SimpleColumn('supervisor_name'), slug='supervisor_name'))
         if self.loc_level > 4:
             columns.append(DatabaseColumn('AWC', SimpleColumn('awc_name'), slug='awc_name'))
-            columns.append(DatabaseColumn(
-                'AWC Site Code',
-                SimpleColumn('awc_site_code'),
-                slug='awc_site_code')
-            )
+            if self.beta:
+                columns.append(DatabaseColumn(
+                    'AWC Site Code',
+                    SimpleColumn('awc_site_code'),
+                    slug='awc_site_code')
+                )
         return columns
 
     @property
@@ -257,12 +258,13 @@ class DemographicsExport(ExportableMixin):
                     'slug': 'awc_name'
                 }
             )
-            columns.append(
-                {
-                    'header': 'AWC Site Code',
-                    'slug': 'awc_site_code'
-                }
-            )
+            if self.beta:
+                columns.append(
+                    {
+                        'header': 'AWC Site Code',
+                        'slug': 'awc_site_code'
+                    }
+                )
         return columns
 
     def get_data(self):

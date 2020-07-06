@@ -932,7 +932,7 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     worksheet.sheet_view.showGridLines = False
     # sheet title
     worksheet.merge_cells('B2:{0}2'.format(
-        "L" if aggregation_level == 3 else ("M" if aggregation_level == 2 else "N")
+        "K" if aggregation_level == 3 else ("L" if aggregation_level == 2 else "M")
     ))
     title_cell = worksheet['B2']
     title_cell.fill = PatternFill("solid", fgColor="4472C4")
@@ -941,11 +941,11 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     title_cell.alignment = Alignment(horizontal="center")
 
     # sheet header
-    header_cells = ["B3", "C3", "D3", "E3", "F3", "G3", "H3", "I3", "J3", "K3", "L3"]
+    header_cells = ["B3", "C3", "D3", "E3", "F3", "G3", "H3", "I3", "J3", "K3"]
     if aggregation_level < 3:
-        header_cells.append("M3")
+        header_cells.append("L3")
     if aggregation_level < 2:
-        header_cells.append("N3")
+        header_cells.append("M3")
 
     for cell in header_cells:
         worksheet[cell].fill = blue_fill
@@ -968,15 +968,15 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
         headers.append("Block")
 
     headers.extend([
-        'Supervisor', 'AWC', 'AWC Site Code', 'AWW Name', 'AWW Contact Number',
+        'Supervisor', 'AWC', 'AWW Name', 'AWW Contact Number',
         'Home Visits Conducted', 'Weighing Efficiency', 'AWW Eligible for Incentive',
         'Number of Days AWC was Open', 'AWH Eligible for Incentive'
     ])
-    columns = ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']
+    columns = ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K']
     if aggregation_level < 3:
-        columns.append('M')
+        columns.append('L')
     if aggregation_level < 2:
-        columns.append('N')
+        columns.append('M')
 
     table_header = {}
     for col, header in zip(columns, headers):
@@ -1013,7 +1013,7 @@ def create_aww_performance_excel_file(excel_data, data_type, month, state, distr
     widths_columns.extend(columns)
     standard_widths = [4, 7, 15]
     standard_widths.extend([15] * (3 - aggregation_level))
-    standard_widths.extend([13, 12, 12, 13, 15, 11, 14, 14])
+    standard_widths.extend([13, 12, 13, 15, 11, 14, 14])
     standard_widths.append(14)
 
     for col, width in zip(widths_columns, standard_widths):
@@ -1123,7 +1123,10 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
 
     thr_days_info = ""
     if report_type == THR_REPORT_DAY_BENEFICIARY_TYPE:
-        total_column_count = 30
+        if beta:
+            total_column_count = 31
+        else:
+            total_column_count = 30
         data_start_row_diff = 3
         secondary_headers = ['Not provided',
                              'Provided for 1-7 days',
@@ -1134,11 +1137,17 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
 
     else:
         if report_type == THR_REPORT_BENEFICIARY_TYPE:
-            total_column_count = 15
+            if beta:
+                total_column_count = 16
+            else:
+                total_column_count = 15
             data_start_row_diff = 2
 
         else:
-            total_column_count = 11
+            if beta:
+                total_column_count = 12
+            else:
+                total_column_count = 11
             data_start_row_diff = 1
 
         if parse(month).date() <= THR_21_DAYS_THRESHOLD_DATE:
@@ -1198,9 +1207,11 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
     table_header_position_row = 5
     headers = ["S.No"]
     main_headers = ['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name', 'AWW Phone No.',
-                   'Total No. of Beneficiaries eligible for THR',
-                   f'Total No. of beneficiaries received THR {thr_days_info} in given month',
-                   'Total No of Pictures taken by AWW']
+                    'Total No. of Beneficiaries eligible for THR',
+                    f'Total No. of beneficiaries received THR {thr_days_info} in given month',
+                    'Total No of Pictures taken by AWW']
+    if beta:
+        main_headers.insert(5, 'AWC Site Code')
     headers.extend(main_headers[aggregation_level:])
 
     def set_beneficiary_columns(start_column_index, end_column_index, row):
@@ -1339,14 +1350,17 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
     return file_hash
 
 
-def create_child_report_excel_file(excel_data, data_type, month, aggregation_level):
+def create_child_report_excel_file(excel_data, data_type, month, aggregation_level, beta=False):
     export_info = excel_data[1][1]
     max_merged_column_no = aggregation_level
     if aggregation_level == 5:
-        max_merged_column_no = aggregation_level + 2
+        if beta:
+            max_merged_column_no = aggregation_level + 2
+        else:
+            max_merged_column_no = aggregation_level + 1
 
-    primary_headers = ['Children weighed','Height measured for Children', '', 'Severely Underweight Children',
-                       'Moderately Underweight Children','Children with normal weight for age (WfA)',
+    primary_headers = ['Children weighed', 'Height measured for Children', '', 'Severely Underweight Children',
+                       'Moderately Underweight Children', 'Children with normal weight for age (WfA)',
                        'Severely wasted Children(SAM)', 'Moderately wasted children(MAM)',
                        'Children with normal weight for height',
                        'Severely stunted children', 'Moderately Stunted Children',

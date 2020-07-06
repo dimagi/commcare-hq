@@ -29,15 +29,15 @@ class IncentiveReport(object):
                 month=self.month, block_id=self.location
             ).order_by('-supervisor_name', 'awc_name')
         data = data.values(
-                'state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name', 'awc_site_code',
-                'aww_name', 'contact_phone_number', 'wer_weighed', 'wer_eligible', 'awc_num_open', 'valid_visits',
+                'state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name', 'aww_name',
+                'contact_phone_number', 'wer_weighed', 'wer_eligible', 'awc_num_open', 'valid_visits',
                 'expected_visits', 'is_launched', 'visit_denominator', 'awh_eligible', 'incentive_eligible'
             )
 
         headers = [
-                'State', 'District', 'Block', 'Supervisor', 'AWC', 'AWC Site Code', 'AWW Name',
-                'AWW Contact Number', 'Home Visits Conducted', 'Weighing Efficiency',
-                'AWW Eligible for Incentive', 'Number of Days AWC was Open', 'AWH Eligible for Incentive'
+                'State', 'District', 'Block', 'Supervisor', 'AWC', 'AWW Name', 'AWW Contact Number',
+                'Home Visits Conducted', 'Weighing Efficiency', 'AWW Eligible for Incentive',
+                'Number of Days AWC was Open', 'AWH Eligible for Incentive'
             ]
 
         excel_rows = [headers]
@@ -49,7 +49,6 @@ class IncentiveReport(object):
                 row['block_name'],
                 row['supervisor_name'],
                 row['awc_name'],
-                row['awc_site_code'],
             ]
 
             # AWC not launched
