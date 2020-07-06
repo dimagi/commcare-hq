@@ -2,6 +2,7 @@ hqDefine("cloudcare/js/preview_app/main", function () {
     $(function () {
         var initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
         window.GMAPS_API_KEY = initialPageData('maps_api_key'); // maps api is loaded on-demand
+        window.MAPBOX_ACCESS_TOKEN = initialPageData('mapbox_access_token');
         hqImport('cloudcare/js/preview_app/preview_app').start({
             apps: [initialPageData('app')],
             language: initialPageData('language'),

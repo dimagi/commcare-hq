@@ -677,7 +677,9 @@ function GeoPointEntry(question, options) {
     var self = this;
     EntryArrayAnswer.call(self, question, options);
     self.templateType = 'geo';
-    self.apiKey = 'https://maps.googleapis.com/maps/api/js?key=' + window.GMAPS_API_KEY + '&sensor=false';
+    self.jsLocation = 'https://unpkg.com/leaflet@1.6.0/dist/leaflet.js';
+    self.cssLocation = 'https://unpkg.com/leaflet@1.6.0/dist/leaflet.css';
+    self.mapboxJsLocation = 'https://api.mapbox.com/mapbox.js/v3.3.1/mapbox.standalone.js';
     self.map = null;
 
     self.DEFAULT = {
@@ -692,40 +694,43 @@ function GeoPointEntry(question, options) {
     };
 
     self.gMapsCallback = function () {
-        self.geocoder = new google.maps.Geocoder();
-        self.map = new google.maps.Map($('#' + self.entryId)[0], {
-            mapTypeId: google.maps.MapTypeId.ROADMAP,
-            center: new google.maps.LatLng(self.DEFAULT.lat, self.DEFAULT.lon),
-            zoom: self.DEFAULT.zoom,
-        });
-        if (self.rawAnswer().length) {
-            self.map.setCenter(new google.maps.LatLng(self.rawAnswer()[0], self.rawAnswer()[1]));
-            self.map.setZoom(self.DEFAULT.anszoom);
-        }
-        google.maps.event.addListener(self.map, "center_changed", self.updateCenter.bind(self));
-        var marker = new google.maps.Marker({
-            map: self.map,
-        });
-        marker.bindTo('position', self.map, 'center');
+        self.map = L.map(self.entryId).setView([self.DEFAULT.lat, self.DEFAULT.lon], self.DEFAULT.zoom);
+        L.tileLayer(`https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=${window.MAPBOX_ACCESS_TOKEN}`, {
+            id: 'mapbox/streets-v11',
+        }).addTo(self.map);
+        self.map.on('move', self.updateCenter);
+
+        self.centerMarker = L.marker(self.map.getCenter()).addTo(self.map);
+
+        L.mapbox.accessToken = window.MAPBOX_ACCESS_TOKEN;
+        self.geocoder = L.mapbox.geocoder('mapbox.places');
     };
 
     self.afterRender = function () {
-        if (typeof google === "undefined" && !window.gMapsRequested) {
-            // First entry to attempt to load google
-            window.gMapsRequested = true;
-            $.getScript(self.apiKey, self.gMapsCallback);
-        } else if (typeof google === "undefined" && window.gMapsRequested) {
-            // Waiting for gmaps to load, recursively call afterRender
-            setTimeout(self.afterRender, 400);
+        if (typeof L === 'undefined') {
+            // Get the leaflet css, leaflet js, then mapbox js (for the geocoder).
+            self.getCss(self.cssLocation).then(function() {
+                return $.getScript(self.jsLocation)
+            }).then(function() {
+                return $.getScript(self.mapboxJsLocation);
+            }).then(self.gMapsCallback);
         } else {
-            // google has already been loaded
             self.gMapsCallback();
         }
     };
 
+    self.getCss = function (cssLocation) {
+        return $.get(cssLocation).then(function(css) {
+           $('<style type="text/css"></style>')
+          .html(css)
+          .appendTo('head');
+        });
+    };
+
     self.updateCenter = function () {
         var center = self.map.getCenter();
-        self.rawAnswer([center.lat(), center.lng()]);
+        self.centerMarker.setLatLng(center);
+        self.rawAnswer([center.lat, center.lng]);
     };
 
     self.formatLat = function () {
@@ -744,12 +749,14 @@ function GeoPointEntry(question, options) {
 
     self.search = function (form) {
         var query = $(form).find('.query').val();
-        self.geocoder.geocode({
-            'address': query,
-        }, function (results, status) {
-            if (status === google.maps.GeocoderStatus.OK) {
-                self.map.fitBounds(results[0].geometry.viewport);
-                self.map.setCenter(results[0].geometry.location);
+        self.geocoder.query(query, function(err, data) {
+            if (err != null) {
+                console.error(err);
+            }
+            if (data.lbounds) {
+                self.map.fitBounds(data.lbounds);
+            } else if (data.latlng) {
+                self.map.setView([data.latlng[0], data.latlng[1]], self.DEFAULT.zoom);
             }
         });
     };

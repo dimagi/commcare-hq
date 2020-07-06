@@ -8,6 +8,7 @@ describe('Entries', function () {
 
     beforeEach(function () {
         window.GMAPS_API_KEY = 'xxx';
+        window.MAPBOX_ACCESS_TOKEN = 'xxx';
         questionJSON = {
             "caption_audio": null,
             "caption": "Do you want to modify the visit number?",
