@@ -1,13 +1,14 @@
 from functools import wraps
 
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import ugettext_lazy, ugettext as _
 from django.conf import settings
 
 from corehq import toggles
 from corehq.apps.hqwebapp.views import no_permissions
 from custom.icds.const import ICDS_DOMAIN, IS_ICDS_ENVIRONMENT
 from corehq.apps.users.models import DomainMembershipError
+from django.http import HttpResponse
 
 DATA_INTERFACE_ACCESS_DENIED = mark_safe(ugettext_lazy(
     "This project has blocked access to interfaces that edit data for forms and cases"
@@ -36,8 +37,8 @@ def check_app_access(domain, user, app):
         try:
             role = user.get_role(domain)
         except DomainMembershipError:
-            return 'User is not a member of this project', 404
+            return HttpResponse(_('User is not a member of this project'), status=404), None
         else:
             if not (role and role.permissions.view_web_app(app)):
-                return 'User is not allowed on this app', 406
-    return None, None
+                return HttpResponse(_('User is not allowed on this app'), status=406), None
+    return None
