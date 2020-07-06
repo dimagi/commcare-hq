@@ -211,9 +211,6 @@ from custom.icds_reports.reports.registered_household import (
     get_registered_household_data_map,
     get_registered_household_sector_data,
 )
-from custom.icds_reports.reports.service_delivery_dashboard import (
-    get_service_delivery_data,
-)
 from custom.icds_reports.reports.service_delivery_dashboard_data import (
     get_service_delivery_report_data,
     get_service_delivery_details,
@@ -236,7 +233,6 @@ from custom.icds_reports.utils import (
     get_datatables_ordering_info,
     get_location_filter,
     get_location_level,
-    icds_pre_release_features,
     india_now,
     filter_cas_data_export,
     get_deprecation_info,
@@ -244,6 +240,7 @@ from custom.icds_reports.utils import (
     timestamp_string_to_date_string,
     datetime_to_date_string
 )
+from ..icds_core.view_utils import icds_pre_release_features
 from custom.icds_reports.utils.data_accessor import (
     get_awc_covered_data_with_retrying,
     get_inc_indicator_api_data,
@@ -261,7 +258,7 @@ from custom.icds_reports.reports.bihar_api import get_api_demographics_data, get
     get_api_vaccine_data, get_api_ag_school_data
 
 from . import const
-from .exceptions import InvalidLocationTypeException, TableauTokenException
+from .exceptions import InvalidLocationTypeException
 
 # checks required to view the dashboard
 from custom.icds_reports.reports.poshan_progress_dashboard_data import get_poshan_progress_dashboard_data
@@ -319,43 +316,6 @@ def _get_user_location(user, domain):
         block_id = 'All'
     return location_type_code, user_location_id, state_id, district_id, block_id
 
-
-def get_tableau_trusted_url(client_ip):
-    """
-    Generate a login-free URL to access Tableau views for the client with IP client_ip
-    See Tableau Trusted Authentication https://onlinehelp.tableau.com/current/server/en-us/trusted_auth.htm
-    """
-    access_token = get_tableau_access_token(const.TABLEAU_USERNAME, client_ip)
-    url = "{tableau_trusted}{access_token}/#/views/".format(
-        tableau_trusted=const.TABLEAU_TICKET_URL,
-        access_token=access_token
-    )
-    return url
-
-
-def get_tableau_access_token(tableau_user, client_ip):
-    """
-    Request an access_token from Tableau
-    Note: the IP address of the webworker that this code runs on should be configured to request tokens in Tableau
-
-    args:
-        tableau_user: username of a valid tableau_user who can access the Tableau views
-        client_ip: IP address of the client who should redee be allowed to redeem the Tableau trusted token
-                   if this is empty, the token returned can be redeemed on any IP address
-    """
-    r = requests.post(
-        const.TABLEAU_TICKET_URL,
-        data={'username': tableau_user, 'client_ip': client_ip},
-        verify=False
-    )
-
-    if r.status_code == 200:
-        if r.text == const.TABLEAU_INVALID_TOKEN:
-            raise TableauTokenException("Tableau server failed to issue a valid token")
-        else:
-            return r.text
-    else:
-        raise TableauTokenException("Token request failed with code {}".format(r.status_code))
 
 
 @location_safe
@@ -536,33 +496,18 @@ class ServiceDeliveryDashboardView(BaseReportView):
         start, length, order_by_number_column, order_by_name_column, order_dir = \
             get_datatables_ordering_info(request)
         reversed_order = True if order_dir == 'desc' else False
-        icds_features_flag = icds_pre_release_features(self.request.couch_user)
-        if icds_features_flag:
-            data = get_service_delivery_report_data(
-                domain,
-                start,
-                length,
-                order_by_name_column,
-                reversed_order,
-                location_filters,
-                year,
-                month,
-                step,
-                include_test
-            )
-        else:
-            data = get_service_delivery_data(
-                domain,
-                start,
-                length,
-                order_by_name_column,
-                reversed_order,
-                location_filters,
-                year,
-                month,
-                step,
-                include_test
-            )
+        data = get_service_delivery_report_data(
+            domain,
+            start,
+            length,
+            order_by_name_column,
+            reversed_order,
+            location_filters,
+            year,
+            month,
+            step,
+            include_test
+        )
         return JsonResponse(data=data)
 
 
@@ -2829,29 +2774,26 @@ class PoshanProgressDashboardView(BaseReportView):
         location = request.GET.get('location_id')
         if location == 'null' or location == 'undefined':
             location = None
-        data_format = request.GET.get('data_format', 'month')
+        data_period = request.GET.get('data_period', 'month')
         quarter = int(request.GET.get('quarter', 1))
 
-        return step, month, year, include_test, domain, data_format, quarter, location
+        return step, month, year, include_test, domain, data_period, quarter, location
 
     def get(self, request, *args, **kwargs):
-        step, month, year, include_test, domain, data_format, quarter, location = \
+        step, month, year, include_test, domain, data_period, quarter, location = \
             self.get_settings(request, *args, **kwargs)
 
         location_filters = get_location_filter(location, domain)
         location_filters['aggregation_level'] = location_filters.get('aggregation_level', 1)
 
-        icds_features_flag = icds_pre_release_features(self.request.couch_user)
-        data = {}
-        if icds_features_flag:
-            data = get_poshan_progress_dashboard_data(
-                domain,
-                year,
-                month,
-                quarter,
-                data_format,
-                step,
-                location_filters,
-                include_test
-            )
+        data = get_poshan_progress_dashboard_data(
+            domain,
+            year,
+            month,
+            quarter,
+            data_period,
+            step,
+            location_filters,
+            include_test
+        )
         return JsonResponse(data=data)

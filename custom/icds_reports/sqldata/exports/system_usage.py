@@ -1,7 +1,7 @@
 import datetime
 from sqlagg.columns import SumColumn, SimpleColumn
 
-from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
+from corehq.apps.reports.sqlreport import DatabaseColumn
 from custom.icds_reports.sqldata.base import IcdsSqlData
 from custom.icds_reports.utils.mixins import ExportableMixin, NUM_LAUNCHED_AWCS, NUM_OF_DAYS_AWC_WAS_OPEN
 from custom.icds_reports.utils import phone_number_function
@@ -12,10 +12,7 @@ class SystemUsageExport(ExportableMixin, IcdsSqlData):
 
     def __init__(self, config=None, loc_level=1, show_test=False, beta=False):
         super(SystemUsageExport, self).__init__(config, loc_level, show_test, beta)
-        if beta:
-            self.table_name = 'system_usage_report_view'
-        else:
-            self.table_name = 'agg_awc_monthly'
+        self.table_name = 'system_usage_report_view'
 
     @property
     def get_columns_by_loc_level(self):
@@ -70,6 +67,11 @@ class SystemUsageExport(ExportableMixin, IcdsSqlData):
                 slug='num_add_pregnancy_forms'
             ),
             DatabaseColumn(
+                'Number of birth preparedness forms',
+                SumColumn('usage_num_bp_tri'),
+                slug='usage_num_bp_tri'
+            ),
+            DatabaseColumn(
                 'Number of delivery forms',
                 SumColumn('usage_num_delivery'),
                 slug='num_delivery_forms'
@@ -94,45 +96,19 @@ class SystemUsageExport(ExportableMixin, IcdsSqlData):
                 'Number of take home rations forms',
                 SumColumn('usage_num_thr'),
                 slug='num_thr_forms'
-            )
-        ]
-        if self.beta:
-            agg_columns.insert(4, DatabaseColumn(
-                'Number of birth preparedness forms',
-                SumColumn('usage_num_bp_tri'),
-                slug='usage_num_bp_tri')
-            )
-            agg_columns.insert(11, DatabaseColumn(
+            ),
+            DatabaseColumn(
                 'Number of due list forms',
                 SumColumn('usage_num_due_list_ccs_and_child_health'),
-                slug='usage_num_due_list_ccs_and_child_health')
+                slug='usage_num_due_list_ccs_and_child_health'
             )
-            # adding this field to reports from jan 2020
-            if self.config['month'] >= datetime.date(2020, 1, 1):
-                agg_columns.append(DatabaseColumn(
-                    'Number of launched LSs',
-                    SumColumn('num_supervisor_launched'),
-                    format_fn=lambda x: (x or 0) if self.loc_level < 5 else "Not applicable at AWC level",
-                    slug='num_supervisor_launched')
-                )
-        else:
-            agg_columns.insert(4, AggregateColumn(
-                'Number of birth preparedness forms',
-                lambda x, y, z: x + y + z,
-                [
-                    SumColumn('usage_num_bp_tri1'),
-                    SumColumn('usage_num_bp_tri2'),
-                    SumColumn('usage_num_bp_tri3')
-                ],
-                slug='num_bp_forms')
-            )
-            agg_columns.insert(11, AggregateColumn(
-                'Number of due list forms',
-                lambda x, y: x + y,
-                [
-                    SumColumn('usage_num_due_list_ccs'),
-                    SumColumn('usage_num_due_list_child_health')
-                ],
-                slug='num_due_list_forms')
+        ]
+        # adding this field to reports from jan 2020
+        if self.config['month'] >= datetime.date(2020, 1, 1):
+            agg_columns.append(DatabaseColumn(
+                'Number of launched LSs',
+                SumColumn('num_supervisor_launched'),
+                format_fn=lambda x: (x or 0) if self.loc_level < 5 else "Not applicable at AWC level",
+                slug='num_supervisor_launched')
             )
         return columns + agg_columns

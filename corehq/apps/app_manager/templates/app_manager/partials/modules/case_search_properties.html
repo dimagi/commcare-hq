@@ -11,10 +11,101 @@
       <td class="col-sm-4">
         <input class="form-control" type="text" data-bind="value: property.name"/>
       </td>
-      <td class="col-sm-6">
+      <td class="col-sm-5">
         <input class="form-control" type="text" data-bind="value: property.label"/>
       </td>
-      <td class="col-sm-2">
+      {% if js_options.search_prompt_appearance_enabled %}
+        <td class="col-sm-2">
+          <select class="form-control" data-bind="value: property.appearance">
+            <option value="">{% trans "Text" %}</option>
+            <option value="barcode_scan">{% trans "Barcode" %}</option>
+            <option value="fixture">{% trans "Lookup Table Selection" %}</option>
+          </select>
+          <button type="button"
+                  class="btn btn-default"
+                  data-bind="
+                        visible: property.appearance() == 'fixture',
+                        attr: {'data-target': '#lookup-table-prompt-' + property.uniqueId}"
+                  data-toggle="modal">
+            <i class="fa fa-pencil"></i>
+            {% trans "Edit" %}
+          </button>
+          <span data-bind="visible: property.itemSet.nodeset, text: property.itemSet.nodeset"></span>
+          <div class="modal fade" data-bind="attr: {'id': 'lookup-table-prompt-' + property.uniqueId}">
+            <div class="modal-dialog modal-md">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                  <h3>
+                    {% trans "Add Lookup Table" %}
+                  </h3>
+                </div>
+                <div class="modal-body">
+                  <div class="form-horizontal">
+                    <div class="form-group">
+                      <label class="control-label">
+                        {% trans "Lookup Table" %}
+                      </label>
+                      <select class="form-control" data-bind="value: property.itemSet.lookupTableNodeset">
+                        <option value="">{% trans "Select a lookup table..." %}</option>
+                        {% for item in  js_options.item_lists %}
+                          <option value="instance('{{ item.id }}'){{ item.path }}">{{ item.name }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label class="control-label">{% trans "Label Field" %}</label>
+                      <input class="form-control" type="text" data-bind="value: property.itemSet.label" placeholder="{% trans "name" %}"/>
+                    </div>
+                    <div class="form-group">
+                      <label class="control-label">{% trans "Value Field" %}</label>
+                      <input class="form-control" type="text" data-bind="value: property.itemSet.value" placeholder="{% trans "id" %}"/>
+                    </div>
+                    <div class="form-group">
+                      <label class="control-label">{% trans "Sort Field" %}</label>
+                      <input class="form-control" type="text" data-bind="value: property.itemSet.sort" placeholder="{% trans "name" %}"/>
+                    </div>
+                    <div class="panel panel-default">
+                      <div class="panel-heading">
+                        <h3 class="panel-title panel-title-nolink">
+                          {% trans "Advanced" %}
+                        </h3>
+                      </div>
+                      <div class="panel-body">
+                        <div class="form-group">
+                          <label class="control-label" >
+                            {% trans "Instance URI" %}
+                          </label>
+                          <input class="form-control" type="text" data-bind="value: property.itemSet.instance_uri"/>
+                        </div>
+                        <div class="form-group">
+                          <label class="control-label" >
+                            {% trans "Instance ID" %}
+                          </label>
+                          <input class="form-control" type="text" data-bind="value: property.itemSet.instance_id"/>
+                        </div>
+                        <div class="form-group">
+                          <label class="control-label" >
+                            {% trans "Instance Nodeset" %}
+                          </label>
+                          <input class="form-control" type="text" data-bind="value: property.itemSet.nodeset"/>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button class="btn btn-primary" type="button" data-dismiss="modal">
+                    {% trans "Done" %}
+                  </button>
+                </div>
+                  </form>
+              </div>
+            </div>
+          </div>
+        </td>
+      {% endif %}
+      <td class="col-sm-1">
         <i style="cursor: pointer;" class="fa fa-remove"
            data-bind="click: $parent.removeProperty"></i>
       </td>
@@ -31,8 +122,11 @@
         <table class="table table-condensed">
           <thead data-bind="visible: searchProperties().length > 0">
           <tr>
-            <th class="col-sm-5">{% trans "Case Property" %}</th>
-            <th class="col-sm-6">{% trans "Display Text" %}</th>
+            <th class="col-sm-4">{% trans "Case Property" %}</th>
+            <th class="col-sm-5">{% trans "Display Text" %}</th>
+            {% if js_options.search_prompt_appearance_enabled %}
+              <th class="col-sm-2">{% trans "Format" %}</th>
+            {% endif %}
             <th class="col-sm-1">&nbsp;</th>
           </tr>
           </thead>

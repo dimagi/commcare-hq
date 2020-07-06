@@ -15,5 +15,3 @@ class Migration(migrations.Migration):
     dependencies = [
         ('icds_reports', '0198_update_sdd_view'),
     ]
-
-    operations = get_view_migrations()

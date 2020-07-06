@@ -44,7 +44,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import user_exists
 from corehq.apps.users.models import DomainMembershipError, UserRole
 from corehq.apps.users.util import cc_user_domain, format_username
 from corehq.toggles import TWO_STAGE_USER_PROVISIONING
-from custom.icds.view_utils import is_icds_cas_project
+from custom.icds_core.view_utils import is_icds_cas_project
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 
 mark_safe_lazy = lazy(mark_safe, str)
@@ -246,9 +246,8 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
     )
 
     def __init__(self, *args, **kwargs):
+        from corehq.apps.settings.views import ApiKeyView
         self.user = kwargs['existing_user']
-        api_key_status = kwargs.pop('api_key_status') if 'api_key_status' in kwargs else None
-        api_key_exists = kwargs.pop('api_key_exists') if 'api_key_exists' in kwargs else None
         super(UpdateMyAccountInfoForm, self).__init__(*args, **kwargs)
         self.username = self.user.username
 
@@ -257,30 +256,6 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             username_controls.append(hqcrispy.StaticField(
                 ugettext_lazy('Username'), self.username)
             )
-
-        api_key_button = [
-            twbscrispy.StrictButton(
-                ugettext_lazy('Generate New API Key'),
-                type="button",
-                id='generate-api-key',
-                css_class='btn-default',
-            ),
-        ]
-        if api_key_exists:
-            api_key_button.append(
-                crispy.HTML('&nbsp;&nbsp;{}'.format(ugettext_lazy(
-                    'NOTE: Generating a new API Key will cause the '
-                    'current Key to become inactive.'
-                ))),
-            )
-
-        api_key_controls = [
-            hqcrispy.StaticField(ugettext_lazy('API Key'), api_key_status),
-            hqcrispy.FormActions(
-                crispy.Div(*api_key_button),
-                css_class="form-group"
-            ),
-        ]
 
         self.fields['language'].label = ugettext_lazy("My Language")
 
@@ -310,7 +285,13 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             (hqcrispy.FieldsetAccordionGroup if self.collapse_other_options else crispy.Fieldset)(
                 ugettext_lazy("Other Options"),
                 hqcrispy.Field('language'),
-                crispy.Div(*api_key_controls),
+                crispy.Div(hqcrispy.StaticField(
+                    ugettext_lazy('API Key'),
+                    mark_safe(
+                        ugettext_lazy('API key management has moved <a href="{}">here</a>.')
+                        .format(reverse(ApiKeyView.urlname))
+                    ),
+                )),
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(

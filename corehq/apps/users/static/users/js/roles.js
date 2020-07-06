@@ -77,6 +77,10 @@ hqDefine('users/js/roles',[
             unwrap: function (self) {
                 var data = ko.mapping.toJS(self);
 
+                if (data.name) {
+                    data.name = data.name.trim();
+                }
+
                 data.permissions.view_report_list = ko.utils.arrayMap(ko.utils.arrayFilter(data.reportPermissions.specific, function (report) {
                     return report.value;
                 }), function (report) {

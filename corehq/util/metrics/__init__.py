@@ -118,7 +118,7 @@ from celery.task import periodic_task
 from django.conf import settings
 from corehq.util.timer import TimingContext
 from dimagi.utils.modules import to_function
-from .const import COMMON_TAGS, ALERT_INFO
+from .const import COMMON_TAGS, ALERT_INFO, MPM_ALL
 from .metrics import (
     DebugMetrics,
     DelegatedMetrics,
@@ -165,9 +165,16 @@ def metrics_counter(name: str, value: float = 1, tags: Dict[str, str] = None, do
     provider.counter(name, value, tags=tags, documentation=documentation)
 
 
-def metrics_gauge(name: str, value: float, tags: Dict[str, str] = None, documentation: str = ''):
+def metrics_gauge(name: str, value: float, tags: Dict[str, str] = None, documentation: str = '',
+                  multiprocess_mode: str = MPM_ALL):
+    """
+    kwargs:
+        multiprocess_mode: See PrometheusMetrics._gauge for documentation. This is only passed
+            to PrometheusMetrics since it is one of PrometheusMetrics.accepted_gauge_params
+    """
     provider = _get_metrics_provider()
-    provider.gauge(name, value, tags=tags, documentation=documentation)
+    provider.gauge(name, value, tags=tags, documentation=documentation,
+        multiprocess_mode=MPM_ALL)
 
 
 def metrics_histogram(
@@ -181,7 +188,7 @@ def metrics_histogram(
     )
 
 
-def metrics_gauge_task(name, fn, run_every):
+def metrics_gauge_task(name, fn, run_every, multiprocess_mode=MPM_ALL):
     """
     Helper for easily registering gauges to run periodically
 
@@ -194,6 +201,8 @@ def metrics_gauge_task(name, fn, run_every):
             'commcare.my.metric', my_calculation_function, run_every=crontab(minute=0)
         )
 
+    kwargs:
+        multiprocess_mode: See PrometheusMetrics._gauge for documentation.
     """
     _enforce_prefix(name, 'commcare')
 
