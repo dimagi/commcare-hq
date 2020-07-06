@@ -66,9 +66,9 @@ class.
 import re
 import warnings
 from datetime import datetime, timedelta
-from typing import Optional
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
+from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
@@ -99,12 +99,6 @@ from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
     FormAccessors,
 )
-from corehq.motech.auth import (
-    AuthManager,
-    BasicAuthManager,
-    BearerAuthManager,
-    DigestAuthManager,
-)
 from corehq.motech.const import (
     ALGO_AES,
     BASIC_AUTH,
@@ -113,7 +107,7 @@ from corehq.motech.const import (
     OAUTH1,
 )
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.requests import Requests, simple_post
+from corehq.motech.requests import simple_post
 from corehq.motech.utils import b64_aes_decrypt
 from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
@@ -175,7 +169,6 @@ class Repeater(QuickCachedDocumentMixin, Document):
     base_doc = 'Repeater'
 
     domain = StringProperty()
-    name = StringProperty(default="")
     connection_settings_id = IntegerProperty(required=False, default=None)
     # TODO: Delete the following properties once all Repeaters have been
     #       migrated to ConnectionSettings. (2020-05-16)
@@ -200,11 +193,15 @@ class Repeater(QuickCachedDocumentMixin, Document):
     def __repr__(self):
         return f"<{self.__class__.__name__} {self._id} {self.name!r}>"
 
-    @property
+    @cached_property
     def connection_settings(self):
         if not self.connection_settings_id:
             return self.create_connection_settings()
         return ConnectionSettings.objects.get(pk=self.connection_settings_id)
+
+    @property
+    def name(self):
+        return self.connection_settings.name
 
     @classmethod
     def available_for_domain(cls, domain):
@@ -317,6 +314,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
 
     @classmethod
     def wrap(cls, data):
+        data.pop('name', None)
         if cls.__name__ == Repeater.__name__:
             cls_ = cls.get_class_from_doc_type(data['doc_type'])
             if cls_:
@@ -446,7 +444,6 @@ class Repeater(QuickCachedDocumentMixin, Document):
         # Allow ConnectionSettings to encrypt old Repeater passwords:
         conn.plaintext_password = self.plaintext_password
         conn.save()
-        self.name = conn.name
         self.connection_settings_id = conn.id
         self.save()
         return conn
