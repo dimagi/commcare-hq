@@ -3,7 +3,7 @@ from tastypie.exceptions import BadRequest
 
 from casexml.apps.case.models import CommCareCase
 
-from corehq.apps.api.es import CaseESView, ElasticAPIQuerySet, es_search
+from corehq.apps.api.es import CaseESView, ElasticAPIQuerySet, es_query_from_get_params
 from corehq.apps.api.models import ESCase
 from corehq.apps.api.resources import (
     DomainSpecificResourceMixin,
@@ -65,7 +65,7 @@ class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
 
     def obj_get_list(self, bundle, domain, **kwargs):
         try:
-            es_query = es_search(bundle.request, domain)
+            es_query = es_query_from_get_params(bundle.request, domain)
         except Http400 as e:
             raise BadRequest(str(e))
 

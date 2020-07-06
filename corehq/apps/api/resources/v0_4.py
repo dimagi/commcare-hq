@@ -14,7 +14,7 @@ from casexml.apps.case.xform import get_case_updates
 from corehq.apps.api.query_adapters import GroupQuerySetAdapter
 from couchforms.models import doc_types
 
-from corehq.apps.api.es import ElasticAPIQuerySet, FormESView, es_search
+from corehq.apps.api.es import ElasticAPIQuerySet, FormESView, es_query_from_get_params
 from corehq.apps.api.fields import (
     ToManyDictField,
     ToManyDocumentsField,
@@ -151,7 +151,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
     def obj_get_list(self, bundle, domain, **kwargs):
         include_archived = 'include_archived' in bundle.request.GET
         try:
-            es_query = es_search(bundle.request, domain, ['include_archived'])
+            es_query = es_query_from_get_params(bundle.request, domain, ['include_archived'])
         except Http400 as e:
             raise BadRequest(str(e))
         if include_archived:

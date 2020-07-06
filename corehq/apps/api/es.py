@@ -648,7 +648,7 @@ query_param_consumers = [
 ]
 
 
-def es_search(request, domain, reserved_query_params=None):
+def es_query_from_get_params(request, domain, reserved_query_params=None):
     return es_search_by_params(request.GET, domain, reserved_query_params)
 
 
