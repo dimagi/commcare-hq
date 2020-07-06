@@ -28,3 +28,5 @@ class Command(AppMigrationCommandBase):
 
         app.move_child_modules_after_parents()  # TODO: probably shouldn't do this blindly
         return app
+    # TODO: move "excluded form ids" between parents and children
+    # TODO: Don't re-create modules if they already exist (monotonic)
