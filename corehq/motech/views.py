@@ -1,6 +1,6 @@
 import re
 
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
@@ -8,10 +8,10 @@ from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
 from django.views.generic.edit import ModelFormMixin, ProcessFormView
 
+from django_prbac.utils import has_privilege
 from memoized import memoized
 
-from corehq import privileges
-from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq import privileges, toggles
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
@@ -110,13 +110,19 @@ class MotechLogDetailView(BaseProjectSettingsView, DetailView):
         return reverse(self.urlname, args=[self.domain, pk])
 
 
-@method_decorator(requires_privilege_with_fallback(privileges.DATA_FORWARDING),
-                  name='dispatch')
-@method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
 class ConnectionSettingsListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
     urlname = 'connection_settings_list_view'
     page_title = _('Connection Settings')
     template_name = 'motech/connection_settings.html'
+
+    @method_decorator(require_permission(Permissions.edit_motech))
+    def dispatch(self, request, *args, **kwargs):
+        if (
+            toggles.INCREMENTAL_EXPORTS.enabled_for_request(request)
+            or has_privilege(request, privileges.DATA_FORWARDING)
+        ):
+            return super().dispatch(request, *args, **kwargs)
+        raise Http404()
 
     @property
     def total(self):
@@ -178,15 +184,21 @@ class ConnectionSettingsListView(BaseProjectSettingsView, CRUDPaginatedViewMixin
         return self.paginate_crud_response
 
 
-@method_decorator(requires_privilege_with_fallback(privileges.DATA_FORWARDING),
-                  name='dispatch')
-@method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
 class ConnectionSettingsDetailView(BaseProjectSettingsView, ModelFormMixin, ProcessFormView):
     urlname = 'connection_settings_detail_view'
     page_title = _('Connection Settings')
     template_name = 'motech/connection_settings_detail.html'
     model = ConnectionSettings
     form_class = ConnectionSettingsForm
+
+    @method_decorator(require_permission(Permissions.edit_motech))
+    def dispatch(self, request, *args, **kwargs):
+        if (
+            toggles.INCREMENTAL_EXPORTS.enabled_for_request(request)
+            or has_privilege(request, privileges.DATA_FORWARDING)
+        ):
+            return super().dispatch(request, *args, **kwargs)
+        raise Http404()
 
     def get_queryset(self):
         return super().get_queryset().filter(domain=self.domain)
@@ -218,8 +230,13 @@ class ConnectionSettingsDetailView(BaseProjectSettingsView, ModelFormMixin, Proc
 
 @require_POST
 @require_permission(Permissions.edit_motech)
-@requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def test_connection_settings(request, domain):
+    if not (
+        toggles.INCREMENTAL_EXPORTS.enabled_for_request(request)
+        or has_privilege(request, privileges.DATA_FORWARDING)
+    ):
+        raise Http404
+
     if request.POST.get('plaintext_password') == PASSWORD_PLACEHOLDER:
         # The user is editing an existing instance, and the form is
         # showing the password placeholder. (We don't tell the user what
