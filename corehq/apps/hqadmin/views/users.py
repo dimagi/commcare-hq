@@ -339,7 +339,7 @@ class DomainAdminRestoreView(AdminRestoreView):
 @require_superuser
 def web_user_lookup(request):
     template = "hqadmin/web_user_lookup.html"
-    web_user_email = request.GET.get("q").lower()
+    web_user_email = request.GET.get("q", "").lower()
 
     context = {
         'current_page': {
