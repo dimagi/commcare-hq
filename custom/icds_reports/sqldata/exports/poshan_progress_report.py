@@ -70,17 +70,22 @@ class PoshanProgressReport(object):
         data = query_set.values(*cols)
         row_data_dict = {}
         dummy_row = [0 for _ in range(0, len(all_cols))]
+
+        latest_value_cols = ['num_launched_districts', 'num_launched_blocks', 'num_launched_awcs']
         # update the dict
         # {'unique_id': [contains the excel row with sum of col values for all months eg. m1+m2+m3]}
         for row in data:
+            launched = True if row['num_launched_awcs'] > 0 else False
             if row[unique_id] not in row_data_dict.keys():
                 row_data_dict[row[unique_id]] = dummy_row[:]
             row_data = row_data_dict[row[unique_id]][:]
             for k, v in row.items():
                 if k in ['state_name', 'district_name']:
                     row_data[all_cols.index(k)] = v
+                elif k in latest_value_cols:
+                    row_data[all_cols.index(k)] = max(row_data[all_cols.index(k)], v if (v and launched is True) else 0)
                 elif k != unique_id:
-                    row_data[all_cols.index(k)] += v if v else 0
+                    row_data[all_cols.index(k)] += v if (v and launched is True) else 0
             row_data_dict[row[unique_id]] = row_data
 
         # stores names and ids not numbers like state_name, id
@@ -90,12 +95,14 @@ class PoshanProgressReport(object):
         # calculating average and getting total row
         # m1+m2+m3/3
         for k, v in row_data_dict.items():
+            launched = True if v[all_cols.index('num_launched_awcs')] > 0 else False
             for col in all_cols:
                 if col not in named_cols:
                     val = v[all_cols.index(col)]
-                    val = handle_average(val)
+                    if col not in latest_value_cols:
+                        val = handle_average(val)
                     row_data_dict[k][all_cols.index(col)] = val
-                    total_row[all_cols.index(col)] += round(val) if val else 0
+                    total_row[all_cols.index(col)] += round(val) if (val and launched is True) else 0
                 else:
                     total_row[all_cols.index(col)] = 'Total'
 
@@ -106,9 +113,6 @@ class PoshanProgressReport(object):
         for k, v in row_data_dict.items():
             row = v[:]
             row_data_dict[k] = self.__calculate_percentage_in_rows(row, all_cols)
-            # rounding remaining values (not used to calculate percentage)
-            for col in ['num_launched_districts', 'num_launched_blocks']:
-                row_data_dict[k][all_cols.index(col)] = round(row_data_dict[k][all_cols.index(col)])
             # marking all the unlaunched states as Not Launched
             if row_data_dict[k][all_cols.index('num_launched_awcs')] == 0:
                 for col in all_cols:
@@ -154,10 +158,11 @@ class PoshanProgressReport(object):
         total_row = [0 for _ in range(0, len(all_cols))]
         for row in data:
             row_data = dummy_row[:]
+            launched = True if row['num_launched_awcs'] > 0 else False
             for col in cols_to_fetch:
                 row_data[all_cols.index(col)] = row[col]
                 if col not in ['state_name', 'district_name']:
-                    total_row[all_cols.index(col)] += row[col] if row[col] else 0
+                    total_row[all_cols.index(col)] += row[col] if (row[col] and launched is True) else 0
                 else:
                     total_row[all_cols.index(col)] = 'Total'
             excel_rows.append(row_data)

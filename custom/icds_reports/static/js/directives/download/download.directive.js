@@ -161,35 +161,36 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
         vm.indicators.push({id: 11, name: 'Dashboard Activity Report'});
     }
 
-    if (haveAccessToFeatures) {
-        vm.indicators.push({id: 12, name: 'Service Delivery Report'});
-        vm.indicators.push({id: 13, name: 'Child Growth Tracking Report'});
-        vm.indicators.push({id: 14, name: 'AWW Activity Report'});
+    vm.indicators.push({id: 12, name: 'Service Delivery Report'});
+    vm.indicators.push({id: 13, name: 'Child Growth Tracking Report'});
+    vm.indicators.push({id: 14, name: 'AWW Activity Report'});
+    if (vm.userLocationType.toLowerCase() !== 'block'  && vm.userLocationType.toLowerCase() !== 'district') {
         vm.indicators.push({id: 15, name: 'Poshan Progress Report'});
-        vm.reportLayouts = [
-            {id: 'comprehensive', name: 'Comprehensive'},
-            {id: 'summary', name: 'Summary'},
-        ];
-        vm.dataPeriods = [
-            {id: 'month', name: 'Monthly'},
-            {id: 'quarter', name: 'Quarterly'},
-        ];
-        vm.beneficiaryCategories = [
-            {id: 'pw_lw_children', name: 'PW, LW & Children 0-3 years'},
-            {id: 'children_3_6', name: 'Children 3-6 years'},
-        ];
-        vm.quarters = [
-            {id: 1, name: 'Jan-Mar'},
-            {id: 2, name: 'Apr-Jun'},
-            {id: 3, name: 'Jul-Sep'},
-            {id: 4, name: 'Oct-Dec'},
-        ];
-        vm.quartersCopy = vm.quarters;
-        vm.selectedBeneficiaryCategory = 'pw_lw_children';
-        vm.selectedReportLayout = 'comprehensive';
-        vm.selectedDataPeriod = 'month';
-        vm.selectedQuarter = 1;
     }
+    vm.reportLayouts = [
+        {id: 'comprehensive', name: 'Comprehensive'},
+        {id: 'summary', name: 'Summary'},
+    ];
+    vm.dataPeriods = [
+        {id: 'month', name: 'Monthly'},
+        {id: 'quarter', name: 'Quarterly'},
+    ];
+    vm.beneficiaryCategories = [
+        {id: 'pw_lw_children', name: 'PW, LW & Children 0-3 years'},
+        {id: 'children_3_6', name: 'Children 3-6 years'},
+    ];
+    vm.quarters = [
+        {id: 1, name: 'Jan-Mar'},
+        {id: 2, name: 'Apr-Jun'},
+        {id: 3, name: 'Jul-Sep'},
+        {id: 4, name: 'Oct-Dec'},
+    ];
+    vm.quartersCopy = vm.quarters;
+    vm.selectedBeneficiaryCategory = 'pw_lw_children';
+    vm.selectedReportLayout = 'comprehensive';
+    vm.selectedDataPeriod = 'month';
+    vm.selectedQuarter = 1;
+
     vm.THRreportTypes = [
         {id: 'consolidated', name: 'Consolidated'},
         {id: 'beneficiary_wise', name: 'Beneficiary wise'},
@@ -360,7 +361,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
             vm.setPPRYears();
 
         } else if (year.id === latest.getFullYear()) {
-            const maxQuarter = Math.floor((latest.getMonth() + 1)/4);
+            var maxQuarter = Math.floor(latest.getMonth() / 3);
             vm.months = _.filter(vm.monthsCopy, function (month) {
                 return month.id <= latest.getMonth() + 1;
             });
@@ -413,7 +414,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
     };
 
     vm.getFormats = function () {
-        if (vm.isChildBeneficiaryListSelected()) {
+        if (vm.isChildBeneficiaryListSelected() || vm.isChildGrowthTrackerSelected()) {
             return [vm.formats[0]];
         } else {
             return vm.formats;
@@ -421,8 +422,9 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
     };
 
     vm.onIndicatorSelect = function () {
+        var latest = new Date();
         vm.handleViewByShift();
-        if (vm.isChildBeneficiaryListSelected()) {
+        if (vm.isChildBeneficiaryListSelected() || vm.isChildGrowthTrackerSelected()) {
             init();
             vm.selectedFormat = vm.formats[0].id;
         } else if (vm.isIncentiveReportSelected()) {
@@ -473,7 +475,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
         var levels = _.filter(vm.levels, function (value){return value.id > locationIndex;});
         vm.groupByLevels = levels;
         vm.selectedLevel = locationIndex + 1;
-    }
+    };
 
     /**
      * To adjust selectedLevel for the reports that do not have viewBy filter. These
@@ -498,13 +500,12 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
             'pdfformat': vm.selectedPDFFormat,
             'selected_awcs': awcs.join(','),
         };
-        if (haveAccessToFeatures) {
-            taskConfig['beneficiary_category'] = vm.selectedBeneficiaryCategory;
-            taskConfig['thr_report_type'] = vm.selectedTHRreportType;
-            taskConfig['report_layout'] = vm.selectedReportLayout;
-            taskConfig['data_period'] = vm.selectedDataPeriod;
-            taskConfig['quarter'] = vm.selectedQuarter;
-        }
+        taskConfig['beneficiary_category'] = vm.selectedBeneficiaryCategory;
+        taskConfig['thr_report_type'] = vm.selectedTHRreportType;
+        taskConfig['report_layout'] = vm.selectedReportLayout;
+        taskConfig['data_period'] = vm.selectedDataPeriod;
+        taskConfig['quarter'] = vm.selectedQuarter;
+
         var selectedFilters = vm.selectedFilterOptions();
         if (vm.isChildBeneficiaryListSelected()) {
             taskConfig['filter[]'] = [];
@@ -547,7 +548,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
         var beneficiaryListErrors = vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
         var growthListErrors = vm.isChildGrowthTrackerSelected() && !vm.isDistrictOrBelowSelected();
         var incentiveReportErrors = vm.isIncentiveReportSelected() && !vm.isStateSelected();
-        var PPRErrors = vm.isPPRSelected() && vm.isDistrictOrBelowSelected();
+        var PPRErrors = vm.isPPRSelected() && (vm.isDistrictOrBelowSelected() || vm.selectedLevel === 0);
         var ladySupervisorReportErrors = false;
         if (!vm.haveAccessToFeatures) {
             ladySupervisorReportErrors = vm.isLadySupervisorSelected() && !vm.isStateSelected();

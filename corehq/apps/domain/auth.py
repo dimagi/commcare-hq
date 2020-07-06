@@ -284,4 +284,4 @@ class HQApiKeyAuthentication(ApiKeyAuthentication):
             api_key = self.extract_credentials(request)[1]
         except ValueError:
             api_key = ''
-        return f"{request.domain}_{api_key}"
+        return f"{getattr(request, 'domain', '')}_{api_key}"

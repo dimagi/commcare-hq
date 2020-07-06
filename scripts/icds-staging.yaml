@@ -1,0 +1,58 @@
+#############################
+#   ICDS STAGING WORKFLOW   #
+############################
+
+# GENERAL PROCESS
+# From your commcare-hq directory with the virtualenv turned on
+#     $ git checkout master
+# Update scripts/icds-staging.yaml and add your branch that you want to deploy
+# Push the updates of icds-staging.yaml to master by using
+#     $ scripts/commit-icds-staging
+# To check if your branch causes any conflicts before rebuilding
+#     $ scripts/rebuild-icds-staging --no-push
+# To rebuild from your new spec and deploy
+#     $ scripts/rebuild-icds-staging
+#     $ commcare-cloud icds-staging deploy --commcare-rev icds-autostaging
+# We will be removing --commcare-rev once we add default branch for icds-staging
+# on commcare-cloud
+
+# CONFLICT RESOLUTION
+# First, determine where the conflict lies.
+# a). branch `foo` conflicts with `master`
+#       $ git checkout -b foo origin/foo
+#       $ git pull origin master
+#     try to resolve conflict
+#       $ git push origin foo
+# b). branch `foo` conflicts with branch `bar`
+#     you can't just merge foo into bar or vice versa, otherwise the PR
+#     for foo will contain commits from bar.  Instead make a third,
+#     conflict-resolution branch:
+#       $ git checkout -b foo+bar --no-track origin/foo
+#       $ git pull origin bar
+#     try to resolve conflict
+#       $ git push origin foo+bar
+#     add the branch `foo+bar` to icds-staging.yaml and move branches foo and
+#     bar to right below it
+#
+#     Later on branch B gets merged into master and removed from icds-staging.yaml.
+#     Perhaps the person who removes it also notices the A+B and does the
+#     following. Otherwise anyone who comes along and sees A+B but not both
+#     branches can feel free to assume the following need to be done.
+#       * Merge A+B into A. Since B is now gone, you want to merge the
+#         resolution into A, otherwise A will conflict with master.
+#       * Remove A+B from icds-staging.yaml. It's no longer necessary since it's
+#         now a subset of A.
+#
+# If you are unsure of how to resolve a conflict, notify the branch owner.
+
+# FORMPLAYER
+# From the formplayer, repo, call `./scripts/rebuildstaging`
+# This rebuilds the `icds-autostaging` branch of formplayer and runs the formplayer-staging job on jenkins
+
+trunk: master
+name: icds-autostaging
+branches:
+  - ap/restrict-unauthorized-users
+  - mk/update-guj-resident-translations # MK July 3
+
+submodules: {}
