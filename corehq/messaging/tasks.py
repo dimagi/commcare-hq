@@ -159,6 +159,7 @@ def run_messaging_rule(domain, rule_id):
             incr += 1
             if incr >= 1000:
                 incr = 0
+                progress_helper.update_total_key_expiry()
                 if progress_helper.is_canceled():
                     break
 
