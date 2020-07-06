@@ -700,11 +700,7 @@ def _validate_and_get_es_filter(search_param):
         raise Http400
 
 
-def es_query_from_get_params(request, domain, reserved_query_params=None):
-    return es_search_by_params(request.GET, domain, reserved_query_params)
-
-
-def es_search_by_params(search_params, domain, reserved_query_params=None):
+def es_query_from_get_params(search_params, domain, reserved_query_params=None):
     payload = {
         "filter": {
             "and": [

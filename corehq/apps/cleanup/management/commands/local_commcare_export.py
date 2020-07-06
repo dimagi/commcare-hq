@@ -13,7 +13,7 @@ from corehq.apps.api.es import (
     CaseESView,
     ElasticAPIQuerySet,
     FormESView,
-    es_search_by_params,
+    es_query_from_get_params,
 )
 from corehq.apps.api.models import ESCase, ESXFormInstance
 from corehq.apps.api.resources.v0_4 import (
@@ -35,7 +35,7 @@ class MockApi(namedtuple('MockApi', 'query_set resource serializer')):
 
 def _get_case_mock(project, params):
     # this is mostly copy/paste/modified from CommCareCaseResource
-    es_query = es_search_by_params(params, project)
+    es_query = es_query_from_get_params(params, project)
     query_set = ElasticAPIQuerySet(
         payload=es_query,
         model=ESCase,
@@ -50,7 +50,7 @@ def _get_case_mock(project, params):
 def _get_form_mock(project, params):
     # this is mostly copy/paste/modified from XFormInstanceResource
     include_archived = 'include_archived' in params
-    es_query = es_search_by_params(params, project, ['include_archived'])
+    es_query = es_query_from_get_params(params, project, ['include_archived'])
     if include_archived:
         es_query['filter']['and'].append({'or': [
             {'term': {'doc_type': 'xforminstance'}},

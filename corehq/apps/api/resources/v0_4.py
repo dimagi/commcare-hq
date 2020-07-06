@@ -151,7 +151,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
     def obj_get_list(self, bundle, domain, **kwargs):
         include_archived = 'include_archived' in bundle.request.GET
         try:
-            es_query = es_query_from_get_params(bundle.request, domain, ['include_archived'])
+            es_query = es_query_from_get_params(bundle.request.GET, domain, ['include_archived'])
         except Http400 as e:
             raise BadRequest(str(e))
         if include_archived:
