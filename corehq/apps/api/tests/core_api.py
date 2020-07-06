@@ -1,4 +1,8 @@
-from django.test import TestCase
+import json
+
+from datetime import datetime
+from django.test import SimpleTestCase, TestCase
+from django.test.client import RequestFactory
 from django.urls import reverse
 from django.utils.http import urlencode
 
@@ -11,7 +15,7 @@ from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
     Subscription,
 )
-from corehq.apps.api.es import ElasticAPIQuerySet
+from corehq.apps.api.es import ElasticAPIQuerySet, es_query_from_get_params
 from corehq.apps.api.fields import (
     ToManyDictField,
     ToManyDocumentsField,
@@ -21,7 +25,9 @@ from corehq.apps.api.fields import (
 from corehq.apps.api.resources import v0_4, v0_5
 from corehq.apps.api.util import get_obj
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.tests.utils import ElasticTestMixin
 from corehq.apps.users.models import CommCareUser, HQApiKey, WebUser
+from no_exceptions.exceptions import Http400
 
 from .utils import APIResourceTest, FakeFormESView
 
@@ -485,3 +491,110 @@ class TestApiKey(APIResourceTest):
                               }))
         response = self.client.get(endpoint)
         self.assertEqual(response.status_code, 401)
+
+
+class TestParamstoESFilters(SimpleTestCase, ElasticTestMixin):
+
+    def test_search_param(self):
+        self.maxDiff = None
+        range_expression = {
+            'gte': datetime(2019, 1, 1).isoformat(),
+            'lte': datetime(2019, 1, 2).isoformat()
+        }
+        server_modified_missing = {"missing": {
+            "field": "server_modified_on", "null_value": True, "existence": True}
+        }
+        query = {
+            'filter': {
+                "or": [
+                    {
+                        "and": [
+                            {
+                                "not": server_modified_missing
+                            },
+                            {
+                                "range": {
+                                    "server_modified_on": range_expression
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "and": [
+                            server_modified_missing,
+                            {
+                                "range": {
+                                    "received_on": range_expression
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+        request = RequestFactory().get(
+            "/a/test_domain/api/v0.5/form/",
+            data={'_search': json.dumps(query)}
+        )
+        expected = {
+            "filter": {
+                "and": [
+                    {
+                        "term": {
+                            "domain.exact": "test_domain"
+                        }
+                    },
+                    query['filter']
+                ]
+            }
+        }
+        self.checkQuery(
+            es_query_from_get_params(request, 'test_domain'),
+            expected,
+            is_raw_query=True
+        )
+
+    def test_inserted_at_query(self):
+        query = {
+            'filter': {
+                'range': {
+                    'inserted_at': {'gt': '2020-06-27T20:51:23.773000'}
+                }
+            }
+        }
+        request = RequestFactory().get(
+            "/a/test_domain/api/v0.5/form/",
+            data={'_search': json.dumps(query)}
+        )
+        expected = {
+            "filter": {
+                "and": [
+                    {
+                        "term": {
+                            "domain.exact": "test_domain"
+                        }
+                    },
+                    query['filter']
+                ]
+            }
+        }
+        self.checkQuery(
+            es_query_from_get_params(request, 'test_domain'),
+            expected,
+            is_raw_query=True
+        )
+
+    def test_other_queries_get_skipped(self):
+        query = {
+            'filter': {
+                'range': {
+                    'received_on': {'gt': '2020-06-27T20:51:23.773000'}
+                }
+            }
+        }
+        request = RequestFactory().get(
+            "/a/test_domain/api/v0.5/form/",
+            data={'_search': json.dumps(query)}
+        )
+        with self.assertRaises(Http400):
+            es_query_from_get_params(request, 'test_domain')

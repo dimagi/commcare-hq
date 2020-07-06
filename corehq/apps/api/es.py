@@ -648,6 +648,58 @@ query_param_consumers = [
 ]
 
 
+def _validate_and_get_es_filter(search_param):
+    #
+    try:
+        _filter = search_param['filter']
+        # custom use case by 'enveritas' project for Form API
+        date_range = _filter['range']['inserted_at']
+        return {
+            'range': {'inserted_at': date_range}
+        }
+    except KeyError:
+        pass
+    try:
+        # Data export tool passes below structure. validate that it is so
+        try:
+            _range = _filter['or'][0]['and'][0]['range']['server_modified_on']
+        except KeyError:
+            _range = _filter['or'][0]['and'][1]['range']['server_modified_on']
+        server_modified_missing = {"missing": {
+            "field": "server_modified_on", "null_value": True, "existence": True}
+        }
+        expected = json.dumps({
+            "or": [
+                {
+                    "and": [
+                        {
+                            "not": server_modified_missing
+                        },
+                        {
+                            "range": {
+                                "server_modified_on": _range
+                            }
+                        }
+                    ]
+                },
+                {
+                    "and": [
+                        server_modified_missing,
+                        {
+                            "range": {
+                                "received_on": _range
+                            }
+                        }
+                    ]
+                }
+            ]
+        }, sort_keys=True)
+        assert json.dumps(_filter, sort_keys=True) == expected
+        return _filter
+    except (KeyError, AssertionError):
+        raise Http400
+
+
 def es_query_from_get_params(request, domain, reserved_query_params=None):
     return es_search_by_params(request.GET, domain, reserved_query_params)
 
@@ -660,15 +712,11 @@ def es_search_by_params(search_params, domain, reserved_query_params=None):
             ]
         },
     }
-
-    # ?_search=<json> for providing raw ES query, which is nonetheless restricted here
-    # NOTE: The fields actually analyzed into ES indices differ somewhat from the raw
-    # XML / JSON.
     if '_search' in search_params:
-        additions = json.loads(search_params['_search'])
-
-        if 'filter' in additions:
-            payload['filter']['and'].append(additions['filter'])
+        # This is undocumented usecase by Data export tool and one custom project
+        #   Validate that the passed in param is one of these two expected
+        _filter = _validate_and_get_es_filter(json.loads(search_params['_search']))
+        payload['filter']['and'].append(_filter)
 
     # filters are actually going to be a more common case
     reserved_query_params = RESERVED_QUERY_PARAMS | set(reserved_query_params or [])
