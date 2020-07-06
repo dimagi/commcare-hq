@@ -1,5 +1,7 @@
 import re
 from collections import namedtuple
+from corehq.apps.domain.models import Domain
+from dimagi.utils.web import get_url_base
 
 WA_TEMPLATE_STRING = "cc_wa_template"
 
@@ -10,6 +12,26 @@ class WhatsAppTemplateStringException(Exception):
 
 def is_whatsapp_template_message(message_text):
     return WA_TEMPLATE_STRING in message_text.lower()
+
+
+def is_multimedia_message(msg):
+    return hasattr(msg, 'caption_image') and msg.caption_image is not None \
+           or hasattr(msg, 'caption_audio') and msg.caption_audio is not None \
+           or hasattr(msg, 'caption_video') and msg.caption_video is not None
+
+
+def get_multimedia_urls(msg):
+    image_url = audio_url = video_url = None
+    domain_obj = Domain.get_by_name(msg.domain, strict=True)
+    for app in domain_obj.full_applications():
+        for path, media in app.get_media_objects(remove_unused=True):
+            if hasattr(msg, 'caption_image') and msg.caption_image == path:
+                image_url = get_url_base() + media.url() + 'image.png'
+            if hasattr(msg, 'caption_audio') and msg.caption_audio == path:
+                audio_url = get_url_base() + media.url() + 'audio.mp3'
+            if hasattr(msg, 'caption_video') and msg.caption_video== path:
+                video_url = get_url_base() + media.url() + 'video.mp4'
+    return image_url, audio_url , video_url
 
 
 def extract_error_message_from_template_string(message_text):
