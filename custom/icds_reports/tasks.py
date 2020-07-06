@@ -1100,7 +1100,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
 
     if indicator not in (AWW_INCENTIVE_REPORT, LS_REPORT_EXPORT, THR_REPORT_EXPORT, CHILDREN_EXPORT,
                          DASHBOARD_USAGE_EXPORT, SERVICE_DELIVERY_REPORT, CHILD_GROWTH_TRACKER_REPORT,
-                         AWW_ACTIVITY_REPORT, POSHAN_PROGRESS_REPORT, SYSTEM_USAGE_EXPORT):
+                         AWW_ACTIVITY_REPORT, POSHAN_PROGRESS_REPORT):
         if file_format == 'xlsx' and beta:
             cache_key = create_excel_file_in_openpyxl(excel_data, data_type)
         else:
