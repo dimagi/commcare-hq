@@ -26,7 +26,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
 from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
 from corehq.apps.users.exceptions import IllegalAccountConfirmation
-from corehq.util.model_log import log_model_change
+from corehq.util.model_log import log_model_change, ModelAction
 from corehq.util.models import BouncedEmail
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -1208,7 +1208,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             user = self.get_django_user()
             user.delete()
             if deleted_by:
-                log_model_change(user, deleted_by, message={'deleted_via': deleted_via}, is_delete=True)
+                log_model_change(user, deleted_by, message={'deleted_via': deleted_via}, action=ModelAction.DELETE)
         except User.DoesNotExist:
             pass
         super(CouchUser, self).delete()  # Call the "real" delete() method.
@@ -1646,7 +1646,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             self_django_user,
             message={'created_via': created_via},
             fields_changed=None,
-            is_create=True
+            action=ModelAction.CREATE
         )
 
 
@@ -1873,7 +1873,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         else:
             django_user.delete()
             if deleted_by:
-                log_model_change(deleted_by, django_user, message={'deleted_via': deleted_via}, is_delete=True)
+                log_model_change(deleted_by, django_user, message={'deleted_via': deleted_via},
+                                 action=ModelAction.DELETE)
         self.save()
 
     def confirm_account(self, password):

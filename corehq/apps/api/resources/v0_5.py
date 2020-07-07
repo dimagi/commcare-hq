@@ -85,7 +85,7 @@ from corehq.apps.users.util import raw_username
 from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
 from corehq.util.couch import DocumentNotFound, get_document_or_not_found
-from corehq.util.model_log import log_model_change
+from corehq.util.model_log import ModelAction, log_model_change
 from corehq.util.timer import TimingContext
 
 from . import (
@@ -272,7 +272,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             else:
                 django_user.delete()
                 log_model_change(request.user, django_user, message={'deleted_via': USER_CHANGE_VIA_API},
-                                 is_delete=True)
+                                 action=ModelAction.DELETE)
         return bundle
 
     def obj_update(self, bundle, **kwargs):
