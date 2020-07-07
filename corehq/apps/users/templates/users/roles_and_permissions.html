@@ -164,9 +164,9 @@
             </td>
           {% endif %}
           <td class="text-center">
-            <div data-bind="visible: reportPermissions.all(),
-                                            permissionIcon: {
-                                                manage: true
+            <div data-bind="permissionIcon: {
+                                              edit: permissions.edit_reports,
+                                              view: permissions.view_reports
                                             }"></div>
             <div data-bind="visible: !reportPermissions.all() && reportPermissions.filteredSpecific().length">
               <strong>{% trans "Only" %}</strong><br/>
