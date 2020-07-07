@@ -54,7 +54,7 @@ from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.utils.xform import adjust_text_to_datetime
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.util.quickcache import quickcache
-from custom.icds.view_utils import check_app_access
+from custom.icds.view_utils import check_authorization
 
 from .models import DeviceLogRequest, MobileRecoveryMeasure, SerialIdBucket
 from .utils import (
@@ -260,7 +260,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
 
     app = get_app_cached(domain, app_id) if app_id else None
 
-    error_response = check_app_access(domain, couch_user, app)
+    error_response = check_authorization(domain, couch_user, app)
     if error_response:
         return error_response
     restore_config = RestoreConfig(
@@ -311,7 +311,7 @@ def heartbeat(request, domain, app_build_id):
 
     info["app_id"] = app_id
 
-    error_response = check_app_access(domain, request.couch_user, app)
+    error_response = check_authorization(domain, request.couch_user, app)
     if error_response:
         return error_response
     if not toggles.SKIP_UPDATING_USER_REPORTING_METADATA.enabled(domain):

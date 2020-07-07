@@ -29,7 +29,7 @@ def is_icds_cas_project(domain):
     return IS_ICDS_ENVIRONMENT and domain == ICDS_DOMAIN
 
 
-def check_app_access(domain, user, app):
+def check_authorization(domain, user, app):
     if (
         settings.SERVER_ENVIRONMENT == 'icds-staging'
         and toggles.ROLE_WEBAPPS_PERMISSIONS.enabled(domain)
