@@ -166,10 +166,10 @@ class Permissions(DocumentSchema):
 
         return super(Permissions, cls).wrap(data)
 
-    def view_web_app(self, app_id):
+    def view_web_app(self, master_app_id):
         if self.view_web_apps:
             return True
-        return app_id in self.view_web_apps_list
+        return master_app_id in self.view_web_apps_list
 
     def view_report(self, report, value=None):
         """Both a getter (when value=None) and setter (when value=True|False)"""
