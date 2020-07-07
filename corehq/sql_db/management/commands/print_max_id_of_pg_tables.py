@@ -33,10 +33,9 @@ class Command(BaseCommand):
 
     def handle(self, **options):
         dbname = options['dbname']
-        minval = options['minval']
         cursor = connections[dbname].cursor()
         sequences = get_sequences(cursor)
         result = get_last_values(sequences, cursor)
         print('sequence_name, last_value, max_value')
         for sequence, (last_value, max_value) in result.items():
-            print(sequence, ", ", last_value, ", ",max_value)
+            print(sequence, ", ", last_value, ", ", max_value)
