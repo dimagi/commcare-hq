@@ -1071,6 +1071,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         upload_record = UserUploadRecord(
             domain=self.domain,
             task_id=task.id,
+            user_id=request.couch_user.user_id
         )
         upload_record.save()
         task_ref.set_task(task)

@@ -6,10 +6,11 @@ from django.db import models
 
 
 class UserUploadRecord(models.Model):
-    domain = models.TextField()
-    status = JSONField(null=True)
-    task_id = models.CharField(max_length=256)
+    domain = models.CharField(max_length=256)
+    result = JSONField(null=True)
+    task_id = models.CharField(max_length=40)
     date_created = models.DateTimeField(auto_now_add=True)
+    user_id = models.CharField(max_length=40)
 
     def get_file(self):
         csvfile = StringIO()
