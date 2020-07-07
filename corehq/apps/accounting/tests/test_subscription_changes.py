@@ -178,7 +178,8 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
                 edit_locations=True,
                 view_locations=True,
                 edit_apps=True,
-                edit_data=True
+                edit_data=True,
+                edit_reports=True
             )
             user_role.save()
 
