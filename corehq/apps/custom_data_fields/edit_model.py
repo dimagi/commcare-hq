@@ -17,6 +17,7 @@ from corehq.toggles import REGEX_FIELD_VALIDATION
 
 from .models import (
     CustomDataFieldsDefinition,
+    CustomDataFieldsProfile,
     Field,
     validate_reserved_words,
 )
@@ -28,6 +29,7 @@ class CustomDataFieldsForm(forms.Form):
     """
     data_fields = forms.CharField(widget=forms.HiddenInput)
     purge_existing = forms.BooleanField(widget=forms.HiddenInput, required=False, initial=False)
+    profiles = forms.CharField(widget=forms.HiddenInput)
 
     def verify_no_duplicates(self, data_fields):
         errors = set()
@@ -68,6 +70,25 @@ class CustomDataFieldsForm(forms.Form):
             raise ValidationError('<br/>'.join(sorted(errors)))
 
         return data_fields
+
+    def clean_profiles(self):
+        raw_profiles = json.loads(self.cleaned_data['profiles'])
+
+        errors = set()
+        profiles = []
+        for raw_profile in raw_profiles:
+            profile_form = CustomDataFieldsProfileForm(raw_profile)
+            profile_form.is_valid()
+            profiles.append(profile_form.cleaned_data)
+            if profile_form.errors:
+                errors.update([error[0] for error in profile_form.errors.values()])
+
+        # TODO: validate
+
+        if errors:
+            raise ValidationError('<br/>'.join(sorted(errors)))
+
+        return profiles
 
 
 class XmlSlugField(forms.SlugField):
@@ -124,11 +145,11 @@ class CustomDataFieldsProfileForm(forms.Form):
     """
     name = forms.CharField(
         required=True,
-        error_messages={'required': ugettext_lazy('All fields are required')}
+        error_messages={'required': ugettext_lazy('A name is required for each profile.')}
     )
     fields = forms.CharField(
         required=True,
-        error_messages={'required': ugettext_lazy('At least one field is required')}
+        error_messages={'required': ugettext_lazy('At least one field is required for each profile.')}
     )
 
     def clean_fields(self):
@@ -164,8 +185,13 @@ class CustomDataModelMixin(object):
     def page_name(cls):
         return _("Edit {} Fields").format(str(cls.entity_string))
 
+    @memoized
     def get_definition(self):
         return CustomDataFieldsDefinition.get_or_create(self.domain, self.field_type)
+
+    @memoized
+    def get_profiles(self):
+        return self.get_definition().get_profiles()
 
     def save_custom_fields(self):
         definition = self.get_definition()
@@ -176,6 +202,18 @@ class CustomDataModelMixin(object):
             for field in self.form.cleaned_data['data_fields']
         ])
         definition.save()
+
+    def save_profiles(self):
+        # TODO: handle edits instead of clearing and re-adding all
+        for profile in self.get_profiles():
+            profile.delete()
+        definition = self.get_definition()
+        for profile in self.form.cleaned_data['profiles']:
+            CustomDataFieldsProfile(
+                definition=definition,
+                name=profile['name'],
+                fields=json.loads(profile['fields'])
+            ).save()
 
     def get_field(self, field):
         if REGEX_FIELD_VALIDATION.enabled(self.domain) and field.get('regex'):
@@ -197,12 +235,18 @@ class CustomDataModelMixin(object):
 
     @property
     def page_context(self):
-        return {
+        context = {
             "custom_fields": json.loads(self.form.data['data_fields']),
             "custom_fields_form": self.form,
-            "show_profiles": self.show_profiles,
             "show_purge_existing": self.show_purge_existing,
         }
+        if self.show_profiles:
+            profiles = json.loads(self.form.data['profiles'])
+            context.update({
+                "show_profiles": True,
+                "custom_fields_profiles": sorted(profiles, key=lambda x: x['name'].lower()),
+            })
+        return context
 
     @property
     @memoized
@@ -210,22 +254,27 @@ class CustomDataModelMixin(object):
         if self.request.method == "POST":
             return CustomDataFieldsForm(self.request.POST)
         else:
-            definition = self.get_definition()
-            serialized = json.dumps([
-                {
-                    'slug': field.slug,
-                    'is_required': field.is_required,
-                    'label': field.label,
-                    'choices': field.choices,
-                    'regex': field.regex,
-                    'regex_msg': field.regex_msg,
-                } for field in definition.get_fields()
-            ])
-            return CustomDataFieldsForm({'data_fields': serialized})
+            return CustomDataFieldsForm({
+                'data_fields': json.dumps([
+                    {
+                        'slug': field.slug,
+                        'is_required': field.is_required,
+                        'label': field.label,
+                        'choices': field.choices,
+                        'regex': field.regex,
+                        'regex_msg': field.regex_msg,
+                    } for field in self.get_definition().get_fields()
+                ]),
+                'profiles': json.dumps([
+                    profile.to_json()
+                    for profile in self.get_profiles()
+                ]),
+            })
 
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
             self.save_custom_fields()
+            self.save_profiles()
             if self.show_purge_existing and self.form.cleaned_data['purge_existing']:
                 self.update_existing_models()
             msg = _("{} fields saved successfully").format(
