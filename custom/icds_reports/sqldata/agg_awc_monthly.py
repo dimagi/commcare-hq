@@ -1,6 +1,6 @@
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SumColumn, SimpleColumn
-from sqlagg.filters import BETWEEN, IN, NOT
+from sqlagg.filters import BETWEEN, IN, NOT, EQ
 from sqlagg.sorting import OrderBy
 
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
@@ -35,7 +35,7 @@ class AggAWCMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
             filters.append(NOT(IN('state_id', get_INFilter_bindparams('excluded_states', self.excluded_states))))
 
         if 'month' in self.config and self.config['month']:
-            filters.append(BETWEEN('month', 'two_before', 'month'))
+            filters.append(EQ('month', 'month'))
         return filters
 
     @property
