@@ -1,10 +1,7 @@
 from functools import wraps
 
-from django.contrib import messages
-from django.http import JsonResponse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy
-from django.utils.translation import ugettext as _
 
 from corehq.apps.hqwebapp.views import no_permissions
 from custom.icds.const import ICDS_DOMAIN, IS_ICDS_ENVIRONMENT
