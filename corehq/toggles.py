@@ -14,7 +14,7 @@
     NAMESPACE_DOMAIN is preferred for most flags, because it can be confusing for different users
     to experience different behavior. Domain-based flags are like a lightweight privilege that's
     independent of a software plan. User-based flags are more like a lightweight permission that's
-    independent of user roles.
+    independent of user roles (and therefore also independent of domain).
 
     Tags define how a feature is supported. See descriptions below. When in doubt, use TAG_CUSTOM
     to limit your toggle's expected support burden.
