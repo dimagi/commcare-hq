@@ -8,7 +8,9 @@ from corehq.messaging.whatsapputil import (
     WhatsAppTemplateStringException,
     is_whatsapp_template_message,
     get_template_hsm_parts, WA_TEMPLATE_STRING,
-    extract_error_message_from_template_string
+    extract_error_message_from_template_string,
+    is_multimedia_message,
+    get_multimedia_urls
 )
 
 INFOBIP_DOMAIN = "api.infobip.com"
@@ -106,7 +108,15 @@ class InfobipBackend(SQLSMSBackend):
                 'templateData': parts.params
             }
         else:
-            payload['whatsApp'] = {'text': msg.text}
+            payload['whatsApp'] = {
+                'text': msg.text
+            }
+
+            if is_multimedia_message(msg):
+                image_url, audio_url, video_url = get_multimedia_urls(msg)
+                if image_url: payload['whatsApp']['imageUrl'] = image_url
+                if audio_url: payload['whatsApp']['audioUrl'] = audio_url
+                if video_url: payload['whatsApp']['videoUrl'] = video_url
 
         response = requests.post(url, json=payload, headers=headers)
         self.handle_response(response, msg)
