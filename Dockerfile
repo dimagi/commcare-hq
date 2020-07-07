@@ -44,10 +44,8 @@ RUN npm -g install \
     bower \
     grunt-cli \
     uglify-js \
- && npm -g install \
     puppeteer \
     mocha-headless-chrome \
- && echo '{ "allow_root": true }' > /root/.bowerrc \
  && cd /vendor \
  && npm shrinkwrap \
  && yarn global add phantomjs-prebuilt \
