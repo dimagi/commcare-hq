@@ -1,6 +1,6 @@
-from corehq.plugins.signal_plugin import SignalPlugins
+from corehq.plugins.interface import Plugins
 
-plugin_manager = SignalPlugins()
+plugin_manager = Plugins()
 
 register_extension_point = plugin_manager.register_extension_point
 register_plugin = plugin_manager.register_plugin

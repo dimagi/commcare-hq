@@ -953,7 +953,7 @@ class ApplicationsTab(UITab):
         submenu_context.extend([
             dropdown_dict(**response)
             for response in plugins.get_contributions(
-                "uitab_dropdown_items", tab=tab_name, domain=self.domain, request=self._request
+                "uitab:dropdown_items", tab=tab_name, domain=self.domain, request=self._request
             )
         ])
         return submenu_context

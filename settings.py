@@ -367,7 +367,7 @@ HQ_APPS = (
 
     'custom.common',
 
-    'custom.icds.app_config.IcdsAppConfig',
+    'custom.icds',
     'custom.icds.data_management',
     'custom.icds_reports',
     'custom.nic_compliance',
@@ -1017,6 +1017,13 @@ REQUIRE_TWO_FACTOR_FOR_SUPERUSERS = False
 # Use an experimental partitioning algorithm
 # that adds messages to the partition with the fewest unprocessed messages
 USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
+
+COMMCARE_PLUGINS = {
+    "uitab:dropdown_items": [{
+        "callable": "custom.icds.commcare_plugin.uitab_dropdown_items",
+        "domains": ["icsd-cas"],
+    }]
+}
 
 try:
     # try to see if there's an environmental variable set for local_settings

@@ -4,7 +4,7 @@ from corehq.plugins import register_extension_point
 from corehq.plugins.interface import ExtensionPoint
 
 register_extension_point(ExtensionPoint(
-    "uitab_dropdown_items", providing_args=("tab", "domain", "request"),
+    "uitab:dropdown_items", providing_args=("tab", "domain", "request"),
     docs=inspect.cleandoc("""
         Called by UI tabs during rendering. Receivers must return a dict with keys:
         * title
