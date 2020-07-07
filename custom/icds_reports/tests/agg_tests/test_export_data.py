@@ -98,7 +98,7 @@ class TestExportData(TestCase):
                                     'AWW Phone No.', 'Total No. of Beneficiaries eligible for THR',
                                     'Total No. of beneficiaries received THR for at least 21 days in given month',
                                     'Total No of Pictures taken by AWW'],
-                                   ['st1', 'd1', 'b1', 's1', 'a1', 'a1' 'AWC Not Launched', 'AWC Not Launched',
+                                   ['st1', 'd1', 'b1', 's1', 'a1', 'a1', 'AWC Not Launched', 'AWC Not Launched',
                                     'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
                                    ['st1', 'd1', 'b1', 's1', 'a17', 'a17', 'AWC Not Launched', 'AWC Not Launched',
                                     'AWC Not Launched', 'AWC Not Launched', 'AWC Not Launched'],
