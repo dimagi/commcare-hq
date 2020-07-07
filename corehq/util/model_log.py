@@ -40,6 +40,6 @@ def log_model_change(user, model_object, message=None, fields_changed=None, acti
         content_type_id=get_content_type_for_model(model_object).pk,
         object_id=model_object.pk,
         object_repr=force_text(model_object),
-        action_flag=action,
+        action_flag=action.value,
         change_message=message,
     )
