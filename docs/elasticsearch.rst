@@ -70,7 +70,7 @@ create the new index with new mapping and reindex all data, so you'll
 have to update the index hash and alias at the top of the mapping file.
 The hash suffix to the index can just be a random alphanumeric string and
 is usually the date of the edit by convention. The alias should also be updated
-likewise or simply suffixed with ``_new``, for example ``xforms_new``, so that
+to a new one of format ``xforms_<date-modified>`` (the date is just by convention), so that
 production operations continue to use the old alias pointing to existing index.
 This will trigger a preindex as outlined in the `Indexes` section. In subsequent commits
 alias can be flipped back to what it was, for example ``xforms``. Changing the alias
