@@ -162,7 +162,7 @@ from corehq.util.view_utils import (
     reverse,
 )
 from custom.icds.const import IS_ICDS_ENVIRONMENT
-from custom.icds.view_utils import check_edit_access_for_domain
+from custom.icds.view_utils import check_data_interfaces_blocked_for_domain
 from no_exceptions.exceptions import Http403
 
 from .dispatcher import ProjectReportDispatcher
@@ -1249,7 +1249,7 @@ def case_property_names(request, domain, case_id):
 @require_case_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
-@check_edit_access_for_domain
+@check_data_interfaces_blocked_for_domain
 def edit_case_view(request, domain, case_id):
     if not (has_privilege(request, privileges.DATA_CLEANUP)):
         raise Http404()
@@ -2015,7 +2015,7 @@ def _get_data_cleaning_updates(request, old_properties):
 @require_permission(Permissions.edit_data)
 @require_POST
 @location_safe
-@check_edit_access_for_domain
+@check_data_interfaces_blocked_for_domain
 def edit_form(request, domain, instance_id):
     instance = safely_get_form(request, domain, instance_id)
     assert instance.domain == domain

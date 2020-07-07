@@ -24,16 +24,5 @@ def check_data_interfaces_blocked_for_domain(view_func):
     return _inner
 
 
-def check_edit_access_for_domain(fn):
-    @wraps(fn)
-    def _check_edit_access_for_domain(request, domain, *args, **kwargs):
-        if is_icds_cas_project(domain):
-            messages.error(request, _("You don't have permission to edit these fields"))
-            return JsonResponse({'success': 0})
-        else:
-            return fn(request, domain, *args, **kwargs)
-    return _check_edit_access_for_domain
-
-
 def is_icds_cas_project(domain):
     return IS_ICDS_ENVIRONMENT and domain == ICDS_DOMAIN
