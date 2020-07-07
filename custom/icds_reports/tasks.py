@@ -111,8 +111,8 @@ from custom.icds_reports.models.aggregate import (
     AggregateMigrationForms,
     AggregateAvailingServiceForms,
     BiharAPIDemographics,
-    ChildVaccines
-
+    ChildVaccines,
+    AggregateAppVersion
 )
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.models.util import UcrReconciliationStatus
@@ -447,6 +447,7 @@ def icds_aggregation_task(self, date, func_name):
         '_ccs_record_monthly_table': _ccs_record_monthly_table,
         '_agg_ccs_record_table': _agg_ccs_record_table,
         '_agg_awc_table': _agg_awc_table,
+        '_agg_app_version_table': _agg_app_version_table,
         'aggregate_awc_daily': aggregate_awc_daily,
         'update_service_delivery_report': update_service_delivery_report,
         '_aggregate_inactive_aww_agg': _aggregate_inactive_aww_agg
@@ -755,6 +756,11 @@ def _agg_ls_table(day):
 def _agg_thr_table(state_id, day):
     with transaction.atomic(using=router.db_for_write(AggregateTHRForm)):
         AggregateTHRForm.aggregate(state_id, force_to_date(day))
+
+@track_time
+def _agg_app_version_table(day):
+    with transaction.atomic(using=router.db_for_write(AggregateAppVersion)):
+        AggregateAppVersion.aggregate(force_to_date(day))
 
 @track_time
 def _agg_adolescent_girls_registration_table(state_id, day):

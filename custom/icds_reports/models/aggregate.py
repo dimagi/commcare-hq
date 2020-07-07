@@ -27,7 +27,8 @@ from custom.icds_reports.const import (
     AGG_MIGRATION_TABLE,
     BIHAR_API_DEMOGRAPHICS_TABLE,
     AGG_AVAILING_SERVICES_TABLE,
-    CHILD_VACCINE_TABLE
+    CHILD_VACCINE_TABLE,
+    AGG_APP_VERSION_TABLE
 )
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     AggAwcDailyAggregationDistributedHelper,
@@ -63,8 +64,10 @@ from custom.icds_reports.utils.aggregation_helpers.distributed import (
     MigrationFormsAggregationDistributedHelper,
     BiharApiDemographicsHelper,
     AvailingServiceFormsAggregationDistributedHelper,
-    ChildVaccineHelper
+    ChildVaccineHelper,
+    AppVersionAggregationDistributedHelper
 )
+
 
 def get_cursor(model):
     db = router.db_for_write(model)
@@ -637,6 +640,21 @@ class AggregateTHRForm(models.Model, AggregateMixin):
         db_table = AGG_THR_V2_TABLE
 
     _agg_helper_cls = THRFormV2AggDistributedHelper
+    _agg_atomic = False
+
+
+class AggregateAppVersion(models.Model, AggregateMixin):
+    supervisor_id = models.TextField()
+    awc_id = models.TextField()
+    month = models.DateField()
+    app_version = models.IntegerField(blank=True, null=True)
+    commcare_version = models.TextField(blank=True, null=True)
+
+    class Meta(object):
+        db_table = AGG_APP_VERSION_TABLE
+        unique_together = ('month', 'supervisor_id', 'awc_id')
+
+    _agg_helper_cls = AppVersionAggregationDistributedHelper
     _agg_atomic = False
 
 
