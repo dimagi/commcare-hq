@@ -31,7 +31,8 @@ class CustomDataFieldsForm(forms.Form):
     purge_existing = forms.BooleanField(widget=forms.HiddenInput, required=False, initial=False)
     profiles = forms.CharField(widget=forms.HiddenInput)
 
-    def verify_no_duplicates(self, data_fields):
+    @classmethod
+    def verify_no_duplicates(cls, data_fields):
         errors = set()
         slugs = [field['slug'].lower()
                  for field in data_fields if 'slug' in field]
@@ -41,7 +42,8 @@ class CustomDataFieldsForm(forms.Form):
                              "unique.").format(slug))
         return errors
 
-    def verify_no_reserved_words(self, data_fields):
+    @classmethod
+    def verify_no_reserved_words(cls, data_fields):
         case_reserved_words = load_case_reserved_words()
         errors = set()
         slugs = [field['slug'].lower()
@@ -50,6 +52,42 @@ class CustomDataFieldsForm(forms.Form):
             if slug in case_reserved_words:
                 errors.add(_("Key '{}' is a reserved word in Commcare.").format(slug))
         return errors
+
+    @classmethod
+    def verify_no_profiles_missing_fields(cls, data_fields, profiles):
+        errors = set()
+        slugs = {field['slug'].lower()
+                 for field in data_fields if 'slug' in field}
+        for profile in profiles:
+            for field in json.loads(profile.get('fields', "{}")).keys():
+                if field not in slugs:
+                    errors.add(_("Profile '{}' contains '{}' which is not a known field.").format(
+                        profile['name'], field
+                    ))
+        return errors
+
+    @classmethod
+    def verify_profiles_validate(cls, data_fields, profiles):
+        errors = set()
+        fields_by_slug = {
+            field['slug']: Field(
+                slug=field.get('slug'),
+                is_required=field.get('is_required'),
+                label=field.get('label'),
+                choices=field.get('choices'),
+                regex=field.get('regex'),
+                regex_msg=field.get('regex_msg'),
+            ) for field in data_fields if field.get('slug')
+        }
+        for profile in profiles:
+            for key, value in json.loads(profile.get('fields', '{}')).items():
+                field = fields_by_slug.get(key)
+                if field:
+                    # Only one of these two will run, depending on field's data.
+                    # The other one will return early.
+                    errors.add(field.validate_choices(value))
+                    errors.add(field.validate_regex(value))
+        return {e for e in errors if e}
 
     def clean_data_fields(self):
         raw_data_fields = json.loads(self.cleaned_data['data_fields'])
@@ -83,12 +121,24 @@ class CustomDataFieldsForm(forms.Form):
             if profile_form.errors:
                 errors.update([error[0] for error in profile_form.errors.values()])
 
-        # TODO: validate
-
         if errors:
             raise ValidationError('<br/>'.join(sorted(errors)))
 
         return profiles
+
+    def clean(self):
+        cleaned_data = super().clean()
+        data_fields = self.cleaned_data.get('data_fields', [])
+        profiles = self.cleaned_data.get('profiles', [])
+
+        errors = set()
+        errors.update(self.verify_no_profiles_missing_fields(data_fields, profiles))
+        errors.update(self.verify_profiles_validate(data_fields, profiles))
+
+        if errors:
+            raise ValidationError('<br/>'.join(sorted(errors)))
+
+        return cleaned_data
 
 
 class XmlSlugField(forms.SlugField):

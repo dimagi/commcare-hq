@@ -29,12 +29,14 @@
 
     <p class="lead">{{ view.page_name }}</p>
 
-    {% if custom_fields_form.data_fields.errors %}
-      {% for error in custom_fields_form.data_fields.errors %}
-        <div class="alert alert-danger">
-          {{ error|safe }}
-          <button type="button" class="close" data-dismiss="alert">&times;</button>
-        </div>
+    {% if custom_fields_form.errors %}
+      {% for field, errors in custom_fields_form.errors.items %}
+        {% for error in errors %}
+          <div class="alert alert-danger">
+            {{ error|safe }}
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+          </div>
+        {% endfor %}
       {% endfor %}
     {% endif %}
 
