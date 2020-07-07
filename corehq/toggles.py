@@ -16,8 +16,9 @@
     independent of a software plan. User-based flags are more like a lightweight permission that's
     independent of user roles (and therefore also independent of domain).
 
-    Tags define how a feature is supported. See descriptions below. When in doubt, use TAG_CUSTOM
-    to limit your toggle's expected support burden.
+    Tags document the feature's expected audience, particularly services projects versus SaaS projects.
+    See descriptions below. Tags have no technical effect. When in doubt, use TAG_CUSTOM to limit
+    your toggle's support burden.
 
     When adding a new toggle, define it near related toggles - this file is frequently edited,
     so appending it to the end of the file invites merge conflicts.
