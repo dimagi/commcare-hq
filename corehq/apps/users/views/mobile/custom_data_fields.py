@@ -14,7 +14,7 @@ class UserFieldsView(CustomDataModelMixin, BaseUserSettingsView):
     field_type = CUSTOM_USER_DATA_FIELD_TYPE
     entity_string = _("User")
     show_purge_existing = True
-    show_profiles = True
+    _show_profiles = True
     page_title = _('Edit User Fields')
 
     @method_decorator(require_can_edit_commcare_users)
