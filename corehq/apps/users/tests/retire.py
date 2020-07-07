@@ -63,7 +63,6 @@ class RetireUserTestCase(TestCase):
         delete_all_xforms()
         super(RetireUserTestCase, self).tearDown()
 
-    @run_with_all_backends
     def test_retire(self):
         deleted_via = "Test test"
         django_user = self.commcare_user.get_django_user()
