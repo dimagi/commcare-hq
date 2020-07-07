@@ -42,6 +42,11 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         self.regex = ko.observable(options.regex);
         self.regex_msg = ko.observable(options.regex_msg);
 
+        self.hasModalDetail = true;
+        self.modalName = ko.computed(function () {
+            return self.label() || self.slug();
+        });
+
         if (!toggles.toggleEnabled('REGEX_FIELD_VALIDATION')) {
             // if toggle isn't enabled - always show "choice" option
             self.validationMode('choice');
@@ -96,6 +101,11 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         self.name = ko.observable(options.name);
         self.serializedFields = ko.observable();
 
+        self.hasModalDetail = false;
+        self.modalName = ko.computed(function () {
+            return self.name();
+        });
+
         self.fields = uiElementKeyValueList.new(
             String(Math.random()).slice(2),
             gettext("Profile"),
@@ -120,8 +130,8 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         self.data_fields = ko.observableArray();
         self.profiles = ko.observableArray();
         self.purge_existing = ko.observable(false);
-        // The data field that the "remove field modal" currently refers to.
-        self.modalField = ko.observable();
+        // The field  or profile that the removal modal currently refers to.
+        self.modalModel = ko.observable();
 
         self.addField = function () {
             self.data_fields.push(Field({
@@ -134,17 +144,17 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
             }));
         };
 
-        self.removeField = function (field) {
-            self.data_fields.remove(field);
+        self.removeModel = function (model) {
+            self.data_fields.remove(model);
+            self.profiles.remove(model);
         };
 
-        self.setModalField = function (field) {
-            self.modalField(field);
+        self.setModalModel = function (model) {
+            self.modalModel(model);
         };
 
-        self.confirmRemoveField = function () {
-            // Remove the field that the "remove field modal" currently refers to.
-            self.removeField(self.modalField());
+        self.confirmRemoveModel = function () {
+            self.removeModel(self.modalModel());
         };
 
         self.addProfile = function () {
@@ -154,33 +164,16 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
             }));
         };
 
-        self.serialize = function () {
-            var fields = [];
-            var fieldsToRemove = [];
-            _.each(self.data_fields(), function (field) {
-                if (field.slug() || field.label()) {
-                    fields.push(field.serialize());
-                } else {
-                    fieldsToRemove.push(field);
-                }
+        self.serializeFields = function () {
+            return _.map(self.data_fields(), function (field) {
+                return field.serialize();
             });
-
-            _.each(fieldsToRemove, function (field) {
-                self.removeField(field);
-            });
-            return fields;
         };
 
         self.serializeProfiles = function () {
-            var profiles = []
-
-            _.each(self.profiles(), function (profile) {
-                profiles.push(profile.serialize());
+            return _.map(self.profiles(), function (profile) {
+                return profile.serialize();
             });
-
-            // TODO: handle removing profiles
-
-            return profiles;
         };
 
         self.submitFields = function (fieldsForm) {
@@ -196,7 +189,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
 
             $('<input type="hidden">')
                 .attr('name', 'data_fields')
-                .attr('value', JSON.stringify(self.serialize()))
+                .attr('value', JSON.stringify(self.serializeFields()))
                 .appendTo(customDataFieldsForm);
 
             $('<input type="hidden">')
