@@ -12,7 +12,7 @@ from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.app_manager.views.utils import update_linked_app
-from corehq.apps.hqwebapp.tasks import send_mail_async
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.linked_domain.const import MODEL_APP, MODEL_CASE_SEARCH, MODEL_REPORT
 from corehq.apps.linked_domain.dbaccessors import get_linked_domains
 from corehq.apps.linked_domain.ucr import update_linked_ucr
@@ -120,7 +120,7 @@ The following linked project spaces received content:
                 for msg in self._get_errors(linked_domain) + self._get_successes(linked_domain):
                     message += "\n   - " + msg
         email = self.user.email or self.user.username
-        send_mail_async.delay(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
+        send_html_email_async.delay(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
 
     def _release_app(self, domain_link, model, user, build_and_release=False):
         if toggles.MULTI_MASTER_LINKED_DOMAINS.enabled(domain_link.linked_domain):
