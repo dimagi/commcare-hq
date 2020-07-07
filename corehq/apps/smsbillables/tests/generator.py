@@ -16,8 +16,6 @@ from corehq.apps.smsbillables.models import (
     SmsGatewayFee,
     SmsUsageFee,
 )
-from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
-from corehq.messaging.smsbackends.infobip.models import InfobipBackend
 from corehq.util.test_utils import unit_testing_only
 
 # arbitrarily generated once from http://www.generatedata.com/
@@ -86,7 +84,15 @@ def arbitrary_country_code_and_prefixes(
 def _available_gateway_fee_backends():
     return [
         backend for backend in get_sms_backend_classes().values()
-        if backend.get_api_id() not in [SQLTwilioBackend.get_api_id(), InfobipBackend.get_api_id()]
+        if not backend.using_api_to_get_fees
+    ]
+
+
+@unit_testing_only
+def _available_direct_fee_backends():
+    return [
+        backend for backend in get_sms_backend_classes().values()
+        if backend.using_api_to_get_fees
     ]
 
 
@@ -218,6 +224,44 @@ def arbitrary_non_global_backend_ids():
         sms_backend.is_global = False
         sms_backend.save()
     return backend_ids
+
+
+@unit_testing_only
+def arbitrary_with_direct_fees_backends():
+    backends = []
+    for backend in _available_direct_fee_backends():
+        backend_instance = data_gen.arbitrary_unique_name("back")
+        sms_backend = backend()
+        sms_backend.hq_api_id = backend.get_api_id()
+        sms_backend.couch_id = backend_instance
+        sms_backend.name = backend_instance
+        sms_backend.is_global = True
+        sms_backend.set_extra_fields(
+            account_sid='sid',
+            auth_token='token',
+        )
+        sms_backend.save()
+        backends.append(sms_backend)
+    return backends
+
+
+@unit_testing_only
+def arbitrary_non_global_with_direct_fees_backends():
+    backends = []
+    for backend in _available_direct_fee_backends():
+        backend_instance = data_gen.arbitrary_unique_name("back")
+        sms_backend = backend()
+        sms_backend.hq_api_id = backend.get_api_id()
+        sms_backend.couch_id = backend_instance
+        sms_backend.name = backend_instance
+        sms_backend.is_global = False
+        sms_backend.set_extra_fields(
+            account_sid='sid',
+            auth_token='token',
+        )
+        sms_backend.save()
+        backends.append(sms_backend)
+    return backends
 
 
 @unit_testing_only
