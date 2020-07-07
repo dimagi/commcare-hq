@@ -29,7 +29,7 @@ def is_icds_cas_project(domain):
     return IS_ICDS_ENVIRONMENT and domain == ICDS_DOMAIN
 
 
-def check_authorization(domain, user, app_id):
+def check_authorization(domain, user, master_app_id):
     if (
         settings.SERVER_ENVIRONMENT == 'icds-staging'
         and toggles.ROLE_WEBAPPS_PERMISSIONS.enabled(user.username)
@@ -37,8 +37,11 @@ def check_authorization(domain, user, app_id):
         try:
             role = user.get_role(domain)
         except DomainMembershipError:
-            return HttpResponse(_('User is not a member of this project'), status=404), None
+            return HttpResponse(_('User is not a member of this project'), status=404)
         else:
-            if not (role and role.permissions.view_web_app(app_id)):
-                return HttpResponse(_('User is not allowed on this app'), status=406), None
+            if (
+                not master_app_id
+                or not (role and role.permissions.view_web_app(master_app_id))
+            ):
+                return HttpResponse(_('User is not allowed on this app'), status=406)
     return None
