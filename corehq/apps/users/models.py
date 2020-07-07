@@ -3,6 +3,7 @@ import json
 import logging
 import re
 from auditcare.decorators.models import store_original_doc
+from auditcare.utils.models import TrackModelUpdates
 from datetime import datetime
 from hashlib import sha1
 from uuid import uuid4
@@ -1040,6 +1041,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     reporting_metadata = SchemaProperty(ReportingMetadata)
 
     _user = None
+    track_updates_for = []
 
     @classmethod
     def wrap(cls, data, should_save=False):
@@ -1532,6 +1534,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             from .signals import couch_user_post_save
             results = couch_user_post_save.send_robust(sender='couch_user', couch_user=self)
             log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
+
+        # ToDo: get user who calls save for async tasks like import
+        TrackModelUpdates(self).save()
 
     @classmethod
     def django_user_post_save_signal(cls, sender, django_user, created, max_tries=3):
