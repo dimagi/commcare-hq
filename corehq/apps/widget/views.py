@@ -18,13 +18,13 @@ from memoized import memoized
 @require_GET
 def dialer_view(request, domain):
     callout_number = request.GET.get("callout_number")
-    return render(request, "dialer/base_template.html", {"callout_number": callout_number})
+    return render(request, "widget/web_app_dialer.html", {"callout_number": callout_number})
 
 
 class DialerSettingsView(BaseProjectSettingsView):
     urlname = 'dialer_settings_view'
     page_title = ugettext_lazy('Dialer Settings')
-    template_name = 'dialer/settings.html'
+    template_name = 'widget/settings.html'
 
     @method_decorator(toggles.WIDGET_DIALER.required_decorator())
     def dispatch(self, request, *args, **kwargs):
