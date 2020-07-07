@@ -23,7 +23,10 @@
     so appending it to the end of the file invites merge conflicts.
 
     To access your toggle:
-    - In python, StaticToggle has `enabled` and `enabled_for_request` methods.
+    - In python, StaticToggle has `enabled_for_request`, which takes care of detecting which namespace(s) to check,
+      and `enabled`, which requires the caller to specify the namespace.
+    - For python views, the `required_decorator` is useful.
+    - For python tests, the `flag_enabled` decorator is useful.
     - In HTML, there's a `toggle_enabled` template tag.
     - In JavaScript, the `hqwebapp/js/toggles` modules provides as `toggleEnabled` method.
 """
