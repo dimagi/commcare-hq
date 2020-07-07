@@ -18,12 +18,18 @@ rebuild staging from yaml configuration
 EOF
 }
 
-filename=$1
-if [[ '' = $filename ]]
-then
-    echo "No config file specified."
+function abort () {
+    echo $1
+    echo "Aborting."
     exit 1
+}
+
+staging_file=$1
+if [[ '' = $staging_file ]]
+then
+    abort "No config file specified."
 fi
+filename="scripts/$1"
 shift
 while [[ $# > 0 ]]
 do
@@ -87,13 +93,11 @@ args=''
 
 [[ $skip_fetch = 'y' ]] && args="$args sync rebuild"
 
-# if icds-staging.yaml isn't up-to-date, warn and quit
+# if staging file isn't up-to-date, warn and quit
 git fetch origin master
 if [[ -n $(git diff origin/master -- "$filename") && $no_push != 'y' ]]
 then
-    echo "$filename on this branch different from the one on master"
-    echo "Aborting."
-    exit 1
+    abort "$filename on this branch different from the one on master"
 fi
 
 

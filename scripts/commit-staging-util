@@ -10,15 +10,16 @@ function abort () {
     exit 1
 }
 
-filename=$1
+staging_file=$1
 
-if [[ '' = $filename ]]
+if [[ '' = $staging_file ]]
 then
     abort "No config file specified."
 fi
 
+filename="scripts/$staging_file"
 branch=$(get_branch)
-COMMIT_MESSAGE="update $filename"
+COMMIT_MESSAGE="update $staging_file"
 
 if [[ $branch != 'master' ]]
 then
