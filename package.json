@@ -83,7 +83,7 @@
     "uglify-js": "^2.6.1",
     "ui-select": "angular-ui/ui-select#v0.13.2",
     "underscore": "1.8.3",
-    "xpath": "dimagi/js-xpath#0.0.3",
+    "xpath": "dimagi/js-xpath#v0.0.3",
     "zxcvbn": "4.2.0"
   },
   "devDependencies": {
