@@ -1,24 +1,25 @@
-import textwrap
-
 from celery.task import task
 from collections import defaultdict
 
 from django.conf import settings
 from django.utils.translation import ugettext as _
+from django.urls import reverse
 
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import get_url_base
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.app_manager.views.utils import update_linked_app
-from corehq.apps.hqwebapp.tasks import send_mail_async
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.linked_domain.const import MODEL_APP, MODEL_CASE_SEARCH, MODEL_REPORT
 from corehq.apps.linked_domain.dbaccessors import get_linked_domains
 from corehq.apps.linked_domain.ucr import update_linked_ucr
 from corehq.apps.linked_domain.updates import update_model_type
 from corehq.apps.linked_domain.util import pull_missing_multimedia_for_app_and_notify
 from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
+from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.users.models import CouchUser
 
 
@@ -119,7 +120,7 @@ The following linked project spaces received content:
                 for msg in self._get_errors(linked_domain) + self._get_successes(linked_domain):
                     message += "\n   - " + msg
         email = self.user.email or self.user.username
-        send_mail_async.delay(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
+        send_html_email_async.delay(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
 
     def _release_app(self, domain_link, model, user, build_and_release=False):
         if toggles.MULTI_MASTER_LINKED_DOMAINS.enabled(domain_link.linked_domain):
@@ -154,7 +155,14 @@ The following linked project spaces received content:
                 update_linked_ucr(domain_link, linked_report.get_id)
 
         if not found:
-            return _("Could not find report")
+            report = ReportConfiguration.get(report_id)
+            if report.report_meta.created_by_builder:
+                view = 'edit_report_in_builder'
+            else:
+                view = 'edit_configurable_report'
+            url = get_url_base() + reverse(view, args=[domain_link.master_domain, report_id])
+            return _('Could not find report. <a href="{}">Click here</a> and click "Link Report" '
+                     + 'to link this report.').format(url)
 
     def _release_case_search(self, domain_link, model, user):
         if not toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain_link.linked_domain):
