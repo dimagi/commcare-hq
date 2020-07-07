@@ -13,7 +13,7 @@ from memoized import memoized
 
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
-from corehq.toggles import REGEX_FIELD_VALIDATION
+from corehq.toggles import CUSTOM_DATA_FIELDS_PROFILES, REGEX_FIELD_VALIDATION
 
 from .models import (
     CustomDataFieldsDefinition,
@@ -168,7 +168,7 @@ class CustomDataModelMixin(object):
     urlname = None
     template_name = "custom_data_fields/custom_data_fields.html"
     field_type = None
-    show_profiles = False
+    _show_profiles = False
     show_purge_existing = False
     entity_string = None  # User, Group, Location, Product...
 
@@ -184,6 +184,10 @@ class CustomDataModelMixin(object):
     @classmethod
     def page_name(cls):
         return _("Edit {} Fields").format(str(cls.entity_string))
+
+    @property
+    def show_profiles(self):
+        return self._show_profiles and CUSTOM_DATA_FIELDS_PROFILES.enabled(self.domain)
 
     @memoized
     def get_definition(self):
@@ -204,6 +208,9 @@ class CustomDataModelMixin(object):
         definition.save()
 
     def save_profiles(self):
+        if not self.show_profiles:
+            return
+
         # TODO: handle edits instead of clearing and re-adding all
         for profile in self.get_profiles():
             profile.delete()
