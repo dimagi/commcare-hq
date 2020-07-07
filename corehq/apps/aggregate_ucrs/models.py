@@ -138,7 +138,7 @@ class AggregateTableDefinition(models.Model, AbstractUCRDataSource):
         return columns
 
     @memoized
-    def get_secondary_tables(self):
+    def get_secondary_tables_and_adapters(self):
         return [
             (table, get_indicator_adapter(table.data_source).get_table())
             for table in self.secondary_tables.all()
