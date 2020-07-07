@@ -71,21 +71,6 @@ function rebuildstaging() {
     python scripts/rebuildstaging.py "$filename" "$@"
 }
 
-function get_deploy_env() {
-  if [[ $(basename $filename) == 'icds-staging.yaml' ]]
-  then
-    echo "icds-staging"
-  elif [[ $(basename $filename) == 'staging.yaml' ]]
-  then
-    echo "staging"
-  else
-    echo "Unknown config file."
-    echo "Aborting"
-    exit 1
-  fi
-}
-
-
 args=''
 
 [[ $verbose = 'y' ]] && args="$args -v"
@@ -104,8 +89,12 @@ fi
 rebuildstaging $args
 if [[ $deploy = 'y' && $no_push != 'y' && $enterprise != 'y' ]]
 then
-    deploy_env=$(get_deploy_env $filename)
+    deploy_env=$(grep deploy_env $filename | sed -E 's/deploy_env:[[:space:]]+//')
+    if [[ '' = $staging_file ]]
+    then
+        abort "Key 'deploy_env' not present in $filename."
+    fi
     which commcare-cloud \
     && commcare-cloud $deploy_env deploy --quiet \
-    || echo 'Could not auto-deploy for you. Run `commcare-cloud icds-staging deploy` to deploy.'
+    || echo "Could not auto-deploy for you. Run `commcare-cloud $deploy_env deploy` to deploy."
 fi
