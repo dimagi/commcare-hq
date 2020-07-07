@@ -1087,7 +1087,7 @@ class HandleResponseTests(SimpleTestCase):
     def setUp(self):
         self.repeater = DummyRepeater(
             domain=self.domain,
-            name="https://example.com/api/",
+            url="https://example.com/api/",
         )
         self.repeat_record = Mock()
 
