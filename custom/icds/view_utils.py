@@ -44,4 +44,3 @@ def check_authorization(domain, user, master_app_id):
                 or not (role and role.permissions.view_web_app(master_app_id))
             ):
                 return HttpResponse(_('User is not allowed on this app'), status=406)
-    return None
