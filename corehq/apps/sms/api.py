@@ -94,11 +94,15 @@ class MessageMetadata(object):
 def add_msg_tags(msg, metadata):
     if msg and metadata:
         fields = ('workflow', 'xforms_session_couch_id', 'reminder_id', 'chat_user_id',
-                  'ignore_opt_out', 'location_id', 'messaging_subevent_id', 'custom_metadata')
+                  'ignore_opt_out', 'location_id', 'messaging_subevent_id', 'custom_metadata',
+                  'caption_image', 'caption_audio', 'caption_video')
         for field in fields:
-            value = getattr(metadata, field)
-            if value is not None:
-                setattr(msg, field, value)
+            try:
+                value = getattr(metadata, field)
+                if value is not None:
+                    setattr(msg, field, value)
+            except AttributeError:
+                pass
 
 
 def log_sms_exception(msg):
@@ -171,7 +175,7 @@ def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent
 
 
 def send_sms_to_verified_number(verified_number, text, metadata=None,
-        logged_subevent=None):
+        logged_subevent=None, events=[]):
     """
     Sends an sms using the given verified phone number entry.
 
@@ -201,6 +205,8 @@ def send_sms_to_verified_number(verified_number, text, metadata=None,
         text = text
     )
     add_msg_tags(msg, metadata)
+    for event in events:
+        add_msg_tags(msg, event)
 
     return queue_outgoing_sms(msg)
 
