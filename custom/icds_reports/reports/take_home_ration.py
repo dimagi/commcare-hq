@@ -22,7 +22,8 @@ class TakeHomeRationExport(object):
 
     def get_excel_data(self):
         def _format_report_data(column, value, is_launched):
-            location_names = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name']
+            location_names = ['state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name',
+                              'awc_site_code']
             AWC_NOT_LAUNCHED = 'AWC Not Launched'
             if column in location_names:
                 return value
