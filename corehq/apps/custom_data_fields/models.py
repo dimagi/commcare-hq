@@ -3,6 +3,7 @@ import re
 from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields import JSONField
 from django.db import models
+from django.db.models.functions import Lower
 from django.utils.translation import ugettext as _
 
 CUSTOM_DATA_FIELD_PREFIX = "data-field"
@@ -107,6 +108,9 @@ class CustomDataFieldsDefinition(models.Model):
         self.field_set.set(fields, bulk=False)
         self.set_field_order([f.id for f in fields])
 
+    def get_profiles(self):
+        return list(CustomDataFieldsProfile.objects.filter(definition=self).order_by(Lower('name')))
+
     def get_validator(self):
         """
         Returns a validator to be used in bulk import
@@ -148,3 +152,10 @@ class CustomDataFieldsProfile(models.Model):
     name = models.CharField(max_length=126)
     fields = JSONField(default=list, null=True)
     definition = models.ForeignKey('CustomDataFieldsDefinition', on_delete=models.CASCADE)
+
+    def to_json(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'fields': self.fields,
+        }
