@@ -10,13 +10,13 @@ def get_sequences(cursor):
 def get_last_values(sequences, cursor):
     # list of sequences
     select_statements = [
-        '(SELECT last_value FROM {})'.format(s)
+        '(SELECT last_value, max_value FROM {})'.format(s)
         for s in sequences
     ]
     query = " UNION ALL ".join(select_statements)
     cursor.execute(query)
-    result = [r for (r,) in cursor.fetchall()]
-    result = dict(zip(sequences, result))
+    # result = [r for (r,) in cursor.fetchall()]
+    result = dict(zip(sequences, cursor.fetchall()))
     return result
 
 
@@ -30,12 +30,6 @@ class Command(BaseCommand):
             'dbname',
             help='Django db alias'
         )
-        parser.add_argument(
-            '--minval',
-            type=int,
-            dest='minval',
-            help='print only sequences where the last_value is more than this provided minvalue'
-        )
 
     def handle(self, **options):
         dbname = options['dbname']
@@ -43,7 +37,6 @@ class Command(BaseCommand):
         cursor = connections[dbname].cursor()
         sequences = get_sequences(cursor)
         result = get_last_values(sequences, cursor)
-        print('sequence_name, last_value')
-        for sequence, last_value in result.items():
-            if last_value and last_value > minval:
-                print(sequence, ", ", last_value)
+        print('sequence_name, last_value, max_value')
+        for sequence, (last_value, max_value) in result.items():
+            print(sequence, ", ", last_value, ", ",max_value)
