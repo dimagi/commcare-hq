@@ -51,6 +51,7 @@
 
 trunk: master
 name: icds-autostaging
+deploy_env: icds-staging
 branches:
   - ap/restrict-unauthorized-users
 

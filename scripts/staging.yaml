@@ -48,6 +48,7 @@
 
 trunk: master
 name: autostaging
+deploy_env: staging
 branches:
   - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
   - jls/sync-mixins-hard-fail # Jenny May 24
