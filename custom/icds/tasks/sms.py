@@ -1,5 +1,5 @@
 import calendar
-from datetime import date
+from datetime import date, datetime
 
 from django.conf import settings
 from django.core.management import call_command
@@ -13,6 +13,7 @@ from django.utils.translation import ugettext_lazy as _
 from celery.schedules import crontab
 from dateutil.relativedelta import relativedelta
 
+from corehq.util.metrics import metrics_counter
 from couchexport.models import Format
 from dimagi.utils import web
 from soil.util import expose_cached_download
@@ -126,6 +127,12 @@ def send_sms_limit_exceeded_alert(sender, instance, **kwargs):
                 email_from=settings.DEFAULT_FROM_EMAIL)
 
 
+@periodic_task_on_envs(settings.ICDS_ENVS, run_every=crontab(hour=20))
+def delete_old_sms_events():
+    end_date = datetime.utcnow() - relativedelta(years=1)
+    delete_sms_events.delay(datetime.min, end_date)
+
+
 @task
 def delete_sms_events(start_date, end_date):
     db = router.db_for_write(SMS)
@@ -140,6 +147,7 @@ def delete_sms_events(start_date, end_date):
             """,
             [start_date, end_date]
         )
+
         cursor.execute(
             f"""
             DELETE FROM {MessagingSubEvent._meta.db_table} as subevent
@@ -149,6 +157,8 @@ def delete_sms_events(start_date, end_date):
             """,
             [start_date, end_date]
         )
+        metrics_counter('commcare.sms_events.deleted', cursor.rowcount, tags = {'type': 'sub_event'})
+
         cursor.execute(
             f"""
             DELETE FROM {MessagingEvent._meta.db_table}
@@ -156,3 +166,4 @@ def delete_sms_events(start_date, end_date):
             """,
             [start_date, end_date]
         )
+        metrics_counter('commcare.sms_events.deleted', cursor.rowcount, tags={'type': 'event'})
