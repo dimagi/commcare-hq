@@ -300,18 +300,19 @@ def heartbeat(request, domain, app_build_id):
     """
     app_id = request.GET.get('app_id', '')
     build_profile_id = request.GET.get('build_profile_id', '')
-
-    app = get_app_cached(domain, app_build_id)
+    master_app_id = app_id
     try:
         info = GlobalAppConfig.get_latest_version_info(domain, app_id, build_profile_id)
     except (Http404, AssertionError):
         # If it's not a valid master app id, find it by talking to couch
+        app = get_app_cached(domain, app_build_id)
         notify_exception(request, 'Received an invalid heartbeat request')
+        master_app_id = app.master_id
         info = GlobalAppConfig.get_latest_version_info(domain, app.master_id, build_profile_id)
 
     info["app_id"] = app_id
 
-    error_response = check_authorization(domain, request.couch_user, app)
+    error_response = check_authorization(domain, request.couch_user, master_app_id)
     if error_response:
         return error_response
     if not toggles.SKIP_UPDATING_USER_REPORTING_METADATA.enabled(domain):
