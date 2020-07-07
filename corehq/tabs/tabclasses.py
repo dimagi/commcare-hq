@@ -42,7 +42,6 @@ from corehq.apps.hqadmin.reports import (
 from corehq.apps.hqadmin.views.system import GlobalThresholds
 from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
-from corehq.apps.linked_domain.dbaccessors import is_linked_domain
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.receiverwrapper.rate_limiter import (
     SHOULD_RATE_LIMIT_SUBMISSIONS,
@@ -98,8 +97,14 @@ from corehq.tabs.utils import (
     sidebar_to_dropdown,
 )
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
-from custom.icds.view_utils import is_icds_cas_project
-from custom.icds.views.hosted_ccz import ManageHostedCCZ, ManageHostedCCZLink
+from custom.icds_core.const import (
+    LocationReassignmentDownloadOnlyView_urlname,
+    LocationReassignmentView_urlname,
+    ManageHostedCCZ_urlname,
+    ManageHostedCCZLink_urlname,
+    SMSUsageReport_urlname,
+)
+from custom.icds_core.view_utils import is_icds_cas_project
 
 
 class ProjectReportsTab(UITab):
@@ -161,10 +166,9 @@ class ProjectReportsTab(UITab):
                 'icon': 'icon-tasks fa fa-wrench',
             })
         if toggles.PERFORM_LOCATION_REASSIGNMENT.enabled(self.couch_user.username):
-            from custom.icds.location_reassignment.views import LocationReassignmentDownloadOnlyView
             tools.append({
-                'title': _(LocationReassignmentDownloadOnlyView.section_name),
-                'url': reverse(LocationReassignmentDownloadOnlyView.urlname, args=[self.domain]),
+                'title': _("Download Location Reassignment Template"),
+                'url': reverse(LocationReassignmentDownloadOnlyView_urlname, args=[self.domain]),
                 'icon': 'icon-tasks fa fa-download',
             })
         return [(_("Tools"), tools)]
@@ -946,8 +950,8 @@ class ApplicationsTab(UITab):
             ))
         if toggles.MANAGE_CCZ_HOSTING.enabled_for_request(self._request):
             submenu_context.append(dropdown_dict(
-                ManageHostedCCZ.page_title,
-                url=reverse(ManageHostedCCZ.urlname, args=[self.domain])
+                _("Manage CCZ Hosting"),
+                url=reverse(ManageHostedCCZ_urlname, args=[self.domain])
             ))
         return submenu_context
 
@@ -1062,6 +1066,13 @@ class MessagingTab(UITab):
                     'url': reverse('sms_compose_message', args=[self.domain])
                 },
             ])
+            if toggles.ICDS_CUSTOM_SMS_REPORT.enabled(self.domain):
+                messages_urls.extend([
+                    {
+                        'title': _('Get Custom SMS Usage Report'),
+                        'url': reverse(SMSUsageReport_urlname, args=[self.domain])
+                    },
+                ])
 
         if self.can_access_reminders:
             messages_urls.extend([
@@ -1525,10 +1536,9 @@ class ProjectUsersTab(UITab):
             })
 
         if toggles.PERFORM_LOCATION_REASSIGNMENT.enabled(self.couch_user.username):
-            from custom.icds.location_reassignment.views import LocationReassignmentView
             menu.append({
                 'title': _("Location Reassignment"),
-                'url': reverse(LocationReassignmentView.urlname, args=[self.domain])
+                'url': reverse(LocationReassignmentView_urlname, args=[self.domain])
             })
 
         return menu
@@ -1597,11 +1607,11 @@ class HostedCCZTab(UITab):
     def sidebar_items(self):
         items = super(HostedCCZTab, self).sidebar_items
         items.append((_('Manage CCZ Hostings'), [
-            {'url': reverse(ManageHostedCCZLink.urlname, args=[self.domain]),
-             'title': ManageHostedCCZLink.page_title
+            {'url': reverse(ManageHostedCCZLink_urlname, args=[self.domain]),
+             'title': _("Manage CCZ Hosting Links")
              },
-            {'url': reverse(ManageHostedCCZ.urlname, args=[self.domain]),
-             'title': ManageHostedCCZ.page_title
+            {'url': reverse(ManageHostedCCZ_urlname, args=[self.domain]),
+             'title': _("Manage CCZ Hosting")
              },
         ]))
         return items
@@ -1950,6 +1960,7 @@ class MySettingsTab(UITab):
     @property
     def sidebar_items(self):
         from corehq.apps.settings.views import (
+            ApiKeyView,
             ChangeMyPasswordView,
             EnableMobilePrivilegesView,
             MyAccountSettingsView,
@@ -1977,7 +1988,11 @@ class MySettingsTab(UITab):
             {
                 'title': _(TwoFactorProfileView.page_title),
                 'url': reverse(TwoFactorProfileView.urlname),
-            }
+            },
+            {
+                'title': _(ApiKeyView.page_title),
+                'url': reverse(ApiKeyView.urlname),
+            },
         ])
 
         if (

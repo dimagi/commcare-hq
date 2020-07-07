@@ -49,11 +49,6 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.decorators import require_mobile_access
 from corehq.apps.ota.rate_limiter import rate_limit_restore
 from corehq.apps.users.models import CouchUser, UserReportingMetadataStaging
-from corehq.apps.users.util import (
-    update_device_meta,
-    update_last_sync,
-    update_latest_builds,
-)
 from corehq.const import ONE_DAY, OPENROSA_VERSION_MAP
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.utils.xform import adjust_text_to_datetime
@@ -301,22 +296,19 @@ def heartbeat(request, domain, app_build_id):
     app_id = request.GET.get('app_id', '')
     build_profile_id = request.GET.get('build_profile_id', '')
 
-    info = {"app_id": app_id}
     try:
-        # mobile will send master app_id
-        config = GlobalAppConfig.by_app_id(domain, app_id)
+        info = GlobalAppConfig.get_latest_version_info(domain, app_id, build_profile_id)
     except (Http404, AssertionError):
         # If it's not a valid master app id, find it by talking to couch
         notify_exception(request, 'Received an invalid heartbeat request')
         app = get_app_cached(domain, app_build_id)
-        config = GlobalAppConfig.by_app_id(domain, app.master_id)
-    else:
-        info.update({
-            "latest_apk_version": config.get_latest_apk_version(),
-            "latest_ccz_version": config.get_latest_app_version(build_profile_id),
-        })
-        if not toggles.SKIP_UPDATING_USER_REPORTING_METADATA.enabled(domain):
-            update_user_reporting_data(app_build_id, app_id, build_profile_id, request.couch_user, request)
+        info = GlobalAppConfig.get_latest_version_info(domain, app.master_id, build_profile_id)
+
+    info["app_id"] = app_id
+
+    if not toggles.SKIP_UPDATING_USER_REPORTING_METADATA.enabled(domain):
+        update_user_reporting_data(app_build_id, app_id, build_profile_id, request.couch_user, request)
+
     if _should_force_log_submission(request):
         info['force_logs'] = True
     return JsonResponse(info)

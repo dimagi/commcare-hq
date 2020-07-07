@@ -99,7 +99,7 @@ def build_form_xml_from_property_dict(form_properties, separator=''):
 def get_simple_form_xml(form_id, case_id=None, metadata=None, simple_form=SIMPLE_FORM):
     from casexml.apps.case.mock import CaseBlock
 
-    case_blocks = [CaseBlock(create=True, case_id=case_id)] if case_id else []
+    case_blocks = [CaseBlock.deprecated_init(create=True, case_id=case_id)] if case_id else []
     return FormSubmissionBuilder(
         form_id=form_id,
         metadata=metadata,

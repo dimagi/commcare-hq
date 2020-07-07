@@ -7,10 +7,10 @@ from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
 from custom.icds_reports.cache import icds_quickcache
-from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
-from custom.icds_reports.models import AggChildHealthMonthly
+from custom.icds_reports.const import LocationTypes, ChartColors, MapColors, AggregationLevels
+from custom.icds_reports.models import AggChildHealthMonthly, ChildHealthMonthlyView
 from custom.icds_reports.utils import apply_exclude, generate_data_for_map, chosen_filters_to_labels, \
-    indian_formatted_number
+    indian_formatted_number, get_filters_from_config_for_chart_view
 from custom.icds_reports.messages import new_born_with_low_weight_help_text
 from custom.icds_reports.utils import get_location_launched_status
 
@@ -109,9 +109,13 @@ def get_newborn_with_low_birth_weight_chart(domain, config, loc_level, show_test
     config['month__range'] = (three_before, month)
     del config['month']
 
-    chart_data = AggChildHealthMonthly.objects.filter(
-        **config
-    ).values(
+    # using child health monthly while querying for sector level due to performance issues
+    if icds_features_flag and config['aggregation_level'] >= AggregationLevels.SUPERVISOR:
+        chm_filter = get_filters_from_config_for_chart_view(config)
+        chm_queryset = ChildHealthMonthlyView.objects.filter(**chm_filter)
+    else:
+        chm_queryset = AggChildHealthMonthly.objects.filter(**config)
+    chart_data = chm_queryset.values(
         'month', '%s_name' % loc_level
     ).annotate(
         low_birth=Sum('low_birth_weight_in_month'),

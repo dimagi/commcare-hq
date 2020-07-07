@@ -338,7 +338,7 @@ class TestEmwfFilterFormExportFormFilters(TestCase):
         users_patch.assert_called_once_with([])
         locations_patch.assert_called_once_with([])
 
-    @patch("corehq.apps.export.forms.user_ids_at_locations")
+    @patch("corehq.apps.export.forms.mobile_user_ids_at_locations")
     def test_get_model_filter_for_restricted_locations_access(self, user_ids_at_locations_patch, locations_patch,
                                                              users_patch, user_type_patch, group_patch):
         domain = Domain(name="testapp", is_active=True)
@@ -459,7 +459,7 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         static_user_ids_for_group_patch.assert_called_once_with(self.group_ids)
 
     @patch.object(filter_builder, '_get_group_independent_filters', lambda x, y, z, a, b: [])
-    @patch("corehq.apps.export.forms.user_ids_at_locations")
+    @patch("corehq.apps.export.forms.mobile_user_ids_at_locations")
     def test_get_filters_from_slugs_for_restricted_locations_access(self, user_ids_at_locations_patch,
                                                                     static_user_ids_for_group_patch,
                                                                     group_ids_patch):
@@ -487,7 +487,7 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         get_users_filter.assert_called_once_with(list(get_user_ids.return_value))
         get_user_ids.assert_called_once_with(self.group_ids_slug)
 
-    @patch("corehq.apps.export.forms.user_ids_at_locations")
+    @patch("corehq.apps.export.forms.mobile_user_ids_at_locations")
     @patch.object(filter, 'selected_user_types')
     @patch.object(filter_builder, '_get_locations_filter')
     @patch.object(filter_builder, '_get_selected_locations_and_descendants_ids')

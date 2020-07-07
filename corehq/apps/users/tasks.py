@@ -18,6 +18,7 @@ from couchdbkit import BulkSaveError, ResourceConflict
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xform import get_case_ids_from_form
 from corehq.util.metrics import metrics_gauge
+from corehq.util.metrics.const import MPM_MAX
 from couchforms.exceptions import UnexpectedDeletedXForm
 from dimagi.utils.couch.bulk import BulkFetchException
 from dimagi.utils.logging import notify_exception
@@ -195,7 +196,7 @@ def remove_indices_from_deleted_cases(domain, case_ids):
     deleted_ids = set(case_ids)
     indexes_referencing_deleted_cases = CaseAccessors(domain).get_all_reverse_indices_info(list(case_ids))
     case_updates = [
-        CaseBlock(
+        CaseBlock.deprecated_init(
             case_id=index_info.case_id,
             index={
                 index_info.identifier: (index_info.referenced_type, '')  # blank string = delete index
@@ -291,8 +292,8 @@ def remove_unused_custom_fields_from_users_task(domain):
 @task()
 def update_domain_date(user_id, domain):
     from corehq.apps.users.models import WebUser
-    user = WebUser.get_by_user_id(user_id, domain)
-    domain_membership = user.get_domain_membership(domain)
+    user = WebUser.get_by_user_id(user_id)
+    domain_membership = user.get_domain_membership(domain, allow_mirroring=False)
     today = datetime.today().date()
     if domain_membership and (
             not domain_membership.last_accessed or domain_membership.last_accessed < today):
@@ -349,7 +350,8 @@ def gauge_pending_user_confirmations():
             metric_name, stats['domain__count'], tags={
                 'domain': stats['domain'],
                 'user_type': 'web',
-            }
+            },
+            multiprocess_mode=MPM_MAX
         )
 
     from corehq.apps.users.analytics import get_inactive_commcare_users_in_domain
@@ -362,5 +364,6 @@ def gauge_pending_user_confirmations():
                 metric_name, num_unconfirmed, tags={
                     'domain': domain_name,
                     'user_type': 'mobile',
-                }
+                },
+                multiprocess_mode=MPM_MAX
             )

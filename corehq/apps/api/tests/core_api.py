@@ -1,9 +1,10 @@
+from mock import patch
+
 from django.test import TestCase
 from django.urls import reverse
 from django.utils.http import urlencode
 
 from tastypie import fields
-from tastypie.models import ApiKey
 from tastypie.resources import Resource
 
 from corehq.apps.accounting.models import (
@@ -22,7 +23,8 @@ from corehq.apps.api.fields import (
 from corehq.apps.api.resources import v0_4, v0_5
 from corehq.apps.api.util import get_obj
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, HQApiKey, WebUser
+from corehq.util.test_utils import flag_disabled
 
 from .utils import APIResourceTest, FakeXFormES
 
@@ -378,7 +380,8 @@ class TestSingleSignOnResource(APIResourceTest):
         super(TestSingleSignOnResource, self).setUp()
         self.commcare_username = 'webby@qwerty.commcarehq.org'
         self.commcare_password = '*****'
-        self.commcare_user = CommCareUser.create(self.domain.name, self.commcare_username, self.commcare_password)
+        self.commcare_user = CommCareUser.create(self.domain.name, self.commcare_username, self.commcare_password,
+                                                 None, None)
 
     def tearDown(self):
         self.commcare_user.delete()
@@ -470,12 +473,12 @@ class TestApiKey(APIResourceTest):
     def test_wrong_user_api_key(self):
         username = 'blah@qwerty.commcarehq.org'
         password = '***'
-        other_user = WebUser.create(self.domain.name, username, password)
+        other_user = WebUser.create(self.domain.name, username, password, None, None)
         other_user.set_role(self.domain.name, 'admin')
         other_user.save()
         self.addCleanup(other_user.delete)
         django_user = WebUser.get_django_user(other_user)
-        other_api_key, _ = ApiKey.objects.get_or_create(user=django_user)
+        other_api_key, _ = HQApiKey.objects.get_or_create(user=django_user)
         self.addCleanup(other_api_key.delete)
 
         endpoint = "%s?%s" % (self.single_endpoint(self.user._id),
@@ -485,3 +488,47 @@ class TestApiKey(APIResourceTest):
                               }))
         response = self.client.get(endpoint)
         self.assertEqual(response.status_code, 401)
+
+
+class TestApiThrottle(APIResourceTest):
+    resource = v0_5.WebUserResource
+    api_name = 'v0.5'
+    patch = flag_disabled('API_THROTTLE_WHITELIST')
+
+    def setUp(self):
+        super().setUp()
+        self.endpoint = "%s?%s" % (self.single_endpoint(self.user._id), urlencode({
+            "username": self.user.username,
+            "api_key": self.api_key.key
+        }))
+
+    def test_throttle_allowlist(self):
+        """Test that the allowlist toggle allows all traffic through
+        """
+        with patch('corehq.apps.api.resources.meta.CacheDBThrottle.should_be_throttled') as should_be_throttled:
+            should_be_throttled.return_value = True
+
+            response = self.client.get(self.endpoint)
+            self.assertEqual(response.status_code, 429)
+
+            with patch('corehq.apps.api.resources.meta.API_THROTTLE_WHITELIST.enabled') as toggle_patch:
+                toggle_patch.return_value = True
+
+                response = self.client.get(self.endpoint)
+
+                self.assertEqual(response.status_code, 200)
+
+    def test_should_be_throttled_identifier(self):
+        """Test that the correct identifier is used for the throttle
+        """
+        with patch('corehq.apps.api.resources.meta.HQThrottle.should_be_throttled') as hq_should_be_throttled:
+
+            self.client.get(self.endpoint)
+            hq_should_be_throttled.assert_called_with(f"{self.domain}_{self.user.username}")
+
+            with patch('corehq.apps.api.resources.meta.API_THROTTLE_WHITELIST.enabled') as toggle_patch:
+                toggle_patch.return_value = True
+
+                self.client.get(self.endpoint)
+
+                hq_should_be_throttled.assert_called_with(self.user.username)

@@ -37,7 +37,7 @@ def _get_or_create_user(domain):
     username = format_username('nick', domain)
     user = CommCareUser.get_by_username(username, strict=True)
     if not user:
-        user = CommCareUser.create(domain, username, 'secret')
+        user = CommCareUser.create(domain, username, 'secret', None, None)
     return user
 
 
@@ -74,7 +74,7 @@ def _update_case_id_properties(domain, user):
                 update[k] = case_ids_by_external_id[v]
         if update:
             case_blocks.append(
-                CaseBlock(
+                CaseBlock.deprecated_init(
                     case_id=case.case_id,
                     user_id=user._id,
                     update=update,

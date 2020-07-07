@@ -8,7 +8,7 @@ from corehq.apps.users.models import CommCareUser
 class ReminderUtilTest(TestCase):
 
     def setUp(self):
-        self.user = CommCareUser.create('test', 'test', 'test')
+        self.user = CommCareUser.create('test', 'test', 'test', None, None)
 
     def test_get_two_way_number_for_recipient(self):
         self.assertIsNone(get_two_way_number_for_recipient(self.user))

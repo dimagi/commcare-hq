@@ -183,7 +183,7 @@ class Command(BaseCommand):
     def create_case_blocks(self, updates):
         case_blocks = []
         for case_id, mother_name in updates.items():
-            case_block = CaseBlock(case_id,
+            case_block = CaseBlock.deprecated_init(case_id,
                                    update={MOTHER_NAME_PROPERTY: mother_name},
                                    user_id=SYSTEM_USER_ID)
             case_block = ElementTree.tostring(case_block.as_xml()).decode('utf-8')

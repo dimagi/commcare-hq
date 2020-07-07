@@ -60,12 +60,12 @@ class DomainLink(models.Model):
         return bool(self.remote_base_url) or 'http' in self.linked_domain
 
     @atomic
-    def update_last_pull(self, model, user_id, date=None, model_details=None):
+    def update_last_pull(self, model, user_id, date=None, model_detail=None):
         self.last_pull = date or datetime.utcnow()
         self.save()
         history = DomainLinkHistory(link=self, date=self.last_pull, user_id=user_id, model=model)
-        if model_details:
-            history.model_detail = model_details.to_json()
+        if model_detail:
+            history.model_detail = model_detail
         history.save()
 
     def save(self, *args, **kwargs):
@@ -148,6 +148,10 @@ class AppLinkDetail(jsonobject.JsonObject):
     app_id = jsonobject.StringProperty()
 
 
+class FixtureLinkDetail(jsonobject.JsonObject):
+    tag = jsonobject.StringProperty()
+
+
 class ReportLinkDetail(jsonobject.JsonObject):
     report_id = jsonobject.StringProperty()
 
@@ -155,5 +159,6 @@ class ReportLinkDetail(jsonobject.JsonObject):
 def wrap_detail(model, detail_json):
     return {
         'app': AppLinkDetail,
+        'fixture': FixtureLinkDetail,
         'report': ReportLinkDetail,
     }[model].wrap(detail_json)

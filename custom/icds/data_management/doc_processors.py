@@ -31,7 +31,7 @@ class DataManagementDocProcessor(BaseDocProcessor):
     def _create_case_blocks(updates):
         case_blocks = []
         for case_id, case_updates in updates.items():
-            case_block = CaseBlock(case_id,
+            case_block = CaseBlock.deprecated_init(case_id,
                                    update=case_updates,
                                    user_id=SYSTEM_USER_ID)
             case_block = ElementTree.tostring(case_block.as_xml()).decode('utf-8')
