@@ -6,7 +6,7 @@ from django.conf import settings
 
 from corehq import toggles
 from corehq.apps.hqwebapp.views import no_permissions
-from custom.icds.const import ICDS_DOMAIN, IS_ICDS_ENVIRONMENT
+from custom.icds_core.const import ICDS_DOMAIN, IS_ICDS_ENVIRONMENT
 from corehq.apps.users.models import DomainMembershipError
 from django.http import HttpResponse
 
