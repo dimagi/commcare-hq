@@ -2,6 +2,9 @@ import hmac
 import json
 import logging
 import re
+from collections import defaultdict
+from copy import deepcopy
+
 from auditcare.decorators.models import store_original_doc
 from auditcare.utils.models import TrackModelUpdates
 from datetime import datetime
@@ -27,7 +30,6 @@ from memoized import memoized
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
 from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
-from corehq.apps.users.exceptions import IllegalAccountConfirmation
 from corehq.util.model_log import log_model_change
 from corehq.util.models import BouncedEmail
 from dimagi.ext.couchdbkit import (
@@ -773,6 +775,27 @@ class _AuthorizableMixin(IsMemberOfMixin):
         except Exception:
             return None
 
+    @staticmethod
+    def _compare_memberships_by_domain(new_memberships, old_memberships):
+        changes = defaultdict(dict)
+        for domain in set(new_memberships) - set(old_memberships):
+            changes[domain]['create'] = new_memberships[domain]
+
+        for domain in set(old_memberships) - set(new_memberships):
+            changes[domain]['delete'] = old_memberships[domain]
+
+        for domain in set(new_memberships) & set(old_memberships):
+            domain_membership_change = {}
+            new_membership = new_memberships[domain]
+            old_membership = old_memberships[domain]
+            for attr, value in new_membership.items():
+                if old_membership.get(attr) != value:
+                    domain_membership_change[attr] = value
+            if domain_membership_change:
+                changes[domain]['update'] = domain_membership_change
+
+        return dict(changes)
+
 
 class SingleMembershipMixin(_AuthorizableMixin):
     domain_membership = SchemaProperty(DomainMembership)
@@ -794,10 +817,30 @@ class SingleMembershipMixin(_AuthorizableMixin):
     def transfer_domain_membership(self, domain, user, create_record=False):
         raise NotImplementedError
 
+    def compare_domain_membership(self, other_user_doc):
+        domain_memberships_by_domain = {
+            self.domain_membership['domain']: self.domain_membership
+        }
+        other_user_domain_memberships_by_domain = {
+            other_user_doc['domain_membership']['domain']: other_user_doc['domain_membership']
+        }
+        return self._compare_memberships_by_domain(domain_memberships_by_domain,
+                                                   other_user_domain_memberships_by_domain)
+
 
 class MultiMembershipMixin(_AuthorizableMixin):
     domains = StringListProperty()
     domain_memberships = SchemaListProperty(DomainMembership)
+
+    def compare_domain_memberships(self, other_user_doc):
+        domain_memberships_by_domain = {
+            dm['domain']: dm for dm in self.domain_memberships
+        }
+        other_user_domain_memberships_by_domain = {
+            dm['domain']: dm for dm in other_user_doc['domain_memberships']
+        }
+        return self._compare_memberships_by_domain(domain_memberships_by_domain,
+                                                   other_user_domain_memberships_by_domain)
 
 
 class LowercaseStringProperty(StringProperty):
@@ -1675,6 +1718,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     # with a location where location.location_type.has_user == True
     user_location_id = StringProperty()
 
+    track_updates_for = ['domain_membership']
+
     @classmethod
     def wrap(cls, data):
         # migrations from using role_id to using the domain_memberships
@@ -2379,6 +2424,8 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     # such as those going through the recruiting pipeline
     # to better mark them in our analytics
     atypical_user = BooleanProperty(default=False)
+
+    track_updates_for = ['domain_memberships']
 
     def is_global_admin(self):
         # override this function to pass global admin rights off to django
