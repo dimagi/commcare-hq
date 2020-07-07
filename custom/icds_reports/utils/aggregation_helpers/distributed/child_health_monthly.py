@@ -364,7 +364,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
                       date_trunc('MONTH', child_tasks.due_list_date_7g_vit_a_9) = %(start_date)s
                   THEN 1 ELSE NULL END
             """),
-            ("mother_phone_number", "child_health.mother_phone_number"),
+            ("mother_phone_number", "CONCAT('91', mother_person_cases.phone_number)"),
             ("date_death", "child_health.date_death"),
             ("mother_case_id", "child_health.mother_case_id"),
             ("state_id", "child_health.state_id"),
@@ -392,6 +392,9 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
               AND child_health.state_id = child_tasks.state_id
               AND child_health.supervisor_id = child_tasks.supervisor_id
             LEFT OUTER JOIN "{person_cases_ucr}" person_cases ON child_health.mother_id = person_cases.doc_id
+              AND child_health.state_id = person_cases.state_id
+              AND child_health.supervisor_id = person_cases.supervisor_id
+            LEFT OUTER JOIN "{person_cases_ucr}" mother_person_cases ON child_health.mother_case_id = person_cases.doc_id
               AND child_health.state_id = person_cases.state_id
               AND child_health.supervisor_id = person_cases.supervisor_id
             LEFT OUTER JOIN "{agg_cf_table}" cf ON child_health.doc_id = cf.case_id AND cf.month = %(start_date)s
