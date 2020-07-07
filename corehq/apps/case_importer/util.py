@@ -89,9 +89,6 @@ class ImporterConfig(namedtuple('ImporterConfig', [
         )
 
 
-ALLOWED_EXTENSIONS = ['xls', 'xlsx']
-
-
 class WorksheetWrapper(object):
 
     def __init__(self, worksheet):

@@ -1364,7 +1364,7 @@ class TestAWCReport(TestCase):
             }
         )
 
-    def test_awc_reports_maternal_child_immunization_coverage_at_age_1_year(self):
+    def test_awc_reports_maternal_child_immunization_coverage_at_age_1_year_with_age_1_2(self):
         data = get_awc_reports_maternal_child(
             'icds-cas',
             {
@@ -1375,43 +1375,7 @@ class TestAWCReport(TestCase):
                 'aggregation_level': 5
             },
             (2017, 5, 1),
-            (2017, 4, 1),
-        )
-        self.assertDictEqual(
-            data['kpi'][4][0],
-            {
-                "color": "green",
-                "all": 0,
-                "frequency": "month",
-                "format": "percent_and_div",
-                "percent": "Data in the previous reporting period was 0",
-                "value": 0,
-                "label": "Immunization Coverage (at age 1 year)",
-                'help_text': (
-                    "Of the total number of children enrolled for Anganwadi Services who are over a year old, "
-                    "the percentage of children who have received the complete immunization as per the National "
-                    "Immunization Schedule of India that is required by age 1."
-                    "<br/><br/>"
-                    " This includes the following immunizations:<br/>"
-                    " If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"
-                    " If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1"
-                ),
-            }
-        )
-
-    def test_awc_reports_maternal_child_immunization_coverage_at_age_1_year_with_age_1_2_ff(self):
-        data = get_awc_reports_maternal_child(
-            'icds-cas',
-            {
-                'state_id': 'st1',
-                'district_id': 'd1',
-                'block_id': 'b1',
-                'awc_id': 'a1',
-                'aggregation_level': 5
-            },
-            (2017, 5, 1),
-            (2017, 4, 1),
-            icds_feature_flag=True
+            (2017, 4, 1)
         )
         self.assertDictEqual(
             data['kpi'][4][0],

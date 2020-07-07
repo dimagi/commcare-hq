@@ -1,3 +1,4 @@
+import copy
 import csv
 import json
 import os
@@ -27,12 +28,11 @@ from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 from weasyprint import HTML, CSS
 
-from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_latest_released_build_id
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.reports_core.filters import Choice
-from corehq.apps.userreports.models import StaticReportConfiguration, AsyncIndicator
+from corehq.apps.userreports.models import StaticReportConfiguration
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from corehq.blobs.mixin import safe_id
 from corehq.const import ONE_DAY
@@ -50,20 +50,16 @@ from custom.icds_reports.const import (
     THR_21_DAYS_THRESHOLD_DATE
 )
 
-from custom.icds_reports.exceptions import InvalidLocationTypeException
-from custom.icds_reports.models.aggregate import AwcLocation
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.queries import get_test_state_locations_id, get_test_district_locations_id
 from couchexport.export import export_from_tables
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.parsing import ISO_DATE_FORMAT
-from django.db.models import Case, When, Q, F, IntegerField, Max, Min
-from django.db.utils import OperationalError
+from django.db.models import Case, When, Q, F, IntegerField, Min
 import uuid
 from sqlagg.filters import EQ, NOT
 from pillowtop.models import KafkaCheckpoint
 from custom.icds_reports.cache import icds_quickcache
-from custom.icds_reports.models import AggAwcMonthly
 
 OPERATORS = {
     "==": operator.eq,
@@ -472,6 +468,8 @@ def get_status(value, second_part='', normal_value='', exportable=False, data_en
         status = {'value': 'Moderately ' + second_part, 'color': 'black'}
     elif value in ['normal']:
         status = {'value': normal_value, 'color': 'black'}
+    elif value in ['N/A']:
+        return 'N/A'
     return status if not exportable else status['value']
 
 
@@ -757,10 +755,6 @@ def generate_qrcode(data):
     image.save(output, "PNG")
     qr_content = b64encode(output.getvalue())
     return qr_content
-
-
-def icds_pre_release_features(user):
-    return toggles.ICDS_DASHBOARD_REPORT_FEATURES.enabled(user.username)
 
 
 def indian_formatted_number(number):
@@ -1147,7 +1141,7 @@ def create_thr_report_excel_file(excel_data, data_type, month, aggregation_level
             total_column_count = 11
             data_start_row_diff = 1
 
-        if parse(month).date() <= THR_21_DAYS_THRESHOLD_DATE or not beta:
+        if parse(month).date() <= THR_21_DAYS_THRESHOLD_DATE:
             thr_days_info = "for at least 21 days"
         else:
             thr_days_info = "for at least 25 days"
@@ -1461,7 +1455,7 @@ def create_child_report_excel_file(excel_data, data_type, month, aggregation_lev
     return file_hash
 
 
-def create_service_delivery_report(excel_data, data_type, config, beta=False):
+def create_service_delivery_report(excel_data, data_type, config):
 
     export_info = excel_data[1][1]
     location_padding_columns = ([''] * config['aggregation_level'])
@@ -1485,11 +1479,8 @@ def create_service_delivery_report(excel_data, data_type, config, beta=False):
                          'Provided for 1-7 days',
                          'Provided for 8-14 days',
                          'Provided for 15-20 days',
-                         'Provided for at least 21 days (>=21 days)']
-    if beta:
-        secondary_headers.pop()
-        secondary_headers += ['Provided for 21-24 days',
-                              'Provided for at least 25 days (>=25 days)']
+                         'Provided for 21-24 days',
+                         'Provided for at least 25 days (>=25 days)']
 
     workbook = Workbook()
     worksheet = workbook.active
@@ -1545,11 +1536,8 @@ def create_service_delivery_report(excel_data, data_type, config, beta=False):
                                                    get_column_letter(current_column_location + merging_width)))
             current_column_location += merging_width+1
         else:
-            offset_count = 14
-            if beta:
-                offset_count = 17
             worksheet.merge_cells('{}1:{}1'.format(get_column_letter(current_column_location),
-                                                   get_column_letter(current_column_location + offset_count)))
+                                                   get_column_letter(current_column_location + 17)))
 
             current_column_location_sec_header = current_column_location
             for sec_header in secondary_headers:
@@ -1564,7 +1552,7 @@ def create_service_delivery_report(excel_data, data_type, config, beta=False):
                                                        get_column_letter(current_column_location_sec_header + 2)))
                 current_column_location_sec_header += 3
 
-            current_column_location += offset_count + 1
+            current_column_location += 18
 
     # Secondary Header
     headers = excel_data[0][1][0]
@@ -2015,7 +2003,7 @@ def create_poshan_progress_report(excel_data, data_type, config, aggregation_lev
     workbook = Workbook()
     worksheet = workbook.active
     # sheet title
-    worksheet.title = "Poshan Progress Report {}".format(layout)
+    worksheet.title = "PPR {}".format(layout)
     worksheet.sheet_view.showGridLines = False
     amount_of_columns = 1 + len(excel_data[0])
     last_column = get_column_letter(amount_of_columns+1)
@@ -2359,6 +2347,7 @@ class AggLevelInfo(object):
 
 
 def _construct_replacement_map_from_awc_location(loc_level, replacement_location_ids):
+    from custom.icds_reports.models.aggregate import AwcLocation
 
     def _full_hierarchy_name(loc):
         loc_names = [loc[f'{level}_name'] for level in levels.keys() if loc[f'{level}_name']]
@@ -2438,6 +2427,7 @@ def get_location_replacement_name(location, field, replacement_names):
 
 @icds_quickcache(['filters', 'loc_name'], timeout=30 * 60)
 def get_location_launched_status(filters, loc_name):
+    from custom.icds_reports.models import AggAwcMonthly
 
     def select_location_filter(filters):
         location_filters = dict()
@@ -2510,3 +2500,12 @@ def handle_average(val):
     else:
         ret = val / 3
     return ret
+
+
+def get_filters_from_config_for_chart_view(config):
+    config_filter = copy.deepcopy(config)
+    if 'gender' in config_filter:
+        config_filter['sex'] = config_filter['gender']
+        del config_filter['gender']
+    del config_filter['aggregation_level']
+    return config_filter

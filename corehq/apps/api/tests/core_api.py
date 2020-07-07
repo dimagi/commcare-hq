@@ -3,6 +3,8 @@ import json
 from datetime import datetime
 from django.test import SimpleTestCase, TestCase
 from django.test.client import RequestFactory
+from mock import patch
+
 from django.urls import reverse
 from django.utils.http import urlencode
 
@@ -27,7 +29,10 @@ from corehq.apps.api.util import get_obj
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.tests.utils import ElasticTestMixin
 from corehq.apps.users.models import CommCareUser, HQApiKey, WebUser
+from corehq.util.test_utils import flag_disabled
 from no_exceptions.exceptions import Http400
+
+
 
 from .utils import APIResourceTest, FakeFormESView
 
@@ -598,3 +603,47 @@ class TestParamstoESFilters(SimpleTestCase, ElasticTestMixin):
         )
         with self.assertRaises(Http400):
             es_query_from_get_params(request.GET, 'test_domain')
+
+
+class TestApiThrottle(APIResourceTest):
+    resource = v0_5.WebUserResource
+    api_name = 'v0.5'
+    patch = flag_disabled('API_THROTTLE_WHITELIST')
+
+    def setUp(self):
+        super().setUp()
+        self.endpoint = "%s?%s" % (self.single_endpoint(self.user._id), urlencode({
+            "username": self.user.username,
+            "api_key": self.api_key.key
+        }))
+
+    def test_throttle_allowlist(self):
+        """Test that the allowlist toggle allows all traffic through
+        """
+        with patch('corehq.apps.api.resources.meta.CacheDBThrottle.should_be_throttled') as should_be_throttled:
+            should_be_throttled.return_value = True
+
+            response = self.client.get(self.endpoint)
+            self.assertEqual(response.status_code, 429)
+
+            with patch('corehq.apps.api.resources.meta.API_THROTTLE_WHITELIST.enabled') as toggle_patch:
+                toggle_patch.return_value = True
+
+                response = self.client.get(self.endpoint)
+
+                self.assertEqual(response.status_code, 200)
+
+    def test_should_be_throttled_identifier(self):
+        """Test that the correct identifier is used for the throttle
+        """
+        with patch('corehq.apps.api.resources.meta.HQThrottle.should_be_throttled') as hq_should_be_throttled:
+
+            self.client.get(self.endpoint)
+            hq_should_be_throttled.assert_called_with(f"{self.domain}_{self.user.username}")
+
+            with patch('corehq.apps.api.resources.meta.API_THROTTLE_WHITELIST.enabled') as toggle_patch:
+                toggle_patch.return_value = True
+
+                self.client.get(self.endpoint)
+
+                hq_should_be_throttled.assert_called_with(self.user.username)
