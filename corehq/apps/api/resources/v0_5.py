@@ -10,7 +10,6 @@ from django.utils.translation import ugettext_noop
 
 from memoized import memoized_property
 from tastypie import fields, http
-from corehq.apps.domain.auth import HQApiKeyAuthentication
 from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.bundle import Bundle
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
@@ -40,6 +39,7 @@ from corehq.apps.api.resources.auth import (
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import get_obj
 from corehq.apps.app_manager.models import Application
+from corehq.apps.domain.auth import HQApiKeyAuthentication
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
