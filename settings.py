@@ -894,8 +894,6 @@ RESTRICT_DOMAIN_CREATION = False
 
 CUSTOM_LANDING_PAGE = False
 
-TABLEAU_URL_ROOT = "https://icds.commcarehq.org/"
-
 SENTRY_DSN = None
 SENTRY_REPOSITORY = 'dimagi/commcare-hq'
 SENTRY_ORGANIZATION_SLUG = 'dimagi'

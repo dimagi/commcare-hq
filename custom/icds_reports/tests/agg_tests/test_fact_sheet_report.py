@@ -162,7 +162,7 @@ class TestFactSheetReportMaternalAndChildNutritionICDS(TestCase):
                 },
                 'data': [
                     {'html': 'Children from 0 - 5 years with severe acute malnutrition (weight-for-height)'},
-                    {'html': 16.666666666666668, 'sort_key': 16.666666666666668},
+                    {'html': 8.333333333333334, 'sort_key': 8.333333333333334},
                     {'html': 0.0, 'sort_key': 0.0},
                     {'html': 0}
                 ],

@@ -9,7 +9,8 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.sql_db.connections import connection_manager, ICDS_UCR_CITUS_ENGINE_ID
 from custom.icds_reports.const import DISTRIBUTED_TABLES, REFERENCE_TABLES
-from custom.icds_reports.utils.migrations import create_citus_reference_table, create_citus_distributed_table, get_view_migrations
+from custom.icds_reports.utils.migrations import get_view_migrations
+from custom.icds_core.db import create_citus_distributed_table, create_citus_reference_table
 from custom.icds_reports.utils.aggregation_helpers.distributed.location_reassignment import TempPrevIntermediateTables, TempPrevUCRTables
 from custom.icds_reports.tasks import (
     _aggregate_child_health_pnc_forms,

@@ -3,7 +3,7 @@ from functools import wraps
 from django.http import HttpResponse
 
 from corehq.apps.locations.permissions import user_can_access_location_id
-from custom.icds_reports.utils import icds_pre_release_features
+from custom.icds_core.view_utils import icds_pre_release_features
 
 
 def can_access_location_data(view_fn):
