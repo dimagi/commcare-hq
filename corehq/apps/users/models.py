@@ -2,6 +2,7 @@ import hmac
 import json
 import logging
 import re
+from auditcare.decorators.models import store_original_doc
 from datetime import datetime
 from hashlib import sha1
 from uuid import uuid4
@@ -1052,6 +1053,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         if should_save:
             couch_user.save()
 
+        # keep copy of original doc for TrackModelUpdates on save
+        if not hasattr(couch_user, '_original'):
+            couch_user._original = deepcopy(couch_user._doc)
         return couch_user
 
     class AccountTypeError(Exception):
@@ -1396,6 +1400,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         }[doc_type].wrap(source)
 
     @classmethod
+    @store_original_doc()
     @quickcache(['username'], skip_arg="strict")
     def get_by_username(cls, username, strict=False):
         if not username:
@@ -1442,6 +1447,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         get_mirror_domain_links_for_dropdown.clear(self)
 
     @classmethod
+    @store_original_doc()
     @quickcache(['userID', 'domain'])
     def get_by_user_id(cls, userID, domain=None):
         """
