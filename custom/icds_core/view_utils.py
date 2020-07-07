@@ -44,3 +44,7 @@ def check_authorization(domain, user, master_app_id):
                 or not (role and role.permissions.view_web_app(master_app_id))
             ):
                 return HttpResponse(_('User is not allowed on this app'), status=406)
+
+
+def icds_pre_release_features(user):
+    return toggles.ICDS_DASHBOARD_REPORT_FEATURES.enabled(user.username)
