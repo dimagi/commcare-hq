@@ -270,7 +270,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             except User.DoesNotExist:
                 pass
             else:
-                django_user.delete(deleted_by=request.user, deleted_via=USER_CHANGE_VIA_API)
+                django_user.delete()
                 log_model_change(request.user, django_user, message={'deleted_via': USER_CHANGE_VIA_API},
                                  is_delete=True)
         return bundle
