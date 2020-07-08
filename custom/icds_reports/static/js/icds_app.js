@@ -11,7 +11,7 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
     $scope.healthCollapsed = true;
     $scope.isWebUser = isWebUser;
     $scope.dateChanged = false;
-    $scope.haveAccessToFeatures = haveAccessToFeatures
+    $scope.haveAccessToFeatures = haveAccessToFeatures;
 
     angular.element(document).ready(function () {
         $scope.adjustUIComponentsIfAlertIsActive();
@@ -132,7 +132,7 @@ MainController.$inject = [
     'isWebUser',
     'userLocationId',
     'isAlertActive',
-    'haveAccessToFeatures'
+    'haveAccessToFeatures',
 ];
 
 window.angular.module('icdsApp', [
