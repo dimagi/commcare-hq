@@ -224,10 +224,10 @@ def patch_shard_db_transactions(cls):
     if not issubclass(cls, TestCase):
         return cls
     assert hasattr(cls, "_enter_atomics") and hasattr(cls, "_rollback_atomics"), cls
-    shard_cfg = getattr(settings, "PARTITION_DATABASE_CONFIG", None)
-    if not shard_cfg:
+    shard_dbs = {k for k, v in settings.DATABASES.items() if "PLPROXY" in v}
+    print("shard dbs:", shard_dbs)
+    if not shard_dbs:
         return cls
-    shard_dbs = {"proxy"} | set(shard_cfg["shards"])
 
     @classmethod
     def _enter_atomics(cls):
