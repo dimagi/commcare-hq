@@ -239,8 +239,8 @@ For interoperability with external systems which process transactional data, Com
 which manages the pipeline of case and form transactions received and manages the lifecycle of secure outbound
 messages to external systems.
 
-This architecture is designed to autonomously support the scale and volume of transactional data required for
-tens-to-hundreds of millions of transactions will be processed in a 24hr period.
+This architecture is designed to autonomously support the scale and volume of transactional data up to hundreds of
+millions of transactions in a 24hr period.
 
 .. image:: ../images/repeaters_flow.png
 
