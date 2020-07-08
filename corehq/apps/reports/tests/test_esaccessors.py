@@ -17,7 +17,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 from corehq.apps.es import CaseES
 from corehq.apps.es.aggregations import MISSING_KEY
 from corehq.apps.groups.models import Group
-from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS, get_case_by_identifier, update_case
+from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS, get_case_by_identifier
 from corehq.apps.locations.tests.util import setup_locations_and_types, restrict_user_by_location
 from corehq.apps.reports.analytics.esaccessors import (
     get_active_case_counts_by_owner,
@@ -1114,9 +1114,10 @@ class TestCaseESAccessors(BaseESAccessorsTest):
         case = self._send_case_to_es()
         case.external_id = '123'
         case.save()
-        update_case(self.domain, case.case_id, {'contact_phone_number': '234'})
         case = CaseAccessors(self.domain).get_case(case.case_id)
-        es_case = transform_case_for_elasticsearch(case.to_json())
+        case_json = case.to_json()
+        case_json['contact_phone_number'] = '234'
+        es_case = transform_case_for_elasticsearch(case_json)
         send_to_elasticsearch('cases', es_case)
         self.es.indices.refresh(CASE_INDEX)
         self.assertEqual(
