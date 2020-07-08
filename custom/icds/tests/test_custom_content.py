@@ -1,32 +1,34 @@
-from corehq.apps.receiverwrapper.util import submit_form_locally
+from mock import patch
+
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.locations.tests.util import make_loc, setup_location_types
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.tests.util import create_user_case
-from corehq.messaging.scheduling.models import CustomContent
-from corehq.messaging.scheduling.scheduling_partitioned.models import CaseTimedScheduleInstance
+from corehq.messaging.scheduling.scheduling_partitioned.models import (
+    CaseTimedScheduleInstance,
+)
 from custom.icds.const import (
     AWC_LOCATION_TYPE_CODE,
-    SUPERVISOR_LOCATION_TYPE_CODE,
     BLOCK_LOCATION_TYPE_CODE,
     DISTRICT_LOCATION_TYPE_CODE,
-    STATE_TYPE_CODE,
-    ANDHRA_PRADESH_SITE_CODE,
-    MAHARASHTRA_SITE_CODE,
     ENGLISH,
-    HINDI,
-    TELUGU,
-    MARATHI,
+    STATE_TYPE_CODE,
+    SUPERVISOR_LOCATION_TYPE_CODE,
 )
 from custom.icds.messaging.custom_content import (
     GROWTH_MONITORING_XMLNS,
-    render_message,
+    cf_visits_complete,
+    child_illness_reported,
+    missed_cf_visit_to_aww,
+    missed_cf_visit_to_ls,
+    missed_pnc_visit_to_ls,
     person_case_is_migrated_or_opted_out,
+    render_message,
     run_indicator_for_usercase,
+    static_negative_growth_indicator,
 )
 from custom.icds.tests.base import BaseICDSTest
-from mock import patch
-
 
 TEST_GROWTH_FORM_XML = """<?xml version="1.0" ?>
 <data xmlns="{xmlns}">
@@ -114,26 +116,22 @@ class CustomContentTest(BaseICDSTest):
                 self.assertEqual(call_args[1], object)
 
     def test_static_negative_growth_indicator(self):
-        c = CustomContent(custom_content_id='ICDS_STATIC_NEGATIVE_GROWTH_MESSAGE')
-
         schedule_instance = CaseTimedScheduleInstance(
             domain=self.domain,
             case_id=self.child_health_case.case_id,
         )
 
-        c.set_context(schedule_instance=schedule_instance)
-
         # Test when current weight is greater than previous
         submit_growth_form(self.domain, self.child_health_case.case_id, '10.1', '10.4')
         self.assertEqual(
-            c.get_list_of_messages(self.mother_person_case),
+            static_negative_growth_indicator(self.mother_person_case, schedule_instance),
             []
         )
 
         # Test when current weight is equal to previous
         submit_growth_form(self.domain, self.child_health_case.case_id, '10.1', '10.1')
         self.assertEqual(
-            c.get_list_of_messages(self.mother_person_case),
+            static_negative_growth_indicator(self.mother_person_case, schedule_instance),
             ["As per the latest records of your AWC, the weight of your child Joe has remained static in the last "
              "month. Please consult your AWW for necessary advice."]
         )
@@ -141,7 +139,7 @@ class CustomContentTest(BaseICDSTest):
         # Test when current weight is less than previous
         submit_growth_form(self.domain, self.child_health_case.case_id, '10.1', '9.9')
         self.assertEqual(
-            c.get_list_of_messages(self.mother_person_case),
+            static_negative_growth_indicator(self.mother_person_case, schedule_instance),
             ["As per the latest records of your AWC, the weight of your child Joe has reduced in the last month. "
              "Please consult your AWW for necessary advice."]
         )
@@ -159,101 +157,77 @@ class CustomContentTest(BaseICDSTest):
         update_case(self.domain, self.child_health_case.case_id, {'property': 'value10'})
 
         self.assertEqual(
-            c.get_list_of_messages(self.mother_person_case),
+            static_negative_growth_indicator(self.mother_person_case, schedule_instance),
             ["As per the latest records of your AWC, the weight of your child Joe has reduced in the last month. "
              "Please consult your AWW for necessary advice."]
         )
 
     def test_static_negative_growth_indicator_with_red_status(self):
-        c = CustomContent(custom_content_id='ICDS_STATIC_NEGATIVE_GROWTH_MESSAGE')
-
         schedule_instance = CaseTimedScheduleInstance(
             domain=self.domain,
             case_id=self.red_child_health_case.case_id,
         )
 
-        c.set_context(schedule_instance=schedule_instance)
-
         # Current weight is less than previous, but grade is red, so no messages are sent
         submit_growth_form(self.domain, self.red_child_health_case.case_id, '10.1', '9.9')
         self.assertEqual(
-            c.get_list_of_messages(self.mother_person_case),
+            static_negative_growth_indicator(self.mother_person_case, schedule_instance),
             []
         )
 
     def test_missed_cf_visit_to_aww(self):
-        c = CustomContent(custom_content_id='ICDS_MISSED_CF_VISIT_TO_AWW')
-
         schedule_instance = CaseTimedScheduleInstance(
             domain=self.domain,
             case_id=self.ccs_record_case.case_id,
         )
 
-        c.set_context(schedule_instance=schedule_instance)
-
         self.assertEqual(
-            c.get_list_of_messages(self.user1),
+            missed_cf_visit_to_aww(self.user1, schedule_instance),
             ["AWC awc1 has not reported a visit during complementary feeding initiation period for Sam"],
         )
 
     def test_missed_cf_visit_to_ls(self):
-        c = CustomContent(custom_content_id='ICDS_MISSED_CF_VISIT_TO_LS')
-
         schedule_instance = CaseTimedScheduleInstance(
             domain=self.domain,
             case_id=self.ccs_record_case.case_id,
         )
 
-        c.set_context(schedule_instance=schedule_instance)
-
         self.assertEqual(
-            c.get_list_of_messages(self.user3),
+            missed_cf_visit_to_ls(self.user3, schedule_instance),
             ["AWC awc1 has not reported a visit during complementary feeding initiation period for Sam"],
         )
 
     def test_missed_pnc_visit_to_ls(self):
-        c = CustomContent(custom_content_id='ICDS_MISSED_PNC_VISIT_TO_LS')
-
         schedule_instance = CaseTimedScheduleInstance(
             domain=self.domain,
             case_id=self.ccs_record_case.case_id,
         )
 
-        c.set_context(schedule_instance=schedule_instance)
-
         self.assertEqual(
-            c.get_list_of_messages(self.user3),
+            missed_pnc_visit_to_ls(self.user3, schedule_instance),
             ["AWC awc1 has not reported a visit during the PNC within one week of delivery for Sam"],
         )
 
     def test_child_illness_reported(self):
-        c = CustomContent(custom_content_id='ICDS_CHILD_ILLNESS_REPORTED')
-
         schedule_instance = CaseTimedScheduleInstance(
             domain=self.domain,
             case_id=self.child_person_case.case_id,
         )
 
-        c.set_context(schedule_instance=schedule_instance)
-
         self.assertEqual(
-            c.get_list_of_messages(self.user3),
+            child_illness_reported(self.user3, schedule_instance),
             ["AWC awc1 has reported illness for the child Joe. Please ensure that AWW follows up with mother "
              "immediately"],
         )
 
     def test_cf_visits_complete(self):
-        c = CustomContent(custom_content_id='ICDS_CF_VISITS_COMPLETE')
-
         schedule_instance = CaseTimedScheduleInstance(
             domain=self.domain,
             case_id=self.ccs_record_case.case_id,
         )
 
-        c.set_context(schedule_instance=schedule_instance)
-
         self.assertEqual(
-            c.get_list_of_messages(self.user1),
+            cf_visits_complete(self.user1, schedule_instance),
             ["Congratulations! You've done all the Complementary Feeding  Visits for Sam"],
         )
 
