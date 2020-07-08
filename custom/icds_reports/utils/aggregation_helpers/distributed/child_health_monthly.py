@@ -394,9 +394,9 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             LEFT OUTER JOIN "{person_cases_ucr}" person_cases ON child_health.mother_id = person_cases.doc_id
               AND child_health.state_id = person_cases.state_id
               AND child_health.supervisor_id = person_cases.supervisor_id
-            LEFT OUTER JOIN "{person_cases_ucr}" mother_person_cases ON child_health.mother_case_id = person_cases.doc_id
-              AND child_health.state_id = person_cases.state_id
-              AND child_health.supervisor_id = person_cases.supervisor_id
+            LEFT OUTER JOIN "{person_cases_ucr}" mother_person_cases ON child_health.mother_case_id = mother_person_cases.doc_id
+              AND child_health.state_id = mother_person_cases.state_id
+              AND child_health.supervisor_id = mother_person_cases.supervisor_id
             LEFT OUTER JOIN "{agg_cf_table}" cf ON child_health.doc_id = cf.case_id AND cf.month = %(start_date)s
               AND child_health.state_id = cf.state_id
               AND child_health.supervisor_id = cf.supervisor_id
