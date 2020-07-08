@@ -144,7 +144,7 @@ workers against each other.
 
 **Inspect Data**
 
-Allows diving into individual data reports
+Reports for finding and viewing in detail individual cases and form submissions.
 
 **Messaging Reports**
 
