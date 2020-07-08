@@ -157,7 +157,7 @@ def delete_sms_events(start_date, end_date):
             """,
             [start_date, end_date]
         )
-        metrics_counter('commcare.sms_events.deleted', cursor.rowcount, tags = {'type': 'sub_event'})
+        metrics_counter('commcare.sms_events.deleted', cursor.rowcount, tags={'type': 'sub_event'})
 
         cursor.execute(
             f"""
