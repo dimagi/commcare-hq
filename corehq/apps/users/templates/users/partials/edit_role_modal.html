@@ -607,12 +607,11 @@
                   </div>
                   <div class="panel-body"
                        data-bind="foreach: reportPermissions.specific, slideVisible: !reportPermissions.all()">
-                    <div class="form-check" style="white-space:nowrap;">
+                    <div class="form-check">
                       <input type="checkbox"
                              data-bind="checked: value, attr: { 'id': slug() + '-checkbox' },
                                         disable: !$root.allowEdit" />
-                      <label data-bind="attr: { 'for': slug() + '-checkbox' }"
-                             style="white-space:normal;">
+                      <label data-bind="attr: { 'for': slug() + '-checkbox' }">
                         <span data-bind="html: name"></span>
                       </label>
                     </div>
