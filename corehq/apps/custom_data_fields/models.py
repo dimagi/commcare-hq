@@ -131,7 +131,7 @@ class SQLCustomDataFieldsDefinition(SyncSQLToCouchMixin, models.Model):
         self.sqlfield_set.set(fields, bulk=False)
         self.set_sqlfield_order([f.id for f in fields])
 
-    def get_validator(self, data_field_class):
+    def get_validator(self):
         """
         Returns a validator to be used in bulk import
         """
@@ -154,11 +154,9 @@ class SQLCustomDataFieldsDefinition(SyncSQLToCouchMixin, models.Model):
         def validate_required(field, value):
             if field.is_required and not value:
                 return _(
-                    "Cannot create or update a {entity} without "
-                    "the required field: {field}."
+                    "Field {slug} is required."
                 ).format(
-                    entity=data_field_class.entity_string,
-                    field=field.slug
+                    slug=field.slug
                 )
 
         def validate_custom_fields(custom_fields):
