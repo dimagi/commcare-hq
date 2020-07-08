@@ -143,6 +143,7 @@ if [ "$CMD" == "test" -o "$CMD" == "hqtest" -o "$CMD" == "py3test" ]; then
     fi
     export COMPOSE_FILE=docker/hq-compose.yml
     export COMPOSE_PROJECT_NAME=hqtest
+    export CITUS_DB="${CITUS_DB:-test_commcare_ucr_citus}"
     if [ -n "$TRAVIS_BUILD_DIR" ]; then
         export VOLUME_PREFIX="$TRAVIS_BUILD_DIR/docker-volumes/"
     else
@@ -222,6 +223,7 @@ export TRAVIS_BUILD_NUMBER="$TRAVIS_BUILD_NUMBER"
 export TRAVIS_HQ_USERNAME="$TRAVIS_HQ_USERNAME"
 export TRAVIS_HQ_PASSWORD="$TRAVIS_HQ_PASSWORD"
 export DATADOG_API_KEY="$DATADOG_API_KEY"
+export CITUS_DB="${CITUS_DB:-commcare_ucr_citus}"
 
 if [ "$TRAVIS" == "true" -o "$DOCKER_HQ_OVERLAY" == "none" ]; then
     # don't mount /mnt/commcare-hq-ro volume read-only on travis
