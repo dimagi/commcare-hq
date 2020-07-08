@@ -35,21 +35,21 @@ class DeliveryFormsAggregationDistributedHelper(StateBasedAggregationDistributed
             %(state_id)s AS state_id,
             LAST_VALUE(supervisor_id) over w as supervisor_id,
             %(month)s::DATE AS month,
-            LAST_VALUE(completed_on) over w AS latest_time_end_processed,
+            LAST_VALUE(timeend_with_time) over w AS latest_time_end_processed,
             LAST_VALUE(breastfed_at_birth) over w as breastfed_at_birth,
             SUM(CASE WHEN (unscheduled_visit=0 AND days_visit_late < 8) OR
-                          (completed_on::DATE - next_visit) < 8 THEN 1 ELSE 0 END
+                          (timeend_with_time::DATE - next_visit) < 8 THEN 1 ELSE 0 END
                 ) OVER w as valid_visits,
             LAST_VALUE(where_born) OVER w AS where_born,
             LAST_VALUE(num_children_del) OVER w AS num_children_del,
             LAST_VALUE(still_live_birth) OVER w AS still_live_birth
           FROM "{ucr_tablename}"
           WHERE state_id = %(state_id)s AND
-                completed_on >= %(current_month_start)s AND completed_on < %(next_month_start)s AND
+                timeend_with_time >= %(current_month_start)s AND timeend_with_time < %(next_month_start)s AND
                 case_load_ccs_record0 IS NOT NULL
           WINDOW w AS (
             PARTITION BY supervisor_id, case_load_ccs_record0
-            ORDER BY completed_on RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+            ORDER BY timeend_with_time RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
           )
         )
         """.format(
