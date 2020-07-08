@@ -8,7 +8,7 @@ services:
     volumes:
       - ${VOLUME_PREFIX}citus_master:/var/lib/postgresql/data
     environment:
-      POSTGRES_DB: "${CITUS_DB:-commcare_ucr_citus}"
+      POSTGRES_DB: "${UCR_CITUS_DB:-commcare_ucr_citus}"
       POSTGRES_USER: commcarehq
       POSTGRES_PASSWORD: commcarehq
   citus_manager:
@@ -17,7 +17,7 @@ services:
     depends_on: { citus_master: { condition: service_healthy } }
     environment:
       CITUS_HOST: citus_master
-      POSTGRES_DB: "${CITUS_DB:-commcare_ucr_citus}"
+      POSTGRES_DB: "${UCR_CITUS_DB:-commcare_ucr_citus}"
       POSTGRES_USER: commcarehq
       POSTGRES_PASSWORD: commcarehq
   citus_worker1:
@@ -28,7 +28,7 @@ services:
     volumes:
       - ${VOLUME_PREFIX}citus_worker1:/var/lib/postgresql/data
     environment:
-      POSTGRES_DB: "${CITUS_DB:-commcare_ucr_citus}"
+      POSTGRES_DB: "${UCR_CITUS_DB:-commcare_ucr_citus}"
       POSTGRES_USER: commcarehq
   citus_worker2:
     image: 'citusdata/citus:8.1.1'
@@ -38,5 +38,5 @@ services:
     volumes:
       - ${VOLUME_PREFIX}citus_worker2:/var/lib/postgresql/data
     environment:
-      POSTGRES_DB: "${CITUS_DB:-commcare_ucr_citus}"
+      POSTGRES_DB: "${UCR_CITUS_DB:-commcare_ucr_citus}"
       POSTGRES_USER: commcarehq
