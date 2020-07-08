@@ -94,15 +94,11 @@ class MessageMetadata(object):
 def add_msg_tags(msg, metadata):
     if msg and metadata:
         fields = ('workflow', 'xforms_session_couch_id', 'reminder_id', 'chat_user_id',
-                  'ignore_opt_out', 'location_id', 'messaging_subevent_id', 'custom_metadata',
-                  'caption_image', 'caption_audio', 'caption_video')
+                  'ignore_opt_out', 'location_id', 'messaging_subevent_id', 'custom_metadata')
         for field in fields:
-            try:
-                value = getattr(metadata, field)
-                if value is not None:
-                    setattr(msg, field, value)
-            except AttributeError:
-                pass
+            value = getattr(metadata, field)
+            if value is not None:
+                setattr(msg, field, value)
 
 
 def log_sms_exception(msg):
@@ -205,8 +201,18 @@ def send_sms_to_verified_number(verified_number, text, metadata=None,
         text = text
     )
     add_msg_tags(msg, metadata)
+
+    msg.custom_metadata = {}
     for event in events:
-        add_msg_tags(msg, event)
+        multimedia_fields = ('caption_image', 'caption_audio', 'caption_video')
+        for field in multimedia_fields:
+            try:
+                value = getattr(event, field)
+                if value is not None:
+                    msg.custom_metadata[field] = value
+            except AttributeError:
+                pass
+    msg.save()
 
     return queue_outgoing_sms(msg)
 

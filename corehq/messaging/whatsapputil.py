@@ -15,9 +15,9 @@ def is_whatsapp_template_message(message_text):
 
 
 def is_multimedia_message(msg):
-    return hasattr(msg, 'caption_image') and msg.caption_image is not None \
-           or hasattr(msg, 'caption_audio') and msg.caption_audio is not None \
-           or hasattr(msg, 'caption_video') and msg.caption_video is not None
+    return 'caption_image' in msg.custom_metadata\
+           or 'caption_audio' in msg.custom_metadata\
+           or 'caption_video' in msg.custom_metadata
 
 
 def get_multimedia_urls(msg):
@@ -25,11 +25,11 @@ def get_multimedia_urls(msg):
     domain_obj = Domain.get_by_name(msg.domain, strict=True)
     for app in domain_obj.full_applications():
         for path, media in app.get_media_objects(remove_unused=True):
-            if hasattr(msg, 'caption_image') and msg.caption_image == path:
+            if 'caption_image' in msg.custom_metadata and msg.custom_metadata['caption_image'] == path:
                 image_url = get_url_base() + media.url() + 'image.png'
-            if hasattr(msg, 'caption_audio') and msg.caption_audio == path:
+            if 'caption_audio' in msg.custom_metadata and msg.custom_metadata['caption_audio'] == path:
                 audio_url = get_url_base() + media.url() + 'audio.mp3'
-            if hasattr(msg, 'caption_video') and msg.caption_video== path:
+            if 'caption_video' in msg.custom_metadata and msg.custom_metadata['caption_video'] == path:
                 video_url = get_url_base() + media.url() + 'video.mp4'
     return image_url, audio_url , video_url
 
