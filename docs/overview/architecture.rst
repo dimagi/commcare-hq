@@ -5,8 +5,7 @@ CommCare Backend Services
 -------------------------
 
 The majority of the code runs inside the server process. This contains all of the data models and services that
-power the CommCare website. These are broken into functional modules although, the module coupling depicted above
-is meant as a guide and the boundaries between modules are not always fully defined.
+power the CommCare website.
 
 Each module is a collection of one or more Django applications that each contain the relevant data models, url
 mappings and view controllers, templates, and Database views necessary to provide that module’s functionality.
