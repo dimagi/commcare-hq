@@ -143,7 +143,7 @@ Apache Kafka
 
 Kafka_ is a distributed streaming platform used for building real-time data pipelines and streaming apps. It is
 horizontally scalable, fault-tolerant, fast, and runs in production in thousands of companies. It is used in
-CommCare to create asynchronous feeds that power our ETL and reporting pipelines.
+CommCare to create asynchronous feeds that power our change processors (pillows) as part of the reporting pipeline.
 
 .. _Kafka: https://kafka.apache.org/
 
