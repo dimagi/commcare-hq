@@ -21,6 +21,15 @@ class SimpleFilter(DomainFilter):
         return [Q(**{self.filter_kwarg: domain_name})]
 
 
+class DomainOrNullFilter(SimpleFilter):
+    def get_filters(self, domain_name):
+        """
+        Returns a queryset filtered by domain name or when domain is NULL
+        """
+        return [Q(**{self.filter_kwarg: domain_name})
+                | Q(**{f'{self.filter_kwarg}__isnull': True})]
+
+
 class UsernameFilter(DomainFilter):
     def get_filters(self, domain_name):
         """
