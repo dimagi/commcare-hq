@@ -310,7 +310,7 @@ class CreateConfigReportView(BaseEditConfigReportView):
 
 class ReportBuilderView(BaseDomainView):
 
-    @method_decorator(require_permission(Permissions.edit_data))
+    @method_decorator(require_permission(Permissions.edit_reports))
     @cls_to_view_login_and_domain
     @use_daterangepicker
     @use_datatables
