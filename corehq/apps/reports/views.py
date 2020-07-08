@@ -161,8 +161,8 @@ from corehq.util.view_utils import (
     request_as_dict,
     reverse,
 )
-from custom.icds.const import IS_ICDS_ENVIRONMENT
-from custom.icds.view_utils import check_data_interfaces_blocked_for_domain
+from custom.icds_core.const import IS_ICDS_ENVIRONMENT
+from custom.icds_core.view_utils import check_data_interfaces_blocked_for_domain
 from no_exceptions.exceptions import Http403
 
 from .dispatcher import ProjectReportDispatcher
