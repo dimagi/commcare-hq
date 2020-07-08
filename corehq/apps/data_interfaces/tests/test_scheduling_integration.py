@@ -1069,7 +1069,8 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
 
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     @patch('corehq.messaging.tasks.sync_case_for_messaging_rule.delay')
-    def test_run_messaging_rule(self, task_patch):
+    @patch('corehq.apps.es.es_query.ESQuery.count', return_value=10)
+    def test_run_messaging_rule(self, es_patch, task_patch):
         rule_id = self._setup_rule()
         with create_case(self.domain, 'person') as case1, create_case(self.domain, 'person') as case2:
             run_messaging_rule(self.domain, rule_id)
