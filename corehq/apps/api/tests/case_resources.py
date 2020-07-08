@@ -13,6 +13,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import WebUser
 from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.apps.es.tests.utils import ElasticTestMixin
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.pillows.case import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
@@ -164,7 +165,7 @@ class TestCommCareCaseResource(APIResourceTest):
         self.assertEqual(child_cases[0]['id'], child_case_id)
 
 
-class TestCommCareCaseResourceQueries(APIResourceTest):
+class TestCommCareCaseResourceQueries(APIResourceTest, ElasticTestMixin):
     """
     Tests the CommCareCaseREsource, currently only v0_4
     """
@@ -176,13 +177,14 @@ class TestCommCareCaseResourceQueries(APIResourceTest):
 
         response = self._assert_auth_get_resource('%s?%s' % (self.list_endpoint, urlencode(url_params)))
         self.assertEqual(response.status_code, 200)
-        self.assertItemsEqual(fake_es.queries[0]['filter']['and'], expected_query)
+        self.checkQuery(fake_es.queries[0]['query']['filtered']['filter']['and'], expected_query, is_raw_query=True)
 
     def test_get_list_legacy_filters(self):
         expected = [
             {'term': {'domain.exact': 'qwerty'}},
-            {'term': {'type': 'movie'}},
             {'term': {'name': 'lethal weapon ii'}},
+            {'term': {'type': 'movie'}},
+            {'match_all': {}},
         ]
         params = {
             'case_type': 'Movie',
@@ -193,12 +195,13 @@ class TestCommCareCaseResourceQueries(APIResourceTest):
     def test_get_list_case_sensitivity(self):
         expected = [
             {'term': {'domain.exact': 'qwerty'}},
-            {'term': {'type': 'fish'}},
             {'term': {'type.exact': 'FISH'}},
-            {'term': {'name': 'nemo'}},
             {'term': {'name.exact': 'Nemo'}},
-            {'term': {'external_id': 'clownfish_1'}},
             {'term': {'external_id.exact': 'ClownFish_1'}},
+            {'term': {'type': 'fish'}},
+            {'term': {'name': 'nemo'}},
+            {'term': {'external_id': 'clownfish_1'}},
+            {'match_all': {}},
         ]
         params = {
             'type': 'fish',
@@ -215,8 +218,9 @@ class TestCommCareCaseResourceQueries(APIResourceTest):
         end_date = datetime(2011, 1, 2)
         expected = [
             {'term': {'domain.exact': 'qwerty'}},
-            {'range': {'server_modified_on': {'gte': start_date.isoformat(), 'lte': end_date.isoformat()}}},
             {'range': {'modified_on': {'gte': start_date.isoformat(), 'lte': end_date.isoformat()}}},
+            {'range': {'server_modified_on': {'gte': start_date.isoformat(), 'lte': end_date.isoformat()}}},
+            {'match_all': {}},
         ]
         params = {
             'server_date_modified_end': end_date.isoformat(),

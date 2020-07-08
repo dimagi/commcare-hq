@@ -65,7 +65,7 @@ class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
 
     def obj_get_list(self, bundle, domain, **kwargs):
         try:
-            es_query = es_query_from_get_params(bundle.request.GET, domain)
+            es_query = es_query_from_get_params(bundle.request.GET, domain, doc_type='case')
         except Http400 as e:
             raise BadRequest(str(e))
 

@@ -501,6 +501,7 @@ class TestApiKey(APIResourceTest):
 class TestParamstoESFilters(SimpleTestCase, ElasticTestMixin):
 
     def test_search_param(self):
+        # GET param _search can accept a custom query from Data export tool
         self.maxDiff = None
         range_expression = {
             'gte': datetime(2019, 1, 1).isoformat(),
@@ -542,16 +543,32 @@ class TestParamstoESFilters(SimpleTestCase, ElasticTestMixin):
             data={'_search': json.dumps(query)}
         )
         expected = {
-            "filter": {
-                "and": [
-                    {
-                        "term": {
-                            "domain.exact": "test_domain"
-                        }
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {
+                                "term": {
+                                    "domain.exact": "test_domain"
+                                }
+                            },
+                            {
+                                "term": {
+                                    "doc_type": "xforminstance"
+                                }
+                            },
+                            query['filter'],
+                            {
+                                "match_all": {}
+                            }
+                        ]
                     },
-                    query['filter']
-                ]
-            }
+                    "query": {
+                        "match_all": {}
+                    }
+                }
+            },
+            "size": 1000000
         }
         self.checkQuery(
             es_query_from_get_params(request.GET, 'test_domain'),
@@ -560,6 +577,7 @@ class TestParamstoESFilters(SimpleTestCase, ElasticTestMixin):
         )
 
     def test_inserted_at_query(self):
+        # GET param _search can accept a custom query from a custom API use case 
         query = {
             'filter': {
                 'range': {
@@ -583,6 +601,34 @@ class TestParamstoESFilters(SimpleTestCase, ElasticTestMixin):
                 ]
             }
         }
+        expected = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {
+                                "term": {
+                                    "domain.exact": "test_domain"
+                                }
+                            },
+                            {
+                                "term": {
+                                    "doc_type": "xforminstance"
+                                }
+                            },
+                            query['filter'],
+                            {
+                                "match_all": {}
+                            }
+                        ]
+                    },
+                    "query": {
+                        "match_all": {}
+                    }
+                }
+            },
+            "size": 1000000
+        }
         self.checkQuery(
             es_query_from_get_params(request.GET, 'test_domain'),
             expected,
@@ -590,6 +636,7 @@ class TestParamstoESFilters(SimpleTestCase, ElasticTestMixin):
         )
 
     def test_other_queries_get_skipped(self):
+        # GET param _search shouldn't accept any other queries
         query = {
             'filter': {
                 'range': {

@@ -149,18 +149,10 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
         return MOCK_XFORM_ES or FormESView(domain)
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        include_archived = 'include_archived' in bundle.request.GET
         try:
             es_query = es_query_from_get_params(bundle.request.GET, domain, ['include_archived'])
         except Http400 as e:
             raise BadRequest(str(e))
-        if include_archived:
-            es_query['filter']['and'].append({'or': [
-                {'term': {'doc_type': 'xforminstance'}},
-                {'term': {'doc_type': 'xformarchived'}},
-            ]})
-        else:
-            es_query['filter']['and'].append({'term': {'doc_type': 'xforminstance'}})
 
         # Note that FormESView is used only as an ES client, for `run_query` against the proper index
         return ElasticAPIQuerySet(

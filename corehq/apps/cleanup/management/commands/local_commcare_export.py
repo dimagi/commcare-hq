@@ -51,13 +51,6 @@ def _get_form_mock(project, params):
     # this is mostly copy/paste/modified from XFormInstanceResource
     include_archived = 'include_archived' in params
     es_query = es_query_from_get_params(params, project, ['include_archived'])
-    if include_archived:
-        es_query['filter']['and'].append({'or': [
-            {'term': {'doc_type': 'xforminstance'}},
-            {'term': {'doc_type': 'xformarchived'}},
-        ]})
-    else:
-        es_query['filter']['and'].append({'term': {'doc_type': 'xforminstance'}})
 
     query_set = ElasticAPIQuerySet(
         payload=es_query,

@@ -19,6 +19,8 @@ from corehq.apps.api.resources.v0_1 import TASTYPIE_RESERVED_GET_PARAMS
 from corehq.apps.api.util import object_does_not_exist
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.es import filters
+from corehq.apps.es.forms import FormES
+from corehq.apps.es.cases import CaseES
 from corehq.apps.es.utils import flatten_field_dict
 from corehq.apps.reports.filters.forms import FormsByApplicationFilter
 from corehq.elastic import (
@@ -700,19 +702,24 @@ def _validate_and_get_es_filter(search_param):
         raise Http400
 
 
-def es_query_from_get_params(search_params, domain, reserved_query_params=None):
-    payload = {
-        "filter": {
-            "and": [
-                {"term": {"domain.exact": domain}}
-            ]
-        },
-    }
+def es_query_from_get_params(search_params, domain, reserved_query_params=None, doc_type='form'):
+    # doc_type can be form or case
+    assert doc_type in ['form', 'case']
+    es = FormES() if doc_type == 'form' else CaseES()
+
+    query = es.remove_default_filters().domain(domain)
+
+    if doc_type == 'form':
+        if 'include_archived' in search_params:
+            query = query.filter(filters.OR(filters.term('doc_type', 'xforminstance'), filters.term('doc_type', 'xformarchived')))
+        else:
+            query = query.filter(filters.term('doc_type', 'xforminstance'))
+
     if '_search' in search_params:
         # This is undocumented usecase by Data export tool and one custom project
         #   Validate that the passed in param is one of these two expected
         _filter = _validate_and_get_es_filter(json.loads(search_params['_search']))
-        payload['filter']['and'].append(_filter)
+        query = query.filter(_filter)
 
     # filters are actually going to be a more common case
     reserved_query_params = RESERVED_QUERY_PARAMS | set(reserved_query_params or [])
@@ -728,13 +735,13 @@ def es_query_from_get_params(search_params, domain, reserved_query_params=None):
             raise Http400("Bad query parameter: {}".format(str(e)))
 
         if payload_filter:
-            payload["filter"]["and"].append(payload_filter)
+            query = query.filter(payload_filter)
 
     # add unconsumed filters
     for param, value in query_params.items():
         # assume these fields are analyzed in ES so convert to lowercase
         # Any fields that are not analyzed in ES should be in the ``query_param_consumers`` above
         value = value.lower()
-        payload["filter"]["and"].append(filters.term(param, value))
+        query = query.filter(filters.term(param, value))
 
-    return payload
+    return query.raw_query
