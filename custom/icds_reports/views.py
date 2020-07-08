@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from wsgiref.util import FileWrapper
 
 from django.conf import settings
@@ -28,7 +28,7 @@ from custom.icds_reports.utils.topojson_util.topojson_util import get_block_topo
 from dimagi.utils.dates import add_months, force_to_date
 
 from corehq import toggles
-from corehq.apps.domain.decorators import api_auth, login_and_domain_required
+from corehq.apps.domain.decorators import api_auth, login_and_domain_required, require_superuser
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
 from corehq.apps.hqwebapp.views import BugReportView
@@ -428,6 +428,58 @@ class BaseCasAPIView(View):
 
     def get_state_id_from_state_name(self, state_name):
         return SQLLocation.objects.get(name=state_name, location_type__name='state').location_id
+
+
+@location_safe
+@method_decorator([login_and_domain_required,
+                   toggles.ENABLE_ICDS_DASHBOARD_RELEASE_NOTES_UPDATE.required_decorator(),
+                   require_superuser], name='dispatch')
+class ReleaseNotesUpdateView(TemplateView):
+    page_title = 'Update Dashboard Release Notes'
+    urlname = 'update_dashboard_release_notes'
+    template_name = 'icds_reports/update_release_notes.html'
+
+    def post(self, request, *args, **kwargs):
+        data = request.FILES['dashboard_release_notes']
+        icds_file, _ = IcdsFile.objects.get_or_create(blob_id="dashboard_release_notes.pdf",
+                                                      data_type='dashboard_release_notes')
+
+        icds_file.store_file_in_blobdb(data)
+        icds_file.save()
+        messages.success(request, 'ICDS Dashboard Release Notes uploaded Successfully')
+        return redirect(self.urlname, domain=request.domain)
+
+
+@location_safe
+@method_decorator([login_and_domain_required], name='dispatch')
+class DownloadReleaseNotes(View):
+    def get(self, request, *args, **kwargs):
+        release_notes_file = IcdsFile.objects.filter(blob_id="dashboard_release_notes.pdf")\
+            .order_by('file_added').last()
+        release_notes = release_notes_file.get_file_from_blobdb()
+
+        release_date = release_notes_file.file_added.strftime('%d-%m-%Y')
+
+        response = HttpResponse(release_notes.read(), content_type='application/pdf')
+        response['Content-Disposition'] = safe_filename_header("Dashboard_release_notes_" + release_date + ".pdf")
+
+        return response
+
+
+@location_safe
+@method_decorator([login_and_domain_required], name='dispatch')
+class ReleaseDateView(View):
+    def get(self, request, *args, **kwargs):
+        release_date = IcdsFile.objects.filter(blob_id="dashboard_release_notes.pdf")\
+            .order_by('file_added').last().file_added
+        release_date_string = release_date.strftime('%d-%m-%Y')
+
+        week_ago = date.today() - timedelta(days=7)
+        is_older_than_a_week = week_ago > release_date
+        return JsonResponse(data={
+            'releaseDate': release_date_string,
+            'isOlderThanAWeek': is_older_than_a_week
+        })
 
 
 @method_decorator(DASHBOARD_CHECKS, name='dispatch')

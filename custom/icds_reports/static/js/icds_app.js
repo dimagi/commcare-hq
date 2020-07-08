@@ -2,7 +2,8 @@
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function MainController($scope, $route, $routeParams, $location, $uibModal, $window, $http, reportAnIssueUrl, isWebUser, userLocationId, isAlertActive) {
+function MainController($scope, $route, $routeParams, $location, $uibModal, $window, $http, reportAnIssueUrl, isWebUser,
+                        userLocationId, isAlertActive, haveAccessToFeatures) {
     $scope.$route = $route;
     $scope.$location = $location;
     $scope.$routeParams = $routeParams;
@@ -10,6 +11,7 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
     $scope.healthCollapsed = true;
     $scope.isWebUser = isWebUser;
     $scope.dateChanged = false;
+    $scope.haveAccessToFeatures = haveAccessToFeatures
 
     angular.element(document).ready(function () {
         $scope.adjustUIComponentsIfAlertIsActive();
@@ -70,6 +72,15 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
         }
     };
 
+    $scope.isOlderThanAWeek = (function () {
+        $http.get(url('release_date')).then(function (response) {
+            if (response && response.data) {
+                return response.data['isOlderThanAWeek'];
+            }
+            return true;
+        });
+    })();
+
     $scope.$on('$routeChangeStart', function () {
         $scope.checkAccessToLocation();
         var path = window.location.pathname + $location.path().substr(1);
@@ -121,6 +132,7 @@ MainController.$inject = [
     'isWebUser',
     'userLocationId',
     'isAlertActive',
+    'haveAccessToFeatures'
 ];
 
 window.angular.module('icdsApp', [

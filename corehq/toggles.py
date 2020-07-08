@@ -1966,3 +1966,10 @@ ONE_PHONE_NUMBER_MULTIPLE_CONTACTS = StaticToggle(
     Otherwise the recipient has no way to know who they're supposed to be enter information about.
     """
 )
+
+ENABLE_ICDS_DASHBOARD_RELEASE_NOTES_UPDATE = StaticToggle(
+    'enable_icds_dashboard_release_notes_update',
+    'Enable updating ICDS dashboard release notes for specific users',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
+)
