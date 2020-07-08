@@ -85,6 +85,7 @@ from corehq.apps.app_manager.views.utils import (
     clear_xmlns_app_id_cache,
     get_langs,
     handle_custom_icon_edits,
+    handle_shadow_child_modules,
 )
 from corehq.apps.app_manager.xform import CaseError
 from corehq.apps.case_search.models import case_search_enabled_for_domain
@@ -573,6 +574,8 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         module["display_style"] = request.POST.get("display_style")
     if should_edit("source_module_id"):
         module["source_module_id"] = request.POST.get("source_module_id")
+        handle_shadow_child_modules(app, module)
+        resp['redirect'] = reverse('view_module', args=[domain, app_id, module_unique_id])
     if should_edit("display_separately"):
         module["display_separately"] = json.loads(request.POST.get("display_separately"))
     if should_edit("parent_module"):
