@@ -156,11 +156,17 @@ section for tracking SMS messages sent and received through their domain
 Provides tools for looking at applications deployed to users’ phones and device logging
 information.
 
+User Defined Reports
+~~~~~~~~~~~~~~~~~~~~
+In addition to the set of standard reports users may also configure reports based on the data collected by their
+users. This reporting framework allows users to define User Configurable Reports (UCR) which store their data in
+SQL tables.
+
 Mobile Reports
 ~~~~~~~~~~~~~~
 
-CommCare has the ability to perform basic data transforms and accumulations with a "User Configurable Reports"
-(UCR) engine.
+UCRs may also be used to send report data to the mobile devices. This data can then be displayed on the device as
+a report or graph.
 
 Messaging Layer
 --------------
