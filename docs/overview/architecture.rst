@@ -116,10 +116,15 @@ Other services
 Nginx (proxy)
 ~~~~~~~~~~~~~
 
-CommCare’s main entry point for all traffic to CommCare HQ goes through Nginx_. This is installable via the Ubuntu
-software installer. SSL termination happens at Nginx. Web traffic once hitting nginx is then routed to our multiple
-web-worker processes running Gunicorn (see below). The routing of traffic is determined by the nginx load balancer
-that proxy this traffic transparently to the user, and balances the load between the web processes.
+CommCare’s main entry point for all traffic to CommCare HQ goes through Nginx_. Nginx performs the following
+functions:
+
+* SSL termination
+* Reverse proxy and load balancing
+* Request routing to CommCare and Formplayer
+* Serving static assets
+* Request caching
+* Rate limiting (optional)
 
 .. _Nginx: https://www.nginx.com/
 
