@@ -51,14 +51,11 @@ A large portion of our data is stored in the PostgreSQL_ database, including cas
 account information.
 
 Also stored in a relational database, are tables of domain-specific transactional reporting data. For a particular
-reporting need, our reporting framework stores a table where each row contains the relevant indicators aggregated
-to some minimum interval (such as one day) as well as any values necessary for filtering. Thus any person or system
-can use standard SQL reporting queries or tools to build quantitative reports capable of drill-down, drill-through,
-and slice-and-dice operations.
+reporting need, our User Configurable Reporting framework (UCR) stores a table where each row contains the relevant
+indicators as well as any values necessary for filtering.
 
 For larger deployments the PostgreSQL database is sharded. Our primary data is sharded using a library called
-PL/Proxy as well as application logic written in the Django framework. Reporting data is sharded using CitusDB, an
-enterprise open-source sharding solution for PostgreSQL databases.
+PL/Proxy as well as application logic written in the Python.
 
 PostgreSQL is a powerful, open source object-relational database system. It has more than 15 years of active
 development and a proven architecture that has earned it a strong reputation for reliability, data integrity, and
