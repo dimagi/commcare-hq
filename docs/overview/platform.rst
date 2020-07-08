@@ -40,14 +40,27 @@ Application Data Layer
 Data Management
 ~~~~~~~~~~~~~~~
 
-The underlying data model for CommCare uses forms and cases to track interactions with objects, often people. Cases
-provide longitudinal records which can track the ongoing interactions with a case through form submissions and
-facilitate the complex sharding and reconciliation required from synchronizing offline clients.
+There are two data models that underpin the CommCare data model:
 
-Every time a form is filled out, it can either create a new case, update an existing case, or close an existing
-case. Each case has a type, such as “patient”, or “contact”, which distinguishes it from cases of other types.
-Cases may also be structured in a hierarchy using subcases, such that a case can be directly linked to its parent
-case for maintaining relationships between cases.
+**Form**
+A form is the basic building block of Applications. Forms are represented as XForms_ (XML Forms) which contain
+data, logic and rules. Users interact with forms on the mobile device to capture data and perform logic. This data
+is then sent back to CommCare as a *form submission* which is an XML document containing only the data portion of 
+the XForm.
+
+Forms may include *case blocks* which can be used to create, update and close cases.
+
+.. _XForms: https://dimagi.github.io/xform-spec/
+
+**Case**
+Cases are used to track interactions with objects, often people. Cases provide longitudinal records which can track
+the ongoing interactions with a case through form submissions and facilitate the complex sharding and reconciliation
+required from synchronizing offline clients.
+
+Each case has a type, such as "patient", "contact", "household" which distinguishes it from cases of other types.
+Cases may also be structured in a hierarchy using uni-directional relationships between cases.
+
+The full specification for cases can be found `here <https://github.com/dimagi/commcare-core/wiki/casexml20>`_.
 
 Transaction Processing
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -146,7 +159,7 @@ information.
 Mobile Reports
 ~~~~~~~~~~~~~~
 
-CommCare has the ability to perform basic data transforms and accumulations with a “User Configurable Reports”
+CommCare has the ability to perform basic data transforms and accumulations with a "User Configurable Reports"
 (UCR) engine.
 
 Messaging Layer
