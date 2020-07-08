@@ -65,5 +65,6 @@ branches:
   - nemanja1040:whatsapp_multimedia_messages  # Nemanja Stancic Jul 6
   - solleks:cdg/edit_reports_permission  # Charlie July 6
   - jls/linked-domain-report-links # Jenny July 7
+  - kev/geowidget-mapbox # Kevin July 8
 
 submodules: {}
