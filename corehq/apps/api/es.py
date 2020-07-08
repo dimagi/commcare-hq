@@ -187,63 +187,6 @@ class ESView(View):
         es_results['hits']['hits'] = hits
         return es_results
 
-    def base_query(self, terms=None, fields=None, start=0, size=DEFAULT_SIZE):
-        """
-        The standard query to run across documents of a certain index.
-        domain = exact match domain string
-        terms = k,v pairs of terms you want to match against. you can dive down into properties like form.foo for an xform, like { "username": "foo", "type": "bar" } - this will make it into a term: k: v dict
-        fields = field properties to report back in the results['fields'] array. if blank, you will need to read the _source
-        start = where to start the results from
-        size = default size in ES is 10, also explicitly set here.
-        """
-        fields = fields or []
-        query = {
-            "filter": {
-                "and": [
-                    {"term": {"domain.exact": self.domain}}
-                ]
-            },
-            "from": start,
-            "size": size
-        }
-
-        use_terms = terms or {}
-
-        if len(fields) > 0:
-            query['fields'] = fields
-        for k, v in use_terms.items():
-            query['filter']['and'].append({"term": {k: v}})
-        return query
-
-    def get(self, request, *args, **kwargs):
-        """
-        Very basic querying based upon GET parameters.
-        todo: apply GET params as lucene query_string params to base_query
-        """
-        size = request.GET.get('size', DEFAULT_SIZE)
-        start = request.GET.get('start', 0)
-        query_results = self.run_query(self.base_query(start=start, size=size))
-        query_output = json.dumps(query_results, indent=self.indent)
-        response = HttpResponse(query_output, content_type="application/json")
-        return response
-
-    def post(self, request, *args, **kwargs):
-        """
-        More powerful ES querying using POST params.
-        """
-        try:
-            raw_query = json.loads(request.body.decode('utf-8'))
-        except Exception as e:
-            content_response = dict(message="Error parsing query request", exception=str(e))
-            response = HttpResponse(status=406, content=json.dumps(content_response))
-            return response
-
-        #ensure that the domain is filtered in implementation
-        query_results = self.run_query(raw_query)
-        query_output = json.dumps(query_results, indent=self.indent)
-        response = HttpResponse(query_output, content_type="application/json")
-        return response
-
 
 class CaseESView(ESView):
     """
@@ -265,19 +208,6 @@ class FormESView(ESView):
     index = XFORM_INDEX
     doc_type = "XFormInstance"
     model = ESXFormInstance
-
-    def base_query(self, terms=None, doc_type='xforminstance', fields=None, start=0, size=DEFAULT_SIZE):
-        """
-        Somewhat magical enforcement that the basic query for XForms will only return XFormInstance
-        docs by default.
-        """
-
-        new_terms = terms or {}
-        use_fields = fields or []
-        if 'doc_type' not in new_terms:
-            #let the terms override the kwarg - the query terms trump the magic
-            new_terms['doc_type'] = doc_type
-        return super(FormESView, self).base_query(terms=new_terms, fields=use_fields, start=start, size=size)
 
     def run_query(self, es_query, **kwargs):
         es_results = super(FormESView, self).run_query(es_query)
@@ -341,22 +271,6 @@ class ReportFormESView(FormESView):
     doc_type = "XFormInstance"
     model = ESXFormInstance
 
-    def base_query(self, terms=None, doc_type='xforminstance', fields=None, start=0, size=DEFAULT_SIZE):
-        """
-        Somewhat magical enforcement that the basic query for XForms will only return XFormInstance
-        docs by default.
-        """
-        raw_terms = terms or {}
-        query_terms = {}
-        if 'doc_type' not in raw_terms:
-            #let the terms override the kwarg - the query terms trump the magic
-            query_terms['doc_type'] = doc_type
-
-        for k, v in raw_terms.items():
-            query_terms['%s.%s' % (k, VALUE_TAG)] = v
-
-        return super(ReportFormESView, self).base_query(terms=raw_terms, fields=fields, start=start, size=size)
-
     def run_query(self, es_query):
         es_results = super(FormESView, self).run_query(es_query)
         #hack, walk the results again, and if we have xmlns, populate human readable names
@@ -390,69 +304,6 @@ class ReportFormESView(FormESView):
 
                 res['_source']['es_readable_name'] = name
         return es_results
-
-    @classmethod
-    def by_case_id_query(cls, domain, case_id, terms=None, doc_type='xforminstance',
-                         date_field=None, startdate=None, enddate=None,
-                         date_format=ISO_DATE_FORMAT):
-        """
-        Run a case_id query on both case properties (supporting old and new) for xforms.
-
-        datetime options onsubmission ranges possible too by passing datetime startdate or enddate
-
-        args:
-        domain: string domain, required exact
-        case_id: string
-        terms: k,v of additional filters to apply as terms and block of filter
-        doc_type: explicit xforminstance doc_type term query (only search active, legit items)
-        date_field: string property of the xform submission you want to do date filtering, be sure to make sure that the field in question is indexed as a datetime
-        startdate, enddate: datetime interval values
-        date_format: string of the date format to filter based upon, defaults to yyyy-mm-dd
-        """
-
-        use_terms = terms or {}
-        query = {
-            "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {"term": {"domain.exact": domain.lower()}},
-                            {"term": {"doc_type": doc_type}},
-                            {
-                                "nested": {
-                                    "path": "form.case",
-                                    "filter": {
-                                        "or": [
-                                            {"term": {"form.case.@case_id": "%s" % case_id}},
-                                            {"term": {"form.case.case_id": "%s" % case_id}}
-                                        ]
-                                    }
-                                }
-                            }
-                        ]
-                    },
-                    "query": {
-                        "match_all": {}
-                    }
-                }
-            }
-        }
-        if date_field is not None:
-            range_query = {
-                "range": {
-                    date_field: {}
-                }
-            }
-
-            if startdate is not None:
-                range_query['range'][date_field]["gte"] = startdate.strftime(date_format)
-            if enddate is not None:
-                range_query['range'][date_field]["lte"] = enddate.strftime(date_format)
-            query['query']['filtered']['filter']['and'].append(range_query)
-
-        for k, v in use_terms.items():
-            query['query']['filtered']['filter']['and'].append({"term": {k.lower(): v.lower()}})
-        return query
 
 
 class ElasticAPIQuerySet(object):

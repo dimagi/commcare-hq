@@ -12,7 +12,7 @@ from pact.forms.patient_form import PactPatientForm
 from pact.forms.weekly_schedule_form import ScheduleForm
 from pact.models import PactPatientCase
 from pact.reports import PactDrilldownReportMixin, PactElasticTabularReportMixin
-from pact.utils import pact_script_fields
+from pact.utils import pact_script_fields, get_by_case_id_form_es_query
 
 
 class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMixin):
@@ -119,21 +119,20 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
         if not self.patient_id:
             return None
 
-        full_query = ReportFormESView.by_case_id_query(self.request.domain, self.patient_id)
+        fields = [
+            "_id",
+            "received_on",
+            "form.meta.timeEnd",
+            "form.meta.timeStart",
+            "form.meta.username",
+            "form.#type",
+        ]
+        full_query = (get_by_case_id_form_es_query(self.pagination.start, self.pagination.count, self.patient_id)
+            .source(fields).raw_query)
         full_query.update({
-            "fields": [
-                "_id",
-                "received_on",
-                "form.meta.timeEnd",
-                "form.meta.timeStart",
-                "form.meta.username",
-                "form.#type",
-            ],
             "sort": self.get_sorting_block(),
-            "size": self.pagination.count,
-            "from": self.pagination.start
+            "script_fields": pact_script_fields()
         })
-        full_query['script_fields'] = pact_script_fields()
         res = self.xform_es.run_query(full_query)
         return res
 

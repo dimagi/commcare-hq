@@ -1,6 +1,7 @@
 from django.urls import NoReverseMatch, reverse
 from django.http import Http404
 from corehq.apps.api.es import ReportCaseESView, ReportFormESView
+from corehq.apps.es import filters
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.users.models import CommCareUser
 from django.utils.safestring import mark_safe
@@ -8,7 +9,8 @@ from memoized import memoized
 from pact.enums import PACT_CASE_TYPE, PACT_DOMAIN
 from . import chw_schedule
 from pact.reports import PactDrilldownReportMixin, PactElasticTabularReportMixin
-from pact.utils import pact_script_fields, case_script_field
+from pact.utils import (
+    pact_script_fields, case_script_field, get_base_form_es_query, get_base_case_es_query)
 
 
 class PactCHWProfileReport(PactDrilldownReportMixin, PactElasticTabularReportMixin):
@@ -44,15 +46,14 @@ class PactCHWProfileReport(PactDrilldownReportMixin, PactElasticTabularReportMix
 
     def get_assigned_patients(self):
         """get list of patients and their submissions on who this chw is assigned as primary hp"""
-        fields = ["_id", "name", "pactid.#value", "hp_status.#value", "dot_status.#value"]
-        case_query = self.case_es.base_query(
-            terms={'type': PACT_CASE_TYPE, 'hp.#value': self.get_user().raw_username}, fields=fields,
-            size=100)
-
-        case_query['filter']['and'].append({'not': {'term': {'hp_status.#value': 'discharged'}}})
+        source = ["_id", "name", "pactid.#value", "hp_status.#value", "dot_status.#value"]
+        case_query = (get_base_case_es_query(0, 100)
+            .filter(filters.term('type', PACT_CASE_TYPE))
+            .filter(filters.term('hp.#value', self.get_user().raw_username))
+            .filter(filters.NOT(filters.term('hp_status.#value', 'discharged')))
+            .source(source).raw_query)
         chw_patients_res = self.case_es.run_query(case_query)
         assigned_patients = [x['fields'] for x in chw_patients_res['hits']['hits']]
-
         for x in assigned_patients:
             x['info_url'] = self.pact_case_link(x['_id'])
             if x['dot_status.#value'] is not None or x['dot_status.#value'] != "":
@@ -123,9 +124,11 @@ class PactCHWProfileReport(PactDrilldownReportMixin, PactElasticTabularReportMix
             "form.meta.timeStart",
             "form.meta.timeEnd"
         ]
-        query = self.xform_es.base_query(terms={'form.meta.username': user.raw_username},
-                                         fields=fields, start=self.pagination.start,
-                                         size=self.pagination.count)
+        query = get_base_form_es_query(self.pagination.start, self.pagination.count)
+        query = (query
+            .filter(filters.term('form.meta.username', user.raw_username))
+            .source(fields)
+            .raw_query)
         query['script_fields'] = {}
         query['script_fields'].update(pact_script_fields())
         query['script_fields'].update(case_script_field())

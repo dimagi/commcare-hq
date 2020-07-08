@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, time
 import uuid
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.api.es import ReportCaseESView, ReportFormESView
+from corehq.apps.es import filters
 from corehq.apps.hqcase.analytics import get_number_of_cases_in_domain_of_type
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.reports.generic import GenericTabularReport
@@ -13,6 +14,7 @@ from dimagi.utils.parsing import json_format_date
 from pact.enums import PACT_DOMAIN, PACT_CASE_TYPE, XMLNS_DOTS_FORM
 from pact.models import PactPatientCase, DOTSubmission, CObservation
 from pact.reports.dot_calendar import DOTCalendarReporter
+from pact.utils import get_base_form_es_query, get_base_case_es_query
 
 
 class PactDOTPatientField(BaseSingleOptionFilter):
@@ -41,11 +43,8 @@ class PactDOTPatientField(BaseSingleOptionFilter):
         total_count = \
             get_number_of_cases_in_domain_of_type('pact', case_type=PACT_CASE_TYPE) or 100
         fields = ['_id', 'name', 'pactid.#value']
-        query = case_es.base_query(terms={'type': PACT_CASE_TYPE},
-                                   fields=fields,
-                                   start=0,
-                                   size=total_count)
-        query['filter']['and'].append({"prefix": {"dot_status.#value": "dot"}})
+        query = get_base_case_es_query(0, total_count).filter(filters.term('type', PACT_CASE_TYPE)).source(fields)
+        query = query.add_query({"prefix": {"dot_status.#value": "dot"}}).raw_query
 
         results = case_es.run_query(query)
         for res in results['hits']['hits']:
@@ -87,10 +86,10 @@ class PactDOTReport(GenericTabularReport, CustomProjectReport, ProjectReportPara
         unique_visits = dcal.unique_xforms()
         xform_es = ReportFormESView(PACT_DOMAIN)
 
-        q = xform_es.base_query(size=len(unique_visits))
+        q = get_base_form_es_query(size=len(unique_visits))
         lvisits = list(unique_visits)
         if len(lvisits) > 0:
-            q['filter']['and'].append({"ids": {"values": lvisits}})
+            q = q.add_query({"ids": {"values": lvisits}})
             #todo double check pactid/caseid matches
         q['sort'] = {'received_on': 'desc'}
         res = xform_es.run_query(q)

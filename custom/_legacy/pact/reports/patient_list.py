@@ -2,6 +2,7 @@ from django.urls import NoReverseMatch
 from django.utils import html
 
 from corehq.apps.api.es import ReportCaseESView, ReportFormESView
+from corehq.apps.es import filters
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.users.models import CommCareUser
@@ -10,7 +11,7 @@ from pact.enums import PACT_DOMAIN, PACT_HP_CHOICES, PACT_DOT_CHOICES, PACT_CASE
 from pact.reports import PactElasticTabularReportMixin
 from pact.reports.dot import PactDOTReport
 from pact.reports.patient import PactPatientInfoReport
-from pact.utils import query_per_case_submissions_facet
+from pact.utils import query_per_case_submissions_facet, get_base_case_es_query
 
 
 class PactPrimaryHPField(BaseSingleOptionFilter):
@@ -76,8 +77,9 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
     xform_es = ReportFormESView(PACT_DOMAIN)
 
     def get_pact_cases(self):
-        query = self.case_es.base_query(start=0, size=None)
-        query['fields'] = ['_id', 'name', 'pactid.#value']
+        query = (get_base_case_es_query(0, None)
+            .source(['_id', 'name', 'pactid.#value'])
+            .raw_query)
         results = self.case_es.run_query(query)
         for res in results['hits']['hits']:
             yield res['fields']
@@ -152,9 +154,11 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
             "closed_on",
             "closed"
         ]
-        full_query = self.case_es.base_query(terms={'type': PACT_CASE_TYPE}, fields=fields,
-                                             start=self.pagination.start,
-                                             size=self.pagination.count)
+        full_query = (get_base_case_es_query(self.pagination.start, self.pagination.count)
+            .filter(filters.term('type', PACT_CASE_TYPE))
+            .source(fields)
+            .raw_query
+        )
         full_query['sort'] = self.get_sorting_block()
 
         def status_filtering(slug, field, prefix, any_field, default):

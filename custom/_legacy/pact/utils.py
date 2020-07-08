@@ -3,6 +3,9 @@ from pact.enums import PACT_DOTS_DATA_PROPERTY, PACT_DOMAIN
 from io import BytesIO
 from django.test.client import RequestFactory
 from corehq.apps.receiverwrapper.views import post
+from corehq.apps.es import filters
+from corehq.apps.es.cases import CaseES
+from corehq.apps.es.forms import FormES
 
 
 def submit_xform(url_path, domain, submission_xml_string, extra_meta=None):
@@ -148,6 +151,40 @@ def get_patient_display_cache(case_ids):
         ret[case_id]['url'] = PactPatientInfoReport.get_url(*['pact']) + "?patient_id=%s" % case_id
 
     return ret
+
+DEFAULT_SIZE = 10
+
+
+def get_base_form_es_query(start=0, size=DEFAULT_SIZE):
+    return (FormES()
+        .remove_default_filters()
+        .domain(PACT_DOMAIN)
+        .filter(filters.term('doc_type', 'XFormInstance'))
+        .start(start)
+        .size(size))
+
+
+def get_base_case_es_query(start=0, size=DEFAULT_SIZE):
+    return (CaseES()
+        .remove_default_filters()
+        .domain(PACT_DOMAIN)
+        .start(start)
+        .size(size))
+
+
+def get_by_case_id_form_es_query(start, size, case_id):
+    base_query = get_base_form_es_query(start, size)
+    return (base_query
+        .filter(
+            filters.nested(
+                'form.case',
+                filters.OR(
+                    filters.term('form.case.@case_id', case_id),
+                    filters.term('form.case.case_id', case_id)
+                )
+            )
+        )
+    )
 
 
 REPORT_XFORM_MISSING_DOTS_QUERY = {
