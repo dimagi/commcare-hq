@@ -259,8 +259,8 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     )
 
     app = get_app_cached(domain, app_id) if app_id else None
-
-    error_response = check_authorization(domain, couch_user, app.master_id)
+    master_app_id = app.master_id if app else None
+    error_response = check_authorization(domain, couch_user, master_app_id)
     if error_response:
         return error_response, None
     restore_config = RestoreConfig(
@@ -307,7 +307,7 @@ def heartbeat(request, domain, app_build_id):
         # If it's not a valid master app id, find it by talking to couch
         app = get_app_cached(domain, app_build_id)
         notify_exception(request, 'Received an invalid heartbeat request')
-        master_app_id = app.master_id
+        master_app_id = app.master_id if app else None
         info = GlobalAppConfig.get_latest_version_info(domain, app.master_id, build_profile_id)
 
     info["app_id"] = app_id
