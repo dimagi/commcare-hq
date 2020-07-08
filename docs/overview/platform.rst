@@ -178,7 +178,7 @@ scheduling and validation.
 Conditional Scheduled Messages
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Every time a case is created, updated, or closed in a form it is placed on the asynchronous processing queued.
+Every time a case is created, updated, or closed in a form it is placed on the asynchronous processing queue.
 Asynchronous processors review any relevant business logic rules to review whether the case has become (or is no
 longer) eligible for the rule, and schedules a localized message which can contain information relevant to the
 case, such as an individual who did not receive a scheduled visit.
@@ -224,13 +224,13 @@ APIs
 
 CommCare has extensive APIs to get data in and out for bidirectional integration with other systems. This method of
 data integration requires familiarity with RESTful HTTP conventions, such as GET and POST and url parameters.
-Character encoding is UTF-8. Dates should be compliant ISO 8601. In some cases CommCare uses RFC 3339, but is
-moving towards ISO 8601. Guides should be generated in accordance with RFC 4122. Documented APIs and use of
-Standards are readily available.
 
 There are APIs both for reading and writing data to CommCare.  This can be updated data related to forms or cases
-in the system and enable highly-sophisticated integrations with CommCare.  Below is an example subset of the
-RESTful APIs available on CommCare.
+in the system and enable highly-sophisticated integrations with CommCare.
+
+More details on CommCare's API can be found in the `API documentation`_.
+
+.. _API documentation: https://confluence.dimagi.com/display/commcarepublic/CommCare+HQ+APIs
 
 MOTECH Repeaters
 ~~~~~~~~~~~~~~~~
