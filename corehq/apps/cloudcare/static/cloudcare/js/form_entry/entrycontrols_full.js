@@ -693,7 +693,7 @@ function GeoPointEntry(question, options) {
         self.rawAnswer([]);
     };
 
-    self.gMapsCallback = function () {
+    self.loadMap = function () {
         self.map = L.map(self.entryId).setView([self.DEFAULT.lat, self.DEFAULT.lon], self.DEFAULT.zoom);
         L.tileLayer(`https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=${window.MAPBOX_ACCESS_TOKEN}`, {
             id: 'mapbox/streets-v11',
@@ -708,14 +708,9 @@ function GeoPointEntry(question, options) {
 
     self.afterRender = function () {
         if (typeof L === 'undefined') {
-            // Get the leaflet css, leaflet js, then mapbox js (for the geocoder).
-            self.getCss(self.cssLocation).then(function() {
-                return $.getScript(self.jsLocation)
-            }).then(function() {
-                return $.getScript(self.mapboxJsLocation);
-            }).then(self.gMapsCallback);
+            question.error('Could not load map. Please try again later.');
         } else {
-            self.gMapsCallback();
+            self.loadMap();
         }
     };
 
@@ -751,7 +746,7 @@ function GeoPointEntry(question, options) {
         var query = $(form).find('.query').val();
         self.geocoder.query(query, function(err, data) {
             if (err != null) {
-                console.error(err);
+                question.error(gettext('Could not run search. Please try again later.'));
             }
             if (data.lbounds) {
                 self.map.fitBounds(data.lbounds);

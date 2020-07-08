@@ -1847,7 +1847,6 @@ class EditFormInstance(View):
 
         context.update({
             'domain': domain,
-            'maps_api_key': settings.GMAPS_API_KEY,  # used by cloudcare
             "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             'form_name': _('Edit Submission'),  # used in breadcrumbs
             'use_sqlite_backend': use_sqlite_backend(domain),
