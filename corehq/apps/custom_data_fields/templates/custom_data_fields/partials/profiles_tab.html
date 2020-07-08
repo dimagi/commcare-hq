@@ -22,7 +22,7 @@
     <tbody data-bind="foreach: profiles">
       <tr>
         <td>
-          <!-- TODO: select2 here would be nice -->
+          <input class="form-control" type="hidden" data-bind="value: id"/>
           <input class="form-control" type="text" data-bind="value: name"/>
         </td>
         <td data-bind="jqueryElement: $fields"></td>

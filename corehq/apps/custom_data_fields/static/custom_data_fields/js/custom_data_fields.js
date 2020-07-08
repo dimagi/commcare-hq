@@ -95,9 +95,10 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
     }
 
     function Profile(options) {
-        assertProperties.assertRequired(options, ['name', 'fields']);
+        assertProperties.assertRequired(options, ['id', 'name', 'fields']);
         var self = {};
 
+        self.id = ko.observable(options.id);
         self.name = ko.observable(options.name);
         self.serializedFields = ko.observable();
 
@@ -115,6 +116,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
 
         self.serialize = function () {
             return {
+                id: self.id(),
                 name: self.name(),
                 fields: self.fields.val(),
             };
@@ -159,6 +161,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
 
         self.addProfile = function () {
             self.profiles.push(Profile({
+                id: '',
                 name: '',
                 fields: {},
             }));
