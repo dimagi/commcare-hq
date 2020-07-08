@@ -364,7 +364,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
                       date_trunc('MONTH', child_tasks.due_list_date_7g_vit_a_9) = %(start_date)s
                   THEN 1 ELSE NULL END
             """),
-            ("mother_phone_number", "CONCAT('91', mother_person_cases.phone_number)"),
+            ("mother_phone_number", "mother_person_cases.phone_number"),
             ("date_death", "child_health.date_death"),
             ("mother_case_id", "child_health.mother_case_id"),
             ("state_id", "child_health.state_id"),

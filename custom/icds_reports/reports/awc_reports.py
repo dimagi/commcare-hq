@@ -31,6 +31,7 @@ from custom.icds_reports.const import MapColors, CHILDREN_ENROLLED_FOR_ANGANWADI
     OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS
 
 from custom.icds_reports.messages import new_born_with_low_weight_help_text
+from custom.icds_reports.utils import phone_number_function
 
 
 @icds_quickcache(['domain', 'config', 'month', 'prev_month', 'two_before', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -1063,7 +1064,7 @@ def get_awc_report_beneficiary(start, length, draw, order, filters, month, two_b
                 data_entered=True if row_data.recorded_height and row_data.recorded_weight else False
             ),
             pse_days_attended=row_data.pse_days_attended,
-            mother_phone_number=row_data.mother_phone_number,
+            mother_phone_number=phone_number_function(row_data.mother_phone_number),
             aww_phone_number=row_data.aww_phone_number,
             beneficiary_status=get_beneficiary_status(row_data.valid_status_daily,
                                                       row_data.migration_status_daily,
