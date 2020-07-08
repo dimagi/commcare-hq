@@ -9,6 +9,9 @@ from prometheus_client import CollectorRegistry, multiprocess, push_to_gateway
 from corehq.util.soft_assert import soft_assert
 from corehq.util.metrics.metrics import HqMetrics
 
+from .const import MPM_ALL
+
+
 prometheus_soft_assert = soft_assert(to=[
     f'{name}@dimagi.com'
     for name in ['skelly', 'rkumar', 'sreddy']
@@ -21,6 +24,10 @@ class PrometheusMetrics(HqMetrics):
     def __init__(self):
         self._metrics = {}
 
+    @property
+    def accepted_gauge_params(self):
+        return ['multiprocess_mode']
+
     def _counter(self, name: str, value: float = 1, tags: Dict[str, str] = None, documentation: str = ''):
         """See https://prometheus.io/docs/concepts/metric_types/#counter"""
         try:
@@ -28,10 +35,20 @@ class PrometheusMetrics(HqMetrics):
         except ValueError:
             pass
 
-    def _gauge(self, name: str, value: float, tags: Dict[str, str] = None, documentation: str = ''):
-        """See https://prometheus.io/docs/concepts/metric_types/#histogram"""
+    def _gauge(self, name: str, value: float, tags: Dict[str, str]=None, documentation: str = '',
+               multiprocess_mode: str = MPM_ALL):
+        """
+        See https://prometheus.io/docs/concepts/metric_types/#histogram
+
+        multiprocess_mode: can be one of below values
+            'all': Default. Return a timeseries per process alive or dead.
+            'liveall': Return a timeseries per process that is still alive.
+            'livesum': Return a single timeseries that is the sum of the values of alive processes.
+            'max': Return a single timeseries that is the maximum of the values of all processes, alive or dead.
+            'min': Return a single timeseries that is the minimum of the values of all processes, alive or dead.
+        """
         try:
-            self._get_metric(PGauge, name, tags, documentation).set(value)
+            self._get_metric(PGauge, name, tags, documentation, multiprocess_mode=multiprocess_mode).set(value)
         except ValueError:
             pass
 

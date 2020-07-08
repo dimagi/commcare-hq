@@ -313,9 +313,9 @@ Then you need to have Formplayer running.
 Prerequisites:
 + Install Java
 
-      $ sudo apt install openjdk-8-jre
+      $ sudo apt install default-jre
 
-+ [Initialize formplayer database](https://github.com/dimagi/formplayer#building-and-running).
++ [Initialize Formplayer database](https://github.com/dimagi/formplayer#building-and-running).
   The password for the "commcarehq" user is in the localsettings.py file
   in the `DATABASES` dictionary.
 
@@ -334,11 +334,12 @@ above (probably the repo root), and run:
     $ java -jar formplayer.jar
 
 This starts a process in the foreground, so you'll need to keep it open as long
-as you plan on using Formplayer. If Formplayer stops working, you can try
-re-fetching it using the same command above. Feel free to add it to your
-`hammer` command or wherever.
+as you plan on using Formplayer.
 
-    $ curl https://s3.amazonaws.com/dimagi-formplayer-jars/latest-successful/formplayer.jar -o formplayer.jar
+To keep Formplayer up to date with the version used in production, you can add
+the `curl` commands above to your `hammer` command, or whatever script you use
+for updating your dev environment.
+
 
 #### Browser Settings
 
@@ -360,10 +361,16 @@ Then run the following separately:
     $ ./manage.py runserver 0.0.0.0:8000
 
     # Keeps elasticsearch index in sync
+    # You can also skip this and run `./manage.py ptop_reindexer_v2` to manually sync ES indices when needed.
     $ ./manage.py run_ptop --all
 
     # Setting up the asynchronous task scheduler (only required if you have CELERY_TASK_ALWAYS_EAGER=False in settings)
     $ celery -A corehq worker -l info
+
+For celery, you may need to add a "-Q" argument based on the queue you want to listen to.
+For example, to use case importer with celery locally you need to run
+`celery -A corehq worker -l info -Q case_import_queue`
+
 
 Create a superuser for your local environment
 

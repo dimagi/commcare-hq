@@ -28,7 +28,7 @@ from corehq.apps.sms.models import (
 )
 from corehq.util.celery_utils import periodic_task_on_envs, task
 from corehq.util.files import file_extention_from_filename
-from custom.icds.view_utils import is_icds_cas_project
+from custom.icds_core.view_utils import is_icds_cas_project
 
 
 @periodic_task_on_envs(settings.ICDS_ENVS, run_every=crontab(day_of_month='2', minute=0, hour=0), queue='sms_queue')

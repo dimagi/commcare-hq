@@ -65,7 +65,6 @@ from corehq.apps.hqwebapp.decorators import (
 )
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-from corehq.apps.linked_domain.dbaccessors import get_linked_domains
 from corehq.apps.linked_domain.models import DomainLink, ReportLinkDetail
 from corehq.apps.linked_domain.ucr import create_linked_ucr, linked_downstream_reports_by_domain
 from corehq.apps.linked_domain.util import is_linked_report
@@ -629,7 +628,7 @@ class ConfigureReport(ReportBuilderView):
             'date_range_options': [r._asdict() for r in get_simple_dateranges()],
             'linked_report_domain_list': linked_downstream_reports_by_domain(
                 self.domain, self.existing_report.get_id
-            )
+            ) if self.existing_report else {}
         }
 
     def _get_bound_form(self, report_data):

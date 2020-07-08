@@ -82,9 +82,8 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             # only do this if the database contains the citus extension
             return
 
-        from custom.icds_reports.utils.migrations import (
-            create_citus_distributed_table, create_citus_reference_table
-        )
+        from custom.icds_core.db import create_citus_reference_table
+        from custom.icds_core.db import create_citus_distributed_table
         with self.engine.begin() as connection:
             if config.distribution_type == 'hash':
                 if config.distribution_column not in self.get_table().columns:

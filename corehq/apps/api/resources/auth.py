@@ -21,7 +21,7 @@ from corehq.apps.users.decorators import (
     require_permission,
     require_permission_raw,
 )
-from corehq.toggles import IS_CONTRACTOR
+from corehq.toggles import API_THROTTLE_WHITELIST, IS_CONTRACTOR
 
 
 def api_auth(view_func):
@@ -97,7 +97,10 @@ class LoginAndDomainAuthentication(Authentication):
             return response
 
     def get_identifier(self, request):
-        return f"{request.domain}_{request.couch_user.username}"
+        username = request.couch_user.username
+        if API_THROTTLE_WHITELIST.enabled(username):
+            return username
+        return f"{request.domain}_{username}"
 
 
 class RequirePermissionAuthentication(LoginAndDomainAuthentication):

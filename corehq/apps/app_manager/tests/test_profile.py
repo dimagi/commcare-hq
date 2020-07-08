@@ -1,9 +1,8 @@
 import uuid
 import xml.etree.cElementTree as ET
 
-from django.test import SimpleTestCase
-
-import mock
+from django.conf import settings
+from django.test import SimpleTestCase, override_settings
 
 from corehq.apps.app_manager.commcare_settings import (
     get_commcare_settings_lookup,
@@ -128,5 +127,15 @@ class ProfileTest(SimpleTestCase, TestXmlMixin):
             ET.fromstring(profile),
             key='recovery-measures-url',
             value=self.app.recovery_measures_url,
+            setting={'force': True},
+        )
+
+    @override_settings(IS_DIMAGI_ENVIRONMENT=False)
+    def test_support_email_setting(self):
+        profile = self.app.create_profile()
+        self._test_property(
+            ET.fromstring(profile),
+            key='support-email-address',
+            value=settings.SUPPORT_EMAIL,
             setting={'force': True},
         )
