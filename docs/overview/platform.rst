@@ -69,8 +69,8 @@ CommCare provides a transaction processing layer which acts as the first step in
 pipeline. This layer manages the horizontal workload of the mobile and web applications submitting forms, which are
 archived into a chunked object storage, and extracts the transactional ‘case’ logic which is used to facilitate
 data synchronization through more live storage in the table based storage layer. The transaction processor then
-appropriately queues transactions into the real time data pipeline for processing into the dashboard tables through
-the Kakfa Change Feed, or triggering asynchronous business rules in the Celery queue.
+appropriately queues transactions into the real time data pipeline for processing into the reporting databases
+through the Kakfa Change Feed, or triggering asynchronous business rules in the Celery queue.
 
 The data processing service is flexible to store any content sent or received via mobile form submissions or SMS
 services as long as it adheres to the XForms specification. It also saves all logging and auditing information
