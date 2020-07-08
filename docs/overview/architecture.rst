@@ -150,21 +150,8 @@ CommCare to create asynchronous feeds that power our change processors (pillows)
 RabbitMQ
 ~~~~~~~~
 
-RabbitMQ_ (RMQ) is an open source Advanced Message Queuing Protocol (AMQP) compliant server. CommCare’s long
-running, periodic, and computationally expensive backend processes are queued and executed via the AMQP protocol.
-
-A queuing system is vital for running a large data-heavy website in a smooth and predictable manner. Tasks that are
-known to take a while ought to be queued in a background process and not force a user and their browser to “wait”
-interminably long for an operation to happen. AMQP and the technologies surrounding it make for a clean, reusable
-interface to allow developers to create, execute, and retrieve results from these long running tasks.
-
-The python library that utilizes AMQP and RMQ is the Celery_ project, an open source library for asynchronous task
-queuing. A task can be written in python code to do a database operation or other report for CommCareHQ. To execute
-the task, the website can transmit a job request that is sent to the RabbitMQ queue. Separate worker processes on
-other dedicated machines can receive these tasks requests by querying the RabbitMQ server for new task requests.
-Once the worker completes the task, it can then notify the frontend of its completion in various ways. Either
-sending an email to the user making the request that the job is completed, and providing a link, or utilizing
-redis, updating the content of a URL the user is viewing to show that the task is completed.
+RabbitMQ_ is an open source Advanced Message Queuing Protocol (AMQP) compliant server. As mentioned above CommCare
+uses the Celery_ framework to execute background tasks. The Celery task queues are managed by RabbitMQ.
 
 .. _RabbitMQ: https://www.rabbitmq.com/
 
