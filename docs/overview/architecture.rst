@@ -133,7 +133,7 @@ Redis
 
 Redis_ is an open source document store that is used for caching in CommCareHQ. Its primary use is for general
 caching of data that otherwise would require a query to the database to speed up the performance of the site. Redis
-also is used as a temporary data storage of large binary file storage for caching export files, image dumps, and
+also is used as a temporary data storage of large binary files for caching export files, image dumps, and
 other large downloads.
 
 .. _Redis: https://redis.io/
