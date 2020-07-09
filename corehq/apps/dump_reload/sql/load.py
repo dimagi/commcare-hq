@@ -1,8 +1,9 @@
 import json
+import multiprocessing as mp
 from collections import Counter, defaultdict
 from concurrent.futures import ProcessPoolExecutor
+from contextlib import contextmanager
 from functools import partial
-import multiprocessing as mp
 
 from django.apps import apps
 from django.conf import settings
@@ -164,6 +165,23 @@ def load_data_for_db(db_alias):
             e.args = ("Problem loading data: %s" % e,)
             raise
     yield LoadStat(db_alias, model_counter)
+
+
+@contextmanager
+def constraint_checks_deferred(db_alias):
+    """
+    PostgreSQL does not support disabling constraint checks like MySQL.
+    But you can defer them until transaction commit. Django's
+    ``DatabaseWrapper`` for PostgreSQL doesn't have a method for this,
+    so we need to execute raw SQL.
+    """
+    connection = connections[db_alias]
+    with connection.cursor() as cursor:
+        cursor.execute('SET CONSTRAINTS ALL DEFERRED')
+        try:
+            yield
+        finally:
+            cursor.execute('SET CONSTRAINTS ALL IMMEDIATE')
 
 
 def get_db_alias(obj: dict) -> str:
