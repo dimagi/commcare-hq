@@ -91,8 +91,8 @@ class PactDOTReport(GenericTabularReport, CustomProjectReport, ProjectReportPara
         if len(lvisits) > 0:
             q = q.add_query({"ids": {"values": lvisits}})
             #todo double check pactid/caseid matches
-        q['sort'] = {'received_on': 'desc'}
-        res = xform_es.run_query(q)
+        q.sort('received_on', desc=True)
+        res = xform_es.run_query(q.raw_query)
 
         #ugh, not storing all form data by default - need to get?
         ret['sorted_visits'] = [DOTSubmission.wrap(x['_source']) for x in
