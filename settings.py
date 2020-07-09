@@ -2029,6 +2029,7 @@ DOMAIN_MODULE_MAP = {
     'reach-dashboard-qa': 'custom.aaa',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
+    'nhm-af-up': 'custom.up_nrhm',
 
     'crs-remind': 'custom.apps.crs_reports',
 
