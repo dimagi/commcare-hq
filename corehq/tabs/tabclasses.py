@@ -175,7 +175,7 @@ class ProjectReportsTab(UITab):
 
     def _get_report_builder_items(self):
         user_reports = []
-        if self.couch_user.can_edit_data():
+        if self.couch_user.can_edit_reports():
             has_access = has_report_builder_access(self._request)
             user_reports = [(
                 _("Report Builder"),
