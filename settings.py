@@ -778,9 +778,6 @@ MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiZGltYWdpIiwiYSI6ImpZWWQ4dkUifQ.3FNy5rVvLolWLyc
 
 OPEN_EXCHANGE_RATES_API_ID = ''
 
-# for touchforms maps
-GMAPS_API_KEY = "changeme"
-
 # import local settings if we find them
 LOCAL_APPS = ()
 LOCAL_MIDDLEWARE = ()
