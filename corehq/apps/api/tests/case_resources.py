@@ -74,7 +74,8 @@ class TestCommCareCaseResource(APIResourceTest):
         api_cases = json.loads(response.content)['objects']
         self.assertEqual(len(api_cases), 2)
 
-        response = self._assert_auth_get_resource('%s?%s' % (self.list_endpoint, urlencode({'owner_id': 'owner1'})))
+        response = self._assert_auth_get_resource(
+            '%s?%s' % (self.list_endpoint, urlencode({'owner_id': 'owner1'})))
         self.assertEqual(response.status_code, 200)
         api_cases = json.loads(response.content)['objects']
         self.assertEqual(len(api_cases), 1)

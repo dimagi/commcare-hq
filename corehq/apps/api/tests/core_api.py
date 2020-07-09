@@ -31,7 +31,6 @@ from corehq.apps.es.tests.utils import ElasticTestMixin
 from corehq.apps.users.models import CommCareUser, HQApiKey, WebUser
 from corehq.util.test_utils import flag_disabled
 from no_exceptions.exceptions import Http400
-
 from .utils import APIResourceTest, FakeFormESView
 
 

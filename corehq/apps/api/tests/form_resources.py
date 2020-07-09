@@ -180,7 +180,7 @@ class TestXFormInstanceResource(APIResourceTest):
         api_form = api_forms[0]
         self.assertEqual(api_form['form']['@xmlns'], xmlns2)
 
-        # archived form should be included 
+        # archived form should be included
         response = self._assert_auth_get_resource(
             '%s?%s' % (self.list_endpoint, urlencode({'include_archived': 'true'})))
         self.assertEqual(response.status_code, 200)
