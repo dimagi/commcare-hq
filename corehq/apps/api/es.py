@@ -481,6 +481,21 @@ class TermParam(object):
             return filters.term(self.term, value)
 
 
+class XFormServerModifiedParams:
+    param = 'server_modified_on'
+
+    def consume_params(self, raw_params):
+        value = raw_params.pop(self.param, None)
+        if value:
+            return filters.OR(
+                filters.AND(
+                    filters.NOT(filters.missing(self.param)), filters.range_filter(self.param, **value)
+                ),
+                filters.AND(
+                    filters.missing(self.param), filters.range_filter("received_on", **value)
+                )
+            )
+
 query_param_consumers = [
     TermParam('xmlns', 'xmlns.exact'),
     TermParam('xmlns.exact'),
@@ -504,7 +519,7 @@ query_param_consumers = [
 def _validate_and_get_es_filter(search_param):
     #
     try:
-        _filter = search_param['filter']
+        _filter = search_param.pop('filter')
         # custom use case by 'enveritas' project for Form API
         date_range = _filter['range']['inserted_at']
         return {
@@ -514,41 +529,19 @@ def _validate_and_get_es_filter(search_param):
         pass
     try:
         # Data export tool passes below structure. validate that it is so
+        _range = None
         try:
             _range = _filter['or'][0]['and'][0]['range']['server_modified_on']
         except KeyError:
-            _range = _filter['or'][0]['and'][1]['range']['server_modified_on']
-        server_modified_missing = {"missing": {
-            "field": "server_modified_on", "null_value": True, "existence": True}
-        }
-        expected = json.dumps({
-            "or": [
-                {
-                    "and": [
-                        {
-                            "not": server_modified_missing
-                        },
-                        {
-                            "range": {
-                                "server_modified_on": _range
-                            }
-                        }
-                    ]
-                },
-                {
-                    "and": [
-                        server_modified_missing,
-                        {
-                            "range": {
-                                "received_on": _range
-                            }
-                        }
-                    ]
-                }
-            ]
-        }, sort_keys=True)
-        assert json.dumps(_filter, sort_keys=True) == expected
-        return _filter
+            try:
+                _range = _filter['or'][0]['and'][1]['range']['server_modified_on']
+            except KeyError:
+                pass
+
+        if _range:
+            return XFormServerModifiedParams().consume_params({'server_modified_on': _range})
+        else:
+            raise Http400
     except (KeyError, AssertionError):
         raise Http400
 

@@ -512,9 +512,9 @@ class TestParamstoESFilters(SimpleTestCase, ElasticTestMixin):
         }
         query = {
             'filter': {
-                "or": [
+                "or": (
                     {
-                        "and": [
+                        "and": (
                             {
                                 "not": server_modified_missing
                             },
@@ -523,19 +523,19 @@ class TestParamstoESFilters(SimpleTestCase, ElasticTestMixin):
                                     "server_modified_on": range_expression
                                 }
                             }
-                        ]
+                        )
                     },
                     {
-                        "and": [
+                        "and": (
                             server_modified_missing,
                             {
                                 "range": {
                                     "received_on": range_expression
                                 }
                             }
-                        ]
+                        )
                     }
-                ]
+                )
             }
         }
         request = RequestFactory().get(
