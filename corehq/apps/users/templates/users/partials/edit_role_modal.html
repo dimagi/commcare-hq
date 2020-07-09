@@ -516,7 +516,7 @@
             </legend>
 
             {% if has_report_builder_access %}
-              <div class="form-group">
+              <div class="form-group" data-bind="visible: permissions.access_all_locations">
                 <label class="col-sm-4 control-label">
                   {% trans "Create and Edit Reports" %}
                 </label>
