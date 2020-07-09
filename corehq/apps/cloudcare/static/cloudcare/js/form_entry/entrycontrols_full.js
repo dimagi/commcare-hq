@@ -737,13 +737,12 @@ function GeoPointEntry(question, options) {
     self.search = function (form) {
         var query = $(form).find('.query').val();
         self.geocoder.query(query, function (err, data) {
-            if (err !== null) {
-                question.error(gettext('Could not run search. Please try again later.'));
-            }
-            if (data.lbounds) {
-                self.map.fitBounds(data.lbounds);
-            } else if (data.latlng) {
-                self.map.setView([data.latlng[0], data.latlng[1]], self.DEFAULT.zoom);
+            if (err === null) {
+                if (data.lbounds !== null) {
+                    self.map.fitBounds(data.lbounds);
+                } else if (data.latlng !== null) {
+                    self.map.setView([data.latlng[0], data.latlng[1]], self.DEFAULT.zoom);
+                }
             }
         });
     };
