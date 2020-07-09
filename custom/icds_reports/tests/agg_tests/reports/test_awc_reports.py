@@ -1,5 +1,6 @@
 import json
 import datetime
+from decimal import Decimal
 
 from datetime import date
 from django.core.serializers.json import DjangoJSONEncoder
@@ -18,6 +19,26 @@ from custom.icds_reports.messages import new_born_with_low_weight_help_text, was
     percent_aadhaar_seeded_beneficiaries_help_text, percent_children_enrolled_help_text, \
     percent_pregnant_women_enrolled_help_text, percent_lactating_women_enrolled_help_text, \
     percent_adolescent_girls_enrolled_help_text_v2
+
+
+def coerce_decimal_to_float(data):
+    """Recursively coerce all decimal values in data to floats
+
+    This is a stop-gap measure to make tests pass on both Django 1.11
+    and Django 2.2 while a better solution is developed for handling
+    the Django 2.2 change that made Avg(), StdDev(), and Variance()
+    return Decimals.
+    https://docs.djangoproject.com/en/3.0/releases/2.2/#miscellaneous
+
+    TODO remove when Django 1 is no longer supported
+    """
+    if isinstance(data, list):
+        return [coerce_decimal_to_float(v) for v in data]
+    if isinstance(data, dict):
+        return {k: coerce_decimal_to_float(v) for k, v in data.items()}
+    if isinstance(data, Decimal):
+        return float(data)
+    return data
 
 
 class FirstDayOfMay(date):
@@ -39,6 +60,8 @@ class SecondDayOfMay(date):
 
 
 class TestAWCReport(TestCase):
+    maxDiff = None
+
     def test_beneficiary_details_recorded_weight_none(self):
         data = get_beneficiary_details(
             case_id='6b234c5b-883c-4849-9dfd-b1571af8717b',
@@ -256,7 +279,7 @@ class TestAWCReport(TestCase):
 
     def test_awc_reports_system_usage_PSE_average_weekly_attendance(self):
         self.assertEqual(
-            get_awc_reports_system_usage(
+            coerce_decimal_to_float(get_awc_reports_system_usage(
                 'icds-cas',
                 {
                     'state_id': 'st1',
@@ -269,7 +292,7 @@ class TestAWCReport(TestCase):
                 (2017, 4, 1),
                 (2017, 3, 1),
                 'aggregation_level'
-            )['charts'][1],
+            )['charts'][1]),
             [
                 {
                     "classed": "dashed",
@@ -812,7 +835,7 @@ class TestAWCReport(TestCase):
             for el in kpi:
                 del el['help_text']
         self.assertEqual(
-            data['charts'][1],
+            coerce_decimal_to_float(data['charts'][1]),
             [
                 {
                     "color": "#006fdf",
