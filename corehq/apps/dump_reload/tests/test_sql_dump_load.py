@@ -7,6 +7,7 @@ from io import StringIO
 
 from django.contrib.admin.utils import NestedObjects
 from django.core import serializers
+from django.db import transaction
 from django.db.models.signals import post_delete, post_save
 from django.test import SimpleTestCase, TestCase
 from django.test.utils import override_settings
@@ -24,7 +25,10 @@ from corehq.apps.dump_reload.sql.dump import (
     get_model_iterator_builders_to_dump,
     get_objects_to_dump,
 )
-from corehq.apps.dump_reload.sql.load import DefaultDictWithKey
+from corehq.apps.dump_reload.sql.load import (
+    DefaultDictWithKey,
+    constraint_checks_deferred,
+)
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.zapier.consts import EventTypes
@@ -77,9 +81,11 @@ class BaseDumpLoadTest(TestCase):
     def delete_sql_data(self):
         for model_class, builder in get_model_iterator_builders_to_dump(self.domain_name, []):
             for iterator in builder.querysets():
-                collector = NestedObjects(using=iterator.db)
-                collector.collect(iterator)
-                collector.delete()
+                with transaction.atomic(using=iterator.db), \
+                        constraint_checks_deferred(iterator.db):
+                    collector = NestedObjects(using=iterator.db)
+                    collector.collect(iterator)
+                    collector.delete()
 
         self.assertEqual([], list(get_objects_to_dump(self.domain_name, [])))
 
