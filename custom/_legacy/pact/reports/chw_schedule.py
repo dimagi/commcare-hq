@@ -4,6 +4,7 @@ from django.core.cache import cache
 import json
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.api.es import ReportFormESView
+from corehq.apps.es import filters
 from corehq.util.dates import iso_string_to_datetime, iso_string_to_date
 from dimagi.utils.dates import force_to_datetime
 from dimagi.utils.parsing import json_format_date
@@ -119,8 +120,9 @@ def dots_submissions_by_case(case_id, query_date, username=None):
     term_block = {'form.#type': 'dots_form'}
     if username is not None:
         term_block['form.meta.username'] = username
-    query = (get_by_case_id_form_es_query(0, 1, case_id)
-        .filter(filters.range_filter('form.encounter_date.#value', gte=query_date, lte=query_date)
+    query = (
+        get_by_case_id_form_es_query(0, 1, case_id)
+        .filter(filters.range_filter('form.encounter_date.#value', gte=query_date, lte=query_date))
         .sort('received_on')
         .raw_query
     )
