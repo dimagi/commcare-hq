@@ -51,15 +51,21 @@ name: autostaging
 branches:
   - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
   - jls/sync-mixins-hard-fail # Jenny May 24
-  - jls/migrate-CustomDataFieldsDefinition-2 # Jenny April 29
   - rn_update_perfect_scrollbar # Rohit Negi May 4
   - jls/migrate-MobileAuthKeyRecord-2 # Jenny May 16
   - nh/repeaters_ui  # Norman May 28
   - nh/charset  # Norman May 27
-  - ap/lazy-load-multimedia # Amit June 5
-  - fr/multiple-api-keys  # Conflicting migrations with ce/web-apps-permissions
-  - revert-27725-jls/kill-configurable-timeout # Jenny June 9
-  - nemanja1040:aws_pinpoint_fees  # Nemanja Stancic June 17
-  - jls/linked-domain-fixtures # Jenny June 18
+  - fr/multiple-api-keys
+  - jls/turn-off-analytics-logging # Jenny June 19
+  - nemanja1040:gateways_refactor  # Nemanja Stancic June 23
+  - sr-es-alias # Sravan June 24
+  - ml/SAAS-11011-account-name-filter  # Michelle Jun 30
+  - ce/user-upload-record # Cal June 30
+  - bmb/bower-to-yarn # Biyeun Jul 1
+  - nemanja1040:whatsapp_multimedia_messages  # Nemanja Stancic Jul 6
+  - solleks:cdg/edit_reports_permission  # Charlie July 6
+  - jls/linked-domain-report-links # Jenny July 7
+  - kev/geowidget-mapbox # Kevin July 8
+  - dm/dj2-fix-tests  # Danny/Daniel Jul 9
 
 submodules: {}

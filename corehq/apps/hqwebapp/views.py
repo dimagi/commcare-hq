@@ -58,7 +58,7 @@ from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER
 from dimagi.utils.django.request import mutable_querydict
-from dimagi.utils.logging import notify_exception
+from dimagi.utils.logging import notify_exception, notify_error
 from dimagi.utils.web import get_site_domain, get_url_base, json_response
 from soil import DownloadBase
 from soil import views as soil_views
@@ -114,7 +114,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.context_processors import commcare_hq_names
-from corehq.util.metrics.const import TAG_UNKNOWN
+from corehq.util.metrics.const import TAG_UNKNOWN, MPM_MAX
 from corehq.util.metrics.utils import sanitize_url
 from corehq.util.view_utils import reverse
 from no_exceptions.exceptions import Http403
@@ -312,7 +312,7 @@ def server_up(req):
             'status': 'failed' if not status.success else 'ok',
             'check': check_name
         }
-        metrics_gauge('commcare.serverup.check', status.duration, tags=tags)
+        metrics_gauge('commcare.serverup.check', status.duration, tags=tags, multiprocess_mode=MPM_MAX)
 
     if failed_checks and not is_deploy_in_progress():
         status_messages = [
@@ -498,25 +498,17 @@ def logout(req, default_domain_redirect='domain_login'):
         return HttpResponseRedirect(reverse('login'))
 
 
-# ping_login and ping_session are both tiny views used in user inactivity and session expiration handling
-# They are identical except that ping_session extends the user's current session, while ping_login does not.
+# ping_response powers the ping_login and ping_session views, both tiny views used in user inactivity and
+# session expiration handling.ping_session extends the user's current session, while ping_login does not.
 # This difference is controlled in SelectiveSessionMiddleware, which makes ping_login bypass sessions.
 @location_safe
 @two_factor_exempt
-def ping_login(request):
+def ping_response(request):
     return JsonResponse({
         'success': request.user.is_authenticated,
-        'last_request': request.session.get('last_request'),
-        'username': request.user.username,
-    })
-
-
-@location_safe
-@two_factor_exempt
-def ping_session(request):
-    return JsonResponse({
-        'success': request.user.is_authenticated,
-        'last_request': request.session.get('last_request'),
+        'session_expiry': request.session.get('session_expiry'),
+        'secure_session': request.session.get('secure_session'),
+        'secure_session_timeout': request.session.get('secure_session_timeout'),
         'username': request.user.username,
     })
 
@@ -613,13 +605,36 @@ def jserror(request):
             browser_version = parsed_agent['browser'].get('version', TAG_UNKNOWN)
             browser_name = parsed_agent['browser'].get('name', TAG_UNKNOWN)
 
+    url = request.POST.get('page', None)
+    domain = None
+    if url:
+        path = urlparse(url).path
+        if path:
+            domain = get_domain_from_url(path)
+    domain = domain or '_unknown'
+
     metrics_counter('commcare.jserror.count', tags={
         'os': os,
         'browser_version': browser_version,
         'browser_name': browser_name,
-        'url': sanitize_url(request.POST.get('page', None)),
-        'file': request.POST.get('filename'),
+        'url': sanitize_url(url),
         'bot': bot,
+        'domain': domain,
+    })
+
+    notify_error(message=f'[JS] {request.POST.get("message")}', details={
+        'message': request.POST.get('message'),
+        'domain': domain,
+        'page': url,
+        'file': request.POST.get('file'),
+        'line': request.POST.get('line'),
+        'stack': request.POST.get('stack'),
+        'meta': {
+            'os': os,
+            'browser_version': browser_version,
+            'browser_name': browser_name,
+            'bot': bot,
+        }
     })
 
     return HttpResponse('')
@@ -1290,7 +1305,7 @@ def log_email_event(request, secret):
     # https://docs.aws.amazon.com/ses/latest/DeveloperGuide/event-publishing-retrieving-sns-examples.html
 
     if secret != settings.SNS_EMAIL_EVENT_SECRET:
-        return HttpResponse(f"Incorrect secret: {secret}", status=403, content_type='text/plain')
+        return HttpResponse("Incorrect secret", status=403, content_type='text/plain')
 
     request_json = json.loads(request.body)
 

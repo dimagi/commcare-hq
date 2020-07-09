@@ -216,8 +216,14 @@ class ConfigurableReportTableManagerMixin(object):
 
             tables_to_act_on = get_tables_rebuild_migrate(diffs)
             for table_name in tables_to_act_on.rebuild:
-                pillow_logging.info("[rebuild] Rebuilding table: %s", table_name)
                 sql_adapter = table_map[table_name]
+                pillow_logging.info(
+                    "[rebuild] Rebuilding table: %s, from config %s at rev %s",
+                    table_name, sql_adapter.config._id, sql_adapter.config._rev
+                )
+                pillow_logging.info("[rebuild] Using config: %r", sql_adapter.config)
+                pillow_logging.info("[rebuild] sqlalchemy metadata: %r", get_metadata(engine_id).tables[table_name])
+                pillow_logging.info("[rebuild] sqlalchemy table: %r", sql_adapter.get_table())
                 table_diffs = [diff for diff in diffs if diff.table_name == table_name]
                 if not sql_adapter.config.is_static:
                     try:
@@ -230,11 +236,19 @@ class ConfigurableReportTableManagerMixin(object):
             self.migrate_tables(engine, diffs, tables_to_act_on.migrate, table_map)
 
     def migrate_tables(self, engine, diffs, table_names, adapters_by_table):
-        pillow_logging.debug("[rebuild] Application migrations to tables: %s", table_names)
         migration_diffs = [diff for diff in diffs if diff.table_name in table_names]
+        for table in table_names:
+            adapter = adapters_by_table[table]
+            pillow_logging.info("[rebuild] Using config: %r", adapter.config)
+            pillow_logging.info("[rebuild] sqlalchemy metadata: %r", get_metadata(adapter.engine_id).tables[table])
+            pillow_logging.info("[rebuild] sqlalchemy table: %r", adapter.get_table())
         changes = migrate_tables(engine, migration_diffs)
         for table, diffs in changes.items():
             adapter = adapters_by_table[table]
+            pillow_logging.info(
+                "[rebuild] Migrating table: %s, from config %s at rev %s",
+                table, adapter.config._id, adapter.config._rev
+            )
             adapter.log_table_migrate(source='pillowtop', diffs=diffs)
 
     def rebuild_table(self, adapter, diffs=None):
@@ -244,12 +258,12 @@ class ConfigurableReportTableManagerMixin(object):
             if config._rev != latest_rev:
                 raise StaleRebuildError('Tried to rebuild a stale table ({})! Ignoring...'.format(config))
 
+        diff_dicts = [diff.to_dict() for diff in diffs]
         if config.disable_destructive_rebuild and adapter.table_exists:
-            diff_dicts = [diff.to_dict() for diff in diffs]
             adapter.log_table_rebuild_skipped(source='pillowtop', diffs=diff_dicts)
             return
 
-        rebuild_indicators.delay(adapter.config.get_id, source='pillowtop', engine_id=adapter.engine_id)
+        rebuild_indicators.delay(adapter.config.get_id, source='pillowtop', engine_id=adapter.engine_id, diffs=diff_dicts)
 
     def _pull_in_new_and_modified_data_sources(self):
         """
@@ -344,7 +358,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                 eval_context = EvaluationContext(doc)
                 with self._metrics_timer('single_doc_transform'):
                     for adapter in adapters:
-                        with self._metrics_timer('transform', adapter.config._id):
+                        with self._per_config_metrics_timer('transform', adapter.config._id):
                             if adapter.config.filter(doc, eval_context):
                                 if adapter.run_asynchronous:
                                     async_configs_by_doc_id[doc['_id']].append(adapter.config._id)
@@ -367,7 +381,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                 delete_docs = to_delete_by_adapter[adapter] + to_delete
                 if not delete_docs:
                     continue
-                with self._metrics_timer('delete', adapter.config._id):
+                with self._per_config_metrics_timer('delete', adapter.config._id):
                     try:
                         adapter.bulk_delete(delete_docs)
                     except Exception:
@@ -377,7 +391,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
         with self._metrics_timer('single_batch_load'):
             # bulk update by adapter
             for adapter, rows in rows_to_save_by_adapter.items():
-                with self._metrics_timer('load', adapter.config._id):
+                with self._per_config_metrics_timer('load', adapter.config._id):
                     try:
                         adapter.save_rows(rows)
                     except Exception:
@@ -402,6 +416,17 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
             tags['config_id'] = config_id
         return metrics_histogram_timer(
             'commcare.change_feed.processor.timing',
+            timing_buckets=(.03, .1, .3, 1, 3, 10), tags=tags
+        )
+
+    def _per_config_metrics_timer(self, step, config_id):
+        tags = {
+            'action': step,
+        }
+        if settings.ENTERPRISE_MODE:
+            tags['config_id'] = config_id
+        return metrics_histogram_timer(
+            'commcare.change_feed.urc.timing',
             timing_buckets=(.03, .1, .3, 1, 3, 10), tags=tags
         )
 

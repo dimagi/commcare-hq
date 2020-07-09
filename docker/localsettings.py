@@ -5,7 +5,7 @@ import os
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'commcarehq',
         'USER': 'commcarehq',
         'PASSWORD': 'commcarehq',
@@ -21,7 +21,7 @@ USE_PARTITIONED_DATABASE = os.environ.get('USE_PARTITIONED_DATABASE', 'no') == '
 if USE_PARTITIONED_DATABASE:
     DATABASES.update({
         'proxy': {
-            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'ENGINE': 'django.db.backends.postgresql',
             'NAME': 'commcarehq_proxy',
             'USER': 'commcarehq',
             'PASSWORD': 'commcarehq',
@@ -36,7 +36,7 @@ if USE_PARTITIONED_DATABASE:
             }
         },
         'p1': {
-            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'ENGINE': 'django.db.backends.postgresql',
             'NAME': 'commcarehq_p1',
             'USER': 'commcarehq',
             'PASSWORD': 'commcarehq',
@@ -50,7 +50,7 @@ if USE_PARTITIONED_DATABASE:
             }
         },
         'p2': {
-            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'ENGINE': 'django.db.backends.postgresql',
             'NAME': 'commcarehq_p2',
             'USER': 'commcarehq',
             'PASSWORD': 'commcarehq',
@@ -68,7 +68,7 @@ if USE_PARTITIONED_DATABASE:
 # See CITUSDB_SETUP.md for explanation
 DATABASES.update({
     'icds-ucr': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': 'django.db.backends.postgresql',
         'DISABLE_SERVER_SIDE_CURSORS': True,
         'NAME': 'commcare_ucr_citus',
         'USER': 'commcarehq',
@@ -76,8 +76,6 @@ DATABASES.update({
         'HOST': 'citus_master',
         'PORT': '5432',
         'TEST': {
-            # use the same DB for tests to skip expensive setup time in Travs
-            'NAME': 'commcare_ucr_citus',
             'SERIALIZE': False,
         },
     },

@@ -26,7 +26,7 @@ from testil import eq
 
 def _get_db_config(db_name, master=None, delay=None):
     config = {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': db_name,
         'USER': '',
         'PASSWORD': '',

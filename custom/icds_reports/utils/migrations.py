@@ -102,28 +102,6 @@ def get_composite_primary_key_migrations(models_to_update):
     return operations
 
 
-def create_citus_distributed_table(connection, table, distribution_column):
-    res = connection.execute("""
-        select 1 from pg_dist_partition
-        where partmethod = 'h' and logicalrelid = %s::regclass
-    """, [table])
-    if res is None:
-        res = list(connection)
-    if not list(res):
-        connection.execute("select create_distributed_table(%s, %s)", [table, distribution_column])
-
-
-def create_citus_reference_table(connection, table):
-    res = connection.execute("""
-        select 1 from pg_dist_partition
-        where partmethod = 'n' and logicalrelid = %s::regclass
-    """, [table])
-    if res is None:
-        res = list(connection)
-    if not list(res):
-        connection.execute("select create_reference_table(%s)", [table])
-
-
 def create_index_migration(table_name, index_name, columns):
     create_index_sql = "CREATE INDEX CONCURRENTLY IF NOT EXISTS {} ON {} ({})".format(
         index_name, table_name, ','.join(columns)

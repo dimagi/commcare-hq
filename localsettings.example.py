@@ -6,7 +6,7 @@ INTERNAL_IPS = ['127.0.0.1']
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'commcarehq',
         'USER': 'commcarehq',
         'PASSWORD': 'commcarehq',
@@ -26,7 +26,7 @@ if USE_PARTITIONED_DATABASE:
 
     DATABASES.update({
         'proxy': {
-            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'ENGINE': 'django.db.backends.postgresql',
             'NAME': 'commcarehq_proxy',
             'USER': 'commcarehq',
             'PASSWORD': 'commcarehq',
@@ -40,7 +40,7 @@ if USE_PARTITIONED_DATABASE:
             }
         },
         'p1': {
-            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'ENGINE': 'django.db.backends.postgresql',
             'NAME': 'commcarehq_p1',
             'USER': 'commcarehq',
             'PASSWORD': 'commcarehq',
@@ -54,7 +54,7 @@ if USE_PARTITIONED_DATABASE:
             }
         },
         'p2': {
-            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'ENGINE': 'django.db.backends.postgresql',
             'NAME': 'commcarehq_p2',
             'USER': 'commcarehq',
             'PASSWORD': 'commcarehq',

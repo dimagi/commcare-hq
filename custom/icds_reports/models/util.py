@@ -159,6 +159,7 @@ UCR_MAPPING = {
         'static-person_cases_v3': ['person'],
         'static-tasks_cases': ['tasks'],
         'static-tech_issue_cases': ['tech_issue'],
+        'static-child_tasks_cases': ['tasks'],
     },
 }
 

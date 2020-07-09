@@ -58,7 +58,6 @@ class TestMigrateBackend(TestCase):
     sql_reindex_accessors = [
         mod.CaseUploadFileMetaReindexAccessor,
         mod.DemoUserRestoreReindexAccessor,
-        mod.IcdsFileReindexAccessor,
     ]
 
     @classmethod
@@ -95,12 +94,6 @@ class TestMigrateBackend(TestCase):
         obj.save()
         code = CODES.demo_user_restore
         return SqlDoc(obj, self.user.domain, uid, code, "text/xml", 87)
-
-    def IcdsFile_save(self, obj, key):
-        obj.blob_id = key
-        obj.data_type = "unknown"
-        obj.save()
-        return SqlDoc(obj, "icds-cas", "IcdsFile", CODES.tempfile, None, 0)
 
     def setUp(self):
         super(TestMigrateBackend, self).setUp()
