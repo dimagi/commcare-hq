@@ -17,6 +17,7 @@
   {% initial_page_data "can_restrict_access_by_location" can_restrict_access_by_location %}
   {% initial_page_data "landing_page_choices" landing_page_choices %}
   {% initial_page_data "web_apps_privilege" web_apps_privilege %}
+  {% initial_page_data "has_report_builder_access" has_report_builder_access %}
 
   <p class="lead">
     {% if can_edit_roles %}
@@ -164,9 +165,9 @@
             </td>
           {% endif %}
           <td class="text-center">
-            <div data-bind="permissionIcon: {
-                                              edit: permissions.edit_reports,
-                                              view: permissions.view_reports
+            <div data-bind="visible: reportPermissions.all(),
+                                            permissionIcon: {
+                                                manage: true
                                             }"></div>
             <div data-bind="visible: !reportPermissions.all() && reportPermissions.filteredSpecific().length">
               <strong>{% trans "Only" %}</strong><br/>

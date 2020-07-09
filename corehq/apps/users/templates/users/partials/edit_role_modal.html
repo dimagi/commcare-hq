@@ -515,21 +515,24 @@
               {% trans "Reports" %}
             </legend>
 
-            <div class="form-group">
-              <label class="col-sm-4 control-label">
-                {% trans "Create and Edit Reports" %}
-              </label>
-              <div class="col-sm-8 controls">
-                <div class="form-check">
-                  <input type="checkbox"
-                         id="create-and-edit-reports-checkbox"
-                         data-bind="checked: permissions.edit_reports, disable: !$root.allowEdit" />
-                  <label for="create-and-edit-reports-checkbox">
-                    {% trans "Allow role to create and edit reports." %}
-                  </label>
+            {% if has_report_builder_access %}
+              <div class="form-group">
+                <label class="col-sm-4 control-label">
+                  {% trans "Create and Edit Reports" %}
+                </label>
+                <div class="col-sm-8 controls">
+                  <div class="form-check">
+                    <input type="checkbox"
+                           id="create-and-edit-reports-checkbox"
+                           data-bind="checked: permissions.edit_reports, disable: !$root.allowEdit" />
+                    <label for="create-and-edit-reports-checkbox">
+                      {% trans "Allow role to create and edit reports in report builder." %}
+                    </label>
+                  </div>
                 </div>
               </div>
-            </div>
+            {% endif %}
+
             <div class="form-group">
               <label class="col-sm-4 control-label">
                 {% trans "Access All Reports" %}
