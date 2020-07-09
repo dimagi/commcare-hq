@@ -1,8 +1,9 @@
 import os
-from datetime import datetime
+from datetime import datetime, date
 
 import postgres_copy
 import sqlalchemy
+import mock
 
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
@@ -16,7 +17,8 @@ from custom.icds_reports.tasks import (
     _aggregate_child_health_pnc_forms,
     _aggregate_bp_forms,
     _aggregate_gm_forms,
-    drop_gm_indices
+    drop_gm_indices,
+    update_bihar_api_table
 )
 
 
@@ -269,3 +271,8 @@ def partition_child_health():
             with open(view.sql, "r", encoding='utf-8') as sql_file:
                 sql_to_execute = sql_file.read()
                 connection.execute(sql_to_execute)
+
+
+def build_bihar_api():
+    with mock.patch('custom.icds_reports.utils.aggregation_helpers.distributed.bihar_api_demographics.BiharApiDemographicsHelper.bihar_state_id', 'st1'):
+        update_bihar_api_table(date(2017, 5, 1))
