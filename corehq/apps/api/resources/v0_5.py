@@ -752,6 +752,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
         return uri
 
     class Meta(CustomResourceMeta):
+        authentication = RequirePermissionAuthentication(Permissions.view_reports, allow_session_auth=True)
         list_allowed_methods = []
         detail_allowed_methods = ["get"]
 
