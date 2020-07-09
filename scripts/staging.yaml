@@ -66,5 +66,6 @@ branches:
   - solleks:cdg/edit_reports_permission  # Charlie July 6
   - jls/linked-domain-report-links # Jenny July 7
   - kev/geowidget-mapbox # Kevin July 8
+  - dm/dj2-fix-tests  # Danny/Daniel Jul 9
 
 submodules: {}
