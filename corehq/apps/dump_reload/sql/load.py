@@ -4,6 +4,7 @@ from collections import Counter, defaultdict
 from concurrent.futures import ProcessPoolExecutor as Executor
 from contextlib import contextmanager
 from functools import partial
+from typing import Tuple
 
 from django.apps import apps
 from django.conf import settings
@@ -39,12 +40,21 @@ class SqlDataLoader(DataLoader):
             if not object_count % 1000:
                 self.stdout.write(f'Loaded {object_count} SQL objects')
 
+        def collect_results(dbalias_to_workerqueue) -> Tuple[list, list]:
+            load_stats = []
+            exceptions = []
+            terminate_workers(dbalias_to_workerqueue)
+            for db_alias, (worker, __) in dbalias_to_workerqueue.items():
+                try:
+                    load_stats.append(worker.result())
+                except Exception as err:
+                    err.args += (f'Error in worker {db_alias!r}',)
+                    exceptions.append(err)
+            return load_stats, exceptions
+
         def terminate_workers(dbalias_to_workerqueue):
             for __, queue in dbalias_to_workerqueue.values():
                 queue.put(None)
-
-        def collect_stats(dbalias_to_workerqueue):
-            return [w.result() for w, q in dbalias_to_workerqueue.values()]
 
         num_aliases = len(settings.DATABASES)
         manager = mp.Manager()
@@ -58,10 +68,17 @@ class SqlDataLoader(DataLoader):
             for line in object_strings:
                 obj = self.line_to_object(line)
                 if obj is not None:
-                    enqueue_object(dbalias_to_workerqueue, obj)
-            terminate_workers(dbalias_to_workerqueue)
-            load_stats = collect_stats(dbalias_to_workerqueue)
+                    try:
+                        enqueue_object(dbalias_to_workerqueue, obj)
+                    except Exception as err:
+                        __, errors = collect_results(dbalias_to_workerqueue)
+                        errors.append(err)
+                        break
+            else:
+                load_stats, errors = collect_results(dbalias_to_workerqueue)
 
+        if errors:
+            raise errors[0] if len(errors) == 1 else Exception(errors)
         _reset_sequences(load_stats)
         loaded_model_counts = Counter()
         for db_stats in load_stats:
