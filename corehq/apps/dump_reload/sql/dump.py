@@ -8,8 +8,8 @@ from django.db import router
 from corehq.apps.dump_reload.exceptions import DomainDumpError
 from corehq.apps.dump_reload.interface import DataDumper
 from corehq.apps.dump_reload.sql.filters import (
-    DomainOrNullFilter,
     FilteredModelIteratorBuilder,
+    ManyFilters,
     SimpleFilter,
     UniqueFilteredModelIteratorBuilder,
     UserIDFilter,
@@ -116,8 +116,8 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('sms.KeywordAction', SimpleFilter('keyword__domain')),
     FilteredModelIteratorBuilder('sms.QueuedSMS', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('sms.SelfRegistrationInvitation', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('sms.SQLMobileBackend', DomainOrNullFilter('domain')),
-    FilteredModelIteratorBuilder('sms.SQLMobileBackendMapping', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('sms.SQLMobileBackend', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('sms.SQLMobileBackendMapping', ManyFilters('domain', 'backend__domain')),
     FilteredModelIteratorBuilder('cloudcare.ApplicationAccess', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('cloudcare.SQLAppGroup', SimpleFilter('application_access__domain')),
     FilteredModelIteratorBuilder('linked_domain.DomainLink', SimpleFilter('linked_domain')),
