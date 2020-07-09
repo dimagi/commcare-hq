@@ -695,6 +695,8 @@ function GeoPointEntry(question, options) {
         L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token='
                     + window.MAPBOX_ACCESS_TOKEN, {
             id: 'mapbox/streets-v11',
+            attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
+                         ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
         }).addTo(self.map);
         self.map.on('move', self.updateCenter);
 
@@ -706,7 +708,7 @@ function GeoPointEntry(question, options) {
 
     self.afterRender = function () {
         if (typeof L === 'undefined') {
-            question.error('Could not load map. Please try again later.');
+            question.error(gettext('Could not load map. Please try again later.'));
         } else {
             self.loadMap();
         }
