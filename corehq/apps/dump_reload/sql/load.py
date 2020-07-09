@@ -1,7 +1,8 @@
 import json
 import multiprocessing as mp
+import os
 from collections import Counter, defaultdict
-from concurrent.futures import ProcessPoolExecutor as Executor
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from contextlib import contextmanager
 from functools import partial
 from typing import Tuple
@@ -10,12 +11,7 @@ from django.apps import apps
 from django.conf import settings
 from django.core.management.color import no_style
 from django.core.serializers.python import Deserializer as PythonDeserializer
-from django.db import (
-    DatabaseError,
-    connections,
-    router,
-    transaction,
-)
+from django.db import DatabaseError, connections, router, transaction
 
 from corehq.apps.dump_reload.exceptions import DataLoadException
 from corehq.apps.dump_reload.interface import DataLoader
@@ -58,6 +54,8 @@ class SqlDataLoader(DataLoader):
 
         num_aliases = len(settings.DATABASES)
         manager = mp.Manager()
+        Executor = ProcessPoolExecutor if os.cpu_count() >= num_aliases \
+            else ThreadPoolExecutor
         with Executor(max_workers=num_aliases) as executor:
             # Map each db_alias to a queue + a worker task to consume the queue
             worker_queue_factory = partial(get_worker_queue, executor, manager)
