@@ -95,7 +95,7 @@ class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, Proje
     exportable = True
 
     def get_user_link(self, user):
-        if(self._has_form_view_permission()):
+        if self._has_form_view_permission():
             user_link = self.get_raw_user_link(user)
             return self.table_cell(user.raw_username, user_link)
         return self.table_cell(user.raw_username)
