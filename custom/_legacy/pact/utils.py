@@ -152,6 +152,7 @@ def get_patient_display_cache(case_ids):
 
     return ret
 
+
 DEFAULT_SIZE = 10
 
 

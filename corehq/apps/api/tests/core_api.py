@@ -32,8 +32,6 @@ from corehq.apps.users.models import CommCareUser, HQApiKey, WebUser
 from corehq.util.test_utils import flag_disabled
 from no_exceptions.exceptions import Http400
 
-
-
 from .utils import APIResourceTest, FakeFormESView
 
 
@@ -577,7 +575,7 @@ class TestParamstoESFilters(SimpleTestCase, ElasticTestMixin):
         )
 
     def test_inserted_at_query(self):
-        # GET param _search can accept a custom query from a custom API use case 
+        # GET param _search can accept a custom query from a custom API use case
         query = {
             'filter': {
                 'range': {

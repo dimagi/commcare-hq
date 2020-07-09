@@ -39,9 +39,6 @@ from no_exceptions.exceptions import Http400
 logger = logging.getLogger('es')
 
 
-DEFAULT_SIZE = 10
-
-
 class ESUserError(Http400):
     pass
 
@@ -555,7 +552,8 @@ def es_query_from_get_params(search_params, domain, reserved_query_params=None, 
 
     if doc_type == 'form':
         if 'include_archived' in search_params:
-            query = query.filter(filters.OR(filters.term('doc_type', 'xforminstance'), filters.term('doc_type', 'xformarchived')))
+            query = query.filter(
+                filters.OR(filters.term('doc_type', 'xforminstance'), filters.term('doc_type', 'xformarchived')))
         else:
             query = query.filter(filters.term('doc_type', 'xforminstance'))
 
