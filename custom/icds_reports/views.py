@@ -444,6 +444,9 @@ class ProgramSummaryView(BaseReportView):
         }
 
         config.update(get_location_filter(location, domain))
+        # query database at same level for which it is requested
+        if config.get('aggregation_level') > 1:
+            config['aggregation_level'] -= 1
         now = tuple(now.date().timetuple())[:3]
         pre_release_features = icds_pre_release_features(self.request.couch_user)
         data = get_program_summary_data_with_retrying(
