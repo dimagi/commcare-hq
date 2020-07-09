@@ -11,12 +11,10 @@ from django.core.management.color import no_style
 from django.core.serializers.python import Deserializer as PythonDeserializer
 from django.db import (
     DatabaseError,
-    IntegrityError,
     connections,
     router,
     transaction,
 )
-from django.utils.encoding import force_text
 
 from corehq.apps.dump_reload.exceptions import DataLoadException
 from corehq.apps.dump_reload.interface import DataLoader
@@ -135,35 +133,27 @@ def load_data_for_db(db_alias):
     database identified by ``db_alias``. When it is terminated with
     ``None``, it yields a LoadStat object.
     """
-    with transaction.atomic(using=db_alias):
-        connection = connections[db_alias]
-        model_counter = Counter()
-        with connection.constraint_checks_disabled():
-            while True:
-                obj_dict = yield
-                if obj_dict is None:
-                    break
-                for obj in PythonDeserializer([obj_dict], using=db_alias):
-                    if router.allow_migrate_model(db_alias, obj.object.__class__):
-                        model_counter.update([obj.object.__class__])
-                        try:
-                            obj.save(using=db_alias)
-                        except (DatabaseError, IntegrityError) as e:
-                            e.args = ("Could not load %(app_label)s.%(object_name)s(pk=%(pk)s): %(error_msg)s" % {
-                                'app_label': obj.object._meta.app_label,
-                                'object_name': obj.object._meta.object_name,
-                                'pk': obj.object.pk,
-                                'error_msg': force_text(e)
-                            },)
-                            raise
-        # Since we disabled constraint checks, we must manually check for
-        # any invalid keys that might have been added
-        table_names = [model._meta.db_table for model in model_counter]
-        try:
-            connection.check_constraints(table_names=table_names)
-        except Exception as e:
-            e.args = ("Problem loading data: %s" % e,)
-            raise
+    model_counter = Counter()
+    with constraint_checks_deferred(db_alias), \
+            transaction.atomic(using=db_alias):
+        while True:
+            obj_dict = yield
+            if obj_dict is None:
+                break
+            for obj in PythonDeserializer([obj_dict], using=db_alias):
+                Model = type(obj.object)
+                if not router.allow_migrate_model(db_alias, Model):
+                    continue
+                model_counter.update([Model])
+                try:
+                    obj.save(using=db_alias)
+                except DatabaseError as err:
+                    m = Model._meta
+                    raise type(err)(
+                        f'Could not load {m.app_label}.{m.object_name}'
+                        f'(pk={obj.object.pk}) in DB {db_alias!r}'
+                    ) from err
+    print(f'Loading DB {db_alias!r} complete')
     yield LoadStat(db_alias, model_counter)
 
 
