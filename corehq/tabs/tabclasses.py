@@ -2009,7 +2009,6 @@ class MySettingsTab(UITab):
 class AccountingTab(UITab):
     title = ugettext_noop("Accounting")
     view = "accounting_default"
-    dispatcher = AccountingAdminInterfaceDispatcher
 
     url_prefix_formats = ('/hq/accounting/',)
     show_by_default = False
@@ -2021,7 +2020,7 @@ class AccountingTab(UITab):
     @property
     @memoized
     def sidebar_items(self):
-        items = super(AccountingTab, self).sidebar_items
+        items = AccountingAdminInterfaceDispatcher.navigation_sections(request=self._request, domain=self.domain)
 
         from corehq.apps.accounting.views import ManageAccountingAdminsView
         items.append(('Permissions', (
@@ -2065,7 +2064,6 @@ class AccountingTab(UITab):
 class SMSAdminTab(UITab):
     title = ugettext_noop("SMS Connectivity & Billing")
     view = "default_sms_admin_interface"
-    dispatcher = SMSAdminInterfaceDispatcher
 
     url_prefix_formats = ('/hq/sms/',)
     show_by_default = False
@@ -2075,7 +2073,7 @@ class SMSAdminTab(UITab):
     def sidebar_items(self):
         from corehq.apps.sms.views import (GlobalSmsGatewayListView,
             AddGlobalGatewayView, EditGlobalGatewayView)
-        items = super(SMSAdminTab, self).sidebar_items
+        items = SMSAdminInterfaceDispatcher.navigation_sections(request=self._request, domain=self.domain)
         items.append((_('SMS Connectivity'), [
             {'title': _('Gateways'),
              'url': reverse(GlobalSmsGatewayListView.urlname),

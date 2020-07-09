@@ -26,8 +26,6 @@ class UITab(object):
     title = None
     view = None
 
-    dispatcher = None
-
     # Tuple of prefixes that this UITab claims e.g.
     #   ('/a/{domain}/reports/', '/a/{domain}/otherthing/')
     # This is a required field.
@@ -98,12 +96,8 @@ class UITab(object):
         return filtered
 
     @property
-    @memoized
     def sidebar_items(self):
-        if self.dispatcher:
-            return self.dispatcher.navigation_sections(request=self._request, domain=self.domain)
-        else:
-            return []
+        return []
 
     @property
     @memoized
