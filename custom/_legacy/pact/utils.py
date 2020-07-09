@@ -111,43 +111,30 @@ def get_patient_display_cache(case_ids):
     if len(case_ids) == 0:
         return {}
     case_es = ReportCaseESView(PACT_DOMAIN)
-    query = {
-        "fields": [
-            "_id",
-            "name",
-        ],
-        "script_fields": {
-            "case_id": {
-                "script": "_source._id"
-            },
-            "pactid": get_report_script_field("pactid"),
-            "first_name": get_report_script_field("first_name"),
-            "last_name": get_report_script_field("last_name"),
+    query = (
+        CaseES()
+        .remove_default_filters()
+        .domain(PACT_DOMAIN)
+        .source(["_id", "name"])
+        .size(len(case_ids))
+    )
+    query = query.add_query({"ids": {"values": case_ids}})
+    query["script_fields"] = {
+        "case_id": {
+            "script": "_source._id"
         },
-        "filter": {
-            "and": [
-                {
-                    "term": {
-                        "domain.exact": "pact"
-                    }
-                },
-                {
-                    "ids": {
-                        "values": case_ids,
-                    }
-                }
-            ]
-        },
-        "size": len(case_ids)
+        "pactid": get_report_script_field("pactid"),
+        "first_name": get_report_script_field("first_name"),
+        "last_name": get_report_script_field("last_name"),
     }
-    res = case_es.run_query(query)
+    res = case_es.run_query(query.raw_query)
 
     from pact.reports.patient import PactPatientInfoReport
 
     ret = {}
     for entry in res['hits']['hits']:
-        case_id = entry['fields']['case_id']
-        ret[case_id] = entry['fields']
+        case_id = entry['case_id']
+        ret[case_id] = entry
         ret[case_id]['url'] = PactPatientInfoReport.get_url(*['pact']) + "?patient_id=%s" % case_id
 
     return ret

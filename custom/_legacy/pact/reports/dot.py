@@ -48,7 +48,7 @@ class PactDOTPatientField(BaseSingleOptionFilter):
 
         results = case_es.run_query(query)
         for res in results['hits']['hits']:
-            yield res['fields']
+            yield res
 
 
 class PactDOTReport(GenericTabularReport, CustomProjectReport, ProjectReportParametersMixin,

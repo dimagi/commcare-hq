@@ -82,7 +82,7 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
             .raw_query)
         results = self.case_es.run_query(query)
         for res in results['hits']['hits']:
-            yield res['fields']
+            yield res
 
     @property
     def headers(self):
@@ -138,7 +138,7 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
             #hack, do a facet query here
             facet_dict = self.case_submits_facet_dict(SIZE_LIMIT)
             for result in res['hits']['hits']:
-                yield list(_format_row(result['fields']))
+                yield list(_format_row(result))
 
     @property
     def es_results(self):
@@ -157,9 +157,7 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
         full_query = (get_base_case_es_query(self.pagination.start, self.pagination.count)
             .filter(filters.term('type', PACT_CASE_TYPE))
             .source(fields)
-            .raw_query
         )
-        full_query['sort'] = self.get_sorting_block()
 
         def status_filtering(slug, field, prefix, any_field, default):
             if self.request.GET.get(slug, None) is not None:
@@ -178,11 +176,11 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
                         field_status_prefix = prefix
                     else:
                         field_status_prefix = None
-                        full_query['filter']['and'].append({"term": {field: field_status_filter_query.lower()}})
+                        full_query = full_query.filter(filters.term(field, field_status_filter_query.lower()))
 
                     if field_status_prefix is not None:
                         field_filter = {"prefix": {field: field_status_prefix.lower()}}
-                        full_query['filter']['and'].append(field_filter)
+                        full_query = full_query.add_query(field_filter)
 
         status_filtering(DOTStatus.slug, "dot_status.#value", "DOT", DOTStatus.ANY_DOT, None)
         status_filtering(HPStatusField.slug, "hp_status.#value", "HP", HPStatusField.ANY_HP, HPStatusField.ANY_HP)
@@ -191,8 +189,9 @@ class PatientListDashboardReport(PactElasticTabularReportMixin):
         if self.request.GET.get(PactPrimaryHPField.slug, "") != "":
             primary_hp_term = self.request.GET[PactPrimaryHPField.slug]
             primary_hp_filter = {"term": {"hp.#value": primary_hp_term}}
-            full_query['filter']['and'].append(primary_hp_filter)
-        return self.case_es.run_query(full_query)
+            full_query = full_query.filter(filters.term("hp.#value", primary_hp_term))
+        full_query['sort'] = self.get_sorting_block()
+        return self.case_es.run_query(full_query.raw_query)
 
     def pact_case_link(self, case_id, name):
         try:

@@ -156,4 +156,4 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
                 pass
             else:
                 for result in res['hits']['hits']:
-                    yield list(_format_row(result['fields']))
+                    yield list(_format_row(result))
