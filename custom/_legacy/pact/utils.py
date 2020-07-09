@@ -175,42 +175,6 @@ def get_by_case_id_form_es_query(start, size, case_id):
     )
 
 
-REPORT_XFORM_MISSING_DOTS_QUERY = {
-    "query": {
-        "filtered": {
-            "query": {
-                "match_all": {}
-            },
-            "filter": {
-                "and": [
-                    {
-                        "term": {
-                            "domain.exact": "pact"
-                        }
-                    },
-                    {
-                        "term": {
-                            "form.#type": "dots_form"
-                        }
-                    },
-                    {
-                        "missing": {
-                            "field": "%s.processed.#type" % PACT_DOTS_DATA_PROPERTY,
-                        }
-                    }
-                ]
-            }
-        },
-    },
-    "fields": [],
-    "sort": {
-        "received_on": "asc"
-    },
-    "size": 1
-
-}
-
-
 def get_report_script_field(field_path, is_known=False):
     """
     Generate a script field string for easier querying.
