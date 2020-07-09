@@ -274,5 +274,9 @@ def partition_child_health():
 
 
 def build_bihar_api():
-    with mock.patch('custom.icds_reports.utils.aggregation_helpers.distributed.bihar_api_demographics.BiharApiDemographicsHelper.bihar_state_id', 'st1'):
+    with mock.patch(
+        'custom.icds_reports.utils.aggregation_helpers.distributed'
+        '.bihar_api_demographics.BiharApiDemographicsHelper.bihar_state_id',
+        'st1',
+    ):
         update_bihar_api_table(date(2017, 5, 1))

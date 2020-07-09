@@ -1,8 +1,8 @@
+import csv
 import os
-from datetime import datetime, date
+from datetime import datetime
 
 import mock
-import csv
 
 from django.conf import settings
 from django.test.utils import override_settings
@@ -14,7 +14,6 @@ from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.util.test_utils import flag_enabled, timelimit
-
 
 from custom.icds_reports.tasks import (
     move_ucr_data_into_aggregation_tables,
