@@ -12,7 +12,7 @@ from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
-    help = ""
+    help = "Reports of SMSes sent to gateway in a date range"
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
@@ -126,8 +126,8 @@ class Command(BaseCommand):
 
         for sms in SMS.objects.filter(
             domain=domain,
-            date__gt=start_timestamp,
-            date__lte=end_timestamp,
+            processed_timestamp__gt=start_timestamp,
+            processed_timestamp__lte=end_timestamp,
             backend_api=AirtelTCLBackend.get_api_id(),
             direction='O',
             processed=True,

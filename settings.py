@@ -893,8 +893,6 @@ RESTRICT_DOMAIN_CREATION = False
 
 CUSTOM_LANDING_PAGE = False
 
-TABLEAU_URL_ROOT = "https://icds.commcarehq.org/"
-
 SENTRY_DSN = None
 SENTRY_REPOSITORY = 'dimagi/commcare-hq'
 SENTRY_ORGANIZATION_SLUG = 'dimagi'
@@ -2031,6 +2029,7 @@ DOMAIN_MODULE_MAP = {
     'reach-dashboard-qa': 'custom.aaa',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
+    'nhm-af-up': 'custom.up_nrhm',
 
     'crs-remind': 'custom.apps.crs_reports',
 

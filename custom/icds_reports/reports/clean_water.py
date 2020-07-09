@@ -81,20 +81,28 @@ def get_clean_water_data_chart(domain, config, loc_level, show_test=False):
     month = datetime(*config['month'])
     three_before = datetime(*config['month']) - relativedelta(months=3)
 
-    config['month__range'] = (three_before, month)
-    del config['month']
+    def get_data(filter):
+        start_month = datetime(*filter['month']) - relativedelta(months=3)
+        month = datetime(*filter['month'])
+        all_months_chart_data = []
+        while start_month <= month:
+            filter['month'] = start_month
+            month_chart_data = AggAwcMonthly.objects.filter(
+                **filter
+            ).values(
+                'month', '%s_name' % loc_level
+            ).annotate(
+                in_month=Sum('infra_clean_water'),
+                all=Sum('num_awc_infra_last_update'),
+            ).order_by('month')
+            if not show_test:
+                month_chart_data = apply_exclude(domain, month_chart_data)
 
-    chart_data = AggAwcMonthly.objects.filter(
-        **config
-    ).values(
-        'month', '%s_name' % loc_level
-    ).annotate(
-        in_month=Sum('infra_clean_water'),
-        all=Sum('num_awc_infra_last_update'),
-    ).order_by('month')
+            all_months_chart_data += list(month_chart_data)
+            start_month += relativedelta(months=1)
+        return all_months_chart_data
 
-    if not show_test:
-        chart_data = apply_exclude(domain, chart_data)
+    chart_data = get_data(config)
 
     data = {
         'blue': OrderedDict(),
@@ -102,7 +110,6 @@ def get_clean_water_data_chart(domain, config, loc_level, show_test=False):
     }
 
     dates = [dt for dt in rrule(MONTHLY, dtstart=three_before, until=month)]
-
     for date in dates:
         miliseconds = int(date.strftime("%s")) * 1000
         data['blue'][miliseconds] = {'y': 0, 'all': 0, 'in_month': 0}

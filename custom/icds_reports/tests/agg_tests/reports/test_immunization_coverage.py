@@ -39,25 +39,20 @@ class TestImmunizationCoverage(TestCase):
         self.assertIn('average', data)
         self.assertIn('extended_info', data)
 
-    def test_map_data(self):
+    def test_map_data_with_age_1_2_ff(self):
         data = get_immunization_coverage_data_map(
             'icds-cas',
             config={
                 'month': (2017, 5, 1),
                 'aggregation_level': 1
             },
-            loc_level='state'
+            loc_level='state',
         )
         self.assertDictEqual(
             data['data'],
             {
-                'st4': {'all': 0, 'original_name': ['st4'], 'children': 0, 'fillKey': '0%-20%'},
-                'st5': {'all': 0, 'original_name': ['st5'], 'children': 0, 'fillKey': '0%-20%'},
-                'st6': {'all': 0, 'original_name': ['st6'], 'children': 0, 'fillKey': '0%-20%'},
-                'st7': {'all': 1, 'original_name': ['st7'], 'children': 0, 'fillKey': '0%-20%'},
-                'st1': {'all': 568, 'original_name': ['st1'], 'children': 83, 'fillKey': '0%-20%'},
-                'st2': {'all': 617, 'original_name': ['st2'], 'children': 45, 'fillKey': '0%-20%'},
-                'st3': {'all': 0, 'original_name': ['st3'], 'children': 0, 'fillKey': '0%-20%'}
+                'st1': {'all': 44, 'original_name': ['st1'], 'children': 4, 'fillKey': '0%-20%'},
+                'st2': {'all': 57, 'original_name': ['st2'], 'children': 6, 'fillKey': '0%-20%'}
             }
         )
 
@@ -71,13 +66,11 @@ class TestImmunizationCoverage(TestCase):
             loc_level='state'
         )
         expected = (
-            "Of the total number of children enrolled for Anganwadi Services who are over a year old, "
-            "the percentage of children who have received the complete immunization as per the National "
-            "Immunization Schedule of India that is required by age 1."
-            "<br/><br/>"
-            "This includes the following immunizations:<br/>"
-            "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"
-            "If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1"
+            "Of the total number of children enrolled for Anganwadi Services who are between 1-2 years old,"
+            " the percentage of children who have received the complete immunization as per the National"
+            " Immunization Schedule of India that is required by age 1.<br/><br/>This includes the following"
+            " immunizations:<br/>If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>If"
+            " DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1"
         )
         self.assertEqual(data['rightLegend']['info'], expected)
 
@@ -90,7 +83,7 @@ class TestImmunizationCoverage(TestCase):
             },
             loc_level='state'
         )
-        self.assertEqual(data['rightLegend']['average'], 10.79258010118044)
+        self.assertEqual(data['rightLegend']['average'], 9.900990099009901)
 
     def test_map_data_right_legend_extended_info(self):
         data = get_immunization_coverage_data_map(
@@ -105,21 +98,22 @@ class TestImmunizationCoverage(TestCase):
             data['rightLegend']['extended_info'],
             [
                 {
-                    'indicator': 'Total number of ICDS Child beneficiaries older than 1 year:',
-                    'value': "1,186"
+                    'indicator': 'Total number of ICDS Child beneficiaries between 1-2 years old:',
+                    'value': "101"
                 },
                 {
                     'indicator': (
-                        'Total number of children who have recieved '
+                        'Total number of children between 1-2 years old who have received '
                         'complete immunizations required by age 1:'
                     ),
-                    'value': "128"
+                    'value': "10"
                 },
                 {
                     'indicator': (
-                        '% of children who have recieved complete immunizations required by age 1:'
+                        '% of children between 1-2 years old who have received complete immunizations'
+                        ' required by age 1:'
                     ),
-                    'value': '10.79%'
+                    'value': '9.90%'
                 }
             ]
         )
@@ -180,9 +174,9 @@ class TestImmunizationCoverage(TestCase):
             data['data'],
             {
                 'block_map': {
-                    'all': 568,
+                    'all': 44,
                     'original_name': ['b1', 'b2'],
-                    'children': 83,
+                    'children': 4,
                     'fillKey': '0%-20%'
                 }
             }
@@ -199,9 +193,9 @@ class TestImmunizationCoverage(TestCase):
             },
             loc_level='block',
         )
-        self.assertEqual(data['rightLegend']['average'], 14.612676056338028)
+        self.assertEqual(data['rightLegend']['average'], 9.090909090909092)
 
-    def test_chart_data(self):
+    def test_chart_data_with_age_1_2(self):
         self.assertDictEqual(
             get_immunization_coverage_data_chart(
                 'icds-cas',
@@ -212,68 +206,57 @@ class TestImmunizationCoverage(TestCase):
                 loc_level='state'
             ),
             {
-                "location_type": "State",
-                "bottom_five": [
-                    {'loc_name': 'st3', 'percent': 0.0},
-                    {'loc_name': 'st4', 'percent': 0.0},
-                    {'loc_name': 'st5', 'percent': 0.0},
-                    {'loc_name': 'st6', 'percent': 0.0},
-                    {'loc_name': 'st7', 'percent': 0.0},
-                ],
-                "top_five": [
-                    {'loc_name': 'st1', 'percent': 14.612676056338028},
-                    {'loc_name': 'st2', 'percent': 7.293354943273906},
-                    {'loc_name': 'st3', 'percent': 0.0},
-                    {'loc_name': 'st4', 'percent': 0.0},
-                    {'loc_name': 'st5', 'percent': 0.0},
-                ],
-                "chart_data": [
+                'chart_data': [
                     {
-                        "color": ChartColors.BLUE,
-                        "classed": "dashed",
-                        "strokeWidth": 2,
-                        "values": [
+                        'values': [
                             {
-                                "y": 0,
-                                "x": 1485907200000,
-                                "all": 0,
-                                "in_month": 0
+                                'x': 1485907200000,
+                                'y': 0,
+                                'all': 0,
+                                'in_month': 0
                             },
                             {
-                                "y": 0,
-                                "x": 1488326400000,
-                                "all": 0,
-                                "in_month": 0
+                                'x': 1488326400000,
+                                'y': 0,
+                                'all': 0,
+                                'in_month': 0
                             },
                             {
-                                "y": 0.10526315789473684,
-                                "x": 1491004800000,
-                                "all": 1159,
-                                "in_month": 122
+                                'x': 1491004800000,
+                                'y': 0.0784313725490196,
+                                'all': 102,
+                                'in_month': 8
                             },
                             {
-                                "y": 0.10792580101180438,
-                                "x": 1493596800000,
-                                "all": 1186,
-                                "in_month": 128
+                                'x': 1493596800000,
+                                'y': 0.09900990099009901,
+                                'all': 101,
+                                'in_month': 10
                             }
                         ],
-                        "key": "% Children received complete immunizations by 1 year"
+                        'key': '% Children between 1-2 years old who received complete immunizations by 1 year',
+                        'strokeWidth': 2,
+                        'classed': 'dashed',
+                        'color': '#005ebd'
                     }
                 ],
-                "all_locations": [
-                    {'loc_name': 'st1', 'percent': 14.612676056338028},
-                    {'loc_name': 'st2', 'percent': 7.293354943273906},
-                    {'loc_name': 'st3', 'percent': 0.0},
-                    {'loc_name': 'st4', 'percent': 0.0},
-                    {'loc_name': 'st5', 'percent': 0.0},
-                    {'loc_name': 'st6', 'percent': 0.0},
-                    {'loc_name': 'st7', 'percent': 0.0},
-                ]
+                'all_locations': [
+                    {'loc_name': 'st2', 'percent': 10.526315789473685},
+                    {'loc_name': 'st1', 'percent': 9.090909090909092}
+                ],
+                'top_five': [
+                    {'loc_name': 'st2', 'percent': 10.526315789473685},
+                    {'loc_name': 'st1', 'percent': 9.090909090909092}
+                ],
+                'bottom_five': [
+                    {'loc_name': 'st2', 'percent': 10.526315789473685},
+                    {'loc_name': 'st1', 'percent': 9.090909090909092}
+                ],
+                'location_type': 'State'
             }
         )
 
-    def test_sector_data(self):
+    def test_sector_data_with_age_1_2(self):
         self.assertDictEqual(
             get_immunization_coverage_sector_data(
                 'icds-cas',
@@ -288,7 +271,8 @@ class TestImmunizationCoverage(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Of the total number of children enrolled for Anganwadi Services who are over a year old, "
+                "info": "Of the total number of children enrolled for Anganwadi Services who are between"
+                        " 1-2 years old, "
                         "the percentage of children who have received the complete immunization as per the "
                         "National Immunization Schedule of India that is required by age 1."
                         "<br/><br/>"
@@ -297,12 +281,12 @@ class TestImmunizationCoverage(TestCase):
                         "If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1",
                 "tooltips_data": {
                     "s2": {
-                        "all": 193,
+                        "all": 12,
                         "children": 3
                     },
                     "s1": {
-                        "all": 99,
-                        "children": 31
+                        "all": 1,
+                        "children": 0
                     }
                 },
                 "chart_data": [
@@ -313,16 +297,15 @@ class TestImmunizationCoverage(TestCase):
                         "values": [
                             [
                                 "s1",
-                                0.31313131313131315
+                                0.0
                             ],
                             [
                                 "s2",
-                                0.015544041450777202
+                                0.25
                             ]
                         ],
                         "key": ""
                     }
                 ]
             }
-
         )

@@ -256,17 +256,18 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         from corehq.apps.case_search.models import CaseSearchConfig, FuzzyProperties
         expected_object_counts = Counter({
             CaseSearchConfig: 1,
+            FuzzyProperties: 2,
         })
 
         pre_config, created = CaseSearchConfig.objects.get_or_create(pk=self.domain_name)
         pre_config.enabled = True
-        fuzzies = [
+        pre_fuzzies = [
             FuzzyProperties(domain=self.domain, case_type='dog', properties=['breed', 'color']),
             FuzzyProperties(domain=self.domain, case_type='owner', properties=['name']),
         ]
-        for fuzzy in fuzzies:
+        for fuzzy in pre_fuzzies:
             fuzzy.save()
-        pre_config.fuzzy_properties.set(fuzzies)
+        pre_config.fuzzy_properties.set(pre_fuzzies)
         pre_config.save()
 
         self._dump_and_load(expected_object_counts)
@@ -274,6 +275,8 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         post_config = CaseSearchConfig.objects.get(domain=self.domain_name)
         self.assertTrue(post_config.enabled)
         self.assertEqual(pre_config.fuzzy_properties, post_config.fuzzy_properties)
+        post_fuzzies = FuzzyProperties.objects.filter(domain=self.domain_name)
+        self.assertEqual(set(f.case_type for f in post_fuzzies), {'dog', 'owner'})
 
     def test_users(self):
         from corehq.apps.users.models import CommCareUser

@@ -352,8 +352,6 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                     "a release notes form <TODO messaging>")},
                 status_code=400
             )
-    if should_edit('no_vellum'):
-        form.no_vellum = request.POST['no_vellum'] == 'true'
     if (should_edit("form_links_xpath_expressions") and
             should_edit("form_links_form_ids") and
             toggles.FORM_LINK_WORKFLOW.enabled(domain)):

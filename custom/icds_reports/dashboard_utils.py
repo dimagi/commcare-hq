@@ -6,8 +6,8 @@ from corehq.apps.locations.util import location_hierarchy_config
 from corehq.toggles import ICDS_DASHBOARD_SHOW_MOBILE_APK, NAMESPACE_USER
 from custom.icds_reports.const import NavigationSections
 from custom.icds_reports.const import SDDSections
-from custom.icds_reports.utils import (icds_pre_release_features,
-                                       get_latest_issue_tracker_build_id)
+from custom.icds_reports.utils import (get_latest_issue_tracker_build_id)
+from ..icds_core.view_utils import icds_pre_release_features
 from corehq.apps.cloudcare.utils import webapps_module
 from corehq.apps.users.models import UserRole
 
@@ -46,11 +46,9 @@ def get_dashboard_template_context(domain, couch_user):
     if couch_user.is_web_user():
         context['is_web_user'] = True
 
-    beta = icds_pre_release_features(couch_user)
-
     context['nav_metadata'] = _get_nav_metadatada()
     context['sdd_metadata'] = _get_sdd_metadata()
-    context['nav_menu_items'] = _get_nav_menu_items(beta)
+    context['nav_menu_items'] = _get_nav_menu_items()
     context['fact_sheet_sections'] = _get_factsheet_sections()
     context['MAPBOX_ACCESS_TOKEN'] = settings.MAPBOX_ACCESS_TOKEN
     context['support_email'] = settings.SUPPORT_EMAIL
@@ -183,11 +181,10 @@ def _get_factsheet_sections():
     ]))
 
 
-def _get_nav_menu_items(beta):
+def _get_nav_menu_items():
     icds_reach_sub_pages = [NavMenuSubPages(_('AWCs Daily Status'), 'icds_cas_reach/awc_daily_status'),
-                            NavMenuSubPages(_('AWCs Launched'), 'icds_cas_reach/awcs_covered')]
-    if beta:
-        icds_reach_sub_pages.append(NavMenuSubPages(_('LSs Launched'), 'icds_cas_reach/ls_launched'))
+                            NavMenuSubPages(_('AWCs Launched'), 'icds_cas_reach/awcs_covered'),
+                            NavMenuSubPages(_('LSs Launched'), 'icds_cas_reach/ls_launched')]
     return attr.asdict(NavMenuSectionsList([
         NavMenuSection(_('Maternal and Child Nutrition'),
                        [NavMenuSubPages(_('Prevalence of Underweight (Weight-for-Age)'),
