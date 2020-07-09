@@ -21,6 +21,13 @@ Before submitting a PR, review our `Guide to Authoring Pull Requests`_.
 You may also be interested in the `Developers category`_ of the `CommCare Forum`_ 
 if you have questions or need feedback.
 
+CommCare Enhancement Proposals
+------------------------------
+For larger changes or new features we encourage the use of the `CommCare Enhancement Proposal`_
+process which gives the team a chance to give feedback on ideas before the code work begins.
+
+.. _CommCare Enhancement Proposal: https://commcare-hq.readthedocs.io/cep.html
+
 Bug Reports
 -----------
 To file a bug report, please follow the system outlined in our `bug
