@@ -320,7 +320,7 @@ class SetupTab(UITab):
                     url=reverse(item[1].urlname, args=[self.domain])
                 ) for item in dropdown_items
             ] + [
-                dropdown_dict(None, is_divider=True),
+                self.divider,
                 dropdown_dict(_("View All"), url=reverse(ProductListView.urlname, args=[self.domain])),
             ]
 
@@ -886,7 +886,7 @@ class ProjectDataTab(UITab):
             ))
 
         if items:
-            items += [dropdown_dict(None, is_divider=True)]
+            items += [self.divider]
         items += [dropdown_dict(_("View All"), url=self.url)]
         return items
 
@@ -933,7 +933,7 @@ class ApplicationsTab(UITab):
             ))
 
         if self.couch_user.can_edit_apps():
-            submenu_context.append(dropdown_dict(None, is_divider=True))
+            submenu_context.append(self.divider)
             submenu_context.append(dropdown_dict(
                 _('New Application'),
                 url=(reverse('default_new_app', args=[self.domain])),
@@ -1232,7 +1232,7 @@ class MessagingTab(UITab):
             ))
 
         if result:
-            result.append(dropdown_dict(None, is_divider=True))
+            result.append(self.divider)
 
         result.append(dropdown_dict(_("Messages"), is_header=True))
         result.append(dropdown_dict(
@@ -1245,7 +1245,7 @@ class MessagingTab(UITab):
         ))
 
         if result:
-            result.append(dropdown_dict(None, is_divider=True))
+            result.append(self.divider)
 
         view_all_view = MessagingDashboardView.urlname if self.show_dashboard else 'sms_compose_message'
         result.append(dropdown_dict(
@@ -2124,7 +2124,7 @@ class AdminTab(UITab):
         submenu_context.extend([
             dropdown_dict(_("Feature Flags"), url=reverse("toggle_list")),
             dropdown_dict(_("SMS Connectivity & Billing"), url=reverse("default_sms_admin_interface")),
-            dropdown_dict(None, is_divider=True),
+            self.divider,
             dropdown_dict(_("Django Admin"), url="/admin"),
             dropdown_dict(_("View All"), url=self.url),
         ])

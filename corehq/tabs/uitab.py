@@ -5,7 +5,7 @@ from django.utils.translation import get_language
 
 from corehq.apps.domain.models import Domain
 from corehq.tabs.exceptions import UrlPrefixFormatError, UrlPrefixFormatsSuggestion
-from corehq.tabs.utils import sidebar_to_dropdown
+from corehq.tabs.utils import sidebar_to_dropdown, dropdown_dict
 from memoized import memoized
 from dimagi.utils.django.cache import make_template_fragment_key
 from dimagi.utils.web import get_url_base
@@ -63,6 +63,10 @@ class UITab(object):
                     raise UrlPrefixFormatError(
                         'Class {} has url_prefix_format has an issue: {}'
                         .format(self.__class__.__name__, url_prefix_formats))
+
+    @property
+    def divider(self):
+        return dropdown_dict(None, is_divider=True)
 
     @property
     def project(self):
