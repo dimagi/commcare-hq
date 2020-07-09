@@ -28,7 +28,7 @@ from custom.icds_reports.utils.topojson_util.topojson_util import get_block_topo
 from dimagi.utils.dates import add_months, force_to_date
 
 from corehq import toggles
-from corehq.apps.domain.decorators import api_auth, login_and_domain_required, require_superuser
+from corehq.apps.domain.decorators import api_auth, login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
 from corehq.apps.hqwebapp.views import BugReportView
@@ -432,8 +432,7 @@ class BaseCasAPIView(View):
 
 @location_safe
 @method_decorator([login_and_domain_required,
-                   toggles.ENABLE_ICDS_DASHBOARD_RELEASE_NOTES_UPDATE.required_decorator(),
-                   require_superuser], name='dispatch')
+                   toggles.ENABLE_ICDS_DASHBOARD_RELEASE_NOTES_UPDATE.required_decorator()], name='dispatch')
 class ReleaseNotesUpdateView(TemplateView):
     page_title = 'Update Dashboard Release Notes'
     urlname = 'update_dashboard_release_notes'
@@ -454,7 +453,8 @@ class ReleaseNotesUpdateView(TemplateView):
 @method_decorator([login_and_domain_required], name='dispatch')
 class DownloadReleaseNotes(View):
     def get(self, request, *args, **kwargs):
-        release_notes_file = IcdsFile.objects.filter(blob_id="dashboard_release_notes.pdf")\
+        release_notes_file = IcdsFile.objects.filter(blob_id="dashboard_release_notes.pdf",
+                                                     data_type='dashboard_release_notes')\
             .order_by('file_added').last()
         release_notes = release_notes_file.get_file_from_blobdb()
 
@@ -470,7 +470,8 @@ class DownloadReleaseNotes(View):
 @method_decorator([login_and_domain_required], name='dispatch')
 class ReleaseDateView(View):
     def get(self, request, *args, **kwargs):
-        release_date = IcdsFile.objects.filter(blob_id="dashboard_release_notes.pdf")\
+        release_date = IcdsFile.objects.filter(blob_id="dashboard_release_notes.pdf",
+                                               data_type='dashboard_release_notes')\
             .order_by('file_added').last().file_added
         release_date_string = release_date.strftime('%d-%m-%Y')
 

@@ -72,12 +72,12 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
         }
     };
 
-    $scope.isOlderThanAWeek = (function () {
+    $scope.isOlderThanAWeek = true;
+    (function () {
         $http.get(url('release_date')).then(function (response) {
             if (response && response.data) {
-                return response.data['isOlderThanAWeek'];
+                $scope.isOlderThanAWeek = response.data['isOlderThanAWeek'];
             }
-            return true;
         });
     })();
 
