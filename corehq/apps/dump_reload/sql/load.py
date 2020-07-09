@@ -146,8 +146,8 @@ def load_data_for_db(db_alias):
     ``None``, it yields a LoadStat object.
     """
     model_counter = Counter()
-    with constraint_checks_deferred(db_alias), \
-            transaction.atomic(using=db_alias):
+    with transaction.atomic(using=db_alias), \
+         constraint_checks_deferred(db_alias):
         while True:
             obj_dict = yield
             if obj_dict is None:
