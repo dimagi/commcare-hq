@@ -532,6 +532,54 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         ).save()
         self._dump_and_load({AlertScheduleInstance: 1})
 
+    def test_mobile_backend(self):
+        from corehq.apps.sms.models import (
+            SQLMobileBackend,
+            SQLMobileBackendMapping,
+        )
+
+        domain_backend = SQLMobileBackend.objects.create(
+            domain=self.domain_name,
+            name='test-domain-mobile-backend',
+            display_name='Test Domain Mobile Backend',
+            hq_api_id='TDMB',
+            inbound_api_key='test-domain-mobile-backend-inbound-api-key',
+            supported_countries=["*"],
+            backend_type=SQLMobileBackend.SMS,
+            is_global=False,
+        )
+        SQLMobileBackendMapping.objects.create(
+            domain=self.domain_name,
+            backend=domain_backend,
+            backend_type=SQLMobileBackend.SMS,
+            prefix='123',
+        )
+
+        global_backend = SQLMobileBackend.objects.create(
+            domain=None,
+            name='test-global-mobile-backend',
+            display_name='Test Global Mobile Backend',
+            hq_api_id='TGMB',
+            inbound_api_key='test-global-mobile-backend-inbound-api-key',
+            supported_countries=["*"],
+            backend_type=SQLMobileBackend.SMS,
+            is_global=True,
+        )
+        SQLMobileBackendMapping.objects.create(
+            domain=self.domain_name,
+            backend=global_backend,
+            backend_type=SQLMobileBackend.SMS,
+            prefix='*',
+        )
+        self._dump_and_load({
+            SQLMobileBackendMapping: 1,
+            SQLMobileBackend: 1,
+        })
+        self.assertEqual(SQLMobileBackend.objects.first().domain,
+                         self.domain_name)
+        self.assertEqual(SQLMobileBackendMapping.objects.first().domain,
+                         self.domain_name)
+
     def test_case_importer(self):
         from corehq.apps.case_importer.tracking.models import (
             CaseUploadFileMeta,
