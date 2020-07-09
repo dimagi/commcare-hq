@@ -64,6 +64,8 @@ LANGUAGES = (
     ('sw', 'Swahili'),
 )
 
+STATICI18N_FILENAME_FUNCTION = 'statici18n.utils.legacy_filename'
+
 SITE_ID = 1
 
 # If you set this to False, Django will make some optimizations so as not
