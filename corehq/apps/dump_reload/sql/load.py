@@ -1,7 +1,7 @@
 import json
 import multiprocessing as mp
 from collections import Counter, defaultdict
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor as Executor
 from contextlib import contextmanager
 from functools import partial
 
@@ -48,7 +48,7 @@ class SqlDataLoader(DataLoader):
 
         num_aliases = len(settings.DATABASES)
         manager = mp.Manager()
-        with ProcessPoolExecutor(max_workers=num_aliases) as executor:
+        with Executor(max_workers=num_aliases) as executor:
             # Map each db_alias to a queue + a worker task to consume the queue
             worker_queue_factory = partial(get_worker_queue, executor, manager)
             # DefaultDictWithKey passes the key to its factory function so that
@@ -103,14 +103,11 @@ def worker(queue, db_alias):
     while True:
         obj = queue.get()
         if obj is None:
-            # None is a terminator. Collect final stats
             load_stat = coro.send(None)
             queue.task_done()
             return load_stat
-        try:
-            coro.send(obj)
-        finally:
-            queue.task_done()
+        coro.send(obj)
+        queue.task_done()
 
 
 def _reset_sequences(load_stats):
