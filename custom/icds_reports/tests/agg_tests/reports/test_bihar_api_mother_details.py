@@ -14,7 +14,6 @@ from custom.icds_reports.tasks import update_bihar_api_table
 class BiharAPIMotherTest(TestCase):
 
     def test_pregnant_mother_current_month_positive_ifa(self):
-        update_bihar_api_table(date(2017, 5, 1))
         data, count = get_mother_details(
             month=date(2017, 5, 1).strftime("%Y-%m-%d"),
             state_id='st1',
@@ -58,7 +57,6 @@ class BiharAPIMotherTest(TestCase):
         )
 
     def test_pregnant_mother_current_month_negative_ifa(self):
-        update_bihar_api_table(date(2017, 5, 1))
         data, count = get_mother_details(
             month=date(2017, 5, 1).strftime("%Y-%m-%d"),
             state_id='st1',
@@ -102,7 +100,6 @@ class BiharAPIMotherTest(TestCase):
         )
 
     def test_non_pregnant_mother_current_month_negative_ifa(self):
-        update_bihar_api_table(date(2017, 5, 1))
         data, count = get_mother_details(
             month=date(2017, 5, 1).strftime("%Y-%m-%d"),
             state_id='st1',
@@ -146,7 +143,6 @@ class BiharAPIMotherTest(TestCase):
         )
 
     def test_pregnant_mother_past_month_negative_ifa(self):
-        update_bihar_api_table(date(2017, 5, 1))
         data, count = get_mother_details(
             month=date(2017, 5, 1).strftime("%Y-%m-%d"),
             state_id='st1',
@@ -190,7 +186,6 @@ class BiharAPIMotherTest(TestCase):
         )
 
     def test_non_pregnant_mother_past_month_negative_ifa(self):
-        update_bihar_api_table(date(2017, 5, 1))
         data, count = get_mother_details(
             month=date(2017, 5, 1).strftime("%Y-%m-%d"),
             state_id='st1',
@@ -234,7 +229,6 @@ class BiharAPIMotherTest(TestCase):
         )
 
     def test_pregnant_mother_past_month_positive_ifa(self):
-        update_bihar_api_table(date(2017, 5, 1))
         data, count = get_mother_details(
             month=date(2017, 5, 1).strftime("%Y-%m-%d"),
             state_id='st1',
@@ -278,7 +272,6 @@ class BiharAPIMotherTest(TestCase):
         )
 
     def test_non_pregnant_mother_past_month_positive_ifa(self):
-        update_bihar_api_table(date(2017, 5, 1))
         data, count = get_mother_details(
             month=date(2017, 5, 1).strftime("%Y-%m-%d"),
             state_id='st1',
@@ -322,7 +315,6 @@ class BiharAPIMotherTest(TestCase):
         )
 
     def test_non_pregnant_mother_current_month_positive_ifa(self):
-        update_bihar_api_table(date(2017, 5, 1))
         data, count = get_mother_details(
             month=date(2017, 5, 1).strftime("%Y-%m-%d"),
             state_id='st1',
