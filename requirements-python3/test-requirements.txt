@@ -57,7 +57,7 @@ django-simple-captcha==0.5.9  # via -r requirements/requirements.in
 django-statici18n==1.9.0  # via -r requirements/requirements.in
 django-tastypie==0.14.2   # via -r requirements/requirements.in
 django-transfer==0.4      # via -r requirements/requirements.in
-django-two-factor-auth==1.6.2  # via -r requirements/requirements.in
+django-two-factor-auth==1.12  # via -r requirements/requirements.in
 django-user-agents==0.3.2  # via -r requirements/requirements.in
 django-websocket-redis==0.5.2  # via -r requirements/requirements.in
 django==1.11.29           # via -r requirements/requirements.in, django-angular, django-appconf, django-bulk-update, django-formtools, django-logentry-admin, django-otp, django-phonenumber-field, django-prbac, django-ranged-response, django-redis, django-simple-captcha, django-statici18n, django-two-factor-auth, django-user-agents, djangorestframework, jsonfield
