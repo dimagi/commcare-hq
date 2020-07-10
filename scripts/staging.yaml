@@ -57,7 +57,6 @@ branches:
   - nh/charset  # Norman May 27
   - fr/multiple-api-keys
   - jls/turn-off-analytics-logging # Jenny June 19
-  - sr-es-alias # Sravan June 24
   - ml/SAAS-11011-account-name-filter  # Michelle Jun 30
   - ce/user-upload-record # Cal June 30
   - bmb/bower-to-yarn # Biyeun Jul 1
@@ -67,6 +66,6 @@ branches:
   - kev/geowidget-mapbox # Kevin July 8
   - dm/dj2-fix-tests  # Danny/Daniel Jul 9
   - dm/dj2-statici18n  # Danny/Daniel Jul 9
-  - sr-es-api-q # Sravan July 10
+  - sr-alias-api # Sravan July 10
 
 submodules: {}
