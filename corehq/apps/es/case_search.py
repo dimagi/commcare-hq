@@ -38,16 +38,6 @@ class CaseSearchES(CaseES):
     def builtin_filters(self):
         return [case_property_filter, blacklist_owner_id] + super(CaseSearchES, self).builtin_filters
 
-    @property
-    def _case_property_queries(self):
-        """
-        Returns all current case_property queries
-        """
-        try:
-            return self.es_query['query']['filtered']['query']['bool']['must']
-        except (KeyError, TypeError):
-            return []
-
     def case_property_query(self, case_property_name, value, clause=queries.MUST, fuzzy=False):
         """
         Search for all cases where case property with name `case_property_name`` has text value `value`
