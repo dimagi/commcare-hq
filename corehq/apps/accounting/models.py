@@ -459,7 +459,6 @@ class BillingAccount(ValidateModelMixin, models.Model):
         ), True
 
     @classmethod
-    @quickcache(['domain'])
     def get_account_by_domain(cls, domain):
         current_subscription = Subscription.get_active_subscription_by_domain(domain)
         if current_subscription is not None:
