@@ -688,9 +688,13 @@ def delete_module(request, domain, app_id, module_unique_id):
     except ModuleNotFoundException:
         return bail(request, domain, app_id)
     if module.get_child_modules():
-        messages.error(request, _('"{}" has sub-menus. You must remove these before '
-                                  'you can delete it.').format(module.default_name()))
-        return back_to_main(request, domain, app_id)
+        if module.module_type == 'shadow':
+            for child_module in module.get_child_modules():
+                app.delete_module(child_module.unique_id)
+        else:
+            messages.error(request, _('"{}" has sub-menus. You must remove these before '
+                                      'you can delete it.').format(module.default_name()))
+            return back_to_main(request, domain, app_id)
 
     record = app.delete_module(module_unique_id)
     messages.success(
