@@ -613,11 +613,24 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
             module[SLUG].label[lang] = request.POST[label]
 
     if should_edit("root_module_id"):
+        # Make this a child module of 'root_module_id'
         old_root = module['root_module_id']
         if not request.POST.get("root_module_id"):
             module["root_module_id"] = None
         else:
             module["root_module_id"] = request.POST.get("root_module_id")
+
+        try:
+            # if the parent has a shadow, make a new shadow child
+            shadow_parent = next(
+                m for m in app.get_modules()
+                if m.module_type == "shadow" and m.source_module_id == request.POST.get("root_module_id")
+            )
+        except StopIteration:
+            pass
+        else:
+            handle_shadow_child_modules(app, shadow_parent)
+
         if not old_root and module['root_module_id']:
             track_workflow(request.couch_user.username, "User associated module with a parent")
         elif old_root and not module['root_module_id']:

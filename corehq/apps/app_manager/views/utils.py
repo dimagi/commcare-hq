@@ -463,3 +463,5 @@ def handle_shadow_child_modules(app, shadow_parent):
         new_shadow.root_module_id = shadow_parent['unique_id']
         new_shadow.put_in_root = shadow_child.put_in_root
         app.add_module(new_shadow)
+
+    app.move_child_modules_after_parents()
