@@ -1,6 +1,7 @@
 from django.conf import settings
 from nose.plugins import Plugin
 
+from corehq.form_processor.tests.utils import patch_testcase_transactions
 from corehq.util.es.testing import patch_es_user_signals
 
 
@@ -41,6 +42,8 @@ def patch_django_TestCase_databases():
     # Similar error reported elsewhere:
     # https://code.djangoproject.com/ticket/30541
     TestCase.databases = settings.DATABASES.keys()
+
+    patch_testcase_transactions()
 
 
 GLOBAL_FREEZEGUN_IGNORE_LIST = ["kafka."]
