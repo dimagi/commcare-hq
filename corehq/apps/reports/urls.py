@@ -3,6 +3,7 @@ import logging
 from django.conf.urls import include, url
 from django.core.exceptions import ImproperlyConfigured
 
+from corehq.apps.reports.custom_dashboards.views import CustomDashboardView
 from corehq.apps.reports.standard.forms.reports import ReprocessXFormErrorView
 from corehq.apps.userreports.reports.view import (
     ConfigurableReportView,
@@ -145,6 +146,7 @@ urlpatterns = [
         name=ReprocessXFormErrorView.urlname),
 
     url(r'^custom/', include(custom_report_urls)),
+    url(r'^custom-dashboard/(?P<report_id>[\w\-]+)/$', CustomDashboardView.as_view(), name='custom-dashboard'),
     url(r'^filters/', include(filter_urls)),
     ProjectReportDispatcher.url_pattern(),
 ]

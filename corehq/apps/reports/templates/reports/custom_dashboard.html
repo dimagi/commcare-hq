@@ -1,0 +1,9 @@
+{% extends "hqwebapp/two_column.html" %}
+{% block page_content %}
+  <div id="commcare-dashboard" />
+{% endblock page_content %}
+{% block js %}
+{% for dashboard_js in  report_metadata.js_files %}
+  <script src="{{ dashboard_js }}"></script>
+{% endfor %}
+{% endblock js %}

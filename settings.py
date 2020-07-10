@@ -94,6 +94,7 @@ LOCALE_PATHS = (
 )
 
 BOWER_COMPONENTS = os.path.join(FILEPATH, 'bower_components')
+CUSTOM_DASHBOARDS = os.path.join(FILEPATH, 'custom-dashboards', 'static')
 
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
@@ -103,6 +104,7 @@ STATICFILES_FINDERS = (
 
 STATICFILES_DIRS = [
     BOWER_COMPONENTS,
+    CUSTOM_DASHBOARDS,
 ]
 
 # bleh, why did this submodule have to be removed?
