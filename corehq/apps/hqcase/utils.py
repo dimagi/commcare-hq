@@ -130,7 +130,7 @@ def get_case_by_identifier(domain, identifier):
     # Try by any of the allowed identifiers
     for identifier_type in ALLOWED_CASE_IDENTIFIER_TYPES:
         result = CaseES().domain(domain).filter(
-            filters.term(identifier_type, identifier)).exclude_source().run().doc_ids
+            filters.term(identifier_type, identifier)).get_ids()
         if result:
             return case_accessors.get_case(result[0])
     # Try by case id

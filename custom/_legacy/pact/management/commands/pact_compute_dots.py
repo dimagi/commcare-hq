@@ -3,7 +3,7 @@ from django.core.management.base import BaseCommand
 from corehq.apps.api.es import ReportFormESView
 from corehq.apps.es import filters
 from corehq.apps.es.forms import FormES
-from pact.enums import PACT_DOMAIN
+from pact.enums import PACT_DOMAIN, PACT_DOTS_DATA_PROPERTY
 
 
 CHUNK_SIZE = 100

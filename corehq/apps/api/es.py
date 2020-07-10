@@ -514,9 +514,11 @@ query_param_consumers = [
 
 
 def _validate_and_get_es_filter(search_param):
-    #
+    _filter = search_param.pop('filter', None)
+    if not _filter:
+        # not a supported query
+        raise Http400
     try:
-        _filter = search_param.pop('filter')
         # custom use case by 'enveritas' project for Form API
         date_range = _filter['range']['inserted_at']
         return {
@@ -525,7 +527,7 @@ def _validate_and_get_es_filter(search_param):
     except KeyError:
         pass
     try:
-        # Data export tool passes below structure. validate that it is so
+        # custom filter from Data export tool
         _range = None
         try:
             _range = _filter['or'][0]['and'][0]['range']['server_modified_on']
