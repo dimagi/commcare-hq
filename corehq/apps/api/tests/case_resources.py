@@ -13,13 +13,14 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import WebUser
 from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.apps.es.tests.utils import ElasticTestMixin
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.pillows.case import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.util.elastic import reset_es_index
 from pillowtop.es_utils import initialize_index_and_mapping
 
-from .utils import APIResourceTest, FakeXFormES
+from .utils import APIResourceTest, FakeFormESView
 
 
 class TestCommCareCaseResource(APIResourceTest):
@@ -30,17 +31,24 @@ class TestCommCareCaseResource(APIResourceTest):
         reset_es_index(CASE_INDEX_INFO)
         initialize_index_and_mapping(self.es, CASE_INDEX_INFO)
 
-    def _setup_case(self):
+    def _setup_case(self, cases=None):
 
         modify_date = datetime.utcnow()
 
-        backend_case = CommCareCase(server_modified_on=modify_date, domain=self.domain.name)
-        backend_case.save()
-        self.addCleanup(backend_case.delete)
+        cases = cases or [(None, None)]
+        for owner_id, case_id in cases:
+            kwargs = {}
+            if owner_id:
+                kwargs['owner_id'] = owner_id
+            if case_id:
+                kwargs['_id'] = case_id
+            backend_case = CommCareCase(server_modified_on=modify_date, domain=self.domain.name, **kwargs)
+            backend_case.save()
+            self.addCleanup(backend_case.delete)
 
-        translated_doc = transform_case_for_elasticsearch(backend_case.to_json())
+            translated_doc = transform_case_for_elasticsearch(backend_case.to_json())
 
-        send_to_elasticsearch('cases', translated_doc)
+            send_to_elasticsearch('cases', translated_doc)
         self.es.indices.refresh(CASE_INDEX_INFO.index)
         return backend_case
 
@@ -57,6 +65,21 @@ class TestCommCareCaseResource(APIResourceTest):
 
         api_case = api_cases[0]
         self.assertEqual(api_case['server_date_modified'], json_format_datetime(backend_case.server_modified_on))
+
+    def test_get_by_owner(self):
+        self._setup_case([('owner1', 'id1'), ('owner2', 'id2')])
+
+        response = self._assert_auth_get_resource(self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
+        api_cases = json.loads(response.content)['objects']
+        self.assertEqual(len(api_cases), 2)
+
+        response = self._assert_auth_get_resource(
+            '%s?%s' % (self.list_endpoint, urlencode({'owner_id': 'owner1'})))
+        self.assertEqual(response.status_code, 200)
+        api_cases = json.loads(response.content)['objects']
+        self.assertEqual(len(api_cases), 1)
+        self.assertItemsEqual(api_cases[0]['case_id'], 'id1')
 
     def test_get_list_format(self):
         """
@@ -91,7 +114,7 @@ class TestCommCareCaseResource(APIResourceTest):
         parent_case_id = uuid.uuid4().hex
         parent_type = 'parent_case_type'
         parent_case = submit_case_blocks(
-            CaseBlock.deprecated_init(
+            CaseBlock(
                 case_id=parent_case_id,
                 create=True,
                 case_type=parent_type,
@@ -100,7 +123,7 @@ class TestCommCareCaseResource(APIResourceTest):
         )[1][0]
         child_case_id = uuid.uuid4().hex
         child_case = submit_case_blocks(
-            CaseBlock.deprecated_init(
+            CaseBlock(
                 case_id=child_case_id,
                 create=True,
                 index={'parent': (parent_type, parent_case_id)}
@@ -143,25 +166,27 @@ class TestCommCareCaseResource(APIResourceTest):
         self.assertEqual(child_cases[0]['id'], child_case_id)
 
 
-class TestCommCareCaseResourceQueries(APIResourceTest):
+class TestCommCareCaseResourceQueries(APIResourceTest, ElasticTestMixin):
     """
     Tests the CommCareCaseREsource, currently only v0_4
     """
     resource = v0_4.CommCareCaseResource
 
     def _test_es_query(self, url_params, expected_query, fake_es=None):
-        fake_es = fake_es or FakeXFormES()
-        v0_3.MOCK_CASE_ES = fake_es
+        fake_es = fake_es or FakeFormESView()
+        v0_3.MOCK_CASE_ES_VIEW = fake_es
 
         response = self._assert_auth_get_resource('%s?%s' % (self.list_endpoint, urlencode(url_params)))
         self.assertEqual(response.status_code, 200)
-        self.assertItemsEqual(fake_es.queries[0]['filter']['and'], expected_query)
+        self.checkQuery(
+            fake_es.queries[0]['query']['filtered']['filter']['and'], expected_query, is_raw_query=True)
 
     def test_get_list_legacy_filters(self):
         expected = [
             {'term': {'domain.exact': 'qwerty'}},
-            {'term': {'type': 'movie'}},
             {'term': {'name': 'lethal weapon ii'}},
+            {'term': {'type': 'movie'}},
+            {'match_all': {}},
         ]
         params = {
             'case_type': 'Movie',
@@ -172,12 +197,13 @@ class TestCommCareCaseResourceQueries(APIResourceTest):
     def test_get_list_case_sensitivity(self):
         expected = [
             {'term': {'domain.exact': 'qwerty'}},
-            {'term': {'type': 'fish'}},
             {'term': {'type.exact': 'FISH'}},
-            {'term': {'name': 'nemo'}},
             {'term': {'name.exact': 'Nemo'}},
-            {'term': {'external_id': 'clownfish_1'}},
             {'term': {'external_id.exact': 'ClownFish_1'}},
+            {'term': {'type': 'fish'}},
+            {'term': {'name': 'nemo'}},
+            {'term': {'external_id': 'clownfish_1'}},
+            {'match_all': {}},
         ]
         params = {
             'type': 'fish',
@@ -194,8 +220,9 @@ class TestCommCareCaseResourceQueries(APIResourceTest):
         end_date = datetime(2011, 1, 2)
         expected = [
             {'term': {'domain.exact': 'qwerty'}},
-            {'range': {'server_modified_on': {'gte': start_date.isoformat(), 'lte': end_date.isoformat()}}},
             {'range': {'modified_on': {'gte': start_date.isoformat(), 'lte': end_date.isoformat()}}},
+            {'range': {'server_modified_on': {'gte': start_date.isoformat(), 'lte': end_date.isoformat()}}},
+            {'match_all': {}},
         ]
         params = {
             'server_date_modified_end': end_date.isoformat(),

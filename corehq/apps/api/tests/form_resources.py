@@ -13,6 +13,7 @@ from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.api.resources import v0_4
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.apps.es.tests.utils import ElasticTestMixin
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.reportxform import transform_xform_for_report_forms_index
@@ -20,7 +21,7 @@ from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.util.elastic import reset_es_index
 from pillowtop.es_utils import initialize_index_and_mapping
 
-from .utils import APIResourceTest, FakeXFormES
+from .utils import APIResourceTest, FakeFormESView
 
 
 class TestXFormInstanceResource(APIResourceTest):
@@ -179,7 +180,7 @@ class TestXFormInstanceResource(APIResourceTest):
         api_form = api_forms[0]
         self.assertEqual(api_form['form']['@xmlns'], xmlns2)
 
-        # archived form should be included 
+        # archived form should be included
         response = self._assert_auth_get_resource(
             '%s?%s' % (self.list_endpoint, urlencode({'include_archived': 'true'})))
         self.assertEqual(response.status_code, 200)
@@ -187,7 +188,7 @@ class TestXFormInstanceResource(APIResourceTest):
         self.assertEqual(len(api_forms), 2)
 
 
-class TestXFormInstanceResourceQueries(APIResourceTest):
+class TestXFormInstanceResourceQueries(APIResourceTest, ElasticTestMixin):
     """
     Tests that urlparameters get converted to expected ES queries.
     """
@@ -195,13 +196,13 @@ class TestXFormInstanceResourceQueries(APIResourceTest):
 
     def _test_es_query(self, url_params, expected_query):
 
-        fake_xform_es = FakeXFormES()
+        fake_xform_es = FakeFormESView()
 
         prior_run_query = fake_xform_es.run_query
 
         # A bit of a hack since none of Python's mocking libraries seem to do basic spies easily...
         def mock_run_query(es_query):
-            self.assertItemsEqual(es_query['filter']['and'], expected_query)
+            self.checkQuery(es_query['query']['filtered']['filter']['and'], expected_query, is_raw_query=True)
             return prior_run_query(es_query)
 
         fake_xform_es.run_query = mock_run_query
@@ -212,17 +213,19 @@ class TestXFormInstanceResourceQueries(APIResourceTest):
 
     def test_get_list_xmlns(self):
         expected = [
-            {'term': {'doc_type': 'xforminstance'}},
             {'term': {'domain.exact': 'qwerty'}},
-            {'term': {'xmlns.exact': 'http://XMLNS'}}
+            {'term': {'doc_type': 'xforminstance'}},
+            {'term': {'xmlns.exact': 'http://XMLNS'}},
+            {'match_all': {}}
         ]
         self._test_es_query({'xmlns': 'http://XMLNS'}, expected)
 
     def test_get_list_xmlns_exact(self):
         expected = [
-            {'term': {'doc_type': 'xforminstance'}},
             {'term': {'domain.exact': 'qwerty'}},
-            {'term': {'xmlns.exact': 'http://XMLNS'}}
+            {'term': {'doc_type': 'xforminstance'}},
+            {'term': {'xmlns.exact': 'http://XMLNS'}},
+            {'match_all': {}}
         ]
         self._test_es_query({'xmlns.exact': 'http://XMLNS'}, expected)
 
@@ -236,9 +239,10 @@ class TestXFormInstanceResourceQueries(APIResourceTest):
         start_date = datetime(1969, 6, 14)
         end_date = datetime(2011, 1, 2)
         expected = [
-            {'range': {'received_on': {'gte': start_date.isoformat(), 'lte': end_date.isoformat()}}},
-            {'term': {'doc_type': 'xforminstance'}},
             {'term': {'domain.exact': 'qwerty'}},
+            {'term': {'doc_type': 'xforminstance'}},
+            {'range': {'received_on': {'gte': start_date.isoformat(), 'lte': end_date.isoformat()}}},
+            {'match_all': {}}
         ]
         params = {
             'received_on_end': end_date.isoformat(),
@@ -252,7 +256,7 @@ class TestXFormInstanceResourceQueries(APIResourceTest):
         ascending.
         '''
 
-        fake_xform_es = FakeXFormES()
+        fake_xform_es = FakeFormESView()
 
         # A bit of a hack since none of Python's mocking libraries seem to do basic spies easily...
         prior_run_query = fake_xform_es.run_query
@@ -276,11 +280,12 @@ class TestXFormInstanceResourceQueries(APIResourceTest):
 
     def test_get_list_archived(self):
         expected = [
-            {'or': [
+            {'term': {'domain.exact': 'qwerty'}},
+            {'or': (
                 {'term': {'doc_type': 'xforminstance'}},
                 {'term': {'doc_type': 'xformarchived'}}
-            ]},
-            {'term': {'domain.exact': 'qwerty'}},
+            )},
+            {'match_all': {}}
         ]
         self._test_es_query({'include_archived': 'true'}, expected)
 

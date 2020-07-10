@@ -15,7 +15,7 @@ from dimagi.utils.web import get_ip
 
 from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
 from corehq.apps.users.models import CouchUser, HQApiKey
-from corehq.toggles import TWO_STAGE_USER_PROVISIONING
+from corehq.toggles import API_THROTTLE_WHITELIST, TWO_STAGE_USER_PROVISIONING
 from corehq.util.hmac_request import validate_request_hmac
 from no_exceptions.exceptions import Http400
 from python_digest import parse_digest_credentials
@@ -280,8 +280,12 @@ class HQApiKeyAuthentication(ApiKeyAuthentication):
         are domain specific.
 
         """
+        username = self.extract_credentials(request)[0]
+        if API_THROTTLE_WHITELIST.enabled(username):
+            return username
+
         try:
             api_key = self.extract_credentials(request)[1]
         except ValueError:
             api_key = ''
-        return f"{request.domain}_{api_key}"
+        return f"{getattr(request, 'domain', '')}_{api_key}"

@@ -48,9 +48,9 @@ class TakeHomeRationExport(object):
         else:
             order_by = ('state_name', 'district_name', 'block_name', 'supervisor_name', 'awc_name')
 
-        if self.report_type == THR_REPORT_BENEFICIARY_TYPE and self.beta:
+        if self.report_type == THR_REPORT_BENEFICIARY_TYPE:
             headers, data = self.get_beneficiary_wise_data(filters, order_by)
-        elif self.report_type == THR_REPORT_DAY_BENEFICIARY_TYPE and self.beta:
+        elif self.report_type == THR_REPORT_DAY_BENEFICIARY_TYPE:
             headers, data = self.get_beneficiary_and_days_wise_data(filters, order_by)
         else:
             headers, data = self.get_consolidated_data(filters, order_by)
@@ -89,18 +89,11 @@ class TakeHomeRationExport(object):
         ]
 
     def get_consolidated_data(self, filters, order_by):
-        if self.beta:
-            thr_days = 21 if self.month <= THR_21_DAYS_THRESHOLD_DATE else 25
-            thr_column = f'thr_{thr_days}_days'
-            launched_column = 'num_launched_awcs'
-            thr_eligible_column = 'thr_eligible'
-            class_model = ServiceDeliveryReportView
-        else:
-            thr_days = 21
-            thr_column = 'thr_given_21_days'
-            launched_column = 'is_launched'
-            thr_eligible_column = 'total_thr_candidates'
-            class_model = TakeHomeRationMonthly
+        thr_days = 21 if self.month <= THR_21_DAYS_THRESHOLD_DATE else 25
+        thr_column = f'thr_{thr_days}_days'
+        launched_column = 'num_launched_awcs'
+        thr_eligible_column = 'thr_eligible'
+        class_model = ServiceDeliveryReportView
 
         headers = ['State', 'District', 'Block', 'Sector', 'Awc Name', 'AWW Name', 'AWW Phone No.',
                    'Total No. of Beneficiaries eligible for THR',

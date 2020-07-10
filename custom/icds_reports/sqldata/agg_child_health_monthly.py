@@ -1,6 +1,6 @@
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SumWhen, SumColumn, SimpleColumn
-from sqlagg.filters import BETWEEN, IN, NOT
+from sqlagg.filters import BETWEEN, IN, NOT, EQ
 from sqlagg.sorting import OrderBy
 
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
@@ -50,7 +50,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
         if not self.show_test:
             filters.append(NOT(IN('state_id', get_INFilter_bindparams('excluded_states', self.excluded_states))))
         if 'month' in self.config and self.config['month']:
-            filters.append(BETWEEN('month', 'two_before', 'month'))
+            filters.append(EQ('month', 'month'))
         return filters
 
     @property
@@ -58,7 +58,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
         return [OrderBy('month')]
 
     def get_columns(self, filters):
-        aggregate_columns = [
+        return [
             DatabaseColumn('month', SimpleColumn('month')),
             AggregateColumn(
                 '% Weighing efficiency (Children <5 weighed)',
@@ -212,6 +212,25 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
                 slug='stunting_normal'
             ),
             AggregateColumn(
+                'Percent children between 1-2 years who got immunized with 1st year immunizations',
+                lambda x, y, z: ((x or 0) + (y or 0)) * 100 / float(z or 1),
+                [
+                    SumWhen(
+                        whens=[["age_tranche <= :age_24", 'fully_immunized_on_time']],
+                        alias='fully_immunized_on_time'
+                    ),
+                    SumWhen(
+                        whens=[["age_tranche <= :age_24", 'fully_immunized_late']],
+                        alias='fully_immunized_late'
+                    ),
+                    SumWhen(
+                        whens=[["age_tranche <= :age_24", 'fully_immunized_eligible']],
+                        alias='fully_immunized_eligible'
+                    )
+                ],
+                slug='fully_immunized'
+            ),
+            AggregateColumn(
                 'Percent Children breastfed at birth',
                 percent_num,
                 [
@@ -327,38 +346,6 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
                 slug='low_birth_weight'
             )
         ]
-        if self.beta:
-            aggregate_columns.insert(13, AggregateColumn(
-                'Percent children between 1-2 years who got immunized with 1st year immunizations',
-                lambda x, y, z: ((x or 0) + (y or 0)) * 100 / float(z or 1),
-                [
-                    SumWhen(
-                        whens=[["age_tranche <= :age_24", 'fully_immunized_on_time']],
-                        alias='fully_immunized_on_time'
-                    ),
-                    SumWhen(
-                        whens=[["age_tranche <= :age_24", 'fully_immunized_late']],
-                        alias='fully_immunized_late'
-                    ),
-                    SumWhen(
-                        whens=[["age_tranche <= :age_24", 'fully_immunized_eligible']],
-                        alias='fully_immunized_eligible'
-                    )
-                ],
-                slug='fully_immunized'
-            ))
-        else:
-            aggregate_columns.insert(13, AggregateColumn(
-                'Percent children immunized with 1st year immunizations',
-                lambda x, y, z: ((x or 0) + (y or 0)) * 100 / float(z or 1),
-                [
-                    SumColumn('fully_immunized_on_time'),
-                    SumColumn('fully_immunized_late'),
-                    SumColumn('fully_immunized_eligible')
-                ],
-                slug='fully_immunized'
-            ))
-        return aggregate_columns
 
     @property
     def columns(self):

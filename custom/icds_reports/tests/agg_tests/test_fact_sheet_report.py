@@ -162,7 +162,7 @@ class TestFactSheetReportMaternalAndChildNutritionICDS(TestCase):
                 },
                 'data': [
                     {'html': 'Children from 0 - 5 years with severe acute malnutrition (weight-for-height)'},
-                    {'html': 16.666666666666668, 'sort_key': 16.666666666666668},
+                    {'html': 8.333333333333334, 'sort_key': 8.333333333333334},
                     {'html': 0.0, 'sort_key': 0.0},
                     {'html': 0}
                 ],
@@ -347,39 +347,9 @@ class TestFactSheetReportInterventions(TestCase):
     def test_nutrition_status_of_children_amount_of_config_rows(self):
         self.assertEqual(len(self.get_data()['config']['sections'][0]['rows_config']), 1)
 
-    def test_nutrition_status_of_children(self):
+    def test_nutrition_status_of_children_with_age_1_2(self):
         self.assertDictEqual(
             self.get_data()['config']['sections'][0],
-            {
-                'months': ['Apr 2017', 'May 2017', 'Jun 2017'],
-                'order': 1,
-                'rows_config': [
-                    {
-                        'average': {
-                            'html': 10.79258010118044,
-                            'sort_key': 10.79258010118044
-                        },
-                        'data': [
-                            {'html': 'Children 1 year+ who have recieved complete immunization'
-                                     ' required by age 1.'},
-                            {'html': 10.526315789473685, 'sort_key': 10.526315789473685},
-                            {'html': 10.79258010118044, 'sort_key': 10.79258010118044},
-                            {'html': 0}
-                        ],
-                        'data_source': 'AggChildHealthMonthlyDataSource',
-                        'format': 'percent',
-                        'header': 'Children 1 year+ who have recieved complete immunization required by age 1.',
-                        'slug': 'fully_immunized'
-                    }
-                ],
-                'section_title': 'Nutrition Status of Children',
-                'slug': 'nutrition_status_of_children'
-            }
-        )
-
-    def test_nutrition_status_of_children_with_age_1_2_ff(self):
-        self.assertDictEqual(
-            self.get_data(beta=True)['config']['sections'][0],
             {
                 'months': ['Apr 2017', 'May 2017', 'Jun 2017'],
                 'order': 1,
