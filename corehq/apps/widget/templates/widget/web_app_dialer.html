@@ -31,10 +31,10 @@
                 {% endif %}
             </div>
             <div id="divHeader" class="bannerHeader">
-                New York State Contact Tracing
+                {{dialer_settings.dialer_page_header}}
             </div>
             <div id="divSubHeader" class="bannerSubHeader">
-                Novel Coronavirus (COVID-19)
+                {{dialer_settings.dialer_page_subheader}}
             </div>
             <div class="bannerUser">
                 <div id="divUserIcon" class="bannerUserIcon">
@@ -171,8 +171,6 @@
                         <div class="pad"></div>
                         <a href="#" target="_blank" class="links">Agent Training Center</a><br>
                         <a href="#" target="_blank" class="links">Agent Support Center</a><br>
-                        <a href="https://www.health.ny.gov/" target="_blank" class="links">Department of Health</a><br>
-                        <a href="https://covid19tracker.health.ny.gov/views/NYS-COVID19-Tracker/NYSDOHCOVID-19Tracker-Map?%3Aembed=yes&%3Atoolbar=no&%3Atabs=n" target="_blank" class="links">NYS COVID-19 Tracker</a><br>
                         <a href="https://s3.amazonaws.com/connectivitytest/checkConnectivity.html" target="_blank" class="links">AWS Connectivity Tool</a>
                     </div>
                 </div>
@@ -184,7 +182,7 @@
  {{block.super}}
 <script>
 function loadDialer() {
-    initDialer('{{callout_number}}', '{{aws_instance_id}}')
+    initDialer('{{callout_number}}', '{{dialer_settings.aws_instance_id}}')
 }
 
 window.addEventListener('DOMContentLoaded', loadDialer, false);

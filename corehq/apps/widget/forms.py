@@ -14,16 +14,28 @@ class DialerSettingsForm(forms.ModelForm):
         label=_("Enable AWS Connect Dialer"),
         required=False
     )
-    url = forms.CharField(
+    aws_instance_id = forms.CharField(
         label=_('AWS Instance ID'),
         help_text=_("""Enter "yourinstance" if your AWS Connect account is
                         "https://yourinstance.awsapps.com/connect/" """)
     )
 
+    dialer_page_header = forms.CharField(
+        label=_('Dialer Page Title'),
+        help_text=_("A title for the Dialer Page header")
+    )
+    dialer_page_subheader = forms.CharField(
+        label=_('Dialer Page Subtitle'),
+        help_text=_("A subtitle for the Dialer Page header")
+    )
+
+
     class Meta:
         model = DialerSettings
         fields = [
-            'url',
+            'aws_instance_id',
+            'dialer_page_header',
+            'dialer_page_subheader'
         ]
 
     def __init__(self, data, *args, **kwargs):
@@ -41,7 +53,15 @@ class DialerSettingsForm(forms.ModelForm):
                 ),
             ),
             crispy.Div(
-                crispy.Field('url', data_bind="value: url"),
+                crispy.Field('aws_instance_id', data_bind="value: aws_instance_id"),
+                data_bind="visible: isEnabled"
+            ),
+            crispy.Div(
+                crispy.Field('dialer_page_header', data_bind="value: dialer_page_header"),
+                data_bind="visible: isEnabled"
+            ),
+            crispy.Div(
+                crispy.Field('dialer_page_subheader', data_bind="dialer_page_subheader"),
                 data_bind="visible: isEnabled"
             ),
             hqcrispy.FormActions(
@@ -55,7 +75,7 @@ class DialerSettingsForm(forms.ModelForm):
     @memoized
     def _existing_config(self):
         existing, _created = DialerSettings.objects.get_or_create(
-            domain=self._domain,
+            domain=self._domain
         )
         return existing
 
@@ -63,10 +83,14 @@ class DialerSettingsForm(forms.ModelForm):
     def initial_data(self):
         return {
             'is_enabled': self._existing_config.is_enabled,
-            'url': self._existing_config.url,
+            'aws_instance_id': self._existing_config.aws_instance_id,
+            'dialer_page_header': self._existing_config.dialer_page_header,
+            'dialer_page_subheader': self._existing_config.dialer_page_subheader
         }
 
     def save(self):
         self._existing_config.is_enabled = self.cleaned_data['is_enabled']
-        self._existing_config.url = self.cleaned_data['url']
+        self._existing_config.aws_instance_id = self.cleaned_data['aws_instance_id']
+        self._existing_config.dialer_page_header = self.cleaned_data['dialer_page_header']
+        self._existing_config.dialer_page_subheader = self.cleaned_data['dialer_page_subheader']
         self._existing_config.save()

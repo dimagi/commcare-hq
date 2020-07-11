@@ -25,9 +25,9 @@ def dialer_view(request, domain):
     custom_logo = get_per_domain_context(domain_object)['CUSTOM_LOGO_URL']
     
     callout_number = request.GET.get("callout_number")
-    aws_instance_id = get_dialer_settings(domain).url
+    dialer_settings = get_dialer_settings(domain)
     return render(request, "widget/web_app_dialer.html", {"callout_number": callout_number, 
-                                                          "aws_instance_id": aws_instance_id,
+                                                          "dialer_settings": dialer_settings,
                                                           "CUSTOM_LOGO_URL": custom_logo,
                                                           })
 
