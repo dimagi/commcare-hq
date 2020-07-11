@@ -8,6 +8,7 @@ from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from django.utils.translation import ugettext_lazy
 
 from corehq.apps.domain.models import Domain
+from corehq.apps.users.decorators import require_permission
 from corehq.apps.widget.forms import DialerSettingsForm
 from corehq.apps.widget.models import DialerSettings
 from corehq.apps.widget.util import get_dialer_settings
@@ -17,7 +18,7 @@ from corehq.util.context_processors import get_per_domain_context
 from memoized import memoized
 
 
-#TODO: Add toggle decorator
+@toggles.WIDGET_DIALER.required_decorator()
 @login_and_domain_required
 @require_GET
 def dialer_view(request, domain):
