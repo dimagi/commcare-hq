@@ -78,7 +78,7 @@ hqDefine("users/js/web_users",[
 
     /* Invitations panel */
     var Invitation = function (options) {
-        assertProperties.assertRequired(options, ["uuid", "email", "email_marked_as_bounced", "invited_on", "role_label"])
+        assertProperties.assertRequired(options, ["uuid", "email", "email_marked_as_bounced", "invited_on", "role_label"]);
         var self = _.extend({}, options);
         self.invited_on = ko.observable(new Date(self.invited_on));
         self.invitedOnText = ko.computed(function () {
@@ -86,7 +86,7 @@ hqDefine("users/js/web_users",[
         });
 
         self.daysRemaining = ko.computed(function () {
-            expirationDate = new Date(self.invited_on());
+            var expirationDate = new Date(self.invited_on());
             expirationDate.setDate(expirationDate.getDate() + 31);
             return (expirationDate - new Date()) / (24 * 60 * 60 * 1000);
         });
@@ -111,7 +111,7 @@ hqDefine("users/js/web_users",[
                 data: {
                     uuid: self.uuid,
                 },
-                success: function (data) {
+                success: function () {
                     self.actionInProgress(false);
                     self.visible(false);
                 },
