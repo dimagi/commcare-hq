@@ -1,28 +1,10 @@
-
-// 	+-------------------------------------------------+
-//   JavaScript to demonstrate a custom CCP container
-//   form that can be invoked by a third party
-//   application.     
-//                                          
-//			*** NOTE - SAMPLE CODE ONLY *** 
-//
-//   THE FILES IN THIS DISTRIBUTION ARE PROVIDED 
-//	 STRICTLY AS SAMPLE CODE TO ILLUSTRATE CONCEPTS.
-//	 THEY ARE PROVIDED ON AN "AS IS" BASIS WITH NO 
-//	 WARRANTY OR FITNESS FOR PURPOSE IMPLIED.  
-//	 CUSTOMERS MUST CAREFULLY EVALUATE THIS CODE FOR 
-//	 SUITABILITY AND SECURITY CONSIDERATIONS PRIOR TO 
-// 	 IMPLEMENTING IN A PRODUCTION OR OTHER CRITICAL
-//	 ENVIRONMENT.
-
-//   Author:  awscliff@                         
-//   Version: 1.0                    
-//   Date:    July 3, 2020        
-// +-------------------------------------------------+  
+/**
+Based on AWS Boilerplate
+**/
 
 
 var inCall = false;
-const customCCPVersion = "NYSDOH 1.0";
+const customCCPVersion = "CommCare Dialer 1.0";
 
 function initializeCCP(instanceName) {
 // This function excutes inline with the HTML <body> to initalize the CCP and set up event handlers
