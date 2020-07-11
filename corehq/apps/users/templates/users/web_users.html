@@ -232,8 +232,8 @@
               <td data-bind="text: role_label"></td>
               <td>
                 <!-- ko text: invitedOnText --><!-- /ko -->
-                <span class="label label-default" data-bind="visible: !isExpired, text: daysRemainingText"></span>
-                <span class="label label-danger" data-bind="visible: isExpired">{% trans "Expired" %}</span>
+                <span class="label label-default" data-bind="visible: !isExpired(), text: daysRemainingText()"></span>
+                <span class="label label-danger" data-bind="visible: isExpired()">{% trans "Expired" %}</span>
               </td>
               <td>
                 <div data-bind="visible: !actionMessage()">

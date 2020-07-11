@@ -80,13 +80,24 @@ hqDefine("users/js/web_users",[
     var Invitation = function (options) {
         assertProperties.assertRequired(options, ["uuid", "email", "email_marked_as_bounced", "invited_on", "role_label"])
         var self = _.extend({}, options);
-        self.invitedOnText = moment(self.invited_on).format("MMMM Do YYYY, h:mm a");
+        self.invited_on = ko.observable(new Date(self.invited_on));
+        self.invitedOnText = ko.computed(function () {
+            return moment(self.invited_on()).format("MMMM Do YYYY, h:mm a");
+        });
 
-        var expirationDate = new Date(options.invited_on);
-        expirationDate.setDate(expirationDate.getDate() + 31);
-        var daysRemaining = (expirationDate - new Date()) / (24 * 60 * 60 * 1000);
-        self.isExpired = daysRemaining < 0;
-        self.daysRemainingText = gettext(_.template("<%= days %> days remaining")({days: Math.floor(daysRemaining)}));
+        self.daysRemaining = ko.computed(function () {
+            expirationDate = new Date(self.invited_on());
+            expirationDate.setDate(expirationDate.getDate() + 31);
+            return (expirationDate - new Date()) / (24 * 60 * 60 * 1000);
+        });
+        self.isExpired = ko.computed(function () {
+            return self.daysRemaining() < 0;
+        });
+        self.daysRemainingText = ko.computed(function () {
+            return _.template(gettext("<%= days %> days remaining"))({
+                days: Math.floor(self.daysRemaining()),
+            });
+        });
 
         self.actionMessage = ko.observable('');
         self.actionInProgress = ko.observable(false);
@@ -122,6 +133,7 @@ hqDefine("users/js/web_users",[
                 success: function (data) {
                     self.actionInProgress(false);
                     self.actionMessage(data.response);
+                    self.invited_on(new Date());
                 },
                 error: function () {
                     self.actionInProgress(false);
