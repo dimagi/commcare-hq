@@ -5,6 +5,7 @@
 
 {% requirejs_main 'users/js/web_users' %}
 {% block page_content %}
+  {% initial_page_data "invitations" invitations %}
   {% registerurl "delete_invitation" domain %}
   {% registerurl "delete_request" domain %}
   {% registerurl "paginate_web_users" domain %}
@@ -197,7 +198,7 @@
   </div><!-- end .panel -->
 
   {% if invitations and not request.is_view_only %}
-    <div class="panel panel-info">
+    <div class="panel panel-info ko-template" id="invitations-panel">
       <div class="panel-heading">
         <h3 class="panel-title">
           {% trans 'Pending Invitations' %}
@@ -213,43 +214,34 @@
               <th>{% trans "Actions" %}</th>
             </tr>
           </thead>
-          <tbody>
-          {% for invitation in invitations %}
+          <tbody data-bind="foreach: invitations">
             <tr>
               <td>
-                {{ invitation.email }}{% if invitation.email_marked_as_bounced %} <span class="label label-danger">{% trans "Blocked" %}</span>{% endif %}
+                <!-- ko text: email --><!-- /ko -->
+                <span class="label label-danger" data-bind="visible: email_marked_as_bounced">{% trans "Blocked" %}</span>
+              </td>
+              <td data-bind="text: role_label"></td>
+              <td>
+                <!-- ko text: invitedOnText --><!-- /ko -->
+                <span class="label label-default" data-bind="visible: !isExpired, text: daysRemainingText"></span>
+                <span class="label label-danger" data-bind="visible: isExpired">{% trans "Expired" %}</span>
               </td>
               <td>
-                {{ invitation.role_label }}
-              </td>
-              <td>
-                {{ invitation.invited_on }}
-                {% if  invitation.invited_on|date:"m/d/Y"|add_days:31|timeuntil != "0 minutes"%}
-                  <span class="label label-default">
-                                    {{ invitation.invited_on|date:"m/d/Y"|add_days:31|timeuntil }} remaining
-                                </span>
-                {% else %}
-                  <span class="label label-danger">
-                                     {% trans "Expired" %}
-                                </span>
-                {% endif %}
-              </td>
-              <td>
-                <div>
+                <div data-bind="visible: !actionMessage()">
                   <button type="button" class="resend-invite btn btn-default"
-                          data-uuid={{ invitation.uuid }}>
+                          data-bind="visible: showResend, click: resend, disable: actionInProgress">
                     <i class="fa fa-envelope-o"></i>
                     {% trans "Resend Invitation" %}
                   </button>
                   <button type="button" class="btn btn-danger delete-invitation"
-                          data-uuid={{ invitation.uuid }}>
+                          data-bind="click: remove, disable: actionInProgress">
                     <i class="fa fa-trash"></i>
                     {% trans "Delete Invitation" %}
                   </button>
                 </div>
+                <span data-bind="visible: actionMessage, text: actionMessage"></span>
               </td>
             </tr>
-          {% endfor %}
           </tbody>
         </table>
       </div>

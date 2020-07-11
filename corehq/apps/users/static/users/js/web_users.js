@@ -2,12 +2,15 @@ hqDefine("users/js/web_users",[
     'jquery',
     'knockout',
     'underscore',
+    'moment/moment',
+    "hqwebapp/js/assert_properties",
     "hqwebapp/js/initial_page_data",
     'bootstrap', // for bootstrap modal
     'hqwebapp/js/components.ko',    // pagination widget
     'hqwebapp/js/knockout_bindings.ko', // for modals
-], function ($, ko, _, initialPageData) {
+], function ($, ko, _, moment, assertProperties, initialPageData) {
 
+    /* Web Users panel */
     var webUsersList = function () {
         var self = {};
         self.users = ko.observableArray([]);
@@ -73,6 +76,52 @@ hqDefine("users/js/web_users",[
         $("#web-users-panel").koApplyBindings(webUsersList());
     });
 
+    /* Invitations panel */
+    var Invitation = function (options) {
+        assertProperties.assertRequired(options, ["uuid", "email", "email_marked_as_bounced", "invited_on", "role_label"])
+        var self = _.extend({}, options);
+        self.invitedOnText = moment(self.invited_on).format("MMMM Do YYYY, h:mm a");
+
+        var expirationDate = new Date(options.invited_on);
+        expirationDate.setDate(expirationDate.getDate() + 31);
+        var daysRemaining = (expirationDate - new Date()) / (24 * 60 * 60 * 1000);
+        self.isExpired = daysRemaining < 0;
+        self.daysRemainingText = gettext(_.template("<%= days %> days remaining")({days: Math.floor(daysRemaining)}));
+
+        self.actionMessage = ko.observable('');
+        self.actionInProgress = ko.observable(false);
+
+        self.remove = function () {
+            // TODO
+        };
+
+        self.showResend = ko.observable(true);
+        self.resend = function () {
+            self.actionInProgress(true);
+            $.post(initialPageData.reverse("reinvite_web_user"), {
+                uuid: self.uuid,
+            },
+            function (data) {
+                self.actionInProgress(false);
+                self.showResend(false);
+                self.actionMessage(data.response);
+            });
+        };
+
+        return self;
+    };
+
+    var invitationsList = function (invitations) {
+        return {
+            invitations: _.map(invitations, Invitation),
+        };
+    };
+
+    $(function () {
+        $("#invitations-panel").koApplyBindings(invitationsList(initialPageData.get('invitations')));
+    });
+
+    /* "Copy and paste admin emails" panel */
     $(function () {
         function selectText(element) {
             /* copied from http://stackoverflow.com/questions/985272/jquery-selecting-text-in-an-element-akin-to-highlighting-with-your-mouse */
@@ -100,20 +149,6 @@ hqDefine("users/js/web_users",[
 
     $(function () {
         var url = initialPageData.reverse;
-
-        $('.resend-invite').click(function (e) {
-            $(this).addClass('disabled').prop('disabled', true);
-            var uuid = this.getAttribute('data-uuid');
-            var self = this;
-            $.post(url("reinvite_web_user"), {
-                uuid: uuid,
-            },
-            function (data) {
-                $(self).parent().text(data.response);
-                self.remove();
-            });
-            e.preventDefault();
-        });
 
         function handleDeletion($el, data, title, body, postUrl) {
             $('#confirm-delete').off('click');
