@@ -23,10 +23,10 @@ from memoized import memoized
 def dialer_view(request, domain):
     domain_object = Domain.get_by_name(domain)
     custom_logo = get_per_domain_context(domain_object)['CUSTOM_LOGO_URL']
-    
+ 
     callout_number = request.GET.get("callout_number")
     dialer_settings = get_dialer_settings(domain)
-    return render(request, "widget/web_app_dialer.html", {"callout_number": callout_number, 
+    return render(request, "widget/web_app_dialer.html", {"callout_number": callout_number,
                                                           "dialer_settings": dialer_settings,
                                                           "CUSTOM_LOGO_URL": custom_logo,
                                                           })

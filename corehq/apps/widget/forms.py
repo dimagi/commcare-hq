@@ -29,7 +29,6 @@ class DialerSettingsForm(forms.ModelForm):
         help_text=_("A subtitle for the Dialer Page header")
     )
 
-
     class Meta:
         model = DialerSettings
         fields = [
