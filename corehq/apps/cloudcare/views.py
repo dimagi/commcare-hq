@@ -1,11 +1,9 @@
 import json
 import re
 import string
-from xml.etree import cElementTree as ElementTree
 
 import sentry_sdk
 from django.conf import settings
-from django.contrib import messages
 from django.http import (
     Http404,
     HttpResponse,
@@ -17,7 +15,6 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
-from django.views.decorators.cache import cache_page
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 from django.views.generic.base import TemplateView
@@ -71,11 +68,10 @@ from corehq.apps.hqwebapp.decorators import (
     use_jquery_ui,
     use_legacy_jquery,
     waf_allow)
-from corehq.apps.hqwebapp.views import render_static
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.users.decorators import require_can_login_as
-from corehq.apps.users.models import CommCareUser, CouchUser, DomainMembershipError
+from corehq.apps.users.models import CouchUser, DomainMembershipError
 from corehq.apps.users.util import format_username
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.apps.widget.util import domain_uses_dialer

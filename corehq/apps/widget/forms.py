@@ -16,7 +16,8 @@ class DialerSettingsForm(forms.ModelForm):
     )
     url = forms.CharField(
         label=_('AWS Instance ID'),
-        help_text=_('Enter "yourinstance" if your AWS Connect account is "https://yourinstance.awsapps.com/connect/"')
+        help_text=_("""Enter "yourinstance" if your AWS Connect account is 
+                        "https://yourinstance.awsapps.com/connect/" """)
     )
 
     class Meta:
