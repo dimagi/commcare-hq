@@ -1,0 +1,306 @@
+.banner{
+    width:100%;
+	height:80px;
+    background-color: #FFFFFF;
+	border-bottom: 5px solid #43285D;
+}
+
+.bannerLogo{
+	float: left;
+	width: 130px;
+	height: 70px;
+	margin: 5px 5px 5px 5px
+}
+
+.bannerHeader{
+	float: left;
+	width: 430px;
+	height: 30px;
+	text-align: left;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 20pt;
+	font-weight: bolder;
+	margin-top:20px;
+}
+
+.bannerSubHeader{
+	width: 430px;
+	height: 15px;
+	text-align: left	;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 10pt;
+	font-weight: bold;
+}
+
+.bannerUser{
+	float: right;
+	width: 250px;
+	height: 50px;
+	text-align: left;
+	margin-top:10px;
+	margin-right:10px;
+}
+
+.bannerUserIcon{
+	float:left;
+	width: 40px;
+	height: 40px;
+}
+
+.bannerUserName{
+	float:left;
+	width: 200px;
+	height: 20px;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 14pt;
+	text-align:left;
+}
+
+.bannerLogin{
+	float: left;
+	width: 140px;
+	height: 50px;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 10pt;
+}
+
+
+.mainBody{
+	width:100%;
+	height:600px;
+	margin: 0px 0px 0px 0px;
+}
+
+.leftPanel{
+	
+	float: left;
+	width: 180px;
+	height: 550px;
+	margin: 10px 20px 0px 20px;
+}
+
+.centerPanel{
+    float: left;
+	width: 400px;
+	height: 550px;
+	margin: 10px 10px 0px 10px;
+}
+
+.rightPanel{
+	float: left;
+	width: 400px;
+	height: 550px;
+	margin: 10px 10px 0px 20px;
+}
+
+.ccp {
+    width: 395px; 
+    min-width: 200px; 
+    height: 530px; 
+    min-height: 500px;
+    display: inline;
+}
+
+.eventPanel {
+    float: left;
+	width: 400px;
+	height: 250px;
+}
+
+.checkPanel {
+    float: left;
+	width: 400px;
+	height: 300px;
+	padding-top: 20px;
+}
+
+.checkColumn {
+    float: left;
+	width: 180px;
+	height: 300px;
+	margin-right: 20px;
+}
+
+.eventWindow {
+	width: 380px; 
+    min-width: 380px; 
+    height: 220px; 
+    min-height: 220px;
+	background-color: white;
+	overflow: scroll;
+	border-style: inset;
+}
+
+.eventContainer{
+	width: 510px;
+}
+
+.eventDate{
+	float: left;
+	width: 110px;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 11pt;
+	font-weight: normal;
+}
+
+.eventText{
+	float: left;
+	width: 400px;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 11pt;
+	font-weight: normal;
+}
+
+.panelHeading{
+	text-align: center;
+	background-color: white;
+	border: 1px solid #43285D;
+	border-radius: 5px;
+	box-shadow: 0 2px 5px rgba(50, 50, 50, 0.1);
+    -webkit-box-shadow: 0 2px 5px rgba(50, 50, 50, 0.1);
+    -moz-box-shadow: 0 2px 5px rgba(50, 50, 50, 0.1);  
+	width: 180px;
+	height: 28px;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 14pt;
+	font-weight: normal;
+}
+
+.panelBody{
+	border: 1px solid #43285D;
+	border-radius: 5px;
+	box-shadow: 0 2px 5px rgba(50, 50, 50, 0.1);
+    -webkit-box-shadow: 0 2px 5px rgba(50, 50, 50, 0.1);
+    -moz-box-shadow: 0 2px 5px rgba(50, 50, 50, 0.1);  
+	width: 180px;
+	min-height:100px;
+}
+
+.panelLabel{
+	text-align: left;
+	width: 180px;
+	height: 15px;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 12pt;
+	font-weight: normal;
+	color: black;
+	font-style: italic;
+	margin-left: 10px;
+    margin-top: 5px;
+}
+
+.panelContent{
+	text-align: left;
+	width: 180px;
+	height: 15px;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 12pt;
+	font-weight: normal;
+	margin-left: 10px;
+}
+
+.panelContentDouble{
+	text-align: left;
+	width: 180px;
+	height: 40px;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 12pt;
+	font-weight: normal;
+	color: white;
+	margin-left: 10px;
+}
+
+.buttonContainer{
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 170px;
+	height: 30px;	
+	padding:10px 5px 5px 5px;
+}
+
+.buttonContainerLeft{
+	align-items: left;
+	justify-content: center;
+	width: 170px;
+	height: 30px;	
+}
+
+.button{
+	
+	height: 25px;
+	width: 160px;
+}
+
+.checkBox{
+	
+	text-align: left;
+	width: 180px;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 11pt;
+	font-weight: normal;
+	color: black;
+	padding-top:10px;
+	padding-bottom:5px;
+	margin-left: 10px;
+}
+
+
+.pad {
+	height: 20px;
+}
+
+.pad90 {
+	height: 90px;
+}
+
+
+.mediaEntry{
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 170px;
+	height: 25px;	
+	padding:10px 5px 5px 5px;
+}
+
+.mediaLabel{
+	text-align: left;
+	width: 145px;
+	height: 20px;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 12pt;
+	font-weight: normal;
+	color: black;
+	font-style: normal;
+	padding-top:3px;
+	padding-bottom:0px;
+	margin-left: 10px;
+}
+
+.mediaContent{
+	width:20px;
+	height:20px;
+}
+
+.links{
+	width: 160px;
+	height: 14px;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 10pt;
+	font-weight: normal;
+	padding-bottom: 8px;
+	padding-left: 10px;
+}
+
+a:link {
+    color: blue;
+}
+
+a:visited {
+    color: blue;
+}
+
+a:hover {
+    color: blue;
+}

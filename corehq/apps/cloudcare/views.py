@@ -78,6 +78,7 @@ from corehq.apps.users.decorators import require_can_login_as
 from corehq.apps.users.models import CommCareUser, CouchUser, DomainMembershipError
 from corehq.apps.users.util import format_username
 from corehq.apps.users.views import BaseUserSettingsView
+from corehq.apps.widget.util import domain_uses_dialer
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
@@ -216,6 +217,7 @@ class FormplayerMain(View):
             "home_url": reverse(self.urlname, args=[domain]),
             "environment": WEB_APPS_ENVIRONMENT,
             'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
+            'dialer_enabled': domain_uses_dialer(domain),
         }
         return set_cookie(
             render(request, "cloudcare/formplayer_home.html", context)
@@ -280,6 +282,7 @@ class FormplayerPreviewSingleApp(View):
             "home_url": reverse(self.urlname, args=[domain, app_id]),
             "environment": WEB_APPS_ENVIRONMENT,
             'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
+            'dialer_enabled': domain_uses_dialer(domain),
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 
@@ -296,6 +299,7 @@ class PreviewAppView(TemplateView):
             'formplayer_url': settings.FORMPLAYER_URL,
             "maps_api_key": settings.GMAPS_API_KEY,
             "environment": PREVIEW_APP_ENVIRONMENT,
+            "dialer_enabled": domain_uses_dialer(request.domain),
         })
 
 

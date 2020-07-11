@@ -9,6 +9,7 @@ from django.utils.translation import ugettext_lazy
 
 from corehq.apps.widget.forms import DialerSettingsForm
 from corehq.apps.widget.models import DialerSettings
+from corehq.apps.widget.util import get_dialer_settings
 from corehq import toggles
 
 from memoized import memoized
@@ -18,7 +19,8 @@ from memoized import memoized
 @require_GET
 def dialer_view(request, domain):
     callout_number = request.GET.get("callout_number")
-    return render(request, "widget/web_app_dialer.html", {"callout_number": callout_number})
+    aws_instance_id = get_dialer_settings(domain).url
+    return render(request, "widget/web_app_dialer.html", {"callout_number": callout_number, "aws_instance_id": aws_instance_id})
 
 
 class DialerSettingsView(BaseProjectSettingsView):

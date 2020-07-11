@@ -16,6 +16,8 @@ hqDefine("cloudcare/js/preview_app/main", function () {
             debuggerEnabled: initialPageData('debugger_enabled'),
         });
 
+        hqImport("cloudcare/js/util").injectDialerContext(initialPageData)
+
         $('.dragscroll').on('scroll', function () {
             $('.form-control').blur();
         });
