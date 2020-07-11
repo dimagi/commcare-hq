@@ -5,11 +5,16 @@
 	border-bottom: 5px solid #43285D;
 }
 
-.bannerLogo{
+.bannerLogoContainer {
 	float: left;
-	width: 130px;
+	width: 120px;
 	height: 70px;
-	margin: 5px 5px 5px 5px
+	padding: 15px 5px 5px 15px;
+}
+
+.bannerLogo {
+    min-height: 100%;
+    max-height: 100%;
 }
 
 .bannerHeader{
@@ -20,7 +25,7 @@
 	font-family: Arial, Helvetica, sans-serif;
 	font-size: 20pt;
 	font-weight: bolder;
-	margin-top:20px;
+	margin-top:15px;
 }
 
 .bannerSubHeader{

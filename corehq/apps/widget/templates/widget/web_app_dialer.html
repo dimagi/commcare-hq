@@ -23,8 +23,12 @@
 
 {% block widget_content %}
         <div id="divBanner" class="banner">
-            <div id="divLogo" class="bannerLogo">
-                <img src="{% static 'widget/images/dialer-logo.png' %}"></img>
+            <div id="divLogo" class="bannerLogoContainer">
+                {% if CUSTOM_LOGO_URL %}
+                <img src="{{ CUSTOM_LOGO_URL }}" class="bannerLogo"></img>
+                {% else %}
+                <img src="{% static 'hqstyle/images/commcare-flower-lg.png' %}" class="bannerLogo"></img>
+                {% endif %}
             </div>
             <div id="divHeader" class="bannerHeader">
                 New York State Contact Tracing

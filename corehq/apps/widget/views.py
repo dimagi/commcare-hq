@@ -7,20 +7,29 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from django.utils.translation import ugettext_lazy
 
+from corehq.apps.domain.models import Domain
 from corehq.apps.widget.forms import DialerSettingsForm
 from corehq.apps.widget.models import DialerSettings
 from corehq.apps.widget.util import get_dialer_settings
 from corehq import toggles
+from corehq.util.context_processors import get_per_domain_context
 
 from memoized import memoized
 
 
+#TODO: Add toggle decorator
 @login_and_domain_required
 @require_GET
 def dialer_view(request, domain):
+    domain_object = Domain.get_by_name(domain)
+    custom_logo = get_per_domain_context(domain_object)['CUSTOM_LOGO_URL']
+    
     callout_number = request.GET.get("callout_number")
     aws_instance_id = get_dialer_settings(domain).url
-    return render(request, "widget/web_app_dialer.html", {"callout_number": callout_number, "aws_instance_id": aws_instance_id})
+    return render(request, "widget/web_app_dialer.html", {"callout_number": callout_number, 
+                                                          "aws_instance_id": aws_instance_id,
+                                                          "CUSTOM_LOGO_URL": custom_logo,
+                                                          })
 
 
 class DialerSettingsView(BaseProjectSettingsView):
