@@ -8,7 +8,6 @@ from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from django.utils.translation import ugettext_lazy
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.decorators import require_permission
 from corehq.apps.widget.forms import DialerSettingsForm
 from corehq.apps.widget.models import DialerSettings
 from corehq.apps.widget.util import get_dialer_settings
@@ -24,7 +23,7 @@ from memoized import memoized
 def dialer_view(request, domain):
     domain_object = Domain.get_by_name(domain)
     custom_logo = get_per_domain_context(domain_object)['CUSTOM_LOGO_URL']
- 
+
     callout_number = request.GET.get("callout_number")
     dialer_settings = get_dialer_settings(domain)
     return render(request, "widget/web_app_dialer.html", {"callout_number": callout_number,
