@@ -6,7 +6,7 @@ hqDefine("users/js/web_users",[
     "hqwebapp/js/assert_properties",
     "hqwebapp/js/initial_page_data",
     'bootstrap', // for bootstrap modal
-    'hqwebapp/js/components.ko',    // pagination widget
+    'hqwebapp/js/components.ko',    // pagination and search box widgets
     'hqwebapp/js/knockout_bindings.ko', // for modals
 ], function ($, ko, _, moment, assertProperties, initialPageData) {
 
@@ -135,17 +135,45 @@ hqDefine("users/js/web_users",[
 
     var invitationsList = function (invitations) {
         var self = {};
-        self.invitations = _.map(invitations, Invitation);
-        self.invitationToRemove = ko.observable();
+        self.allInvitations = ko.observableArray(_.map(invitations, Invitation));
+        self.currentPageInvitations = ko.observableArray();
 
+        self.invitationToRemove = ko.observable();
         self.confirmRemoveInvitation = function (model) {
             self.invitationToRemove(model);
         };
-
         self.removeInvitation = function () {
             self.invitationToRemove().remove();
             self.invitationToRemove(null);
         };
+        _.each(self.allInvitations(), function (i) {
+            // Invitations can be deleted, but not added back
+            i.visible.subscribe(function (newValue) {
+                if (!newValue) {
+                    self.allInvitations.remove(i);
+                    self.totalItems(self.totalItems() - 1);
+                }
+            });
+        });
+
+        self.query = ko.observable('');
+        self.itemsPerPage = ko.observable();
+        self.totalItems = ko.observable(self.allInvitations().length);
+        self.showPagination = ko.computed(function () {
+            return self.totalItems() > self.itemsPerPage();
+        });
+        self.goToPage = function (page) {
+            page = page || 1;
+            var skip = (page - 1) * self.itemsPerPage();
+            var results = _.filter(self.allInvitations(), function (i) {
+                return i.email.toLowerCase().indexOf(self.query().toLowerCase()) !== -1;
+            });
+
+            self.currentPageInvitations(results.slice(skip, skip + self.itemsPerPage()));
+            self.totalItems(results.length);
+        };
+
+        self.goToPage(1);
 
         return self;
     };

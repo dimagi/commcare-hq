@@ -200,9 +200,18 @@
   {% if invitations and not request.is_view_only %}
     <div class="panel panel-info ko-template" id="invitations-panel">
       <div class="panel-heading">
-        <h3 class="panel-title">
-          {% trans 'Pending Invitations' %}
-        </h3>
+        <div class="row">
+          <div class="col-sm-6">
+            <h3 class="panel-title" style="padding-top: 7px;">{% trans 'Pending Invitations' %}</h3>
+          </div>
+          <div class="col-sm-6">
+            <search-box data-apply-bindings="false"
+                        params="value: query,
+                                action: function() { goToPage(1); },
+                                immediate: true,
+                                placeholder: '{% trans_html_attr "Search Invitations..." %}'"></search-box>
+          </div>
+        </div>
       </div>
       <div class="panel-body">
         <table class="table table-striped table-responsive">
@@ -214,7 +223,7 @@
               <th>{% trans "Actions" %}</th>
             </tr>
           </thead>
-          <tbody data-bind="foreach: invitations">
+          <tbody data-bind="foreach: currentPageInvitations">
             <tr data-bind="visible: visible">
               <td>
                 <!-- ko text: email --><!-- /ko -->
@@ -244,6 +253,12 @@
             </tr>
           </tbody>
         </table>
+        <pagination data-bind="visible: showPagination" data-apply-bindings="false"
+                    params="goToPage: goToPage,
+                            slug: 'web-user-invitations',
+                            perPage: itemsPerPage,
+                            maxPagesShown: 10,
+                            totalItems: totalItems"></pagination>
       </div>
       <div class="modal fade" data-bind="modal: invitationToRemove">
         <div class="modal-dialog">
