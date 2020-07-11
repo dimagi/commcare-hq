@@ -171,7 +171,7 @@ def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent
 
 
 def send_sms_to_verified_number(verified_number, text, metadata=None,
-        logged_subevent=None):
+        logged_subevent=None, events=[]):
     """
     Sends an sms using the given verified phone number entry.
 
@@ -201,6 +201,18 @@ def send_sms_to_verified_number(verified_number, text, metadata=None,
         text = text
     )
     add_msg_tags(msg, metadata)
+
+    msg.custom_metadata = {}
+    for event in events:
+        multimedia_fields = ('caption_image', 'caption_audio', 'caption_video')
+        for field in multimedia_fields:
+            try:
+                value = getattr(event, field)
+                if value is not None:
+                    msg.custom_metadata[field] = value
+            except AttributeError:
+                pass
+    msg.save()
 
     return queue_outgoing_sms(msg)
 
