@@ -91,20 +91,42 @@ hqDefine("users/js/web_users",[
         self.actionMessage = ko.observable('');
         self.actionInProgress = ko.observable(false);
 
+        self.visible = ko.observable(true);
         self.remove = function () {
-            // TODO
+            self.actionInProgress(true);
+            $.ajax(initialPageData.reverse("delete_invitation"), {
+                method: 'POST',
+                dataType: 'json',
+                data: {
+                    uuid: self.uuid,
+                },
+                success: function (data) {
+                    self.actionInProgress(false);
+                    self.visible(false);
+                },
+                error: function () {
+                    self.actionInProgress(false);
+                    self.actionMessage(gettext("Unable to delete invitation, please try again later."));
+                },
+            });
         };
 
-        self.showResend = ko.observable(true);
         self.resend = function () {
             self.actionInProgress(true);
-            $.post(initialPageData.reverse("reinvite_web_user"), {
-                uuid: self.uuid,
-            },
-            function (data) {
-                self.actionInProgress(false);
-                self.showResend(false);
-                self.actionMessage(data.response);
+            $.ajax(initialPageData.reverse("reinvite_web_user"), {
+                method: 'POST',
+                dataType: 'json',
+                data: {
+                    uuid: self.uuid,
+                },
+                success: function (data) {
+                    self.actionInProgress(false);
+                    self.actionMessage(data.response);
+                },
+                error: function () {
+                    self.actionInProgress(false);
+                    self.actionMessage(gettext("Unable to resend invitation, please try again later."));
+                },
             });
         };
 
@@ -112,9 +134,20 @@ hqDefine("users/js/web_users",[
     };
 
     var invitationsList = function (invitations) {
-        return {
-            invitations: _.map(invitations, Invitation),
+        var self = {};
+        self.invitations = _.map(invitations, Invitation);
+        self.invitationToRemove = ko.observable();
+
+        self.confirmRemoveInvitation = function (model) {
+            self.invitationToRemove(model);
         };
+
+        self.removeInvitation = function () {
+            self.invitationToRemove().remove();
+            self.invitationToRemove(null);
+        };
+
+        return self;
     };
 
     $(function () {
@@ -147,9 +180,8 @@ hqDefine("users/js/web_users",[
         });
     });
 
+    /* "Pending Access Requests" panel */
     $(function () {
-        var url = initialPageData.reverse;
-
         function handleDeletion($el, data, title, body, postUrl) {
             $('#confirm-delete').off('click');
             $('#confirm-delete').on('click', function () {
@@ -171,16 +203,7 @@ hqDefine("users/js/web_users",[
                 {id: $(this).data('id')},
                 gettext("Delete request"),
                 gettext("Are you sure you want to delete this request?"),
-                url("delete_request")
-            );
-            e.preventDefault();
-        });
-        $('.delete-invitation').on('click', function (e) {
-            handleDeletion($(this),
-                {uuid: $(this).data('uuid')},
-                gettext("Delete invitation"),
-                gettext("Are you sure you want to delete this invitation?"),
-                url("delete_invitation")
+                initialPageData.reverse("delete_request")
             );
             e.preventDefault();
         });

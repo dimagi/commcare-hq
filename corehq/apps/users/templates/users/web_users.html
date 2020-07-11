@@ -215,7 +215,7 @@
             </tr>
           </thead>
           <tbody data-bind="foreach: invitations">
-            <tr>
+            <tr data-bind="visible: visible">
               <td>
                 <!-- ko text: email --><!-- /ko -->
                 <span class="label label-danger" data-bind="visible: email_marked_as_bounced">{% trans "Blocked" %}</span>
@@ -229,12 +229,12 @@
               <td>
                 <div data-bind="visible: !actionMessage()">
                   <button type="button" class="resend-invite btn btn-default"
-                          data-bind="visible: showResend, click: resend, disable: actionInProgress">
+                          data-bind="click: resend, disable: actionInProgress">
                     <i class="fa fa-envelope-o"></i>
                     {% trans "Resend Invitation" %}
                   </button>
                   <button type="button" class="btn btn-danger delete-invitation"
-                          data-bind="click: remove, disable: actionInProgress">
+                          data-bind="click: $root.confirmRemoveInvitation, disable: actionInProgress">
                     <i class="fa fa-trash"></i>
                     {% trans "Delete Invitation" %}
                   </button>
@@ -244,6 +244,26 @@
             </tr>
           </tbody>
         </table>
+      </div>
+      <div class="modal fade" data-bind="modal: invitationToRemove">
+        <div class="modal-dialog">
+          <div class="modal-content" data-bind="with: invitationToRemove">
+            <div class="modal-header">
+              <button type="button" class="close">
+                <span aria-hidden="true">&times;</span>
+                <span class="sr-only">{% trans "Close" %}</span>
+              </button>
+              <h4 class="modal-title">{% trans "Delete Invitation" %}</h4>
+            </div>
+            <div class="modal-body">
+                {% trans "Are you sure you want to delete this invitation?" %}
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+              <button type="button" class="btn btn-danger" data-bind="click: $root.removeInvitation">{% trans "Delete" %}</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   {% endif %}
