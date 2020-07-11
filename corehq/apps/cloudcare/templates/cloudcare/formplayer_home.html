@@ -20,6 +20,16 @@
   <style id="list-cell-container-style"></style>
 {% endblock %}
 
+{% block navigation %}{{ block.super }}
+  <div class="navbar navbar-inverse navbar-cloudcare navbar-static-top">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="{{ home_url }}"><i class="fcc fcc-flower"></i> Web Apps</a>
+      <ul class="nav navbar-nav navbar-right" >
+        <li><a href="#" id="commcare-menu-toggle">{% trans 'Show Full Menu' %}</a></li>
+      </ul>
+    </div>
+  </div>
+{% endblock navigation %}
 
 {% block stylesheets %}
   {% compress css %}
