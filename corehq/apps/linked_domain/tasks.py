@@ -45,22 +45,26 @@ class ReleaseManager():
         self._reset()
 
     def _reset(self, models=None, linked_domains=None):
-        self.errors_by_domain = defaultdict(list)
-        self.successes_by_domain = defaultdict(list)
+        self.errors_by_domain = {'html': defaultdict(list), 'text': defaultdict(list)}
+        self.successes_by_domain = {'html': defaultdict(list), 'text': defaultdict(list)}
         self.models = models or []
         self.linked_domains = linked_domains or []
 
-    def _add_error(self, domain, message):
-        self.errors_by_domain[domain].append(message)
+    def _add_error(self, domain, html, text=None):
+        text = text or html
+        self.errors_by_domain['html'][domain].append(html)
+        self.errors_by_domain['text'][domain].append(text)
 
-    def _add_success(self, domain, message):
-        self.successes_by_domain[domain].append(message)
+    def _add_success(self, domain, html, text=None):
+        text = text or html
+        self.successes_by_domain['html'][domain].append(html)
+        self.successes_by_domain['text'][domain].append(text)
 
-    def _get_errors(self, domain):
-        return self.errors_by_domain[domain]
+    def _get_errors(self, domain, html=True):
+        return self.errors_by_domain['html' if html else 'text'][domain]
 
-    def _get_successes(self, domain):
-        return self.successes_by_domain[domain]
+    def _get_successes(self, domain, html=True):
+        return self.successes_by_domain['html' if html else 'text'][domain]
 
     def release(self, models, linked_domains, build_apps=False):
         self._reset(models, linked_domains)
@@ -97,11 +101,16 @@ class ReleaseManager():
         subject = _("Linked project release complete.")
         if self.errors_by_domain:
             subject += _(" Errors occurred.")
-        message = self.get_email_message()
         email = self.user.email or self.user.username
-        send_html_email_async.delay(subject, email, message, email_from=settings.DEFAULT_FROM_EMAIL)
+        send_html_email_async.delay(
+            subject,
+            email,
+            self.get_email_message(html=True),
+            text_content=self.get_email_message(html=False),
+            email_from=settings.DEFAULT_FROM_EMAIL
+        )
 
-    def get_email_message(self):
+    def get_email_message(self, html=True):
         error_domain_count = len(self.errors_by_domain)
         success_domain_count = len(self.linked_domains) - error_domain_count
         message = _("""
@@ -117,11 +126,11 @@ The following linked project spaces received content:
             "\n".join(["- " + m['name'] for m in self.models])
         )
         for linked_domain in self.linked_domains:
-            if not self._get_errors(linked_domain):
+            if not self._get_errors(linked_domain, html):
                 message += _("\n- {} updated successfully").format(linked_domain)
             else:
                 message += _("\n- {} encountered errors:").format(linked_domain)
-                for msg in self._get_errors(linked_domain) + self._get_successes(linked_domain):
+                for msg in self._get_errors(linked_domain, html) + self._get_successes(linked_domain, html):
                     message += "\n   - " + msg
         return message
 
