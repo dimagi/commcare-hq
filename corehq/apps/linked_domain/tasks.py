@@ -60,6 +60,12 @@ class ReleaseManager():
         self.successes_by_domain['html'][domain].append(html)
         self.successes_by_domain['text'][domain].append(text)
 
+    def _get_error_domain_count(self):
+        return len(self.errors_by_domain['html'])
+
+    def _get_success_domain_count(self):
+        return len(self.linked_domains) - self._get_error_domain_count()
+
     def _get_errors(self, domain, html=True):
         return self.errors_by_domain['html' if html else 'text'][domain]
 
@@ -114,8 +120,7 @@ class ReleaseManager():
         )
 
     def get_email_message(self, html=True):
-        error_domain_count = len(self.errors_by_domain)
-        success_domain_count = len(self.linked_domains) - error_domain_count
+        error_domain_count = self._get_error_domain_count()
         message = _("""
 Release complete. {} project(s) succeeded. {}
 
@@ -124,7 +129,7 @@ The following content was released:
 
 The following linked project spaces received content:
         """).format(
-            success_domain_count,
+            self._get_success_domain_count(),
             _("{} project(s) encountered errors.").format(error_domain_count) if error_domain_count else "",
             "\n".join(["- " + m['name'] for m in self.models])
         )
