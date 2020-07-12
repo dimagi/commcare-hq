@@ -97,7 +97,11 @@ class ReleaseManager():
         subject = _("Linked project release complete.")
         if self.errors_by_domain:
             subject += _(" Errors occurred.")
+        message = self.get_email_message()
+        email = self.user.email or self.user.username
+        send_html_email_async.delay(subject, email, message, email_from=settings.DEFAULT_FROM_EMAIL)
 
+    def get_email_message(self):
         error_domain_count = len(self.errors_by_domain)
         success_domain_count = len(self.linked_domains) - error_domain_count
         message = _("""
@@ -119,8 +123,7 @@ The following linked project spaces received content:
                 message += _("\n- {} encountered errors:").format(linked_domain)
                 for msg in self._get_errors(linked_domain) + self._get_successes(linked_domain):
                     message += "\n   - " + msg
-        email = self.user.email or self.user.username
-        send_html_email_async.delay(subject, email, message, email_from=settings.DEFAULT_FROM_EMAIL)
+        return message
 
     def _release_app(self, domain_link, model, user, build_and_release=False):
         if toggles.MULTI_MASTER_LINKED_DOMAINS.enabled(domain_link.linked_domain):
