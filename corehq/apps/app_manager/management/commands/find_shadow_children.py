@@ -74,14 +74,6 @@ class Command(BaseCommand):
             if m['root_module_id'] in source_module_ids
         }
 
-        # Parent -> Child
-        # ^source - ^source
-        # Shadow -> Shadow Child
-
-        # If there is a shadow child that exists
-        # i.e. a module whose source_module_id is set to the child_module_sources
-
-        # We only need those
         module_ids_to_create = child_modules_of_sources - set(source_module_ids.keys())
         return [
             m['name']['en'] for m in app_doc['modules'] if m['unique_id'] in module_ids_to_create
