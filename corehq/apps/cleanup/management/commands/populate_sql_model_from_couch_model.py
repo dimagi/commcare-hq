@@ -142,37 +142,46 @@ class PopulateSQLCommand(BaseCommand):
         verify_only = options.get("verify_only", False)
         skip_verify = options.get("skip_verify", False)
 
-        doc_count = get_doc_count_by_type(self.couch_db(), self.couch_doc_type())
+        self.doc_count = get_doc_count_by_type(self.couch_db(), self.couch_doc_type())
+        self.diff_count = 0
+        self.doc_index = 0
+
         logger.info("Found {} {} docs and {} {} models".format(
-            doc_count,
+            self.doc_count,
             self.couch_doc_type(),
             self.sql_class().objects.count(),
             self.sql_class().__name__,
         ))
-        diff_count = 0
-        doc_index = 0
         for doc in get_all_docs_with_doc_types(self.couch_db(), [self.couch_doc_type()]):
-            doc_index += 1
+            self.doc_index += 1
             if not skip_verify:
-                try:
-                    obj = self.sql_class().objects.get(couch_id=doc["_id"])
-                    diff = self.diff_couch_and_sql(doc, obj)
-                    if diff:
-                        logger.info(f"Doc {obj.couch_id} has differences: {diff}")
-                        diff_count += 1
-                        exit(1)
-                except self.sql_class().DoesNotExist:
-                    pass    # ignore, the difference in total object count has already been displayed
+                self._verify_doc(doc)
             if not verify_only:
-                logger.info("Looking at {} doc #{} of {} with id {}".format(
-                    self.couch_doc_type(),
-                    doc_index,
-                    doc_count,
-                    doc["_id"]
-                ))
-                with transaction.atomic():
-                    model, created = self.update_or_create_sql_object(doc)
-                    action = "Creating" if created else "Updated"
-                    logger.info("{} model for doc with id {}".format(action, doc["_id"]))
+                self._migrate_doc(doc)
 
-        logger.info(f"Processed {doc_index} documents")
+        logger.info(f"Processed {self.doc_index} documents")
+        if not skip_verify:
+            logger.info(f"Found {self.diff_count} differences")
+
+    def _verify_doc(self, doc):
+        try:
+            obj = self.sql_class().objects.get(couch_id=doc["_id"])
+            diff = self.diff_couch_and_sql(doc, obj)
+            if diff:
+                logger.info(f"Doc {obj.couch_id} has differences: {diff}")
+                self.diff_count += 1
+                exit(1)
+        except self.sql_class().DoesNotExist:
+            pass    # ignore, the difference in total object count has already been displayed
+
+    def _migrate_doc(self, doc):
+        logger.info("Looking at {} doc #{} of {} with id {}".format(
+            self.couch_doc_type(),
+            self.doc_index,
+            self.doc_count,
+            doc["_id"]
+        ))
+        with transaction.atomic():
+            model, created = self.update_or_create_sql_object(doc)
+            action = "Creating" if created else "Updated"
+            logger.info("{} model for doc with id {}".format(action, doc["_id"]))
