@@ -127,9 +127,20 @@ class PopulateSQLCommand(BaseCommand):
                 Only works for migrations that use a couch_id on the sql model.
             """,
         )
+        parser.add_argument(
+            '--skip-verify',
+            action='store_true',
+            dest='skip_verify',
+            default=False,
+            help="""
+                Migrate even if verifcation fails. This is intended for usage only with
+                models that don't support verification.
+            """,
+        )
 
     def handle(self, **options):
         verify_only = options.get("verify_only", False)
+        skip_verify = options.get("skip_verify", False)
 
         doc_count = get_doc_count_by_type(self.couch_db(), self.couch_doc_type())
         logger.info("Found {} {} docs and {} {} models".format(
@@ -142,16 +153,17 @@ class PopulateSQLCommand(BaseCommand):
         doc_index = 0
         for doc in get_all_docs_with_doc_types(self.couch_db(), [self.couch_doc_type()]):
             doc_index += 1
-            if verify_only:
+            if not skip_verify:
                 try:
                     obj = self.sql_class().objects.get(couch_id=doc["_id"])
                     diff = self.diff_couch_and_sql(doc, obj)
                     if diff:
                         logger.info(f"Doc {obj.couch_id} has differences: {diff}")
                         diff_count += 1
+                        exit(1)
                 except self.sql_class().DoesNotExist:
                     pass    # ignore, the difference in total object count has already been displayed
-            else:
+            if not verify_only:
                 logger.info("Looking at {} doc #{} of {} with id {}".format(
                     self.couch_doc_type(),
                     doc_index,
@@ -163,7 +175,4 @@ class PopulateSQLCommand(BaseCommand):
                     action = "Creating" if created else "Updated"
                     logger.info("{} model for doc with id {}".format(action, doc["_id"]))
 
-        if verify_only:
-            logger.info(f"Found {diff_count} differences")
-        else:
-            logger.info(f"Processed {doc_index} documents")
+        logger.info(f"Processed {doc_index} documents")
