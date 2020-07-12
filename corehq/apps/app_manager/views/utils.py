@@ -454,18 +454,25 @@ def handle_shadow_child_modules(app, shadow_parent):
         m for m in app.modules
         if m.root_module_id == shadow_parent.unique_id
     ]
+    changes = False
 
     # Delete unneeded modules
     for child in shadow_parent_children:
         if child.source_module_id not in source_module_children:
+            changes = True
             app.delete_module(child.unique_id)
 
     # Add new modules
     for shadow_child in source_module_children:
+        changes = True
         new_shadow = ShadowModule.new_module(shadow_child.name['en'], 'en')
         new_shadow.source_module_id = shadow_child.unique_id
         new_shadow.root_module_id = shadow_parent['unique_id']
         new_shadow.put_in_root = shadow_child.put_in_root
         app.add_module(new_shadow)
 
-    app.move_child_modules_after_parents()
+    if changes:
+        app.move_child_modules_after_parents()
+        app.save()
+
+    return changes
