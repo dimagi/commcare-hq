@@ -78,22 +78,25 @@ class ReleaseManager():
                 continue
             domain_link = domain_links_by_linked_domain[linked_domain]
             for model in self.models:
-                error = None
+                errors = None
                 try:
                     if model['type'] == MODEL_APP:
-                        error = self._release_app(domain_link, model, self.user, build_apps)
+                        errors = self._release_app(domain_link, model, self.user, build_apps)
                     elif model['type'] == MODEL_REPORT:
-                        error = self._release_report(domain_link, model)
+                        errors = self._release_report(domain_link, model)
                     elif model['type'] == MODEL_CASE_SEARCH:
-                        error = self._release_case_search(domain_link, model, self.user)
+                        errors = self._release_case_search(domain_link, model, self.user)
                     else:
-                        error = self._release_model(domain_link, model, self.user)
+                        errors = self._release_model(domain_link, model, self.user)
                 except Exception as e:   # intentionally broad
-                    error = str(e)
+                    errors = [str(e), str(e)]
                     notify_exception(None, "Exception pushing linked domains: {}".format(e))
 
-                if error:
-                    self._add_error(linked_domain, _("Could not update {}: {}").format(model['name'], error))
+                if errors:
+                    self._add_error(
+                        linked_domain,
+                        _("Could not update {}: {}").format(model['name'], errors[0]),
+                        text=_("Could not update {}: {}").format(model['name'], errors[1]))
                 else:
                     self._add_success(linked_domain, _("Updated {} successfully").format(model['name']))
 
@@ -136,7 +139,7 @@ The following linked project spaces received content:
 
     def _release_app(self, domain_link, model, user, build_and_release=False):
         if toggles.MULTI_MASTER_LINKED_DOMAINS.enabled(domain_link.linked_domain):
-            return _("Multi master flag is in use")
+            return self._error_tuple(_("Multi master flag is in use"))
 
         app_id = model['detail']['app_id']
         found = False
@@ -148,7 +151,7 @@ The following linked project spaces received content:
                     app = update_linked_app(linked_app, app_id, user.user_id)
 
             if not found:
-                return _("Could not find app")
+                return self._error_tuple(_("Could not find app"))
 
             if build_and_release:
                 error_prefix = _("Updated app but did not build or release: ")
@@ -156,7 +159,7 @@ The following linked project spaces received content:
                 build.is_released = True
                 build.save(increment_version=False)
         except Exception as e:  # intentionally broad
-            return error_prefix + str(e)
+            return self._error_tuple(error_prefix + str(e))
 
     def _release_report(self, domain_link, model):
         report_id = model['detail']['report_id']
@@ -173,15 +176,22 @@ The following linked project spaces received content:
             else:
                 view = 'edit_configurable_report'
             url = get_url_base() + reverse(view, args=[domain_link.master_domain, report_id])
-            return _('Could not find report. <a href="{}">Click here</a> and click "Link Report" '
-                     + 'to link this report.').format(url)
+            return self._error_tuple(
+                _('Could not find report. <a href="{}">Click here</a> and click "Link Report" to link this '
+                  + 'report.').format(url),
+                text=_('Could not find report. Please check that the report has been linked.'),
+            )
 
     def _release_case_search(self, domain_link, model, user):
         if not toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain_link.linked_domain):
-            return _("Case claim flag is not on")
+            return self._error_tuple(_("Case claim flag is not on"))
 
         return self._release_model(domain_link, model, user)
 
     def _release_model(self, domain_link, model, user):
         update_model_type(domain_link, model['type'], model_detail=model['detail'])
         domain_link.update_last_pull(model['type'], user._id, model_detail=model['detail'])
+
+    def _error_tuple(self, html, text=None):
+        text = text or html
+        return (html, text)
