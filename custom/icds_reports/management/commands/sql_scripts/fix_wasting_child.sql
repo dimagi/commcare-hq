@@ -2,23 +2,9 @@ UPDATE child_health_monthly
     SET current_month_wasting = 'unmeasured'
 
 where
-    child_health_monthly.height_measured_in_month <> 1 AND
+    child_health_monthly.height_measured_in_month is distinct from 1 AND
     child_health_monthly.current_month_wasting is distinct FROM NULL AND
-    child_health_monthly.month = '2020-01-01';
-/*
- Custom Scan (Citus Router)  (cost=0.00..0.00 rows=0 width=0)
-   Task Count: 64
-   Tasks Shown: One of 64
-   ->  Task
-         Node: host=100.71.184.232 port=6432 dbname=icds_ucr
-         ->  Update on child_health_monthly_323196 child_health_monthly  (cost=0.00..73224.14 rows=435930 width=663)
-               Update on "child_health_monthly_2020-01-01_403772" child_health_monthly_1
-               ->  Seq Scan on "child_health_monthly_2020-01-01_403772" child_health_monthly_1  (cost=0.00..73224.14 rows=435930 width=663)
-                     Filter: ((current_month_wasting IS NOT NULL) AND (height_measured_in_month <> 1) AND (month = '2020-01-01'::date))
-(9 rows)
-
-*/
-
+    child_health_monthly.month = '{month}';
 
 DROP TABLE IF EXISTS temp_agg_child_health_rhit;
 CREATE UNLOGGED TABLE temp_agg_child_health_rhit AS (select state_id,supervisor_id,awc_id,month,gender,age_tranche,caste,disabled,minority,resident, wasting_moderate, wasting_severe, wasting_normal from agg_child_health where 1=0);
@@ -54,7 +40,7 @@ state_id,
         SUM(CASE WHEN chm.current_month_wasting = 'severe' THEN 1 ELSE 0 END) AS wasting_severe,
         SUM(CASE WHEN chm.current_month_wasting = 'normal' THEN 1 ELSE 0 END) AS wasting_normal
     from child_health_monthly chm
-        WHERE month = '2020-01-01'
+        WHERE month = '{month}'
     group by  state_id,
         supervisor_id,
         awc_id,
@@ -75,7 +61,6 @@ UPDATE agg_child_health
         wasting_moderate = thr_temp.wasting_moderate,
         wasting_severe = thr_temp.wasting_severe,
         wasting_normal = thr_temp.wasting_normal
-
 from temp_agg_child wasting_temp
 where
     agg_child_health.state_id = wasting_temp.state_id AND
@@ -88,7 +73,8 @@ where
     agg_child_health.disabled = wasting_temp.coalesce_disabled AND
     agg_child_health.minority = wasting_temp.coalesce_minority AND
     agg_child_health.resident = wasting_temp.coalesce_resident AND
-    agg_child_health.aggregation_level = 5;
+    agg_child_health.aggregation_level = 5 AND
+    agg_child_health.month='{month}';
 
 
 UPDATE agg_child_health
@@ -106,7 +92,7 @@ from (
         sum(wasting_severe) as wasting_severe,
         sum(wasting_normal) as wasting_normal
     from agg_child_health
-        WHERE aggregation_level=5 AND month = '2020-01-01' GROUP BY month, supervisor_id, gender, age_tranche
+        WHERE aggregation_level=5 AND month = '{month}' GROUP BY month, supervisor_id, gender, age_tranche
 ) ut
     WHERE
         agg_child_health.month=ut.month AND
@@ -114,7 +100,7 @@ from (
         agg_child_health.gender=ut.gender AND
         agg_child_health.age_tranche=ut.age_tranche AND
         agg_child_health.aggregation_level=4 AND
-        agg_child_health.month = '2020-01-01'
+        agg_child_health.month = '{month}';
 
 
 UPDATE agg_child_health
@@ -132,7 +118,7 @@ from (
         sum(wasting_severe) as wasting_severe,
         sum(wasting_normal) as wasting_normal
     from agg_child_health
-        WHERE aggregation_level=4 AND month = '2020-01-01' GROUP BY month, block_id, gender, age_tranche
+        WHERE aggregation_level=4 AND month = '{month}' GROUP BY month, block_id, gender, age_tranche
 ) ut
     WHERE
         agg_child_health.month=ut.month AND
@@ -140,7 +126,7 @@ from (
         agg_child_health.gender=ut.gender AND
         agg_child_health.age_tranche=ut.age_tranche AND
         agg_child_health.aggregation_level=3 AND
-        agg_child_health.month = '2020-01-01';
+        agg_child_health.month = '{month}';
 
 
 UPDATE agg_child_health
@@ -158,7 +144,7 @@ from (
         sum(wasting_severe) as wasting_severe,
         sum(wasting_normal) as wasting_normal
     from agg_child_health
-        WHERE aggregation_level=3 AND month = '2020-01-01' GROUP BY month, district_id, gender, age_tranche
+        WHERE aggregation_level=3 AND month = '{month}' GROUP BY month, district_id, gender, age_tranche
 ) ut
     WHERE
         agg_child_health.month=ut.month AND
@@ -183,7 +169,7 @@ from (
         sum(wasting_severe) as wasting_severe,
         sum(wasting_normal) as wasting_normal
     from agg_child_health
-        WHERE aggregation_level=2 AND month = '2020-01-01' GROUP BY month, state_id, gender, age_tranche
+        WHERE aggregation_level=2 AND month = '{month}' GROUP BY month, state_id, gender, age_tranche
 ) ut
     WHERE
         agg_child_health.month=ut.month AND
