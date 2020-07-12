@@ -3629,12 +3629,6 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
             return 'none'
         return self.source_module.requires
 
-    # @property
-    # def root_module_id(self):
-    #     if not self.source_module:
-    #         return None
-    #     return self.source_module.root_module_id
-
     def get_suite_forms(self):
         if not self.source_module:
             return []

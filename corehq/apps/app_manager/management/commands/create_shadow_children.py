@@ -30,7 +30,7 @@ class Command(AppMigrationCommandBase):
             move_excluded_form_ids(app, new_shadow)
             app.add_module(new_shadow)
 
-        app.move_child_modules_after_parents()  # TODO: probably shouldn't do this blindly
+        app.move_child_modules_after_parents()
         return app
 
 
