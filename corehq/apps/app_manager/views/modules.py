@@ -702,12 +702,22 @@ def delete_module(request, domain, app_id, module_unique_id):
         return bail(request, domain, app_id)
     if module.get_child_modules():
         if module.module_type == 'shadow':
+            # When deleting a shadow module, delete all the shadow-children
             for child_module in module.get_child_modules():
                 app.delete_module(child_module.unique_id)
         else:
             messages.error(request, _('"{}" has sub-menus. You must remove these before '
                                       'you can delete it.').format(module.default_name()))
             return back_to_main(request, domain, app_id)
+
+    shadow_children = [
+        m.unique_id for m in app.get_modules()
+        if m.module_type == 'shadow' and m.source_module_id == module_unique_id and m.root_module_id is not None
+    ]
+    for shadow_child in shadow_children:
+        # We don't allow directly deleting or editing the source of a shadow
+        # child, so we delete it when its source is deleted
+        app.delete_module(shadow_child)
 
     record = app.delete_module(module_unique_id)
     messages.success(
