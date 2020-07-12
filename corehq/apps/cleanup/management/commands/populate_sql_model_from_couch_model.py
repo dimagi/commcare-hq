@@ -118,9 +118,9 @@ class PopulateSQLCommand(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--verify',
+            '--verify-only',
             action='store_true',
-            dest='verify',
+            dest='verify_only',
             default=False,
             help="""
                 Don't migrate anything, instead check if couch and sql data is identical.
@@ -129,7 +129,7 @@ class PopulateSQLCommand(BaseCommand):
         )
 
     def handle(self, **options):
-        verify = options.get("verify", False)
+        verify_only = options.get("verify_only", False)
 
         doc_count = get_doc_count_by_type(self.couch_db(), self.couch_doc_type())
         logger.info("Found {} {} docs and {} {} models".format(
@@ -142,7 +142,7 @@ class PopulateSQLCommand(BaseCommand):
         doc_index = 0
         for doc in get_all_docs_with_doc_types(self.couch_db(), [self.couch_doc_type()]):
             doc_index += 1
-            if verify:
+            if verify_only:
                 try:
                     obj = self.sql_class().objects.get(couch_id=doc["_id"])
                     diff = self.diff_couch_and_sql(doc, obj)
@@ -163,7 +163,7 @@ class PopulateSQLCommand(BaseCommand):
                     action = "Creating" if created else "Updated"
                     logger.info("{} model for doc with id {}".format(action, doc["_id"]))
 
-        if verify:
+        if verify_only:
             logger.info(f"Found {diff_count} differences")
         else:
             logger.info(f"Processed {doc_index} documents")
