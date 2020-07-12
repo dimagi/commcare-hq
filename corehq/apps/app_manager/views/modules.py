@@ -574,8 +574,9 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         module["display_style"] = request.POST.get("display_style")
     if should_edit("source_module_id"):
         module["source_module_id"] = request.POST.get("source_module_id")
-        handle_shadow_child_modules(app, module)
-        resp['redirect'] = reverse('view_module', args=[domain, app_id, module_unique_id])
+        if handle_shadow_child_modules(app, module):
+            # Reload the page to show new shadow child modules
+            resp['redirect'] = reverse('view_module', args=[domain, app_id, module_unique_id])
     if should_edit("display_separately"):
         module["display_separately"] = json.loads(request.POST.get("display_separately"))
     if should_edit("parent_module"):
@@ -620,16 +621,15 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         else:
             module["root_module_id"] = request.POST.get("root_module_id")
 
-        try:
-            # if the parent has a shadow, make a new shadow child
-            shadow_parent = next(
-                m for m in app.get_modules()
-                if m.module_type == "shadow" and m.source_module_id == request.POST.get("root_module_id")
-            )
-        except StopIteration:
-            pass
-        else:
-            handle_shadow_child_modules(app, shadow_parent)
+        # Add or remove children of shadows as required
+        shadow_parents = (
+            m for m in app.get_modules()
+            if m.module_type == "shadow"
+            and (m.source_module_id == request.POST.get("root_module_id") or m.source_module_id == old_root)
+        )
+        for shadow_parent in shadow_parents:
+            if handle_shadow_child_modules(app, shadow_parent):
+                resp['redirect'] = reverse('view_module', args=[domain, app_id, module_unique_id])
 
         if not old_root and module['root_module_id']:
             track_workflow(request.couch_user.username, "User associated module with a parent")
@@ -714,20 +714,22 @@ def delete_module(request, domain, app_id, module_unique_id):
         m.unique_id for m in app.get_modules()
         if m.module_type == 'shadow' and m.source_module_id == module_unique_id and m.root_module_id is not None
     ]
+    deletion_records = []
     for shadow_child in shadow_children:
         # We don't allow directly deleting or editing the source of a shadow
         # child, so we delete it when its source is deleted
-        app.delete_module(shadow_child)
+        deletion_records.append(app.delete_module(shadow_child))
 
-    record = app.delete_module(module_unique_id)
-    messages.success(
-        request,
-        _('You have deleted "{name}". <a href="{url}" class="post-link">Undo</a>').format(
-            name=record.module.default_name(app=app),
-            url=reverse('undo_delete_module', args=[domain, record.get_id])
-        ),
-        extra_tags='html'
-    )
+    deletion_records.append(app.delete_module(module_unique_id))
+    for record in deletion_records:
+        messages.success(
+            request,
+            _('You have deleted "{name}". <a href="{url}" class="post-link">Undo</a>').format(
+                name=record.module.default_name(app=app),
+                url=reverse('undo_delete_module', args=[domain, record.get_id])
+            ),
+            extra_tags='html'
+        )
     app.save()
     clear_xmlns_app_id_cache(domain)
     return back_to_main(request, domain, app_id=app_id)
