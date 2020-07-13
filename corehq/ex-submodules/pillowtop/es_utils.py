@@ -40,7 +40,19 @@ ES_ENV_SETTINGS = {
     },
 }
 
-ES_META = {
+XFORM_HQ_INDEX_NAME = "xforms"
+CASE_HQ_INDEX_NAME = "hqcases"
+USER_HQ_INDEX_NAME = "hqusers"
+DOMAIN_HQ_INDEX_NAME = "hqdomains"
+APP_HQ_INDEX_NAME = "hqapps"
+GROUP_HQ_INDEX_NAME = "hqgroups"
+SMS_HQ_INDEX_NAME = "smslogs"
+REPORT_CASE_HQ_INDEX_NAME = "report_cases"
+REPORT_XFORM_HQ_INDEX_NAME = "report_xforms"
+CASE_SEARCH_HQ_INDEX_NAME = "case_search"
+TEST_HQ_INDEX_NAME = "pillowtop_tests"
+
+ES_INDEX_SETTINGS = {
     # Default settings for all indexes on ElasticSearch
     'default': {
         "settings": {
@@ -49,21 +61,21 @@ ES_META = {
         },
     },
     # Default settings for aliases on all environments (overrides default settings)
-    'hqdomains': {
+    DOMAIN_HQ_INDEX_NAME: {
         "settings": {
             "number_of_replicas": 0,
             "analysis": _get_analysis('default', 'comma'),
         },
     },
 
-    'hqapps': {
+    APP_HQ_INDEX_NAME: {
         "settings": {
             "number_of_replicas": 0,
             "analysis": _get_analysis('default'),
         },
     },
 
-    'hqusers': {
+    USER_HQ_INDEX_NAME: {
         "settings": {
             "number_of_shards": 2,
             "number_of_replicas": 0,
@@ -78,26 +90,27 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
     alias = jsonobject.StringProperty()
     type = jsonobject.StringProperty()
     mapping = jsonobject.DictProperty()
+    hq_index_name = jsonobject.StringProperty()
 
     def __str__(self):
         return '{} ({})'.format(self.alias, self.index)
 
     @property
     def meta(self):
-        meta_settings = deepcopy(ES_META['default'])
+        meta_settings = deepcopy(ES_INDEX_SETTINGS['default'])
         meta_settings.update(
-            ES_META.get(self.alias, {})
+            ES_INDEX_SETTINGS.get(self.hq_index_name, {})
         )
         meta_settings.update(
-            ES_META.get(settings.SERVER_ENVIRONMENT, {}).get(self.alias, {})
+            ES_INDEX_SETTINGS.get(settings.SERVER_ENVIRONMENT, {}).get(self.hq_index_name, {})
         )
 
         overrides = copy(ES_ENV_SETTINGS)
         if settings.ES_SETTINGS is not None:
             overrides.update({settings.SERVER_ENVIRONMENT: settings.ES_SETTINGS})
 
-        for alias in ['default', self.alias]:
-            for key, value in overrides.get(settings.SERVER_ENVIRONMENT, {}).get(alias, {}).items():
+        for hq_index_name in ['default', self.hq_index_name]:
+            for key, value in overrides.get(settings.SERVER_ENVIRONMENT, {}).get(hq_index_name, {}).items():
                 if value is REMOVE_SETTING:
                     del meta_settings['settings'][key]
                 else:
@@ -133,18 +146,12 @@ def create_index_and_set_settings_normal(es, index, metadata=None):
     set_index_normal_settings(es, index)
 
 
-def completely_initialize_pillow_index(pillow):
-    """
-    This utility can be used to initialize the elastic index and mapping for a pillow
-    """
-    return initialize_index_and_mapping(pillow.get_es_new(), get_index_info_from_pillow(pillow))
-
-
 def initialize_index_and_mapping(es, index_info):
     index_exists = es.indices.exists(index_info.index)
     if not index_exists:
         initialize_index(es, index_info)
     initialize_mapping_if_necessary(es, index_info)
+    assume_alias(es, index_info.index, index_info.alias)
 
 
 def initialize_index(es, index_info):
