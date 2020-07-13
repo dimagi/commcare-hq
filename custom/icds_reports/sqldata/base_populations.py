@@ -47,7 +47,6 @@ class BasePopulationBeta(ICDSMixin):
                 filters['aggregation_level'] -= 1
 
             filters['month'] = date(self.config['year'], self.config['month'], 1)
-            print(filters)
             awc_data = AggAwc.objects.filter(**filters).values('cases_person').order_by('month').first()
             return [
                 [

@@ -65,16 +65,10 @@ class BaseOperationalizationBeta(ICDSMixin):
                 filters['aggregation_level'] -= 1
 
             filters['month'] = date(self.config['year'], self.config['month'], 1)
-            print(filters)
             awc_data = AggAwc.objects.filter(**filters).values(
                 'num_awcs',
                 'num_launched_awcs',
                 'awc_num_open').order_by('month').first()
-
-            print(AggAwc.objects.filter(**filters).values(
-                'num_awcs',
-                'num_launched_awcs',
-                'awc_num_open').order_by('month').query)
 
             return [
                 [
