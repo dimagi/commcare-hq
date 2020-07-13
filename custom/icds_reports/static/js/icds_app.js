@@ -76,9 +76,9 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
     (function () {
         var config = {
             params: {
-                type: 'date'
-            }
-        }
+                type: 'date',
+            },
+        };
         $http.get(url('download_release_notes'), config).then(function (response) {
             if (response && response.data) {
                 $scope.isOlderThanAWeek = response.data['isOlderThanAWeek'];
