@@ -9,7 +9,8 @@ from custom.icds_reports.asr_sqldata import ASRIdentification, ASROperationaliza
 from custom.icds_reports.filters import ICDSMonthFilter, IcdsLocationFilter, IcdsRestrictedLocationFilter
 from custom.icds_reports.mpr_sqldata import MPRIdentification, MPRSectors, MPRPopulation, MPRBirthsAndDeaths, \
     MPRAWCDetails, MPRSupplementaryNutrition, MPRUsingSalt, MPRProgrammeCoverage, MPRPreschoolEducation, \
-    MPRGrowthMonitoring, MPRImmunizationCoverage, MPRVhnd, MPRReferralServices, MPRMonitoring
+    MPRGrowthMonitoring, MPRImmunizationCoverage, MPRVhnd, MPRReferralServices, MPRMonitoring, \
+    MPROperationalizationBeta, MPRPopulationBeta
 from custom.icds_reports.mpr_sqldata import MPROperationalization
 from custom.icds_reports.reports import IcdsBaseReport
 from memoized import memoized
@@ -28,9 +29,9 @@ class MPRReport(IcdsBaseReport):
     def data_provider_classes(self):
         return [
             MPRIdentification,
-            MPROperationalization,
+            MPROperationalization if not self.icds_pre_release_features() else MPROperationalizationBeta,
             MPRSectors,
-            MPRPopulation,
+            MPRPopulation if not self.icds_pre_release_features() else MPRPopulationBeta,
             MPRBirthsAndDeaths,
             MPRAWCDetails,
             MPRSupplementaryNutrition,

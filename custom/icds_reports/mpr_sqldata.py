@@ -5,8 +5,9 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, D
 
 from django.utils.translation import ugettext as _
 from custom.icds_reports.sqldata.base_identification import BaseIdentification
-from custom.icds_reports.sqldata.base_operationalization import BaseOperationalization
-from custom.icds_reports.sqldata.base_populations import BasePopulation
+from custom.icds_reports.sqldata.base_operationalization import BaseOperationalization, \
+    BaseOperationalizationBeta
+from custom.icds_reports.sqldata.base_populations import BasePopulation, BasePopulationBeta
 from custom.icds_reports.utils import ICDSMixin, MPRData, ICDSDataTableColumn
 
 
@@ -29,6 +30,9 @@ class MPRIdentification(BaseIdentification):
 
 
 class MPROperationalization(BaseOperationalization, MPRData):
+    pass
+
+class MPROperationalizationBeta(BaseOperationalizationBeta, MPRData):
     pass
 
 
@@ -69,8 +73,13 @@ class MPRSectors(object):
             ]
 
 
+
 class MPRPopulation(BasePopulation, MPRData):
 
+    title = 'e. Total Population of Project'
+
+
+class MPRPopulationBeta(BasePopulationBeta, MPRData):
     title = 'e. Total Population of Project'
 
 
