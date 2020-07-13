@@ -61,7 +61,7 @@ class BaseOperationalizationBeta(ICDSMixin):
         if self.config['location_id']:
             filters = get_location_filter(self.config['location_id'], self.config['domain'])
 
-            if filters.get('aggregation_level')>1:
+            if filters.get('aggregation_level') > 1:
                 filters['aggregation_level'] -= 1
 
             filters['month'] = date(self.config['year'], self.config['month'], 1)
@@ -82,11 +82,5 @@ class BaseOperationalizationBeta(ICDSMixin):
                     awc_data.num_awcs if awc_data else None,
                     awc_data.num_launched_awcs if awc_data else None,
                     awc_data.awc_num_open if awc_data else None
-                ],
-                [
-                    'No. of Mini AWCs',
-                    0,
-                    0,
-                    0
                 ]
             ]
