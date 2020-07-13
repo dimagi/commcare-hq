@@ -154,10 +154,10 @@ class PopulateSQLCommand(BaseCommand):
         ))
         for doc in get_all_docs_with_doc_types(self.couch_db(), [self.couch_doc_type()]):
             self.doc_index += 1
-            if not skip_verify:
-                self._verify_doc(doc)
             if not verify_only:
                 self._migrate_doc(doc)
+            if not skip_verify:
+                self._verify_doc(doc)
 
         logger.info(f"Processed {self.doc_index} documents")
         if not skip_verify:
