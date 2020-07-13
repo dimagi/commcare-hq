@@ -691,19 +691,24 @@ function GeoPointEntry(question, options) {
     };
 
     self.loadMap = function () {
-        self.map = L.map(self.entryId).setView([self.DEFAULT.lat, self.DEFAULT.lon], self.DEFAULT.zoom);
-        L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token='
-                    + window.MAPBOX_ACCESS_TOKEN, {
-            id: 'mapbox/streets-v11',
-            attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
-                         ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        }).addTo(self.map);
-        self.map.on('move', self.updateCenter);
+        if (window.MAPBOX_ACCESS_TOKEN) {
+            self.map = L.map(self.entryId).setView([self.DEFAULT.lat, self.DEFAULT.lon], self.DEFAULT.zoom);
+            L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token='
+                        + window.MAPBOX_ACCESS_TOKEN, {
+                id: 'mapbox/streets-v11',
+                attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
+                             ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            }).addTo(self.map);
+            self.map.on('move', self.updateCenter);
 
-        self.centerMarker = L.marker(self.map.getCenter()).addTo(self.map);
+            self.centerMarker = L.marker(self.map.getCenter()).addTo(self.map);
 
-        L.mapbox.accessToken = window.MAPBOX_ACCESS_TOKEN;
-        self.geocoder = L.mapbox.geocoder('mapbox.places');
+            L.mapbox.accessToken = window.MAPBOX_ACCESS_TOKEN;
+            self.geocoder = L.mapbox.geocoder('mapbox.places');
+        } else {
+            question.error(gettext('Map layer not configured.'));
+        }
+
     };
 
     self.afterRender = function () {
