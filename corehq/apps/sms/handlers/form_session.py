@@ -11,7 +11,7 @@ from corehq.apps.sms.api import (
 )
 from corehq.apps.sms.messages import *
 from corehq.apps.sms.util import format_message_list, get_date_format
-from corehq.apps.smsforms.app import _responses_to_text, get_responses
+from corehq.apps.smsforms.app import _responses_to_text, get_responses, get_events_from_responses
 from corehq.apps.smsforms.models import SQLXFormsSession, XFormsSessionSynchronization, \
     get_channel_for_contact
 from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
@@ -111,15 +111,16 @@ def answer_next_question(v, text, msg, session):
             mark_as_invalid_response(msg)
 
         text_responses = _responses_to_text(responses)
+        events = get_events_from_responses(responses)
         if len(text_responses) > 0:
             response_text = format_message_list(text_responses)
-            send_sms_to_verified_number(v, response_text, 
-                metadata=outbound_metadata)
+            send_sms_to_verified_number(v, response_text,
+                metadata=outbound_metadata, events=events)
     else:
         mark_as_invalid_response(msg)
         response_text = "%s %s" % (error_msg, event.text_prompt)
-        send_sms_to_verified_number(v, response_text, 
-            metadata=outbound_metadata)
+        send_sms_to_verified_number(v, response_text,
+            metadata=outbound_metadata, events=[event])
 
 
 def validate_answer(event, text, v):
