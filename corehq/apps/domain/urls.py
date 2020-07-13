@@ -80,6 +80,8 @@ from corehq.motech.repeaters.views import (
     requeue_repeat_record,
 )
 
+from corehq.apps.widget.views import DialerSettingsView
+
 PASSWORD_RESET_KWARGS = {
     'template_name': 'login_and_password/password_reset_form.html',
     'form_class': ConfidentialPasswordResetForm,
@@ -193,6 +195,7 @@ domain_settings = [
     url(r'^project_limits/$', ProjectLimitsView.as_view(), name=ProjectLimitsView.urlname),
     url(r'^toggle_diff/$', toggle_diff, name='toggle_diff'),
     url(r'^sms_rates/$', SMSRatesView.as_view(), name=SMSRatesView.urlname),
+    url(r'^widget/dialer/$', DialerSettingsView.as_view(), name=DialerSettingsView.urlname),
     url(r'^recovery_measures_history/$',
         RecoveryMeasuresHistory.as_view(),
         name=RecoveryMeasuresHistory.urlname),
