@@ -367,9 +367,6 @@ HQ_APPS = (
 
     'custom.common',
 
-    'custom.icds',
-    'custom.icds.data_management',
-    'custom.icds_reports',
     'custom.nic_compliance',
     'custom.hki',
     'custom.champ',
