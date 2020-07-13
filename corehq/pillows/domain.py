@@ -5,12 +5,12 @@ from corehq.apps.change_feed import topics
 from corehq.apps.domain.models import Domain
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
+from corehq.util.doc_processor.couch import CouchDocumentProvider
 from django_countries.data import COUNTRIES
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor
-from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
-from pillowtop.reindexer.reindexer import ElasticPillowReindexer, ReindexerFactory
+from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer, ReindexerFactory
 
 
 def transform_domain_for_elasticsearch(doc_dict):
@@ -57,22 +57,22 @@ def get_domain_kafka_to_elasticsearch_pillow(pillow_id='KafkaDomainPillow', num_
 class DomainReindexerFactory(ReindexerFactory):
     slug = 'domain'
     arg_contributors = [
-        ReindexerFactory.elastic_reindexer_args,
+        ReindexerFactory.resumable_reindexer_args,
+        ReindexerFactory.elastic_reindexer_args
     ]
 
     def build(self):
-        return ElasticPillowReindexer(
-            pillow_or_processor=get_domain_kafka_to_elasticsearch_pillow(),
-            change_provider=CouchViewChangeProvider(
-                couch_db=Domain.get_db(),
-                view_name='all_docs/by_doc_type',
-                view_kwargs={
-                    'startkey': ['Domain'],
-                    'endkey': ['Domain', {}],
-                    'include_docs': True,
-                }
-            ),
+        iteration_key = "DomainToElasticsearchPillow_{}_reindexer".format(DOMAIN_INDEX_INFO.index)
+        doc_provider = CouchDocumentProvider(iteration_key, [Domain])
+        options = {
+            'chunk_size': 5
+        }
+        options.update(self.options)
+        return ResumableBulkElasticPillowReindexer(
+            doc_provider,
             elasticsearch=get_es_new(),
             index_info=DOMAIN_INDEX_INFO,
-            **self.options
+            doc_transform=transform_domain_for_elasticsearch,
+            pillow=get_domain_kafka_to_elasticsearch_pillow(),
+            **options
         )
