@@ -29,6 +29,10 @@ def get_agg_child_temp_tablename():
     return 'tmp_agg_child_health_5'
 
 
+def get_app_version_temp_tablename():
+    return 'tmp_app_version'
+
+
 def get_prev_agg_tablename(table_alias):
     return f'{table_alias}_prev'
 
