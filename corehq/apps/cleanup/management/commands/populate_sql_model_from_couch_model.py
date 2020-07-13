@@ -2,7 +2,7 @@ import logging
 import sys
 import traceback
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.core.management import call_command
 from django.db import transaction
 
@@ -141,6 +141,9 @@ class PopulateSQLCommand(BaseCommand):
     def handle(self, **options):
         verify_only = options.get("verify_only", False)
         skip_verify = options.get("skip_verify", False)
+
+        if verify_only and skip_verify:
+            raise CommandError("verify_only and skip_verify are mutually exclusive")
 
         self.doc_count = get_doc_count_by_type(self.couch_db(), self.couch_doc_type())
         self.diff_count = 0
