@@ -17,6 +17,7 @@ class TestUpdateRoles(BaseLinkedAppsTest):
             name='test',
             permissions=Permissions(
                 edit_data=True,
+                edit_reports=True,
                 view_report_list=[
                     'corehq.reports.DynamicReportmaster_report_id'
                 ]
