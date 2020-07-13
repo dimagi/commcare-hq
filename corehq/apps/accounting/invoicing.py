@@ -722,7 +722,12 @@ class UserLineItemFactory(FeatureLineItemFactory):
                     history = DomainUserHistory.objects.get(domain=domain, record_date=date)
                     total_users += history.num_users
                 except DomainUserHistory.DoesNotExist:
-                    raise
+                    from corehq.apps.domain.models import Domain
+                    if Domain.get_by_name(domain) is not None:
+                        # this checks to see if the domain still exists
+                        # before raising an error. If it was deleted the
+                        # loop will continue
+                        raise
             excess_users += max(total_users - self.rate.monthly_limit, 0)
         return excess_users
 
