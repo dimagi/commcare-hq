@@ -14,7 +14,7 @@
 {% block stylesheets %}
   {{ block.super }}
   {% compress css %}
-    <link rel="stylesheet" href="{% static 'widget/css/dialerstyle.css' %}">
+    <link type="text/css" rel="stylesheet" href="{% static 'widget/css/dialerstyle.css' %}">
   {% endcompress %}
 {% endblock %}
 
