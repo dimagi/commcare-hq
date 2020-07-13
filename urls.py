@@ -90,6 +90,7 @@ domain_specific = [
     url(r'^remote_link/', include('corehq.apps.linked_domain.urls')),
     url(r'^translations/', include('corehq.apps.translations.urls')),
     url(r'^submit_feedback/$', submit_feedback, name='submit_feedback'),
+    url(r'^widget/', include('corehq.apps.widget.urls')),
 ]
 
 urlpatterns = [
