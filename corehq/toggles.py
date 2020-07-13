@@ -1965,6 +1965,13 @@ REFER_CASE_REPEATER = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
+WIDGET_DIALER = StaticToggle(
+    'widget_dialer',
+    'COVID: Enable usage of AWS Connect Dialer',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
 RESTRICT_LOGIN_AS = StaticToggle(
     'restrict_login_as',
     'COVID: Limit allowed users for login as',

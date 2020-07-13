@@ -1,0 +1,191 @@
+{% extends "widget/base_webapps_template.html" %}
+{% load static %}
+{% load compress %}
+
+{% block head %}
+  {{ block.super }}
+  <script src="{% static 'widget/js/connect-streams-min.js' %}"></script>
+  <script src="{% static 'widget/js/amazon-connect-min.js' %}"></script>
+  <script src="{% static 'widget/js/detectRTC.js' %}"></script>
+  <script src="{% static 'widget/js/testUDPNetwork.js' %}"></script>
+  <script src="{% static 'widget/js/ccputil.js' %}"></script>
+{% endblock %}
+
+{% block stylesheets %}
+  {{ block.super }}
+  {% compress css %}
+    <link rel="stylesheet" href="{% static 'widget/css/dialerstyle.css' %}">
+  {% endcompress %}
+{% endblock %}
+
+
+{% block title %}Dialer{% endblock %}
+
+{% block widget_content %}
+        <div id="divBanner" class="banner">
+            <div id="divLogo" class="bannerLogoContainer">
+                {% if CUSTOM_LOGO_URL %}
+                <img src="{{ CUSTOM_LOGO_URL }}" class="bannerLogo"></img>
+                {% else %}
+                <img src="{% static 'hqstyle/images/commcare-flower-lg.png' %}" class="bannerLogo"></img>
+                {% endif %}
+            </div>
+            <div id="divHeader" class="bannerHeader">
+                {{dialer_settings.dialer_page_header}}
+            </div>
+            <div id="divSubHeader" class="bannerSubHeader">
+                {{dialer_settings.dialer_page_subheader}}
+            </div>
+            <div class="bannerUser">
+                <div id="divUserIcon" class="bannerUserIcon">
+                    <img src="{% static 'widget/images/user-icon.png' %}"></img>
+                </div>
+
+                <div id="divUserName" class="bannerUserName">
+                    NOT LOGGED IN
+                </div>
+                <div id="divLogin" class="bannerLogin">
+                    <a id="ConnectLogin" href="#" target="_blank">Login</a>
+                </div>
+            </div>
+        </div>
+        <div id="divMainBody" class="mainBody">
+            <div id="divLeftPanel" class="leftPanel">
+                <div class="panelHeading">Telephone</div>
+
+                <div class="panelBody">
+                    <div class="panelLabel">Phone Number:</div>
+                    <div id="phoneNo"class="panelContent">NOT AVAILABLE</div>
+
+                    <div class="panelLabel">Call Status:</div>
+                    <div id="contactStatus" class="panelContent">Not Dialled</div>
+
+                    <div class="panelLabel">Contact ID:</div>
+                    <div id="contactId" class="panelContentDouble"></div>
+
+                    <div class="panelLabel">Queue Name:</div>
+                    <div id="queueName" class="panelContent"></div>
+
+                    <div class="buttonContainer">
+                        <button id="phoneButton" class="button" onclick="dialEndPoint(document.getElementById('phoneNo').innerText)">Dial Now</button>
+                    </div>
+                </div>
+                <div class="pad"></div>
+                <div class="panelHeading">Preferences</div>
+                <div class="panelBody">
+                    <div class="checkBox">
+                        <input type="checkbox" name="chkAutoDial" id="chkAutoDial" value="" onchange="savePreferences()">
+                        <label for="chkAutoDial">Auto dial on load</label>
+                    </div>
+                    <div class="checkBox">
+                        <input type="checkbox" name="chkRestoreLocation" id="chkRestoreLocation" value="" onchange="savePreferences()">
+                        <label for="chkRestore Location">Restore location</label>
+                    </div>
+                    <div class="pad90"></div>
+                    <div class="buttonContainer">
+                    </div>
+                </div>
+            </div>
+
+            <div id="divCenterPanel" class="centerPanel">
+                <div id="divCCP" class="ccp"></div>
+            </div>
+
+            <div id="divRightPanel" class="rightPanel">
+                <div id="divEventPanel" class="eventPanel">
+                    <div id="divEventWindow" class="eventWindow">
+                        <!-- Log is built here -->
+                    </div>
+                    <div class="buttonContainerLeft">
+                        <button class="button" onclick="copyToClipboard();">Copy To Clipboard</button>
+                    </div>
+                </div>
+
+                <div class="checkPanel">
+                    <div class="checkColumn">
+                        <div class="panelHeading">Media Devices</div>
+
+                        <div class="panelBody">
+
+                            <div class="mediaEntry">
+                                <div class="mediaLabel">Speakers</div>
+                                <div class="mediaResult">
+                                    <img id="imgSpeakers" src="{% static 'widget/images/blackLED.png' %}"></img>
+                                </div>
+                            </div>
+
+                            <div class="mediaEntry">
+                                <div class="mediaLabel">Microphone</div>
+                                <div class="mediaResult">
+                                    <img id="imgMicrophone" src="{% static 'widget/images/blackLED.png' %}"></img>
+                                </div>
+                            </div>
+
+                            <div class="mediaEntry">
+                                <div class="mediaLabel">Mic. Permission</div>
+                                <div class="mediaResult">
+                                    <img id="imgMicrophonePermission" src="{% static 'widget/images/blackLED.png' %}"></img>
+                                </div>
+                            </div>
+
+                            <div class="mediaEntry">
+                                <div class="mediaLabel">Web Cam</div>
+                                <div class="mediaResult">
+                                    <img id="imgWebCam" src="{% static 'widget/images/blackLED.png' %}"></img>
+                                </div>
+                            </div>
+
+                            <div class="mediaEntry">
+                                <div class="mediaLabel">WebRTC</div>
+                                <div class="mediaResult">
+                                    <img id="imgWebRTC" src="{% static 'widget/images/blackLED.png' %}"></img>
+                                </div>
+                            </div>
+
+                            <div class="buttonContainer">
+                                <button class="button" onclick="checkMedia()">Check Media</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="checkColumn">
+                        <div class="panelHeading">Network</div>
+
+                        <div class="panelBody">
+                            <div class="mediaEntry">
+                                <div class="mediaLabel">US East 1</div>
+                                <div class="mediaResult">
+                                    <img id="imgUDPUSE1" src="{% static 'widget/images/blackLED.png' %}"></img>
+                                </div>
+                            </div>
+                            <div class="mediaEntry">
+                                <div class="mediaLabel">US West 2</div>
+                                <div class="mediaResult">
+                                    <img id="imgUDPUSW2" src="{% static 'widget/images/blackLED.png' %}"></img>
+                                </div>
+                            </div>
+                            <div class="buttonContainer">
+                                <button class="button" onclick="checkNetwork()">Check Network</button>
+                            </div>
+                        </div>
+
+                        <div class="pad"></div>
+                        <a href="#" target="_blank" class="links">Agent Training Center</a><br>
+                        <a href="#" target="_blank" class="links">Agent Support Center</a><br>
+                        <a href="https://s3.amazonaws.com/connectivitytest/checkConnectivity.html" target="_blank" class="links">AWS Connectivity Tool</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+{% endblock %}
+
+{% block js %}
+ {{block.super}}
+<script>
+function loadDialer() {
+    initDialer('{{callout_number}}', '{{dialer_settings.aws_instance_id}}')
+}
+
+window.addEventListener('DOMContentLoaded', loadDialer, false);
+</script>
+
+{% endblock %}
