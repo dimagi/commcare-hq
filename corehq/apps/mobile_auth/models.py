@@ -4,7 +4,6 @@ from django.db import models
 
 from dimagi.ext.couchdbkit import DateTimeProperty, Document, StringProperty
 from dimagi.utils.couch.migration import SyncCouchToSQLMixin, SyncSQLToCouchMixin
-from dimagi.utils.parsing import json_format_datetime
 
 from .utils import generate_aes_key
 
@@ -35,18 +34,6 @@ class MobileAuthKeyRecord(SyncCouchToSQLMixin, Document):
     @property
     def uuid(self):
         return self.get_id
-
-    @classmethod
-    def key_for_time(cls, domain, user_id, now):
-        now_json = json_format_datetime(now)
-        key_record = cls.view('mobile_auth/key_records',
-            startkey=[domain, user_id, now_json],
-            endkey=[domain, user_id, ""],
-            descending=True,
-            limit=1,
-            include_docs=True,
-        ).first()
-        return key_record
 
     @classmethod
     def _migration_get_sql_model_class(cls):
@@ -91,3 +78,7 @@ class SQLMobileAuthKeyRecord(SyncSQLToCouchMixin, models.Model):
     @classmethod
     def _migration_get_fields(cls):
         return ["domain", "user_id", "valid", "expires", "type", "key"]
+
+    @classmethod
+    def key_for_time(cls, domain, user_id, now):
+        return cls.objects.filter(domain=domain, user_id=user_id, valid__lte=now).order_by('-valid').first()
