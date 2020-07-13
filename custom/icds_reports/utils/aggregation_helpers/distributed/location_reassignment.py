@@ -2,7 +2,7 @@ from dateutil.relativedelta import relativedelta
 from django.db import connections
 
 from corehq.apps.userreports.util import get_table_name
-from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
+from custom.icds_reports.utils.connections import get_icds_ucr_citus_db_alias
 from custom.icds_reports.const import DASHBOARD_DOMAIN
 from custom.icds_reports.utils.aggregation_helpers import get_prev_agg_tablename, transform_day_to_month
 

@@ -1023,6 +1023,8 @@ REQUIRE_TWO_FACTOR_FOR_SUPERUSERS = False
 # that adds messages to the partition with the fewest unprocessed messages
 USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
 
+LOCAL_CUSTOM_DB_ROUTING = {}
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
@@ -1395,6 +1397,13 @@ if helper.is_testing():
 DATABASE_ROUTERS = globals().get('DATABASE_ROUTERS', [])
 if 'corehq.sql_db.routers.MultiDBRouter' not in DATABASE_ROUTERS:
     DATABASE_ROUTERS.append('corehq.sql_db.routers.MultiDBRouter')
+
+# Mapping of app_label to DB name or reporting DB alias (see REPORTING_DATABASES)
+CUSTOM_DB_ROUTING = {
+    "aaa": "aaa-data",
+    "icds_reports": "icds-ucr-citus"  # this can be removed once the ICDS code is not present on all envs
+}
+CUSTOM_DB_ROUTING.update(LOCAL_CUSTOM_DB_ROUTING)
 
 INDICATOR_CONFIG = {
 }
