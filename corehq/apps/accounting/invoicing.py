@@ -427,6 +427,10 @@ class CustomerAccountInvoiceFactory(object):
 
 
 def should_create_invoice(subscription, domain, invoice_start, invoice_end):
+    from corehq.apps.domain.models import Domain
+    if Domain.get_by_name(domain) is None:
+        # domain has been deleted, ignore
+        return False
     if subscription.is_trial:
         log_accounting_info("Skipping invoicing for Subscription %s because it's a trial." % subscription.pk)
         return False
