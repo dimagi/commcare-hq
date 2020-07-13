@@ -167,11 +167,11 @@ def get_db_for_partitioned_model(model, hints):
 
     if HINT_INSTANCE in hints:
         instance = hints[HINT_INSTANCE]
-        if instance._state.db is not None:
-            return instance._state.db
         partition_value = getattr(instance, 'partition_value', None)
         if partition_value is not None:
             return get_db_alias_for_partitioned_doc(partition_value)
+        if instance._state.db is not None:
+            return instance._state.db
     if hints.get(HINT_PLPROXY):
         return plproxy_config.proxy_db
     if HINT_USING in hints:
