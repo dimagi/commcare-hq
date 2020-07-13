@@ -562,7 +562,7 @@ def process_sms_registration(msg):
 
 def incoming(phone_number, text, backend_api, timestamp=None,
              domain_scope=None, backend_message_id=None,
-             raw_text=None, backend_id=None):
+             raw_text=None, backend_id=None, media_url=None):
     """
     entry point for incoming sms
 
@@ -571,6 +571,7 @@ def incoming(phone_number, text, backend_api, timestamp=None,
     backend_api - backend API ID of receiving sms backend
     timestamp - message received timestamp; defaults to now (UTC)
     domain_scope - set the domain scope for this SMS; see SMSBase.domain_scope for details
+    media_url - url for media download.
     """
     # Log message in message log
     if text is None:
@@ -587,6 +588,8 @@ def incoming(phone_number, text, backend_api, timestamp=None,
         backend_message_id=backend_message_id,
         raw_text=raw_text,
     )
+    if media_url: msg.custom_metadata = {"media_url": media_url}
+
     if settings.SMS_QUEUE_ENABLED:
         msg.processed = False
         msg.datetime_to_process = get_utcnow()

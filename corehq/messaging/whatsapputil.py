@@ -31,7 +31,7 @@ def get_multimedia_urls(msg):
                 audio_url = get_url_base() + media.url() + 'audio.mp3'
             if 'caption_video' in msg.custom_metadata and msg.custom_metadata['caption_video'] == path:
                 video_url = get_url_base() + media.url() + 'video.mp4'
-    return image_url, audio_url , video_url
+    return image_url, audio_url, video_url
 
 
 def extract_error_message_from_template_string(message_text):

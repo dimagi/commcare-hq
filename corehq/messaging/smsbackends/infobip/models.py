@@ -1,5 +1,7 @@
 import requests
 import json
+from io import BytesIO
+from django.core.files.uploadedfile import UploadedFile
 from corehq.apps.sms.models import SQLSMSBackend, SMS
 from corehq.apps.sms.util import clean_phone_number
 from corehq.messaging.smsbackends.infobip.forms import InfobipBackendForm
@@ -156,6 +158,20 @@ class InfobipBackend(SQLSMSBackend):
             f'/whatsapp/1/senders/{self.config.reply_to_phone_number}/templates'
         response = requests.get(url, headers=headers)
         return json.loads(response.content).get('templates')
+
+    def download_incoming_media(self, media_url):
+        file_id = media_url.rsplit('/', 1)[-1]
+        headers = {
+            'Authorization': f'App {self.config.auth_token}',
+            'Accept': 'application/json'
+        }
+        response = requests.get(media_url, headers=headers)
+        uploaded_file = UploadedFile(
+            BytesIO(response.content),
+            file_id,
+            content_type=response.headers.get('content-type')
+        )
+        return file_id, uploaded_file
 
     @classmethod
     def generate_template_string(cls, template):
