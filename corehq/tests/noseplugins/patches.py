@@ -1,5 +1,7 @@
+from django.conf import settings
 from nose.plugins import Plugin
 
+from corehq.form_processor.tests.utils import patch_testcase_transactions
 from corehq.util.es.testing import patch_es_user_signals
 
 
@@ -13,6 +15,7 @@ class PatchesPlugin(Plugin):
 
     def begin(self):
         patch_assertItemsEqual()
+        patch_django_TestCase_databases()
         fix_freezegun_bugs()
         patch_es_user_signals()
 
@@ -20,6 +23,27 @@ class PatchesPlugin(Plugin):
 def patch_assertItemsEqual():
     import unittest
     unittest.TestCase.assertItemsEqual = unittest.TestCase.assertCountEqual
+
+
+def patch_django_TestCase_databases():
+    """Lift restriction on database access in tests introduced in Django 2.2
+
+    For test performance it may be better to remove this and tag each
+    test with the databases it will query.
+    """
+    from django.test import TestCase
+    # According to the docs it should be possible to allow tests to
+    # access all databases with `TestCase.databses = '_all__'`
+    # https://docs.djangoproject.com/en/2.2/topics/testing/tools/#multi-database-support
+    #
+    # Unfortunately support for '__all__' appears to be buggy:
+    # django.db.utils.ConnectionDoesNotExist: The connection _ doesn't exist
+    #
+    # Similar error reported elsewhere:
+    # https://code.djangoproject.com/ticket/30541
+    TestCase.databases = settings.DATABASES.keys()
+
+    patch_testcase_transactions()
 
 
 GLOBAL_FREEZEGUN_IGNORE_LIST = ["kafka."]
