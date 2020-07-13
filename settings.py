@@ -789,6 +789,12 @@ LOCAL_PILLOWTOPS = {}
 
 LOCAL_STATIC_DATA_SOURCES = []
 LOCAL_STATIC_UCR_REPORTS = []
+LOCAL_CUSTOM_UCR_EXPRESSIONS = []
+LOCAL_CUSTOM_UCR_EXPRESSION_LISTS = []
+LOCAL_CUSTOM_UCR_REPORT_FILTERS = []
+LOCAL_CUSTOM_UCR_REPORT_FILTER_VALUES = []
+
+LOCAL_DOMAIN_MODULE_MAP = {}
 
 RUN_FORM_META_PILLOW = True
 RUN_CASE_SEARCH_PILLOW = True
@@ -1892,21 +1898,16 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('eqa_expression', 'custom.eqa.expressions.eqa_expression'),
     ('cqi_action_item', 'custom.eqa.expressions.cqi_action_item'),
     ('eqa_percent_expression', 'custom.eqa.expressions.eqa_percent_expression'),
-]
+] + LOCAL_CUSTOM_UCR_EXPRESSIONS
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
-    ('mvp.ucr.reports.expressions.CUSTOM_UCR_EXPRESSIONS'),
-    ('custom.icds_reports.ucr.expressions.CUSTOM_UCR_EXPRESSIONS'),
-    ('corehq.apps.userreports.expressions.extension_expressions.CUSTOM_UCR_EXPRESSIONS'),
-]
+    'mvp.ucr.reports.expressions.CUSTOM_UCR_EXPRESSIONS',
+    'corehq.apps.userreports.expressions.extension_expressions.CUSTOM_UCR_EXPRESSIONS',
+] + LOCAL_CUSTOM_UCR_EXPRESSION_LISTS
 
-CUSTOM_UCR_REPORT_FILTERS = [
-    ('village_choice_list', 'custom.icds_reports.ucr.filter_spec.build_village_choice_list_filter_spec')
-]
+CUSTOM_UCR_REPORT_FILTERS = [] + LOCAL_CUSTOM_UCR_REPORT_FILTERS
 
-CUSTOM_UCR_REPORT_FILTER_VALUES = [
-    ('village_choice_list', 'custom.icds_reports.ucr.filter_value.VillageFilterValue')
-]
+CUSTOM_UCR_REPORT_FILTER_VALUES = [] + LOCAL_CUSTOM_UCR_REPORT_FILTER_VALUES
 
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
@@ -1917,9 +1918,6 @@ DOMAIN_MODULE_MAP = {
     'pact': 'pact',
 
     'ipm-senegal': 'custom.intrahealth',
-    'icds-test': 'custom.icds_reports',
-    'icds-cas': 'custom.icds_reports',
-    'icds-dashboard-qa': 'custom.icds_reports',
     'reach-test': 'custom.aaa',
     'reach-dashboard-qa': 'custom.aaa',
     'testing-ipm-senegal': 'custom.intrahealth',
@@ -1971,6 +1969,8 @@ DOMAIN_MODULE_MAP = {
 
     'ccqa': 'custom.ccqa',
 }
+
+DOMAIN_MODULE_MAP.update(LOCAL_DOMAIN_MODULE_MAP)
 
 THROTTLE_SCHED_REPORTS_PATTERNS = (
     # Regex patterns matching domains whose scheduled reports use a
