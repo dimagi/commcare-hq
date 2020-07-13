@@ -9,9 +9,6 @@ from django.contrib.admin.utils import NestedObjects
 from django.core import serializers
 from django.db.models.signals import post_delete, post_save
 from django.test import TestCase
-from django.test.utils import override_settings
-
-from nose.plugins.attrib import attr
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
@@ -48,6 +45,7 @@ from corehq.form_processor.models import (
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     create_form_for_test,
+    use_sql_backend,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.models import AlertScheduleInstance
 
@@ -140,8 +138,7 @@ class BaseDumpLoadTest(TestCase):
                 self.assertIn('raw', args, message)
 
 
-@attr(sql_backend=True)
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@use_sql_backend
 class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
     maxDiff = None
 
