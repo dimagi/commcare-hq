@@ -17,7 +17,7 @@ from custom.icds_reports.views import (
     GovernanceHomeVisitAPI, GovernanceBeneficiaryAPI, GovernanceStateListAPI, GovernanceVHNDSAPI,
     MobileDashboardDownloadView, GovernanceCBEAPI, BiharDemographicsAPI, BiharMotherDetailsAPI, BiharVaccinesAPI,
     BiharSchoolAPI, ServiceDeliveryDashboardDetailsView, PoshanProgressDashboardView, LSsLaunchedView,
-    DownloadReleaseNotes, ReleaseNotesUpdateView, ReleaseDateView
+    DownloadReleaseNotes, ReleaseNotesUpdateView
 )
 
 
@@ -211,7 +211,6 @@ urlpatterns = [
     url(r'^bihar_demographics/mother_details/', BiharMotherDetailsAPI.as_view(), name='mother_details'),
     url(r'^bihar_demographics/children_and_vaccines/', BiharVaccinesAPI.as_view(), name='children_and_vaccines'),
     url(r'^bihar_demographics/school_data/', BiharSchoolAPI.as_view(), name='school_data'),
-    url(r'^release_date/', ReleaseDateView.as_view(), name='release_date'),
     url('^update_dashboard_release_notes/', ReleaseNotesUpdateView.as_view(), name=ReleaseNotesUpdateView.urlname),
     url('^download_release_notes/', DownloadReleaseNotes.as_view(), name='download_release_notes')
 ]

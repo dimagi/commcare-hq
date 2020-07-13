@@ -456,31 +456,26 @@ class DownloadReleaseNotes(View):
         release_notes_file = IcdsFile.objects.filter(blob_id="dashboard_release_notes.pdf",
                                                      data_type='dashboard_release_notes')\
             .order_by('file_added').last()
-        release_notes = release_notes_file.get_file_from_blobdb()
+        request_type = request.GET.get('type')
+        if request_type == 'date':
+            release_date = release_notes_file.file_added
+            release_date_string = release_date.strftime('%d-%m-%Y')
 
-        release_date = release_notes_file.file_added.strftime('%d-%m-%Y')
+            week_ago = date.today() - timedelta(days=7)
+            is_older_than_a_week = week_ago > release_date
+            return JsonResponse(data={
+                'releaseDate': release_date_string,
+                'isOlderThanAWeek': is_older_than_a_week
+            })
+        else:
+            release_notes = release_notes_file.get_file_from_blobdb()
 
-        response = HttpResponse(release_notes.read(), content_type='application/pdf')
-        response['Content-Disposition'] = safe_filename_header("Dashboard_release_notes_" + release_date + ".pdf")
+            release_date = release_notes_file.file_added.strftime('%d-%m-%Y')
 
-        return response
+            response = HttpResponse(release_notes.read(), content_type='application/pdf')
+            response['Content-Disposition'] = safe_filename_header("Dashboard_release_notes_" + release_date + ".pdf")
 
-
-@location_safe
-@method_decorator([login_and_domain_required], name='dispatch')
-class ReleaseDateView(View):
-    def get(self, request, *args, **kwargs):
-        release_date = IcdsFile.objects.filter(blob_id="dashboard_release_notes.pdf",
-                                               data_type='dashboard_release_notes')\
-            .order_by('file_added').last().file_added
-        release_date_string = release_date.strftime('%d-%m-%Y')
-
-        week_ago = date.today() - timedelta(days=7)
-        is_older_than_a_week = week_ago > release_date
-        return JsonResponse(data={
-            'releaseDate': release_date_string,
-            'isOlderThanAWeek': is_older_than_a_week
-        })
+            return response
 
 
 @method_decorator(DASHBOARD_CHECKS, name='dispatch')
