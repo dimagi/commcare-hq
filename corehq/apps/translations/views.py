@@ -1,7 +1,7 @@
 import io
 
 from django.contrib import messages
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 
@@ -124,7 +124,7 @@ def download_bulk_app_translations(request, domain, app_id):
 def upload_bulk_app_translations(request, domain, app_id):
     lang = request.POST.get('language')
     validate = request.POST.get('validate')
-
+    
     app = get_app(domain, app_id)
     try:
         workbook = get_workbook(request.file)
@@ -132,13 +132,10 @@ def upload_bulk_app_translations(request, domain, app_id):
         messages.error(request, str(e))
     else:
         if validate:
-            if not lang:
-                msgs = [(messages.error, _("Please select language to validate."))]
-            else:
-                try:
-                    msgs = validate_bulk_app_translation_upload(app, workbook, request.user.email, lang)
-                except BulkAppTranslationsException as e:
-                    msgs = [(messages.error, str(e))]
+            try:
+                msgs = validate_bulk_app_translation_upload(app, workbook, request.user.email, lang, request.file)
+            except BulkAppTranslationsException as e:
+                msgs = [(messages.error, str(e))]
         else:
             sheet_name_to_unique_id = get_sheet_name_to_unique_id_map(request.file, lang)
             msgs = process_bulk_app_translation_upload(app, workbook, sheet_name_to_unique_id, lang=lang)
