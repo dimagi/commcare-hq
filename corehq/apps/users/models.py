@@ -135,6 +135,7 @@ class Permissions(DocumentSchema):
     access_api = BooleanProperty(default=True)
     access_web_apps = BooleanProperty(default=False)
 
+    edit_reports = BooleanProperty(default=False)
     view_reports = BooleanProperty(default=False)
     view_report_list = StringListProperty(default=[])
 
@@ -241,6 +242,7 @@ class Permissions(DocumentSchema):
             edit_motech=True,
             edit_data=True,
             edit_apps=True,
+            edit_reports=True,
             view_reports=True,
             edit_billing=True,
             edit_shared_exports=True,
@@ -2708,6 +2710,10 @@ class AnonymousCouchUser(object):
     def is_active(self):
         return True
 
+    @property
+    def is_staff(self):
+        return False
+
     def is_domain_admin(self):
         return False
 
@@ -2731,6 +2737,9 @@ class AnonymousCouchUser(object):
         return False
 
     def can_edit_apps(self):
+        return False
+
+    def can_edit_reports(self):
         return False
 
     def is_eula_signed(self, version=None):

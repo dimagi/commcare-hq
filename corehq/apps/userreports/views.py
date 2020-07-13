@@ -310,7 +310,7 @@ class CreateConfigReportView(BaseEditConfigReportView):
 
 class ReportBuilderView(BaseDomainView):
 
-    @method_decorator(require_permission(Permissions.edit_data))
+    @method_decorator(require_permission(Permissions.edit_reports))
     @cls_to_view_login_and_domain
     @use_daterangepicker
     @use_datatables
@@ -775,6 +775,9 @@ def _assert_report_delete_privileges(request):
         raise Http404()
 
 
+@login_and_domain_required
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+@require_permission(Permissions.edit_reports)
 def delete_report(request, domain, report_id):
     _assert_report_delete_privileges(request)
     config = get_document_or_404(ReportConfiguration, domain, report_id)
