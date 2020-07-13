@@ -5,7 +5,7 @@ from django.utils.translation import get_language
 
 from corehq.apps.domain.models import Domain
 from corehq.tabs.exceptions import UrlPrefixFormatError, UrlPrefixFormatsSuggestion
-from corehq.tabs.utils import sidebar_to_dropdown
+from corehq.tabs.utils import sidebar_to_dropdown, dropdown_dict
 from memoized import memoized
 from dimagi.utils.django.cache import make_template_fragment_key
 from dimagi.utils.web import get_url_base
@@ -25,8 +25,6 @@ def url_is_location_safe(url):
 class UITab(object):
     title = None
     view = None
-
-    dispatcher = None
 
     # Tuple of prefixes that this UITab claims e.g.
     #   ('/a/{domain}/reports/', '/a/{domain}/otherthing/')
@@ -67,6 +65,10 @@ class UITab(object):
                         .format(self.__class__.__name__, url_prefix_formats))
 
     @property
+    def divider(self):
+        return dropdown_dict(None, is_divider=True)
+
+    @property
     def project(self):
         if not self._project and self.domain:
             self._project = Domain.get_by_name(self.domain)
@@ -98,12 +100,8 @@ class UITab(object):
         return filtered
 
     @property
-    @memoized
     def sidebar_items(self):
-        if self.dispatcher:
-            return self.dispatcher.navigation_sections(request=self._request, domain=self.domain)
-        else:
-            return []
+        return []
 
     @property
     @memoized

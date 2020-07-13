@@ -1,8 +1,8 @@
+import csv
 import os
 from datetime import datetime
 
 import mock
-import csv
 
 from django.conf import settings
 from django.test.utils import override_settings
@@ -20,7 +20,7 @@ from custom.icds_reports.tasks import (
     build_incentive_report,
 )
 from .agg_setup import setup_location_hierarchy, setup_tables_and_fixtures, aggregate_state_form_data, \
-    cleanup_misc_agg_tables
+    cleanup_misc_agg_tables, build_bihar_api
 
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
 
@@ -41,6 +41,7 @@ def setUpModule():
             try:
                 with mock.patch('custom.icds_reports.tasks.update_aggregate_locations_tables'):
                     move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
+                build_bihar_api()
                 build_incentive_report(agg_date=datetime(2017, 5, 28))
             except Exception as e:
                 print(e)

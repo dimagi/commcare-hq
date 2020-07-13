@@ -259,17 +259,18 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         from corehq.apps.case_search.models import CaseSearchConfig, FuzzyProperties
         expected_object_counts = Counter({
             CaseSearchConfig: 1,
+            FuzzyProperties: 2,
         })
 
         pre_config, created = CaseSearchConfig.objects.get_or_create(pk=self.domain_name)
         pre_config.enabled = True
-        fuzzies = [
+        pre_fuzzies = [
             FuzzyProperties(domain=self.domain, case_type='dog', properties=['breed', 'color']),
             FuzzyProperties(domain=self.domain, case_type='owner', properties=['name']),
         ]
-        for fuzzy in fuzzies:
+        for fuzzy in pre_fuzzies:
             fuzzy.save()
-        pre_config.fuzzy_properties.set(fuzzies)
+        pre_config.fuzzy_properties.set(pre_fuzzies)
         pre_config.save()
 
         self._dump_and_load(expected_object_counts)
@@ -277,6 +278,8 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         post_config = CaseSearchConfig.objects.get(domain=self.domain_name)
         self.assertTrue(post_config.enabled)
         self.assertEqual(pre_config.fuzzy_properties, post_config.fuzzy_properties)
+        post_fuzzies = FuzzyProperties.objects.filter(domain=self.domain_name)
+        self.assertEqual(set(f.case_type for f in post_fuzzies), {'dog', 'owner'})
 
     def test_users(self):
         from corehq.apps.users.models import CommCareUser
@@ -528,6 +531,54 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             alert_schedule_id=uuid.uuid4(),
         ).save()
         self._dump_and_load({AlertScheduleInstance: 1})
+
+    def test_mobile_backend(self):
+        from corehq.apps.sms.models import (
+            SQLMobileBackend,
+            SQLMobileBackendMapping,
+        )
+
+        domain_backend = SQLMobileBackend.objects.create(
+            domain=self.domain_name,
+            name='test-domain-mobile-backend',
+            display_name='Test Domain Mobile Backend',
+            hq_api_id='TDMB',
+            inbound_api_key='test-domain-mobile-backend-inbound-api-key',
+            supported_countries=["*"],
+            backend_type=SQLMobileBackend.SMS,
+            is_global=False,
+        )
+        SQLMobileBackendMapping.objects.create(
+            domain=self.domain_name,
+            backend=domain_backend,
+            backend_type=SQLMobileBackend.SMS,
+            prefix='123',
+        )
+
+        global_backend = SQLMobileBackend.objects.create(
+            domain=None,
+            name='test-global-mobile-backend',
+            display_name='Test Global Mobile Backend',
+            hq_api_id='TGMB',
+            inbound_api_key='test-global-mobile-backend-inbound-api-key',
+            supported_countries=["*"],
+            backend_type=SQLMobileBackend.SMS,
+            is_global=True,
+        )
+        SQLMobileBackendMapping.objects.create(
+            domain=self.domain_name,
+            backend=global_backend,
+            backend_type=SQLMobileBackend.SMS,
+            prefix='*',
+        )
+        self._dump_and_load({
+            SQLMobileBackendMapping: 1,
+            SQLMobileBackend: 1,
+        })
+        self.assertEqual(SQLMobileBackend.objects.first().domain,
+                         self.domain_name)
+        self.assertEqual(SQLMobileBackendMapping.objects.first().domain,
+                         self.domain_name)
 
     def test_case_importer(self):
         from corehq.apps.case_importer.tracking.models import (

@@ -64,6 +64,8 @@ LANGUAGES = (
     ('sw', 'Swahili'),
 )
 
+STATICI18N_FILENAME_FUNCTION = 'statici18n.utils.legacy_filename'
+
 SITE_ID = 1
 
 # If you set this to False, Django will make some optimizations so as not
@@ -677,6 +679,61 @@ REMINDERS_RATE_LIMIT_PERIOD = 60
 
 SYNC_CASE_FOR_MESSAGING_ON_SAVE = True
 
+# Used by the new reminders framework
+LOCAL_AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {}
+AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {
+    "UCLA_GENERAL_HEALTH":
+        ["custom.ucla.api.general_health_message_bank_content_new",
+         "UCLA: General Health Message Bank"],
+    "UCLA_MENTAL_HEALTH":
+        ["custom.ucla.api.mental_health_message_bank_content_new",
+         "UCLA: Mental Health Message Bank"],
+    "UCLA_SEXUAL_HEALTH":
+        ["custom.ucla.api.sexual_health_message_bank_content_new",
+         "UCLA: Sexual Health Message Bank"],
+    "UCLA_MED_ADHERENCE":
+        ["custom.ucla.api.med_adherence_message_bank_content_new",
+         "UCLA: Med Adherence Message Bank"],
+    "UCLA_SUBSTANCE_USE":
+        ["custom.ucla.api.substance_use_message_bank_content_new",
+         "UCLA: Substance Use Message Bank"],
+}
+
+# Used by the old reminders framework
+LOCAL_AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {}
+AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
+    'HOST_CASE_OWNER_LOCATION':
+        ['corehq.apps.reminders.custom_recipients.host_case_owner_location',
+         "Custom: Extension Case -> Host Case -> Owner (which is a location)"],
+    'HOST_CASE_OWNER_LOCATION_PARENT':
+        ['corehq.apps.reminders.custom_recipients.host_case_owner_location_parent',
+         "Custom: Extension Case -> Host Case -> Owner (which is a location) -> Parent location"],
+    'CASE_OWNER_LOCATION_PARENT':
+        ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent_old_framework',
+         "Abt: The case owner's location's parent location"],
+}
+
+
+# Used by the new reminders framework
+LOCAL_AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {}
+AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
+    'HOST_CASE_OWNER_LOCATION':
+        ['corehq.messaging.scheduling.custom_recipients.host_case_owner_location',
+         "Custom: Extension Case -> Host Case -> Owner (which is a location)"],
+    'HOST_CASE_OWNER_LOCATION_PARENT':
+        ['corehq.messaging.scheduling.custom_recipients.host_case_owner_location_parent',
+         "Custom: Extension Case -> Host Case -> Owner (which is a location) -> Parent location"],
+    'CASE_OWNER_LOCATION_PARENT':
+        ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent_new_framework',
+         "Abt: The case owner's location's parent location"],
+}
+
+LOCAL_AVAILABLE_CUSTOM_RULE_CRITERIA = {}
+AVAILABLE_CUSTOM_RULE_CRITERIA = {}
+
+LOCAL_AVAILABLE_CUSTOM_RULE_ACTIONS = {}
+AVAILABLE_CUSTOM_RULE_ACTIONS = {}
+
 ####### auditcare parameters #######
 AUDIT_MODEL_SAVE = [
     'corehq.apps.app_manager.Application',
@@ -989,6 +1046,12 @@ except ImportError as error:
     # fallback in case nothing else is found - used for readthedocs
     from dev_settings import *
 
+
+AVAILABLE_CUSTOM_SCHEDULING_CONTENT.update(LOCAL_AVAILABLE_CUSTOM_SCHEDULING_CONTENT)
+AVAILABLE_CUSTOM_REMINDER_RECIPIENTS.update(LOCAL_AVAILABLE_CUSTOM_REMINDER_RECIPIENTS)
+AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS.update(LOCAL_AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS)
+AVAILABLE_CUSTOM_RULE_CRITERIA.update(LOCAL_AVAILABLE_CUSTOM_RULE_CRITERIA)
+AVAILABLE_CUSTOM_RULE_ACTIONS.update(LOCAL_AVAILABLE_CUSTOM_RULE_ACTIONS)
 
 # The defaults above are given as a function of (or rather a closure on) DEBUG,
 # so if not overridden they need to be evaluated after DEBUG is set
@@ -1553,127 +1616,6 @@ ALLOWED_CUSTOM_CONTENT_HANDLERS = {
     "UCLA_SUBSTANCE_USE": "custom.ucla.api.substance_use_message_bank_content",
 }
 
-# Used by the new reminders framework
-AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {
-    "ICDS_STATIC_NEGATIVE_GROWTH_MESSAGE":
-        ["custom.icds.messaging.custom_content.static_negative_growth_indicator",
-         "ICDS: Static/Negative Growth Indicator"],
-    "ICDS_MISSED_CF_VISIT_TO_AWW":
-        ["custom.icds.messaging.custom_content.missed_cf_visit_to_aww",
-         "ICDS: Missed CF Visit for AWW recipient"],
-    "ICDS_MISSED_CF_VISIT_TO_LS":
-        ["custom.icds.messaging.custom_content.missed_cf_visit_to_ls",
-         "ICDS: Missed CF Visit for LS recipient"],
-    "ICDS_MISSED_PNC_VISIT_TO_LS":
-        ["custom.icds.messaging.custom_content.missed_pnc_visit_to_ls",
-         "ICDS: Missed PNC Visit for LS recipient"],
-    "ICDS_CHILD_ILLNESS_REPORTED":
-        ["custom.icds.messaging.custom_content.child_illness_reported",
-         "ICDS: Child Illness Reported"],
-    "ICDS_CF_VISITS_COMPLETE":
-        ["custom.icds.messaging.custom_content.cf_visits_complete",
-         "ICDS: CF Visits Complete"],
-    "ICDS_AWW_1":
-        ["custom.icds.messaging.custom_content.aww_1",
-         "ICDS: Weekly AWC Submission Performance to AWW"],
-    "ICDS_AWW_2":
-        ["custom.icds.messaging.custom_content.aww_2",
-         "ICDS: Monthly AWC Aggregate Performance to AWW"],
-    "ICDS_LS_1":
-        ["custom.icds.messaging.custom_content.ls_1",
-         "ICDS: Monthly AWC Aggregate Performance to LS"],
-    "ICDS_LS_2":
-        ["custom.icds.messaging.custom_content.ls_2",
-         "ICDS: Weekly AWC VHND Performance to LS"],
-    "ICDS_LS_6":
-        ["custom.icds.messaging.custom_content.ls_6",
-         "ICDS: Weekly AWC Submission Performance to LS"],
-    "ICDS_PHASE2_AWW_1":
-        ["custom.icds.messaging.custom_content.phase2_aww_1",
-         "ICDS: AWC VHND Performance to AWW"],
-    "UCLA_GENERAL_HEALTH":
-        ["custom.ucla.api.general_health_message_bank_content_new",
-         "UCLA: General Health Message Bank"],
-    "UCLA_MENTAL_HEALTH":
-        ["custom.ucla.api.mental_health_message_bank_content_new",
-         "UCLA: Mental Health Message Bank"],
-    "UCLA_SEXUAL_HEALTH":
-        ["custom.ucla.api.sexual_health_message_bank_content_new",
-         "UCLA: Sexual Health Message Bank"],
-    "UCLA_MED_ADHERENCE":
-        ["custom.ucla.api.med_adherence_message_bank_content_new",
-         "UCLA: Med Adherence Message Bank"],
-    "UCLA_SUBSTANCE_USE":
-        ["custom.ucla.api.substance_use_message_bank_content_new",
-         "UCLA: Substance Use Message Bank"],
-}
-
-# Used by the old reminders framework
-AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
-    'HOST_CASE_OWNER_LOCATION':
-        ['corehq.apps.reminders.custom_recipients.host_case_owner_location',
-         "Custom: Extension Case -> Host Case -> Owner (which is a location)"],
-    'HOST_CASE_OWNER_LOCATION_PARENT':
-        ['corehq.apps.reminders.custom_recipients.host_case_owner_location_parent',
-         "Custom: Extension Case -> Host Case -> Owner (which is a location) -> Parent location"],
-    'CASE_OWNER_LOCATION_PARENT':
-        ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent_old_framework',
-         "Abt: The case owner's location's parent location"],
-}
-
-# Used by the new reminders framework
-AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
-    'ICDS_MOTHER_PERSON_CASE_FROM_CCS_RECORD_CASE':
-        ['custom.icds.messaging.custom_recipients.recipient_mother_person_case_from_ccs_record_case',
-         "ICDS: Mother person case from ccs_record case"],
-    'ICDS_MOTHER_PERSON_CASE_FROM_CCS_RECORD_CASE_EXCL_MIGRATED_OR_OPTED_OUT':
-        ['custom.icds.messaging.custom_recipients'
-         '.recipient_mother_person_case_from_ccs_record_case_excl_migrated_or_opted_out',
-         "ICDS: Mother person case from ccs_record case (excluding migrated and not registered mothers)"],
-    'ICDS_MOTHER_PERSON_CASE_FROM_CHILD_HEALTH_CASE':
-        ['custom.icds.messaging.custom_recipients.recipient_mother_person_case_from_child_health_case',
-         "ICDS: Mother person case from child_health case"],
-    'ICDS_MOTHER_PERSON_CASE_FROM_CHILD_PERSON_CASE':
-        ['custom.icds.messaging.custom_recipients.recipient_mother_person_case_from_child_person_case',
-         "ICDS: Mother person case from child person case"],
-    'ICDS_SUPERVISOR_FROM_AWC_OWNER':
-        ['custom.icds.messaging.custom_recipients.supervisor_from_awc_owner',
-         "ICDS: Supervisor Location from AWC Owner"],
-    'HOST_CASE_OWNER_LOCATION':
-        ['corehq.messaging.scheduling.custom_recipients.host_case_owner_location',
-         "Custom: Extension Case -> Host Case -> Owner (which is a location)"],
-    'HOST_CASE_OWNER_LOCATION_PARENT':
-        ['corehq.messaging.scheduling.custom_recipients.host_case_owner_location_parent',
-         "Custom: Extension Case -> Host Case -> Owner (which is a location) -> Parent location"],
-    'CASE_OWNER_LOCATION_PARENT':
-        ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent_new_framework',
-         "Abt: The case owner's location's parent location"],
-}
-
-AVAILABLE_CUSTOM_RULE_CRITERIA = {
-    'ICDS_PERSON_CASE_IS_UNDER_6_YEARS_OLD':
-        'custom.icds.rules.custom_criteria.person_case_is_under_6_years_old',
-    'ICDS_PERSON_CASE_IS_UNDER_19_YEARS_OLD':
-        'custom.icds.rules.custom_criteria.person_case_is_under_19_years_old',
-    'ICDS_CCS_RECORD_CASE_HAS_FUTURE_EDD':
-        'custom.icds.rules.custom_criteria.ccs_record_case_has_future_edd',
-    'ICDS_CCS_RECORD_CASE_CHILD_AVAILING_SERVICES':
-        'custom.icds.rules.custom_criteria.ccs_record_case_is_availing_services',
-    'ICDS_CHILD_HEALTH_CASE_CHILD_AVAILING_SERVICES':
-        'custom.icds.rules.custom_criteria.child_health_case_is_availing_services',
-    'ICDS_IS_USERCASE_OF_AWW':
-        'custom.icds.rules.custom_criteria.is_usercase_of_aww',
-    'ICDS_IS_USERCASE_OF_LS':
-        'custom.icds.rules.custom_criteria.is_usercase_of_ls',
-    'ICDS_CCS_RECORD_MOTHER_CASE_AVAILING_SERVICES_HAS_CONTACT_PHONE_NUMBER':
-        'custom.icds.rules.custom_criteria.ccs_record_mother_case_availing_services_has_phone_number'
-}
-
-AVAILABLE_CUSTOM_RULE_ACTIONS = {
-    'ICDS_ESCALATE_TECH_ISSUE':
-        'custom.icds.rules.custom_actions.escalate_tech_issue',
-}
-
 # These are custom templates which can wrap default the sms/chat.html template
 CUSTOM_CHAT_TEMPLATES = {}
 
@@ -2030,6 +1972,7 @@ DOMAIN_MODULE_MAP = {
     'reach-dashboard-qa': 'custom.aaa',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
+    'nhm-af-up': 'custom.up_nrhm',
 
     'crs-remind': 'custom.apps.crs_reports',
 

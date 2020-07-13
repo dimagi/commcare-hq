@@ -57,13 +57,15 @@ branches:
   - nh/charset  # Norman May 27
   - fr/multiple-api-keys
   - jls/turn-off-analytics-logging # Jenny June 19
-  - nemanja1040:gateways_refactor  # Nemanja Stancic June 23
-  - sr-es-alias # Sravan June 24
   - ml/SAAS-11011-account-name-filter  # Michelle Jun 30
   - ce/user-upload-record # Cal June 30
   - bmb/bower-to-yarn # Biyeun Jul 1
   - nemanja1040:whatsapp_multimedia_messages  # Nemanja Stancic Jul 6
   - solleks:cdg/edit_reports_permission  # Charlie July 6
   - jls/linked-domain-report-links # Jenny July 7
+  - kev/geowidget-mapbox # Kevin July 8
+  - dm/dj2-fix-tests  # Danny/Daniel Jul 9
+  - sr-alias-api # Sravan July 10
+  - jls/web-users-invitation-search # Jenny July 11
 
 submodules: {}

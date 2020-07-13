@@ -1,3 +1,5 @@
+.. _commcare_postgresql_configuration:
+
 Configuring SQL Databases in CommCare
 =====================================
 
