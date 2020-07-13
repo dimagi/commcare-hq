@@ -67,6 +67,6 @@ branches:
   - dm/dj2-fix-tests  # Danny/Daniel Jul 9
   - sr-alias-api # Sravan July 10
   - jls/web-users-invitation-search # Jenny July 11
-  - ctsims/call_center_widgets # Clayton July 13
+#  - ctsims/call_center_widgets # Clayton July 13
 
 submodules: {}
