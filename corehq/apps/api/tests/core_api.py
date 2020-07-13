@@ -1,6 +1,10 @@
+import json
+
+from datetime import datetime
+from django.test import SimpleTestCase, TestCase
+from django.test.client import RequestFactory
 from mock import patch
 
-from django.test import TestCase
 from django.urls import reverse
 from django.utils.http import urlencode
 
@@ -13,7 +17,7 @@ from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
     Subscription,
 )
-from corehq.apps.api.es import ElasticAPIQuerySet
+from corehq.apps.api.es import ElasticAPIQuerySet, es_query_from_get_params
 from corehq.apps.api.fields import (
     ToManyDictField,
     ToManyDocumentsField,
@@ -23,10 +27,11 @@ from corehq.apps.api.fields import (
 from corehq.apps.api.resources import v0_4, v0_5
 from corehq.apps.api.util import get_obj
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.tests.utils import ElasticTestMixin
 from corehq.apps.users.models import CommCareUser, HQApiKey, WebUser
 from corehq.util.test_utils import flag_disabled
-
-from .utils import APIResourceTest, FakeXFormES
+from no_exceptions.exceptions import Http400
+from .utils import APIResourceTest, FakeFormESView
 
 
 class TestElasticAPIQuerySet(TestCase):
@@ -35,7 +40,7 @@ class TestElasticAPIQuerySet(TestCase):
     '''
 
     def test_slice(self):
-        es = FakeXFormES()
+        es = FakeFormESView()
         for i in range(0, 1300):
             es.add_doc(i, {'i': i})
 
@@ -61,7 +66,7 @@ class TestElasticAPIQuerySet(TestCase):
         self.assertEqual(len(qs_slice), 500)
 
     def test_order_by(self):
-        es = FakeXFormES()
+        es = FakeFormESView()
         for i in range(0, 1300):
             es.add_doc(i, {'i': i})
 
@@ -488,6 +493,160 @@ class TestApiKey(APIResourceTest):
                               }))
         response = self.client.get(endpoint)
         self.assertEqual(response.status_code, 401)
+
+
+class TestParamstoESFilters(SimpleTestCase, ElasticTestMixin):
+
+    def test_search_param(self):
+        # GET param _search can accept a custom query from Data export tool
+        self.maxDiff = None
+        range_expression = {
+            'gte': datetime(2019, 1, 1).isoformat(),
+            'lte': datetime(2019, 1, 2).isoformat()
+        }
+        server_modified_missing = {"missing": {
+            "field": "server_modified_on", "null_value": True, "existence": True}
+        }
+        query = {
+            'filter': {
+                "or": (
+                    {
+                        "and": (
+                            {
+                                "not": server_modified_missing
+                            },
+                            {
+                                "range": {
+                                    "server_modified_on": range_expression
+                                }
+                            }
+                        )
+                    },
+                    {
+                        "and": (
+                            server_modified_missing,
+                            {
+                                "range": {
+                                    "received_on": range_expression
+                                }
+                            }
+                        )
+                    }
+                )
+            }
+        }
+        request = RequestFactory().get(
+            "/a/test_domain/api/v0.5/form/",
+            data={'_search': json.dumps(query)}
+        )
+        expected = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {
+                                "term": {
+                                    "domain.exact": "test_domain"
+                                }
+                            },
+                            {
+                                "term": {
+                                    "doc_type": "xforminstance"
+                                }
+                            },
+                            query['filter'],
+                            {
+                                "match_all": {}
+                            }
+                        ]
+                    },
+                    "query": {
+                        "match_all": {}
+                    }
+                }
+            },
+            "size": 1000000
+        }
+        self.checkQuery(
+            es_query_from_get_params(request.GET, 'test_domain'),
+            expected,
+            is_raw_query=True
+        )
+
+    def test_inserted_at_query(self):
+        # GET param _search can accept a custom query from a custom API use case
+        query = {
+            'filter': {
+                'range': {
+                    'inserted_at': {'gt': '2020-06-27T20:51:23.773000'}
+                }
+            }
+        }
+        request = RequestFactory().get(
+            "/a/test_domain/api/v0.5/form/",
+            data={'_search': json.dumps(query)}
+        )
+        expected = {
+            "filter": {
+                "and": [
+                    {
+                        "term": {
+                            "domain.exact": "test_domain"
+                        }
+                    },
+                    query['filter']
+                ]
+            }
+        }
+        expected = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {
+                                "term": {
+                                    "domain.exact": "test_domain"
+                                }
+                            },
+                            {
+                                "term": {
+                                    "doc_type": "xforminstance"
+                                }
+                            },
+                            query['filter'],
+                            {
+                                "match_all": {}
+                            }
+                        ]
+                    },
+                    "query": {
+                        "match_all": {}
+                    }
+                }
+            },
+            "size": 1000000
+        }
+        self.checkQuery(
+            es_query_from_get_params(request.GET, 'test_domain'),
+            expected,
+            is_raw_query=True
+        )
+
+    def test_other_queries_get_skipped(self):
+        # GET param _search shouldn't accept any other queries
+        query = {
+            'filter': {
+                'range': {
+                    'received_on': {'gt': '2020-06-27T20:51:23.773000'}
+                }
+            }
+        }
+        request = RequestFactory().get(
+            "/a/test_domain/api/v0.5/form/",
+            data={'_search': json.dumps(query)}
+        )
+        with self.assertRaises(Http400):
+            es_query_from_get_params(request.GET, 'test_domain')
 
 
 class TestApiThrottle(APIResourceTest):
