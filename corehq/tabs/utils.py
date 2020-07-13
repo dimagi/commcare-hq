@@ -115,8 +115,7 @@ def divider_and_more_menu(url):
 
 
 def main_menu_dropdown_dict(title, url=None, html=None,
-                            is_header=False, is_divider=False, data_id=None,
-                            second_level_dropdowns=[]):
+                            is_header=False, is_divider=False, data_id=None):
     return {
         'title': title,
         'url': url,
