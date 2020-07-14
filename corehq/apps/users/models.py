@@ -1836,11 +1836,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         undelete_system_forms.delay(self.domain, set(deleted_form_ids), set(deleted_case_ids))
         self.save()
-        log_model_change(
-            unretired_by,
-            self.get_django_user(use_primary_db=True),
-            message={'unretired_via': unretired_via},
-        )
+        if unretired_by:
+            log_model_change(
+                unretired_by,
+                self.get_django_user(use_primary_db=True),
+                message={'unretired_via': unretired_via},
+            )
         return True, None
 
     def retire(self, deleted_by, deleted_via=None):
