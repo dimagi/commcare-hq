@@ -55,7 +55,7 @@ def form_ids_in_es(form_ids):
     query = {"filter": {"ids": {"values": list(form_ids)}}}
     es_interface = ElasticsearchInterface(get_es_new())
     es_meta = ES_META['forms']
-    results = es_interface.search(es_meta.index, es_meta.type, query,
+    results = es_interface.search(es_meta.alias, es_meta.type, query,
                                   params={'size': CHUNK_SIZE})
     if 'hits' in results:
         for hit in results['hits']['hits']:
