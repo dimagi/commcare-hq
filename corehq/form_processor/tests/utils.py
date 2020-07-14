@@ -5,6 +5,8 @@ from uuid import uuid4
 
 from couchdbkit import ResourceNotFound
 from django.conf import settings
+from django.db import transaction
+from django.test import TestCase
 from django.test.utils import override_settings
 from nose.plugins.attrib import attr
 from nose.tools import nottest
@@ -182,7 +184,7 @@ def partitioned(cls):
     Marks a test to be run with the partitioned database settings in
     addition to the non-partitioned database settings.
     """
-    return attr(sql_backend=True)(cls)
+    return patch_shard_db_transactions(attr(sql_backend=True)(cls))
 
 
 def only_run_with_non_partitioned_database(cls):
@@ -207,6 +209,74 @@ def only_run_with_partitioned_database(cls):
 
 def use_sql_backend(cls):
     return partitioned(override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)(cls))
+
+
+def patch_testcase_transactions():
+    TestCase.transaction_exempt_databases = frozenset()
+
+    @classmethod
+    def _enter_atomics(cls):
+        atomics = {}
+        exempt = cls.transaction_exempt_databases
+        for db_name in cls._databases_names():
+            if db_name in exempt:
+                continue
+            atomics[db_name] = transaction.atomic(using=db_name)
+            atomics[db_name].__enter__()
+        return atomics
+    TestCase._enter_atomics = _enter_atomics
+
+    @classmethod
+    def _rollback_atomics(cls, atomics):
+        """Rollback atomic blocks opened by the previous method."""
+        exempt = cls.transaction_exempt_databases
+        for db_name in reversed(cls._databases_names()):
+            if db_name in exempt:
+                continue
+            transaction.set_rollback(True, using=db_name)
+            atomics[db_name].__exit__(None, None, None)
+    TestCase._rollback_atomics = _rollback_atomics
+
+    def _should_check_constraints(self, connection):
+        # Prevent intermittent error:
+        # Traceback (most recent call last):
+        #   File "django/test/testcases.py", line 274, in __call__
+        #     self._post_teardown()
+        #   File "django/test/testcases.py", line 1009, in _post_teardown
+        #     self._fixture_teardown()
+        #   File "django/test/testcases.py", line 1176, in _fixture_teardown
+        #     if self._should_check_constraints(connections[db_name]):
+        #   File "django/test/testcases.py", line 1184, in _should_check_constraints
+        #     not connection.needs_rollback and connection.is_usable()
+        #   File "django/db/backends/postgresql/base.py", line 252, in is_usable
+        #     self.connection.cursor().execute("SELECT 1")
+        # AttributeError: 'NoneType' object has no attribute 'cursor'
+        return (connection.connection is not None
+            and super_should_check_constraints(self, connection))
+    super_should_check_constraints = TestCase._should_check_constraints
+    TestCase._should_check_constraints = _should_check_constraints
+
+
+def patch_shard_db_transactions(cls):
+    """Patch shard db transaction management on test class
+
+    Do not use a transaction per test on shard databases because proxy
+    queries cannot see changes in uncommitted transactions in shard dbs.
+    This means that changes to shard dbs will not be rolled back at the
+    end of each test; test cleanup must be done manually.
+
+    :param cls: A test class.
+    """
+    if not issubclass(cls, TestCase):
+        return cls
+    assert hasattr(cls, "_enter_atomics") and hasattr(cls, "_rollback_atomics"), cls
+    shard_dbs = {k for k, v in settings.DATABASES.items() if "PLPROXY" in v}
+    if shard_dbs:
+        # Reassign attribute to prevent leaking this change to other
+        # classes that share the same class attribute.
+        pre_exempt = cls.transaction_exempt_databases
+        cls.transaction_exempt_databases = frozenset(pre_exempt) | shard_dbs
+    return cls
 
 
 @nottest
