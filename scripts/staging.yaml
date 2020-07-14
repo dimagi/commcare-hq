@@ -54,7 +54,7 @@ branches:
   - jls/sync-mixins-hard-fail # Jenny May 24
   - rn_update_perfect_scrollbar # Rohit Negi May 4
   - jls/migrate-MobileAuthKeyRecord-2 # Jenny May 16
-#  - nh/repeaters_ui  # Norman May 28
+  - nh/repeaters_ui  # Norman May 28
   - nh/charset  # Norman May 27
   - jls/turn-off-analytics-logging # Jenny June 19
 #  - ce/user-upload-record # Cal June 30
