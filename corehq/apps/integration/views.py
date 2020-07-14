@@ -106,4 +106,3 @@ class DialerSettingsView(BaseProjectSettingsView):
                 request, ugettext_lazy("Could not update Dialer Settings")
             )
         return self.get(request, *args, **kwargs)
-

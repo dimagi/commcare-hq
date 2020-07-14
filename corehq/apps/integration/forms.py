@@ -10,16 +10,6 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.integration.models import SimprintsIntegration, DialerSettings
 
 
-from django.utils.translation import ugettext_lazy as _
-
-from corehq.apps.hqwebapp import crispy as hqcrispy
-from crispy_forms import layout as crispy
-from crispy_forms.layout import Submit
-
-from memoized import memoized
-from django import forms
-
-
 class DialerSettingsForm(forms.ModelForm):
     is_enabled = forms.BooleanField(
         label=_("Enable AWS Connect Dialer"),
