@@ -849,7 +849,7 @@ class UserRepeaterTest(TestCase, DomainSubscriptionMixin):
             None,
             None,
         )
-        self.addCleanup(user.delete)
+        self.addCleanup(user.delete, deleted_by=None)
         return user
 
     def test_trigger(self):

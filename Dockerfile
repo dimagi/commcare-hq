@@ -40,6 +40,7 @@ RUN git config --global url."https://".insteadOf git:// \
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
 
 RUN npm -g install \
+    yarn \
     bower \
     grunt-cli \
     uglify-js \
@@ -49,4 +50,5 @@ RUN npm -g install \
  && echo '{ "allow_root": true }' > /root/.bowerrc \
  && cd /vendor \
  && npm shrinkwrap \
+ && yarn global add phantomjs-prebuilt \
  && npm -g install

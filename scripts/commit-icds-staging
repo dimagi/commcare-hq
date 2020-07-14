@@ -1,0 +1,4 @@
+#!/bin/bash
+
+commit_command="scripts/commit-staging-util icds-staging.yaml $*"
+$(echo $commit_command)

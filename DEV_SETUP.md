@@ -361,10 +361,16 @@ Then run the following separately:
     $ ./manage.py runserver 0.0.0.0:8000
 
     # Keeps elasticsearch index in sync
+    # You can also skip this and run `./manage.py ptop_reindexer_v2` to manually sync ES indices when needed.
     $ ./manage.py run_ptop --all
 
     # Setting up the asynchronous task scheduler (only required if you have CELERY_TASK_ALWAYS_EAGER=False in settings)
     $ celery -A corehq worker -l info
+
+For celery, you may need to add a "-Q" argument based on the queue you want to listen to.
+For example, to use case importer with celery locally you need to run
+`celery -A corehq worker -l info -Q case_import_queue`
+
 
 Create a superuser for your local environment
 

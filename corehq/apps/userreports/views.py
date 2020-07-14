@@ -65,9 +65,8 @@ from corehq.apps.hqwebapp.decorators import (
 )
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-from corehq.apps.linked_domain.dbaccessors import get_linked_domains
 from corehq.apps.linked_domain.models import DomainLink, ReportLinkDetail
-from corehq.apps.linked_domain.ucr import create_linked_ucr
+from corehq.apps.linked_domain.ucr import create_linked_ucr, linked_downstream_reports_by_domain
 from corehq.apps.linked_domain.util import is_linked_report
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.reports.daterange import get_simple_dateranges
@@ -244,7 +243,9 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
             'form': self.edit_form,
             'report': self.config,
             'referring_apps': self.get_referring_apps(),
-            'linked_domain_list': sorted([d.linked_domain for d in get_linked_domains(self.domain)]),
+            'linked_report_domain_list': linked_downstream_reports_by_domain(
+                self.domain, self.report_id
+            ),
         }
 
     def get_referring_apps(self):
@@ -602,7 +603,6 @@ class ConfigureReport(ReportBuilderView):
             self.domain, self.page_name, self.app_id, self.source_type, self.source_id, self.existing_report
         )
         temp_ds_id = report_form.create_temp_data_source_if_necessary(self.request.user.username)
-
         return {
             'existing_report': self.existing_report,
             'report_description': self.report_description,
@@ -626,7 +626,9 @@ class ConfigureReport(ReportBuilderView):
             'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, []),
             'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
             'date_range_options': [r._asdict() for r in get_simple_dateranges()],
-            'linked_domain_list': sorted([d.linked_domain for d in get_linked_domains(self.domain)]),
+            'linked_report_domain_list': linked_downstream_reports_by_domain(
+                self.domain, self.existing_report.get_id
+            ) if self.existing_report else {}
         }
 
     def _get_bound_form(self, report_data):

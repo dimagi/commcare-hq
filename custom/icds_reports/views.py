@@ -233,7 +233,6 @@ from custom.icds_reports.utils import (
     get_datatables_ordering_info,
     get_location_filter,
     get_location_level,
-    icds_pre_release_features,
     india_now,
     filter_cas_data_export,
     get_deprecation_info,
@@ -241,6 +240,7 @@ from custom.icds_reports.utils import (
     timestamp_string_to_date_string,
     datetime_to_date_string
 )
+from ..icds_core.view_utils import icds_pre_release_features
 from custom.icds_reports.utils.data_accessor import (
     get_awc_covered_data_with_retrying,
     get_inc_indicator_api_data,
@@ -258,7 +258,7 @@ from custom.icds_reports.reports.bihar_api import get_api_demographics_data, get
     get_api_vaccine_data, get_api_ag_school_data
 
 from . import const
-from .exceptions import InvalidLocationTypeException, TableauTokenException
+from .exceptions import InvalidLocationTypeException
 
 # checks required to view the dashboard
 from custom.icds_reports.reports.poshan_progress_dashboard_data import get_poshan_progress_dashboard_data
@@ -316,43 +316,6 @@ def _get_user_location(user, domain):
         block_id = 'All'
     return location_type_code, user_location_id, state_id, district_id, block_id
 
-
-def get_tableau_trusted_url(client_ip):
-    """
-    Generate a login-free URL to access Tableau views for the client with IP client_ip
-    See Tableau Trusted Authentication https://onlinehelp.tableau.com/current/server/en-us/trusted_auth.htm
-    """
-    access_token = get_tableau_access_token(const.TABLEAU_USERNAME, client_ip)
-    url = "{tableau_trusted}{access_token}/#/views/".format(
-        tableau_trusted=const.TABLEAU_TICKET_URL,
-        access_token=access_token
-    )
-    return url
-
-
-def get_tableau_access_token(tableau_user, client_ip):
-    """
-    Request an access_token from Tableau
-    Note: the IP address of the webworker that this code runs on should be configured to request tokens in Tableau
-
-    args:
-        tableau_user: username of a valid tableau_user who can access the Tableau views
-        client_ip: IP address of the client who should redee be allowed to redeem the Tableau trusted token
-                   if this is empty, the token returned can be redeemed on any IP address
-    """
-    r = requests.post(
-        const.TABLEAU_TICKET_URL,
-        data={'username': tableau_user, 'client_ip': client_ip},
-        verify=False
-    )
-
-    if r.status_code == 200:
-        if r.text == const.TABLEAU_INVALID_TOKEN:
-            raise TableauTokenException("Tableau server failed to issue a valid token")
-        else:
-            return r.text
-    else:
-        raise TableauTokenException("Token request failed with code {}".format(r.status_code))
 
 
 @location_safe
@@ -481,6 +444,9 @@ class ProgramSummaryView(BaseReportView):
         }
 
         config.update(get_location_filter(location, domain))
+        # query database at same level for which it is requested
+        if config.get('aggregation_level') > 1:
+            config['aggregation_level'] -= 1
         now = tuple(now.date().timetuple())[:3]
         pre_release_features = icds_pre_release_features(self.request.couch_user)
         data = get_program_summary_data_with_retrying(

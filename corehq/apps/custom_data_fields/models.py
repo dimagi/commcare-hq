@@ -211,6 +211,8 @@ class CustomDataFieldsDefinition(SyncCouchToSQLMixin, QuickCachedDocumentMixin, 
         for field_name in self._migration_get_fields():
             value = getattr(self, field_name)
             setattr(sql_object, field_name, value)
+        if not sql_object.id:
+            sql_object.save(sync_to_couch=False)
         sql_object.set_fields([
             SQLField(
                 slug=field.slug,

@@ -83,7 +83,7 @@ class CallCenterLocationOwnerOptionsViewTest(TestCase):
     def tearDownClass(cls):
         super(CallCenterLocationOwnerOptionsViewTest, cls).tearDownClass()
         for user in cls.users:
-            user.delete()
+            user.delete(deleted_by=None)
         CALL_CENTER_LOCATION_OWNERS.set(cls.domain.name, False, NAMESPACE_DOMAIN)
         cls.domain.delete()
         ensure_index_deleted(USER_INDEX_INFO.index)

@@ -283,6 +283,8 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
         locationsService.onSelectLocation($item, level, locationsCache, vm);
         if (vm.selectedIndicator == 15) {
             vm.groupByLevels = vm.groupByLevelValuesPPR();
+        } else if (vm.showViewBy()) {
+            vm.handleViewByShift();
         }
     };
 
@@ -472,6 +474,8 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
 
     vm.handleViewByShift = function() {
         var locationIndex = locationsService.selectedLocationIndex(vm.selectedLocations);
+        // locationIndex might come -ve in case of national level or no location selected
+        locationIndex = locationIndex >= 0 ? locationIndex : 0;
         var levels = _.filter(vm.levels, function (value){return value.id > locationIndex;});
         vm.groupByLevels = levels;
         vm.selectedLevel = locationIndex + 1;
@@ -545,6 +549,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
     };
 
     vm.hasErrors = function () {
+        var viewByErrors = vm.showViewBy() && (vm.selectedLevel <= 0 || vm.selectedLevel > 5);
         var beneficiaryListErrors = vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
         var growthListErrors = vm.isChildGrowthTrackerSelected() && !vm.isDistrictOrBelowSelected();
         var incentiveReportErrors = vm.isIncentiveReportSelected() && !vm.isStateSelected();
@@ -554,7 +559,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
             ladySupervisorReportErrors = vm.isLadySupervisorSelected() && !vm.isStateSelected();
         }
         var awwActvityReportErrors = vm.isAwwActivityReportSelected() && (vm.selectedLevel === 5 || vm.selectedLevel === 0);
-        return beneficiaryListErrors || incentiveReportErrors || ladySupervisorReportErrors || growthListErrors || awwActvityReportErrors || PPRErrors;
+        return beneficiaryListErrors || incentiveReportErrors || ladySupervisorReportErrors || growthListErrors || awwActvityReportErrors || PPRErrors || viewByErrors;
     };
 
     vm.isCombinedPDFSelected = function () {

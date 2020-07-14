@@ -40,6 +40,11 @@ DEFAULT_BUCKETS = (.005, .01, .025, .05, .075, .1, .25, .5, .75, 1.0, 2.5, 5.0, 
 
 
 class HqMetrics(metaclass=abc.ABCMeta):
+
+    @property
+    def accepted_gauge_params(self):
+        return []
+
     def initialize(self):
         pass
 
@@ -48,10 +53,11 @@ class HqMetrics(metaclass=abc.ABCMeta):
         _validate_tag_names(tags)
         self._counter(name, value, tags, documentation)
 
-    def gauge(self, name: str, value: float, tags: Dict[str, str] = None, documentation: str = ''):
+    def gauge(self, name: str, value: float, tags: Dict[str, str] = None, documentation: str = '', **kwargs):
         _enforce_prefix(name, 'commcare')
         _validate_tag_names(tags)
-        self._gauge(name, value, tags, documentation)
+        kwargs = {k: v for (k, v) in kwargs.items() if k in self.accepted_gauge_params}
+        self._gauge(name, value, tags, documentation, **kwargs)
 
     def histogram(self, name: str, value: float,
                   bucket_tag: str, buckets: List[int] = DEFAULT_BUCKETS, bucket_unit: str = '',
@@ -67,6 +73,9 @@ class HqMetrics(metaclass=abc.ABCMeta):
                      tags: Dict[str, str] = None, aggregation_key: str = None):
         _validate_tag_names(tags)
         self._create_event(title, text, alert_type, tags, aggregation_key)
+
+    def push_metrics(self):
+        pass
 
     @abstractmethod
     def _counter(self, name, value, tags, documentation):
