@@ -60,25 +60,25 @@ class SQLField(models.Model):
     def validate_choices(self, value):
         if self.choices and value and str(value) not in self.choices:
             return _(
-                "'{value}' is not a valid choice for {slug}, the available "
+                "'{value}' is not a valid choice for {label}. The available "
                 "options are: {options}."
             ).format(
                 value=value,
-                slug=self.slug,
+                label=self.label,
                 options=', '.join(self.choices),
             )
 
     def validate_regex(self, value):
         if self.regex and value and not re.search(self.regex, value):
-            return _("'{value}' is not a valid match for {slug}").format(
-                value=value, slug=self.slug)
+            return _("'{value}' is not a valid match for {label}").format(
+                value=value, label=self.label)
 
     def validate_required(self, value):
         if self.is_required and not value:
             return _(
-                "Field {slug} is required."
+                "{label} is required."
             ).format(
-                slug=self.slug
+                label=self.label
             )
 
 
