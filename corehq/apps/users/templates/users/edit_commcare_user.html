@@ -10,6 +10,8 @@
 {% block page_content %}
   {% initial_page_data "couch_user_id" couch_user.user_id %}
   {% initial_page_data "couch_user_username" couch_user.username %}
+  {% initial_page_data 'custom_fields_slugs' custom_fields_slugs %}
+  {% initial_page_data 'custom_fields_profiles' custom_fields_profiles %}
   {% initial_page_data "hide_password_feedback" hide_password_feedback %}
   {% initial_page_data 'implement_password_obfuscation' implement_password_obfuscation %}
   {% initial_page_data "is_currently_logged_in_user" is_currently_logged_in_user %}

@@ -1,12 +1,14 @@
 hqDefine('users/js/edit_commcare_user', [
     'jquery',
     'knockout',
+    'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/alert_user',
     'analytix/js/google',
     'hqwebapp/js/multiselect_utils',
     'locations/js/widgets',
     'jquery-textchange/jquery.textchange',
+    'hqwebapp/js/knockout_bindings.ko',
     'hqwebapp/js/widgets',
     'registration/js/password',
     'nic_compliance/js/encoder',
@@ -14,6 +16,7 @@ hqDefine('users/js/edit_commcare_user', [
 ], function (
     $,
     ko,
+    assertProperties,
     initialPageData,
     alertUser,
     googleAnalytics,
@@ -129,13 +132,72 @@ hqDefine('users/js/edit_commcare_user', [
 
     var $userInformationForm = $('form[name="user_information"]');
     $userInformationForm.on("change", null, null, function () {
-        $(":submit").prop("disabled", false);
+        $userInformationForm.find(":submit").prop("disabled", false);
     }).on("input", null, null, function () {
-        $(":submit").prop("disabled", false);
+        $userInformationForm.find(":submit").prop("disabled", false);
     });
 
-    if ($('#js-unrecognized-data').length > 0) {
-        $(":submit").prop("disabled", false);
+    /* Additional Information / custom user data */
+    var fieldModel = function (value) {
+        return {
+            value: ko.observable(value),
+            previousValue: ko.observable(value),    // save user-entered value
+            disable: ko.observable(false),
+        };
+    };
+    var customDataFieldsModel = function (options) {
+        assertProperties.assertRequired(options, ['profiles', 'slugs']);
+        var self = {};
+
+        self.profiles = _.indexBy(options.profiles, 'id');
+        self.slugs = options.slugs;
+        _.each(self.slugs, function (slug) {
+            self[slug] = fieldModel('');    // TODO: populate with original value
+        });
+
+        // TODO: populate slug from initial page data
+        self.commcare_profile = fieldModel('');   // TODO: populate with original value
+        self.commcare_profile.value.subscribe(function (newValue) {
+            if (!newValue) {
+                return;
+            }
+            var profile = self.profiles[newValue];
+            _.each(self.slugs, function (slug) {
+                var field = self[slug];
+                if (slug in profile.fields) {
+                    if (!field.disable()) {
+                        field.previousValue(field.value());
+                    }
+                    field.value(profile.fields[slug]);
+                    field.disable(true);
+                } else {
+                    if (field.disable()) {
+                        field.value(field.previousValue());
+                    }
+                    field.disable(false);
+                }
+            });
+        });
+
+        return self;
+    };
+
+    var $customDataFieldsForm = $(".custom-data-fieldset");
+    if ($customDataFieldsForm.length) {
+        $customDataFieldsForm.koApplyBindings(function () {
+            return {
+                custom_fields: customDataFieldsModel({
+                    profiles: initialPageData.get('custom_fields_profiles'),
+                    slugs: initialPageData.get('custom_fields_slugs'),
+                }),
+            };
+        });
+    }
+
+    // If there's unrecognized data, allow user to save to clear it
+    var $unrecognizedDataWarning = $("#js-unrecognized-data");
+    if ($unrecognizedDataWarning.length > 0) {
+        $unrecognizedDataWarning.closest("form").find(":submit").prop("disabled", false);
     }
 
     // Analytics

@@ -1213,6 +1213,7 @@ class CommCareUserFormSet(object):
             field_view=UserFieldsView,
             existing_custom_data=self.editable_user.user_data,
             post_dict=self.data,
+            ko_model="custom_fields",
         )
 
     def is_valid(self):
