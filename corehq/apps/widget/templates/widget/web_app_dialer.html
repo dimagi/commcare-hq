@@ -2,15 +2,12 @@
 {% load hq_shared_tags %}
 {% load static %}
 {% load compress %}
+{% requirejs_main "widget/js/web_app_dialer_main" %}
 
 {% block head %}
   {{ block.super }}
-  <script src="{% static 'widget/js/connect-streams-min.js' %}"></script>
-  <script src="{% static 'widget/js/amazon-connect-min.js' %}"></script>
-  <script src="{% static 'widget/js/detectRTC.js' %}"></script>
-  <script src="{% static 'widget/js/testUDPNetwork.js' %}"></script>
-  <script src="{% static 'widget/js/ccputil.js' %}"></script>
 {% endblock %}
+
 
 {% block stylesheets %}
   {{ block.super }}
@@ -21,6 +18,9 @@
 {% block title %}Dialer{% endblock %}
 
 {% block widget_content %}
+        {% initial_page_data 'callout_number' callout_number %}
+        {% initial_page_data 'aws_instance_id' dialer_settings.aws_instance_id %}
+
         <div id="divBanner" class="banner">
             <div id="divLogo" class="bannerLogoContainer">
                 {% if CUSTOM_LOGO_URL %}
@@ -66,19 +66,15 @@
                     <div id="queueName" class="panelContent"></div>
 
                     <div class="buttonContainer">
-                        <button id="phoneButton" class="button" onclick="dialEndPoint(document.getElementById('phoneNo').innerText)">Dial Now</button>
+                        <button class="button" id="button-dial">Dial Now</button>
                     </div>
                 </div>
                 <div class="pad"></div>
                 <div class="panelHeading">Preferences</div>
                 <div class="panelBody">
                     <div class="checkBox">
-                        <input type="checkbox" name="chkAutoDial" id="chkAutoDial" value="" onchange="savePreferences()">
+                        <input type="checkbox" name="chkAutoDial" id="checkbox-autodial" value="">
                         <label for="chkAutoDial">Auto dial on load</label>
-                    </div>
-                    <div class="checkBox">
-                        <input type="checkbox" name="chkRestoreLocation" id="chkRestoreLocation" value="" onchange="savePreferences()">
-                        <label for="chkRestore Location">Restore location</label>
                     </div>
                     <div class="pad90"></div>
                     <div class="buttonContainer">
@@ -96,7 +92,7 @@
                         <!-- Log is built here -->
                     </div>
                     <div class="buttonContainerLeft">
-                        <button class="button" onclick="copyToClipboard();">Copy To Clipboard</button>
+                        <button id="button-clipboard" class="button">Copy To Clipboard</button>
                     </div>
                 </div>
 
@@ -142,7 +138,7 @@
                             </div>
 
                             <div class="buttonContainer">
-                                <button class="button" onclick="checkMedia()">Check Media</button>
+                                <button class="button" id="button-check-media">Check Media</button>
                             </div>
                         </div>
                     </div>
@@ -163,7 +159,7 @@
                                 </div>
                             </div>
                             <div class="buttonContainer">
-                                <button class="button" onclick="checkNetwork()">Check Network</button>
+                                <button class="button" id="button-check-network">Check Network</button>
                             </div>
                         </div>
 
@@ -175,16 +171,4 @@
                 </div>
             </div>
         </div>
-{% endblock %}
-
-{% block js %}
- {{block.super}}
-<script>
-function loadDialer() {
-    initDialer('{{callout_number}}', '{{dialer_settings.aws_instance_id}}')
-}
-
-window.addEventListener('DOMContentLoaded', loadDialer, false);
-</script>
-
 {% endblock %}
