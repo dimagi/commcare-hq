@@ -1,13 +1,9 @@
-{% extends "widget/base_webapps_template.html" %}
+{% extends "widget/base_cloudcare_template.html" %}
+{% load i18n %}
 {% load hq_shared_tags %}
 {% load static %}
 {% load compress %}
 {% requirejs_main "widget/js/web_app_dialer_main" %}
-
-{% block head %}
-  {{ block.super }}
-{% endblock %}
-
 
 {% block stylesheets %}
   {{ block.super }}
@@ -15,7 +11,7 @@
 {% endblock %}
 
 
-{% block title %}Dialer{% endblock %}
+{% block title %}{%trans 'Dialer'%}{% endblock %}
 
 {% block widget_content %}
         {% initial_page_data 'callout_number' callout_number %}

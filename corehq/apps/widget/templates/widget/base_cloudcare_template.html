@@ -4,21 +4,12 @@
 {% load hq_shared_tags %}
 {% load compress %}
 
-{% block title %}Dialer{% endblock %}
-
-{% block head %}
-  {{ block.super }}
-  <style id="list-cell-layout-style"></style>
-  <style id="list-cell-grid-style"></style>
-  <style id="list-cell-container-style"></style>
-{% endblock %}
-
 {% block navigation %}
   <div class="navbar navbar-inverse navbar-cloudcare navbar-static-top">
     <div class="container-fluid">
       <a class="navbar-brand" href="{{ home_url }}"><i class="fcc fcc-flower"></i> Web Apps</a>
       <ul class="nav navbar-nav navbar-right" >
-        <li><a href="#" onclick="window.close()" "id="commcare-menu-toggle">{% trans 'Close Dialer' %}</a></li>
+        <li><a href="#" onclick="window.close()" "id="commcare-menu-toggle">{% trans 'Close' %} {%block title%}{{block.super}}{%endblock%}</a></li>
       </ul>
     </div>
   </div>
@@ -26,13 +17,6 @@
 
 {% block stylesheets %}
   {% compress css %}
-    <link rel="stylesheet" href="{% static 'nprogress/nprogress.css' %}">
-    <link rel="stylesheet" href="{% static 'At.js/dist/css/jquery.atwho.min.css' %}">
-    <link rel="stylesheet" href="{% static 'datetimepicker/build/jquery.datetimepicker.min.css' %}">
-    <link type="text/css"
-          rel="stylesheet"
-          media="all"
-          href="{% static 'datatables/media/css/jquery.dataTables.min.css' %}"/>
     <link rel="stylesheet" href="{% static 'cloudcare/css/webforms.css' %}">
     <link rel="stylesheet" href="{% static 'bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.css' %}"/>
   {% endcompress %}
