@@ -187,7 +187,7 @@ hqDefine('cloudcare/js/util', function () {
     };
 
     var injectDialerContext = function () {
-        initialPageData = hqImport("hqwebapp/js/initial_page_data")
+        var initialPageData = hqImport("hqwebapp/js/initial_page_data");
         if (initialPageData.get('dialer_enabled') && window.mdAnchorRender) {
             window.mdAnchorRender = function (tokens, idx, options, env, self) {
                 var hIndex = tokens[idx].attrIndex('href');

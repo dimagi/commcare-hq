@@ -12,7 +12,6 @@ from corehq.apps.widget.forms import DialerSettingsForm
 from corehq.apps.widget.models import DialerSettings
 from corehq.apps.widget.util import get_dialer_settings
 from corehq import toggles
-from corehq.util.context_processors import get_per_domain_context
 
 from memoized import memoized
 
@@ -21,8 +20,6 @@ from memoized import memoized
 @login_and_domain_required
 @require_GET
 def dialer_view(request, domain):
-    domain_object = Domain.get_by_name(domain)
-
     callout_number = request.GET.get("callout_number")
     dialer_settings = get_dialer_settings(domain)
     return render(request, "widget/web_app_dialer.html", {"callout_number": callout_number,
