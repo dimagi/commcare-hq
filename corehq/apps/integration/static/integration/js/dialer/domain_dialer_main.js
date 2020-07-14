@@ -11,7 +11,7 @@ hqDefine("integration/js/dialer/domain_dialer_main", [
    "integration/js/dialer/connect-streams-min",
 ], function (
    initialPageData,
-   dialer_utils,
+   dialer_utils
 ) {
     $(function () {
         var inCall = false;

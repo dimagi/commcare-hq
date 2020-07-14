@@ -157,7 +157,7 @@ hqDefine('integration/js/dialer/dialer_utils',[], function () {
                     promiseResolved = true;
                     resolve(true);
                 }
-                catch {}
+                catch(err) {}
             };
         });	
     }
