@@ -38,7 +38,7 @@ class DialerSettingsForm(forms.ModelForm):
         ]
 
     def __init__(self, data, *args, **kwargs):
-        self._domain = kwargs.pop('domain')
+        self.domain = kwargs.pop('domain')
         kwargs['initial'] = self.initial_data
         super(DialerSettingsForm, self).__init__(data, *args, **kwargs)
 
@@ -69,7 +69,7 @@ class DialerSettingsForm(forms.ModelForm):
     @memoized
     def _existing_config(self):
         existing, _created = DialerSettings.objects.get_or_create(
-            domain=self._domain
+            domain=self.domain
         )
         return existing
 
