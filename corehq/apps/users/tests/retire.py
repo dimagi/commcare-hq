@@ -141,7 +141,7 @@ class RetireUserTestCase(TestCase):
         self.assertTrue(form_2.is_deleted)
 
         # Both forms should be undeleted on `unretire()`
-        self.commcare_user.unretire()
+        self.commcare_user.unretire(unretired_by=None)
         form_1 = FormAccessors(self.domain).get_form(xform_1.form_id)
         self.assertFalse(form_1.is_deleted)
         form_2 = FormAccessors(self.domain).get_form(xform_2.form_id)
