@@ -90,18 +90,19 @@ def get_users_location_ids(domain, user_ids):
     return list(chain(*location_ids))
 
 
-def user_ids_at_locations(location_ids):
+def mobile_user_ids_at_locations(location_ids):
+    # this doesn't include web users
     return UserES().location(location_ids).get_ids()
 
 
 def user_ids_at_locations_and_descendants(location_ids):
     location_ids_and_children = SQLLocation.objects.get_locations_and_children_ids(location_ids)
-    return user_ids_at_locations(location_ids_and_children)
+    return mobile_user_ids_at_locations(location_ids_and_children)
 
 
 def user_ids_at_accessible_locations(domain_name, user):
     accessible_location_ids = SQLLocation.active_objects.accessible_location_ids(domain_name, user)
-    return user_ids_at_locations(accessible_location_ids)
+    return mobile_user_ids_at_locations(accessible_location_ids)
 
 
 def get_user_ids_from_assigned_location_ids(domain, location_ids):

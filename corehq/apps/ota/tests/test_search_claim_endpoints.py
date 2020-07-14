@@ -304,7 +304,7 @@ class CaseClaimEndpointTests(TestCase):
 
     def tearDown(self):
         ensure_index_deleted(CASE_SEARCH_INDEX)
-        self.user.delete()
+        self.user.delete(deleted_by=None)
         self.domain.delete()
         for query_addition in CaseSearchQueryAddition.objects.all():
             query_addition.delete()

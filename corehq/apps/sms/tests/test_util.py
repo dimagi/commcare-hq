@@ -25,7 +25,7 @@ class UtilTestCase(TestCase):
         self.user = CommCareUser.create(self.domain, 'test-user', '123', None, None)
 
     def tearDown(self):
-        self.user.delete()
+        self.user.delete(deleted_by=None)
 
     def testCleanPhoneNumber(self):
         phone_number = "  324 23-23421241"

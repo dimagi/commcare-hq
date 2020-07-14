@@ -11,6 +11,7 @@ from corehq.apps.sms.models import (
     MessagingSubEvent,
 )
 from corehq.messaging.scheduling.models import CommCareUser, SMSContent
+from corehq.util.metrics.tests.utils import capture_metrics
 from custom.icds.tasks.sms import delete_sms_events
 
 
@@ -25,7 +26,7 @@ class TestDeleteMessageEvents(DomainSubscriptionMixin, TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.mobile_user.delete()
+        cls.mobile_user.delete(deleted_by=None)
         super(TestDeleteMessageEvents, cls).tearDownClass()
 
     def tearDown(self):
@@ -45,7 +46,11 @@ class TestDeleteMessageEvents(DomainSubscriptionMixin, TestCase):
         start = now - timedelta(seconds=1)
         end = now + timedelta(seconds=1)
 
-        delete_sms_events(start, end)
+        with capture_metrics() as metrics:
+            delete_sms_events(start, end)
+
+        self.assertEqual(1, metrics.sum('commcare.sms_events.deleted', type='event'))
+        self.assertEqual(10, metrics.sum('commcare.sms_events.deleted', type='sub_event'))
 
         self.assertEqual(20, SMS.objects.all().count())
         self.assertEqual(10, SMS.objects.filter(messaging_subevent_id__isnull=False).count())
