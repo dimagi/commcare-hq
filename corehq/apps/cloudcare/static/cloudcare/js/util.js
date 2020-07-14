@@ -186,8 +186,9 @@ hqDefine('cloudcare/js/util', function () {
         }
     };
 
-    var injectDialerContext = function (initialPageData) {
-        if (initialPageData('dialer_enabled') && window.mdAnchorRender) {
+    var injectDialerContext = function () {
+        initialPageData = hqImport("hqwebapp/js/initial_page_data")
+        if (initialPageData.get('dialer_enabled') && window.mdAnchorRender) {
             window.mdAnchorRender = function (tokens, idx, options, env, self) {
                 var hIndex = tokens[idx].attrIndex('href');
                 var dialed = false;
@@ -195,7 +196,7 @@ hqDefine('cloudcare/js/util', function () {
                     var href =  tokens[idx].attrs[hIndex][1];
                     if (href.startsWith("tel://")) {
                         var callout = href.substring("tel://".length);
-                        var url = hqImport("hqwebapp/js/initial_page_data").reverse("dialer_view")
+                        var url = initialPageData.reverse("dialer_view");
                         tokens[idx].attrs[hIndex][1] = url + "?callout_number=" + callout;
                         dialed = true;
                     }
@@ -210,9 +211,9 @@ hqDefine('cloudcare/js/util', function () {
                     }
                 }
                 return self.renderToken(tokens, idx, options);
-            }
+            };
         }
-    }
+    };
 
     return {
         getFormUrl: getFormUrl,

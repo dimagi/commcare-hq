@@ -8,7 +8,7 @@ var Formplayer = {
 var md = window.markdownit();
 
 //Overriden by downstream contexts, check before changing
-var mdAnchorRender = md.renderer.rules.link_open || function (tokens, idx, options, env, self) {
+window.mdAnchorRender = md.renderer.rules.link_open || function (tokens, idx, options, env, self) {
     return self.renderToken(tokens, idx, options);
 };
 
