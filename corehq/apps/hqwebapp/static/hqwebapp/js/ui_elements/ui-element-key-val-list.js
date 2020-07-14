@@ -49,7 +49,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-list', [
         $enumModal.append($modalDialog);
 
 
-        $('#hq-modal-home').append($enumModal);
+        $('#hq-content').append($enumModal);
 
         $('#' + this.modal_id).on('hide.bs.modal', function () {
             var $inputMap = $(this).find('form .hq-input-map'),
