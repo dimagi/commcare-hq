@@ -9,7 +9,7 @@ from corehq.apps.sms.util import strip_plus
 from corehq.util.timezones.conversions import ServerTime
 from datetime import datetime
 from django.conf import settings
-
+import re
 
 class AirtelTCLBackend(SQLSMSBackend):
 
@@ -105,7 +105,11 @@ class AirtelTCLBackend(SQLSMSBackend):
         """
         phone_number = strip_plus(phone_number)
         if phone_number.startswith('91') and len(phone_number) > 2:
-            return phone_number[2:]
+            pattern = '^[6-9]'
+            result = re.match(pattern, phone_number[2:])
+            if result:
+                return phone_number[2:]
+
 
         raise InvalidDestinationNumber()
 
