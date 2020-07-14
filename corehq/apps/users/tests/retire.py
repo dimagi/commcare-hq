@@ -27,6 +27,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
 )
 from corehq.form_processor.models import UserArchivedRebuild
 from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.util.model_log import ModelAction
 
 
 class RetireUserTestCase(TestCase):
@@ -75,6 +76,7 @@ class RetireUserTestCase(TestCase):
 
     @run_with_all_backends
     def test_unretire_user(self):
+        other_django_user = self.other_user.get_django_user()
         case_ids = [uuid.uuid4().hex, uuid.uuid4().hex, uuid.uuid4().hex]
 
         caseblocks = []
@@ -96,7 +98,16 @@ class RetireUserTestCase(TestCase):
         form = FormAccessors(self.domain).get_form(xform.form_id)
         self.assertTrue(form.is_deleted)
 
-        self.commcare_user.unretire()
+        self.assertEqual(
+            list(LogEntry.objects.filter(user_id=other_django_user.pk, action_flag=ModelAction.CREATE.value)),
+            []
+        )
+        self.commcare_user.unretire(unretired_by=other_django_user, unretired_via="Test")
+
+        log_entry = LogEntry.objects.get(user_id=other_django_user.pk, action_flag=ModelAction.CREATE.value)
+        self.assertEqual(log_entry.object_repr, force_text(self.commcare_user.get_django_user()))
+        self.assertEqual(log_entry.change_message, str({'created_via': "Test"}))
+
         cases = CaseAccessors(self.domain).get_cases(case_ids)
         self.assertFalse(all([c.is_deleted for c in cases]))
         self.assertEqual(len(cases), 3)
