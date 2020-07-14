@@ -287,7 +287,6 @@ HQ_APPS = (
     'corehq.apps.sms',
     'corehq.apps.smsforms',
     'corehq.apps.ivr',
-    'corehq.apps.widget',
     'corehq.messaging',
     'corehq.messaging.scheduling',
     'corehq.messaging.scheduling.scheduling_partitioned',

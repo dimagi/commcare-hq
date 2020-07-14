@@ -72,6 +72,7 @@ from corehq.apps.domain.views.settings import (
     RecoveryMeasuresHistory,
 )
 from corehq.apps.domain.views.sms import SMSRatesView
+from corehq.apps.integration.urls import settings_patterns as integration_settings
 from corehq.apps.linked_domain.views import DomainLinkView
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.motech.repeaters.views import (
@@ -79,8 +80,6 @@ from corehq.motech.repeaters.views import (
     cancel_repeat_record,
     requeue_repeat_record,
 )
-
-from corehq.apps.widget.views import DialerSettingsView
 
 PASSWORD_RESET_KWARGS = {
     'template_name': 'login_and_password/password_reset_form.html',
@@ -181,7 +180,7 @@ domain_settings = [
     url(r'^repeat_record_report/requeue/', requeue_repeat_record, name='requeue_repeat_record'),
     url(r'^repeat_record_report/generate_repeater_payloads/', generate_repeater_payloads,
         name='generate_repeater_payloads'),
-    url(r'^integration/', include('corehq.apps.integration.urls')),
+    url(r'^integration/', include(integration_settings)),
     url(r'^transfer/$', TransferDomainView.as_view(), name=TransferDomainView.urlname),
     url(r'^case_search/$', CaseSearchConfigView.as_view(), name=CaseSearchConfigView.urlname),
     url(r'^domain_links/$', DomainLinkView.as_view(), name=DomainLinkView.urlname),
@@ -195,7 +194,6 @@ domain_settings = [
     url(r'^project_limits/$', ProjectLimitsView.as_view(), name=ProjectLimitsView.urlname),
     url(r'^toggle_diff/$', toggle_diff, name='toggle_diff'),
     url(r'^sms_rates/$', SMSRatesView.as_view(), name=SMSRatesView.urlname),
-    url(r'^widget/dialer/$', DialerSettingsView.as_view(), name=DialerSettingsView.urlname),
     url(r'^recovery_measures_history/$',
         RecoveryMeasuresHistory.as_view(),
         name=RecoveryMeasuresHistory.urlname),

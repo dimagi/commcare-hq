@@ -74,7 +74,7 @@ from corehq.apps.users.decorators import require_can_login_as
 from corehq.apps.users.models import CouchUser, DomainMembershipError
 from corehq.apps.users.util import format_username
 from corehq.apps.users.views import BaseUserSettingsView
-from corehq.apps.widget.util import domain_uses_dialer
+from corehq.apps.integration.util import domain_uses_dialer
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
