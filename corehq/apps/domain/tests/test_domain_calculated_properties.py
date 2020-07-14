@@ -6,7 +6,6 @@ from django.test import TestCase
 from corehq.apps.es.sms import SMSES
 from corehq.apps.sms.models import INCOMING, OUTGOING
 from dimagi.utils.parsing import json_format_datetime
-from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.domain.calculations import all_domain_stats, calced_props, sms

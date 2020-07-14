@@ -12,7 +12,6 @@ from casexml.apps.case.const import CASE_ACTION_CREATE
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from corehq.apps.commtrack.tests.util import bootstrap_domain
 from dimagi.utils.dates import DateSpan
-from dimagi.utils.parsing import string_to_utc_datetime
 from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
