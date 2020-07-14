@@ -70,6 +70,7 @@ from corehq.apps.registration.forms import MobileWorkerAccountConfirmationForm
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.user_importer.importer import UserUploadError, check_headers
+from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups
 from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary,
@@ -1060,6 +1061,13 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         except UserUploadError as e:
             messages.error(request, _(str(e)))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
+
+        upload_record = UserUploadRecord(
+            domain=self.domain,
+            task_id=task.id,
+            user_id=request.couch_user.user_id
+        )
+        upload_record.save()
 
         task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
         task = import_users_and_groups.delay(
