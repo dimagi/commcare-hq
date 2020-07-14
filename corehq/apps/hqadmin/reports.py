@@ -22,6 +22,7 @@ from corehq.apps.sms.filters import RequiredPhoneNumberFilter
 from corehq.apps.sms.mixin import apply_leniency
 from corehq.apps.sms.models import PhoneNumber
 from corehq.const import SERVER_DATETIME_FORMAT
+from corehq.apps.hqadmin.models import HqDeploy
 
 
 class AdminReport(GenericTabularReport):
@@ -266,3 +267,44 @@ class UserListReport(GetParamsMixin, AdminReport):
         if date:
             return parse(date).strftime(SERVER_DATETIME_FORMAT)
         return "---"
+
+
+class DeployHistoryReport(GetParamsMixin, AdminReport):
+    base_template = 'reports/base_template.html'
+
+    slug = 'deploy_history_report'
+    name = ugettext_lazy("Deploy History Report")
+
+    fields = [
+        'corehq.apps.reports.filters.simple.SimpleSearch',
+    ]
+    emailable = False
+    exportable = False
+    ajax_pagination = True
+    default_rows = 10
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn(_("Date")),
+            DataTablesColumn(_("User")),
+            DataTablesColumn(_("Diff URL")),
+        )
+
+    @property
+    def rows(self):
+        deploy_list = HqDeploy.objects.filter()[:10]
+        for deploy in deploy_list:
+            yield [
+                deploy.date,
+                deploy.user,
+                deploy.diff_url,
+            ]
+
+    @property
+    def total_records(self):
+        return self.default_rows
+
+    @cached_property
+    def _user_lookup_url(self):
+        return reverse('web_deploy_lookup')

@@ -38,6 +38,7 @@ from corehq.apps.hqadmin.reports import (
     DeviceLogSoftAssertReport,
     UserAuditReport,
     UserListReport,
+    DeployHistoryReport,
 )
 from corehq.apps.hqadmin.views.system import GlobalThresholds
 from corehq.apps.hqwebapp.models import GaTracker
@@ -2219,6 +2220,8 @@ class AdminTab(UITab):
             (_('Administrative Reports'), [
                 {'title': _('User List'),
                  'url': UserListReport.get_url()},
+                {'title': _('Deploy History'),
+                 'url': DeployHistoryReport.get_url()},
                 {'title': _('Download Malt table'),
                  'url': reverse('download_malt')},
                 {'title': _('Download Global Impact Report'),
