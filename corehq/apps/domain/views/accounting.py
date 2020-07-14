@@ -1533,22 +1533,19 @@ class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
     def page_context(self):
         context = super(SubscriptionRenewalView, self).page_context
 
-        current_privs = get_privileges(self.subscription.plan_version)
-        plan = DefaultProductPlan.get_lowest_edition(
-            current_privs, return_plan=False,
-        ).lower()
+        current_edition = self.subscription.plan_version.plan.edition
 
-        current_edition = (plan
-                           if self.current_subscription is not None
-                           and not self.current_subscription.is_trial
-                           else "")
+        if current_edition in [
+            SoftwarePlanEdition.COMMUNITY,
+            SoftwarePlanEdition.PAUSED,
+        ]:
+            raise Http404()
 
-        # never allow renewal into community
-        if current_edition == SoftwarePlanEdition.COMMUNITY:
-            raise Http404
-
-        context['current_edition'] = current_edition
-
+        context.update({
+            'current_edition': current_edition,
+            'plan': self.subscription.plan_version.user_facing_description,
+            'tile_css': 'tile-{}'.format(current_edition.lower()),
+        })
         return context
 
 
