@@ -139,23 +139,21 @@ hqDefine('widget/js/dialer_utils',[], function () {
             pc.onicecandidate = function (ice) {  //listen for candidate events
                 var ipRe = /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/;
 
-            try 
-            {
-                testIp = ice.candidate.candidate.match(ipRe);
-                if (isRfc1918(testIp))
-                {
-                    if (! success.hasOwnProperty(region) ){
-                        updateSuccessImage(region);
-                        success[region] = "PASSED";
-                        addToSystemLog("PASS for region: " + region);
+                try {
+                    testIp = ice.candidate.candidate.match(ipRe);
+                    if (isRfc1918(testIp)) {
+                        if (! success.hasOwnProperty(region) ) {
+                            updateSuccessImage(region);
+                            success[region] = "PASSED";
+                            addToSystemLog("PASS for region: " + region);
+                        }
                     }
-                } 
-                if (promiseResolved || !ice || !ice.candidate || !ice.candidate.candidate || !(ice.candidate.candidate.indexOf('typ relay') > -1)) return;
-          
-                promiseResolved = true;
-                resolve(true);
-            }
-            catch {}
+                    if (promiseResolved || !ice || !ice.candidate || !ice.candidate.candidate || !(ice.candidate.candidate.indexOf('typ relay') > -1)) return;
+              
+                    promiseResolved = true;
+                    resolve(true);
+                }
+                catch {}
             };
         });	
     }
