@@ -1995,6 +1995,7 @@ DOMAIN_MODULE_MAP = {
     'vectorlink-burkina-faso': 'custom.abt',
     'vectorlink-ethiopia': 'custom.abt',
     'vectorlink-ghana': 'custom.abt',
+    'vectorlink-ivorycoast': 'custom.abt',
     'vectorlink-kenya': 'custom.abt',
     'vectorlink-madagascar': 'custom.abt',
     'vectorlink-malawi': 'custom.abt',
