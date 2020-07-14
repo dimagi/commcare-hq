@@ -84,5 +84,5 @@ class GetNUsersForRateLimitingTest(TestCase, DomainSubscriptionMixin):
                                        password='123', created_by=None, created_via=None)
             user.is_active = True
             user.save()
-            self.addCleanup(user.delete)
+            self.addCleanup(user.delete, deleted_by=None)
         assert CommCareUser.total_by_domain(domain, is_active=True) == n_users

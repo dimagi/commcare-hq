@@ -181,7 +181,7 @@ class Base(TestCase):
 
     def tearDown(self):
         if self.user:
-            self.user.delete()
+            self.user.delete(deleted_by=None)
         DASHBOARD_ICDS_REPORT.always_enabled = set()
 
     def _get_request(self, path):
