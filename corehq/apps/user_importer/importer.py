@@ -288,7 +288,7 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
         group_memoizer = GroupMemoizer(domain)
         group_memoizer.load_all()
         can_assign_locations = domain_has_privilege(domain, privileges.LOCATIONS)
-        locations_cache = None
+        location_cache = None
         if can_assign_locations:
             location_cache = SiteCodeToLocationCache(domain)
 
