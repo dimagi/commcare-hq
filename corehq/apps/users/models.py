@@ -1522,7 +1522,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
                 django_user = self.sync_to_django_user()
                 django_user.save()
                 if params.get('unretired_by'):
-                    self.log_user_create(params['unretired_by'], params.get('unretired_via'))
+                    log_model_change(
+                        params['unretired_by'],
+                        django_user,
+                        message={'unretired_via': params.get('unretired_via')},
+                    )
 
             super(CouchUser, self).save(**params)
 
