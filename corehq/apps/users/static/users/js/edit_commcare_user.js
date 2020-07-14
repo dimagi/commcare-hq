@@ -1,11 +1,11 @@
 hqDefine('users/js/edit_commcare_user', [
     'jquery',
     'knockout',
-    'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/alert_user',
     'analytix/js/google',
     'hqwebapp/js/multiselect_utils',
+    'users/js/custom_data_fields',
     'locations/js/widgets',
     'jquery-textchange/jquery.textchange',
     'hqwebapp/js/knockout_bindings.ko',
@@ -16,11 +16,11 @@ hqDefine('users/js/edit_commcare_user', [
 ], function (
     $,
     ko,
-    assertProperties,
     initialPageData,
     alertUser,
     googleAnalytics,
-    multiselectUtils
+    multiselectUtils,
+    customDataFields
 ) {
     var couchUserId = initialPageData.get('couch_user_id');
 
@@ -138,55 +138,11 @@ hqDefine('users/js/edit_commcare_user', [
     });
 
     /* Additional Information / custom user data */
-    var fieldModel = function (value) {
-        return {
-            value: ko.observable(value),
-            previousValue: ko.observable(value),    // save user-entered value
-            disable: ko.observable(false),
-        };
-    };
-    var customDataFieldsModel = function (options) {
-        assertProperties.assertRequired(options, ['profiles', 'slugs']);
-        var self = {};
-
-        self.profiles = _.indexBy(options.profiles, 'id');
-        self.slugs = options.slugs;
-        _.each(self.slugs, function (slug) {
-            self[slug] = fieldModel('');    // TODO: populate with original value
-        });
-
-        // TODO: populate slug from initial page data
-        self.commcare_profile = fieldModel('');   // TODO: populate with original value
-        self.commcare_profile.value.subscribe(function (newValue) {
-            if (!newValue) {
-                return;
-            }
-            var profile = self.profiles[newValue];
-            _.each(self.slugs, function (slug) {
-                var field = self[slug];
-                if (slug in profile.fields) {
-                    if (!field.disable()) {
-                        field.previousValue(field.value());
-                    }
-                    field.value(profile.fields[slug]);
-                    field.disable(true);
-                } else {
-                    if (field.disable()) {
-                        field.value(field.previousValue());
-                    }
-                    field.disable(false);
-                }
-            });
-        });
-
-        return self;
-    };
-
     var $customDataFieldsForm = $(".custom-data-fieldset");
     if ($customDataFieldsForm.length) {
         $customDataFieldsForm.koApplyBindings(function () {
             return {
-                custom_fields: customDataFieldsModel({
+                custom_fields: customDataFields.customDataFieldsEditor({
                     profiles: initialPageData.get('custom_fields_profiles'),
                     slugs: initialPageData.get('custom_fields_slugs'),
                 }),

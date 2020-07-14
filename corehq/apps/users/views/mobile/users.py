@@ -668,10 +668,12 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             bulk_download_url = reverse(FilteredUserDownload.urlname, args=[self.domain])
         else:
             bulk_download_url = reverse("download_commcare_users", args=[self.domain])
+        profiles = [profile.to_json() for profile in self.custom_data.model.get_profiles()]
         return {
             'new_mobile_worker_form': self.new_mobile_worker_form,
             'custom_fields_form': self.custom_data.form,
             'custom_fields_slugs': [f.slug for f in self.custom_data.fields],
+            'custom_fields_profiles': profiles,
             'can_bulk_edit_users': self.can_bulk_edit_users,
             'can_add_extra_users': self.can_add_extra_users,
             'can_access_all_locations': self.can_access_all_locations,
