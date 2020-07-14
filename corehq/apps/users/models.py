@@ -1521,6 +1521,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             if self._rev and not self.to_be_deleted():
                 django_user = self.sync_to_django_user()
                 django_user.save()
+                if params.get('unretired_by'):
+                    self.log_user_create(params['unretired_by'], params.get('unretired_via'))
 
             super(CouchUser, self).save(**params)
 
@@ -1813,7 +1815,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         owner_ids.extend([g._id for g in self.get_case_sharing_groups()])
         return owner_ids
 
-    def unretire(self):
+    def unretire(self, unretired_by, unretired_via=None):
         """
         This un-deletes a user, but does not fully restore the state to
         how it previously was. Using this has these caveats:
@@ -1835,7 +1837,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         CaseAccessors(self.domain).soft_undelete_cases(deleted_case_ids)
 
         undelete_system_forms.delay(self.domain, set(deleted_form_ids), set(deleted_case_ids))
-        self.save()
+        self.save(unretired_by=unretired_by, unretired_via=unretired_via)
         return True, None
 
     def retire(self, deleted_by, deleted_via=None):
