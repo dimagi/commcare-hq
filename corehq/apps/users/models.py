@@ -26,7 +26,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
 from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
 from corehq.apps.users.exceptions import IllegalAccountConfirmation
-from corehq.util.model_log import log_model_change
+from corehq.util.model_log import log_model_change, ModelAction
 from corehq.util.models import BouncedEmail
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -1202,11 +1202,13 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         })
         return session_data
 
-    def delete(self):
+    def delete(self, deleted_by, deleted_via=None):
         self.clear_quickcache_for_user()
         try:
             user = self.get_django_user()
             user.delete()
+            if deleted_by:
+                log_model_change(user, deleted_by, message={'deleted_via': deleted_via}, action=ModelAction.DELETE)
         except User.DoesNotExist:
             pass
         super(CouchUser, self).delete()  # Call the "real" delete() method.
@@ -1644,7 +1646,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             self_django_user,
             message={'created_via': created_via},
             fields_changed=None,
-            is_create=True
+            action=ModelAction.CREATE
         )
 
 
@@ -1710,12 +1712,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
             sync_user_cases_if_applicable(self, spawn_task)
 
-    def delete(self):
+    def delete(self, deleted_by, deleted_via=None):
         from corehq.apps.ota.utils import delete_demo_restore_for_user
         # clear demo restore objects if any
         delete_demo_restore_for_user(self)
 
-        super(CommCareUser, self).delete()
+        super(CommCareUser, self).delete(deleted_by=deleted_by, deleted_via=deleted_via)
 
     @property
     @memoized
@@ -1836,7 +1838,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.save()
         return True, None
 
-    def retire(self):
+    def retire(self, deleted_by, deleted_via=None):
         NotAllowed.check(self.domain)
         suffix = DELETED_SUFFIX
         deletion_id = uuid4().hex
@@ -1870,6 +1872,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             pass
         else:
             django_user.delete()
+            if deleted_by:
+                log_model_change(deleted_by, django_user, message={'deleted_via': deleted_via},
+                                 action=ModelAction.DELETE)
         self.save()
 
     def confirm_account(self, password):

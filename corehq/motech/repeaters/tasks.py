@@ -7,6 +7,7 @@ from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 
 from corehq.util.metrics import metrics_gauge_task, metrics_counter, metrics_histogram_timer
+from corehq.util.metrics.const import MPM_MAX
 from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
@@ -135,5 +136,6 @@ def process_repeat_record(repeat_record):
 repeaters_overdue = metrics_gauge_task(
     'commcare.repeaters.overdue',
     get_overdue_repeat_record_count,
-    run_every=crontab()  # every minute
+    run_every=crontab(),  # every minute
+    multiprocess_mode=MPM_MAX
 )

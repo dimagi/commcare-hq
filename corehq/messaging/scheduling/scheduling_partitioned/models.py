@@ -1,4 +1,5 @@
 import pytz
+import sys
 import uuid
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
@@ -330,9 +331,14 @@ class ScheduleInstance(PartitionedModel):
                 try:
                     content.send(recipient, logged_event)
                 except:
+                    error = sys.exc_info()[1]
                     # Release the lock if an error happened so that we can try sending
                     # to this recipient again later.
                     lock.release()
+                    logged_event.error(
+                        MessagingEvent.ERROR_INTERNAL_SERVER_ERROR,
+                        additional_error_text=str(error),
+                    )
                     raise
 
         # Update the MessagingEvent for reporting

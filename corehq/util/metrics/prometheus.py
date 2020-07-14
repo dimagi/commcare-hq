@@ -1,13 +1,17 @@
-from typing import List, Dict
+from typing import Dict, List
 
 from django.conf import settings
+
+from prometheus_client import CollectorRegistry
 from prometheus_client import Counter as PCounter
 from prometheus_client import Gauge as PGauge
 from prometheus_client import Histogram as PHistogram
-from prometheus_client import CollectorRegistry, multiprocess, push_to_gateway
+from prometheus_client import pushadd_to_gateway
 
-from corehq.util.soft_assert import soft_assert
 from corehq.util.metrics.metrics import HqMetrics
+from corehq.util.soft_assert import soft_assert
+
+from .const import MPM_ALL
 
 prometheus_soft_assert = soft_assert(to=[
     f'{name}@dimagi.com'
@@ -20,6 +24,15 @@ class PrometheusMetrics(HqMetrics):
 
     def __init__(self):
         self._metrics = {}
+        self._additional_kwargs = {}
+        self._push_gateway_host = getattr(settings, 'PROMETHEUS_PUSHGATEWAY_HOST', None)
+        if self._push_gateway_host:
+            self._registry = CollectorRegistry()
+            self._additional_kwargs['registry'] = self._registry
+
+    @property
+    def accepted_gauge_params(self):
+        return ['multiprocess_mode']
 
     def _counter(self, name: str, value: float = 1, tags: Dict[str, str] = None, documentation: str = ''):
         """See https://prometheus.io/docs/concepts/metric_types/#counter"""
@@ -28,10 +41,20 @@ class PrometheusMetrics(HqMetrics):
         except ValueError:
             pass
 
-    def _gauge(self, name: str, value: float, tags: Dict[str, str] = None, documentation: str = ''):
-        """See https://prometheus.io/docs/concepts/metric_types/#histogram"""
+    def _gauge(self, name: str, value: float, tags: Dict[str, str]=None, documentation: str = '',
+               multiprocess_mode: str = MPM_ALL):
+        """
+        See https://prometheus.io/docs/concepts/metric_types/#histogram
+
+        multiprocess_mode: can be one of below values
+            'all': Default. Return a timeseries per process alive or dead.
+            'liveall': Return a timeseries per process that is still alive.
+            'livesum': Return a single timeseries that is the sum of the values of alive processes.
+            'max': Return a single timeseries that is the maximum of the values of all processes, alive or dead.
+            'min': Return a single timeseries that is the minimum of the values of all processes, alive or dead.
+        """
         try:
-            self._get_metric(PGauge, name, tags, documentation).set(value)
+            self._get_metric(PGauge, name, tags, documentation, multiprocess_mode=multiprocess_mode).set(value)
         except ValueError:
             pass
 
@@ -78,13 +101,12 @@ class PrometheusMetrics(HqMetrics):
         metric = self._metrics.get(name)
         if not metric:
             tags = tags or {}
+            kwargs = {**kwargs, **self._additional_kwargs}
             metric = metric_type(name, documentation, labelnames=tags.keys(), **kwargs)
             self._metrics[name] = metric
         else:
             assert metric.__class__ == metric_type
         try:
-            if getattr(settings, 'PUSHGATEWAY_HOST', None):
-                self._push_to_gateway()
             return metric.labels(**tags) if tags else metric
         except ValueError as e:
             prometheus_soft_assert(False, 'Prometheus metric error', {
@@ -95,12 +117,12 @@ class PrometheusMetrics(HqMetrics):
             })
             raise
 
-    def _push_to_gateway(self):
-        registry = CollectorRegistry()
-        multiprocess.MultiProcessCollector(registry)
-        host = getattr(settings, 'PUSHGATEWAY_HOST')
-        try:
-            push_to_gateway(host, job='batch_mode', registry=registry)
-        except Exception:
-            # Could get a URLOpenerror if Pushgateway is not running
-            prometheus_soft_assert(False, 'Prometheus metric error while pushing to gateway')
+    def push_metrics(self):
+        if self._push_gateway_host:
+            try:
+                pushadd_to_gateway(self._push_gateway_host, job='celery', registry=self._registry)
+            except Exception:
+                prometheus_soft_assert(False, 'Prometheus metric error while pushing to gateway')
+            finally:
+                # force re-creating metrics to prevent accumulating values
+                self._metrics.clear()

@@ -219,6 +219,14 @@ class Display(OrderedXmlObject):
     media_audio = StringField('media/@audio')
 
 
+class Itemset(XmlObject):
+    ROOT_NAME = 'itemset'
+    nodeset = StringField('@nodeset')
+    value_ref = StringField('value/@ref')
+    label_ref = StringField('label/@ref')
+    sort_ref = StringField('sort/@ref')
+
+
 class DisplayNode(XmlObject):
     """
     Mixin for any node that has the awkward text-or-display subnode,
@@ -499,6 +507,9 @@ class QueryPrompt(DisplayNode):
 
     key = StringField('@key')
     appearance = StringField('@appearance', required=False)
+    input_ = StringField('@input', required=False)
+
+    itemset = NodeField('itemset', Itemset)
 
 
 class RemoteRequestPost(XmlObject):

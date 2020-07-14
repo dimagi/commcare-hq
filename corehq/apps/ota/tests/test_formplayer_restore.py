@@ -31,7 +31,7 @@ class FormplayerRestoreTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.commcare_user.delete()
+        cls.commcare_user.delete(deleted_by=None)
         delete_all_domains()
         super(FormplayerRestoreTest, cls).tearDownClass()
 

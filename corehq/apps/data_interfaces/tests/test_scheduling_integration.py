@@ -108,7 +108,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
         cls.domain_obj.delete()
         super(CaseRuleSchedulingIntegrationTest, cls).tearDownClass()
 

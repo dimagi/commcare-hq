@@ -55,7 +55,6 @@ services:
       service: kafka
     environment:
       KAFKA_ADVERTISED_HOST_NAME: ${KAFKA_ADVERTISED_HOST_NAME}
-      KAFKA_ADVERTISED_PORT: 9092
     ports:
       - "9092:9092"
 

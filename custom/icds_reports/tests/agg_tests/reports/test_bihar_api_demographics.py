@@ -12,7 +12,6 @@ from mock import patch
 class DemographicsAPITest(TestCase):
 
     def test_file_content(self):
-        BiharAPIDemographics.aggregate(date(2017, 5, 1))
         data, count = get_api_demographics_data(
             month=date(2017, 5, 1).strftime("%Y-%m-%d"),
             state_id='st1',

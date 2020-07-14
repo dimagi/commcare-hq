@@ -777,11 +777,11 @@ def _unassign_users_from_location(domain, location_id):
     """
     Unset location for all users assigned to that location.
     """
-    from corehq.apps.locations.dbaccessors import user_ids_at_locations
+    from corehq.apps.locations.dbaccessors import mobile_user_ids_at_locations
     from corehq.apps.users.models import CouchUser
     from dimagi.utils.couch.database import iter_docs
 
-    user_ids = user_ids_at_locations([location_id])
+    user_ids = mobile_user_ids_at_locations([location_id])
     for doc in iter_docs(CouchUser.get_db(), user_ids):
         user = CouchUser.wrap_correctly(doc)
         if user.is_web_user():
