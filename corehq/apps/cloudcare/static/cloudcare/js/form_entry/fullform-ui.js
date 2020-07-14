@@ -1,4 +1,4 @@
-/* global FormplayerFrontend */
+/* global FormplayerFrontend, mdAnchorRender */
 var Formplayer = {
     Utils: {},
     Const: {},
@@ -8,7 +8,7 @@ var Formplayer = {
 var md = window.markdownit();
 
 //Overriden by downstream contexts, check before changing
-window.mdAnchorRender = md.renderer.rules.link_open || function (tokens, idx, options, env, self) {
+mdAnchorRender = md.renderer.rules.link_open || function (tokens, idx, options, env, self) {
     return self.renderToken(tokens, idx, options);
 };
 
