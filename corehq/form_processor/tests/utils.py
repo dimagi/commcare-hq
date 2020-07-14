@@ -5,8 +5,7 @@ from uuid import uuid4
 
 from couchdbkit import ResourceNotFound
 from django.conf import settings
-from django.db import transaction
-from django.test import TestCase
+from django.test import TestCase, TransactionTestCase
 from django.test.utils import override_settings
 from nose.plugins.attrib import attr
 from nose.tools import nottest
@@ -211,31 +210,31 @@ def use_sql_backend(cls):
     return partitioned(override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)(cls))
 
 
-def patch_testcase_transactions():
-    TestCase.transaction_exempt_databases = frozenset()
+def patch_testcase_databases():
+    """Lift Django 2.2 restriction on database access in tests
+
+    For test performance it may be better to remove this and tag each
+    test with the databases it will query.
+    """
+    # According to the docs it should be possible to allow tests to
+    # access all databases with `TestCase.databses = '_all__'`
+    # https://docs.djangoproject.com/en/2.2/topics/testing/tools/#multi-database-support
+    #
+    # Unfortunately support for '__all__' appears to be buggy:
+    # django.db.utils.ConnectionDoesNotExist: The connection _ doesn't exist
+    #
+    # Similar error reported elsewhere:
+    # https://code.djangoproject.com/ticket/30541
+    TransactionTestCase.databases = settings.DATABASES.keys()
+    TransactionTestCase.transaction_exempt_databases = frozenset()
 
     @classmethod
-    def _enter_atomics(cls):
-        atomics = {}
+    def _databases_names(cls, include_mirrors=True):
+        names = super_database_names(include_mirrors=include_mirrors)
         exempt = cls.transaction_exempt_databases
-        for db_name in cls._databases_names():
-            if db_name in exempt:
-                continue
-            atomics[db_name] = transaction.atomic(using=db_name)
-            atomics[db_name].__enter__()
-        return atomics
-    TestCase._enter_atomics = _enter_atomics
-
-    @classmethod
-    def _rollback_atomics(cls, atomics):
-        """Rollback atomic blocks opened by the previous method."""
-        exempt = cls.transaction_exempt_databases
-        for db_name in reversed(cls._databases_names()):
-            if db_name in exempt:
-                continue
-            transaction.set_rollback(True, using=db_name)
-            atomics[db_name].__exit__(None, None, None)
-    TestCase._rollback_atomics = _rollback_atomics
+        return [n for n in names if n not in exempt]
+    super_database_names = TransactionTestCase._databases_names
+    TransactionTestCase._databases_names = _databases_names
 
     def _should_check_constraints(self, connection):
         # Prevent intermittent error:
@@ -267,9 +266,8 @@ def patch_shard_db_transactions(cls):
 
     :param cls: A test class.
     """
-    if not issubclass(cls, TestCase):
+    if not issubclass(cls, TransactionTestCase):
         return cls
-    assert hasattr(cls, "_enter_atomics") and hasattr(cls, "_rollback_atomics"), cls
     shard_dbs = {k for k, v in settings.DATABASES.items() if "PLPROXY" in v}
     if shard_dbs:
         # Reassign attribute to prevent leaking this change to other
