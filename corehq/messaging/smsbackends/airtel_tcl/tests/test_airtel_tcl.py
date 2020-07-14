@@ -44,7 +44,7 @@ class AirtelTCLBackendTest(TestCase):
             campaign_name='jkl',
         )
 
-        msg_obj = QueuedSMS(text='\u0928\u092e\u0938\u094d\u0924\u0947', phone_number='+910123456789')
+        msg_obj = QueuedSMS(text='\u0928\u092e\u0938\u094d\u0924\u0947', phone_number='+916123456789')
         payload = backend.get_json_payload(msg_obj)
         self.assertEqual(
             payload,
@@ -53,7 +53,7 @@ class AirtelTCLBackendTest(TestCase):
                 'keyword': 'ICDS',
                 'dataSet': [
                     {
-                        'MSISDN': '0123456789',
+                        'MSISDN': '6123456789',
                         'OA': 'def',
                         'CIRCLE_NAME': 'ghi',
                         'CAMPAIGN_NAME': 'jkl',
@@ -78,7 +78,7 @@ class AirtelTCLBackendTest(TestCase):
             campaign_name='jkl',
         )
 
-        msg_obj = QueuedSMS(text='message', phone_number='+910123456789')
+        msg_obj = QueuedSMS(text='message', phone_number='+916123456789')
         payload = backend.get_json_payload(msg_obj)
         self.assertEqual(
             payload,
@@ -87,7 +87,7 @@ class AirtelTCLBackendTest(TestCase):
                 'keyword': 'ICDS',
                 'dataSet': [
                     {
-                        'MSISDN': '0123456789',
+                        'MSISDN': '6123456789',
                         'OA': 'def',
                         'CIRCLE_NAME': 'ghi',
                         'CAMPAIGN_NAME': 'jkl',

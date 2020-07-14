@@ -1,5 +1,6 @@
 import json
 import pytz
+import re
 import requests
 from corehq.apps.sms.models import SQLSMSBackend
 from corehq.messaging.smsbackends.airtel_tcl.exceptions import AirtelTCLError, InvalidDestinationNumber
@@ -9,7 +10,6 @@ from corehq.apps.sms.util import strip_plus
 from corehq.util.timezones.conversions import ServerTime
 from datetime import datetime
 from django.conf import settings
-import re
 
 class AirtelTCLBackend(SQLSMSBackend):
 
