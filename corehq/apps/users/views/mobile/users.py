@@ -456,7 +456,7 @@ def force_user_412(request, domain, user_id):
 @require_POST
 def restore_commcare_user(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
-    success, message = user.unretire(unretired_by=request.user)
+    success, message = user.unretire(unretired_by=request.user, unretired_via=USER_CHANGE_VIA_WEB)
     if success:
         messages.success(request, "User %s and all their submissions have been restored" % user.username)
     else:
