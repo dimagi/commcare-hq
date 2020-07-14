@@ -197,6 +197,31 @@ FreeTextEntry.prototype.onPreProcess = function (newValue) {
     this.question.error(this.getErrorMessage(newValue));
 };
 
+function AddressEntry(question, options) {
+    var self = this;
+    FreeTextEntry.call(this, question, options);
+    this.templateType = 'address';
+    this.lengthLimit = options.lengthLimit;
+
+    self.afterRender = function () {
+        var accessToken = 'pk.eyJ1Ijoia25ndXllbi1kaW1hZ2kiLCJhIjoiY2tjM3ZtbXltMDF3OTJ5bnd0cjBpeHc4NSJ9.fVcAJi5sxr-vi_UQf2RnkA';
+        var geocoder = new MapboxGeocoder({
+            accessToken: accessToken,
+            types: 'address',
+            proximity: { longitude: -74.006058, latitude: 40.712772},
+            getItemValue: function(item) {
+                console.log(item);
+                self.rawAnswer(item.place_name);
+                return item.place_name;
+            }
+        });
+        geocoder.addTo('#' + self.entryId);
+        $('input.mapboxgl-ctrl-geocoder--input').addClass('form-control')
+    }
+}
+AddressEntry.prototype = Object.create(FreeTextEntry.prototype);
+AddressEntry.prototype.constructor = FreeTextEntry;
+
 /**
  * The entry that defines an integer input. Only accepts whole numbers
  */
@@ -777,6 +802,9 @@ function getEntry(question) {
     var displayOptions = _getDisplayOptions(question);
     var isPhoneMode = ko.utils.unwrapObservable(displayOptions.phoneMode);
 
+    console.log(question.datatype());
+    console.log('\n\n\n');
+
     switch (question.datatype()) {
         case Formplayer.Const.STRING:
             // Barcode uses text box for CloudCare so it's possible to still enter a barcode field
@@ -791,6 +819,7 @@ function getEntry(question) {
                     enableAutoUpdate: isPhoneMode,
                 });
             }
+            entry = new AddressEntry(question, {});
             break;
         case Formplayer.Const.INT:
             entry = new IntEntry(question, {
