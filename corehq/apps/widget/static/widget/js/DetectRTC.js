@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 'use strict';
 
 // Last Updated On: 2020-03-23 2:31:22 AM UTC
@@ -1164,3 +1166,5 @@
         });
     }
 })();
+
+/* eslint-enable */
