@@ -215,8 +215,9 @@ def patch_testcase_databases():
     """Lift Django 2.2 restriction on database access in tests
 
     Allows `TestCase` and `TransactionTestCase` to access all databases
-    except for icds-specific databases by default. This can be
-    overridden by setting `databases` on test case subclasses.
+    by default. ICDS-specific databases are only accessible in icds
+    tests. This can be overridden by setting `databases` on test case
+    subclasses.
 
     Similar to pre-Django 2.2, transactions are disabled on all
     databases except "default". This can be overridden by setting
@@ -234,12 +235,22 @@ def patch_testcase_databases():
     #
     # Similar error reported elsewhere:
     # https://code.djangoproject.com/ticket/30541
-    databases = frozenset(k for k in settings.DATABASES.keys() if "icds" not in k)
+    default_dbs = frozenset(k for k in settings.DATABASES.keys() if "icds" not in k)
+    icds_dbs = frozenset(settings.DATABASES.keys())
+
+    def is_icds(cls):
+        # TODO remove when custom.icds packages have been moved to new repo
+        return cls.__module__.startswith("custom.icds")
+
+    @classproperty
+    def databases(cls):
+        return icds_dbs if is_icds(cls) else default_dbs
     TestCase.databases = databases
     TransactionTestCase.databases = databases
 
     @classproperty
     def transaction_exempt_databases(cls):
+        databases = icds_dbs if is_icds(cls) else default_dbs
         if cls.databases is databases:
             return frozenset(db for db in databases if db != "default")
         return frozenset(db for db in databases if db not in cls.databases)
