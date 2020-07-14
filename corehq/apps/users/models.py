@@ -1521,12 +1521,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             if self._rev and not self.to_be_deleted():
                 django_user = self.sync_to_django_user()
                 django_user.save()
-                if params.get('unretired_by'):
-                    log_model_change(
-                        params['unretired_by'],
-                        django_user,
-                        message={'unretired_via': params.get('unretired_via')},
-                    )
 
             super(CouchUser, self).save(**params)
 
@@ -1841,7 +1835,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         CaseAccessors(self.domain).soft_undelete_cases(deleted_case_ids)
 
         undelete_system_forms.delay(self.domain, set(deleted_form_ids), set(deleted_case_ids))
-        self.save(unretired_by=unretired_by, unretired_via=unretired_via)
+        self.save()
+        log_model_change(
+            unretired_by,
+            self.get_django_user(use_primary_db=True),
+            message={'unretired_via': unretired_via},
+        )
         return True, None
 
     def retire(self, deleted_by, deleted_via=None):
