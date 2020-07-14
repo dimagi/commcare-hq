@@ -110,14 +110,14 @@ class AirtelTCLBackendTest(TestCase):
         )
 
     def test_get_phone_number(self):
-        self.assertEqual(AirtelTCLBackend.get_phone_number('+910123456789'), '0123456789')
-        self.assertEqual(AirtelTCLBackend.get_phone_number('910123456789'), '0123456789')
+        self.assertEqual(AirtelTCLBackend.get_phone_number('+918123456789'), '8123456789')
+        self.assertEqual(AirtelTCLBackend.get_phone_number('916123456789'), '6123456789')
 
         with self.assertRaises(InvalidDestinationNumber):
-            AirtelTCLBackend.get_phone_number('+999123456')
+            AirtelTCLBackend.get_phone_number('+9959123456')
 
         with self.assertRaises(InvalidDestinationNumber):
-            AirtelTCLBackend.get_phone_number('+91')
+            AirtelTCLBackend.get_phone_number('+913')
 
     def test_handle_response(self):
         with self.assertRaises(AirtelTCLError):
