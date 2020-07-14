@@ -307,4 +307,4 @@ class TargetDomainValidator(ImportValidator):
         if target_domain and target_domain != self.domain:
             mirror_domains = DomainPermissionsMirror.mirror_domains(self.domain)
             if target_domain not in mirror_domains:
-                return error_message.format(target_domain, self.domain)
+                return self.error_message.format(target_domain, self.domain)
