@@ -1,7 +1,7 @@
 import uuid
 from xml.etree import cElementTree as ElementTree
 
-from django.contrib.admin.models import LogEntry, DELETION
+from django.contrib.admin.models import LogEntry
 from django.test import TestCase
 from django.utils.encoding import force_text
 
@@ -70,7 +70,7 @@ class RetireUserTestCase(TestCase):
         other_django_user = self.other_user.get_django_user()
 
         self.commcare_user.retire(deleted_by=other_django_user, deleted_via=deleted_via)
-        log_entry = LogEntry.objects.get(user_id=other_django_user.pk, action_flag=DELETION)
+        log_entry = LogEntry.objects.get(user_id=other_django_user.pk, action_flag=ModelAction.DELETE.value)
         self.assertEqual(log_entry.object_repr, force_text(django_user))
         self.assertEqual(log_entry.change_message, str({'deleted_via': deleted_via}))
 
