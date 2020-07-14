@@ -47,21 +47,16 @@ class DialerSettingsForm(forms.ModelForm):
         self.helper.layout = crispy.Layout(
             hqcrispy.B3MultiField(
                 _("Telephony Services"),
-                hqcrispy.InlineField(
-                    'is_enabled', data_bind="checked: isEnabled"
-                ),
+                hqcrispy.InlineField('is_enabled'),
             ),
             crispy.Div(
-                crispy.Field('aws_instance_id', data_bind="value: aws_instance_id"),
-                data_bind="visible: isEnabled"
+                crispy.Field('aws_instance_id'),
             ),
             crispy.Div(
-                crispy.Field('dialer_page_header', data_bind="value: dialer_page_header"),
-                data_bind="visible: isEnabled"
+                crispy.Field('dialer_page_header'),
             ),
             crispy.Div(
-                crispy.Field('dialer_page_subheader', data_bind="dialer_page_subheader"),
-                data_bind="visible: isEnabled"
+                crispy.Field('dialer_page_subheader'),
             ),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
