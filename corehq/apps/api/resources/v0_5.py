@@ -667,7 +667,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
             return ""
 
     def _get_report_data(self, report_config, domain, start, limit, get_params):
-        report = ConfigurableReportDataSource.from_spec(report_config)
+        report = ConfigurableReportDataSource.from_spec(report_config, include_prefilters=True)
 
         string_type_params = [
             filter.name
