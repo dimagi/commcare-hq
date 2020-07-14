@@ -7,7 +7,6 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from django.utils.translation import ugettext_lazy
 
-from corehq.apps.domain.models import Domain
 from corehq.apps.widget.forms import DialerSettingsForm
 from corehq.apps.widget.models import DialerSettings
 from corehq.apps.widget.util import get_dialer_settings
