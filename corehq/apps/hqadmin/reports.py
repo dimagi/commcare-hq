@@ -73,7 +73,8 @@ class DeviceLogSoftAssertReport(BaseDeviceLogReport, AdminReport):
         logs = self._filter_logs()
         rows = self._create_rows(
             logs,
-            range=slice(self.pagination.start, self.pagination.start + self.pagination.count)
+            range=slice(self.pagination.start,
+                        self.pagination.start + self.pagination.count)
         )
         return rows
 
@@ -282,26 +283,32 @@ class DeployHistoryReport(GetParamsMixin, AdminReport):
 
     emailable = False
     exportable = False
-    ajax_pagination = False
+    ajax_pagination = True
     default_rows = 10
 
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn(_("Date")),
+            DataTablesColumn(_("Date"), sortable=False),
             DataTablesColumn(_("User"), sortable=False),
             DataTablesColumn(_("Diff URL"), sortable=False),
         )
 
     @property
     def rows(self):
-        deploy_list = HqDeploy.objects.filter()
-        for deploy in deploy_list:
+        deploy_list = HqDeploy.objects.all()
+        start = self.pagination.start
+        end = self.pagination.start + self.pagination.count
+        for deploy in deploy_list[start:end]:
             yield [
                 self._format_date(deploy.date),
                 deploy.user,
                 self._hyperlink_diff_url(deploy.diff_url),
             ]
+
+    @property
+    def total_records(self):
+        return HqDeploy.objects.count()
 
     @cached_property
     def _user_lookup_url(self):
@@ -313,7 +320,8 @@ class DeployHistoryReport(GetParamsMixin, AdminReport):
             delta_dict = self._strfdelta(raw_time_since_deploy)
 
             if delta_dict['days'] != 0:
-                delta_str = "{days} day(s), {hours} hour(s) ago".format(**delta_dict)
+                delta_str = "{days} day(s), {hours} hour(s) ago".format(
+                    **delta_dict)
             elif delta_dict['hours'] != 0:
                 delta_str = "{hours} hour(s), {minutes} minute(s) ago".format(
                     **delta_dict)
