@@ -1838,8 +1838,8 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
             num_docs_unporcessed += 1
 
         log = {
-            "doc_id": doc_id, "sql_modified_on": sql_modified_on, "in_es": found_in_es,
-            "subtype": doc_subtype
+            "doc_id": doc_id, "modified_on": sql_modified_on.isoformat(), "inserted_at": inserted_at.isoformat(),
+            "in_es": found_in_es, "subtype": doc_subtype
         }
         celery_task_logger.info(json.dumps(log))
         send_change_for_ucr_reprocessing(doc_id, doc_subtype, status_record.is_form_ucr)
@@ -1905,9 +1905,9 @@ def get_data_not_in_ucr(status_record):
                 # This is to handle the cases which are outdated. This condition also handles the time drift of 2 sec
                 # between main db and ucr db. i.e  doc will even be included when inserted_at-sql_modified_on < 2 sec
                 if sql_modified_on - doc_id_and_inserted_in_ucr[doc_id] > timedelta(seconds=-2):
-                    yield (doc_id, doc_subtype, sql_modified_on.isoformat(), doc_id_and_inserted_in_ucr[doc_id])
+                    yield (doc_id, doc_subtype, sql_modified_on, doc_id_and_inserted_in_ucr[doc_id])
             else:
-                yield (doc_id, doc_subtype, sql_modified_on.isoformat(), None)
+                yield (doc_id, doc_subtype, sql_modified_on, None)
 
 
 def _get_docs_in_ucr(domain, table_id, doc_ids):
