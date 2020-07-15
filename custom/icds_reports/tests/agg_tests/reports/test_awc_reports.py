@@ -21,25 +21,6 @@ from custom.icds_reports.messages import new_born_with_low_weight_help_text, was
     percent_adolescent_girls_enrolled_help_text_v2
 
 
-def coerce_decimal_to_float(data):
-    """Recursively coerce all decimal values in data to floats
-
-    This is a stop-gap measure to make tests pass on both Django 1.11
-    and Django 2.2 while a better solution is developed for handling
-    the Django 2.2 change that made Avg(), StdDev(), and Variance()
-    return Decimals.
-    https://docs.djangoproject.com/en/3.0/releases/2.2/#miscellaneous
-
-    TODO remove when Django 1 is no longer supported
-    """
-    if isinstance(data, list):
-        return [coerce_decimal_to_float(v) for v in data]
-    if isinstance(data, dict):
-        return {k: coerce_decimal_to_float(v) for k, v in data.items()}
-    if isinstance(data, Decimal):
-        return float(data)
-    return data
-
 
 class FirstDayOfMay(date):
     @classmethod
@@ -279,7 +260,7 @@ class TestAWCReport(TestCase):
 
     def test_awc_reports_system_usage_PSE_average_weekly_attendance(self):
         self.assertEqual(
-            coerce_decimal_to_float(get_awc_reports_system_usage(
+            get_awc_reports_system_usage(
                 'icds-cas',
                 {
                     'state_id': 'st1',
@@ -292,46 +273,46 @@ class TestAWCReport(TestCase):
                 (2017, 4, 1),
                 (2017, 3, 1),
                 'aggregation_level'
-            )['charts'][1]),
+            )['charts'][1],
             [
                 {
                     "classed": "dashed",
                     "values": [
                         [
                             1491523200000,
-                            0.65625
+                            Decimal(0.65625)
                         ],
                         [
                             1491609600000,
-                            0.64516129
+                            Decimal(0.64516129)
                         ],
                         [
                             1491782400000,
-                            0.677419355
+                            Decimal(0.677419355)
                         ],
                         [
                             1491955200000,
-                            0.612903226
+                            Decimal(0.612903226)
                         ],
                         [
                             1492473600000,
-                            0.612903226
+                            Decimal(0.612903226)
                         ],
                         [
                             1492732800000,
-                            0.64516129
+                            Decimal(0.64516129)
                         ],
                         [
                             1492992000000,
-                            0.64516129
+                            Decimal(0.64516129)
                         ],
                         [
                             1493078400000,
-                            0.64516129
+                            Decimal(0.64516129)
                         ],
                         [
                             1493251200000,
-                            0.64516129
+                            Decimal(0.64516129)
                         ]
                     ],
                     "key": "PSE- Average Weekly Attendance"
@@ -835,7 +816,7 @@ class TestAWCReport(TestCase):
             for el in kpi:
                 del el['help_text']
         self.assertEqual(
-            coerce_decimal_to_float(data['charts'][1]),
+            data['charts'][1],
             [
                 {
                     "color": "#006fdf",
@@ -843,187 +824,187 @@ class TestAWCReport(TestCase):
                     "strokeWidth": 2,
                     "values": [
                         {
-                            "y": 0,
+                            "y": Decimal(0),
                             "x": 1493596800000,
                             "attended": 0,
                             "eligible": 0
                         },
                         {
-                            "y": 0.741935484,
+                            "y": Decimal(0.741935484),
                             "x": 1493683200000,
                             "attended": 23,
                             "eligible": 31
                         },
                         {
-                            "y": 0.806451613,
+                            "y": Decimal(0.806451613),
                             "x": 1493769600000,
                             "attended": 25,
                             "eligible": 31
                         },
                         {
-                            "y": 0.8,
+                            "y": Decimal(0.8),
                             "x": 1493856000000,
                             "attended": 24,
                             "eligible": 30
                         },
                         {
-                            "y": 0.8,
+                            "y": Decimal(0.8),
                             "x": 1493942400000,
                             "attended": 24,
                             "eligible": 30
                         },
                         {
-                            "y": 0,
+                            "y": Decimal(0),
                             "x": 1494028800000,
                             "attended": 0,
                             "eligible": 0
                         },
                         {
-                            "y": 0,
+                            "y": Decimal(0),
                             "x": 1494115200000,
                             "attended": 0,
                             "eligible": 0
                         },
                         {
-                            "y": 0,
+                            "y": Decimal(0),
                             "x": 1494201600000,
                             "attended": 0,
                             "eligible": 0
                         },
                         {
-                            "y": 0.8,
+                            "y": Decimal(0.8),
                             "x": 1494288000000,
                             "attended": 24,
                             "eligible": 30
                         },
                         {
-                            "y": 0,
+                            "y": Decimal(0),
                             "x": 1494374400000,
                             "attended": 0,
                             "eligible": 0
                         },
                         {
-                            "y": 0,
+                            "y": Decimal(0),
                             "x": 1494460800000,
                             "attended": 0,
                             "eligible": 0
                         },
                         {
-                            "y": 0,
+                            "y": Decimal(0),
                             "x": 1494547200000,
                             "attended": 0,
                             "eligible": 0
                         },
                         {
-                            "y": 0,
+                            "y": Decimal(0),
                             "x": 1494633600000,
                             "attended": 0,
                             "eligible": 0
                         },
                         {
-                            "y": 0,
+                            "y": Decimal(0),
                             "x": 1494720000000,
                             "attended": 0,
                             "eligible": 0
                         },
                         {
-                            "y": 1.0,
+                            "y": Decimal(1.0),
                             "x": 1494806400000,
                             "attended": 30,
                             "eligible": 30
                         },
                         {
-                            "y": 0.666666667,
+                            "y": Decimal(0.666666667),
                             "x": 1494892800000,
                             "attended": 20,
                             "eligible": 30
                         },
                         {
-                            "y": 0.733333333,
+                            "y": Decimal(0.733333333),
                             "x": 1494979200000,
                             "attended": 22,
                             "eligible": 30
                         },
                         {
-                            "y": 0.766666667,
+                            "y": Decimal(0.766666667),
                             "x": 1495065600000,
                             "attended": 23,
                             "eligible": 30
                         },
                         {
-                            "y": 0.666666667,
+                            "y": Decimal(0.666666667),
                             "x": 1495152000000,
                             "attended": 20,
                             "eligible": 30
                         },
                         {
-                            "y": 0.633333333,
+                            "y": Decimal(0.633333333),
                             "x": 1495238400000,
                             "attended": 19,
                             "eligible": 30
                         },
                         {
-                            "y": 0,
+                            "y": Decimal(0),
                             "x": 1495324800000,
                             "attended": 0,
                             "eligible": 0
                         },
                         {
-                            "y": 0.666666667,
+                            "y": Decimal(0.666666667),
                             "x": 1495411200000,
                             "attended": 20,
                             "eligible": 30
                         },
                         {
-                            "y": 0,
+                            "y": Decimal(0),
                             "x": 1495497600000,
                             "attended": 0,
                             "eligible": 0
                         },
                         {
-                            "y": 0.666666667,
+                            "y": Decimal(0.666666667),
                             "x": 1495584000000,
                             "attended": 20,
                             "eligible": 30
                         },
                         {
-                            "y": 0.666666667,
+                            "y": Decimal(0.666666667),
                             "x": 1495670400000,
                             "attended": 20,
                             "eligible": 30
                         },
                         {
-                            "y": 0.666666667,
+                            "y": Decimal(0.666666667),
                             "x": 1495756800000,
                             "attended": 20,
                             "eligible": 30
                         },
                         {
-                            "y": 0.666666667,
+                            "y": Decimal(0.666666667),
                             "x": 1495843200000,
                             "attended": 20,
                             "eligible": 30
                         },
                         {
-                            "y": 0,
+                            "y": Decimal(0),
                             "x": 1495929600000,
                             "attended": 0,
                             "eligible": 0
                         },
                         {
-                            "y": 0.655172414,
+                            "y": Decimal(0.655172414),
                             "x": 1496016000000,
                             "attended": 19,
                             "eligible": 29
                         },
                         {
-                            "y": 1.0,
+                            "y": Decimal(1.0),
                             "x": 1496102400000,
                             "attended": 29,
                             "eligible": 29
                         },
                         {
-                            "y": 0,
+                            "y": Decimal(0),
                             "x": 1496188800000,
                             "attended": 0,
                             "eligible": 0
