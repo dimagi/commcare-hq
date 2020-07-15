@@ -3,6 +3,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 
+from datetime import datetime as dt
 from dateutil.parser import parse
 from memoized import memoized
 
@@ -78,19 +79,22 @@ class DeviceLogSoftAssertReport(BaseDeviceLogReport, AdminReport):
 
     def _filter_logs(self):
         logs = DeviceReportEntry.objects.filter(
-            date__range=[self.datespan.startdate_param_utc, self.datespan.enddate_param_utc]
+            date__range=[self.datespan.startdate_param_utc,
+                         self.datespan.enddate_param_utc]
         ).filter(type='soft-assert')
 
         if self.selected_domain is not None:
             logs = logs.filter(domain__exact=self.selected_domain)
 
         if self.selected_commcare_version is not None:
-            logs = logs.filter(app_version__contains='"{}"'.format(self.selected_commcare_version))
+            logs = logs.filter(app_version__contains='"{}"'.format(
+                self.selected_commcare_version))
 
         return logs
 
     def _create_row(self, log, *args, **kwargs):
-        row = super(DeviceLogSoftAssertReport, self)._create_row(log, *args, **kwargs)
+        row = super(DeviceLogSoftAssertReport, self)._create_row(
+            log, *args, **kwargs)
         row.append(log.domain)
         return row
 
@@ -135,7 +139,8 @@ class AdminPhoneNumberReport(PhoneNumberReport):
             return
 
         if paginate and self.pagination:
-            data = data[self.pagination.start:self.pagination.start + self.pagination.count]
+            data = data[
+                self.pagination.start:self.pagination.start + self.pagination.count]
 
         for number in data:
             yield self._fmt_row(number, owner_cache, link_user)
@@ -275,8 +280,6 @@ class DeployHistoryReport(GetParamsMixin, AdminReport):
     slug = 'deploy_history_report'
     name = ugettext_lazy("Deploy History Report")
 
-    # search should accept git ref and show the deploy that contains that ref. More involved than simpleSearch
-
     emailable = False
     exportable = False
     ajax_pagination = True
@@ -285,9 +288,9 @@ class DeployHistoryReport(GetParamsMixin, AdminReport):
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn(_("Date")),
-            DataTablesColumn(_("User")),
-            DataTablesColumn(_("Diff URL")),
+            DataTablesColumn(_("Date"), sortable=False),
+            DataTablesColumn(_("User"), sortable=False),
+            DataTablesColumn(_("Diff URL"), sortable=False),
         )
 
     @property
@@ -304,15 +307,33 @@ class DeployHistoryReport(GetParamsMixin, AdminReport):
     def _user_lookup_url(self):
         return reverse('web_deploy_lookup')
 
-    @staticmethod
-    def _format_date(date):
-        #find time relative to now -> last_deploy.date|naturaltime
+    def _format_date(self, date):
+        raw_time_since_deploy = dt.now() - date
+        delta_dict = self._strfdelta(raw_time_since_deploy)
+
+        if delta_dict['days'] != 0:
+            delta_str = "{days} day(s), {hours} hour(s) ago".format(**delta_dict)
+        elif delta_dict['hours'] != 0:
+            delta_str = "{hours} hour(s), {minutes} minute(s) ago".format(
+                **delta_dict)
+        else:
+            delta_str = "{minutes} minute(s), {seconds} second(s) ago".format(
+                **delta_dict)
+
+        ret_str = '<div>{delta}</div><div>{actual_date}</div>'
         if date:
-            return date.strftime(SERVER_DATETIME_FORMAT)
+            return ret_str.format(delta=delta_str, actual_date=date.strftime(SERVER_DATETIME_FORMAT))
         return "---"
+
+    def _strfdelta(self, tdelta):
+        # datetime.timedelta object cannot use 'strftime', use custom fn:
+        relative_time_formatted = {"days": tdelta.days}
+        relative_time_formatted["hours"], rem = divmod(tdelta.seconds, 3600)
+        relative_time_formatted["minutes"], relative_time_formatted[
+            "seconds"] = divmod(rem, 60)
+        return relative_time_formatted
 
     def _hyperlink_diff_url(self, diff_url):
         hyperlink_diff_url = '<a href="{link}">Diff with previous</a>'
         hyperlink_diff_url = hyperlink_diff_url.format(link=diff_url)
         return hyperlink_diff_url
-
