@@ -3601,6 +3601,12 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     parent_select = SchemaProperty(ParentSelect)
     search_config = SchemaProperty(CaseSearch)
 
+    # Current allowed versions are '1' and '2'. version 1 had incorrect child
+    # module behaviour, which was fixed for version 2. Apps in the wild were
+    # depending on the old behaviour, so the new behaviour is applicable only
+    # for new modules / apps.
+    shadow_module_version = IntegerProperty(default=1)
+
     get_forms = IndexedSchema.Getter('forms')
 
     @classmethod
