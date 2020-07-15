@@ -187,6 +187,20 @@ function FreeTextEntry(question, options) {
                 return gettext('Free response');
         }
     };
+    if (options.receiveStr) {
+        var match = options.receiveStr.match(/receive-(.*)-(.*)/)
+        if (match) {
+            self.receiveTopic = match[1];
+            self.receiveTopicField = match[2];
+            $.subscribe(self.receiveTopic, function(e, addr) {
+                if (addr == Formplayer.Const.NO_ANSWER) {
+                    self.rawAnswer(Formplayer.Const.NO_ANSWER);
+                } else if (addr[self.receiveTopicField]) {
+                    self.rawAnswer(addr[self.receiveTopicField]);
+                }
+            });
+        }
+    }
 }
 FreeTextEntry.prototype = Object.create(EntrySingleAnswer.prototype);
 FreeTextEntry.prototype.constructor = EntrySingleAnswer;
@@ -204,16 +218,41 @@ function AddressEntry(question, options) {
     this.lengthLimit = options.lengthLimit;
 
     self.afterRender = function () {
+        if (options.broadcastStr) {
+            var match = options.broadcastStr.match(/broadcast-(.*)/)
+            if (match) {
+                self.broadcastTopic = match[1];
+            }
+        }
+
         var accessToken = 'pk.eyJ1Ijoia25ndXllbi1kaW1hZ2kiLCJhIjoiY2tjM3ZtbXltMDF3OTJ5bnd0cjBpeHc4NSJ9.fVcAJi5sxr-vi_UQf2RnkA';
         var geocoder = new MapboxGeocoder({
             accessToken: accessToken,
             types: 'address',
             proximity: { longitude: -74.006058, latitude: 40.712772},
             getItemValue: function(item) {
-                console.log(item);
                 self.rawAnswer(item.place_name);
+                broadcastObj = {
+                    full: item.place_name
+                }
+                for (var i=0; i<item.context.length; i++) {
+                    var contextItem = item.context[i];
+                    if (contextItem.id.startsWith('postcode')) {
+                        broadcastObj.zipcode = contextItem.text;
+                    } else if (contextItem.id.startsWith('place')) {
+                        broadcastObj.city= contextItem.text;
+                    }
+                }
+                broadcastObj.street = item.address || '';
+                broadcastObj.street += ' ' + item.text;
+
+                $.publish(self.broadcastTopic, broadcastObj);
                 return item.place_name;
-            }
+            },
+        });
+        geocoder.on('clear', function() {
+            self.rawAnswer(Formplayer.Const.NO_ANSWER);
+            $.publish(self.broadcastTopic, Formplayer.Const.NO_ANSWER);
         });
         geocoder.addTo('#' + self.entryId);
         $('input.mapboxgl-ctrl-geocoder--input').addClass('form-control')
@@ -802,28 +841,30 @@ function getEntry(question) {
     var displayOptions = _getDisplayOptions(question);
     var isPhoneMode = ko.utils.unwrapObservable(displayOptions.phoneMode);
 
-    console.log(question.datatype());
-    console.log('\n\n\n');
-
     switch (question.datatype()) {
         case Formplayer.Const.STRING:
             // Barcode uses text box for CloudCare so it's possible to still enter a barcode field
         case Formplayer.Const.BARCODE:
             isNumeric = style === Formplayer.Const.NUMERIC;
-            if (isNumeric) {
+            if (style && style.includes('address')) {
+                entry = new AddressEntry(question, {
+                    broadcastStr: style
+                });
+            } else if (isNumeric) {
                 entry = new PhoneEntry(question, {
                     enableAutoUpdate: isPhoneMode,
                 });
             } else {
                 entry = new FreeTextEntry(question, {
                     enableAutoUpdate: isPhoneMode,
+                    receiveStr: (style && style.startsWith('receive')) ? style : null,
                 });
             }
-            entry = new AddressEntry(question, {});
             break;
         case Formplayer.Const.INT:
             entry = new IntEntry(question, {
                 enableAutoUpdate: isPhoneMode,
+                receiveStr: (style && style.startsWith('receive')) ? style : null,
             });
             break;
         case Formplayer.Const.LONGINT:
