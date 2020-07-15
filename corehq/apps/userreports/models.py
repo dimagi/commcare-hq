@@ -1134,6 +1134,7 @@ class AsyncIndicator(models.Model):
 
 
 class InvalidUCRData(models.Model):
+    id = models.BigAutoField(primary_key=True)
     doc_id = models.CharField(max_length=255, null=False)
     doc_type = models.CharField(max_length=126, null=False, db_index=True)
     domain = models.CharField(max_length=126, null=False, db_index=True)

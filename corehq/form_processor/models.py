@@ -1277,6 +1277,8 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
         TYPE_CASE_ATTACHMENT,
         TYPE_LEDGER,
     )
+
+    id = models.BigAutoField(primary_key=True)
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_id', db_index=False,
         related_name="transaction_set", related_query_name="transaction",

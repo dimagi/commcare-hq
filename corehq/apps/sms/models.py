@@ -1060,6 +1060,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         ERROR_EMAIL_GATEWAY: ugettext_noop("Email Gateway Error"),
     }
 
+    id = models.BigAutoField(primary_key=True)
     domain = models.CharField(max_length=126, null=False, db_index=True)
     date = models.DateTimeField(null=False, db_index=True)
     source = models.CharField(max_length=3, null=False)
@@ -1480,6 +1481,7 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
         (MessagingEvent.RECIPIENT_WEB_USER, ugettext_noop('Web User')),
     )
 
+    id = models.BigAutoField(primary_key=True)
     parent = models.ForeignKey('MessagingEvent', on_delete=models.CASCADE)
     date = models.DateTimeField(null=False, db_index=True)
     recipient_type = models.CharField(max_length=3, choices=RECIPIENT_CHOICES, null=False)
