@@ -33,7 +33,7 @@ CREATE TABLE tmp_awc_location_launched AS
         awc_site_code,
         awc_name,
         awc_id
-        FROM agg_awc_monthly WHERE num_launched_awcs >0 AND aggregation_level=5 AND month='2020-06-01'
+        FROM agg_awc_monthly WHERE num_launched_awcs >0 AND aggregation_level=5 AND month='2020-07-01'
 
 SELECT
     t.district_name,
