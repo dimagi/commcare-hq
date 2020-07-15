@@ -886,7 +886,7 @@ class TestAWCReport(TestCase):
                             "eligible": 0
                         },
                         {
-                            "y": Decimal('0.80000000000000000000'),
+                            "y": 0,
                             "x": 1494460800000,
                             "attended": 0,
                             "eligible": 0
