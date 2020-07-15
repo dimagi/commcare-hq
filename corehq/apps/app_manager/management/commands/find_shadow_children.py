@@ -66,6 +66,9 @@ class Command(BaseCommand):
         logger.info(f"{len(unmigrated_apps)} apps to migrate. Details in {self.options['csv_path']}")
 
     def _find_shadow_children(self, app_doc):
+        if not app_doc.get('modules', []):
+            return []
+
         source_module_ids = {
             m['source_module_id']: m['unique_id']
             for m in app_doc['modules'] if m.get('module_type', '') == 'shadow'
