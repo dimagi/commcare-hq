@@ -1,8 +1,9 @@
 import json
 import datetime
-from decimal import Decimal
-
 from datetime import date
+from decimal import Decimal as Decimal_
+
+import django
 from django.core.serializers.json import DjangoJSONEncoder
 from django.test import TestCase
 from mock import mock
@@ -19,6 +20,10 @@ from custom.icds_reports.messages import new_born_with_low_weight_help_text, was
     percent_aadhaar_seeded_beneficiaries_help_text, percent_children_enrolled_help_text, \
     percent_pregnant_women_enrolled_help_text, percent_lactating_women_enrolled_help_text, \
     percent_adolescent_girls_enrolled_help_text_v2
+
+
+# TODO remove when Django 1 is no longer supported
+Decimal = Decimal_ if django.__version__ >= "2.2" else float
 
 
 class FirstDayOfMay(date):
