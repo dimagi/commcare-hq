@@ -4,6 +4,7 @@
 {% load compress %}
 {% load menu_tags %}
 
+{% block plan_breadcrumbs %}{% endblock %}
 
 {% block form_content %}
   <p class="lead text-center">
@@ -11,35 +12,7 @@
       You are renewing your <strong>{{ p }} Edition</strong> subscription.
     {% endblocktrans %}
   </p>
-  <div class="confirm-plan-summary">
-    <div class="tile {{ tile_css }}">
-      <h3>
-        {{ plan.name }}
-      </h3>
-      <p class="plan-price">
-        {{ plan.monthly_fee }}
-      </p>
-      <p class="plan-monthly-label">
-        <strong>
-          {% trans "Monthly Fee" %}
-        </strong>
-      </p>
-      <h4>
-        {% trans 'Included each month' %}
-      </h4>
-      <div class="plan-included well well-sm">
-        <dl class="dl-horizontal">
-          {% for rate in plan.rates %}
-            <dt>{{ rate.name }}</dt>
-            <dd>{{ rate.included }}</dd>
-          {% endfor %}
-        </dl>
-      </div>
-      <p class="plan-desc">
-        {{ plan.description }}
-      </p>
-    </div>
-  </div>
+  {% include 'accounting/partials/confirm_plan_summary.html' %}
 
   <form class="form"
         method="post"

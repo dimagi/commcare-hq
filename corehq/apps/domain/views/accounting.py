@@ -1521,7 +1521,7 @@ class SubscriptionMixin(object):
 class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
     urlname = "domain_subscription_renewal"
     page_title = ugettext_lazy("Renew Plan")
-    step_title = ugettext_lazy("Renew or Change Plan")
+    step_title = ugettext_lazy("Renew Plan")
     template_name = "domain/renew_plan.html"
 
     @property
@@ -1545,14 +1545,16 @@ class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
             'current_edition': current_edition,
             'plan': self.subscription.plan_version.user_facing_description,
             'tile_css': 'tile-{}'.format(current_edition.lower()),
+            'is_renewal_page': True,
         })
         return context
 
 
-class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin, SubscriptionMixin):
+class ConfirmSubscriptionRenewalView(SelectPlanView, DomainAccountingSettings, AsyncHandlerMixin, SubscriptionMixin):
     template_name = 'domain/confirm_subscription_renewal.html'
     urlname = 'domain_subscription_renewal_confirmation'
-    page_title = ugettext_lazy("Renew Plan")
+    page_title = ugettext_lazy("Confirm Billing Information")
+    step_title = ugettext_lazy("Confirm Billing Information")
     async_handlers = [
         Select2BillingInfoHandler,
     ]
@@ -1599,6 +1601,7 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
             'plan': self.subscription.plan_version.user_facing_description,
             'confirm_form': self.confirm_form,
             'next_plan': self.next_plan_version.user_facing_description,
+            'is_renewal_page': True,
         }
 
     @property
