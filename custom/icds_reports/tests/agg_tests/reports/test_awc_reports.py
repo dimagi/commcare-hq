@@ -21,7 +21,6 @@ from custom.icds_reports.messages import new_born_with_low_weight_help_text, was
     percent_adolescent_girls_enrolled_help_text_v2
 
 
-
 class FirstDayOfMay(date):
     @classmethod
     def today(cls):
@@ -950,7 +949,7 @@ class TestAWCReport(TestCase):
                             "eligible": 0
                         },
                         {
-                            "y":Decimal('0.66666666700000000000'),
+                            "y": Decimal('0.66666666700000000000'),
                             "x": 1495411200000,
                             "attended": 20,
                             "eligible": 30

@@ -1,5 +1,4 @@
 import datetime
-from unittest import skip
 
 from django.test import TestCase
 from custom.icds_reports.reports.bihar_api import get_api_vaccine_data
