@@ -25,33 +25,31 @@ CREATE TABLE tmp_daily_attendance_rank AS
 --                            Filter: (image_name IS NOT NULL)
 -- (11 rows)
 
-CREATE TABLE tmp_awc_location_launched AS
-    SELECT
-        district_name,
-        block_name,
-        supervisor_name,
-        awc_site_code,
-        awc_name,
-        awc_id
-        FROM agg_awc_monthly WHERE num_launched_awcs >0 AND aggregation_level=5 AND month='2020-07-01'
-
 SELECT
-    t.district_name,
-    t.block_name,
-    t.supervisor_name,
-    t.awc_site_code,
-    t.awc_name,
-    t.awc_id,
-    ut.pse_date_1,
-    ut.form_location_lat_1,
-    ut.form_location_long_1,
-    ut.pse_date_2,
-    ut.form_location_lat_2,
-    ut.form_location_long_2,
-    ut.pse_date_3,
-    ut.form_location_lat_3,
-    ut.form_location_long_3
-    FROM tmp_awc_location_launched t
+        "awc_location_local"."doc_id" AS "awc_id",
+        "awc_location_local"."awc_name" AS "awc_name",
+        "awc_location_local"."awc_site_code" AS "awc_site_code",
+        "awc_location_local"."supervisor_name" AS "supervisor_name",
+        "awc_location_local"."block_name" AS "block_name",
+        "awc_location_local"."district_name" AS "district_name",
+        ut.pse_date_1,
+        ut.form_location_lat_1,
+        ut.form_location_long_1,
+        ut.pse_date_2,
+        ut.form_location_lat_2,
+        ut.form_location_long_2,
+        ut.pse_date_3,
+        ut.form_location_lat_3,
+        ut.form_location_long_3
+    FROM "awc_location_local"
+    LEFT JOIN "public"."agg_awc" "agg_awc" ON (
+        ("awc_location_local"."aggregation_level" = "agg_awc"."aggregation_level") AND
+        ("awc_location_local"."state_id" = "agg_awc"."state_id") AND
+        ("awc_location_local"."district_id" = "agg_awc"."district_id") AND
+        ("awc_location_local"."block_id" = "agg_awc"."block_id") AND
+        ("awc_location_local"."supervisor_id" = "agg_awc"."supervisor_id") AND
+        ("awc_location_local"."doc_id" = "agg_awc"."awc_id")
+    )
     LEFT JOIN (
         SELECT
             awc_id,
@@ -66,11 +64,10 @@ SELECT
             MIN(CASE WHEN rank=3 THEN form_location_long  END) as form_location_long_3
         FROM tmp_daily_attendance_rank
         group by awc_id
-    ) ut ON ( ut.awc_id = t.awc_id)
+    ) ut ON ( ut.awc_id = "awc_location_local".doc_id)
+    WHERE "agg_awc"."num_launched_awcs" >0 AND "awc_location_local"."aggregation_level" =5 AND "agg_awc"."month"='2020-07-01' AND "awc_location_local"."state_id" = '039bbe4a40de499ea87b9761537dd611'
     
-DROP TABLE IF EXISTS tmp_daily_attendance;
 DROP TABLE IF EXISTS tmp_daily_attendance_rank;
-DROP TABLE IF EXISTS tmp_awc_location_launched;
 
 
 
