@@ -275,6 +275,8 @@ class DeployHistoryReport(GetParamsMixin, AdminReport):
     slug = 'deploy_history_report'
     name = ugettext_lazy("Deploy History Report")
 
+    # can remove simple search in seperate commit
+    # search should accept git ref and show the deploy that contains that ref. More involved than simpleSearch
     fields = [
         'corehq.apps.reports.filters.simple.SimpleSearch',
     ]
@@ -296,7 +298,7 @@ class DeployHistoryReport(GetParamsMixin, AdminReport):
         deploy_list = HqDeploy.objects.filter()[:10]
         for deploy in deploy_list:
             yield [
-                deploy.date,
+                self._format_date(deploy.date),
                 deploy.user,
                 deploy.diff_url,
             ]
@@ -308,3 +310,10 @@ class DeployHistoryReport(GetParamsMixin, AdminReport):
     @cached_property
     def _user_lookup_url(self):
         return reverse('web_deploy_lookup')
+
+    @staticmethod
+    def _format_date(date):
+        #find time relative to now -> last_deploy.date|naturaltime
+        if date:
+            return date.strftime(SERVER_DATETIME_FORMAT)
+        return "---"
