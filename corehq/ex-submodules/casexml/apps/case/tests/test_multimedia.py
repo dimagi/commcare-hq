@@ -51,13 +51,13 @@ class BaseCaseMultimediaTest(TestCase, TestFileMixin):
     def _formatXForm(self, doc_id, raw_xml, attachment_block, date=None):
         if date is None:
             date = datetime.utcnow()
-        final_xml = Template(raw_xml).render(Context({
+        final_xml = Template(raw_xml.decode("utf8")).render(Context({
             "attachments": attachment_block,
             "time_start": json_format_datetime(date - timedelta(minutes=4)),
             "time_end": json_format_datetime(date),
             "date_modified": json_format_datetime(date),
             "doc_id": doc_id
-        }))
+        })).encode("utf8")
         return final_xml
 
     def _prepAttachments(self, new_attachments, removes=[]):

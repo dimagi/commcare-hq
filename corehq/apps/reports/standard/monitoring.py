@@ -95,8 +95,17 @@ class WorkerMonitoringReportTableBase(GenericTabularReport, ProjectReport, Proje
     exportable = True
 
     def get_user_link(self, user):
-        user_link = self.get_raw_user_link(user)
-        return self.table_cell(user.raw_username, user_link)
+        if self._has_form_view_permission():
+            user_link = self.get_raw_user_link(user)
+            return self.table_cell(user.raw_username, user_link)
+        return self.table_cell(user.raw_username)
+
+    def _has_form_view_permission(self):
+        return self.request.couch_user.has_permission(
+            self.request.domain,
+            'view_report',
+            data='corehq.apps.reports.standard.inspect.SubmitHistory'
+        )
 
     def get_raw_user_link(self, user):
         raise NotImplementedError
@@ -1067,7 +1076,7 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
                 _fmt_ts(stats.get('std_deviation')),
                 _fmt_ts(stats.get('min')),
                 _fmt_ts(stats.get('max')),
-                stats.get('count', 0),
+                self.table_cell(stats.get('count', 0)),
             ])
 
         total_data = get_form_duration_stats_for_users(
@@ -1079,12 +1088,14 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
             self.datespan.enddate_utc,
             by_submission_time=self.by_submission_time,
         )
-        self.total_row = ["All Users",
-                          _fmt_ts(total_data.get('avg')),
-                          _fmt_ts(total_data.get('std_deviation')),
-                          _fmt_ts(total_data.get('min')),
-                          _fmt_ts(total_data.get('max')),
-                          total_data.get('count', 0)]
+        self.total_row = [
+            "All Users",
+            _fmt_ts(total_data.get('avg')),
+            _fmt_ts(total_data.get('std_deviation')),
+            _fmt_ts(total_data.get('min')),
+            _fmt_ts(total_data.get('max')),
+            self.table_cell(total_data.get('count', 0)),
+        ]
         return rows
 
 
