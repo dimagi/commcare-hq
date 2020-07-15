@@ -292,12 +292,12 @@ class DeployHistoryReport(GetParamsMixin, AdminReport):
 
     @property
     def rows(self):
-        deploy_list = HqDeploy.objects.filter()[:10]
+        deploy_list = HqDeploy.objects.filter()
         for deploy in deploy_list:
             yield [
                 self._format_date(deploy.date),
                 deploy.user,
-                deploy.diff_url,
+                self._hyperlink_diff_url(deploy.diff_url),
             ]
 
     @cached_property
@@ -310,3 +310,9 @@ class DeployHistoryReport(GetParamsMixin, AdminReport):
         if date:
             return date.strftime(SERVER_DATETIME_FORMAT)
         return "---"
+
+    def _hyperlink_diff_url(self, diff_url):
+        hyperlink_diff_url = '<a href="{link}">Diff with previous</a>'
+        hyperlink_diff_url = hyperlink_diff_url.format(link=diff_url)
+        return hyperlink_diff_url
+
