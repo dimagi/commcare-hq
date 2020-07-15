@@ -55,4 +55,5 @@ deploy_env: icds-staging
 branches:
   - ap/restrict-unauthorized-users
   - rn_test_caseupdate_django_upgrade #15th July
+  - sr/mm-field #15th July
 submodules: {}
