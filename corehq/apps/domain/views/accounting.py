@@ -1559,6 +1559,10 @@ class ConfirmSubscriptionRenewalView(SelectPlanView, DomainAccountingSettings, A
         Select2BillingInfoHandler,
     ]
 
+    @property
+    def is_request_from_current_step(self):
+        return self.request.method == 'POST' and "from_plan_page" not in self.request.POST
+
     @method_decorator(require_POST)
     def dispatch(self, request, *args, **kwargs):
         return super(ConfirmSubscriptionRenewalView, self).dispatch(request, *args, **kwargs)
@@ -1583,7 +1587,7 @@ class ConfirmSubscriptionRenewalView(SelectPlanView, DomainAccountingSettings, A
     @property
     @memoized
     def confirm_form(self):
-        if self.request.method == 'POST' and "from_plan_page" not in self.request.POST:
+        if self.is_request_from_current_step:
             return ConfirmSubscriptionRenewalForm(
                 self.account, self.domain, self.request.couch_user.username,
                 self.subscription, self.next_plan_version,
@@ -1613,6 +1617,17 @@ class ConfirmSubscriptionRenewalView(SelectPlanView, DomainAccountingSettings, A
             return self.async_response
         if self.new_edition == SoftwarePlanEdition.ENTERPRISE:
             return HttpResponseRedirect(reverse(SelectedEnterprisePlanView.urlname, args=[self.domain]))
+        if (not self.is_request_from_current_step
+                and self.new_edition not in SoftwarePlanEdition.SELF_RENEWABLE_EDITIONS):
+            messages.error(
+                request,
+                _("Your subscription is not eligible for self-renewal. "
+                  "Please sign up for a new subscription instead or contact {}"
+                  ).format(settings.BILLING_EMAIL)
+            )
+            return HttpResponseRedirect(
+                reverse(DomainSubscriptionView.urlname, args=[self.domain])
+            )
         if self.confirm_form.is_valid():
             is_saved = self.confirm_form.save()
             if not is_saved:
