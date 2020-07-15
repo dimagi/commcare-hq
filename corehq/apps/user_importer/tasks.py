@@ -10,7 +10,7 @@ from corehq.apps.user_importer.models import UserUploadRecord
 
 
 @task(serializer='pickle')
-def import_users_and_groups(domain, user_specs, group_specs, upload_user):
+def import_users_and_groups(domain, user_specs, group_specs, upload_user, upload_record_id):
     from corehq.apps.user_importer.importer import create_or_update_users_and_groups, create_or_update_groups
     task = import_users_and_groups
     DownloadBase.set_progress(task, 0, 100)
@@ -36,7 +36,8 @@ def import_users_and_groups(domain, user_specs, group_specs, upload_user):
         'errors': group_results['errors'] + user_results['errors'],
         'rows': user_results['rows']
     }
-    upload_record = UserUploadRecord.objects.using(DEFAULT_DB_ALIAS).get(task_id=import_users_and_groups.request.id)
+    upload_record = UserUploadRecord.objects.using(DEFAULT_DB_ALIAS).get(pk=upload_record_id)
+    upload_record.task_id = import_users_and_groups.request.id
     upload_record.status = results
     upload_record.save()
     DownloadBase.set_progress(task, total, total)

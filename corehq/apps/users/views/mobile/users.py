@@ -1063,7 +1063,6 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
 
         upload_record = UserUploadRecord(
             domain=self.domain,
-            task_id=task.id,
             user_id=request.couch_user.user_id
         )
         upload_record.save()
@@ -1073,7 +1072,8 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
             self.domain,
             list(self.user_specs),
             list(self.group_specs),
-            request.couch_user
+            request.couch_user,
+            upload_record.pk
         )
         task_ref.set_task(task)
         return HttpResponseRedirect(
