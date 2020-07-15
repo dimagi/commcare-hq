@@ -97,7 +97,7 @@ def exempt_from_test_transactions(dbnames):
 
     Depends on `TestCase.transaction_exempt_databases`, which is a
     feature added by
-    `corehq.form_processor.tests.utils.patch_testcase_transactions`
+    `corehq.form_processor.tests.utils.patch_testcase_databases`
 
     :param dbnames: Sequence of transaction-exempt database names.
     :returns: A function that stops/removes the exemption.
