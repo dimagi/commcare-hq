@@ -274,12 +274,9 @@ class DeployHistoryReport(GetParamsMixin, AdminReport):
 
     slug = 'deploy_history_report'
     name = ugettext_lazy("Deploy History Report")
-
-    # can remove simple search in seperate commit
+    
     # search should accept git ref and show the deploy that contains that ref. More involved than simpleSearch
-    fields = [
-        'corehq.apps.reports.filters.simple.SimpleSearch',
-    ]
+
     emailable = False
     exportable = False
     ajax_pagination = True
