@@ -1299,10 +1299,7 @@ class CommCareUserFilterForm(forms.Form):
             and not self.couch_user.is_domain_admin(self.domain)
         )
         if not role_id:
-            if restricted_role_access:
-                raise forms.ValidationError(_("Please select a role"))
-            else:
-                return None
+            return None
 
         role = UserRole.get(role_id)
         if not role.domain == self.domain:
