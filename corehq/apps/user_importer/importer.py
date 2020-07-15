@@ -1,5 +1,5 @@
 import logging
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from datetime import datetime
 
 from django.db import DEFAULT_DB_ALIAS
@@ -43,7 +43,7 @@ allowed_headers = set([
     'uncategorized_data', 'user_id', 'is_active', 'is_account_confirmed', 'send_confirmation_email',
     'location_code', 'role',
     'User IMEIs (read only)', 'registered_on (read only)', 'last_submission (read only)',
-    'last_sync (read only)', 'web_user', 'remove_web_user'
+    'last_sync (read only)', 'web_user', 'remove_web_user', 'domain'
 ]) | required_headers
 old_headers = {
     # 'old_header_name': 'new_header_name'
@@ -275,22 +275,37 @@ def get_location_from_site_code(site_code, location_cache):
         )
 
 
-def create_or_update_users_and_groups(domain, user_specs, upload_user, group_memoizer=None, update_progress=None):
-    ret = {"errors": [], "rows": []}
+DomainInfo = namedtuple('DomainInfo', ['validators', 'can_assign_locations', 'location_cache', 'roles_by_name'])
 
-    group_memoizer = group_memoizer or GroupMemoizer(domain)
-    group_memoizer.load_all()
+
+def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, group_memoizer=None, update_progress=None):
+    domain_info_by_domain = {}
+
+    def _get_domain_info(domain):
+        domain_info = domain_info_by_domain.get(domain)
+        if domain_info:
+            return domain_info
+        group_memoizer = GroupMemoizer(domain)
+        group_memoizer.load_all()
+        can_assign_locations = domain_has_privilege(domain, privileges.LOCATIONS)
+        location_cache = None
+        if can_assign_locations:
+            location_cache = SiteCodeToLocationCache(domain)
+
+        domain_obj = Domain.get_by_name(domain)
+        allowed_group_names = [group.name for group in group_memoizer.groups]
+        roles_by_name = {role.name: role for role in UserRole.by_domain(domain)}
+        domain_user_specs = [spec for spec in user_specs if spec.get('domain', upload_domain) == domain]
+        validators = get_user_import_validators(domain_obj, domain_user_specs, allowed_group_names, list(roles_by_name), upload_domain)
+
+        domain_info = DomainInfo(validators, can_assign_locations, location_cache, roles_by_name)
+        domain_info_by_domain[domain] = domain_info
+        return domain_info
+
+    ret = {"errors": [], "rows": []}
 
     current = 0
 
-    can_assign_locations = domain_has_privilege(domain, privileges.LOCATIONS)
-    if can_assign_locations:
-        location_cache = SiteCodeToLocationCache(domain)
-
-    domain_obj = Domain.get_by_name(domain)
-    allowed_group_names = [group.name for group in group_memoizer.groups]
-    roles_by_name = {role.name: role for role in UserRole.by_domain(domain)}
-    validators = get_user_import_validators(domain_obj, user_specs, allowed_group_names, list(roles_by_name))
     try:
         for row in user_specs:
             if update_progress:
@@ -298,13 +313,17 @@ def create_or_update_users_and_groups(domain, user_specs, upload_user, group_mem
                 current += 1
 
             username = row.get('username')
+            domain = row.get('domain') or upload_domain
+            username = normalize_username(str(username), domain) if username else None
             status_row = {
                 'username': username,
                 'row': row,
             }
 
+            domain_info = _get_domain_info(domain)
+
             try:
-                for validator in validators:
+                for validator in domain_info.validators:
                     validator(row)
             except UserUploadError as e:
                 status_row['flag'] = str(e)
@@ -329,7 +348,6 @@ def create_or_update_users_and_groups(domain, user_specs, upload_user, group_mem
             web_user = row.get('web_user')
 
             try:
-                username = normalize_username(str(username), domain) if username else None
                 password = str(password) if password else None
 
                 is_active = spec_value_to_boolean_or_none(row, 'is_active')
@@ -384,13 +402,13 @@ def create_or_update_users_and_groups(domain, user_specs, upload_user, group_mem
                 if is_active is not None:
                     user.is_active = is_active
 
-                if can_assign_locations:
+                if domain_info.can_assign_locations:
                     # Do this here so that we validate the location code before we
                     # save any other information to the user, this way either all of
                     # the user's information is updated, or none of it
                     location_ids = []
                     for code in location_codes:
-                        loc = get_location_from_site_code(code, location_cache)
+                        loc = get_location_from_site_code(code, domain_info.location_cache)
                         location_ids.append(loc.location_id)
 
                     locations_updated = set(user.assigned_location_ids) != set(location_ids)
@@ -403,7 +421,7 @@ def create_or_update_users_and_groups(domain, user_specs, upload_user, group_mem
                         user.reset_locations(location_ids, commit=False)
 
                 if role:
-                    role_qualified_id = roles_by_name[role].get_qualified_id()
+                    role_qualified_id = domain_info.roles_by_name[role].get_qualified_id()
                     user.set_role(domain, role_qualified_id)
 
                 if web_user:
