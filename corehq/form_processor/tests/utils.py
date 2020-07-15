@@ -7,6 +7,7 @@ from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.test import TestCase, TransactionTestCase
 from django.test.utils import override_settings
+from django.utils.decorators import classproperty
 from nose.plugins.attrib import attr
 from nose.tools import nottest
 from unittest2 import skipIf, skipUnless
@@ -213,6 +214,15 @@ def use_sql_backend(cls):
 def patch_testcase_databases():
     """Lift Django 2.2 restriction on database access in tests
 
+    Allows `TestCase` and `TransactionTestCase` to access all databases
+    by default. ICDS-specific databases are only accessible in icds
+    tests. This can be overridden by setting `databases` on test case
+    subclasses.
+
+    Similar to pre-Django 2.2, transactions are disabled on all
+    databases except "default". This can be overridden by setting
+    `transaction_exempt_databases` on test case subclasses.
+
     For test performance it may be better to remove this and tag each
     test with the databases it will query.
     """
@@ -225,15 +235,33 @@ def patch_testcase_databases():
     #
     # Similar error reported elsewhere:
     # https://code.djangoproject.com/ticket/30541
-    TransactionTestCase.databases = settings.DATABASES.keys()
-    TransactionTestCase.transaction_exempt_databases = frozenset()
+    default_dbs = frozenset(k for k in settings.DATABASES.keys() if "icds" not in k)
+    icds_dbs = frozenset(settings.DATABASES.keys())
+
+    def is_icds(cls):
+        # TODO remove when custom.icds packages have been moved to new repo
+        return cls.__module__.startswith("custom.icds")
+
+    @classproperty
+    def databases(cls):
+        return icds_dbs if is_icds(cls) else default_dbs
+    TestCase.databases = databases
+    TransactionTestCase.databases = databases
+
+    @classproperty
+    def transaction_exempt_databases(cls):
+        databases = icds_dbs if is_icds(cls) else default_dbs
+        if cls.databases is databases:
+            return frozenset(db for db in databases if db != "default")
+        return frozenset(db for db in databases if db not in cls.databases)
+    TransactionTestCase.transaction_exempt_databases = transaction_exempt_databases
 
     @classmethod
     def _databases_names(cls, include_mirrors=True):
-        names = super_database_names(include_mirrors=include_mirrors)
+        names = super_database_names(cls, include_mirrors=include_mirrors)
         exempt = cls.transaction_exempt_databases
         return [n for n in names if n not in exempt]
-    super_database_names = TransactionTestCase._databases_names
+    super_database_names = TransactionTestCase._databases_names.__func__
     TransactionTestCase._databases_names = _databases_names
 
     def _should_check_constraints(self, connection):
