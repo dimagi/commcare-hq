@@ -371,7 +371,7 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                     # False means it was set explicitly to that value
                     if is_account_confirmed is False and not web_user:
                         raise UserUploadError(_(
-                            f"You can only set 'Is Account Confirmed' to 'False' on a new User."
+                            "You can only set 'Is Account Confirmed' to 'False' on a new User."
                         ))
 
                     if is_password(password):
@@ -436,7 +436,7 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                     if remove_web_user:
                         if not current_user or not current_user.is_member_of(domain):
                             raise UserUploadError(_(
-                                f"You cannot remove a web user that is not a member of this project. {web_user} is not a member."
+                                "You cannot remove a web user that is not a member of this project. {web_user} is not a member.".format(web_user=web_user)
                             ))
                         else:
                             current_user.delete_domain_membership(domain)
@@ -444,11 +444,11 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                     else:
                         if not role:
                             raise UserUploadError(_(
-                                f"You cannot upload a web user without a role. {web_user} does not have a role"
+                                "You cannot upload a web user without a role. {web_user} does not have a role".format(web_user=web_user)
                             ))
                         if not current_user and is_account_confirmed:
                             raise UserUploadError(_(
-                                f"You can only set 'Is Account Confirmed' to 'True' on an existing Web User. {web_user} is a new username."
+                                "You can only set 'Is Account Confirmed' to 'True' on an existing Web User. {web_user} is a new username.".format(web_user=web_user)
                             ))
                         if current_user and not current_user.is_member_of(domain) and is_account_confirmed:
                             current_user.add_as_web_user(domain, role=role_qualified_id, location_id=user.location_id)
