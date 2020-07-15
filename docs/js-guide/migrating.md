@@ -20,7 +20,7 @@ These docs walk through the process of migrating a single page to RequireJS.
 
 ### Basic Migration Process
 
-Prerequisites: Before a page can be migrated, **all** of its dependencies must already be in external JavaScript files and must be using `hqDefine`. See above for details on moving inline script blocks to files, and see [module patterns](https://github.com/dimagi/js-guide/blob/master/code-organization.md#module-patterns) for details on `hqDefine`. Also, pages that are not descendants of [hqwebapp/base.html](https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/hqwebapp/templates/hqwebapp/base.html) cannot yet be migrated.
+Prerequisites: Before a page can be migrated, **all** of its dependencies must already be in external JavaScript files and must be using `hqDefine`. See above for details on moving inline script blocks to files, and see [module patterns](https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/blob/master/code-organization.md#module-patterns) for details on `hqDefine`. Also, pages that are not descendants of [hqwebapp/base.html](https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/hqwebapp/templates/hqwebapp/base.html) cannot yet be migrated.
 
 Once these conditions are met, migrating to RequireJS is essentially the process of explicitly adding each module's dependencies to the module's definition, and also updating each HTML page to reference a single "main" module rather than including a bunch of `<script>` tags:
 1. Add `requirejs_main` tag and remove `<script>` tags
@@ -131,7 +131,7 @@ Tactics that can help track down problems with the RequireJS build process, whic
 
 ## Moving away from classical inheritance
 
-See [our approach to inheritance](https://github.com/dimagi/js-guide/blob/master/code-organization.md#inheritance). Most of our classical-style inheritance is a format than can be fairly mechanically changed to be functional:
+See [our approach to inheritance](https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/blob/master/code-organization.md#inheritance). Most of our classical-style inheritance is a format than can be fairly mechanically changed to be functional:
 - In the class definition, make sure the instance is initialized to an empty object instead of `this`. There's usually a `var self = this;` line that should be switched to `var self = {};`
 - Throughout the class definition, make sure the code is consistently using `self` instead of `this`
 - Make sure the class definition returns `self` at the end (typically it won't return anything)

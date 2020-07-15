@@ -11,7 +11,7 @@ This varies depending on the service; see details on individual services below.
 
 ### Client Side
 
-For passing data from the server to the client, which is mostly API keys, analytics uses a variation on [initial_page_data](https://github.com/dimagi/js-guide/blob/master/integration-patterns.md): same general idea, but with better namespacing and accessed via [initial.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/static/analytix/js/initial.js). Most of the analytics templates just contain this initial data, while a few contain the actual third-party scripts (for the services that don't interact with any other HQ JavaScript).
+For passing data from the server to the client, which is mostly API keys, analytics uses a variation on [initial_page_data](https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/blob/master/integration-patterns.md): same general idea, but with better namespacing and accessed via [initial.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/static/analytix/js/initial.js). Most of the analytics templates just contain this initial data, while a few contain the actual third-party scripts (for the services that don't interact with any other HQ JavaScript).
 
 Analytics has its own logging infrastructure, is set up in [logging.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/static/analytix/js/logging.js) and prints to the browser console. The logging level can be controlled via `settings.ANALYTICS_CONFIG['LOG_LEVEL']` (see "Debugging" below).
 
