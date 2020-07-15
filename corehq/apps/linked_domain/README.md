@@ -1,9 +1,65 @@
 # Linking Domains
 
-* Ability to sync models between two domains (master domain -> linked domain)
-* Can be within the same HQ instance or between remote instances.
+Linked project spaces allow project spaces to share much of their data. You configure a controlling upstream domain
+(called "master" in most code, though we are replacing that over time) and one or more downstream domains
+(called "linked" in most code, similarly being replaced). You can then overwrite downstream content with upstream content.
 
-# Remote linking
+Linked domains have two major use cases:
+
+1. Setting up a practice domain and then a production domain
+1. Multi-geography projects that have one upstream domain and then a downstream domain for each of several different locations.
+
+Most domain linkages are "local",  with all domains residing in the same HQ cloud environment.
+There are also "remote" links, where the upstream domain is in a different environment than the downstream domains.
+Not all functionality is supported by remote linked domains, but most of it is. See below for more on remote
+linking.
+
+## User Interface
+
+The upstream domain looks like any other domain, but downstream domains have a more limited UI, because most of
+comes from their upstream domain and much of that shared content is read-only (see below for details on specific
+data models). Both upstream and downstream domains have a settings
+page (Project Settings > Linked Project Spaces) used to overwrite content.
+
+Overwriting can be triggered from either the upstream domain ("pushing" / "Enterprise Release Management") or any
+downstream domain ("pulling"). Individual downstream domains can be pushed/pulled, and individual data types can be
+pushed/pulled.
+
+To enable linked domains, turn on the feature flag
+[LINKED_DOMAINS](https://github.com/dimagi/commcare-hq/blob/966b62cc113b56af771906def76833446b4ba025/corehq/toggles.py#L1497).
+To link two domains, copy an application from the upstream domain to the desired downstream domain, checking the
+checkbox "Copy as linked application." This is a legacy workflow, leftover from when linked domains **only**
+supported applications. Remote domain linkages cannot be created via the UI; see below for details.
+
+## Data models
+
+Supported data types are defined in
+[LINKED_MODELS](https://github.com/dimagi/commcare-hq/blob/966b62cc113b56af771906def76833446b4ba025/corehq/apps/linked_domain/const.py#L13):
+
+- Applications
+- Reports
+- Lookup tables
+- User roles
+- Custom data fields for users, products, and locations
+- Feature flags and privileges
+- Case search settings
+
+Of these, apps and reports need to be linked individually, from the app settings and edit report UIs, and are
+overwritten individually. The rest of the data types are overwritten as entire blocks: for example, you can't
+overwrite a single user role, you update them as one unit. Lookup tables are in between: you don't need to link
+them individually, but you can update them individually (due to performance concerns around updating them as a
+block).
+
+The ability to edit linked data on a downstream domain depends on the data type. For example, applications are
+read-only on downstream domains, with a few settings (controlled by
+[supports_linked_app](https://github.com/dimagi/commcare-hq/blob/966b62cc113b56af771906def76833446b4ba025/corehq/apps/app_manager/static/app_manager/json/commcare-profile-settings.yaml#L97))
+that may be edited and will retain their
+values even when the app is updated. Reports cannot be edited at all. Other data, such as user roles, can typically
+be edited on the downstream domain, but any edits will be overwritten the next time that data type is
+pushed/pulled.
+
+
+## Remote linking
 
 ### On 'master domain':
 
