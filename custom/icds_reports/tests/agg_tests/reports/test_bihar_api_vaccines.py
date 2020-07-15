@@ -1,9 +1,9 @@
 import datetime
+from unittest import skip
 
 from django.test import TestCase
 from custom.icds_reports.reports.bihar_api import get_api_vaccine_data
 from datetime import date
-from mock import patch
 
 from custom.icds_reports.tasks import update_child_vaccine_table
 
