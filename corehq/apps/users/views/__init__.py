@@ -700,6 +700,18 @@ def post_user_role(request, domain):
         assert(old_role.doc_type == UserRole.__name__)
         assert(old_role.domain == domain)
 
+    if not role.permissions.access_all_locations:
+        # The following permissions cannot be granted to location-restricted
+        # roles.
+        role.permissions.edit_web_users = False
+        role.permissions.view_web_users = False
+        role.permissions.edit_groups = False
+        role.permissions.view_groups = False
+        role.permissions.edit_apps = False
+        role.permissions.view_roles = False
+        role.permissions.edit_reports = False
+        role.permissions.edit_billing = False
+
     if role.permissions.edit_web_users:
         role.permissions.view_web_users = True
 
