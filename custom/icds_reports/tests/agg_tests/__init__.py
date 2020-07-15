@@ -27,7 +27,7 @@ from .agg_setup import setup_location_hierarchy, setup_tables_and_fixtures, aggr
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
 
 
-@timelimit(48000000)
+@timelimit(480)
 def setUpModule():
     if settings.USE_PARTITIONED_DATABASE:
         print('============= WARNING: not running test setup because settings.USE_PARTITIONED_DATABASE is True.')

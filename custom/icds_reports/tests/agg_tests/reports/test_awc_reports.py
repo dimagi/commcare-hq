@@ -259,7 +259,6 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_reports_system_usage_PSE_average_weekly_attendance(self):
-        self.maxDiff=None
         self.assertEqual(
             get_awc_reports_system_usage(
                 'icds-cas',
@@ -802,7 +801,6 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_reports_pse_charts_1(self):
-        self.maxDiff=None
         data = get_awc_reports_pse(
             {
                 'state_id': 'st1',
