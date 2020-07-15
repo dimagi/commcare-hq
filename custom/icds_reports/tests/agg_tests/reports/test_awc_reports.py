@@ -826,187 +826,187 @@ class TestAWCReport(TestCase):
                     "strokeWidth": 2,
                     "values": [
                         {
-                            "y": Decimal(0),
+                            "y": 0,
                             "x": 1493596800000,
                             "attended": 0,
                             "eligible": 0
                         },
                         {
-                            "y": Decimal(0.741935484),
+                            "y": Decimal('0.74193548400000000000'),
                             "x": 1493683200000,
                             "attended": 23,
                             "eligible": 31
                         },
                         {
-                            "y": Decimal(0.806451613),
+                            "y": Decimal('0.80645161300000000000'),
                             "x": 1493769600000,
                             "attended": 25,
                             "eligible": 31
                         },
                         {
-                            "y": Decimal(0.8),
+                            "y": Decimal('0.80000000000000000000'),
                             "x": 1493856000000,
                             "attended": 24,
                             "eligible": 30
                         },
                         {
-                            "y": Decimal(0.8),
+                            "y": Decimal('0.80000000000000000000'),
                             "x": 1493942400000,
                             "attended": 24,
                             "eligible": 30
                         },
                         {
-                            "y": Decimal(0),
+                            "y": 0,
                             "x": 1494028800000,
                             "attended": 0,
                             "eligible": 0
                         },
                         {
-                            "y": Decimal(0),
+                            "y": 0,
                             "x": 1494115200000,
                             "attended": 0,
                             "eligible": 0
                         },
                         {
-                            "y": Decimal(0),
+                            "y": 0,
                             "x": 1494201600000,
                             "attended": 0,
                             "eligible": 0
                         },
                         {
-                            "y": Decimal(0.8),
+                            "y": Decimal('0.80000000000000000000'),
                             "x": 1494288000000,
                             "attended": 24,
                             "eligible": 30
                         },
                         {
-                            "y": Decimal(0),
+                            "y": 0,
                             "x": 1494374400000,
                             "attended": 0,
                             "eligible": 0
                         },
                         {
-                            "y": Decimal(0),
+                            "y": Decimal('0.80000000000000000000'),
                             "x": 1494460800000,
                             "attended": 0,
                             "eligible": 0
                         },
                         {
-                            "y": Decimal(0),
+                            "y": 0,
                             "x": 1494547200000,
                             "attended": 0,
                             "eligible": 0
                         },
                         {
-                            "y": Decimal(0),
+                            "y": 0,
                             "x": 1494633600000,
                             "attended": 0,
                             "eligible": 0
                         },
                         {
-                            "y": Decimal(0),
+                            "y": 0,
                             "x": 1494720000000,
                             "attended": 0,
                             "eligible": 0
                         },
                         {
-                            "y": Decimal(1.0),
+                            "y": Decimal('1.00000000000000000000'),
                             "x": 1494806400000,
                             "attended": 30,
                             "eligible": 30
                         },
                         {
-                            "y": Decimal(0.666666667),
+                            "y": Decimal('0.66666666700000000000'),
                             "x": 1494892800000,
                             "attended": 20,
                             "eligible": 30
                         },
                         {
-                            "y": Decimal(0.733333333),
+                            "y": Decimal('0.73333333300000000000'),
                             "x": 1494979200000,
                             "attended": 22,
                             "eligible": 30
                         },
                         {
-                            "y": Decimal(0.766666667),
+                            "y": Decimal('0.76666666700000000000'),
                             "x": 1495065600000,
                             "attended": 23,
                             "eligible": 30
                         },
                         {
-                            "y": Decimal(0.666666667),
+                            "y": Decimal('0.66666666700000000000'),
                             "x": 1495152000000,
                             "attended": 20,
                             "eligible": 30
                         },
                         {
-                            "y": Decimal(0.633333333),
+                            "y": Decimal('0.63333333300000000000'),
                             "x": 1495238400000,
                             "attended": 19,
                             "eligible": 30
                         },
                         {
-                            "y": Decimal(0),
+                            "y": 0,
                             "x": 1495324800000,
                             "attended": 0,
                             "eligible": 0
                         },
                         {
-                            "y": Decimal(0.666666667),
+                            "y":Decimal('0.66666666700000000000'),
                             "x": 1495411200000,
                             "attended": 20,
                             "eligible": 30
                         },
                         {
-                            "y": Decimal(0),
+                            "y": 0,
                             "x": 1495497600000,
                             "attended": 0,
                             "eligible": 0
                         },
                         {
-                            "y": Decimal(0.666666667),
+                            "y": Decimal('0.66666666700000000000'),
                             "x": 1495584000000,
                             "attended": 20,
                             "eligible": 30
                         },
                         {
-                            "y": Decimal(0.666666667),
+                            "y": Decimal('0.66666666700000000000'),
                             "x": 1495670400000,
                             "attended": 20,
                             "eligible": 30
                         },
                         {
-                            "y": Decimal(0.666666667),
+                            "y": Decimal('0.66666666700000000000'),
                             "x": 1495756800000,
                             "attended": 20,
                             "eligible": 30
                         },
                         {
-                            "y": Decimal(0.666666667),
+                            "y": Decimal('0.66666666700000000000'),
                             "x": 1495843200000,
                             "attended": 20,
                             "eligible": 30
                         },
                         {
-                            "y": Decimal(0),
+                            "y": 0,
                             "x": 1495929600000,
                             "attended": 0,
                             "eligible": 0
                         },
                         {
-                            "y": Decimal(0.655172414),
+                            "y": Decimal('0.65517241400000000000'),
                             "x": 1496016000000,
                             "attended": 19,
                             "eligible": 29
                         },
                         {
-                            "y": Decimal(1.0),
+                            "y": Decimal('1.00000000000000000000'),
                             "x": 1496102400000,
                             "attended": 29,
                             "eligible": 29
                         },
                         {
-                            "y": Decimal(0),
+                            "y": 0,
                             "x": 1496188800000,
                             "attended": 0,
                             "eligible": 0
