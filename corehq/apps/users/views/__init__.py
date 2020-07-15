@@ -80,6 +80,7 @@ from corehq.apps.sms.verify import (
     initiate_sms_verification_workflow,
 )
 from corehq.apps.translations.models import SMSTranslations
+from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.decorators import (
     require_can_edit_or_view_web_users,
     require_can_edit_web_users,
@@ -583,6 +584,7 @@ class ListRolesView(BaseRoleAccessView):
                 toggles.DHIS2_INTEGRATION.enabled(self.domain)
             ),
             'web_apps_privilege': self.web_apps_privilege,
+            'has_report_builder_access': has_report_builder_access(self.request)
         }
 
 
