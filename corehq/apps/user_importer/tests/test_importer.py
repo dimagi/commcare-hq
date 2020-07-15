@@ -399,6 +399,17 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
 
 class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.patcher = patch('corehq.apps.user_importer.tasks.UserUploadRecord')
+        cls.patcher.start()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.patcher.stop()
+        super().tearDownClass()
+
     def setUp(self):
         super(TestUserBulkUploadStrongPassword, self).setUp()
         delete_all_users()
