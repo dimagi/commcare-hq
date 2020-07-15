@@ -1,5 +1,5 @@
 from dimagi.utils.couch import CriticalSection
-
+from corehq.apps.sms.models import SMS
 from corehq.apps.receiverwrapper.util import submit_form_locally
 
 
@@ -15,10 +15,27 @@ def form_requires_input(form):
 
 
 def process_sms_form_complete(session, form):
-    result = submit_form_locally(form, session.domain, app_id=session.app_id, partial_submission=False)
+    attachments = get_sms_form_incoming_media_files(session)
+    result = submit_form_locally(
+        form,
+        session.domain,
+        app_id=session.app_id,
+        partial_submission=False,
+        attachments=attachments
+    )
     session.submission_id = result.xform.form_id
     session.mark_completed(True)
     session.save()
+
+
+def get_sms_form_incoming_media_files(session):
+    attachments = {}
+    for message in SMS.objects.filter(xforms_session_couch_id=session._id):
+        if message.custom_metadata and 'media_url' in message.custom_metadata:
+            media_url = message.custom_metadata['media_url']
+            file_id, file = message.outbound_backend.download_incoming_media(media_url)
+            attachments[file_id] = file
+    return attachments
 
 
 def critical_section_for_smsforms_sessions(contact_id):
