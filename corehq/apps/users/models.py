@@ -25,7 +25,7 @@ from memoized import memoized
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
 from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
-from corehq.apps.users.exceptions import IllegalAccountConfirmation
+
 from corehq.util.model_log import log_model_change, ModelAction
 from corehq.util.models import BouncedEmail
 from dimagi.ext.couchdbkit import (
@@ -1813,7 +1813,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         owner_ids.extend([g._id for g in self.get_case_sharing_groups()])
         return owner_ids
 
-    def unretire(self):
+    def unretire(self, unretired_by, unretired_via=None):
         """
         This un-deletes a user, but does not fully restore the state to
         how it previously was. Using this has these caveats:
@@ -1836,6 +1836,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         undelete_system_forms.delay(self.domain, set(deleted_form_ids), set(deleted_case_ids))
         self.save()
+        if unretired_by:
+            log_model_change(
+                unretired_by,
+                self.get_django_user(use_primary_db=True),
+                message={'unretired_via': unretired_via},
+            )
         return True, None
 
     def retire(self, deleted_by, deleted_via=None):
