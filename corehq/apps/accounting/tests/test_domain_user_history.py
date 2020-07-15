@@ -4,9 +4,15 @@ from corehq.apps.accounting import tasks
 from corehq.apps.accounting.models import DomainUserHistory
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
+from corehq.apps.domain.tests.test_utils import delete_all_domains
 
 
 class TestDomainUserHistory(BaseInvoiceTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        delete_all_domains()
+        super().setUpClass()
 
     def setUp(self):
         super(TestDomainUserHistory, self).setUp()
