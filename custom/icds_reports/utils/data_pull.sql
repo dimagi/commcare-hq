@@ -1,11 +1,3 @@
-CREATE TABLE tmp_daily_attendance AS
-    SELECT
-        awc_id,
-        pse_date,
-        form_location_lat,
-        form_location_long
-        FROM daily_attendance_view WHERE state_id='7fb6f3fe5e7540e7be63c848c28c97ed' AND image_name IS NOT NULL ORDER BY pse_date DESC
-
 CREATE TABLE tmp_daily_attendance_rank AS
     SELECT
         awc_id,
@@ -13,11 +5,25 @@ CREATE TABLE tmp_daily_attendance_rank AS
         form_location_lat,
         form_location_long,
         rank() OVER (
-            PARTITION BY awc_id
+            PARTITION BY supervisor_id,awc_id
             ORDER BY pse_date DESC
             )
-
-    FROM tmp_daily_attendance
+    FROM daily_attendance WHERE state_id='039bbe4a40de499ea87b9761537dd611' AND image_name IS NOT NULL
+    
+--                                                                               QUERY PLAN
+-- ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--  Custom Scan (Citus Real-Time)  (cost=0.00..0.00 rows=0 width=0)
+--    Task Count: 64
+--    Tasks Shown: One of 64
+--    ->  Task
+--          Node: host=100.71.184.232 port=6432 dbname=icds_ucr
+--          ->  WindowAgg  (cost=47078.26..47078.57 rows=14 width=100)
+--                ->  Sort  (cost=47078.26..47078.29 rows=14 width=92)
+--                      Sort Key: daily_attendance.supervisor_id, daily_attendance.awc_id, daily_attendance.pse_date DESC
+--                      ->  Index Scan using ix_daily_attendance_month_state_id_102776 on daily_attendance_102776 daily_attendance  (cost=0.56..47077.99 rows=14 width=92)
+--                            Index Cond: (state_id = '039bbe4a40de499ea87b9761537dd611'::text)
+--                            Filter: (image_name IS NOT NULL)
+-- (11 rows)
 
 CREATE TABLE tmp_awc_location_launched AS
     SELECT
