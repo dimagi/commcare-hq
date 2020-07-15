@@ -274,7 +274,7 @@ class DeployHistoryReport(GetParamsMixin, AdminReport):
 
     slug = 'deploy_history_report'
     name = ugettext_lazy("Deploy History Report")
-    
+
     # search should accept git ref and show the deploy that contains that ref. More involved than simpleSearch
 
     emailable = False
@@ -299,10 +299,6 @@ class DeployHistoryReport(GetParamsMixin, AdminReport):
                 deploy.user,
                 deploy.diff_url,
             ]
-
-    @property
-    def total_records(self):
-        return self.default_rows
 
     @cached_property
     def _user_lookup_url(self):
