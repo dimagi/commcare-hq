@@ -10,7 +10,7 @@ def get_sequences(cursor):
 def get_last_values(sequences, cursor):
     # list of sequences
     select_statements = [
-        '(SELECT last_value, max_value FROM {})'.format(s)
+        '(SELECT last_value, max_value FROM "{}")'.format(s)
         for s in sequences
     ]
     query = " UNION ALL ".join(select_statements)
