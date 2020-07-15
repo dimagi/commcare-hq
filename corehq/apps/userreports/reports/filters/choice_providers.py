@@ -191,7 +191,7 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
 
     def get_choices_for_known_values(self, values, user):
         return []
-    
+
     def default_value(self, user):
         return None
 
