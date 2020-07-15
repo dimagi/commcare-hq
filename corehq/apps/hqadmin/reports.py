@@ -282,13 +282,13 @@ class DeployHistoryReport(GetParamsMixin, AdminReport):
 
     emailable = False
     exportable = False
-    ajax_pagination = True
+    ajax_pagination = False
     default_rows = 10
 
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn(_("Date"), sortable=False),
+            DataTablesColumn(_("Date")),
             DataTablesColumn(_("User"), sortable=False),
             DataTablesColumn(_("Diff URL"), sortable=False),
         )
@@ -308,20 +308,20 @@ class DeployHistoryReport(GetParamsMixin, AdminReport):
         return reverse('web_deploy_lookup')
 
     def _format_date(self, date):
-        raw_time_since_deploy = dt.now() - date
-        delta_dict = self._strfdelta(raw_time_since_deploy)
-
-        if delta_dict['days'] != 0:
-            delta_str = "{days} day(s), {hours} hour(s) ago".format(**delta_dict)
-        elif delta_dict['hours'] != 0:
-            delta_str = "{hours} hour(s), {minutes} minute(s) ago".format(
-                **delta_dict)
-        else:
-            delta_str = "{minutes} minute(s), {seconds} second(s) ago".format(
-                **delta_dict)
-
-        ret_str = '<div>{delta}</div><div>{actual_date}</div>'
         if date:
+            raw_time_since_deploy = dt.now() - date
+            delta_dict = self._strfdelta(raw_time_since_deploy)
+
+            if delta_dict['days'] != 0:
+                delta_str = "{days} day(s), {hours} hour(s) ago".format(**delta_dict)
+            elif delta_dict['hours'] != 0:
+                delta_str = "{hours} hour(s), {minutes} minute(s) ago".format(
+                    **delta_dict)
+            else:
+                delta_str = "{minutes} minute(s), {seconds} second(s) ago".format(
+                    **delta_dict)
+
+            ret_str = '<div>{delta}</div><div>{actual_date}</div>'
             return ret_str.format(delta=delta_str, actual_date=date.strftime(SERVER_DATETIME_FORMAT))
         return "---"
 
@@ -334,6 +334,4 @@ class DeployHistoryReport(GetParamsMixin, AdminReport):
         return relative_time_formatted
 
     def _hyperlink_diff_url(self, diff_url):
-        hyperlink_diff_url = '<a href="{link}">Diff with previous</a>'
-        hyperlink_diff_url = hyperlink_diff_url.format(link=diff_url)
-        return hyperlink_diff_url
+        return '<a href="{link}">Diff with previous</a>'.format(link=diff_url)
