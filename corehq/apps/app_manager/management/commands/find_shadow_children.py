@@ -5,6 +5,7 @@ from django.core.management import BaseCommand
 
 from dimagi.utils.couch.database import iter_docs
 
+from corehq import toggles
 from corehq.apps.app_manager.management.commands.helpers import get_all_app_ids
 from corehq.apps.app_manager.models import Application
 
@@ -80,7 +81,16 @@ class Command(BaseCommand):
         ]
 
     def get_app_ids(self):
-        return get_all_app_ids(
-            domain=self.options.get('domain', None),
-            include_builds=self.options.get('include_builds', False)
-        )
+        if self.options.get('domain', None):
+            return get_all_app_ids(
+                domain=self.options.get('domain', None),
+                include_builds=self.options.get('include_builds', False)
+            )
+        else:
+            app_ids = set()
+            for domain in toggles.APP_BUILDER_SHADOW_MODULES.get_enabled_domains():
+                app_ids = app_ids | get_all_app_ids(
+                    domain=domain,
+                    include_builds=self.options.get('include_builds', False)
+                )
+            return app_ids
