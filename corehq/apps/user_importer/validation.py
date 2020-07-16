@@ -13,6 +13,7 @@ from dimagi.utils.parsing import string_to_boolean
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.users.forms import get_mobile_worker_max_username_length
+from corehq.apps.users.models import DomainPermissionsMirror
 from corehq.apps.users.util import normalize_username, raw_username
 from corehq.util.workbook_json.excel import (
     StringTypeRequiredError,
@@ -20,7 +21,7 @@ from corehq.util.workbook_json.excel import (
 )
 
 
-def get_user_import_validators(domain_obj, all_specs, allowed_groups=None, allowed_roles=None):
+def get_user_import_validators(domain_obj, all_specs, allowed_groups=None, allowed_roles=None, upload_domain=None):
     domain = domain_obj.name
     validate_passwords = domain_obj.strong_mobile_passwords
     noop = NoopValidator(domain)
@@ -42,6 +43,7 @@ def get_user_import_validators(domain_obj, all_specs, allowed_groups=None, allow
         GroupValidator(domain, allowed_groups),
         RoleValidator(domain, allowed_roles),
         ExistingUserValidator(domain, all_specs),
+        TargetDomainValidator(upload_domain)
     ]
 
 
@@ -261,7 +263,7 @@ def is_password(password):
 
 
 class ExistingUserValidator(ImportValidator):
-    error_message = _("The username already belongs to a user. Specify and ID to update the user.")
+    error_message = _("The username already belongs to a user. Specify an ID to update the user.")
 
     def __init__(self, domain, all_sepcs):
         super().__init__(domain)
@@ -295,3 +297,14 @@ class ExistingUserValidator(ImportValidator):
 
         if username in self.existing_usernames:
             return self.error_message
+
+
+class TargetDomainValidator(ImportValidator):
+    error_message = _("Target domain {} is not a mirror of {}")
+
+    def validate_spec(self, spec):
+        target_domain = spec.get('domain')
+        if target_domain and target_domain != self.domain:
+            mirror_domains = DomainPermissionsMirror.mirror_domains(self.domain)
+            if target_domain not in mirror_domains:
+                return self.error_message.format(target_domain, self.domain)
