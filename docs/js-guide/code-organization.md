@@ -26,7 +26,7 @@ myapp/
     images/
     js/       <= JavaScript
     less/
-    lib/      <= Third-party code: This should be rare, since most third-party code should be coming from bower
+    lib/      <= Third-party code: This should be rare, since most third-party code should be coming from yarn
     spec/     <= JavaScript tests
     ...       <= May contain other directories for data files, i.e., `json/`
   templates/myapp/
