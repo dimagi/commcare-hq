@@ -7,9 +7,9 @@
 if [ $# != 0 ]; then
     ENVS=$@
 else
-    ENVS=(staging production india swiss icds pna)
+    ENVS=(icds-staging staging production india swiss icds pna)
 fi
 
 for i in ${ENVS[@]}; do
-    git tag | grep deploy | grep ${i} | grep -v hot_fix | tail -n 1
+    git tag | grep deploy | grep "[0-9]\-${i}-deploy" | grep -v hot_fix | tail -n 1
 done
