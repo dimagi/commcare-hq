@@ -10,9 +10,6 @@ from django.core import serializers
 from django.db import transaction
 from django.db.models.signals import post_delete, post_save
 from django.test import SimpleTestCase, TestCase
-from django.test.utils import override_settings
-
-from nose.plugins.attrib import attr
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
@@ -53,6 +50,7 @@ from corehq.form_processor.models import (
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     create_form_for_test,
+    use_sql_backend,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     AlertScheduleInstance,
@@ -149,8 +147,7 @@ class BaseDumpLoadTest(TestCase):
                 self.assertIn('raw', args, message)
 
 
-@attr(sql_backend=True)
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@use_sql_backend
 class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
     maxDiff = None
 
@@ -321,9 +318,9 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             created_via=None,
             email='webuser@example.com',
         )
-        self.addCleanup(ccuser_1.delete)
-        self.addCleanup(ccuser_2.delete)
-        self.addCleanup(web_user.delete)
+        self.addCleanup(ccuser_1.delete, deleted_by=None)
+        self.addCleanup(ccuser_2.delete, deleted_by=None)
+        self.addCleanup(web_user.delete, deleted_by=None)
 
         self._dump_and_load(expected_object_counts)
 
@@ -350,7 +347,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             email='email@example.com',
             uuid='428d454aa9abc74e1964e16d3565d6b6'  # match ID in devicelog.xml
         )
-        self.addCleanup(user.delete)
+        self.addCleanup(user.delete, deleted_by=None)
 
         with open('corehq/ex-submodules/couchforms/tests/data/devicelogs/devicelog.xml', 'rb') as f:
             xml = f.read()
@@ -378,7 +375,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             email='email@example.com',
             uuid=user_id
         )
-        self.addCleanup(user.delete)
+        self.addCleanup(user.delete, deleted_by=None)
 
         DemoUserRestore(
             demo_user_id=user_id,

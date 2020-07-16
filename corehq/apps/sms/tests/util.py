@@ -322,7 +322,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
     def tearDown(self):
         delete_domain_phone_numbers(self.domain)
         for user in self.users:
-            user.delete()
+            user.delete(deleted_by=None)
         for app in self.apps:
             app.delete()
         for keyword in self.keywords:

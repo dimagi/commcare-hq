@@ -27,10 +27,11 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
 
 .. toctree::
     :caption: Overview
-    :maxdepth: 2
+    :maxdepth: 1
 
     overview/platform
     overview/architecture
+    cep
 
 .. toctree::
     :caption: Application Building

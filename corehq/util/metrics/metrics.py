@@ -74,6 +74,9 @@ class HqMetrics(metaclass=abc.ABCMeta):
         _validate_tag_names(tags)
         self._create_event(title, text, alert_type, tags, aggregation_key)
 
+    def push_metrics(self):
+        pass
+
     @abstractmethod
     def _counter(self, name, value, tags, documentation):
         raise NotImplementedError

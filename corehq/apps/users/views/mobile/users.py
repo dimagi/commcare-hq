@@ -115,6 +115,7 @@ from corehq.apps.users.views import (
 from corehq.const import (
     GOOGLE_PLAY_STORE_COMMCARE_URL,
     USER_DATE_FORMAT,
+    USER_CHANGE_VIA_BULK_IMPORTER,
     USER_CHANGE_VIA_WEB,
 )
 from corehq.toggles import (
@@ -426,7 +427,7 @@ def delete_commcare_user(request, domain, user_id):
         messages.error(request, _("This is a location user. You must delete the "
                        "corresponding location before you can delete this user."))
         return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
-    user.retire()
+    user.retire(deleted_by=request.user, deleted_via=USER_CHANGE_VIA_WEB)
     messages.success(request, "User %s has been deleted. All their submissions and cases will be permanently deleted in the next few minutes" % user.username)
     return HttpResponseRedirect(reverse(MobileWorkerListView.urlname, args=[domain]))
 
@@ -455,7 +456,7 @@ def force_user_412(request, domain, user_id):
 @require_POST
 def restore_commcare_user(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
-    success, message = user.unretire()
+    success, message = user.unretire(unretired_by=request.user, unretired_via=USER_CHANGE_VIA_WEB)
     if success:
         messages.success(request, "User %s and all their submissions have been restored" % user.username)
     else:
@@ -680,7 +681,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         return {
             'new_mobile_worker_form': self.new_mobile_worker_form,
             'custom_fields_form': self.custom_data.form,
-            'custom_field_slugs': [f.slug for f in self.custom_data.fields],
+            'custom_fields_slugs': [f.slug for f in self.custom_data.fields],
             'can_bulk_edit_users': self.can_bulk_edit_users,
             'can_add_extra_users': self.can_add_extra_users,
             'can_access_all_locations': self.can_access_all_locations,
@@ -1307,7 +1308,7 @@ class DeleteCommCareUsers(BaseManageCommCareUserView, UsernameUploadMixin):
         deleted_count = 0
         for user_id, doc in user_docs_by_id.items():
             if user_id not in user_ids_with_forms:
-                CommCareUser.wrap(doc).delete()
+                CommCareUser.wrap(doc).delete(deleted_by=request.user, deleted_via=USER_CHANGE_VIA_BULK_IMPORTER)
                 deleted_count += 1
         if deleted_count:
             messages.success(request, f"{deleted_count} user(s) deleted.")
