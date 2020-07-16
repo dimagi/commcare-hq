@@ -76,7 +76,7 @@ class QueueingTestCase(BaseSMSTest):
         SMS.objects.filter(domain=self.domain).delete()
 
     def tearDown(self):
-        self.contact.delete()
+        self.contact.delete(deleted_by=None)
         self.backend.delete()
         self.backend_mapping.delete()
 

@@ -221,7 +221,7 @@ hqDefine("users/js/mobile_workers",[
 
     var newUserCreationModel = function (options) {
         assertProperties.assertRequired(options, [
-            'custom_field_slugs',
+            'custom_fields_slugs',
             'draconian_security',
             'implement_password_obfuscation',
             'location_url',
@@ -232,9 +232,9 @@ hqDefine("users/js/mobile_workers",[
         var self = {};
         self.STATUS = STATUS;   // make status constants available to bindings in HTML
 
-        self.customFieldSlugs = options.custom_field_slugs; // Required custom fields this domain has configured
-        self.stagedUser = ko.observable();                  // User in new user modal, not yet sent to server
-        self.newUsers = ko.observableArray();               // New users sent to server
+        self.customFieldSlugs = options.custom_fields_slugs; // Required custom fields this domain has configured
+        self.stagedUser = ko.observable();                   // User in new user modal, not yet sent to server
+        self.newUsers = ko.observableArray();                // New users sent to server
 
         // Username handling
         self.usernameAvailabilityStatus = ko.observable();
@@ -518,7 +518,7 @@ hqDefine("users/js/mobile_workers",[
         $("#users-list").koApplyBindings(usersListModel());
 
         var newUserCreation = newUserCreationModel({
-            custom_field_slugs: initialPageData.get('custom_field_slugs'),
+            custom_fields_slugs: initialPageData.get('custom_fields_slugs'),
             draconian_security: initialPageData.get('draconian_security'),
             implement_password_obfuscation: initialPageData.get('implement_password_obfuscation'),
             location_url: initialPageData.reverse('location_search'),

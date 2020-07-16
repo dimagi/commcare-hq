@@ -133,12 +133,10 @@ def load_data_for_db(db_alias, objects):
                 try:
                     obj.save(using=db_alias)
                 except (DatabaseError, IntegrityError) as e:
-                    e.args = ("Could not load %(app_label)s.%(object_name)s(pk=%(pk)s): %(error_msg)s" % {
-                        'app_label': obj.object._meta.app_label,
-                        'object_name': obj.object._meta.object_name,
-                        'pk': obj.object.pk,
-                        'error_msg': force_text(e)
-                    },)
+                    app = obj.object._meta.app_label,
+                    name = obj.object._meta.object_name,
+                    pk = obj.object.pk,
+                    e.args = (f"Could not load {app}.{name}(pk={pk}): {e}",)
                     raise
 
     # Since we disabled constraint checks, we must manually check for
