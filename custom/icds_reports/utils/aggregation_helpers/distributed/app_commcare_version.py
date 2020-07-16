@@ -4,11 +4,11 @@ from custom.icds_reports.const import AGG_APP_VERSION_TABLE
 from custom.icds_reports.utils.aggregation_helpers import month_formatter, transform_day_to_month, \
     get_app_version_temp_tablename
 from custom.icds_reports.utils.aggregation_helpers.distributed.base import (
-    AggregationPartitionedHelper
+    BaseICDSAggregationDistributedHelper
 )
 
 
-class AppVersionAggregationDistributedHelper(AggregationPartitionedHelper):
+class AppVersionAggregationDistributedHelper(BaseICDSAggregationDistributedHelper):
     helper_key = 'usage-forms'
     ucr_data_source_id = 'static-usage_forms'
     tablename = AGG_APP_VERSION_TABLE
@@ -19,15 +19,11 @@ class AppVersionAggregationDistributedHelper(AggregationPartitionedHelper):
         self.next_month_start = self.month + relativedelta(months=1)
 
     def aggregate(self, cursor):
-        drop_query = self.drop_table_query()
-        create_query = self.create_table_query()
         create_temp_query = self.create_temporary_table()
         drop_temp_query = self.drop_temporary_table()
         agg_query, agg_params = self.aggregation_query()
         index_queries = self.indexes()
 
-        cursor.execute(drop_query)
-        cursor.execute(create_query)
         cursor.execute(drop_temp_query)
         cursor.execute(create_temp_query)
         cursor.execute(agg_query, agg_params)
@@ -39,21 +35,6 @@ class AppVersionAggregationDistributedHelper(AggregationPartitionedHelper):
             cursor.execute(query)
         cursor.execute(drop_temp_query)
 
-    def drop_table_query(self):
-        return f"""
-                DROP TABLE IF EXISTS "{self.monthly_tablename}"
-            """
-
-    def create_table_query(self):
-        return f"""
-            CREATE TABLE "{self.monthly_tablename}" (LIKE {self.tablename});
-            SELECT create_distributed_table('{self.monthly_tablename}', 'supervisor_id');
-        """
-
-    @property
-    def monthly_tablename(self):
-        return f"{self.tablename}_{month_formatter(self.month)}"
-
     @property
     def temporary_tablename(self):
         return get_app_version_temp_tablename()
@@ -64,17 +45,15 @@ class AppVersionAggregationDistributedHelper(AggregationPartitionedHelper):
             "end_date": month_formatter(self.next_month_start)
         }
         return """
-            SELECT distinct
+            SELECT distinct on (awc_id)
                 awc_id,
                 supervisor_id,
                 %(start_date)s::DATE AS month,
-                LAST_VALUE(app_version) over w as app_version,
-                LAST_VALUE(commcare_version) over w as commcare_version
+                app_version as app_version,
+                commcare_version as commcare_version
             FROM "{ucr_tablename}" WHERE
-                form_date >= %(start_date)s AND form_date < %(end_date)s WINDOW w as (
-                PARTITION BY awc_id, supervisor_id ORDER BY
-                form_date RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-                )
+                form_date >= %(start_date)s AND form_date < %(end_date)s ORDER BY 
+                awc_id, form_date  DESC
         """.format(
             ucr_tablename=self.ucr_tablename,
             tablename=self.tablename,
@@ -132,7 +111,4 @@ class AppVersionAggregationDistributedHelper(AggregationPartitionedHelper):
     def aggregation_queries(self):
         return [
             """INSERT INTO "{new_tablename}" (SELECT * FROM "{tmp_tablename}")""".format(new_tablename=self.tablename, tmp_tablename=self.temporary_tablename),
-            'DROP TABLE IF EXISTS "{monthly_tablename}"'.format(monthly_tablename=self.monthly_tablename),
-            """ALTER TABLE "{new_tablename}" RENAME TO \"{tablename}\"""".format(new_tablename=self.tablename, tablename=self.monthly_tablename),
-            """ALTER TABLE "{tablename}" ATTACH PARTITION "{monthly_tablename}" FOR VALUES IN ('{month}')""".format(monthly_tablename=self.monthly_tablename, month=self.month.strftime('%Y-%m-%d'), tablename=self.tablename),
         ]
