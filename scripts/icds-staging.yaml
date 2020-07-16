@@ -56,4 +56,5 @@ branches:
   - ap/restrict-unauthorized-users
   - rn_test_caseupdate_django_upgrade #15th July
   - sr/mm-field #15th July
+  - rn_fix_telangana_state_level_topojson
 submodules: {}
