@@ -22,7 +22,7 @@ class AwcInfrastructureAggregationHelper(StateBasedAggregationPartitionedHelper)
         'adult_scale_available', 'baby_scale_available', 'flat_scale_available',
         'adult_scale_usable', 'baby_scale_usable', 'cooking_utensils_usable',
         'infantometer_usable', 'medicine_kits_usable', 'stadiometer_usable',
-        'preschool_kit_available', 'preschool_kit_usable'
+        'preschool_kit_available', 'preschool_kit_usable', 'use_salt'
     )
 
     @property
@@ -93,7 +93,7 @@ class AwcInfrastructureAggregationHelper(StateBasedAggregationPartitionedHelper)
             electricity_awc, adequate_space_pse,
             adult_scale_available, baby_scale_available, flat_scale_available,
             adult_scale_usable, baby_scale_usable, cooking_utensils_usable,
-            infantometer_usable, medicine_kits_usable, stadiometer_usable
+            infantometer_usable, medicine_kits_usable, stadiometer_usable, use_salt
         ) (
           SELECT
             %(state_id)s AS state_id,
@@ -118,7 +118,8 @@ class AwcInfrastructureAggregationHelper(StateBasedAggregationPartitionedHelper)
             ucr.cooking_utensils_usable as cooking_utensils_usable,
             ucr.infantometer_usable as infantometer_usable,
             ucr.medicine_kits_usable as medicine_kits_usable,
-            ucr.stadiometer_usable as stadiometer_usable
+            ucr.stadiometer_usable as stadiometer_usable,
+            ucr.use_salt as use_salt
           FROM ({ucr_table_query}) ucr
         )
         """.format(

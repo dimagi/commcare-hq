@@ -549,6 +549,7 @@ class AggAwc(models.Model, AggregateMixin):
     cases_ccs_lactating_reg_in_month = models.IntegerField(blank=True, null=True)
     cases_ccs_pregnant_all_reg_in_month = models.IntegerField(blank=True, null=True)
     cases_ccs_lactating_all_reg_in_month = models.IntegerField(blank=True, null=True)
+    use_salt = models.IntegerField(null=True)
 
     class Meta:
         managed = False
@@ -1521,6 +1522,7 @@ class AggregateAwcInfrastructureForms(models.Model, AggregateMixin):
     stadiometer_usable = models.PositiveSmallIntegerField(null=True)
     preschool_kit_usable = models.PositiveSmallIntegerField(null=True)
     preschool_kit_available = models.PositiveSmallIntegerField(null=True)
+    use_salt = models.PositiveSmallIntegerField(null=True)
 
     class Meta(object):
         db_table = AGG_INFRASTRUCTURE_TABLE

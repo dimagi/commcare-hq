@@ -1,3 +1,4 @@
+from datetime import date
 from operator import mul, truediv, sub
 
 from corehq.apps.locations.models import SQLLocation
@@ -8,7 +9,8 @@ from custom.icds_reports.sqldata.base_identification import BaseIdentification
 from custom.icds_reports.sqldata.base_operationalization import BaseOperationalization
 from custom.icds_reports.sqldata.base_populations import BasePopulation
 from custom.icds_reports.utils import ICDSMixin, MPRData, ICDSDataTableColumn
-
+from custom.icds_reports.models.aggregate import AggAwc
+from custom.icds_reports.utils import get_location_filter
 
 class MPRIdentification(BaseIdentification):
 
@@ -423,6 +425,34 @@ class MPRUsingSalt(ICDSMixin, MPRData):
             data = self.custom_data(selected_location=self.selected_location, domain=self.config['domain'])
             use_salt = data.get('use_salt', 0)
             percent = "%.2f" % ((use_salt or 0) * 100 / float(self.awc_number or 1))
+            return [
+                ["Number of AWCs using Iodized Salt:", use_salt],
+                ["% of AWCs:", percent + " %"]
+            ]
+
+        return []
+
+
+class MPRUsingSaltBeta(ICDSMixin, MPRData):
+
+    slug = 'using_salt'
+    title = "5. Number of AWCs using Iodized Salt"
+
+    @property
+    def rows(self):
+        if self.config['location_id']:
+            filters = get_location_filter(self.config['location_id'], self.config['domain'])
+            if filters.get('aggregation_level') > 1:
+                filters['aggregation_level'] -= 1
+
+            filters['month'] = date(self.config['year'], self.config['month'], 1)
+
+            awc_data = AggAwc.objects.filter(**filters).values(
+                'use_salt',
+                'num_launched_awcs').order_by('month').first()
+
+            use_salt = awc_data.get('use_salt', 0)
+            percent = "%.2f" % ((use_salt or 0) * 100 / float(awc_data.get('num_launched_awcs', 0) or 1))
             return [
                 ["Number of AWCs using Iodized Salt:", use_salt],
                 ["% of AWCs:", percent + " %"]
