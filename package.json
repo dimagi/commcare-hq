@@ -90,7 +90,7 @@
     "grunt": "^0.4.5",
     "grunt-cli": "^0.1.13",
     "grunt-contrib-watch": "^0.6.1",
-    "grunt-mocha": "^0.4.13",
+    "grunt-mocha": "^1.2.0",
     "angular-mocks": "1.4.4",
     "chai": "3.3.0",
     "colors": "^1.4.0",
