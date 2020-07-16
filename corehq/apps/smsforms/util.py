@@ -31,10 +31,11 @@ def process_sms_form_complete(session, form):
 def get_sms_form_incoming_media_files(session):
     attachments = {}
     for message in SMS.objects.filter(xforms_session_couch_id=session._id):
-        if message.custom_metadata and 'media_url' in message.custom_metadata:
-            media_url = message.custom_metadata['media_url']
-            file_id, file = message.outbound_backend.download_incoming_media(media_url)
-            attachments[file_id] = file
+        if message.custom_metadata and 'media_urls' in message.custom_metadata:
+            media_urls = message.custom_metadata['media_urls']
+            for media_url in media_urls:
+                file_id, file = message.outbound_backend.download_incoming_media(media_url)
+                attachments[file_id] = file
     return attachments
 
 
