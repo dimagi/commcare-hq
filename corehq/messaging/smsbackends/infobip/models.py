@@ -113,9 +113,12 @@ class InfobipBackend(SQLSMSBackend):
             if is_multimedia_message(msg):
                 payload['whatsApp'] = {}
                 image_url, audio_url, video_url = get_multimedia_urls(msg)
-                if image_url: payload['whatsApp']['imageUrl'] = image_url
-                if audio_url: payload['whatsApp']['audioUrl'] = audio_url
-                if video_url: payload['whatsApp']['videoUrl'] = video_url
+                if image_url:
+                    payload['whatsApp']['imageUrl'] = image_url
+                if audio_url:
+                    payload['whatsApp']['audioUrl'] = audio_url
+                if video_url:
+                    payload['whatsApp']['videoUrl'] = video_url
 
                 requests.post(url, json=payload, headers=headers)
 
