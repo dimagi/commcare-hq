@@ -266,7 +266,7 @@ class AuthCouchOnlyTest(TestCase, AuthTestMixin, _AuthTestsCouchOnly):
         super(AuthCouchOnlyTest, self)._set_up_auth_test()
 
     def tearDown(self):
-        self.user.delete()
+        self.user.delete(deleted_by=None)
         super(AuthCouchOnlyTest, self).tearDown()
 
 
@@ -284,7 +284,7 @@ class InsecureAuthCouchOnlyTest(TestCase, AuthTestMixin, _AuthTestsCouchOnly):
         super(InsecureAuthCouchOnlyTest, self)._set_up_auth_test()
 
     def tearDown(self):
-        self.user.delete()
+        self.user.delete(deleted_by=None)
         super(InsecureAuthCouchOnlyTest, self).tearDown()
 
 
@@ -302,7 +302,7 @@ class AuthTest(TestCase, AuthTestMixin, _AuthTestsBothBackends):
         super(AuthTest, self)._set_up_auth_test()
 
     def tearDown(self):
-        self.user.delete()
+        self.user.delete(deleted_by=None)
         super(AuthTest, self).tearDown()
 
 
@@ -320,7 +320,7 @@ class InsecureAuthTest(TestCase, AuthTestMixin, _AuthTestsBothBackends):
         super(InsecureAuthTest, self)._set_up_auth_test()
 
     def tearDown(self):
-        self.user.delete()
+        self.user.delete(deleted_by=None)
         super(InsecureAuthTest, self).tearDown()
 
 

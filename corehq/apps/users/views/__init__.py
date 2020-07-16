@@ -510,10 +510,16 @@ class ListWebUsersView(BaseRoleAccessView):
     @property
     @memoized
     def invitations(self):
-        invitations = Invitation.by_domain(self.domain)
-        for invitation in invitations:
-            invitation.role_label = self.role_labels.get(invitation.role, "")
-        return invitations
+        return [
+            {
+                "uuid": str(invitation.uuid),
+                "email": invitation.email,
+                "email_marked_as_bounced": bool(invitation.email_marked_as_bounced),
+                "invited_on": invitation.invited_on,
+                "role_label": self.role_labels.get(invitation.role, ""),
+            }
+            for invitation in Invitation.by_domain(self.domain)
+        ]
 
     @property
     def page_context(self):

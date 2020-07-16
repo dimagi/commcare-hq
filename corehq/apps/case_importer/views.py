@@ -32,7 +32,7 @@ from corehq.apps.reports.analytics.esaccessors import (
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.util.view_utils import absolute_reverse
-from corehq.util.workbook_reading import valid_extensions, SpreadsheetFileExtError
+from corehq.util.workbook_reading import valid_extensions, SpreadsheetFileExtError, SpreadsheetFileInvalidError
 
 require_can_edit_data = require_permission(Permissions.edit_data)
 
@@ -284,7 +284,9 @@ def bulk_case_upload_api(request, domain, **kwargs):
         error = "Please upload file with one of the following extensions: {}".format(
             ', '.join(valid_extensions)
         )
-    return json_response({'code': 500, 'message': _(error)}, status_code=500)
+    except SpreadsheetFileInvalidError as e:
+        error = str(e)
+    return json_response({'code': 500, 'message': error}, status_code=500)
 
 
 def _bulk_case_upload_api(request, domain):

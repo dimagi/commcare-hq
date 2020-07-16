@@ -69,7 +69,7 @@ class TestDefaultLandingPages(TestCase):
 
     def test_no_role_cant_access(self):
         user = self._make_web_user('elodin@theuniversity.com')
-        self.addCleanup(user.delete)
+        self.addCleanup(user.delete, deleted_by=None)
         user.delete_domain_membership(self.domain)
         user.save()
         self.client.login(username=user.username, password=self.global_password)
@@ -78,9 +78,9 @@ class TestDefaultLandingPages(TestCase):
 
     def test_formplayer_default_override(self):
         web_user = self._make_web_user('elodin@theuniversity.com', role=self.webapps_role)
-        self.addCleanup(web_user.delete)
+        self.addCleanup(web_user.delete, deleted_by=None)
         mobile_worker = self._make_commcare_user('kvothe')
-        self.addCleanup(mobile_worker.delete)
+        self.addCleanup(mobile_worker.delete, deleted_by=None)
         for user in [web_user, mobile_worker]:
             self.client.login(username=user.username, password=self.global_password)
 
@@ -100,7 +100,7 @@ def test_web_user_landing_page(self, role, expected_urlname, extra_url_args=None
         role = getattr(self, role)
     extra_url_args = extra_url_args or []
     user = self._make_web_user('elodin@theuniversity.com', role=role)
-    self.addCleanup(user.delete)
+    self.addCleanup(user.delete, deleted_by=None)
     self.client.login(username=user.username, password=self.global_password)
 
     response = self.client.get(reverse("domain_homepage", args=[self.domain]), follow=True)
@@ -119,7 +119,7 @@ def test_mobile_worker_landing_page(self, role, expected_urlname, extra_url_args
         role = getattr(self, role)
     extra_url_args = extra_url_args or []
     user = self._make_commcare_user('kvothe', role=role)
-    self.addCleanup(user.delete)
+    self.addCleanup(user.delete, deleted_by=None)
     self.client.login(username=user.username, password=self.global_password)
 
     response = self.client.get(reverse("domain_homepage", args=[self.domain]), follow=True)

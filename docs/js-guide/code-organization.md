@@ -70,7 +70,9 @@ one of a number of patterns.
 
 We're in the process of migrating to [RequireJS](https://requirejs.org/). Part of this process has included developing a lighter-weight alternative module system called `hqDefine`.
 
-`hqDefine` serves as a stepping stone between legacy code and requirejs modules: it adds encapsulation but not full-blown dependency management. **New code should be written to be compatible with RequireJS.** This is typically easy; once familiar with the module patterns described below, see the [migration guide](https://github.com/dimagi/js-guide/blob/master/migrating.md#migrating-to-requirejs) for details on making sure your code will work with RequireJS.
+`hqDefine` serves as a stepping stone between legacy code and requirejs modules: it adds encapsulation but not
+full-blown dependency management. **New code should be written to be compatible with RequireJS.** This is typically
+easy; once familiar with the module patterns described below, see the [migration guide](https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/migrating.md#migrating-to-requirejs) for details on making sure your code will work with RequireJS.
 
 Before diving into `hqDefine`, I want to talk first about the status quo
 convention for sanity with no module system.
