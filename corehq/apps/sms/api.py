@@ -206,12 +206,9 @@ def send_sms_to_verified_number(verified_number, text, metadata=None,
     for event in events:
         multimedia_fields = ('caption_image', 'caption_audio', 'caption_video')
         for field in multimedia_fields:
-            try:
-                value = getattr(event, field)
-                if value is not None:
-                    msg.custom_metadata[field] = value
-            except AttributeError:
-                pass
+            value = getattr(event, field, None)
+            if value is not None:
+                msg.custom_metadata[field] = value
     msg.save()
 
     return queue_outgoing_sms(msg)
