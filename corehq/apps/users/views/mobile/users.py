@@ -120,6 +120,7 @@ from corehq.const import (
     USER_DATE_FORMAT,
 )
 from corehq.toggles import (
+    CUSTOM_DATA_FIELDS_PROFILES,
     FILTERED_BULK_USER_DOWNLOAD,
     TWO_STAGE_USER_PROVISIONING,
 )
@@ -934,6 +935,14 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
         return super(CreateCommCareUserModal, self).dispatch(request, *args, **kwargs)
 
     def render_form(self, status):
+        if CUSTOM_DATA_FIELDS_PROFILES.enabled(self.domain):
+            return self.render_json_response({
+                "status": "failure",
+                "form_html": "<div class='alert alert-danger'>{}</div>".format(_("""
+                    Cannot add new worker due to usage of user field profiles.
+                    Please add your new worker from the mobile workers page.
+                """)),
+            })
         return self.render_json_response({
             "status": status,
             "form_html": render_to_string(self.template_name, {
