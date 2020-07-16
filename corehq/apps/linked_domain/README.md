@@ -1,8 +1,9 @@
 # Linking Domains
 
-Linked project spaces allow project spaces to share much of their data. You configure a controlling upstream domain
-(called "master" in most code, though we are replacing that over time) and one or more downstream domains
-(called "linked" in most code, similarly being replaced). You can then overwrite downstream content with upstream content.
+Linked project spaces allow project spaces to share much of their data. You configure one controlling upstream domain
+with one or more downstream domains and then can overwrite downstream content with upstream content.
+Most code refers to upstream domains as "master" and downstream as "linked", though we're updating that
+terminology.
 
 Linked domains have two major use cases:
 
@@ -17,6 +18,7 @@ linking.
 ## User Interface
 
 The upstream domain looks like any other domain, but downstream domains have a more limited UI, because most of
+their configuration
 comes from their upstream domain and much of that shared content is read-only (see below for details on specific
 data models). Both upstream and downstream domains have a settings
 page (Project Settings > Linked Project Spaces) used to overwrite content.
@@ -33,7 +35,7 @@ supported applications. Remote domain linkages cannot be created via the UI; see
 
 ## Data models
 
-Supported data types are defined in
+Linked domains share configuration data. Supported data types are defined in
 [LINKED_MODELS](https://github.com/dimagi/commcare-hq/blob/966b62cc113b56af771906def76833446b4ba025/corehq/apps/linked_domain/const.py#L13):
 
 - Applications
@@ -57,6 +59,9 @@ that may be edited and will retain their
 values even when the app is updated. Reports cannot be edited at all. Other data, such as user roles, can typically
 be edited on the downstream domain, but any edits will be overwritten the next time that data type is
 pushed/pulled.
+
+Support for additional models is added as time permits. Any configuration-related data type could potentially be shared.
+Project data like forms and cases would not be shared.
 
 
 ## Remote linking
