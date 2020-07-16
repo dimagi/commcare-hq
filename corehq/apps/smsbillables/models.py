@@ -348,9 +348,11 @@ class SmsBillable(models.Model):
             include_deleted=True,
         )
 
-        is_gateway_billable = backend_id is None\
-                              or backend_instance.is_global\
-                              or toggles.ENABLE_INCLUDE_SMS_GATEWAY_CHARGING.enabled(domain)
+        is_gateway_billable = (
+            backend_id is None
+            or backend_instance.is_global
+            or toggles.ENABLE_INCLUDE_SMS_GATEWAY_CHARGING.enabled(domain)
+        )
 
         direct_gateway_fee = gateway_fee = multipart_count = conversion_rate = None
 
