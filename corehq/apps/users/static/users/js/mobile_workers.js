@@ -78,6 +78,7 @@ hqDefine("users/js/mobile_workers",[
         var self = ko.mapping.fromJS(options);
         self.custom_fields = customDataFields.customDataFieldsEditor({
             profiles: initialPageData.get('custom_fields_profiles'),
+            profile_slug: initialPageData.get('custom_fields_profile_slug'),
             slugs: initialPageData.get('custom_fields_slugs'),
         });
 
