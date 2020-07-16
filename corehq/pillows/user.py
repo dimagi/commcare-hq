@@ -2,7 +2,7 @@ import copy
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed import topics
 from corehq.apps.groups.dbaccessors import get_group_id_name_map_by_user
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor
@@ -13,13 +13,14 @@ from corehq.elastic import (
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.util.es.interface import ElasticsearchInterface
 from corehq.util.quickcache import quickcache
+from corehq.util.doc_processor.couch import CouchDocumentProvider
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor, PillowProcessor
 from pillowtop.processors.elastic import BulkElasticProcessor
-from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
-from pillowtop.reindexer.reindexer import ElasticPillowReindexer, ReindexerFactory
+from pillowtop.reindexer.reindexer import ResumableBulkElasticPillowReindexer
+from pillowtop.reindexer.reindexer import ReindexerFactory
 
 
 def update_unknown_user_from_form_if_necessary(es, doc_dict):
@@ -44,7 +45,7 @@ def update_unknown_user_from_form_if_necessary(es, doc_dict):
         }
         if domain:
             doc["domain_membership"] = {"domain": domain}
-        ElasticsearchInterface(es).create_doc(USER_INDEX, ES_META['users'].type, doc=doc, doc_id=user_id)
+        ElasticsearchInterface(es).create_doc(USER_INDEX_INFO.alias, ES_META['users'].type, doc=doc, doc_id=user_id)
 
 
 def transform_user_for_elasticsearch(doc_dict):
@@ -199,20 +200,22 @@ def get_unknown_users_pillow(pillow_id='unknown-users-pillow', num_processes=1, 
 class UserReindexerFactory(ReindexerFactory):
     slug = 'user'
     arg_contributors = [
-        ReindexerFactory.elastic_reindexer_args,
+        ReindexerFactory.resumable_reindexer_args,
+        ReindexerFactory.elastic_reindexer_args
     ]
 
     def build(self):
-        return ElasticPillowReindexer(
-            pillow_or_processor=get_user_pillow_old(),
-            change_provider=CouchViewChangeProvider(
-                couch_db=CommCareUser.get_db(),
-                view_name='users/by_username',
-                view_kwargs={
-                    'include_docs': True,
-                }
-            ),
+        iteration_key = "UserToElasticsearchPillow_{}_reindexer".format(USER_INDEX)
+        doc_provider = CouchDocumentProvider(iteration_key, [CommCareUser, WebUser])
+        options = {
+            'chunk_size': 5
+        }
+        options.update(self.options)
+        return ResumableBulkElasticPillowReindexer(
+            doc_provider,
             elasticsearch=get_es_new(),
             index_info=USER_INDEX_INFO,
-            **self.options
+            doc_transform=transform_user_for_elasticsearch,
+            pillow=get_user_pillow_old(),
+            **options
         )
