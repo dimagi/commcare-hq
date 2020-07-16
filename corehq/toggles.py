@@ -544,7 +544,7 @@ BIOMETRIC_INTEGRATION = StaticToggle(
 ADD_USERS_FROM_LOCATION = StaticToggle(
     'add_users_from_location',
     "Allow users to add new mobile workers from the locations page",
-    TAG_SOLUTIONS_CONDITIONAL,
+    TAG_DEPRECATED,
     [NAMESPACE_DOMAIN]
 )
 
