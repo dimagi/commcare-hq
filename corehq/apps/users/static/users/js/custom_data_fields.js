@@ -19,28 +19,27 @@ hqDefine("users/js/custom_data_fields", [
     };
 
     var customDataFieldsEditor = function (options) {
-        assertProperties.assertRequired(options, ['profiles', 'slugs']);
+        assertProperties.assertRequired(options, ['profiles', 'slugs', 'profile_slug']);
         var self = {};
 
         self.profiles = _.indexBy(options.profiles, 'id');
+        self.profile_slug = options.profile_slug;
         self.slugs = options.slugs;
         _.each(self.slugs, function (slug) {
             self[slug] = fieldModel('');    // TODO: populate with original value, inc. for disabled
         });
 
         self.serialize = function () {
-            var data = {
-                commcare_profile: self.commcare_profile.value(),
-            };
+            var data = {};
+            data[self.profile_slug] = self[self.profile_slug].value();
             _.each(self.slugs, function (slug) {
                 data[slug] = self[slug].value();
             });
             return data;
         };
 
-        // TODO: get PROFILE_SLUG from initial page data
-        self.commcare_profile = fieldModel('');   // TODO: populate with original value
-        self.commcare_profile.value.subscribe(function (newValue) {
+        self[self.profile_slug] = fieldModel('');   // TODO: populate with original value
+        self[self.profile_slug].value.subscribe(function (newValue) {
             if (!newValue) {
                 return;
             }

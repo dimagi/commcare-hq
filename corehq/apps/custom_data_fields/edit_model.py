@@ -19,6 +19,7 @@ from .models import (
     CustomDataFieldsDefinition,
     CustomDataFieldsProfile,
     Field,
+    PROFILE_SLUG,
     validate_reserved_words,
 )
 
@@ -311,6 +312,7 @@ class CustomDataModelMixin(object):
             context.update({
                 "show_profiles": True,
                 "custom_fields_profiles": sorted(profiles, key=lambda x: x['name'].lower()),
+                "custom_fields_profile_slug": PROFILE_SLUG,
             })
         return context
 

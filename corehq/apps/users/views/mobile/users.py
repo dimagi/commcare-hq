@@ -50,7 +50,10 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
-from corehq.apps.custom_data_fields.models import CUSTOM_DATA_FIELD_PREFIX
+from corehq.apps.custom_data_fields.models import (
+    CUSTOM_DATA_FIELD_PREFIX,
+    PROFILE_SLUG,
+)
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.es import FormES
@@ -183,6 +186,7 @@ class EditCommCareUserView(BaseEditUserView):
         context.update({
             'custom_fields_slugs': [f.slug for f in self.form_user_update.custom_data.fields],
             'custom_fields_profiles': sorted(profiles, key=lambda x: x['name'].lower()),
+            'custom_fields_profile_slug': PROFILE_SLUG,
             'edit_user_form_title': self.edit_user_form_title,
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
@@ -675,6 +679,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'custom_fields_form': self.custom_data.form,
             'custom_fields_slugs': [f.slug for f in self.custom_data.fields],
             'custom_fields_profiles': profiles,
+            'custom_fields_profile_slug': PROFILE_SLUG,
             'can_bulk_edit_users': self.can_bulk_edit_users,
             'can_add_extra_users': self.can_add_extra_users,
             'can_access_all_locations': self.can_access_all_locations,
