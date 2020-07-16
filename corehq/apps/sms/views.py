@@ -2156,7 +2156,7 @@ class WhatsAppTemplatesView(BaseMessagingSectionView):
                 for template in templates:
                     template['template_string'] = wa_active_backend.generate_template_string(template)
                 context.update({'wa_templates': templates})
-            except Exception:
+            except TypeError:
                 messages.error(
                     self.request,
                     wa_active_backend.get_generic_name()
