@@ -12,7 +12,7 @@ from corehq.apps.user_importer.importer import (
 )
 from corehq.apps.user_importer.tasks import import_users_and_groups
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.apps.users.models import CommCareUser, Permissions, UserRole, WebUser
+from corehq.apps.users.models import CommCareUser, DomainPermissionsMirror, Permissions, UserRole, WebUser
 
 
 class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
@@ -374,6 +374,19 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         web_user = WebUser.get_by_username(username)
         self.assertFalse(web_user.is_member_of(self.domain.name))
+
+    def test_multi_domain(self):
+        dm = DomainPermissionsMirror(source=self.domain.name, mirror=self.other_domain.name)
+        dm.save()
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(username=123, domain=self.other_domain.name)],
+            [],
+            None
+        )
+        self.assertIsNotNone(
+            CommCareUser.get_by_username('{}@{}.commcarehq.org'.format('123', self.other_domain.name))
+        )
 
 
 class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
