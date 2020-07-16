@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 import custom.icds_reports.models.aggregate
 from django.db import migrations, models
 
-from custom.icds_reports.utils.migrations import get_view_migrations
+from custom.icds_reports.utils.migrations import get_view_migrations, get_composite_primary_key_migrations
 
 
 class Migration(migrations.Migration):
@@ -18,7 +18,6 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='AggregateAppVersion',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('supervisor_id', models.TextField()),
                 ('awc_id', models.TextField()),
                 ('month', models.DateField()),
@@ -35,5 +34,5 @@ class Migration(migrations.Migration):
             unique_together=set([('month', 'supervisor_id', 'awc_id')]),
         ),
     ]
-
+    operations.extend(get_composite_primary_key_migrations(['aggregateappversion']))
     operations.extend(get_view_migrations())
