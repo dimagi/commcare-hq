@@ -585,7 +585,8 @@ def incoming(phone_number, text, backend_api, timestamp=None,
         backend_message_id=backend_message_id,
         raw_text=raw_text,
     )
-    if media_url: msg.custom_metadata = {"media_url": media_url}
+    if media_url:
+        msg.custom_metadata = {"media_url": media_url}
 
     if settings.SMS_QUEUE_ENABLED:
         msg.processed = False
