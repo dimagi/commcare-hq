@@ -45,7 +45,7 @@ class GetFormQuestionValuesTests(SimpleTestCase):
 
     def test_utf8_question(self):
         with warnings.catch_warnings():
-            warnings.simplefilter("ignore", UnicodeWarning)
+            warnings.simplefilter("ignore", BytesWarning)
             value = get_form_question_values({'form': {'foo': {b'b\xc4\x85r': 'baz'}}})
         self.assertEqual(value, {'/data/foo/b\u0105r': 'baz'})
 
