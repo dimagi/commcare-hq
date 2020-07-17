@@ -10,23 +10,40 @@ hqDefine("users/js/custom_data_fields", [
     _,
     assertProperties
 ) {
-    var fieldModel = function (value) {
+    var fieldModel = function (options) {
         return {
-            value: ko.observable(value),
-            previousValue: ko.observable(value),    // save user-entered value
-            disable: ko.observable(false),
+            value: ko.observable(options.value),
+            previousValue: ko.observable(options.value),    // save user-entered value
+            disable: ko.observable(!!false),
         };
     };
 
     var customDataFieldsEditor = function (options) {
-        assertProperties.assertRequired(options, ['profiles', 'slugs', 'profile_slug']);
+        assertProperties.assertRequired(options, ['profiles', 'slugs', 'profile_slug'], ['user_data']);
+        options.user_data = options.user_data || {};
         var self = {};
 
         self.profiles = _.indexBy(options.profiles, 'id');
         self.profile_slug = options.profile_slug;
         self.slugs = options.slugs;
+
+        var originalProfileFields = {},
+            originalProfileId,
+            originalProfile;
+        if (options.user_data) {
+            originalProfileId = options.user_data[options.profile_slug];
+            if (originalProfileId) {
+                originalProfile = self.profiles[originalProfileId];
+                if (originalProfile) {
+                    originalProfileFields = originalProfile.fields;
+                }
+            }
+        }
         _.each(self.slugs, function (slug) {
-            self[slug] = fieldModel('');    // TODO: populate with original value, inc. for disabled
+            self[slug] = fieldModel({
+                value: options.user_data[slug] || originalProfileFields[slug],
+                disable: !!originalProfileFields[slug],
+            });
         });
 
         self.serialize = function () {
@@ -38,19 +55,19 @@ hqDefine("users/js/custom_data_fields", [
             return data;
         };
 
-        self[self.profile_slug] = fieldModel('');   // TODO: populate with original value
+        self[self.profile_slug] = fieldModel({value: originalProfileId});
         self[self.profile_slug].value.subscribe(function (newValue) {
-            if (!newValue) {
-                return;
+            var fields = {};
+            if (newValue) {
+                fields = self.profiles[newValue].fields;
             }
-            var profile = self.profiles[newValue];
             _.each(self.slugs, function (slug) {
                 var field = self[slug];
-                if (slug in profile.fields) {
+                if (fields[slug]) {
                     if (!field.disable()) {
                         field.previousValue(field.value());
                     }
-                    field.value(profile.fields[slug]);
+                    field.value(fields[slug]);
                     field.disable(true);
                 } else {
                     if (field.disable()) {
