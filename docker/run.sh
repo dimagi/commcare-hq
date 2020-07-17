@@ -107,8 +107,8 @@ function _run_tests() {
 
     if [ "$TEST" == "python-sharded-and-javascript" ]; then
         ./manage.py create_kafka_topics
-        echo "coverage run manage.py test $@ $TESTS"
-        /vendor/bin/coverage run manage.py test "$@" $TESTS
+        echo "python -bb manage.py test $@ $TESTS"
+        python -bb manage.py test "$@" $TESTS
 
         ./manage.py migrate --noinput
         ./manage.py runserver 0.0.0.0:8000 &> commcare-hq.log &
@@ -117,8 +117,8 @@ function _run_tests() {
          grunt test "$@"
     elif [ "$TEST" != "javascript" ]; then
         ./manage.py create_kafka_topics
-        echo "coverage run manage.py test $@ $TESTS"
-        /vendor/bin/coverage run manage.py test "$@" $TESTS
+        echo "python -bb manage.py test $@ $TESTS"
+        python -bb manage.py test "$@" $TESTS
     else
         ./manage.py migrate --noinput
         ./manage.py runserver 0.0.0.0:8000 &> commcare-hq.log &
