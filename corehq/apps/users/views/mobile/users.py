@@ -114,9 +114,9 @@ from corehq.apps.users.views import (
 )
 from corehq.const import (
     GOOGLE_PLAY_STORE_COMMCARE_URL,
-    USER_DATE_FORMAT,
     USER_CHANGE_VIA_BULK_IMPORTER,
     USER_CHANGE_VIA_WEB,
+    USER_DATE_FORMAT,
 )
 from corehq.toggles import (
     FILTERED_BULK_USER_DOWNLOAD,
@@ -125,6 +125,7 @@ from corehq.toggles import (
 from corehq.util import get_document_or_404
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.metrics import metrics_counter
+from corehq.util.model_log import ModelAction, log_model_change
 from corehq.util.workbook_json.excel import (
     WorkbookJSONError,
     WorksheetNotFound,
@@ -851,6 +852,8 @@ def _modify_user_status(request, domain, user_id, is_active):
         })
     user.is_active = is_active
     user.save(spawn_task=True)
+    log_model_change(request.user, user.get_django_user(), message={'is_active': is_active},
+                     action=ModelAction.UPDATE)
     return json_response({
         'success': True,
     })
