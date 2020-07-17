@@ -59,13 +59,13 @@ def clean_logs():
 )
 def check_repeaters():
     start = datetime.utcnow()
-    six_hours_sec = 6 * 60 * 60
-    six_hours_later = start + timedelta(seconds=six_hours_sec)
+    twelve_hours_sec = 12 * 60 * 60
+    twelve_hours_later = start + timedelta(seconds=twelve_hours_sec)
 
     # Long timeout to allow all waiting repeat records to be iterated
     check_repeater_lock = get_redis_lock(
         CHECK_REPEATERS_KEY,
-        timeout=six_hours_sec,
+        timeout=twelve_hours_sec,
         name=CHECK_REPEATERS_KEY,
     )
     if not check_repeater_lock.acquire(blocking=False):
@@ -78,8 +78,10 @@ def check_repeaters():
             timing_buckets=_check_repeaters_buckets,
         ):
             for record in iterate_repeat_records(start):
-                if datetime.utcnow() > six_hours_later:
-                    _soft_assert(False, "I've been iterating repeat records for six hours. I quit!")
+                if not _soft_assert(
+                    datetime.utcnow() < twelve_hours_later,
+                    "I've been iterating repeat records for 12 hours. I quit!"
+                ):
                     break
                 metrics_counter("commcare.repeaters.check.attempt_forward")
                 record.attempt_forward_now()
