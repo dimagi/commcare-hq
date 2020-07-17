@@ -1,4 +1,4 @@
-/* global FormplayerFrontend */
+/* global FormplayerFrontend, mdAnchorRender */
 var Formplayer = {
     Utils: {},
     Const: {},
@@ -7,7 +7,8 @@ var Formplayer = {
 };
 var md = window.markdownit();
 
-var defaultRender = md.renderer.rules.link_open || function (tokens, idx, options, env, self) {
+//Overriden by downstream contexts, check before changing
+window.mdAnchorRender = md.renderer.rules.link_open || function (tokens, idx, options, env, self) {
     return self.renderToken(tokens, idx, options);
 };
 
@@ -22,7 +23,7 @@ md.renderer.rules.link_open = function (tokens, idx, options, env, self) {
     }
 
     // pass token to default renderer.
-    return defaultRender(tokens, idx, options, env, self);
+    return mdAnchorRender(tokens, idx, options, env, self);
 };
 
 _.delay(function () {
