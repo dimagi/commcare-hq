@@ -3635,6 +3635,24 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
             return 'none'
         return self.source_module.requires
 
+    _root_module_id = ModuleBase.root_module_id
+
+    @property
+    def root_module_id(self):
+        if self.shadow_module_version == 1:
+            if not self.source_module:
+                return None
+            return self.source_module.root_module_id
+
+        return self._root_module_id
+
+    @root_module_id.setter
+    def root_module_id(self, value):
+        if self.shadow_module_version == 1:
+            raise AttributeError("Can't set root_module_id on modules with shadow_module_version = 1")
+        else:
+            self._root_module_id = value
+
     def get_suite_forms(self):
         if not self.source_module:
             return []

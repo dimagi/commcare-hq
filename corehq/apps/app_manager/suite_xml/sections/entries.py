@@ -827,7 +827,7 @@ class EntriesHelper(object):
             if not module_:
                 return datums_
 
-            if module_.module_type == 'shadow':
+            if module_.module_type == 'shadow' and module_.shadow_module_version > 1:
                 module_ = module_.source_module
 
             try:
