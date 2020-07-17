@@ -813,6 +813,13 @@ ES_SEARCH_TIMEOUT = 30
 
 BITLY_OAUTH_TOKEN = None
 
+OAUTH2_PROVIDER = {
+    'SCOPES': {
+        'view_reports': 'View Report Data on All Domains',
+    },
+}
+
+
 # this should be overridden in localsettings
 INTERNAL_DATA = defaultdict(list)
 
