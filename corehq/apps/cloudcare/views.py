@@ -131,7 +131,7 @@ class FormplayerMain(View):
             # User has access via domain mirroring
             pass
         if role:
-            apps = [_format_app(app) for app in apps if role.permissions.view_web_app(app)]
+            apps = [_format_app(app) for app in apps if role.permissions.view_web_app(app.master_id)]
         apps = sorted(apps, key=lambda app: app['name'])
         return apps
 
@@ -256,7 +256,7 @@ class FormplayerPreviewSingleApp(View):
             raise Http404()
 
         role = request.couch_user.get_role(domain)
-        if role and not role.permissions.view_web_app(app):
+        if role and not role.permissions.view_web_app(app.master_id):
             raise Http404()
 
         def _default_lang():
