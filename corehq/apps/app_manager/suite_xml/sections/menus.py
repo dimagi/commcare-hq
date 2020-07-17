@@ -32,13 +32,16 @@ from corehq.apps.app_manager.xpath import (
 class MenuContributor(SuiteContributorByModule):
 
     def get_module_contributions(self, module, training_menu):
-
+        from corehq.apps.app_manager.models import ShadowModule
         menus = []
         if hasattr(module, 'get_menus'):
             for menu in module.get_menus(build_profile_id=self.build_profile_id):
                 menus.append(menu)
         else:
-            if getattr(module, 'shadow_module_version', 0) == 1:
+            shadow_modules = [m for m in self.app.get_modules()
+                              if m.module_type == 'shadow' and m.source_module_id]
+            old_style_shadow_modules = any(m for m in shadow_modules if m.shadow_module_version == 1)
+            if getattr(module, 'shadow_module_version', 0) == 1 or old_style_shadow_modules:
                 # Old style shadow modules don't allow child shadows, need to
                 # figure out which are the roots
                 id_modules = [module]       # the current module and all of its shadows
@@ -60,7 +63,7 @@ class MenuContributor(SuiteContributorByModule):
 
                 for id_module in id_modules:
                     for root_module in root_modules:
-                        menu = self._generate_menu(module, root_module, training_menu)
+                        menu = self._generate_menu(module, root_module, training_menu, id_module)
                         if len(menu.commands):
                             menus.append(menu)
             else:
@@ -71,7 +74,7 @@ class MenuContributor(SuiteContributorByModule):
                     elif module.module_type == 'shadow' and module.source_module.root_module:
                         root_module = module.source_module.root_module
 
-                menu = self._generate_menu(module, root_module, training_menu)
+                menu = self._generate_menu(module, root_module, training_menu, module)
                 if len(menu.commands):
                     menus.append(menu)
 
@@ -83,28 +86,28 @@ class MenuContributor(SuiteContributorByModule):
 
         return menus
 
-    def _generate_menu(self, module, root_module, training_menu):
+    def _generate_menu(self, module, root_module, training_menu, id_module):
         from corehq.apps.app_manager.models import ShadowModule
         menu_kwargs = {}
         suffix = ""
-        if module.is_training_module:
+        if id_module.is_training_module:
             menu_kwargs.update({'root': 'training-root'})
         elif root_module:
             menu_kwargs.update({'root': id_strings.menu_id(root_module)})
             suffix = id_strings.menu_id(root_module) if isinstance(root_module, ShadowModule) else ""
-        menu_kwargs.update({'id': id_strings.menu_id(module, suffix)})
+        menu_kwargs.update({'id': id_strings.menu_id(id_module, suffix)})
 
         # Determine relevancy
         if self.app.enable_module_filtering:
-            relevancy = module.module_filter
+            relevancy = id_module.module_filter
             # If module has a parent, incorporate the parent's relevancy.
             # This is only necessary when the child uses display only forms.
-            if module.put_in_root and module.root_module and module.root_module.module_filter:
+            if id_module.put_in_root and id_module.root_module and id_module.root_module.module_filter:
                 if relevancy:
                     relevancy = str(XPath.and_(XPath(relevancy).paren(force=True),
-                        XPath(module.root_module.module_filter).paren(force=True)))
+                        XPath(id_module.root_module.module_filter).paren(force=True)))
                 else:
-                    relevancy = module.root_module.module_filter
+                    relevancy = id_module.root_module.module_filter
             if relevancy:
                 menu_kwargs['relevant'] = interpolate_xpath(relevancy)
 
@@ -135,8 +138,8 @@ class MenuContributor(SuiteContributorByModule):
         excluded_form_ids = []
         if root_module and isinstance(root_module, ShadowModule):
             excluded_form_ids = root_module.excluded_form_ids
-        if module and isinstance(module, ShadowModule):
-            excluded_form_ids = module.excluded_form_ids
+        if id_module and isinstance(id_module, ShadowModule):
+            excluded_form_ids = id_module.excluded_form_ids
 
         commands = self._get_commands(excluded_form_ids, module)
         if module.is_training_module and module.put_in_root and training_menu:

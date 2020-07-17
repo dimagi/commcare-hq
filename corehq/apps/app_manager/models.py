@@ -3685,7 +3685,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         return self.source_module.all_forms_require_a_case()
 
     @classmethod
-    def new_module(cls, name, lang):
+    def new_module(cls, name, lang, shadow_module_version=2):
         lang = lang or 'en'
         detail = Detail(
             columns=[DetailColumn(
@@ -3701,6 +3701,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
                 short=Detail(detail.to_json()),
                 long=Detail(detail.to_json()),
             ),
+            shadow_module_version=shadow_module_version,
         )
         module.get_or_create_unique_id()
         return module
