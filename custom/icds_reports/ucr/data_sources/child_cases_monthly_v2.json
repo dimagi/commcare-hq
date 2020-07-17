@@ -407,17 +407,15 @@
         "type": "boolean",
         "column_id": "child_count_male"
       },
-     {
-      "filter": {
-      "type": "named",
-      "name": "is_resident",
-      "comment": null
-       },
-      "display_name": null,
-      "type": "boolean",
-      "column_id": "resident",
-      "comment": null
-     },   
+      {
+        "filter": {
+          "type": "named",
+          "name": "is_resident"
+        },
+        "display_name": null,
+        "type": "boolean",
+        "column_id": "resident"
+      },   
       {
         "display_name": null,
         "datatype": "integer",
@@ -1882,21 +1880,20 @@
         "type": "expression",
         "column_id": "is_cf"
       },
-    {
-     "display_name": null,
-     "datatype": "string",
-     "type": "expression",
-     "is_primary_key": false,
-     "transform": {},
-     "is_nullable": true,
-     "expression": {
-       "type": "named",
-       "name": "zscore_grading_wfa"
-       },
-      "column_id": "zscore_grading_wfa_display",
-      "create_index": false,
-      "comment": null
-     }
+      {  
+        "display_name": null,
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "expression": {
+          "type": "named",
+          "name": "zscore_grading_wfa"
+        },
+        "column_id": "zscore_grading_wfa_display",
+        "create_index": false
+       }
     ],
     "named_expressions": {
       "month_start": {
@@ -2212,64 +2209,64 @@
         }
       },
       "zscore_grading_wfa": {
-      "type": "conditional",
-      "test": {
-      "type": "and",
-      "filters": [
-       {
-          "operator": "gte",
-          "type": "boolean_expression",
-          "expression": {
-            "type": "diff_days",
-            "from_date_expression": {
-              "type": "root_doc",
+        "type": "conditional",
+        "test": {
+          "type": "and",
+          "filters": [
+            {
+             "operator": "gte",
+             "type": "boolean_expression",
+             "expression": {
+               "type": "diff_days",
+               "from_date_expression": {
+                 "type": "root_doc",
+                 "expression": {
+                   "datatype": "date",
+                   "type": "property_name",
+                   "property_name": "last_date_gmp"
+                 }
+               },
+               "to_date_expression": {
+               "type": "named",
+               "name": "month_end"
+               }
+             },
+             "property_value": 0
+            },
+            {
+              "operator": "gte",
+              "type": "boolean_expression",
               "expression": {
-                "datatype": "date",
-                "type": "property_name",
-                "property_name": "last_date_gmp"
+                "type": "diff_days",
+                "from_date_expression": {
+                  "type": "named",
+                  "name": "month_start"
+                },
+               "to_date_expression": {
+                 "type": "root_doc",
+                 "expression": {
+                   "datatype": "date",
+                   "type": "property_name",
+                   "property_name": "last_date_gmp"
+                }
               }
             },
-            "to_date_expression": {
-              "type": "named",
-              "name": "month_end"
-            }
-          },
-          "property_value": 0
-        },
-        {
-          "operator": "gte",
-          "type": "boolean_expression",
-          "expression": {
-            "type": "diff_days",
-            "from_date_expression": {
-              "type": "named",
-              "name": "month_start"
-            },
-            "to_date_expression": {
-              "type": "root_doc",
-              "expression": {
-                "datatype": "date",
-                "type": "property_name",
-                "property_name": "last_date_gmp"
-              }
-            }
-          },
-          "property_value": 0
-        }
-      ]
-    },
-    "expression_if_true": {
-      "type": "root_doc",
-      "expression": {
-        "datatype": "string",
+            "property_value": 0
+          }
+        ]
+      },
+      "expression_if_true": {
+        "type": "root_doc",
+        "expression": {
+          "datatype": "string",
+          "type": "property_name",
+          "property_name": "zscore_grading_wfa"
+         }
+      },
+      "expression_if_false": {
         "type": "property_name",
-        "property_name": "zscore_grading_wfa"
-      }
-    },
-    "expression_if_false": {
-      "type": "property_name",
-      "property_name": "no_exist"
-      }
+        "property_name": "no_exist"
+       }
      }
    },
     "named_filters": {
