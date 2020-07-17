@@ -3,7 +3,7 @@ from tastypie.exceptions import BadRequest
 
 from casexml.apps.case.models import CommCareCase
 
-from corehq.apps.api.es import CaseES, ElasticAPIQuerySet, es_search
+from corehq.apps.api.es import CaseESView, ElasticAPIQuerySet, es_query_from_get_params
 from corehq.apps.api.models import ESCase
 from corehq.apps.api.resources import (
     DomainSpecificResourceMixin,
@@ -20,7 +20,7 @@ from no_exceptions.exceptions import Http400
 # By the time a test case is running, the resource is already instantiated,
 # so as a hack until this can be remedied, there is a global that
 # can be set to provide a mock.
-MOCK_CASE_ES = None
+MOCK_CASE_ES_VIEW = None
 
 
 class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
@@ -53,8 +53,8 @@ class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
         }
 
     def case_es(self, domain):
-        # Note that CaseES is used only as an ES client, for `run_query` against the proper index
-        return MOCK_CASE_ES or CaseES(domain)
+        # Note that CaseESView is used only as an ES client, for `run_query` against the proper index
+        return MOCK_CASE_ES_VIEW or CaseESView(domain)
 
     def obj_get(self, bundle, **kwargs):
         case_id = kwargs['pk']
@@ -65,7 +65,7 @@ class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
 
     def obj_get_list(self, bundle, domain, **kwargs):
         try:
-            es_query = es_search(bundle.request, domain)
+            es_query = es_query_from_get_params(bundle.request.GET, domain, doc_type='case')
         except Http400 as e:
             raise BadRequest(str(e))
 
