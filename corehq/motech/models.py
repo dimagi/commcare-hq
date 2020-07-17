@@ -219,8 +219,19 @@ class RequestLog(models.Model):
             request_url=log_entry.url,
             request_headers=log_entry.headers,
             request_params=log_entry.params,
-            request_body=log_entry.data,
+            request_body=_as_text(log_entry.data),
             request_error=log_entry.error,
             response_status=log_entry.response_status,
-            response_body=log_entry.response_body,
+            response_body=_as_text(log_entry.response_body),
         )
+
+
+def _as_text(value):
+    if isinstance(value, str):
+        return value
+    if isinstance(value, bytes):
+        try:
+            return value.decode("utf8")
+        except UnicodeDecodeError:
+            pass
+    return repr(value)
