@@ -312,6 +312,7 @@ class SMSSurveyContent(Content):
                 module,
                 form,
                 case_id,
+                yield_responses=True
             )
         except TouchformsError as e:
             logged_subevent.error(
