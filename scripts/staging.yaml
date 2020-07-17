@@ -65,7 +65,7 @@ branches:
   - ctsims/call_center_widgets # Clayton July 13
   - ce/multi-domain-upload # Cal July 13
   - ml/SAAS-10954-show-all-option  # Michelle July 15
-  - dm/django2-upgrade  # Danny / Daniel July 15
+#  - dm/django2-upgrade  # Danny / Daniel July 15
   - kev/webapps-addresses-question # Kevin July 16
 
 submodules: {}
