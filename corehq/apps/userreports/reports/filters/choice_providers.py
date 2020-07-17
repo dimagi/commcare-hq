@@ -149,11 +149,14 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
 
     def query(self, query_context):
         try:
+            default = self.default_value(query_context.user)
+            if not default:
+                default = [Choice(SHOW_ALL_CHOICE, "[{}]".format(ugettext('Show All')))]
             choices = [
                 self._make_choice_from_value(value)
                 for value in self.get_values_for_query(query_context)
             ]
-            return self._deduplicate_and_sort_choices(choices)
+            return default + self._deduplicate_and_sort_choices(choices)
         except ColumnNotFoundError:
             return []
 
@@ -188,6 +191,9 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
 
     def get_choices_for_known_values(self, values, user):
         return []
+
+    def default_value(self, user):
+        return None
 
     def _make_choice_from_value(self, value):
         if value is None or value == '':
@@ -394,12 +400,14 @@ class AbstractMultiProvider(ChoiceProvider):
         assert not bad_choice_providers, bad_choice_providers
 
     def query(self, query_context):
+        default = None
         limit = query_context.limit
         offset = query_context.offset
         query = query_context.query
         user = query_context.user
         choices = []
         for choice_provider in self.choice_providers:
+            default = choice_provider.default_value(user)
             if limit <= 0:
                 break
             query_context = ChoiceQueryContext(query=query, limit=limit, offset=offset, user=user)
@@ -410,7 +418,9 @@ class AbstractMultiProvider(ChoiceProvider):
                 offset = 0
             else:
                 offset -= choice_provider.query_count(query, user=user)
-        return choices
+            if not default:
+                default = [Choice(SHOW_ALL_CHOICE, "[{}]".format(ugettext('Show All')))]
+        return default + choices
 
     def get_choices_for_known_values(self, values, user):
         remaining_values = set(values)
