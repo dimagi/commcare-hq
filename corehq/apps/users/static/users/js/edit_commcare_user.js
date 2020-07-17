@@ -146,6 +146,7 @@ hqDefine('users/js/edit_commcare_user', [
                     profiles: initialPageData.get('custom_fields_profiles'),
                     profile_slug: initialPageData.get('custom_fields_profile_slug'),
                     slugs: initialPageData.get('custom_fields_slugs'),
+                    user_data: initialPageData.get('user_data'),
                 }),
             };
         });
