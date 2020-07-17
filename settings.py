@@ -214,6 +214,7 @@ DEFAULT_APPS = (
     'statici18n',
     'django_user_agents',
     'logentry_admin',
+    'oauth2_provider',
 )
 
 CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'
