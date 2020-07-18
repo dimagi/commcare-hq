@@ -2,6 +2,7 @@ import hmac
 import json
 import logging
 import re
+from copy import copy
 from datetime import datetime
 from hashlib import sha1
 from uuid import uuid4
@@ -1027,7 +1028,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     language = StringProperty()
     subscribed_to_commcare_users = BooleanProperty(default=False)
     announcements_seen = ListProperty()
-    user_data = DictProperty()
+    user_data = DictProperty()      # use metadata property instead of accessing this directly
     # This should not be set directly but using set_location method only
     location_id = StringProperty()
     assigned_location_ids = StringListProperty()
@@ -1086,6 +1087,14 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
                 value=getattr(self, key)
             ) for key in properties),
         )
+
+    @property
+    def metadata(self):
+        return self.user_data
+
+    @metadata.setter
+    def metadata(self, value):
+        self.user_data = value
 
     @property
     def two_factor_disabled(self):
@@ -1683,6 +1692,42 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             data['user_data'] = dict(data['user_data'], **{'commcare_project': data['domain']})
 
         return super(CommCareUser, cls).wrap(data)
+
+    @property
+    def metadata(self):
+        data = copy(self.user_data)
+        profile = self._get_user_data_profile(data)
+        if profile:
+            data.update(profile.fields)
+        return data
+
+    @metadata.setter
+    def metadata(self, value):
+        profile = self._get_user_data_profile(value)
+        if profile:
+            overlap = [k for k, v in profile.fields.items() if k in value and value[k] or v != v]
+            if overlap:
+                raise ValueError("metadata properties conflict with profile: {}".format(", ".join(overlap)))
+            for key in profile.fields.keys():
+                value.pop(key, None)
+
+        self.user_data = value
+
+    def _get_user_data_profile(self, data):
+        from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+        from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, PROFILE_SLUG
+        if PROFILE_SLUG not in data:
+            return None
+
+        try:
+            profile = CustomDataFieldsProfile.objects.get(id=data.get(PROFILE_SLUG))
+        except CustomDataFieldsProfile.DoesNotExist:
+            raise ValueError("Could not find profile")
+        if profile.definition.domain != self.domain:
+            raise ValueError("Could not find profile")
+        if profile.definition.field_type != UserFieldsView.field_type:
+            raise ValueError("Could not find profile")
+        return profile
 
     def _is_demo_user_cached_value_is_stale(self):
         from corehq.apps.users.dbaccessors.all_commcare_users import get_practice_mode_mobile_workers
