@@ -25,4 +25,7 @@ class NotifyExceptionTest(SimpleTestCase):
         err = ValueError('βªđ ṿåƚŭę')
         with patch('corehq.util.view_utils.notify_exception') as notify_exception_patch:
             my_view('foo', err)
-            notify_exception_patch.assert_called_with('foo', 'JSON exception response: βªđ ṿåƚŭę')
+            notify_exception_patch.assert_called_with(
+                'foo',
+                'JSON exception response: ValueError: βªđ ṿåƚŭę',
+            )
