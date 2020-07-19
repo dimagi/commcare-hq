@@ -32,7 +32,7 @@ class MPRReport(IcdsBaseReport):
             MPRSectors,
             MPRPopulation,
             MPRBirthsAndDeaths,
-            MPRAWCDetails if self.icds_pre_release_features() else MPRAWCDetailsBeta,
+            MPRAWCDetails if not self.icds_pre_release_features() else MPRAWCDetailsBeta,
             MPRSupplementaryNutrition,
             MPRUsingSalt,
             MPRProgrammeCoverage,
