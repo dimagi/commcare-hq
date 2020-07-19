@@ -67,12 +67,12 @@ where
     agg_child_health.supervisor_id = wasting_temp.supervisor_id AND
     agg_child_health.awc_id = wasting_temp.awc_id AND
     agg_child_health.month = wasting_temp.month AND
-    agg_child_health.gender = wasting_temp.sex AND
+    agg_child_health.gender = wasting_temp.gender AND
     agg_child_health.age_tranche = wasting_temp.age_tranche AND
     agg_child_health.caste = wasting_temp.caste AND
-    agg_child_health.disabled = wasting_temp.coalesce_disabled AND
-    agg_child_health.minority = wasting_temp.coalesce_minority AND
-    agg_child_health.resident = wasting_temp.coalesce_resident AND
+    agg_child_health.disabled = wasting_temp.disabled AND
+    agg_child_health.minority = wasting_temp.minority AND
+    agg_child_health.resident = wasting_temp.resident AND
     agg_child_health.aggregation_level = 5 AND
     agg_child_health.month='{month}';
 
