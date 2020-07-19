@@ -1,3 +1,4 @@
+from datetime import date
 from operator import mul, truediv, sub
 
 from corehq.apps.locations.models import SQLLocation
@@ -8,7 +9,8 @@ from custom.icds_reports.sqldata.base_identification import BaseIdentification
 from custom.icds_reports.sqldata.base_operationalization import BaseOperationalization
 from custom.icds_reports.sqldata.base_populations import BasePopulation
 from custom.icds_reports.utils import ICDSMixin, MPRData, ICDSDataTableColumn
-
+from custom.icds_reports.models.views import ServiceDeliveryReportView
+from custom.icds_reports.utils import get_location_filter
 
 class MPRIdentification(BaseIdentification):
 
@@ -410,6 +412,157 @@ class MPRSupplementaryNutrition(ICDSMixin, MPRData):
                 }
             ),
         )
+
+
+
+class MPRSupplementaryNutritionBeta(ICDSMixin, MPRData):
+
+    title = '4. Delivery of Supplementary Nutrition and Pre-School Education (PSE)'
+    slug = 'supplementary_nutrition'
+
+    def __init__(self, config, allow_conditional_agg=False):
+        super(MPRSupplementaryNutritionBeta, self).__init__(config, allow_conditional_agg)
+        self.awc_open_count = 0
+
+    @property
+    def subtitle(self):
+        return 'Average no. days AWCs were open during the month? %.1f' % (
+            self.awc_open_count / (self.awc_number or 1)
+        ),
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn(''),
+            DataTablesColumn(_('Morning snacks/ breakfast')),
+            DataTablesColumn(_('Hot cooked meals/RTE')),
+            DataTablesColumn(_('Take home ration (THR')),
+            DataTablesColumn(_('PSE'))
+        )
+
+    @property
+    def rows(self):
+        if self.config['location_id']:
+            filters = get_location_filter(self.config['location_id'], self.config['domain'])
+            if filters.get('aggregation_level') > 1:
+                filters['aggregation_level'] -= 1
+
+            filters['month'] = date(self.config['year'], self.config['month'], 1)
+
+            data = ServiceDeliveryReportView.objects.filter(**filters).values(
+                'num_launched_awcs',
+                'breakfast_served',
+                'hcm_served',
+                'thr_served',
+                'pse_provided',
+                'breakfast_21_days',
+                'hcm_21_days',
+                'pse_16_days',
+                'breakfast_9_days',
+                'hcm_9_days',
+                'pse_9_days',
+                'num_launched_awcs').order_by('month').first()
+
+            self.awc_open_count = data.get('awc_days_open', 0)
+            rows = []
+            for row in self.row_config:
+                row_data = []
+                for idx, cell in enumerate(row):
+                    if isinstance(cell, dict):
+                        num = data.get(cell['column'], 0)
+                        if cell['second_value'] == 'location_number':
+                            denom = self.awc_number
+                        else:
+                            denom = data.get(cell['second_value'], 1)
+                        if 'format' in cell:
+                            cell_data = '%.1f%%' % (cell['func'](num, float(denom or 1)) * 100)
+                        else:
+                            cell_data = '%.1f' % cell['func'](num, float(denom or 1))
+                        row_data.append(cell_data)
+                    else:
+                        row_data.append(data.get(cell, cell if cell == '--' or idx == 0 else 0))
+                rows.append(row_data)
+            return rows
+
+    @property
+    def row_config(self):
+        return (
+            (
+                _('a. Average number of days services were provided'),
+                {
+                    'column': 'breakfast_served',
+                    'func': truediv,
+                    'second_value': "num_launched_awcs",
+                },
+                {
+                    'column': 'hcm_served',
+                    'func': truediv,
+                    'second_value': "num_launched_awcs",
+                },
+                {
+                    'column': 'thr_served',
+                    'func': truediv,
+                    'second_value': "num_launched_awcs",
+                },
+                {
+                    'column': 'pse_provided',
+                    'func': truediv,
+                    'second_value': "num_launched_awcs",
+                }
+            ),
+            (
+                _('b. % of AWCs provided supplementary food for 21 or more days'),
+                {
+                    'column': 'breakfast_21_days',
+                    'func': truediv,
+                    'second_value': "num_launched_awcs",
+                    'format': 'percent'
+                },
+                {
+                    'column': 'hcm_21_days',
+                    'func': truediv,
+                    'second_value': "num_launched_awcs",
+                    'format': 'percent'
+                },
+                '--',
+                '--'
+            ),
+            (
+                _('c. % of AWCs providing PSE for 16 or more days'),
+                '--',
+                '--',
+                '--',
+                {
+                    'column': 'pse_16_days',
+                    'func': truediv,
+                    'second_value': "num_launched_awcs",
+                    'format': 'percent'
+                }
+            ),
+            (
+                _('d. % of AWCs providing services for 9 days or less'),
+                {
+                    'column': 'breakfast_9_days',
+                    'func': truediv,
+                    'second_value': "num_launched_awcs",
+                    'format': 'percent'
+                },
+                {
+                    'column': 'hcm_9_days',
+                    'func': truediv,
+                    'second_value': "num_launched_awcs",
+                    'format': 'percent'
+                },
+                '',
+                {
+                    'column': 'pse_9_days',
+                    'func': truediv,
+                    'second_value': "num_launched_awcs",
+                    'format': 'percent'
+                }
+            ),
+        )
+
 
 
 class MPRUsingSalt(ICDSMixin, MPRData):
