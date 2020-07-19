@@ -376,6 +376,7 @@ class ChildHealthMonthly(models.Model, AggregateMixin):
     alive_status_daily = models.SmallIntegerField(blank=True, null=True)
     duplicate_status_daily = models.SmallIntegerField(blank=True, null=True)
     seeking_services_status_daily = models.SmallIntegerField(blank=True, null=True)
+    live_birth = models.SmallIntegerField(null=True)
 
     class Meta:
         managed = False
@@ -698,6 +699,8 @@ class AggCcsRecord(models.Model, AggregateMixin):
     pregnant_all_registered_in_month = models.IntegerField(null=True)
     valid_visits = models.IntegerField(null=True)
     expected_visits = models.IntegerField(null=True)
+    pregnant_permanent_resident = models.IntegerField(null=True)
+    pregnant_temp_resident = models.IntegerField(null=True)
 
     class Meta:
         managed = False
@@ -779,6 +782,10 @@ class AggChildHealth(models.Model, AggregateMixin):
     zscore_grading_hfa_recorded_in_month = models.IntegerField(blank=True, null=True)
     zscore_grading_wfh_recorded_in_month = models.IntegerField(blank=True, null=True)
     lunch_count_21_days = models.IntegerField(blank=True, null=True)
+    live_birth_permanent_resident = models.IntegerField(blank=True, null=True)
+    live_birth_temp_resident = models.IntegerField(blank=True, null=True)
+    permanent_resident = models.IntegerField(blank=True, null=True)
+    temp_resident = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
