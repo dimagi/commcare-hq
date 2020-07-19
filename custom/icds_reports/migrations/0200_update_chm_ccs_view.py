@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 
 from django.db import migrations
 
-from custom.icds_reports.utils.migrations import get_view_migrations
+
 
 
 class Migration(migrations.Migration):
@@ -16,4 +16,4 @@ class Migration(migrations.Migration):
         ('icds_reports', '0199_update_ppr_view'),
     ]
 
-    operations = get_view_migrations()
+    operations = []

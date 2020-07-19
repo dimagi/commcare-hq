@@ -90,7 +90,19 @@ COALESCE(agg_sdr.third_fourth_month_of_pregnancy_count,0) as third_fourth_month_
 COALESCE(agg_sdr.annaprasan_diwas_count,0) as annaprasan_diwas_count,
 COALESCE(agg_sdr.suposhan_diwas_count,0) as suposhan_diwas_count,
 COALESCE(agg_sdr.coming_of_age_count,0) as coming_of_age_count,
-COALESCE(agg_sdr.public_health_message_count,0) as public_health_message_count
+COALESCE(agg_sdr.public_health_message_count,0) as public_health_message_count,
+
+COALESCE(agg_sdr.breakfast_served,0) as breakfast_served,
+COALESCE(agg_sdr.hcm_served,0) as hcm_served,
+COALESCE(agg_sdr.thr_served,0) as thr_served,
+COALESCE(agg_sdr.pse_provided,0) as pse_provided,
+COALESCE(agg_sdr.breakfast_21_days,0) as breakfast_21_days,
+COALESCE(agg_sdr.hcm_21_days,0) as hcm_21_days,
+COALESCE(agg_sdr.breakfast_9_days,0) as breakfast_9_days,
+COALESCE(agg_sdr.hcm_9_days,0) as hcm_9_days,
+COALESCE(agg_sdr.pse_9_days,0) as pse_9_days,
+COALESCE(agg_sdr.pse_16_days,0) as pse_16_days,
+COALESCE (agg_awc.awc_days_open,0) as awc_days_open
 FROM "public"."awc_location_months_local" "awc_location_months"
 LEFT join agg_awc on (
         ("agg_awc"."month" = "awc_location_months"."month") AND

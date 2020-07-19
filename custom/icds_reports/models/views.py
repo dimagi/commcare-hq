@@ -1317,6 +1317,7 @@ class ServiceDeliveryReportView(models.Model):
     state_map_location_name = models.TextField(blank=True, null=True)
     month = models.DateField(blank=True, null=True)
     num_launched_awcs = models.IntegerField(help_text='Number of AWC launched')
+    awc_days_open = models.IntegerField()
     valid_visits = models.IntegerField(help_text='valid home visits')
     expected_visits= models.IntegerField(help_text='expected home visits')
     num_awcs_conducted_cbe = models.IntegerField(help_text='Number of AWC conducted atleast one CBE')
@@ -1470,6 +1471,18 @@ class ServiceDeliveryReportView(models.Model):
     suposhan_diwas_count = models.IntegerField(null=True)
     coming_of_age_count = models.IntegerField(null=True)
     public_health_message_count = models.IntegerField(null=True)
+
+    breakfast_served = models.IntegerField(null=True)
+    hcm_served = models.IntegerField(null=True)
+    thr_served = models.IntegerField(null=True)
+    pse_provided = models.IntegerField(null=True)
+    breakfast_21_days = models.IntegerField(null=True)
+    hcm_21_days = models.IntegerField(null=True)
+    pse_16_days = models.IntegerField(null=True)
+    breakfast_9_days = models.IntegerField(null=True)
+    hcm_9_days = models.IntegerField(null=True)
+    pse_9_days = models.IntegerField(null=True)
+
 
     class Meta(object):
         app_label = 'icds_reports'
