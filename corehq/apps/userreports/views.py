@@ -776,7 +776,6 @@ def _assert_report_delete_privileges(request):
 
 
 @login_and_domain_required
-@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 @require_permission(Permissions.edit_reports)
 def delete_report(request, domain, report_id):
     _assert_report_delete_privileges(request)
@@ -824,6 +823,8 @@ def delete_report(request, domain, report_id):
     return HttpResponseRedirect(redirect)
 
 
+@login_and_domain_required
+@require_permission(Permissions.edit_reports)
 def undelete_report(request, domain, report_id):
     _assert_report_delete_privileges(request)
     config = get_document_or_404(ReportConfiguration, domain, report_id, additional_doc_types=[
