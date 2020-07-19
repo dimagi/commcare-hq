@@ -149,7 +149,10 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
         fully_immunized_eligible = "({} AND {} > 12)".format(valid_in_month, age_in_months)
         immunized_age_in_days = "(child_tasks.immun_one_year_date - person_cases.dob)"
         fully_immun_before_month = "(child_tasks.immun_one_year_date < {})".format(end_month_string)
-
+        live_birth_in_month = (
+            "(person_cases.dob BETWEEN {} AND {} AND"
+            " del_form.still_live_birth='live' and del_form.mother_resident_status='yes')"
+        ).format(start_month_string, end_month_string)
         columns = (
             ("awc_id", "child_health.awc_id"),
             ("case_id", "child_health.doc_id"),
@@ -169,7 +172,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             ("caste", "child_health.caste"),
             ("disabled", "child_health.disabled"),
             ("minority", "child_health.minority"),
-            ("resident", "child_health.resident"),
+            ("resident", "CASE WHEN person_cases.resident=1 THEN 'yes' ELSE 'no' END"),
             ("dob", "person_cases.dob"),
             ("age_in_months", 'trunc({})'.format(age_in_months_end)),
             ("open_in_month", "CASE WHEN {} THEN 1 ELSE 0 END".format(open_in_month)),
@@ -372,6 +375,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             ("birth_weight", "child_health.birth_weight"),
             ("child_person_case_id", "child_health.mother_id"),
             ("delivery_nature", "del_form.delivery_nature"),
+            ("live_birth", "CASE WHEN {} THEN 1 ELSE 0 END".format(live_birth_in_month)),
             ("term_days", "(del_form.add::DATE - del_form.edd::DATE) + 280"),
             ("valid_status_daily", "CASE WHEN {} THEN 1 ELSE 0 END".format(valid_status_daily)),
             ("migration_status_daily", "CASE WHEN {} THEN 0 ELSE 1 END".format(not_migration_status_daily)),

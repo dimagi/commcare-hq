@@ -136,6 +136,11 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
             ('zscore_grading_hfa_recorded_in_month', "SUM(chm.zscore_grading_hfa_recorded_in_month)"),
             ('zscore_grading_wfh_recorded_in_month', "SUM(chm.zscore_grading_wfh_recorded_in_month)"),
             ('days_ration_given_child', "SUM(chm.days_ration_given_child)"),
+            ('live_birth_permanent_resident',"SUM(CASE WHEN chm.resident='yes' THEN chm.live_birth ELSE 0 END)"),
+            ('live_birth_temp_resident', "SUM(CASE WHEN chm.resident IS DISTINCT FROM 'yes' THEN chm.live_birth ELSE 0 END)"),
+            ('permanent_resident', "SUM(CASE WHEN chm.resident='yes' and chm.live_birth=0 THEN 1 ELSE 0 END)"),
+            ('temp_resident', "SUM(CASE WHEN chm.resident IS DISTINCT FROM 'yes' AND"
+                              " chm.live_birth=0 THEN 1 ELSE 0 END)")
         )
         query_cols = []
         for c in columns:
@@ -307,6 +312,8 @@ class AggChildHealthAggregationDistributedHelper(AggregationPartitionedHelper):
             ('wasting_severe_v2', ),
             ('zscore_grading_hfa_recorded_in_month', ),
             ('zscore_grading_wfh_recorded_in_month', ),
+            ('permanent_resident', ),
+            ('temp_resident', ),
             ('state_is_test', 'MAX(state_is_test)'),
             (
                 'district_is_test',
