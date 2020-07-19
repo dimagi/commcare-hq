@@ -58,7 +58,7 @@ def form_session_handler(v, text, msg):
                 xforms_session_couch_id=session._id,
             )
             add_msg_tags(msg, inbound_metadata)
-
+            msg.save()
             try:
                 answer_next_question(v, text, msg, session)
             except Exception:

@@ -559,7 +559,7 @@ def process_sms_registration(msg):
 
 def incoming(phone_number, text, backend_api, timestamp=None,
              domain_scope=None, backend_message_id=None,
-             raw_text=None, backend_id=None, media_urls=[]):
+             raw_text=None, backend_id=None, media_urls=None):
     """
     entry point for incoming sms
 

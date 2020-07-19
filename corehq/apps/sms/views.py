@@ -2151,12 +2151,12 @@ class WhatsAppTemplatesView(BaseMessagingSectionView):
             )
         else:
             wa_active_backend = turn_backend.get() if turn_backend.count() else infobip_backend.get()
-            try:
-                templates = wa_active_backend.get_all_templates()
+            templates = wa_active_backend.get_all_templates()
+            if templates:
                 for template in templates:
                     template['template_string'] = wa_active_backend.generate_template_string(template)
                 context.update({'wa_templates': templates})
-            except TypeError:
+            else:
                 messages.error(
                     self.request,
                     wa_active_backend.get_generic_name()
