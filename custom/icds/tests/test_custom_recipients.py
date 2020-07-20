@@ -4,7 +4,17 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseAlertScheduleInstance,
     CaseTimedScheduleInstance,
 )
-from custom.icds.const import AWC_LOCATION_TYPE_CODE, SUPERVISOR_LOCATION_TYPE_CODE
+from custom.icds.const import (
+    AWC_LOCATION_TYPE_CODE,
+    SUPERVISOR_LOCATION_TYPE_CODE,
+)
+from custom.icds.messaging.custom_recipients import (
+    recipient_mother_person_case_from_ccs_record_case,
+    recipient_mother_person_case_from_ccs_record_case_excl_migrated_or_opted_out,
+    recipient_mother_person_case_from_child_health_case,
+    recipient_mother_person_case_from_child_person_case,
+    supervisor_from_awc_owner,
+)
 from custom.icds.tests.base import BaseICDSTest
 
 
@@ -23,138 +33,62 @@ class CustomRecipientTest(BaseICDSTest):
         cls.awc1 = make_loc('awc1', domain=cls.domain, type=AWC_LOCATION_TYPE_CODE, parent=cls.ls1)
         cls.awc2 = make_loc('awc2', domain=cls.domain, type=AWC_LOCATION_TYPE_CODE, parent=None)
 
-    def test_mother_person_case_from_ccs_record_case(self):
-        for cls in (CaseAlertScheduleInstance, CaseTimedScheduleInstance):
-            self.assertEqual(
-                cls(
-                    domain=self.domain,
-                    case_id=self.ccs_record_case.case_id,
-                    recipient_type='CustomRecipient',
-                    recipient_id='ICDS_MOTHER_PERSON_CASE_FROM_CCS_RECORD_CASE'
-                ).recipient.case_id,
-                self.mother_person_case.case_id
-            )
+    def _test_recipient(self, custom_function, test_cases, test_attr="case_id"):
+        for case_id, expected_case_id in test_cases:
+            for cls in (CaseAlertScheduleInstance, CaseTimedScheduleInstance):
+                schedule_instance = cls(domain=self.domain, case_id=case_id)
+                actual = custom_function(schedule_instance)
+                if expected_case_id is None:
+                    self.assertIsNone(actual)
+                else:
+                    if test_attr:
+                        actual = getattr(actual, test_attr)
+                    self.assertEqual(actual, expected_case_id)
 
-            self.assertIsNone(
-                cls(
-                    domain=self.domain,
-                    case_id=self.lone_ccs_record_case.case_id,
-                    recipient_type='CustomRecipient',
-                    recipient_id='ICDS_MOTHER_PERSON_CASE_FROM_CCS_RECORD_CASE'
-                ).recipient
-            )
+    def test_mother_person_case_from_ccs_record_case(self):
+        self._test_recipient(
+            recipient_mother_person_case_from_ccs_record_case,
+            [
+                (self.ccs_record_case.case_id, self.mother_person_case.case_id),
+                (self.lone_ccs_record_case.case_id, None),
+            ]
+        )
 
     def test_mother_person_case_from_ccs_record_case_excl_migrated_or_opted_out(self):
-        recipient_id = 'ICDS_MOTHER_PERSON_CASE_FROM_CCS_RECORD_CASE_EXCL_MIGRATED_OR_OPTED_OUT'
-        for cls in (CaseAlertScheduleInstance, CaseTimedScheduleInstance):
-            self.assertEqual(
-                cls(
-                    domain=self.domain,
-                    case_id=self.ccs_record_case.case_id,
-                    recipient_type='CustomRecipient',
-                    recipient_id=recipient_id
-                ).recipient.case_id,
-                self.mother_person_case.case_id
-            )
-
-            self.assertIsNone(
-                cls(
-                    domain=self.domain,
-                    case_id=self.migrated_mother_ccs_record_case.case_id,
-                    recipient_type='CustomRecipient',
-                    recipient_id=recipient_id
-                ).recipient
-            )
-
-            self.assertIsNone(
-                cls(
-                    domain=self.domain,
-                    case_id=self.opted_out_mother_ccs_record_case.case_id,
-                    recipient_type='CustomRecipient',
-                    recipient_id=recipient_id
-                ).recipient
-            )
-
-            self.assertIsNone(
-                cls(
-                    domain=self.domain,
-                    case_id=self.lone_ccs_record_case.case_id,
-                    recipient_type='CustomRecipient',
-                    recipient_id=recipient_id
-                ).recipient
-            )
+        self._test_recipient(
+            recipient_mother_person_case_from_ccs_record_case_excl_migrated_or_opted_out,
+            [
+                (self.ccs_record_case.case_id, self.mother_person_case.case_id),
+                (self.migrated_mother_ccs_record_case.case_id, None),
+                (self.opted_out_mother_ccs_record_case.case_id, None),
+                (self.lone_ccs_record_case.case_id, None),
+            ]
+        )
 
     def test_mother_person_case_from_child_health_case(self):
-        for cls in (CaseAlertScheduleInstance, CaseTimedScheduleInstance):
-            self.assertEqual(
-                cls(
-                    domain=self.domain,
-                    case_id=self.child_health_case.case_id,
-                    recipient_type='CustomRecipient',
-                    recipient_id='ICDS_MOTHER_PERSON_CASE_FROM_CHILD_HEALTH_CASE'
-                ).recipient.case_id,
-                self.mother_person_case.case_id
-            )
-
-            self.assertIsNone(
-                cls(
-                    domain=self.domain,
-                    case_id=self.lone_child_health_case.case_id,
-                    recipient_type='CustomRecipient',
-                    recipient_id='ICDS_MOTHER_PERSON_CASE_FROM_CHILD_HEALTH_CASE'
-                ).recipient
-            )
+        self._test_recipient(
+            recipient_mother_person_case_from_child_health_case,
+            [
+                (self.child_health_case.case_id, self.mother_person_case.case_id),
+                (self.lone_child_health_case.case_id, None),
+            ]
+        )
 
     def test_mother_person_case_from_child_person_case(self):
-        for cls in (CaseAlertScheduleInstance, CaseTimedScheduleInstance):
-            self.assertEqual(
-                cls(
-                    domain=self.domain,
-                    case_id=self.child_person_case.case_id,
-                    recipient_type='CustomRecipient',
-                    recipient_id='ICDS_MOTHER_PERSON_CASE_FROM_CHILD_PERSON_CASE'
-                ).recipient.case_id,
-                self.mother_person_case.case_id
-            )
-
-            self.assertIsNone(
-                cls(
-                    domain=self.domain,
-                    case_id=self.lone_child_person_case.case_id,
-                    recipient_type='CustomRecipient',
-                    recipient_id='ICDS_MOTHER_PERSON_CASE_FROM_CHILD_PERSON_CASE'
-                ).recipient
-            )
+        self._test_recipient(
+            recipient_mother_person_case_from_child_person_case,
+            [
+                (self.child_person_case.case_id, self.mother_person_case.case_id),
+                (self.lone_child_person_case.case_id, None),
+            ]
+        )
 
     def test_supervisor_from_awc_owner(self):
-        for cls in (CaseAlertScheduleInstance, CaseTimedScheduleInstance):
-            with create_case(self.domain, 'person', owner_id=self.awc1.location_id) as case:
-                self.assertEqual(
-                    cls(
-                        domain=self.domain,
-                        case_id=case.case_id,
-                        recipient_type='CustomRecipient',
-                        recipient_id='ICDS_SUPERVISOR_FROM_AWC_OWNER'
-                    ).recipient,
-                    self.ls1
-                )
+        with create_case(self.domain, 'person', owner_id=self.awc1.location_id) as case:
+            self._test_recipient(supervisor_from_awc_owner, [(case.case_id, self.ls1)], test_attr=None)
 
-            with create_case(self.domain, 'person', owner_id=self.awc2.location_id) as case:
-                self.assertIsNone(
-                    cls(
-                        domain=self.domain,
-                        case_id=case.case_id,
-                        recipient_type='CustomRecipient',
-                        recipient_id='ICDS_SUPERVISOR_FROM_AWC_OWNER'
-                    ).recipient
-                )
+        with create_case(self.domain, 'person', owner_id=self.awc2.location_id) as case:
+            self._test_recipient(supervisor_from_awc_owner, [(case.case_id, None)], test_attr=None)
 
-            with create_case(self.domain, 'person') as case:
-                self.assertIsNone(
-                    cls(
-                        domain=self.domain,
-                        case_id=case.case_id,
-                        recipient_type='CustomRecipient',
-                        recipient_id='ICDS_SUPERVISOR_FROM_AWC_OWNER'
-                    ).recipient
-                )
+        with create_case(self.domain, 'person') as case:
+            self._test_recipient(supervisor_from_awc_owner, [(case.case_id, None)], test_attr=None)

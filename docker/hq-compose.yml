@@ -94,6 +94,7 @@ services:
       environment:
           KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
           KAFKA_BROKER_ID: 1
+          KAFKA_ADVERTISED_PORT: 9092
           CUSTOM_INIT_SCRIPT: "curl https://raw.githubusercontent.com/vishnubob/wait-for-it/c096cface5fbd9f2d6b037391dfecae6fde1362e/wait-for-it.sh > wait.sh && chmod +x ./wait.sh && ./wait.sh zookeeper:2181 || exit 1"
       volumes:
         - /var/run/docker.sock:/var/run/docker.sock
@@ -118,16 +119,16 @@ services:
     volumes:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-citus_master:}/var/lib/postgresql/data
     environment:
-      POSTGRES_DB: commcare_ucr_citus
+      POSTGRES_DB: "${UCR_CITUS_DB:-commcare_ucr_citus}"
       POSTGRES_USER: commcarehq
       POSTGRES_PASSWORD: commcarehq
   citus_manager:
     image: 'citusdata/membership-manager:0.2.0'
-    volumes: ['/var/run/docker.sock:/var/run/docker.sock']
+    volumes: ["${DOCKER_SOCK:-/var/run/docker.sock}:/var/run/docker.sock"]
     depends_on: { citus_master: { condition: service_healthy } }
     environment:
       CITUS_HOST: citus_master
-      POSTGRES_DB: commcare_ucr_citus
+      POSTGRES_DB: "${UCR_CITUS_DB:-commcare_ucr_citus}"
       POSTGRES_USER: commcarehq
       POSTGRES_PASSWORD: commcarehq
   citus_worker1:
@@ -137,7 +138,7 @@ services:
     volumes:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-citus_worker1:}/var/lib/postgresql/data
     environment:
-      POSTGRES_DB: commcare_ucr_citus
+      POSTGRES_DB: "${UCR_CITUS_DB:-commcare_ucr_citus}"
       POSTGRES_USER: commcarehq
   citus_worker2:
     image: 'citusdata/citus:8.1.1'
@@ -146,5 +147,5 @@ services:
     volumes:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-citus_worker2:}/var/lib/postgresql/data
     environment:
-      POSTGRES_DB: commcare_ucr_citus
+      POSTGRES_DB: "${UCR_CITUS_DB:-commcare_ucr_citus}"
       POSTGRES_USER: commcarehq

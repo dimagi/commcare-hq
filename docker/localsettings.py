@@ -76,8 +76,6 @@ DATABASES.update({
         'HOST': 'citus_master',
         'PORT': '5432',
         'TEST': {
-            # use the same DB for tests to skip expensive setup time in Travs
-            'NAME': 'commcare_ucr_citus',
             'SERIALIZE': False,
         },
     },

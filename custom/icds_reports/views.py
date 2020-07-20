@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from wsgiref.util import FileWrapper
 
 from django.conf import settings
@@ -233,7 +233,6 @@ from custom.icds_reports.utils import (
     get_datatables_ordering_info,
     get_location_filter,
     get_location_level,
-    icds_pre_release_features,
     india_now,
     filter_cas_data_export,
     get_deprecation_info,
@@ -241,6 +240,7 @@ from custom.icds_reports.utils import (
     timestamp_string_to_date_string,
     datetime_to_date_string
 )
+from ..icds_core.view_utils import icds_pre_release_features
 from custom.icds_reports.utils.data_accessor import (
     get_awc_covered_data_with_retrying,
     get_inc_indicator_api_data,
@@ -258,7 +258,7 @@ from custom.icds_reports.reports.bihar_api import get_api_demographics_data, get
     get_api_vaccine_data, get_api_ag_school_data
 
 from . import const
-from .exceptions import InvalidLocationTypeException, TableauTokenException
+from .exceptions import InvalidLocationTypeException
 
 # checks required to view the dashboard
 from custom.icds_reports.reports.poshan_progress_dashboard_data import get_poshan_progress_dashboard_data
@@ -316,43 +316,6 @@ def _get_user_location(user, domain):
         block_id = 'All'
     return location_type_code, user_location_id, state_id, district_id, block_id
 
-
-def get_tableau_trusted_url(client_ip):
-    """
-    Generate a login-free URL to access Tableau views for the client with IP client_ip
-    See Tableau Trusted Authentication https://onlinehelp.tableau.com/current/server/en-us/trusted_auth.htm
-    """
-    access_token = get_tableau_access_token(const.TABLEAU_USERNAME, client_ip)
-    url = "{tableau_trusted}{access_token}/#/views/".format(
-        tableau_trusted=const.TABLEAU_TICKET_URL,
-        access_token=access_token
-    )
-    return url
-
-
-def get_tableau_access_token(tableau_user, client_ip):
-    """
-    Request an access_token from Tableau
-    Note: the IP address of the webworker that this code runs on should be configured to request tokens in Tableau
-
-    args:
-        tableau_user: username of a valid tableau_user who can access the Tableau views
-        client_ip: IP address of the client who should redee be allowed to redeem the Tableau trusted token
-                   if this is empty, the token returned can be redeemed on any IP address
-    """
-    r = requests.post(
-        const.TABLEAU_TICKET_URL,
-        data={'username': tableau_user, 'client_ip': client_ip},
-        verify=False
-    )
-
-    if r.status_code == 200:
-        if r.text == const.TABLEAU_INVALID_TOKEN:
-            raise TableauTokenException("Tableau server failed to issue a valid token")
-        else:
-            return r.text
-    else:
-        raise TableauTokenException("Token request failed with code {}".format(r.status_code))
 
 
 @location_safe
@@ -467,6 +430,54 @@ class BaseCasAPIView(View):
         return SQLLocation.objects.get(name=state_name, location_type__name='state').location_id
 
 
+@location_safe
+@method_decorator([login_and_domain_required,
+                   toggles.ENABLE_ICDS_DASHBOARD_RELEASE_NOTES_UPDATE.required_decorator()], name='dispatch')
+class ReleaseNotesUpdateView(TemplateView):
+    page_title = 'Update Dashboard Release Notes'
+    urlname = 'update_dashboard_release_notes'
+    template_name = 'icds_reports/update_release_notes.html'
+
+    def post(self, request, *args, **kwargs):
+        data = request.FILES['dashboard_release_notes']
+        icds_file, _ = IcdsFile.objects.get_or_create(blob_id="dashboard_release_notes.pdf",
+                                                      data_type='dashboard_release_notes')
+
+        icds_file.store_file_in_blobdb(data)
+        icds_file.save()
+        messages.success(request, 'ICDS Dashboard Release Notes uploaded Successfully')
+        return redirect(self.urlname, domain=request.domain)
+
+
+@location_safe
+@method_decorator([login_and_domain_required], name='dispatch')
+class DownloadReleaseNotes(View):
+    def get(self, request, *args, **kwargs):
+        release_notes_file = IcdsFile.objects.filter(blob_id="dashboard_release_notes.pdf",
+                                                     data_type='dashboard_release_notes')\
+            .order_by('file_added').last()
+        request_type = request.GET.get('type')
+        if request_type == 'date':
+            release_date = release_notes_file.file_added
+            release_date_string = release_date.strftime('%d-%m-%Y')
+
+            week_ago = date.today() - timedelta(days=7)
+            is_older_than_a_week = week_ago > release_date
+            return JsonResponse(data={
+                'releaseDate': release_date_string,
+                'isOlderThanAWeek': is_older_than_a_week
+            })
+        else:
+            release_notes = release_notes_file.get_file_from_blobdb()
+
+            release_date = release_notes_file.file_added.strftime('%d-%m-%Y')
+
+            response = HttpResponse(release_notes.read(), content_type='application/pdf')
+            response['Content-Disposition'] = safe_filename_header("Dashboard_release_notes_" + release_date + ".pdf")
+
+            return response
+
+
 @method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class ProgramSummaryView(BaseReportView):
 
@@ -481,6 +492,9 @@ class ProgramSummaryView(BaseReportView):
         }
 
         config.update(get_location_filter(location, domain))
+        # query database at same level for which it is requested
+        if config.get('aggregation_level') > 1:
+            config['aggregation_level'] -= 1
         now = tuple(now.date().timetuple())[:3]
         pre_release_features = icds_pre_release_features(self.request.couch_user)
         data = get_program_summary_data_with_retrying(

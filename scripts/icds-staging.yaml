@@ -7,7 +7,7 @@
 #     $ git checkout master
 # Update scripts/icds-staging.yaml and add your branch that you want to deploy
 # Push the updates of icds-staging.yaml to master by using
-#     $ scripts/commit-icds-staging
+#     $ scripts/commit-icds-staging --push
 # To check if your branch causes any conflicts before rebuilding
 #     $ scripts/rebuild-icds-staging --no-push
 # To rebuild from your new spec and deploy
@@ -51,7 +51,10 @@
 
 trunk: master
 name: icds-autostaging
+deploy_env: icds-staging
 branches:
   - ap/restrict-unauthorized-users
-
+  - rn_correct_positioning_of_states
+  - mk/aks-audit/update-users-for-replay-attack # MK July 17th
+  - dm/django2-upgrade # Sravan July 17th
 submodules: {}
