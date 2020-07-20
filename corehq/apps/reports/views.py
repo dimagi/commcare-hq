@@ -161,7 +161,7 @@ from corehq.util.view_utils import (
     request_as_dict,
     reverse,
 )
-from custom.icds_core.const import IS_ICDS_ENVIRONMENT
+from custom.icds_core.view_utils import is_icds_cas_project
 from custom.icds_core.view_utils import check_data_interfaces_blocked_for_domain
 from no_exceptions.exceptions import Http403
 
@@ -1070,7 +1070,7 @@ class CaseDataView(BaseProjectReportSectionView):
         show_properties_edit = (
             can_edit_data
             and has_privilege(self.request, privileges.DATA_CLEANUP)
-            and not IS_ICDS_ENVIRONMENT
+            and not is_icds_cas_project(self.domain)
         )
 
         context = {
@@ -1630,7 +1630,7 @@ def _get_display_options(request, domain, user, form, support_enabled):
         user_can_edit
         and has_privilege(request, privileges.DATA_CLEANUP)
         and not form.is_deprecated
-        and not IS_ICDS_ENVIRONMENT
+        and not is_icds_cas_project(domain)
     )
 
     show_resave = (
