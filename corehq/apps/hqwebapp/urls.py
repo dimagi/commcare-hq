@@ -47,17 +47,6 @@ from corehq.apps.settings.views import (
 )
 
 
-def two_factor_urls():
-    def get_urls(urls):
-        if isinstance(urls, list):
-            # django-two-factor-auth==1.6.2
-            return urls
-        # django-two-factor-auth~=1.12
-        assert isinstance(urls, tuple) and isinstance(urls[0], list), urls
-        return urls[0]
-    return get_urls(tf_urls) + get_urls(tf_twilio_urls), 'two_factor'
-
-
 urlpatterns = [
     url(r'^$', redirect_to_default),
     url(r'^homepage/$', redirect_to_default, name='homepage'),
@@ -90,7 +79,8 @@ urlpatterns = [
     url(r'^account/two_factor/backup/phone/register/$', TwoFactorPhoneSetupView.as_view(), name=TwoFactorPhoneSetupView.urlname),
     url(r'^account/two_factor/backup/phone/unregister/(?P<pk>\d+)/$', TwoFactorPhoneDeleteView.as_view(),
         name=TwoFactorPhoneDeleteView.urlname),
-    url(r'', include(two_factor_urls(), namespace='two_factor')),
+    url(r'', include(tf_urls)),
+    url(r'', include(tf_twilio_urls)),
     url(r'^account/two_factor/reset/$', TwoFactorResetView.as_view(), name=TwoFactorResetView.urlname),
     url(r'^hq/admin/session_details/$', SessionDetailsView.as_view(),
         name=SessionDetailsView.urlname),
