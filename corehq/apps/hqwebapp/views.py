@@ -479,8 +479,8 @@ class HQLoginView(LoginView):
 class CloudCareLoginView(HQLoginView):
     form_list = [
         ('auth', CloudCareAuthenticationForm),
-        ('token', AuthenticationTokenForm),
-        ('backup', BackupTokenForm),
+        ('token', HQAuthenticationTokenForm),
+        ('backup', HQBackupTokenForm),
     ]
 
 
