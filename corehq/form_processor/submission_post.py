@@ -154,7 +154,9 @@ class SubmissionPost(object):
         if isinstance(self.instance, BadRequest):
             return HttpResponseBadRequest(self.instance.message)
 
-    def _post_process_form(self, xform):
+    def _post_process_form(self, xform, xform_context):
+        for model_obj in xform_context.supplementary_models:
+            xform.track_create(model_obj)
         self._set_submission_properties(xform)
         found_old = scrub_meta(xform)
         legacy_notification_assert(not found_old, 'Form with old metadata submitted', xform.form_id)
@@ -243,7 +245,7 @@ class SubmissionPost(object):
         result = process_xform_xml(self.domain, self.instance, self.attachments, self.auth_context.to_json())
         submitted_form = result.submitted_form
 
-        self._post_process_form(submitted_form)
+        self._post_process_form(submitted_form, xform_context)
         self._invalidate_caches(submitted_form)
 
         if submitted_form.is_submission_error_log:
