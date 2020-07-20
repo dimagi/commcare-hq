@@ -1205,7 +1205,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             COMMCARE_USER_TYPE_DEMO
         )
 
-        session_data = self.to_json().get('user_data')
+        session_data = self.metadata
 
         if self.is_commcare_user() and self.is_demo_user:
             session_data.update({
@@ -1509,7 +1509,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
         user_data = {'commcare_project': domain}
         user_data.update(kwargs.get('user_data', {}))
-        couch_user.user_data = user_data
+        couch_user.metadata = user_data
         couch_user.sync_from_django_user(django_user)
         return couch_user
 

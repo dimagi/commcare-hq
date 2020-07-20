@@ -125,7 +125,7 @@ def _get_user_case_fields(commcare_user, case_type, owner_id):
             return False
 
     # remove any keys that aren't valid XML element names
-    fields = {k: v for k, v in commcare_user.user_data.items() if
+    fields = {k: v for k, v in commcare_user.metadata.items() if
               valid_element_name(k)}
     # language or phone_number can be null and will break
     # case submission
