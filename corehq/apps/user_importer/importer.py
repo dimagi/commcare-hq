@@ -285,15 +285,18 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
         domain_info = domain_info_by_domain.get(domain)
         if domain_info:
             return domain_info
-        group_memoizer = GroupMemoizer(domain)
-        group_memoizer.load_all()
+        if domain == upload_domain:
+            domain_group_memoizer = group_memoizer or GroupMemoizer(domain)
+        else:
+            domain_group_memoizer = GroupMemoizer(domain)
+        domain_group_memoizer.load_all()
         can_assign_locations = domain_has_privilege(domain, privileges.LOCATIONS)
         location_cache = None
         if can_assign_locations:
             location_cache = SiteCodeToLocationCache(domain)
 
         domain_obj = Domain.get_by_name(domain)
-        allowed_group_names = [group.name for group in group_memoizer.groups]
+        allowed_group_names = [group.name for group in domain_group_memoizer.groups]
         roles_by_name = {role.name: role for role in UserRole.by_domain(domain)}
         domain_user_specs = [spec for spec in user_specs if spec.get('domain', upload_domain) == domain]
         validators = get_user_import_validators(domain_obj, domain_user_specs, allowed_group_names, list(roles_by_name), upload_domain)
