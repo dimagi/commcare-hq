@@ -15,7 +15,7 @@
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-datatables/dist/plugins/bootstrap/datatables.bootstrap.min.css' %}">
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'leaflet/dist/leaflet.css' %}">
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-busy/dist/angular-busy.min.css' %}"/>
-        <link type="text/css" rel="stylesheet" media="all" href="{% static 'utatti-perfect-scrollbar/css/perfect-scrollbar.css' %}"/>
+        <link type="text/css" rel="stylesheet" media="all" href="{% static 'perfect-scrollbar/css/perfect-scrollbar.css' %}"/>
         <link type="text/less" rel="stylesheet" media="all" href="{% static 'css/icds_dashboard.less' %}"/>
         <link type="text/less" rel="stylesheet" media="all" href="{% static 'css/fact_sheets.less' %}"/>
         <link type="text/less" rel="stylesheet" media="all" href="{% static 'css/navbar.less' %}"/>
@@ -30,7 +30,7 @@
             window.ga('require', 'urlChangeTracker');
         </script>
 {% compress js %}
-        <script src="{% static 'd3-3.5.17/d3.js' %}"></script>
+        <script src="{% static 'd3/d3.js' %}"></script>
         <script src="{% static 'datatables/media/js/jquery.dataTables.min.js'%}"></script>
         <script src="{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js'%}"></script>
         <script src="{% static 'datatables-fixedheader/js/dataTables.fixedHeader.js'%}"></script>
@@ -46,9 +46,9 @@
         <script src="{% static 'nvd3-1.8.6/build/nv.d3.js' %}"></script>
         <script src="{% static 'angular-nvd3/dist/angular-nvd3.js' %}"></script>
         <script src="{% static 'moment/min/moment-with-locales.min.js' %}"> </script>
-        <script src="{% static 'utatti-perfect-scrollbar/dist/perfect-scrollbar.min.js' %}"></script>
+        <script src="{% static 'perfect-scrollbar/dist/perfect-scrollbar.min.js' %}"></script>
         <script src="{% static 'angular-perfect-scrollbar/src/angular-perfect-scrollbar.js' %}"></script>
-        <script src="{% static 'topojson/topojson.js' %}"></script>
+        <script src="{% static 'topojson/dist/topojson.js' %}"></script>
         <script src="{% static 'datamaps/dist/datamaps.ind.js' %}"></script>
 {% endcompress %}
 {% comment %}
@@ -57,7 +57,7 @@ related to angular not being defined. But if we split it here it works fine.
 {% endcomment %}
 {% compress js %}
         <script src="{% static 'angular-datamaps/dist/angular-datamaps.js' %}"></script>
-        <script src="{% static 'angular-bootstrap/ui-bootstrap-tpls.min.js' %}"></script>
+        <script src="{% static 'angular-ui-bootstrap/dist/ui-bootstrap-tpls.js' %}"></script>
 
         <script src="{% static 'js/icds_app.js' %}"></script>
         <script src="{% static 'js/icds_dashboard_utils.js' %}"></script>
