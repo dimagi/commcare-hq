@@ -85,6 +85,16 @@ class UserModelTest(TestCase):
             'cruise': 'control',
             'this': 'road',
         })
+        self.user.pop_metadata('cruise')
+        self.assertEqual(self.user.metadata, {
+            'commcare_project': 'my-domain',
+            'this': 'road',
+        })
+        self.user.update_metadata({'this': 'field'})
+        self.assertEqual(self.user.metadata, {
+            'commcare_project': 'my-domain',
+            'this': 'field',
+        })
 
     def test_metadata_with_profile(self):
         definition = CustomDataFieldsDefinition(domain='my-domain', field_type=UserFieldsView.field_type)
@@ -99,10 +109,7 @@ class UserModelTest(TestCase):
         profile.save()
 
         # Custom user data profiles get their data added to metadata automatically for mobile users
-        self.user.metadata = {
-            'commcare_project': 'my-domain',
-            PROFILE_SLUG: profile.id,
-        }
+        self.user.update_metadata({PROFILE_SLUG: profile.id})
         self.assertEqual(self.user.metadata, {
             'commcare_project': 'my-domain',
             PROFILE_SLUG: profile.id,
@@ -114,10 +121,7 @@ class UserModelTest(TestCase):
         self.assertEqual(web_user.metadata, {
             'commcare_project': None,
         })
-        web_user.metadata = {
-            'commcare_project': None,
-            PROFILE_SLUG: profile.id,
-        }
+        web_user.update_metadata({PROFILE_SLUG: profile.id})
         self.assertEqual(web_user.metadata, {
             'commcare_project': None,
             PROFILE_SLUG: profile.id,
