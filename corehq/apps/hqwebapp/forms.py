@@ -2,6 +2,7 @@ import json
 
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.signals import user_logged_in, user_login_failed
 from django.core.exceptions import ValidationError
 from django.http import QueryDict
 from django.middleware.csrf import get_token
@@ -13,6 +14,7 @@ from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.helper import FormHelper
 from memoized import memoized
+from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 
 from corehq.apps.domain.forms import NoAutocompleteMixin
 from corehq.apps.users.models import CouchUser
@@ -284,3 +286,21 @@ class FormListForm(object):
 
     def as_table(self):
         return render_to_string(self.template, self.get_context())
+
+
+class HQAuthenticationTokenForm(AuthenticationTokenForm):
+
+    def clean(self):
+        cleaned_data = super(HQAuthenticationTokenForm, self).clean()
+        if self.errors:
+            user_login_failed.send(sender=__name__, credentials={'username': self.user.username})
+        return cleaned_data
+
+
+class HQBackupTokenForm(BackupTokenForm):
+
+    def clean(self):
+        cleaned_data = super(HQBackupTokenForm, self).clean()
+        if self.errors:
+            user_login_failed.send(sender=__name__, credentials={'username': self.user.username})
+        return cleaned_data
