@@ -39,8 +39,8 @@ hqDefine("integration/js/dialer/domain_dialer_main", [
             connect.agent(function(agent) { 
                 
                 var agentName = agent.getName();
-                document.getElementById("divUserName").innerText = "Welcome, " + agentName;
-                dialer_utils.addToSystemLog("Agent is logged in: " + agentName);
+                document.getElementById("divUserName").innerText = gettext("Welcome, ") + agentName;
+                dialer_utils.addToSystemLog(gettext("Agent is logged in: ") + agentName);
                 
                 if (document.getElementById("checkbox-autodial").checked) {
                     dialEndPoint(document.getElementById('phoneNo').innerText);
@@ -54,7 +54,7 @@ hqDefine("integration/js/dialer/domain_dialer_main", [
 
                     document.getElementById("contactId").innerHTML = contact.getContactId();
                     document.getElementById("queueName").innerHTML = contact.getQueue().name;
-                    document.getElementById("contactStatus").innerHTML = "Connecting...";
+                    document.getElementById("contactStatus").innerHTML = gettext("Connecting...");
                     dialer_utils.addToSystemLog("Connecting to endpoint...");
                     dialer_utils.addToSystemLog("Unique Contact ID assigned: " + contact.getContactId());
                     dialer_utils.addToSystemLog("Call assigned to Queue: " + contact.getQueue().name);
@@ -63,7 +63,7 @@ hqDefine("integration/js/dialer/domain_dialer_main", [
                 });
 
                 contact.onConnected(function(contact) {
-                    document.getElementById("contactStatus").innerHTML = "Connected";
+                    document.getElementById("contactStatus").innerHTML = gettext("Connected");
                     dialer_utils.addToSystemLog("Call connected");
                     inCall = true;
                     document.getElementById("phoneButton").disabled = true;
@@ -74,7 +74,7 @@ hqDefine("integration/js/dialer/domain_dialer_main", [
                 //	if (conStatus != "Disconnected") {
                 //		window.alert("Your call has ended. Please close this window now.");    
                 //	}
-                    document.getElementById("contactStatus").innerHTML = "Disconnected";
+                    document.getElementById("contactStatus").innerHTML = gettext("Disconnected");
                     document.getElementById("phoneButton").disabled = false;
                     dialer_utils.addToSystemLog("Call disconnected or cleared");
                     inCall = false
@@ -146,19 +146,19 @@ hqDefine("integration/js/dialer/domain_dialer_main", [
                 
             if (targetEndPoint == "" || targetEndPoint.includes("NOT")) {
                 dialer_utils.addToSystemLog("There is no valid phone number available");
-                window.alert("There is no valid phone number available.");
+                window.alert(gettext("There is no valid phone number available."));
                 return(0);
             }
             
             if (document.getElementById("divUserName").innerText.includes("NOT")) {
                 dialer_utils.addToSystemLog("You have not logged in");
-                window.alert("You have not logged in.");
+                window.alert(gettext("You have not logged in."));
                 return(0);
             }
 
             if (inCall) {
                 dialer_utils.addToSystemLog("You already have an active call");
-                window.alert("You already have an active call.");
+                window.alert(gettext("You already have an active call."));
                 return(0);
             }
             
