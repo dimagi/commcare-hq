@@ -32,18 +32,13 @@ from corehq.apps.app_manager.xpath import (
 class MenuContributor(SuiteContributorByModule):
 
     def get_module_contributions(self, module, training_menu):
-        from corehq.apps.app_manager.models import ShadowModule
         menus = []
         if hasattr(module, 'get_menus'):
             for menu in module.get_menus(build_profile_id=self.build_profile_id):
                 menus.append(menu)
         else:
-            v1_shadow_modules = [m for m in self.app.get_modules()
-                              if m.module_type == 'shadow'
-                              and m.shadow_module_version == 1
-                              and m.source_module_id]
             module_is_source_for_v1_shadow = any(
-                m for m in v1_shadow_modules
+                m for m in self._v1_shadow_modules()
                 if (m.source_module_id == module.unique_id)
                 or (getattr(module, 'root_module', False)
                     and m.source_module_id == module.root_module.unique_id)
@@ -51,28 +46,8 @@ class MenuContributor(SuiteContributorByModule):
             module_is_v1_shadow = getattr(module, 'shadow_module_version', 0) == 1
 
             if module_is_v1_shadow or module_is_source_for_v1_shadow:
-                # Old style shadow modules don't allow child shadows, need to
-                # figure out which are the roots
-                id_modules = [module]       # the current module and all of its shadows
-                root_modules = []           # the current module's parent and all of that parent's shadows
-
-                if not module.put_in_root and module.root_module:
-                    root_modules.append(module.root_module)
-                    for shadow in v1_shadow_modules:
-                        if module.root_module.unique_id == shadow.source_module_id:
-                            root_modules.append(shadow)
-                else:
-                    root_modules.append(None)
-                    if module.put_in_root and module.root_module:
-                        for shadow in v1_shadow_modules:
-                            if module.root_module.unique_id == shadow.source_module_id:
-                                id_modules.append(shadow)
-
-                for id_module in id_modules:
-                    for root_module in root_modules:
-                        menu = self._generate_menu(module, root_module, training_menu, id_module)
-                        if len(menu.commands):
-                            menus.append(menu)
+                for v1_shadow_menu in self._generate_v1_shadow_menus(module, training_menu):
+                    menus.append(v1_shadow_menu)
             else:
                 root_module = None
                 if not module.put_in_root:
@@ -93,7 +68,46 @@ class MenuContributor(SuiteContributorByModule):
 
         return menus
 
+    @memoized
+    def _v1_shadow_modules(self):
+        return [
+            m for m in self.app.get_modules()
+            if m.module_type == 'shadow'
+            and m.shadow_module_version == 1
+            and m.source_module_id
+        ]
+
+    def _generate_v1_shadow_menus(self, module, training_menu):
+        # V1 shadow modules create a 'fake' module for any child shadow menus
+        # These child shadow modules don't have a representation in the DB, but
+        # are needed in the suite to add in all the child forms.
+        # This behaviour has been superceded by v2 shadow modules.
+
+        id_modules = [module]       # the current module and all of its shadows
+        root_modules = []           # the current module's parent and all of that parent's shadows
+
+        if not module.put_in_root and module.root_module:
+            root_modules.append(module.root_module)
+            for shadow in self._v1_shadow_modules():
+                if module.root_module.unique_id == shadow.source_module_id:
+                    root_modules.append(shadow)
+        else:
+            root_modules.append(None)
+            if module.put_in_root and module.root_module:
+                for shadow in self._v1_shadow_modules():
+                    if module.root_module.unique_id == shadow.source_module_id:
+                        id_modules.append(shadow)
+
+        for id_module in id_modules:
+            for root_module in root_modules:
+                menu = self._generate_menu(module, root_module, training_menu, id_module)
+                if len(menu.commands):
+                    yield menu
+
     def _generate_menu(self, module, root_module, training_menu, id_module):
+        # In general, `id_module` and `module` will be the same thing.
+        # In the case of v1 shadow menus, `id_module` is either the current module or one of that module's shadows
+        # For more information, see the note in `_generate_v1_shadow_menus`.
         from corehq.apps.app_manager.models import ShadowModule
         menu_kwargs = {}
         suffix = ""
