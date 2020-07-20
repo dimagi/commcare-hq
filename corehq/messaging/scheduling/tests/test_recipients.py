@@ -7,6 +7,12 @@ from django.test import TestCase
 from mock import patch
 
 from corehq.apps.casegroups.models import CommCareCaseGroup
+from corehq.apps.custom_data_fields.models import (
+    CustomDataFieldsDefinition,
+    CustomDataFieldsProfile,
+    Field,
+    PROFILE_SLUG,
+)
 from corehq.apps.data_interfaces.tests.util import create_case
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
@@ -18,6 +24,7 @@ from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils import is_commcarecase
+from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.messaging.pillow import get_case_messaging_sync_pillow
 from corehq.messaging.scheduling.models import (
     Content,
@@ -67,6 +74,26 @@ class SchedulingRecipientTest(TestCase):
         cls.mobile_user5.user_data['role'] = ['nurse', 'pharmacist']
         cls.mobile_user5.save()
 
+        cls.definition = CustomDataFieldsDefinition(domain=cls.domain, field_type=UserFieldsView.field_type)
+        cls.definition.save()
+        cls.definition.set_fields([
+            Field(
+                slug='role',
+                label='Role',
+            ),
+        ])
+        cls.definition.save()
+        cls.profile = CustomDataFieldsProfile(
+            name='nurse_profile',
+            fields={'role': ['nurse']},
+            definition=cls.definition,
+        )
+        cls.profile.save()
+        cls.mobile_user6 = CommCareUser.create(cls.domain, 'mobile6', 'abc', None, None, metadata={
+            PROFILE_SLUG: cls.profile.id,
+        })
+        cls.mobile_user5.save()
+
         cls.web_user = WebUser.create(cls.domain, 'web', 'abc', None, None)
 
         cls.web_user2 = WebUser.create(cls.domain, 'web2', 'abc', None, None)
@@ -83,6 +110,7 @@ class SchedulingRecipientTest(TestCase):
                 cls.mobile_user3.get_id,
                 cls.mobile_user4.get_id,
                 cls.mobile_user5.get_id,
+                cls.mobile_user6.get_id,
             ]
         )
         cls.group2.save()
@@ -513,7 +541,7 @@ class SchedulingRecipientTest(TestCase):
         )
         self.assertEqual(
             self.user_ids(instance.expand_recipients()),
-            [self.mobile_user4.get_id, self.mobile_user5.get_id]
+            [self.mobile_user4.get_id, self.mobile_user5.get_id, self.mobile_user6.get_id]
         )
 
     def test_web_user_recipient_with_user_data_filter(self):

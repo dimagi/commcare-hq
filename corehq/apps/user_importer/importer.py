@@ -423,12 +423,14 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                     user.add_phone_number(_fmt_phone(phone_number), default=True)
                 if name:
                     user.set_full_name(str(name))
-                if data:
-                    user.user_data.update(data)
+                data = data or {}
                 if profile:
-                    user.user_data[PROFILE_SLUG] = domain_info.profiles_by_name[profile].id
-                    for key in domain_info.profiles_by_name[profile].fields.keys():
-                        user.user_data.pop(key, None)   # TODO: pop fields when editing user, too
+                    data[PROFILE_SLUG] = domain_info.profiles_by_name[profile].id
+                if data:
+                    try:
+                        user.metadata = data
+                    except ValueError as e:
+                        raise UserUploadError(str(e))
                 if uncategorized_data:
                     user.update_metadata(uncategorized_data)
                 if language:

@@ -66,13 +66,13 @@ def parse_users(group_memoizer, domain, user_filters, task=None, total_count=Non
 
     def _make_user_dict(user, group_names, location_cache):
         model_data, uncategorized_data = (
-            fields_definition.get_model_and_uncategorized(user.user_data)
+            fields_definition.get_model_and_uncategorized(user.metadata)
         )
         role = user.get_role(domain)
         profile = None
-        if PROFILE_SLUG in user.user_data and toggles.CUSTOM_DATA_FIELDS_PROFILES.enabled(domain):
+        if PROFILE_SLUG in user.metadata and toggles.CUSTOM_DATA_FIELDS_PROFILES.enabled(domain):
             try:
-                profile = CustomDataFieldsProfile.objects.get(id=user.user_data[PROFILE_SLUG])
+                profile = CustomDataFieldsProfile.objects.get(id=user.metadata[PROFILE_SLUG])
             except CustomDataFieldsProfile.DoesNotExist:
                 profile = None
         activity = user.reporting_metadata
