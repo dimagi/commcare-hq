@@ -1029,6 +1029,8 @@ REQUIRE_TWO_FACTOR_FOR_SUPERUSERS = False
 # that adds messages to the partition with the fewest unprocessed messages
 USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
 
+CUSTOM_DOMAIN_SPECIFIC_URL_MODULES = []
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
