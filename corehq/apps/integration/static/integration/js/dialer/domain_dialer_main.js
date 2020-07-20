@@ -6,7 +6,7 @@ Based on AWS Boilerplate
 hqDefine("integration/js/dialer/domain_dialer_main", [
    "hqwebapp/js/initial_page_data",
    "integration/js/dialer/dialer_utils",
-   "integration/js/dialer/DetectRTC",
+   "detectrtc/DetectRTC",
    "integration/js/dialer/amazon-connect-min",
    "integration/js/dialer/connect-streams-min",
 ], function (
