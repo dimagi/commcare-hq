@@ -45,7 +45,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
 )
 from corehq.const import SERVER_DATE_FORMAT, SERVER_DATETIME_FORMAT
 from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
-from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
+from custom.icds_reports.utils.connections import get_icds_ucr_citus_db_alias
 from corehq.util.celery_utils import periodic_task_on_envs
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email

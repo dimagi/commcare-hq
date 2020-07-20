@@ -1,16 +1,14 @@
 from collections import Counter
-from unittest import SkipTest
 
 from django.db import DEFAULT_DB_ALIAS
 from django.test import override_settings
-from django.test.testcases import SimpleTestCase, TestCase
+from django.test.testcases import SimpleTestCase
 
 import mock
-from corehq.sql_db.connections import (
-    ICDS_UCR_CITUS_ENGINE_ID,
-    ConnectionManager,
-    connection_manager,
-)
+from decorator import contextmanager
+from testil import eq
+
+from corehq.sql_db.connections import ConnectionManager
 from corehq.sql_db.tests.test_partition_config import (
     PARTITION_CONFIG_WITH_STANDBYS,
 )
@@ -20,8 +18,6 @@ from corehq.sql_db.util import (
     get_replication_delay_for_shard_standbys,
     get_standbys_with_acceptible_delay,
 )
-from decorator import contextmanager
-from testil import eq
 
 
 def _get_db_config(db_name, master=None, delay=None):

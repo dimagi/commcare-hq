@@ -1,5 +1,4 @@
-from contextlib import contextmanager, ContextDecorator
-from threading import local
+from contextlib import contextmanager
 
 from django.conf import settings
 from django.core import signals
@@ -18,19 +17,10 @@ from .util import select_db_for_read
 
 DEFAULT_ENGINE_ID = DEFAULT_DB_ALIAS
 UCR_ENGINE_ID = 'ucr'
-AAA_DB_ENGINE_ID = 'aaa-data'
 ICDS_UCR_CITUS_ENGINE_ID = 'icds-ucr-citus'
 
 
-def get_icds_ucr_citus_db_alias():
-    return _get_db_alias_or_none(ICDS_UCR_CITUS_ENGINE_ID)
-
-
-def get_aaa_db_alias():
-    return _get_db_alias_or_none(AAA_DB_ENGINE_ID)
-
-
-def _get_db_alias_or_none(enigne_id):
+def get_db_alias_or_none(enigne_id):
     try:
         return connection_manager.get_django_db_alias(enigne_id)
     except KeyError:
