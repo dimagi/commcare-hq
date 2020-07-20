@@ -10,7 +10,7 @@ from django_prbac.utils import has_privilege
 from memoized import memoized
 from six.moves.urllib.parse import urlencode
 
-from corehq import privileges, toggles, plugins
+from corehq import privileges, toggles
 from corehq.apps.accounting.dispatcher import (
     AccountingAdminInterfaceDispatcher,
 )
@@ -949,13 +949,6 @@ class ApplicationsTab(UITab):
                 url=(reverse('convert_translations', args=[self.domain])),
             ))
 
-        tab_name = self.__class__.__name__
-        submenu_context.extend([
-            dropdown_dict(**response)
-            for response in plugins.get_contributions(
-                "uitab:dropdown_items", tab=tab_name, domain=self.domain, request=self._request
-            )
-        ])
         return submenu_context
 
     @property
