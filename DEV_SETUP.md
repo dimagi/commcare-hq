@@ -244,8 +244,11 @@ In order to download the required JavaScript packages, you'll need to install `y
 2. Install dependencies with:
 
 ```
-yarn install
+yarn install --frozen-lockfile
 ```
+
+NOTE: if you are making changes to `package.json`, please run `yarn install` without the `--frozen-lockfile` flag so that `yarn.lock` will get updated.
+
 
 #### Troubleshooting Javascript dependency installation
 
