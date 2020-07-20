@@ -131,8 +131,8 @@ function parse_meta(type, style) {
  */
 function Container(json) {
     var self = this;
+    self.pubsub = new ko.subscribable();
     self.fromJS(json);
-
     /**
      * Used in KO template to determine what template to use for a child
      * @param {Object} child - The child object to be rendered, either Group, Repeat, or Question
@@ -435,6 +435,7 @@ function Question(json, parent) {
     var self = this;
     self.fromJS(json);
     self.parent = parent;
+    self.parentPubSub = parent.pubsub;
     self.error = ko.observable(null);
     self.serverError = ko.observable(null);
     self.rel_ix = ko.observable(relativeIndex(self.ix()));
@@ -509,6 +510,25 @@ Question.prototype.fromJS = function (json) {
 
     ko.mapping.fromJS(json, mapping, self);
 };
+
+Question.prototype.stylesContaining = function(pattern) {
+    var self = this;
+    var retVal = [];
+    if (self.style) {
+        var styles = ko.utils.unwrapObservable(self.style.raw).split(' ');
+        styles.forEach(function(style) {
+            if ((pattern instanceof RegExp && style.match(pattern))
+                || (typeof pattern === "string" && pattern === style)) {
+                retVal.push(style);
+            }
+        })
+    }
+	return retVal;
+}
+
+Question.prototype.stylesContains = function(pattern) {
+    return this.stylesContaining(pattern).length > 0;
+}
 
 
 Formplayer.Const = {
