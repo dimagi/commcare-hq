@@ -430,7 +430,7 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                     for key in domain_info.profiles_by_name[profile].fields.keys():
                         user.user_data.pop(key, None)   # TODO: pop fields when editing user, too
                 if uncategorized_data:
-                    user.user_data.update(uncategorized_data)
+                    user.update_metadata(uncategorized_data)
                 if language:
                     user.language = language
                 if email:
@@ -461,7 +461,7 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                     user.set_role(domain, role_qualified_id)
 
                 if web_user:
-                    user.user_data.update({'login_as_user': web_user})
+                    user.update_metadata({'login_as_user': web_user})
 
                 user.save()
 
