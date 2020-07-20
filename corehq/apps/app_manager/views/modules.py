@@ -1,6 +1,7 @@
 import json
 import logging
 from collections import OrderedDict
+from functools import partial
 from distutils.version import LooseVersion
 
 from django.contrib import messages
@@ -267,6 +268,7 @@ def _get_shadow_module_view_context(app, module, lang=None):
             'modules': [get_mod_dict(m) for m in app.modules if m.module_type in ['basic', 'advanced']],
             'source_module_id': module.source_module_id,
             'excluded_form_ids': module.excluded_form_ids,
+            'shadow_module_version': module.shadow_module_version,
         },
     }
 
@@ -678,8 +680,8 @@ def _new_report_module(request, domain, app, name, lang):
     return back_to_main(request, domain, app_id=app.id, module_id=module.id)
 
 
-def _new_shadow_module(request, domain, app, name, lang):
-    module = app.add_module(ShadowModule.new_module(name, lang))
+def _new_shadow_module(request, domain, app, name, lang, shadow_module_version=2):
+    module = app.add_module(ShadowModule.new_module(name, lang, shadow_module_version=shadow_module_version))
     app.save()
     return back_to_main(request, domain, app_id=app.id, module_id=module.id)
 
@@ -742,6 +744,24 @@ def undo_delete_module(request, domain, record_id):
     record.undo()
     messages.success(request, 'Module successfully restored.')
     return back_to_main(request, domain, app_id=record.app_id, module_id=record.module_id)
+
+
+@require_can_edit_apps
+def upgrade_shadow_module(request, domain, app_id, module_unique_id):
+    app = get_app(domain, app_id)
+    try:
+        shadow_module = app.get_module_by_unique_id(module_unique_id)
+    except ModuleNotFoundError:
+        messages.error(request, "Couldn't find module")
+    else:
+        if shadow_module.shadow_module_version == 1:
+            shadow_module.shadow_module_version = 2
+            handle_shadow_child_modules(app, shadow_module)
+            messages.success(request, 'Module successfully upgraded.')
+        else:
+            messages.error(request, "Can't upgrade this module, it's already at the new version")
+
+    return back_to_main(request, domain, app_id=app_id, module_unique_id=module_unique_id)
 
 
 @no_conflict_require_POST
@@ -1296,6 +1316,10 @@ MODULE_TYPE_MAP = {
     },
     'shadow': {
         FN: _new_shadow_module,
+        VALIDATIONS: []
+    },
+    'shadow-v1': {
+        FN: partial(_new_shadow_module, shadow_module_version=1),
         VALIDATIONS: []
     },
     'training': {

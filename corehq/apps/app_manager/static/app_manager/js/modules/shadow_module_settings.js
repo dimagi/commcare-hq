@@ -5,17 +5,28 @@ hqDefine('app_manager/js/modules/shadow_module_settings', function () {
         /**
          * Returns a Knockout view model based on the modules and forms given in modules
          */
-        ShadowModule: function (modules, selectedModuleId, excludedFormIds) {
+        ShadowModule: function (modules, selectedModuleId, excludedFormIds, shadowModuleVersion) {
             var self = this;
             self.modules = ko.observableArray();
+            self.shadowModuleVersion = shadowModuleVersion;
             self.selectedModuleId = ko.observable(selectedModuleId);
             self.selectedModule = ko.pureComputed(function () {
                 return _.findWhere(self.modules(), {uniqueId: self.selectedModuleId()});
             });
             // Find all forms that could potentially be included in the current module:
-            // Forms belonging to the source module and to the source module's children
             self.sourceForms = ko.pureComputed(function () {
-                return self.selectedModule().forms();
+                if (self.shadowModuleVersion === 1) {
+                    // Forms belonging to the source module and to the source module's children
+                    return self.selectedModule().forms().concat(_.flatten(_.map(_.filter(self.modules(), function (m) {
+                        return m.rootId === self.selectedModuleId();
+                    }), function (m) {
+                        return m.forms();
+                    })));
+                } else {
+                    // Forms belonging only to the source module
+                    return self.selectedModule().forms();
+                }
+
             });
             self.includedFormIds = ko.observableArray();
             self.excludedFormIds = ko.pureComputed(function () {

@@ -118,6 +118,21 @@
                   </div>
                 </div>
               </div>
+              {% if request|toggle_enabled:"V1_SHADOW_MODULES" %}
+                <div class="form-group">
+                  <label class="{% css_label_class %} control-label">
+                    {% trans "Shadow Module Version" %}
+                  </label>
+                  <div class="{% css_field_class %}">
+                    v. {{ module.shadow_module_version }}
+                    {% if module.shadow_module_version == 1 %}
+                      <a class="btn btn-primary" href="{% url 'upgrade_shadow_module' domain app.id module.unique_id %}">
+                        {% trans "Upgrade to version 2" %}
+                      </a>
+                    {% endif %}
+                  </div>
+                </div>
+              {% endif %}
             {% endif %}
 
             {% if add_ons.menu_mode %}

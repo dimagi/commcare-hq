@@ -441,6 +441,13 @@ def handle_shadow_child_modules(app, shadow_parent):
 
     Used primarily when changing the "source module id" of a shadow module
     """
+    if shadow_parent.shadow_module_version == 1:
+        # For old-style shadow modules, we don't create any child-shadows
+        return False
+
+    if not shadow_parent.source_module_id:
+        return False
+
     source_module_children = [
         m for m in app.modules
         if m.root_module_id == shadow_parent['source_module_id']
