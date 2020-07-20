@@ -786,7 +786,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             device_id="Generated from HQ",
             first_name=first_name,
             last_name=last_name,
-            user_data=self.custom_data.get_data_to_save(),
+            metadata=self.custom_data.get_data_to_save(),
             is_account_confirmed=is_account_confirmed,
             location=SQLLocation.objects.get(location_id=location_id) if location_id else None,
         )
@@ -993,7 +993,7 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
                 created_via=USER_CHANGE_VIA_WEB,
                 phone_number=phone_number,
                 device_id="Generated from HQ",
-                user_data=self.custom_data.get_data_to_save(),
+                metadata=self.custom_data.get_data_to_save(),
             )
 
             if 'location_id' in request.GET:
@@ -1475,7 +1475,7 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
                 email=email,
                 phone_number=self.invitation.phone_number,
                 device_id='Generated from HQ',
-                user_data=self.invitation.custom_user_data,
+                metadata=self.invitation.custom_user_data,
             )
             # Since the user is being created by following the link and token
             # we sent to their phone by SMS, we can verify their phone number
