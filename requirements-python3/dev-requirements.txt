@@ -6,19 +6,19 @@
 #
 alabaster==0.7.12         # via sphinx
 alembic==0.8.6            # via -r requirements/requirements.in
-amqp==2.5.2               # via kombu
+amqp==2.6.0               # via kombu
 architect==0.5.6          # via -r requirements/requirements.in
 argparse==1.4.0           # via unittest2
 attrs==18.2.0             # via -r requirements/requirements.in
 babel==2.7.0              # via django-phonenumber-field, sphinx
 backcall==0.2.0           # via ipython
 beautifulsoup4==4.8.1     # via -r requirements/test-requirements.in
-billiard==3.5.0.4         # via -r requirements/requirements.in, celery
+billiard==3.6.3.0         # via celery
 boto3==1.10.14            # via -r requirements/requirements.in
 botocore==1.13.14         # via boto3, s3transfer
 cairocffi==1.1.0          # via cairosvg, weasyprint
 cairosvg==2.4.2           # via weasyprint
-git+git://github.com/dimagi/celery@dc7253614fd8500af78b09d1ceb79c50f1baac8d#egg=celery  # via -r requirements/requirements.in, django-celery-results
+celery==4.4.2             # via -r requirements/requirements.in, django-celery-results
 certifi==2019.9.11        # via requests, sentry-sdk
 cffi==1.13.2              # via cairocffi, csiphash, weasyprint
 chardet==3.0.4            # via ghdiff, requests
@@ -98,6 +98,7 @@ html5lib==1.0.1           # via weasyprint
 httpagentparser==1.9.0    # via -r requirements/requirements.in
 idna==2.8                 # via email-validator, requests
 imagesize==1.1.0          # via sphinx
+importlib-metadata==1.7.0  # via kombu
 ipdb==0.11                # via -r requirements/dev-requirements.in
 ipython-genutils==0.2.0   # via traitlets
 ipython==7.15.0           # via -r requirements/dev-requirements.in, ipdb
@@ -113,7 +114,7 @@ jsonobject-couchdbkit==1.0.1  # via -r requirements/requirements.in
 jsonobject==0.9.9         # via -r requirements/requirements.in, jsonobject-couchdbkit
 jsonpath-rw==1.4.0        # via -r requirements/requirements.in
 kafka-python==1.4.7       # via -r requirements/requirements.in
-kombu==4.2.2.post1        # via -r requirements/requirements.in, celery
+kombu==4.6.11             # via celery
 laboratory==0.2.0         # via -r requirements/requirements.in
 linecache2==1.0.0         # via traceback2
 lxml==4.3.5               # via -r requirements/requirements.in, eulxml
@@ -221,7 +222,7 @@ ua-parser==0.8.0          # via user-agents
 unittest2==1.1.0          # via -r requirements/test-requirements.in
 urllib3==1.25.6           # via botocore, elasticsearch, elasticsearch2, py-kissmetrics, requests, sentry-sdk, transifex-client
 user-agents==2.0          # via django-user-agents
-vine==1.3.0               # via amqp
+vine==1.3.0               # via amqp, celery
 wcwidth==0.1.7            # via prompt-toolkit
 weasyprint==0.42.3        # via -r requirements/requirements.in
 webencodings==0.5.1       # via html5lib, tinycss2
@@ -230,6 +231,7 @@ wheel==0.29.0             # via -r requirements/dev-requirements.in
 wrapt==1.11.2             # via ddtrace
 xlrd==1.0.0               # via -r requirements/requirements.in
 xlwt==1.3.0               # via -r requirements/requirements.in
+zipp==3.1.0               # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 pip==20.1                 # via pip-tools
