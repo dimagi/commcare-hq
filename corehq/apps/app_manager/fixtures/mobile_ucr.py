@@ -123,7 +123,7 @@ class ReportFixturesProvider(FixtureProvider):
             role = restore_user.get_role(restore_user.domain)
             if role:
                 allowed_app_ids = [app['_id'] for app in get_brief_apps_in_domain(restore_user.domain)
-                                   if role.permissions.view_web_app(app.master_id)]
+                                   if role.permissions.view_web_app((app['copy_of'] or app['_id']))]
                 apps = get_apps_by_id(restore_user.domain, allowed_app_ids)
             else:
                 # If there is no role, allow access to all apps
