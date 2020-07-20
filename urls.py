@@ -4,6 +4,7 @@ from django.contrib import admin
 from django.shortcuts import render
 from django.views.generic import RedirectView, TemplateView
 
+from corehq import plugins
 from corehq.apps.accounting.urls import \
     domain_specific as accounting_domain_specific
 from corehq.apps.app_manager.views.formdesigner import ping
@@ -75,9 +76,6 @@ domain_specific = [
     url(r'^', include('custom.m4change.urls')),
     url(r'^dashboard/', include('corehq.apps.dashboard.urls')),
     url(r'^configurable_reports/', include('corehq.apps.userreports.urls')),
-    url(r'^', include('custom.icds_reports.urls')),
-    url(r'^', include('custom.icds.urls')),
-    url(r'^', include('custom.icds.data_management.urls')),
     url(r'^', include('custom.aaa.urls')),
     url(r'^champ_cameroon/', include('custom.champ.urls')),
     url(r'^motech/', include('corehq.motech.urls')),
@@ -91,6 +89,11 @@ domain_specific = [
     url(r'^translations/', include('corehq.apps.translations.urls')),
     url(r'^submit_feedback/$', submit_feedback, name='submit_feedback'),
 ]
+
+for plugin_url_modules in plugins.get_contributions("urls:domain_specific"):
+    for module in plugin_url_modules:
+        domain_specific.append(url(r'^', include(module)))
+
 
 urlpatterns = [
     url(r'^favicon\.ico$', RedirectView.as_view(

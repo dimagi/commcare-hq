@@ -1022,7 +1022,10 @@ COMMCARE_PLUGINS = {
     "uitab:dropdown_items": [{
         "callable": "custom.icds.commcare_plugin.uitab_dropdown_items",
         "domains": ["icsd-cas"],
-    }]
+    }],
+    "urls:domain_specific": [
+        {"callable": "custom.icds.commcare_plugin.urls_domain_specific"}
+    ]
 }
 
 try:

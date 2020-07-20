@@ -12,3 +12,11 @@ def uitab_dropdown_items(tab, domain, request):
             "title": _("Manage CCZ Hosting"),
             "url": reverse(ManageHostedCCZ_urlname, args=[domain]),
         }
+
+
+def urls_domain_specific():
+    return [
+        'custom.icds_reports.urls',
+        'custom.icds.urls',
+        'custom.icds.data_management.urls',
+    ]
