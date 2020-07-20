@@ -44,6 +44,7 @@ from couchforms.signals import successful_form_received
 from couchforms.util import legacy_notification_assert
 from couchforms.openrosa_response import OpenRosaResponse, ResponseNature
 from dimagi.utils.logging import notify_exception, log_signal_errors
+from dimagi.utils.modules import to_function
 from phonelog.utils import process_device_log, SumoLogicLog
 
 from celery.task.control import revoke as revoke_celery_task
@@ -52,6 +53,15 @@ CaseStockProcessingResult = namedtuple(
     'CaseStockProcessingResult',
     'case_result, case_models, stock_result'
 )
+
+
+class SubmissionFormContext(object):
+    instance_xml = None
+    supplementary_models = None
+
+    def __init__(self, instance_xml):
+        self.instance_xml = instance_xml
+        self.supplementary_models = []
 
 
 class FormProcessingResult(namedtuple('FormProcessingResult', 'response xform cases ledgers submission_type')):
@@ -97,6 +107,10 @@ class SubmissionPost(object):
 
         self.is_openrosa_version3 = self.openrosa_headers.get(OPENROSA_VERSION_HEADER, '') == OPENROSA_VERSION_3
         self.track_load = form_load_counter("form_submission", domain)
+
+        self.pre_processing_steps = [
+            to_function(class_name)() for class_name in settings.XFORM_PRE_PROCESSORS.get(self.domain)
+        ]
 
     def _set_submission_properties(self, xform):
         # attaches shared properties of the request to the document.
@@ -221,6 +235,11 @@ class SubmissionPost(object):
         if failure_response:
             return FormProcessingResult(failure_response, None, [], [], 'known_failures')
 
+        xform_context = SubmissionFormContext(instance_xml=self.instance)
+        if self.pre_processing_steps:
+            self._pre_process_form(xform_context)
+            self.instance = xform_context.instance_xml
+
         result = process_xform_xml(self.domain, self.instance, self.attachments, self.auth_context.to_json())
         submitted_form = result.submitted_form
 
@@ -328,6 +347,13 @@ class SubmissionPost(object):
 
             response = self._get_open_rosa_response(instance, **openrosa_kwargs)
             return FormProcessingResult(response, instance, cases, ledgers, submission_type)
+
+    def _pre_process_form(self, xform_context):
+        for step in self.pre_processing_steps:
+            result = step(xform_context)
+            if result:
+                return result
+        return xform_context
 
     def _conditionally_send_device_logs_to_sumologic(self, instance):
         url = getattr(settings, 'SUMOLOGIC_URL', None)

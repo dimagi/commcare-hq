@@ -239,6 +239,7 @@ HQ_APPS = (
     'corehq.apps.appstore',
     'corehq.apps.data_analytics',
     'corehq.apps.data_pipeline_audit',
+    'corehq.apps.data_vault',
     'corehq.apps.domain',
     'corehq.apps.domain_migration_flags',
     'corehq.apps.dump_reload',
@@ -2095,3 +2096,7 @@ if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
     ]
 
 PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requirements.txt')
+
+XFORM_PRE_PROCESSORS = {
+    'icds-cas': ['custom.icds.form_processor.steps.AadhaarNumberExtractor'],
+}
