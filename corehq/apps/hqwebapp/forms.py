@@ -294,6 +294,7 @@ class HQAuthenticationTokenForm(AuthenticationTokenForm):
             cleaned_data = super(HQAuthenticationTokenForm, self).clean()
         except ValidationError:
             user_login_failed.send(sender=__name__, credentials={'username': self.user.username})
+            couch_user = CouchUser.get_by_username(self.user.username)
             if couch_user and couch_user.is_locked_out() and couch_user.supports_lockout():
                 raise ValidationError(LOCKOUT_MESSAGE)
             else:
@@ -311,6 +312,7 @@ class HQBackupTokenForm(BackupTokenForm):
             cleaned_data = super(HQBackupTokenForm, self).clean()
         except ValidationError:
             user_login_failed.send(sender=__name__, credentials={'username': self.user.username})
+            couch_user = CouchUser.get_by_username(self.user.username)
             if couch_user and couch_user.is_locked_out() and couch_user.supports_lockout():
                 raise ValidationError(LOCKOUT_MESSAGE)
             else:
