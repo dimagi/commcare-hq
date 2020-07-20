@@ -2,7 +2,7 @@ import json
 
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
-from django.contrib.auth.signals import user_logged_in, user_login_failed
+from django.contrib.auth.signals import user_login_failed
 from django.core.exceptions import ValidationError
 from django.http import QueryDict
 from django.middleware.csrf import get_token
