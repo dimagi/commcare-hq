@@ -24,8 +24,10 @@ class PluginContribution:
         _callable = self.callable_ref
         if isinstance(_callable, str):
             _callable = to_function(self.callable_ref)
-        if not _callable or not callable(_callable):
-            raise Exception(f"Plugin callable is not callable: '{self.callable_ref}'")
+        if not _callable:
+            raise Exception(f"Plugin not found: '{self.callable_ref}'")
+        if not callable(_callable):
+            raise Exception(f"Plugin not callable: '{self.callable_ref}'")
         self._callable = _callable
         spec = inspect.getfullargspec(_callable)
         unconsumed_args = set(extension_point.providing_args) - set(spec.args)
