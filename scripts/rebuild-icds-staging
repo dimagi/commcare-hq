@@ -1,0 +1,4 @@
+#!/bin/bash
+
+rebuild_command="scripts/rebuildstaging-util icds-staging.yaml $*"
+$(echo $rebuild_command)

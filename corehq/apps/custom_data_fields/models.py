@@ -57,6 +57,30 @@ class SQLField(models.Model):
         db_table = "custom_data_fields_field"
         order_with_respect_to = "definition"
 
+    def validate_choices(self, value):
+        if self.choices and value and str(value) not in self.choices:
+            return _(
+                "'{value}' is not a valid choice for {label}. The available "
+                "options are: {options}."
+            ).format(
+                value=value,
+                label=self.label,
+                options=', '.join(self.choices),
+            )
+
+    def validate_regex(self, value):
+        if self.regex and value and not re.search(self.regex, value):
+            return _("'{value}' is not a valid match for {label}").format(
+                value=value, label=self.label)
+
+    def validate_required(self, value):
+        if self.is_required and not value:
+            return _(
+                "{label} is required."
+            ).format(
+                label=self.label
+            )
+
 
 class CustomDataField(JsonObject):
     slug = StringProperty()
@@ -131,43 +155,17 @@ class SQLCustomDataFieldsDefinition(SyncSQLToCouchMixin, models.Model):
         self.sqlfield_set.set(fields, bulk=False)
         self.set_sqlfield_order([f.id for f in fields])
 
-    def get_validator(self, data_field_class):
+    def get_validator(self):
         """
         Returns a validator to be used in bulk import
         """
-        def validate_choices(field, value):
-            if field.choices and value and str(value) not in field.choices:
-                return _(
-                    "'{value}' is not a valid choice for {slug}, the available "
-                    "options are: {options}."
-                ).format(
-                    value=value,
-                    slug=field.slug,
-                    options=', '.join(field.choices),
-                )
-
-        def validate_regex(field, value):
-            if field.regex and value and not re.search(field.regex, value):
-                return _("'{value}' is not a valid match for {slug}").format(
-                    value=value, slug=field.slug)
-
-        def validate_required(field, value):
-            if field.is_required and not value:
-                return _(
-                    "Cannot create or update a {entity} without "
-                    "the required field: {field}."
-                ).format(
-                    entity=data_field_class.entity_string,
-                    field=field.slug
-                )
-
         def validate_custom_fields(custom_fields):
             errors = []
             for field in self.get_fields():
                 value = custom_fields.get(field.slug, None)
-                errors.append(validate_required(field, value))
-                errors.append(validate_choices(field, value))
-                errors.append(validate_regex(field, value))
+                errors.append(field.validate_required(value))
+                errors.append(field.validate_choices(value))
+                errors.append(field.validate_regex(value))
             return ' '.join(filter(None, errors))
 
         return validate_custom_fields
@@ -211,6 +209,8 @@ class CustomDataFieldsDefinition(SyncCouchToSQLMixin, QuickCachedDocumentMixin, 
         for field_name in self._migration_get_fields():
             value = getattr(self, field_name)
             setattr(sql_object, field_name, value)
+        if not sql_object.id:
+            sql_object.save(sync_to_couch=False)
         sql_object.set_fields([
             SQLField(
                 slug=field.slug,

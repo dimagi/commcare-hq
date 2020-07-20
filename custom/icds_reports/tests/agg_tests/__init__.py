@@ -1,8 +1,10 @@
+import csv
 import os
 from datetime import datetime
 
 import mock
-import csv
+
+from nose.tools import nottest
 
 from django.conf import settings
 from django.test.utils import override_settings
@@ -20,7 +22,7 @@ from custom.icds_reports.tasks import (
     build_incentive_report,
 )
 from .agg_setup import setup_location_hierarchy, setup_tables_and_fixtures, aggregate_state_form_data, \
-    cleanup_misc_agg_tables
+    cleanup_misc_agg_tables, build_bihar_api
 
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
 
@@ -31,6 +33,11 @@ def setUpModule():
         print('============= WARNING: not running test setup because settings.USE_PARTITIONED_DATABASE is True.')
         return
 
+    global _stop_transaction_exemption
+    _stop_transaction_exemption = exempt_from_test_transactions([
+        "icds-ucr",
+        "icds-ucr-citus",
+    ])
     domain = create_domain('icds-cas')
     setup_location_hierarchy(domain.name)
 
@@ -41,6 +48,7 @@ def setUpModule():
             try:
                 with mock.patch('custom.icds_reports.tasks.update_aggregate_locations_tables'):
                     move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
+                build_bihar_api()
                 build_incentive_report(agg_date=datetime(2017, 5, 28))
             except Exception as e:
                 print(e)
@@ -73,6 +81,42 @@ def tearDownModule():
 
     Domain.get_by_name('icds-cas').delete()
     _call_center_domain_mock.stop()
+    _stop_transaction_exemption()
+
+
+@nottest
+def exempt_from_test_transactions(dbnames):
+    """Do not start a transaction per test for the given databases
+
+    AVOID IF POSSIBLE. All new tests should attempt to work with test
+    transactions to facilitate automatic cleanup. Otherwise it is
+    difficult to prevent test state mutations from contaminating other
+    tests.
+
+    TODO remove this and update tests that depend on it.
+
+    Depends on `TestCase.transaction_exempt_databases`, which is a
+    feature added by
+    `corehq.form_processor.tests.utils.patch_testcase_databases`
+
+    :param dbnames: Sequence of transaction-exempt database names.
+    :returns: A function that stops/removes the exemption.
+    """
+    def stop_exemption():
+        assert new_exempt == TestCase.transaction_exempt_databases, f"""
+            database test transaction exemptions unexpectedly changed
+            during this exemption context.
+            original exempt dbs: {old_exempt}
+            context exempt dbs: {new_exempt}
+            current exempt dbs: {TestCase.transaction_exempt_databases}
+        """
+        TestCase.transaction_exempt_databases = old_exempt
+
+    assert not isinstance(dbnames, str), "expected a sequence, got str"
+    old_exempt = TestCase.transaction_exempt_databases
+    new_exempt = frozenset(old_exempt).union(dbnames)
+    TestCase.transaction_exempt_databases = new_exempt
+    return stop_exemption
 
 
 class CSVTestCase(TestCase):

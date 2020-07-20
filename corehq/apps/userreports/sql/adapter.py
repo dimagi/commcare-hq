@@ -451,12 +451,12 @@ def get_indicator_table(indicator_config, metadata, override_table_name=None):
             logger.error(f"Invalid index specified on {table_name} ({index.column_ids})")
     constraints = [PrimaryKeyConstraint(*indicator_config.pk_columns)]
     columns_and_indices = sql_columns + extra_indices + constraints
-    # todo: needed to add extend_existing=True to support multiple calls to this function for the same table.
-    # is that valid?
+    current_table = metadata.tables.get(table_name)
+    if current_table is not None:
+        metadata.remove(current_table)
     return sqlalchemy.Table(
         table_name,
         metadata,
-        extend_existing=True,
         *columns_and_indices
     )
 

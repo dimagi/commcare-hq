@@ -22,7 +22,7 @@ class PhoneUsersTestCase(TestCase):
     def tearDown(self):
         user = WebUser.get_by_username(self.username)
         if user:
-            user.delete()
+            user.delete(deleted_by=None)
 
         domain_obj = Domain.get_by_name(self.domain)
         if domain_obj:
@@ -54,7 +54,7 @@ class PhoneUsersTestCase(TestCase):
         self.assertEqual(self.couch_user.default_phone_number, '789')
 
     def testPhoneUsersViewLastCommCareUsername(self):
-        self.couch_user.delete()
+        self.couch_user.delete(deleted_by=None)
         phone_user_count = CouchUser.phone_users_by_domain(self.domain).count()
         self.assertEqual(phone_user_count, 0)
 

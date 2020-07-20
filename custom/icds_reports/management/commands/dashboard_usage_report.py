@@ -11,7 +11,7 @@ from django.db.models.functions import Cast
 from corehq.apps.users.models import CouchUser
 from corehq.util.argparse_types import date_type
 from corehq.util.log import with_progress_bar
-from custom.icds_reports.const import THR_REPORT_EXPORT
+from custom.icds_reports.const import POSHAN_PROGRESS_REPORT
 from custom.icds_reports.models import ICDSAuditEntryRecord
 from custom.icds_reports.sqldata.exports.dashboard_usage import DashBoardUsage
 
@@ -77,7 +77,7 @@ class Command(BaseCommand):
                                                            time_of_use__gte=start_date,
                                                            time_of_use__lt=end_date)
                        .annotate(indicator=Cast(KeyTextTransform('indicator', 'post_data'), TextField()))
-                       .filter(indicator__lte=THR_REPORT_EXPORT).values('indicator', 'username')
+                       .filter(indicator__lte=POSHAN_PROGRESS_REPORT).values('indicator', 'username')
                        .annotate(count=Count('indicator')).order_by('username', 'indicator'))
         for record in records:
             if record['indicator'] == '':

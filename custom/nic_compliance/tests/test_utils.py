@@ -34,7 +34,7 @@ class TestDecodePassword(TestCase):
         cls.username = "username@test.com"
         cls.web_user = WebUser.get_by_username(cls.username)
         if cls.web_user:
-            cls.web_user.delete()
+            cls.web_user.delete(deleted_by=None)
         cls.web_user = WebUser.create(cls.domain.name, cls.username, "123456", None, None)
 
     @classmethod
