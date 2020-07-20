@@ -56,4 +56,5 @@ branches:
   - ap/restrict-unauthorized-users
   - rn_correct_positioning_of_states
   - dm/django2-upgrade # Sravan July 17th
+  - sk/local-ucr  # Simon July 20
 submodules: {}
