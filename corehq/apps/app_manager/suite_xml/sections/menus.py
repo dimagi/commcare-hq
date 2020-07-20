@@ -38,26 +38,33 @@ class MenuContributor(SuiteContributorByModule):
             for menu in module.get_menus(build_profile_id=self.build_profile_id):
                 menus.append(menu)
         else:
-            shadow_modules = [m for m in self.app.get_modules()
-                              if m.module_type == 'shadow' and m.source_module_id]
-            old_style_shadow_modules = any(m for m in shadow_modules if m.shadow_module_version == 1)
-            if getattr(module, 'shadow_module_version', 0) == 1 or old_style_shadow_modules:
+            v1_shadow_modules = [m for m in self.app.get_modules()
+                              if m.module_type == 'shadow'
+                              and m.shadow_module_version == 1
+                              and m.source_module_id]
+            module_is_source_for_v1_shadow = any(
+                m for m in v1_shadow_modules
+                if (m.source_module_id == module.unique_id)
+                or (getattr(module, 'root_module', False)
+                    and m.source_module_id == module.root_module.unique_id)
+            )
+            module_is_v1_shadow = getattr(module, 'shadow_module_version', 0) == 1
+
+            if module_is_v1_shadow or module_is_source_for_v1_shadow:
                 # Old style shadow modules don't allow child shadows, need to
                 # figure out which are the roots
                 id_modules = [module]       # the current module and all of its shadows
                 root_modules = []           # the current module's parent and all of that parent's shadows
 
-                shadow_modules = [m for m in self.app.get_modules()
-                                  if m.module_type == 'shadow' and m.source_module_id]
                 if not module.put_in_root and module.root_module:
                     root_modules.append(module.root_module)
-                    for shadow in shadow_modules:
+                    for shadow in v1_shadow_modules:
                         if module.root_module.unique_id == shadow.source_module_id:
                             root_modules.append(shadow)
                 else:
                     root_modules.append(None)
                     if module.put_in_root and module.root_module:
-                        for shadow in shadow_modules:
+                        for shadow in v1_shadow_modules:
                             if module.root_module.unique_id == shadow.source_module_id:
                                 id_modules.append(shadow)
 

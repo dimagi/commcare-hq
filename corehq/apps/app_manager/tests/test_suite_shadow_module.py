@@ -74,3 +74,23 @@ class ShadowModuleWithChildSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.shadow.source_module_id = self.child.unique_id
         self.assertXmlPartialEqual(self.get_xml('shadow_module_families_source_child'),
                                    self.app.create_suite(), "./menu")
+
+    def test_mixture_v1_v2_shadow_modules(self, *args):
+        """If there are both V1 and V2 shadow modules pointing to the same source, they
+        should both be added to the suite with their different semantics to
+        maintain backwards compatibility
+
+        """
+        self.shadow.shadow_module_version = 1
+        self.shadow.source_module_id = self.parent.unique_id
+
+        self.shadow_v2 = self.app.add_module(ShadowModule.new_module('V2 Shadow Module', None))
+        self.shadow_v2.source_module_id = self.parent.unique_id
+        self.shadow_child = self.app.add_module(
+            ShadowModule.new_module('Shadow Child Module', None)
+        )
+        self.shadow_child.source_module_id = self.child.unique_id
+        self.shadow_child.root_module_id = self.shadow_v2.unique_id
+
+        self.assertXmlPartialEqual(self.get_xml('shadow_module_source_parent_v1_v2'),
+                                   self.app.create_suite(), "./menu")
