@@ -66,7 +66,7 @@ class TestUsersByLocation(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.george.delete()
+        cls.george.delete(deleted_by=None)
         cls.domain_obj.delete()
         ensure_index_deleted(USER_INDEX)
         super(TestUsersByLocation, cls).tearDownClass()
@@ -109,7 +109,7 @@ class TestUsersByLocation(TestCase):
             [u._id for u in users],
             [self.varys._id, self.tyrion._id, self.daenerys._id, self.george._id]
         )
-        other_user.delete()
+        other_user.delete(deleted_by=None)
 
     def test_generate_user_ids_from_primary_location_ids_from_couch(self):
         self.assertItemsEqual(

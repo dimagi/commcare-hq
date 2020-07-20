@@ -21,6 +21,21 @@ class SimpleFilter(DomainFilter):
         return [Q(**{self.filter_kwarg: domain_name})]
 
 
+class ManyFilters(DomainFilter):
+    """
+    Filter by multiple filter kwargs. Filters are ANDed
+    """
+    def __init__(self, *filter_kwargs):
+        assert filter_kwargs, 'Please set one of more filter_kwargs'
+        self.filter_kwargs = filter_kwargs
+
+    def get_filters(self, domain_name):
+        filter_ = Q(**{self.filter_kwargs[0]: domain_name})
+        for filter_kwarg in self.filter_kwargs[1:]:
+            filter_ &= Q(**{filter_kwarg: domain_name})
+        return [filter_]
+
+
 class UsernameFilter(DomainFilter):
     def get_filters(self, domain_name):
         """

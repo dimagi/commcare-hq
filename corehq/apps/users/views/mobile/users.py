@@ -70,6 +70,7 @@ from corehq.apps.registration.forms import MobileWorkerAccountConfirmationForm
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.user_importer.importer import UserUploadError, check_headers
+from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups
 from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary,
@@ -115,6 +116,7 @@ from corehq.apps.users.views import (
 from corehq.const import (
     GOOGLE_PLAY_STORE_COMMCARE_URL,
     USER_DATE_FORMAT,
+    USER_CHANGE_VIA_BULK_IMPORTER,
     USER_CHANGE_VIA_WEB,
 )
 from corehq.toggles import (
@@ -426,7 +428,7 @@ def delete_commcare_user(request, domain, user_id):
         messages.error(request, _("This is a location user. You must delete the "
                        "corresponding location before you can delete this user."))
         return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
-    user.retire()
+    user.retire(deleted_by=request.user, deleted_via=USER_CHANGE_VIA_WEB)
     messages.success(request, "User %s has been deleted. All their submissions and cases will be permanently deleted in the next few minutes" % user.username)
     return HttpResponseRedirect(reverse(MobileWorkerListView.urlname, args=[domain]))
 
@@ -455,7 +457,7 @@ def force_user_412(request, domain, user_id):
 @require_POST
 def restore_commcare_user(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
-    success, message = user.unretire()
+    success, message = user.unretire(unretired_by=request.user, unretired_via=USER_CHANGE_VIA_WEB)
     if success:
         messages.success(request, "User %s and all their submissions have been restored" % user.username)
     else:
@@ -615,21 +617,6 @@ def update_user_groups(request, domain, couch_user_id):
     return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id]))
 
 
-@require_can_edit_commcare_users
-@require_POST
-def update_user_data(request, domain, couch_user_id):
-    user_data = request.POST["user-data"]
-    if user_data:
-        updated_data = json.loads(user_data)
-        user = CommCareUser.get(couch_user_id)
-        assert user.doc_type == "CommCareUser"
-        assert user.domain == domain
-        user.user_data = updated_data
-        user.save(spawn_task=True)
-    messages.success(request, "User data updated!")
-    return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id]))
-
-
 @location_safe
 class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     template_name = 'users/mobile_workers.html'
@@ -680,7 +667,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         return {
             'new_mobile_worker_form': self.new_mobile_worker_form,
             'custom_fields_form': self.custom_data.form,
-            'custom_field_slugs': [f.slug for f in self.custom_data.fields],
+            'custom_fields_slugs': [f.slug for f in self.custom_data.fields],
             'can_bulk_edit_users': self.can_bulk_edit_users,
             'can_add_extra_users': self.can_add_extra_users,
             'can_access_all_locations': self.can_access_all_locations,
@@ -1060,12 +1047,19 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
             messages.error(request, _(str(e)))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
+        upload_record = UserUploadRecord(
+            domain=self.domain,
+            user_id=request.couch_user.user_id
+        )
+        upload_record.save()
+
         task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
         task = import_users_and_groups.delay(
             self.domain,
             list(self.user_specs),
             list(self.group_specs),
-            request.couch_user
+            request.couch_user,
+            upload_record.pk
         )
         task_ref.set_task(task)
         return HttpResponseRedirect(
@@ -1307,7 +1301,7 @@ class DeleteCommCareUsers(BaseManageCommCareUserView, UsernameUploadMixin):
         deleted_count = 0
         for user_id, doc in user_docs_by_id.items():
             if user_id not in user_ids_with_forms:
-                CommCareUser.wrap(doc).delete()
+                CommCareUser.wrap(doc).delete(deleted_by=request.user, deleted_via=USER_CHANGE_VIA_BULK_IMPORTER)
                 deleted_count += 1
         if deleted_count:
             messages.success(request, f"{deleted_count} user(s) deleted.")
