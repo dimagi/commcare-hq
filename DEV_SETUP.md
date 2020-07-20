@@ -232,41 +232,30 @@ names to the aliases.
 
     $ ./manage.py ptop_es_manage --flip_all_aliases
 
-### Installing Bower
+### Installing Yarn
 
-We use Bower to manage our JavaScript dependencies. In order to download the required JavaScript packages,
-you'll need to install `bower` and run `bower install`. Follow these steps to install:
+We use Yarn to manage our JavaScript dependencies. It is able to install older `bower` dependencies/repositories that we still need 
+and `npm` repositories. Eventually we will move fully to `npm`, but for now you will need `yarn` to manage `js` repositories.
 
-1. If you do not already have npm:
+In order to download the required JavaScript packages, you'll need to install `yarn` and run `yarn install`. Follow these steps to install:
 
-    For Ubuntu: In Ubuntu this is now bundled with NodeJS. An up-to-date version is available on the NodeSource
-    repository. Run the following commands:
+1. Follow [these steps](https://classic.yarnpkg.com/en/docs/install#mac-stable) to install Yarn.
 
-        $ curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
-        $ sudo apt-get install -y nodejs
-
-    For macOS: Install with Homebrew:
-
-        $ brew install node
-
-    For others: install [npm](https://www.npmjs.com/)
-
-2. Install Bower:
-
-        $ sudo npm -g install bower
-
-3. Run Bower with:
-
-        $ bower install
-
-
-### Install JS-XPATH
-
-This is required for the server side xpath validation. See [package.json](package.json) for exact version.
+2. Install dependencies with:
 
 ```
-npm install dimagi/js-xpath#v0.0.2-rc1
+yarn install
 ```
+
+#### Troubleshooting Javascript dependency installation
+
+Depending on your operating system, and what version of `nodejs` and `npm` you have locally, 
+you might run into issues. Here are minimum version requirements for these packages. 
+
+    $ npm --version
+    $ 6.14.4
+    $ node --version
+    $ v12.18.1
 
 ### Using LESS: 2 Options
 
@@ -457,14 +446,13 @@ See https://github.com/nose-devs/nose/blob/master/nose/plugins/testid.py
 
 ### Setup
 
-In order to run the JavaScript tests you'll need to install the required npm packages:
+Make sure javascript packages are installed with the following. Please see the section on 
+installing `yarn` above for more details.
 
-    $ npm install
+It's recommended to install grunt globally (with `yarn`) in order to use grunt from the command line:
 
-It's recommended to install grunt globally in order to use grunt from the command line:
-
-    $ npm install -g grunt
-    $ npm install -g grunt-cli
+    $ yarn install global grunt
+    $ yarn install global grunt-cli
 
 In order for the tests to run the __development server needs to be running on port 8000__.
 

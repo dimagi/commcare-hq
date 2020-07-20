@@ -70,6 +70,7 @@ from corehq.apps.registration.forms import MobileWorkerAccountConfirmationForm
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.user_importer.importer import UserUploadError, check_headers
+from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups
 from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary,
@@ -616,21 +617,6 @@ def update_user_groups(request, domain, couch_user_id):
     return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id]))
 
 
-@require_can_edit_commcare_users
-@require_POST
-def update_user_data(request, domain, couch_user_id):
-    user_data = request.POST["user-data"]
-    if user_data:
-        updated_data = json.loads(user_data)
-        user = CommCareUser.get(couch_user_id)
-        assert user.doc_type == "CommCareUser"
-        assert user.domain == domain
-        user.user_data = updated_data
-        user.save(spawn_task=True)
-    messages.success(request, "User data updated!")
-    return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id]))
-
-
 @location_safe
 class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     template_name = 'users/mobile_workers.html'
@@ -1061,12 +1047,19 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
             messages.error(request, _(str(e)))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
+        upload_record = UserUploadRecord(
+            domain=self.domain,
+            user_id=request.couch_user.user_id
+        )
+        upload_record.save()
+
         task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
         task = import_users_and_groups.delay(
             self.domain,
             list(self.user_specs),
             list(self.group_specs),
-            request.couch_user
+            request.couch_user,
+            upload_record.pk
         )
         task_ref.set_task(task)
         return HttpResponseRedirect(
