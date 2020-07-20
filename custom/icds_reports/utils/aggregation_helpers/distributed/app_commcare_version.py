@@ -110,5 +110,8 @@ class AppVersionAggregationDistributedHelper(BaseICDSAggregationDistributedHelpe
 
     def aggregation_queries(self):
         return [
-            """INSERT INTO "{new_tablename}" (SELECT * FROM "{tmp_tablename}")""".format(new_tablename=self.tablename, tmp_tablename=self.temporary_tablename),
+            """DROP TABLE IF EXISTS "local_tmp_agg_app";"""
+            """CREATE TABLE "local_tmp_agg_app" AS SELECT * FROM "{temporary_tablename}";""".format(temporary_tablename=self.temporary_tablename),
+            """INSERT INTO "{new_tablename}" SELECT * from "local_tmp_agg_app";""".format(new_tablename=self.tablename),
+            """DROP TABLE "local_tmp_agg_app";"""
         ]

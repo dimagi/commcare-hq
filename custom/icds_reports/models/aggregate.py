@@ -645,7 +645,7 @@ class AggregateTHRForm(models.Model, AggregateMixin):
 
 class AggregateAppVersion(models.Model, AggregateMixin):
     supervisor_id = models.TextField()
-    awc_id = models.TextField()
+    awc_id = models.TextField(primary_key=True)
     month = models.DateField()
     app_version = models.IntegerField(blank=True, null=True)
     commcare_version = models.TextField(blank=True, null=True)
