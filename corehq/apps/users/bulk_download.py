@@ -45,7 +45,7 @@ def build_data_headers(keys, header_prefix='data'):
 
 def parse_users(group_memoizer, domain, user_filters, task=None, total_count=None):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-    user_data_model = CustomDataFieldsDefinition.get_or_create(
+    fields_definition = CustomDataFieldsDefinition.get_or_create(
         domain,
         UserFieldsView.field_type
     )
@@ -66,7 +66,7 @@ def parse_users(group_memoizer, domain, user_filters, task=None, total_count=Non
 
     def _make_user_dict(user, group_names, location_cache):
         model_data, uncategorized_data = (
-            user_data_model.get_model_and_uncategorized(user.user_data)
+            fields_definition.get_model_and_uncategorized(user.user_data)
         )
         role = user.get_role(domain)
         profile = None
@@ -136,7 +136,7 @@ def parse_users(group_memoizer, domain, user_filters, task=None, total_count=Non
 
     if toggles.CUSTOM_DATA_FIELDS_PROFILES.enabled(domain):
         user_headers += ['user_field_profile']
-    user_data_fields = [f.slug for f in user_data_model.get_fields(include_system=False)]
+    user_data_fields = [f.slug for f in fields_definition.get_fields(include_system=False)]
     user_headers.extend(build_data_headers(user_data_fields))
     user_headers.extend(build_data_headers(
         unrecognized_user_data_keys,
