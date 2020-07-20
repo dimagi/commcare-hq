@@ -62,16 +62,19 @@ class SchedulingRecipientTest(TestCase):
         cls.mobile_user2 = CommCareUser.create(cls.domain, 'mobile2', 'abc', None, None)
         cls.mobile_user2.set_location(cls.state_location)
 
-        cls.mobile_user3 = CommCareUser.create(cls.domain, 'mobile3', 'abc', None, None)
-        cls.mobile_user3.user_data['role'] = 'pharmacist'
+        cls.mobile_user3 = CommCareUser.create(cls.domain, 'mobile3', 'abc', None, None, metadata={
+            'role': 'pharmacist',
+        })
         cls.mobile_user3.save()
 
-        cls.mobile_user4 = CommCareUser.create(cls.domain, 'mobile4', 'abc', None, None)
-        cls.mobile_user4.user_data['role'] = 'nurse'
+        cls.mobile_user4 = CommCareUser.create(cls.domain, 'mobile4', 'abc', None, None, metadata={
+            'role': 'nurse',
+        })
         cls.mobile_user4.save()
 
-        cls.mobile_user5 = CommCareUser.create(cls.domain, 'mobile5', 'abc', None, None)
-        cls.mobile_user5.user_data['role'] = ['nurse', 'pharmacist']
+        cls.mobile_user5 = CommCareUser.create(cls.domain, 'mobile5', 'abc', None, None, metadata={
+            'role': ['nurse', 'pharmacist'],
+        })
         cls.mobile_user5.save()
 
         cls.definition = CustomDataFieldsDefinition(domain=cls.domain, field_type=UserFieldsView.field_type)
@@ -96,8 +99,9 @@ class SchedulingRecipientTest(TestCase):
 
         cls.web_user = WebUser.create(cls.domain, 'web', 'abc', None, None)
 
-        cls.web_user2 = WebUser.create(cls.domain, 'web2', 'abc', None, None)
-        cls.web_user2.user_data['role'] = 'nurse'
+        cls.web_user2 = WebUser.create(cls.domain, 'web2', 'abc', None, None, metadata={
+            'role': 'nurse',
+        })
         cls.web_user2.save()
 
         cls.group = Group(domain=cls.domain, users=[cls.mobile_user.get_id])

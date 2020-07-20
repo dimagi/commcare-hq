@@ -1485,7 +1485,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     @classmethod
     def create(cls, domain, username, password, created_by, created_via, email=None, uuid='', date='',
-               first_name='', last_name='', **kwargs):
+               first_name='', last_name='', metadata=None, **kwargs):
         try:
             django_user = User.objects.using(router.db_for_write(User)).get(username=username)
         except User.DoesNotExist:
@@ -1506,9 +1506,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         else:
             couch_user.created_on = datetime.utcnow()
 
-        user_data = {'commcare_project': domain}
-        user_data.update(kwargs.get('user_data', {}))
-        couch_user.metadata = user_data
+        metadata = metadata or {}
+        metadata.update({'commcare_project': domain})
+        couch_user.metadata = metadata
         couch_user.sync_from_django_user(django_user)
         return couch_user
 
@@ -1803,6 +1803,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                location=None,
                commit=True,
                is_account_confirmed=True,
+               metadata=None,
                **kwargs):
         """
         Main entry point into creating a CommCareUser (mobile worker).
@@ -1815,7 +1816,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             assert not kwargs['is_active'], \
                 "it's illegal to create a user with is_active=True and is_account_confirmed=False"
         commcare_user = super(CommCareUser, cls).create(domain, username, password, created_by, created_via,
-                                                        email, uuid, date, **kwargs)
+                                                        email, uuid, date, metadata=None, **kwargs)
         if phone_number is not None:
             commcare_user.add_phone_number(phone_number)
 
@@ -1826,6 +1827,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         commcare_user.registering_device_id = device_id
         commcare_user.is_account_confirmed = is_account_confirmed
         commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
+        # metadata can't be set until domain is present
+        commcare_user.update_metadata(metadata)
 
         if location:
             commcare_user.set_location(location, commit=False)
@@ -2447,9 +2450,9 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     @classmethod
     def create(cls, domain, username, password, created_by, created_via, email=None, uuid='', date='',
-               **kwargs):
+               metadata=None, **kwargs):
         web_user = super(WebUser, cls).create(domain, username, password, created_by, created_via, email, uuid,
-                                              date, **kwargs)
+                                              date, metadata=metadata, **kwargs)
         if domain:
             web_user.add_domain_membership(domain, **kwargs)
         web_user.save()
