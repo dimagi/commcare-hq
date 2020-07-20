@@ -1267,7 +1267,7 @@ class TestGetCaseSharingGroupsExpression(TestCase):
         for group in Group.by_domain(self.second_domain):
             group.delete()
         for user in CommCareUser.all():
-            user.delete()
+            user.delete(deleted_by=None)
         super(TestGetCaseSharingGroupsExpression, self).tearDown()
 
     @run_with_all_backends
@@ -1332,7 +1332,7 @@ class TestGetReportingGroupsExpression(TestCase):
         for group in Group.by_domain(self.second_domain):
             group.delete()
         for user in CommCareUser.all():
-            user.delete()
+            user.delete(deleted_by=None)
         super(TestGetReportingGroupsExpression, self).tearDown()
 
     @run_with_all_backends

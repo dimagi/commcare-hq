@@ -2279,6 +2279,16 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         vm.getDataForStep(vm.step);
     });
 
+    vm.isOlderThan90Days = function () {
+        var selectedDate = dateHelperService.getSelectedDate();
+        var currentDate = new Date();
+        currentDate.setHours(0, 0, 0, 0);
+        var diffTime = currentDate - selectedDate;
+        var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        return diffDays > 90;
+    };
+
     vm.getPopoverContent = function (weightRecorded, heightRecorded, ageInMonths, type) {
         var html = '';
 

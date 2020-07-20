@@ -26,7 +26,7 @@ class TestDeleteMessageEvents(DomainSubscriptionMixin, TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.mobile_user.delete()
+        cls.mobile_user.delete(deleted_by=None)
         super(TestDeleteMessageEvents, cls).tearDownClass()
 
     def tearDown(self):

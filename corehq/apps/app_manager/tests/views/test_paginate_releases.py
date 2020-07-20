@@ -45,7 +45,7 @@ class TestPaginateReleases(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
         cls.domain.delete()
         delete_es_index(APP_INDEX_INFO.index)
         super(TestPaginateReleases, cls).tearDownClass()

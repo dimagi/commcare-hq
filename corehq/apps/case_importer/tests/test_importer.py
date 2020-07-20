@@ -51,7 +51,7 @@ class ImporterTest(TestCase):
         delete_all_cases()
 
     def tearDown(self):
-        self.couch_user.delete()
+        self.couch_user.delete(deleted_by=None)
         self.domain_obj.delete()
         super(ImporterTest, self).tearDown()
 
@@ -516,7 +516,7 @@ def restrict_user_to_location(test_case, location):
         yield
     finally:
         test_case.couch_user = orig_user
-        restricted_user.delete()
+        restricted_user.delete(deleted_by=None)
 
 
 @contextmanager
@@ -539,4 +539,4 @@ def get_commcare_user(domain_name):
     try:
         yield user
     finally:
-        user.delete()
+        user.delete(deleted_by=None)

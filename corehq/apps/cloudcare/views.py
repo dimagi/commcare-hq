@@ -206,7 +206,7 @@ class FormplayerMain(View):
             "language": language,
             "apps": apps,
             "domain_is_on_trial": domain_is_on_trial(domain),
-            "maps_api_key": settings.GMAPS_API_KEY,
+            "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             "username": request.couch_user.username,
             "formplayer_url": settings.FORMPLAYER_URL,
             "single_app_mode": False,
@@ -271,7 +271,7 @@ class FormplayerPreviewSingleApp(View):
             "domain": domain,
             "language": language,
             "apps": [_format_app(app)],
-            "maps_api_key": settings.GMAPS_API_KEY,
+            "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             "username": request.user.username,
             "formplayer_url": settings.FORMPLAYER_URL,
             "single_app_mode": True,
@@ -293,7 +293,7 @@ class PreviewAppView(TemplateView):
         return self.render_to_response({
             'app': app,
             'formplayer_url': settings.FORMPLAYER_URL,
-            "maps_api_key": settings.GMAPS_API_KEY,
+            "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             "environment": PREVIEW_APP_ENVIRONMENT,
             "dialer_enabled": domain_uses_dialer(request.domain),
         })
