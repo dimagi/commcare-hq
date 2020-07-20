@@ -128,18 +128,6 @@ class MonthlyPerformanceSummaryTests(SetupProjectPerformanceMixin, TestCase):
         cls.class_teardown()
         MALTRow.objects.all().delete()
 
-    def test_delta_active_additional_user(self):
-        """
-        delta_active() should return 1 when there is one additional user from previous month
-        """
-        self.assertEqual(self.month.delta_active, 1)
-
-    def test_delta_active_no_user(self):
-        """
-        delta_active() should return this month's active users when there is no summary from previous month
-        """
-        self.assertEqual(self.prev_month.delta_active, 1)
-
     def test_number_of_active_users(self):
         """
         number_of_active_users() should return 1 user last month
@@ -151,19 +139,6 @@ class MonthlyPerformanceSummaryTests(SetupProjectPerformanceMixin, TestCase):
         number_of_performing_users() should return two users who submitted 15 or more forms
         """
         self.assertEqual(self.month.number_of_performing_users, 2)
-
-    def test_delta_performing_additional_user(self):
-        """
-        delta_high_performing() should return 1 when there is one more performing user
-        """
-        self.assertEqual(self.month.delta_high_performing, 1)
-
-    def test_delta_performing_no_user(self):
-        """
-        delta_high_performing() should return this month's
-        performing user1 when there is no summary from previous month
-        """
-        self.assertEqual(self.prev_month.delta_high_performing, 1)
 
     def test_helper_get_all_user_stubs(self):
         """
