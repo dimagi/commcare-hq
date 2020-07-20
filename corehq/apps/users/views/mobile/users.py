@@ -852,7 +852,7 @@ def _modify_user_status(request, domain, user_id, is_active):
         })
     user.is_active = is_active
     user.save(spawn_task=True)
-    log_model_change(request.user, user.get_django_user(), message={'is_active': is_active},
+    log_model_change(request.user, user.get_django_user(), message=f"Changed 'is_active' to {is_active}",
                      action=ModelAction.UPDATE)
     return json_response({
         'success': True,
