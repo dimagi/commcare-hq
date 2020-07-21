@@ -228,11 +228,13 @@ function AddressEntry(question, options) {
             broadcastObj = {
                 full: item.place_name
             }
-            item.context.forEach(function (contextItem) {
-                if (contextItem.id.startsWith('postcode')) {
-                    broadcastObj.zipcode = contextItem.text;
-                } else if (contextItem.id.startsWith('place')) {
-                    broadcastObj.city= contextItem.text;
+            item.context.forEach(function (contextValue) {
+                if (contextValue.id.startsWith('postcode')) {
+                    broadcastObj.zipcode = contextValue.text;
+                } else if (contextValue.id.startsWith('place')) {
+                    broadcastObj.city = contextValue.text;
+                } else if (contextValue.id.startsWith('region')) {
+                    broadcastObj.state = contextValue.short_code.replace('US-', '');
                 }
             });
             broadcastObj.street = item.address || '';
@@ -260,9 +262,8 @@ function AddressEntry(question, options) {
             })
         }
 
-        var accessToken = 'pk.eyJ1Ijoia25ndXllbi1kaW1hZ2kiLCJhIjoiY2tjM3ZtbXltMDF3OTJ5bnd0cjBpeHc4NSJ9.fVcAJi5sxr-vi_UQf2RnkA';
         var geocoder = new MapboxGeocoder({
-            accessToken: accessToken,
+            accessToken: window.MAPBOX_ACCESS_TOKEN,
             types: 'address',
             enableEventLogging: false,
             proximity: { longitude: -74.006058, latitude: 40.712772},
