@@ -865,6 +865,10 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
                            send_only_active=False):
     """
     Renders only notification's main content, which then may be used to generate full notification body.
+
+    :returns: two-tuple `(report_text: str, excel_files: list)`. Both
+    values are empty when there are no applicable report configs.
+    `excel_files` is a list of dicts.
     """
     from dimagi.utils.web import get_url_base
 
@@ -878,7 +882,7 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
 
     # Don't send an email if none of the reports configs have started
     if len(configs) == 0:
-        return False, False
+        return "", []
 
     for config in configs:
         content, excel_file = config.get_report_content(lang, attach_excel=attach_excel)
@@ -899,7 +903,7 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
             "enddate": date_range.get("enddate") if date_range else "",
         })
 
-    return render(request, "reports/report_email_content.html", {
+    response = render(request, "reports/report_email_content.html", {
         "reports": report_outputs,
         "domain": domain,
         "couch_user": owner_id,
@@ -908,7 +912,8 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         "email": email,
         "notes": notes,
         "report_type": _("once off report") if once else _("scheduled report"),
-    }).content, excel_attachments
+    })
+    return response.content.decode("utf-8"), excel_attachments
 
 
 def render_full_report_notification(request, content, email=None, report_notification=None):
@@ -937,8 +942,8 @@ def render_full_report_notification(request, content, email=None, report_notific
 
 @login_and_domain_required
 def view_scheduled_report(request, domain, scheduled_report_id):
-    content = get_scheduled_report_response(request.couch_user, domain, scheduled_report_id, email=False)[0]
-    return render_full_report_notification(request, content)
+    report_text = get_scheduled_report_response(request.couch_user, domain, scheduled_report_id, email=False)[0]
+    return render_full_report_notification(request, report_text)
 
 
 def safely_get_case(request, domain, case_id):
