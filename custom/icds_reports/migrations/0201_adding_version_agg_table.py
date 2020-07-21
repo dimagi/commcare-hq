@@ -5,6 +5,8 @@ from __future__ import unicode_literals
 import custom.icds_reports.models.aggregate
 from django.db import migrations, models
 
+from custom.icds_reports.utils.migrations import get_view_migrations
+
 
 class Migration(migrations.Migration):
 
@@ -32,3 +34,5 @@ class Migration(migrations.Migration):
             unique_together=set([('month', 'supervisor_id', 'awc_id')]),
         ),
     ]
+
+    operations.extend(get_view_migrations())
