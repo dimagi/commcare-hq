@@ -33,7 +33,9 @@ CREATE VIEW system_usage_report_view AS
         "agg_awc_monthly"."num_launched_supervisors" AS "num_launched_supervisors",
         "agg_awc_monthly"."block_map_location_name" AS "block_map_location_name",
         "agg_awc_monthly"."district_map_location_name" AS "district_map_location_name",
-        "agg_awc_monthly"."state_map_location_name" AS "state_map_location_name"
+        "agg_awc_monthly"."state_map_location_name" AS "state_map_location_name",
+        "app_version"."app_version" AS "app_version",
+        "app_version"."commcare_version" AS "commcare_version"
     FROM "agg_awc_monthly"
     LEFT JOIN agg_ls ON (
         ("agg_awc_monthly"."month" = "agg_ls"."month") AND
@@ -42,4 +44,8 @@ CREATE VIEW system_usage_report_view AS
         ("agg_awc_monthly"."district_id" = "agg_ls"."district_id") AND
         ("agg_awc_monthly"."block_id" = "agg_ls"."block_id") AND
         ("agg_awc_monthly"."supervisor_id" = "agg_ls"."supervisor_id")
+    ) LEFT JOIN FROM "public"."icds_dashboard_app_version" "app_version" ON (
+        ("agg_awc_monthly"."month" = "app_version"."month") AND
+        ("agg_awc_monthly"."awc_id" = "app_version"."awc_id") AND
+        ("agg_awc_monthly"."supervisor_id" = "app_version"."supervisor_id")
     );

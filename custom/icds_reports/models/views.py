@@ -1279,6 +1279,8 @@ class SystemUsageReportView(models.Model):
     num_launched_districts = models.IntegerField(blank=True, null=True)
     num_launched_blocks = models.IntegerField(blank=True, null=True)
     num_launched_supervisors = models.IntegerField(blank=True, null=True)
+    app_version = models.IntegerField(blank=True, null=True)
+    commcare_version = models.TextField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_reports'

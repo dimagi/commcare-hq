@@ -1180,6 +1180,40 @@ class TestExportData(TestCase):
             ]
         )
 
+    def test_system_usage_export_for_awc_level_with_beta_app_version(self):
+        self.assertListEqual(
+            SystemUsageExport(
+                config={
+                    'domain': 'icds-cas',
+                    'block_id': 'b1',
+                    'aggregation_level': 5,
+                    'month': date(2020, 5, 1)
+                },
+                loc_level=5, beta=True
+            ).get_excel_data('b1', system_usage_num_launched_awcs_formatting_at_awc_level=True)[0],
+            ['System Usage', [
+                [
+                    'State',
+                    'District',
+                    'Block',
+                    'Supervisor',
+                    'AWC',
+                    'AWW Phone Number',
+                    'Number of days AWC was open in the given month',
+                    'Number of launched AWCs (ever submitted at least one HH reg form)',
+                    'Number of household registration forms', 'Number of add pregnancy forms',
+                    'Number of birth preparedness forms', 'Number of delivery forms',
+                    'Number of PNC forms', 'Number of exclusive breastfeeding forms',
+                    'Number of complementary feeding forms', 'Number of growth monitoring forms',
+                    'Number of take home rations forms', 'Number of due list forms',
+                    'Number of launched LSs',
+                    'AWW Application version',
+                    'CommCare version'
+                ]
+            ]]
+
+        )
+
     def test_system_usage_export_after_jan_2020(self):
         self.assertListEqual(
             SystemUsageExport(

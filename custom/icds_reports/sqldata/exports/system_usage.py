@@ -33,6 +33,12 @@ class SystemUsageExport(ExportableMixin, IcdsSqlData):
                 format_fn=phone_number_function,
                 slug='contact_phone_number')
             )
+        # adding version fields
+        if self.beta and self.config['month'] >= datetime.date(2020, 5, 1):
+            columns.append(DatabaseColumn('AWW Application version', SimpleColumn('app_version'),
+                                          slug='app_version'))
+            columns.append(DatabaseColumn('CommCare version', SimpleColumn('commcare_version'),
+                                          slug='commcare_version'))
         return columns
 
     @property
@@ -106,4 +112,7 @@ class SystemUsageExport(ExportableMixin, IcdsSqlData):
                 format_fn=lambda x: (x or 0) if self.loc_level < 5 else "Not applicable at AWC level",
                 slug='num_supervisor_launched')
             )
+        if self.beta and self.loc_level > 4 and self.config['month'] >= datetime.date(2020, 5, 1):
+            agg_columns += columns[-2:]
+            columns = columns[:-2]
         return columns + agg_columns
