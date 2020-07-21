@@ -56,9 +56,6 @@ CaseStockProcessingResult = namedtuple(
 
 
 class SubmissionFormContext(object):
-    instance_xml = None
-    supplementary_models = None
-
     def __init__(self, instance_xml):
         self.instance_xml = instance_xml
         self.supplementary_models = []
@@ -109,7 +106,7 @@ class SubmissionPost(object):
         self.track_load = form_load_counter("form_submission", domain)
 
         self.pre_processing_steps = [
-            to_function(class_name)() for class_name in settings.XFORM_PRE_PROCESSORS.get(self.domain)
+            to_function(class_name)() for class_name in settings.XFORM_PRE_PROCESSORS.get(self.domain, [])
         ]
 
     def _set_submission_properties(self, xform):

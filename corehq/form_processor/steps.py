@@ -6,11 +6,12 @@ from corehq.apps.data_vault.models import VaultStore
 
 class FormProcessingStep(ABC):
     @abstractmethod
-    def __call__(self, *args, **kwargs):
+    def __call__(self, context):
         """
         Process the form context object. Return an instance of
         FormProcessingResult to terminate the processing or None
         To allow processing to continue to the next step
+        :param context: form context
         """
         pass
 

@@ -12,7 +12,7 @@ class VaultStore(models.Model):
     key = models.CharField(max_length=25, default=_default_key)
     value = models.CharField(max_length=255)
     identifier = models.CharField(max_length=255, blank=True, null=True)
-    date_created = models.DateTimeField()
+    date_created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         indexes = [
