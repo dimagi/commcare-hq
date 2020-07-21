@@ -1,4 +1,4 @@
-from corehq.extensions.interface import CommCareExtensions, ExtensionError
+from corehq.extensions.interface import CommCareExtensions, ExtensionError   # noqa
 
 extension_manager = CommCareExtensions()
 

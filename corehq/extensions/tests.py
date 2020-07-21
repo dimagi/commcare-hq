@@ -89,4 +89,3 @@ def test_validation_callable_args():
 
     with testil.assert_raises(ExtensionError, msg=re.compile("consumed.*arg1")):
         extensions.register_extension("ext_point_a", bad_spec)
-
