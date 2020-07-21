@@ -309,3 +309,8 @@ class metrics_track_errors(ContextDecorator):
             metrics_counter(self.succeeded_name)
         else:
             metrics_counter(self.failed_name)
+
+
+def push_metrics():
+    provider = _get_metrics_provider()
+    provider.push_metrics()

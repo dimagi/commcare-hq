@@ -161,6 +161,8 @@ from corehq.util.view_utils import (
     request_as_dict,
     reverse,
 )
+from custom.icds_core.view_utils import is_icds_cas_project
+from custom.icds_core.view_utils import check_data_interfaces_blocked_for_domain
 from no_exceptions.exceptions import Http403
 
 from .dispatcher import ProjectReportDispatcher
@@ -1065,6 +1067,11 @@ class CaseDataView(BaseProjectReportSectionView):
         repeat_records = get_repeat_records_by_payload_id(self.domain, self.case_id)
 
         can_edit_data = self.request.couch_user.can_edit_data
+        show_properties_edit = (
+            can_edit_data
+            and has_privilege(self.request, privileges.DATA_CLEANUP)
+            and not is_icds_cas_project(self.domain)
+        )
 
         context = {
             "case_id": self.case_id,
@@ -1076,7 +1083,7 @@ class CaseDataView(BaseProjectReportSectionView):
             "default_properties_as_table": default_properties,
             "dynamic_properties": dynamic_data,
             "dynamic_properties_as_table": dynamic_properties,
-            "show_properties_edit": can_edit_data and has_privilege(self.request, privileges.DATA_CLEANUP),
+            "show_properties_edit": show_properties_edit,
             "case_actions": mark_safe(json.dumps(wrapped_case.actions())),
             "timezone": timezone,
             "tz_abbrev": tz_abbrev,
@@ -1242,6 +1249,7 @@ def case_property_names(request, domain, case_id):
 @require_case_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
+@check_data_interfaces_blocked_for_domain
 def edit_case_view(request, domain, case_id):
     if not (has_privilege(request, privileges.DATA_CLEANUP)):
         raise Http404()
@@ -1622,6 +1630,7 @@ def _get_display_options(request, domain, user, form, support_enabled):
         user_can_edit
         and has_privilege(request, privileges.DATA_CLEANUP)
         and not form.is_deprecated
+        and not is_icds_cas_project(domain)
     )
 
     show_resave = (
@@ -1847,7 +1856,7 @@ class EditFormInstance(View):
 
         context.update({
             'domain': domain,
-            'maps_api_key': settings.GMAPS_API_KEY,  # used by cloudcare
+            "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             'form_name': _('Edit Submission'),  # used in breadcrumbs
             'use_sqlite_backend': use_sqlite_backend(domain),
             'username': context.get('user').username,
@@ -2006,6 +2015,7 @@ def _get_data_cleaning_updates(request, old_properties):
 @require_permission(Permissions.edit_data)
 @require_POST
 @location_safe
+@check_data_interfaces_blocked_for_domain
 def edit_form(request, domain, instance_id):
     instance = safely_get_form(request, domain, instance_id)
     assert instance.domain == domain

@@ -95,7 +95,7 @@ LOCALE_PATHS = (
     os.path.join(FILEPATH, 'locale'),
 )
 
-BOWER_COMPONENTS = os.path.join(FILEPATH, 'bower_components')
+YARN_COMPONENTS = os.path.join(FILEPATH, 'node_modules')
 
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
@@ -104,7 +104,7 @@ STATICFILES_FINDERS = (
 )
 
 STATICFILES_DIRS = [
-    BOWER_COMPONENTS,
+    YARN_COMPONENTS,
 ]
 
 # bleh, why did this submodule have to be removed?
@@ -358,7 +358,6 @@ HQ_APPS = (
 
     'custom.reports.mc',
     'custom.apps.crs_reports',
-    'custom.m4change',
     'custom.succeed',
     'custom.ucla',
 
@@ -517,8 +516,6 @@ FIXTURE_GENERATORS = [
     "corehq.apps.locations.fixtures.location_fixture_generator",
     "corehq.apps.locations.fixtures.flat_location_fixture_generator",
     "corehq.apps.locations.fixtures.related_locations_fixture_generator",
-    "custom.m4change.fixtures.report_fixtures.generator",
-    "custom.m4change.fixtures.location_fixtures.generator",
 ]
 
 ### Shared drive settings ###
@@ -772,12 +769,9 @@ ANALYTICS_CONFIG = {
 
 GREENHOUSE_API_KEY = ''
 
-MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiZGltYWdpIiwiYSI6ImpZWWQ4dkUifQ.3FNy5rVvLolWLycXPxKVEA'
+MAPBOX_ACCESS_TOKEN = ''
 
 OPEN_EXCHANGE_RATES_API_ID = ''
-
-# for touchforms maps
-GMAPS_API_KEY = "changeme"
 
 # import local settings if we find them
 LOCAL_APPS = ()
@@ -1490,7 +1484,7 @@ COUCHDB_APPS = [
     # needed to make couchdbkit happy
     ('fluff', 'fluff-bihar'),
     ('mc', 'fluff-mc'),
-    ('m4change', 'm4change'),
+    ('m4change', 'm4change'),  # todo: remove once code that uses is removed
     ('export', META_DB),
     ('callcenter', META_DB),
 
@@ -1925,9 +1919,7 @@ DOMAIN_MODULE_MAP = {
 
     'crs-remind': 'custom.apps.crs_reports',
 
-    'm4change': 'custom.m4change',
     'succeed': 'custom.succeed',
-    'test-pathfinder': 'custom.m4change',
     'champ-cameroon': 'custom.champ',
 
     # From DOMAIN_MODULE_CONFIG on production
@@ -1950,6 +1942,7 @@ DOMAIN_MODULE_MAP = {
     'vectorlink-burkina-faso': 'custom.abt',
     'vectorlink-ethiopia': 'custom.abt',
     'vectorlink-ghana': 'custom.abt',
+    'vectorlink-ivorycoast': 'custom.abt',
     'vectorlink-kenya': 'custom.abt',
     'vectorlink-madagascar': 'custom.abt',
     'vectorlink-malawi': 'custom.abt',

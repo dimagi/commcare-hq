@@ -40,7 +40,7 @@ class CCUserLocationAssignmentTest(TestCase):
         )
 
     def tearDown(self):
-        self.user.delete()
+        self.user.delete(deleted_by=None)
         super(CCUserLocationAssignmentTest, self).tearDown()
 
     def test_set_location(self):
@@ -111,7 +111,7 @@ class CCUserLocationAssignmentTest(TestCase):
         self.assertEqual(saved_user.get_sql_location(self.domain), None)
 
     def test_create_with_location(self):
-        self.addCleanup(self.user.delete)
+        self.addCleanup(self.user.delete, deleted_by=None)
         self.user = CommCareUser.create(
             domain=self.domain,
             username='cc2',
@@ -172,7 +172,7 @@ class WebUserLocationAssignmentTest(TestCase):
         )
 
     def tearDown(self):
-        self.user.delete()
+        self.user.delete(deleted_by=None)
         super(WebUserLocationAssignmentTest, self).tearDown()
 
     def test_set_location(self):

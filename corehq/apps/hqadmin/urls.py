@@ -12,7 +12,6 @@ from corehq.apps.hqadmin.views.operations import (
 from corehq.apps.hqadmin.views.reports import (
     DownloadGIRView,
     DownloadMALTView,
-    top_five_projects_by_country,
 )
 from corehq.apps.hqadmin.views.system import (
     SystemInfoView,
@@ -71,7 +70,6 @@ urlpatterns = [
     url(r'^download_gir', DownloadGIRView.as_view(), name=DownloadGIRView.urlname),
     url(r'^reprocess_messaging_case_updates/$', ReprocessMessagingCaseUpdatesView.as_view(),
         name=ReprocessMessagingCaseUpdatesView.urlname),
-    url(r'^top_five_projects_by_country/$', top_five_projects_by_country, name='top_five_projects_by_country'),
     url(r'^web_user_data', WebUserDataView.as_view(), name=WebUserDataView.urlname),
     AdminReportDispatcher.url_pattern(),
 ]

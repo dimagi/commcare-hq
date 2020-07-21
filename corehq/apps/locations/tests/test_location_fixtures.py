@@ -131,13 +131,13 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
         self.user = create_restore_user(self.domain, 'user', '123')
 
     def tearDown(self):
-        self.user._couch_user.delete()
+        self.user._couch_user.delete(deleted_by=None)
         for lt in self.location_types.values():
             lt.expand_to = None
             lt._expand_from_root = False
             lt._expand_from = None
             lt.include_without_expanding = None
-            lt.include_only = []
+            lt.include_only.set([])
             lt.save()
         for loc in self.locations.values():
             loc.location_type.refresh_from_db()
@@ -316,7 +316,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
         # I want all all the cities, but am at the state level
         self.user._couch_user.set_location(self.locations['Massachusetts'])
         location_type = self.locations['Massachusetts'].location_type
-        location_type.include_only = [self.location_types['state'], self.location_types['county']]
+        location_type.include_only.set([self.location_types['state'], self.location_types['county']])
         location_type.save()
         # include county and state
         self.assert_fixture_queryset_equals_locations(
@@ -327,7 +327,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
     def test_include_only_location_types_hierarchical(self):
         self.user._couch_user.set_location(self.locations['Massachusetts'])
         location_type = self.locations['Massachusetts'].location_type
-        location_type.include_only = [self.location_types['state'], self.location_types['county']]
+        location_type.include_only.set([self.location_types['state'], self.location_types['county']])
         location_type.save()
 
         self._assert_fixture_matches_file(
@@ -450,7 +450,7 @@ class LocationFixturesDataTest(LocationHierarchyTestCase, FixtureHasLocationsMix
     @classmethod
     def tearDownClass(cls):
         cls.loc_fields.delete()
-        cls.user._couch_user.delete()
+        cls.user._couch_user.delete(deleted_by=None)
         super(LocationFixturesDataTest, cls).tearDownClass()
 
     def test_utility_method(self):
@@ -610,11 +610,11 @@ class ForkedHierarchyLocationFixturesTest(TestCase, FixtureHasLocationsMixin):
     def test_include_only_location_types(self):
         self.user._couch_user.set_location(self.locations['Massachusetts'])
         location_type = self.locations['Massachusetts'].location_type
-        location_type.include_only = [
+        location_type.include_only.set([
             self.location_types['state'],
             self.location_types['county'],
             self.location_types['city'],
-        ]
+        ])
         location_type.save()
         # include county and state
         self.assert_fixture_queryset_equals_locations([
@@ -649,7 +649,7 @@ class RelatedLocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocations
 
     @classmethod
     def tearDownClass(cls):
-        cls.user._couch_user.delete()
+        cls.user._couch_user.delete(deleted_by=None)
         super(RelatedLocationFixturesTest, cls).tearDownClass()
 
     def tearDown(self):
