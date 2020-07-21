@@ -170,3 +170,9 @@ if os.path.exists("custom/icds"):
         "custom.icds.data_management",
         "custom.icds_reports"
     ) + tuple(INSTALLED_APPS)
+
+    CUSTOM_DOMAIN_SPECIFIC_URL_MODULES = [
+        'custom.icds_reports.urls',
+        'custom.icds.urls',
+        'custom.icds.data_management.urls'
+    ]

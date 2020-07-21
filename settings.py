@@ -1813,7 +1813,7 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_4.json'),
     os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2019.json'),
     os.path.join('custom', 'echis_reports', 'ucr', 'reports', '*.json'),
-    # os.path.join('custom', 'aaa', 'ucr', 'reports', '*.json'),  # these depend on ICDS custom expressions
+    os.path.join('custom', 'aaa', 'ucr', 'reports', '*.json'),
     os.path.join('custom', 'ccqa', 'ucr', 'reports', 'patients.json'),  # For testing static UCRs
 ] + LOCAL_STATIC_UCR_REPORTS
 
@@ -1848,7 +1848,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'inddex', 'ucr', 'data_sources', '*.json'),
 
     os.path.join('custom', 'echis_reports', 'ucr', 'data_sources', '*.json'),
-    # os.path.join('custom', 'aaa', 'ucr', 'data_sources', '*.json'),  # these depend on ICDS custom expressions
+    os.path.join('custom', 'aaa', 'ucr', 'data_sources', '*.json'),
     os.path.join('custom', 'ccqa', 'ucr', 'data_sources', 'patients.json'),  # For testing static UCRs
 ] + LOCAL_STATIC_DATA_SOURCES
 
