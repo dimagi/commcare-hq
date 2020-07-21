@@ -3,7 +3,7 @@ from django.core.cache import cache
 from django.urls import reverse, resolve, Resolver404
 from django.utils.translation import get_language
 
-from corehq import plugins
+from corehq import extensions
 from corehq.apps.domain.models import Domain
 from corehq.tabs.exceptions import UrlPrefixFormatError, UrlPrefixFormatsSuggestion
 from corehq.tabs.utils import sidebar_to_dropdown, dropdown_dict
@@ -95,7 +95,7 @@ class UITab(object):
         tab_name = self.__class__.__name__
         items.extend([
             dropdown_dict(**response)
-            for response in plugins.get_contributions(
+            for response in extensions.get_contributions(
                 "uitab:dropdown_items", tab=tab_name, domain=self.domain, request=self._request
             )
         ])

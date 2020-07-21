@@ -352,7 +352,7 @@ HQ_APPS = (
     'corehq.apps.case_search',
     'corehq.apps.zapier.apps.ZapierConfig',
     'corehq.apps.translations',
-    'corehq.plugins.app_config.PluginAppConfig',
+    'corehq.extensions.app_config.PluginAppConfig',
 
     # custom reports
     'pact',
@@ -1018,13 +1018,13 @@ REQUIRE_TWO_FACTOR_FOR_SUPERUSERS = False
 # that adds messages to the partition with the fewest unprocessed messages
 USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
 
-COMMCARE_PLUGINS = {
+COMMCARE_EXTENSIONS = {
     "uitab:dropdown_items": [{
-        "callable": "custom.icds.commcare_plugin.uitab_dropdown_items",
+        "callable": "custom.icds.commcare_extensions.uitab_dropdown_items",
         "domains": ["icsd-cas"],
     }],
     "urls:domain_specific": [
-        {"callable": "custom.icds.commcare_plugin.urls_domain_specific"}
+        {"callable": "custom.icds.commcare_extensions.urls_domain_specific"}
     ]
 }
 

@@ -18,7 +18,7 @@ class ExtensionPoint:
     docs = attr.ib(default="")
 
 
-class PluginContribution:
+class ExtensionContribution:
     def __init__(self, callable_ref, domains=None):
         self.callable_ref = callable_ref
         self.domains = domains
@@ -29,9 +29,9 @@ class PluginContribution:
         if isinstance(_callable, str):
             _callable = to_function(self.callable_ref)
         if not _callable:
-            raise ExtensionError(f"Plugin not found: '{self.callable_ref}'")
+            raise ExtensionError(f"Extension not found: '{self.callable_ref}'")
         if not callable(_callable):
-            raise ExtensionError(f"Plugin not callable: '{self.callable_ref}'")
+            raise ExtensionError(f"Extension not callable: '{self.callable_ref}'")
         self._callable = _callable
         spec = inspect.getfullargspec(_callable)
         unconsumed_args = set(extension_point.providing_args) - set(spec.args)
@@ -52,23 +52,23 @@ class PluginContribution:
         return f"{self.callable_ref}"
 
 
-class Plugins:
+class CommCareExtensions:
     def __init__(self):
         self.registry = defaultdict(list)
         self.extension_point_registry = {}
 
-    def load_plugins(self, plugins):
-        for point, plugin_defs in plugins.items():
-            for plugin_def in plugin_defs:
-                self.register_plugin(point, plugin_def["callable"], plugin_def.get("domains", None))
+    def load_extensions(self, implementations):
+        for point, implementation_defs in implementations.items():
+            for definition in implementation_defs:
+                self.register_extension(point, definition["callable"], definition.get("domains", None))
 
-    def register_plugin(self, point, callable_ref, domains=None):
+    def register_extension(self, point, callable_ref, domains=None):
         if point not in self.extension_point_registry:
             raise ExtensionError(f"unknown extension point '{point}'")
 
-        plugin = PluginContribution(callable_ref, domains)
-        plugin.validate(self.extension_point_registry[point])
-        self.registry[point].append(plugin)
+        extension = ExtensionContribution(callable_ref, domains)
+        extension.validate(self.extension_point_registry[point])
+        self.registry[point].append(extension)
 
     def register_extension_point(self, point: ExtensionPoint):
         if point.name in self.extension_point_registry:
@@ -76,20 +76,20 @@ class Plugins:
         self.extension_point_registry[point.name] = point
 
     def get_extension_point_contributions(self, extension_point, **kwargs):
-        plugins = self.registry[extension_point]
+        extensions = self.registry[extension_point]
         results = []
-        for plugin in plugins:
+        for extension in extensions:
             try:
-                result = plugin(**kwargs)
+                result = extension(**kwargs)
                 if result is not None:
                     results.append(result)
             except Exception:  # noqa
                 notify_exception(
                     None,
-                    message="Error calling plugin",
+                    message="Error calling extension",
                     details={
                         "extention_point": extension_point,
-                        "plugin": plugin,
+                        "extension": extension,
                         "kwargs": kwargs
                     },
                 )

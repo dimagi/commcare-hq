@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.shortcuts import render
 from django.views.generic import RedirectView, TemplateView
 
-from corehq import plugins
+from corehq import extensions
 from corehq.apps.accounting.urls import \
     domain_specific as accounting_domain_specific
 from corehq.apps.app_manager.views.formdesigner import ping
@@ -90,7 +90,7 @@ domain_specific = [
     url(r'^submit_feedback/$', submit_feedback, name='submit_feedback'),
 ]
 
-for plugin_url_modules in plugins.get_contributions("urls:domain_specific"):
+for plugin_url_modules in extensions.get_contributions("urls:domain_specific"):
     for module in plugin_url_modules:
         domain_specific.append(url(r'^', include(module)))
 

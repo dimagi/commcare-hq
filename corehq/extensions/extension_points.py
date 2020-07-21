@@ -1,5 +1,5 @@
-from corehq.plugins import register_extension_point
-from corehq.plugins.interface import ExtensionPoint
+from corehq.extensions import register_extension_point
+from corehq.extensions.interface import ExtensionPoint
 
 register_extension_point(ExtensionPoint(
     "uitab:dropdown_items", providing_args=("tab", "domain", "request"),
