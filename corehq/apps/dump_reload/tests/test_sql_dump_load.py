@@ -7,11 +7,9 @@ from io import StringIO
 
 from django.contrib.admin.utils import NestedObjects
 from django.core import serializers
+from django.db import transaction
 from django.db.models.signals import post_delete, post_save
-from django.test import TestCase
-from django.test.utils import override_settings
-
-from nose.plugins.attrib import attr
+from django.test import SimpleTestCase, TestCase
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
@@ -23,6 +21,10 @@ from corehq.apps.dump_reload.sql import SqlDataDumper, SqlDataLoader
 from corehq.apps.dump_reload.sql.dump import (
     get_model_iterator_builders_to_dump,
     get_objects_to_dump,
+)
+from corehq.apps.dump_reload.sql.load import (
+    DefaultDictWithKey,
+    constraint_checks_deferred,
 )
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.products.models import SQLProduct
@@ -48,8 +50,11 @@ from corehq.form_processor.models import (
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     create_form_for_test,
+    use_sql_backend,
 )
-from corehq.messaging.scheduling.scheduling_partitioned.models import AlertScheduleInstance
+from corehq.messaging.scheduling.scheduling_partitioned.models import (
+    AlertScheduleInstance,
+)
 
 
 class BaseDumpLoadTest(TestCase):
@@ -74,9 +79,11 @@ class BaseDumpLoadTest(TestCase):
     def delete_sql_data(self):
         for model_class, builder in get_model_iterator_builders_to_dump(self.domain_name, []):
             for iterator in builder.querysets():
-                collector = NestedObjects(using=iterator.db)
-                collector.collect(iterator)
-                collector.delete()
+                with transaction.atomic(using=iterator.db), \
+                        constraint_checks_deferred(iterator.db):
+                    collector = NestedObjects(using=iterator.db)
+                    collector.collect(iterator)
+                    collector.delete()
 
         self.assertEqual([], list(get_objects_to_dump(self.domain_name, [])))
 
@@ -140,8 +147,7 @@ class BaseDumpLoadTest(TestCase):
                 self.assertIn('raw', args, message)
 
 
-@attr(sql_backend=True)
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@use_sql_backend
 class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
     maxDiff = None
 
@@ -312,9 +318,9 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             created_via=None,
             email='webuser@example.com',
         )
-        self.addCleanup(ccuser_1.delete)
-        self.addCleanup(ccuser_2.delete)
-        self.addCleanup(web_user.delete)
+        self.addCleanup(ccuser_1.delete, deleted_by=None)
+        self.addCleanup(ccuser_2.delete, deleted_by=None)
+        self.addCleanup(web_user.delete, deleted_by=None)
 
         self._dump_and_load(expected_object_counts)
 
@@ -341,7 +347,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             email='email@example.com',
             uuid='428d454aa9abc74e1964e16d3565d6b6'  # match ID in devicelog.xml
         )
-        self.addCleanup(user.delete)
+        self.addCleanup(user.delete, deleted_by=None)
 
         with open('corehq/ex-submodules/couchforms/tests/data/devicelogs/devicelog.xml', 'rb') as f:
             xml = f.read()
@@ -369,7 +375,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             email='email@example.com',
             uuid=user_id
         )
-        self.addCleanup(user.delete)
+        self.addCleanup(user.delete, deleted_by=None)
 
         DemoUserRestore(
             demo_user_id=user_id,
@@ -656,6 +662,45 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             user_id='user_id',
         )
         self._dump_and_load(Counter({ZapierSubscription: 1}))
+
+
+class DefaultDictWithKeyTests(SimpleTestCase):
+
+    def test_intended_use_case(self):
+        def enlist(item):
+            return [item]
+        greasy_spoon = DefaultDictWithKey(enlist)
+        self.assertEqual(greasy_spoon['spam'], ['spam'])
+        greasy_spoon['spam'].append('spam')
+        self.assertEqual(greasy_spoon['spam'], ['spam', 'spam'])
+
+    def test_not_enough_params(self):
+        def empty_list():
+            return []
+        greasy_spoon = DefaultDictWithKey(empty_list)
+        with self.assertRaisesRegex(
+            TypeError,
+            r'empty_list\(\) takes 0 positional arguments but 1 was given'
+        ):
+            greasy_spoon['spam']
+
+    def test_too_many_params(self):
+        def appender(item1, item2):
+            return [item1, item2]
+        greasy_spoon = DefaultDictWithKey(appender)
+        with self.assertRaisesRegex(
+            TypeError,
+            r"appender\(\) missing 1 required positional argument: 'item2'"
+        ):
+            greasy_spoon['spam']
+
+    def test_no_factory(self):
+        greasy_spoon = DefaultDictWithKey()
+        with self.assertRaisesRegex(
+            TypeError,
+            "'NoneType' object is not callable"
+        ):
+            greasy_spoon['spam']
 
 
 def _normalize_object_counter(counter, for_loaded=False):

@@ -95,7 +95,7 @@ LOCALE_PATHS = (
     os.path.join(FILEPATH, 'locale'),
 )
 
-BOWER_COMPONENTS = os.path.join(FILEPATH, 'bower_components')
+YARN_COMPONENTS = os.path.join(FILEPATH, 'node_modules')
 
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
@@ -104,7 +104,7 @@ STATICFILES_FINDERS = (
 )
 
 STATICFILES_DIRS = [
-    BOWER_COMPONENTS,
+    YARN_COMPONENTS,
 ]
 
 # bleh, why did this submodule have to be removed?
@@ -358,7 +358,6 @@ HQ_APPS = (
 
     'custom.reports.mc',
     'custom.apps.crs_reports',
-    'custom.m4change',
     'custom.succeed',
     'custom.ucla',
 
@@ -517,8 +516,6 @@ FIXTURE_GENERATORS = [
     "corehq.apps.locations.fixtures.location_fixture_generator",
     "corehq.apps.locations.fixtures.flat_location_fixture_generator",
     "corehq.apps.locations.fixtures.related_locations_fixture_generator",
-    "custom.m4change.fixtures.report_fixtures.generator",
-    "custom.m4change.fixtures.location_fixtures.generator",
 ]
 
 ### Shared drive settings ###
@@ -772,12 +769,9 @@ ANALYTICS_CONFIG = {
 
 GREENHOUSE_API_KEY = ''
 
-MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiZGltYWdpIiwiYSI6ImpZWWQ4dkUifQ.3FNy5rVvLolWLycXPxKVEA'
+MAPBOX_ACCESS_TOKEN = ''
 
 OPEN_EXCHANGE_RATES_API_ID = ''
-
-# for touchforms maps
-GMAPS_API_KEY = "changeme"
 
 # import local settings if we find them
 LOCAL_APPS = ()
@@ -1030,6 +1024,8 @@ REQUIRE_TWO_FACTOR_FOR_SUPERUSERS = False
 USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
 
 CUSTOM_DOMAIN_SPECIFIC_URL_MODULES = []
+LOCAL_CUSTOM_DB_ROUTING = {}
+
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1404,6 +1400,13 @@ DATABASE_ROUTERS = globals().get('DATABASE_ROUTERS', [])
 if 'corehq.sql_db.routers.MultiDBRouter' not in DATABASE_ROUTERS:
     DATABASE_ROUTERS.append('corehq.sql_db.routers.MultiDBRouter')
 
+# Mapping of app_label to DB name or reporting DB alias (see REPORTING_DATABASES)
+CUSTOM_DB_ROUTING = {
+    "aaa": "aaa-data",
+    "icds_reports": "icds-ucr-citus"  # this can be removed once the ICDS code is not present on all envs
+}
+CUSTOM_DB_ROUTING.update(LOCAL_CUSTOM_DB_ROUTING)
+
 INDICATOR_CONFIG = {
 }
 
@@ -1490,7 +1493,7 @@ COUCHDB_APPS = [
     # needed to make couchdbkit happy
     ('fluff', 'fluff-bihar'),
     ('mc', 'fluff-mc'),
-    ('m4change', 'm4change'),
+    ('m4change', 'm4change'),  # todo: remove once code that uses is removed
     ('export', META_DB),
     ('callcenter', META_DB),
 
@@ -1925,9 +1928,7 @@ DOMAIN_MODULE_MAP = {
 
     'crs-remind': 'custom.apps.crs_reports',
 
-    'm4change': 'custom.m4change',
     'succeed': 'custom.succeed',
-    'test-pathfinder': 'custom.m4change',
     'champ-cameroon': 'custom.champ',
 
     # From DOMAIN_MODULE_CONFIG on production
@@ -1950,6 +1951,7 @@ DOMAIN_MODULE_MAP = {
     'vectorlink-burkina-faso': 'custom.abt',
     'vectorlink-ethiopia': 'custom.abt',
     'vectorlink-ghana': 'custom.abt',
+    'vectorlink-ivorycoast': 'custom.abt',
     'vectorlink-kenya': 'custom.abt',
     'vectorlink-madagascar': 'custom.abt',
     'vectorlink-malawi': 'custom.abt',

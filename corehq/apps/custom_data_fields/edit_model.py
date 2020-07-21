@@ -137,7 +137,7 @@ class CustomDataModelMixin(object):
     @classmethod
     def get_validator(cls, domain):
         data_model = SQLCustomDataFieldsDefinition.get_or_create(domain, cls.field_type)
-        return data_model.get_validator(cls)
+        return data_model.get_validator()
 
     @classmethod
     def page_name(cls):

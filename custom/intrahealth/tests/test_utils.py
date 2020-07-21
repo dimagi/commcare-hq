@@ -80,7 +80,7 @@ class IntraHealthTestCase(TestCase):
             cls.couverture_table.drop(connection, checkfirst=True)
 
         cls.engine.dispose()
-        cls.mobile_worker.delete()
+        cls.mobile_worker.delete(deleted_by=None)
         cls.domain.delete()
         delete_all_xforms()
         super(IntraHealthTestCase, cls).tearDownClass()
