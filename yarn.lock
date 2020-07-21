@@ -1163,6 +1163,11 @@ detect-newline@^2.1.0:
   resolved "https://registry.yarnpkg.com/detect-newline/-/detect-newline-2.1.0.tgz#f41f1c10be4b00e87b5f13da680759f2c5bfd3e2"
   integrity sha1-9B8cEL5LAOh7XxPaaAdZ8sW/0+I=
 
+detectrtc@1.4.0:
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/detectrtc/-/detectrtc-1.4.0.tgz#2626dd651c62374344f07999d6e06008c0fe7f46"
+  integrity sha512-VQWrlpttdKCog05BhdRmlRzWa4QaJDHEoyvn1EoQvqUWz1DfneKXwmBO1sizVHRUyhu54mu6LSPG6bDQk1VrsA==
+
 dezalgo@^1.0.0, dezalgo@~1.0.3:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/dezalgo/-/dezalgo-1.0.3.tgz#7f742de066fc748bc8db820569dddce49bf0d456"
