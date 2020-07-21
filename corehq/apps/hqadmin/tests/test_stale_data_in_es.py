@@ -27,6 +27,7 @@ from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.util.elastic import reset_es_index
 from corehq.util.es import elasticsearch
+from corehq.util.es.interface import ElasticsearchInterface
 
 
 class ExitEarlyException(Exception):
@@ -262,10 +263,11 @@ class TestStaleDataInESSQL(TestCase):
 
     @classmethod
     def _delete_docs_from_es(cls, doc_ids, index_info):
+        es_interface = ElasticsearchInterface(cls.elasticsearch)
         refresh = False
         for doc_id in doc_ids:
             try:
-                cls.elasticsearch.delete(index_info.index, index_info.type, doc_id)
+                es_interface.delete(index_info.index, index_info.type, doc_id)
             except elasticsearch.NotFoundError:
                 pass
             else:
