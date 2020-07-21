@@ -3,6 +3,7 @@ import datetime
 from celery.signals import before_task_publish, task_prerun, task_postrun
 from django.core.cache import cache
 
+from corehq.util.metrics import push_metrics
 from corehq.util.quickcache import quickcache
 from dimagi.utils.parsing import string_to_utc_datetime
 
@@ -115,3 +116,8 @@ def celery_record_time_to_run(task_id=None, task=None, state=None, **kwargs):
             bucket_tag='duration', buckets=DAY_SCALE_TIME_BUCKETS, bucket_unit='s',
             tags=tags
         )
+
+
+@task_postrun.connect
+def celery_push_metrics(**kwargs):
+    push_metrics()

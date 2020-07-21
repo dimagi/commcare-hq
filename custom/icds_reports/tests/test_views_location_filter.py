@@ -145,7 +145,7 @@ class TestLocationView(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
         cls.awc_3.delete()
         cls.awc_2.delete()
         cls.awc.delete()

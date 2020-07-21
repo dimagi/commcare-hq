@@ -45,7 +45,7 @@ hqDefine('cloudcare/js/util', function () {
         if (message === undefined) {
             return;
         }
-        _show(message, $el, 30000, "alert alert-warning");
+        _show(message, $el, null, "alert alert-danger");
     };
 
     var showHTMLError = function (message, $el, autoHideTime) {
