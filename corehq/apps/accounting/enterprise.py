@@ -195,7 +195,7 @@ class EnterpriseMobileWorkerReport(EnterpriseReport):
     def headers(self):
         headers = super(EnterpriseMobileWorkerReport, self).headers
         return [_('Username'), _('Name'), _('Email Address'), _('Created Date [UTC]'), _('Last Sync [UTC]'),
-                _('Last Submission [UTC]'), _('CommCare Version')] + headers
+                _('Last Submission [UTC]'), _('CommCare Version'), _('User ID')] + headers
 
     def rows_for_domain(self, domain_obj):
         rows = []
@@ -210,6 +210,7 @@ class EnterpriseMobileWorkerReport(EnterpriseReport):
                 self.format_date(user.reporting_metadata.last_sync_for_user.sync_date),
                 self.format_date(user.reporting_metadata.last_submission_for_user.submission_date),
                 user.reporting_metadata.last_submission_for_user.commcare_version or '',
+                user.user_id
             ] + self.domain_properties(domain_obj))
         return rows
 
