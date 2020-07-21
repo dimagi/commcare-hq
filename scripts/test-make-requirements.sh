@@ -2,8 +2,6 @@
 set -e
 
 make requirements
-# we want to hard ignore any yarn.lock changes
-git checkout -- yarn.lock
 git --no-pager diff
 git update-index -q --refresh
 if git diff-index --quiet HEAD --; then
