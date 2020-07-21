@@ -15,7 +15,7 @@ from corehq.apps.hqadmin.management.commands.stale_data_in_es import (
 from corehq.apps.userreports.util import get_table_name
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.utils import should_use_sql_backend
-from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
+from custom.icds_reports.utils.connections import get_icds_ucr_citus_db_alias
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
 
