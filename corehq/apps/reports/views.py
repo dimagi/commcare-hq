@@ -899,7 +899,7 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
             "enddate": date_range.get("enddate") if date_range else "",
         })
 
-    return render(request, "reports/report_email_content.html", {
+    response = render(request, "reports/report_email_content.html", {
         "reports": report_outputs,
         "domain": domain,
         "couch_user": owner_id,
@@ -908,7 +908,8 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         "email": email,
         "notes": notes,
         "report_type": _("once off report") if once else _("scheduled report"),
-    }).content, excel_attachments
+    })
+    return response.content.decode("utf-8"), excel_attachments
 
 
 def render_full_report_notification(request, content, email=None, report_notification=None):
