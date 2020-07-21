@@ -7,6 +7,10 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
 
 
+class ExtensionError(Exception):
+    pass
+
+
 @attr.s(frozen=True)
 class ExtensionPoint:
     name = attr.ib()
@@ -25,14 +29,14 @@ class PluginContribution:
         if isinstance(_callable, str):
             _callable = to_function(self.callable_ref)
         if not _callable:
-            raise Exception(f"Plugin not found: '{self.callable_ref}'")
+            raise ExtensionError(f"Plugin not found: '{self.callable_ref}'")
         if not callable(_callable):
-            raise Exception(f"Plugin not callable: '{self.callable_ref}'")
+            raise ExtensionError(f"Plugin not callable: '{self.callable_ref}'")
         self._callable = _callable
         spec = inspect.getfullargspec(_callable)
         unconsumed_args = set(extension_point.providing_args) - set(spec.args)
         if unconsumed_args and not spec.varkw:
-            raise Exception(f"Not all extension point args are consumed: {unconsumed_args}")
+            raise ExtensionError(f"Not all extension point args are consumed: {unconsumed_args}")
 
     def should_call(self, **kwargs):
         if self.domains is None or 'domain' not in kwargs:
@@ -60,7 +64,7 @@ class Plugins:
 
     def register_plugin(self, point, callable_ref, domains=None):
         if point not in self.extension_point_registry:
-            raise Exception(f"unknown extension point '{point}'")
+            raise ExtensionError(f"unknown extension point '{point}'")
 
         plugin = PluginContribution(callable_ref, domains)
         plugin.validate(self.extension_point_registry[point])
@@ -68,7 +72,7 @@ class Plugins:
 
     def register_extension_point(self, point: ExtensionPoint):
         if point.name in self.extension_point_registry:
-            raise Exception(f"Exception point '{point.name}' already registered")
+            raise ExtensionError(f"Exception point '{point.name}' already registered")
         self.extension_point_registry[point.name] = point
 
     def get_extension_point_contributions(self, extension_point, **kwargs):

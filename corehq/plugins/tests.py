@@ -2,7 +2,7 @@ import re
 
 import testil
 
-from corehq.plugins.interface import ExtensionPoint, Plugins
+from corehq.plugins.interface import ExtensionPoint, Plugins, ExtensionError
 
 
 class DemoPlugin:
@@ -69,17 +69,17 @@ def test_plugins():
 
 
 def test_validation_missing_point():
-    with testil.assert_raises(Exception, msg="unknown extension point 'missing'"):
+    with testil.assert_raises(ExtensionError, msg="unknown extension point 'missing'"):
         plugins.register_plugin("missing", demo_plugin_2)
 
 
 def test_validation_missing_callable():
-    with testil.assert_raises(Exception, msg=re.compile("not callable")):
+    with testil.assert_raises(ExtensionError, msg="Plugin not found: 'corehq.missing'"):
         plugins.register_plugin("ext_point_a", "corehq.missing")
 
 
 def test_validation_not_callable():
-    with testil.assert_raises(Exception, msg=re.compile("not callable")):
+    with testil.assert_raises(ExtensionError, msg=re.compile("not callable")):
         plugins.register_plugin("ext_point_a", demo_plugin_1)
 
 
@@ -87,6 +87,6 @@ def test_validation_callable_args():
     def bad_spec(a, domain):
         pass
 
-    with testil.assert_raises(Exception, msg=re.compile("consumed.*arg1")):
+    with testil.assert_raises(ExtensionError, msg=re.compile("consumed.*arg1")):
         plugins.register_plugin("ext_point_a", bad_spec)
 

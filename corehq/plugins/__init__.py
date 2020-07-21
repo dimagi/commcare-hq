@@ -1,4 +1,4 @@
-from corehq.plugins.interface import Plugins
+from corehq.plugins.interface import Plugins, ExtensionError
 
 plugin_manager = Plugins()
 
