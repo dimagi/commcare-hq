@@ -106,8 +106,8 @@ class GetICDSSmsUsageTest(BaseICDSTest):
 
     @classmethod
     def tearDownClass(cls):
-        cls.users[0].delete()
-        cls.users[1].delete()
+        cls.users[0].delete(deleted_by=None)
+        cls.users[1].delete(deleted_by=None)
         SMS.objects.filter(
             domain=cls.domain,
         ).delete()

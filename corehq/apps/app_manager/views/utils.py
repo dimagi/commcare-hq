@@ -115,7 +115,7 @@ def get_langs(request, app):
 
 
 def set_lang_cookie(response, lang):
-    response.set_cookie('lang', encode_if_unicode(lang))
+    response.set_cookie('lang', lang)
 
 
 def bail(request, domain, app_id, not_found=""):
@@ -124,10 +124,6 @@ def bail(request, domain, app_id, not_found=""):
     else:
         messages.error(request, 'Oops! We could not complete your request. Please try again')
     return back_to_main(request, domain, app_id)
-
-
-def encode_if_unicode(s):
-    return s.encode('utf-8') if isinstance(s, str) else s
 
 
 def validate_langs(request, existing_langs):
@@ -374,7 +370,7 @@ def update_linked_app(app, master_app_id_or_build, user_id):
         app.reapply_overrides()
         app.save()
 
-    app.domain_link.update_last_pull('app', user_id, model_details=AppLinkDetail(app_id=app._id).to_json())
+    app.domain_link.update_last_pull('app', user_id, model_detail=AppLinkDetail(app_id=app._id).to_json())
     return app
 
 

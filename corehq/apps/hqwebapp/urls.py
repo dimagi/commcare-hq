@@ -46,6 +46,7 @@ from corehq.apps.settings.views import (
     TwoFactorSetupView,
 )
 
+
 urlpatterns = [
     url(r'^$', redirect_to_default),
     url(r'^homepage/$', redirect_to_default, name='homepage'),
@@ -72,13 +73,17 @@ urlpatterns = [
         name='dropbox_upload'),
     url(r'^account/two_factor/$', TwoFactorProfileView.as_view(), name=TwoFactorProfileView.urlname),
     url(r'^account/two_factor/setup/$', TwoFactorSetupView.as_view(), name=TwoFactorSetupView.urlname),
-    url(r'^account/two_factor/setup/complete/$', TwoFactorSetupCompleteView.as_view(), name=TwoFactorSetupCompleteView.urlname),
-    url(r'^account/two_factor/backup/tokens/$', TwoFactorBackupTokensView.as_view(), name=TwoFactorBackupTokensView.urlname),
+    url(r'^account/two_factor/setup/complete/$', TwoFactorSetupCompleteView.as_view(),
+        name=TwoFactorSetupCompleteView.urlname),
+    url(r'^account/two_factor/backup/tokens/$', TwoFactorBackupTokensView.as_view(),
+        name=TwoFactorBackupTokensView.urlname),
     url(r'^account/two_factor/disable/$', TwoFactorDisableView.as_view(), name=TwoFactorDisableView.urlname),
-    url(r'^account/two_factor/backup/phone/register/$', TwoFactorPhoneSetupView.as_view(), name=TwoFactorPhoneSetupView.urlname),
+    url(r'^account/two_factor/backup/phone/register/$', TwoFactorPhoneSetupView.as_view(),
+        name=TwoFactorPhoneSetupView.urlname),
     url(r'^account/two_factor/backup/phone/unregister/(?P<pk>\d+)/$', TwoFactorPhoneDeleteView.as_view(),
         name=TwoFactorPhoneDeleteView.urlname),
-    url(r'', include((tf_urls + tf_twilio_urls, 'two_factor'), namespace='two_factor')),
+    url(r'', include(tf_urls)),
+    url(r'', include(tf_twilio_urls)),
     url(r'^account/two_factor/reset/$', TwoFactorResetView.as_view(), name=TwoFactorResetView.urlname),
     url(r'^hq/admin/session_details/$', SessionDetailsView.as_view(),
         name=SessionDetailsView.urlname),

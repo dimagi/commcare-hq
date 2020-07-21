@@ -2,7 +2,7 @@ import logging
 import sys
 import traceback
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.core.management import call_command
 from django.db import transaction
 
@@ -39,6 +39,15 @@ class PopulateSQLCommand(BaseCommand):
         This should find and update the sql object that corresponds to the given doc,
         or create it if it doesn't yet exist. This method is responsible for saving
         the sql object.
+        """
+        raise NotImplementedError()
+
+    @classmethod
+    def diff_couch_and_sql(cls, couch, sql):
+        """
+        This should compare each attribute of the given couch document and sql object.
+        Return a human-reaedable string describing their differences, or None if the
+        two are equivalent.
         """
         raise NotImplementedError()
 
@@ -107,24 +116,75 @@ class PopulateSQLCommand(BaseCommand):
     def couch_db(cls):
         return couch_config.get_db(cls.couch_db_slug())
 
-    def handle(self, **options):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--verify-only',
+            action='store_true',
+            dest='verify_only',
+            default=False,
+            help="""
+                Don't migrate anything, instead check if couch and sql data is identical.
+                Only works for migrations that use a couch_id on the sql model.
+            """,
+        )
+        parser.add_argument(
+            '--skip-verify',
+            action='store_true',
+            dest='skip_verify',
+            default=False,
+            help="""
+                Migrate even if verifcation fails. This is intended for usage only with
+                models that don't support verification.
+            """,
+        )
 
-        doc_count = get_doc_count_by_type(self.couch_db(), self.couch_doc_type())
+    def handle(self, **options):
+        verify_only = options.get("verify_only", False)
+        skip_verify = options.get("skip_verify", False)
+
+        if verify_only and skip_verify:
+            raise CommandError("verify_only and skip_verify are mutually exclusive")
+
+        self.doc_count = get_doc_count_by_type(self.couch_db(), self.couch_doc_type())
+        self.diff_count = 0
+        self.doc_index = 0
+
         logger.info("Found {} {} docs and {} {} models".format(
-            doc_count,
+            self.doc_count,
             self.couch_doc_type(),
             self.sql_class().objects.count(),
             self.sql_class().__name__,
         ))
-        doc_index = 0
         for doc in get_all_docs_with_doc_types(self.couch_db(), [self.couch_doc_type()]):
-            doc_index += 1
-            logger.info("Looking at {} doc #{} of {} with id {}".format(
-                self.couch_doc_type(),
-                doc_index,
-                doc_count,
-                doc["_id"]
-            ))
-            with transaction.atomic():
-                model, created = self.update_or_create_sql_object(doc)
-                logger.info("{} model for doc with id {}".format("Creating" if created else "Updated", doc["_id"]))
+            self.doc_index += 1
+            if not verify_only:
+                self._migrate_doc(doc)
+            if not skip_verify:
+                self._verify_doc(doc)
+
+        logger.info(f"Processed {self.doc_index} documents")
+        if not skip_verify:
+            logger.info(f"Found {self.diff_count} differences")
+
+    def _verify_doc(self, doc):
+        try:
+            obj = self.sql_class().objects.get(couch_id=doc["_id"])
+            diff = self.diff_couch_and_sql(doc, obj)
+            if diff:
+                logger.info(f"Doc {obj.couch_id} has differences: {diff}")
+                self.diff_count += 1
+                exit(1)
+        except self.sql_class().DoesNotExist:
+            pass    # ignore, the difference in total object count has already been displayed
+
+    def _migrate_doc(self, doc):
+        logger.info("Looking at {} doc #{} of {} with id {}".format(
+            self.couch_doc_type(),
+            self.doc_index,
+            self.doc_count,
+            doc["_id"]
+        ))
+        with transaction.atomic():
+            model, created = self.update_or_create_sql_object(doc)
+            action = "Creating" if created else "Updated"
+            logger.info("{} model for doc with id {}".format(action, doc["_id"]))

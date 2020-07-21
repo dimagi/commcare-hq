@@ -42,7 +42,7 @@ class SyncWebUserTestCase(TestCase):
         self.assertEqual(len(self.web_user.first_name), 50)
 
     def tearDown(self):
-        WebUser.get_by_user_id(self.web_user.user_id).delete()
+        WebUser.get_by_user_id(self.web_user.user_id).delete(deleted_by=None)
         self.domain_obj.delete()
         super().tearDown()
 
@@ -84,13 +84,13 @@ class SyncCommCareUserTestCase(TestCase):
         self.assertEqual(len(self.commcare_user.first_name), 50)
 
     def test_retire(self):
-        self.commcare_user.retire()
+        self.commcare_user.retire(deleted_by=None)
         self.assertEqual(User.objects.filter(username=self.commcare_user.username).count(), 0)
 
         self.commcare_user = CommCareUser.create(self.domain, self.username, self.password, None, None)
         self.commcare_user.save()
 
     def tearDown(self):
-        CommCareUser.get_by_user_id(self.commcare_user.user_id).delete()
+        CommCareUser.get_by_user_id(self.commcare_user.user_id).delete(deleted_by=None)
         self.domain_obj.delete()
         super(SyncCommCareUserTestCase, self).tearDown()
