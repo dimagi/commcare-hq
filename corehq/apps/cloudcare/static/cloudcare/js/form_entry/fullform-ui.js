@@ -434,6 +434,7 @@ function Question(json, parent) {
     var self = this;
     self.fromJS(json);
     self.parent = parent;
+    // Grab the parent pubsub so questions can interact with other questions on the same form/group.
     self.parentPubSub = parent.pubsub;
     self.error = ko.observable(null);
     self.serverError = ko.observable(null);
@@ -509,7 +510,12 @@ Question.prototype.fromJS = function (json) {
 
     ko.mapping.fromJS(json, mapping, self);
 };
-
+/**
+ * Returns a list of style strings that match the given pattern.
+ * If a regex is provided, returns regex matches. If a string is provided
+ * an exact match is returned.
+ * @param {Object} pattern - the regex or string used to find matching styles.
+ */
 Question.prototype.stylesContaining = function(pattern) {
     var self = this;
     var retVal = [];
@@ -525,7 +531,12 @@ Question.prototype.stylesContaining = function(pattern) {
     }
 	return retVal;
 }
-
+/**
+ * Returns a boolean of whether the styles contain a pattern
+ * If a regex is provided, returns regex matches. If a string is provided
+ * an exact match is returned.
+ * @param {Object} pattern - the regex or string used to find matching styles.
+ */
 Question.prototype.stylesContains = function(pattern) {
     return this.stylesContaining(pattern).length > 0;
 }
