@@ -431,6 +431,15 @@ Or, to drop the current test DB and create a fresh one
 See `corehq.tests.nose.HqdbContext` for full description
 of `REUSE_DB` and `--reusedb`.
 
+### Accessing the test shell and database
+
+The `CCHQ_TESTING` environment variable allows you to run management commands in the context of your test environment rather than your dev environment.
+This is most useful for shell or direct database access:
+
+    $ CCHQ_TESTING=1 ./manage.py dbshell
+    
+    $ CCHQ_TESTING=1 ./manage.py shell
+
 ### Running tests by tag
 You can run all tests with a certain tag as follows:
 
