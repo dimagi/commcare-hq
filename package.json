@@ -81,7 +81,7 @@
     "select2": "4.0.0",
     "topojson": "3.0.2",
     "uglify-js": "2.8.29",
-    "ui-select": "angular-ui/ui-select#v0.13.2",
+    "ui-select": "npm:ui-select#0.13.2",
     "underscore": "1.8.3",
     "xpath": "dimagi/js-xpath#v0.0.3",
     "zxcvbn": "4.2.0"
