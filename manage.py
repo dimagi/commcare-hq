@@ -67,7 +67,7 @@ def _patch_gevent_if_required(args, gevent_commands):
 
 def init_hq_python_path():
     _set_source_root_parent('submodules')
-    _set_source_root_parent('extra')
+    _set_source_root_parent('extensions')
     _set_source_root(os.path.join('corehq', 'ex-submodules'))
     _set_source_root(os.path.join('custom', '_legacy'))
 
