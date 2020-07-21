@@ -15,7 +15,7 @@ class ExtensionError(Exception):
 class ExtensionPoint:
     name = attr.ib()
     providing_args = attr.ib()
-    docs = attr.ib(default="")
+    help = attr.ib(default="")
 
 
 class ExtensionContribution:
@@ -70,10 +70,10 @@ class CommCareExtensions:
         extension.validate(self.extension_point_registry[point])
         self.registry[point].append(extension)
 
-    def register_extension_point(self, point: ExtensionPoint):
-        if point.name in self.extension_point_registry:
-            raise ExtensionError(f"Exception point '{point.name}' already registered")
-        self.extension_point_registry[point.name] = point
+    def register_extension_point(self, name, providing_args=(), help=""):
+        if name in self.extension_point_registry:
+            raise ExtensionError(f"Exception point '{name}' already registered")
+        self.extension_point_registry[name] = ExtensionPoint(name, providing_args, help)
 
     def get_extension_point_contributions(self, extension_point, **kwargs):
         extensions = self.registry[extension_point]
