@@ -29,11 +29,11 @@ from corehq.elastic import (
     report_and_fail_on_shard_failures,
 )
 from corehq.pillows.base import VALUE_TAG, restore_property_dict
-from corehq.pillows.mappings.case_mapping import CASE_INDEX
-from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
-from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
-from corehq.pillows.mappings.user_mapping import USER_INDEX
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
+from corehq.pillows.mappings.case_mapping import CASE_ES_ALIAS
+from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_ES_ALIAS
+from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_ALIAS
+from corehq.pillows.mappings.user_mapping import USER_ES_ALIAS
+from corehq.pillows.mappings.xform_mapping import XFORM_ALIAS
 from no_exceptions.exceptions import Http400
 
 logger = logging.getLogger('es')
@@ -72,7 +72,7 @@ class ESView(View):
     #     -d"query=@myquery.json&csrfmiddlewaretoken=<csrftoken>"
     #or, call this programmatically to avoid CSRF issues.
 
-    index = ""
+    es_alias = ""
     domain = ""
     es = None
     doc_type = None
@@ -123,7 +123,7 @@ class ESView(View):
 
     def get_document(self, doc_id):
         try:
-            doc = self.es_interface.get_doc(self.index, '_all', doc_id)
+            doc = self.es_interface.get_doc(self.es_alias, '_all', doc_id)
         except NotFoundError:
             raise object_does_not_exist(self.doc_type, doc_id)
 
@@ -148,7 +148,7 @@ class ESView(View):
             es_query['fields'] = fields
 
         try:
-            es_results = self.es_interface.search(self.index, es_type, body=es_query)
+            es_results = self.es_interface.search(self.es_alias, es_type, body=es_query)
             report_and_fail_on_shard_failures(es_results)
         except ElasticsearchException as e:
             if 'query_string' in es_query.get('query', {}).get('filtered', {}).get('query', {}):
@@ -164,7 +164,7 @@ class ESView(View):
                     raise ESUserError("Error with elasticsearch query: %s" %
                         querystring)
 
-            msg = "Error in elasticsearch query [%s]: %s\nquery: %s" % (self.index, str(e), es_query)
+            msg = "Error in elasticsearch query [%s]: %s\nquery: %s" % (self.es_alias, str(e), es_query)
             raise ESError(msg)
 
         hits = []
@@ -190,19 +190,19 @@ class CaseESView(ESView):
     Expressive CaseES interface. Yes, this is redundant with pieces of the v0_1.py CaseAPI - todo to merge these applications
     Which this should be the final say on ES access for Casedocs
     """
-    index = CASE_INDEX
+    es_alias = CASE_ES_ALIAS
     doc_type = "CommCareCase"
     model = ESCase
 
 
 class ReportCaseESView(ESView):
-    index = REPORT_CASE_INDEX
+    es_alias = REPORT_CASE_ES_ALIAS
     doc_type = "CommCareCase"
     model = ESCase
 
 
 class FormESView(ESView):
-    index = XFORM_INDEX
+    es_alias = XFORM_ALIAS
     doc_type = "XFormInstance"
     model = ESXFormInstance
 
@@ -264,7 +264,7 @@ def report_term_filter(terms, mapping):
 
 
 class ReportFormESView(FormESView):
-    index = REPORT_XFORM_INDEX
+    es_alias = REPORT_XFORM_ALIAS
     doc_type = "XFormInstance"
     model = ESXFormInstance
 
