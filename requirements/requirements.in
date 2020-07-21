@@ -8,7 +8,7 @@ jsonobject-couchdbkit~=1.0.1
 git+git://github.com/dimagi/celery@dc7253614fd8500af78b09d1ceb79c50f1baac8d#egg=celery
 # required by django-digest
 decorator==4.0.11
-django>=1.11.29,<2  # https://github.com/advisories/GHSA-hmr4-m2h5-33qx
+django~=2.2.13
 django-braces==1.13.0
 django-celery-results~=1.0.0
 django-crispy-forms==1.7.0
@@ -79,8 +79,8 @@ Pygments~=2.0
 Jinja2~=2.10
 tinys3==0.1.12
 django-formtools==2.1
-django-otp==0.3.13
-django-two-factor-auth==1.6.2
+django-otp~=0.9.3
+django-two-factor-auth~=1.12
 datadog==0.15.0
 ddtrace==0.14.1
 django-websocket-redis==0.5.2

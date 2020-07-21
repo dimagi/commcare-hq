@@ -496,7 +496,7 @@
     {% if not requirejs_main %}
       {% if request.use_maps %}
         {% compress js %}
-          <script src="{% static 'jquery-color/jquery.color.js' %}"></script>
+          <script src="{% static 'jquery-color/dist/jquery.color.js' %}"></script>
           <script src="{% static 'leaflet/dist/leaflet.js' %}"></script>
         {% endcompress %}
       {% endif %}

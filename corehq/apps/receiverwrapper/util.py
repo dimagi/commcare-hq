@@ -38,7 +38,7 @@ def submit_form_locally(instance, domain, **kwargs):
     if not 200 <= result.response.status_code < 300:
         raise LocalSubmissionError('Error submitting (status code %s): %s' % (
             result.response.status_code,
-            result.response.content,
+            result.response.content.decode('utf-8', errors='backslashreplace'),
         ))
     return result
 

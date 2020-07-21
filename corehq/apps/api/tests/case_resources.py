@@ -143,7 +143,7 @@ class TestCommCareCaseResource(APIResourceTest):
         self.assertEqual(
             response.status_code,
             200,
-            "Status code was not 200. Response content was {}".format(response.content)
+            f"Status code was not 200. Response content was {response.content!r}"
         )
         parent_cases = list(json.loads(response.content)['parent_cases'].values())
 
@@ -157,7 +157,7 @@ class TestCommCareCaseResource(APIResourceTest):
         self.assertEqual(
             response.status_code,
             200,
-            "Status code was not 200. Response content was {}".format(response.content)
+            f"Status code was not 200. Response content was {response.content!r}"
         )
         child_cases = list(json.loads(response.content)['child_cases'].values())
 

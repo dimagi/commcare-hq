@@ -26,11 +26,14 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
         permissions = Permissions(edit_apps=True, view_reports=True)
         cls.role = UserRole.get_or_create_with_permissions(cls.domain.name, permissions, 'edit-apps')
+        cls.patcher = patch('corehq.apps.user_importer.tasks.UserUploadRecord')
+        cls.patcher.start()
 
     @classmethod
     def tearDownClass(cls):
         cls.domain.delete()
         cls.other_domain.delete()
+        cls.patcher.stop()
         super().tearDownClass()
 
     def tearDown(self):
@@ -63,7 +66,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(user_id='missing')],
             [],
-            None
+            None,
+            mock.MagicMock()
         )
 
         self.assertIsNone(self.user)
@@ -77,7 +81,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(location_code=self.loc1.site_code)],
             [],
-            None
+            None,
+            mock.MagicMock()
         )
         self.assertEqual(self.user.location_id, self.loc1._id)
         self.assertEqual(self.user.location_id, self.user.user_data.get('commcare_location_id'))
@@ -104,7 +109,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(location_code=[a.site_code for a in [self.loc1, self.loc2]])],
             [],
-            None
+            None,
+            mock.MagicMock()
         )
         # first location should be primary location
         self.assertEqual(self.user.location_id, self.loc1._id)
@@ -122,7 +128,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(location_code=[a.site_code for a in [self.loc1, self.loc2]])],
             [],
-            None
+            None,
+            mock.MagicMock()
         )
 
         # deassign all locations
@@ -130,7 +137,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(location_code=[], user_id=self.user._id)],
             [],
-            None
+            None,
+            mock.MagicMock()
         )
 
         # user should have no locations
@@ -202,7 +210,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(name=1234)],
             [],
-            None
+            None,
+            mock.MagicMock()
         )
         self.assertEqual(self.user.full_name, "1234")
 
@@ -215,7 +224,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(name=None)],
             [],
-            None
+            None,
+            mock.MagicMock()
         )
         self.assertEqual(self.user.full_name, "")
 
@@ -228,7 +238,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(email=email)],
             [],
-            None
+            None,
+            mock.MagicMock()
         )
         self.assertEqual(self.user.email, email.lower())
 
@@ -237,7 +248,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(role=self.role.name)],
             [],
-            None
+            None,
+            mock.MagicMock()
         )
         self.assertEqual(self.user.get_role(self.domain_name).name, self.role.name)
 
@@ -246,7 +258,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(is_active='')],
             [],
-            None
+            None,
+            mock.MagicMock()
         )
         self.assertTrue(self.user.is_active)
 
@@ -255,7 +268,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec()],
             [],
-            None
+            None,
+            mock.MagicMock()
         )
         self.assertIsNotNone(self.user)
 
@@ -263,7 +277,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(user_id=self.user._id, username='')],
             [],
-            None
+            None,
+            mock.MagicMock()
         )
 
     def test_update_user_numeric_username(self):
@@ -271,7 +286,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(username=123)],
             [],
-            None
+            None,
+            mock.MagicMock()
         )
         self.assertIsNotNone(
             CommCareUser.get_by_username('{}@{}.commcarehq.org'.format('123', self.domain.name))
@@ -282,7 +298,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(delete_keys=['is_active'], is_account_confirmed='False')],
             [],
-            None
+            None,
+            mock.MagicMock()
         )
         user = self.user
         self.assertIsNotNone(user)
@@ -313,7 +330,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
                 ),
             ],
             [],
-            None
+            None,
+            mock.MagicMock()
         )
         self.assertEqual(mock_account_confirm_email.call_count, 1)
         self.assertEqual('with_email', mock_account_confirm_email.call_args[0][0].raw_username)
@@ -332,6 +350,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
                 )
             ],
             [],
+            mock.MagicMock(),
             mock.MagicMock()
         )
         self.assertTrue(mock_invite.send_activation_email.called)
@@ -345,6 +364,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(web_user='a@a.com', is_account_confirmed='True', role=self.role.name)],
             [],
+            mock.MagicMock(),
             mock.MagicMock()
         )
         web_user = WebUser.get_by_username(username)
@@ -358,6 +378,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(web_user='a@a.com', role=self.role.name)],
             [],
+            mock.MagicMock(),
             mock.MagicMock()
         )
         web_user = WebUser.get_by_username(username)
@@ -370,6 +391,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(web_user='a@a.com', remove_web_user='True')],
             [],
+            mock.MagicMock(),
             mock.MagicMock()
         )
         web_user = WebUser.get_by_username(username)
@@ -377,6 +399,17 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
 
 class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.patcher = patch('corehq.apps.user_importer.tasks.UserUploadRecord')
+        cls.patcher.start()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.patcher.stop()
+        super().tearDownClass()
+
     def setUp(self):
         super(TestUserBulkUploadStrongPassword, self).setUp()
         delete_all_users()
@@ -415,7 +448,8 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             list(user_spec + self.user_specs),
             [],
-            None
+            None,
+            mock.MagicMock()
         )['messages']['rows']
         self.assertEqual(rows[0]['flag'], "'password' values must be unique")
 
@@ -427,6 +461,7 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             list([updated_user_spec]),
             [],
-            None
+            None,
+            mock.MagicMock()
         )['messages']['rows']
         self.assertEqual(rows[0]['flag'], 'Password is not strong enough. Try making your password more complex.')

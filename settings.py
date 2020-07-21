@@ -95,7 +95,7 @@ LOCALE_PATHS = (
     os.path.join(FILEPATH, 'locale'),
 )
 
-BOWER_COMPONENTS = os.path.join(FILEPATH, 'bower_components')
+YARN_COMPONENTS = os.path.join(FILEPATH, 'node_modules')
 
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
@@ -104,7 +104,7 @@ STATICFILES_FINDERS = (
 )
 
 STATICFILES_DIRS = [
-    BOWER_COMPONENTS,
+    YARN_COMPONENTS,
 ]
 
 # bleh, why did this submodule have to be removed?
@@ -772,12 +772,9 @@ ANALYTICS_CONFIG = {
 
 GREENHOUSE_API_KEY = ''
 
-MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiZGltYWdpIiwiYSI6ImpZWWQ4dkUifQ.3FNy5rVvLolWLycXPxKVEA'
+MAPBOX_ACCESS_TOKEN = ''
 
 OPEN_EXCHANGE_RATES_API_ID = ''
-
-# for touchforms maps
-GMAPS_API_KEY = "changeme"
 
 # import local settings if we find them
 LOCAL_APPS = ()
@@ -1995,6 +1992,7 @@ DOMAIN_MODULE_MAP = {
     'vectorlink-burkina-faso': 'custom.abt',
     'vectorlink-ethiopia': 'custom.abt',
     'vectorlink-ghana': 'custom.abt',
+    'vectorlink-ivorycoast': 'custom.abt',
     'vectorlink-kenya': 'custom.abt',
     'vectorlink-madagascar': 'custom.abt',
     'vectorlink-malawi': 'custom.abt',
