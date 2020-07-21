@@ -513,8 +513,9 @@ Question.prototype.fromJS = function (json) {
 Question.prototype.stylesContaining = function(pattern) {
     var self = this;
     var retVal = [];
-    if (self.style) {
-        var styles = ko.utils.unwrapObservable(self.style.raw).split(' ');
+    var styleStr = ko.utils.unwrapObservable(self.style.raw);
+    if (styleStr) {
+        var styles = styleStr.split(' ');
         styles.forEach(function(style) {
             if ((pattern instanceof RegExp && style.match(pattern))
                 || (typeof pattern === "string" && pattern === style)) {

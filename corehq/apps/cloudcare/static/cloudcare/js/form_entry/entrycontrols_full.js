@@ -228,14 +228,13 @@ function AddressEntry(question, options) {
             broadcastObj = {
                 full: item.place_name
             }
-            for (var i=0; i<item.context.length; i++) {
-                var contextItem = item.context[i];
+            item.context.forEach(function (contextItem) {
                 if (contextItem.id.startsWith('postcode')) {
                     broadcastObj.zipcode = contextItem.text;
                 } else if (contextItem.id.startsWith('place')) {
                     broadcastObj.city= contextItem.text;
                 }
-            }
+            });
             broadcastObj.street = item.address || '';
             broadcastObj.street += ' ' + item.text;
 
