@@ -215,13 +215,19 @@ FreeTextEntry.prototype.enableReceiver = function (question, options) {
     }
 };
 
-
+/**
+ * The entry that represents an address entry.
+ * Takes in a `broadcastStyles` list of strings in format `broadcast-<topic>` to broadcast
+ * the address item that is selected. Item contains `full`, `street`, `city`, `state`, `zipcode`.
+ */
 function AddressEntry(question, options) {
     var self = this;
     FreeTextEntry.call(self, question, options);
     self.templateType = 'address';
     self.broadcastTopics = [];
 
+    // Callback for the geocoder when an address item is selected. We intercept here and broadcast to
+    // subscribers.
     self.geocoderItemCallback = function(item) {
         self.rawAnswer(item.place_name);
         self.broadcastTopics.forEach(function(broadcastTopic) {
@@ -237,14 +243,17 @@ function AddressEntry(question, options) {
                     broadcastObj.state = contextValue.short_code.replace('US-', '');
                 }
             });
+            // street composed of (optional) number and street name.
             broadcastObj.street = item.address || '';
             broadcastObj.street += ' ' + item.text;
 
             question.parentPubSub.notifySubscribers(broadcastObj, broadcastTopic);
-         });
+        });
+        // The default full address returned to the search bar
         return item.place_name;
     };
 
+    // geocoder function called when user presses 'x', broadcast a no answer to subscribers.
     self.geocoderOnClearCallback = function () {
         self.answer(Formplayer.Const.NO_ANSWER);
         self.broadcastTopics.forEach(function(broadcastTopic) {
@@ -266,11 +275,13 @@ function AddressEntry(question, options) {
             accessToken: window.MAPBOX_ACCESS_TOKEN,
             types: 'address',
             enableEventLogging: false,
+            // proximity set to NYC
             proximity: { longitude: -74.006058, latitude: 40.712772},
             getItemValue: self.geocoderItemCallback,
         });
         geocoder.on('clear', self.geocoderOnClearCallback);
         geocoder.addTo('#' + self.entryId);
+        // Must add the form-control class to the input created by mapbox in order to edit.
         $('input.mapboxgl-ctrl-geocoder--input').addClass('form-control');
     };
 }
