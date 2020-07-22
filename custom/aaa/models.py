@@ -28,8 +28,7 @@ from dimagi.utils.dates import force_to_date
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
-from corehq.sql_db.connections import get_aaa_db_alias
-from custom.aaa.const import ALL, PRODUCT_CODES
+from custom.aaa.const import ALL, PRODUCT_CODES, get_aaa_db_alias
 
 logger = logging.getLogger(__name__)
 

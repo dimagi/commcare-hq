@@ -66,5 +66,6 @@ branches:
   - ml/SAAS-10954-show-all-option  # Michelle July 15
   - dm/django2-upgrade  # Danny / Daniel July 15
   - kev/webapps-addresses-question # Kevin July 16
+  - ce/2fa-lockout
 
 submodules: {}
