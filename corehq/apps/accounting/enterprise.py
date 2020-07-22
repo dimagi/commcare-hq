@@ -22,7 +22,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_mobile_user_count,
     get_web_user_count,
 )
-from corehq.apps.users.models import CouchUser, Invitation
+from corehq.apps.users.models import CouchUser, Invitation, UserRole
 from corehq.util.quickcache import quickcache
 
 
