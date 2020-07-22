@@ -352,7 +352,7 @@ HQ_APPS = (
     'corehq.apps.case_search',
     'corehq.apps.zapier.apps.ZapierConfig',
     'corehq.apps.translations',
-    'corehq.extensions.app_config.PluginAppConfig',
+    'corehq.extensions.app_config.ExtensionAppConfig',
 
     # custom reports
     'pact',
