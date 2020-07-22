@@ -131,8 +131,8 @@ function parse_meta(type, style) {
  */
 function Container(json) {
     var self = this;
+    self.pubsub = new ko.subscribable();
     self.fromJS(json);
-
     /**
      * Used in KO template to determine what template to use for a child
      * @param {Object} child - The child object to be rendered, either Group, Repeat, or Question
@@ -435,6 +435,8 @@ function Question(json, parent) {
     var self = this;
     self.fromJS(json);
     self.parent = parent;
+    // Grab the parent pubsub so questions can interact with other questions on the same form/group.
+    self.parentPubSub = parent.pubsub;
     self.error = ko.observable(null);
     self.serverError = ko.observable(null);
     self.rel_ix = ko.observable(relativeIndex(self.ix()));
@@ -509,6 +511,36 @@ Question.prototype.fromJS = function (json) {
 
     ko.mapping.fromJS(json, mapping, self);
 };
+/**
+ * Returns a list of style strings that match the given pattern.
+ * If a regex is provided, returns regex matches. If a string is provided
+ * an exact match is returned.
+ * @param {Object} pattern - the regex or string used to find matching styles.
+ */
+Question.prototype.stylesContaining = function(pattern) {
+    var self = this;
+    var retVal = [];
+    var styleStr = ko.utils.unwrapObservable(self.style.raw);
+    if (styleStr) {
+        var styles = styleStr.split(' ');
+        styles.forEach(function(style) {
+            if ((pattern instanceof RegExp && style.match(pattern))
+                || (typeof pattern === "string" && pattern === style)) {
+                retVal.push(style);
+            }
+        })
+    }
+	return retVal;
+}
+/**
+ * Returns a boolean of whether the styles contain a pattern
+ * If a regex is provided, returns regex matches. If a string is provided
+ * an exact match is returned.
+ * @param {Object} pattern - the regex or string used to find matching styles.
+ */
+Question.prototype.stylesContains = function(pattern) {
+    return this.stylesContaining(pattern).length > 0;
+}
 
 
 Formplayer.Const = {
