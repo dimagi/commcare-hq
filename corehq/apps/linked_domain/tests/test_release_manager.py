@@ -43,7 +43,7 @@ class TestReleaseManager(BaseLinkedAppsTest):
         )
 
     def _assert_error(self, domain, error):
-        for actual in self.manager.errors_by_domain.get(domain, []):
+        for actual in self.manager.errors_by_domain.get('text', {}).get(domain, []):
             if error in actual:
                 self.assertTrue(True)
                 return
