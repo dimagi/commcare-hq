@@ -28,7 +28,7 @@ class Command(BaseCommand):
 
         # pregnant and lactating st, sc, obc, others
         rows = AggCcsRecord.objects.filter(
-                month=date(2020, 6, 1), aggregation_level=5).values('district_id', 'caste').order_by().annotate(
+                month=date(2020, 6, 1), aggregation_level=5).values('district_id', 'caste').annotate(
                 pregnant=Sum('pregnant'), lactating=Sum('lactating'))
         for row in rows:
             district_id = row['district_id']
@@ -48,7 +48,7 @@ class Command(BaseCommand):
         # child 6 months - 3 years sc, st, obc, others
         rows = AggChildHealth.objects.filter(
                 month=date(2020, 6, 1), state_id=STATE_ID, aggregation_level=5,
-                age_tranche__in=['12', '24', '36']).values('district_id', 'caste').order_by().annotate(
+                age_tranche__in=['12', '24', '36']).values('district_id', 'caste').annotate(
                 valid_count=Sum('valid_in_month'))
         for row in rows:
             district_id = row['district_id']
@@ -59,7 +59,7 @@ class Command(BaseCommand):
         # child 3 years - 6 years sc, st, obc, others
         rows = AggChildHealth.objects.filter(
                 month=date(2020, 6, 1), state_id=STATE_ID, aggregation_level=5,
-                age_tranche__in=['48', '60', '72']).values('district_id', 'caste').order_by().annotate(
+                age_tranche__in=['48', '60', '72']).values('district_id', 'caste').annotate(
             valid_count=Sum('valid_in_month'))
         for row in rows:
             district_id = row['district_id']
@@ -70,7 +70,7 @@ class Command(BaseCommand):
         # child 6 months - 3 years minority
         rows = AggChildHealth.objects.filter(
                 month=date(2020, 6, 1), state_id=STATE_ID, minority='yes', aggregation_level=5,
-                age_tranche__in=['12', '24', '36']).values('district_id').order_by().annotate(
+                age_tranche__in=['12', '24', '36']).values('district_id').annotate(
             valid_count=Sum('valid_in_month'))
         for row in rows:
             district_id = row['district_id']
@@ -79,14 +79,13 @@ class Command(BaseCommand):
         # child 3 years - 6 years minority
         rows = AggChildHealth.objects.filter(
                 month=date(2020, 6, 1), state_id=STATE_ID, minority='yes', aggregation_level=5,
-                age_tranche__in=['48', '60', '72']).values('district_id').order_by().annotate(
+                age_tranche__in=['48', '60', '72']).values('district_id').annotate(
             valid_count=Sum('valid_in_month'))
         for row in rows:
             district_id = row['district_id']
             data[district_id][headers.index('minority_ch_3_to_6yr')] = row['valid_count']
+        excel_rows.extend(data.values())
 
-        for _, val in data.items():
-            excel_rows.append(val)
         fout = open('/home/cchq/ap_benefic_data.csv', 'w')
         writer = csv.writer(fout)
         writer.writerows(excel_rows)
