@@ -45,17 +45,6 @@ from CommcareTranslationChecker import validate_workbook
 from CommcareTranslationChecker.exceptions import FatalError
 
 
-def run_translation_checker(file_obj):
-    translation_checker_messages = []
-    result_wb = None
-    try:
-        result_wb = validate_workbook(file_obj, translation_checker_messages)
-    except FatalError as e:
-        translation_checker_messages.append(
-            _("Workbook check failed to finish due to the following error : %s" % e))
-    return translation_checker_messages, result_wb
-
-
 def validate_bulk_app_translation_upload(app, workbook, email, lang_to_compare, file_obj):
     from corehq.apps.translations.validator import UploadedTranslationsValidator
     msgs = UploadedTranslationsValidator(app, workbook, lang_to_compare).compare()
@@ -65,6 +54,17 @@ def validate_bulk_app_translation_upload(app, workbook, email, lang_to_compare, 
         return [(messages.error, _("Issues found. You should receive an email shortly."))]
     else:
         return [(messages.success, _("No issues found."))]
+
+
+def run_translation_checker(file_obj):
+    translation_checker_messages = []
+    result_wb = None
+    try:
+        result_wb = validate_workbook(file_obj, translation_checker_messages)
+    except FatalError as e:
+        translation_checker_messages.append(
+            _("Workbook check failed to finish due to the following error : %s" % e))
+    return translation_checker_messages, result_wb
 
 
 def _email_app_translations_discrepancies(msgs, checker_messages, email, app_name, result_wb):
