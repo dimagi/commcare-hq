@@ -1,6 +1,7 @@
 import json
 import logging
 from collections import OrderedDict
+from functools import partial
 from distutils.version import LooseVersion
 
 from django.contrib import messages
@@ -85,6 +86,7 @@ from corehq.apps.app_manager.views.utils import (
     clear_xmlns_app_id_cache,
     get_langs,
     handle_custom_icon_edits,
+    handle_shadow_child_modules,
 )
 from corehq.apps.app_manager.xform import CaseError
 from corehq.apps.case_search.models import case_search_enabled_for_domain
@@ -180,6 +182,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
         'details': _get_module_details_context(request, app, module, case_property_builder, case_type),
         'case_list_form_options': _case_list_form_options(app, module, case_type, lang),
         'valid_parents_for_child_module': _get_valid_parents_for_child_module(app, module),
+        'shadow_parent': _get_shadow_parent(app, module),
         'js_options': {
             'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
             'is_search_enabled': case_search_enabled_for_domain(app.domain),
@@ -265,6 +268,7 @@ def _get_shadow_module_view_context(app, module, lang=None):
             'modules': [get_mod_dict(m) for m in app.modules if m.module_type in ['basic', 'advanced']],
             'source_module_id': module.source_module_id,
             'excluded_form_ids': module.excluded_form_ids,
+            'shadow_module_version': module.shadow_module_version,
         },
     }
 
@@ -367,10 +371,17 @@ def _get_valid_parents_for_child_module(app, module):
         invalid_ids.remove(current_parent_id)
 
     # The current module is not allowed, but its parent is
-    # Shadow modules are not allowed
+    # Shadow modules are not allowed to be selected as parents
     return [parent_module for parent_module in app.modules if (parent_module.unique_id not in invalid_ids)
             and not parent_module == module and parent_module.doc_type != "ShadowModule"
             and not parent_module.is_training_module]
+
+
+def _get_shadow_parent(app, module):
+    # If this module is a shadow module and has a parent, return it
+    if module.module_type == 'shadow' and getattr(module, 'root_module_id', None):
+        return app.get_module_by_unique_id(module.root_module_id)
+    return None
 
 
 def _case_list_form_options(app, module, case_type_, lang=None):
@@ -565,6 +576,9 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         module["display_style"] = request.POST.get("display_style")
     if should_edit("source_module_id"):
         module["source_module_id"] = request.POST.get("source_module_id")
+        if handle_shadow_child_modules(app, module):
+            # Reload the page to show new shadow child modules
+            resp['redirect'] = reverse('view_module', args=[domain, app_id, module_unique_id])
     if should_edit("display_separately"):
         module["display_separately"] = json.loads(request.POST.get("display_separately"))
     if should_edit("parent_module"):
@@ -602,11 +616,23 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
             module[SLUG].label[lang] = request.POST[label]
 
     if should_edit("root_module_id"):
+        # Make this a child module of 'root_module_id'
         old_root = module['root_module_id']
         if not request.POST.get("root_module_id"):
             module["root_module_id"] = None
         else:
             module["root_module_id"] = request.POST.get("root_module_id")
+
+        # Add or remove children of shadows as required
+        shadow_parents = (
+            m for m in app.get_modules()
+            if m.module_type == "shadow"
+            and (m.source_module_id == request.POST.get("root_module_id") or m.source_module_id == old_root)
+        )
+        for shadow_parent in shadow_parents:
+            if handle_shadow_child_modules(app, shadow_parent):
+                resp['redirect'] = reverse('view_module', args=[domain, app_id, module_unique_id])
+
         if not old_root and module['root_module_id']:
             track_workflow(request.couch_user.username, "User associated module with a parent")
         elif old_root and not module['root_module_id']:
@@ -654,8 +680,8 @@ def _new_report_module(request, domain, app, name, lang):
     return back_to_main(request, domain, app_id=app.id, module_id=module.id)
 
 
-def _new_shadow_module(request, domain, app, name, lang):
-    module = app.add_module(ShadowModule.new_module(name, lang))
+def _new_shadow_module(request, domain, app, name, lang, shadow_module_version=2):
+    module = app.add_module(ShadowModule.new_module(name, lang, shadow_module_version=shadow_module_version))
     app.save()
     return back_to_main(request, domain, app_id=app.id, module_id=module.id)
 
@@ -677,19 +703,35 @@ def delete_module(request, domain, app_id, module_unique_id):
     except ModuleNotFoundException:
         return bail(request, domain, app_id)
     if module.get_child_modules():
-        messages.error(request, _('"{}" has sub-menus. You must remove these before '
-                                  'you can delete it.').format(module.default_name()))
-        return back_to_main(request, domain, app_id)
+        if module.module_type == 'shadow':
+            # When deleting a shadow module, delete all the shadow-children
+            for child_module in module.get_child_modules():
+                app.delete_module(child_module.unique_id)
+        else:
+            messages.error(request, _('"{}" has sub-menus. You must remove these before '
+                                      'you can delete it.').format(module.default_name()))
+            return back_to_main(request, domain, app_id)
 
-    record = app.delete_module(module_unique_id)
-    messages.success(
-        request,
-        _('You have deleted "{name}". <a href="{url}" class="post-link">Undo</a>').format(
-            name=record.module.default_name(app=app),
-            url=reverse('undo_delete_module', args=[domain, record.get_id])
-        ),
-        extra_tags='html'
-    )
+    shadow_children = [
+        m.unique_id for m in app.get_modules()
+        if m.module_type == 'shadow' and m.source_module_id == module_unique_id and m.root_module_id is not None
+    ]
+    deletion_records = []
+    for shadow_child in shadow_children:
+        # We don't allow directly deleting or editing the source of a shadow
+        # child, so we delete it when its source is deleted
+        deletion_records.append(app.delete_module(shadow_child))
+
+    deletion_records.append(app.delete_module(module_unique_id))
+    for record in deletion_records:
+        messages.success(
+            request,
+            _('You have deleted "{name}". <a href="{url}" class="post-link">Undo</a>').format(
+                name=record.module.default_name(app=app),
+                url=reverse('undo_delete_module', args=[domain, record.get_id])
+            ),
+            extra_tags='html'
+        )
     app.save()
     clear_xmlns_app_id_cache(domain)
     return back_to_main(request, domain, app_id=app_id)
@@ -702,6 +744,24 @@ def undo_delete_module(request, domain, record_id):
     record.undo()
     messages.success(request, 'Module successfully restored.')
     return back_to_main(request, domain, app_id=record.app_id, module_id=record.module_id)
+
+
+@require_can_edit_apps
+def upgrade_shadow_module(request, domain, app_id, module_unique_id):
+    app = get_app(domain, app_id)
+    try:
+        shadow_module = app.get_module_by_unique_id(module_unique_id)
+    except ModuleNotFoundError:
+        messages.error(request, "Couldn't find module")
+    else:
+        if shadow_module.shadow_module_version == 1:
+            shadow_module.shadow_module_version = 2
+            handle_shadow_child_modules(app, shadow_module)
+            messages.success(request, 'Module successfully upgraded.')
+        else:
+            messages.error(request, "Can't upgrade this module, it's already at the new version")
+
+    return back_to_main(request, domain, app_id=app_id, module_unique_id=module_unique_id)
 
 
 @no_conflict_require_POST
@@ -1256,6 +1316,10 @@ MODULE_TYPE_MAP = {
     },
     'shadow': {
         FN: _new_shadow_module,
+        VALIDATIONS: []
+    },
+    'shadow-v1': {
+        FN: partial(_new_shadow_module, shadow_module_version=1),
         VALIDATIONS: []
     },
     'training': {
