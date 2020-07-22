@@ -236,7 +236,9 @@ class SubmissionPost(object):
 
         xform_context = SubmissionFormContext(instance_xml=self.instance)
         if self.pre_processing_steps:
-            self._pre_process_form(xform_context)
+            form_processing_result = self._pre_process_form(xform_context)
+            if form_processing_result:
+                return form_processing_result
             self.instance = xform_context.instance_xml
 
         result = process_xform_xml(self.domain, self.instance, self.attachments, self.auth_context.to_json())
@@ -348,11 +350,13 @@ class SubmissionPost(object):
             return FormProcessingResult(response, instance, cases, ledgers, submission_type)
 
     def _pre_process_form(self, xform_context):
+        """
+        :return: FormProcessingResult, if received from any of the step, else None
+        """
         for step in self.pre_processing_steps:
             result = step(xform_context)
             if result:
                 return result
-        return xform_context
 
     def _conditionally_send_device_logs_to_sumologic(self, instance):
         url = getattr(settings, 'SUMOLOGIC_URL', None)
