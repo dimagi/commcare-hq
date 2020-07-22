@@ -1,10 +1,12 @@
 import io
 
 from django.contrib import messages
-from django.utils.translation import ugettext as _
 from django.template.defaultfilters import linebreaksbr
+from django.utils.translation import ugettext as _
 
 import ghdiff
+from CommcareTranslationChecker import validate_workbook
+from CommcareTranslationChecker.exceptions import FatalError
 
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
@@ -34,15 +36,11 @@ from corehq.apps.translations.const import (
     SINGLE_SHEET_NAME,
 )
 from corehq.apps.translations.exceptions import BulkAppTranslationsException
+from corehq.util.files import read_workbook_content_as_file
 from corehq.util.workbook_json.excel import (
     WorkbookJSONError,
     get_single_worksheet,
 )
-
-from corehq.util.files import read_workbook_content_as_file
-
-from CommcareTranslationChecker import validate_workbook
-from CommcareTranslationChecker.exceptions import FatalError
 
 
 def validate_bulk_app_translation_upload(app, workbook, email, lang_to_compare, file_obj):
@@ -75,7 +73,7 @@ def _email_app_translations_discrepancies(msgs, checker_messages, email, app_nam
     :param app_name: name of the application
     :param result_wb: result wb of translation checker to attach with the email
     """
-    def _form_email_content(msgs, checker_messages):
+    def form_email_content(msgs, checker_messages):
         if msgs:
             html_file_content = ghdiff.default_css
             for sheet_name, msg in msgs.items():
@@ -91,16 +89,16 @@ def _email_app_translations_discrepancies(msgs, checker_messages, email, app_nam
             text_content += _("No issues found with the workbook.")
         return html_file_content, text_content
 
-    def _attachment(title, content, mimetype='text/html'):
+    def attachment(title, content, mimetype='text/html'):
         return {'title': title, 'file_obj': content, 'mimetype': mimetype}
 
     subject = _("App Translations Discrepancies for {}").format(app_name)
-    html_file_content, text_content = _form_email_content(msgs, checker_messages)
+    html_file_content, text_content = form_email_content(msgs, checker_messages)
     attachments = []
     if html_file_content:
-        attachments.append(_attachment("{} Discrepancies.html".format(app_name), io.StringIO(html_file_content)))
+        attachments.append(attachment("{} Discrepancies.html".format(app_name), io.StringIO(html_file_content)))
     if result_wb:
-        attachments.append(_attachment("{} TranslationChecker.xlsx".format(app_name),
+        attachments.append(attachment("{} TranslationChecker.xlsx".format(app_name),
                                        io.BytesIO(read_workbook_content_as_file(result_wb)), result_wb.mime_type))
 
     send_html_email_async.delay(subject, email, linebreaksbr(text_content), file_attachments=attachments)

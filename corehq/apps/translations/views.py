@@ -5,7 +5,6 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 
-from corehq.apps.hqwebapp.decorators import waf_allow
 from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
@@ -21,6 +20,7 @@ from corehq.apps.app_manager.ui_translations import (
     build_ui_translation_download_file,
     process_ui_translation_upload,
 )
+from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.translations.app_translations.download import (
     get_bulk_app_sheets_by_name,
     get_bulk_app_single_sheet_by_name,
