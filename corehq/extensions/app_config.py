@@ -2,7 +2,7 @@ from django.apps import AppConfig
 from django.conf import settings
 
 
-class PluginAppConfig(AppConfig):
+class ExtensionAppConfig(AppConfig):
     name = 'corehq.extensions'
 
     def ready(self):
