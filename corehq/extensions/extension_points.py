@@ -1,10 +1,16 @@
-from corehq.extensions import register_extension_point
+from corehq.extensions.interface import extension_point
 
-register_extension_point(
-    "uitab:dropdown_items",
-    providing_args=("tab", "domain", "request"),
-    help="""
-        Called by UI tabs during rendering. Receivers must return a dict with keys:
+
+@extension_point
+def domain_specific_urls():
+    """Return a list of URL module strings to be included in the domain specific URL patterns."""
+
+
+@extension_point
+def uitab_dropdown_items(tab, domain, request):
+    """Called by UI tabs during rendering.
+
+    :returns: Dict with keys:
         * title
         * url (default=None)
         * html (default=None)
@@ -12,14 +18,3 @@ register_extension_point(
         * is_divider (default=False)
         * data_id (default=None)
     """
-)
-
-
-register_extension_point(
-    "urls:domain_specific",
-    providing_args=(),
-    help="""
-        Return a list of URL module strings to be included in the domain specific
-        URL patterns.
-    """
-)

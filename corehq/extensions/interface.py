@@ -1,3 +1,4 @@
+import importlib
 import inspect
 from collections import defaultdict
 
@@ -15,7 +16,24 @@ class ExtensionError(Exception):
 class ExtensionPoint:
     name = attr.ib()
     providing_args = attr.ib()
-    help = attr.ib(default="")
+
+
+def extension_point(func):
+    """Decorator for creating an extension point"""
+    def extend(domains=None):
+
+        def _extend(impl):
+            setattr(impl, "extension_point_impl", {
+                "spec": func.__name__,
+                "domains": domains
+            })
+            return impl
+
+        return _extend
+
+    setattr(func, "extension_point_spec", {"name": func.__name__})
+    setattr(func, "extend", extend)
+    return func
 
 
 class ExtensionContribution:
@@ -58,9 +76,46 @@ class CommCareExtensions:
         self.extension_point_registry = {}
 
     def load_extensions(self, implementations):
-        for point, implementation_defs in implementations.items():
-            for definition in implementation_defs:
-                self.register_extension(point, definition["callable"], definition.get("domains", None))
+        for module_name in implementations:
+            self.register_extensions(module_name)
+
+    def add_extension_points(self, module_or_name):
+        names = []
+        module = self.resolve_module(module_or_name)
+        for name in dir(module):
+            method = getattr(module, name)
+            spec_opts = getattr(method, "extension_point_spec", None)
+            if spec_opts is not None:
+                name = spec_opts["name"]
+                if name in self.extension_point_registry:
+                    raise ExtensionError(f"Exception point '{name}' already registered")
+                spec = inspect.getfullargspec(method)
+                self.extension_point_registry[name] = ExtensionPoint(name, spec.args)
+                names.append(name)
+
+        if not names:
+            raise ValueError(f"did not find any extension points in {module!r}")
+
+    def register_extensions(self, module_or_name):
+        names = []
+        module = self.resolve_module(module_or_name)
+        for name in dir(module):
+            method = getattr(module, name)
+            spec_opts = getattr(method, "extension_point_impl", None)
+            if spec_opts is not None:
+                spec = spec_opts["spec"]
+                domains = spec_opts["domains"]
+                self.register_extension(spec, method, domains)
+                names.append(name)
+
+        if not names:
+            raise ValueError(f"did not find any extensions in {module!r}")
+
+    def resolve_module(self, module_or_name):
+        if isinstance(module_or_name, str):
+            return importlib.import_module(module_or_name)
+        else:
+            return module_or_name
 
     def register_extension(self, point, callable_ref, domains=None):
         if point not in self.extension_point_registry:
@@ -69,11 +124,6 @@ class CommCareExtensions:
         extension = ExtensionContribution(callable_ref, domains)
         extension.validate(self.extension_point_registry[point])
         self.registry[point].append(extension)
-
-    def register_extension_point(self, name, providing_args=(), help=""):
-        if name in self.extension_point_registry:
-            raise ExtensionError(f"Exception point '{name}' already registered")
-        self.extension_point_registry[name] = ExtensionPoint(name, providing_args, help)
 
     def get_extension_point_contributions(self, extension_point, **kwargs):
         extensions = self.registry[extension_point]

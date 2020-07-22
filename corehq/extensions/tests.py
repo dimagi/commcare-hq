@@ -1,8 +1,14 @@
 import re
+import sys
 
 import testil
 
-from corehq.extensions.interface import ExtensionPoint, CommCareExtensions, ExtensionError
+from corehq.extensions.interface import CommCareExtensions, ExtensionError, extension_point
+
+
+@extension_point
+def ext_point_a(arg1, domain):
+    pass
 
 
 class DemoExtension:
@@ -11,15 +17,19 @@ class DemoExtension:
             args: response for args, response in mock_calls.items()
         }
 
+    @ext_point_a.extend(["d2"])
     def ext_point_a(self, arg1, domain):
         return self.mock_calls[(arg1, domain)]
 
 
-demo_extension_1 = DemoExtension({
+demo_extension = DemoExtension({
     (1, "d2"): "p1",
 })
 
+demo_extension_1 = demo_extension.ext_point_a
 
+
+@ext_point_a.extend()
 def demo_extension_2(arg1, domain):
     if arg1 == 1:
         return "p2"
@@ -27,30 +37,20 @@ def demo_extension_2(arg1, domain):
         raise Exception
 
 
+@ext_point_a.extend(["d1"])
 def demo_extension_3(**kwargs):
     """test that kwargs style functions are acceptable"""
     return "p3"
 
 
-extensions = CommCareExtensions()
-point = ExtensionPoint("ext_point_a", providing_args=("arg1", "domain"))
-extensions.register_extension_point(point)
 
-extensions.load_extensions({
-    "ext_point_a": [
-        {
-            "callable": demo_extension_1.ext_point_a,
-            "domains": ["d2"],
-        },
-        {
-            "callable": demo_extension_2,
-        },
-        {
-            "callable": "corehq.extensions.tests.demo_extension_3",
-            "domains": ["d1"],
-        },
-    ]
-})
+
+extensions = CommCareExtensions()
+extensions.add_extension_points(sys.modules[__name__])
+print('---', extensions.extension_point_registry)
+extensions.load_extensions([
+    "corehq.extensions.tests"
+])
 
 
 def test_commcare_extensions():
@@ -80,7 +80,7 @@ def test_validation_missing_callable():
 
 def test_validation_not_callable():
     with testil.assert_raises(ExtensionError, msg=re.compile("not callable")):
-        extensions.register_extension("ext_point_a", demo_extension_1)
+        extensions.register_extension("ext_point_a", demo_extension)
 
 
 def test_validation_callable_args():

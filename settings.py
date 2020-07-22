@@ -1018,15 +1018,9 @@ REQUIRE_TWO_FACTOR_FOR_SUPERUSERS = False
 # that adds messages to the partition with the fewest unprocessed messages
 USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
 
-COMMCARE_EXTENSIONS = {
-    "uitab:dropdown_items": [{
-        "callable": "custom.icds.commcare_extensions.uitab_dropdown_items",
-        "domains": ["icsd-cas"],
-    }],
-    "urls:domain_specific": [
-        {"callable": "custom.icds.commcare_extensions.urls_domain_specific"}
-    ]
-}
+COMMCARE_EXTENSIONS = [
+    "custom.icds.commcare_extensions",
+]
 
 try:
     # try to see if there's an environmental variable set for local_settings
