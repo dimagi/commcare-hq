@@ -187,6 +187,9 @@ class Repeater(QuickCachedDocumentMixin, Document):
 
     friendly_name = _("Data")
     paused = BooleanProperty(default=False)
+    started_at = DateTimeProperty(default=datetime.utcnow)
+    last_success_at = DateTimeProperty(required=False, default=None)
+    failure_streak = IntegerProperty(default=0)
 
     payload_generator_classes = ()
 
@@ -261,6 +264,14 @@ class Repeater(QuickCachedDocumentMixin, Document):
         Return True/False depending on whether the payload meets forawrding criteria or not
         """
         return True
+
+    def update_failure_streak(self, attempt):
+        if attempt.succeeded:
+            self.last_success_at = attempt.datetime
+            self.failure_streak = 0
+        else:
+            self.failure_streak += 1
+        self.save()
 
     def clear_caches(self):
         super(Repeater, self).clear_caches()
@@ -339,6 +350,8 @@ class Repeater(QuickCachedDocumentMixin, Document):
 
     def resume(self):
         self.paused = False
+        self.started_at = datetime.utcnow()
+        self.failure_streak = 0
         self.save()
 
     def get_url(self, repeat_record):
@@ -770,6 +783,7 @@ class RepeatRecord(Document):
         self.succeeded = attempt.succeeded
         self.cancelled = attempt.cancelled
         self.failure_reason = attempt.failure_reason
+        self.repeater.update_failure_streak(attempt)
 
     def get_numbered_attempts(self):
         for i, attempt in enumerate(self.attempts):
