@@ -43,8 +43,6 @@ def demo_extension_3(**kwargs):
     return "p3"
 
 
-
-
 extensions = CommCareExtensions()
 extensions.add_extension_points(sys.modules[__name__])
 print('---', extensions.extension_point_registry)
