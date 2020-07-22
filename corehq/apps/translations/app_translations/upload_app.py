@@ -77,32 +77,32 @@ def _email_app_translations_discrepancies(msgs, checker_messages, email, app_nam
     """
     def _form_email_content(msgs, checker_messages):
         if msgs:
-            html_content = ghdiff.default_css
+            html_file_content = ghdiff.default_css
             for sheet_name, msg in msgs.items():
-                html_content += "<strong>{}</strong>".format(sheet_name) + msg
-            text_content = _("Hi, PFA file for discrepancies found for app translations.\n")
+                html_file_content += "<strong>{}</strong>".format(sheet_name) + msg
+            text_content = _("Hi, PFA file for discrepancies found for app translations.") + "\n"
         else:
-            html_content = None
-            text_content = _("Hi, No discrepancies found for app translations.\n")
+            html_file_content = None
+            text_content = _("Hi, No discrepancies found for app translations.") + "\n"
         if checker_messages:
-            text_content += _("Issues found with the workbook are as follows :\n %s." % '\n'.join(
-                checker_messages))
+            text_content += _("Issues found with the workbook are as follows :") + "\n"
+            text_content += '\n'.join([_(msg) for msg in checker_messages])
         else:
             text_content += _("No issues found with the workbook.")
-        return html_content, text_content
+        return html_file_content, text_content
 
     def _attachment(title, content, mimetype='text/html'):
         return {'title': title, 'file_obj': content, 'mimetype': mimetype}
 
     subject = _("App Translations Discrepancies for {}").format(app_name)
-    html_content, text_content = _form_email_content(msgs, checker_messages)
+    html_file_content, text_content = _form_email_content(msgs, checker_messages)
     attachments = []
-    if html_content:
-        attachments.append(_attachment("{} Discrepancies.html".format(app_name), io.StringIO(html_content)))
+    if html_file_content:
+        attachments.append(_attachment("{} Discrepancies.html".format(app_name), io.StringIO(html_file_content)))
     if result_wb:
         attachments.append(_attachment("{} TranslationChecker.xlsx".format(app_name),
                                        io.BytesIO(read_workbook_content_as_file(result_wb)), result_wb.mime_type))
-    
+
     send_html_email_async.delay(subject, email, linebreaksbr(text_content), file_attachments=attachments)
 
 
