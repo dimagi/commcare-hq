@@ -1,5 +1,6 @@
 import csv
 import io
+import json
 import logging
 import os
 import re
@@ -45,7 +46,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
 )
 from corehq.const import SERVER_DATE_FORMAT, SERVER_DATETIME_FORMAT
 from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
-from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
+from custom.icds_reports.utils.connections import get_icds_ucr_citus_db_alias
 from corehq.util.celery_utils import periodic_task_on_envs
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
@@ -149,7 +150,6 @@ from custom.icds_reports.utils import (
     create_pdf_file,
     create_thr_report_excel_file,
     get_performance_report_blob_key,
-    icds_pre_release_features,
     track_time,
     zip_folder,
     get_dashboard_usage_excel_file,
@@ -158,6 +158,7 @@ from custom.icds_reports.utils import (
     create_poshan_progress_report,
     create_aww_activity_report
 )
+from custom.icds_core.view_utils import icds_pre_release_features
 from custom.icds_reports.utils.aggregation_helpers.distributed import (
     ChildHealthMonthlyAggregationDistributedHelper,
     AggAwcDistributedHelper,
@@ -908,8 +909,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
         excel_data = SystemUsageExport(
             config=config,
             loc_level=aggregation_level,
-            show_test=include_test,
-            beta=beta
+            show_test=include_test
         ).get_excel_data(
             location,
             system_usage_num_launched_awcs_formatting_at_awc_level=aggregation_level > 4 and beta,
@@ -969,6 +969,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
     elif indicator == THR_REPORT_EXPORT:
         loc_level = aggregation_level if location else 0
         excel_data = TakeHomeRationExport(
+            domain=config['domain'],
             location=location,
             month=config['month'],
             loc_level=loc_level,
@@ -978,7 +979,9 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
         export_info = excel_data[1][1]
         generated_timestamp = date_parser.parse(export_info[0][1])
         formatted_timestamp = generated_timestamp.strftime("%d-%m-%Y__%H-%M-%S")
-        data_type = 'THR Report__{}'.format(formatted_timestamp)
+
+        data_type = 'THR Report__{}__{}'.format(config['thr_report_type'],
+                                                formatted_timestamp)
         if file_format == 'xlsx':
             cache_key = create_thr_report_excel_file(
                 excel_data,
@@ -1021,8 +1024,7 @@ def prepare_excel_reports(config, aggregation_level, include_test, beta, locatio
             cache_key = create_service_delivery_report(
                 excel_data,
                 data_type,
-                config,
-                beta
+                config
             )
         else:
             cache_key = create_excel_file(excel_data, data_type, file_format)
@@ -1809,7 +1811,8 @@ def create_reconciliation_records():
 @task(queue='dashboard_comparison_queue')
 def reconcile_data_not_in_ucr(reconciliation_status_pk):
     status_record = UcrReconciliationStatus.objects.get(pk=reconciliation_status_pk)
-    number_documents_missing = 0
+    num_docs_retried = 0
+    num_docs_unporcessed = 0
 
     data_not_in_ucr = list(get_data_not_in_ucr(status_record))
     doc_ids_not_in_ucr = {data[0] for data in data_not_in_ucr}
@@ -1825,21 +1828,33 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
     # running the data accessor again to avoid storing all doc ids in memory
     # since run time is relatively short and does not scale with number of errors
     # but the number of doc ids will increase with the number of errors
-    for doc_id, doc_subtype, sql_modified_on in data_not_in_ucr:
+    for doc_id, doc_subtype, sql_modified_on, inserted_at in data_not_in_ucr:
         if doc_id in known_bad_doc_ids:
             # These docs are invalid
             continue
-        number_documents_missing += 1
-        not_found_in_es = doc_id in doc_ids_not_in_es
-        celery_task_logger.info(f'doc_id {doc_id} from {sql_modified_on} not found in UCR data sources. '
-            f'Not found in ES: {not_found_in_es}')
+        num_docs_retried += 1
+        found_in_es = doc_id not in doc_ids_not_in_es
+        if not inserted_at or (sql_modified_on - inserted_at).seconds > 3600:
+            num_docs_unporcessed += 1
+
+        log = {
+            "doc_id": doc_id, "modified_on": sql_modified_on.isoformat(), "inserted_at": inserted_at.isoformat(),
+            "in_es": found_in_es, "subtype": doc_subtype
+        }
+        celery_task_logger.info(json.dumps(log))
         send_change_for_ucr_reprocessing(doc_id, doc_subtype, status_record.is_form_ucr)
 
     metrics_counter(
         "commcare.icds.ucr_reconciliation.published_change_count",
-        number_documents_missing,
+        num_docs_retried,
         tags={'config_id': status_record.table_id, 'doc_type': status_record.doc_type},
-        documentation="Number of docs that were not found in UCR that were republished"
+        documentation="Number of docs that were republished"
+    )
+    metrics_counter(
+        "commcare.icds.ucr_reconciliation.fully_missing_count",
+        num_docs_unporcessed,
+        tags={'config_id': status_record.table_id, 'doc_type': status_record.doc_type},
+        documentation="Number of docs that were not found in UCR or not fresh than 1 hour"
     )
     metrics_counter(
         "commcare.icds.ucr_reconciliation.partially_processed_count",
@@ -1848,12 +1863,12 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
         documentation="Number of docs that exists in Elasticsearch but are not found in UCR"
     )
     status_record.last_processed_date = datetime.utcnow()
-    status_record.documents_missing = number_documents_missing
-    if number_documents_missing == 0:
+    status_record.documents_missing = num_docs_retried
+    if num_docs_retried == 0:
         status_record.verified_date = datetime.utcnow()
     status_record.save()
 
-    return number_documents_missing
+    return num_docs_retried
 
 
 def send_change_for_ucr_reprocessing(doc_id, doc_subtype, is_form):
@@ -1887,12 +1902,12 @@ def get_data_not_in_ucr(status_record):
         doc_id_and_inserted_in_ucr = _get_docs_in_ucr(domain, status_record.table_id, doc_ids)
         for doc_id, doc_subtype, sql_modified_on in chunk:
             if doc_id in doc_id_and_inserted_in_ucr:
-                # This is to handle the cases which are outdated. This condition also handles the time drift of 1 sec
+                # This is to handle the cases which are outdated. This condition also handles the time drift of 2 sec
                 # between main db and ucr db. i.e  doc will even be included when inserted_at-sql_modified_on < 2 sec
                 if sql_modified_on - doc_id_and_inserted_in_ucr[doc_id] > timedelta(seconds=-2):
-                    yield (doc_id, doc_subtype, sql_modified_on.isoformat())
+                    yield (doc_id, doc_subtype, sql_modified_on, doc_id_and_inserted_in_ucr[doc_id])
             else:
-                yield (doc_id, doc_subtype, sql_modified_on.isoformat())
+                yield (doc_id, doc_subtype, sql_modified_on, None)
 
 
 def _get_docs_in_ucr(domain, table_id, doc_ids):

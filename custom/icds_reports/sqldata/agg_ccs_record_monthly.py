@@ -1,6 +1,6 @@
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SumColumn, SimpleColumn, SumWhen
-from sqlagg.filters import BETWEEN, IN, NOT
+from sqlagg.filters import BETWEEN, IN, NOT, EQ
 from sqlagg.sorting import OrderBy
 
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
@@ -16,13 +16,14 @@ from custom.utils.utils import clean_IN_filter_value
 class AggCCSRecordMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
     table_name = 'agg_ccs_record_monthly'
 
-    def __init__(self, config=None, loc_level='state', show_test=False):
+    def __init__(self, config=None, loc_level='state', show_test=False, beta=False):
         super(AggCCSRecordMonthlyDataSource, self).__init__(config)
         self.loc_key = '%s_id' % loc_level
         self.excluded_states = get_test_state_locations_id(self.domain)
         self.config['excluded_states'] = self.excluded_states
         clean_IN_filter_value(self.config, 'excluded_states')
         self.show_test = show_test
+        self.beta = beta
 
     @property
     def domain(self):
@@ -38,7 +39,7 @@ class AggCCSRecordMonthlyDataSource(ProgressReportMixIn, IcdsSqlData):
         if not self.show_test:
             filters.append(NOT(IN('state_id', get_INFilter_bindparams('excluded_states', self.excluded_states))))
         if 'month' in self.config and self.config['month']:
-            filters.append(BETWEEN('month', 'two_before', 'month'))
+            filters.append(EQ('month', 'month'))
         return filters
 
     @property

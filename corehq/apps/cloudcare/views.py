@@ -1,11 +1,9 @@
 import json
 import re
 import string
-from xml.etree import cElementTree as ElementTree
 
 import sentry_sdk
 from django.conf import settings
-from django.contrib import messages
 from django.http import (
     Http404,
     HttpResponse,
@@ -17,7 +15,6 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
-from django.views.decorators.cache import cache_page
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 from django.views.generic.base import TemplateView
@@ -71,13 +68,13 @@ from corehq.apps.hqwebapp.decorators import (
     use_jquery_ui,
     use_legacy_jquery,
     waf_allow)
-from corehq.apps.hqwebapp.views import render_static
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.users.decorators import require_can_login_as
-from corehq.apps.users.models import CommCareUser, CouchUser, DomainMembershipError
+from corehq.apps.users.models import CouchUser, DomainMembershipError
 from corehq.apps.users.util import format_username
 from corehq.apps.users.views import BaseUserSettingsView
+from corehq.apps.integration.util import domain_uses_dialer
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
@@ -209,13 +206,14 @@ class FormplayerMain(View):
             "language": language,
             "apps": apps,
             "domain_is_on_trial": domain_is_on_trial(domain),
-            "maps_api_key": settings.GMAPS_API_KEY,
+            "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             "username": request.couch_user.username,
             "formplayer_url": settings.FORMPLAYER_URL,
             "single_app_mode": False,
             "home_url": reverse(self.urlname, args=[domain]),
             "environment": WEB_APPS_ENVIRONMENT,
             'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
+            'dialer_enabled': domain_uses_dialer(domain),
         }
         return set_cookie(
             render(request, "cloudcare/formplayer_home.html", context)
@@ -273,13 +271,14 @@ class FormplayerPreviewSingleApp(View):
             "domain": domain,
             "language": language,
             "apps": [_format_app(app)],
-            "maps_api_key": settings.GMAPS_API_KEY,
+            "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             "username": request.user.username,
             "formplayer_url": settings.FORMPLAYER_URL,
             "single_app_mode": True,
             "home_url": reverse(self.urlname, args=[domain, app_id]),
             "environment": WEB_APPS_ENVIRONMENT,
             'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
+            'dialer_enabled': domain_uses_dialer(domain),
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 
@@ -294,8 +293,9 @@ class PreviewAppView(TemplateView):
         return self.render_to_response({
             'app': app,
             'formplayer_url': settings.FORMPLAYER_URL,
-            "maps_api_key": settings.GMAPS_API_KEY,
+            "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             "environment": PREVIEW_APP_ENVIRONMENT,
+            "dialer_enabled": domain_uses_dialer(request.domain),
         })
 
 

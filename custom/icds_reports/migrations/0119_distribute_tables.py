@@ -4,10 +4,7 @@ from django.db import migrations
 
 from corehq.sql_db.connections import is_citus_db
 from custom.icds_reports.const import DISTRIBUTED_TABLES, REFERENCE_TABLES
-from custom.icds_reports.utils.migrations import (
-    create_citus_distributed_table,
-    create_citus_reference_table,
-)
+from custom.icds_core.db import create_citus_distributed_table, create_citus_reference_table
 
 
 def _distribute_citus_tables(apps, schema_editor):

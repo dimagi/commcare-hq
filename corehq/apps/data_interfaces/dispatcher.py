@@ -7,7 +7,7 @@ from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.reports.dispatcher import ReportDispatcher, datespan_default
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from custom.icds.view_utils import check_data_interfaces_blocked_for_domain
+from custom.icds_core.view_utils import check_data_interfaces_blocked_for_domain
 
 require_can_edit_data = require_permission(Permissions.edit_data)
 

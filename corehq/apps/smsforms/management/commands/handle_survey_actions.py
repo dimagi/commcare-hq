@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 
 from corehq import toggles
 from dimagi.utils.couch import get_redis_lock
-from dimagi.utils.logging import notify_exception, notify_error
+from dimagi.utils.logging import notify_exception
 
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.smsforms.models import SQLXFormsSession, XFormsSessionSynchronization
@@ -66,23 +66,7 @@ class Command(BaseCommand):
                     phone_number=phone_number,
                 )
                 if not XFormsSessionSynchronization.channel_is_available_for_session(fake_session):
-                    running_session_info = XFormsSessionSynchronization.get_running_session_info_for_channel(
-                        fake_session.get_channel())
-                    # First confirm the supposedly running session is even open
-                    # and if it's not (should be exceedingly rare) release it and act like it wasn't there
-                    if running_session_info.session_id \
-                            and running_session_info.session_id not in all_open_session_ids:
-                        notify_error(
-                            "The supposedly running session was not open and was released. "
-                            "No known way for this to happen, so worth investigating.",
-                            details={
-                                'running_session_info': running_session_info
-                            })
-                        XFormsSessionSynchronization.clear_stale_channel_claim(fake_session.get_channel())
-                    # This is the 99% case: there's a running session for the channel
-                    # so leave this session/action in the queue for later and move on to the next one
-                    else:
-                        continue
+                    continue
 
             enqueue_lock = self.get_enqueue_lock(session_id, current_action_due)
             if enqueue_lock.acquire(blocking=False):

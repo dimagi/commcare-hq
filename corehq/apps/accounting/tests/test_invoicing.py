@@ -74,7 +74,7 @@ class BaseInvoiceTestCase(BaseAccountingTest):
 
     def tearDown(self):
         for user in self.domain.all_users():
-            user.delete()
+            user.delete(deleted_by=None)
         super(BaseAccountingTest, self).tearDown()
 
     @classmethod

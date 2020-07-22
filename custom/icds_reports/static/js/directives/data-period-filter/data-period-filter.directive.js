@@ -61,8 +61,11 @@ function DataPeriodFilterController($scope, $location, $uibModal, storageService
 
         modalInstance.result.then(function (data) {
             $location.search('data_period', data['data_period']);
-            if (data['data_period'] == 'month') {
+            if (data['data_period'] === 'month') {
                 $location.search('quarter', null);
+            }
+            if (data['data_period'] === 'quarter') {
+                $location.search('month', null);
             }
             $scope.$emit('filtersChange');
         });

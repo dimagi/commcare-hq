@@ -18,6 +18,7 @@ from corehq.project_limits.rate_limiter import RateLimiter, get_dynamic_rate_def
 from corehq.util.decorators import run_only_when, silence_and_report_error
 from corehq.util.global_request import get_request
 from corehq.util.metrics import metrics_counter, metrics_gauge
+from corehq.util.metrics.const import MPM_MAX
 from dimagi.utils.web import get_ip
 
 VOICE_LANGUAGES = ('en', 'en-gb', 'es', 'fr', 'it', 'de', 'da-DK', 'de-DE',
@@ -66,7 +67,7 @@ class Gateway(object):
         locale = translation.get_language()
         validate_voice_locale(locale)
 
-        url = reverse('two_factor:twilio_call_app', kwargs={'token': token})
+        url = reverse('two_factor_twilio:call_app', kwargs={'token': token})
         url = '%s?%s' % (url, urlencode({'locale': locale}))
         uri = 'https://%s%s' % (Site.objects.get_current().domain, url)
         self.client.api.account.calls.create(to=device.number.as_e164, from_=self.from_number,
@@ -164,7 +165,7 @@ def _report_current_global_two_factor_setup_rate_limiter():
     for window, value, threshold in global_two_factor_setup_rate_limiter.iter_rates():
         metrics_gauge('commcare.two_factor.global_two_factor_setup_threshold', threshold, tags={
             'window': window
-        })
+        }, multiprocess_mode=MPM_MAX)
         metrics_gauge('commcare.two_factor.global_two_factor_setup_usage', value, tags={
             'window': window
-        })
+        }, multiprocess_mode=MPM_MAX)

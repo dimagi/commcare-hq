@@ -74,15 +74,17 @@
   {% initial_page_data 'formplayer_url' formplayer_url %}
   {% initial_page_data 'grid_polyfill_path' 'css-grid-polyfill-binaries/css-polyfills.js'|static %}
   {% initial_page_data 'language' language %}
-  {% initial_page_data 'maps_api_key' maps_api_key %}
+  {% initial_page_data 'mapbox_access_token' mapbox_access_token %}
   {% initial_page_data 'single_app_mode' single_app_mode %}
   {% initial_page_data 'username' username %}
   {% initial_page_data 'use_live_query' use_live_query %}
+  {% initial_page_data 'dialer_enabled' dialer_enabled %}
   {% registerurl 'list_case_exports' request.domain %}
   {% registerurl 'list_form_exports' request.domain %}
   {% registerurl 'case_data' request.domain '---' %}
   {% registerurl 'render_form_data' request.domain '---' %}
   {% registerurl 'report_formplayer_error' request.domain %}
+  {% registerurl 'dialer_view' request.domain %}
 
   <!-- For now we won't touch this since the form entry code is coupled with it  -->
 

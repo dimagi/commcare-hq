@@ -66,7 +66,6 @@ def get_per_domain_context(project, request=None):
         'CUSTOM_LOGO_URL': custom_logo_url,
         'allow_report_an_issue': allow_report_an_issue,
         'EULA_COMPLIANCE': getattr(settings, 'EULA_COMPLIANCE', False),
-        'SECURE_TIMEOUT': settings.SECURE_TIMEOUT if project and project.secure_sessions else None,
     }
 
 
@@ -113,13 +112,16 @@ def current_url_name(request):
 
 
 def js_api_keys(request):
-    if hasattr(request, 'couch_user') and request.couch_user and not request.couch_user.analytics_enabled:
+    if getattr(request, 'couch_user', None) and not request.couch_user.analytics_enabled:
         return {}  # disable js analytics
-    return {
+    api_keys = {
         'ANALYTICS_IDS': settings.ANALYTICS_IDS,
         'ANALYTICS_CONFIG': settings.ANALYTICS_CONFIG,
         'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
     }
+    if getattr(request, 'project', None) and request.project.hipaa_compliant and api_keys['ANALYTICS_IDS'].get('GOOGLE_ANALYTICS_API_ID'):
+        del api_keys['ANALYTICS_IDS']['GOOGLE_ANALYTICS_API_ID']
+    return api_keys
 
 
 def js_toggles(request):

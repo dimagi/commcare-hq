@@ -290,8 +290,8 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             ("current_month_wasting",
                 "CASE "
                 "WHEN NOT {} THEN NULL "
-                "WHEN date_trunc('MONTH', gm.zscore_grading_wfh_last_recorded) != %(start_date)s "
-                "   THEN 'unmeasured' "
+                "WHEN date_trunc('MONTH', gm.zscore_grading_wfh_last_recorded) != %(start_date)s OR "
+                "date_trunc('MONTH', gm.height_child_last_recorded) is distinct from %(start_date)s THEN 'unmeasured' "
                 "WHEN gm.zscore_grading_wfh = 1 THEN 'severe' "
                 "WHEN gm.zscore_grading_wfh = 2 THEN 'moderate' "
                 "WHEN gm.zscore_grading_wfh = 3 THEN 'normal' "
@@ -364,7 +364,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
                       date_trunc('MONTH', child_tasks.due_list_date_7g_vit_a_9) = %(start_date)s
                   THEN 1 ELSE NULL END
             """),
-            ("mother_phone_number", "child_health.mother_phone_number"),
+            ("mother_phone_number", "mother_person_cases.phone_number"),
             ("date_death", "child_health.date_death"),
             ("mother_case_id", "child_health.mother_case_id"),
             ("state_id", "child_health.state_id"),
@@ -394,6 +394,9 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             LEFT OUTER JOIN "{person_cases_ucr}" person_cases ON child_health.mother_id = person_cases.doc_id
               AND child_health.state_id = person_cases.state_id
               AND child_health.supervisor_id = person_cases.supervisor_id
+            LEFT OUTER JOIN "{person_cases_ucr}" mother_person_cases ON child_health.mother_case_id = mother_person_cases.doc_id
+              AND child_health.state_id = mother_person_cases.state_id
+              AND child_health.supervisor_id = mother_person_cases.supervisor_id
             LEFT OUTER JOIN "{agg_cf_table}" cf ON child_health.doc_id = cf.case_id AND cf.month = %(start_date)s
               AND child_health.state_id = cf.state_id
               AND child_health.supervisor_id = cf.supervisor_id

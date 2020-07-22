@@ -3,7 +3,6 @@ import mock
 from django.test.testcases import TestCase
 from django.urls import reverse
 from django.utils.http import urlencode
-from tastypie.models import ApiKey
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
@@ -11,6 +10,7 @@ from corehq.apps.fixtures.resources.v0_1 import InternalFixtureResource
 from corehq.apps.users.models import (
     DomainMembership,
     DomainPermissionsMirror,
+    HQApiKey,
     Permissions,
     UserRole,
     WebUser,
@@ -33,7 +33,7 @@ class DomainPermissionsMirrorTest(TestCase):
                                             is_admin=True)
         cls.web_user_non_admin = WebUser.create('state', 'clementine', 'worsepassword', None, None,
                                                 email='c@aol.com')
-        cls.api_key, _ = ApiKey.objects.get_or_create(user=WebUser.get_django_user(cls.web_user_non_admin))
+        cls.api_key, _ = HQApiKey.objects.get_or_create(user=WebUser.get_django_user(cls.web_user_non_admin))
 
     def setUp(self):
         patches = [
@@ -59,8 +59,8 @@ class DomainPermissionsMirrorTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.web_user_admin.delete()
-        cls.web_user_non_admin.delete()
+        cls.web_user_admin.delete(deleted_by=None)
+        cls.web_user_non_admin.delete(deleted_by=None)
         cls.api_key.delete()
         Domain.get_by_name('county').delete()
         Domain.get_by_name('state').delete()

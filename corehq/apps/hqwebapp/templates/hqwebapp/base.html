@@ -333,8 +333,8 @@
       {% endif %}
     {% endif %}
 
-    {% if request.user.is_authenticated and SECURE_TIMEOUT %}
-      {% initial_page_data 'secure_timeout' SECURE_TIMEOUT %}
+    {% if request.user.is_authenticated and request.project and request.session.secure_session %}
+      {% initial_page_data 'session_expiry' request.session.session_expiry %}
       {% initial_page_data 'secure_timeout_username' request.couch_user.username %}
       {% registerurl 'iframe_domain_login' request.project.name %}
       {% registerurl 'iframe_domain_login_new_window' %}
@@ -496,7 +496,7 @@
     {% if not requirejs_main %}
       {% if request.use_maps %}
         {% compress js %}
-          <script src="{% static 'jquery-color/jquery.color.js' %}"></script>
+          <script src="{% static 'jquery-color/dist/jquery.color.js' %}"></script>
           <script src="{% static 'leaflet/dist/leaflet.js' %}"></script>
         {% endcompress %}
       {% endif %}

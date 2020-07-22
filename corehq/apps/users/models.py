@@ -1,15 +1,18 @@
+import hmac
 import json
 import logging
 import re
 from datetime import datetime
+from hashlib import sha1
 from uuid import uuid4
 from xml.etree import cElementTree as ElementTree
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.contrib.postgres.fields import JSONField
+from django.contrib.postgres.fields import ArrayField, JSONField
 from django.db import connection, models, router
 from django.template.loader import render_to_string
+from django.utils import timezone
 from django.utils.translation import override as override_language
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
@@ -22,8 +25,8 @@ from memoized import memoized
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
 from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
-from corehq.apps.users.exceptions import IllegalAccountConfirmation
-from corehq.util.model_log import log_model_change
+
+from corehq.util.model_log import log_model_change, ModelAction
 from corehq.util.models import BouncedEmail
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -60,6 +63,7 @@ from corehq.apps.domain.utils import (
 )
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
+from corehq.apps.users.exceptions import IllegalAccountConfirmation
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.apps.users.permissions import EXPORT_PERMISSIONS
 from corehq.apps.users.tasks import (
@@ -395,9 +399,9 @@ class UserRole(QuickCachedDocumentMixin, Document):
         return cls(permissions=Permissions(), domain=domain, name=None)
 
     @property
-    def ids_of_assigned_users(self):
+    def has_users_assigned(self):
         from corehq.apps.es.users import UserES
-        return UserES().is_active().domain(self.domain).role_id(self._id).values_list('_id', flat=True)
+        return bool(UserES().is_active().domain(self.domain).role_id(self._id).count())
 
     @classmethod
     def get_preset_permission_by_name(cls, name):
@@ -1198,11 +1202,13 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         })
         return session_data
 
-    def delete(self):
+    def delete(self, deleted_by, deleted_via=None):
         self.clear_quickcache_for_user()
         try:
             user = self.get_django_user()
             user.delete()
+            if deleted_by:
+                log_model_change(user, deleted_by, message={'deleted_via': deleted_via}, action=ModelAction.DELETE)
         except User.DoesNotExist:
             pass
         super(CouchUser, self).delete()  # Call the "real" delete() method.
@@ -1640,7 +1646,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             self_django_user,
             message={'created_via': created_via},
             fields_changed=None,
-            is_create=True
+            action=ModelAction.CREATE
         )
 
 
@@ -1674,10 +1680,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if not data.get('user_data', {}).get('commcare_project'):
             data['user_data'] = dict(data['user_data'], **{'commcare_project': data['domain']})
 
-        # Todo; remove after migration
-        from corehq.apps.users.management.commands import add_multi_location_property
-        add_multi_location_property.Command().migrate_user(data)
-
         return super(CommCareUser, cls).wrap(data)
 
     def _is_demo_user_cached_value_is_stale(self):
@@ -1710,12 +1712,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
             sync_user_cases_if_applicable(self, spawn_task)
 
-    def delete(self):
+    def delete(self, deleted_by, deleted_via=None):
         from corehq.apps.ota.utils import delete_demo_restore_for_user
         # clear demo restore objects if any
         delete_demo_restore_for_user(self)
 
-        super(CommCareUser, self).delete()
+        super(CommCareUser, self).delete(deleted_by=deleted_by, deleted_via=deleted_via)
 
     @property
     @memoized
@@ -1811,7 +1813,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         owner_ids.extend([g._id for g in self.get_case_sharing_groups()])
         return owner_ids
 
-    def unretire(self):
+    def unretire(self, unretired_by, unretired_via=None):
         """
         This un-deletes a user, but does not fully restore the state to
         how it previously was. Using this has these caveats:
@@ -1834,9 +1836,15 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         undelete_system_forms.delay(self.domain, set(deleted_form_ids), set(deleted_case_ids))
         self.save()
+        if unretired_by:
+            log_model_change(
+                unretired_by,
+                self.get_django_user(use_primary_db=True),
+                message={'unretired_via': unretired_via},
+            )
         return True, None
 
-    def retire(self):
+    def retire(self, deleted_by, deleted_via=None):
         NotAllowed.check(self.domain)
         suffix = DELETED_SUFFIX
         deletion_id = uuid4().hex
@@ -1870,6 +1878,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             pass
         else:
             django_user.delete()
+            if deleted_by:
+                log_model_change(deleted_by, django_user, message={'deleted_via': deleted_via},
+                                 action=ModelAction.DELETE)
         self.save()
 
     def confirm_account(self, password):
@@ -2954,3 +2965,25 @@ class UserReportingMetadataStaging(models.Model):
 
     class Meta(object):
         unique_together = ('domain', 'user_id', 'app_id')
+
+
+class HQApiKey(models.Model):
+    user = models.ForeignKey(User, related_name='api_keys', on_delete=models.CASCADE)
+    key = models.CharField(max_length=128, blank=True, default='', db_index=True)
+    name = models.CharField(max_length=255, blank=True, default='')
+    created = models.DateTimeField(default=timezone.now)
+    ip_allowlist = ArrayField(models.GenericIPAddressField(), default=list)
+
+    class Meta(object):
+        unique_together = ('user', 'name')
+
+    def save(self, *args, **kwargs):
+        if not self.key:
+            self.key = self.generate_key()
+
+        return super().save(*args, **kwargs)
+
+    def generate_key(self):
+        # From tastypie
+        new_uuid = uuid4()
+        return hmac.new(new_uuid.bytes, digestmod=sha1).hexdigest()

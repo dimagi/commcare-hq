@@ -1,28 +1,35 @@
 import calendar
-from datetime import date
+from datetime import date, datetime
 
 from django.conf import settings
 from django.core.management import call_command
+from django.db import connections, router
 from django.db.models.signals import post_save
+from django.db.transaction import atomic
 from django.dispatch import receiver
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
+from celery.schedules import crontab
 from dateutil.relativedelta import relativedelta
 
+from corehq.util.metrics import metrics_counter
 from couchexport.models import Format
 from dimagi.utils import web
 from soil.util import expose_cached_download
 
-from celery.schedules import crontab
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.sms.models import DailyOutboundSMSLimitReached
+from corehq.apps.sms.const import DEFAULT_SMS_DAILY_LIMIT
+from corehq.apps.sms.models import (
+    SMS,
+    DailyOutboundSMSLimitReached,
+    MessagingEvent,
+    MessagingSubEvent,
+)
 from corehq.util.celery_utils import periodic_task_on_envs, task
 from corehq.util.files import file_extention_from_filename
-from custom.icds.view_utils import is_icds_cas_project
-
-from corehq.apps.sms.const import DEFAULT_SMS_DAILY_LIMIT
+from custom.icds_core.view_utils import is_icds_cas_project
 
 
 @periodic_task_on_envs(settings.ICDS_ENVS, run_every=crontab(day_of_month='2', minute=0, hour=0), queue='sms_queue')
@@ -118,3 +125,45 @@ def send_sms_limit_exceeded_alert(sender, instance, **kwargs):
             """).format(env=settings.SERVER_ENVIRONMENT, date=instance.date, sms_limit=sms_daily_limit)
         send_html_email_async.delay(subject, recipients, message,
                 email_from=settings.DEFAULT_FROM_EMAIL)
+
+
+@periodic_task_on_envs(settings.ICDS_ENVS, run_every=crontab(hour=20))
+def delete_old_sms_events():
+    end_date = datetime.utcnow() - relativedelta(years=1)
+    delete_sms_events.delay(datetime.min, end_date)
+
+
+@task
+def delete_sms_events(start_date, end_date):
+    db = router.db_for_write(SMS)
+    with atomic(db), connections[db].cursor() as cursor:
+        cursor.execute(
+            f"""
+            UPDATE {SMS._meta.db_table} sms
+            SET messaging_subevent_id = NULL
+            FROM {MessagingSubEvent._meta.db_table} as subevent
+            LEFT JOIN {MessagingEvent._meta.db_table} as event ON event.id = subevent.parent_id
+            WHERE sms.messaging_subevent_id = subevent.id and event.date between %s and %s
+            """,
+            [start_date, end_date]
+        )
+
+        cursor.execute(
+            f"""
+            DELETE FROM {MessagingSubEvent._meta.db_table} as subevent
+            USING {MessagingEvent._meta.db_table} as event
+            WHERE subevent.parent_id = event.id
+            AND event.date between %s and %s
+            """,
+            [start_date, end_date]
+        )
+        metrics_counter('commcare.sms_events.deleted', cursor.rowcount, tags={'type': 'sub_event'})
+
+        cursor.execute(
+            f"""
+            DELETE FROM {MessagingEvent._meta.db_table}
+            WHERE date between %s and %s
+            """,
+            [start_date, end_date]
+        )
+        metrics_counter('commcare.sms_events.deleted', cursor.rowcount, tags={'type': 'event'})

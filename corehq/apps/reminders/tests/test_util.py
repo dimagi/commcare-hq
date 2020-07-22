@@ -39,4 +39,4 @@ class ReminderUtilTest(TestCase):
 
     def tearDown(self):
         delete_domain_phone_numbers('test')
-        self.user.delete()
+        self.user.delete(deleted_by=None)

@@ -55,7 +55,7 @@ class UserPillowTest(UserPillowTestBase):
     def test_kafka_user_pillow_deletion(self):
         user = self._make_and_test_user_kafka_pillow('test-kafka-user_deletion')
         # soft delete
-        user.retire()
+        user.retire(deleted_by=None)
 
         # send to kafka
         since = get_topic_offset(topics.COMMCARE_USER)
