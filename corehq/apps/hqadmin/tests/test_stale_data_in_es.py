@@ -267,7 +267,7 @@ class TestStaleDataInESSQL(TestCase):
         refresh = False
         for doc_id in doc_ids:
             try:
-                es_interface.delete(index_info.index, index_info.type, doc_id)
+                es_interface.delete_doc(index_info.index, index_info.type, doc_id)
             except elasticsearch.NotFoundError:
                 pass
             else:

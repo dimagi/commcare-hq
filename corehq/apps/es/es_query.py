@@ -538,7 +538,7 @@ class ESQuerySet(object):
             return flatten_field_dict(result, fields_property='_source')
         else:
             # ES7 scroll for some reason don't include _id in the source even if it's specified
-            if settings.ELASTICSEARCH_MAJOR_VERSION == 7 and query._source and "_id" in query._source:
+            if settings.ELASTICSEARCH_MAJOR_VERSION == 7 and getattr(query, '_source', None) and "_id" in query._source:
                 result['_source']['_id'] = result.get('_id', None)
             return result['_source']
 

@@ -175,7 +175,6 @@ tropo-webapi-python==0.1.3  # via -r requirements/requirements.in
 turn-python==0.0.1        # via -r requirements/requirements.in
 twilio==6.5.1             # via -r requirements/requirements.in
 ua-parser==0.8.0          # via user-agents
-unidecode==0.04.20        # via -r requirements/requirements.in
 urllib3==1.25.6           # via botocore, elasticsearch, elasticsearch2, elasticsearch7, py-kissmetrics, requests, sentry-sdk
 user-agents==2.0          # via django-user-agents
 uwsgi==2.0.18             # via -r requirements/prod-requirements.in
