@@ -28,14 +28,13 @@ class Command(BaseCommand):
 
         # pregnant and lactating st, sc, obc, others
         rows = AggCcsRecord.objects.filter(
-                month=date(2020, 6, 1), aggregation_level=5).values('district_id', 'caste').annotate(
+                month=date(2020, 6, 1), aggregation_level=5, caste__in=['sc', 'st', 'obc', 'other']).values('district_id', 'caste').annotate(
                 pregnant=Sum('pregnant'), lactating=Sum('lactating'))
         for row in rows:
             district_id = row['district_id']
             caste = row['caste']
-            if caste is not None:
-                data[district_id][headers.index(f'{caste}_pregnant')] = row['pregnant']
-                data[district_id][headers.index(f'{caste}_lactating')] = row['lactating']
+            data[district_id][headers.index(f'{caste}_pregnant')] = row['pregnant']
+            data[district_id][headers.index(f'{caste}_lactating')] = row['lactating']
         # pregnant and lactating minority
         rows = AggCcsRecord.objects.filter(
                 month=date(2020, 6, 1), state_id=STATE_ID, minority='yes', aggregation_level=5).values(
@@ -47,25 +46,23 @@ class Command(BaseCommand):
 
         # child 6 months - 3 years sc, st, obc, others
         rows = AggChildHealth.objects.filter(
-                month=date(2020, 6, 1), state_id=STATE_ID, aggregation_level=5,
+                month=date(2020, 6, 1), state_id=STATE_ID, aggregation_level=5, caste__in=['sc', 'st', 'obc', 'other'],
                 age_tranche__in=['12', '24', '36']).values('district_id', 'caste').annotate(
                 valid_count=Sum('valid_in_month'))
         for row in rows:
             district_id = row['district_id']
             caste = row['caste']
-            if caste is not None:
-                data[district_id][headers.index(f'{caste}_ch_6_to_3yr')] = row['valid_count']
+            data[district_id][headers.index(f'{caste}_ch_6_to_3yr')] = row['valid_count']
 
         # child 3 years - 6 years sc, st, obc, others
         rows = AggChildHealth.objects.filter(
-                month=date(2020, 6, 1), state_id=STATE_ID, aggregation_level=5,
+                month=date(2020, 6, 1), state_id=STATE_ID, aggregation_level=5, caste__in=['sc', 'st', 'obc', 'other'],
                 age_tranche__in=['48', '60', '72']).values('district_id', 'caste').annotate(
             valid_count=Sum('valid_in_month'))
         for row in rows:
             district_id = row['district_id']
             caste = row['caste']
-            if caste is not None:
-                data[district_id][headers.index(f'{caste}_ch_3_to_6yr')] = row['valid_count']
+            data[district_id][headers.index(f'{caste}_ch_3_to_6yr')] = row['valid_count']
 
         # child 6 months - 3 years minority
         rows = AggChildHealth.objects.filter(
