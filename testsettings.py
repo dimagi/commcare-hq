@@ -165,11 +165,14 @@ if os.path.exists("custom/icds"):
         ['village_choice_list', 'custom.icds_reports.ucr.filter_value.VillageFilterValue']
     )
 
-    INSTALLED_APPS = (
+    icds_apps = [
         "custom.icds",
         "custom.icds.data_management",
         "custom.icds_reports"
-    ) + tuple(INSTALLED_APPS)
+    ]
+    for app in icds_apps:
+        if app not in INSTALLED_APPS:
+            INSTALLED_APPS = (app,) + tuple(INSTALLED_APPS)
 
     CUSTOM_DOMAIN_SPECIFIC_URL_MODULES = [
         'custom.icds_reports.urls',
