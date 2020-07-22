@@ -298,7 +298,7 @@ class QueueingTestCase(BaseSMSTest):
         self.assertTrue(passes_trial_check(sms))
 
     def test_incoming(self, process_sms_delay_mock, enqueue_directly_mock):
-        incoming('999123', 'inbound test', self.backend.get_api_id(), backend_id=self.backend.couch_id)
+        incoming('999123', 'inbound test', self.backend.get_api_id())
 
         self.assertEqual(enqueue_directly_mock.call_count, 1)
         self.assertEqual(self.queued_sms_count, 1)

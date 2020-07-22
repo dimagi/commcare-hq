@@ -341,12 +341,15 @@ class SmsBillable(models.Model):
     def _get_gateway_fee(cls, backend_api_id, backend_id,
                          phone_number, direction, couch_id, backend_message_id, domain):
         country_code, national_number = get_country_code_and_national_number(phone_number)
-        backend_instance = SQLMobileBackend.load(
-            backend_id,
-            api_id=backend_api_id,
-            is_couch_id=True,
-            include_deleted=True,
-        )
+
+        backend_instance = None
+        if backend_id is not None:
+            backend_instance = SQLMobileBackend.load(
+                backend_id,
+                api_id=backend_api_id,
+                is_couch_id=True,
+                include_deleted=True,
+            )
 
         is_gateway_billable = (
             backend_id is None
@@ -357,7 +360,7 @@ class SmsBillable(models.Model):
         direct_gateway_fee = gateway_fee = multipart_count = conversion_rate = None
 
         if is_gateway_billable:
-            if backend_instance.using_api_to_get_fees:
+            if backend_instance and backend_instance.using_api_to_get_fees:
                 if backend_message_id:
                     direct_gateway_fee, multipart_count = \
                         cls.get_charge_details_through_api(backend_instance, backend_message_id)
