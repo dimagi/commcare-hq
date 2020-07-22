@@ -118,6 +118,8 @@ def process_repeat_record(repeat_record):
         repeat_record.cancel()
         repeat_record.save()
         return
+    if not repeater.is_connection_working():
+        repeater.pause()
 
     try:
         if repeater.paused:

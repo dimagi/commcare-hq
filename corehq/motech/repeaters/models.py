@@ -273,6 +273,28 @@ class Repeater(QuickCachedDocumentMixin, Document):
             self.failure_streak += 1
         self.save()
 
+    def is_connection_working(self):
+        """
+        Tries to determine whether the remote API is accepting payloads
+        based on past success.
+        """
+        three_months = timedelta(days=90)
+        if self.failure_streak > 10_000:
+            # 10,000 misses without a single hit.
+            return False
+        if datetime.utcnow() - self.started_at < three_months:
+            # Three months grace period to get it working
+            return True
+        if self.last_success_at is None:
+            if self.failure_streak == 0:
+                # Never succeeded, but never failed either: Nothing sent yet.
+                return True
+        else:
+            if datetime.utcnow() - self.last_success_at < three_months:
+                # Has succeeded at least once in the last 3 months
+                return True
+        return False
+
     def clear_caches(self):
         super(Repeater, self).clear_caches()
         # Also expire for cases repeater is fetched using Repeater class.
