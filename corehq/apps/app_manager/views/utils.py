@@ -450,7 +450,7 @@ def handle_shadow_child_modules(app, shadow_parent):
 
     source_module_children = [
         m for m in app.modules
-        if m.root_module_id == shadow_parent['source_module_id']
+        if m.root_module_id == shadow_parent.source_module_id
     ]
 
     shadow_parent_children = [
@@ -468,7 +468,7 @@ def handle_shadow_child_modules(app, shadow_parent):
     # Add new modules
     for shadow_child in source_module_children:
         changes = True
-        new_shadow = ShadowModule.new_module(shadow_child.name['en'], 'en')
+        new_shadow = ShadowModule.new_module(shadow_child.default_name(), app.default_language)
         new_shadow.source_module_id = shadow_child.unique_id
         new_shadow.root_module_id = shadow_parent.unique_id
         new_shadow.put_in_root = shadow_child.put_in_root
