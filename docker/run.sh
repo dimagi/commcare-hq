@@ -10,7 +10,7 @@ fi
 function setup() {
     [ -n "$1" ] && TEST="$1"
 
-    rm *.log *.lock || true
+    rm *.log || true
 
     scripts/uninstall-requirements.sh
     pip install -r requirements/test-requirements.txt
