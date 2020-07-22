@@ -32,7 +32,6 @@ from corehq.pillows.base import VALUE_TAG, restore_property_dict
 from corehq.pillows.mappings.case_mapping import CASE_ES_ALIAS
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_ES_ALIAS
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_ALIAS
-from corehq.pillows.mappings.user_mapping import USER_ES_ALIAS
 from corehq.pillows.mappings.xform_mapping import XFORM_ALIAS
 from no_exceptions.exceptions import Http400
 
