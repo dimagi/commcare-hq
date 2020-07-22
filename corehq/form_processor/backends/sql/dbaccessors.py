@@ -22,7 +22,7 @@ from ddtrace import tracer
 from casexml.apps.case.xform import get_case_updates
 from dimagi.utils.chunked import chunked
 
-from corehq.apps.data_vault.models import VaultStore
+from corehq.apps.data_vault import save_tracked_vault_entries
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
@@ -621,7 +621,6 @@ class FormAccessorSQL(AbstractFormAccessor):
         logging.debug('Saving new form: %s', form)
 
         operations = form.get_tracked_models_to_create(XFormOperationSQL)
-        vault_items = form.get_tracked_models_to_create(VaultStore)
         for operation in operations:
             if operation.is_saved():
                 raise XFormSaveError(
@@ -637,8 +636,7 @@ class FormAccessorSQL(AbstractFormAccessor):
                 attachment_writer.write()
                 for operation in operations:
                     operation.save()
-                for vault_item in vault_items:
-                    vault_item.save()
+                save_tracked_vault_entries(form)
         except InternalError as e:
             raise XFormSaveError(e)
 

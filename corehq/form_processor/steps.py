@@ -1,7 +1,7 @@
 import re
 from abc import ABC, abstractmethod
 
-from corehq.apps.data_vault.models import VaultStore
+from corehq.apps.data_vault import add_vault_entry
 
 
 class FormProcessingStep(ABC):
@@ -41,7 +41,7 @@ class VaultPatternExtractor(FormProcessingStep):
     def _replace_values(self, xml_as_text):
         values = self._extract_patterns_from_string(xml_as_text, self._patterns)
         distinct_values = set(values)
-        vault_items = [VaultStore(value=value, identifier=self.identifier) for value in distinct_values]
+        vault_items = [add_vault_entry(value=value, identifier=self.identifier) for value in distinct_values]
         new_xml = self._replace_keys_in_string({v.value: v.key for v in vault_items}, xml_as_text)
         return new_xml, vault_items
 
