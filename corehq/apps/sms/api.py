@@ -753,7 +753,7 @@ def _process_incoming(msg):
             # Opt the phone number in, and then process the message normally
             PhoneBlacklist.opt_in_sms(msg.phone_number, domain=domain)
 
-        handled = False
+    handled = False
 
     if _domain_accepts_inbound(msg):
         if v and v.pending_verification:
