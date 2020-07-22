@@ -19,6 +19,8 @@ from corehq.apps.api.resources.v0_1 import TASTYPIE_RESERVED_GET_PARAMS
 from corehq.apps.api.util import object_does_not_exist
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.es import filters
+from corehq.apps.es.forms import FormES
+from corehq.apps.es.cases import CaseES
 from corehq.apps.es.utils import flatten_field_dict
 from corehq.apps.reports.filters.forms import FormsByApplicationFilter
 from corehq.elastic import (
@@ -35,9 +37,6 @@ from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from no_exceptions.exceptions import Http400
 
 logger = logging.getLogger('es')
-
-
-DEFAULT_SIZE = 10
 
 
 class ESUserError(Http400):
@@ -185,65 +184,8 @@ class ESView(View):
         es_results['hits']['hits'] = hits
         return es_results
 
-    def base_query(self, terms=None, fields=None, start=0, size=DEFAULT_SIZE):
-        """
-        The standard query to run across documents of a certain index.
-        domain = exact match domain string
-        terms = k,v pairs of terms you want to match against. you can dive down into properties like form.foo for an xform, like { "username": "foo", "type": "bar" } - this will make it into a term: k: v dict
-        fields = field properties to report back in the results['fields'] array. if blank, you will need to read the _source
-        start = where to start the results from
-        size = default size in ES is 10, also explicitly set here.
-        """
-        fields = fields or []
-        query = {
-            "filter": {
-                "and": [
-                    {"term": {"domain.exact": self.domain}}
-                ]
-            },
-            "from": start,
-            "size": size
-        }
 
-        use_terms = terms or {}
-
-        if len(fields) > 0:
-            query['fields'] = fields
-        for k, v in use_terms.items():
-            query['filter']['and'].append({"term": {k: v}})
-        return query
-
-    def get(self, request, *args, **kwargs):
-        """
-        Very basic querying based upon GET parameters.
-        todo: apply GET params as lucene query_string params to base_query
-        """
-        size = request.GET.get('size', DEFAULT_SIZE)
-        start = request.GET.get('start', 0)
-        query_results = self.run_query(self.base_query(start=start, size=size))
-        query_output = json.dumps(query_results, indent=self.indent)
-        response = HttpResponse(query_output, content_type="application/json")
-        return response
-
-    def post(self, request, *args, **kwargs):
-        """
-        More powerful ES querying using POST params.
-        """
-        try:
-            raw_query = json.loads(request.body.decode('utf-8'))
-        except Exception as e:
-            content_response = dict(message="Error parsing query request", exception=str(e))
-            response = HttpResponse(status=406, content=json.dumps(content_response))
-            return response
-
-        #ensure that the domain is filtered in implementation
-        query_results = self.run_query(raw_query)
-        query_output = json.dumps(query_results, indent=self.indent)
-        response = HttpResponse(query_output, content_type="application/json")
-        return response
-
-
-class CaseES(ESView):
+class CaseESView(ESView):
     """
     Expressive CaseES interface. Yes, this is redundant with pieces of the v0_1.py CaseAPI - todo to merge these applications
     Which this should be the final say on ES access for Casedocs
@@ -253,32 +195,19 @@ class CaseES(ESView):
     model = ESCase
 
 
-class ReportCaseES(ESView):
+class ReportCaseESView(ESView):
     index = REPORT_CASE_INDEX
     doc_type = "CommCareCase"
     model = ESCase
 
 
-class XFormES(ESView):
+class FormESView(ESView):
     index = XFORM_INDEX
     doc_type = "XFormInstance"
     model = ESXFormInstance
 
-    def base_query(self, terms=None, doc_type='xforminstance', fields=None, start=0, size=DEFAULT_SIZE):
-        """
-        Somewhat magical enforcement that the basic query for XForms will only return XFormInstance
-        docs by default.
-        """
-
-        new_terms = terms or {}
-        use_fields = fields or []
-        if 'doc_type' not in new_terms:
-            #let the terms override the kwarg - the query terms trump the magic
-            new_terms['doc_type'] = doc_type
-        return super(XFormES, self).base_query(terms=new_terms, fields=use_fields, start=start, size=size)
-
     def run_query(self, es_query, **kwargs):
-        es_results = super(XFormES, self).run_query(es_query)
+        es_results = super(FormESView, self).run_query(es_query)
         # hack, walk the results again, and if we have xmlns, populate human readable names
         # Note that `get_unknown_form_name` does not require the request, which is also
         # not necessarily available here. So `None` is passed here.
@@ -311,59 +240,6 @@ class XFormES(ESView):
         return es_results
 
 
-class UserES(ESView):
-    """
-    self.run_query accepts a structured elasticsearch query
-    """
-    index = USER_INDEX
-    doc_type = "CommCareUser"
-
-    def validate_query(self, query):
-        if 'password' in query['fields']:
-            raise ESUserError("You cannot include password in the results")
-
-    def run_query(self, es_query, es_type=None, security_check=True):
-        """
-        Must be called with a "fields" parameter
-        Returns the raw query json back, or None if there's an error
-        """
-
-        logger.info("ESlog: [%s.%s] ESquery: %s" % (
-            self.__class__.__name__, self.domain, json.dumps(es_query)))
-
-        self.validate_query(es_query)
-
-        try:
-            es_results = self.es_interface.search(self.index, es_type, body=es_query)
-            report_and_fail_on_shard_failures(es_results)
-        except ElasticsearchException as e:
-            msg = "Error in elasticsearch query [%s]: %s\nquery: %s" % (
-                self.index, str(e), es_query)
-            notify_exception(None, message=msg)
-            return None
-
-        hits = []
-        for res in es_results['hits']['hits']:
-            if '_source' in res:
-                raise ESUserError(
-                    "This query does not support full document lookups")
-
-            # security check
-            if security_check:
-                res_domain = res['fields'].get('domain_memberships.domain', None)
-
-                if res_domain == self.domain:
-                    hits.append(res)
-                else:
-                    logger.info(
-                        "Requester domain %s does not match result domain %s" % (
-                        self.domain, res_domain))
-            else:
-                hits.append(res)
-        es_results['hits']['hits'] = hits
-        return es_results
-
-
 def report_term_filter(terms, mapping):
     """convert terms to correct #value term queries based upon the mapping
     does it match up with pre-defined stuff in the mapping?
@@ -387,29 +263,13 @@ def report_term_filter(terms, mapping):
     return ret_terms
 
 
-class ReportXFormES(XFormES):
+class ReportFormESView(FormESView):
     index = REPORT_XFORM_INDEX
     doc_type = "XFormInstance"
     model = ESXFormInstance
 
-    def base_query(self, terms=None, doc_type='xforminstance', fields=None, start=0, size=DEFAULT_SIZE):
-        """
-        Somewhat magical enforcement that the basic query for XForms will only return XFormInstance
-        docs by default.
-        """
-        raw_terms = terms or {}
-        query_terms = {}
-        if 'doc_type' not in raw_terms:
-            #let the terms override the kwarg - the query terms trump the magic
-            query_terms['doc_type'] = doc_type
-
-        for k, v in raw_terms.items():
-            query_terms['%s.%s' % (k, VALUE_TAG)] = v
-
-        return super(ReportXFormES, self).base_query(terms=raw_terms, fields=fields, start=start, size=size)
-
     def run_query(self, es_query):
-        es_results = super(XFormES, self).run_query(es_query)
+        es_results = super(FormESView, self).run_query(es_query)
         #hack, walk the results again, and if we have xmlns, populate human readable names
         # Note that `get_unknown_form_name` does not require the request, which is also
         # not necessarily available here. So `None` is passed here.
@@ -441,69 +301,6 @@ class ReportXFormES(XFormES):
 
                 res['_source']['es_readable_name'] = name
         return es_results
-
-    @classmethod
-    def by_case_id_query(cls, domain, case_id, terms=None, doc_type='xforminstance',
-                         date_field=None, startdate=None, enddate=None,
-                         date_format=ISO_DATE_FORMAT):
-        """
-        Run a case_id query on both case properties (supporting old and new) for xforms.
-
-        datetime options onsubmission ranges possible too by passing datetime startdate or enddate
-
-        args:
-        domain: string domain, required exact
-        case_id: string
-        terms: k,v of additional filters to apply as terms and block of filter
-        doc_type: explicit xforminstance doc_type term query (only search active, legit items)
-        date_field: string property of the xform submission you want to do date filtering, be sure to make sure that the field in question is indexed as a datetime
-        startdate, enddate: datetime interval values
-        date_format: string of the date format to filter based upon, defaults to yyyy-mm-dd
-        """
-
-        use_terms = terms or {}
-        query = {
-            "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {"term": {"domain.exact": domain.lower()}},
-                            {"term": {"doc_type": doc_type}},
-                            {
-                                "nested": {
-                                    "path": "form.case",
-                                    "filter": {
-                                        "or": [
-                                            {"term": {"form.case.@case_id": "%s" % case_id}},
-                                            {"term": {"form.case.case_id": "%s" % case_id}}
-                                        ]
-                                    }
-                                }
-                            }
-                        ]
-                    },
-                    "query": {
-                        "match_all": {}
-                    }
-                }
-            }
-        }
-        if date_field is not None:
-            range_query = {
-                "range": {
-                    date_field: {}
-                }
-            }
-
-            if startdate is not None:
-                range_query['range'][date_field]["gte"] = startdate.strftime(date_format)
-            if enddate is not None:
-                range_query['range'][date_field]["lte"] = enddate.strftime(date_format)
-            query['query']['filtered']['filter']['and'].append(range_query)
-
-        for k, v in use_terms.items():
-            query['query']['filtered']['filter']['and'].append({"term": {k.lower(): v.lower()}})
-        return query
 
 
 class ElasticAPIQuerySet(object):
@@ -681,6 +478,21 @@ class TermParam(object):
             return filters.term(self.term, value)
 
 
+class XFormServerModifiedParams:
+    param = 'server_modified_on'
+
+    def consume_params(self, raw_params):
+        value = raw_params.pop(self.param, None)
+        if value:
+            return filters.OR(
+                filters.AND(
+                    filters.NOT(filters.missing(self.param)), filters.range_filter(self.param, **value)
+                ),
+                filters.AND(
+                    filters.missing(self.param), filters.range_filter("received_on", **value)
+                )
+            )
+
 query_param_consumers = [
     TermParam('xmlns', 'xmlns.exact'),
     TermParam('xmlns.exact'),
@@ -701,35 +513,57 @@ query_param_consumers = [
 ]
 
 
-def es_search(request, domain, reserved_query_params=None):
-    return es_search_by_params(request.GET, domain, reserved_query_params)
+def _validate_and_get_es_filter(search_param):
+    _filter = search_param.pop('filter', None)
+    if not _filter:
+        # not a supported query
+        raise Http400
+    try:
+        # custom use case by 'enveritas' project for Form API
+        date_range = _filter['range']['inserted_at']
+        return {
+            'range': {'inserted_at': date_range}
+        }
+    except KeyError:
+        pass
+    try:
+        # custom filter from Data export tool
+        _range = None
+        try:
+            _range = _filter['or'][0]['and'][0]['range']['server_modified_on']
+        except KeyError:
+            try:
+                _range = _filter['or'][0]['and'][1]['range']['server_modified_on']
+            except KeyError:
+                pass
+
+        if _range:
+            return XFormServerModifiedParams().consume_params({'server_modified_on': _range})
+        else:
+            raise Http400
+    except (KeyError, AssertionError):
+        raise Http400
 
 
-def es_search_by_params(search_params, domain, reserved_query_params=None):
-    payload = {
-        "filter": {
-            "and": [
-                {"term": {"domain.exact": domain}}
-            ]
-        },
-    }
+def es_query_from_get_params(search_params, domain, reserved_query_params=None, doc_type='form'):
+    # doc_type can be form or case
+    assert doc_type in ['form', 'case']
+    es = FormES() if doc_type == 'form' else CaseES()
 
-    # ?_search=<json> for providing raw ES query, which is nonetheless restricted here
-    # NOTE: The fields actually analyzed into ES indices differ somewhat from the raw
-    # XML / JSON.
+    query = es.remove_default_filters().domain(domain)
+
+    if doc_type == 'form':
+        if 'include_archived' in search_params:
+            query = query.filter(
+                filters.OR(filters.term('doc_type', 'xforminstance'), filters.term('doc_type', 'xformarchived')))
+        else:
+            query = query.filter(filters.term('doc_type', 'xforminstance'))
+
     if '_search' in search_params:
-        additions = json.loads(search_params['_search'])
-
-        if 'filter' in additions:
-            payload['filter']['and'].append(additions['filter'])
-
-        if 'query' in additions:
-            payload['query'] = additions['query']
-
-    # ?q=<lucene>
-    if 'q' in search_params:
-        payload['query'] = payload.get('query', {})
-        payload['query']['query_string'] = {'query': search_params['q']}  # A bit indirect?
+        # This is undocumented usecase by Data export tool and one custom project
+        #   Validate that the passed in param is one of these two expected
+        _filter = _validate_and_get_es_filter(json.loads(search_params['_search']))
+        query = query.filter(_filter)
 
     # filters are actually going to be a more common case
     reserved_query_params = RESERVED_QUERY_PARAMS | set(reserved_query_params or [])
@@ -745,13 +579,13 @@ def es_search_by_params(search_params, domain, reserved_query_params=None):
             raise Http400("Bad query parameter: {}".format(str(e)))
 
         if payload_filter:
-            payload["filter"]["and"].append(payload_filter)
+            query = query.filter(payload_filter)
 
     # add unconsumed filters
     for param, value in query_params.items():
         # assume these fields are analyzed in ES so convert to lowercase
         # Any fields that are not analyzed in ES should be in the ``query_param_consumers`` above
         value = value.lower()
-        payload["filter"]["and"].append(filters.term(param, value))
+        query = query.filter(filters.term(param, value))
 
-    return payload
+    return query.raw_query
