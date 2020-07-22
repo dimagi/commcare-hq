@@ -311,12 +311,12 @@ def heartbeat(request, domain, app_build_id):
         info = GlobalAppConfig.get_latest_version_info(domain, app.master_id, build_profile_id)
 
     info["app_id"] = app_id
-
-    error_response = check_authorization(domain, request.couch_user, master_app_id)
-    if error_response:
-        return error_response
-    if not toggles.SKIP_UPDATING_USER_REPORTING_METADATA.enabled(domain):
-        update_user_reporting_data(app_build_id, app_id, build_profile_id, request.couch_user, request)
+    if master_app_id:
+        error_response = check_authorization(domain, request.couch_user, master_app_id)
+        if error_response:
+            return error_response
+        if not toggles.SKIP_UPDATING_USER_REPORTING_METADATA.enabled(domain):
+            update_user_reporting_data(app_build_id, app_id, build_profile_id, request.couch_user, request)
 
     if _should_force_log_submission(request):
         info['force_logs'] = True
