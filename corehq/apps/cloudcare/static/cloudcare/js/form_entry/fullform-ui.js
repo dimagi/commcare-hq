@@ -435,7 +435,7 @@ function Question(json, parent) {
     self.fromJS(json);
     self.parent = parent;
     // Grab the parent pubsub so questions can interact with other questions on the same form/group.
-    self.parentPubSub = parent.pubsub;
+    self.parentPubSub = (parent) ? parent.pubsub : new ko.subscribable();
     self.error = ko.observable(null);
     self.serverError = ko.observable(null);
     self.rel_ix = ko.observable(relativeIndex(self.ix()));
@@ -516,30 +516,30 @@ Question.prototype.fromJS = function (json) {
  * an exact match is returned.
  * @param {Object} pattern - the regex or string used to find matching styles.
  */
-Question.prototype.stylesContaining = function(pattern) {
+Question.prototype.stylesContaining = function (pattern) {
     var self = this;
     var retVal = [];
-    var styleStr = ko.utils.unwrapObservable(self.style.raw);
+    var styleStr = (self.style) ? ko.utils.unwrapObservable(self.style.raw) : null;
     if (styleStr) {
         var styles = styleStr.split(' ');
-        styles.forEach(function(style) {
+        styles.forEach(function (style) {
             if ((pattern instanceof RegExp && style.match(pattern))
                 || (typeof pattern === "string" && pattern === style)) {
                 retVal.push(style);
             }
-        })
+        });
     }
-	return retVal;
-}
+    return retVal;
+};
 /**
  * Returns a boolean of whether the styles contain a pattern
  * If a regex is provided, returns regex matches. If a string is provided
  * an exact match is returned.
  * @param {Object} pattern - the regex or string used to find matching styles.
  */
-Question.prototype.stylesContains = function(pattern) {
+Question.prototype.stylesContains = function (pattern) {
     return this.stylesContaining(pattern).length > 0;
-}
+};
 
 
 Formplayer.Const = {
@@ -563,6 +563,7 @@ Formplayer.Const = {
 
     // Appearance attributes
     NUMERIC: 'numeric',
+    ADDRESS: 'address',
     MINIMAL: 'minimal',
     LABEL: 'label',
     LIST_NOLABEL: 'list-nolabel',

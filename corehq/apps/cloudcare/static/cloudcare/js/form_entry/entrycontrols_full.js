@@ -200,12 +200,12 @@ FreeTextEntry.prototype.onPreProcess = function (newValue) {
 FreeTextEntry.prototype.enableReceiver = function (question, options) {
     var self = this;
     if (options.receiveStyle) {
-        var match = options.receiveStyle.match(/receive-(.*)-(.*)/)
+        var match = options.receiveStyle.match(/receive-(.*)-(.*)/);
         if (match) {
             var receiveTopic = match[1];
             var receiveTopicField = match[2];
-            question.parentPubSub.subscribe(function(addr) {
-                if (addr == Formplayer.Const.NO_ANSWER) {
+            question.parentPubSub.subscribe(function (addr) {
+                if (addr === Formplayer.Const.NO_ANSWER) {
                     self.rawAnswer(Formplayer.Const.NO_ANSWER);
                 } else if (addr[receiveTopicField]) {
                     self.rawAnswer(addr[receiveTopicField]);
@@ -228,12 +228,12 @@ function AddressEntry(question, options) {
 
     // Callback for the geocoder when an address item is selected. We intercept here and broadcast to
     // subscribers.
-    self.geocoderItemCallback = function(item) {
+    self.geocoderItemCallback = function (item) {
         self.rawAnswer(item.place_name);
-        self.broadcastTopics.forEach(function(broadcastTopic) {
-            broadcastObj = {
-                full: item.place_name
-            }
+        self.broadcastTopics.forEach(function (broadcastTopic) {
+            var broadcastObj = {
+                full: item.place_name,
+            };
             item.context.forEach(function (contextValue) {
                 if (contextValue.id.startsWith('postcode')) {
                     broadcastObj.zipcode = contextValue.text;
@@ -256,19 +256,19 @@ function AddressEntry(question, options) {
     // geocoder function called when user presses 'x', broadcast a no answer to subscribers.
     self.geocoderOnClearCallback = function () {
         self.answer(Formplayer.Const.NO_ANSWER);
-        self.broadcastTopics.forEach(function(broadcastTopic) {
+        self.broadcastTopics.forEach(function (broadcastTopic) {
             question.parentPubSub.notifySubscribers(Formplayer.Const.NO_ANSWER, broadcastTopic);
         });
     };
 
     self.afterRender = function () {
         if (options.broadcastStyles) {
-            options.broadcastStyles.forEach(function(broadcast) {
+            options.broadcastStyles.forEach(function (broadcast) {
                 var match = broadcast.match(/broadcast-(.*)/);
                 if (match) {
                     self.broadcastTopics.push(match[1]);
                 }
-            })
+            });
         }
 
         var geocoder = new MapboxGeocoder({
@@ -877,9 +877,9 @@ function getEntry(question) {
         case Formplayer.Const.BARCODE:
             options = {
                 enableAutoUpdate: isPhoneMode,
-                receiveStyle: (question.stylesContains(/receive-*/)) ? question.stylesContaining(/receive-*/)[0]: null,
-            }
-            if (question.stylesContains('address')) {
+                receiveStyle: (question.stylesContains(/receive-*/)) ? question.stylesContaining(/receive-*/)[0] : null,
+            };
+            if (question.stylesContains(Formplayer.Const.ADDRESS)) {
                 entry = new AddressEntry(question, {
                     broadcastStyles: question.stylesContaining(/broadcast-*/),
                 });
