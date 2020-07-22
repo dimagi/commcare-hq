@@ -125,8 +125,9 @@ def upload_bulk_app_translations(request, domain, app_id):
     lang = request.POST.get('language')
     validate = request.POST.get('validate')
     app = get_app(domain, app_id)
+    file = request.file
     try:
-        workbook = get_workbook(request.file)
+        workbook = get_workbook(file)
     except WorkbookJSONError as e:
         messages.error(request, str(e))
     else:
@@ -135,7 +136,7 @@ def upload_bulk_app_translations(request, domain, app_id):
                 msgs = [(messages.error, _("Please select language to validate."))]
             else:
                 try:
-                    msgs = validate_bulk_app_translation_upload(app, workbook, request.user.email, lang, request.file)
+                    msgs = validate_bulk_app_translation_upload(app, workbook, request.user.email, lang, file)
                 except BulkAppTranslationsException as e:
                     msgs = [(messages.error, str(e))]
         else:
