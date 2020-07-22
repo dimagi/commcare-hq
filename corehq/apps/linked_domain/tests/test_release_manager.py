@@ -33,8 +33,14 @@ class TestReleaseManager(BaseLinkedAppsTest):
         cls.extra_domain_link.delete()
 
     def _assert_domain_outcomes(self, success_domains, error_domains):
-        self.assertEqual(set(self.manager.successes_by_domain.keys()), success_domains)
-        self.assertEqual(set(self.manager.errors_by_domain.keys()), error_domains)
+        self.assertEqual(
+            set(self.manager.successes_by_domain.get('text', {}).keys()),
+            success_domains
+        )
+        self.assertEqual(
+            set(self.manager.errors_by_domain.get('text', {}).keys()),
+            error_domains
+        )
 
     def _assert_error(self, domain, error):
         for actual in self.manager.errors_by_domain.get(domain, []):
