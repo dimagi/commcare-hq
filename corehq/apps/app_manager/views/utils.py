@@ -470,8 +470,17 @@ def handle_shadow_child_modules(app, shadow_parent):
         changes = True
         new_shadow = ShadowModule.new_module(shadow_child.name['en'], 'en')
         new_shadow.source_module_id = shadow_child.unique_id
-        new_shadow.root_module_id = shadow_parent['unique_id']
+        new_shadow.root_module_id = shadow_parent.unique_id
         new_shadow.put_in_root = shadow_child.put_in_root
+
+        # move excluded form ids
+        shadow_child_form_ids = set(
+            f.unique_id
+            for f in app.get_module_by_unique_id(new_shadow.source_module_id).get_forms()
+        )
+        new_shadow.excluded_form_ids = list(set(shadow_parent.excluded_form_ids) & shadow_child_form_ids)
+        shadow_parent.excluded_form_ids = list(set(shadow_parent.excluded_form_ids) - shadow_child_form_ids)
+
         app.add_module(new_shadow)
 
     if changes:
