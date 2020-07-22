@@ -90,8 +90,8 @@ domain_specific = [
     url(r'^submit_feedback/$', submit_feedback, name='submit_feedback'),
 ]
 
-for plugin_url_modules in extensions.get_contributions("urls:domain_specific"):
-    for module in plugin_url_modules:
+for url_modules in extensions.get_contributions("urls:domain_specific"):
+    for module in url_modules:
         domain_specific.append(url(r'^', include(module)))
 
 
