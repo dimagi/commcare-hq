@@ -1,6 +1,7 @@
 from django.utils.translation import ugettext_noop as _
 
 from corehq.const import ONE_DAY
+from corehq.sql_db.connections import get_db_alias_or_none
 
 BLOB_EXPIRATION_TIME = ONE_DAY
 
@@ -75,3 +76,8 @@ PRODUCT_CODES = [
     "tt_2",
     "tt_booster",
 ]
+
+AAA_DB_ENGINE_ID = 'aaa-data'
+
+def get_aaa_db_alias():
+    return get_db_alias_or_none(AAA_DB_ENGINE_ID)

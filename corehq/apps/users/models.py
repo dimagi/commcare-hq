@@ -399,9 +399,9 @@ class UserRole(QuickCachedDocumentMixin, Document):
         return cls(permissions=Permissions(), domain=domain, name=None)
 
     @property
-    def ids_of_assigned_users(self):
+    def has_users_assigned(self):
         from corehq.apps.es.users import UserES
-        return UserES().is_active().domain(self.domain).role_id(self._id).values_list('_id', flat=True)
+        return bool(UserES().is_active().domain(self.domain).role_id(self._id).count())
 
     @classmethod
     def get_preset_permission_by_name(cls, name):
