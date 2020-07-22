@@ -67,5 +67,6 @@ branches:
   - dm/django2-upgrade  # Danny / Daniel July 15
   - kev/webapps-addresses-question # Kevin July 16
   - ce/2fa-lockout
+  - fr/shadow-module-child-versioned # Farid July 22
 
 submodules: {}
