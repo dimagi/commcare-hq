@@ -952,7 +952,7 @@ def get_awc_report_infrastructure(domain, config, month, show_test=False, beta=F
                     'frequency': 'month'
                 },
                 {
-                    'label': _('AWCs with Weighing Scale: Mother and Child'),
+                    'label': _('Weighing Scale: Mother and Child'),
                     'help_text': None,
                     'value': get_infa_value(kpi_data, 'adult_weighing_scale'),
                     'all': '',
