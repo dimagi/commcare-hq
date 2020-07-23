@@ -66,7 +66,6 @@ def determine_authtype_from_header(request, default=DIGEST):
         # Note: this will not identify initial, uncredentialed digest requests
         return DIGEST
     elif auth_header.startswith('bearer '):
-        # Note: this will not identify initial, uncredentialed digest requests
         return OAUTH2
     elif _is_api_key_authentication(request):
         return API_KEY
