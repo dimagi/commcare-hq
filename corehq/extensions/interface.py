@@ -31,8 +31,8 @@ def extension_point(func):
 
         return _extend
 
-    setattr(func, "extension_point_spec", {"name": func.__name__})
-    setattr(func, "extend", extend)
+    func.extension_point_spec = {"name": func.__name__}
+    func.extend = extend
     return func
 
 

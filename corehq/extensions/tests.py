@@ -44,11 +44,13 @@ def demo_extension_3(**kwargs):
 
 
 extensions = CommCareExtensions()
-extensions.add_extension_points(sys.modules[__name__])
-print('---', extensions.extension_point_registry)
-extensions.load_extensions([
-    "corehq.extensions.tests"
-])
+
+
+def setup():
+    extensions.add_extension_points(sys.modules[__name__])
+    extensions.load_extensions([
+        "corehq.extensions.tests"
+    ])
 
 
 def test_commcare_extensions():

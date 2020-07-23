@@ -6,6 +6,6 @@ class ExtensionAppConfig(AppConfig):
     name = 'corehq.extensions'
 
     def ready(self):
-        from corehq.extensions import extension_points, extension_manager  # noqa
+        from corehq.extensions import extension_points, extension_manager
         extension_manager.add_extension_points(extension_points)
         extension_manager.load_extensions(settings.COMMCARE_EXTENSIONS)

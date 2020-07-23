@@ -96,7 +96,7 @@ class UITab(object):
         items.extend([
             dropdown_dict(**response)
             for response in extensions.get_contributions(
-                "uitab:dropdown_items", tab=tab_name, domain=self.domain, request=self._request
+                "uitab_dropdown_items", tab=tab_name, domain=self.domain, request=self._request
             )
         ])
 
