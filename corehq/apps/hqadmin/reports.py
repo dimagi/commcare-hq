@@ -311,6 +311,7 @@ class DeployHistoryReport(GetParamsMixin, AdminReport):
     def total_records(self):
         return HqDeploy.objects.count()
 
+<<<<<<< HEAD
     def _format_date(self, date):
         if date:
             return f'<div>{naturaltime(date)}</div><div>{date.strftime(SERVER_DATETIME_FORMAT)}</div>'
