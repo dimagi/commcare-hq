@@ -19,7 +19,7 @@ class FormProcessingStep(ABC):
 class VaultPatternExtractor(FormProcessingStep):
     def __init__(self, patterns, xmlns_whitelist=None):
         self._patterns = patterns
-        self._xmlns_whitelist = xmlns_whitelist
+        self._xmlns_whitelist = xmlns_whitelist or []
 
     def __call__(self, context):
         if self._should_process(context.instance_xml):
@@ -34,7 +34,7 @@ class VaultPatternExtractor(FormProcessingStep):
     def _process(self, context):
         new_xml, vault_items = self._replace_values(context.instance_xml)
         context.instance_xml = new_xml
-        context.supplementary_models.append(vault_items)
+        context.supplementary_models.extend(vault_items)
 
     def _replace_values(self, xml_as_text):
         values = self._extract_patterns_from_string(xml_as_text, self._patterns)
