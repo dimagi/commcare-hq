@@ -1712,9 +1712,21 @@ class ProjectSettingsTab(UITab):
             })
 
         items.append((_('Project Information'), project_info))
+        
+        project_admin = []
 
         if user_is_admin and has_project_access:
-            items.append((_('Project Administration'), _get_administration_section(self.domain)))
+            project_admin.extend((_get_administration_section(self.domain)))
+
+        if toggles.RELEASE_BUILDS_PER_PROFILE.enabled(self.domain):
+            project_admin.append({
+                'title': _(ManageReleasesByAppProfile.page_title),
+                'url': reverse(ManageReleasesByAppProfile.urlname, args=[self.domain])
+                })
+      
+
+        items.append((_('Project Administration'), project_admin))
+        
 
         if self.couch_user.can_edit_motech() and has_project_access:
             integration_nav = _get_integration_section(self.domain)
@@ -1843,11 +1855,6 @@ def _get_administration_section(domain):
             'url': reverse(ManageReleasesByLocation.urlname, args=[domain])
         })
 
-    if toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
-        administration.append({
-            'title': _(ManageReleasesByAppProfile.page_title),
-            'url': reverse(ManageReleasesByAppProfile.urlname, args=[domain])
-        })
 
     return administration
 
