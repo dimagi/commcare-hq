@@ -44,7 +44,7 @@ CREATE VIEW system_usage_report_view AS
         ("agg_awc_monthly"."district_id" = "agg_ls"."district_id") AND
         ("agg_awc_monthly"."block_id" = "agg_ls"."block_id") AND
         ("agg_awc_monthly"."supervisor_id" = "agg_ls"."supervisor_id")
-    ) LEFT JOIN FROM "public"."icds_dashboard_app_version" "app_version" ON (
+    ) LEFT JOIN "public"."icds_dashboard_app_version" "app_version" ON (
         ("agg_awc_monthly"."month" = "app_version"."month") AND
         ("agg_awc_monthly"."awc_id" = "app_version"."awc_id") AND
         ("agg_awc_monthly"."supervisor_id" = "app_version"."supervisor_id")
