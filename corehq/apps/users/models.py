@@ -2791,6 +2791,7 @@ class AnonymousCouchUser(object):
 
 
 class UserReportingMetadataStaging(models.Model):
+    id = models.BigAutoField(primary_key=True)
     domain = models.TextField()
     user_id = models.TextField()
     app_id = models.TextField(null=True)  # not all form submissions include an app_id

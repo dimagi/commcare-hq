@@ -1834,14 +1834,17 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
             continue
         num_docs_retried += 1
         found_in_es = doc_id not in doc_ids_not_in_es
-        if not inserted_at or (sql_modified_on - inserted_at).seconds > 3600:
+        if not inserted_at or sql_modified_on > inserted_at:
             num_docs_unporcessed += 1
+            log = {
+                "doc_id": doc_id,
+                "modified_on": sql_modified_on.isoformat(),
+                "inserted_at": inserted_at.isoformat(),
+                "in_es": found_in_es,
+                "subtype": doc_subtype,
+            }
+            celery_task_logger.info("|" + json.dumps(log))
 
-        log = {
-            "doc_id": doc_id, "modified_on": sql_modified_on.isoformat(), "inserted_at": inserted_at.isoformat(),
-            "in_es": found_in_es, "subtype": doc_subtype
-        }
-        celery_task_logger.info(json.dumps(log))
         send_change_for_ucr_reprocessing(doc_id, doc_subtype, status_record.is_form_ucr)
 
     metrics_counter(

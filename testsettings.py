@@ -149,3 +149,42 @@ METRICS_PROVIDERS = [
 
 # timeout faster in tests
 ES_SEARCH_TIMEOUT = 5
+
+if os.path.exists("custom/icds"):
+    STATIC_DATA_SOURCES.extend([
+        "custom/icds_reports/ucr/data_sources/*.json",
+        "custom/icds_reports/ucr/data_sources/dashboard/*.json"
+    ])
+
+    STATIC_UCR_REPORTS.extend([
+        "custom/icds_reports/ucr/reports/dashboard/*.j,son",
+        "custom/icds_reports/ucr/reports/asr/*.json",
+        "custom/icds_reports/ucr/reports/asr/ucr_v2/*.json",
+        "custom/icds_reports/ucr/reports/mpr/*.json",
+        "custom/icds_reports/ucr/reports/mpr/dashboard/*.json",
+        "custom/icds_reports/ucr/reports/ls/*.json",
+        "custom/icds_reports/ucr/reports/other/*.json",
+    ])
+
+    CUSTOM_UCR_EXPRESSION_LISTS.append("custom.icds_reports.ucr.expressions.CUSTOM_UCR_EXPRESSIONS")
+    CUSTOM_UCR_REPORT_FILTERS.append(
+        ['village_choice_list', 'custom.icds_reports.ucr.filter_spec.build_village_choice_list_filter_spec']
+    )
+    CUSTOM_UCR_REPORT_FILTER_VALUES.append(
+        ['village_choice_list', 'custom.icds_reports.ucr.filter_value.VillageFilterValue']
+    )
+
+    icds_apps = [
+        "custom.icds",
+        "custom.icds.data_management",
+        "custom.icds_reports"
+    ]
+    for app in icds_apps:
+        if app not in INSTALLED_APPS:
+            INSTALLED_APPS = (app,) + tuple(INSTALLED_APPS)
+
+    CUSTOM_DOMAIN_SPECIFIC_URL_MODULES = [
+        'custom.icds_reports.urls',
+        'custom.icds.urls',
+        'custom.icds.data_management.urls'
+    ]

@@ -70,6 +70,7 @@ class TestBulkDocOperations(TestCase):
         cls.es = get_es_new()
         cls.es_interface = ElasticsearchInterface(cls.es)
         cls.index = TEST_INDEX_INFO.index
+        cls.es_alias = TEST_INDEX_INFO.alias
 
         with trap_extra_setup(ConnectionError):
             ensure_index_deleted(cls.index)
@@ -117,7 +118,7 @@ class TestBulkDocOperations(TestCase):
         self.assertEqual([], errors)
 
         es_docs = self.es_interface.get_bulk_docs(
-            index=self.index, doc_type=TEST_INDEX_INFO.type, doc_ids=self.case_ids)
+            self.es_alias, doc_type=TEST_INDEX_INFO.type, doc_ids=self.case_ids)
         ids_in_es = {
             doc['_id'] for doc in es_docs
         }

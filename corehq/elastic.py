@@ -15,13 +15,13 @@ from dimagi.utils.chunked import chunked
 from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
 
 from corehq.apps.es.utils import flatten_field_dict
-from corehq.pillows.mappings.app_mapping import APP_INDEX
-from corehq.pillows.mappings.case_mapping import CASE_INDEX
+from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
+from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
-from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
-from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
+from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX_INFO
+from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
@@ -78,7 +78,8 @@ def get_es_new():
     Returns an elasticsearch.Elasticsearch instance.
     """
     hosts = _es_hosts()
-    return Elasticsearch(hosts, timeout=settings.ES_SEARCH_TIMEOUT, serializer=ESJSONSerializer())
+    es = Elasticsearch(hosts, timeout=settings.ES_SEARCH_TIMEOUT, serializer=ESJSONSerializer())
+    return es
 
 
 @memoized
@@ -88,7 +89,7 @@ def get_es_export():
     Returns an elasticsearch.Elasticsearch instance.
     """
     hosts = _es_hosts()
-    return Elasticsearch(
+    es = Elasticsearch(
         hosts,
         retry_on_timeout=True,
         max_retries=3,
@@ -96,6 +97,7 @@ def get_es_export():
         timeout=300,
         serializer=ESJSONSerializer(),
     )
+    return es
 
 
 ES_DEFAULT_INSTANCE = 'default'
@@ -121,7 +123,7 @@ def doc_exists_in_es(index_info, doc_id_or_dict):
     else:
         assert isinstance(doc_id_or_dict, dict)
         doc_id = doc_id_or_dict['_id']
-    return ElasticsearchInterface(get_es_new()).doc_exists(index_info.index, doc_id, index_info.type)
+    return ElasticsearchInterface(get_es_new()).doc_exists(index_info.alias, doc_id, index_info.type)
 
 
 def send_to_elasticsearch(index_name, doc, delete=False, es_merge_update=False):
@@ -129,16 +131,14 @@ def send_to_elasticsearch(index_name, doc, delete=False, es_merge_update=False):
     Utility method to update the doc in elasticsearch.
     Duplicates the functionality of pillowtop but can be called directly.
     """
-    from pillowtop.es_utils import ElasticsearchIndexInfo
     doc_id = doc['_id']
     if isinstance(doc_id, bytes):
         doc_id = doc_id.decode('utf-8')
-    es_meta = ES_META[index_name]
-    index_info = ElasticsearchIndexInfo(index=es_meta.index, type=es_meta.type)
+    index_info = ES_META[index_name]
     doc_exists = doc_exists_in_es(index_info, doc_id)
     return send_to_es(
-        index=es_meta.index,
-        doc_type=es_meta.type,
+        alias=index_info.alias,
+        doc_type=index_info.type,
         doc_id=doc_id,
         es_getter=get_es_new,
         name="{}.{} <{}>:".format(send_to_elasticsearch.__module__,
@@ -154,24 +154,21 @@ def send_to_elasticsearch(index_name, doc, delete=False, es_merge_update=False):
 def refresh_elasticsearch_index(index_name):
     es_meta = ES_META[index_name]
     es = get_es_new()
-    es.indices.refresh(index=es_meta.index)
+    es.indices.refresh(index=es_meta.alias)
 
 
-EsMeta = namedtuple('EsMeta', 'index, type')
-
+# Todo; These names can be migrated to use hq_index_name attribute constants in future
 ES_META = {
-    "forms": EsMeta(XFORM_INDEX_INFO.index, XFORM_INDEX_INFO.type),
-    "cases": EsMeta(CASE_INDEX, 'case'),
-    "active_cases": EsMeta(CASE_INDEX, 'case'),
-    "users": EsMeta(USER_INDEX_INFO.index, USER_INDEX_INFO.type),
-    "users_all": EsMeta(USER_INDEX_INFO.index, USER_INDEX_INFO.type),
-    "domains": EsMeta(DOMAIN_INDEX_INFO.index, DOMAIN_INDEX_INFO.type),
-    "apps": EsMeta(APP_INDEX, 'app'),
-    "groups": EsMeta(GROUP_INDEX_INFO.index, GROUP_INDEX_INFO.type),
-    "sms": EsMeta(SMS_INDEX_INFO.index, SMS_INDEX_INFO.type),
-    "report_cases": EsMeta(REPORT_CASE_INDEX, 'report_case'),
-    "report_xforms": EsMeta(REPORT_XFORM_INDEX, 'report_xform'),
-    "case_search": EsMeta(CASE_SEARCH_INDEX_INFO.index, CASE_SEARCH_INDEX_INFO.type),
+    "forms": XFORM_INDEX_INFO,
+    "cases": CASE_INDEX_INFO,
+    "users": USER_INDEX_INFO,
+    "domains": DOMAIN_INDEX_INFO,
+    "apps": APP_INDEX_INFO,
+    "groups": GROUP_INDEX_INFO,
+    "sms": SMS_INDEX_INFO,
+    "report_cases": REPORT_CASE_INDEX_INFO,
+    "report_xforms": REPORT_XFORM_INDEX_INFO,
+    "case_search": CASE_SEARCH_INDEX_INFO,
 }
 
 ES_MAX_CLAUSE_COUNT = 1024  #  this is what ES's maxClauseCount is currently set to,
@@ -200,16 +197,9 @@ def run_query(index_name, q, debug_host=None, es_instance_alias=ES_DEFAULT_INSTA
 
     es_interface = ElasticsearchInterface(es_instance)
 
+    es_meta = ES_META[index_name]
     try:
-        es_meta = ES_META[index_name]
-    except KeyError:
-        from corehq.apps.userreports.util import is_ucr_table
-        if is_ucr_table(index_name):
-            es_meta = EsMeta(index_name, 'indicator')
-        else:
-            raise
-    try:
-        results = es_interface.search(es_meta.index, es_meta.type, body=q)
+        results = es_interface.search(es_meta.alias, es_meta.type, body=q)
         report_and_fail_on_shard_failures(results)
         return results
     except ElasticsearchException as e:
@@ -223,7 +213,7 @@ def mget_query(index_name, ids):
     es_interface = ElasticsearchInterface(get_es_new())
     es_meta = ES_META[index_name]
     try:
-        return es_interface.get_bulk_docs(es_meta.index, es_meta.type, ids)
+        return es_interface.get_bulk_docs(es_meta.alias, es_meta.type, ids)
     except ElasticsearchException as e:
         raise ESError(e)
 
@@ -259,7 +249,7 @@ def scroll_query(index_name, q, es_instance_alias=ES_DEFAULT_INSTANCE):
     try:
         return scan(
             get_es_instance(es_instance_alias),
-            index=es_meta.index,
+            index_alias=es_meta.alias,
             doc_type=es_meta.type,
             query=q,
         )

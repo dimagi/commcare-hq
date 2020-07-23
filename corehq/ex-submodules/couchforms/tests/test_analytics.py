@@ -21,7 +21,7 @@ from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 from testapps.test_pillowtop.utils import process_pillow_changes
 
-from corehq.elastic import get_es_new, EsMeta, send_to_elasticsearch
+from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import TestFormMetadata
@@ -120,7 +120,7 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
 
 
 TEST_ES_META = {
-    XFORM_INDEX_INFO.index: EsMeta(XFORM_INDEX_INFO.index, XFORM_INDEX_INFO.type)
+    XFORM_INDEX_INFO.index: XFORM_INDEX_INFO
 }
 
 

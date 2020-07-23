@@ -221,6 +221,9 @@ class ErrorCollector(object):
 
 
 def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=None):
+    """
+    Builds bulk payload json to be called via Elasticsearch Bulk API
+    """
     doc_transform = doc_transform or (lambda x: x)
     payload = []
 
@@ -234,7 +237,7 @@ def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=
 
     for change in changes:
         action = {
-            "_index": index_info.index,
+            "_index": index_info.alias,
             "_id": change.id
         }
         if settings.ELASTICSEARCH_MAJOR_VERSION != 7:
@@ -248,6 +251,8 @@ def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=
                 doc = doc_transform(doc)
                 action.update({
                     "_op_type": "index",
+                    "_type": index_info.type,
+                    "_id": doc['_id'],
                     "_source": doc
                 })
             except Exception as e:

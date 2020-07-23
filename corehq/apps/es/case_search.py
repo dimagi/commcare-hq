@@ -32,7 +32,7 @@ from . import filters, queries
 
 
 class CaseSearchES(CaseES):
-    index = CASE_SEARCH_ALIAS
+    index = "case_search"
 
     @property
     def builtin_filters(self):

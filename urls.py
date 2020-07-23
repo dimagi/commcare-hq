@@ -75,9 +75,6 @@ domain_specific = [
     url(r'^', include('custom.m4change.urls')),
     url(r'^dashboard/', include('corehq.apps.dashboard.urls')),
     url(r'^configurable_reports/', include('corehq.apps.userreports.urls')),
-    url(r'^', include('custom.icds_reports.urls')),
-    url(r'^', include('custom.icds.urls')),
-    url(r'^', include('custom.icds.data_management.urls')),
     url(r'^', include('custom.aaa.urls')),
     url(r'^champ_cameroon/', include('custom.champ.urls')),
     url(r'^motech/', include('corehq.motech.urls')),
@@ -92,6 +89,9 @@ domain_specific = [
     url(r'^submit_feedback/$', submit_feedback, name='submit_feedback'),
     url(r'^integration/', include('corehq.apps.integration.urls')),
 ]
+
+for module in settings.CUSTOM_DOMAIN_SPECIFIC_URL_MODULES:
+    domain_specific.append(url(r'^', include(module)))
 
 urlpatterns = [
     url(r'^favicon\.ico$', RedirectView.as_view(

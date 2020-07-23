@@ -44,17 +44,24 @@ class TestAdolescentGirls(TestCase):
                     ]
                 },
                 "fills": {
-                    "Adolescent Girls": MapColors.BLUE,
+                    "Out of school Adolescent Girls": MapColors.BLUE,
                     "defaultFill": MapColors.GREY
                 },
                 "data": {
-                    'st4': {'all': 0, 'valid': 0, 'original_name': ['st4'], 'fillKey': 'Adolescent Girls'},
-                    'st5': {'all': 0, 'valid': 0, 'original_name': ['st5'], 'fillKey': 'Adolescent Girls'},
-                    'st6': {'all': 0, 'valid': 0, 'original_name': ['st6'], 'fillKey': 'Adolescent Girls'},
-                    'st7': {'all': 3, 'valid': 2, 'original_name': ['st7'], 'fillKey': 'Adolescent Girls'},
-                    'st1': {'all': 10, 'valid': 0, 'original_name': ['st1'], 'fillKey': 'Adolescent Girls'},
-                    'st2': {'all': 11, 'valid': 0, 'original_name': ['st2'], 'fillKey': 'Adolescent Girls'},
-                    'st3': {'all': 0, 'valid': 0, 'original_name': ['st3'], 'fillKey': 'Adolescent Girls'}},
+                    'st4': {'all': 0, 'valid': 0, 'original_name': ['st4'],
+                            'fillKey': 'Out of school Adolescent Girls'},
+                    'st5': {'all': 0, 'valid': 0, 'original_name': ['st5'],
+                            'fillKey': 'Out of school Adolescent Girls'},
+                    'st6': {'all': 0, 'valid': 0, 'original_name': ['st6'],
+                            'fillKey': 'Out of school Adolescent Girls'},
+                    'st7': {'all': 3, 'valid': 2, 'original_name': ['st7'],
+                            'fillKey': 'Out of school Adolescent Girls'},
+                    'st1': {'all': 10, 'valid': 0, 'original_name': ['st1'],
+                            'fillKey': 'Out of school Adolescent Girls'},
+                    'st2': {'all': 11, 'valid': 0, 'original_name': ['st2'],
+                            'fillKey': 'Out of school Adolescent Girls'},
+                    'st3': {'all': 0, 'valid': 0, 'original_name': ['st3'],
+                            'fillKey': 'Out of school Adolescent Girls'}},
                 "slug": "adolescent_girls",
                 "label": ""
             }
@@ -95,7 +102,7 @@ class TestAdolescentGirls(TestCase):
                     ]
                 },
                 "fills": {
-                    "Adolescent Girls": MapColors.BLUE,
+                    "Out of school Adolescent Girls": MapColors.BLUE,
                     "defaultFill": MapColors.GREY
                 },
                 "data": {
@@ -103,7 +110,7 @@ class TestAdolescentGirls(TestCase):
                         'valid': 0,
                         'all': 10,
                         'original_name': ['b1', 'b2'],
-                        'fillKey': 'Adolescent Girls'}
+                        'fillKey': 'Out of school Adolescent Girls'}
                 },
                 "slug": "adolescent_girls",
                 "label": ""

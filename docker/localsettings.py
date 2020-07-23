@@ -239,7 +239,12 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
 
 BIGCOUCH = True
 
-LOCAL_APPS = ()
+LOCAL_APPS = (
+    # these are necessary to facilitate ICDS tests
+    "custom.icds",
+    "custom.icds.data_management",
+    "custom.icds_reports",
+)
 
 REPORTING_DATABASES = {
     'default': 'default',

@@ -267,7 +267,7 @@ def delete_case_search_cases(domain):
 
     op_kwargs = {
         "_op_type": "delete",
-        "_index": CASE_SEARCH_INDEX,
+        "_index": CASE_SEARCH_INDEX_INFO.alias,
         "_type": CASE_ES_TYPE,
     }
     if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
