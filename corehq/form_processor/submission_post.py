@@ -234,7 +234,7 @@ class SubmissionPost(object):
         if failure_response:
             return FormProcessingResult(failure_response, None, [], [], 'known_failures')
 
-        xform_context = SubmissionFormContext(instance_xml=self.instance)
+        xform_context = SubmissionFormContext(instance_xml=self.instance.decode('utf-8'))
         if self.pre_processing_steps:
             form_processing_result = self._pre_process_form(xform_context)
             if form_processing_result:
