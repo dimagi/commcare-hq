@@ -2,6 +2,7 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.contrib.humanize.templatetags.humanize import naturaltime
 
 from datetime import datetime as dt
 from dateutil.parser import parse
@@ -310,36 +311,10 @@ class DeployHistoryReport(GetParamsMixin, AdminReport):
     def total_records(self):
         return HqDeploy.objects.count()
 
-    @cached_property
-    def _user_lookup_url(self):
-        return reverse('web_deploy_lookup')
-
     def _format_date(self, date):
         if date:
-            raw_time_since_deploy = dt.now() - date
-            delta_dict = self._strfdelta(raw_time_since_deploy)
-
-            if delta_dict['days'] != 0:
-                delta_str = "{days} day(s), {hours} hour(s) ago".format(
-                    **delta_dict)
-            elif delta_dict['hours'] != 0:
-                delta_str = "{hours} hour(s), {minutes} minute(s) ago".format(
-                    **delta_dict)
-            else:
-                delta_str = "{minutes} minute(s), {seconds} second(s) ago".format(
-                    **delta_dict)
-
-            ret_str = '<div>{delta}</div><div>{actual_date}</div>'
-            return ret_str.format(delta=delta_str, actual_date=date.strftime(SERVER_DATETIME_FORMAT))
+            return f'<div>{naturaltime(date)}</div><div>{date.strftime(SERVER_DATETIME_FORMAT)}</div>'
         return "---"
 
-    def _strfdelta(self, tdelta):
-        # datetime.timedelta object cannot use 'strftime', use custom fn:
-        relative_time_formatted = {"days": tdelta.days}
-        relative_time_formatted["hours"], rem = divmod(tdelta.seconds, 3600)
-        relative_time_formatted["minutes"], relative_time_formatted[
-            "seconds"] = divmod(rem, 60)
-        return relative_time_formatted
-
     def _hyperlink_diff_url(self, diff_url):
-        return '<a href="{link}">Diff with previous</a>'.format(link=diff_url)
+        return f'<a href="{diff_url}">Diff with previous</a>'
