@@ -563,10 +563,12 @@ class ESQuerySet(object):
     @property
     def total(self):
         """Return the total number of docs matching the query."""
-        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-            return self.raw['hits']['total'].get('value', 0)
+        total = self.raw['hits']['total']
+        if type(total) == int:
+            return total
         else:
-            return self.raw['hits']['total']
+            # some queries in ES7 return a dict
+            return total.get('value', 0)
 
     def aggregation(self, name):
         return self.raw['aggregations'][name]

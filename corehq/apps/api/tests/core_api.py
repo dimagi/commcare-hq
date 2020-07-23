@@ -86,6 +86,14 @@ class TestElasticAPIQuerySet(TestCase):
         list(queryset.order_by('one', '-two', 'three'))
         self.assertEqual(es.queries[3]['sort'], [{'one': asc_}, {'two': desc_}, {'three': asc_}])
 
+    def test_count(self):
+        es = FakeFormESView()
+        for i in range(0, 1300):
+            es.add_doc(i, {'i': i})
+
+        queryset = ElasticAPIQuerySet(es_client=es, payload={})
+        self.assertEqual(queryset.count(), 1300)
+
 
 class ToManySourceModel(object):
 
