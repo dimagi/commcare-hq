@@ -119,6 +119,27 @@ EntrySingleAnswer.prototype.constructor = Entry;
 EntrySingleAnswer.prototype.onAnswerChange = function (newValue) {
     this.question.onchange();
 };
+EntrySingleAnswer.prototype.enableReceiver = function (question, options) {
+    var self = this;
+    if (options.receiveStyle) {
+        var match = options.receiveStyle.match(/receive-(.*)-(.*)/);
+        if (match) {
+            var receiveTopic = match[1];
+            var receiveTopicField = match[2];
+            question.parentPubSub.subscribe(function (addr) {
+                if (addr === Formplayer.Const.NO_ANSWER) {
+                    self.rawAnswer(Formplayer.Const.NO_ANSWER);
+                } else if (addr[receiveTopicField]) {
+                    self.receiveValue(addr[receiveTopicField]);
+                }
+            }, null, receiveTopic);
+        }
+    }
+};
+EntrySingleAnswer.prototype.receiveValue = function (value) {
+    var self = this;
+    self.rawAnswer(value);
+};
 
 
 /**
@@ -197,23 +218,7 @@ FreeTextEntry.prototype.onPreProcess = function (newValue) {
     }
     this.question.error(this.getErrorMessage(newValue));
 };
-FreeTextEntry.prototype.enableReceiver = function (question, options) {
-    var self = this;
-    if (options.receiveStyle) {
-        var match = options.receiveStyle.match(/receive-(.*)-(.*)/);
-        if (match) {
-            var receiveTopic = match[1];
-            var receiveTopicField = match[2];
-            question.parentPubSub.subscribe(function (addr) {
-                if (addr === Formplayer.Const.NO_ANSWER) {
-                    self.rawAnswer(Formplayer.Const.NO_ANSWER);
-                } else if (addr[receiveTopicField]) {
-                    self.rawAnswer(addr[receiveTopicField]);
-                }
-            }, null, receiveTopic);
-        }
-    }
-};
+
 
 /**
  * The entry that represents an address entry.
@@ -235,12 +240,17 @@ function AddressEntry(question, options) {
                 full: item.place_name,
             };
             item.context.forEach(function (contextValue) {
-                if (contextValue.id.startsWith('postcode')) {
-                    broadcastObj.zipcode = contextValue.text;
-                } else if (contextValue.id.startsWith('place')) {
-                    broadcastObj.city = contextValue.text;
-                } else if (contextValue.id.startsWith('region')) {
-                    broadcastObj.state = contextValue.short_code.replace('US-', '');
+                try {
+                    if (contextValue.id.startsWith('postcode')) {
+                        broadcastObj.zipcode = contextValue.text;
+                    } else if (contextValue.id.startsWith('place')) {
+                        broadcastObj.city = contextValue.text;
+                    } else if (contextValue.id.startsWith('region')) {
+                        broadcastObj.state_short = contextValue.short_code.replace('US-', '');
+                        broadcastObj.state_long = contextValue.text;
+                    }
+                } catch (err) {
+                    // Swallow error, broadcast best effort. Consider logging.
                 }
             });
             // street composed of (optional) number and street name.
@@ -412,6 +422,8 @@ function SingleSelectEntry(question, options) {
     self.isValid = function () {
         return true;
     };
+
+    self.enableReceiver(question, options);
 }
 SingleSelectEntry.prototype = Object.create(EntrySingleAnswer.prototype);
 SingleSelectEntry.prototype.constructor = EntrySingleAnswer;
@@ -423,6 +435,14 @@ SingleSelectEntry.prototype.onPreProcess = function (newValue) {
             this.answer(+newValue);
         }
     }
+};
+SingleSelectEntry.prototype.receiveValue = function (value) {
+    var self = this;
+    self.choices().forEach(function (choice, idx) {
+        if (choice === value) {
+            self.rawAnswer(idx + 1);
+        }
+    });
 };
 
 /**
@@ -937,7 +957,9 @@ function getEntry(question) {
                     hideLabel: hideLabel,
                 });
             } else {
-                entry = new SingleSelectEntry(question, {});
+                entry = new SingleSelectEntry(question, {
+                    receiveStyle: (question.stylesContains(/receive-*/)) ? question.stylesContaining(/receive-*/)[0] : null,
+                });
             }
             break;
         case Formplayer.Const.MULTI_SELECT:
