@@ -10,6 +10,8 @@ from lxml import etree
 
 from casexml.apps.case import const
 from casexml.apps.case.xform import get_case_updates
+
+from corehq.apps.data_vault import VAULT_DB_NAME_FOR_WRITE, save_tracked_vault_entries, has_tracked_vault_entries
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.backends.sql.dbaccessors import (
     FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
@@ -105,6 +107,9 @@ class FormProcessorSQL(object):
                 ledger_value.db for ledger_value in stock_result.models_to_save
             }
 
+        if any(has_tracked_vault_entries(on_model=form) for form in filter(None, processed_forms)):
+            db_names.add(VAULT_DB_NAME_FOR_WRITE)
+
         all_models = filter(None, chain(
             processed_forms,
             cases or [],
@@ -118,8 +123,11 @@ class FormProcessorSQL(object):
                 # Save deprecated form first to avoid ID conflicts
                 if processed_forms.deprecated:
                     FormAccessorSQL.update_form(processed_forms.deprecated, publish_changes=False)
+                    # in case of rollback, vault entry pk is cleared through tracked models on form
+                    save_tracked_vault_entries(processed_forms.deprecated)
 
                 FormAccessorSQL.save_new_form(processed_forms.submitted)
+                save_tracked_vault_entries(processed_forms.submitted)
                 if cases:
                     for case in cases:
                         CaseAccessorSQL.save_case(case)
