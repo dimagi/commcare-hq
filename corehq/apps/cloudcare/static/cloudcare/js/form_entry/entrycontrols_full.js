@@ -223,7 +223,7 @@ FreeTextEntry.prototype.onPreProcess = function (newValue) {
 /**
  * The entry that represents an address entry.
  * Takes in a `broadcastStyles` list of strings in format `broadcast-<topic>` to broadcast
- * the address item that is selected. Item contains `full`, `street`, `city`, `state`, `zipcode`.
+ * the address item that is selected. Item contains `full`, `street`, `city`, `state_short`, `state_long`, `zipcode`.
  */
 function AddressEntry(question, options) {
     var self = this;
@@ -293,6 +293,7 @@ function AddressEntry(question, options) {
         geocoder.addTo('#' + self.entryId);
         // Must add the form-control class to the input created by mapbox in order to edit.
         $('input.mapboxgl-ctrl-geocoder--input').addClass('form-control');
+
     };
 }
 AddressEntry.prototype = Object.create(FreeTextEntry.prototype);
@@ -438,11 +439,18 @@ SingleSelectEntry.prototype.onPreProcess = function (newValue) {
 };
 SingleSelectEntry.prototype.receiveValue = function (value) {
     var self = this;
-    self.choices().forEach(function (choice, idx) {
-        if (choice === value) {
-            self.rawAnswer(idx + 1);
+    var found = false;
+    var choices = self.choices();
+    for (var i = 0; i < choices.length; i++) {
+        if (choices[i] === value) {
+            self.rawAnswer(i + 1);
+            var found = true;
+            break;
         }
-    });
+    }
+    if (!found) {
+        self.rawAnswer(Formplayer.Const.NO_ANSWER);
+    }
 };
 
 /**
@@ -597,6 +605,8 @@ function ComboboxEntry(question, options) {
     self.afterRender = function () {
         self.renderAtwho();
     };
+
+    self.enableReceiver(question, options);
 }
 
 ComboboxEntry.filter = function (query, d, matchType) {
@@ -647,6 +657,21 @@ ComboboxEntry.prototype.onPreProcess = function (newValue) {
         this.question.error(null);
     } else {
         this.question.error(gettext('Not a valid choice'));
+    }
+};
+ComboboxEntry.prototype.receiveValue = function (value) {
+    var self = this;
+    var found = false;
+    var options = self.options();
+    for (var i = 0; i < options.length; i++) {
+        if (options[i].name === value) {
+            self.rawAnswer(options[i].name);
+            var found = true;
+            break;
+        }
+    }
+    if (!found) {
+        self.rawAnswer(Formplayer.Const.NO_ANSWER);
     }
 };
 
@@ -929,7 +954,7 @@ function getEntry(question) {
         case Formplayer.Const.SELECT:
             isMinimal = style === Formplayer.Const.MINIMAL;
             if (style) {
-                isCombobox = style.startsWith(Formplayer.Const.COMBOBOX);
+                isCombobox = question.stylesContains(Formplayer.Const.COMBOBOX);
             }
             if (style) {
                 isLabel = style === Formplayer.Const.LABEL || style === Formplayer.Const.LIST_NOLABEL;
@@ -939,7 +964,6 @@ function getEntry(question) {
             if (isMinimal) {
                 entry = new DropdownEntry(question, {});
             } else if (isCombobox) {
-
                 entry = new ComboboxEntry(question, {
                     /*
                      * The appearance attribute is either:
@@ -951,6 +975,8 @@ function getEntry(question) {
                      * The second word designates the matching type
                      */
                     matchType: question.style.raw().split(' ')[1],
+                    receiveStyle: (question.stylesContains(/receive-*/)) ?
+                        question.stylesContaining(/receive-*/)[0] : null,
                 });
             } else if (isLabel) {
                 entry = new ChoiceLabelEntry(question, {
