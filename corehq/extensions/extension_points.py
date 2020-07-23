@@ -1,4 +1,4 @@
-from corehq.extensions.interface import extension_point
+from corehq.extensions import extension_point
 
 
 @extension_point
