@@ -23,7 +23,8 @@ from ddtrace import tracer
 from casexml.apps.case.xform import get_case_updates
 from dimagi.utils.chunked import chunked
 
-from corehq.apps.data_vault import save_tracked_vault_entries, has_tracked_vault_entries, VAULT_DB_NAME_FOR_WRITE
+from corehq.apps.data_vault import save_tracked_vault_entries, has_tracked_vault_entries
+from corehq.apps.data_vault.models import VaultEntry
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
@@ -632,7 +633,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         try:
             db_names = [form.db]
             if has_tracked_vault_entries(form):
-                db_names.append(VAULT_DB_NAME_FOR_WRITE)
+                db_names.append(router.db_for_write(VaultEntry))
             with form.attachment_writer() as attachment_writer:
                 with ExitStack() as stack:
                     for db_name in db_names:

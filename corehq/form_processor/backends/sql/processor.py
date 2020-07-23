@@ -5,13 +5,14 @@ from itertools import chain
 
 import redis
 from contextlib import ExitStack
-from django.db import transaction, DatabaseError
+from django.db import transaction, DatabaseError, router
 from lxml import etree
 
 from casexml.apps.case import const
 from casexml.apps.case.xform import get_case_updates
 
-from corehq.apps.data_vault import VAULT_DB_NAME_FOR_WRITE, save_tracked_vault_entries, has_tracked_vault_entries
+from corehq.apps.data_vault import save_tracked_vault_entries, has_tracked_vault_entries
+from corehq.apps.data_vault.models import VaultEntry
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.backends.sql.dbaccessors import (
     FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
@@ -108,7 +109,7 @@ class FormProcessorSQL(object):
             }
 
         if any(has_tracked_vault_entries(on_model=form) for form in filter(None, processed_forms)):
-            db_names.add(VAULT_DB_NAME_FOR_WRITE)
+            db_names.add(router.db_for_write(VaultEntry))
 
         all_models = filter(None, chain(
             processed_forms,
