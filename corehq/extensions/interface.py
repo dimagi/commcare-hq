@@ -19,17 +19,46 @@ class ExtensionPoint:
 
 
 def extension_point(func):
-    """Decorator for creating an extension point"""
-    def extend(domains=None):
+    """Decorator for creating an extension point.
+
+    Usage:
+
+        @extension_point
+        def get_menu_items(menu_name, domain) -> List[str]:
+            # This function serves to define the extension point and should
+            # only have a docstring and no implementation
+
+        # use the extension point function as a decorator to tag implementation functions
+
+        @get_menu_items.extend
+        def extra_menu_items(menu_name, domain):
+            # actual implementation which will get called
+            return ["Option A"] if menu_name == "options" else []
+
+        # extensions may also be limited to specific domains (only for extension points
+        # that pass a domain argument). Domains must be passed as a keyword argument
+        # and must be a list.
+
+        @get_menu_items.extend(domains=["more_options"])
+        def menu_items_for_more_options_domain(menu_name, domain):
+            assert domain == "more_options"
+            return ["Option B"]
+    """
+    def extend(impl=None, *, domains=None):
 
         def _extend(impl):
-            setattr(impl, "extension_point_impl", {
-                "spec": func.__name__,
-                "domains": domains
-            })
+            impl.extension_point_impl = {"spec": func.__name__, "domains": domains}
             return impl
 
-        return _extend
+        if impl is not None:
+            assert callable(impl), (
+                f"Incorrect usage of extension decorator. See docs below:\n\n{extension_point.__doc__}"
+            )
+
+        if domains is not None:
+            assert isinstance(domains, list), "domains must be a list"
+
+        return _extend if impl is None else _extend(impl)
 
     func.extension_point_spec = {"name": func.__name__}
     func.extend = extend

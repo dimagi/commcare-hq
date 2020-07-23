@@ -4,6 +4,7 @@ import sys
 import testil
 
 from corehq.extensions.interface import CommCareExtensions, ExtensionError, extension_point
+from corehq.util.test_utils import generate_cases
 
 
 @extension_point
@@ -17,7 +18,7 @@ class DemoExtension:
             args: response for args, response in mock_calls.items()
         }
 
-    @ext_point_a.extend(["d2"])
+    @ext_point_a.extend(domains=["d2"])
     def ext_point_a(self, arg1, domain):
         return self.mock_calls[(arg1, domain)]
 
@@ -37,7 +38,7 @@ def demo_extension_2(arg1, domain):
         raise Exception
 
 
-@ext_point_a.extend(["d1"])
+@ext_point_a.extend(domains=["d1"])
 def demo_extension_3(**kwargs):
     """test that kwargs style functions are acceptable"""
     return "p3"
@@ -89,3 +90,14 @@ def test_validation_callable_args():
 
     with testil.assert_raises(ExtensionError, msg=re.compile("consumed.*arg1")):
         extensions.register_extension("ext_point_a", bad_spec)
+
+
+@generate_cases([
+    ([["d1"]], {}, re.compile("Incorrect usage")),
+    ([], {"domains": "d1"}, re.compile("domains must be a list")),
+])
+def test_decorator(self, args, kwargs, exception_message):
+    with testil.assert_raises(AssertionError, msg=exception_message):
+        @ext_point_a.extend(*args, **kwargs)
+        def impl():
+            pass
