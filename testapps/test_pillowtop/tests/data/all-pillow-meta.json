@@ -72,7 +72,7 @@
     "KafkaDomainPillow": {
         "advertised_name": "KafkaDomainPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "KafkaDomainPillow-test_hqdomains_2020-07-22",
+        "checkpoint_id": "KafkaDomainPillow-test_hqdomains_2020-02-10",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "KafkaDomainPillow"
     },

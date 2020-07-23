@@ -1,7 +1,7 @@
 from corehq.util.elastic import prefix_for_tests
 from pillowtop.es_utils import ElasticsearchIndexInfo, DOMAIN_HQ_INDEX_NAME
 
-DOMAIN_INDEX = prefix_for_tests("hqdomains_2020-07-22")
+DOMAIN_INDEX = prefix_for_tests("hqdomains_2020-02-10")
 DOMAIN_ES_ALIAS = prefix_for_tests('hqdomains')
 
 DOMAIN_MAPPING = {
@@ -151,7 +151,6 @@ DOMAIN_MAPPING = {
                                                    'section_title': {'type': 'string'}},
                                     'type': 'object'},
                 'full_downloads': {'type': 'long'},
-                'ga_opt_out': {'type': 'boolean'},
                 'hipaa_compliant': {'type': 'boolean'},
                 'hr_name': {'type': 'string'},
                 'internal': {'dynamic': False,

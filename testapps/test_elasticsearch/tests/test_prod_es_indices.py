@@ -135,7 +135,7 @@ EXPECTED_PROD_INDICES = [
     {
         "alias": "test_hqdomains",
         "hq_index_name": "hqdomains",
-        "index": "test_hqdomains_2020-07-22",
+        "index": "test_hqdomains_2020-02-10",
         "type": "hqdomain",
         "meta": {
             "settings": {
