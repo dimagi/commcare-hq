@@ -50,6 +50,7 @@ class Command(BaseCommand):
             type=int,
             default=None,
         )
+        parser.add_argument('--commit', help='Last git commit sha', default=False)
 
     def handle(self, **options):
         compare_url = options.get('url', None)
@@ -59,7 +60,8 @@ class Command(BaseCommand):
             date=datetime.utcnow(),
             user=options['user'],
             environment=options['environment'],
-            diff_url=compare_url
+            diff_url=compare_url,
+            commit=options['commit']
         )
         deploy.save()
 
