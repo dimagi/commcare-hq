@@ -187,6 +187,7 @@ function FreeTextEntry(question, options) {
                 return gettext('Free response');
         }
     };
+    self.enableReceiver(question, options);
 }
 FreeTextEntry.prototype = Object.create(EntrySingleAnswer.prototype);
 FreeTextEntry.prototype.constructor = EntrySingleAnswer;
@@ -196,6 +197,97 @@ FreeTextEntry.prototype.onPreProcess = function (newValue) {
     }
     this.question.error(this.getErrorMessage(newValue));
 };
+FreeTextEntry.prototype.enableReceiver = function (question, options) {
+    var self = this;
+    if (options.receiveStyle) {
+        var match = options.receiveStyle.match(/receive-(.*)-(.*)/);
+        if (match) {
+            var receiveTopic = match[1];
+            var receiveTopicField = match[2];
+            question.parentPubSub.subscribe(function (addr) {
+                if (addr === Formplayer.Const.NO_ANSWER) {
+                    self.rawAnswer(Formplayer.Const.NO_ANSWER);
+                } else if (addr[receiveTopicField]) {
+                    self.rawAnswer(addr[receiveTopicField]);
+                }
+            }, null, receiveTopic);
+        }
+    }
+};
+
+/**
+ * The entry that represents an address entry.
+ * Takes in a `broadcastStyles` list of strings in format `broadcast-<topic>` to broadcast
+ * the address item that is selected. Item contains `full`, `street`, `city`, `state`, `zipcode`.
+ */
+function AddressEntry(question, options) {
+    var self = this;
+    FreeTextEntry.call(self, question, options);
+    self.templateType = 'address';
+    self.broadcastTopics = [];
+
+    // Callback for the geocoder when an address item is selected. We intercept here and broadcast to
+    // subscribers.
+    self.geocoderItemCallback = function (item) {
+        self.rawAnswer(item.place_name);
+        self.broadcastTopics.forEach(function (broadcastTopic) {
+            var broadcastObj = {
+                full: item.place_name,
+            };
+            item.context.forEach(function (contextValue) {
+                if (contextValue.id.startsWith('postcode')) {
+                    broadcastObj.zipcode = contextValue.text;
+                } else if (contextValue.id.startsWith('place')) {
+                    broadcastObj.city = contextValue.text;
+                } else if (contextValue.id.startsWith('region')) {
+                    broadcastObj.state = contextValue.short_code.replace('US-', '');
+                }
+            });
+            // street composed of (optional) number and street name.
+            broadcastObj.street = item.address || '';
+            broadcastObj.street += ' ' + item.text;
+
+            question.parentPubSub.notifySubscribers(broadcastObj, broadcastTopic);
+        });
+        // The default full address returned to the search bar
+        return item.place_name;
+    };
+
+    // geocoder function called when user presses 'x', broadcast a no answer to subscribers.
+    self.geocoderOnClearCallback = function () {
+        self.answer(Formplayer.Const.NO_ANSWER);
+        self.broadcastTopics.forEach(function (broadcastTopic) {
+            question.parentPubSub.notifySubscribers(Formplayer.Const.NO_ANSWER, broadcastTopic);
+        });
+    };
+
+    self.afterRender = function () {
+        if (options.broadcastStyles) {
+            options.broadcastStyles.forEach(function (broadcast) {
+                var match = broadcast.match(/broadcast-(.*)/);
+                if (match) {
+                    self.broadcastTopics.push(match[1]);
+                }
+            });
+        }
+
+        var geocoder = new MapboxGeocoder({
+            accessToken: window.MAPBOX_ACCESS_TOKEN,
+            types: 'address',
+            enableEventLogging: false,
+            // proximity set to NYC
+            proximity: { longitude: -74.006058, latitude: 40.712772},
+            getItemValue: self.geocoderItemCallback,
+        });
+        geocoder.on('clear', self.geocoderOnClearCallback);
+        geocoder.addTo('#' + self.entryId);
+        // Must add the form-control class to the input created by mapbox in order to edit.
+        $('input.mapboxgl-ctrl-geocoder--input').addClass('form-control');
+    };
+}
+AddressEntry.prototype = Object.create(FreeTextEntry.prototype);
+AddressEntry.prototype.constructor = FreeTextEntry;
+
 
 /**
  * The entry that defines an integer input. Only accepts whole numbers
@@ -219,6 +311,7 @@ function IntEntry(question, options) {
         return 'Number';
     };
 
+    self.enableReceiver(question, options);
 }
 IntEntry.prototype = Object.create(FreeTextEntry.prototype);
 IntEntry.prototype.constructor = FreeTextEntry;
@@ -251,6 +344,7 @@ function PhoneEntry(question, options) {
         return 'Phone number or Numeric ID';
     };
 
+    this.enableReceiver(question, options);
 }
 PhoneEntry.prototype = Object.create(FreeTextEntry.prototype);
 PhoneEntry.prototype.constructor = FreeTextEntry;
@@ -781,15 +875,18 @@ function getEntry(question) {
         case Formplayer.Const.STRING:
             // Barcode uses text box for CloudCare so it's possible to still enter a barcode field
         case Formplayer.Const.BARCODE:
-            isNumeric = style === Formplayer.Const.NUMERIC;
-            if (isNumeric) {
-                entry = new PhoneEntry(question, {
-                    enableAutoUpdate: isPhoneMode,
+            options = {
+                enableAutoUpdate: isPhoneMode,
+                receiveStyle: (question.stylesContains(/receive-*/)) ? question.stylesContaining(/receive-*/)[0] : null,
+            };
+            if (question.stylesContains(Formplayer.Const.ADDRESS)) {
+                entry = new AddressEntry(question, {
+                    broadcastStyles: question.stylesContaining(/broadcast-*/),
                 });
+            } else if (question.stylesContains(Formplayer.Const.NUMERIC)) {
+                entry = new PhoneEntry(question, options);
             } else {
-                entry = new FreeTextEntry(question, {
-                    enableAutoUpdate: isPhoneMode,
-                });
+                entry = new FreeTextEntry(question, options);
             }
             break;
         case Formplayer.Const.INT:
