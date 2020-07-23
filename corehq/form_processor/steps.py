@@ -26,6 +26,8 @@ class VaultPatternExtractor(FormProcessingStep):
             return self._process(context)
 
     def _should_process(self, xml_as_text):
+        if not self._xmlns_whitelist:
+            return True
         for xmlns in self._xmlns_whitelist:
             if xmlns in xml_as_text:
                 return True
