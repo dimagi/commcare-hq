@@ -7,7 +7,7 @@ def _default_key():
     return secrets.token_urlsafe(16)
 
 
-class VaultStore(models.Model):
+class VaultEntry(models.Model):
     id = models.BigAutoField(primary_key=True)
     key = models.CharField(max_length=25, default=_default_key)
     value = models.CharField(max_length=255)
