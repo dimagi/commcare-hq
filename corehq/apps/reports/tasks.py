@@ -115,7 +115,7 @@ def datadog_report_user_stats(metric_name, commcare_users_by_domain):
     for domain, user_count in commcare_users_by_domain.items():
         metrics_gauge(metric_name, user_count, tags={
             'domain': '_other' if domain is () else domain
-        })
+        }, multiprocess_mode='max')
 
 
 def summarize_user_counts(commcare_users_by_domain, n):
@@ -165,12 +165,14 @@ def is_app_active(app_id, domain):
 
 @periodic_task(run_every=crontab(hour="2", minute="0", day_of_week="*"), queue='background_queue')
 def apps_update_calculated_properties():
-    es = get_es_new()
     q = {"filter": {"and": [{"missing": {"field": "copy_of"}}]}}
     results = stream_es_query(q=q, es_index='apps', size=999999, chunksize=500)
     for r in results:
-        props = {"cp_is_active": is_app_active(r["_id"], r["_source"]["domain"])}
-        es.update(APP_INDEX, ES_META['apps'].type, r["_id"], body={"doc": props})
+        doc = {
+            "_id": r["_id"],
+            "cp_is_active": is_app_active(r["_id"], r["_source"]["domain"])
+        }
+        send_to_elasticsearch('apps', doc, es_merge_update=True)
 
 
 @task(serializer='pickle', ignore_result=True)

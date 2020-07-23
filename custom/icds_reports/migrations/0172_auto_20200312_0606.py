@@ -11,9 +11,7 @@ from custom.icds_reports.utils.migrations import (
 from corehq.sql_db.operations import RawSQLMigration
 from corehq.sql_db.connections import is_citus_db
 from custom.icds_reports.const import AGG_AVAILING_SERVICES_TABLE
-from custom.icds_reports.utils.migrations import (
-    create_citus_distributed_table
-)
+from custom.icds_core.db import create_citus_distributed_table
 
 migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
 

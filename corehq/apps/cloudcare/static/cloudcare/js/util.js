@@ -45,7 +45,7 @@ hqDefine('cloudcare/js/util', function () {
         if (message === undefined) {
             return;
         }
-        _show(message, $el, 30000, "alert alert-warning");
+        _show(message, $el, null, "alert alert-danger");
     };
 
     var showHTMLError = function (message, $el, autoHideTime) {
@@ -186,6 +186,35 @@ hqDefine('cloudcare/js/util', function () {
         }
     };
 
+    var injectDialerContext = function () {
+        var initialPageData = hqImport("hqwebapp/js/initial_page_data");
+        if (initialPageData.get('dialer_enabled') && window.mdAnchorRender) {
+            window.mdAnchorRender = function (tokens, idx, options, env, self) {
+                var hIndex = tokens[idx].attrIndex('href');
+                var dialed = false;
+                if (hIndex >= 0) {
+                    var href =  tokens[idx].attrs[hIndex][1];
+                    if (href.startsWith("tel://")) {
+                        var callout = href.substring("tel://".length);
+                        var url = initialPageData.reverse("dialer_view");
+                        tokens[idx].attrs[hIndex][1] = url + "?callout_number=" + callout;
+                        dialed = true;
+                    }
+                }
+                if (dialed) {
+                    var aIndex = tokens[idx].attrIndex('target');
+
+                    if (aIndex < 0) {
+                        tokens[idx].attrPush(['target', 'dialer']); // add new attribute
+                    } else {
+                        tokens[idx].attrs[aIndex][1] = 'dialer';    // replace value of existing attr
+                    }
+                }
+                return self.renderToken(tokens, idx, options);
+            };
+        }
+    };
+
     return {
         getFormUrl: getFormUrl,
         getSubmitUrl: getSubmitUrl,
@@ -199,5 +228,6 @@ hqDefine('cloudcare/js/util', function () {
         formplayerLoadingComplete: formplayerLoadingComplete,
         formplayerSyncComplete: formplayerSyncComplete,
         reportFormplayerErrorToHQ: reportFormplayerErrorToHQ,
+        injectDialerContext: injectDialerContext,
     };
 });

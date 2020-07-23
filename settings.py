@@ -64,6 +64,8 @@ LANGUAGES = (
     ('sw', 'Swahili'),
 )
 
+STATICI18N_FILENAME_FUNCTION = 'statici18n.utils.legacy_filename'
+
 SITE_ID = 1
 
 # If you set this to False, Django will make some optimizations so as not
@@ -93,7 +95,7 @@ LOCALE_PATHS = (
     os.path.join(FILEPATH, 'locale'),
 )
 
-BOWER_COMPONENTS = os.path.join(FILEPATH, 'bower_components')
+YARN_COMPONENTS = os.path.join(FILEPATH, 'node_modules')
 
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
@@ -102,7 +104,7 @@ STATICFILES_FINDERS = (
 )
 
 STATICFILES_DIRS = [
-    BOWER_COMPONENTS,
+    YARN_COMPONENTS,
 ]
 
 # bleh, why did this submodule have to be removed?
@@ -121,6 +123,7 @@ FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
 FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
 SOFT_ASSERTS_LOG_FILE = "%s/%s" % (FILEPATH, "soft_asserts.log")
 MAIN_COUCH_SQL_DATAMIGRATION = "%s/%s" % (FILEPATH, "main_couch_sql_datamigration.log")
+ES_INTERFACE_LOG_FILE = "%s/%s" % (FILEPATH, "es_interface.log")
 
 LOCAL_LOGGING_CONFIG = {}
 
@@ -356,7 +359,6 @@ HQ_APPS = (
 
     'custom.reports.mc',
     'custom.apps.crs_reports',
-    'custom.m4change',
     'custom.succeed',
     'custom.ucla',
 
@@ -365,9 +367,6 @@ HQ_APPS = (
 
     'custom.common',
 
-    'custom.icds',
-    'custom.icds.data_management',
-    'custom.icds_reports',
     'custom.nic_compliance',
     'custom.hki',
     'custom.champ',
@@ -518,8 +517,6 @@ FIXTURE_GENERATORS = [
     "corehq.apps.locations.fixtures.location_fixture_generator",
     "corehq.apps.locations.fixtures.flat_location_fixture_generator",
     "corehq.apps.locations.fixtures.related_locations_fixture_generator",
-    "custom.m4change.fixtures.report_fixtures.generator",
-    "custom.m4change.fixtures.location_fixtures.generator",
 ]
 
 ### Shared drive settings ###
@@ -676,6 +673,61 @@ REMINDERS_RATE_LIMIT_PERIOD = 60
 
 SYNC_CASE_FOR_MESSAGING_ON_SAVE = True
 
+# Used by the new reminders framework
+LOCAL_AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {}
+AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {
+    "UCLA_GENERAL_HEALTH":
+        ["custom.ucla.api.general_health_message_bank_content_new",
+         "UCLA: General Health Message Bank"],
+    "UCLA_MENTAL_HEALTH":
+        ["custom.ucla.api.mental_health_message_bank_content_new",
+         "UCLA: Mental Health Message Bank"],
+    "UCLA_SEXUAL_HEALTH":
+        ["custom.ucla.api.sexual_health_message_bank_content_new",
+         "UCLA: Sexual Health Message Bank"],
+    "UCLA_MED_ADHERENCE":
+        ["custom.ucla.api.med_adherence_message_bank_content_new",
+         "UCLA: Med Adherence Message Bank"],
+    "UCLA_SUBSTANCE_USE":
+        ["custom.ucla.api.substance_use_message_bank_content_new",
+         "UCLA: Substance Use Message Bank"],
+}
+
+# Used by the old reminders framework
+LOCAL_AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {}
+AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
+    'HOST_CASE_OWNER_LOCATION':
+        ['corehq.apps.reminders.custom_recipients.host_case_owner_location',
+         "Custom: Extension Case -> Host Case -> Owner (which is a location)"],
+    'HOST_CASE_OWNER_LOCATION_PARENT':
+        ['corehq.apps.reminders.custom_recipients.host_case_owner_location_parent',
+         "Custom: Extension Case -> Host Case -> Owner (which is a location) -> Parent location"],
+    'CASE_OWNER_LOCATION_PARENT':
+        ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent_old_framework',
+         "Abt: The case owner's location's parent location"],
+}
+
+
+# Used by the new reminders framework
+LOCAL_AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {}
+AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
+    'HOST_CASE_OWNER_LOCATION':
+        ['corehq.messaging.scheduling.custom_recipients.host_case_owner_location',
+         "Custom: Extension Case -> Host Case -> Owner (which is a location)"],
+    'HOST_CASE_OWNER_LOCATION_PARENT':
+        ['corehq.messaging.scheduling.custom_recipients.host_case_owner_location_parent',
+         "Custom: Extension Case -> Host Case -> Owner (which is a location) -> Parent location"],
+    'CASE_OWNER_LOCATION_PARENT':
+        ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent_new_framework',
+         "Abt: The case owner's location's parent location"],
+}
+
+LOCAL_AVAILABLE_CUSTOM_RULE_CRITERIA = {}
+AVAILABLE_CUSTOM_RULE_CRITERIA = {}
+
+LOCAL_AVAILABLE_CUSTOM_RULE_ACTIONS = {}
+AVAILABLE_CUSTOM_RULE_ACTIONS = {}
+
 ####### auditcare parameters #######
 AUDIT_MODEL_SAVE = [
     'corehq.apps.app_manager.Application',
@@ -718,17 +770,23 @@ ANALYTICS_CONFIG = {
 
 GREENHOUSE_API_KEY = ''
 
-MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiZGltYWdpIiwiYSI6ImpZWWQ4dkUifQ.3FNy5rVvLolWLycXPxKVEA'
+MAPBOX_ACCESS_TOKEN = ''
 
 OPEN_EXCHANGE_RATES_API_ID = ''
-
-# for touchforms maps
-GMAPS_API_KEY = "changeme"
 
 # import local settings if we find them
 LOCAL_APPS = ()
 LOCAL_MIDDLEWARE = ()
 LOCAL_PILLOWTOPS = {}
+
+LOCAL_STATIC_DATA_SOURCES = []
+LOCAL_STATIC_UCR_REPORTS = []
+LOCAL_CUSTOM_UCR_EXPRESSIONS = []
+LOCAL_CUSTOM_UCR_EXPRESSION_LISTS = []
+LOCAL_CUSTOM_UCR_REPORT_FILTERS = []
+LOCAL_CUSTOM_UCR_REPORT_FILTER_VALUES = []
+
+LOCAL_DOMAIN_MODULE_MAP = {}
 
 RUN_FORM_META_PILLOW = True
 RUN_CASE_SEARCH_PILLOW = True
@@ -893,8 +951,6 @@ RESTRICT_DOMAIN_CREATION = False
 
 CUSTOM_LANDING_PAGE = False
 
-TABLEAU_URL_ROOT = "https://icds.commcarehq.org/"
-
 SENTRY_DSN = None
 SENTRY_REPOSITORY = 'dimagi/commcare-hq'
 SENTRY_ORGANIZATION_SLUG = 'dimagi'
@@ -932,6 +988,7 @@ CUSTOM_LANDING_TEMPLATE = {
     # "default": 'login_and_password/login.html',
 }
 
+ENABLE_ES_INTERFACE_LOGGING = False
 ES_SETTINGS = None
 ES_XFORM_INDEX_NAME = "xforms_2016-07-07"
 ES_XFORM_DISABLE_ALL = False
@@ -968,6 +1025,10 @@ REQUIRE_TWO_FACTOR_FOR_SUPERUSERS = False
 # that adds messages to the partition with the fewest unprocessed messages
 USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
 
+CUSTOM_DOMAIN_SPECIFIC_URL_MODULES = []
+LOCAL_CUSTOM_DB_ROUTING = {}
+
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
@@ -990,6 +1051,12 @@ except ImportError as error:
     # fallback in case nothing else is found - used for readthedocs
     from dev_settings import *
 
+
+AVAILABLE_CUSTOM_SCHEDULING_CONTENT.update(LOCAL_AVAILABLE_CUSTOM_SCHEDULING_CONTENT)
+AVAILABLE_CUSTOM_REMINDER_RECIPIENTS.update(LOCAL_AVAILABLE_CUSTOM_REMINDER_RECIPIENTS)
+AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS.update(LOCAL_AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS)
+AVAILABLE_CUSTOM_RULE_CRITERIA.update(LOCAL_AVAILABLE_CUSTOM_RULE_CRITERIA)
+AVAILABLE_CUSTOM_RULE_ACTIONS.update(LOCAL_AVAILABLE_CUSTOM_RULE_ACTIONS)
 
 # The defaults above are given as a function of (or rather a closure on) DEBUG,
 # so if not overridden they need to be evaluated after DEBUG is set
@@ -1141,6 +1208,14 @@ LOGGING = {
             'class': 'logging.handlers.RotatingFileHandler',
             'formatter': 'verbose',
             'filename': DJANGO_LOG_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
+        },
+        'es_interface-handler': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'verbose',
+            'filename': ES_INTERFACE_LOG_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
@@ -1303,6 +1378,11 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': False,
         },
+        'es_interface': {
+            'handlers': ['es_interface-handler'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
     }
 }
 
@@ -1334,6 +1414,13 @@ if helper.is_testing():
 DATABASE_ROUTERS = globals().get('DATABASE_ROUTERS', [])
 if 'corehq.sql_db.routers.MultiDBRouter' not in DATABASE_ROUTERS:
     DATABASE_ROUTERS.append('corehq.sql_db.routers.MultiDBRouter')
+
+# Mapping of app_label to DB name or reporting DB alias (see REPORTING_DATABASES)
+CUSTOM_DB_ROUTING = {
+    "aaa": "aaa-data",
+    "icds_reports": "icds-ucr-citus"  # this can be removed once the ICDS code is not present on all envs
+}
+CUSTOM_DB_ROUTING.update(LOCAL_CUSTOM_DB_ROUTING)
 
 INDICATOR_CONFIG = {
 }
@@ -1421,7 +1508,7 @@ COUCHDB_APPS = [
     # needed to make couchdbkit happy
     ('fluff', 'fluff-bihar'),
     ('mc', 'fluff-mc'),
-    ('m4change', 'm4change'),
+    ('m4change', 'm4change'),  # todo: remove once code that uses is removed
     ('export', META_DB),
     ('callcenter', META_DB),
 
@@ -1552,127 +1639,6 @@ ALLOWED_CUSTOM_CONTENT_HANDLERS = {
     "UCLA_SEXUAL_HEALTH": "custom.ucla.api.sexual_health_message_bank_content",
     "UCLA_MED_ADHERENCE": "custom.ucla.api.med_adherence_message_bank_content",
     "UCLA_SUBSTANCE_USE": "custom.ucla.api.substance_use_message_bank_content",
-}
-
-# Used by the new reminders framework
-AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {
-    "ICDS_STATIC_NEGATIVE_GROWTH_MESSAGE":
-        ["custom.icds.messaging.custom_content.static_negative_growth_indicator",
-         "ICDS: Static/Negative Growth Indicator"],
-    "ICDS_MISSED_CF_VISIT_TO_AWW":
-        ["custom.icds.messaging.custom_content.missed_cf_visit_to_aww",
-         "ICDS: Missed CF Visit for AWW recipient"],
-    "ICDS_MISSED_CF_VISIT_TO_LS":
-        ["custom.icds.messaging.custom_content.missed_cf_visit_to_ls",
-         "ICDS: Missed CF Visit for LS recipient"],
-    "ICDS_MISSED_PNC_VISIT_TO_LS":
-        ["custom.icds.messaging.custom_content.missed_pnc_visit_to_ls",
-         "ICDS: Missed PNC Visit for LS recipient"],
-    "ICDS_CHILD_ILLNESS_REPORTED":
-        ["custom.icds.messaging.custom_content.child_illness_reported",
-         "ICDS: Child Illness Reported"],
-    "ICDS_CF_VISITS_COMPLETE":
-        ["custom.icds.messaging.custom_content.cf_visits_complete",
-         "ICDS: CF Visits Complete"],
-    "ICDS_AWW_1":
-        ["custom.icds.messaging.custom_content.aww_1",
-         "ICDS: Weekly AWC Submission Performance to AWW"],
-    "ICDS_AWW_2":
-        ["custom.icds.messaging.custom_content.aww_2",
-         "ICDS: Monthly AWC Aggregate Performance to AWW"],
-    "ICDS_LS_1":
-        ["custom.icds.messaging.custom_content.ls_1",
-         "ICDS: Monthly AWC Aggregate Performance to LS"],
-    "ICDS_LS_2":
-        ["custom.icds.messaging.custom_content.ls_2",
-         "ICDS: Weekly AWC VHND Performance to LS"],
-    "ICDS_LS_6":
-        ["custom.icds.messaging.custom_content.ls_6",
-         "ICDS: Weekly AWC Submission Performance to LS"],
-    "ICDS_PHASE2_AWW_1":
-        ["custom.icds.messaging.custom_content.phase2_aww_1",
-         "ICDS: AWC VHND Performance to AWW"],
-    "UCLA_GENERAL_HEALTH":
-        ["custom.ucla.api.general_health_message_bank_content_new",
-         "UCLA: General Health Message Bank"],
-    "UCLA_MENTAL_HEALTH":
-        ["custom.ucla.api.mental_health_message_bank_content_new",
-         "UCLA: Mental Health Message Bank"],
-    "UCLA_SEXUAL_HEALTH":
-        ["custom.ucla.api.sexual_health_message_bank_content_new",
-         "UCLA: Sexual Health Message Bank"],
-    "UCLA_MED_ADHERENCE":
-        ["custom.ucla.api.med_adherence_message_bank_content_new",
-         "UCLA: Med Adherence Message Bank"],
-    "UCLA_SUBSTANCE_USE":
-        ["custom.ucla.api.substance_use_message_bank_content_new",
-         "UCLA: Substance Use Message Bank"],
-}
-
-# Used by the old reminders framework
-AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
-    'HOST_CASE_OWNER_LOCATION':
-        ['corehq.apps.reminders.custom_recipients.host_case_owner_location',
-         "Custom: Extension Case -> Host Case -> Owner (which is a location)"],
-    'HOST_CASE_OWNER_LOCATION_PARENT':
-        ['corehq.apps.reminders.custom_recipients.host_case_owner_location_parent',
-         "Custom: Extension Case -> Host Case -> Owner (which is a location) -> Parent location"],
-    'CASE_OWNER_LOCATION_PARENT':
-        ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent_old_framework',
-         "Abt: The case owner's location's parent location"],
-}
-
-# Used by the new reminders framework
-AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
-    'ICDS_MOTHER_PERSON_CASE_FROM_CCS_RECORD_CASE':
-        ['custom.icds.messaging.custom_recipients.recipient_mother_person_case_from_ccs_record_case',
-         "ICDS: Mother person case from ccs_record case"],
-    'ICDS_MOTHER_PERSON_CASE_FROM_CCS_RECORD_CASE_EXCL_MIGRATED_OR_OPTED_OUT':
-        ['custom.icds.messaging.custom_recipients'
-         '.recipient_mother_person_case_from_ccs_record_case_excl_migrated_or_opted_out',
-         "ICDS: Mother person case from ccs_record case (excluding migrated and not registered mothers)"],
-    'ICDS_MOTHER_PERSON_CASE_FROM_CHILD_HEALTH_CASE':
-        ['custom.icds.messaging.custom_recipients.recipient_mother_person_case_from_child_health_case',
-         "ICDS: Mother person case from child_health case"],
-    'ICDS_MOTHER_PERSON_CASE_FROM_CHILD_PERSON_CASE':
-        ['custom.icds.messaging.custom_recipients.recipient_mother_person_case_from_child_person_case',
-         "ICDS: Mother person case from child person case"],
-    'ICDS_SUPERVISOR_FROM_AWC_OWNER':
-        ['custom.icds.messaging.custom_recipients.supervisor_from_awc_owner',
-         "ICDS: Supervisor Location from AWC Owner"],
-    'HOST_CASE_OWNER_LOCATION':
-        ['corehq.messaging.scheduling.custom_recipients.host_case_owner_location',
-         "Custom: Extension Case -> Host Case -> Owner (which is a location)"],
-    'HOST_CASE_OWNER_LOCATION_PARENT':
-        ['corehq.messaging.scheduling.custom_recipients.host_case_owner_location_parent',
-         "Custom: Extension Case -> Host Case -> Owner (which is a location) -> Parent location"],
-    'CASE_OWNER_LOCATION_PARENT':
-        ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent_new_framework',
-         "Abt: The case owner's location's parent location"],
-}
-
-AVAILABLE_CUSTOM_RULE_CRITERIA = {
-    'ICDS_PERSON_CASE_IS_UNDER_6_YEARS_OLD':
-        'custom.icds.rules.custom_criteria.person_case_is_under_6_years_old',
-    'ICDS_PERSON_CASE_IS_UNDER_19_YEARS_OLD':
-        'custom.icds.rules.custom_criteria.person_case_is_under_19_years_old',
-    'ICDS_CCS_RECORD_CASE_HAS_FUTURE_EDD':
-        'custom.icds.rules.custom_criteria.ccs_record_case_has_future_edd',
-    'ICDS_CCS_RECORD_CASE_CHILD_AVAILING_SERVICES':
-        'custom.icds.rules.custom_criteria.ccs_record_case_is_availing_services',
-    'ICDS_CHILD_HEALTH_CASE_CHILD_AVAILING_SERVICES':
-        'custom.icds.rules.custom_criteria.child_health_case_is_availing_services',
-    'ICDS_IS_USERCASE_OF_AWW':
-        'custom.icds.rules.custom_criteria.is_usercase_of_aww',
-    'ICDS_IS_USERCASE_OF_LS':
-        'custom.icds.rules.custom_criteria.is_usercase_of_ls',
-    'ICDS_CCS_RECORD_MOTHER_CASE_AVAILING_SERVICES_HAS_CONTACT_PHONE_NUMBER':
-        'custom.icds.rules.custom_criteria.ccs_record_mother_case_availing_services_has_phone_number'
-}
-
-AVAILABLE_CUSTOM_RULE_ACTIONS = {
-    'ICDS_ESCALATE_TECH_ISSUE':
-        'custom.icds.rules.custom_actions.escalate_tech_issue',
 }
 
 # These are custom templates which can wrap default the sms/chat.html template
@@ -1864,17 +1830,10 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_3.json'),
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_4.json'),
     os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2019.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'dashboard', '*.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr', '*.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr', 'ucr_v2', '*.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr', '*.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr', 'dashboard', '*.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls', '*.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'other', '*.json'),
     os.path.join('custom', 'echis_reports', 'ucr', 'reports', '*.json'),
     os.path.join('custom', 'aaa', 'ucr', 'reports', '*.json'),
     os.path.join('custom', 'ccqa', 'ucr', 'reports', 'patients.json'),  # For testing static UCRs
-]
+] + LOCAL_STATIC_UCR_REPORTS
 
 
 STATIC_DATA_SOURCES = [
@@ -1890,49 +1849,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'malaria_consortium.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'weekly_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ag_care_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ag_care_cases_monthly.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'awc_locations.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'awc_mgt_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly_v2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_cases_monthly_v2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_delivery_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'daily_feeding_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'gm_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'hardware_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'home_visit_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'household_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'infrastructure_form.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'infrastructure_form_v2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'it_report_follow_issue.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_home_visit_forms_filled.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_app_usage_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_vhnd_form.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'person_cases_v3.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tasks_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tech_issue_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'thr_forms_v2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'usage_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'adolescent_girl_register_form_ucr.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'complementary_feeding_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'dashboard_growth_monitoring.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'postnatal_care_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'commcare_user_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'delivery_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'pregnant_tasks.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'child_tasks.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'thr_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'birth_preparedness_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'daily_feeding_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'migrations_form.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'availing_service_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'add_pregnancy_form.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'primary_private_school_form_ucr.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'cbe_form.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'commande_combined.json'),
@@ -1952,7 +1868,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'echis_reports', 'ucr', 'data_sources', '*.json'),
     os.path.join('custom', 'aaa', 'ucr', 'data_sources', '*.json'),
     os.path.join('custom', 'ccqa', 'ucr', 'data_sources', 'patients.json'),  # For testing static UCRs
-]
+] + LOCAL_STATIC_DATA_SOURCES
 
 for k, v in LOCAL_PILLOWTOPS.items():
     plist = PILLOWTOPS.get(k, [])
@@ -1999,21 +1915,16 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('eqa_expression', 'custom.eqa.expressions.eqa_expression'),
     ('cqi_action_item', 'custom.eqa.expressions.cqi_action_item'),
     ('eqa_percent_expression', 'custom.eqa.expressions.eqa_percent_expression'),
-]
+] + LOCAL_CUSTOM_UCR_EXPRESSIONS
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
-    ('mvp.ucr.reports.expressions.CUSTOM_UCR_EXPRESSIONS'),
-    ('custom.icds_reports.ucr.expressions.CUSTOM_UCR_EXPRESSIONS'),
-    ('corehq.apps.userreports.expressions.extension_expressions.CUSTOM_UCR_EXPRESSIONS'),
-]
+    'mvp.ucr.reports.expressions.CUSTOM_UCR_EXPRESSIONS',
+    'corehq.apps.userreports.expressions.extension_expressions.CUSTOM_UCR_EXPRESSIONS',
+] + LOCAL_CUSTOM_UCR_EXPRESSION_LISTS
 
-CUSTOM_UCR_REPORT_FILTERS = [
-    ('village_choice_list', 'custom.icds_reports.ucr.filter_spec.build_village_choice_list_filter_spec')
-]
+CUSTOM_UCR_REPORT_FILTERS = [] + LOCAL_CUSTOM_UCR_REPORT_FILTERS
 
-CUSTOM_UCR_REPORT_FILTER_VALUES = [
-    ('village_choice_list', 'custom.icds_reports.ucr.filter_value.VillageFilterValue')
-]
+CUSTOM_UCR_REPORT_FILTER_VALUES = [] + LOCAL_CUSTOM_UCR_REPORT_FILTER_VALUES
 
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
@@ -2024,19 +1935,15 @@ DOMAIN_MODULE_MAP = {
     'pact': 'pact',
 
     'ipm-senegal': 'custom.intrahealth',
-    'icds-test': 'custom.icds_reports',
-    'icds-cas': 'custom.icds_reports',
-    'icds-dashboard-qa': 'custom.icds_reports',
     'reach-test': 'custom.aaa',
     'reach-dashboard-qa': 'custom.aaa',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
+    'nhm-af-up': 'custom.up_nrhm',
 
     'crs-remind': 'custom.apps.crs_reports',
 
-    'm4change': 'custom.m4change',
     'succeed': 'custom.succeed',
-    'test-pathfinder': 'custom.m4change',
     'champ-cameroon': 'custom.champ',
 
     # From DOMAIN_MODULE_CONFIG on production
@@ -2059,6 +1966,7 @@ DOMAIN_MODULE_MAP = {
     'vectorlink-burkina-faso': 'custom.abt',
     'vectorlink-ethiopia': 'custom.abt',
     'vectorlink-ghana': 'custom.abt',
+    'vectorlink-ivorycoast': 'custom.abt',
     'vectorlink-kenya': 'custom.abt',
     'vectorlink-madagascar': 'custom.abt',
     'vectorlink-malawi': 'custom.abt',
@@ -2077,6 +1985,8 @@ DOMAIN_MODULE_MAP = {
 
     'ccqa': 'custom.ccqa',
 }
+
+DOMAIN_MODULE_MAP.update(LOCAL_DOMAIN_MODULE_MAP)
 
 THROTTLE_SCHED_REPORTS_PATTERNS = (
     # Regex patterns matching domains whose scheduled reports use a

@@ -7,6 +7,7 @@ from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.sms.util import format_message_list
 from corehq.apps.smsforms.models import SQLXFormsSession, XFormsSessionSynchronization
 from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
+from corehq.apps.smsforms.app import _responses_to_text, get_events_from_responses
 from corehq.messaging.scheduling.util import utcnow
 from corehq.util.celery_utils import no_result_task
 from corehq.util.metrics import metrics_counter
@@ -51,7 +52,9 @@ def send_first_message(domain, recipient, phone_entry_or_number, session, respon
     metrics_counter('commcare.smsforms.session_started', 1, tags={'domain': domain, 'workflow': workflow})
 
     if len(responses) > 0:
-        message = format_message_list(responses)
+        text_responses = _responses_to_text(responses)
+        message = format_message_list(text_responses)
+        events = get_events_from_responses(responses)
         metadata = MessageMetadata(
             workflow=workflow,
             xforms_session_couch_id=session.couch_id,
@@ -61,7 +64,8 @@ def send_first_message(domain, recipient, phone_entry_or_number, session, respon
                 phone_entry_or_number,
                 message,
                 metadata,
-                logged_subevent=logged_subevent
+                logged_subevent=logged_subevent,
+                events=events
             )
         else:
             send_sms(

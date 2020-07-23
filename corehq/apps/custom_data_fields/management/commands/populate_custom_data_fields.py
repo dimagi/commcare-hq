@@ -18,7 +18,30 @@ class Command(PopulateSQLCommand):
 
     @classmethod
     def commit_adding_migration(cls):
-        return "ff0443ec554edf75015f03842441fc8553cf6d88"
+        return "bb82e5c3d2840d6e3e3a6f5ebf1a0c7e817f4613"
+
+    @classmethod
+    def diff_attr(cls, name, doc, obj):
+        couch = doc.get(name, None)
+        sql = getattr(obj, name, None)
+        if couch != sql:
+            return f"{name}: couch value '{couch}' != sql value '{sql}'"
+
+    @classmethod
+    def diff_couch_and_sql(cls, doc, obj):
+        diffs = []
+        for attr in ('field_type', 'domain'):
+            diffs.append(cls.diff_attr(attr, doc, obj))
+        couch_fields = doc.get('fields', [])
+        sql_fields = obj.get_fields()
+        if len(couch_fields) != len(sql_fields):
+            diffs.append(f"fields: {len(couch_fields)} in couch != {len(sql_fields)} in sql")
+        else:
+            for couch_field, sql_field in list(zip(couch_fields, sql_fields)):
+                for attr in ('slug', 'is_required', 'label', 'choices', 'regex', 'regex_msg'):
+                    diffs.append(cls.diff_attr(attr, couch_field, sql_field))
+        diffs = [d for d in diffs if d]
+        return "\n".join(diffs) if diffs else None
 
     def update_or_create_sql_object(self, doc):
         model, created = self.sql_class().objects.update_or_create(
