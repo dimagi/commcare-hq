@@ -62,7 +62,6 @@ branches:
   - jls/linked-domain-report-links # Jenny July 7
   - sr-alias-api # Sravan July 10
   - ce/multi-domain-upload # Cal July 13
-  - ml/SAAS-10954-show-all-option  # Michelle July 15
   - kev/webapps-addresses-question # Kevin July 16
   - ce/2fa-lockout
   - fr/shadow-module-child-versioned # Farid July 22
