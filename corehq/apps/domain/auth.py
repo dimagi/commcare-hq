@@ -27,6 +27,7 @@ BASIC = 'basic'
 DIGEST = 'digest'
 NOAUTH = 'noauth'
 API_KEY = 'api_key'
+OAUTH2 = 'oauth2'
 FORMPLAYER = 'formplayer'
 
 
@@ -64,6 +65,9 @@ def determine_authtype_from_header(request, default=DIGEST):
     elif auth_header.startswith('digest '):
         # Note: this will not identify initial, uncredentialed digest requests
         return DIGEST
+    elif auth_header.startswith('bearer '):
+        # Note: this will not identify initial, uncredentialed digest requests
+        return OAUTH2
     elif _is_api_key_authentication(request):
         return API_KEY
 
