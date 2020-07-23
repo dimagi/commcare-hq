@@ -4,15 +4,23 @@ from corehq.apps.custom_data_fields.models import (
     CustomDataFieldsDefinition,
     CustomDataFieldsProfile,
     Field,
+    PROFILE_SLUG,
 )
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
+from corehq.pillows.user import transform_user_for_elasticsearch
+from corehq.util.elastic import ensure_index_deleted
+from pillowtop.es_utils import initialize_index_and_mapping
 
 
 class TestCustomDataFieldsProfile(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.definition = CustomDataFieldsDefinition(domain='a-domain', field_type=UserFieldsView.field_type)
+        cls.domain = 'a-domain'
+        cls.definition = CustomDataFieldsDefinition(domain=cls.domain, field_type=UserFieldsView.field_type)
         cls.definition.save()
         cls.definition.set_fields([
             Field(
@@ -83,3 +91,20 @@ class TestCustomDataFieldsProfile(TestCase):
                 "prefix": "tri",
             },
         }])
+
+    def test_has_users_assigned(self):
+        self.es = get_es_new()
+        ensure_index_deleted(USER_INDEX)
+        initialize_index_and_mapping(self.es, USER_INDEX_INFO)
+
+        user = CommCareUser.create(self.domain, 'pentagon', '*****', None, None, metadata={
+            PROFILE_SLUG: self.profile5.id,
+        })
+        self.addCleanup(user.delete, deleted_by=None)
+        send_to_elasticsearch('users', transform_user_for_elasticsearch(user.to_json()))
+        self.es.indices.refresh(USER_INDEX)
+
+        self.assertFalse(self.profile3.has_users_assigned)
+        self.assertTrue(self.profile5.has_users_assigned)
+
+        ensure_index_deleted(USER_INDEX)

@@ -264,7 +264,7 @@ class CustomDataModelMixin(object):
 
     def save_profiles(self):
         if not self.show_profiles:
-            return
+            return []
 
         definition = self.get_definition()
         seen = set()
@@ -278,9 +278,16 @@ class CustomDataModelMixin(object):
             )
             seen.add(obj.id)
 
+        errors = []
         for profile in self.get_profiles():
             if profile.id not in seen:
-                profile.delete()
+                if profile.has_users_assigned:
+                    errors.append(_("Could not delete profile '{}' because it has users "
+                                    "assigned.")).format(profile.name)
+                else:
+                    profile.delete()
+
+        return errors
 
     def get_field(self, field):
         if REGEX_FIELD_VALIDATION.enabled(self.domain) and field.get('regex'):
@@ -342,12 +349,14 @@ class CustomDataModelMixin(object):
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
             self.save_custom_fields()
-            self.save_profiles()
+            errors = self.save_profiles()
             if self.show_purge_existing and self.form.cleaned_data['purge_existing']:
                 self.update_existing_models()
             msg = _("{} fields saved successfully").format(
                 str(self.entity_string)
             )
+            for error in errors:
+                messages.error(request, error)
             messages.success(request, msg)
             return redirect(self.urlname, self.domain)
         else:
