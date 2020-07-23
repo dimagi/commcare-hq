@@ -6,6 +6,8 @@ from django.db import models
 from django.db.models.functions import Lower
 from django.utils.translation import ugettext as _
 
+from corehq.apps.es.users import UserES, filters
+
 CUSTOM_DATA_FIELD_PREFIX = "data-field"
 # If mobile-worker is demo, this will be set to value 'demo'
 COMMCARE_USER_TYPE_KEY = 'user_type'
@@ -156,6 +158,19 @@ class CustomDataFieldsProfile(models.Model):
     name = models.CharField(max_length=126)
     fields = JSONField(default=list, null=True)
     definition = models.ForeignKey('CustomDataFieldsDefinition', on_delete=models.CASCADE)
+
+    @property
+    def has_users_assigned(self):
+        return bool(
+            UserES().domain(self.definition.domain)
+                    .mobile_users()
+                    .filter(
+                        filters.nested('user_data_es',
+                        filters.AND(
+                            filters.term('user_data_es.key', PROFILE_SLUG),
+                            filters.term('user_data_es.value', self.id)
+                        ))).count()
+        )
 
     def to_json(self):
         return {
