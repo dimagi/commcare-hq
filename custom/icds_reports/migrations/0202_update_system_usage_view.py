@@ -17,4 +17,3 @@ class Migration(migrations.Migration):
     ]
 
     operations = get_view_migrations()
-

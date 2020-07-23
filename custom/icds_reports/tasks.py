@@ -758,10 +758,12 @@ def _agg_thr_table(state_id, day):
     with transaction.atomic(using=router.db_for_write(AggregateTHRForm)):
         AggregateTHRForm.aggregate(state_id, force_to_date(day))
 
+
 @track_time
 def _agg_app_version_table(day):
     with transaction.atomic(using=router.db_for_write(AggregateAppVersion)):
         AggregateAppVersion.aggregate(force_to_date(day))
+
 
 @track_time
 def _agg_adolescent_girls_registration_table(state_id, day):
