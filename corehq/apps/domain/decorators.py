@@ -196,8 +196,8 @@ def api_key():
 def oauth2_check():
     def auth_check(request):
         oauthlib_core = get_oauthlib_core()
-        # todo: do we need to set scopes here? If so, how do we do that?
-        valid, r = oauthlib_core.verify_request(request, scopes=[])
+        # as of now, this is only used in our APIs, so explictly check that particular scope
+        valid, r = oauthlib_core.verify_request(request, scopes=['access_apis'])
         if valid:
             request.user = r.user
             return True

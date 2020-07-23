@@ -815,7 +815,7 @@ BITLY_OAUTH_TOKEN = None
 
 OAUTH2_PROVIDER = {
     'SCOPES': {
-        'view_reports': 'View Report Data on All Domains',
+        'access_apis': 'Access API data on all your CommCare projects',
     },
 }
 
