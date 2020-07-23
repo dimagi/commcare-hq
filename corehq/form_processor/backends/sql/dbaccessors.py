@@ -634,10 +634,9 @@ class FormAccessorSQL(AbstractFormAccessor):
             db_names = [form.db]
             if has_tracked_vault_entries(form):
                 db_names.append(router.db_for_write(VaultEntry))
-            with form.attachment_writer() as attachment_writer:
-                with ExitStack() as stack:
-                    for db_name in db_names:
-                        stack.enter_context(transaction.atomic(db_name, savepoint=False))
+            with form.attachment_writer() as attachment_writer, ExitStack() as stack:
+                for db_name in db_names:
+                    stack.enter_context(transaction.atomic(db_name, savepoint=False))
                 transaction.on_commit(attachment_writer.commit, using=form.db)
                 form.save()
                 attachment_writer.write()
