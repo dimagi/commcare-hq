@@ -275,7 +275,7 @@ def get_location_from_site_code(site_code, location_cache):
         )
 
 
-DomainInfo = namedtuple('DomainInfo', ['validators', 'can_assign_locations', 'location_cache', 'roles_by_name'])
+DomainInfo = namedtuple('DomainInfo', ['validators', 'can_assign_locations', 'location_cache', 'roles_by_name', 'group_memoizer'])
 
 
 def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, group_memoizer=None, update_progress=None):
@@ -301,7 +301,7 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
         domain_user_specs = [spec for spec in user_specs if spec.get('domain', upload_domain) == domain]
         validators = get_user_import_validators(domain_obj, domain_user_specs, allowed_group_names, list(roles_by_name), upload_domain)
 
-        domain_info = DomainInfo(validators, can_assign_locations, location_cache, roles_by_name)
+        domain_info = DomainInfo(validators, can_assign_locations, location_cache, roles_by_name, domain_group_memoizer)
         domain_info_by_domain[domain] = domain_info
         return domain_info
 
@@ -490,12 +490,12 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                     # Passing use_primary_db=True because of https://dimagi-dev.atlassian.net/browse/ICDS-465
                     user.get_django_user(use_primary_db=True).check_password(password)
 
-                for group in group_memoizer.by_user_id(user.user_id):
+                for group in domain_info.group_memoizer.by_user_id(user.user_id):
                     if group.name not in group_names:
                         group.remove_user(user)
 
                 for group_name in group_names:
-                    group_memoizer.by_name(group_name).add_user(user, save=False)
+                    domain_info.group_memoizer.by_name(group_name).add_user(user, save=False)
 
             except (UserUploadError, CouchUser.Inconsistent) as e:
                 status_row['flag'] = str(e)
@@ -503,7 +503,8 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
             ret["rows"].append(status_row)
     finally:
         try:
-            group_memoizer.save_all()
+            for domain_info in domain_info_by_domain.values():
+                domain_info.group_memoizer.save_all()
         except BulkSaveError as e:
             _error_message = (
                 "Oops! We were not able to save some of your group changes. "
