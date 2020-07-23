@@ -20,6 +20,8 @@ from django.views import View
 
 from django_otp import match_token
 from django_prbac.utils import has_privilege
+from oauth2_provider.oauth2_backends import get_oauthlib_core
+
 from corehq.apps.domain.auth import HQApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
 
@@ -191,6 +193,27 @@ def api_key():
     return real_decorator
 
 
+def oauth2_check():
+    def auth_check(request):
+        oauthlib_core = get_oauthlib_core()
+        # as of now, this is only used in our APIs, so explictly check that particular scope
+        valid, r = oauthlib_core.verify_request(request, scopes=['access_apis'])
+        if valid:
+            request.user = r.user
+            return True
+
+    def real_decorator(view):
+        def wrapper(request, *args, **kwargs):
+            auth = auth_check(request)
+            if auth:
+                return view(request, *args, **kwargs)
+
+            response = HttpUnauthorized()
+            return response
+        return wrapper
+    return real_decorator
+
+
 def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False, allow_sessions=True):
     """
     kwargs:
@@ -248,6 +271,15 @@ def login_or_formplayer_ex(allow_cc_users=False, allow_sessions=True):
 def login_or_api_key_ex(allow_cc_users=False, allow_sessions=True):
     return _login_or_challenge(
         api_key(),
+        allow_cc_users=allow_cc_users,
+        api_key=True,
+        allow_sessions=allow_sessions
+    )
+
+
+def login_or_oauth2_ex(allow_cc_users=False, allow_sessions=True):
+    return _login_or_challenge(
+        oauth2_check(),
         allow_cc_users=allow_cc_users,
         api_key=True,
         allow_sessions=allow_sessions
@@ -315,11 +347,13 @@ api_auth = _get_multi_auth_decorator(default=DIGEST)
 login_or_digest = login_or_digest_ex()
 login_or_basic = login_or_basic_ex()
 login_or_api_key = login_or_api_key_ex()
+login_or_oauth2 = login_or_oauth2_ex()
 
 # Use these decorators on views to exclusively allow any one authorization method and not session based auth
 digest_auth = login_or_digest_ex(allow_sessions=False)
 basic_auth = login_or_basic_ex(allow_sessions=False)
 api_key_auth = login_or_api_key_ex(allow_sessions=False)
+oauth2_auth = login_or_oauth2_ex(allow_sessions=False)
 
 basic_auth_or_try_api_key_auth = login_or_basic_or_api_key_ex(allow_sessions=False)
 
