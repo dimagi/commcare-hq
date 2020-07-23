@@ -3,8 +3,10 @@ import sys
 
 import testil
 
-from corehq.extensions.interface import CommCareExtensions, ExtensionError, extension_point
+from corehq.extensions.interface import CommCareExtensions, ExtensionError, extension_point, extension_manager
 from corehq.util.test_utils import generate_cases
+
+extension_manager.locked = False
 
 
 @extension_point
@@ -101,3 +103,14 @@ def test_decorator(self, args, kwargs, exception_message):
         @ext_point_a.extend(*args, **kwargs)
         def impl():
             pass
+
+
+def test_late_extension_definition():
+    extension_manager.locked = True
+    try:
+        with testil.assert_raises(ExtensionError, msg=re.compile("Late extension definition")):
+            @ext_point_a.extend
+            def impl():
+                pass
+    finally:
+        extension_manager.locked = False

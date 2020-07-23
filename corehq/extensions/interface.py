@@ -47,13 +47,17 @@ def extension_point(func):
     def extend(impl=None, *, domains=None):
 
         def _extend(impl):
-            impl.extension_point_impl = {"spec": func.__name__, "domains": domains}
-            return impl
+            if extension_manager.locked:
+                raise ExtensionError(
+                    "Late extension definition. Extensions must be defined before setup is complete"
+                )
 
-        if impl is not None:
             assert callable(impl), (
                 f"Incorrect usage of extension decorator. See docs below:\n\n{extension_point.__doc__}"
             )
+
+            impl.extension_point_impl = {"spec": func.__name__, "domains": domains}
+            return impl
 
         if domains is not None:
             assert isinstance(domains, list), "domains must be a list"
@@ -103,6 +107,7 @@ class CommCareExtensions:
     def __init__(self):
         self.registry = defaultdict(list)
         self.extension_point_registry = {}
+        self.locked = False
 
     def load_extensions(self, implementations):
         for module_name in implementations:
@@ -173,3 +178,6 @@ class CommCareExtensions:
                     },
                 )
         return results
+
+
+extension_manager = CommCareExtensions()

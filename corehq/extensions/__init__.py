@@ -1,5 +1,3 @@
-from corehq.extensions.interface import CommCareExtensions
-
-extension_manager = CommCareExtensions()
+from corehq.extensions.interface import CommCareExtensions, extension_manager
 
 get_contributions = extension_manager.get_extension_point_contributions
