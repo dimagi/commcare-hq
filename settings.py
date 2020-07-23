@@ -797,8 +797,28 @@ RUN_UNKNOWN_USER_PILLOW = True
 # databases.
 CASE_ES_DROP_FORM_FIELDS = False
 
+# Repeaters in the order in which they should appear in "Data Forwarding"
+REPEATER_CLASSES = [
+    'corehq.motech.repeaters.models.FormRepeater',
+    'corehq.motech.repeaters.models.CaseRepeater',
+    'corehq.motech.repeaters.models.CreateCaseRepeater',
+    'corehq.motech.repeaters.models.UpdateCaseRepeater',
+    'corehq.motech.repeaters.models.ReferCaseRepeater',
+    'corehq.motech.repeaters.models.ShortFormRepeater',
+    'corehq.motech.repeaters.models.AppStructureRepeater',
+    'corehq.motech.repeaters.models.UserRepeater',
+    'corehq.motech.repeaters.models.LocationRepeater',
+    'corehq.motech.openmrs.repeaters.OpenmrsRepeater',
+    'corehq.motech.dhis2.repeaters.Dhis2Repeater',
+    'corehq.motech.dhis2.repeaters.Dhis2EntityRepeater',
+]
+
+# Override this in localsettings to add new repeater types
+LOCAL_REPEATER_CLASSES = []
+
 # tuple of fully qualified repeater class names that are enabled.
 # Set to None to enable all or empty tuple to disable all.
+# This will not prevent users from creating
 REPEATERS_WHITELIST = None
 
 # If ENABLE_PRELOGIN_SITE is set to true, redirect to Dimagi.com urls
@@ -1057,6 +1077,8 @@ AVAILABLE_CUSTOM_REMINDER_RECIPIENTS.update(LOCAL_AVAILABLE_CUSTOM_REMINDER_RECI
 AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS.update(LOCAL_AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS)
 AVAILABLE_CUSTOM_RULE_CRITERIA.update(LOCAL_AVAILABLE_CUSTOM_RULE_CRITERIA)
 AVAILABLE_CUSTOM_RULE_ACTIONS.update(LOCAL_AVAILABLE_CUSTOM_RULE_ACTIONS)
+
+REPEATER_CLASSES.extend(LOCAL_REPEATER_CLASSES)
 
 # The defaults above are given as a function of (or rather a closure on) DEBUG,
 # so if not overridden they need to be evaluated after DEBUG is set
