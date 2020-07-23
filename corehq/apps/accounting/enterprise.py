@@ -178,7 +178,7 @@ class EnterpriseWebUserReport(EnterpriseReport):
                     'N/A',
                     _('Invited')
                 ]
-            )
+                + self.domain_properties(domain_obj))
         return rows
 
     def total_for_domain(self, domain_obj):
