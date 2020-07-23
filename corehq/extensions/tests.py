@@ -1,12 +1,12 @@
 import re
-import sys
 
 import testil
 
-from corehq.extensions.interface import CommCareExtensions, ExtensionError, extension_point, extension_manager
+from corehq.extensions.interface import CommCareExtensions, Extension, ExtensionError
 from corehq.util.test_utils import generate_cases
 
-extension_manager.locked = False
+extensions = CommCareExtensions()
+extension_point = extensions.extension_point
 
 
 @extension_point
@@ -20,7 +20,6 @@ class DemoExtension:
             args: response for args, response in mock_calls.items()
         }
 
-    @ext_point_a.extend(domains=["d2"])
     def ext_point_a(self, arg1, domain):
         return self.mock_calls[(arg1, domain)]
 
@@ -28,8 +27,7 @@ class DemoExtension:
 demo_extension = DemoExtension({
     (1, "d2"): "p1",
 })
-
-demo_extension_1 = demo_extension.ext_point_a
+ext_point_a.extend(domains=["d2"])(demo_extension.ext_point_a)
 
 
 @ext_point_a.extend()
@@ -46,14 +44,9 @@ def demo_extension_3(**kwargs):
     return "p3"
 
 
-extensions = CommCareExtensions()
-
-
 def setup():
-    extensions.add_extension_points(sys.modules[__name__])
-    extensions.load_extensions([
-        "corehq.extensions.tests"
-    ])
+    extensions.add_extension_points(None)
+    extensions.load_extensions(["corehq.extensions.tests"])
 
 
 def test_commcare_extensions():
@@ -73,17 +66,12 @@ def test_commcare_extensions():
 
 def test_validation_missing_point():
     with testil.assert_raises(ExtensionError, msg="unknown extension point 'missing'"):
-        extensions.register_extension("missing", demo_extension_2)
-
-
-def test_validation_missing_callable():
-    with testil.assert_raises(ExtensionError, msg="Extension not found: 'corehq.missing'"):
-        extensions.register_extension("ext_point_a", "corehq.missing")
+        extensions.register_extension(Extension("missing", demo_extension_2, None))
 
 
 def test_validation_not_callable():
-    with testil.assert_raises(ExtensionError, msg=re.compile("not callable")):
-        extensions.register_extension("ext_point_a", demo_extension)
+    with testil.assert_raises(TypeError):
+        extensions.register_extension(Extension("ext_point_a", "corehq.missing", None))
 
 
 def test_validation_callable_args():
@@ -91,7 +79,7 @@ def test_validation_callable_args():
         pass
 
     with testil.assert_raises(ExtensionError, msg=re.compile("consumed.*arg1")):
-        extensions.register_extension("ext_point_a", bad_spec)
+        extensions.register_extension(Extension("ext_point_a", bad_spec, None))
 
 
 @generate_cases([
@@ -99,6 +87,8 @@ def test_validation_callable_args():
     ([], {"domains": "d1"}, re.compile("domains must be a list")),
 ])
 def test_decorator(self, args, kwargs, exception_message):
+    ext = CommCareExtensions()
+    ext.extension_point(ext_point_a)
     with testil.assert_raises(AssertionError, msg=exception_message):
         @ext_point_a.extend(*args, **kwargs)
         def impl():
@@ -106,11 +96,24 @@ def test_decorator(self, args, kwargs, exception_message):
 
 
 def test_late_extension_definition():
-    extension_manager.locked = True
-    try:
-        with testil.assert_raises(ExtensionError, msg=re.compile("Late extension definition")):
-            @ext_point_a.extend
-            def impl():
-                pass
-    finally:
-        extension_manager.locked = False
+    ext = CommCareExtensions()
+
+    @ext.extension_point
+    def ext_point_b():
+        """testing..."""
+
+    ext.load_extensions([])
+    with testil.assert_raises(ExtensionError, msg=re.compile("Late extension definition")):
+        @ext_point_b.extend
+        def impl():
+            pass
+
+
+def test_late_extension_point_definition():
+    ext = CommCareExtensions()
+    ext.load_extensions([])
+
+    with testil.assert_raises(ExtensionError, msg=re.compile("Late extension point definition")):
+        @ext.extension_point
+        def ext_point_c():
+            """testing..."""
