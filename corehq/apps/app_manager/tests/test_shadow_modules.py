@@ -457,3 +457,144 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
             self.factory.app.create_suite(),
             './entry[3]'
         )
+
+    def test_shadow_module_source_has_child_module(self, *args):
+        self.factory = AppFactory()
+
+        # m0
+        self.basic_module, self.form0 = self.factory.new_basic_module('basic_module', 'parrot')
+        self.form0.xmlns = 'http://openrosa.org/formdesigner/m0f0'
+        self.form1 = self.factory.new_form(self.basic_module)
+        self.form1.xmlns = 'http://openrosa.org/formdesigner/m0f1'
+
+        # m1
+        self.child_module, self.form2 = self.factory.new_basic_module(
+            'child_module', 'parrot', parent_module=self.basic_module
+        )
+        self.form2.xmlns = 'http://openrosa.org/formdesigner/m1f0'
+        self.child_module.put_in_root = True
+
+        # m2
+        self.shadow_module = self.factory.new_shadow_module(
+            'shadow_module', self.basic_module, with_form=False, shadow_module_version=2
+        )
+        self.shadow_child_module = self.factory.new_shadow_module(
+            'shadow_child', self.child_module, with_form=False, shadow_module_version=2
+        )
+        self.shadow_child_module.root_module_id = self.shadow_module.unique_id
+        self.shadow_child_module.put_in_root = True
+
+        expected_menu = ("""
+        <partial>
+          <menu id="m0">
+            <text>
+              <locale id="modules.m0"/>
+            </text>
+            <command id="m0-f0"/>
+            <command id="m0-f1"/>
+          </menu>
+        """                     # basic module
+        """
+          <menu id="m0">
+            <text>
+              <locale id="modules.m0"/>
+            </text>
+            <command id="m1-f0"/>
+          </menu>
+        """                     # child module, put in root
+        """
+          <menu id="m2">
+            <text>
+              <locale id="modules.m2"/>
+            </text>
+            <command id="m2-f0"/>
+            <command id="m2-f1"/>
+          </menu>
+        """                     # shadow module - basic
+        """
+          <menu id="m2">
+            <text>
+              <locale id="modules.m2"/>
+            </text>
+            <command id="m3-f0"/>
+          </menu>
+        """                     # shadow module - child
+        """
+        </partial>
+        """)
+        suite = self.factory.app.create_suite()
+        self.assertXmlPartialEqual(
+            expected_menu,
+            suite,
+            './menu',
+        )
+
+        expected_entries = ("""
+            <partial>
+              <entry>
+                <form>http://openrosa.org/formdesigner/m0f0</form>
+                <command id="m0-f0">
+                  <text>
+                    <locale id="forms.m0f0"/>
+                  </text>
+                </command>
+              </entry>
+        """                     # basic module, first form
+        """
+              <entry>
+                <form>http://openrosa.org/formdesigner/m0f1</form>
+                <command id="m0-f1">
+                  <text>
+                    <locale id="forms.m0f1"/>
+                  </text>
+                </command>
+              </entry>
+        """                     # basic module, second form
+        """
+              <entry>
+                <form>http://openrosa.org/formdesigner/m1f0</form>
+                <command id="m1-f0">
+                  <text>
+                    <locale id="forms.m1f0"/>
+                  </text>
+                </command>
+              </entry>
+        """                     # child module, first form
+        """
+              <entry>
+                <form>http://openrosa.org/formdesigner/m0f0</form>
+                <command id="m2-f0">
+                  <text>
+                    <locale id="forms.m0f0"/>
+                  </text>
+                </command>
+              </entry>
+        """                     # shadow basic module, first form
+        """
+              <entry>
+                <form>http://openrosa.org/formdesigner/m0f1</form>
+                <command id="m2-f1">
+                  <text>
+                    <locale id="forms.m0f1"/>
+                  </text>
+                </command>
+              </entry>
+        """                     # shadow basic module, second form
+        """
+              <entry>
+                <form>http://openrosa.org/formdesigner/m1f0</form>
+                <command id="m3-f0">
+                  <text>
+                    <locale id="forms.m1f0"/>
+                  </text>
+                </command>
+              </entry>
+        """                     # shadow child module, first form
+        """
+            </partial>
+        """)
+        self.assertXmlPartialEqual(
+            expected_entries,
+            suite,
+            './entry',
+        )
