@@ -404,7 +404,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             [self._get_spec(username=123, domain=self.other_domain.name)],
             [],
-            None
+            None,
+            mock.MagicMock()
         )
         self.assertIsNotNone(
             CommCareUser.get_by_username('{}@{}.commcarehq.org'.format('123', self.other_domain.name))
