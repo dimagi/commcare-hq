@@ -5,9 +5,8 @@ from django.db import connections
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.blobs import get_blob_db, CODES
 from corehq.blobs.models import BlobMeta
-from corehq.sql_db.connections import get_aaa_db_alias
 from couchexport.export import export_from_tables
-from custom.aaa.const import MINISTRY_MOHFW, MINISTRY_MWCD, ALL, BLOB_EXPIRATION_TIME
+from custom.aaa.const import MINISTRY_MOHFW, MINISTRY_MWCD, ALL, BLOB_EXPIRATION_TIME, get_aaa_db_alias
 from custom.aaa.models import AggAwc, AggVillage, CcsRecord, Child, Woman
 from io import BytesIO
 

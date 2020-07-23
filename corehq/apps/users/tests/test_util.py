@@ -15,7 +15,7 @@ class TestUsernameToUserID(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
         cache.clear()
         super(TestUsernameToUserID, cls).tearDownClass()
 
@@ -50,7 +50,7 @@ class TestUserIdToUsernameToUserName(TestCase):
     @classmethod
     def tearDownClass(cls):
         for user in cls.users:
-            user.delete()
+            user.delete(deleted_by=None)
         cache.clear()
         super(TestUserIdToUsernameToUserName, cls).tearDownClass()
 

@@ -1,5 +1,6 @@
 import csv
 import io
+import json
 import logging
 import os
 import re
@@ -45,7 +46,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
 )
 from corehq.const import SERVER_DATE_FORMAT, SERVER_DATETIME_FORMAT
 from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
-from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
+from custom.icds_reports.utils.connections import get_icds_ucr_citus_db_alias
 from corehq.util.celery_utils import periodic_task_on_envs
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
@@ -1832,12 +1833,15 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
             # These docs are invalid
             continue
         num_docs_retried += 1
-        not_found_in_es = doc_id in doc_ids_not_in_es
+        found_in_es = doc_id not in doc_ids_not_in_es
         if not inserted_at or (sql_modified_on - inserted_at).seconds > 3600:
             num_docs_unporcessed += 1
 
-        celery_task_logger.info(f'doc_id {doc_id} from {sql_modified_on} not found in UCR data sources. '
-            f'Not found in ES: {not_found_in_es}')
+        log = {
+            "doc_id": doc_id, "modified_on": sql_modified_on.isoformat(), "inserted_at": inserted_at.isoformat(),
+            "in_es": found_in_es, "subtype": doc_subtype
+        }
+        celery_task_logger.info(json.dumps(log))
         send_change_for_ucr_reprocessing(doc_id, doc_subtype, status_record.is_form_ucr)
 
     metrics_counter(
@@ -1901,9 +1905,9 @@ def get_data_not_in_ucr(status_record):
                 # This is to handle the cases which are outdated. This condition also handles the time drift of 2 sec
                 # between main db and ucr db. i.e  doc will even be included when inserted_at-sql_modified_on < 2 sec
                 if sql_modified_on - doc_id_and_inserted_in_ucr[doc_id] > timedelta(seconds=-2):
-                    yield (doc_id, doc_subtype, sql_modified_on.isoformat(), doc_id_and_inserted_in_ucr[doc_id])
+                    yield (doc_id, doc_subtype, sql_modified_on, doc_id_and_inserted_in_ucr[doc_id])
             else:
-                yield (doc_id, doc_subtype, sql_modified_on.isoformat(), None)
+                yield (doc_id, doc_subtype, sql_modified_on, None)
 
 
 def _get_docs_in_ucr(domain, table_id, doc_ids):

@@ -34,8 +34,8 @@ class DigestOtaRestoreTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.commcare_user.delete()
-        cls.web_user.delete()
+        cls.commcare_user.delete(deleted_by=None)
+        cls.web_user.delete(deleted_by=None)
         delete_all_domains()
         super(DigestOtaRestoreTest, cls).tearDownClass()
 

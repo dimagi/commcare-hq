@@ -67,7 +67,7 @@ class Gateway(object):
         locale = translation.get_language()
         validate_voice_locale(locale)
 
-        url = reverse('two_factor:twilio_call_app', kwargs={'token': token})
+        url = reverse('two_factor_twilio:call_app', kwargs={'token': token})
         url = '%s?%s' % (url, urlencode({'locale': locale}))
         uri = 'https://%s%s' % (Site.objects.get_current().domain, url)
         self.client.api.account.calls.create(to=device.number.as_e164, from_=self.from_number,

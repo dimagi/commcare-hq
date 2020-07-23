@@ -430,14 +430,18 @@ class RegistrationAPITestCase(TestCase):
         SubscriptionAdjustment.objects.all().delete()
 
         for obj in [
-            cls.subscription1,
-            cls.account1,
             cls.admin_user1,
             cls.read_only_user1,
+            cls.admin_user2,
+        ]:
+            obj.delete(deleted_by=None)
+
+        for obj in [
+            cls.subscription1,
+            cls.account1,
             cls.domain1,
             cls.subscription2,
             cls.account2,
-            cls.admin_user2,
             cls.domain2,
         ]:
             obj.delete()

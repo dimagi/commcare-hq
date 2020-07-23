@@ -18,9 +18,9 @@ from corehq.apps.users.models import HQApiKey, WebUser
 from corehq.util.test_utils import PatchMeta, flag_enabled
 
 
-class FakeXFormES(object):
+class FakeFormESView(object):
     """
-    A mock of XFormES that will return the docs that have been
+    A mock of FormESView that will return the docs that have been
     added regardless of the query.
     """
 
@@ -99,7 +99,7 @@ class APIResourceTest(TestCase, metaclass=PatchMeta):
     @classmethod
     def tearDownClass(cls):
         cls.api_key.delete()
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
 
         for domain in Domain.get_all():
             Subscription._get_active_subscription_by_domain.clear(Subscription, domain.name)

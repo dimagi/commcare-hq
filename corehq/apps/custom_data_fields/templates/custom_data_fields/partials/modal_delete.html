@@ -1,0 +1,41 @@
+{% load i18n %}
+
+<div
+  id="delete-confirm-modal"
+  class="modal fade"
+  tabindex="-1"
+  role="dialog"
+  aria-labelledby="delete-confirm-modal-label"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h3 class="modal-title" id="delete-confirm-modal-label">{% trans "Are you sure you want to delete this field?" %}</h3>
+      </div>
+
+      <div class="modal-body" style="line-height: 18px">
+        {% blocktrans with entity_string=view.entity_string|lower %}
+          <p>
+            Deleting this field can cause you to lose data for any {{ entity_string }} with information stored in this field.
+          </p>
+          <p>
+            Data will show up on the edit {{ entity_string }} page but
+            will be removed the next time the {{ entity_string }} is saved.
+          </p>
+        {% endblocktrans %}
+      </div>
+
+      <div class="modal-footer">
+        <a href="#" data-dismiss="modal" class="btn btn-default">Cancel</a>
+        <button aria-hidden="true"
+                data-dismiss="modal"
+                data-bind="click: $root.confirmRemoveField"
+                class="btn btn-danger">
+          {% trans "Delete Field" %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

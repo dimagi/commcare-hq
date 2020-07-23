@@ -36,7 +36,7 @@ class BaseSubmissionTest(TestCase):
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms(self.domain.name)
         FormProcessorTestUtils.delete_all_cases(self.domain.name)
-        self.couch_user.delete()
+        self.couch_user.delete(deleted_by=None)
         self.domain.delete()
         super(BaseSubmissionTest, self).tearDown()
 

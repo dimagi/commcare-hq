@@ -52,7 +52,7 @@ class TestInactiveMobileUsers(TestCase):
     def tearDown(self):
         user = CommCareUser.get_by_username('123.testing@icds-cas.commcare.org')
         if user:
-            user.delete()
+            user.delete(deleted_by=None)
         user = CommCareUser.get_by_username('234.testing@icds-cas.commcare.org')
         if user:
-            user.delete()
+            user.delete(deleted_by=None)

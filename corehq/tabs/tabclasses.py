@@ -70,6 +70,7 @@ from corehq.apps.users.permissions import (
     can_download_data_files,
     can_view_sms_exports,
 )
+from corehq.apps.integration.views import DialerSettingsView
 from corehq.feature_previews import (
     EXPLORE_CASE_DATA_PREVIEW,
     is_eligible_for_ecd_preview,
@@ -320,7 +321,7 @@ class SetupTab(UITab):
                     url=reverse(item[1].urlname, args=[self.domain])
                 ) for item in dropdown_items
             ] + [
-                dropdown_dict(None, is_divider=True),
+                self.divider,
                 dropdown_dict(_("View All"), url=reverse(ProductListView.urlname, args=[self.domain])),
             ]
 
@@ -886,7 +887,7 @@ class ProjectDataTab(UITab):
             ))
 
         if items:
-            items += [dropdown_dict(None, is_divider=True)]
+            items += [self.divider]
         items += [dropdown_dict(_("View All"), url=self.url)]
         return items
 
@@ -933,7 +934,7 @@ class ApplicationsTab(UITab):
             ))
 
         if self.couch_user.can_edit_apps():
-            submenu_context.append(dropdown_dict(None, is_divider=True))
+            submenu_context.append(self.divider)
             submenu_context.append(dropdown_dict(
                 _('New Application'),
                 url=(reverse('default_new_app', args=[self.domain])),
@@ -1232,7 +1233,7 @@ class MessagingTab(UITab):
             ))
 
         if result:
-            result.append(dropdown_dict(None, is_divider=True))
+            result.append(self.divider)
 
         result.append(dropdown_dict(_("Messages"), is_header=True))
         result.append(dropdown_dict(
@@ -1245,7 +1246,7 @@ class MessagingTab(UITab):
         ))
 
         if result:
-            result.append(dropdown_dict(None, is_divider=True))
+            result.append(self.divider)
 
         view_all_view = MessagingDashboardView.urlname if self.show_dashboard else 'sms_compose_message'
         result.append(dropdown_dict(
@@ -1921,6 +1922,12 @@ def _get_integration_section(domain):
             'url': reverse(OpenmrsImporterView.urlname, args=[domain])
         })
 
+    if toggles.WIDGET_DIALER.enabled(domain):
+        integration.append({
+            'title': _(DialerSettingsView.page_title),
+            'url': reverse(DialerSettingsView.urlname, args=[domain])
+        })
+
     return integration
 
 
@@ -2009,7 +2016,6 @@ class MySettingsTab(UITab):
 class AccountingTab(UITab):
     title = ugettext_noop("Accounting")
     view = "accounting_default"
-    dispatcher = AccountingAdminInterfaceDispatcher
 
     url_prefix_formats = ('/hq/accounting/',)
     show_by_default = False
@@ -2021,7 +2027,7 @@ class AccountingTab(UITab):
     @property
     @memoized
     def sidebar_items(self):
-        items = super(AccountingTab, self).sidebar_items
+        items = AccountingAdminInterfaceDispatcher.navigation_sections(request=self._request, domain=self.domain)
 
         from corehq.apps.accounting.views import ManageAccountingAdminsView
         items.append(('Permissions', (
@@ -2065,7 +2071,6 @@ class AccountingTab(UITab):
 class SMSAdminTab(UITab):
     title = ugettext_noop("SMS Connectivity & Billing")
     view = "default_sms_admin_interface"
-    dispatcher = SMSAdminInterfaceDispatcher
 
     url_prefix_formats = ('/hq/sms/',)
     show_by_default = False
@@ -2075,7 +2080,7 @@ class SMSAdminTab(UITab):
     def sidebar_items(self):
         from corehq.apps.sms.views import (GlobalSmsGatewayListView,
             AddGlobalGatewayView, EditGlobalGatewayView)
-        items = super(SMSAdminTab, self).sidebar_items
+        items = SMSAdminInterfaceDispatcher.navigation_sections(request=self._request, domain=self.domain)
         items.append((_('SMS Connectivity'), [
             {'title': _('Gateways'),
              'url': reverse(GlobalSmsGatewayListView.urlname),
@@ -2126,7 +2131,7 @@ class AdminTab(UITab):
         submenu_context.extend([
             dropdown_dict(_("Feature Flags"), url=reverse("toggle_list")),
             dropdown_dict(_("SMS Connectivity & Billing"), url=reverse("default_sms_admin_interface")),
-            dropdown_dict(None, is_divider=True),
+            self.divider,
             dropdown_dict(_("Django Admin"), url="/admin"),
             dropdown_dict(_("View All"), url=self.url),
         ])

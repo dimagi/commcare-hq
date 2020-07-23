@@ -1,4 +1,4 @@
-/* global FormplayerFrontend */
+/* global FormplayerFrontend, mdAnchorRender */
 var Formplayer = {
     Utils: {},
     Const: {},
@@ -7,7 +7,8 @@ var Formplayer = {
 };
 var md = window.markdownit();
 
-var defaultRender = md.renderer.rules.link_open || function (tokens, idx, options, env, self) {
+//Overriden by downstream contexts, check before changing
+window.mdAnchorRender = md.renderer.rules.link_open || function (tokens, idx, options, env, self) {
     return self.renderToken(tokens, idx, options);
 };
 
@@ -22,7 +23,7 @@ md.renderer.rules.link_open = function (tokens, idx, options, env, self) {
     }
 
     // pass token to default renderer.
-    return defaultRender(tokens, idx, options, env, self);
+    return mdAnchorRender(tokens, idx, options, env, self);
 };
 
 _.delay(function () {
@@ -508,61 +509,6 @@ Question.prototype.fromJS = function (json) {
 
     ko.mapping.fromJS(json, mapping, self);
 };
-
-
-/**
- * Used to compare if questions are equal to each other by looking at their index
- * @param {Object} e - Either the javascript object Question, Group, Repeat or the JSON representation
- */
-var cmpkey = function (e) {
-    var ix = ko.utils.unwrapObservable(e.ix);
-    if (e.uuid) {
-        return 'uuid-' + ko.utils.unwrapObservable(e.uuid);
-    } else {
-        return 'ix-' + (ix ? ix : getIx(e));
-    }
-};
-
-/**
- * Given an element Question, Group, or Repeat, this will determine the index of the element in the set of
- * elements passed in. Returns -1 if not found
- * @param {Object} e - Either the javascript object Question, Group, Repeat or the JSON representation
- * @param {Object} set - The set of objects, either Question, Group, or Repeat to search in
- */
-var ixElementSet = function (e, set) {
-    return $.map(set, function (val) {
-        return cmpkey(val);
-    }).indexOf(cmpkey(e));
-};
-
-/**
- * Given an element Question, Group, or Repeat, this will return the element in the set of
- * elements passed in. Returns null if not found
- * @param {Object} e - Either the javascript object Question, Group, Repeat or the JSON representation
- * @param {Object} set - The set of objects, either Question, Group, or Repeat to search in
- */
-var inElementSet = function (e, set) {
-    var ix = ixElementSet(e, set);
-    return (ix !== -1 ? set[ix] : null);
-};
-
-
-function scroll_pin(pin_threshold, $container, $elem) {
-    return function () {
-        var base_offset = $container.offset().top;
-        var scroll_pos = $(window).scrollTop();
-        var elem_pos = base_offset - scroll_pos;
-        var pinned = (elem_pos < pin_threshold);
-
-        $elem.css('top', pinned ? pin_threshold + 'px' : base_offset);
-    };
-}
-
-function set_pin(pin_threshold, $container, $elem) {
-    var pinfunc = scroll_pin(pin_threshold, $container, $elem);
-    $(window).scroll(pinfunc);
-    pinfunc();
-}
 
 
 Formplayer.Const = {
