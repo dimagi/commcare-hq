@@ -11,8 +11,6 @@ class VaultEntry(models.Model):
     id = models.BigAutoField(primary_key=True)
     key = models.CharField(max_length=25, default=_default_key)
     value = models.CharField(max_length=255)
-    # ToDo: remove/addback
-    # identifier = models.CharField(max_length=255, blank=True, null=True)
     date_created = models.DateTimeField(auto_now_add=True)
 
     class Meta:

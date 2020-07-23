@@ -1,6 +1,6 @@
-def add_vault_entry(value, identifier):
+def add_vault_entry(value):
     from corehq.apps.data_vault.models import VaultEntry
-    return VaultEntry(value=value, identifier=identifier)
+    return VaultEntry(value=value)
 
 
 def has_tracked_vault_entries(on_model):
