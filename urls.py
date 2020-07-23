@@ -88,7 +88,11 @@ domain_specific = [
     url(r'^remote_link/', include('corehq.apps.linked_domain.urls')),
     url(r'^translations/', include('corehq.apps.translations.urls')),
     url(r'^submit_feedback/$', submit_feedback, name='submit_feedback'),
+    url(r'^integration/', include('corehq.apps.integration.urls')),
 ]
+
+for module in settings.CUSTOM_DOMAIN_SPECIFIC_URL_MODULES:
+    domain_specific.append(url(r'^', include(module)))
 
 for url_modules in extensions.get_contributions("domain_specific_urls"):
     for module in url_modules:

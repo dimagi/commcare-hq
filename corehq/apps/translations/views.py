@@ -5,6 +5,7 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 
+from corehq.apps.hqwebapp.decorators import waf_allow
 from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
@@ -116,6 +117,7 @@ def download_bulk_app_translations(request, domain, app_id):
     return export_response(temp, Format.XLS_2007, filename)
 
 
+@waf_allow('XSS_BODY')
 @no_conflict_require_POST
 @require_can_edit_apps
 @get_file("bulk_upload_file")
