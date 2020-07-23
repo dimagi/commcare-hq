@@ -67,5 +67,6 @@ branches:
   - ce/2fa-lockout
   - fr/shadow-module-child-versioned # Farid July 22
   - ce/enterprise-invited # Cal July 22
+  - cz/oauth2  # cory july 23
 
 submodules: {}
