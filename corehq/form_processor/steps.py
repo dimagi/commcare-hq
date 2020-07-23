@@ -49,9 +49,7 @@ class VaultPatternExtractor(FormProcessingStep):
     def _extract_patterns_from_string(text, patterns):
         values = []
         for pattern in patterns:
-            result = re.match(pattern, text)
-            if re.match(pattern, text):
-                values.append(list(result.groups()))
+            values.extend(re.findall(pattern, text))
         return values
 
     @staticmethod
