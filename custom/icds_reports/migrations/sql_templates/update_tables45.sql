@@ -1,1 +1,0 @@
-ALTER TABLE awc_location DROP COLUMN ls_name;

@@ -1,3 +1,0 @@
-{# NOTE: Django assumes templates are stored with UTF-8 encoding by default. Be sure to save this template with UTF-8 encoding. #}
-
-{{ child_name }} కు  ఈ నెలలో D.P.T.-3 మరియు తట్టు టీకా పొందవలసి ఉంది. కానీ ఈ టీకాలు వేయబడలేదు 

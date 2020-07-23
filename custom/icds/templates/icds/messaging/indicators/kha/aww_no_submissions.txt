@@ -1,7 +1,0 @@
-{% if more_than_one_week %}
-Ka AWC {{ awc }} ka khlem ai kano kano ka phorm ne leh kano kano ka jing treikam/ activity ha ka ICDS CAS application palat ia ka shi taiew. Sngewbha buddien bad ka Block Level Helpdesk lane Supervisor ban ioh jingiarap
-{% endif %}
-
-{% if more_than_one_month %}
-Ka AWC {{ awc }} ka khlem ai kano kano ka phorm ne leh kano kano ka jigtreikam/ activity ha ka ICDS CAS application palat ia ka shi bnai. Sngewbha buddien bad ka Block Level Helpdesk lane Supervisor ban ioh jingiarap
-{% endif %}

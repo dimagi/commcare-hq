@@ -1,7 +1,0 @@
-{% if location_names and timeframe == 'week' %}
-Kine ki  AWC ki khlem pynlong kano kano ka jingtreikam/ activity ha ka ICDS CAS application palat ia ka shi taiew: {{ location_names }}. Sngewbha buddien ban ai jingiarap.
-{% endif %}
-
-{% if location_names and timeframe == 'month' %}
-Kine ki AWC ki khlem pynlong kano kano ka jingtreikam/ activity ha ka ICDS CAS application palat ia ka shi bnai: {{ location_names }}. Sngewbha buddien ban ai jingiarap.
-{% endif %}

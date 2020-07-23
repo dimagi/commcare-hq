@@ -1,7 +1,0 @@
-doc_id,person_case_id,inserted_at,timeend,state_id,supervisor_id,awc_id,out_of_school,re_out_of_school,admitted_in_school
-doc_id1,adolescent_girl_person_case1,2017-05-01,2017-04-01,st7,s24,a105,,,yes
-doc_id2,adolescent_girl_person_case2,2017-05-01,2017-04-02,st7,s24,a105,yes,,
-doc_id3,adolescent_girl_person_case3,2017-05-01,2017-04-03,st7,s24,a105,,yes,
-doc_id4,adolescent_girl_person_case4,2017-05-01,2017-04-04,st7,s24,a105,,yes,
-doc_id5,adolescent_girl_person_case3,2017-05-01,2017-04-05,st7,s24,a105,,,yes
-doc_id6,adolescent_girl_person_case1,2017-05-01,2017-04-06,st7,s24,a105,yes,,

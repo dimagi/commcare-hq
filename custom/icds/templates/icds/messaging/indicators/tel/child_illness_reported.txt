@@ -1,3 +1,0 @@
-{# NOTE: Django assumes templates are stored with UTF-8 encoding by default. Be sure to save this template with UTF-8 encoding. #}
-
-{{ awc }} అంగన్ వాడీ {{ child }} కు అనారోగ్యంగా ఉందని రిపోర్టు చేసింది. ఆ అంగన్ వాడీ కార్యకర్త తల్లితో వెంటనే సంప్రదించేలా చూడవలెను

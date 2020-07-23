@@ -1,1 +1,0 @@
-VHSND hi heng  AWC ah te hian tun ni 30 kalta chhung khan hman anilo: {{ location_names }}

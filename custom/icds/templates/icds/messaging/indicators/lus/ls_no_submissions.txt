@@ -1,7 +1,0 @@
-{% if location_names and timeframe == 'week' %}
-Heng AWC te hian kar khat chhungin ICDS CAS application ah hian engmah hmalakna an neilo a: {{ location_names }}. Khawngaih takin puih an ngaih chuan puibawm ang che.
-{% endif %}
-
-{% if location_names and timeframe == 'month' %}
-Heng AWC te hian thla khat chhungin ICDS CAS application ah hian engmah hmalakna an nei lo a: {{ location_names }}.  Khawngaih takin pui an ngaih chuan puibawm ang che
-{% endif %}

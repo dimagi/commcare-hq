@@ -1,7 +1,0 @@
-{% if more_than_one_week %}
-AWC {{ awc }} hian kar khat chhungin application ah hian eng form mah a thehlut lo va, engmah hmalakna a neilo a.  Block Level Tanpuitu emaw Circlre Officer hnenah puibawm turin ngen ang che
-{% endif %}
-
-{% if more_than_one_month %}
-AWC {{ awc }} hian thla khat chuang application ah hian engmah hmalakna a/an neilo a.  Block Level Tanpuitu emaw Circle Officer hnenah emaw puibawm turin ngen ang che
-{% endif %}

@@ -1,1 +1,0 @@
-AWC {{ awc }} has reported illness for the child {{ child }}. Please ensure that AWW follows up with mother immediately
