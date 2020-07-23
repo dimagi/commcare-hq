@@ -15,7 +15,7 @@ def _disable_ga(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('domain', '0004_domainauditentryrecord'),
+        ('domain', '0004_domainauditrecordentry'),
     ]
 
     operations = [
