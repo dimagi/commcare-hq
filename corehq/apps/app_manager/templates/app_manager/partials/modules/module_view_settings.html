@@ -64,14 +64,22 @@
                   </span>
                 </label>
                 <div class="{% css_field_class %}">
-                  <select type="text" name="root_module_id" class="form-control">
-                    <option value="">{% trans "No Parent" %}</option>
-                    {% for mod in valid_parents_for_child_module %}
-                      <option value="{{mod.unique_id}}"{% if mod.unique_id == module.root_module_id %} selected{% endif %}>
-                        {{ mod.name|trans:langs }}
+                  {% if shadow_parent %}
+                    <select type="text" name="root_module_id" class="form-control" disabled>
+                      <option value="{{shadow_parent.unique_id}}" selected >
+                        {{ shadow_parent.name|trans:langs }}
                       </option>
-                    {% endfor %}
-                  </select>
+                    </select>
+                  {% else %}
+                    <select type="text" name="root_module_id" class="form-control">
+                      <option value="">{% trans "No Parent" %}</option>
+                      {% for mod in valid_parents_for_child_module %}
+                        <option value="{{mod.unique_id}}"{% if mod.unique_id == module.root_module_id %} selected{% endif %}>
+                          {{ mod.name|trans:langs }}
+                        </option>
+                      {% endfor %}
+                    </select>
+                  {% endif %}
                 </div>
               </div>
             {% endif %}
@@ -84,6 +92,7 @@
                   </label>
                   <div class="{% css_field_class %}">
                     <select name="source_module_id" class="form-control"
+                            {% if shadow_parent %} disabled {% endif %}
                             data-bind="options: modules,
                                              optionsText: 'name',
                                              optionsValue: 'uniqueId',
@@ -109,6 +118,21 @@
                   </div>
                 </div>
               </div>
+              {% if request|toggle_enabled:"V1_SHADOW_MODULES" %}
+                <div class="form-group">
+                  <label class="{% css_label_class %} control-label">
+                    {% trans "Shadow Module Version" %}
+                  </label>
+                  <div class="{% css_field_class %}">
+                    v. {{ module.shadow_module_version }}
+                    {% if module.shadow_module_version == 1 %}
+                      <a class="btn btn-primary" href="{% url 'upgrade_shadow_module' domain app.id module.unique_id %}">
+                        {% trans "Upgrade to version 2" %}
+                      </a>
+                    {% endif %}
+                  </div>
+                </div>
+              {% endif %}
             {% endif %}
 
             {% if add_ons.menu_mode %}
