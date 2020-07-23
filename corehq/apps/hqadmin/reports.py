@@ -305,7 +305,7 @@ class DeployHistoryReport(GetParamsMixin, AdminReport):
                 self._format_date(deploy.date),
                 deploy.user,
                 self._hyperlink_diff_url(deploy.diff_url),
-                self._shorten_commit_sha(deploy.commit),
+                self._shorten_and_hyperlink_commit(deploy.commit),
             ]
 
     @property
@@ -320,7 +320,7 @@ class DeployHistoryReport(GetParamsMixin, AdminReport):
     def _hyperlink_diff_url(self, diff_url):
         return f'<a href="{diff_url}">Diff with previous</a>'
 
-    def _shorten_commit_sha(self, commit_sha):
+    def _shorten_and_hyperlink_commit(self, commit_sha):
         if commit_sha:
-            return commit_sha[:7]
+            return '<a href="https://github.com/dimagi/commcare-hq/commit/{commit}">{short_commit}</a>'.format(commit=commit_sha,short_commit=commit_sha[:7])
         return None
