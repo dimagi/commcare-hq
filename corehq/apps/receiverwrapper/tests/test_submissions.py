@@ -10,10 +10,12 @@ from django.urls import reverse
 
 from mock import patch
 
+from corehq.apps.data_vault.models import VaultEntry
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.steps import VaultPatternExtractor
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     use_sql_backend,
@@ -296,3 +298,26 @@ class SubmissionSQLTransactionsTest(TestCase, TestFileMixin):
 
         transaction = result.cases[0].get_transaction_by_form_id(result.xform.form_id)
         self.assertTrue(transaction.is_form_transaction)
+
+    def test_submit_with_vault_items(self):
+        with override_settings(XFORM_PRE_PROCESSORS={
+                self.domain: ['corehq.apps.receiverwrapper.tests.test_submissions.TestVaultPatternExtractor']}
+        ):
+            self.assertEqual(VaultEntry.objects.count(), 0)
+            form_xml = self.get_xml('form_with_vault_item')
+            result = submit_form_locally(form_xml, domain=self.domain)
+            self.assertEqual(VaultEntry.objects.count(), 1)
+            vault_entry = VaultEntry.objects.first()
+            self.assertEqual(vault_entry.value, "0123456789")
+
+            saved_form_xml = result.xform.get_xml().decode('utf-8')
+            self.assertFalse("0123456789" in saved_form_xml)
+            self.assertTrue(
+                f"<secret_case_property>vault:{vault_entry.key}</secret_case_property>" in saved_form_xml)
+
+
+class TestVaultPatternExtractor(VaultPatternExtractor):
+    def __init__(self):
+        super(TestVaultPatternExtractor, self).__init__(
+            patterns=[r'<secret_case_property>(\d{10})<\/secret_case_property>'],
+        )
