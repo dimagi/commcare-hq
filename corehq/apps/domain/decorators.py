@@ -214,7 +214,8 @@ def _oauth2_check():
     return real_decorator
 
 
-def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False, allow_sessions=True):
+def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False,
+                        allow_sessions=True, require_domain=True):
     """
     Ensure someone is logged in, or issue a challenge / failure.
 
@@ -228,31 +229,36 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False, allow
       authentication details.
     allow_cc_users: authorize non-WebUser users
     allow_sessions: allow session based authorization
+    require_domain: whether domain checks should be used/assumed in API request
     """
     def _outer(fn):
-        @wraps(fn)
-        def safe_fn(request, domain, *args, **kwargs):
-            if request.user.is_authenticated and allow_sessions:
-                return login_and_domain_required(fn)(request, domain, *args, **kwargs)
-            else:
-                # if sessions are blocked or user is not already authenticated, check for authentication
-                @check_lockout
-                @challenge_fn
-                @two_factor_check(fn, api_key)
-                def _inner(request, domain, *args, **kwargs):
-                    couch_user = _ensure_request_couch_user(request)
-                    if (
-                        couch_user
-                        and (allow_cc_users or couch_user.is_web_user())
-                        and couch_user.is_member_of(domain, allow_mirroring=True)
-                    ):
-                        clear_login_attempts(couch_user)
-                        return fn(request, domain, *args, **kwargs)
-                    else:
-                        return HttpResponseForbidden()
+        if require_domain:
+            @wraps(fn)
+            def safe_fn_with_domain(request, domain, *args, **kwargs):
+                if request.user.is_authenticated and allow_sessions:
+                    return login_and_domain_required(fn)(request, domain, *args, **kwargs)
+                else:
+                    # if sessions are blocked or user is not already authenticated, check for authentication
+                    @check_lockout
+                    @challenge_fn
+                    @two_factor_check(fn, api_key)
+                    def _inner(request, domain, *args, **kwargs):
+                        couch_user = _ensure_request_couch_user(request)
+                        if (
+                            couch_user
+                            and (allow_cc_users or couch_user.is_web_user())
+                            and couch_user.is_member_of(domain, allow_mirroring=True)
+                        ):
+                            clear_login_attempts(couch_user)
+                            return fn(request, domain, *args, **kwargs)
+                        else:
+                            return HttpResponseForbidden()
 
-                return _inner(request, domain, *args, **kwargs)
-        return safe_fn
+                    return _inner(request, domain, *args, **kwargs)
+
+            return safe_fn_with_domain
+        else:
+            raise Exception("require domain not supported yet!")
     return _outer
 
 
