@@ -104,11 +104,11 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             default_timezone='America/New_York',
         )
         cls.domain_obj.save()
-        cls.user = CommCareUser.create(cls.domain, 'test1', 'abc')
+        cls.user = CommCareUser.create(cls.domain, 'test1', 'abc', None, None)
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
         cls.domain_obj.delete()
         super(CaseRuleSchedulingIntegrationTest, cls).tearDownClass()
 
@@ -1069,11 +1069,13 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
 
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     @patch('corehq.messaging.tasks.sync_case_for_messaging_rule.delay')
-    def test_run_messaging_rule(self, task_patch):
+    @patch('corehq.apps.es.es_query.ESQuery.count', return_value=10)
+    def test_run_messaging_rule(self, es_patch, task_patch):
         rule_id = self._setup_rule()
         with create_case(self.domain, 'person') as case1, create_case(self.domain, 'person') as case2:
             run_messaging_rule(self.domain, rule_id)
             self.assertEqual(task_patch.call_count, 2)
+            self.assertEqual(es_patch.call_count, 1)
             task_patch.assert_has_calls(
                 [
                     call(self.domain, case1.case_id, rule_id),
@@ -1085,7 +1087,8 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     @patch('corehq.messaging.tasks.sync_case_chunk_for_messaging_rule.delay')
     @patch('corehq.messaging.tasks.run_messaging_rule_for_shard.delay')
-    def test_run_messaging_rule_sharded(self, shard_rule_patch, sync_patch):
+    @patch('corehq.apps.es.es_query.ESQuery.count', return_value=10)
+    def test_run_messaging_rule_sharded(self, es_patch, shard_rule_patch, sync_patch):
         rule_id = self._setup_rule()
         with create_case(self.domain, 'person') as case1, create_case(self.domain, 'person') as case2:
             run_messaging_rule(self.domain, rule_id)
@@ -1102,6 +1105,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
                 ],
                 any_order=True
             )
+            self.assertEqual(es_patch.call_count, 1)
 
     @run_with_all_backends
     @patch('corehq.messaging.scheduling.models.content.SMSContent.send')

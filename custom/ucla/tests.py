@@ -32,7 +32,7 @@ class TestUCLACustomHandler(TestCase):
         super(TestUCLACustomHandler, cls).setUpClass()
         cls.domain = Domain.get_or_create_with_name(cls.domain_name, is_active=True)
         email = 'dimagi@dimagi.com'
-        cls.user = WebUser.create(cls.domain_name, email, '***', email=email)
+        cls.user = WebUser.create(cls.domain_name, email, '***', None, None, email=email)
         cls.user.save()
         cls.schedule = TimedSchedule.create_simple_daily_schedule(
             cls.domain_name,
@@ -43,7 +43,7 @@ class TestUCLACustomHandler(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.schedule.delete()
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
         cls.domain.delete()
         super(TestUCLACustomHandler, cls).tearDownClass()
 

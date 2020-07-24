@@ -5,7 +5,9 @@ from uuid import uuid4
 
 from couchdbkit import ResourceNotFound
 from django.conf import settings
+from django.test import TestCase, TransactionTestCase
 from django.test.utils import override_settings
+from django.utils.decorators import classproperty
 from nose.plugins.attrib import attr
 from nose.tools import nottest
 from unittest2 import skipIf, skipUnless
@@ -138,7 +140,6 @@ class FormProcessorTestUtils(object):
                     'startkey': [doc_type],
                     'endkey': [doc_type, {}],
                 }
-
             FormProcessorTestUtils._delete_all_from_view(db, view, view_kwargs)
 
     @staticmethod
@@ -182,7 +183,7 @@ def partitioned(cls):
     Marks a test to be run with the partitioned database settings in
     addition to the non-partitioned database settings.
     """
-    return attr(sql_backend=True)(cls)
+    return patch_shard_db_transactions(attr(sql_backend=True)(cls))
 
 
 def only_run_with_non_partitioned_database(cls):
@@ -207,6 +208,100 @@ def only_run_with_partitioned_database(cls):
 
 def use_sql_backend(cls):
     return partitioned(override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)(cls))
+
+
+def patch_testcase_databases():
+    """Lift Django 2.2 restriction on database access in tests
+
+    Allows `TestCase` and `TransactionTestCase` to access all databases
+    by default. ICDS-specific databases are only accessible in icds
+    tests. This can be overridden by setting `databases` on test case
+    subclasses.
+
+    Similar to pre-Django 2.2, transactions are disabled on all
+    databases except "default". This can be overridden by setting
+    `transaction_exempt_databases` on test case subclasses.
+
+    For test performance it may be better to remove this and tag each
+    test with the databases it will query.
+    """
+    # According to the docs it should be possible to allow tests to
+    # access all databases with `TestCase.databses = '_all__'`
+    # https://docs.djangoproject.com/en/2.2/topics/testing/tools/#multi-database-support
+    #
+    # Unfortunately support for '__all__' appears to be buggy:
+    # django.db.utils.ConnectionDoesNotExist: The connection _ doesn't exist
+    #
+    # Similar error reported elsewhere:
+    # https://code.djangoproject.com/ticket/30541
+    default_dbs = frozenset(k for k in settings.DATABASES.keys() if "icds" not in k)
+    icds_dbs = frozenset(settings.DATABASES.keys())
+
+    def is_icds(cls):
+        # TODO remove when custom.icds packages have been moved to new repo
+        return cls.__module__.startswith("custom.icds")
+
+    @classproperty
+    def databases(cls):
+        return icds_dbs if is_icds(cls) else default_dbs
+    TestCase.databases = databases
+    TransactionTestCase.databases = databases
+
+    @classproperty
+    def transaction_exempt_databases(cls):
+        databases = icds_dbs if is_icds(cls) else default_dbs
+        if cls.databases is databases:
+            return frozenset(db for db in databases if db != "default")
+        return frozenset(db for db in databases if db not in cls.databases)
+    TransactionTestCase.transaction_exempt_databases = transaction_exempt_databases
+
+    @classmethod
+    def _databases_names(cls, include_mirrors=True):
+        names = super_database_names(cls, include_mirrors=include_mirrors)
+        exempt = cls.transaction_exempt_databases
+        return [n for n in names if n not in exempt]
+    super_database_names = TransactionTestCase._databases_names.__func__
+    TransactionTestCase._databases_names = _databases_names
+
+    def _should_check_constraints(self, connection):
+        # Prevent intermittent error:
+        # Traceback (most recent call last):
+        #   File "django/test/testcases.py", line 274, in __call__
+        #     self._post_teardown()
+        #   File "django/test/testcases.py", line 1009, in _post_teardown
+        #     self._fixture_teardown()
+        #   File "django/test/testcases.py", line 1176, in _fixture_teardown
+        #     if self._should_check_constraints(connections[db_name]):
+        #   File "django/test/testcases.py", line 1184, in _should_check_constraints
+        #     not connection.needs_rollback and connection.is_usable()
+        #   File "django/db/backends/postgresql/base.py", line 252, in is_usable
+        #     self.connection.cursor().execute("SELECT 1")
+        # AttributeError: 'NoneType' object has no attribute 'cursor'
+        return (connection.connection is not None
+            and super_should_check_constraints(self, connection))
+    super_should_check_constraints = TestCase._should_check_constraints
+    TestCase._should_check_constraints = _should_check_constraints
+
+
+def patch_shard_db_transactions(cls):
+    """Patch shard db transaction management on test class
+
+    Do not use a transaction per test on shard databases because proxy
+    queries cannot see changes in uncommitted transactions in shard dbs.
+    This means that changes to shard dbs will not be rolled back at the
+    end of each test; test cleanup must be done manually.
+
+    :param cls: A test class.
+    """
+    if not issubclass(cls, TransactionTestCase):
+        return cls
+    shard_dbs = {k for k, v in settings.DATABASES.items() if "PLPROXY" in v}
+    if shard_dbs:
+        # Reassign attribute to prevent leaking this change to other
+        # classes that share the same class attribute.
+        pre_exempt = cls.transaction_exempt_databases
+        cls.transaction_exempt_databases = frozenset(pre_exempt) | shard_dbs
+    return cls
 
 
 @nottest

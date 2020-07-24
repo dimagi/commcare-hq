@@ -1,11 +1,9 @@
 import json
 import re
 import string
-from xml.etree import cElementTree as ElementTree
 
 import sentry_sdk
 from django.conf import settings
-from django.contrib import messages
 from django.http import (
     Http404,
     HttpResponse,
@@ -17,7 +15,6 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
-from django.views.decorators.cache import cache_page
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 from django.views.generic.base import TemplateView
@@ -70,14 +67,14 @@ from corehq.apps.hqwebapp.decorators import (
     use_datatables,
     use_jquery_ui,
     use_legacy_jquery,
-)
-from corehq.apps.hqwebapp.views import render_static
+    waf_allow)
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.users.decorators import require_can_login_as
-from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.models import CouchUser, DomainMembershipError
 from corehq.apps.users.util import format_username
 from corehq.apps.users.views import BaseUserSettingsView
+from corehq.apps.integration.util import domain_uses_dialer
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
@@ -89,11 +86,6 @@ from xml2json.lib import xml2json
 @require_cloudcare_access
 def default(request, domain):
     return HttpResponseRedirect(reverse('formplayer_main', args=[domain]))
-
-
-@login_and_domain_required
-def login_new_window(request, domain):
-    return render_static(request, "close_window.html", _("Thank you for logging in!"))
 
 
 @location_safe
@@ -129,9 +121,14 @@ class FormplayerMain(View):
         apps = filter(None, apps)
         apps = filter(lambda app: app.get('cloudcare_enabled') or self.preview, apps)
         apps = filter(lambda app: app_access.user_can_access_app(user, app), apps)
-        role = user.get_role(domain)
+        role = None
+        try:
+            role = user.get_role(domain)
+        except DomainMembershipError:
+            # User has access via domain mirroring
+            pass
         if role:
-            apps = [app for app in apps if role.permissions.view_web_app(app)]
+            apps = [_format_app(app) for app in apps if role.permissions.view_web_app(app)]
         apps = sorted(apps, key=lambda app: app['name'])
         return apps
 
@@ -209,13 +206,14 @@ class FormplayerMain(View):
             "language": language,
             "apps": apps,
             "domain_is_on_trial": domain_is_on_trial(domain),
-            "maps_api_key": settings.GMAPS_API_KEY,
+            "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             "username": request.couch_user.username,
             "formplayer_url": settings.FORMPLAYER_URL,
             "single_app_mode": False,
             "home_url": reverse(self.urlname, args=[domain]),
             "environment": WEB_APPS_ENVIRONMENT,
             'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
+            'dialer_enabled': domain_uses_dialer(domain),
         }
         return set_cookie(
             render(request, "cloudcare/formplayer_home.html", context)
@@ -272,14 +270,15 @@ class FormplayerPreviewSingleApp(View):
         context = {
             "domain": domain,
             "language": language,
-            "apps": [app],
-            "maps_api_key": settings.GMAPS_API_KEY,
+            "apps": [_format_app(app)],
+            "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             "username": request.user.username,
             "formplayer_url": settings.FORMPLAYER_URL,
             "single_app_mode": True,
             "home_url": reverse(self.urlname, args=[domain, app_id]),
             "environment": WEB_APPS_ENVIRONMENT,
             'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
+            'dialer_enabled': domain_uses_dialer(domain),
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 
@@ -294,8 +293,9 @@ class PreviewAppView(TemplateView):
         return self.render_to_response({
             'app': app,
             'formplayer_url': settings.FORMPLAYER_URL,
-            "maps_api_key": settings.GMAPS_API_KEY,
+            "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             "environment": PREVIEW_APP_ENVIRONMENT,
+            "dialer_enabled": domain_uses_dialer(request.domain),
         })
 
 
@@ -364,6 +364,11 @@ class LoginAsUsers(View):
             'location': user.sql_location.to_json() if user.sql_location else None,
         }
         return formatted_user
+
+
+def _format_app(app):
+    app['imageUri'] = app.get('logo_refs', {}).get('hq_logo_web_apps', {}).get('path', '')
+    return app
 
 
 @login_and_domain_required
@@ -488,6 +493,8 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
         return json_response({'success': 1})
 
 
+@waf_allow('XSS_BODY')
+@location_safe
 @login_and_domain_required
 def report_formplayer_error(request, domain):
     data = json.loads(request.body)
@@ -506,15 +513,17 @@ def report_formplayer_error(request, domain):
             'cloudcare_env': data.get('cloudcareEnv'),
         })
         message = data.get("readableErrorMessage") or "request failure in web form session"
-        notify_error(message=f'[Cloudcare] {message}', details=data)
+        thread_topic = _message_to_sentry_thread_topic(message)
+        notify_error(message=f'[Cloudcare] {thread_topic}', details=data)
     elif error_type == 'show_error_notification':
         message = data.get('message')
+        thread_topic = _message_to_sentry_thread_topic(message)
         metrics_counter('commcare.formplayer.show_error_notification', tags={
             'message': _message_to_tag_value(message or 'no_message'),
             'domain': domain,
             'cloudcare_env': data.get('cloudcareEnv'),
         })
-        notify_error(message=f'[Cloudcare] {message}', details=data)
+        notify_error(message=f'[Cloudcare] {thread_topic}', details=data)
     else:
         metrics_counter('commcare.formplayer.unknown_error_type', tags={
             'domain': domain,
@@ -547,3 +556,14 @@ def _message_to_tag_value(message, allowed_chars=string.ascii_lowercase + string
     message_tag = ''.join((c if c in allowed_chars else ' ') for c in message_tag.lower())
     message_tag = '_'.join(re.split(r' +', message_tag)[:4])
     return message_tag[:59]
+
+
+def _message_to_sentry_thread_topic(message):
+    """
+    >>> _message_to_sentry_thread_topic(
+    ... 'EntityScreen EntityScreen [Detail=org.commcare.suite.model.Detail@1f984e3c, '
+    ... 'selection=null] could not select case 8854f3583f6f46e69af59fddc9f9428d. '
+    ... 'If this error persists please report a bug to CommCareHQ.')
+    'EntityScreen EntityScreen [Detail=org.commcare.suite.model.Detail@[...], selection=null] could not select case [...]. If this error persists please report a bug to CommCareHQ.'
+    """
+    return re.sub(r'[a-f0-9-]{7,}', '[...]', message)

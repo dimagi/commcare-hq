@@ -154,7 +154,7 @@ def update_users_at_locations(domain, location_ids, supply_point_ids, ancestor_i
     Update location fixtures for users given locations
     """
     from corehq.apps.users.models import CouchUser, update_fixture_status_for_users
-    from corehq.apps.locations.dbaccessors import user_ids_at_locations
+    from corehq.apps.locations.dbaccessors import mobile_user_ids_at_locations
     from corehq.apps.fixtures.models import UserFixtureType
     from dimagi.utils.couch.database import iter_docs
 
@@ -163,7 +163,7 @@ def update_users_at_locations(domain, location_ids, supply_point_ids, ancestor_i
         close_supply_point_case(domain, supply_point_id)
 
     # unassign users from locations
-    unassign_user_ids = user_ids_at_locations(location_ids)
+    unassign_user_ids = mobile_user_ids_at_locations(location_ids)
     for doc in iter_docs(CouchUser.get_db(), unassign_user_ids):
         user = CouchUser.wrap_correctly(doc)
         for location_id in location_ids:
@@ -175,13 +175,13 @@ def update_users_at_locations(domain, location_ids, supply_point_ids, ancestor_i
                 user.unset_location_by_id(location_id, fall_back_to_next=True)
 
     # update fixtures for users at ancestor locations
-    user_ids = user_ids_at_locations(ancestor_ids)
+    user_ids = mobile_user_ids_at_locations(ancestor_ids)
     update_fixture_status_for_users(user_ids, UserFixtureType.LOCATION)
 
 
 def deactivate_users_at_location(location_id):
-    from corehq.apps.locations.dbaccessors import user_ids_at_locations
-    user_ids = user_ids_at_locations([location_id])
+    from corehq.apps.locations.dbaccessors import mobile_user_ids_at_locations
+    user_ids = mobile_user_ids_at_locations([location_id])
     for doc in iter_docs(CouchUser.get_db(), user_ids):
         user = CouchUser.wrap_correctly(doc)
         user.is_active = False

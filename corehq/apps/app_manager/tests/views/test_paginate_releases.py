@@ -25,7 +25,7 @@ class TestPaginateReleases(TestCase):
 
         cls.username = 'bananafana'
         cls.password = '*******'
-        cls.user = WebUser.create(cls.domain.name, cls.username, cls.password, is_admin=True)
+        cls.user = WebUser.create(cls.domain.name, cls.username, cls.password, None, None, is_admin=True)
         cls.user.eula.signed = True
         cls.user.save()
 
@@ -45,7 +45,7 @@ class TestPaginateReleases(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
         cls.domain.delete()
         delete_es_index(APP_INDEX_INFO.index)
         super(TestPaginateReleases, cls).tearDownClass()

@@ -1,7 +1,7 @@
 from corehq.util.es.elasticsearch import TransportError
 
 from pillowtop.checkpoints.manager import PillowCheckpoint
-from pillowtop.es_utils import ElasticsearchIndexInfo
+from pillowtop.es_utils import ElasticsearchIndexInfo, TEST_HQ_INDEX_NAME
 from pillowtop.pillow.interface import ConstructedPillow
 
 
@@ -24,7 +24,8 @@ TEST_INDEX_INFO = ElasticsearchIndexInfo(
     index=TEST_ES_INDEX,
     alias=TEST_ES_ALIAS,
     type=TEST_ES_TYPE,
-    mapping=TEST_ES_MAPPING
+    mapping=TEST_ES_MAPPING,
+    hq_index_name=TEST_HQ_INDEX_NAME
 )
 
 
@@ -33,7 +34,7 @@ def get_doc_count(es, index, refresh_first=True):
         # we default to calling refresh since ES might have stale data
         es.indices.refresh(index)
     stats = es.indices.stats(index)
-    return stats['indices'][index]['total']['docs']['count']
+    return list(stats['indices'].values())[0]['total']['docs']['count']
 
 
 def get_index_mapping(es, index, doc_type):

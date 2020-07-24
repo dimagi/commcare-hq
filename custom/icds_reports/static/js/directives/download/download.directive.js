@@ -8,6 +8,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
     vm.monthsCopy = [];
     vm.years = [];
     vm.yearsCopy = [];
+    vm.quartersCopy = [];
     vm.userLocationType = userLocationType;
     vm.task_id = $location.search()['task_id'] || '';
     vm.haveAccessToFeatures = haveAccessToFeatures;
@@ -116,7 +117,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
     vm.showWarning = function () {
         return (
             vm.now === vm.selectedMonth &&
-            new Date().getFullYear() === vm.selectedYear && !vm.isDashboardUsageSelected()
+            new Date().getFullYear() === vm.selectedYear && !vm.isDashboardUsageSelected() && !vm.isAwwActivityReportSelected()
         );
     };
     vm.levels = [
@@ -160,16 +161,42 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
         vm.indicators.push({id: 11, name: 'Dashboard Activity Report'});
     }
 
-    if (haveAccessToFeatures) {
-        vm.indicators.push({id: 12, name: 'Service Delivery Report'});
-        vm.indicators.push({id: 13, name: 'Child Growth Tracking Report'});
-        vm.beneficiaryCategories = [
-            {id: 'pw_lw_children', name: 'PW, LW & Children 0-3 years'},
-            {id: 'children_3_6', name: 'Children 3-6 years'},
-        ];
-        vm.selectedBeneficiaryCategory = 'pw_lw_children';
+    vm.indicators.push({id: 12, name: 'Service Delivery Report'});
+    vm.indicators.push({id: 13, name: 'Child Growth Tracking Report'});
+    vm.indicators.push({id: 14, name: 'AWW Activity Report'});
+    if (vm.userLocationType.toLowerCase() !== 'block'  && vm.userLocationType.toLowerCase() !== 'district') {
+        vm.indicators.push({id: 15, name: 'Poshan Progress Report'});
     }
+    vm.reportLayouts = [
+        {id: 'comprehensive', name: 'Comprehensive'},
+        {id: 'summary', name: 'Summary'},
+    ];
+    vm.dataPeriods = [
+        {id: 'month', name: 'Monthly'},
+        {id: 'quarter', name: 'Quarterly'},
+    ];
+    vm.beneficiaryCategories = [
+        {id: 'pw_lw_children', name: 'PW, LW & Children 0-3 years'},
+        {id: 'children_3_6', name: 'Children 3-6 years'},
+    ];
+    vm.quarters = [
+        {id: 1, name: 'Jan-Mar'},
+        {id: 2, name: 'Apr-Jun'},
+        {id: 3, name: 'Jul-Sep'},
+        {id: 4, name: 'Oct-Dec'},
+    ];
+    vm.quartersCopy = vm.quarters;
+    vm.selectedBeneficiaryCategory = 'pw_lw_children';
+    vm.selectedReportLayout = 'comprehensive';
+    vm.selectedDataPeriod = 'month';
+    vm.selectedQuarter = 1;
 
+    vm.THRreportTypes = [
+        {id: 'consolidated', name: 'Consolidated'},
+        {id: 'beneficiary_wise', name: 'Beneficiary wise'},
+        {id: 'days_beneficiary_wise', name: 'Days & Beneficiary wise'},
+    ];
+    vm.selectedTHRreportType = 'consolidated';
     var ALL_OPTION = locationsService.ALL_OPTION;
     var NATIONAL_OPTION = locationsService.ALL_OPTION;
 
@@ -215,12 +242,15 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
     var init = function () {
         initHierarchy();
         locationsCache = locationsService.initLocations(vm, locationsCache);
+        if (vm.selectedIndicator == 15) {
+            vm.groupByLevels = vm.groupByLevelValuesPPR();
+        }
     };
 
     init();
 
     vm.disallowNational = function () {
-        return vm.isChildBeneficiaryListSelected() || vm.isChildGrowthTrackerSelected();
+        return vm.isChildBeneficiaryListSelected() || vm.isChildGrowthTrackerSelected() || vm.isAwwActivityReportSelected();
     };
 
     vm.getPlaceholder = function (locationTypes) {
@@ -251,6 +281,11 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
 
     vm.onSelectLocation = function ($item, level) {
         locationsService.onSelectLocation($item, level, locationsCache, vm);
+        if (vm.selectedIndicator == 15) {
+            vm.groupByLevels = vm.groupByLevelValuesPPR();
+        } else if (vm.showViewBy()) {
+            vm.handleViewByShift();
+        }
     };
 
     vm.onSelectAWCs = function ($item) {
@@ -303,6 +338,10 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
             });
         }
 
+        if (vm.isPPRSelected()) {
+            vm.setPPRYears();
+        }
+
         if (year.id === 2019 && vm.isTakeHomeRationReportSelected()) {
             var currentMonth = latest.getMonth() + 1;
             var currentYear = latest.getFullYear();
@@ -314,11 +353,26 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
                 }
             });
             vm.selectedMonth = vm.selectedMonth >= 7 ? vm.selectedMonth : 7;
+        } else if((year.id === 2019 && vm.isPPRSelected())) {
+            vm.months = _.filter(vm.monthsCopy, function (month) {
+                    return month.id >= 4
+            });
+            vm.selectedMonth = vm.selectedMonth >= 4 ? vm.selectedMonth : 4;
+            vm.quarters = vm.quartersCopy.slice(1,4);
+            vm.selectedQuarter = vm.selectedQuarter >= 2 ? vm.selectedQuarter : 2;
+            vm.setPPRYears();
+
         } else if (year.id === latest.getFullYear()) {
+            var maxQuarter = Math.floor(latest.getMonth() / 3);
             vm.months = _.filter(vm.monthsCopy, function (month) {
                 return month.id <= latest.getMonth() + 1;
             });
             vm.selectedMonth = vm.selectedMonth <= latest.getMonth() + 1 ? vm.selectedMonth : latest.getMonth() + 1;
+            vm.quarters = _.filter(vm.quartersCopy, function (quarter) {
+                return quarter.id <= maxQuarter;
+            });
+            vm.selectedQuarter = vm.selectedQuarter <= maxQuarter ? vm.selectedQuarter : maxQuarter;
+
         } else if (year.id === 2017) {
             vm.months = _.filter(vm.monthsCopy, function (month) {
                 return month.id >= 3;
@@ -326,6 +380,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
             vm.selectedMonth = vm.selectedMonth >= 3 ? vm.selectedMonth : 3;
         } else {
             vm.months = vm.monthsCopy;
+            vm.quarters = vm.quartersCopy;
         }
         vm.excludeCurrentMonthIfInitialThreeDays();
     };
@@ -361,7 +416,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
     };
 
     vm.getFormats = function () {
-        if (vm.isChildBeneficiaryListSelected()) {
+        if (vm.isChildBeneficiaryListSelected() || vm.isChildGrowthTrackerSelected()) {
             return [vm.formats[0]];
         } else {
             return vm.formats;
@@ -369,7 +424,9 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
     };
 
     vm.onIndicatorSelect = function () {
-        if (vm.isChildBeneficiaryListSelected()) {
+        var latest = new Date();
+        vm.handleViewByShift();
+        if (vm.isChildBeneficiaryListSelected() || vm.isChildGrowthTrackerSelected()) {
             init();
             vm.selectedFormat = vm.formats[0].id;
         } else if (vm.isIncentiveReportSelected()) {
@@ -388,15 +445,40 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
                 if (vm.selectedYear < 2020) {
                     vm.selectedYear = new Date().getFullYear();
                 }
+            } else if (vm.isPPRSelected()) {
+                vm.groupByLevels = vm.groupByLevelValuesPPR();
+                var currentYear  = new Date().getFullYear();
+                vm.selectedLevel = 1;
+                vm.selectedYear = vm.selectedYear >= 2019 ? vm.selectedYear : currentYear;
+                if (vm.selectedYear == currentYear) {
+                    if ([0, 1, 2].includes(new Date().getMonth())) {
+                        vm.selectedYear = currentYear - 1;
+                    }
+                }
+                vm.setPPRYears();
+                vm.selectedFormat = vm.formats[1].id;
+                vm.selectedMonth = latest.getMonth();
+
             } else {
                 vm.years = vm.yearsCopy;
             }
             vm.onSelectYear({'id': vm.selectedYear});
             vm.selectedFormat = 'xlsx';
         }
-
+        // set data period to monthly for all
+        vm.selectedDataPeriod = 'month'
         vm.adjustSelectedLevelForNoViewByFilter();
 
+
+    };
+
+    vm.handleViewByShift = function() {
+        var locationIndex = locationsService.selectedLocationIndex(vm.selectedLocations);
+        // locationIndex might come -ve in case of national level or no location selected
+        locationIndex = locationIndex >= 0 ? locationIndex : 0;
+        var levels = _.filter(vm.levels, function (value){return value.id > locationIndex;});
+        vm.groupByLevels = levels;
+        vm.selectedLevel = locationIndex + 1;
     };
 
     /**
@@ -422,9 +504,12 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
             'pdfformat': vm.selectedPDFFormat,
             'selected_awcs': awcs.join(','),
         };
-        if (haveAccessToFeatures) {
-            taskConfig['beneficiary_category'] = vm.selectedBeneficiaryCategory;
-        }
+        taskConfig['beneficiary_category'] = vm.selectedBeneficiaryCategory;
+        taskConfig['thr_report_type'] = vm.selectedTHRreportType;
+        taskConfig['report_layout'] = vm.selectedReportLayout;
+        taskConfig['data_period'] = vm.selectedDataPeriod;
+        taskConfig['quarter'] = vm.selectedQuarter;
+
         var selectedFilters = vm.selectedFilterOptions();
         if (vm.isChildBeneficiaryListSelected()) {
             taskConfig['filter[]'] = [];
@@ -456,19 +541,25 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
         vm.selectedIndicator = 1;
         vm.selectedFormat = 'xlsx';
         vm.selectedPDFFormat = 'many';
+        vm.selectedQuarter = 1;
+        vm.selectedDataPeriod = 'month';
+        vm.handleViewByShift();
         initHierarchy();
         vm.updateSelectedDate();
     };
 
     vm.hasErrors = function () {
+        var viewByErrors = vm.showViewBy() && (vm.selectedLevel <= 0 || vm.selectedLevel > 5);
         var beneficiaryListErrors = vm.isChildBeneficiaryListSelected() && (vm.selectedFilterOptions().length === 0 || !vm.isDistrictOrBelowSelected());
         var growthListErrors = vm.isChildGrowthTrackerSelected() && !vm.isDistrictOrBelowSelected();
         var incentiveReportErrors = vm.isIncentiveReportSelected() && !vm.isStateSelected();
+        var PPRErrors = vm.isPPRSelected() && (vm.isDistrictOrBelowSelected() || vm.selectedLevel === 0);
         var ladySupervisorReportErrors = false;
         if (!vm.haveAccessToFeatures) {
             ladySupervisorReportErrors = vm.isLadySupervisorSelected() && !vm.isStateSelected();
         }
-        return beneficiaryListErrors || incentiveReportErrors || ladySupervisorReportErrors || growthListErrors;
+        var awwActvityReportErrors = vm.isAwwActivityReportSelected() && (vm.selectedLevel === 5 || vm.selectedLevel === 0);
+        return beneficiaryListErrors || incentiveReportErrors || ladySupervisorReportErrors || growthListErrors || awwActvityReportErrors || PPRErrors || viewByErrors;
     };
 
     vm.isCombinedPDFSelected = function () {
@@ -548,6 +639,22 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
         return vm.selectedIndicator === 13;
     };
 
+    vm.isMonthlyDataPeriodSelected = function() {
+        return vm.selectedDataPeriod === 'month';
+    };
+
+    vm.isQuarterDataPeriodSelected = function() {
+        return vm.selectedDataPeriod === 'quarter';
+    };
+
+    vm.isPPRSelected = function() {
+        return vm.selectedIndicator === 15;
+    };
+
+    vm.isAwwActivityReportSelected = function () {
+        return vm.selectedIndicator === 14;
+    };
+
     vm.isSupervisorOrBelowSelected = function () {
         return vm.selectedLocations[3] && vm.selectedLocations[3] !== ALL_OPTION.location_id;
     };
@@ -563,7 +670,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
     vm.showViewBy = function () {
         return !(vm.isChildBeneficiaryListSelected() || vm.isIncentiveReportSelected() ||
             vm.isLadySupervisorSelected() || vm.isDashboardUsageSelected() ||
-            vm.isChildGrowthTrackerSelected() || vm.isTakeHomeRationReportSelected());
+            vm.isChildGrowthTrackerSelected() || vm.isTakeHomeRationReportSelected() || vm.isAwwActivityReportSelected());
     };
 
     vm.showLocationFilter = function () {
@@ -571,11 +678,15 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
     };
 
     vm.showMonthFilter = function () {
-        return !vm.isDashboardUsageSelected();
+        return !(vm.isDashboardUsageSelected() || vm.isAwwActivityReportSelected() || vm.isQuarterDataPeriodSelected());
     };
 
+    vm.showQuarterFilter = function() {
+        return vm.isQuarterDataPeriodSelected();
+    }
+
     vm.showYearFilter = function () {
-        return !vm.isDashboardUsageSelected();
+        return !(vm.isDashboardUsageSelected() || vm.isAwwActivityReportSelected());
     };
 
 
@@ -603,10 +714,25 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
         }
     };
 
+    vm.groupByLevelValuesPPR = function () {
+        return _.filter(vm.groupByLevels, function (level) {
+                return level.id == 1 || level.id == 2
+        });
+    };
+
+    vm.setPPRYears = function () {
+        vm.years = _.filter(vm.yearsCopy, function (year) {
+            return year.id >= 2019;
+        });
+
+    }
+
     vm.showReassignmentMessage = function () {
         var utcSelectedDate = Date.UTC(vm.selectedDate.getFullYear(), vm.selectedDate.getMonth());
         return vm.selectedLocation && (Date.parse(vm.selectedLocation.archived_on) <= utcSelectedDate || Date.parse(vm.selectedLocation.deprecates_at) > utcSelectedDate);
     };
+
+
 }
 
 DownloadController.$inject = ['$scope', '$rootScope', '$location', 'locationHierarchy', 'locationsService',

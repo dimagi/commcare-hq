@@ -505,7 +505,7 @@ def _create_case(domain, **kwargs):
     from casexml.apps.case.mock import CaseBlock
     from corehq.apps.hqcase.utils import submit_case_blocks
     return submit_case_blocks(
-        [CaseBlock(**kwargs).as_text()], domain=domain
+        [CaseBlock.deprecated_init(**kwargs).as_text()], domain=domain
     )
 
 
@@ -614,7 +614,7 @@ def update_case(domain, case_id, case_properties, user_id=None):
         kwargs['user_id'] = user_id
 
     post_case_blocks(
-        [CaseBlock(**kwargs).as_xml()], domain=domain
+        [CaseBlock.deprecated_init(**kwargs).as_xml()], domain=domain
     )
 
 

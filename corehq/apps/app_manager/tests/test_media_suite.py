@@ -10,6 +10,7 @@ from mock import patch
 
 import commcare_translations
 from corehq.apps.app_manager import id_strings
+from corehq.apps.app_manager.suite_xml.generator import MediaSuiteGenerator
 from corehq.apps.app_manager.models import (
     Application,
     BuildProfile,
@@ -23,7 +24,7 @@ from corehq.apps.app_manager.models import (
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin, parse_normalize, patch_get_xform_resource_overrides
 from corehq.apps.builds.models import BuildSpec
-from corehq.apps.hqmedia.models import CommCareAudio, CommCareImage
+from corehq.apps.hqmedia.models import CommCareAudio, CommCareImage, CommCareVideo
 from corehq.util.test_utils import softer_assert
 
 
@@ -77,18 +78,32 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         app.get_module(0).get_form(0).set_audio('en', '')
         self.assertFalse(list(app.multimedia_map.keys()))
 
+    def test_media_suite_generator(self):
+        app = Application.wrap(self.get_json('app_video_inline'))
+        image_path = 'jr://file/commcare/image1.jpg'
+        audio_path = 'jr://file/commcare/audio1.mp3'
+        video_path = 'jr://file/commcare/video-inline/data/inline_video.mp4'
+        app.create_mapping(CommCareImage(_id='123'), image_path, save=False)
+        app.create_mapping(CommCareAudio(_id='456'), audio_path, save=False)
+        app.create_mapping(CommCareVideo(_id='789'), video_path, save=False)
+        app.get_module(0).case_list_form.set_icon('en', image_path)
+        app.get_module(0).case_list_form.set_audio('en', audio_path)
+        app.get_module(0).case_list_form.form_id = app.get_module(0).get_form(0).unique_id
+
+        app.profile["properties"] = {
+            'lazy-load-video-files': 'true'
+        }
+        self.assertXmlEqual(self.get_xml('media-suite-lazy-true'), MediaSuiteGenerator(app).generate_suite())
+
+        app.profile["properties"] = {
+            'lazy-load-video-files': 'false'
+        }
+        self.assertXmlEqual(self.get_xml('media-suite-lazy-false'), MediaSuiteGenerator(app).generate_suite())
+
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
     def test_all_media_paths_with_inline_video(self, mock):
         inline_video_path = 'jr://file/commcare/video-inline/data/inline_video.mp4'
         app = Application.wrap(self.get_json('app_video_inline'))
-
-        self.assertTrue(app.get_module(0).uses_media())
-        self.assertEqual(app.all_media_paths(), set([inline_video_path]))
-
-    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
-    def test_all_media_paths_with_expanded_audio(self, mock):
-        inline_video_path = 'jr://file/commcare/expanded-audio/data/expanded_audio.mp3'
-        app = Application.wrap(self.get_json('app_expanded_audio'))
 
         self.assertTrue(app.get_module(0).uses_media())
         self.assertEqual(app.all_media_paths(), set([inline_video_path]))

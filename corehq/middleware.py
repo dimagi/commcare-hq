@@ -17,7 +17,7 @@ from corehq.apps.domain.utils import legacy_domain_re
 from corehq.const import OPENROSA_DEFAULT_VERSION
 from dimagi.utils.logging import notify_exception
 
-from dimagi.utils.parsing import string_to_utc_datetime
+from dimagi.utils.parsing import json_format_datetime, string_to_utc_datetime
 
 try:
     import psutil
@@ -113,30 +113,57 @@ class LogLongRequestMiddleware(MiddlewareMixin):
 
 class TimeoutMiddleware(MiddlewareMixin):
 
-    @staticmethod
-    def _session_expired(timeout, activity, time):
-        if activity is None:
-            return False
+    @classmethod
+    def update_secure_session(cls, session, is_secure, user, domain=None):
+        session['secure_session'] = is_secure
+        timeout = cls._get_timeout(session, is_secure, user, domain)
+        session['secure_session_timeout'] = timeout
+        session.set_expiry(timeout * 60)
+        session['session_expiry'] = json_format_datetime(session.get_expiry_date())
 
-        time_since_activity = time - string_to_utc_datetime(activity)
-        return time_since_activity > datetime.timedelta(minutes=timeout)
+    @classmethod
+    def _get_timeout(cls, session, is_secure, user, domain=None):
+        if not is_secure:
+            return settings.INACTIVITY_TIMEOUT
+        domains = cls._get_relevant_domains(user, domain)
 
-    @staticmethod
-    def _user_requires_secure_session(couch_user):
+        timeouts = list(map(Domain.secure_timeout, domains))
+        timeouts = list(filter(None, timeouts))
+
+        # Include timeout in current session, important for users who are not domain members
+        # (e.g., superusers) who visited a secure domain and are now looking at a non-secure domain
+        if 'secure_session_timeout' in session:
+            timeouts.append(session['secure_session_timeout'])
+
+        return min(timeouts) if timeouts else settings.SECURE_TIMEOUT
+
+    @classmethod
+    def _get_relevant_domains(cls, couch_user, domain=None):
+        domains = []
+
+        # Include current domain, which user may not be a member of
+        if domain:
+            domains.append(domain)
+
         if not couch_user:
-            return False
+            return domains
 
-        domains = couch_user.get_domains()
-        if any(Domain.is_secure_session_required(domain) for domain in domains):
-            return True
+        domains.extend(couch_user.get_domains())
 
         from corehq.apps.users.models import DomainPermissionsMirror
         for domain in domains:
-            mirrors = DomainPermissionsMirror.mirror_domains(domain)
-            if any(Domain.is_secure_session_required(m) for m in mirrors):
-                return True
+            domains.extend(DomainPermissionsMirror.mirror_domains(domain))
 
-        return False
+        return domains
+
+    @staticmethod
+    def _session_expired(timeout, activity):
+        if activity is None:
+            return False
+
+        time = datetime.datetime.utcnow()
+        time_since_activity = time - string_to_utc_datetime(activity)
+        return time_since_activity > datetime.timedelta(minutes=timeout)
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         if not request.user.is_authenticated:
@@ -145,36 +172,31 @@ class TimeoutMiddleware(MiddlewareMixin):
         secure_session = request.session.get('secure_session')
         domain = getattr(request, "domain", None)
         domain_obj = Domain.get_by_name(domain) if domain else None
-        now = datetime.datetime.utcnow()
 
         # figure out if we want to switch to secure_sessions
         change_to_secure_session = (
             not secure_session
             and (
                 (domain_obj and domain_obj.secure_sessions)
-                or self._user_requires_secure_session(request.couch_user)))
+                or any(filter(Domain.is_secure_session_required,
+                             self._get_relevant_domains(request.couch_user, domain)))
+            )
+        )
 
-        timeout = None
-        if secure_session or change_to_secure_session:
-            if domain_obj:
-                timeout = domain_obj.secure_timeout
-            if not timeout:
-                timeout = settings.SECURE_TIMEOUT
-        else:
-            timeout = settings.INACTIVITY_TIMEOUT
-
+        secure_session = secure_session or change_to_secure_session
+        timeout = self._get_timeout(request.session, secure_session, request.couch_user, domain)
         if change_to_secure_session:
             # force re-authentication if the user has been logged in longer than the secure timeout
-            if self._session_expired(timeout, request.user.last_login, now):
+            if self._session_expired(timeout, request.user.last_login):
                 LogoutView.as_view(template_name=settings.BASE_TEMPLATE)(request)
                 # this must be after logout so it is attached to the new session
-                request.session['secure_session'] = True
-                request.session.set_expiry(timeout * 60)
+                self.update_secure_session(request.session, True, request.couch_user, domain)
                 return HttpResponseRedirect(reverse('login') + '?next=' + request.path)
 
-            request.session['secure_session'] = True
+            self.update_secure_session(request.session, True, request.couch_user, domain)
 
-        request.session.set_expiry(timeout * 60)
+        if not getattr(request, '_bypass_sessions', False):
+            self.update_secure_session(request.session, secure_session, request.couch_user, domain)
 
 
 def always_allow_browser_caching(fn):
@@ -240,16 +262,25 @@ class SelectiveSessionMiddleware(SessionMiddleware):
 
     def __init__(self, get_response=None):
         super().__init__(get_response)
-        regexes = getattr(settings, 'SESSION_BYPASS_URLS', [])
+        regexes = [
+            '/favicon.ico$',
+            '/ping_login/$',
+            '/downloads/temp/ajax/',  # soil polling
+            '/downloads/temp/heartbeat/',  # soil status
+            '/a/{domain}/apps/view/[A-Za-z0-9-]+/current_version/$'  # app manager new changes polling
+            '/hq/notifications/service/$',  # background request for notification (bell menu in top nav)
+        ]
+        if settings.BYPASS_SESSIONS_FOR_MOBILE:
+            regexes.extend(getattr(settings, 'SESSION_BYPASS_URLS', []))
         self.bypass_re = [
             re.compile(regex.format(domain=legacy_domain_re)) for regex in regexes
         ]
 
     def _bypass_sessions(self, request):
-        return (settings.BYPASS_SESSIONS_FOR_MOBILE and
-            any(rx.match(request.path_info) for rx in self.bypass_re))
+        return any(rx.match(request.path_info) for rx in self.bypass_re)
 
     def process_request(self, request):
         super().process_request(request)
         if self._bypass_sessions(request):
             request.session.save = lambda *x: None
+            request._bypass_sessions = True

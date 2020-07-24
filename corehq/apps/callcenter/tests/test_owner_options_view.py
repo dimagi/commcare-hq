@@ -48,7 +48,7 @@ class CallCenterLocationOwnerOptionsViewTest(TestCase):
 
         cls.username = "foo"
         cls.password = "bar"
-        cls.web_user = WebUser.create(cls.domain.name, cls.username, cls.password)
+        cls.web_user = WebUser.create(cls.domain.name, cls.username, cls.password, None, None)
         cls.web_user.save()
 
         # Create case sharing groups
@@ -73,7 +73,7 @@ class CallCenterLocationOwnerOptionsViewTest(TestCase):
         cls.location_ids = {l._id for l in cls.locations}
 
         # Create users
-        cls.users = [CommCareUser.create(TEST_DOMAIN, 'user{}'.format(i), '***') for i in range(3)]
+        cls.users = [CommCareUser.create(TEST_DOMAIN, 'user{}'.format(i), '***', None, None) for i in range(3)]
         for user in cls.users:
             send_to_elasticsearch('users', user.to_json())
         es.indices.refresh(USER_INDEX_INFO.index)
@@ -83,7 +83,7 @@ class CallCenterLocationOwnerOptionsViewTest(TestCase):
     def tearDownClass(cls):
         super(CallCenterLocationOwnerOptionsViewTest, cls).tearDownClass()
         for user in cls.users:
-            user.delete()
+            user.delete(deleted_by=None)
         CALL_CENTER_LOCATION_OWNERS.set(cls.domain.name, False, NAMESPACE_DOMAIN)
         cls.domain.delete()
         ensure_index_deleted(USER_INDEX_INFO.index)

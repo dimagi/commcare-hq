@@ -15,7 +15,6 @@ from django.utils.translation import ugettext as _
 import yaml
 from couchdbkit import ResourceNotFound
 from couchdbkit.exceptions import DocTypeError
-from memoized import memoized
 
 from dimagi.utils.couch import CriticalSection
 
@@ -558,73 +557,6 @@ def get_and_assert_practice_user_in_domain(practice_user_id, domain):
                 username=user.username)
         )
     return user
-
-
-class LatestAppInfo(object):
-
-    def __init__(self, brief_app_id, domain):
-        """
-        Wrapper to get latest app version and CommCare APK version info
-
-        args:
-            brief_app_id: id of an app that is not copy (to facilitate quickcaching)
-
-        raises Http404 error if id is not valid
-        raises assertion error if an id of app copy is passed
-        """
-        self.app_id = brief_app_id
-        self.domain = domain
-
-    @property
-    @memoized
-    def app(self):
-        app = get_app(self.domain, self.app_id, latest=True, target='release')
-        # quickache based on a copy app_id will have to be updated too fast
-        is_app_id_brief = self.app_id == app.master_id
-        assert is_app_id_brief, "this class doesn't handle copy app ids"
-        return app
-
-    def clear_caches(self):
-        self.get_latest_app_version.clear(self)
-        self.get_latest_apk_version.clear(self)
-
-    @quickcache(vary_on=['self.app_id'])
-    def get_latest_apk_version(self):
-        from corehq.apps.app_manager.models import LATEST_APK_VALUE
-        from corehq.apps.builds.models import BuildSpec
-        from corehq.apps.builds.utils import get_default_build_spec
-        if self.app.global_app_config.apk_prompt == "off":
-            return {}
-        else:
-            configured_version = self.app.global_app_config.apk_version
-            if configured_version == LATEST_APK_VALUE:
-                value = get_default_build_spec().version
-            else:
-                value = BuildSpec.from_string(configured_version).version
-            force = self.app.global_app_config.apk_prompt == "forced"
-            return {"value": value, "force": force}
-
-    @quickcache(vary_on=['self.app_id'])
-    def get_latest_app_version(self):
-        from corehq.apps.app_manager.models import LATEST_APP_VALUE
-        if self.app.global_app_config.app_prompt == "off":
-            return {}
-        else:
-            force = self.app.global_app_config.app_prompt == "forced"
-            app_version = self.app.global_app_config.app_version
-            if app_version != LATEST_APP_VALUE:
-                return {"value": app_version, "force": force}
-            else:
-                if not self.app or not self.app.is_released:
-                    return {}
-                else:
-                    return {"value": self.app.version, "force": force}
-
-    def get_info(self):
-        return {
-            "latest_apk_version": self.get_latest_apk_version(),
-            "latest_ccz_version": self.get_latest_app_version(),
-        }
 
 
 def get_form_source_download_url(xform):

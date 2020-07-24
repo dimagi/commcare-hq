@@ -41,7 +41,8 @@ class IntraHealthTestCase(TestCase):
         cls.pps.save()
 
         cls.mobile_worker = CommCareUser.create(
-            domain=TEST_DOMAIN, username='dummy', password='dummy', phone_number='777777'
+            domain=TEST_DOMAIN, username='dummy', password='dummy', created_by=None,
+            created_via=None, phone_number='777777'
         )
         cls.mobile_worker.location_id = cls.pps.get_id
         cls.mobile_worker.save()
@@ -79,7 +80,7 @@ class IntraHealthTestCase(TestCase):
             cls.couverture_table.drop(connection, checkfirst=True)
 
         cls.engine.dispose()
-        cls.mobile_worker.delete()
+        cls.mobile_worker.delete(deleted_by=None)
         cls.domain.delete()
         delete_all_xforms()
         super(IntraHealthTestCase, cls).tearDownClass()

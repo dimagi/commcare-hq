@@ -93,6 +93,7 @@ from corehq.apps.domain.decorators import (
     track_domain_request,
 )
 from corehq.apps.domain.models import Domain
+from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.hqmedia.controller import MultimediaHTMLUploadController
 from corehq.apps.hqmedia.models import (
@@ -182,6 +183,8 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
         'js_options': {
             'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
             'is_search_enabled': case_search_enabled_for_domain(app.domain),
+            'search_prompt_appearance_enabled': app.enable_search_prompt_appearance,
+            'item_lists': item_lists_by_domain(request.domain) if app.enable_search_prompt_appearance else [],
             'search_properties': module.search_config.properties if module_offers_search(module) else [],
             'include_closed': module.search_config.include_closed if module_offers_search(module) else False,
             'default_properties': module.search_config.default_properties if module_offers_search(module) else [],
@@ -760,10 +763,26 @@ def _update_search_properties(module, search_properties, lang='en'):
             label.update({lang: prop['label']})
         else:
             label = {lang: prop['label']}
-        yield {
+        ret = {
             'name': prop['name'],
-            'label': label
+            'label': label,
         }
+        if prop.get('appearance', '') == 'fixture':
+            ret['input_'] = 'select1'
+            fixture_props = json.loads(prop['fixture'])
+            ret['itemset'] = {
+                'instance_uri': fixture_props['instance_uri'],
+                'instance_id': fixture_props['instance_id'],
+                'nodeset': fixture_props['nodeset'],
+                'label': fixture_props['label'],
+                'value': fixture_props['value'],
+                'sort': fixture_props['sort'],
+            }
+
+        elif prop.get('appearance', '') == 'barcode_scan':
+            ret['appearance'] = 'barcode_scan'
+
+        yield ret
 
 
 @no_conflict_require_POST

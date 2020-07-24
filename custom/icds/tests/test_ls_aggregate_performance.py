@@ -65,7 +65,7 @@ class BaseAggregatePerformanceTestCase(TestCase, TestXmlMixin):
 
     @classmethod
     def _make_user(cls, name, location):
-        user = CommCareUser.create(cls.domain, name, 'password')
+        user = CommCareUser.create(cls.domain, name, 'password', None, None)
         user.set_location(location)
         return user
 
@@ -113,7 +113,7 @@ class TestAWWAggregatePerformanceIndicator(BaseAggregatePerformanceTestCase):
     @patch.object(LSAggregatePerformanceIndicator, 'days_open_fixture', new_callable=PropertyMock)
     def test_user_not_in_fixtures(self, days_open, weighed, thr, visits):
         aww3 = self._make_user('aww3', self.locs['AWC3'])
-        self.addCleanup(aww3.delete)
+        self.addCleanup(aww3.delete, deleted_by=None)
         days_open.return_value = etree.fromstring(self.get_xml('days_open_fixture'))
         weighed.return_value = etree.fromstring(self.get_xml('weighed_fixture'))
         thr.return_value = etree.fromstring(self.get_xml('thr_fixture'))

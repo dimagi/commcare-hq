@@ -490,7 +490,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         form_id = uuid.uuid4().hex
         case_id = uuid.uuid4().hex
         owner_id = uuid.uuid4().hex
-        case_block = CaseBlock(
+        case_block = CaseBlock.deprecated_init(
             create=True,
             case_id=case_id,
             case_type='person',
@@ -502,7 +502,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         submit_case_blocks(case_block, domain=self.domain_name, form_id=form_id)
 
         # submit a new form with a different case update
-        case_block = CaseBlock(
+        case_block = CaseBlock.deprecated_init(
             create=True,
             case_id=case_id,
             case_type='newtype',
@@ -642,7 +642,7 @@ class MigrationTestCase(BaseMigrationTestCase):
     def test_basic_case_migration_case_name(self):
         case_id = uuid.uuid4().hex
         submit_case_blocks(
-            CaseBlock(
+            CaseBlock.deprecated_init(
                 case_id,
                 case_type='migrate',
                 create=True,
@@ -652,7 +652,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         )
 
         submit_case_blocks(
-            CaseBlock(
+            CaseBlock.deprecated_init(
                 case_id,
                 update={'name': 'test21'},
             ).as_text(),
@@ -1095,27 +1095,27 @@ class MigrationTestCase(BaseMigrationTestCase):
 
     def test_delete_user_during_migration(self):
         from corehq.apps.users.models import CommCareUser
-        user = CommCareUser.create(self.domain_name, "mobile-user", "123")
+        user = CommCareUser.create(self.domain_name, "mobile-user", "123", None, None)
         # NOTE user is deleted when domain is deleted in tearDown
         with self.patch_migration_chunk_size(1):
             self.do_migration(live=True, diffs=IGNORE)
         self.assert_backend("sql")
         with self.assertRaises(NotAllowed):
-            user.retire()
+            user.retire(deleted_by=None)
         with self.assertRaises(NotAllowed):
-            user.unretire()
+            user.unretire(unretired_by=None)
 
         clear_local_domain_sql_backend_override(self.domain_name)
         self.assert_backend("couch")
         with self.assertRaises(NotAllowed):
-            user.retire()
+            user.retire(deleted_by=None)
         with self.assertRaises(NotAllowed):
-            user.unretire()
+            user.unretire(unretired_by=None)
 
         self.do_migration(finish=True)
         self.do_migration(COMMIT)
-        user.retire()
-        user.unretire()
+        user.retire(deleted_by=None)
+        user.unretire(unretired_by=None)
 
     def test_delete_cases_during_migration(self):
         from corehq.apps.hqcase.tasks import delete_exploded_cases

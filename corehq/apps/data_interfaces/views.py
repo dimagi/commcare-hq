@@ -105,7 +105,7 @@ def default_data_view_url(request, domain):
     if can_download_data_files(domain, request.couch_user):
         return reverse(DataFileDownloadList.urlname, args=[domain])
 
-    if request.couch_user.can_edit_data:
+    if request.couch_user.can_edit_data():
         return CaseReassignmentInterface.get_url(domain)
 
     raise Http404()
@@ -511,7 +511,7 @@ class XFormManagementView(DataInterfaceSection):
             _request.session = request.session
 
             _request.GET = QueryDict(form_query_string)
-            OTPMiddleware().process_request(_request)
+            OTPMiddleware(lambda req: None)(_request)
 
             dispatcher = EditDataInterfaceDispatcher()
             xform_ids = dispatcher.dispatch(
@@ -600,7 +600,6 @@ def find_by_id(request, domain):
         'can_view_cases': can_view_cases,
         'can_view_forms': can_view_forms,
     })
-
 
 
 class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):

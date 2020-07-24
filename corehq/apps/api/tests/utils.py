@@ -5,7 +5,6 @@ from django.urls import reverse
 from django.utils.http import urlencode
 
 from django_prbac.models import Role
-from tastypie.models import ApiKey
 
 from corehq.apps.accounting.models import (
     BillingAccount,
@@ -15,13 +14,13 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.api.util import object_does_not_exist
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import HQApiKey, WebUser
 from corehq.util.test_utils import PatchMeta, flag_enabled
 
 
-class FakeXFormES(object):
+class FakeFormESView(object):
     """
-    A mock of XFormES that will return the docs that have been
+    A mock of FormESView that will return the docs that have been
     added regardless of the query.
     """
 
@@ -78,7 +77,7 @@ class APIResourceTest(TestCase, metaclass=PatchMeta):
         cls.list_endpoint = cls._get_list_endpoint()
         cls.username = 'rudolph@qwerty.commcarehq.org'
         cls.password = '***'
-        cls.user = WebUser.create(cls.domain.name, cls.username, cls.password)
+        cls.user = WebUser.create(cls.domain.name, cls.username, cls.password, None, None)
         cls.user.set_role(cls.domain.name, 'admin')
         cls.user.save()
 
@@ -88,7 +87,7 @@ class APIResourceTest(TestCase, metaclass=PatchMeta):
         cls.subscription.is_active = True
         cls.subscription.save()
 
-        cls.api_key, _ = ApiKey.objects.get_or_create(user=WebUser.get_django_user(cls.user))
+        cls.api_key, _ = HQApiKey.objects.get_or_create(user=WebUser.get_django_user(cls.user))
 
     @classmethod
     def _get_list_endpoint(cls):
@@ -100,7 +99,7 @@ class APIResourceTest(TestCase, metaclass=PatchMeta):
     @classmethod
     def tearDownClass(cls):
         cls.api_key.delete()
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
 
         for domain in Domain.get_all():
             Subscription._get_active_subscription_by_domain.clear(Subscription, domain.name)
@@ -122,7 +121,7 @@ class APIResourceTest(TestCase, metaclass=PatchMeta):
         api_key = self.api_key.key
         if username != self.username:
             web_user = WebUser.get_by_username(username)
-            api_key, _ = ApiKey.objects.get_or_create(user=WebUser.get_django_user(web_user))
+            api_key, _ = HQApiKey.objects.get_or_create(user=WebUser.get_django_user(web_user))
             api_key = api_key.key
 
         api_params = urlencode({'username': username, 'api_key': api_key})

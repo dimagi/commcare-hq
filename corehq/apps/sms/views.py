@@ -2125,23 +2125,41 @@ class WhatsAppTemplatesView(BaseMessagingSectionView):
     @property
     def page_context(self):
         context = super(WhatsAppTemplatesView, self).page_context
-        from corehq.messaging.smsbackends.turn.models import SQLTurnWhatsAppBackend, generate_template_string
-        try:
-            turn_backend = SQLTurnWhatsAppBackend.active_objects.get(domain=self.domain)
-        except SQLTurnWhatsAppBackend.MultipleObjectsReturned:
+        from corehq.messaging.smsbackends.turn.models import SQLTurnWhatsAppBackend
+        from corehq.messaging.smsbackends.infobip.models import InfobipBackend
+
+        turn_backend = SQLTurnWhatsAppBackend.active_objects.filter(
+            domain=self.domain,
+            hq_api_id=SQLTurnWhatsAppBackend.get_api_id()
+        )
+        infobip_backend = InfobipBackend.active_objects.filter(
+            domain=self.domain,
+            hq_api_id=InfobipBackend.get_api_id()
+        )
+
+        if (turn_backend.count() + infobip_backend.count()) > 1:
             messages.error(
                 self.request,
-                _("You have multiple Turn backends configured. Please remove the ones you don't use.")
+                _("You have multiple gateways that support whatsapp templates (infobip, turn) configured."
+                  " Please remove the ones you don't use.")
             )
-        except SQLTurnWhatsAppBackend.DoesNotExist:
+        elif (turn_backend.count() + infobip_backend.count()) == 0:
             messages.error(
                 self.request,
-                _("You have no Turn backends configured. Please configure one before proceeding ")
+                _("You have no gateways that support whatsapp templates (infobip, turn) configured."
+                  " Please configure one before proceeding ")
             )
         else:
-            templates = turn_backend.get_all_templates()
-            for template in templates:
-                template['template_string'] = generate_template_string(template)
-            context.update({'wa_templates': templates})
-        finally:
-            return context
+            wa_active_backend = turn_backend.get() if turn_backend.count() else infobip_backend.get()
+            templates = wa_active_backend.get_all_templates()
+            if templates is not None:
+                for template in templates:
+                    template['template_string'] = wa_active_backend.generate_template_string(template)
+                context.update({'wa_templates': templates})
+            else:
+                messages.error(
+                    self.request,
+                    wa_active_backend.get_generic_name()
+                    + _(" failed to fetch templates. Please make sure the gateway is configured properly.")
+                )
+        return context

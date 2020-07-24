@@ -388,13 +388,13 @@ class SQLPhoneNumberTestCase(TestCase):
             self.assertEqual(owner.case_id, case.case_id)
 
     def test_user_owner(self):
-        mobile_user = CommCareUser.create(self.domain, 'abc', 'def')
+        mobile_user = CommCareUser.create(self.domain, 'abc', 'def', None, None)
         number = PhoneNumber(owner_doc_type='CommCareUser', owner_id=mobile_user.get_id)
         owner = number.owner
         self.assertTrue(isinstance(owner, CommCareUser))
         self.assertEqual(owner.get_id, mobile_user.get_id)
 
-        web_user = WebUser.create(self.domain, 'ghi', 'jkl')
+        web_user = WebUser.create(self.domain, 'ghi', 'jkl', None, None)
         number = PhoneNumber(owner_doc_type='WebUser', owner_id=web_user.get_id)
         owner = number.owner
         self.assertTrue(isinstance(owner, WebUser))
@@ -692,8 +692,8 @@ class TestUserPhoneNumberSync(TestCase):
         self.domain = 'user-phone-number-test'
         self.domain_obj = Domain(name=self.domain)
         self.domain_obj.save()
-        self.mobile_worker1 = CommCareUser.create(self.domain, 'mobile1', 'mobile1')
-        self.mobile_worker2 = CommCareUser.create(self.domain, 'mobile2', 'mobile2')
+        self.mobile_worker1 = CommCareUser.create(self.domain, 'mobile1', 'mobile1', None, None)
+        self.mobile_worker2 = CommCareUser.create(self.domain, 'mobile2', 'mobile2', None, None)
 
     def tearDown(self):
         delete_domain_phone_numbers(self.domain)
@@ -751,7 +751,7 @@ class TestUserPhoneNumberSync(TestCase):
         self.assertEqual(PhoneNumber.by_domain(self.domain).count(), 2)
         self.assertPhoneEntries(self.mobile_worker2, ['9990002'])
 
-        self.mobile_worker1.retire()
+        self.mobile_worker1.retire(deleted_by=None)
         self.assertEqual(PhoneNumber.by_domain(self.domain).count(), 1)
         self.assertPhoneEntries(self.mobile_worker2, ['9990002'])
 
@@ -762,8 +762,8 @@ class TestGenericContactMethods(TestCase):
         self.domain = 'contact-phone-number-test'
         self.domain_obj = Domain(name=self.domain)
         self.domain_obj.save()
-        self.mobile_worker1 = CommCareUser.create(self.domain, 'mobile1', 'mobile1')
-        self.mobile_worker2 = CommCareUser.create(self.domain, 'mobile2', 'mobile2')
+        self.mobile_worker1 = CommCareUser.create(self.domain, 'mobile1', 'mobile1', None, None)
+        self.mobile_worker2 = CommCareUser.create(self.domain, 'mobile2', 'mobile2', None, None)
 
     def tearDown(self):
         delete_domain_phone_numbers(self.domain)

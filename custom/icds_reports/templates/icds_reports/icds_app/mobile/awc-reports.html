@@ -1,4 +1,4 @@
-{% load staticfiles %}
+{% load static %}
 <div cg-busy="[$ctrl.myPromise]">
   <div class="app-bg h-100vh overflow-hidden" ng-show="!$ctrl.filtersOpen && $ctrl.selectedLocationLevel==4">
     <div class="top-section p-3" style="padding-bottom: 25vh">
@@ -62,6 +62,11 @@
           <!--PSE photo submissions-->
           <div class="bg-white mb-2">
             <p class="center pl-3 pt-3 mb-0 font-18 font-weight-600 font-montserrat">PSE Photo Submissions</p>
+            <div class="col-xs-10 text-center filter-alert" ng-show="$ctrl.isOlderThan90Days()">
+              <p class="font-14 font-montserrat font-weight-500 mb-0">
+                PSE photos older than 90 days are not available on the ICDS CAS Dashboard
+              </p>
+            </div>
             <div class="d-flex justify-content-between flex-shrink-0 overflow-auto align-items-center px-3">
               <div ng-repeat="images in $ctrl.data.images" class="d-flex justify-content-between flex-shrink-0 overflow-auto align-items-center">
                 <div ng-repeat="img in images">

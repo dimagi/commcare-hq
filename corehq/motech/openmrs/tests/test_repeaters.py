@@ -297,11 +297,11 @@ class AllowedToForwardTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super(AllowedToForwardTests, cls).setUpClass()
-        cls.owner = CommCareUser.create(DOMAIN, 'chw@example.com', '123')
+        cls.owner = CommCareUser.create(DOMAIN, 'chw@example.com', '123', None, None)
 
     @classmethod
     def tearDownClass(cls):
-        cls.owner.delete()
+        cls.owner.delete(deleted_by=None)
         super(AllowedToForwardTests, cls).tearDownClass()
 
     def test_update_from_openmrs(self):
@@ -387,7 +387,7 @@ class CaseLocationTests(LocationHierarchyTestCase):
         get_case_location should return case owner's location when owner is a mobile worker
         """
         gardens = self.locations['Gardens']
-        self.owner = CommCareUser.create(self.domain, 'gardens_user', '***', location=gardens)
+        self.owner = CommCareUser.create(self.domain, 'gardens_user', '***', None, None, location=gardens)
         form, (case, ) = _create_case(domain=self.domain, case_id=uuid.uuid4().hex, owner_id=self.owner.get_id)
         location = get_case_location(case)
         self.assertEqual(location, gardens)
@@ -396,7 +396,7 @@ class CaseLocationTests(LocationHierarchyTestCase):
         """
         get_case_location should return None when owner has no location
         """
-        self.owner = CommCareUser.create(self.domain, 'no_location', '***')
+        self.owner = CommCareUser.create(self.domain, 'no_location', '***', None, None)
         form, (case, ) = _create_case(domain=self.domain, case_id=uuid.uuid4().hex, owner_id=self.owner.get_id)
         location = get_case_location(case)
         self.assertIsNone(location)
@@ -570,7 +570,7 @@ class SaveMatchIdsTests(SimpleTestCase):
         self.patient = PATIENT_SEARCH_RESPONSE['results'][0]
 
     @mock.patch('corehq.motech.openmrs.repeater_helpers.submit_case_blocks')
-    @mock.patch('corehq.motech.openmrs.repeater_helpers.CaseBlock')
+    @mock.patch('corehq.motech.openmrs.repeater_helpers.CaseBlock.deprecated_init')
     def test_save_openmrs_uuid(self, case_block_mock, _):
         self.case_config['patient_identifiers']['uuid']['case_property'] = 'openmrs_uuid'
         save_match_ids(self.case, self.case_config, self.patient)
@@ -581,7 +581,7 @@ class SaveMatchIdsTests(SimpleTestCase):
         )
 
     @mock.patch('corehq.motech.openmrs.repeater_helpers.submit_case_blocks')
-    @mock.patch('corehq.motech.openmrs.repeater_helpers.CaseBlock')
+    @mock.patch('corehq.motech.openmrs.repeater_helpers.CaseBlock.deprecated_init')
     @mock.patch('corehq.motech.openmrs.repeater_helpers.importer_util')
     def test_save_external_id(self, importer_util_mock, case_block_mock, _):
         importer_util_mock.lookup_case.return_value = (None, LookupErrors.NotFound)

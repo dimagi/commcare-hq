@@ -137,7 +137,7 @@ class TestLocationView(TestCase):
             parent=cls.supervisor_3
         )
         cls.factory = RequestFactory()
-        cls.user = WebUser.create(cls.domain.name, 'test', 'passwordtest')
+        cls.user = WebUser.create(cls.domain.name, 'test', 'passwordtest', None, None)
         cls.user.is_authenticated = True
         cls.user.is_superuser = True
         cls.user.is_authenticated = True
@@ -145,7 +145,7 @@ class TestLocationView(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
         cls.awc_3.delete()
         cls.awc_2.delete()
         cls.awc.delete()
@@ -473,7 +473,7 @@ class TestLocationAncestorsView(TestCase):
             location_type=state
         )
         cls.factory = RequestFactory()
-        cls.user = WebUser.create(cls.domain.name, 'test', 'passwordtest')
+        cls.user = WebUser.create(cls.domain.name, 'test', 'passwordtest', None, None)
         cls.user.is_authenticated = True
         cls.user.is_superuser = True
         cls.user.is_authenticated = True

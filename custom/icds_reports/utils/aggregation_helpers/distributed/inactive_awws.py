@@ -19,10 +19,12 @@ class InactiveAwwsAggregationDistributedHelper(BaseICDSAggregationDistributedHel
         delete_extra_record_query = self.delete_extra_record_query()
         missing_location_query = self.missing_location_query()
         aggregation_query, agg_params = self.aggregate_query()
+        update_days_query = self.update_days_query()
 
         cursor.execute(delete_extra_record_query)
         cursor.execute(missing_location_query)
         cursor.execute(aggregation_query, agg_params)
+        cursor.execute(update_days_query)
 
     def delete_extra_record_query(self):
         return """
@@ -107,4 +109,21 @@ class InactiveAwwsAggregationDistributedHelper(BaseICDSAggregationDistributedHel
             table_name=self.aggregate_parent_table,
             ucr_table_query=ucr_query,
             awc_location_table_name='awc_location_local',
+            now=datetime.date.today()
         ), params
+
+    def update_days_query(self):
+        return """
+            UPDATE "{table_name}" SET
+                no_of_days_since_start = CASE
+                    WHEN first_submission IS DISTINCT FROM NULL
+                    THEN '{now}'::DATE - first_submission::DATE
+                    ELSE NULL END,
+                no_of_days_inactive = CASE
+                    WHEN last_submission IS DISTINCT FROM NULL
+                    THEN '{now}'::DATE - last_submission::DATE
+                    ELSE NULL END
+        """.format(
+            table_name=self.aggregate_parent_table,
+            now=datetime.date.today()
+        )

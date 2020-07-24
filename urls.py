@@ -21,7 +21,10 @@ from corehq.apps.hqwebapp.urls import legacy_prelogin
 from corehq.apps.hqwebapp.views import (
     apache_license,
     bsd_license,
+    no_permissions,
+    not_found,
     redirect_to_dimagi,
+    server_error,
 )
 from corehq.apps.registration.tasks import PRICING_LINK
 from corehq.apps.reports.views import ReportNotificationUnsubscribeView
@@ -38,10 +41,9 @@ except ImportError:
 
 admin.autodiscover()
 
-handler500 = 'corehq.apps.hqwebapp.views.server_error'
-handler404 = 'corehq.apps.hqwebapp.views.not_found'
-handler403 = 'corehq.apps.hqwebapp.views.no_permissions'
-
+handler500 = server_error
+handler404 = not_found
+handler403 = no_permissions
 
 
 domain_specific = [
@@ -73,9 +75,6 @@ domain_specific = [
     url(r'^', include('custom.m4change.urls')),
     url(r'^dashboard/', include('corehq.apps.dashboard.urls')),
     url(r'^configurable_reports/', include('corehq.apps.userreports.urls')),
-    url(r'^', include('custom.icds_reports.urls')),
-    url(r'^', include('custom.icds.urls')),
-    url(r'^', include('custom.icds.data_management.urls')),
     url(r'^', include('custom.aaa.urls')),
     url(r'^champ_cameroon/', include('custom.champ.urls')),
     url(r'^motech/', include('corehq.motech.urls')),
@@ -88,7 +87,11 @@ domain_specific = [
     url(r'^remote_link/', include('corehq.apps.linked_domain.urls')),
     url(r'^translations/', include('corehq.apps.translations.urls')),
     url(r'^submit_feedback/$', submit_feedback, name='submit_feedback'),
+    url(r'^integration/', include('corehq.apps.integration.urls')),
 ]
+
+for module in settings.CUSTOM_DOMAIN_SPECIFIC_URL_MODULES:
+    domain_specific.append(url(r'^', include(module)))
 
 urlpatterns = [
     url(r'^favicon\.ico$', RedirectView.as_view(
@@ -99,6 +102,7 @@ urlpatterns = [
     url(r'^register/', include('corehq.apps.registration.urls')),
     url(r'^a/(?P<domain>%s)/' % legacy_domain_re, include(domain_specific)),
     url(r'^account/', include('corehq.apps.settings.urls')),
+    url(r'^oauth/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     url(r'', include('corehq.apps.hqwebapp.urls')),
     url(r'', include('corehq.apps.domain.urls')),
     url(r'^hq/accounting/', include('corehq.apps.accounting.urls')),
@@ -118,6 +122,7 @@ urlpatterns = [
     url(r'^turn/', include('corehq.messaging.smsbackends.turn.urls')),
     url(r'^twilio/', include('corehq.messaging.smsbackends.twilio.urls')),
     url(r'^infobip/', include('corehq.messaging.smsbackends.infobip.urls')),
+    url(r'^pinpoint/', include('corehq.messaging.smsbackends.amazon_pinpoint.urls')),
     url(r'^dropbox/', include('corehq.apps.dropbox.urls')),
     url(r'^start_enterprise/', include('corehq.messaging.smsbackends.start_enterprise.urls')),
     url(r'^telerivet/', include('corehq.messaging.smsbackends.telerivet.urls')),

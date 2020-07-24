@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from wsgiref.util import FileWrapper
 
 from django.conf import settings
@@ -23,6 +23,7 @@ from dateutil.relativedelta import relativedelta
 
 from couchexport.export import Format
 from couchexport.shortcuts import export_response
+
 from custom.icds_reports.utils.topojson_util.topojson_util import get_block_topojson_for_state, get_map_name
 from dimagi.utils.dates import add_months, force_to_date
 
@@ -64,7 +65,9 @@ from custom.icds_reports.const import (
     LocationTypes,
     CAS_API_PAGE_SIZE,
     SERVICE_DELIVERY_REPORT,
-    CHILD_GROWTH_TRACKER_REPORT
+    CHILD_GROWTH_TRACKER_REPORT,
+    POSHAN_PROGRESS_REPORT,
+    AWW_ACTIVITY_REPORT
 )
 from custom.icds_reports.dashboard_utils import get_dashboard_template_context
 from custom.icds_reports.models.aggregate import AwcLocation
@@ -170,6 +173,11 @@ from custom.icds_reports.reports.lactating_enrolled_women import (
 from custom.icds_reports.reports.lady_supervisor import (
     get_lady_supervisor_data,
 )
+from custom.icds_reports.reports.ls_launched import (
+    get_ls_launched_data_chart,
+    get_ls_launched_data_map,
+    get_ls_launched_sector_data,
+)
 from custom.icds_reports.reports.medicine_kit import (
     get_medicine_kit_data_chart,
     get_medicine_kit_data_map,
@@ -203,8 +211,9 @@ from custom.icds_reports.reports.registered_household import (
     get_registered_household_data_map,
     get_registered_household_sector_data,
 )
-from custom.icds_reports.reports.service_delivery_dashboard import (
-    get_service_delivery_data,
+from custom.icds_reports.reports.service_delivery_dashboard_data import (
+    get_service_delivery_report_data,
+    get_service_delivery_details,
 )
 from custom.icds_reports.reports.stadiometer import (
     get_stadiometer_data_chart,
@@ -224,7 +233,6 @@ from custom.icds_reports.utils import (
     get_datatables_ordering_info,
     get_location_filter,
     get_location_level,
-    icds_pre_release_features,
     india_now,
     filter_cas_data_export,
     get_deprecation_info,
@@ -232,6 +240,7 @@ from custom.icds_reports.utils import (
     timestamp_string_to_date_string,
     datetime_to_date_string
 )
+from ..icds_core.view_utils import icds_pre_release_features
 from custom.icds_reports.utils.data_accessor import (
     get_awc_covered_data_with_retrying,
     get_inc_indicator_api_data,
@@ -249,9 +258,11 @@ from custom.icds_reports.reports.bihar_api import get_api_demographics_data, get
     get_api_vaccine_data, get_api_ag_school_data
 
 from . import const
-from .exceptions import InvalidLocationTypeException, TableauTokenException
+from .exceptions import InvalidLocationTypeException
 
 # checks required to view the dashboard
+from custom.icds_reports.reports.poshan_progress_dashboard_data import get_poshan_progress_dashboard_data
+
 DASHBOARD_CHECKS = [
     toggles.DASHBOARD_ICDS_REPORT.required_decorator(),
     require_permission(Permissions.view_report, 'custom.icds_reports.reports.reports.DashboardReport',
@@ -305,43 +316,6 @@ def _get_user_location(user, domain):
         block_id = 'All'
     return location_type_code, user_location_id, state_id, district_id, block_id
 
-
-def get_tableau_trusted_url(client_ip):
-    """
-    Generate a login-free URL to access Tableau views for the client with IP client_ip
-    See Tableau Trusted Authentication https://onlinehelp.tableau.com/current/server/en-us/trusted_auth.htm
-    """
-    access_token = get_tableau_access_token(const.TABLEAU_USERNAME, client_ip)
-    url = "{tableau_trusted}{access_token}/#/views/".format(
-        tableau_trusted=const.TABLEAU_TICKET_URL,
-        access_token=access_token
-    )
-    return url
-
-
-def get_tableau_access_token(tableau_user, client_ip):
-    """
-    Request an access_token from Tableau
-    Note: the IP address of the webworker that this code runs on should be configured to request tokens in Tableau
-
-    args:
-        tableau_user: username of a valid tableau_user who can access the Tableau views
-        client_ip: IP address of the client who should redee be allowed to redeem the Tableau trusted token
-                   if this is empty, the token returned can be redeemed on any IP address
-    """
-    r = requests.post(
-        const.TABLEAU_TICKET_URL,
-        data={'username': tableau_user, 'client_ip': client_ip},
-        verify=False
-    )
-
-    if r.status_code == 200:
-        if r.text == const.TABLEAU_INVALID_TOKEN:
-            raise TableauTokenException("Tableau server failed to issue a valid token")
-        else:
-            return r.text
-    else:
-        raise TableauTokenException("Token request failed with code {}".format(r.status_code))
 
 
 @location_safe
@@ -456,6 +430,54 @@ class BaseCasAPIView(View):
         return SQLLocation.objects.get(name=state_name, location_type__name='state').location_id
 
 
+@location_safe
+@method_decorator([login_and_domain_required,
+                   toggles.ENABLE_ICDS_DASHBOARD_RELEASE_NOTES_UPDATE.required_decorator()], name='dispatch')
+class ReleaseNotesUpdateView(TemplateView):
+    page_title = 'Update Dashboard Release Notes'
+    urlname = 'update_dashboard_release_notes'
+    template_name = 'icds_reports/update_release_notes.html'
+
+    def post(self, request, *args, **kwargs):
+        data = request.FILES['dashboard_release_notes']
+        icds_file, _ = IcdsFile.objects.get_or_create(blob_id="dashboard_release_notes.pdf",
+                                                      data_type='dashboard_release_notes')
+
+        icds_file.store_file_in_blobdb(data)
+        icds_file.save()
+        messages.success(request, 'ICDS Dashboard Release Notes uploaded Successfully')
+        return redirect(self.urlname, domain=request.domain)
+
+
+@location_safe
+@method_decorator([login_and_domain_required], name='dispatch')
+class DownloadReleaseNotes(View):
+    def get(self, request, *args, **kwargs):
+        release_notes_file = IcdsFile.objects.filter(blob_id="dashboard_release_notes.pdf",
+                                                     data_type='dashboard_release_notes')\
+            .order_by('file_added').last()
+        request_type = request.GET.get('type')
+        if request_type == 'date':
+            release_date = release_notes_file.file_added
+            release_date_string = release_date.strftime('%d-%m-%Y')
+
+            week_ago = date.today() - timedelta(days=7)
+            is_older_than_a_week = week_ago > release_date
+            return JsonResponse(data={
+                'releaseDate': release_date_string,
+                'isOlderThanAWeek': is_older_than_a_week
+            })
+        else:
+            release_notes = release_notes_file.get_file_from_blobdb()
+
+            release_date = release_notes_file.file_added.strftime('%d-%m-%Y')
+
+            response = HttpResponse(release_notes.read(), content_type='application/pdf')
+            response['Content-Disposition'] = safe_filename_header("Dashboard_release_notes_" + release_date + ".pdf")
+
+            return response
+
+
 @method_decorator(DASHBOARD_CHECKS, name='dispatch')
 class ProgramSummaryView(BaseReportView):
 
@@ -470,6 +492,9 @@ class ProgramSummaryView(BaseReportView):
         }
 
         config.update(get_location_filter(location, domain))
+        # query database at same level for which it is requested
+        if config.get('aggregation_level') > 1:
+            config['aggregation_level'] -= 1
         now = tuple(now.date().timetuple())[:3]
         pre_release_features = icds_pre_release_features(self.request.couch_user)
         data = get_program_summary_data_with_retrying(
@@ -522,8 +547,35 @@ class ServiceDeliveryDashboardView(BaseReportView):
         start, length, order_by_number_column, order_by_name_column, order_dir = \
             get_datatables_ordering_info(request)
         reversed_order = True if order_dir == 'desc' else False
+        data = get_service_delivery_report_data(
+            domain,
+            start,
+            length,
+            order_by_name_column,
+            reversed_order,
+            location_filters,
+            year,
+            month,
+            step,
+            include_test
+        )
+        return JsonResponse(data=data)
 
-        data = get_service_delivery_data(
+
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
+class ServiceDeliveryDashboardDetailsView(BaseReportView):
+
+    def get(self, request, *args, **kwargs):
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
+
+        location_filters = get_location_filter(location, domain)
+        location_filters['aggregation_level'] = location_filters.get('aggregation_level', 1)
+
+        start, length, order_by_number_column, order_by_name_column, order_dir = \
+            get_datatables_ordering_info(request)
+        reversed_order = True if order_dir == 'desc' else False
+        data = get_service_delivery_details(
             domain,
             start,
             length,
@@ -1003,15 +1055,32 @@ class ExportIndicatorView(View):
 
         if indicator == SERVICE_DELIVERY_REPORT:
             config['beneficiary_category'] = request.POST.get('beneficiary_category')
+        if indicator == THR_REPORT_EXPORT:
+            config['thr_report_type'] = request.POST.get('thr_report_type')
 
         if indicator == CHILD_GROWTH_TRACKER_REPORT:
             if not sql_location or sql_location.location_type_name in [LocationTypes.STATE]:
                 return HttpResponseBadRequest()
             config = beneficiary_config
+
+        if indicator == POSHAN_PROGRESS_REPORT:
+            config['report_layout'] = request.POST.get('report_layout')
+            config['data_period'] = request.POST.get('data_period')
+            config['quarter'] = int(request.POST.get('quarter'))
+            config['year'] = year
+
+        if indicator == AWW_ACTIVITY_REPORT:
+            if not sql_location or sql_location.location_type_name not in [
+                LocationTypes.STATE, LocationTypes.DISTRICT, LocationTypes.BLOCK, LocationTypes.SUPERVISOR
+            ]:
+                return HttpResponseBadRequest()
+            config = beneficiary_config
+
         if indicator in (CHILDREN_EXPORT, PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT,
                          AWC_INFRASTRUCTURE_EXPORT, GROWTH_MONITORING_LIST_EXPORT, AWW_INCENTIVE_REPORT,
                          LS_REPORT_EXPORT, THR_REPORT_EXPORT, DASHBOARD_USAGE_EXPORT,
-                         SERVICE_DELIVERY_REPORT, CHILD_GROWTH_TRACKER_REPORT):
+                         SERVICE_DELIVERY_REPORT, CHILD_GROWTH_TRACKER_REPORT, AWW_ACTIVITY_REPORT,
+                         POSHAN_PROGRESS_REPORT):
             task = prepare_excel_reports.delay(
                 config,
                 aggregation_level,
@@ -1435,6 +1504,7 @@ class AWCDailyStatusView(View):
             location = None
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
+        beta = icds_pre_release_features(request.couch_user)
 
         if icds_pre_release_features(self.request.couch_user):
             config['num_launched_awcs__gte'] = 1
@@ -1443,7 +1513,7 @@ class AWCDailyStatusView(View):
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_awc_daily_status_sector_data(domain, config, loc_level, location, include_test)
             else:
-                data = get_awc_daily_status_data_map(domain, config.copy(), loc_level, include_test)
+                data = get_awc_daily_status_data_map(domain, config.copy(), loc_level, include_test, beta=beta)
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_awc_daily_status_sector_data(
                         domain, config, loc_level, location, include_test
@@ -1478,7 +1548,7 @@ class AWCsCoveredView(BaseReportView):
 
 
 @method_decorator(DASHBOARD_CHECKS, name='dispatch')
-class RegisteredHouseholdView(BaseReportView):
+class LSsLaunchedView(BaseReportView):
     def get(self, request, *args, **kwargs):
         step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
             self.get_settings(request, *args, **kwargs)
@@ -1490,6 +1560,39 @@ class RegisteredHouseholdView(BaseReportView):
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
 
+        data = {}
+        if step == "map":
+            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+                data = get_ls_launched_sector_data(domain, config, loc_level, location, include_test)
+            else:
+                data = get_ls_launched_data_map(domain, config.copy(), loc_level, include_test)
+                if loc_level == LocationTypes.BLOCK:
+                    sector = get_ls_launched_sector_data(
+                        domain, config, loc_level, location, include_test
+                    )
+                    data.update(sector)
+        elif step == "chart":
+            data = get_ls_launched_data_chart(domain, config, loc_level, include_test)
+
+        return JsonResponse(data={
+            'report_data': data,
+        })
+
+
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
+class RegisteredHouseholdView(BaseReportView):
+    def get(self, request, *args, **kwargs):
+        step, now, month, year, include_test, domain, current_month, prev_month, location, selected_month = \
+            self.get_settings(request, *args, **kwargs)
+
+        config = {
+            'month': tuple(selected_month.timetuple())[:3],
+            'aggregation_level': 1,
+        }
+        config.update(get_location_filter(location, self.kwargs['domain']))
+        loc_level = get_location_level(config.get('aggregation_level'))
+        beta = icds_pre_release_features(request.couch_user)
+
         if icds_pre_release_features(self.request.couch_user):
             config['num_launched_awcs__gte'] = 1
 
@@ -1498,7 +1601,7 @@ class RegisteredHouseholdView(BaseReportView):
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_registered_household_sector_data(domain, config, loc_level, location, include_test)
             else:
-                data = get_registered_household_data_map(domain, config.copy(), loc_level, include_test)
+                data = get_registered_household_data_map(domain, config.copy(), loc_level, include_test, beta=beta)
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_registered_household_sector_data(
                         domain, config, loc_level, location, include_test
@@ -1721,6 +1824,7 @@ class CleanWaterView(BaseReportView):
         }
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
+        beta = icds_pre_release_features(request.couch_user)
 
         if icds_pre_release_features(self.request.couch_user):
             config['num_launched_awcs__gte'] = 1
@@ -1730,7 +1834,7 @@ class CleanWaterView(BaseReportView):
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_clean_water_sector_data(domain, config, loc_level, location, include_test)
             else:
-                data = get_clean_water_data_map(domain, config.copy(), loc_level, include_test)
+                data = get_clean_water_data_map(domain, config.copy(), loc_level, include_test, beta=beta)
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_clean_water_sector_data(
                         domain, config, loc_level, location, include_test
@@ -1756,6 +1860,7 @@ class FunctionalToiletView(BaseReportView):
         }
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
+        beta = icds_pre_release_features(request.couch_user)
 
         if icds_pre_release_features(self.request.couch_user):
             config['num_launched_awcs__gte'] = 1
@@ -1765,7 +1870,7 @@ class FunctionalToiletView(BaseReportView):
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_functional_toilet_sector_data(domain, config, loc_level, location, include_test)
             else:
-                data = get_functional_toilet_data_map(domain, config.copy(), loc_level, include_test)
+                data = get_functional_toilet_data_map(domain, config.copy(), loc_level, include_test, beta=beta)
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_functional_toilet_sector_data(
                         domain, config, loc_level, location, include_test
@@ -1791,6 +1896,7 @@ class MedicineKitView(BaseReportView):
         }
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
+        beta = icds_pre_release_features(request.couch_user)
 
         if icds_pre_release_features(self.request.couch_user):
             config['num_launched_awcs__gte'] = 1
@@ -1800,7 +1906,7 @@ class MedicineKitView(BaseReportView):
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_medicine_kit_sector_data(domain, config, loc_level, location, include_test)
             else:
-                data = get_medicine_kit_data_map(domain, config.copy(), loc_level, include_test)
+                data = get_medicine_kit_data_map(domain, config.copy(), loc_level, include_test, beta=beta)
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_medicine_kit_sector_data(
                         domain, config, loc_level, location, include_test
@@ -1826,6 +1932,7 @@ class InfantometerView(BaseReportView):
         }
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
+        beta = icds_pre_release_features(request.couch_user)
 
         if icds_pre_release_features(self.request.couch_user):
             config['num_launched_awcs__gte'] = 1
@@ -1835,7 +1942,7 @@ class InfantometerView(BaseReportView):
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_infantometer_sector_data(domain, config, loc_level, location, include_test)
             else:
-                data = get_infantometer_data_map(domain, config.copy(), loc_level, include_test)
+                data = get_infantometer_data_map(domain, config.copy(), loc_level, include_test, beta=beta)
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_infantometer_sector_data(
                         domain, config, loc_level, location, include_test
@@ -1860,6 +1967,7 @@ class StadiometerView(BaseReportView):
         }
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
+        beta = icds_pre_release_features(request.couch_user)
 
         if icds_pre_release_features(self.request.couch_user):
             config['num_launched_awcs__gte'] = 1
@@ -1869,7 +1977,7 @@ class StadiometerView(BaseReportView):
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_stadiometer_sector_data(domain, config, loc_level, location, include_test)
             else:
-                data = get_stadiometer_data_map(domain, config.copy(), loc_level, include_test)
+                data = get_stadiometer_data_map(domain, config.copy(), loc_level, include_test, beta=beta)
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_stadiometer_sector_data(
                         domain, config, loc_level, location, include_test
@@ -1894,6 +2002,7 @@ class InfantsWeightScaleView(BaseReportView):
         }
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
+        beta = icds_pre_release_features(request.couch_user)
 
         if icds_pre_release_features(self.request.couch_user):
             config['num_launched_awcs__gte'] = 1
@@ -1902,7 +2011,7 @@ class InfantsWeightScaleView(BaseReportView):
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_infants_weight_scale_sector_data(domain, config, loc_level, location, include_test)
             else:
-                data = get_infants_weight_scale_data_map(domain, config.copy(), loc_level, include_test)
+                data = get_infants_weight_scale_data_map(domain, config.copy(), loc_level, include_test, beta=beta)
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_infants_weight_scale_sector_data(
                         domain, config, loc_level, location, include_test
@@ -1928,6 +2037,8 @@ class AdultWeightScaleView(BaseReportView):
         }
         config.update(get_location_filter(location, self.kwargs['domain']))
         loc_level = get_location_level(config.get('aggregation_level'))
+        beta = icds_pre_release_features(request.couch_user)
+
         if icds_pre_release_features(self.request.couch_user):
             config['num_launched_awcs__gte'] = 1
         data = {}
@@ -1935,7 +2046,7 @@ class AdultWeightScaleView(BaseReportView):
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
                 data = get_adult_weight_scale_sector_data(domain, config, loc_level, location, include_test)
             else:
-                data = get_adult_weight_scale_data_map(domain, config.copy(), loc_level, include_test)
+                data = get_adult_weight_scale_data_map(domain, config.copy(), loc_level, include_test, beta=beta)
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_adult_weight_scale_sector_data(
                         domain, config, loc_level, location, include_test
@@ -2699,3 +2810,41 @@ class BiharMotherDetailsAPI(BaseCasAPIView):
         }
 
         return JsonResponse(data=response_json)
+
+
+@method_decorator(DASHBOARD_CHECKS, name='dispatch')
+class PoshanProgressDashboardView(BaseReportView):
+    def get_settings(self, request, *args, **kwargs):
+        step = kwargs.get('step')
+        now = datetime.utcnow()
+        month = int(request.GET.get('month', now.month))
+        year = int(request.GET.get('year', now.year))
+
+        include_test = request.GET.get('include_test', False)
+        domain = self.kwargs['domain']
+        location = request.GET.get('location_id')
+        if location == 'null' or location == 'undefined':
+            location = None
+        data_period = request.GET.get('data_period', 'month')
+        quarter = int(request.GET.get('quarter', 1))
+
+        return step, month, year, include_test, domain, data_period, quarter, location
+
+    def get(self, request, *args, **kwargs):
+        step, month, year, include_test, domain, data_period, quarter, location = \
+            self.get_settings(request, *args, **kwargs)
+
+        location_filters = get_location_filter(location, domain)
+        location_filters['aggregation_level'] = location_filters.get('aggregation_level', 1)
+
+        data = get_poshan_progress_dashboard_data(
+            domain,
+            year,
+            month,
+            quarter,
+            data_period,
+            step,
+            location_filters,
+            include_test
+        )
+        return JsonResponse(data=data)

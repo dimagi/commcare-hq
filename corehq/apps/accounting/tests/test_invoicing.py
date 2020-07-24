@@ -74,7 +74,7 @@ class BaseInvoiceTestCase(BaseAccountingTest):
 
     def tearDown(self):
         for user in self.domain.all_users():
-            user.delete()
+            user.delete(deleted_by=None)
         super(BaseAccountingTest, self).tearDown()
 
     @classmethod
@@ -695,6 +695,8 @@ class TestInvoiceRecipients(BaseInvoiceTestCase):
             domain=self.domain.name,
             username=generator.create_arbitrary_web_user_name(),
             password='123',
+            created_by=None,
+            created_via=None,
             email="adminwebuser@test.com",
         )
         web_user.set_role(self.domain.name, "admin")

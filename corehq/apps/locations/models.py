@@ -526,7 +526,7 @@ class SQLLocation(AdjListModel):
         self.stocks_all_products = (set(value) ==
                                     set(SQLProduct.by_domain(self.domain)))
 
-        self._products = value
+        self._products.set(value)
 
     def _remove_user(self):
         """
@@ -771,23 +771,6 @@ class LocationFixtureConfiguration(models.Model):
             return cls.objects.get(domain=domain)
         except cls.DoesNotExist:
             return cls(domain=domain)
-
-
-def _unassign_users_from_location(domain, location_id):
-    """
-    Unset location for all users assigned to that location.
-    """
-    from corehq.apps.locations.dbaccessors import user_ids_at_locations
-    from corehq.apps.users.models import CouchUser
-    from dimagi.utils.couch.database import iter_docs
-
-    user_ids = user_ids_at_locations([location_id])
-    for doc in iter_docs(CouchUser.get_db(), user_ids):
-        user = CouchUser.wrap_correctly(doc)
-        if user.is_web_user():
-            user.unset_location_by_id(domain, location_id, fall_back_to_next=True)
-        elif user.is_commcare_user():
-            user.unset_location_by_id(location_id, fall_back_to_next=True)
 
 
 def get_case_sharing_groups_for_locations(locations, for_user_id=None):

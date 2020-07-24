@@ -16,7 +16,6 @@ xforms/
 submissions/
 /formplayer_build
 /export/
-/bower_components
 bad/
 *.log*
 /CommCare.ja*
@@ -42,6 +41,7 @@ python_env-3.6
 services
 KEEP_UNTIL__*
 formplayer.properties
+application.properties
 formplayer.jar
 .vscode/*
 
@@ -65,4 +65,5 @@ node_modules/
 /sharedfiles/
 docker/data
 *.lock
+!yarn.lock
 fab/config.py

@@ -59,6 +59,8 @@
 // hack to fix issues with placeholder not showing up fully
 // !important is necessary because this is overriding an inline style set by select2 javascript
 .select2-container {
+    width: 100% !important;
+
     .select2-search-field {
         width: 100% !important;
     }
@@ -70,4 +72,8 @@
 
 .select2-container.select2-container-active > .select2-choice {
   .box-shadow(0 0 10px @cc-brand-mid);
+}
+
+.select2-selection__placeholder {
+  color: @gray-base !important;
 }

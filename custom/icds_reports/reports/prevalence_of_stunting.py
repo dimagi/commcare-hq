@@ -7,11 +7,11 @@ from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
 from custom.icds_reports.cache import icds_quickcache
-from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
-from custom.icds_reports.models import AggChildHealthMonthly
-from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels, indian_formatted_number,\
+from custom.icds_reports.const import LocationTypes, ChartColors, MapColors, AggregationLevels
+from custom.icds_reports.models import AggChildHealthMonthly, ChildHealthMonthlyView
+from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels, indian_formatted_number, \
     stunting_moderate_column, stunting_severe_column, stunting_normal_column, \
-    default_age_interval, hfa_recorded_in_month_column
+    default_age_interval, hfa_recorded_in_month_column, get_filters_from_config_for_chart_view
 from custom.icds_reports.utils import get_location_launched_status
 
 
@@ -103,6 +103,8 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
     fills.update({'0%-25%': MapColors.PINK})
     fills.update({'25%-38%': MapColors.ORANGE})
     fills.update({'38%-100%': MapColors.RED})
+    if icds_feature_flag:
+        fills.update({'Not Launched': MapColors.GREY})
     fills.update({'defaultFill': MapColors.GREY})
 
     gender_label, age_label, chosen_filters = chosen_filters_to_labels(
@@ -169,10 +171,14 @@ def get_prevalence_of_stunting_data_chart(domain, config, loc_level, show_test=F
 
     config['month__range'] = (three_before, month)
     del config['month']
+    # using child health monthly while querying for sector level due to performance issues
+    if icds_feature_flag and config['aggregation_level'] >= AggregationLevels.SUPERVISOR:
+        chm_filter = get_filters_from_config_for_chart_view(config)
+        chm_queryset = ChildHealthMonthlyView.objects.filter(**chm_filter)
+    else:
+        chm_queryset = AggChildHealthMonthly.objects.filter(**config)
 
-    chart_data = AggChildHealthMonthly.objects.filter(
-        **config
-    ).values(
+    chart_data = chm_queryset.values(
         'month', '%s_name' % loc_level
     ).annotate(
         moderate=Sum(stunting_moderate_column(icds_feature_flag)),

@@ -5,6 +5,7 @@ from custom.icds.case_relationships import (
     mother_person_case_from_ccs_record_case,
 )
 from custom.icds.const import AWC_LOCATION_TYPE_CODE, SUPERVISOR_LOCATION_TYPE_CODE
+from custom.icds.exceptions import CaseRelationshipError
 from custom.icds.messaging.custom_content import get_user_from_usercase, person_case_is_migrated_or_opted_out
 from custom.icds.rules.util import get_date, todays_date
 from dateutil.relativedelta import relativedelta
@@ -125,3 +126,15 @@ def is_usercase_of_aww(case, now):
 
 def is_usercase_of_ls(case, now):
     return case.type == USERCASE_TYPE and check_user_location_type(case, SUPERVISOR_LOCATION_TYPE_CODE)
+
+
+def ccs_record_mother_case_availing_services_has_phone_number(case, now):
+    try:
+        mother = mother_person_case_from_ccs_record_case(case)
+    except (ValueError, CaseRelationshipError):
+        return False
+    if person_case_is_migrated_or_opted_out(mother):
+        return False
+    if not mother.get_case_property('contact_phone_number'):
+        return False
+    return True

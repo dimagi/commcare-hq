@@ -179,6 +179,8 @@ class ScheduledReportSendingTest(TestCase):
             domain=cls.domain,
             username='dummy@example.com',
             password='secret',
+            created_by=None,
+            created_via=None,
         )
 
     @classmethod
@@ -202,7 +204,7 @@ class ScheduledReportSendingTest(TestCase):
             hour=12, minute=None, day=30, interval='monthly', config_ids=[report_config._id]
         )
         report.save()
-        response = get_scheduled_report_response(
+        report_text = get_scheduled_report_response(
             couch_user=self.user, domain=domain, scheduled_report_id=report._id
         )[0]
-        self.assertTrue(self.user.username in response.decode('utf-8'))
+        self.assertTrue(self.user.username in report_text)

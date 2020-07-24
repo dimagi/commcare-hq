@@ -367,12 +367,12 @@ class Repeater(QuickCachedDocumentMixin, Document):
         if self.auth_type == BASIC_AUTH:
             return BasicAuthManager(
                 self.username,
-                self.password,
+                self.plaintext_password,
             )
         if self.auth_type == DIGEST_AUTH:
             return DigestAuthManager(
                 self.username,
-                self.password,
+                self.plaintext_password,
             )
         if self.auth_type == OAUTH1:
             raise NotImplementedError(_(
@@ -381,7 +381,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
         if self.auth_type == BEARER_AUTH:
             return BearerAuthManager(
                 self.username,
-                self.password,
+                self.plaintext_password,
             )
         # OAuth 2.0 coming when Repeaters use ConnectionSettings
 

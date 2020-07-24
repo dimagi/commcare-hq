@@ -32,7 +32,7 @@ from custom.icds.location_reassignment.const import (
     OPERATION_COLUMN,
     SHEETS_TO_IGNORE,
 )
-from custom.icds.location_reassignment.download import Download
+from custom.icds.location_reassignment.download import DownloadUsers
 from custom.icds.location_reassignment.dumper import Dumper
 from custom.icds.location_reassignment.forms import (
     LocationReassignmentRequestForm,
@@ -49,15 +49,18 @@ from custom.icds.location_reassignment.tasks import (
     process_location_reassignment,
     process_other_cases_reassignment,
 )
+from custom.icds_core.const import (
+    LocationReassignmentDownloadOnlyView_urlname,
+    LocationReassignmentView_urlname,
+)
 
 
 @location_safe
 @method_decorator([toggles.PERFORM_LOCATION_REASSIGNMENT.required_decorator()], name='dispatch')
 class LocationReassignmentDownloadOnlyView(BaseProjectReportSectionView):
     section_name = ugettext_lazy("Download Location Reassignment Template")
-
+    urlname = LocationReassignmentDownloadOnlyView_urlname
     page_title = ugettext_lazy('Location Reassignment')
-    urlname = 'location_reassignment_download_only'
     template_name = 'icds/location_reassignment.html'
 
     @property
@@ -78,9 +81,8 @@ class LocationReassignmentDownloadOnlyView(BaseProjectReportSectionView):
 @method_decorator(require_can_edit_locations, name='dispatch')
 class LocationReassignmentView(BaseLocationView):
     section_name = ugettext_lazy("Locations")
-
     page_title = ugettext_lazy('Location Reassignment')
-    urlname = 'location_reassignment'
+    urlname = LocationReassignmentView_urlname
     template_name = 'icds/location_reassignment.html'
 
     def dispatch(self, *args, **kwargs):
@@ -263,7 +265,7 @@ def download_location_reassignment_template(request, domain):
         return HttpResponseRedirect(reverse(LocationReassignmentView.urlname, args=[domain]))
 
     location = SQLLocation.active_objects.get(location_id=location_id, domain=domain)
-    response_file = Download(location).dump()
+    response_file = DownloadUsers(location).dump()
     response = HttpResponse(response_file, content_type="text/html; charset=utf-8")
     timezone = get_timezone_for_user(request.couch_user, domain)
     creation_time = datetime.now(timezone).strftime(FILENAME_DATETIME_FORMAT)

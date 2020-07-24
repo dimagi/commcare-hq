@@ -25,24 +25,32 @@ class UserAnalyticsTest(TestCase):
             domain='test',
             username='active',
             password='secret',
+            created_by=None,
+            created_via=None,
             is_active=True,
         )
         cls.active_user_2 = CommCareUser.create(
             domain='test',
             username='active2',
             password='secret',
+            created_by=None,
+            created_via=None,
             is_active=True,
         )
         cls.inactive_user = CommCareUser.create(
             domain='test',
             username='inactive',
             password='secret',
+            created_by=None,
+            created_via=None,
             is_active=False
         )
         cls.web_user = WebUser.create(
             domain='test',
             username='web',
             password='secret',
+            created_by=None,
+            created_via=None,
         )
         reset_es_index(USER_INDEX_INFO)
         update_analytics_indexes()

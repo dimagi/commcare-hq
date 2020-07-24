@@ -28,6 +28,10 @@ def get_custom_data_models(domain_link, limit_types=None):
     return _do_request_to_remote_hq_json(url, domain_link.remote_details, domain_link.linked_domain, params)
 
 
+def get_fixture(domain_link):
+    return _do_simple_request('linked_domain:fixtures', domain_link)
+
+
 def get_user_roles(domain_link):
     return _do_simple_request('linked_domain:user_roles', domain_link)['user_roles']
 
@@ -57,6 +61,17 @@ def get_released_app(master_domain, app_id, linked_domain, remote_details):
 
 def get_latest_released_versions_by_app_id(domain_link):
     return _do_simple_request('linked_domain:released_app_versions', domain_link)['versions']
+
+
+def get_ucr_config(domain_link, report_config_id):
+    from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
+    url = reverse('linked_domain:ucr_config', args=[domain_link.master_domain,
+                                                    report_config_id])
+    response = _do_request_to_remote_hq_json(url, domain_link.remote_details, domain_link.linked_domain)
+    return {
+        "report": ReportConfiguration.wrap(response["report"]),
+        "datasource": DataSourceConfiguration.wrap(response["datasource"]),
+    }
 
 
 def _convert_app_from_remote_linking_source(app_json):

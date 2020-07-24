@@ -59,11 +59,11 @@ from .views.mobile.users import (
     reset_demo_user_restore,
     restore_commcare_user,
     toggle_demo_mode,
-    update_user_data,
     update_user_groups,
     user_download_job_poll,
     user_upload_job_poll,
     CommCareUserConfirmAccountView, send_confirmation_email)
+from ..hqwebapp.decorators import waf_allow
 
 urlpatterns = [
     url(r'^$', DefaultProjectUserSettingsView.as_view(), name=DefaultProjectUserSettingsView.urlname),
@@ -104,10 +104,9 @@ urlpatterns = [
         MobileWorkerListView.as_view(),
         name=MobileWorkerListView.urlname),
     url(r'^commcare/json/$', paginate_mobile_workers, name='paginate_mobile_workers'),
-    url(r'^commcare/fields/$', UserFieldsView.as_view(), name=UserFieldsView.urlname),
+    url(r'^commcare/fields/$', waf_allow('XSS_BODY')(UserFieldsView.as_view()), name=UserFieldsView.urlname),
     url(r'^commcare/account/(?P<couch_user_id>[ \w-]+)/$', EditCommCareUserView.as_view(),
         name=EditCommCareUserView.urlname),
-    url(r'^commcare/account/(?P<couch_user_id>[ \w-]+)/user_data/$', update_user_data, name='update_user_data'),
     url(r'^commcare/account/(?P<couch_user_id>[ \w-]+)/groups/$', update_user_groups, name='update_user_groups'),
     url(r'^commcare/activate/(?P<user_id>[ \w-]+)/$', activate_commcare_user, name='activate_commcare_user'),
     url(r'^commcare/deactivate/(?P<user_id>[ \w-]+)/$', deactivate_commcare_user, name='deactivate_commcare_user'),
@@ -128,7 +127,7 @@ urlpatterns = [
         name=DemoRestoreStatusView.urlname),
     url(r'^commcare/demo_restore/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$', demo_restore_job_poll,
         name='demo_restore_job_poll'),
-    url(r'^commcare/upload/$', UploadCommCareUsers.as_view(), name=UploadCommCareUsers.urlname),
+    url(r'^commcare/upload/$', waf_allow('XSS_BODY')(UploadCommCareUsers.as_view()), name=UploadCommCareUsers.urlname),
     url(r'^commcare/upload/status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$', UserUploadStatusView.as_view(),
         name=UserUploadStatusView.urlname),
     url(r'^commcare/upload/poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',

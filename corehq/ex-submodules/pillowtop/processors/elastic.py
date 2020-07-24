@@ -87,7 +87,7 @@ class ElasticProcessor(PillowProcessor):
         # send it across
         with self._datadog_timing('load'):
             send_to_elasticsearch(
-                index=self.index_info.index,
+                alias=self.index_info.alias,
                 doc_type=self.index_info.type,
                 doc_id=change.id,
                 es_getter=self.es_getter,
@@ -97,11 +97,11 @@ class ElasticProcessor(PillowProcessor):
             )
 
     def _doc_exists(self, doc_id):
-        return self.elasticsearch.exists(self.index_info.index, self.index_info.type, doc_id)
+        return self.elasticsearch.exists(self.index_info.alias, self.index_info.type, doc_id)
 
     def _delete_doc_if_exists(self, doc_id):
         if self._doc_exists(doc_id):
-            self.elasticsearch.delete(self.index_info.index, self.index_info.type, doc_id)
+            self.elasticsearch.delete(self.index_info.alias, self.index_info.type, doc_id)
 
     def _datadog_timing(self, step):
         return metrics_histogram_timer(
@@ -159,7 +159,7 @@ class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
         return retry_changes, error_changes
 
 
-def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None,
+def send_to_elasticsearch(alias, doc_type, doc_id, es_getter, name, data=None,
                           retries=MAX_RETRIES, propagate_failure=settings.UNIT_TESTING,
                           update=False, delete=False, es_merge_update=False):
     """
@@ -172,18 +172,19 @@ def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None,
     data = data if data is not None else {}
     current_tries = 0
     es_interface = ElasticsearchInterface(es_getter())
+    retries = 1 if settings.UNIT_TESTING else retries
     while current_tries < retries:
         try:
             if delete:
-                es_interface.delete_doc(index, doc_type, doc_id)
+                es_interface.delete_doc(alias, doc_type, doc_id)
             elif update:
                 params = {'retry_on_conflict': 2}
                 if es_merge_update:
-                    es_interface.update_doc_fields(index, doc_type, doc_id, fields=data, params=params)
+                    es_interface.update_doc_fields(alias, doc_type, doc_id, fields=data, params=params)
                 else:
-                    es_interface.update_doc(index, doc_type, doc_id, doc=data, params=params)
+                    es_interface.update_doc(alias, doc_type, doc_id, doc=data, params=params)
             else:
-                es_interface.create_doc(index, doc_type, doc_id, doc=data)
+                es_interface.create_doc(alias, doc_type, doc_id, doc=data)
             break
         except ConnectionError as ex:
             current_tries += 1
@@ -192,7 +193,7 @@ def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None,
 
             if current_tries == retries:
                 message = "[{}] Max retry error on {}/{}/{}:\n\n{}".format(
-                    name, index, doc_type, doc_id, traceback.format_exc())
+                    name, alias, doc_type, doc_id, traceback.format_exc())
                 if propagate_failure:
                     raise PillowtopIndexingError(message)
                 else:
@@ -202,7 +203,7 @@ def send_to_elasticsearch(index, doc_type, doc_id, es_getter, name, data=None,
         except RequestError:
             error_message = (
                 "Pillowtop put_robust error [{}]:\n\n{}\n\tpath: {}/{}/{}\n\t{}".format(
-                    name, traceback.format_exc(), index, doc_type, doc_id, list(data))
+                    name, traceback.format_exc(), alias, doc_type, doc_id, list(data))
             )
 
             if propagate_failure:

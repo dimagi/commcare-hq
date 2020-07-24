@@ -14,12 +14,17 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
     vm.label = "Service Delivery Dashboard";
     vm.haveAccessToAllLocations = haveAccessToAllLocations;
     vm.tooltipPlacement = "right";
-    vm.filters = ['gender', 'age'];
+    vm.filters = ['gender', 'age', 'data_period'];
     vm.userLocationId = userLocationId;
     vm.dataNotEntered = "Data Not Entered";
     vm.showTable = true;
     vm.dataAggregationLevel = 1;
     vm.isAlertActive = isAlertActive;
+
+    vm.isCbeSeeMoreDisplayed = true;
+    vm.isTHRSeeMoreDisplayed = true;
+    vm.isSNSeeMoreDisplayed = true;
+    vm.isPSESeeMoreDisplayed = true;
 
     vm.totalNumberOfEntries = 0; // total number of records in table
     vm.selectedDate = dateHelperService.getSelectedDate();
@@ -45,9 +50,46 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
     vm.step = $routeParams.step;
     vm.currentStepMeta = vm.steps[vm.step];
 
+    vm.isDetailsDisplayed = (vm.step === 'cbe' || vm.step === 'thr' ||
+        vm.step === 'sn' || vm.step === 'pse');
+
+    if (vm.isDetailsDisplayed) {
+        if (vm.step === 'cbe') {
+            vm.detailsTableHeading = 'COMMUNITY BASED EVENTS';
+        } else if (vm.step === 'thr') {
+            vm.detailsTableHeading = 'TAKE HOME RATION';
+        } else if (vm.step === 'sn') {
+            vm.detailsTableHeading = 'SUPPLEMENTARY NUTRITION';
+        } else if (vm.step === 'pse') {
+            vm.detailsTableHeading = 'PRE-SCHOOL EDUCATION';
+        }
+    }
+
+    vm.closeDetails = function() {
+        if (vm.step === 'cbe' || vm.step === 'thr') {
+            $location.path('/service_delivery_dashboard/pw_lw_children');
+        } else if (vm.step === 'sn' || vm.step === 'pse') {
+            $location.path('/service_delivery_dashboard/children');
+        }
+    };
+
+    vm.displaySeeMore = function (detailsUrl) {
+        if (detailsUrl === '/service_delivery_dashboard/cbe') {
+            return vm.isCbeSeeMoreDisplayed;
+        } else if (detailsUrl === '/service_delivery_dashboard/thr') {
+            return vm.isTHRSeeMoreDisplayed;
+        } else if (detailsUrl === '/service_delivery_dashboard/sn') {
+            return vm.isSNSeeMoreDisplayed;
+        } else if (detailsUrl === '/service_delivery_dashboard/pse') {
+            return vm.isPSESeeMoreDisplayed;
+        }
+    };
+
+    // with "stateSave" being enabled, it will retain pagination and the sorted column number and order of sorting etc.
     vm.dtOptions = DTOptionsBuilder.newOptions()
+        .withOption('stateSave', !vm.isDetailsDisplayed)
         .withOption('ajax', {
-            url: url('service_delivery_dashboard', vm.step),
+            url: url(vm.isDetailsDisplayed ? 'service_delivery_dashboard_details' : 'service_delivery_dashboard', vm.step),
             data: $location.search(),
             type: 'GET',
         })
@@ -63,7 +105,10 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
             "sProcessing": "Loading. Please wait...",
         })
         .withOption('order', [[0, 'asc']])
-        .withDOM('ltipr');
+        .withDOM('ltipr')
+        .withOption('initComplete', function() {
+             $compile(angular.element('thead').contents())($scope);
+        });
 
     vm.getLocationLevelNameAndField = function () {
         var locationLevelName = 'State';
@@ -120,6 +165,7 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
                     'tooltipValue': 'Of the total number of launched Anganwadi Centers, the percentage who have conducted at least 2 Community Based Events in the given month.',
                     'columnValueType': 'percentage',
                     'columnValueIndicator': 'num_awcs_conducted_cbe',
+                    'detailsURL': '/service_delivery_dashboard/cbe',
                 },
                 {
                     'mData': 'num_awcs_conducted_vhnd',
@@ -134,6 +180,7 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
                     'tooltipValue': 'Of the total number of pregnant women, lactating women (0-6 months children) and 6-36 months children enrolled for Anganwadi services, the percentage of pregnant women, lactating women (0-6 months children) and 6-36 months children who were provided THR for at least 21 days in the current month.',
                     'columnValueType': 'percentage',
                     'columnValueIndicator': 'thr',
+                    'detailsURL': '/service_delivery_dashboard/thr',
                 },
             ],
             'awc': [
@@ -157,6 +204,7 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
                     'tooltipValue': 'If the AWC conducted at least 2 CBE in the current month then Yes otherwise No.',
                     'columnValueType': 'booleanRaw',
                     'columnValueIndicator': 'num_awcs_conducted_cbe',
+                    'detailsURL': '/service_delivery_dashboard/cbe',
                 },
                 {
                     'mData': 'num_awcs_conducted_vhnd',
@@ -166,11 +214,19 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
                     'columnValueIndicator': 'num_awcs_conducted_vhnd',
                 },
                 {
+                    'mData': 'vhnd_conducted',
+                    'heading': 'Number of VHSND conducted',
+                    'tooltipValue': 'Number of Village Health Sanitation and Nutrition Days (VHSNDs) organised by an AWC in a month',
+                    'columnValueType': 'raw',
+                    'columnValueIndicator': 'vhnd_conducted',
+                },
+                {
                     'mData': 'thr',
                     'heading': 'Take Home Ration (21+ days)',
                     'tooltipValue': 'Of the total number of pregnant women, lactating women (0-6 months children) and 6-36 months children enrolled for Anganwadi services, the percentage of pregnant women, lactating women (0-6 months children) and 6-36 months children who were provided THR for at least 21 days in the current month.',
                     'columnValueType': 'percentage',
                     'columnValueIndicator': 'thr',
+                    'detailsURL': '/service_delivery_dashboard/thr',
                 },
             ],
         },
@@ -181,6 +237,7 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
                 'tooltipValue': 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who were provided Hot Cooked Meal i.e. supplementary nutrition for at least 21 days in the current month.',
                 'columnValueType': 'percentage',
                 'columnValueIndicator': 'supNutrition',
+                'detailsURL': '/service_delivery_dashboard/sn',
             },
             {
                 'mData': 'pse',
@@ -188,6 +245,7 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
                 'tooltipValue': 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who attended Pre-school education for at least 21 days in the current month.',
                 'columnValueType': 'percentage',
                 'columnValueIndicator': 'pse',
+                'detailsURL': '/service_delivery_dashboard/pse',
             },
             {
                 'mData': 'gm',
@@ -197,14 +255,242 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
                 'columnValueIndicator': 'gm36',
             },
         ],
+        'pse': [
+            {
+                'mData': 'pse_0_days_val',
+                'heading': 'Not attended',
+                'tooltipValue': 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who did not attend Pre-school education in the current month',
+                'columnValueType': 'percentage',
+                'columnValueIndicator': 'pse0',
+            },
+            {
+                'mData': 'pse_1_7_days_val',
+                'heading': 'Attended for (1-7) days',
+                'tooltipValue': 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who attended Pre-school education for 1-7 days in the current month',
+                'columnValueType': 'percentage',
+                'columnValueIndicator': 'pse17',
+            },
+            {
+                'mData': 'pse_8_14_days_val',
+                'heading': 'Attended for (8-14) days',
+                'tooltipValue': 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who attended Pre-school education for 8-14 days in the current month',
+                'columnValueType': 'percentage',
+                'columnValueIndicator': 'pse814',
+            },
+            {
+                'mData': 'pse_15_20_days_val',
+                'heading': 'Attended for (15-20) days',
+                'tooltipValue': 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who attended Pre-school education for 15-20 days in the current month',
+                'columnValueType': 'percentage',
+                'columnValueIndicator': 'pse1520',
+            },
+            {
+                'mData': 'pse_21_24_days_val',
+                'heading': 'Attended for (21-24) days',
+                'tooltipValue': 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who attended Pre-school education for 21-24 days in the current month',
+                'columnValueType': 'percentage',
+                'columnValueIndicator': 'pse2124',
+            },
+            {
+                'mData': 'pse_25_days_val',
+                'heading': 'Attended for at least 25 days',
+                'tooltipValue': 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who attended Pre-school education for at least 25 days in the current month',
+                'columnValueType': 'percentage',
+                'columnValueIndicator': 'pse25',
+            },
+        ],
+        'sn': [
+            {
+                'mData': 'lunch_0_days_val',
+                'heading': 'Not Provided',
+                'tooltipValue': 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who were not provided Hot Cooked Meal, i.e., supplementary nutrition',
+                'columnValueType': 'percentage',
+                'columnValueIndicator': 'lunch0',
+            },
+            {
+                'mData': 'lunch_1_7_days_val',
+                'heading': 'Provided for (1-7) days',
+                'tooltipValue': 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who were provided Hot Cooked Meal, i.e., supplementary nutrition for 1-7 days in the current month',
+                'columnValueType': 'percentage',
+                'columnValueIndicator': 'lunch17',
+            },
+            {
+                'mData': 'lunch_8_14_days_val',
+                'heading': 'Provided for (8-14) days',
+                'tooltipValue': 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who were provided Hot Cooked Meal, i.e., supplementary nutrition for 8-14 days in the current month',
+                'columnValueType': 'percentage',
+                'columnValueIndicator': 'lunch814',
+            },
+            {
+                'mData': 'lunch_15_20_days_val',
+                'heading': 'Provided for (15-20) days',
+                'tooltipValue': 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who were provided Hot Cooked Meal, i.e., supplementary nutrition for 15-20 days in the current month',
+                'columnValueType': 'percentage',
+                'columnValueIndicator': 'lunch1520',
+            },
+            {
+                'mData': 'lunch_21_24_days_val',
+                'heading': 'Provided for (21-24) days',
+                'tooltipValue': 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who were provided Hot Cooked Meal, i.e., supplementary nutrition for 21-24 days in the current month',
+                'columnValueType': 'percentage',
+                'columnValueIndicator': 'lunch2124',
+            },
+            {
+                'mData': 'lunch_25_days_val',
+                'heading': 'Provided for at least 25 days',
+                'tooltipValue': 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who were provided Hot Cooked Meal, i.e., supplementary nutrition for at least 25 days in the current month',
+                'columnValueType': 'percentage',
+                'columnValueIndicator': 'lunch25',
+            },
+        ],
+        'thr': [
+            {
+                'mData': 'thr_0_days_val',
+                'heading': 'Not Distributed',
+                'tooltipValue': 'Of the total number of pregnant women, lactating women (0-6 months children) and 6-36 months children enrolled for Anganwadi services, the percentage of pregnant women, lactating women (0-6 months children)  who were not provided with THR in the current month',
+                'columnValueType': 'percentage',
+                'columnValueIndicator': 'thr0',
+            },
+            {
+                'mData': 'thr_1_7_days_val',
+                'heading': 'Distributed for (1-7) days',
+                'tooltipValue': 'Of the total number of pregnant women, lactating women (0-6 months children) and 6-36 months children enrolled for Anganwadi services, the percentage of pregnant women, lactating women (0-6 months children) who were provided with 1-7 days of THR in the current month',
+                'columnValueType': 'percentage',
+                'columnValueIndicator': 'thr17',
+            },
+            {
+                'mData': 'thr_8_14_days_val',
+                'heading': 'Distributed for (8-14) days',
+                'tooltipValue': 'Of the total number of pregnant women, lactating women (0-6 months children) and 6-36 months children enrolled for Anganwadi services, the percentage of pregnant women, lactating women (0-6 months children) who were provided with 8-14 days of THR in the current month',
+                'columnValueType': 'percentage',
+                'columnValueIndicator': 'thr814',
+            },
+            {
+                'mData': 'thr_15_20_days_val',
+                'heading': 'Distributed for (15-20) days',
+                'tooltipValue': 'Of the total number of pregnant women, lactating women (0-6 months children) and 6-36 months children enrolled for Anganwadi services, the percentage of pregnant women, lactating women (0-6 months children) who were provided with 15-20 days of THR in the current month',
+                'columnValueType': 'percentage',
+                'columnValueIndicator': 'thr1520',
+            },
+            {
+                'mData': 'thr_21_24_days_val',
+                'heading': 'Distributed for (21-24) days',
+                'tooltipValue': 'Of the total number of pregnant women, lactating women (0-6 months children) and 6-36 months children enrolled for Anganwadi services, the percentage of pregnant women, lactating women (0-6 months children) who were provided with 21-24 days of THR in the current month',
+                'columnValueType': 'percentage',
+                'columnValueIndicator': 'thr2124',
+            },
+            {
+                'mData': 'thr_25_days_val',
+                'heading': 'Distributed for at least 25 days',
+                'tooltipValue': 'Of the total number of pregnant women, lactating women (0-6 months children) and 6-36 months children enrolled for Anganwadi services, the percentage of pregnant women, lactating women (0-6 months children) who were provided with at least 25 days of THR in the current month',
+                'columnValueType': 'percentage',
+                'columnValueIndicator': 'thr25',
+            },
+        ],
+        'cbe': [
+            {
+                'mData': 'cbe_conducted',
+                'heading': 'Number of CBEs conducted',
+                'tooltipValue': 'Total number of Community Based Events conducted in the month',
+                'columnValueType': 'raw',
+                'columnValueIndicator': 'cbe_conducted',
+            },
+            {
+                'mData': 'third_fourth_month_of_pregnancy_count',
+                'heading': 'Third, Fourth month of pregnancy',
+                'tooltipValue': 'Total number of community based events conducted in the month with ‘Third fourth month of pregnancy’ as the theme',
+                'columnValueType': 'raw',
+                'columnValueIndicator': 'third_fourth_month_of_pregnancy_count',
+            },
+            {
+                'mData': 'annaprasan_diwas_count',
+                'heading': 'Annaprasan Diwas',
+                'tooltipValue': 'Total number of community based events conducted in the month with ‘Annaprasan Diwas’ as the theme',
+                'columnValueType': 'raw',
+                'columnValueIndicator': 'annaprasan_diwas_count',
+            },
+            {
+                'mData': 'suposhan_diwas_count',
+                'heading': 'Suposhan Diwas',
+                'tooltipValue': 'Total number of community based events conducted in the month with ‘Suposhan Diwas’ as the theme',
+                'columnValueType': 'raw',
+                'columnValueIndicator': 'suposhan_diwas_count',
+            },
+            {
+                'mData': 'coming_of_age_count',
+                'heading': 'Celebrating Coming-of-age',
+                'tooltipValue': 'Total number of community based events conducted in the month with ‘Celebrating coming-of-age’ as the theme',
+                'columnValueType': 'raw',
+                'columnValueIndicator': 'coming_of_age_count',
+            },
+            {
+                'mData': 'public_health_message_count',
+                'heading': 'Public Health Message',
+                'tooltipValue': 'Total number of community based events conducted in the month with ‘Public Health Message’ as the theme',
+                'columnValueType': 'raw',
+                'columnValueIndicator': 'public_health_message_count',
+            },
+        ],
     };
+
+    var thrForAtleast25Days = {
+        'mData': 'thr',
+        'heading': 'Take Home Ration (25+ days)',
+        'tooltipValue': 'Of the total number of pregnant women, lactating women (0-6 months children) and 6-36 months children enrolled for Anganwadi services, the percentage of pregnant women, lactating women (0-6 months children) and 6-36 months children who were provided THR for at least 25 days in the current month.',
+        'columnValueType': 'percentage',
+        'columnValueIndicator': 'thrAtleast25',
+        'detailsURL': '/service_delivery_dashboard/thr',
+    };
+
+    var snForAtleast25Days = {
+        'mData': 'sn',
+        'heading': 'Supplementary Nutrition (25+ days)',
+        'tooltipValue': 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who were provided Hot Cooked Meal i.e. supplementary nutrition for at least 25 days in the current month.',
+        'columnValueType': 'percentage',
+        'columnValueIndicator': 'snAtleast25',
+        'detailsURL': '/service_delivery_dashboard/sn',
+    };
+
+    var pseForAtleast25Days = {
+        'mData': 'pse',
+        'heading': 'Pre-school Education (25+ days)',
+        'tooltipValue': 'Of the total children between 3-6 years of age and enrolled for Anganwadi services, the percentage of children who attended Pre-school education for at least 25 days in the current month.',
+        'columnValueType': 'percentage',
+        'columnValueIndicator': 'pseAtleast25',
+        'detailsURL': '/service_delivery_dashboard/pse',
+    };
+
+    if (vm.selectedDate >= new Date(2020, 3, 1)) {
+        vm.sddTableData['pw_lw_children']['non-awc'].pop();
+        vm.sddTableData['pw_lw_children']['non-awc'].push(thrForAtleast25Days);
+        vm.sddTableData['pw_lw_children']['awc'].pop();
+        vm.sddTableData['pw_lw_children']['awc'].push(thrForAtleast25Days);
+        vm.sddTableData['children'].splice(0, 2);
+        vm.sddTableData['children'].unshift(pseForAtleast25Days);
+        vm.sddTableData['children'].unshift(snForAtleast25Days);
+    }
 
     vm.getTableData = function () {
         var isPwLwChildren = vm.isPwLwChildrenTab();
         var isAwc = vm.isAwcDataShown();
-        return isPwLwChildren ?
-            (isAwc ? vm.sddTableData['pw_lw_children']['awc'] : vm.sddTableData['pw_lw_children']['non-awc']) :
-            vm.sddTableData['children'];
+        var isChildrenTab = ($location.path().indexOf('/children') !== -1);
+        var isPSEDetails = ($location.path().indexOf('/pse') !== -1);
+        var isSNDetails = ($location.path().indexOf('/sn') !== -1);
+        var isTHRDetails = ($location.path().indexOf('/thr') !== -1);
+        var isCBEDetails = ($location.path().indexOf('/cbe') !== -1);
+        if (isPwLwChildren) {
+            return (isAwc ? vm.sddTableData['pw_lw_children']['awc'] : vm.sddTableData['pw_lw_children']['non-awc']);
+        } else if (isChildrenTab) {
+            return vm.sddTableData['children'];
+        } else if (isPSEDetails) {
+            return vm.sddTableData['pse'];
+        } else if (isSNDetails) {
+            return vm.sddTableData['sn'];
+        } else if (isTHRDetails) {
+            return vm.sddTableData['thr'];
+        } else if (isCBEDetails) {
+            return vm.sddTableData['cbe'];
+        }
     };
 
     vm.isPwLwChildrenTab = function () {
@@ -221,7 +507,7 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
         var dataTableColumns = [];
         for (var i = 0; i < tableData.length; i++) {
             dataTableColumns.push(DTColumnBuilder.newColumn(tableData[i]['mData'])
-                .withTitle(renderHeaderTooltip(tableData[i]['heading'], tableData[i]['tooltipValue']))
+                .withTitle(renderHeaderTooltip(tableData[i]['heading'], tableData[i]['tooltipValue'], tableData[i]['detailsURL'], vm.displaySeeMore(tableData[i]['detailsURL'])))
                 .renderWith(renderCellValue(tableData[i]['columnValueType'],tableData[i]['columnValueIndicator']))
                 .withClass('medium-col'));
         }
@@ -234,7 +520,7 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
         vm.dtColumns = [DTColumnBuilder.newColumn(
             locationLevelNameField
         ).withTitle(
-            locationLevelName
+            locationLevelName.toUpperCase()
         ).renderWith(renderCellValue('raw', locationLevelNameField)
         ).withClass('medium-col')];
         vm.dtColumns = vm.dtColumns.concat(vm.buildDataTable());
@@ -242,12 +528,23 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
 
     vm.setDtColumns();
 
+    $scope.goToDetailsPage = function (detailsURL) {
+        $location.path(detailsURL);
+    }
+
     function compile(row) {
         $compile(window.angular.element(row).contents())($scope);
     }
 
-    function renderHeaderTooltip(header, tooltipContent) {
-        return '<i class="fa fa-info-circle headerTooltip" style="float: right;" ><div class="headerTooltipText">' + tooltipContent + '</div></i><span>' + header + '</span>';
+    function renderHeaderTooltip(header, tooltipContent, detailsURL, displaySeeMore) {
+        var seeMore = '';
+        if (detailsURL && displaySeeMore) {
+            seeMore = '<div class="d-flex justify-content-end">' +
+                '<span ng-click="goToDetailsPage(\''+ detailsURL +'\')"' +
+                ' class="sdd-details-link">See more</span></div>'
+        }
+        return '<i class="fa fa-info-circle headerTooltip" style="float: right;" >' +
+            '<div class="headerTooltipText">' + tooltipContent + '</div></i><span>' + header.toUpperCase() + '</span>' + seeMore;
     }
 
     function isZeroNullUnassignedOrDataNotEntered(value) {
@@ -293,10 +590,31 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
                         case "homeVisits": return renderPercentageAndPartials(full.home_visits, full.valid_visits, full.expected_visits, 'Home visits');
                         case "gm03": return  renderPercentageAndPartials(full.gm, full.gm_0_3, full.children_0_3, 'Weight measurement');
                         case "gm36": return renderPercentageAndPartials(full.gm, full.gm_3_5, full.children_3_5, 'Weight measurement');
-                        case "thr": return renderPercentageAndPartials(full.thr, full.thr_given_21_days, full.total_thr_candidates, 'THR');
-                        case "pse": return renderPercentageAndPartials(full.pse, full.pse_attended_21_days, full.children_3_6, 'beneficiaries');
-                        case "supNutrition": return renderPercentageAndPartials(full.sn, full.lunch_count_21_days, full.children_3_6, 'beneficiaries');
+                        case "thr": return renderPercentageAndPartials(full.thr,  full.thr_21_days, full.thr_eligible, 'THR');
+                        case "pse": return renderPercentageAndPartials(full.pse, full.pse_21_days, full.pse_eligible, 'beneficiaries');
+                        case "supNutrition": return renderPercentageAndPartials(full.sn, full.lunch_21_days, full.pse_eligible, 'beneficiaries');
+                        case "thrAtleast25": return renderPercentageAndPartials(full.thr, full.thr_25_days, full.thr_eligible, 'THR');
+                        case "pseAtleast25": return renderPercentageAndPartials(full.pse, full.pse_25_days, full.pse_eligible, 'beneficiaries');
+                        case "snAtleast25": return renderPercentageAndPartials(full.sn, full.lunch_25_days, full.pse_eligible, 'beneficiaries');
                         case "num_awcs_conducted_cbe": return renderPercentageAndPartials(full.cbe, full.num_awcs_conducted_cbe, full.num_launched_awcs, 'CBE');
+                        case "pse0": return renderPercentageAndPartials(full.pse_0_days_val, full.pse_0_days, full.pse_eligible, 'beneficiaries');
+                        case "pse17": return renderPercentageAndPartials(full.pse_1_7_days_val, full.pse_1_7_days, full.pse_eligible, 'beneficiaries');
+                        case "pse814": return renderPercentageAndPartials(full.pse_8_14_days_val, full.pse_8_14_days, full.pse_eligible, 'beneficiaries');
+                        case "pse1520": return renderPercentageAndPartials(full.pse_15_20_days_val, full.pse_15_20_days, full.pse_eligible, 'beneficiaries');
+                        case "pse2124": return renderPercentageAndPartials(full.pse_21_24_days_val, full.pse_21_24_days, full.pse_eligible, 'beneficiaries');
+                        case "pse25": return renderPercentageAndPartials(full.pse_25_days_val, full.pse_25_days, full.pse_eligible, 'beneficiaries');
+                        case "lunch0": return renderPercentageAndPartials(full.lunch_0_days_val, full.lunch_0_days, full.pse_eligible, 'beneficiaries');
+                        case "lunch17": return renderPercentageAndPartials(full.lunch_1_7_days_val, full.lunch_1_7_days, full.pse_eligible, 'beneficiaries');
+                        case "lunch814": return renderPercentageAndPartials(full.lunch_8_14_days_val, full.lunch_8_14_days, full.pse_eligible, 'beneficiaries');
+                        case "lunch1520": return renderPercentageAndPartials(full.lunch_15_20_days_val, full.lunch_15_20_days, full.pse_eligible, 'beneficiaries');
+                        case "lunch2124": return renderPercentageAndPartials(full.lunch_21_24_days_val, full.lunch_21_24_days, full.pse_eligible, 'beneficiaries');
+                        case "lunch25": return renderPercentageAndPartials(full.lunch_25_days_val, full.lunch_25_days, full.pse_eligible, 'beneficiaries');
+                        case "thr0": return renderPercentageAndPartials(full.thr_0_days_val, full.thr_0_days, full.thr_eligible, 'THR');
+                        case "thr17": return renderPercentageAndPartials(full.thr_1_7_days_val, full.thr_1_7_days, full.thr_eligible, 'THR');
+                        case "thr814": return renderPercentageAndPartials(full.thr_8_14_days_val, full.thr_8_14_days, full.thr_eligible, 'THR');
+                        case "thr1520": return renderPercentageAndPartials(full.thr_15_20_days_val, full.thr_15_20_days, full.thr_eligible, 'THR');
+                        case "thr2124": return renderPercentageAndPartials(full.thr_21_24_days_val, full.thr_21_24_days, full.thr_eligible, 'THR');
+                        case "thr25": return renderPercentageAndPartials(full.thr_25_days_val, full.thr_25_days, full.thr_eligible, 'THR');
 
                     }
                     break;
@@ -306,12 +624,23 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
 
     }
 
+    function isAllRow(rowData) {
+        return (rowData['state_name'] === 'All' && rowData['district_name'] === 'All' && rowData['block_name'] === 'All'
+            && rowData['awc_name'] === 'All' && rowData['supervisor_name'] === 'All');
+    }
+
     function simpleRender(full, indicator, outputType) {
         var output;
         if (outputType === 'raw') {
             output = full[indicator] !== vm.dataNotEntered ? full[indicator] : vm.dataNotEntered;
         } else if (outputType === 'booleanRaw') {
-            output = full[indicator] !== vm.dataNotEntered ? (full[indicator] ? 'Yes' : 'No') : vm.dataNotEntered;
+            if (vm.isAwcDataShown() && isAllRow(full) && indicator==='num_awcs_conducted_cbe') {
+                output = full['cbe_sector_percent'];
+            } else if (vm.isAwcDataShown() && isAllRow(full) && indicator==='num_awcs_conducted_vhnd') {
+                output = full['vhnd_sector_value'];
+            } else {
+                output = full[indicator] !== vm.dataNotEntered ? (full[indicator] ? 'Yes' : 'No') : vm.dataNotEntered;
+            }
         }
         return isMobile ? output : '<div>' + output + '</div>';
     }
@@ -475,7 +804,7 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
                 requestParams[k] = mobileCustomParams[k];
             }
         }
-        var getUrl = url('service_delivery_dashboard', vm.step);
+        var getUrl = url(vm.isDetailsDisplayed ? 'service_delivery_dashboard_details' : 'service_delivery_dashboard', vm.step);
         vm.myPromise = $http({
             method: "GET",
             url: getUrl,
@@ -483,6 +812,18 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
         }).then(
             function (response) {
                 vm.data = response.data.data;
+                var dataAvailable = vm.data && vm.data.length !== 0;
+                var isAwcsLaunched = dataAvailable && !isZeroNullUnassignedOrDataNotEntered(vm.data[0]['num_launched_awcs']);
+                var beneficiariesExpected = dataAvailable && !isZeroNullUnassignedOrDataNotEntered(vm.data[0]['pse_eligible']);
+
+                vm.isCbeSeeMoreDisplayed = isAwcsLaunched;
+                vm.isTHRSeeMoreDisplayed = isAwcsLaunched && (vm.step === 'pw_lw_children') &&
+                    !isZeroNullUnassignedOrDataNotEntered(vm.data[0]['thr_eligible']);
+                vm.isSNSeeMoreDisplayed = isAwcsLaunched && (vm.step === 'children') &&
+                    beneficiariesExpected;
+                vm.isPSESeeMoreDisplayed = isAwcsLaunched && (vm.step === 'children') &&
+                    beneficiariesExpected;
+
                 vm.dataAggregationLevel = response.data.aggregationLevel;
                 vm.totalNumberOfEntries = response.data.recordsTotal;
                 vm.setDtColumns();

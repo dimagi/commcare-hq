@@ -53,6 +53,7 @@ from corehq.apps.cloudcare.dbaccessors import get_application_access_for_domain
 from corehq.apps.cloudcare.models import ApplicationAccess
 from corehq.apps.consumption.models import DefaultConsumption
 from corehq.apps.commtrack.models import CommtrackConfig
+from corehq.apps.custom_data_fields.models import SQLCustomDataFieldsDefinition
 from corehq.apps.data_analytics.models import GIRRow, MALTRow
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.data_interfaces.models import (
@@ -441,7 +442,9 @@ class TestDeleteDomain(TestCase):
             location.save()
             AppReleaseByLocation.objects.create(domain=domain_name, app_id='123', build_id='456',
                                                 version=23, location=location)
-            LatestEnabledBuildProfiles.objects.create(domain=domain_name, app_id='123', build_id='456', version=10)
+            with patch('corehq.apps.app_manager.models.GlobalAppConfig.by_app_id'):
+                LatestEnabledBuildProfiles.objects.create(domain=domain_name, app_id='123', build_id='456',
+                                                          version=10)
             GlobalAppConfig.objects.create(domain=domain_name, app_id='123')
             ResourceOverride.objects.create(domain=domain_name, app_id='123', root_name='test',
                                             pre_id='456', post_id='789')
@@ -502,6 +505,20 @@ class TestDeleteDomain(TestCase):
 
         self._assert_consumption_counts(self.domain.name, 0)
         self._assert_consumption_counts(self.domain2.name, 1)
+
+    def _assert_custom_data_fields_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            SQLCustomDataFieldsDefinition.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_custom_data_fields(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            SQLCustomDataFieldsDefinition.get_or_create(domain_name, 'UserFields')
+
+        self.domain.delete()
+
+        self._assert_custom_data_fields_counts(self.domain.name, 0)
+        self._assert_custom_data_fields_counts(self.domain2.name, 1)
 
     def _assert_data_analytics_counts(self, domain_name, count):
         self._assert_queryset_count([

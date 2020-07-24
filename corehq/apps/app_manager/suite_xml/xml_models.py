@@ -204,6 +204,7 @@ class LocaleResource(AbstractResource):
 class MediaResource(AbstractResource):
     ROOT_NAME = 'media'
     path = StringField('@path')
+    lazy = SimpleBooleanField('resource/@lazy', true="true", false="false")
 
 
 class PracticeUserRestoreResource(AbstractResource):
@@ -216,6 +217,14 @@ class Display(OrderedXmlObject):
     text = NodeField('text', Text)
     media_image = StringField('media/@image')
     media_audio = StringField('media/@audio')
+
+
+class Itemset(XmlObject):
+    ROOT_NAME = 'itemset'
+    nodeset = StringField('@nodeset')
+    value_ref = StringField('value/@ref')
+    label_ref = StringField('label/@ref')
+    sort_ref = StringField('sort/@ref')
 
 
 class DisplayNode(XmlObject):
@@ -497,6 +506,10 @@ class QueryPrompt(DisplayNode):
     ROOT_NAME = 'prompt'
 
     key = StringField('@key')
+    appearance = StringField('@appearance', required=False)
+    input_ = StringField('@input', required=False)
+
+    itemset = NodeField('itemset', Itemset)
 
 
 class RemoteRequestPost(XmlObject):

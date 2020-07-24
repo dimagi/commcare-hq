@@ -1,0 +1,50 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+<button type="button"
+        data-toggle="modal"
+        data-target="#link-reports"
+        class="btn btn-default">
+  <i class="fa fa-link"></i> {% trans "Link Report" %}
+</button>
+
+<div class="modal fade" id="link-reports">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form class="form form-horizontal" method="post" action="{% url "copy_report" domain %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <h3>
+            {% trans "Link Report" %}
+          </h3>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <div class="controls col-xs-10">
+              <input type="hidden" name="report_id" value="{{ existing_report.get_id }}" />
+              <select name="to_domains" class="form-control" required="" id="domain-selector" multiple>
+                {% for domain, already_linked in linked_report_domain_list.items %}
+                  <option value="{{ domain }}" {% if already_linked %} disabled {% endif %}>
+                    {{ domain }}
+                    {% if already_linked %} ({% trans "Already Linked" %}) {% endif %}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button"
+                  class="btn btn-default"
+                  data-dismiss="modal">
+            {% trans "Cancel" %}
+          </button>
+          <button class="btn btn-primary" type="submit">
+            {% trans "Copy" %}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

@@ -6,8 +6,8 @@ from corehq.apps.locations.util import location_hierarchy_config
 from corehq.toggles import ICDS_DASHBOARD_SHOW_MOBILE_APK, NAMESPACE_USER
 from custom.icds_reports.const import NavigationSections
 from custom.icds_reports.const import SDDSections
-from custom.icds_reports.utils import (icds_pre_release_features,
-                                       get_latest_issue_tracker_build_id)
+from custom.icds_reports.utils import (get_latest_issue_tracker_build_id)
+from ..icds_core.view_utils import icds_pre_release_features
 from corehq.apps.cloudcare.utils import webapps_module
 from corehq.apps.users.models import UserRole
 
@@ -182,6 +182,9 @@ def _get_factsheet_sections():
 
 
 def _get_nav_menu_items():
+    icds_reach_sub_pages = [NavMenuSubPages(_('AWCs Daily Status'), 'icds_cas_reach/awc_daily_status'),
+                            NavMenuSubPages(_('AWCs Launched'), 'icds_cas_reach/awcs_covered'),
+                            NavMenuSubPages(_('LSs Launched'), 'icds_cas_reach/ls_launched')]
     return attr.asdict(NavMenuSectionsList([
         NavMenuSection(_('Maternal and Child Nutrition'),
                        [NavMenuSubPages(_('Prevalence of Underweight (Weight-for-Age)'),
@@ -205,8 +208,7 @@ def _get_nav_menu_items():
                        'healthCollapsed', 'fa-child', 'mother.png'
                        ),
         NavMenuSection(_('ICDS-CAS Reach'),
-                       [NavMenuSubPages(_('AWCs Daily Status'), 'icds_cas_reach/awc_daily_status'),
-                        NavMenuSubPages(_('AWCs Launched'), 'icds_cas_reach/awcs_covered')],
+                       icds_reach_sub_pages,
                        'icdsCasReach', 'fa-bar-chart', 'stats-sidebar.png'
                        ),
         NavMenuSection(_('Demographics'),

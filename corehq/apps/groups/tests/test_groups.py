@@ -15,12 +15,15 @@ class GroupTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super(GroupTest, cls).setUpClass()
-        cls.active_user = CommCareUser.create(domain=DOMAIN, username='activeguy', password='secret')
-        cls.inactive_user = CommCareUser.create(domain=DOMAIN, username='inactivegal', password='secret')
+        cls.active_user = CommCareUser.create(domain=DOMAIN, username='activeguy', password='secret',
+                                              created_by=None, created_via=None)
+        cls.inactive_user = CommCareUser.create(domain=DOMAIN, username='inactivegal', password='secret',
+                                                created_by=None, created_via=None)
         cls.inactive_user.is_active = False
         cls.inactive_user.save()
-        cls.deleted_user = CommCareUser.create(domain=DOMAIN, username='goner', password='secret')
-        cls.deleted_user.retire()
+        cls.deleted_user = CommCareUser.create(domain=DOMAIN, username='goner', password='secret',
+                                               created_by=None, created_via=None)
+        cls.deleted_user.retire(deleted_by=None)
 
     def tearDown(self):
         for group in Group.by_domain(DOMAIN):
@@ -29,7 +32,7 @@ class GroupTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         for user in CommCareUser.all():
-            user.delete()
+            user.delete(deleted_by=None)
         super(GroupTest, cls).tearDownClass()
 
     def testGetUsers(self):

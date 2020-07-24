@@ -245,8 +245,8 @@ class OwnerTests(LocationHierarchyTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.web_user = WebUser.create(TEST_DOMAIN, 'user1', '***')
-        cls.mobile_worker = CommCareUser.create(TEST_DOMAIN, 'chw1', '***')
+        cls.web_user = WebUser.create(TEST_DOMAIN, 'user1', '***', None, None)
+        cls.mobile_worker = CommCareUser.create(TEST_DOMAIN, 'chw1', '***', None, None)
         cls.group = Group.wrap({
             'domain': TEST_DOMAIN,
             'name': 'group',
@@ -277,8 +277,8 @@ class OwnerTests(LocationHierarchyTestCase):
     def tearDownClass(cls):
         cls.bad_group.delete()
         cls.group.delete()
-        cls.mobile_worker.delete()
-        cls.web_user.delete()
+        cls.mobile_worker.delete(deleted_by=None)
+        cls.web_user.delete(deleted_by=None)
         super().tearDownClass()
 
     def test_location_owner(self):
@@ -375,7 +375,7 @@ class OpenmrsAtomFeedsTests(TestCase):
             location_id='test_location',
             location_type=cls.location_type,
         )
-        cls.user = CommCareUser.create(TEST_DOMAIN, 'username', 'password', location=cls.location)
+        cls.user = CommCareUser.create(TEST_DOMAIN, 'username', 'password', None, None, location=cls.location)
         cls.repeater = OpenmrsRepeater.wrap({
             "domain": TEST_DOMAIN,
             "url": "https://demo.mybahmni.org/openmrs/",
@@ -396,7 +396,7 @@ class OpenmrsAtomFeedsTests(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.repeater.delete()
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
         cls.location.delete()
         cls.location_type.delete()
         cls.domain.delete()

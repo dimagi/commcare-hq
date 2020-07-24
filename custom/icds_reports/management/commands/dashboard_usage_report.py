@@ -3,7 +3,7 @@ from collections import defaultdict
 
 from django.contrib.postgres.fields.jsonb import KeyTextTransform
 from django.core.management.base import BaseCommand
-from django.db.models import Count, IntegerField, TextField
+from django.db.models import Count, TextField
 
 from dimagi.utils.chunked import chunked
 from django.db.models.functions import Cast
@@ -11,7 +11,7 @@ from django.db.models.functions import Cast
 from corehq.apps.users.models import CouchUser
 from corehq.util.argparse_types import date_type
 from corehq.util.log import with_progress_bar
-from custom.icds_reports.const import THR_REPORT_EXPORT
+from custom.icds_reports.const import POSHAN_PROGRESS_REPORT
 from custom.icds_reports.models import ICDSAuditEntryRecord
 from custom.icds_reports.sqldata.exports.dashboard_usage import DashBoardUsage
 
@@ -75,11 +75,13 @@ class Command(BaseCommand):
 
         records = list(ICDSAuditEntryRecord.objects.filter(url=f'/a/{domain}/icds_export_indicator',
                                                            time_of_use__gte=start_date,
-                                                           time_of_use__lte=end_date)
-                       .annotate(indicator=Cast(KeyTextTransform('indicator', 'post_data'), IntegerField()))
-                       .filter(indicator__lte=THR_REPORT_EXPORT).values('indicator', 'username')
+                                                           time_of_use__lt=end_date)
+                       .annotate(indicator=Cast(KeyTextTransform('indicator', 'post_data'), TextField()))
+                       .filter(indicator__lte=POSHAN_PROGRESS_REPORT).values('indicator', 'username')
                        .annotate(count=Count('indicator')).order_by('username', 'indicator'))
         for record in records:
+            if record['indicator'] == '':
+                continue
             tabular_user_counts[record['username'].split('@')[0]] += record['count']
             tabular_user_indicators[record['username'].split('@')[0]][int(record['indicator']) - 1]\
                 = record['count']
