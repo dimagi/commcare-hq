@@ -3,87 +3,96 @@
     xmlns:jrm="http://openrosa.org/jr/xforms"
     xmlns="http://commcarehq.org/test/submit">
     <data>
+        <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="ad38211be256653bceac8e2156475667" user_id="ad38211be256653bceac8e2156475665" date_modified="2010-06-29T13:42:50" >
+            <create>
+                <case_type>test_case_type</case_type>
+                <case_name>👕 👖 👔 👗 👙</case_name>
+            </create>
+            <update>
+                <external_id>someexternal</external_id>
+            </update>
+	    </case>
         <what_is_your_name>
-        2663710 U+002013 ‹–› GC=Pd    EN DASH
-        1065594 U+0000A0 ‹ › GC=Zs    NO-BREAK SPACE
-        1009762 U+0000B1 ‹±› GC=Sm    PLUS-MINUS SIGN
-        784139 U+002212 ‹−› GC=Sm    MINUS SIGN
-        602377 U+002003 ‹ › GC=Zs    EM SPACE
-        528576 U+0003BC ‹μ› GC=Ll    GREEK SMALL LETTER MU
-        519669 U+0003B2 ‹β› GC=Ll    GREEK SMALL LETTER BETA
-        512312 U+0003B1 ‹α› GC=Ll    GREEK SMALL LETTER ALPHA
-        491842 U+00200A ‹ › GC=Zs    HAIR SPACE
-        462505 U+0000B0 ‹°› GC=So    DEGREE SIGN
-        And here now are the trans-BMP code points, in order of decending frequency:
+            2663710 U+002013 ‹–› GC=Pd    EN DASH
+            1065594 U+0000A0 ‹ › GC=Zs    NO-BREAK SPACE
+            1009762 U+0000B1 ‹±› GC=Sm    PLUS-MINUS SIGN
+            784139 U+002212 ‹−› GC=Sm    MINUS SIGN
+            602377 U+002003 ‹ › GC=Zs    EM SPACE
+            528576 U+0003BC ‹μ› GC=Ll    GREEK SMALL LETTER MU
+            519669 U+0003B2 ‹β› GC=Ll    GREEK SMALL LETTER BETA
+            512312 U+0003B1 ‹α› GC=Ll    GREEK SMALL LETTER ALPHA
+            491842 U+00200A ‹ › GC=Zs    HAIR SPACE
+            462505 U+0000B0 ‹°› GC=So    DEGREE SIGN
+            And here now are the trans-BMP code points, in order of decending frequency:
 
-        544 U+01D49E ‹𝒞› GC=Lu    MATHEMATICAL SCRIPT CAPITAL C
-        450 U+01D4AF ‹𝒯› GC=Lu    MATHEMATICAL SCRIPT CAPITAL T
-        385 U+01D4AE ‹𝒮› GC=Lu    MATHEMATICAL SCRIPT CAPITAL S
-        292 U+01D49F ‹𝒟› GC=Lu    MATHEMATICAL SCRIPT CAPITAL D
-        285 U+01D4B3 ‹𝒳› GC=Lu    MATHEMATICAL SCRIPT CAPITAL X
-        262 U+01D4A9 ‹𝒩› GC=Lu    MATHEMATICAL SCRIPT CAPITAL N
-        258 U+01D4AB ‹𝒫› GC=Lu    MATHEMATICAL SCRIPT CAPITAL P
-        254 U+01D4A2 ‹𝒢› GC=Lu    MATHEMATICAL SCRIPT CAPITAL G
-        185 U+01D49C ‹𝒜› GC=Lu    MATHEMATICAL SCRIPT CAPITAL A
-        178 U+01D53C ‹𝔼› GC=Lu    MATHEMATICAL DOUBLE-STRUCK CAPITAL E
-        137 U+01D4AA ‹𝒪› GC=Lu    MATHEMATICAL SCRIPT CAPITAL O
-        56 U+01D4A5 ‹𝒥› GC=Lu    MATHEMATICAL SCRIPT CAPITAL J
-        48 U+01D4A6 ‹𝒦› GC=Lu    MATHEMATICAL SCRIPT CAPITAL K
-        44 U+01D4B1 ‹𝒱› GC=Lu    MATHEMATICAL SCRIPT CAPITAL V
-        43 U+01D4B2 ‹𝒲› GC=Lu    MATHEMATICAL SCRIPT CAPITAL W
-        42 U+01D4B4 ‹𝒴› GC=Lu    MATHEMATICAL SCRIPT CAPITAL Y
-        41 U+01D4B5 ‹𝒵› GC=Lu    MATHEMATICAL SCRIPT CAPITAL Z
-        35 U+01D4B0 ‹𝒰› GC=Lu    MATHEMATICAL SCRIPT CAPITAL U
-        30 U+01D4AC ‹𝒬› GC=Lu    MATHEMATICAL SCRIPT CAPITAL Q
-        23 U+01D54A ‹𝕊› GC=Lu    MATHEMATICAL DOUBLE-STRUCK CAPITAL S
-        21 U+01D539 ‹𝔹› GC=Lu    MATHEMATICAL DOUBLE-STRUCK CAPITAL B
-        19 U+01D5A7 ‹𝖧› GC=Lu    MATHEMATICAL SANS-SERIF CAPITAL H
-        18 U+01D517 ‹𝔗› GC=Lu    MATHEMATICAL FRAKTUR CAPITAL T
-        15 U+01D4C3 ‹𝓃› GC=Ll    MATHEMATICAL SCRIPT SMALL N
-        14 U+01D535 ‹𝔵› GC=Ll    MATHEMATICAL FRAKTUR SMALL X
-        13 U+01D4BF ‹𝒿› GC=Ll    MATHEMATICAL SCRIPT SMALL J
-        11 U+01D540 ‹𝕀› GC=Lu    MATHEMATICAL DOUBLE-STRUCK CAPITAL I
-        9 U+01D465 ‹𝑥› GC=Ll    MATHEMATICAL ITALIC SMALL X
-        9 U+01D4CE ‹𝓎› GC=Ll    MATHEMATICAL SCRIPT SMALL Y
-        9 U+01D538 ‹𝔸› GC=Lu    MATHEMATICAL DOUBLE-STRUCK CAPITAL A
-        8 U+01D4C2 ‹𝓂› GC=Ll    MATHEMATICAL SCRIPT SMALL M
-        8 U+01D54D ‹𝕍› GC=Lu    MATHEMATICAL DOUBLE-STRUCK CAPITAL V
-        7 U+01D4B6 ‹𝒶› GC=Ll    MATHEMATICAL SCRIPT SMALL A
-        7 U+01D4BE ‹𝒾› GC=Ll    MATHEMATICAL SCRIPT SMALL I
-        7 U+01D4CC ‹𝓌› GC=Ll    MATHEMATICAL SCRIPT SMALL W
-        7 U+01D516 ‹𝔖› GC=Lu    MATHEMATICAL FRAKTUR CAPITAL S
-        7 U+01D4BE ‹𝒾› GC=Ll    MATHEMATICAL SCRIPT SMALL I
-        7 U+01D4CC ‹𝓌› GC=Ll    MATHEMATICAL SCRIPT SMALL W
-        7 U+01D516 ‹𝔖› GC=Lu    MATHEMATICAL FRAKTUR CAPITAL S
-        4 U+01D4CF ‹𝓏› GC=Ll    MATHEMATICAL SCRIPT SMALL Z
-        4 U+01D53B ‹𝔻› GC=Lu    MATHEMATICAL DOUBLE-STRUCK CAPITAL D
-        4 U+01D54B ‹𝕋› GC=Lu    MATHEMATICAL DOUBLE-STRUCK CAPITAL T
-        3 U+01D4BB ‹𝒻› GC=Ll    MATHEMATICAL SCRIPT SMALL F
-        3 U+01D4CA ‹𝓊› GC=Ll    MATHEMATICAL SCRIPT SMALL U
-        3 U+01D507 ‹𝔇› GC=Lu    MATHEMATICAL FRAKTUR CAPITAL D
-        3 U+01D542 ‹𝕂› GC=Lu    MATHEMATICAL DOUBLE-STRUCK CAPITAL K
-        3 U+01D546 ‹𝕆› GC=Lu    MATHEMATICAL DOUBLE-STRUCK CAPITAL O
-        2 U+01D4BD ‹𝒽› GC=Ll    MATHEMATICAL SCRIPT SMALL H
-        2 U+01D4C5 ‹𝓅› GC=Ll    MATHEMATICAL SCRIPT SMALL P
-        2 U+01D505 ‹𝔅› GC=Lu    MATHEMATICAL FRAKTUR CAPITAL B
-        2 U+01D50E ‹𝔎› GC=Lu    MATHEMATICAL FRAKTUR CAPITAL K
-        2 U+01D541 ‹𝕁› GC=Lu    MATHEMATICAL DOUBLE-STRUCK CAPITAL J
-        2 U+01D543 ‹𝕃› GC=Lu    MATHEMATICAL DOUBLE-STRUCK CAPITAL L
-        2 U+100002 ‹􀀂› GC=Co    Private
-        1 U+01D4B8 ‹𝒸› GC=Ll    MATHEMATICAL SCRIPT SMALL C
-        1 U+01D4C1 ‹𝓁› GC=Ll    MATHEMATICAL SCRIPT SMALL L
-        1 U+01D53D ‹𝔽› GC=Lu    MATHEMATICAL DOUBLE-STRUCK CAPITAL F
-        1 U+01D53E ‹𝔾› GC=Lu    MATHEMATICAL DOUBLE-STRUCK CAPITAL G
-        1 U+01D54C ‹𝕌› GC=Lu    MATHEMATICAL DOUBLE-STRUCK CAPITAL U
-        1 U+01D6A4 ‹𝚤› GC=Ll    MATHEMATICAL ITALIC SMALL DOTLESS I
-        1 U+01D7D9 ‹𝟙› GC=Nd    MATHEMATICAL DOUBLE-STRUCK DIGIT ONE
-         😀 😁 😂 🤣 😃 😄 😅 😆 😉 😊 😋 😎 😍 😘 🥰 😗 😙 😚 ☺️ 🙂 🤗 🤩 🤔 🤨 😐 😑 😶 🙄 😏 😣 😥 😮 🤐 😯 😪 😫 😴 😌 😛 😜 😝 🤤 😒 😓 😔 😕 🙃 🤑 😲 ☹️ 🙁 😖 😞 😟 😤 😢 😭 😦 😧 😨 😩 🤯 😬 😰 😱 🥵 🥶 😳 🤪 😵 😡 😠 🤬 😷 🤒 🤕 🤢 🤮 🤧 😇 🤠 🤡 🥳 🥴 🥺 🤥 🤫 🤭 🧐 🤓 😈 👿 👹 👺 💀 👻 👽 🤖 💩 😺 😸 😹 😻 😼 😽 🙀 😿 😾
+            544 U+01D49E ‹𝒞› GC=Lu    MATHEMATICAL SCRIPT CAPITAL C
+            450 U+01D4AF ‹𝒯› GC=Lu    MATHEMATICAL SCRIPT CAPITAL T
+            385 U+01D4AE ‹𝒮› GC=Lu    MATHEMATICAL SCRIPT CAPITAL S
+            292 U+01D49F ‹𝒟› GC=Lu    MATHEMATICAL SCRIPT CAPITAL D
+            285 U+01D4B3 ‹𝒳› GC=Lu    MATHEMATICAL SCRIPT CAPITAL X
+            262 U+01D4A9 ‹𝒩› GC=Lu    MATHEMATICAL SCRIPT CAPITAL N
+            258 U+01D4AB ‹𝒫› GC=Lu    MATHEMATICAL SCRIPT CAPITAL P
+            254 U+01D4A2 ‹𝒢› GC=Lu    MATHEMATICAL SCRIPT CAPITAL G
+            185 U+01D49C ‹𝒜› GC=Lu    MATHEMATICAL SCRIPT CAPITAL A
+            178 U+01D53C ‹𝔼› GC=Lu    MATHEMATICAL DOUBLE-STRUCK CAPITAL E
+            137 U+01D4AA ‹𝒪› GC=Lu    MATHEMATICAL SCRIPT CAPITAL O
+            56 U+01D4A5 ‹𝒥› GC=Lu    MATHEMATICAL SCRIPT CAPITAL J
+            48 U+01D4A6 ‹𝒦› GC=Lu    MATHEMATICAL SCRIPT CAPITAL K
+            44 U+01D4B1 ‹𝒱› GC=Lu    MATHEMATICAL SCRIPT CAPITAL V
+            43 U+01D4B2 ‹𝒲› GC=Lu    MATHEMATICAL SCRIPT CAPITAL W
+            42 U+01D4B4 ‹𝒴› GC=Lu    MATHEMATICAL SCRIPT CAPITAL Y
+            41 U+01D4B5 ‹𝒵› GC=Lu    MATHEMATICAL SCRIPT CAPITAL Z
+            35 U+01D4B0 ‹𝒰› GC=Lu    MATHEMATICAL SCRIPT CAPITAL U
+            30 U+01D4AC ‹𝒬› GC=Lu    MATHEMATICAL SCRIPT CAPITAL Q
+            23 U+01D54A ‹𝕊› GC=Lu    MATHEMATICAL DOUBLE-STRUCK CAPITAL S
+            21 U+01D539 ‹𝔹› GC=Lu    MATHEMATICAL DOUBLE-STRUCK CAPITAL B
+            19 U+01D5A7 ‹𝖧› GC=Lu    MATHEMATICAL SANS-SERIF CAPITAL H
+            18 U+01D517 ‹𝔗› GC=Lu    MATHEMATICAL FRAKTUR CAPITAL T
+            15 U+01D4C3 ‹𝓃› GC=Ll    MATHEMATICAL SCRIPT SMALL N
+            14 U+01D535 ‹𝔵› GC=Ll    MATHEMATICAL FRAKTUR SMALL X
+            13 U+01D4BF ‹𝒿› GC=Ll    MATHEMATICAL SCRIPT SMALL J
+            11 U+01D540 ‹𝕀› GC=Lu    MATHEMATICAL DOUBLE-STRUCK CAPITAL I
+            9 U+01D465 ‹𝑥› GC=Ll    MATHEMATICAL ITALIC SMALL X
+            9 U+01D4CE ‹𝓎› GC=Ll    MATHEMATICAL SCRIPT SMALL Y
+            9 U+01D538 ‹𝔸› GC=Lu    MATHEMATICAL DOUBLE-STRUCK CAPITAL A
+            8 U+01D4C2 ‹𝓂› GC=Ll    MATHEMATICAL SCRIPT SMALL M
+            8 U+01D54D ‹𝕍› GC=Lu    MATHEMATICAL DOUBLE-STRUCK CAPITAL V
+            7 U+01D4B6 ‹𝒶› GC=Ll    MATHEMATICAL SCRIPT SMALL A
+            7 U+01D4BE ‹𝒾› GC=Ll    MATHEMATICAL SCRIPT SMALL I
+            7 U+01D4CC ‹𝓌› GC=Ll    MATHEMATICAL SCRIPT SMALL W
+            7 U+01D516 ‹𝔖› GC=Lu    MATHEMATICAL FRAKTUR CAPITAL S
+            7 U+01D4BE ‹𝒾› GC=Ll    MATHEMATICAL SCRIPT SMALL I
+            7 U+01D4CC ‹𝓌› GC=Ll    MATHEMATICAL SCRIPT SMALL W
+            7 U+01D516 ‹𝔖› GC=Lu    MATHEMATICAL FRAKTUR CAPITAL S
+            4 U+01D4CF ‹𝓏› GC=Ll    MATHEMATICAL SCRIPT SMALL Z
+            4 U+01D53B ‹𝔻› GC=Lu    MATHEMATICAL DOUBLE-STRUCK CAPITAL D
+            4 U+01D54B ‹𝕋› GC=Lu    MATHEMATICAL DOUBLE-STRUCK CAPITAL T
+            3 U+01D4BB ‹𝒻› GC=Ll    MATHEMATICAL SCRIPT SMALL F
+            3 U+01D4CA ‹𝓊› GC=Ll    MATHEMATICAL SCRIPT SMALL U
+            3 U+01D507 ‹𝔇› GC=Lu    MATHEMATICAL FRAKTUR CAPITAL D
+            3 U+01D542 ‹𝕂› GC=Lu    MATHEMATICAL DOUBLE-STRUCK CAPITAL K
+            3 U+01D546 ‹𝕆› GC=Lu    MATHEMATICAL DOUBLE-STRUCK CAPITAL O
+            2 U+01D4BD ‹𝒽› GC=Ll    MATHEMATICAL SCRIPT SMALL H
+            2 U+01D4C5 ‹𝓅› GC=Ll    MATHEMATICAL SCRIPT SMALL P
+            2 U+01D505 ‹𝔅› GC=Lu    MATHEMATICAL FRAKTUR CAPITAL B
+            2 U+01D50E ‹𝔎› GC=Lu    MATHEMATICAL FRAKTUR CAPITAL K
+            2 U+01D541 ‹𝕁› GC=Lu    MATHEMATICAL DOUBLE-STRUCK CAPITAL J
+            2 U+01D543 ‹𝕃› GC=Lu    MATHEMATICAL DOUBLE-STRUCK CAPITAL L
+            2 U+100002 ‹􀀂› GC=Co    Private
+            1 U+01D4B8 ‹𝒸› GC=Ll    MATHEMATICAL SCRIPT SMALL C
+            1 U+01D4C1 ‹𝓁› GC=Ll    MATHEMATICAL SCRIPT SMALL L
+            1 U+01D53D ‹𝔽› GC=Lu    MATHEMATICAL DOUBLE-STRUCK CAPITAL F
+            1 U+01D53E ‹𝔾› GC=Lu    MATHEMATICAL DOUBLE-STRUCK CAPITAL G
+            1 U+01D54C ‹𝕌› GC=Lu    MATHEMATICAL DOUBLE-STRUCK CAPITAL U
+            1 U+01D6A4 ‹𝚤› GC=Ll    MATHEMATICAL ITALIC SMALL DOTLESS I
+            1 U+01D7D9 ‹𝟙› GC=Nd    MATHEMATICAL DOUBLE-STRUCK DIGIT ONE
+            😀 😁 😂 🤣 😃 😄 😅 😆 😉 😊 😋 😎 😍 😘 🥰 😗 😙 😚 ☺️ 🙂 🤗 🤩 🤔 🤨 😐 😑 😶 🙄 😏 😣 😥 😮 🤐 😯 😪 😫 😴 😌 😛 😜 😝 🤤 😒 😓 😔 😕 🙃 🤑 😲 ☹️ 🙁 😖 😞 😟 😤 😢 😭 😦 😧 😨 😩 🤯 😬 😰 😱 🥵 🥶 😳 🤪 😵 😡 😠 🤬 😷 🤒 🤕 🤢 🤮 🤧 😇 🤠 🤡 🥳 🥴 🥺 🤥 🤫 🤭 🧐 🤓 😈 👿 👹 👺 💀 👻 👽 🤖 💩 😺 😸 😹 😻 😼 😽 🙀 😿 😾
 
-        People and Fantasy
-        👶 👧 🧒 👦 👩 🧑 👨 👵 🧓 👴 👲 👳‍♀️ 👳‍♂️ 🧕 🧔 👱‍♂️ 👱‍♀️ 👨‍🦰 👩‍🦰 👨‍🦱 👩‍🦱 👨‍🦲 👩‍🦲 👨‍🦳 👩‍🦳 🦸‍♀️ 🦸‍♂️ 🦹‍♀️ 🦹‍♂️ 👮‍♀️ 👮‍♂️ 👷‍♀️ 👷‍♂️ 💂‍♀️ 💂‍♂️ 🕵️‍♀️ 🕵️‍♂️ 👩‍⚕️ 👨‍⚕️ 👩‍🌾 👨‍🌾 👩‍🍳 👨‍🍳 👩‍🎓 👨‍🎓 👩‍🎤 👨‍🎤 👩‍🏫 👨‍🏫 👩‍🏭 👨‍🏭 👩‍💻 👨‍💻 👩‍💼 👨‍💼 👩‍🔧 👨‍🔧 👩‍🔬 👨‍🔬 👩‍🎨 👨‍🎨 👩‍🚒 👨‍🚒 👩‍✈️ 👨‍✈️ 👩‍🚀 👨‍🚀 👩‍⚖️ 👨‍⚖️ 👰 🤵 👸 🤴 🤶 🎅 🧙‍♀️ 🧙‍♂️ 🧝‍♀️ 🧝‍♂️ 🧛‍♀️ 🧛‍♂️ 🧟‍♀️ 🧟‍♂️ 🧞‍♀️ 🧞‍♂️ 🧜‍♀️ 🧜‍♂️ 🧚‍♀️ 🧚‍♂️ 👼 🤰 🤱 🙇‍♀️ 🙇‍♂️ 💁‍♀️ 💁‍♂️ 🙅‍♀️ 🙅‍♂️ 🙆‍♀️ 🙆‍♂️ 🙋‍♀️ 🙋‍♂️ 🤦‍♀️ 🤦‍♂️ 🤷‍♀️ 🤷‍♂️ 🙎‍♀️ 🙎‍♂️ 🙍‍♀️ 🙍‍♂️ 💇‍♀️ 💇‍♂️ 💆‍♀️ 💆‍♂️ 🧖‍♀️ 🧖‍♂️ 💅 🤳 💃 🕺 👯‍♀️ 👯‍♂️ 🕴 🚶‍♀️ 🚶‍♂️ 🏃‍♀️ 🏃‍♂️ 👫 👭 👬 💑 👩‍❤️‍👩 👨‍❤️‍👨 💏 👩‍❤️‍💋‍👩 👨‍❤️‍💋‍👨 👪 👨‍👩‍👧 👨‍👩‍👧‍👦 👨‍👩‍👦‍👦 👨‍👩‍👧‍👧 👩‍👩‍👦 👩‍👩‍👧 👩‍👩‍👧‍👦 👩‍👩‍👦‍👦 👩‍👩‍👧‍👧 👨‍👨‍👦 👨‍👨‍👧 👨‍👨‍👧‍👦 👨‍👨‍👦‍👦 👨‍👨‍👧‍👧 👩‍👦 👩‍👧 👩‍👧‍👦 👩‍👦‍👦 👩‍👧‍👧 👨‍👦 👨‍👧 👨‍👧‍👦 👨‍👦‍👦 👨‍👧‍👧 🤲 👐 🙌 👏 🤝 👍 👎 👊 ✊ 🤛 🤜 🤞 ✌️ 🤟 🤘 👌 👈 👉 👆 👇 ☝️ ✋ 🤚 🖐 🖖 👋 🤙 💪 🦵 🦶 🖕 ✍️ 🙏 💍 💄 💋 👄 👅 👂 👃 👣 👁 👀 🧠 🦴 🦷 🗣 👤 👥
+            People and Fantasy
+            👶 👧 🧒 👦 👩 🧑 👨 👵 🧓 👴 👲 👳‍♀️ 👳‍♂️ 🧕 🧔 👱‍♂️ 👱‍♀️ 👨‍🦰 👩‍🦰 👨‍🦱 👩‍🦱 👨‍🦲 👩‍🦲 👨‍🦳 👩‍🦳 🦸‍♀️ 🦸‍♂️ 🦹‍♀️ 🦹‍♂️ 👮‍♀️ 👮‍♂️ 👷‍♀️ 👷‍♂️ 💂‍♀️ 💂‍♂️ 🕵️‍♀️ 🕵️‍♂️ 👩‍⚕️ 👨‍⚕️ 👩‍🌾 👨‍🌾 👩‍🍳 👨‍🍳 👩‍🎓 👨‍🎓 👩‍🎤 👨‍🎤 👩‍🏫 👨‍🏫 👩‍🏭 👨‍🏭 👩‍💻 👨‍💻 👩‍💼 👨‍💼 👩‍🔧 👨‍🔧 👩‍🔬 👨‍🔬 👩‍🎨 👨‍🎨 👩‍🚒 👨‍🚒 👩‍✈️ 👨‍✈️ 👩‍🚀 👨‍🚀 👩‍⚖️ 👨‍⚖️ 👰 🤵 👸 🤴 🤶 🎅 🧙‍♀️ 🧙‍♂️ 🧝‍♀️ 🧝‍♂️ 🧛‍♀️ 🧛‍♂️ 🧟‍♀️ 🧟‍♂️ 🧞‍♀️ 🧞‍♂️ 🧜‍♀️ 🧜‍♂️ 🧚‍♀️ 🧚‍♂️ 👼 🤰 🤱 🙇‍♀️ 🙇‍♂️ 💁‍♀️ 💁‍♂️ 🙅‍♀️ 🙅‍♂️ 🙆‍♀️ 🙆‍♂️ 🙋‍♀️ 🙋‍♂️ 🤦‍♀️ 🤦‍♂️ 🤷‍♀️ 🤷‍♂️ 🙎‍♀️ 🙎‍♂️ 🙍‍♀️ 🙍‍♂️ 💇‍♀️ 💇‍♂️ 💆‍♀️ 💆‍♂️ 🧖‍♀️ 🧖‍♂️ 💅 🤳 💃 🕺 👯‍♀️ 👯‍♂️ 🕴 🚶‍♀️ 🚶‍♂️ 🏃‍♀️ 🏃‍♂️ 👫 👭 👬 💑 👩‍❤️‍👩 👨‍❤️‍👨 💏 👩‍❤️‍💋‍👩 👨‍❤️‍💋‍👨 👪 👨‍👩‍👧 👨‍👩‍👧‍👦 👨‍👩‍👦‍👦 👨‍👩‍👧‍👧 👩‍👩‍👦 👩‍👩‍👧 👩‍👩‍👧‍👦 👩‍👩‍👦‍👦 👩‍👩‍👧‍👧 👨‍👨‍👦 👨‍👨‍👧 👨‍👨‍👧‍👦 👨‍👨‍👦‍👦 👨‍👨‍👧‍👧 👩‍👦 👩‍👧 👩‍👧‍👦 👩‍👦‍👦 👩‍👧‍👧 👨‍👦 👨‍👧 👨‍👧‍👦 👨‍👦‍👦 👨‍👧‍👧 🤲 👐 🙌 👏 🤝 👍 👎 👊 ✊ 🤛 🤜 🤞 ✌️ 🤟 🤘 👌 👈 👉 👆 👇 ☝️ ✋ 🤚 🖐 🖖 👋 🤙 💪 🦵 🦶 🖕 ✍️ 🙏 💍 💄 💋 👄 👅 👂 👃 👣 👁 👀 🧠 🦴 🦷 🗣 👤 👥
 
-        Clothing and Accessories
-        🧥 👚 👕 👖 👔 👗 👙 👘 👠 👡 👢 👞 👟 🥾 🥿 🧦 🧤 🧣 🎩 🧢 👒 🎓 ⛑ 👑 👝 👛 👜 💼 🎒 👓 🕶 🥽 🥼 🌂 🧵 🧶
+            Clothing and Accessories
+            🧥 👚 👕 👖 👔 👗 👙 👘 👠 👡 👢 👞 👟 🥾 🥿 🧦 🧤 🧣 🎩 🧢 👒 🎓 ⛑ 👑 👝 👛 👜 💼 🎒 👓 🕶 🥽 🥼 🌂 🧵 🧶
         </what_is_your_name>
     </data>
 </form>
