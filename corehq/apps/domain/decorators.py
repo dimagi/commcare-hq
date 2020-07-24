@@ -258,7 +258,31 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False,
 
             return safe_fn_with_domain
         else:
-            raise Exception("require domain not supported yet!")
+            # basically a mirror of the above implementation but for a request without a domain
+            @wraps(fn)
+            def safe_fn_no_domain(request, *args, **kwargs):
+                if request.user.is_authenticated and allow_sessions:
+                    # replaces login_and_domain_required
+                    return login_required(fn)(request, *args, **kwargs)
+                else:
+                    # two_factor_check is removed because 2fa enforcement
+                    # only happens in the context of a domain
+                    @check_lockout
+                    @challenge_fn
+                    def _inner(request, *args, **kwargs):
+                        couch_user = _ensure_request_couch_user(request)
+                        if (
+                            couch_user
+                            and (allow_cc_users or couch_user.is_web_user())
+                        ):
+                            clear_login_attempts(couch_user)
+                            return fn(request, *args, **kwargs)
+                        else:
+                            return HttpResponseForbidden()
+
+                    return _inner(request, *args, **kwargs)
+            return safe_fn_no_domain
+
     return _outer
 
 
