@@ -96,7 +96,8 @@ class LoginOrChallengeDBTest(TestCase):
             self.assertEqual(SUCCESS, test(request, self.domain_name))
 
     def test_no_domain_no_sessions(self):
-        decorator = _login_or_challenge(passing_decorator, allow_cc_users=True, allow_sessions=False, require_domain=False)
+        decorator = _login_or_challenge(passing_decorator, allow_cc_users=True, allow_sessions=False,
+                                        require_domain=False)
         test = decorator(sample_view)
 
         request = self._get_request(self.web_django_user)
@@ -106,7 +107,8 @@ class LoginOrChallengeDBTest(TestCase):
         self.assertEqual(SUCCESS, test(request))
 
     def test_no_domain_with_sessions(self):
-        decorator = _login_or_challenge(passing_decorator, allow_cc_users=True, allow_sessions=True, require_domain=False)
+        decorator = _login_or_challenge(passing_decorator, allow_cc_users=True, allow_sessions=True,
+                                        require_domain=False)
         test = decorator(sample_view)
 
         request = self._get_request(self.web_django_user)
