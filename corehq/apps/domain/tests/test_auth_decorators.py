@@ -58,7 +58,6 @@ class LoginOrChallengeDBTest(TestCase):
         cls.domain.delete()
         super().tearDownClass()
 
-
     def _get_request(self, user):
         request = RequestFactory().get('/foobar/')
         request.user = user
@@ -95,3 +94,13 @@ class LoginOrChallengeDBTest(TestCase):
 
             request = self._get_request(self.commcare_django_user)
             self.assertEqual(SUCCESS, test(request, self.domain_name))
+
+    def test_no_domain_no_sessions(self):
+        decorator = _login_or_challenge(passing_decorator, allow_cc_users=True, allow_sessions=False, require_domain=False)
+        test = decorator(sample_view)
+
+        request = self._get_request(self.web_django_user)
+        self.assertEqual(SUCCESS, test(request))
+
+        request = self._get_request(self.commcare_django_user)
+        self.assertNotEqual(SUCCESS, test(request))
