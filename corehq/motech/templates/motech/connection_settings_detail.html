@@ -1,0 +1,10 @@
+{% extends "hqwebapp/base_section.html" %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+
+{% requirejs_main "motech/js/connection_settings_detail" %}
+
+{% block page_content %}
+  {% registerurl "test_connection_settings" domain %}
+  {% crispy form %}
+{% endblock %}
