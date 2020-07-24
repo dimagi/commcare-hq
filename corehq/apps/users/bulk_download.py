@@ -40,7 +40,7 @@ def build_data_headers(keys, header_prefix='data'):
 
 def parse_users(group_memoizer, domain, user_filters, task=None, total_count=None):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-    user_data_model = SQLCustomDataFieldsDefinition.get_or_create(
+    user_data_model = CustomDataFieldsDefinition.get_or_create(
         domain,
         UserFieldsView.field_type
     )
