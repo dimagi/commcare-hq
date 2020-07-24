@@ -71,8 +71,6 @@ class LoginAndDomainAuthentication(Authentication):
         ], **kwargs)
 
     def _get_auth_decorator(self, request):
-        # the initial digest request doesn't have any authorization, so default to
-        # digest in order to send back
         return self.decorator_map[determine_authtype_from_header(request)]
 
     def _auth_test(self, request, wrappers, **kwargs):
