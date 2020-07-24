@@ -434,6 +434,8 @@ def _two_factor_required(view_func, domain, couch_user):
     exempt = getattr(view_func, 'two_factor_exempt', False)
     if exempt:
         return False
+    if not couch_user:
+        return False
     return (
         # If a user is a superuser, then there is no two_factor_disabled loophole allowed.
         # If you lose your phone, you have to give up superuser privileges
