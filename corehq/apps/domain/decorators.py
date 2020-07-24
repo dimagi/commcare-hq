@@ -286,16 +286,26 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False,
     return _outer
 
 
-def login_or_basic_ex(allow_cc_users=False, allow_sessions=True):
-    return _login_or_challenge(basicauth(), allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
+def login_or_basic_ex(allow_cc_users=False, allow_sessions=True, require_domain=True):
+    return _login_or_challenge(
+        basicauth(),
+        allow_cc_users=allow_cc_users,
+        allow_sessions=allow_sessions,
+        require_domain=require_domain,
+    )
 
 
 def login_or_basic_or_api_key_ex(allow_cc_users=False, allow_sessions=True):
     return _login_or_challenge(basic_or_api_key(), allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
 
 
-def login_or_digest_ex(allow_cc_users=False, allow_sessions=True):
-    return _login_or_challenge(httpdigest, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
+def login_or_digest_ex(allow_cc_users=False, allow_sessions=True, require_domain=True):
+    return _login_or_challenge(
+        httpdigest,
+        allow_cc_users=allow_cc_users,
+        allow_sessions=allow_sessions,
+        require_domain=require_domain,
+    )
 
 
 def login_or_formplayer_ex(allow_cc_users=False, allow_sessions=True):
@@ -305,21 +315,23 @@ def login_or_formplayer_ex(allow_cc_users=False, allow_sessions=True):
     )
 
 
-def login_or_api_key_ex(allow_cc_users=False, allow_sessions=True):
+def login_or_api_key_ex(allow_cc_users=False, allow_sessions=True, require_domain=True):
     return _login_or_challenge(
         api_key(),
         allow_cc_users=allow_cc_users,
         api_key=True,
-        allow_sessions=allow_sessions
+        allow_sessions=allow_sessions,
+        require_domain=require_domain,
     )
 
 
-def login_or_oauth2_ex(allow_cc_users=False, allow_sessions=True):
+def login_or_oauth2_ex(allow_cc_users=False, allow_sessions=True, require_domain=True):
     return _login_or_challenge(
         _oauth2_check(),
         allow_cc_users=allow_cc_users,
         api_key=True,
-        allow_sessions=allow_sessions
+        allow_sessions=allow_sessions,
+        require_domain=require_domain,
     )
 
 
@@ -391,6 +403,11 @@ digest_auth = login_or_digest_ex(allow_sessions=False)
 basic_auth = login_or_basic_ex(allow_sessions=False)
 api_key_auth = login_or_api_key_ex(allow_sessions=False)
 oauth2_auth = login_or_oauth2_ex(allow_sessions=False)
+
+digest_auth_no_domain = login_or_digest_ex(allow_sessions=False, require_domain=False)
+basic_auth_no_domain = login_or_basic_ex(allow_sessions=False, require_domain=False)
+api_key_auth_no_domain = login_or_api_key_ex(allow_sessions=False, require_domain=False)
+oauth2_auth_no_domain = login_or_oauth2_ex(allow_sessions=False, require_domain=False)
 
 basic_auth_or_try_api_key_auth = login_or_basic_or_api_key_ex(allow_sessions=False)
 
