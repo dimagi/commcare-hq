@@ -1,6 +1,6 @@
+from distutils.version import LooseVersion
 from getpass import getpass
 from importlib import import_module
-from packaging import version
 from pkg_resources import DistributionNotFound, get_distribution
 
 from django.conf import settings
@@ -34,7 +34,7 @@ class Command(BaseCommand):
             print("DRY RUN sessions will not be modified")
 
         tf_ver = get_two_factor_version()
-        if tf_ver and version.parse(tf_ver) < version.parse("1.12"):
+        if tf_ver and LooseVersion(tf_ver) < LooseVersion("1.12"):
             print(f"WARNING old/insecure django-two-factor-auth version detected: {tf_ver}")
             print("Please run this tool again after upgrading.")
         else:
