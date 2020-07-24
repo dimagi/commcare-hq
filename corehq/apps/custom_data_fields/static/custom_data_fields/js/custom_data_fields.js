@@ -109,7 +109,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
 
         self.fields = uiElementKeyValueList.new(
             String(Math.random()).slice(2),
-            gettext("Profile"),
+            gettext("Profile")
         );
         self.fields.val(options.fields);
         self.$fields = self.fields.ui;
