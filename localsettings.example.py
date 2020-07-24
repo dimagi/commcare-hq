@@ -219,18 +219,6 @@ redis_cache = {
     'BACKEND': 'django_redis.cache.RedisCache',
     'LOCATION': 'redis://127.0.0.1:6379/0',
 }
-# example redis cluster setting
-redis_cluster_cache = {
-    'BACKEND': 'django_redis.cache.RedisCache',
-    'LOCATION': 'redis://127.0.0.1:6379/0',
-    'OPTIONS': {
-        'REDIS_CLIENT_CLASS': 'rediscluster.RedisCluster',
-        'CONNECTION_POOL_CLASS': 'rediscluster.connection.ClusterConnectionPool',
-        'CONNECTION_POOL_KWARGS': {
-            'skip_full_coverage_check': True
-        },
-    }
-}
 CACHES = {
     'default': redis_cache,
     'redis': redis_cache,
