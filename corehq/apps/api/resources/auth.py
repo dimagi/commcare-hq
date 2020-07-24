@@ -26,9 +26,9 @@ from corehq.toggles import API_THROTTLE_WHITELIST, IS_CONTRACTOR
 
 def api_auth(view_func):
     @wraps(view_func)
-    def _inner(req, domain, *args, **kwargs):
+    def _inner(req, *args, **kwargs):
         try:
-            return view_func(req, domain, *args, **kwargs)
+            return view_func(req, *args, **kwargs)
         except Http404 as e:
             if str(e):
                 return HttpResponse(json.dumps({"error": str(e)}),
