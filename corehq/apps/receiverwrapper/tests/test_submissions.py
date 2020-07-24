@@ -112,6 +112,12 @@ class SubmissionTest(BaseSubmissionTest):
             xmlns='http://bihar.commcarehq.org/pregnancy/new',
         )
 
+    def test_submit_with_non_bmp_chars(self):
+        self._test(
+            form="form_data_with_non_bmp_chars.xml",
+            xmlns='http://commcarehq.org/test/submit',
+        )
+
     @softer_assert()
     def test_submit_deprecated_form(self):
         self._submit('simple_form.xml')
