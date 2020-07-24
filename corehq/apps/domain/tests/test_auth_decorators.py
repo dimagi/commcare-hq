@@ -104,3 +104,13 @@ class LoginOrChallengeDBTest(TestCase):
 
         request = self._get_request(self.commcare_django_user)
         self.assertEqual(SUCCESS, test(request))
+
+    def test_no_domain_with_sessions(self):
+        decorator = _login_or_challenge(passing_decorator, allow_cc_users=True, allow_sessions=True, require_domain=False)
+        test = decorator(sample_view)
+
+        request = self._get_request(self.web_django_user)
+        self.assertEqual(SUCCESS, test(request))
+
+        request = self._get_request(self.commcare_django_user)
+        self.assertEqual(SUCCESS, test(request))
