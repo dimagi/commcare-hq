@@ -1,8 +1,8 @@
 from decimal import Decimal
 
 from corehq.apps.custom_data_fields.models import (
-    SQLField,
-    SQLCustomDataFieldsDefinition,
+    CustomDataFieldsDefinition,
+    Field,
 )
 
 from ..util import LocationExporter
@@ -35,9 +35,9 @@ class TestLocationsExport(LocationHierarchyTestCase):
     def setUpClass(cls):
         super(TestLocationsExport, cls).setUpClass()
 
-        cls.loc_fields = SQLCustomDataFieldsDefinition.get_or_create(cls.domain, LocationFieldsView.field_type)
+        cls.loc_fields = CustomDataFieldsDefinition.get_or_create(cls.domain, LocationFieldsView.field_type)
         cls.loc_fields.set_fields([
-            SQLField(slug=slug) for slug in cls.custom_fields
+            Field(slug=slug) for slug in cls.custom_fields
         ])
         cls.loc_fields.save()
 
