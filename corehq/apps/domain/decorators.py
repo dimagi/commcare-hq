@@ -216,6 +216,8 @@ def _oauth2_check():
 
 def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False, allow_sessions=True):
     """
+    Ensure someone is logged in, or issue a challenge / failure.
+
     challenge_fn: a decorator function that takes in a view and returns a wrapped version of that
       view with additional "challenges" applied - namely checking authentication.
       If the "challenges" are met the decorator function should:
@@ -227,8 +229,6 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False, allow
     allow_cc_users: authorize non-WebUser users
     allow_sessions: allow session based authorization
     """
-    # ensure someone is logged in, or challenge
-    # challenge_fn should itself be a decorator that can handle authentication
     def _outer(fn):
         @wraps(fn)
         def safe_fn(request, domain, *args, **kwargs):
