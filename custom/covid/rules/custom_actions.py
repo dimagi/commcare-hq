@@ -19,7 +19,7 @@ def close_cases_assigned_to_checkin(checkin_case, rule):
     num_related_updates = 0
     for assigned_case in _get_assigned_cases(checkin_case):
         num_related_updates += 1
-        submission = update_case(
+        (submission, cases) = update_case(
             assigned_case.domain,
             assigned_case.case_id,
             case_properties=blank_properties,
@@ -27,16 +27,16 @@ def close_cases_assigned_to_checkin(checkin_case, rule):
             xmlns=AUTO_UPDATE_XMLNS,
             device_id=__name__ + ".close_cases_assigned_to_checkin",
         )
-        rule.log_submission(submission[0].form_id)
+        rule.log_submission(submission.form_id)
 
-    close_checkin = update_case(
+    (close_checkin_submission, cases) = update_case(
         checkin_case.domain,
         checkin_case.case_id,
         close=True,
         xmlns=AUTO_UPDATE_XMLNS,
         device_id=__name__ + ".close_cases_assigned_to_checkin",
     )
-    rule.log_submission(close_checkin[0].form_id)
+    rule.log_submission(close_checkin_submission.form_id)
 
     return CaseRuleActionResult(
         num_closes=1,

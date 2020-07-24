@@ -3,7 +3,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.app_manager.const import USERCASE_TYPE
 
 
-def associated_user_cases_closed(case, now):
+def associated_user_case_closed(case, now):
     if case.closed:
         return False
 
@@ -11,6 +11,9 @@ def associated_user_cases_closed(case, now):
         return False
 
     usercase = get_usercase_from_checkin(case)
+
+    if usercase is None:
+        return False
 
     if case.domain != usercase.domain:
         return False
@@ -29,8 +32,9 @@ def get_usercase_from_checkin(checkin_case):
         .case_type(USERCASE_TYPE)
         .case_property_query("username", username)
     )
+
     results = query.run().hits
     if not results:
-        raise Exception
+        return None
 
     return CommCareCase.wrap(flatten_result(results[0]))
