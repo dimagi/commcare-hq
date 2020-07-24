@@ -230,11 +230,13 @@ function AddressEntry(question, options) {
     FreeTextEntry.call(self, question, options);
     self.templateType = 'address';
     self.broadcastTopics = [];
+    self.editing = true;
 
     // Callback for the geocoder when an address item is selected. We intercept here and broadcast to
     // subscribers.
     self.geocoderItemCallback = function (item) {
         self.rawAnswer(item.place_name);
+        self.editing = false;
         self.broadcastTopics.forEach(function (broadcastTopic) {
             var broadcastObj = {
                 full: item.place_name,
@@ -266,6 +268,7 @@ function AddressEntry(question, options) {
     // geocoder function called when user presses 'x', broadcast a no answer to subscribers.
     self.geocoderOnClearCallback = function () {
         self.answer(Formplayer.Const.NO_ANSWER);
+        self.editing = true;
         self.broadcastTopics.forEach(function (broadcastTopic) {
             question.parentPubSub.notifySubscribers(Formplayer.Const.NO_ANSWER, broadcastTopic);
         });
@@ -292,8 +295,17 @@ function AddressEntry(question, options) {
         geocoder.on('clear', self.geocoderOnClearCallback);
         geocoder.addTo('#' + self.entryId);
         // Must add the form-control class to the input created by mapbox in order to edit.
-        $('input.mapboxgl-ctrl-geocoder--input').addClass('form-control');
+        var inputEl = $('input.mapboxgl-ctrl-geocoder--input');
+        inputEl.addClass('form-control');
+        inputEl.on('keydown', _.debounce(self._inputOnKeyDown, 200));
+    };
 
+    self._inputOnKeyDown = function () {
+        // On key down, switch to editing mode so we unregister an answer.
+        if (!self.editing) {
+            self.rawAnswer(Formplayer.Const.NO_ANSWER);
+            self.editing = true;
+        }
     };
 }
 AddressEntry.prototype = Object.create(FreeTextEntry.prototype);
@@ -444,7 +456,7 @@ SingleSelectEntry.prototype.receiveValue = function (value) {
     for (var i = 0; i < choices.length; i++) {
         if (choices[i] === value) {
             self.rawAnswer(i + 1);
-            var found = true;
+            found = true;
             break;
         }
     }
@@ -666,7 +678,7 @@ ComboboxEntry.prototype.receiveValue = function (value) {
     for (var i = 0; i < options.length; i++) {
         if (options[i].name === value) {
             self.rawAnswer(options[i].name);
-            var found = true;
+            found = true;
             break;
         }
     }
