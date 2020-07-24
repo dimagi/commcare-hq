@@ -67,6 +67,7 @@ def _patch_gevent_if_required(args, gevent_commands):
 
 def init_hq_python_path():
     _set_source_root_parent('submodules')
+    _set_source_root_parent('extensions')
     _set_source_root(os.path.join('corehq', 'ex-submodules'))
     _set_source_root(os.path.join('custom', '_legacy'))
 
@@ -89,7 +90,11 @@ def _set_source_root_parent(source_root_parent):
 
     """
     filedir = os.path.dirname(__file__)
-    submodules_list = os.listdir(os.path.join(filedir, source_root_parent))
+    dir = os.path.join(filedir, source_root_parent)
+    if not os.path.exists(dir):
+        return
+
+    submodules_list = os.listdir(dir)
     for d in submodules_list:
         if d == "__init__.py" or d == '.' or d == '..':
             continue
@@ -109,7 +114,6 @@ def run_patches():
     mimetypes.init()
 
     patch_jsonfield()
-    patch_assertItemsEqual()
 
     import django
     _setup_once.setup = django.setup
@@ -134,11 +138,6 @@ def patch_jsonfield():
         return value
 
     JSONField.to_python = to_python
-
-
-def patch_assertItemsEqual():
-    import unittest
-    unittest.TestCase.assertItemsEqual = unittest.TestCase.assertCountEqual
 
 
 # HACK monkey-patch django setup to prevent second setup by django_nose

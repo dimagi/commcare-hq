@@ -36,8 +36,8 @@ class CaseOwnerReportFilter(BaseReportFilter):
         if self.request.can_access_all_locations and EMWF.show_deactivated_data(self.value):
             return query_deactivated_data(query, self.domain)
 
-        # otherwise only return explicit matches
-        case_owners = get_case_owners(self.request, self.domain, self.value)
+        selected_user_types = [v['id'] for v in self.value]
+        case_owners = get_case_owners(self.request, self.domain, selected_user_types)
         return query.owner(case_owners)
 
 

@@ -1,11 +1,13 @@
 from contextlib import contextmanager
 from datetime import date, datetime, time
 
+from django.test import override_settings
 from django.db.models import Q
 from django.test import TestCase
 
 from mock import call, patch
 
+from corehq import toggles
 from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedModule,
@@ -59,6 +61,7 @@ from corehq.messaging.scheduling.tests.util import (
 )
 from corehq.messaging.tasks import (
     run_messaging_rule,
+    run_messaging_rule_for_shard,
     sync_case_for_messaging,
     sync_case_for_messaging_rule,
 )
@@ -101,11 +104,11 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             default_timezone='America/New_York',
         )
         cls.domain_obj.save()
-        cls.user = CommCareUser.create(cls.domain, 'test1', 'abc')
+        cls.user = CommCareUser.create(cls.domain, 'test1', 'abc', None, None)
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
         cls.domain_obj.delete()
         super(CaseRuleSchedulingIntegrationTest, cls).tearDownClass()
 
@@ -1047,9 +1050,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             self.assertEqual(instances[0].schedule_revision, schedule.get_schedule_revision())
             self.assertTrue(instances[0].active)
 
-    @run_with_all_backends
-    @patch('corehq.messaging.tasks.sync_case_for_messaging_rule.delay')
-    def test_run_messaging_rule(self, task_patch):
+    def _setup_rule(self):
         schedule = AlertSchedule.create_simple_alert(
             self.domain,
             SMSContent(message={'en': 'Hello'})
@@ -1064,17 +1065,47 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
         )
 
         AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        return rule.pk
 
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
+    @patch('corehq.messaging.tasks.sync_case_for_messaging_rule.delay')
+    @patch('corehq.apps.es.es_query.ESQuery.count', return_value=10)
+    def test_run_messaging_rule(self, es_patch, task_patch):
+        rule_id = self._setup_rule()
         with create_case(self.domain, 'person') as case1, create_case(self.domain, 'person') as case2:
-            run_messaging_rule(self.domain, rule.pk)
+            run_messaging_rule(self.domain, rule_id)
             self.assertEqual(task_patch.call_count, 2)
+            self.assertEqual(es_patch.call_count, 1)
             task_patch.assert_has_calls(
                 [
-                    call(self.domain, case1.case_id, rule.pk),
-                    call(self.domain, case2.case_id, rule.pk),
+                    call(self.domain, case1.case_id, rule_id),
+                    call(self.domain, case2.case_id, rule_id),
                 ],
                 any_order=True
             )
+
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    @patch('corehq.messaging.tasks.sync_case_chunk_for_messaging_rule.delay')
+    @patch('corehq.messaging.tasks.run_messaging_rule_for_shard.delay')
+    @patch('corehq.apps.es.es_query.ESQuery.count', return_value=10)
+    def test_run_messaging_rule_sharded(self, es_patch, shard_rule_patch, sync_patch):
+        rule_id = self._setup_rule()
+        with create_case(self.domain, 'person') as case1, create_case(self.domain, 'person') as case2:
+            run_messaging_rule(self.domain, rule_id)
+            shard_rule_patch.assert_has_calls(
+                [
+                    call(self.domain, rule_id, 'default')
+                ],
+                any_order=True
+            )
+            run_messaging_rule_for_shard(self.domain, rule_id, 'default')
+            sync_patch.assert_has_calls(
+                [
+                    call(self.domain, (case1.case_id, case2.case_id), rule_id)
+                ],
+                any_order=True
+            )
+            self.assertEqual(es_patch.call_count, 1)
 
     @run_with_all_backends
     @patch('corehq.messaging.scheduling.models.content.SMSContent.send')

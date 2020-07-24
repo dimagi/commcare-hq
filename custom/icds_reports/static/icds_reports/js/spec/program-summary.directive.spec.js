@@ -12,10 +12,7 @@ describe('Program Summary Directive', function () {
     pageData.registerUrl('icds_locations', 'icds_locations');
 
     beforeEach(module('icdsApp', function ($provide) {
-        $provide.constant("userLocationId", null);
-        $provide.constant("haveAccessToAllLocations", false);
-        $provide.constant("isAlertActive", false);
-        $provide.constant("isMobile", false);
+        utils.provideDefaultConstants($provide, {});
         $provide.constant("navMetadata", {
             maternal_child: { 'label': 'Maternal and Child Nutrition' },
             icds_cas_reach: { 'label': 'ICDS-CAS Reach' },

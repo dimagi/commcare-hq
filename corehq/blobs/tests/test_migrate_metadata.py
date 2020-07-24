@@ -58,7 +58,6 @@ class TestMigrateBackend(TestCase):
     sql_reindex_accessors = [
         mod.CaseUploadFileMetaReindexAccessor,
         mod.DemoUserRestoreReindexAccessor,
-        mod.IcdsFileReindexAccessor,
     ]
 
     @classmethod
@@ -70,7 +69,7 @@ class TestMigrateBackend(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
         super(TestMigrateBackend, cls).tearDownClass()
 
     def CaseUploadFileMeta_save(self, obj, key):
@@ -95,12 +94,6 @@ class TestMigrateBackend(TestCase):
         obj.save()
         code = CODES.demo_user_restore
         return SqlDoc(obj, self.user.domain, uid, code, "text/xml", 87)
-
-    def IcdsFile_save(self, obj, key):
-        obj.blob_id = key
-        obj.data_type = "unknown"
-        obj.save()
-        return SqlDoc(obj, "icds-cas", "IcdsFile", CODES.tempfile, None, 0)
 
     def setUp(self):
         super(TestMigrateBackend, self).setUp()
@@ -153,7 +146,7 @@ class TestMigrateBackend(TestCase):
         with tempdir() as tmp:
             filename = join(tmp, "file.txt")
             # do migration
-            migrated, skipped = MIGRATIONS[self.slug].migrate(filename)
+            migrated, skipped = MIGRATIONS[self.slug]().migrate(filename)
             self.assertGreaterEqual(migrated, self.test_size)
 
             # verify: migration state recorded
@@ -189,7 +182,7 @@ class TestMigrateBackend(TestCase):
     def test_resume_migration(self):
         with tempdir() as tmp:
             filename = join(tmp, "file.txt")
-            migrator = MIGRATIONS[self.slug]
+            migrator = MIGRATIONS[self.slug]()
             migrated1, skipped = migrator.migrate(filename)
             self.assertGreaterEqual(migrated1, self.test_size)
             self.assertFalse(skipped)
@@ -200,7 +193,7 @@ class TestMigrateBackend(TestCase):
 
             # resumed migration: all docs already migrated, so BlobMeta records
             # exist, but should not cause errors on attempting to insert them
-            migrated2, skipped = MIGRATIONS[self.slug].migrate(filename)
+            migrated2, skipped = MIGRATIONS[self.slug]().migrate(filename)
             self.assertEqual(migrated1, migrated2)
             self.assertFalse(skipped)
 

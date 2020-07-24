@@ -39,8 +39,11 @@
                     <leaflet lf-center="$ctrl.center" layers="$ctrl.layers" markers="$ctrl.markers" height="600px" width="100%"></leaflet>
                 </div>
                 <div class="row no-margin black">
-                    <h2 class="center">PSE Photo Submissions</h2>
-                    <div uib-carousel active="active" interval="0" style="height: 300px;" >
+                    <h2 class="text-center">PSE Photo Submissions</h2>
+                    <div class="alert alert-info text-center col-xs-12 col-md-offset-2 col-md-8 title" ng-show="$ctrl.isOlderThan90Days()">
+                        PSE photos older than 90 days are not available on the ICDS CAS Dashboard
+                    </div>
+                    <div uib-carousel active="active" interval="0" style="height: 300px;" ng-if="$ctrl.data.images.length">
                         <div uib-slide ng-repeat="images in $ctrl.data.images track by $index" index="$index">
                             <div style="display: inline-block; width: 200px; height: 200px" ng-repeat="img in images track by img.id" ng-class="{'blank-image': !img.image}">
                                 <img class="slider-image" ng-src="{$ img.image $}" style="width: 200px; height: 200px">
@@ -82,6 +85,12 @@
                     <h4>Beneficiary Information:</h4>
                     <div><button class="btn btn-info btn-sm right" ng-click="$ctrl.goToBeneficiaryTable()">Back</button></div>
                     <div class="form-horizontal">
+                        <div ng-if="$ctrl.haveAccessToFeatures" class="form-group">
+                            <label class="control-label col-sm-2" for="name">Status: </label>
+                            <div class="col-sm-9">
+                                <span class="icds-control">{$ $ctrl.beneficiary.beneficiary_status $}</span>
+                            </div>
+                        </div>
                         <div class="form-group">
                             <label class="control-label col-sm-2" for="name">Name: </label>
                             <div class="col-sm-9">

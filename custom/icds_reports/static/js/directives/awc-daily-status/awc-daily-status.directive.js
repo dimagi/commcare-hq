@@ -3,10 +3,10 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function AWCDailyStatusController($scope, $routeParams, $location, $filter, icdsCasReachService, locationsService,
     dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
-    baseControllersService, isAlertActive, isMobile) {
+    baseControllersService, isAlertActive, isMobile, haveAccessToFeatures) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
-        false, isMobile);
+        haveAccessToFeatures, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
     vm.usePercentage = false;
@@ -18,7 +18,7 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
     vm.data = {
         legendTitle: 'Percentage AWCs',
     };
-    vm.filters = ['month', 'age', 'gender'];
+    vm.filters = ['month', 'age', 'gender', 'data_period'];
     vm.rightLegend = {
         info: 'Of the total number of AWCs, the percentage of AWCs that were open yesterday.',
     };
@@ -80,6 +80,7 @@ AWCDailyStatusController.$inject = [
     '$scope', '$routeParams', '$location', '$filter',
     'icdsCasReachService', 'locationsService', 'dateHelperService', 'navigationService', 'userLocationId',
     'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive', 'isMobile',
+    'haveAccessToFeatures',
 ];
 
 window.angular.module('icdsApp').directive('awcDailyStatus', ['templateProviderService', function (templateProviderService) {

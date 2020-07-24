@@ -61,8 +61,22 @@ hqDefine('icds_reports/js/spec/utils', function () {
             {id: '72', name: '60-72 months'},
         ]);
     };
+    module.provideQuarters = function ($provide) {
+        $provide.constant('quartersOfYear', [
+            {id: '1', name: 'Jan-Mar'},
+            {id: '2', name: 'Apr-Jun'},
+            {id: '3', name: 'Jul-Sep'},
+            {id: '4', name: 'Oct-Dec'},
+        ]);
+    };
+    module.provideDataPeriods = function ($provide) {
+        $provide.constant('dataPeriods', [
+            {id: 'month', name: 'Monthly'},
+            {id: 'quarter', name: 'Quarterly'},
+        ]);
+    };
     module.provideDefaultConstants = function ($provide, options) {
-        assertProperties.assert(options, [], ['includeGenders', 'includeAges', 'overrides']);
+        assertProperties.assert(options, [], ['includeGenders', 'includeAges', 'includeQuarters', 'includeDataPeriods', 'overrides']);
         // overrides should be an object with values of any overrides keyed by the same
         // as the below strings
         function getOverrideOrDefault(key, defaultValue) {
@@ -81,9 +95,16 @@ hqDefine('icds_reports/js/spec/utils', function () {
         if (options['includeAges']) {
             module.provideAges($provide);
         }
+        if (options['includeQuarters']) {
+            module.provideQuarters($provide);
+        }
+        if (options['includeDataPeriods']) {
+            module.provideDataPeriods($provide);
+        }
         provideOverrideOrDefault("userLocationId", null);
         provideOverrideOrDefault("isAlertActive", false);
         provideOverrideOrDefault("haveAccessToAllLocations", false);
+        provideOverrideOrDefault("haveAccessToFeatures", false);
         provideOverrideOrDefault("isMobile", false);
     };
     return module;

@@ -1,4 +1,4 @@
-{% load staticfiles %}
+{% load static %}
 <div cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
   <div class="app-bg h-100vh overflow-hidden" ng-show="!$ctrl.filtersOpen && ($ctrl.selectedDate >= $ctrl.sddStartDate)" ng-click="$ctrl.showSortPopup = false">
       <div class="top-section p-3" style="padding-bottom: 25vh">
@@ -10,7 +10,9 @@
           </div>
           {% include 'icds_reports/icds_app/mobile/partials/section-heading.html' %}
       </div>
-      <div class="summary-list" id="summaryList">
+      <reassignment-message ng-show="$ctrl.showReassignmentMessage() && $ctrl.haveAccessToFeatures" selected-location="$ctrl.selectedLocation()"
+                            selected-date="$ctrl.selectedDate"></reassignment-message>
+      <div class="summary-list" id="summaryList" ng-if="!$ctrl.showReassignmentMessage()">
         <sortable-kpi data="$ctrl.sortableInputKpiData"></sortable-kpi>
       </div>
   </div>

@@ -1707,9 +1707,10 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.data = {};
     vm.label = "AWC Report";
     vm.haveAccessToAllLocations = haveAccessToAllLocations;
+    vm.haveAccessToFeatures = haveAccessToFeatures;
     vm.tooltipPlacement = "right";
     vm.step = $routeParams.step;
-    vm.filters = ['gender', 'age'];
+    vm.filters = ['data_period', 'gender', 'age'];
     vm.userLocationId = userLocationId;
     vm.dataNotEntered = "Data Not Entered";
     vm.isAlertActive = isAlertActive;
@@ -1798,7 +1799,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 'heading': 'Mother Phone Number',
                 'class': 'medium-col',
                 'value': renderMotherPhoneNumber
-            },
+            }
         ],
         'pregnant': [
             {
@@ -1895,7 +1896,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             },
             {
                 'mData': 'institutional_delivery',
-                'heading': 'Institutional Delivery (Y/N)',
+                'heading': 'Institutional Delivery (Yes/No)',
                 'class': 'medium-col',
                 'value': renderInstitutionalDeliveryInMonth
             },
@@ -1925,6 +1926,16 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             }
         ],
     };
+
+    if (vm.haveAccessToFeatures) {
+        vm.awcReportTableData['beneficiary'].push(
+        {
+            'mData': 'beneficiary_status',
+            'heading': 'Status',
+            'class': 'medium-col',
+            'value': renderBeneficairyStatus
+        })
+    }
 
     vm.dtColumns = [];
     if (vm.awcReportTableData[vm.step] && !isMobile) {
@@ -2060,6 +2071,10 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
 
     function renderMotherPhoneNumber(data, type, full) {
         return full.mother_phone_number || vm.dataNotEntered;
+    }
+
+    function renderBeneficairyStatus(data, type, full) {
+        return full.beneficiary_status || vm.dataNotEntered;
     }
 
     vm.showTable = true;
@@ -2263,6 +2278,16 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     $scope.$on('filtersChange', function () {
         vm.getDataForStep(vm.step);
     });
+
+    vm.isOlderThan90Days = function () {
+        var selectedDate = dateHelperService.getSelectedDate();
+        var currentDate = new Date();
+        currentDate.setHours(0, 0, 0, 0);
+        var diffTime = currentDate - selectedDate;
+        var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        return diffDays > 90;
+    };
 
     vm.getPopoverContent = function (weightRecorded, heightRecorded, ageInMonths, type) {
         var html = '';
@@ -2890,21 +2915,21 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             route: "/awc_reports/beneficiary",
             label: "Child Beneficiaries List",
             image: "/static/icds_reports/mobile/images/babyboy.png",
-            isMobile: haveAccessToFeatures,
+            isMobile: true,
         },
         {
             id: 'pregnant',
             route: "/awc_reports/pregnant",
             label: "Pregnant Women",
             image: "/static/icds_reports/mobile/images/pregnant.png",
-            isMobile: haveAccessToFeatures,
+            isMobile: true,
         },
         {
             id: 'lactating',
             route: "/awc_reports/lactating",
             label: "Lactating Women",
             image: "/static/icds_reports/mobile/images/lactatingwoman.png",
-            isMobile: haveAccessToFeatures,
+            isMobile: true,
         },
     ];
     vm.mobileSteps = _.filter(steps, function (step) {

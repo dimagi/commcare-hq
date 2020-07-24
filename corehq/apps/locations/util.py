@@ -1,12 +1,14 @@
+import re
 import tempfile
 from collections import OrderedDict
+
+from django.db.models import Q
 
 from memoized import memoized
 
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.loosechange import map_reduce
-from django.db.models import Q
 from soil import DownloadBase
 from soil.util import expose_blob_download
 
@@ -205,7 +207,7 @@ class LocationExporter(object):
         ])
         for loc_type in self.location_types:
             additional_headers = []
-            additional_headers.extend('data: {}'.format(f.slug) for f in self.data_model.field_set.all())
+            additional_headers.extend('data: {}'.format(f.slug) for f in self.data_model.get_fields())
             if self.include_consumption_flag and loc_type.name not in self.administrative_types:
                 additional_headers.extend('consumption: {}'.format(code) for code in self.product_codes)
             additional_headers.append(LOCATION_SHEET_HEADERS_OPTIONAL['uncategorized_data'])
@@ -238,7 +240,7 @@ class LocationExporter(object):
                     'do_delete': '',
                 }
                 row = [row_data[attr] for attr in LOCATION_SHEET_HEADERS_BASE.keys()]
-                for field in self.data_model.field_set.all():
+                for field in self.data_model.get_fields():
                     row.append(model_data.get(field.slug, ''))
 
                 if include_consumption:
@@ -336,3 +338,8 @@ def get_locations_from_ids(location_ids, domain, base_queryset=None):
     if len(locations) != expected_count:
         raise SQLLocation.DoesNotExist('One or more of the locations was not found.')
     return locations
+
+
+def valid_location_site_code(site_code):
+    slug_regex = re.compile(r'^[-_\w\d]+$')
+    return slug_regex.match(site_code)

@@ -8,6 +8,7 @@ from django.db import DataError, transaction
 from celery.schedules import crontab
 
 from corehq.util.metrics import metrics_gauge_task, metrics_counter
+from corehq.util.metrics.const import MPM_MAX
 from dimagi.utils.couch import (
     CriticalSection,
     get_redis_client,
@@ -53,6 +54,8 @@ from corehq.messaging.util import use_phone_entries
 from corehq.util.celery_utils import no_result_task
 from corehq.util.timezones.conversions import ServerTime
 
+from corehq.apps.sms.const import DEFAULT_SMS_DAILY_LIMIT
+
 MAX_TRIAL_SMS = 50
 
 
@@ -67,7 +70,11 @@ def remove_from_queue(queued_sms):
 
     sms.publish_change()
 
-    tags = {'backend': sms.backend_api}
+    tags = {'backend': sms.backend_api, 'icds_indicator': ''}
+    if isinstance(sms.custom_metadata, dict) and 'icds_indicator' in sms.custom_metadata:
+        tags.update({
+            'icds_indicator': sms.custom_metadata['icds_indicator']
+        })
     if sms.direction == OUTGOING and sms.processed and not sms.error:
         create_billable_for_sms(sms)
         metrics_counter('commcare.sms.outbound_succeeded', tags=tags)
@@ -313,7 +320,7 @@ class OutboundDailyCounter(object):
             # If the message isn't tied to a domain, still impose a limit.
             # Outbound messages not tied to a domain can happen when unregistered
             # contacts opt in or out from a gateway.
-            return 10000
+            return DEFAULT_SMS_DAILY_LIMIT
 
     def can_send_outbound_sms(self, queued_sms):
         """
@@ -327,10 +334,11 @@ class OutboundDailyCounter(object):
             # processing the backlog right away.
             self.decrement()
             delay_processing(queued_sms, 60)
-
-            # Log the fact that we reached this limit
+            domain = self.domain_object.name if self.domain_object else ''
+            # Log the fact that we reached this limit and send alert on first breach
+            # via Django Signals if needed
             DailyOutboundSMSLimitReached.create_for_domain_and_date(
-                self.domain_object.name if self.domain_object else '',
+                domain,
                 self.date
             )
             return False
@@ -589,4 +597,5 @@ def queued_sms():
     return QueuedSMS.objects.count()
 
 
-metrics_gauge_task('commcare.sms.queued', queued_sms, run_every=crontab())
+metrics_gauge_task('commcare.sms.queued', queued_sms, run_every=crontab(),
+    multiprocess_mode=MPM_MAX)

@@ -5,6 +5,7 @@ from django.conf import settings
 from celery.task import task
 
 from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 
 from corehq.apps.commtrack.models import (
@@ -13,7 +14,10 @@ from corehq.apps.commtrack.models import (
     sync_supply_point,
 )
 from corehq.apps.es.users import UserES
-from corehq.apps.locations.bulk_management import new_locations_import
+from corehq.apps.locations.bulk_management import (
+    LocationUploadResult,
+    new_locations_import,
+)
 from corehq.apps.locations.const import LOCK_LOCATIONS_TIMEOUT
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.util import dump_locations
@@ -100,36 +104,40 @@ def download_locations_async(domain, download_id, include_consumption, headers_o
 @serial_task('{domain}', default_retry_delay=5 * 60, timeout=LOCK_LOCATIONS_TIMEOUT, max_retries=12,
              queue=settings.CELERY_MAIN_QUEUE, ignore_result=False)
 def import_locations_async(domain, file_ref_id, user_id):
-    importer = MultiExcelImporter(import_locations_async, file_ref_id)
-    user = CouchUser.get_by_user_id(user_id)
-    results = new_locations_import(domain, importer, user)
-    importer.mark_complete()
+    try:
+        importer = MultiExcelImporter(import_locations_async, file_ref_id)
+        user = CouchUser.get_by_user_id(user_id)
+        results = new_locations_import(domain, importer, user)
+        importer.mark_complete()
 
-    if LOCATIONS_IN_UCR.enabled(domain):
-        # We must rebuild datasources once the location import is complete in
-        # case child locations were not updated, but a parent location was.
-        # For example if a state was updated, the county may reference the state
-        # and need to have its row updated
-        datasources = get_datasources_for_domain(domain, "Location", include_static=True)
-        for datasource in datasources:
-            rebuild_indicators_in_place.delay(
-                datasource.get_id, initiated_by=user.username, source='import_locations'
+        if LOCATIONS_IN_UCR.enabled(domain):
+            # We must rebuild datasources once the location import is complete in
+            # case child locations were not updated, but a parent location was.
+            # For example if a state was updated, the county may reference the state
+            # and need to have its row updated
+            datasources = get_datasources_for_domain(domain, "Location", include_static=True)
+            for datasource in datasources:
+                rebuild_indicators_in_place.delay(
+                    datasource.get_id, initiated_by=user.username, source='import_locations'
+                )
+
+        if getattr(settings, 'CELERY_TASK_ALWAYS_EAGER', False):
+            # Log results because they are not sent to the view when
+            # CELERY_TASK_ALWAYS_EAGER is true
+            logging.getLogger(__name__).info(
+                "import_locations_async %s results: %s -> success=%s",
+                file_ref_id,
+                " ".join(
+                    "%s=%r" % (name, getattr(results, name))
+                    for name in ["messages", "warnings", "errors"]
+                    if getattr(results, name)
+                ),
+                results.success,
             )
-
-    if getattr(settings, 'CELERY_TASK_ALWAYS_EAGER', False):
-        # Log results because they are not sent to the view when
-        # CELERY_TASK_ALWAYS_EAGER is true
-        logging.getLogger(__name__).info(
-            "import_locations_async %s results: %s -> success=%s",
-            file_ref_id,
-            " ".join(
-                "%s=%r" % (name, getattr(results, name))
-                for name in ["messages", "warnings", "errors"]
-                if getattr(results, name)
-            ),
-            results.success,
-        )
-
+    except Exception as e:
+        notify_exception(None, message=str(e))
+        results = LocationUploadResult()
+        results.errors = [str(e)]
     return {
         'messages': {
             'messages': results.messages,
@@ -146,7 +154,7 @@ def update_users_at_locations(domain, location_ids, supply_point_ids, ancestor_i
     Update location fixtures for users given locations
     """
     from corehq.apps.users.models import CouchUser, update_fixture_status_for_users
-    from corehq.apps.locations.dbaccessors import user_ids_at_locations
+    from corehq.apps.locations.dbaccessors import mobile_user_ids_at_locations
     from corehq.apps.fixtures.models import UserFixtureType
     from dimagi.utils.couch.database import iter_docs
 
@@ -155,7 +163,7 @@ def update_users_at_locations(domain, location_ids, supply_point_ids, ancestor_i
         close_supply_point_case(domain, supply_point_id)
 
     # unassign users from locations
-    unassign_user_ids = user_ids_at_locations(location_ids)
+    unassign_user_ids = mobile_user_ids_at_locations(location_ids)
     for doc in iter_docs(CouchUser.get_db(), unassign_user_ids):
         user = CouchUser.wrap_correctly(doc)
         for location_id in location_ids:
@@ -167,13 +175,13 @@ def update_users_at_locations(domain, location_ids, supply_point_ids, ancestor_i
                 user.unset_location_by_id(location_id, fall_back_to_next=True)
 
     # update fixtures for users at ancestor locations
-    user_ids = user_ids_at_locations(ancestor_ids)
+    user_ids = mobile_user_ids_at_locations(ancestor_ids)
     update_fixture_status_for_users(user_ids, UserFixtureType.LOCATION)
 
 
 def deactivate_users_at_location(location_id):
-    from corehq.apps.locations.dbaccessors import user_ids_at_locations
-    user_ids = user_ids_at_locations([location_id])
+    from corehq.apps.locations.dbaccessors import mobile_user_ids_at_locations
+    user_ids = mobile_user_ids_at_locations([location_id])
     for doc in iter_docs(CouchUser.get_db(), user_ids):
         user = CouchUser.wrap_correctly(doc)
         user.is_active = False

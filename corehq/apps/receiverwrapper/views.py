@@ -6,10 +6,13 @@ from django.views.decorators.http import require_POST
 
 import couchforms
 from casexml.apps.case.xform import get_case_updates, is_device_report
+from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import Permissions
 from couchforms import openrosa_response
 from couchforms.const import MAGIC_PROPERTY, BadRequest
 from couchforms.getters import MultimediaBug
-from dimagi.utils.decorators.profile import profile_prod
+from dimagi.utils.decorators.profile import profile_dump
 from dimagi.utils.logging import notify_exception
 
 from corehq import toggles
@@ -17,12 +20,14 @@ from corehq.apps.domain.auth import (
     BASIC,
     DIGEST,
     NOAUTH,
+    API_KEY,
     determine_authtype_from_request,
 )
 from corehq.apps.domain.decorators import (
     check_domain_migration,
     login_or_basic_ex,
     login_or_digest_ex,
+    login_or_api_key_ex,
     two_factor_exempt,
 )
 from corehq.apps.locations.permissions import location_safe
@@ -56,7 +61,7 @@ PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_SUBMISSION_LIMIT')
 PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 
 
-@profile_prod('commcare_receiverwapper_process_form.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
+@profile_dump('commcare_receiverwapper_process_form.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
 
@@ -193,6 +198,7 @@ def _record_metrics(tags, submission_type, response, timer=None, xform=None):
     metrics_counter('commcare.xform_submissions.count', tags=tags)
 
 
+@waf_allow('XSS_BODY')
 @location_safe
 @csrf_exempt
 @require_POST
@@ -308,6 +314,21 @@ def _secure_post_basic(request, domain, app_id=None):
     )
 
 
+@login_or_api_key_ex()
+@require_permission(Permissions.edit_data)
+@require_permission(Permissions.access_api)
+def _secure_post_api_key(request, domain, app_id=None):
+    """only ever called from secure post"""
+    return _process_form(
+        request=request,
+        domain=domain,
+        app_id=app_id,
+        user_id=request.couch_user.get_id,
+        authenticated=True,
+    )
+
+
+@waf_allow('XSS_BODY')
 @location_safe
 @csrf_exempt
 @require_POST
@@ -317,6 +338,7 @@ def secure_post(request, domain, app_id=None):
         DIGEST: _secure_post_digest,
         BASIC: _secure_post_basic,
         NOAUTH: _noauth_post,
+        API_KEY: _secure_post_api_key,
     }
 
     if request.GET.get('authtype'):

@@ -23,8 +23,8 @@ def drop_suffix(doc_type):
 class CouchDataLoader(DataLoader):
     slug = 'couch'
 
-    def __init__(self, stdout=None, stderr=None):
-        super(CouchDataLoader, self).__init__(stdout, stderr)
+    def __init__(self, object_filter=None, stdout=None, stderr=None):
+        super().__init__(object_filter, stdout, stderr)
         self._dbs = {}
         self.success_counter = Counter()
 
@@ -45,13 +45,19 @@ class CouchDataLoader(DataLoader):
             total_object_count += 1
             doc = json.loads(obj_string)
             doc_type = drop_suffix(doc['doc_type'])
-            db = self._get_db_for_doc_type(doc_type)
-            db.save(doc)
+            if self.filter_doc(doc_type):
+                db = self._get_db_for_doc_type(doc_type)
+                db.save(doc)
 
         for db in self._dbs.values():
             db.commit()
 
         return total_object_count, self.success_counter
+
+    def filter_doc(self, doc_type):
+        if not self.object_filter:
+            return True
+        return self.object_filter.findall(doc_type)
 
 
 class LoaderCallback(IterDBCallback):

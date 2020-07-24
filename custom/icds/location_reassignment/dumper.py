@@ -37,7 +37,10 @@ class Dumper(object):
         headers = [[location_type, DUMPER_COLUMNS]
                    for location_type in location_types]
         stream = io.BytesIO()
-        self._setup_site_codes(list(transitions_per_location_type.values()))
+        all_transitions = []
+        for transitions in transitions_per_location_type.values():
+            all_transitions.extend(transitions)
+        self._setup_site_codes(all_transitions)
         rows = self._rows(transitions_per_location_type).items()
         export_raw(headers, rows, stream)
         stream.seek(0)
@@ -64,52 +67,42 @@ class Dumper(object):
         # find all sites codes of the destination/final locations
         new_site_codes = []
         for transition in transitions:
-            for operation, details in transition.items():
-                # in case of split final site codes is a list itself and is the value in the dict
-                if operation == SPLIT_OPERATION:
-                    [new_site_codes.extend(to_site_codes) for to_site_codes in list(details.values())]
-                else:
-                    new_site_codes.extend(list(details.keys()))
+            new_site_codes.extend(transition.new_site_codes)
         return new_site_codes
 
     @staticmethod
     def _get_old_site_codes(transitions):
-        # find all sites codes of the destination/final locations
+        # find all sites codes of the old locations
         old_site_codes = []
         for transition in transitions:
-            for operation, details in transition.items():
-                # in case of merge old site code is the key in the dict
-                if operation == SPLIT_OPERATION:
-                    old_site_codes.extend(list(details.keys()))
-                # in case of merge old site codes is a list itself and is the value in the dict
-                elif operation == MERGE_OPERATION:
-                    [old_site_codes.extend(from_site_codes) for from_site_codes in list(details.values())]
-                else:
-                    old_site_codes.extend(list(details.values()))
+            old_site_codes.extend(transition.old_site_codes)
         return old_site_codes
 
     def _rows(self, transitions_per_location_type):
         rows = {location_type: [] for location_type in transitions_per_location_type}
         for location_type, transitions in transitions_per_location_type.items():
-            for operation, details in transitions.items():
-                rows[location_type].extend(self._get_rows_for_operation(operation, details))
+            for transition in transitions:
+                rows[location_type].extend(self._get_rows_for_operation(transition))
         return rows
 
-    def _get_rows_for_operation(self, operation, details):
+    def _get_rows_for_operation(self, transition):
+        operation = transition.operation
         rows = []
         if operation == MERGE_OPERATION:
-            rows.extend(self._get_rows_for_merge(details))
+            rows.extend(self._get_rows_for_merge(transition))
         elif operation == SPLIT_OPERATION:
-            rows.extend(self._get_rows_for_split(details))
+            rows.extend(self._get_rows_for_split(transition))
         elif operation in [MOVE_OPERATION, EXTRACT_OPERATION]:
-            for destination, source in details.items():
-                rows.append(self._build_row(source, operation, destination))
+            source = transition.old_site_codes[0]
+            destination = transition.new_site_codes[0]
+            rows.append(self._build_row(source, operation, destination))
         return rows
 
-    def _get_rows_for_merge(self, details):
+    def _get_rows_for_merge(self, transition):
+        sources = transition.old_site_codes
+        destination = transition.new_site_codes[0]
         return [
             self._build_row(source, MERGE_OPERATION, destination)
-            for destination, sources in details.items()
             for source in sources
         ]
 
@@ -119,10 +112,11 @@ class Dumper(object):
                 destination in self.archived_sites_codes,
                 self._get_count_of_cases_owned(source)]
 
-    def _get_rows_for_split(self, details):
+    def _get_rows_for_split(self, transition):
+        source = transition.old_site_codes[0]
+        destinations = transition.new_site_codes
         return [
             self._build_row(source, SPLIT_OPERATION, destination)
-            for source, destinations in details.items()
             for destination in destinations
         ]
 

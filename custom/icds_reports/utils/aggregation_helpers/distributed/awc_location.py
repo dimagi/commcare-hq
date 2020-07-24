@@ -62,7 +62,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
                 'awc_name': location['name'].replace("\n", ""),
                 'awc_site_code': location['site_code'],
                 'awc_is_test': 1 if metadata.get('is_test_location') == 'test' else 0,
-                'awc_deprecates': ','.join(metadata.get('deprecates', [])),
+                'awc_deprecates': metadata.get('deprecates'),
                 'awc_deprecated_at': metadata.get("deprecated_at"),
             }
 
@@ -79,7 +79,7 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
                 })
                 if loc_type == 'supervisor':
                     loc.update({
-                        'supervisor_deprecates': ','.join(metadata.get('deprecates', [])),
+                        'supervisor_deprecates': metadata.get('deprecates'),
                         'supervisor_deprecated_at': metadata.get("deprecated_at"),
                     })
                 if loc_type in ('block', 'district', 'state'):
@@ -310,6 +310,6 @@ class LocationAggregationDistributedHelper(BaseICDSAggregationDistributedHelper)
 def _get_all_locations_for_domain(domain):
     return (
         SQLLocation.objects
-        .filter(domain=domain, is_archived=False)
+        .filter(domain=domain)
         .values('pk', 'parent_id', 'metadata', 'name', 'location_id', 'location_type__code', 'site_code')
     )

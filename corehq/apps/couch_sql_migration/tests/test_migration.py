@@ -343,7 +343,7 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
             yield
 
 
-IGNORE = object()
+IGNORE = ANY
 
 
 @contextmanager
@@ -490,7 +490,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         form_id = uuid.uuid4().hex
         case_id = uuid.uuid4().hex
         owner_id = uuid.uuid4().hex
-        case_block = CaseBlock(
+        case_block = CaseBlock.deprecated_init(
             create=True,
             case_id=case_id,
             case_type='person',
@@ -502,7 +502,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         submit_case_blocks(case_block, domain=self.domain_name, form_id=form_id)
 
         # submit a new form with a different case update
-        case_block = CaseBlock(
+        case_block = CaseBlock.deprecated_init(
             create=True,
             case_id=case_id,
             case_type='newtype',
@@ -642,7 +642,7 @@ class MigrationTestCase(BaseMigrationTestCase):
     def test_basic_case_migration_case_name(self):
         case_id = uuid.uuid4().hex
         submit_case_blocks(
-            CaseBlock(
+            CaseBlock.deprecated_init(
                 case_id,
                 case_type='migrate',
                 create=True,
@@ -652,7 +652,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         )
 
         submit_case_blocks(
-            CaseBlock(
+            CaseBlock.deprecated_init(
                 case_id,
                 update={'name': 'test21'},
             ).as_text(),
@@ -1095,27 +1095,27 @@ class MigrationTestCase(BaseMigrationTestCase):
 
     def test_delete_user_during_migration(self):
         from corehq.apps.users.models import CommCareUser
-        user = CommCareUser.create(self.domain_name, "mobile-user", "123")
+        user = CommCareUser.create(self.domain_name, "mobile-user", "123", None, None)
         # NOTE user is deleted when domain is deleted in tearDown
         with self.patch_migration_chunk_size(1):
             self.do_migration(live=True, diffs=IGNORE)
         self.assert_backend("sql")
         with self.assertRaises(NotAllowed):
-            user.retire()
+            user.retire(deleted_by=None)
         with self.assertRaises(NotAllowed):
-            user.unretire()
+            user.unretire(unretired_by=None)
 
         clear_local_domain_sql_backend_override(self.domain_name)
         self.assert_backend("couch")
         with self.assertRaises(NotAllowed):
-            user.retire()
+            user.retire(deleted_by=None)
         with self.assertRaises(NotAllowed):
-            user.unretire()
+            user.unretire(unretired_by=None)
 
         self.do_migration(finish=True)
         self.do_migration(COMMIT)
-        user.retire()
-        user.unretire()
+        user.retire(deleted_by=None)
+        user.unretire(unretired_by=None)
 
     def test_delete_cases_during_migration(self):
         from corehq.apps.hqcase.tasks import delete_exploded_cases
@@ -1405,6 +1405,22 @@ class MigrationTestCase(BaseMigrationTestCase):
         ])
         self.do_migration(forms="missing")
 
+    def test_case_with_unprocessed_case_close_form(self):
+        # form state=normal, initial_processing_complete=false
+        self.submit_form(make_test_form("one", age=28))
+        with self.skip_case_and_ledger_updates("two"):
+            two = self.submit_form(make_test_form("two", age=30, closed=True))
+        two.initial_processing_complete = False
+        two.save()
+        with self.skip_forms(["one"]):
+            self.do_migration(missing_docs=CACHED, diffs=IGNORE)
+        self.compare_diffs(
+            missing={"XFormInstance": 1, "CommCareCase": 1}, diffs=IGNORE)
+        self.do_migration(forms="missing", missing_docs=REBUILD)
+        case = self._get_case("test-case")
+        self.assertEqual(case.case_json["age"], "28")
+        self.assertFalse(case.closed)
+
     def test_missing_case(self):
         # This can happen when a form is edited, removing the last
         # remaining reference to a case. The case effectively becomes
@@ -1481,6 +1497,19 @@ class MigrationTestCase(BaseMigrationTestCase):
     def test_case_with_very_long_name(self):
         self.submit_form(make_test_form("naaaame", case_name="ha" * 128))
         self.do_migration(finish=True)
+
+    def test_case_with_malformed_date_modified(self):
+        bad_xml = TEST_FORM.replace('"2015-08-04T18:25:56.656Z"', '"2015-08-014"')
+        assert bad_xml.count("2015-08-014") == 1, bad_xml
+        form = submit_form_locally(TEST_FORM, self.domain_name).xform
+        form.form_data["case"]["@date_modified"] = "2015-08-014"
+        form.delete_attachment('form.xml')
+        form.put_attachment(bad_xml, 'form.xml')
+        form.save()
+        self.do_migration()
+        case = self._get_case("test-case")
+        self.assertEqual(case.xform_ids, ["test-form"])
+        self.assertEqual(case.modified_on, datetime(2015, 8, 14, 0, 0))
 
 
 class LedgerMigrationTests(BaseMigrationTestCase):
@@ -1687,7 +1716,7 @@ def create_form_with_extra_xml_blob_metadata(domain_name):
 
 
 @nottest
-def make_test_form(form_id, **data):
+def make_test_form(form_id, *, closed=False, **data):
     def update(form, pairs, ns=""):
         old = f"<{ns}age>27</{ns}age>"
         new = "".join(
@@ -1716,6 +1745,8 @@ def make_test_form(form_id, **data):
     if updates:
         form = update(form, updates)
         form = update(form, updates, "n0:")
+    if closed:
+        form.replace("</n0:update>", "</n0:update><n0:close />")
     return form.replace(">test-form<", f">{form_id}<")
 
 

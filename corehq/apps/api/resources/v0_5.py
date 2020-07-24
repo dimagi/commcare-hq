@@ -6,10 +6,10 @@ from django.contrib.auth.models import User
 from django.forms import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseNotFound
 from django.urls import reverse
-from memoized import memoized_property
+from django.utils.translation import ugettext_noop
 
+from memoized import memoized_property
 from tastypie import fields, http
-from tastypie.authentication import ApiKeyAuthentication
 from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.bundle import Bundle
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
@@ -18,11 +18,6 @@ from tastypie.resources import ModelResource, Resource, convert_post_to_patch
 from tastypie.utils import dict_strip_unicode_keys
 
 from casexml.apps.stock.models import StockTransaction
-from corehq.apps.locations.permissions import location_safe
-from corehq.apps.reports.standard.cases.utils import (
-    query_location_restricted_cases,
-    query_location_restricted_forms,
-)
 from phonelog.models import DeviceReportEntry
 
 from corehq import privileges
@@ -32,7 +27,10 @@ from corehq.apps.api.odata.serializers import (
     ODataFormSerializer,
 )
 from corehq.apps.api.odata.utils import record_feed_access_in_datadog
-from corehq.apps.api.odata.views import add_odata_headers
+from corehq.apps.api.odata.views import (
+    add_odata_headers,
+    raise_odata_permissions_issues,
+)
 from corehq.apps.api.resources.auth import (
     AdminAuthentication,
     ODataAuthentication,
@@ -41,6 +39,7 @@ from corehq.apps.api.resources.auth import (
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import get_obj
 from corehq.apps.app_manager.models import Application
+from corehq.apps.domain.auth import HQApiKeyAuthentication
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
@@ -50,8 +49,13 @@ from corehq.apps.export.esaccessors import (
 )
 from corehq.apps.export.models import CaseExportInstance, FormExportInstance
 from corehq.apps.groups.models import Group
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es,
+)
+from corehq.apps.reports.standard.cases.utils import (
+    query_location_restricted_cases,
+    query_location_restricted_forms,
 )
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
@@ -78,8 +82,10 @@ from corehq.apps.users.models import (
     WebUser,
 )
 from corehq.apps.users.util import raw_username
+from corehq.const import USER_CHANGE_VIA_API
 from corehq.util import get_document_or_404
 from corehq.util.couch import DocumentNotFound, get_document_or_not_found
+from corehq.util.model_log import ModelAction, log_model_change
 from corehq.util.timer import TimingContext
 
 from . import (
@@ -249,6 +255,8 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                 domain=kwargs['domain'],
                 username=bundle.data['username'].lower(),
                 password=bundle.data['password'],
+                created_by=bundle.request.user,
+                created_via=USER_CHANGE_VIA_API,
                 email=bundle.data.get('email', '').lower(),
             )
             del bundle.data['password']
@@ -256,13 +264,15 @@ class CommCareUserResource(v0_1.CommCareUserResource):
             bundle.obj.save()
         except Exception:
             if bundle.obj._id:
-                bundle.obj.retire()
+                bundle.obj.retire(deleted_by=request.user, deleted_via=USER_CHANGE_VIA_API)
             try:
                 django_user = bundle.obj.get_django_user()
             except User.DoesNotExist:
                 pass
             else:
                 django_user.delete()
+                log_model_change(request.user, django_user, message={'deleted_via': USER_CHANGE_VIA_API},
+                                 action=ModelAction.DELETE)
         return bundle
 
     def obj_update(self, bundle, **kwargs):
@@ -278,8 +288,9 @@ class CommCareUserResource(v0_1.CommCareUserResource):
     def obj_delete(self, bundle, **kwargs):
         user = CommCareUser.get(kwargs['pk'])
         if user:
-            user.retire()
+            user.retire(deleted_by=bundle.request.user, deleted_via=USER_CHANGE_VIA_API)
         return ImmediateHttpResponse(response=http.HttpAccepted())
+
 
 class WebUserResource(v0_1.WebUserResource):
 
@@ -348,6 +359,8 @@ class WebUserResource(v0_1.WebUserResource):
                 domain=kwargs['domain'],
                 username=bundle.data['username'].lower(),
                 password=bundle.data['password'],
+                created_by=bundle.request.user,
+                created_via=USER_CHANGE_VIA_API,
                 email=bundle.data.get('email', '').lower(),
                 is_admin=bundle.data.get('is_admin', False)
             )
@@ -654,7 +667,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
             return ""
 
     def _get_report_data(self, report_config, domain, start, limit, get_params):
-        report = ConfigurableReportDataSource.from_spec(report_config)
+        report = ConfigurableReportDataSource.from_spec(report_config, include_prefilters=True)
 
         string_type_params = [
             filter.name
@@ -742,6 +755,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
         return uri
 
     class Meta(CustomResourceMeta):
+        authentication = RequirePermissionAuthentication(Permissions.view_reports, allow_session_auth=True)
         list_allowed_methods = []
         detail_allowed_methods = ["get"]
 
@@ -803,7 +817,7 @@ class UserDomainsResource(Resource):
 
     class Meta(object):
         resource_name = 'user_domains'
-        authentication = ApiKeyAuthentication()
+        authentication = HQApiKeyAuthentication()
         object_class = UserDomain
         include_resource_uri = False
 
@@ -850,7 +864,7 @@ class DomainForms(Resource):
 
     class Meta(object):
         resource_name = 'domain_forms'
-        authentication = ApiKeyAuthentication()
+        authentication = HQApiKeyAuthentication()
         object_class = Form
         include_resource_uri = False
         allowed_methods = ['get']
@@ -898,7 +912,7 @@ class DomainCases(Resource):
 
     class Meta(object):
         resource_name = 'domain_cases'
-        authentication = ApiKeyAuthentication()
+        authentication = HQApiKeyAuthentication()
         object_class = CaseType
         include_resource_uri = False
         allowed_methods = ['get']
@@ -931,7 +945,7 @@ class DomainUsernames(Resource):
 
     class Meta(object):
         resource_name = 'domain_usernames'
-        authentication = ApiKeyAuthentication()
+        authentication = HQApiKeyAuthentication()
         object_class = User
         include_resource_uri = False
         allowed_methods = ['get']
@@ -995,6 +1009,12 @@ class ODataCaseResource(BaseODataResource):
 
     def obj_get_list(self, bundle, domain, **kwargs):
         config = get_document_or_404(CaseExportInstance, domain, self.config_id)
+        if raise_odata_permissions_issues(bundle.request.couch_user, domain, config):
+            raise ImmediateHttpResponse(
+                HttpForbidden(ugettext_noop(
+                    "You do not have permission to view this feed."
+                ))
+            )
         query = get_case_export_base_query(domain, config.case_type)
         for filter in config.get_filters():
             query = query.filter(filter.to_es_filter())
@@ -1027,6 +1047,13 @@ class ODataFormResource(BaseODataResource):
 
     def obj_get_list(self, bundle, domain, **kwargs):
         config = get_document_or_404(FormExportInstance, domain, self.config_id)
+        if raise_odata_permissions_issues(bundle.request.couch_user, domain, config):
+            raise ImmediateHttpResponse(
+                HttpForbidden(ugettext_noop(
+                    "You do not have permission to view this feed."
+                ))
+            )
+
         query = get_form_export_base_query(domain, config.app_id, config.xmlns, include_errors=False)
         for filter in config.get_filters():
             query = query.filter(filter.to_es_filter())

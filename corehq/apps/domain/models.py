@@ -13,10 +13,8 @@ from django.db.models import F
 from django.db.transaction import atomic
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
 
-from couchdbkit import PreconditionFailed
 from memoized import memoized
 
 from couchforms.analytics import domain_has_submission_in_last_30_days
@@ -44,6 +42,7 @@ from dimagi.utils.logging import log_signal_errors
 from dimagi.utils.next_available_name import next_available_name
 from dimagi.utils.web import get_url_base
 
+from corehq import toggles
 from corehq.apps.app_manager.const import (
     AMPLIFIES_NO,
     AMPLIFIES_NOT_SET,
@@ -436,8 +435,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     last_modified = DateTimeProperty(default=datetime(2015, 1, 1))
 
-    # when turned on, use SECURE_TIMEOUT for sessions of users who are members of this domain
+    # when turned on, use settings.SECURE_TIMEOUT for sessions of users who are members of this domain
     secure_sessions = BooleanProperty(default=False)
+    secure_sessions_timeout = IntegerProperty()
 
     two_factor_auth = BooleanProperty(default=False)
     strong_mobile_passwords = BooleanProperty(default=False)
@@ -504,6 +504,20 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     def is_secure_session_required(name):
         domain_obj = Domain.get_by_name(name)
         return domain_obj and domain_obj.secure_sessions
+
+    @staticmethod
+    @quickcache(['name'], timeout=24 * 60 * 60)
+    def secure_timeout(name):
+        domain_obj = Domain.get_by_name(name)
+        if not domain_obj:
+            return None
+
+        if domain_obj.secure_sessions:
+            if toggles.SECURE_SESSION_TIMEOUT.enabled(name):
+                return domain_obj.secure_sessions_timeout or settings.SECURE_TIMEOUT
+            return settings.SECURE_TIMEOUT
+
+        return None
 
     @staticmethod
     @quickcache(['couch_user._id', 'is_active'], timeout=5*60, memoize_timeout=10)
@@ -738,12 +752,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
             return "Snapshot of %s" % self.copied_from.display_name()
         return self.hr_name or self.name
 
-    def long_display_name(self):
-        if self.is_snapshot:
-            return format_html("Snapshot of {}", self.copied_from.display_name())
-        return self.hr_name or self.name
-
-    __str__ = long_display_name
+    __str__ = display_name
 
     def get_license_display(self):
         return LICENSES.get(self.license)
@@ -866,6 +875,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         super(Domain, self).clear_caches()
         self.get_by_name.clear(self.__class__, self.name)
         self.is_secure_session_required.clear(self.name)
+        self.secure_timeout.clear(self.name)
         domain_restricts_superusers.clear(self.name)
 
     def get_daily_outbound_sms_limit(self):

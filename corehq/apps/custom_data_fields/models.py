@@ -41,6 +41,33 @@ class Field(models.Model):
     regex_msg = models.CharField(max_length=255, null=True)
     definition = models.ForeignKey('CustomDataFieldsDefinition', on_delete=models.CASCADE)
 
+    class Meta:
+        order_with_respect_to = "definition"
+
+    def validate_choices(self, value):
+        if self.choices and value and str(value) not in self.choices:
+            return _(
+                "'{value}' is not a valid choice for {label}. The available "
+                "options are: {options}."
+            ).format(
+                value=value,
+                label=self.label,
+                options=', '.join(self.choices),
+            )
+
+    def validate_regex(self, value):
+        if self.regex and value and not re.search(self.regex, value):
+            return _("'{value}' is not a valid match for {label}").format(
+                value=value, label=self.label)
+
+    def validate_required(self, value):
+        if self.is_required and not value:
+            return _(
+                "{label} is required."
+            ).format(
+                label=self.label
+            )
+
 
 class CustomDataFieldsDefinition(models.Model):
     field_type = models.CharField(max_length=126)
@@ -63,56 +90,34 @@ class CustomDataFieldsDefinition(models.Model):
             new.save()
             return new
 
+    # Gets ordered, and optionally filtered, fields
     def get_fields(self, required_only=False, include_system=True):
         def _is_match(field):
             return not (
                 (required_only and not field.is_required)
                 or (not include_system and is_system_key(field.slug))
             )
-        return filter(_is_match, self.sqlfield_set.all())
+        order = self.get_field_order()
+        fields = [Field.objects.get(id=o) for o in order]
+        return [f for f in fields if _is_match(f)]
 
     # Note that this does not save
     def set_fields(self, fields):
         self.field_set.all().delete()
         self.field_set.set(fields, bulk=False)
+        self.set_field_order([f.id for f in fields])
 
-    def get_validator(self, data_field_class):
+    def get_validator(self):
         """
         Returns a validator to be used in bulk import
         """
-        def validate_choices(field, value):
-            if field.choices and value and str(value) not in field.choices:
-                return _(
-                    "'{value}' is not a valid choice for {slug}, the available "
-                    "options are: {options}."
-                ).format(
-                    value=value,
-                    slug=field.slug,
-                    options=', '.join(field.choices),
-                )
-
-        def validate_regex(field, value):
-            if field.regex and value and not re.search(field.regex, value):
-                return _("'{value}' is not a valid match for {slug}").format(
-                    value=value, slug=field.slug)
-
-        def validate_required(field, value):
-            if field.is_required and not value:
-                return _(
-                    "Cannot create or update a {entity} without "
-                    "the required field: {field}."
-                ).format(
-                    entity=data_field_class.entity_string,
-                    field=field.slug
-                )
-
         def validate_custom_fields(custom_fields):
             errors = []
-            for field in self.fields:
+            for field in self.get_fields():
                 value = custom_fields.get(field.slug, None)
-                errors.append(validate_required(field, value))
-                errors.append(validate_choices(field, value))
-                errors.append(validate_regex(field, value))
+                errors.append(field.validate_required(value))
+                errors.append(field.validate_choices(value))
+                errors.append(field.validate_regex(value))
             return ' '.join(filter(None, errors))
 
         return validate_custom_fields
@@ -127,7 +132,7 @@ class CustomDataFieldsDefinition(models.Model):
             return {}, {}
         model_data = {}
         uncategorized_data = {}
-        slugs = {field.slug for field in self.field_set}
+        slugs = {field.slug for field in self.field_set.all()}
         for k, v in data_dict.items():
             if k in slugs:
                 model_data[k] = v

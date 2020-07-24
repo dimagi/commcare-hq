@@ -454,6 +454,6 @@ def _get_location_data_fields(domain):
     from corehq.apps.locations.views import LocationFieldsView
     fields_definition = CustomDataFieldsDefinition.get(domain, LocationFieldsView.field_type)
     if fields_definition:
-        return fields_definition.fields
+        return fields_definition.get_fields()
     else:
         return []

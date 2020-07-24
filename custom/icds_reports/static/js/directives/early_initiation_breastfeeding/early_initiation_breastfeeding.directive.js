@@ -3,10 +3,10 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function EarlyInitiationBreastfeedingController($scope, $routeParams, $location, $filter, maternalChildService,
     locationsService, dateHelperService, navigationService, userLocationId, storageService, genders,
-    haveAccessToAllLocations, baseControllersService, isAlertActive, isMobile) {
+    haveAccessToAllLocations, baseControllersService, isAlertActive, isMobile, haveAccessToFeatures) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
-        false, isMobile);
+        haveAccessToFeatures, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
     vm.serviceDataFunction = maternalChildService.earlyInitiationBreastfeeding;
@@ -23,7 +23,7 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
     vm.data = {
         legendTitle: '% Newborns',
     };
-    vm.filters = ['age'];
+    vm.filters = ['age', 'data_period'];
 
     vm.rightLegend = {
         info: 'Of the children born in the given month and enrolled for Anganwadi services, the percentage whose breastfeeding was initiated within 1 hour of delivery.\n' +
@@ -94,7 +94,7 @@ EarlyInitiationBreastfeedingController.$inject = [
     '$scope', '$routeParams', '$location', '$filter',
     'maternalChildService', 'locationsService', 'dateHelperService', 'navigationService',
     'userLocationId', 'storageService', 'genders', 'haveAccessToAllLocations', 'baseControllersService',
-    'isAlertActive', 'isMobile',
+    'isAlertActive', 'isMobile', 'haveAccessToFeatures',
 ];
 
 window.angular.module('icdsApp').directive('earlyInitiationBreastfeeding', ['templateProviderService', function (templateProviderService) {

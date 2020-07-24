@@ -16,7 +16,8 @@ from custom.icds_reports.views import (
     DailyIndicators, InfantometerView, StadiometerView, MWCDDataView, IcdsDynamicMobileTemplateView,
     GovernanceHomeVisitAPI, GovernanceBeneficiaryAPI, GovernanceStateListAPI, GovernanceVHNDSAPI,
     MobileDashboardDownloadView, GovernanceCBEAPI, BiharDemographicsAPI, BiharMotherDetailsAPI, BiharVaccinesAPI,
-    BiharSchoolAPI
+    BiharSchoolAPI, ServiceDeliveryDashboardDetailsView, PoshanProgressDashboardView, LSsLaunchedView,
+    DownloadReleaseNotes, ReleaseNotesUpdateView
 )
 
 
@@ -76,6 +77,10 @@ cas_reach_urls = [
         r'^awcs_covered/(?P<step>[\w-]+)/',
         AWCsCoveredView.as_view(),
         name='awcs_covered'),
+    url(
+        r'^ls_launched/(?P<step>[\w-]+)/',
+        LSsLaunchedView.as_view(),
+        name='ls_launched'),
 ]
 
 demographics_urls = [
@@ -162,6 +167,16 @@ urlpatterns = [
         ServiceDeliveryDashboardView.as_view(),
         name='service_delivery_dashboard'
     ),
+    url(
+        r'^poshan_progress_dashboard/(?P<step>[\w-]+)/',
+        PoshanProgressDashboardView.as_view(),
+        name='poshan_progress_dashboard'
+    ),
+    url(
+        r'^service_delivery_dashboard_details/(?P<step>[\w-]+)/',
+        ServiceDeliveryDashboardDetailsView.as_view(),
+        name='service_delivery_dashboard_details'
+    ),
     url(r'^maternal_and_child/', include(maternal_and_child_urls)),
     url(r'^icds_cas_reach/', include(cas_reach_urls)),
     url(r'^demographics/', include(demographics_urls)),
@@ -195,7 +210,9 @@ urlpatterns = [
     url(r'^bihar_demographics/household_members_data/', BiharDemographicsAPI.as_view(), name='household_members_data'),
     url(r'^bihar_demographics/mother_details/', BiharMotherDetailsAPI.as_view(), name='mother_details'),
     url(r'^bihar_demographics/children_and_vaccines/', BiharVaccinesAPI.as_view(), name='children_and_vaccines'),
-    url(r'^bihar_demographics/school_data/', BiharSchoolAPI.as_view(), name='school_data')
+    url(r'^bihar_demographics/school_data/', BiharSchoolAPI.as_view(), name='school_data'),
+    url('^update_dashboard_release_notes/', ReleaseNotesUpdateView.as_view(), name=ReleaseNotesUpdateView.urlname),
+    url('^download_release_notes/', DownloadReleaseNotes.as_view(), name='download_release_notes')
 ]
 
 DASHBOARD_URL_GROUPS = urlpatterns + dashboard_urls + mobile_dashboard_urls + maternal_and_child_urls + cas_reach_urls + demographics_urls + awc_infrastructure_urls

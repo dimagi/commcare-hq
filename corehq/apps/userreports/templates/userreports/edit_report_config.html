@@ -1,6 +1,9 @@
 {% extends "userreports/userreports_base.html" %}
 {% load crispy_forms_tags %}
 {% load i18n %}
+{% load hq_shared_tags %}
+
+{% requirejs_main "userreports/js/edit_report_config" %}
 
 {% block page_content %}
   <div class="pull-right page-actions-toolbar">
@@ -36,8 +39,11 @@
   <div class="clearfix"></div>
 
   <ul class="nav nav-tabs">
-    <li class="active"><a data-toggle="tab" href="#tabs-configuration">Configuration</a></li>
-    <li><a data-toggle="tab" href="#tabs-usage">Usage</a></li>
+    <li class="active"><a data-toggle="tab" href="#tabs-configuration">{% trans "Configuration" %}</a></li>
+    <li><a data-toggle="tab" href="#tabs-usage">{% trans "Usage" %}</a></li>
+    {% if request|toggle_enabled:"LINKED_DOMAINS" %}
+      <li><a data-toggle="tab" href="#tabs-link-report">{% trans "Link Report" %}</a></li>
+    {% endif %}
   </ul>
 
   <div class="tab-content">
@@ -72,6 +78,38 @@
         </ul>
       {% endif %}
     </div>
+    {% if request|toggle_enabled:"LINKED_DOMAINS" %}
+      <div class="tab-pane fade" id="tabs-link-report">
+        <div class="spacer"></div>
+        <form class="form form-horizontal" method="post" action="{% url "copy_report" domain %}">
+          {% csrf_token %}
+          <div class="form-group row">
+            <input type="hidden" name="report_id" value="{{ report.get_id }}" />
+            <label class="control-label col-xs-12 col-sm-4 col-md-4 col-lg-2 requiredField" for=" #domain-selector">
+            {% trans "Link this report to project" %}
+              <span class="asteriskField">*</span>
+            </label>
+            <div class="controls col-sm-9 col-md-9">
+              <select name="to_domains" class="form-control" required="" id="domain-selector" multiple>
+                {% for domain, already_linked in linked_report_domain_list.items %}
+                  <option value="{{ domain }}" {% if already_linked %} disabled {% endif %}>
+                    {{ domain }}
+                    {% if already_linked %} ({% trans "Already Linked" %}) {% endif %}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="form-actions">
+            <div class="col-sm-offset-3 col-md-offset-2 controls col-sm-9 col-md-9">
+              <button class="btn btn-primary" type="submit">
+                {% trans "Copy" %}
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    {% endif %}
   </div>
 {% endblock %}
 

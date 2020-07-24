@@ -1,4 +1,4 @@
-from collections import Counter, OrderedDict
+from collections import Counter, OrderedDict, defaultdict
 
 from django.apps import apps
 from django.conf import settings
@@ -9,17 +9,18 @@ from corehq.apps.dump_reload.exceptions import DomainDumpError
 from corehq.apps.dump_reload.interface import DataDumper
 from corehq.apps.dump_reload.sql.filters import (
     FilteredModelIteratorBuilder,
+    ManyFilters,
     SimpleFilter,
     UniqueFilteredModelIteratorBuilder,
     UserIDFilter,
-    UsernameFilter, RelatedModelIteratorBuilder,
+    UsernameFilter,
 )
 from corehq.apps.dump_reload.sql.serialization import JsonLinesSerializer
-from corehq.apps.dump_reload.util import get_model_label, get_model_class
+from corehq.apps.dump_reload.util import get_model_class, get_model_label
 from corehq.sql_db.config import plproxy_config
 
-# order is important here for foreign key constraints
-APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = OrderedDict((iterator.model_label, iterator) for iterator in [
+APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
+[APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP[iterator.model_label].append(iterator) for iterator in [
     FilteredModelIteratorBuilder('locations.LocationType', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('locations.SQLLocation', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('blobs.BlobMeta', SimpleFilter('domain')),
@@ -32,6 +33,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = OrderedDict((iterator.model_label, itera
     FilteredModelIteratorBuilder('form_processor.LedgerValue', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('form_processor.LedgerTransaction', SimpleFilter('case__domain')),
     FilteredModelIteratorBuilder('case_search.CaseSearchConfig', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('case_search.FuzzyProperties', SimpleFilter('domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.SMSContent', SimpleFilter('alertevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.SMSContent', SimpleFilter('timedevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.SMSContent',
@@ -98,6 +100,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = OrderedDict((iterator.model_label, itera
     FilteredModelIteratorBuilder('data_interfaces.CaseRuleSubmission', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('data_interfaces.DomainCaseRuleRun', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('auth.User', UsernameFilter()),
+    FilteredModelIteratorBuilder('mobile_auth.SQLMobileAuthKeyRecord', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('phonelog.DeviceReportEntry', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('phonelog.ForceCloseEntry', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('phonelog.UserErrorEntry', SimpleFilter('domain')),
@@ -115,23 +118,28 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = OrderedDict((iterator.model_label, itera
     FilteredModelIteratorBuilder('sms.QueuedSMS', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('sms.SelfRegistrationInvitation', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('sms.SQLMobileBackend', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('sms.SQLMobileBackendMapping', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('sms.SQLMobileBackendMapping', ManyFilters('domain', 'backend__domain')),
     FilteredModelIteratorBuilder('cloudcare.ApplicationAccess', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('cloudcare.SQLAppGroup', SimpleFilter('application_access__domain')),
     FilteredModelIteratorBuilder('linked_domain.DomainLink', SimpleFilter('linked_domain')),
     FilteredModelIteratorBuilder('linked_domain.DomainLinkHistory', SimpleFilter('link__linked_domain')),
+    FilteredModelIteratorBuilder('users.DomainPermissionsMirror', SimpleFilter('source')),
     FilteredModelIteratorBuilder('locations.LocationFixtureConfiguration', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('consumption.SQLDefaultConsumption', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('consumption.DefaultConsumption', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('data_dictionary.CaseType', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('data_dictionary.CaseProperty', SimpleFilter('case_type__domain')),
     FilteredModelIteratorBuilder('app_manager.GlobalAppConfig', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('app_manager.AppReleaseByLocation', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('app_manager.LatestEnabledBuildProfiles', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('case_importer.CaseUploadFileMeta', SimpleFilter('caseuploadrecord__domain')),
+    FilteredModelIteratorBuilder('case_importer.CaseUploadFormRecord', SimpleFilter('case_upload_record__domain')),
+    FilteredModelIteratorBuilder('case_importer.CaseUploadRecord', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('translations.SMSTranslations', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('translations.TransifexBlacklist', SimpleFilter('domain')),
-    RelatedModelIteratorBuilder('translations.TransifexOrganization', 'translations.TransifexProject', SimpleFilter('domain'), 'organization'),
+    FilteredModelIteratorBuilder('translations.TransifexOrganization', SimpleFilter('transifexproject__domain')),
     FilteredModelIteratorBuilder('translations.TransifexProject', SimpleFilter('domain')),
-])
+    FilteredModelIteratorBuilder('zapier.ZapierSubscription', SimpleFilter('domain')),
+]]
 
 
 class SqlDataDumper(DataDumper):
@@ -201,8 +209,9 @@ def get_all_model_iterators_builders_for_domain(model_class, domain, limit_to_db
 
     for db_alias in using:
         if not model_class._meta.proxy and router.allow_migrate_model(db_alias, model_class):
-            iterator_builder = APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP[get_model_label(model_class)]
-            yield model_class, iterator_builder.build(domain, model_class, db_alias)
+            iterator_builders = APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP[get_model_label(model_class)]
+            for builder in iterator_builders:
+                yield model_class, builder.build(domain, model_class, db_alias)
 
 
 def get_excluded_apps_and_models(excludes):

@@ -361,7 +361,7 @@ def download_products(request, domain):
             domain,
             ProductFieldsView.field_type
         )
-        product_data_fields = [f.slug for f in product_data_model.field_set.all()]
+        product_data_fields = [f.slug for f in product_data_model.get_fields()]
 
         model_data = {}
         uncategorized_data = {}

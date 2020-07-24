@@ -51,7 +51,7 @@ from corehq.apps.case_search.models import (
 )
 from corehq.apps.cloudcare.dbaccessors import get_application_access_for_domain
 from corehq.apps.cloudcare.models import ApplicationAccess
-from corehq.apps.consumption.models import SQLDefaultConsumption
+from corehq.apps.consumption.models import DefaultConsumption
 from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.data_analytics.models import GIRRow, MALTRow
@@ -73,6 +73,8 @@ from corehq.apps.locations.models import (
     SQLLocation,
     make_location,
 )
+from corehq.apps.mobile_auth.models import SQLMobileAuthKeyRecord
+from corehq.apps.mobile_auth.utils import new_key_record
 from corehq.apps.ota.models import MobileRecoveryMeasure, SerialIdBucket
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.reminders.models import EmailUsage
@@ -97,7 +99,7 @@ from corehq.apps.sms.models import (
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.translations.models import SMSTranslations, TransifexBlacklist
 from corehq.apps.userreports.models import AsyncIndicator
-from corehq.apps.users.models import DomainRequest, SQLInvitation
+from corehq.apps.users.models import DomainRequest, Invitation
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
 from corehq.blobs import NotFound, get_blob_db, CODES
@@ -440,7 +442,9 @@ class TestDeleteDomain(TestCase):
             location.save()
             AppReleaseByLocation.objects.create(domain=domain_name, app_id='123', build_id='456',
                                                 version=23, location=location)
-            LatestEnabledBuildProfiles.objects.create(domain=domain_name, app_id='123', build_id='456', version=10)
+            with patch('corehq.apps.app_manager.models.GlobalAppConfig.by_app_id'):
+                LatestEnabledBuildProfiles.objects.create(domain=domain_name, app_id='123', build_id='456',
+                                                          version=10)
             GlobalAppConfig.objects.create(domain=domain_name, app_id='123')
             ResourceOverride.objects.create(domain=domain_name, app_id='123', root_name='test',
                                             pre_id='456', post_id='789')
@@ -490,12 +494,12 @@ class TestDeleteDomain(TestCase):
 
     def _assert_consumption_counts(self, domain_name, count):
         self._assert_queryset_count([
-            SQLDefaultConsumption.objects.filter(domain=domain_name),
+            DefaultConsumption.objects.filter(domain=domain_name),
         ], count)
 
     def test_consumption(self):
         for domain_name in [self.domain.name, self.domain2.name]:
-            SQLDefaultConsumption.objects.create(domain=domain_name)
+            DefaultConsumption.objects.create(domain=domain_name)
 
         self.domain.delete()
 
@@ -666,6 +670,21 @@ class TestDeleteDomain(TestCase):
 
         self._assert_location_counts(self.domain.name, 0)
         self._assert_location_counts(self.domain2.name, 1)
+
+    def _assert_mobile_auth_counts(self, domain_name, count):
+        self._assert_queryset_count([
+            SQLMobileAuthKeyRecord.objects.filter(domain=domain_name),
+        ], count)
+
+    def test_mobile_auth(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            record = new_key_record(domain=domain_name, user_id='123')
+            record.save()
+
+        self.domain.delete()
+
+        self._assert_mobile_auth_counts(self.domain.name, 0)
+        self._assert_mobile_auth_counts(self.domain2.name, 1)
 
     def _assert_ota_counts(self, domain_name, count):
         self._assert_queryset_count([
@@ -841,14 +860,14 @@ class TestDeleteDomain(TestCase):
     def _assert_users_counts(self, domain_name, count):
         self._assert_queryset_count([
             DomainRequest.objects.filter(domain=domain_name),
-            SQLInvitation.objects.filter(domain=domain_name),
+            Invitation.objects.filter(domain=domain_name),
         ], count)
 
     def test_users_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             DomainRequest.objects.create(domain=domain_name, email='user@test.com', full_name='User')
-            SQLInvitation.objects.create(domain=domain_name, email='user@test.com',
-                                         invited_by='friend@test.com', invited_on=datetime.utcnow())
+            Invitation.objects.create(domain=domain_name, email='user@test.com',
+                                      invited_by='friend@test.com', invited_on=datetime.utcnow())
             self._assert_users_counts(domain_name, 1)
 
         self.domain.delete()

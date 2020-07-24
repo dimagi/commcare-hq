@@ -7,11 +7,9 @@ from io import StringIO
 
 from django.contrib.admin.utils import NestedObjects
 from django.core import serializers
-from django.db.models.signals import post_save
-from django.test import TestCase
-from django.test.utils import override_settings
-
-from nose.plugins.attrib import attr
+from django.db import transaction
+from django.db.models.signals import post_delete, post_save
+from django.test import SimpleTestCase, TestCase
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
@@ -24,9 +22,17 @@ from corehq.apps.dump_reload.sql.dump import (
     get_model_iterator_builders_to_dump,
     get_objects_to_dump,
 )
-from corehq.apps.dump_reload.sql.filters import GetattrQueryset
+from corehq.apps.dump_reload.sql.load import (
+    DefaultDictWithKey,
+    constraint_checks_deferred,
+)
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.products.models import SQLProduct
+from corehq.apps.zapier.consts import EventTypes
+from corehq.apps.zapier.models import ZapierSubscription
+from corehq.apps.zapier.signals.receivers import (
+    zapier_subscription_post_delete,
+)
 from corehq.blobs.models import BlobMeta
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import (
@@ -44,13 +50,17 @@ from corehq.form_processor.models import (
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     create_form_for_test,
+    use_sql_backend,
 )
-from corehq.messaging.scheduling.scheduling_partitioned.models import AlertScheduleInstance
+from corehq.messaging.scheduling.scheduling_partitioned.models import (
+    AlertScheduleInstance,
+)
 
 
 class BaseDumpLoadTest(TestCase):
     @classmethod
     def setUpClass(cls):
+        post_delete.disconnect(zapier_subscription_post_delete, sender=ZapierSubscription)
         super(BaseDumpLoadTest, cls).setUpClass()
         cls.domain_name = uuid.uuid4().hex
         cls.domain = Domain(name=cls.domain_name)
@@ -64,14 +74,13 @@ class BaseDumpLoadTest(TestCase):
     def tearDownClass(cls):
         cls.domain.delete()
         super(BaseDumpLoadTest, cls).tearDownClass()
+        post_delete.connect(zapier_subscription_post_delete, sender=ZapierSubscription)
 
     def delete_sql_data(self):
         for model_class, builder in get_model_iterator_builders_to_dump(self.domain_name, []):
             for iterator in builder.querysets():
-                if isinstance(iterator, GetattrQueryset):
-                    for model in iterator:
-                        model.delete()
-                else:
+                with transaction.atomic(using=iterator.db), \
+                        constraint_checks_deferred(iterator.db):
                     collector = NestedObjects(using=iterator.db)
                     collector.collect(iterator)
                     collector.delete()
@@ -82,10 +91,11 @@ class BaseDumpLoadTest(TestCase):
         self.delete_sql_data()
         super(BaseDumpLoadTest, self).tearDown()
 
-    def _dump_and_load(self, expected_object_counts):
-        expected_object_counts.update(self.default_objects_counts)
+    def _dump_and_load(self, expected_dump_counts, load_filter=None, expected_load_counts=None):
+        expected_load_counts = expected_load_counts or expected_dump_counts
+        expected_dump_counts.update(self.default_objects_counts)
 
-        models = list(expected_object_counts)
+        models = list(expected_dump_counts)
         self._check_signals_handle_raw(models)
 
         output_stream = StringIO()
@@ -99,18 +109,23 @@ class BaseDumpLoadTest(TestCase):
         counts = Counter(object_classes)
         self.assertEqual([], objects_remaining, 'Not all data deleted: {}'.format(counts))
 
+        # Dump
         dump_output = output_stream.getvalue().split('\n')
         dump_lines = [line.strip() for line in dump_output if line.strip()]
-        total_object_count, loaded_model_counts = SqlDataLoader().load_objects(dump_lines)
 
-        expected_model_counts = _normalize_object_counter(expected_object_counts)
+        expected_model_counts = _normalize_object_counter(expected_dump_counts)
         actual_model_counts = Counter([json.loads(line)['model'] for line in dump_lines])
-        expected_total_objects = sum(expected_object_counts.values())
         self.assertDictEqual(dict(expected_model_counts), dict(actual_model_counts))
-        expected_loaded_counts = _normalize_object_counter(expected_object_counts, for_loaded=True)
-        self.assertDictEqual(dict(expected_loaded_counts), dict(loaded_model_counts))
-        self.assertEqual(expected_total_objects, sum(loaded_model_counts.values()))
-        self.assertEqual(expected_total_objects, total_object_count)
+
+        # Load
+        loader = SqlDataLoader(object_filter=load_filter)
+        total_object_count, loaded_model_counts = loader.load_objects(dump_lines)
+
+        normalized_expected_loaded_counts = _normalize_object_counter(expected_load_counts, for_loaded=True)
+        self.assertDictEqual(dict(normalized_expected_loaded_counts), dict(loaded_model_counts))
+        expected_total_load_objects = sum(expected_load_counts.values())
+        self.assertEqual(expected_total_load_objects, sum(loaded_model_counts.values()))
+        self.assertEqual(expected_total_load_objects, total_object_count)
 
         return dump_lines
 
@@ -132,8 +147,7 @@ class BaseDumpLoadTest(TestCase):
                 self.assertIn('raw', args, message)
 
 
-@attr(sql_backend=True)
-@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+@use_sql_backend
 class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
     maxDiff = None
 
@@ -251,17 +265,18 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         from corehq.apps.case_search.models import CaseSearchConfig, FuzzyProperties
         expected_object_counts = Counter({
             CaseSearchConfig: 1,
+            FuzzyProperties: 2,
         })
 
         pre_config, created = CaseSearchConfig.objects.get_or_create(pk=self.domain_name)
         pre_config.enabled = True
-        fuzzies = [
+        pre_fuzzies = [
             FuzzyProperties(domain=self.domain, case_type='dog', properties=['breed', 'color']),
             FuzzyProperties(domain=self.domain, case_type='owner', properties=['name']),
         ]
-        for fuzzy in fuzzies:
+        for fuzzy in pre_fuzzies:
             fuzzy.save()
-        pre_config.fuzzy_properties = fuzzies
+        pre_config.fuzzy_properties.set(pre_fuzzies)
         pre_config.save()
 
         self._dump_and_load(expected_object_counts)
@@ -269,6 +284,8 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         post_config = CaseSearchConfig.objects.get(domain=self.domain_name)
         self.assertTrue(post_config.enabled)
         self.assertEqual(pre_config.fuzzy_properties, post_config.fuzzy_properties)
+        post_fuzzies = FuzzyProperties.objects.filter(domain=self.domain_name)
+        self.assertEqual(set(f.case_type for f in post_fuzzies), {'dog', 'owner'})
 
     def test_users(self):
         from corehq.apps.users.models import CommCareUser
@@ -281,23 +298,29 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             domain=self.domain_name,
             username='user_1',
             password='secret',
+            created_by=None,
+            created_via=None,
             email='email@example.com',
         )
         ccuser_2 = CommCareUser.create(
             domain=self.domain_name,
             username='user_2',
             password='secret',
+            created_by=None,
+            created_via=None,
             email='email1@example.com',
         )
         web_user = WebUser.create(
             domain=self.domain_name,
             username='webuser_t1',
             password='secret',
+            created_by=None,
+            created_via=None,
             email='webuser@example.com',
         )
-        self.addCleanup(ccuser_1.delete)
-        self.addCleanup(ccuser_2.delete)
-        self.addCleanup(web_user.delete)
+        self.addCleanup(ccuser_1.delete, deleted_by=None)
+        self.addCleanup(ccuser_2.delete, deleted_by=None)
+        self.addCleanup(web_user.delete, deleted_by=None)
 
         self._dump_and_load(expected_object_counts)
 
@@ -319,10 +342,12 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             domain=self.domain_name,
             username='user_1',
             password='secret',
+            created_by=None,
+            created_via=None,
             email='email@example.com',
             uuid='428d454aa9abc74e1964e16d3565d6b6'  # match ID in devicelog.xml
         )
-        self.addCleanup(user.delete)
+        self.addCleanup(user.delete, deleted_by=None)
 
         with open('corehq/ex-submodules/couchforms/tests/data/devicelogs/devicelog.xml', 'rb') as f:
             xml = f.read()
@@ -345,10 +370,12 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             domain=self.domain_name,
             username='user_1',
             password='secret',
+            created_by=None,
+            created_via=None,
             email='email@example.com',
             uuid=user_id
         )
-        self.addCleanup(user.delete)
+        self.addCleanup(user.delete, deleted_by=None)
 
         DemoUserRestore(
             demo_user_id=user_id,
@@ -511,6 +538,84 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         ).save()
         self._dump_and_load({AlertScheduleInstance: 1})
 
+    def test_mobile_backend(self):
+        from corehq.apps.sms.models import (
+            SQLMobileBackend,
+            SQLMobileBackendMapping,
+        )
+
+        domain_backend = SQLMobileBackend.objects.create(
+            domain=self.domain_name,
+            name='test-domain-mobile-backend',
+            display_name='Test Domain Mobile Backend',
+            hq_api_id='TDMB',
+            inbound_api_key='test-domain-mobile-backend-inbound-api-key',
+            supported_countries=["*"],
+            backend_type=SQLMobileBackend.SMS,
+            is_global=False,
+        )
+        SQLMobileBackendMapping.objects.create(
+            domain=self.domain_name,
+            backend=domain_backend,
+            backend_type=SQLMobileBackend.SMS,
+            prefix='123',
+        )
+
+        global_backend = SQLMobileBackend.objects.create(
+            domain=None,
+            name='test-global-mobile-backend',
+            display_name='Test Global Mobile Backend',
+            hq_api_id='TGMB',
+            inbound_api_key='test-global-mobile-backend-inbound-api-key',
+            supported_countries=["*"],
+            backend_type=SQLMobileBackend.SMS,
+            is_global=True,
+        )
+        SQLMobileBackendMapping.objects.create(
+            domain=self.domain_name,
+            backend=global_backend,
+            backend_type=SQLMobileBackend.SMS,
+            prefix='*',
+        )
+        self._dump_and_load({
+            SQLMobileBackendMapping: 1,
+            SQLMobileBackend: 1,
+        })
+        self.assertEqual(SQLMobileBackend.objects.first().domain,
+                         self.domain_name)
+        self.assertEqual(SQLMobileBackendMapping.objects.first().domain,
+                         self.domain_name)
+
+    def test_case_importer(self):
+        from corehq.apps.case_importer.tracking.models import (
+            CaseUploadFileMeta,
+            CaseUploadFormRecord,
+            CaseUploadRecord,
+        )
+
+        upload_file_meta = CaseUploadFileMeta.objects.create(
+            identifier=uuid.uuid4().hex,
+            filename='picture.jpg',
+            length=1024,
+        )
+        case_upload_record = CaseUploadRecord.objects.create(
+            domain=self.domain_name,
+            upload_id=uuid.uuid4(),
+            task_id=uuid.uuid4(),
+            couch_user_id=uuid.uuid4().hex,
+            case_type='person',
+            upload_file_meta=upload_file_meta,
+        )
+        CaseUploadFormRecord.objects.create(
+            case_upload_record=case_upload_record,
+            form_id=uuid.uuid4().hex,
+        )
+        self._dump_and_load(Counter({
+            CaseUploadFileMeta: 1,
+            CaseUploadRecord: 1,
+            CaseUploadFormRecord: 1,
+        }))
+
     def test_transifex(self):
         from corehq.apps.translations.models import TransifexProject, TransifexOrganization
         org = TransifexOrganization.objects.create(slug='test', name='demo', api_token='123')
@@ -518,6 +623,84 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             organization=org, slug='testp', name='demop', domain=self.domain_name
         )
         self._dump_and_load(Counter({TransifexOrganization: 1, TransifexProject: 1}))
+
+    def test_filtered_dump_load(self):
+        from corehq.apps.locations.tests.test_location_types import make_loc_type
+        from corehq.apps.products.models import SQLProduct
+        from corehq.apps.locations.models import LocationType
+
+        make_loc_type('state', domain=self.domain_name)
+        SQLProduct.objects.create(domain=self.domain_name, product_id='test1', name='test1')
+        expected_object_counts = Counter({LocationType: 1, SQLProduct: 1})
+
+        self._dump_and_load(expected_object_counts, load_filter='sqlproduct', expected_load_counts=Counter({SQLProduct: 1}))
+        self.assertEqual(0, LocationType.objects.count())
+
+    def test_sms_content(self):
+        from corehq.messaging.scheduling.models import AlertSchedule, SMSContent, AlertEvent
+        from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import \
+            delete_alert_schedule_instances_for_schedule
+
+        schedule = AlertSchedule.create_simple_alert(self.domain, SMSContent())
+
+        schedule.set_custom_alert(
+            [
+                (AlertEvent(minutes_to_wait=5), SMSContent()),
+                (AlertEvent(minutes_to_wait=15), SMSContent()),
+            ]
+        )
+
+        self.addCleanup(lambda: delete_alert_schedule_instances_for_schedule(AlertScheduleInstance, schedule.schedule_id))
+        self._dump_and_load(Counter({AlertSchedule: 1, AlertEvent: 2, SMSContent: 2}))
+
+    def test_zapier_subscription(self):
+        ZapierSubscription.objects.create(
+            domain=self.domain_name,
+            case_type='case_type',
+            event_name=EventTypes.NEW_CASE,
+            url='example.com',
+            user_id='user_id',
+        )
+        self._dump_and_load(Counter({ZapierSubscription: 1}))
+
+
+class DefaultDictWithKeyTests(SimpleTestCase):
+
+    def test_intended_use_case(self):
+        def enlist(item):
+            return [item]
+        greasy_spoon = DefaultDictWithKey(enlist)
+        self.assertEqual(greasy_spoon['spam'], ['spam'])
+        greasy_spoon['spam'].append('spam')
+        self.assertEqual(greasy_spoon['spam'], ['spam', 'spam'])
+
+    def test_not_enough_params(self):
+        def empty_list():
+            return []
+        greasy_spoon = DefaultDictWithKey(empty_list)
+        with self.assertRaisesRegex(
+            TypeError,
+            r'empty_list\(\) takes 0 positional arguments but 1 was given'
+        ):
+            greasy_spoon['spam']
+
+    def test_too_many_params(self):
+        def appender(item1, item2):
+            return [item1, item2]
+        greasy_spoon = DefaultDictWithKey(appender)
+        with self.assertRaisesRegex(
+            TypeError,
+            r"appender\(\) missing 1 required positional argument: 'item2'"
+        ):
+            greasy_spoon['spam']
+
+    def test_no_factory(self):
+        greasy_spoon = DefaultDictWithKey()
+        with self.assertRaisesRegex(
+            TypeError,
+            "'NoneType' object is not callable"
+        ):
+            greasy_spoon['spam']
 
 
 def _normalize_object_counter(counter, for_loaded=False):

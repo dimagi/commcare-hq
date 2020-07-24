@@ -534,4 +534,4 @@ def _get_usercase_default_properties(domain):
     from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE
 
     fields_def = CustomDataFieldsDefinition.get_or_create(domain, CUSTOM_USER_DATA_FIELD_TYPE)
-    return [f.slug for f in fields_def.field_set.all()]
+    return [f.slug for f in fields_def.get_fields()]

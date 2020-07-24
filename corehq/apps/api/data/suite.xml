@@ -193,7 +193,7 @@
       </header>
       <template>
         <text>
-          <xpath function="if(date_opened = '', '', format_date(date(if(date_opened = '', 0, date_opened)),'short'))"/>
+          <xpath function="if(date_opened = '', '', format-date(date(date_opened), '%d/%m/%y'))"/>
         </text>
       </template>
       <sort type="string">
@@ -241,7 +241,7 @@
       </header>
       <template>
         <text>
-          <xpath function="if(date_opened = '', '', format_date(date(if(date_opened = '', 0, date_opened)),'short'))"/>
+          <xpath function="if(date_opened = '', '', format-date(date(date_opened), '%d/%m/%y'))"/>
         </text>
       </template>
     </field>
@@ -265,7 +265,7 @@
       </header>
       <template>
         <text>
-          <xpath function="if(last_modified = '', '', format_date(date(if(last_modified = '', 0, last_modified)),'short'))"/>
+          <xpath function="if(last_modified = '', '', format-date(date(last_modified), '%d/%m/%y'))"/>
         </text>
       </template>
     </field>
@@ -301,7 +301,7 @@
       </header>
       <template>
         <text>
-          <xpath function="if(dateval = '', '', format_date(date(if(dateval = '', 0, dateval)),'short'))"/>
+          <xpath function="if(dateval = '', '', format-date(date(dateval), '%d/%m/%y'))"/>
         </text>
       </template>
     </field>
@@ -469,7 +469,7 @@
       </header>
       <template>
         <text>
-          <xpath function="if(sub_case_date = '', '', format_date(date(if(sub_case_date = '', 0, sub_case_date)),'short'))"/>
+          <xpath function="if(sub_case_date = '', '', format-date(date(sub_case_date), '%d/%m/%y'))"/>
         </text>
       </template>
     </field>
@@ -529,7 +529,7 @@
       </header>
       <template>
         <text>
-          <xpath function="if(dateval = '', '', format_date(date(if(dateval = '', 0, dateval)),'short'))"/>
+          <xpath function="if(dateval = '', '', format-date(date(dateval), '%d/%m/%y'))"/>
         </text>
       </template>
       <sort type="string">
@@ -587,7 +587,7 @@
       </header>
       <template>
         <text>
-          <xpath function="if(dateval = '', '', format_date(date(if(dateval = '', 0, dateval)),'short'))"/>
+          <xpath function="if(dateval = '', '', format-date(date(dateval), '%d/%m/%y'))"/>
         </text>
       </template>
     </field>
@@ -599,7 +599,7 @@
       </header>
       <template>
         <text>
-          <xpath function="if(date_opened = '', '', format_date(date(if(date_opened = '', 0, date_opened)),'short'))"/>
+          <xpath function="if(date_opened = '', '', format-date(date(date_opened), '%d/%m/%y'))"/>
         </text>
       </template>
     </field>

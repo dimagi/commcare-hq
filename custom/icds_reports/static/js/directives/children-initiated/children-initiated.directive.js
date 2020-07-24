@@ -3,10 +3,10 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function ChildrenInitiatedController($scope, $routeParams, $location, $filter, maternalChildService,
     locationsService, dateHelperService, navigationService, userLocationId, storageService, genders,
-    haveAccessToAllLocations, baseControllersService, isAlertActive, isMobile) {
+    haveAccessToAllLocations, baseControllersService, isAlertActive, isMobile, haveAccessToFeatures) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
-        false, isMobile);
+        haveAccessToFeatures, isMobile);
     var vm = this;
     vm.serviceDataFunction = maternalChildService.getChildrenInitiatedData;
 
@@ -23,7 +23,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     vm.data = {
         legendTitle: 'Percentage Children',
     };
-    vm.filters = ['age'];
+    vm.filters = ['age', 'data_period'];
     vm.rightLegend = {
         info: 'Of the total children enrolled for Anganwadi services between the ages of 6 to 8 months, the percentage that was given a timely introduction to solid, semi-solid or soft food.\n' +
         '\n' +
@@ -92,7 +92,7 @@ ChildrenInitiatedController.$inject = [
     '$scope', '$routeParams', '$location', '$filter',
     'maternalChildService', 'locationsService', 'dateHelperService', 'navigationService',
     'userLocationId', 'storageService', 'genders', 'haveAccessToAllLocations', 'baseControllersService',
-    'isAlertActive', 'isMobile',
+    'isAlertActive', 'isMobile', 'haveAccessToFeatures',
 ];
 
 window.angular.module('icdsApp').directive('childrenInitiated', ['templateProviderService', function (templateProviderService) {

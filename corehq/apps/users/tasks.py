@@ -2,6 +2,7 @@ from datetime import datetime
 
 from django.conf import settings
 from django.db import transaction
+from django.db.models import Count
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -16,6 +17,8 @@ from couchdbkit import BulkSaveError, ResourceConflict
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xform import get_case_ids_from_form
+from corehq.util.metrics import metrics_gauge
+from corehq.util.metrics.const import MPM_MAX
 from couchforms.exceptions import UnexpectedDeletedXForm
 from dimagi.utils.couch.bulk import BulkFetchException
 from dimagi.utils.logging import notify_exception
@@ -33,12 +36,6 @@ from corehq.form_processor.models import UserArchivedRebuild
 from corehq.util.celery_utils import deserialize_run_every_setting, run_periodic_task_again
 
 logger = get_task_logger(__name__)
-
-
-@task(serializer='pickle')
-def bulk_upload_async(domain, user_specs, group_specs):
-    # remove this after deploying `import_users_and_groups`
-    return import_users_and_groups(domain, user_specs, group_specs)
 
 
 @task(serializer='pickle')
@@ -199,7 +196,7 @@ def remove_indices_from_deleted_cases(domain, case_ids):
     deleted_ids = set(case_ids)
     indexes_referencing_deleted_cases = CaseAccessors(domain).get_all_reverse_indices_info(list(case_ids))
     case_updates = [
-        CaseBlock(
+        CaseBlock.deprecated_init(
             case_id=index_info.case_id,
             index={
                 index_info.identifier: (index_info.referenced_type, '')  # blank string = delete index
@@ -237,12 +234,12 @@ def _rebuild_case_with_retries(self, domain, case_id, detail):
     queue='background_queue',
 )
 def resend_pending_invitations():
-    from corehq.apps.users.models import SQLInvitation
+    from corehq.apps.users.models import Invitation
     days_to_resend = (15, 29)
     days_to_expire = 30
     domains = Domain.get_all()
     for domain_obj in domains:
-        invitations = SQLInvitation.by_domain(domain_obj.name)
+        invitations = Invitation.by_domain(domain_obj.name)
         for invitation in invitations:
             days = (datetime.utcnow() - invitation.invited_on).days
             if days in days_to_resend:
@@ -295,8 +292,8 @@ def remove_unused_custom_fields_from_users_task(domain):
 @task()
 def update_domain_date(user_id, domain):
     from corehq.apps.users.models import WebUser
-    user = WebUser.get_by_user_id(user_id, domain)
-    domain_membership = user.get_domain_membership(domain)
+    user = WebUser.get_by_user_id(user_id)
+    domain_membership = user.get_domain_membership(domain, allow_mirroring=False)
     today = datetime.today().date()
     if domain_membership and (
             not domain_membership.last_accessed or domain_membership.last_accessed < today):
@@ -341,3 +338,32 @@ def process_reporting_metadata_staging():
     run_again = run_periodic_task_again(process_reporting_metadata_staging_schedule, start, duration)
     if run_again and UserReportingMetadataStaging.objects.exists():
         process_reporting_metadata_staging.delay()
+
+
+@periodic_task(run_every=crontab(minute='*/10'), queue='background_queue')
+def gauge_pending_user_confirmations():
+    metric_name = 'commcare.pending_user_confirmations'
+    from corehq.apps.users.models import Invitation
+    for stats in (Invitation.objects.filter(is_accepted=False).all()
+                  .values('domain').annotate(Count('domain'))):
+        metrics_gauge(
+            metric_name, stats['domain__count'], tags={
+                'domain': stats['domain'],
+                'user_type': 'web',
+            },
+            multiprocess_mode=MPM_MAX
+        )
+
+    from corehq.apps.users.analytics import get_inactive_commcare_users_in_domain
+    for doc in Domain.get_all(include_docs=False):
+        domain_name = doc['key']
+        users = get_inactive_commcare_users_in_domain(domain_name)
+        num_unconfirmed = sum(1 for u in users if not u.is_account_confirmed)
+        if num_unconfirmed:
+            metrics_gauge(
+                metric_name, num_unconfirmed, tags={
+                    'domain': domain_name,
+                    'user_type': 'mobile',
+                },
+                multiprocess_mode=MPM_MAX
+            )

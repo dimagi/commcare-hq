@@ -1,4 +1,4 @@
-{% load staticfiles %}
+{% load static %}
 <div cg-busy="[$ctrl.myPromise]">
   <div class="app-bg h-100vh overflow-hidden" ng-show="!$ctrl.filtersOpen && $ctrl.selectedLocationLevel==4">
     <div class="top-section p-3" style="padding-bottom: 25vh">
@@ -10,7 +10,8 @@
       </div>
       {% include 'icds_reports/icds_app/mobile/partials/section-heading.html' %}
     </div>
-    <div class="summary-list" id="summaryList">
+    <reassignment-message ng-show="$ctrl.showReassignmentMessage() && haveAccessToFeatures" selected-location="$ctrl.selectedLocation()" selected-date="$ctrl.selectedDate"></reassignment-message>
+    <div class="summary-list" id="summaryList" ng-if="!$ctrl.showReassignmentMessage()">
       <div ng-if="!$ctrl.isTabularDataDisplayed">
         <div ng-if="$ctrl.step === 'demographics'">
           <div class="mobile-chart">
@@ -19,7 +20,7 @@
           </div>
         </div>
         <kpi data="$ctrl.data.kpi"></kpi>
-        <div ng-if="haveAccessToFeatures && $ctrl.step === 'pse'">
+        <div ng-if="$ctrl.step === 'pse'">
           <!--AWC days open per week-->
           <div class="mobile-chart">
             <p class="center pl-3 pt-3 mb-0 font-montserrat font-weight-600 font-18">{$ $ctrl.data.charts[0][0].key $}</p>
@@ -61,6 +62,11 @@
           <!--PSE photo submissions-->
           <div class="bg-white mb-2">
             <p class="center pl-3 pt-3 mb-0 font-18 font-weight-600 font-montserrat">PSE Photo Submissions</p>
+            <div class="col-xs-10 text-center filter-alert" ng-show="$ctrl.isOlderThan90Days()">
+              <p class="font-14 font-montserrat font-weight-500 mb-0">
+                PSE photos older than 90 days are not available on the ICDS CAS Dashboard
+              </p>
+            </div>
             <div class="d-flex justify-content-between flex-shrink-0 overflow-auto align-items-center px-3">
               <div ng-repeat="images in $ctrl.data.images" class="d-flex justify-content-between flex-shrink-0 overflow-auto align-items-center">
                 <div ng-repeat="img in images">
@@ -81,7 +87,7 @@
     </div>
     <help-popup></help-popup>
 
-    <div ng-if="haveAccessToFeatures && $ctrl.data && $ctrl.step === 'pse' && $ctrl.showAwcOnMap" class="awc-location">
+    <div ng-if="$ctrl.data && $ctrl.step === 'pse' && $ctrl.showAwcOnMap" class="awc-location">
       <div class="d-flex align-items-center h-10vh">
         <img src="{% static 'icds_reports/mobile/images/back-icon.png' %}" class="mr-2" ng-click="$ctrl.showAwcOnMap=false">
         <p class="mb-0 font-weight-600 font-14 text-white font-montserrat">AWC Location</p>

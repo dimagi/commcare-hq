@@ -29,6 +29,7 @@ from custom.icds_reports.tasks import (
     _aggregate_delivery_forms,
     _aggregate_df_forms,
     _aggregate_gm_forms,
+    _aggregate_inactive_aww_agg,
     _ccs_record_monthly_table,
     _child_health_monthly_aggregation,
     _daily_attendance_table,
@@ -36,6 +37,7 @@ from custom.icds_reports.tasks import (
     ag_pre_queries,
     agg_child_health_temp,
     aggregate_awc_daily,
+    awc_infra_pre_queries,
     availing_pre_queries,
     bp_pre_queries,
     ccs_cf_pre_queries,
@@ -53,7 +55,7 @@ from custom.icds_reports.tasks import (
     update_governance_dashboard,
     update_service_delivery_report,
     update_bihar_api_table,
-    update_child_vaccine_table
+    update_child_vaccine_table,
 )
 
 
@@ -70,7 +72,7 @@ STATE_TASKS = {
     'aggregate_ccs_record_pnc_forms': (ccs_pnc_pre_queries, _aggregate_ccs_record_pnc_forms, None),
     'aggregate_delivery_forms': (None, _aggregate_delivery_forms, None),
     'aggregate_bp_forms': (bp_pre_queries, _aggregate_bp_forms, None),
-    'aggregate_awc_infra_forms': (None, _aggregate_awc_infra_forms, None),
+    'aggregate_awc_infra_forms': (awc_infra_pre_queries, _aggregate_awc_infra_forms, None),
     'agg_ls_awc_mgt_form': (None, _agg_ls_awc_mgt_form, None),
     'agg_ls_vhnd_form': (None, _agg_ls_vhnd_form, None),
     'agg_beneficiary_form': (None, _agg_beneficiary_form, None),
@@ -101,6 +103,7 @@ NORMAL_TASKS = {
     'update_service_delivery_report': (None, update_service_delivery_report, None),
     'update_bihar_api_table': (None, update_bihar_api_table, None),
     'update_child_vaccine_table': (None, update_child_vaccine_table, None),
+    'aggregate_inactive_aww_agg': (None, _aggregate_inactive_aww_agg, None)
 }
 
 

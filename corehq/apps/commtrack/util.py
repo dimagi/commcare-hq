@@ -8,7 +8,7 @@ from xml.etree import cElementTree as ElementTree
 from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 
-from unidecode import unidecode
+from text_unidecode import unidecode
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
@@ -168,13 +168,13 @@ def submit_mapping_case_block(user, index):
     mapping = user.get_location_map_case()
 
     if mapping:
-        caseblock = CaseBlock(
+        caseblock = CaseBlock.deprecated_init(
             create=False,
             case_id=mapping.case_id,
             index=index
         )
     else:
-        caseblock = CaseBlock(
+        caseblock = CaseBlock.deprecated_init(
             create=True,
             case_type=const.USER_LOCATION_OWNER_MAP_TYPE,
             case_id=location_map_case_id(user),

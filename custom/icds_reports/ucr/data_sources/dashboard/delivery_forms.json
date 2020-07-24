@@ -20,7 +20,8 @@
   ],
   "server_environment": [
     "india",
-    "icds"
+    "icds",
+    "icds-staging"
   ],
   "config": {
     "table_id": "static-dashboard_delivery_forms",
@@ -100,6 +101,15 @@
       {
         "column_id": "timeend",
         "datatype": "date",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "meta", "timeEnd"]
+        }
+      },
+      {
+        "column_id": "timeend_with_time",
+        "datatype": "datetime",
         "type": "expression",
         "expression": {
           "type": "property_path",
@@ -298,6 +308,9 @@
     "sql_column_indexes": [
       {
         "column_ids": ["state_id", "timeend"]
+      },
+      {
+        "column_ids": ["state_id", "timeend_with_time"]
       }
     ],
     "sql_settings": {

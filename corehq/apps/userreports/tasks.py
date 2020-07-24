@@ -16,6 +16,7 @@ from celery.task import periodic_task, task
 from couchdbkit import ResourceConflict, ResourceNotFound
 from corehq.util.es.elasticsearch import ConnectionTimeout
 from corehq.util.metrics import metrics_counter, metrics_gauge, metrics_histogram_timer
+from corehq.util.metrics.const import MPM_MAX, MPM_MIN, MPM_LIVESUM
 from corehq.util.queries import paginated_queryset
 
 from couchexport.models import Format
@@ -89,7 +90,7 @@ def _build_indicators(config, document_store, relevant_ids):
 
 
 @task(serializer='pickle', queue=UCR_CELERY_QUEUE, ignore_result=True)
-def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1, source=None, engine_id=None):
+def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1, source=None, engine_id=None, diffs=None):
     config = _get_config_by_id(indicator_config_id)
     success = _('Your UCR table {} has finished rebuilding in {}').format(config.table_id, config.domain)
     failure = _('There was an error rebuilding Your UCR table {} in {}.').format(config.table_id, config.domain)
@@ -117,7 +118,7 @@ def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1, source=
             config.save()
 
         skip_log = bool(limit > 0)  # don't store log for temporary report builder UCRs
-        adapter.rebuild_table(initiated_by=initiated_by, source=source, skip_log=skip_log)
+        adapter.rebuild_table(initiated_by=initiated_by, source=source, skip_log=skip_log, diffs=diffs)
         _iteratively_build_table(config, limit=limit)
 
 
@@ -347,7 +348,7 @@ def queue_async_indicators():
             break
 
 
-def _queue_indicators(async_indicators):
+def _queue_indicators(async_indicators, use_agg_queue=False):
     """
         Extract doc ids for the passed AsyncIndicators and queue task to process indicators for them.
         Mark date_queued on all AsyncIndicator passed to utcnow.
@@ -358,7 +359,15 @@ def _queue_indicators(async_indicators):
         # AsyncIndicator have doc_id as a unique column, so this update would only
         # update the passed AsyncIndicators
         AsyncIndicator.objects.filter(doc_id__in=indicator_doc_ids).update(date_queued=now)
-        build_async_indicators.delay(indicator_doc_ids)
+        if use_agg_queue:
+            build_indicators_with_agg_queue.delay(indicator_doc_ids)
+        else:
+            build_async_indicators.delay(indicator_doc_ids)
+
+
+@task(queue='icds_aggregation_queue', ignore_result=True, acks_late=True)
+def build_indicators_with_agg_queue(indicator_doc_ids):
+    build_async_indicators(indicator_doc_ids)
 
 
 @task(serializer='pickle', queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
@@ -416,6 +425,9 @@ def build_async_indicators(indicator_doc_ids):
         }
         if config_id and settings.ENTERPRISE_MODE:
             tags['config_id'] = config_id
+        else:
+            # Prometheus requires consistent tags even if not available
+            tags['config_id'] = None
         return metrics_histogram_timer(
             'commcare.async_indicator.timing',
             timing_buckets=(.03, .1, .3, 1, 3, 10), tags=tags
@@ -488,7 +500,7 @@ def build_async_indicators(indicator_doc_ids):
                     indicators = [indicator_by_doc_id[doc_id] for doc_id in doc_ids]
                     try:
                         with _metrics_timer('update', adapter.config._id):
-                            adapter.save_rows(rows)
+                            adapter.save_rows(rows, use_shard_col=True)
                     except Exception as e:
                         failed_indicators.union(indicators)
                         message = str(e)
@@ -535,40 +547,52 @@ def async_indicators_metrics():
     oldest_indicator = AsyncIndicator.objects.order_by('date_queued').first()
     if oldest_indicator and oldest_indicator.date_queued:
         lag = (now - oldest_indicator.date_queued).total_seconds()
-        metrics_gauge('commcare.async_indicator.oldest_queued_indicator', lag)
+        metrics_gauge('commcare.async_indicator.oldest_queued_indicator', lag,
+            multiprocess_mode=MPM_MIN)
 
     oldest_100_indicators = AsyncIndicator.objects.all()[:100]
     if oldest_100_indicators.exists():
         oldest_indicator = oldest_100_indicators[0]
         lag = (now - oldest_indicator.date_created).total_seconds()
-        metrics_gauge('commcare.async_indicator.oldest_created_indicator', lag)
+        metrics_gauge('commcare.async_indicator.oldest_created_indicator', lag,
+            multiprocess_mode=MPM_MIN)
 
         lags = [
             (now - indicator.date_created).total_seconds()
             for indicator in oldest_100_indicators
         ]
         avg_lag = sum(lags) / len(lags)
-        metrics_gauge('commcare.async_indicator.oldest_created_indicator_avg', avg_lag)
+        metrics_gauge('commcare.async_indicator.oldest_created_indicator_avg', avg_lag,
+            multiprocess_mode=MPM_MAX)
 
     for config_id, metrics in _indicator_metrics().items():
         tags = {"config_id": config_id}
-        metrics_gauge('commcare.async_indicator.indicator_count', metrics['count'], tags=tags)
+        metrics_gauge('commcare.async_indicator.indicator_count', metrics['count'], tags=tags,
+            multiprocess_mode=MPM_MAX)
         metrics_gauge('commcare.async_indicator.lag', metrics['lag'], tags=tags,
-            documentation="Lag of oldest created indicator including failed indicators")
+            documentation="Lag of oldest created indicator including failed indicators",
+            multiprocess_mode=MPM_MAX)
 
     # Don't use ORM summing because it would attempt to get every value in DB
     unsuccessful_attempts = sum(AsyncIndicator.objects.values_list('unsuccessful_attempts', flat=True).all()[:100])
-    metrics_gauge('commcare.async_indicator.unsuccessful_attempts', unsuccessful_attempts)
+    metrics_gauge('commcare.async_indicator.unsuccessful_attempts', unsuccessful_attempts, multiprocess_mode='livesum')
 
+    oldest_unprocessed = AsyncIndicator.objects.filter(unsuccessful_attempts=0).first()
+    if oldest_unprocessed:
+        lag = (now - oldest_unprocessed.date_created).total_seconds()
+    else:
+        lag = 0
     metrics_gauge(
         'commcare.async_indicator.true_lag',
-        (now - AsyncIndicator.objects.filter(unsuccessful_attempts=0).first().date_created).total_seconds,
-        documentation="Lag of oldest created indicator that didn't get ever queued"
+        lag,
+        documentation="Lag of oldest created indicator that didn't get ever queued",
+        multiprocess_mode=MPM_MAX
     )
     metrics_gauge(
         'commcare.async_indicator.fully_failed_count',
         AsyncIndicator.objects.filter(unsuccessful_attempts=ASYNC_INDICATOR_MAX_RETRIES).count(),
-        documentation="Number of indicators that failed max-retry number of times"
+        documentation="Number of indicators that failed max-retry number of times",
+        multiprocess_mode=MPM_LIVESUM
     )
 
 

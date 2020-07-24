@@ -1,7 +1,9 @@
 import json
 import datetime
-
 from datetime import date
+from decimal import Decimal as Decimal_
+
+import django
 from django.core.serializers.json import DjangoJSONEncoder
 from django.test import TestCase
 from mock import mock
@@ -18,6 +20,9 @@ from custom.icds_reports.messages import new_born_with_low_weight_help_text, was
     percent_aadhaar_seeded_beneficiaries_help_text, percent_children_enrolled_help_text, \
     percent_pregnant_women_enrolled_help_text, percent_lactating_women_enrolled_help_text, \
     percent_adolescent_girls_enrolled_help_text_v2
+
+# TODO remove when Django 1 is no longer supported
+Decimal = Decimal_ if django.__version__ >= "2.2" else float
 
 
 class FirstDayOfMay(date):
@@ -39,6 +44,8 @@ class SecondDayOfMay(date):
 
 
 class TestAWCReport(TestCase):
+    maxDiff = None
+
     def test_beneficiary_details_recorded_weight_none(self):
         data = get_beneficiary_details(
             case_id='6b234c5b-883c-4849-9dfd-b1571af8717b',
@@ -74,6 +81,26 @@ class TestAWCReport(TestCase):
         self.assertEqual(data['sex'], 'F')
         self.assertEqual(data['person_name'], 'Name 3483')
         self.assertEqual(data['mother_name'], 'रींकीकुँवर')
+
+    def test_beneficiary_details_status_active(self):
+        data = get_beneficiary_details(
+            case_id='411c4234-8475-415a-9c28-911b85868aa5',
+            awc_id='a15',
+            selected_month=(2017, 6, 1)
+        )
+        self.assertEqual(data['beneficiary_status'], 'Active')
+
+    def test_beneficiary_details_status_migrated(self):
+        data = get_beneficiary_details(
+            case_id='625adb33-c67e-4151-93c7-64f28c988388',
+            awc_id='a7',
+            selected_month=(2017, 5, 1)
+        )
+        self.assertEqual(data['age_in_months'], 47)
+        self.assertEqual(data['sex'], 'M')
+        self.assertEqual(data['person_name'], 'Name 1783')
+        self.assertEqual(data['mother_name'], 'रेरवा')
+        self.assertEqual(data['beneficiary_status'], 'Migrated')
 
     def test_awc_reports_system_usage_AWC_days_open(self):
         self.assertDictEqual(
@@ -256,39 +283,39 @@ class TestAWCReport(TestCase):
                     "values": [
                         [
                             1491523200000,
-                            0.65625
+                            Decimal('0.65625000000000000000')
                         ],
                         [
                             1491609600000,
-                            0.64516129
+                            Decimal('0.64516129000000000000')
                         ],
                         [
                             1491782400000,
-                            0.677419355
+                            Decimal('0.67741935500000000000')
                         ],
                         [
                             1491955200000,
-                            0.612903226
+                            Decimal('0.61290322600000000000')
                         ],
                         [
                             1492473600000,
-                            0.612903226
+                            Decimal('0.61290322600000000000')
                         ],
                         [
                             1492732800000,
-                            0.64516129
+                            Decimal('0.64516129000000000000')
                         ],
                         [
                             1492992000000,
-                            0.64516129
+                            Decimal('0.64516129000000000000')
                         ],
                         [
                             1493078400000,
-                            0.64516129
+                            Decimal('0.64516129000000000000')
                         ],
                         [
                             1493251200000,
-                            0.64516129
+                            Decimal('0.64516129000000000000')
                         ]
                     ],
                     "key": "PSE- Average Weekly Attendance"
@@ -334,347 +361,6 @@ class TestAWCReport(TestCase):
             ['kpi', 'charts']
         )
 
-    def test_awc_reports_pse_images_0(self):
-        data = get_awc_reports_pse(
-            {
-                'state_id': 'st1',
-                'district_id': 'd1',
-                'block_id': 'b1',
-                'awc_id': 'a1',
-                'aggregation_level': 5
-            },
-            (2017, 5, 1),
-            'icds-cas'
-        )
-        for kpi in data['kpi']:
-            for el in kpi:
-                del el['help_text']
-        self.assertEqual(
-            data['images'][0],
-            [
-                {
-                    "date": "01/05/2017",
-                    "image": None,
-                    "id": 0
-                },
-                {
-                    "date": "02/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
-                             "00a368e6-e88f-41ee-96aa-25a8ec5ab3d6/1493703284010.jpg",
-                    "id": 1
-                },
-                {
-                    "date": "03/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
-                             "ef336dda-12a1-42a4-9bee-405d17c2aba8/1493790538044.jpg",
-                    "id": 2
-                },
-                {
-                    "date": "04/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
-                             "00ec149e-c1a9-4083-a73c-cdc39df17137/1493876634200.jpg",
-                    "id": 3
-                }
-            ]
-        )
-
-    def test_awc_reports_pse_images_1(self):
-        data = get_awc_reports_pse(
-            {
-                'state_id': 'st1',
-                'district_id': 'd1',
-                'block_id': 'b1',
-                'awc_id': 'a1',
-                'aggregation_level': 5
-            },
-            (2017, 5, 1),
-            'icds-cas'
-        )
-        for kpi in data['kpi']:
-            for el in kpi:
-                del el['help_text']
-        self.assertEqual(
-            data['images'][1],
-            [
-                {
-                    "date": "05/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
-                             "ebb1f3c8-34c7-4ed1-9f35-0b209cb4d683/1493959451474.jpg",
-                    "id": 4
-                },
-                {
-                    "date": "06/05/2017",
-                    "image": None,
-                    "id": 5
-                },
-                {
-                    "date": "07/05/2017",
-                    "image": None,
-                    "id": 6
-                },
-                {
-                    "date": "08/05/2017",
-                    "image": None,
-                    "id": 7
-                }
-            ]
-        )
-
-    def test_awc_reports_pse_images_2(self):
-        data = get_awc_reports_pse(
-            {
-                'state_id': 'st1',
-                'district_id': 'd1',
-                'block_id': 'b1',
-                'awc_id': 'a1',
-                'aggregation_level': 5
-            },
-            (2017, 5, 1),
-            'icds-cas'
-        )
-        for kpi in data['kpi']:
-            for el in kpi:
-                del el['help_text']
-        self.assertEqual(
-            data['images'][2],
-            [
-                {
-                    "date": "09/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
-                             "eb20b019-97ef-45e0-9698-fda3d964a096/1494308187855.jpg",
-                    "id": 8
-                },
-                {
-                    "date": "10/05/2017",
-                    "image": None,
-                    "id": 9
-                },
-                {
-                    "date": "11/05/2017",
-                    "image": None,
-                    "id": 10
-                },
-                {
-                    "date": "12/05/2017",
-                    "image": None,
-                    "id": 11
-                }
-            ]
-        )
-
-    def test_awc_reports_pse_images_3(self):
-        data = get_awc_reports_pse(
-            {
-                'state_id': 'st1',
-                'district_id': 'd1',
-                'block_id': 'b1',
-                'awc_id': 'a1',
-                'aggregation_level': 5
-            },
-            (2017, 5, 1),
-            'icds-cas'
-        )
-        for kpi in data['kpi']:
-            for el in kpi:
-                del el['help_text']
-        self.assertEqual(
-            data['images'][3],
-            [
-                {
-                    "date": "13/05/2017",
-                    "image": None,
-                    "id": 12
-                },
-                {
-                    "date": "14/05/2017",
-                    "image": None,
-                    "id": 13
-                },
-                {
-                    "date": "15/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
-                             "036ab123-0a1e-43b6-8e7d-4bcf9abcdfa2/1494826363729.jpg",
-                    "id": 14
-                },
-                {
-                    "date": "16/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
-                             "dda9c427-4ba7-4f90-9c5b-d2a02cff9e31/1494911839185.jpg",
-                    "id": 15
-                }
-            ]
-        )
-
-    def test_awc_reports_pse_images_4(self):
-        data = get_awc_reports_pse(
-            {
-                'state_id': 'st1',
-                'district_id': 'd1',
-                'block_id': 'b1',
-                'awc_id': 'a1',
-                'aggregation_level': 5
-            },
-            (2017, 5, 1),
-            'icds-cas'
-        )
-        for kpi in data['kpi']:
-            for el in kpi:
-                del el['help_text']
-        self.assertEqual(
-            data['images'][4],
-            [
-                {
-                    "date": "17/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
-                             "1be8a49b-c63c-4288-bcb2-9e5bf132834f/1494997946602.jpg",
-                    "id": 16
-                },
-                {
-                    "date": "18/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
-                             "c7f6d174-1218-4f8e-ab84-f80e17b1ebdb/1495084707730.jpg",
-                    "id": 17
-                },
-                {
-                    "date": "19/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
-                             "416990d9-f354-457f-8c52-1866e98840f5/1495173038810.jpg",
-                    "id": 18
-                },
-                {
-                    "date": "20/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
-                             "3fea99f8-c6f4-48c9-9386-152639fe1b17/1495259635314.jpg",
-                    "id": 19
-                }
-            ]
-        )
-
-    def test_awc_reports_pse_images_5(self):
-        data = get_awc_reports_pse(
-            {
-                'state_id': 'st1',
-                'district_id': 'd1',
-                'block_id': 'b1',
-                'awc_id': 'a1',
-                'aggregation_level': 5
-            },
-            (2017, 5, 1),
-            'icds-cas'
-        )
-        for kpi in data['kpi']:
-            for el in kpi:
-                del el['help_text']
-        self.assertEqual(
-            data['images'][5],
-            [
-                {
-                    "date": "21/05/2017",
-                    "image": None,
-                    "id": 20
-                },
-                {
-                    "date": "22/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
-                             "ce528857-f34e-4785-913f-41d221fbeed8/1495432106324.jpg",
-                    "id": 21
-                },
-                {
-                    "date": "23/05/2017",
-                    "image": None,
-                    "id": 22
-                },
-                {
-                    "date": "24/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
-                             "5d0f2aa4-6d5b-424f-91d1-c4afb2d0555b/1495605536823.jpg",
-                    "id": 23
-                }
-            ]
-        )
-
-    def test_awc_reports_pse_images_6(self):
-        data = get_awc_reports_pse(
-            {
-                'state_id': 'st1',
-                'district_id': 'd1',
-                'block_id': 'b1',
-                'awc_id': 'a1',
-                'aggregation_level': 5
-            },
-            (2017, 5, 1),
-            'icds-cas'
-        )
-        for kpi in data['kpi']:
-            for el in kpi:
-                del el['help_text']
-        self.assertEqual(
-            data['images'][6],
-            [
-                {
-                    "date": "25/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
-                             "20e4d641-a85a-4927-96ab-994fa46a8ea0/1495690578649.jpg",
-                    "id": 24
-                },
-                {
-                    "date": "26/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
-                             "f86e701b-1531-469f-8996-705e297bf498/1495776461721.jpg",
-                    "id": 25
-                },
-                {
-                    "date": "27/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
-                             "6701b39d-4b6f-4ae3-8a88-eadb61b1a105/1495865744995.jpg",
-                    "id": 26
-                },
-                {
-                    "date": "28/05/2017",
-                    "image": None,
-                    "id": 27
-                }
-            ]
-        )
-
-    def test_awc_reports_pse_images_7(self):
-        data = get_awc_reports_pse(
-            {
-                'state_id': 'st1',
-                'district_id': 'd1',
-                'block_id': 'b1',
-                'awc_id': 'a1',
-                'aggregation_level': 5
-            },
-            (2017, 5, 1),
-            'icds-cas'
-        )
-        for kpi in data['kpi']:
-            for el in kpi:
-                del el['help_text']
-        self.assertEqual(
-            data['images'][7],
-            [
-                {
-                    "date": "29/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
-                             "6376d77d-bb2a-48ac-9042-7892dda97bba/1496036503892.jpg",
-                    "id": 28
-                },
-                {
-                    "date": "30/05/2017",
-                    "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
-                             "c0d002ca-f7b0-4bd2-a531-881b46610c2f/1496120210768.jpg",
-                    "id": 29
-                },
-                {
-                    "date": "31/05/2017",
-                    "image": None,
-                    "id": 30
-                }
-            ]
-        )
-
     def test_awc_reports_pse_images_length(self):
         data = get_awc_reports_pse(
             {
@@ -685,7 +371,8 @@ class TestAWCReport(TestCase):
                 'aggregation_level': 5
             },
             (2017, 5, 1),
-            'icds-cas'
+            'icds-cas',
+            now_date=(2017, 6, 1)
         )
         for kpi in data['kpi']:
             for el in kpi:
@@ -693,6 +380,217 @@ class TestAWCReport(TestCase):
         self.assertEqual(
             len(data['images']),
             8
+        )
+
+    def test_awc_reports_pse_images(self):
+        data = get_awc_reports_pse(
+            {
+                'state_id': 'st1',
+                'district_id': 'd1',
+                'block_id': 'b1',
+                'awc_id': 'a1',
+                'aggregation_level': 5
+            },
+            (2017, 5, 1),
+            'icds-cas',
+            now_date=(2017, 6, 1)
+        )
+        for kpi in data['kpi']:
+            for el in kpi:
+                del el['help_text']
+        self.assertEqual(
+            data['images'],
+            [
+                [
+                    {
+                        "date": "01/05/2017",
+                        "image": None,
+                        "id": 0
+                    },
+                    {
+                        "date": "02/05/2017",
+                        "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
+                                 "00a368e6-e88f-41ee-96aa-25a8ec5ab3d6/1493703284010.jpg",
+                        "id": 1
+                    },
+                    {
+                        "date": "03/05/2017",
+                        "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
+                                 "ef336dda-12a1-42a4-9bee-405d17c2aba8/1493790538044.jpg",
+                        "id": 2
+                    },
+                    {
+                        "date": "04/05/2017",
+                        "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
+                                 "00ec149e-c1a9-4083-a73c-cdc39df17137/1493876634200.jpg",
+                        "id": 3
+                    }
+                ],
+                [
+                    {
+                        "date": "05/05/2017",
+                        "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
+                                 "ebb1f3c8-34c7-4ed1-9f35-0b209cb4d683/1493959451474.jpg",
+                        "id": 4
+                    },
+                    {
+                        "date": "06/05/2017",
+                        "image": None,
+                        "id": 5
+                    },
+                    {
+                        "date": "07/05/2017",
+                        "image": None,
+                        "id": 6
+                    },
+                    {
+                        "date": "08/05/2017",
+                        "image": None,
+                        "id": 7
+                    }
+                ],
+                [
+                    {
+                        "date": "09/05/2017",
+                        "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
+                                 "eb20b019-97ef-45e0-9698-fda3d964a096/1494308187855.jpg",
+                        "id": 8
+                    },
+                    {
+                        "date": "10/05/2017",
+                        "image": None,
+                        "id": 9
+                    },
+                    {
+                        "date": "11/05/2017",
+                        "image": None,
+                        "id": 10
+                    },
+                    {
+                        "date": "12/05/2017",
+                        "image": None,
+                        "id": 11
+                    }
+                ],
+                [
+                    {
+                        "date": "13/05/2017",
+                        "image": None,
+                        "id": 12
+                    },
+                    {
+                        "date": "14/05/2017",
+                        "image": None,
+                        "id": 13
+                    },
+                    {
+                        "date": "15/05/2017",
+                        "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
+                                 "036ab123-0a1e-43b6-8e7d-4bcf9abcdfa2/1494826363729.jpg",
+                        "id": 14
+                    },
+                    {
+                        "date": "16/05/2017",
+                        "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
+                                 "dda9c427-4ba7-4f90-9c5b-d2a02cff9e31/1494911839185.jpg",
+                        "id": 15
+                    }
+                ],
+                [
+                    {
+                        "date": "17/05/2017",
+                        "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
+                                 "1be8a49b-c63c-4288-bcb2-9e5bf132834f/1494997946602.jpg",
+                        "id": 16
+                    },
+                    {
+                        "date": "18/05/2017",
+                        "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
+                                 "c7f6d174-1218-4f8e-ab84-f80e17b1ebdb/1495084707730.jpg",
+                        "id": 17
+                    },
+                    {
+                        "date": "19/05/2017",
+                        "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
+                                 "416990d9-f354-457f-8c52-1866e98840f5/1495173038810.jpg",
+                        "id": 18
+                    },
+                    {
+                        "date": "20/05/2017",
+                        "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
+                                 "3fea99f8-c6f4-48c9-9386-152639fe1b17/1495259635314.jpg",
+                        "id": 19
+                    }
+                ],
+                [
+                    {
+                        "date": "21/05/2017",
+                        "image": None,
+                        "id": 20
+                    },
+                    {
+                        "date": "22/05/2017",
+                        "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
+                                 "ce528857-f34e-4785-913f-41d221fbeed8/1495432106324.jpg",
+                        "id": 21
+                    },
+                    {
+                        "date": "23/05/2017",
+                        "image": None,
+                        "id": 22
+                    },
+                    {
+                        "date": "24/05/2017",
+                        "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
+                                 "5d0f2aa4-6d5b-424f-91d1-c4afb2d0555b/1495605536823.jpg",
+                        "id": 23
+                    }
+                ],
+                [
+                    {
+                        "date": "25/05/2017",
+                        "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
+                                 "20e4d641-a85a-4927-96ab-994fa46a8ea0/1495690578649.jpg",
+                        "id": 24
+                    },
+                    {
+                        "date": "26/05/2017",
+                        "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
+                                 "f86e701b-1531-469f-8996-705e297bf498/1495776461721.jpg",
+                        "id": 25
+                    },
+                    {
+                        "date": "27/05/2017",
+                        "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
+                                 "6701b39d-4b6f-4ae3-8a88-eadb61b1a105/1495865744995.jpg",
+                        "id": 26
+                    },
+                    {
+                        "date": "28/05/2017",
+                        "image": None,
+                        "id": 27
+                    }
+                ],
+                [
+                    {
+                        "date": "29/05/2017",
+                        "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
+                                 "6376d77d-bb2a-48ac-9042-7892dda97bba/1496036503892.jpg",
+                        "id": 28
+                    },
+                    {
+                        "date": "30/05/2017",
+                        "image": "http://localhost:8000/a/icds-cas/icds_dashboard/icds_image_accessor/"
+                                 "c0d002ca-f7b0-4bd2-a531-881b46610c2f/1496120210768.jpg",
+                        "id": 29
+                    },
+                    {
+                        "date": "31/05/2017",
+                        "image": None,
+                        "id": 30
+                    }
+                ]
+            ]
         )
 
     def test_awc_reports_pse_kpi(self):
@@ -806,25 +704,25 @@ class TestAWCReport(TestCase):
                             "eligible": 0
                         },
                         {
-                            "y": 0.741935484,
+                            "y": Decimal('0.74193548400000000000'),
                             "x": 1493683200000,
                             "attended": 23,
                             "eligible": 31
                         },
                         {
-                            "y": 0.806451613,
+                            "y": Decimal('0.80645161300000000000'),
                             "x": 1493769600000,
                             "attended": 25,
                             "eligible": 31
                         },
                         {
-                            "y": 0.8,
+                            "y": Decimal('0.80000000000000000000'),
                             "x": 1493856000000,
                             "attended": 24,
                             "eligible": 30
                         },
                         {
-                            "y": 0.8,
+                            "y": Decimal('0.80000000000000000000'),
                             "x": 1493942400000,
                             "attended": 24,
                             "eligible": 30
@@ -848,7 +746,7 @@ class TestAWCReport(TestCase):
                             "eligible": 0
                         },
                         {
-                            "y": 0.8,
+                            "y": Decimal('0.80000000000000000000'),
                             "x": 1494288000000,
                             "attended": 24,
                             "eligible": 30
@@ -884,37 +782,37 @@ class TestAWCReport(TestCase):
                             "eligible": 0
                         },
                         {
-                            "y": 1.0,
+                            "y": Decimal('1.00000000000000000000'),
                             "x": 1494806400000,
                             "attended": 30,
                             "eligible": 30
                         },
                         {
-                            "y": 0.666666667,
+                            "y": Decimal('0.66666666700000000000'),
                             "x": 1494892800000,
                             "attended": 20,
                             "eligible": 30
                         },
                         {
-                            "y": 0.733333333,
+                            "y": Decimal('0.73333333300000000000'),
                             "x": 1494979200000,
                             "attended": 22,
                             "eligible": 30
                         },
                         {
-                            "y": 0.766666667,
+                            "y": Decimal('0.76666666700000000000'),
                             "x": 1495065600000,
                             "attended": 23,
                             "eligible": 30
                         },
                         {
-                            "y": 0.666666667,
+                            "y": Decimal('0.66666666700000000000'),
                             "x": 1495152000000,
                             "attended": 20,
                             "eligible": 30
                         },
                         {
-                            "y": 0.633333333,
+                            "y": Decimal('0.63333333300000000000'),
                             "x": 1495238400000,
                             "attended": 19,
                             "eligible": 30
@@ -926,7 +824,7 @@ class TestAWCReport(TestCase):
                             "eligible": 0
                         },
                         {
-                            "y": 0.666666667,
+                            "y": Decimal('0.66666666700000000000'),
                             "x": 1495411200000,
                             "attended": 20,
                             "eligible": 30
@@ -938,25 +836,25 @@ class TestAWCReport(TestCase):
                             "eligible": 0
                         },
                         {
-                            "y": 0.666666667,
+                            "y": Decimal('0.66666666700000000000'),
                             "x": 1495584000000,
                             "attended": 20,
                             "eligible": 30
                         },
                         {
-                            "y": 0.666666667,
+                            "y": Decimal('0.66666666700000000000'),
                             "x": 1495670400000,
                             "attended": 20,
                             "eligible": 30
                         },
                         {
-                            "y": 0.666666667,
+                            "y": Decimal('0.66666666700000000000'),
                             "x": 1495756800000,
                             "attended": 20,
                             "eligible": 30
                         },
                         {
-                            "y": 0.666666667,
+                            "y": Decimal('0.66666666700000000000'),
                             "x": 1495843200000,
                             "attended": 20,
                             "eligible": 30
@@ -968,13 +866,13 @@ class TestAWCReport(TestCase):
                             "eligible": 0
                         },
                         {
-                            "y": 0.655172414,
+                            "y": Decimal('0.65517241400000000000'),
                             "x": 1496016000000,
                             "attended": 19,
                             "eligible": 29
                         },
                         {
-                            "y": 1.0,
+                            "y": Decimal('1.00000000000000000000'),
                             "x": 1496102400000,
                             "attended": 29,
                             "eligible": 29
@@ -1344,7 +1242,7 @@ class TestAWCReport(TestCase):
             }
         )
 
-    def test_awc_reports_maternal_child_immunization_coverage_at_age_1_year(self):
+    def test_awc_reports_maternal_child_immunization_coverage_at_age_1_year_with_age_1_2(self):
         data = get_awc_reports_maternal_child(
             'icds-cas',
             {
@@ -1355,7 +1253,7 @@ class TestAWCReport(TestCase):
                 'aggregation_level': 5
             },
             (2017, 5, 1),
-            (2017, 4, 1),
+            (2017, 4, 1)
         )
         self.assertDictEqual(
             data['kpi'][4][0],
@@ -1368,9 +1266,9 @@ class TestAWCReport(TestCase):
                 "value": 0,
                 "label": "Immunization Coverage (at age 1 year)",
                 'help_text': (
-                    "Of the total number of children enrolled for Anganwadi Services who are over a year old, "
-                    "the percentage of children who have received the complete immunization as per the National "
-                    "Immunization Schedule of India that is required by age 1."
+                    "Of the total number of children enrolled for Anganwadi Services who are between"
+                    " 1-2 years old, the percentage of children who have received the complete immunization"
+                    " as per the National Immunization Schedule of India that is required by age 1."
                     "<br/><br/>"
                     " This includes the following immunizations:<br/>"
                     " If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>"
@@ -1907,7 +1805,8 @@ class TestAWCReport(TestCase):
                     'fully_immunized': 'No',
                     'person_name': 'Name 1237',
                     'aww_phone_number': None,
-                    'mother_phone_number': None
+                    'mother_phone_number': None,
+                    'beneficiary_status': 'Active'
                 },
                 cls=DjangoJSONEncoder
             )
@@ -1932,7 +1831,8 @@ class TestAWCReport(TestCase):
                     'fully_immunized': 'No',
                     'person_name': 'Name 1303',
                     'aww_phone_number': None,
-                    'mother_phone_number': None
+                    'mother_phone_number': None,
+                    'beneficiary_status': 'Active'
                 },
                 cls=DjangoJSONEncoder
             )
@@ -1957,7 +1857,8 @@ class TestAWCReport(TestCase):
                     'fully_immunized': 'No',
                     'person_name': 'Name 1305',
                     'aww_phone_number': None,
-                    'mother_phone_number': None
+                    'mother_phone_number': None,
+                    'beneficiary_status': 'Active'
                 },
                 cls=DjangoJSONEncoder
             )
@@ -1982,7 +1883,8 @@ class TestAWCReport(TestCase):
                     'fully_immunized': 'No',
                     'person_name': 'Name 1341',
                     'aww_phone_number': None,
-                    'mother_phone_number': None
+                    'mother_phone_number': None,
+                    'beneficiary_status': 'Active'
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2007,7 +1909,8 @@ class TestAWCReport(TestCase):
                     'fully_immunized': 'No',
                     'person_name': 'Name 2617',
                     'aww_phone_number': None,
-                    'mother_phone_number': None
+                    'mother_phone_number': None,
+                    'beneficiary_status': 'Active'
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2032,7 +1935,8 @@ class TestAWCReport(TestCase):
                     'fully_immunized': 'No',
                     'person_name': 'Name 2917',
                     'aww_phone_number': None,
-                    'mother_phone_number': None
+                    'mother_phone_number': None,
+                    'beneficiary_status': 'Active'
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2057,7 +1961,9 @@ class TestAWCReport(TestCase):
                     'fully_immunized': 'No',
                     'person_name': 'Name 4398',
                     'aww_phone_number': None,
-                    'mother_phone_number': None},
+                    'mother_phone_number': None,
+                    'beneficiary_status': 'Active'
+                },
                 cls=DjangoJSONEncoder
             )
         )
@@ -2081,7 +1987,8 @@ class TestAWCReport(TestCase):
                     'fully_immunized': 'No',
                     'person_name': 'Name 4399',
                     'aww_phone_number': None,
-                    'mother_phone_number': None
+                    'mother_phone_number': None,
+                    'beneficiary_status': 'Active'
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2106,7 +2013,8 @@ class TestAWCReport(TestCase):
                     'fully_immunized': 'No',
                     'person_name': 'Name 4400',
                     'aww_phone_number': None,
-                    'mother_phone_number': None
+                    'mother_phone_number': None,
+                    'beneficiary_status': 'Active'
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2131,7 +2039,8 @@ class TestAWCReport(TestCase):
                     'fully_immunized': 'No',
                     'person_name': 'Name 1191',
                     'aww_phone_number': None,
-                    'mother_phone_number': None
+                    'mother_phone_number': None,
+                    'beneficiary_status': 'Active'
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2268,15 +2177,15 @@ class TestAWCReport(TestCase):
                 data['data'][0],
                 {
                     'num_rations_distributed': 0,
-                    'institutional_delivery': 'N',
+                    'institutional_delivery': 'No',
                     'person_name': None,
                     'delivery_nature': 'Data Not Entered',
                     'age': 20,
                     'num_pnc_visits': None,
                     'add': datetime.date(2017, 3, 1),
                     'case_id': '36d5e223-a631-4030-910c-262a1d066fb3',
-                    'breastfed_at_birth': 'N',
-                    'is_ebf': 'N'}
+                    'breastfed_at_birth': 'No',
+                    'is_ebf': 'No'}
             )
 
     def test_awc_report_lactating_second_record(self):
@@ -2292,15 +2201,15 @@ class TestAWCReport(TestCase):
                 data['data'][1],
                 {
                     'num_rations_distributed': 6,
-                    'institutional_delivery': 'N',
+                    'institutional_delivery': 'No',
                     'person_name': None,
                     'delivery_nature': 'Data Not Entered',
                     'age': 23,
                     'num_pnc_visits': None,
                     'add': datetime.date(2017, 4, 20),
                     'case_id': 'aefb8fe5-1cd1-4235-9baf-963b1a0b498e',
-                    'breastfed_at_birth': 'N',
-                    'is_ebf': 'N'}
+                    'breastfed_at_birth': 'No',
+                    'is_ebf': 'No'}
             )
 
     def test_awc_report_lactating_third_record(self):
@@ -2316,15 +2225,15 @@ class TestAWCReport(TestCase):
                 data['data'][2],
                 {
                     'num_rations_distributed': 6,
-                    'institutional_delivery': 'N',
+                    'institutional_delivery': 'No',
                     'person_name': None,
                     'delivery_nature': 'Data Not Entered',
                     'age': 24,
                     'num_pnc_visits': None,
                     'add': datetime.date(2017, 3, 1),
                     'case_id': '4f0aac21-5b5d-43a6-a1f6-9744d0e66cf2',
-                    'breastfed_at_birth': 'N',
-                    'is_ebf': 'N'}
+                    'breastfed_at_birth': 'No',
+                    'is_ebf': 'No'}
             )
 
     def test_awc_report_lactating_forth_record(self):
@@ -2340,15 +2249,15 @@ class TestAWCReport(TestCase):
                 data['data'][3],
                 {
                     'num_rations_distributed': 12,
-                    'institutional_delivery': 'N',
+                    'institutional_delivery': 'No',
                     'person_name': None,
                     'delivery_nature': 'Data Not Entered',
                     'age': 26,
                     'num_pnc_visits': None,
                     'add': datetime.date(2017, 3, 20),
                     'case_id': '10a53900-f65e-46b7-ae0c-f32a208c0677',
-                    'breastfed_at_birth': 'N',
-                    'is_ebf': 'N'}
+                    'breastfed_at_birth': 'No',
+                    'is_ebf': 'No'}
             )
 
     def test_awc_report_lactating_fifth_record(self):
@@ -2364,15 +2273,15 @@ class TestAWCReport(TestCase):
                 data['data'][4],
                 {
                     'num_rations_distributed': 12,
-                    'institutional_delivery': 'N',
+                    'institutional_delivery': 'No',
                     'person_name': None,
                     'delivery_nature': 'Data Not Entered',
                     'age': 26,
                     'num_pnc_visits': None,
                     'add': datetime.date(2017, 3, 1),
                     'case_id': '1a6851bc-8172-48fc-80d1-b198f23033ab',
-                    'breastfed_at_birth': 'N',
-                    'is_ebf': 'N'}
+                    'breastfed_at_birth': 'No',
+                    'is_ebf': 'No'}
             )
 
     def test_awc_report_lactating_sixth_record(self):
@@ -2388,15 +2297,15 @@ class TestAWCReport(TestCase):
                 data['data'][5],
                 {
                     'num_rations_distributed': 6,
-                    'institutional_delivery': 'N',
+                    'institutional_delivery': 'No',
                     'person_name': None,
                     'delivery_nature': 'Data Not Entered',
                     'age': 26,
                     'num_pnc_visits': None,
                     'add': datetime.date(2017, 3, 1),
                     'case_id': '37c4d26f-eda0-4d9a-bae9-11a17a3ccfaa',
-                    'breastfed_at_birth': 'N',
-                    'is_ebf': 'N'}
+                    'breastfed_at_birth': 'No',
+                    'is_ebf': 'No'}
             )
 
     def test_awc_report_lactating_seventh_record(self):
@@ -2413,15 +2322,15 @@ class TestAWCReport(TestCase):
                 data['data'][6],
                 {
                     'num_rations_distributed': 6,
-                    'institutional_delivery': 'N',
+                    'institutional_delivery': 'No',
                     'person_name': None,
                     'delivery_nature': 'Data Not Entered',
                     'age': 29,
                     'num_pnc_visits': None,
                     'add': datetime.date(2017, 3, 1),
                     'case_id': '1744a035-56f1-4059-86f5-93fcea3c6076',
-                    'breastfed_at_birth': 'N',
-                    'is_ebf': 'N'}
+                    'breastfed_at_birth': 'No',
+                    'is_ebf': 'No'}
             )
 
     def test_awc_report_lactating_on_first_of_month(self):
@@ -2438,31 +2347,31 @@ class TestAWCReport(TestCase):
                 [
                     {'num_rations_distributed': 0, 'person_name': None, 'num_pnc_visits': None,
                      'age': 20, 'delivery_nature': u'Data Not Entered', 'add': datetime.date(2017, 3, 1),
-                     'case_id': u'36d5e223-a631-4030-910c-262a1d066fb3', 'breastfed_at_birth': u'N',
-                     'is_ebf': u'N', 'institutional_delivery': u'N'},
+                     'case_id': u'36d5e223-a631-4030-910c-262a1d066fb3', 'breastfed_at_birth': u'No',
+                     'is_ebf': u'No', 'institutional_delivery': u'No'},
                     {'num_rations_distributed': 0, 'person_name': None, 'num_pnc_visits': None,
                      'age': 23, 'delivery_nature': u'Data Not Entered', 'add': datetime.date(2017, 4, 20),
-                     'case_id': u'aefb8fe5-1cd1-4235-9baf-963b1a0b498e', 'breastfed_at_birth': u'N',
-                     'is_ebf': u'N', 'institutional_delivery': u'N'},
+                     'case_id': u'aefb8fe5-1cd1-4235-9baf-963b1a0b498e', 'breastfed_at_birth': u'No',
+                     'is_ebf': u'No', 'institutional_delivery': u'No'},
                     {'num_rations_distributed': 0, 'person_name': None, 'num_pnc_visits': None, 'age': 24,
                      'delivery_nature': u'Data Not Entered', 'add': datetime.date(2017, 3, 1),
-                     'case_id': u'4f0aac21-5b5d-43a6-a1f6-9744d0e66cf2', 'breastfed_at_birth': u'N',
-                     'is_ebf': u'N', 'institutional_delivery': u'N'},
+                     'case_id': u'4f0aac21-5b5d-43a6-a1f6-9744d0e66cf2', 'breastfed_at_birth': u'No',
+                     'is_ebf': u'No', 'institutional_delivery': u'No'},
                     {'num_rations_distributed': 0, 'person_name': None, 'num_pnc_visits': None, 'age': 26,
                      'delivery_nature': u'Data Not Entered', 'add': datetime.date(2017, 3, 20),
-                     'case_id': u'10a53900-f65e-46b7-ae0c-f32a208c0677', 'breastfed_at_birth': u'N',
-                     'is_ebf': u'N', 'institutional_delivery': u'N'},
+                     'case_id': u'10a53900-f65e-46b7-ae0c-f32a208c0677', 'breastfed_at_birth': u'No',
+                     'is_ebf': u'No', 'institutional_delivery': u'No'},
                     {'num_rations_distributed': 0, 'person_name': None, 'num_pnc_visits': None, 'age': 26,
                      'delivery_nature': u'Data Not Entered', 'add': datetime.date(2017, 3, 1),
-                     'case_id': u'1a6851bc-8172-48fc-80d1-b198f23033ab', 'breastfed_at_birth': u'N',
-                     'is_ebf': u'N', 'institutional_delivery': u'N'},
+                     'case_id': u'1a6851bc-8172-48fc-80d1-b198f23033ab', 'breastfed_at_birth': u'No',
+                     'is_ebf': u'No', 'institutional_delivery': u'No'},
                     {'num_rations_distributed': 0, 'person_name': None, 'num_pnc_visits': None, 'age': 26,
                      'delivery_nature': u'Data Not Entered', 'add': datetime.date(2017, 3, 1),
-                     'case_id': u'37c4d26f-eda0-4d9a-bae9-11a17a3ccfaa', 'breastfed_at_birth': u'N',
-                     'is_ebf': u'N', 'institutional_delivery': u'N'},
+                     'case_id': u'37c4d26f-eda0-4d9a-bae9-11a17a3ccfaa', 'breastfed_at_birth': u'No',
+                     'is_ebf': u'No', 'institutional_delivery': u'No'},
                     {'num_rations_distributed': 0, 'person_name': None, 'num_pnc_visits': None, 'age': 29,
                      'delivery_nature': u'Data Not Entered', 'add': datetime.date(2017, 3, 1),
-                     'case_id': u'1744a035-56f1-4059-86f5-93fcea3c6076', 'breastfed_at_birth': u'N',
-                     'is_ebf': u'N', 'institutional_delivery': u'N'}
+                     'case_id': u'1744a035-56f1-4059-86f5-93fcea3c6076', 'breastfed_at_birth': u'No',
+                     'is_ebf': u'No', 'institutional_delivery': u'No'}
                 ]
             )

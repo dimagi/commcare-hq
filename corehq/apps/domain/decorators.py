@@ -20,7 +20,7 @@ from django.views import View
 
 from django_otp import match_token
 from django_prbac.utils import has_privilege
-from tastypie.authentication import ApiKeyAuthentication
+from corehq.apps.domain.auth import HQApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
 
 from dimagi.utils.django.request import mutable_querydict
@@ -95,7 +95,7 @@ def login_and_domain_required(view_func):
                 raise Http404()
             return call_view()
 
-        if couch_user.is_member_of(domain_obj):
+        if couch_user.is_member_of(domain_obj, allow_mirroring=True):
             if _is_missing_two_factor(view_func, req):
                 return TemplateResponse(request=req, template='two_factor/core/otp_required.html', status=403)
             elif not _can_access_project_page(req):
@@ -175,7 +175,7 @@ class LoginAndDomainMixin(object):
 
 
 def api_key():
-    api_auth_class = ApiKeyAuthentication()
+    api_auth_class = HQApiKeyAuthentication()
 
     def real_decorator(view):
         def wrapper(request, *args, **kwargs):
@@ -214,7 +214,7 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False, allow
                     if (
                         couch_user
                         and (allow_cc_users or couch_user.is_web_user())
-                        and couch_user.is_member_of(domain)
+                        and couch_user.is_member_of(domain, allow_mirroring=True)
                     ):
                         clear_login_attempts(couch_user)
                         return fn(request, domain, *args, **kwargs)

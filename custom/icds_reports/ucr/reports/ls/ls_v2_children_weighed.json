@@ -23,7 +23,8 @@
   ],
   "server_environment": [
     "india",
-    "icds"
+    "icds",
+    "icds-staging"
   ],
   "report_id": "ls_v2_children_weighed",
   "data_source_table": "static-child_health_cases",

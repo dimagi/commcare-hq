@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.test import TestCase
 
 from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed import topics
@@ -21,20 +20,22 @@ from corehq.pillows.xform import get_xform_pillow
 from corehq.util.elastic import ensure_index_deleted
 from couchforms.models import XFormInstance
 from corehq.util.test_utils import get_form_ready_to_save
-from pillowtop.es_utils import initialize_index
+from pillowtop.es_utils import initialize_index_and_mapping
+
+from .base import BasePillowTestCase
 
 
 TEST_DOMAIN = 'user-pillow-test'
 
 
-class UserPillowTestBase(TestCase):
+class UserPillowTestBase(BasePillowTestCase):
     def setUp(self):
         super(UserPillowTestBase, self).setUp()
         self.index_info = USER_INDEX_INFO
         self.elasticsearch = get_es_new()
         delete_all_users()
         ensure_index_deleted(self.index_info.index)
-        initialize_index(self.elasticsearch, self.index_info)
+        initialize_index_and_mapping(self.elasticsearch, self.index_info)
 
     @classmethod
     def setUpClass(cls):
@@ -54,7 +55,7 @@ class UserPillowTest(UserPillowTestBase):
     def test_kafka_user_pillow_deletion(self):
         user = self._make_and_test_user_kafka_pillow('test-kafka-user_deletion')
         # soft delete
-        user.retire()
+        user.retire(deleted_by=None)
 
         # send to kafka
         since = get_topic_offset(topics.COMMCARE_USER)
@@ -68,7 +69,7 @@ class UserPillowTest(UserPillowTestBase):
 
     def _make_and_test_user_kafka_pillow(self, username):
         # make a user
-        user = CommCareUser.create(TEST_DOMAIN, username, 'secret')
+        user = CommCareUser.create(TEST_DOMAIN, username, 'secret', None, None)
 
         # send to kafka
         since = get_topic_offset(topics.COMMCARE_USER)

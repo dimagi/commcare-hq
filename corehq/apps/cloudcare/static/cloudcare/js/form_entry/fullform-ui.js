@@ -1,3 +1,4 @@
+/* global FormplayerFrontend, mdAnchorRender */
 var Formplayer = {
     Utils: {},
     Const: {},
@@ -6,7 +7,8 @@ var Formplayer = {
 };
 var md = window.markdownit();
 
-var defaultRender = md.renderer.rules.link_open || function (tokens, idx, options, env, self) {
+//Overriden by downstream contexts, check before changing
+window.mdAnchorRender = md.renderer.rules.link_open || function (tokens, idx, options, env, self) {
     return self.renderToken(tokens, idx, options);
 };
 
@@ -21,7 +23,7 @@ md.renderer.rules.link_open = function (tokens, idx, options, env, self) {
     }
 
     // pass token to default renderer.
-    return defaultRender(tokens, idx, options, env, self);
+    return mdAnchorRender(tokens, idx, options, env, self);
 };
 
 _.delay(function () {
@@ -214,7 +216,8 @@ function Form(json) {
     json.children = json.tree;
     delete json.tree;
     Container.call(self, json);
-    self.submitText = ko.observable('Submit');
+    self.blockSubmit = ko.observable(false);
+    self.isSubmitting = ko.observable(false);
 
     self.currentIndex = ko.observable("0");
     self.atLastIndex = ko.observable(false);
@@ -261,6 +264,18 @@ function Form(json) {
         if (!self.showInFormNavigation()) return false;
         return self.currentIndex() !== "0" && self.currentIndex() !== "-1" && !self.atFirstIndex();
     });
+
+    self.enableSubmitButton = ko.computed(function () {
+        return !self.isSubmitting();
+    });
+
+    self.submitText = ko.computed(function () {
+        if (self.isSubmitting()) {
+            return gettext('Submitting...');
+        }
+        return gettext('Submit');
+    });
+
 
     self.forceRequiredVisible = ko.observable(false);
 
@@ -333,12 +348,9 @@ function Form(json) {
     });
 
     $.subscribe('session.block', function (e, block) {
-        $('#webforms input, #webforms textarea').prop('disabled', !!block);
+        $('#webforms input, #webforms textarea').prop('disabled', block === Formplayer.Const.BLOCK_ALL);
+        self.blockSubmit(block === Formplayer.Const.BLOCK_ALL || block === Formplayer.Const.BLOCK_SUBMIT);
     });
-
-    self.submitting = function () {
-        self.submitText('Submitting...');
-    };
 }
 Form.prototype = Object.create(Container.prototype);
 Form.prototype.constructor = Container;
@@ -499,61 +511,6 @@ Question.prototype.fromJS = function (json) {
 };
 
 
-/**
- * Used to compare if questions are equal to each other by looking at their index
- * @param {Object} e - Either the javascript object Question, Group, Repeat or the JSON representation
- */
-var cmpkey = function (e) {
-    var ix = ko.utils.unwrapObservable(e.ix);
-    if (e.uuid) {
-        return 'uuid-' + ko.utils.unwrapObservable(e.uuid);
-    } else {
-        return 'ix-' + (ix ? ix : getIx(e));
-    }
-};
-
-/**
- * Given an element Question, Group, or Repeat, this will determine the index of the element in the set of
- * elements passed in. Returns -1 if not found
- * @param {Object} e - Either the javascript object Question, Group, Repeat or the JSON representation
- * @param {Object} set - The set of objects, either Question, Group, or Repeat to search in
- */
-var ixElementSet = function (e, set) {
-    return $.map(set, function (val) {
-        return cmpkey(val);
-    }).indexOf(cmpkey(e));
-};
-
-/**
- * Given an element Question, Group, or Repeat, this will return the element in the set of
- * elements passed in. Returns null if not found
- * @param {Object} e - Either the javascript object Question, Group, Repeat or the JSON representation
- * @param {Object} set - The set of objects, either Question, Group, or Repeat to search in
- */
-var inElementSet = function (e, set) {
-    var ix = ixElementSet(e, set);
-    return (ix !== -1 ? set[ix] : null);
-};
-
-
-function scroll_pin(pin_threshold, $container, $elem) {
-    return function () {
-        var base_offset = $container.offset().top;
-        var scroll_pos = $(window).scrollTop();
-        var elem_pos = base_offset - scroll_pos;
-        var pinned = (elem_pos < pin_threshold);
-
-        $elem.css('top', pinned ? pin_threshold + 'px' : base_offset);
-    };
-}
-
-function set_pin(pin_threshold, $container, $elem) {
-    var pinfunc = scroll_pin(pin_threshold, $container, $elem);
-    $(window).scroll(pinfunc);
-    pinfunc();
-}
-
-
 Formplayer.Const = {
     GROUP_TYPE: 'sub-group',
     REPEAT_TYPE: 'repeat-juncture',
@@ -586,10 +543,13 @@ Formplayer.Const = {
     NO_PENDING_ANSWER: undefined,
     NO_ANSWER: null,
 
-    // UI Config
+    // UI
     LABEL_WIDTH: 'col-sm-4',
     LABEL_OFFSET: 'col-sm-offset-4',
     CONTROL_WIDTH: 'col-sm-8',
+    BLOCK_NONE: 'block-none',
+    BLOCK_SUBMIT: 'block-submit',
+    BLOCK_ALL: 'block-all',
 
     // XForm Navigation
     QUESTIONS_FOR_INDEX: 'questions_for_index',
@@ -650,6 +610,18 @@ Formplayer.Errors = {
 
 Formplayer.Utils.touchformsError = function (message) {
     return Formplayer.Errors.GENERIC_ERROR + message;
+};
+
+Formplayer.Utils.reloginErrorHtml = function () {
+    var isWebApps = FormplayerFrontend.request('currentUser').environment === FormplayerFrontend.Constants.WEB_APPS_ENVIRONMENT;
+    if (isWebApps) {
+        var url = hqImport("hqwebapp/js/initial_page_data").reverse('login_new_window');
+        return _.template(gettext("Looks like you got logged out because of inactivity, but your work is safe. " +
+                                  "<a href='<%= url %>' target='_blank'>Click here to log back in.</a>"))({url: url});
+    } else {
+        // target=_blank doesn't work properly within an iframe
+        return gettext("You have been logged out because of inactivity.");
+    }
 };
 
 /**

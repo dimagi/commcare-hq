@@ -8,6 +8,7 @@ from corehq.util.es.elasticsearch import TransportError
 from memoized import memoized
 
 from corehq.apps.es import cases as case_es
+from corehq.apps.es.utils import track_es_report_load
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
@@ -81,6 +82,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             query = query_deactivated_data(query, self.domain)
 
         else:  # Only show explicit matches
+            track_es_report_load(self.domain, self.slug, len(self.case_owners))
             query = query.owner(self.case_owners)
 
         if not self.request.can_access_all_locations:
@@ -145,7 +147,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
     @classmethod
     def get_subpages(cls):
         def _get_case_name(request=None, **context):
-            if 'case' in context:
+            if 'case' in context and context['case'].name:
                 return mark_safe(context['case'].name)
             else:
                 return _('View Case')

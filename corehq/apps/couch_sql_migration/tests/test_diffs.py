@@ -646,6 +646,19 @@ class DiffTestCases(SimpleTestCase):
         sql_case = {
             "doc_type": "CommCareCase",
             "closed_by": "somebody",
+            "close_reason": "",
+        }
+        diffs = json_diff(couch_case, sql_case, track_list_indices=False)
+        filtered = filter_case_diffs(couch_case, sql_case, diffs)
+        self.assertEqual(filtered, [])
+
+    def test_case_with_empty_text_node(self):
+        couch_case = {
+            "doc_type": "CommCareCase",
+            "#text": "",
+        }
+        sql_case = {
+            "doc_type": "CommCareCase",
         }
         diffs = json_diff(couch_case, sql_case, track_list_indices=False)
         filtered = filter_case_diffs(couch_case, sql_case, diffs)
@@ -777,3 +790,18 @@ class DiffTestCases(SimpleTestCase):
             ],
         }
         self._test_form_diff_filter(couch_form, sql_form)
+
+    def test_case_with_location_and_referrals(self):
+        couch_case = {
+            "doc_type": "CommCareCase",
+            "location_": [],
+            "referrals": [],
+        }
+        sql_case = {
+            "doc_type": "CommCareCase",
+            "location_": '[]',
+            "referrals": '[]',
+        }
+        diffs = json_diff(couch_case, sql_case, track_list_indices=False)
+        filtered = filter_case_diffs(couch_case, sql_case, diffs)
+        self.assertEqual(filtered, [])

@@ -27,11 +27,9 @@
 
 {% block js-inline %}{{ block.super }}
   {% compress js %}
-    <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
     <script src="{% static 'app_manager/js/forms/case_knockout_bindings.js' %}"></script>
     <script src="{% static 'app_manager/js/case_config_utils.js' %}"></script>
   {% endcompress %}
-  {% include 'hqwebapp/partials/key_value_mapping.html' %}
   {% if module.doc_type == 'AdvancedModule' %}
     {% compress js %}
       <script src="{% static 'app_manager/js/forms/advanced/case_properties.js' %}"></script>
@@ -143,9 +141,7 @@
   {% initial_page_data 'langs' app.langs %}
   {% initial_page_data 'multimedia_object_map' multimedia.object_map %}
   {% initial_page_data 'multimedia_upload_managers' multimedia.upload_managers_js %}
-  {% initial_page_data 'name_enum' form.name_enum %}
   {% initial_page_data 'nav_menu_media_specifics' nav_menu_media_specifics %}
-  {% initial_page_data 'no_vellum' form.no_vellum %}
   {% initial_page_data 'root_requires_same_case' root_requires_same_case %}
   {% initial_page_data 'put_in_root' module.put_in_root %}
   {% initial_page_data 'sessionid' request.COOKIES.sessionid %}

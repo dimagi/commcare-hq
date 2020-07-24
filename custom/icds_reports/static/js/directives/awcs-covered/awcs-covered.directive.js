@@ -3,10 +3,10 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCasReachService, locationsService,
     dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
-    baseControllersService, isAlertActive, isMobile) {
+    baseControllersService, isAlertActive, isMobile, haveAccessToFeatures) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
-        false, isMobile);
+        haveAccessToFeatures, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
     vm.usePercentage = false;
@@ -22,7 +22,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
         info: 'Total AWCs that have launched ICDS-CAS. ' +
         'AWCs are considered launched after submitting at least one Household Registration form.',
     };
-    vm.filters = ['age', 'gender'];
+    vm.filters = ['age', 'gender', 'data_period'];
 
     vm.getPopupSubheading = function () {
         return vm.rightLegend.info;
@@ -82,6 +82,7 @@ AWCSCoveredController.$inject = [
     '$scope', '$routeParams', '$location', '$filter',
     'icdsCasReachService', 'locationsService', 'dateHelperService', 'navigationService', 'userLocationId',
     'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive', 'isMobile',
+    'haveAccessToFeatures',
 ];
 
 window.angular.module('icdsApp').directive('awcsCovered', ['templateProviderService', function (templateProviderService) {

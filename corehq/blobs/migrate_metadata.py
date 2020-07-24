@@ -22,7 +22,6 @@ from corehq.apps.users.models import CommCareUser
 
 import casexml.apps.case.models as cases
 import couchforms.models as xform
-from custom.icds_reports.models.helper import IcdsFile
 
 
 class MultiDbMigrator(object):
@@ -258,24 +257,6 @@ class DemoUserRestoreReindexAccessor(PkReindexAccessor):
         return {"content_length": obj.content_length, "content_type": "text/xml"}
 
 
-class IcdsFileReindexAccessor(PkReindexAccessor):
-    model_class = IcdsFile
-    blob_helper = sql_blob_helper("blob_id")
-
-    def doc_to_json(self, obj):
-        return PkReindexAccessor.doc_to_json(self, obj, "IcdsFile")
-
-    @staticmethod
-    def get_type_code(doc):
-        return CODES.tempfile
-
-    def get_domain(self, obj):
-        return "icds-cas"
-
-    def blob_kwargs(self, obj):
-        return {"content_length": 0}  # unknown content length
-
-
 def couch_blob_helper(doc, *args, **kw):
     obj = BlobHelper(doc, *args, **kw)
     get_domain = DOMAIN_MAP.get(obj.doc_type)
@@ -311,7 +292,7 @@ DOMAIN_MAP = {
 }
 
 
-migrate_metadata = MultiDbMigrator("migrate_metadata",
+migrate_metadata = lambda: MultiDbMigrator("migrate_metadata",
     couch_types=[
         apps.Application,
         apps.LinkedApplication,
@@ -345,6 +326,5 @@ migrate_metadata = MultiDbMigrator("migrate_metadata",
     sql_reindexers=[
         CaseUploadFileMetaReindexAccessor,
         DemoUserRestoreReindexAccessor,
-        IcdsFileReindexAccessor,
     ],
 )

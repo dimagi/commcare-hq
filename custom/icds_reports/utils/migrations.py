@@ -30,7 +30,8 @@ def get_view_migrations():
         'bihar_demographics.sql',
         'pmo_api.sql',
         'bihar_api_mother_view.sql',
-        'bihar_vaccine.sql'
+        'bihar_vaccine.sql',
+        'poshan_progress_report_view.sql'
     ]
     migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
     operations = []
@@ -99,28 +100,6 @@ def get_composite_primary_key_migrations(models_to_update):
             ]
         ))
     return operations
-
-
-def create_citus_distributed_table(connection, table, distribution_column):
-    res = connection.execute("""
-        select 1 from pg_dist_partition
-        where partmethod = 'h' and logicalrelid = %s::regclass
-    """, [table])
-    if res is None:
-        res = list(connection)
-    if not list(res):
-        connection.execute("select create_distributed_table(%s, %s)", [table, distribution_column])
-
-
-def create_citus_reference_table(connection, table):
-    res = connection.execute("""
-        select 1 from pg_dist_partition
-        where partmethod = 'n' and logicalrelid = %s::regclass
-    """, [table])
-    if res is None:
-        res = list(connection)
-    if not list(res):
-        connection.execute("select create_reference_table(%s)", [table])
 
 
 def create_index_migration(table_name, index_name, columns):

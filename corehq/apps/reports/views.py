@@ -161,6 +161,8 @@ from corehq.util.view_utils import (
     request_as_dict,
     reverse,
 )
+from custom.icds_core.view_utils import is_icds_cas_project
+from custom.icds_core.view_utils import check_data_interfaces_blocked_for_domain
 from no_exceptions.exceptions import Http403
 
 from .dispatcher import ProjectReportDispatcher
@@ -863,6 +865,10 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
                            send_only_active=False):
     """
     Renders only notification's main content, which then may be used to generate full notification body.
+
+    :returns: two-tuple `(report_text: str, excel_files: list)`. Both
+    values are empty when there are no applicable report configs.
+    `excel_files` is a list of dicts.
     """
     from dimagi.utils.web import get_url_base
 
@@ -876,7 +882,7 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
 
     # Don't send an email if none of the reports configs have started
     if len(configs) == 0:
-        return False, False
+        return "", []
 
     for config in configs:
         content, excel_file = config.get_report_content(lang, attach_excel=attach_excel)
@@ -897,7 +903,7 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
             "enddate": date_range.get("enddate") if date_range else "",
         })
 
-    return render(request, "reports/report_email_content.html", {
+    response = render(request, "reports/report_email_content.html", {
         "reports": report_outputs,
         "domain": domain,
         "couch_user": owner_id,
@@ -906,7 +912,8 @@ def _render_report_configs(request, configs, domain, owner_id, couch_user, email
         "email": email,
         "notes": notes,
         "report_type": _("once off report") if once else _("scheduled report"),
-    }).content, excel_attachments
+    })
+    return response.content.decode("utf-8"), excel_attachments
 
 
 def render_full_report_notification(request, content, email=None, report_notification=None):
@@ -935,8 +942,8 @@ def render_full_report_notification(request, content, email=None, report_notific
 
 @login_and_domain_required
 def view_scheduled_report(request, domain, scheduled_report_id):
-    content = get_scheduled_report_response(request.couch_user, domain, scheduled_report_id, email=False)[0]
-    return render_full_report_notification(request, content)
+    report_text = get_scheduled_report_response(request.couch_user, domain, scheduled_report_id, email=False)[0]
+    return render_full_report_notification(request, report_text)
 
 
 def safely_get_case(request, domain, case_id):
@@ -1065,6 +1072,11 @@ class CaseDataView(BaseProjectReportSectionView):
         repeat_records = get_repeat_records_by_payload_id(self.domain, self.case_id)
 
         can_edit_data = self.request.couch_user.can_edit_data
+        show_properties_edit = (
+            can_edit_data
+            and has_privilege(self.request, privileges.DATA_CLEANUP)
+            and not is_icds_cas_project(self.domain)
+        )
 
         context = {
             "case_id": self.case_id,
@@ -1076,7 +1088,7 @@ class CaseDataView(BaseProjectReportSectionView):
             "default_properties_as_table": default_properties,
             "dynamic_properties": dynamic_data,
             "dynamic_properties_as_table": dynamic_properties,
-            "show_properties_edit": can_edit_data and has_privilege(self.request, privileges.DATA_CLEANUP),
+            "show_properties_edit": show_properties_edit,
             "case_actions": mark_safe(json.dumps(wrapped_case.actions())),
             "timezone": timezone,
             "tz_abbrev": tz_abbrev,
@@ -1235,13 +1247,14 @@ def case_property_names(request, domain, case_id):
     if case.external_id:
         all_property_names.add('external_id')
 
-    return json_response(sorted(all_property_names))
+    return json_response(sorted(all_property_names, key=lambda item: item.lower()))
 
 
 @location_safe
 @require_case_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
+@check_data_interfaces_blocked_for_domain
 def edit_case_view(request, domain, case_id):
     if not (has_privilege(request, privileges.DATA_CLEANUP)):
         raise Http404()
@@ -1265,7 +1278,7 @@ def edit_case_view(request, domain, case_id):
         case_block_kwargs['update'] = updates
 
     if case_block_kwargs:
-        submit_case_blocks([CaseBlock(case_id=case_id, **case_block_kwargs).as_text()],
+        submit_case_blocks([CaseBlock.deprecated_init(case_id=case_id, **case_block_kwargs).as_text()],
             domain, username=user.username, user_id=user._id, device_id=__name__ + ".edit_case",
             xmlns=EDIT_FORM_XMLNS)
         messages.success(request, _('Case properties saved for %s.' % case.name))
@@ -1520,7 +1533,7 @@ def _get_form_metadata_context(domain, form, timezone, support_enabled=False):
     if getattr(form, 'auth_context', None):
         auth_context = AuthContext(form.auth_context)
         auth_context_user_id = auth_context.user_id
-        auth_user_info = get_doc_info_by_id(domain, auth_context_user_id)
+        auth_user_info = get_doc_info_by_id(None, auth_context_user_id)
     else:
         auth_user_info = get_doc_info_by_id(domain, None)
         auth_context = AuthContext(
@@ -1541,7 +1554,7 @@ def _get_form_metadata_context(domain, form, timezone, support_enabled=False):
             display='admin',
         )
     else:
-        user_info = get_doc_info_by_id(domain, meta_userID)
+        user_info = get_doc_info_by_id(None, meta_userID)
 
     return {
         "form_meta_data": form_meta_data,
@@ -1622,6 +1635,7 @@ def _get_display_options(request, domain, user, form, support_enabled):
         user_can_edit
         and has_privilege(request, privileges.DATA_CLEANUP)
         and not form.is_deprecated
+        and not is_icds_cas_project(domain)
     )
 
     show_resave = (
@@ -1847,7 +1861,7 @@ class EditFormInstance(View):
 
         context.update({
             'domain': domain,
-            'maps_api_key': settings.GMAPS_API_KEY,  # used by cloudcare
+            "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             'form_name': _('Edit Submission'),  # used in breadcrumbs
             'use_sqlite_backend': use_sqlite_backend(domain),
             'username': context.get('user').username,
@@ -2006,6 +2020,7 @@ def _get_data_cleaning_updates(request, old_properties):
 @require_permission(Permissions.edit_data)
 @require_POST
 @location_safe
+@check_data_interfaces_blocked_for_domain
 def edit_form(request, domain, instance_id):
     instance = safely_get_form(request, domain, instance_id)
     assert instance.domain == domain
@@ -2079,7 +2094,7 @@ def export_report(request, domain, export_hash, format):
             response = HttpResponse(file, Format.FORMAT_DICT[format])
             response['Content-Length'] = file.size
             response['Content-Disposition'] = 'attachment; filename="{filename}.{extension}"'.format(
-                filename=export_hash,
+                filename=meta.name or export_hash,
                 extension=Format.FORMAT_DICT[format]['extension']
             )
             return response

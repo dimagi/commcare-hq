@@ -12,7 +12,7 @@ from corehq.pillows.groups_to_user import get_group_pillow
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
-from pillowtop.es_utils import initialize_index
+from pillowtop.es_utils import initialize_index_and_mapping
 
 
 class GroupPillowTest(TestCase):
@@ -21,7 +21,7 @@ class GroupPillowTest(TestCase):
         self.elasticsearch = get_es_new()
         for index in [GROUP_INDEX_INFO, USER_INDEX_INFO]:
             ensure_index_deleted(index.index)
-            initialize_index(self.elasticsearch, index)
+            initialize_index_and_mapping(self.elasticsearch, index)
         delete_all_groups()
 
     def tearDown(self):

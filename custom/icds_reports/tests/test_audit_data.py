@@ -16,11 +16,11 @@ class TestICDSAuditData(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestICDSAuditData, cls).setUpClass()
-        cls.user = CommCareUser.create(DASHBOARD_DOMAIN, 'test', '123')
+        cls.user = CommCareUser.create(DASHBOARD_DOMAIN, 'test', '123', None, None)
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
         super(TestICDSAuditData, cls).tearDownClass()
 
     def tearDown(self):

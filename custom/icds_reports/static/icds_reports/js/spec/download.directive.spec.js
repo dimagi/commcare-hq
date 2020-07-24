@@ -6,7 +6,7 @@ var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 describe('Download Directive', function () {
 
-    var numberOfReports = 12;
+    var numberOfReports = 15;
     describe('Download Directive main functionalities', function() {
         var $scope, $httpBackend, controller;
 
@@ -151,6 +151,25 @@ describe('Download Directive', function () {
             assert.equal(expected, result);
         });
 
+        it('tests get placeholder when state and child growth tracker list is selected', function () {
+            controller.selectedIndicator = 13;
+            var mockLocationType = [{"name": "state", "parents": ["state"], "level": 1}];
+
+            var expected = 'Select State';
+            var result = controller.getPlaceholder(mockLocationType);
+            assert.equal(expected, result);
+        });
+
+        it('tests get placeholder when state and aww activity report is selected', function () {
+            controller.selectedIndicator = 14;
+            var mockLocationType = [{"name": "state", "parents": ["state"], "level": 1}];
+
+            var expected = 'Select State';
+            var result = controller.getPlaceholder(mockLocationType);
+            assert.equal(expected, result);
+        });
+
+
         it('tests get locations for level', function () {
             var level = 0;
             var expected = [
@@ -174,6 +193,14 @@ describe('Download Directive', function () {
             assert.deepEqual(expected, result);
         });
 
+        it('tests get formats when child growth tracker list is selected', function () {
+            controller.selectedIndicator = 13;
+            var expected = [{"id": "csv", "name": "CSV"}];
+
+            var result = controller.getFormats();
+            assert.deepEqual(expected, result);
+        });
+
         it('tests get formats when child beneficiary list is not selected', function () {
             controller.selectedIndicator = 5;
             var expected = [{"id": "csv", "name": "CSV"}, {"id": "xlsx", "name": "Excel"}];
@@ -181,6 +208,25 @@ describe('Download Directive', function () {
             var result = controller.getFormats();
             assert.deepEqual(expected, result);
         });
+
+        it('tests on indicator select when child growth tracker list is selected', function () {
+            controller.selectedIndicator = 13;
+            var result = controller.isChildGrowthTrackerSelected();
+            assert.isTrue(result);
+        });
+
+        it('tests on indicator select when child growth tracker list is not selected', function () {
+            controller.selectedIndicator = 12;
+            var result = controller.isChildGrowthTrackerSelected();
+            assert.isFalse(result);
+        });
+
+        it('tests on indicator select when aww activity report is not selected', function () {
+            controller.selectedIndicator = 9;
+            var result = controller.isAwwActivityReportSelected();
+            assert.isFalse(result);
+        });
+
 
         it('tests on indicator select when child beneficiary list is selected', function () {
             controller.selectedIndicator = 6;
@@ -190,6 +236,13 @@ describe('Download Directive', function () {
             var result = controller.selectedFormat;
 
             assert.equal(expected, result);
+        });
+
+        it('tests on indicator select when aww activity report is selected', function () {
+            controller.selectedIndicator = 14;
+            var result = controller.isAwwActivityReportSelected();
+            assert.isTrue(result);
+
         });
 
         it('tests isDistrictOrBelowSelected - state selected', function () {
@@ -244,6 +297,18 @@ describe('Download Directive', function () {
         it('tests isTakeHomeRatioReportSelected - THR not selected', function () {
             controller.selectedIndicator = 9;
             var result = controller.isTakeHomeRationReportSelected();
+            assert.isFalse(result);
+        });
+
+        it('tests isPPRselecected - PPR selected', function () {
+            controller.selectedIndicator = 15;
+            var result = controller.isPPRSelected();
+            assert.isTrue(result);
+        });
+
+        it('tests isPPRselecected - PPR not selected', function () {
+            controller.selectedIndicator = 9;
+            var result = controller.isPPRSelected();
             assert.isFalse(result);
         });
 
@@ -485,7 +550,7 @@ describe('Download Directive', function () {
 
         it('tests that all users have access to ISSNIP monthly register', function () {
             var length = controller.indicators.length;
-            assert.equal(numberOfReports - 1, length);
+            assert.equal(numberOfReports, length);
         });
     });
 
@@ -587,7 +652,59 @@ describe('Download Directive', function () {
             clock.restore();
         }));
 
-        it('tests that block user does not have access to dashboard usage report', function () {
+        it('tests that block user does not have access to dashboard usage report and PPR report', function () {
+            var length = controller.indicators.length;
+            assert.equal(numberOfReports - 2, length);
+        });
+    });
+
+    describe('Download Directive have access to features', function () {
+        var $scope, $httpBackend, controller;
+
+        pageData.registerUrl('icds-ng-template', 'template');
+        pageData.registerUrl('icds_locations', 'icds_locations');
+        beforeEach(module('icdsApp', function ($provide) {
+            $provide.constant("userLocationId", null);
+            $provide.constant("locationHierarchy", [
+                ['awc', ['supervisor']],
+                ['block', ['district']],
+                ['district', ['state']],
+                ['state', [null]],
+                ['supervisor', ['block']]]);
+            $provide.constant("haveAccessToFeatures", true);
+            $provide.constant("userLocationType", 'district');
+            $provide.constant("isAlertActive", false);
+            $provide.constant("haveAccessToAllLocations", false);
+            $provide.constant("allUserLocationId", []);
+        }));
+
+        beforeEach(inject(function ($rootScope, $compile, _$httpBackend_) {
+            $scope = $rootScope.$new();
+            $httpBackend = _$httpBackend_;
+
+            var mockLocation = {
+                "locations": [{
+                    "location_type_name": "state", "parent_id": null,
+                    "location_id": "9951736acfe54c68948225cc05fbbd63", "name": "Chhattisgarh",
+                }],
+            };
+
+            $httpBackend.expectGET('template').respond(200, '<div></div>');
+            $httpBackend.expectGET('icds_locations').respond(200, mockLocation);
+
+            var fakeDate = new Date(2016, 9, 1);
+            var clock = sinon.useFakeTimers(fakeDate.getTime());
+
+            var element = window.angular.element("<download data='test'></download>");
+            var compiled = $compile(element)($scope);
+
+            $httpBackend.flush();
+            $scope.$digest();
+            controller = compiled.controller('download');
+            clock.restore();
+        }));
+
+        it('tests that district user does not have access to PPR report', function () {
             var length = controller.indicators.length;
             assert.equal(numberOfReports - 1, length);
         });

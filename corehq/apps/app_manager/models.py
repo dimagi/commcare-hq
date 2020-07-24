@@ -16,13 +16,15 @@ from functools import wraps
 from io import BytesIO, open
 from itertools import chain
 from mimetypes import guess_type
+from urllib.parse import urljoin
+from urllib.request import urlopen
 
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.auth.hashers import make_password
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
-from django.db import models, DEFAULT_DB_ALIAS
+from django.db import DEFAULT_DB_ALIAS, models
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.safestring import SafeBytes
@@ -36,15 +38,12 @@ from couchdbkit.exceptions import BadValueError
 from jsonpath_rw import jsonpath, parse
 from lxml import etree
 from memoized import memoized
-from urllib.parse import urljoin
-from urllib.request import urlopen
 
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
     DecimalProperty,
     DictProperty,
-    Document,
     DocumentSchema,
     FloatProperty,
     IntegerProperty,
@@ -79,12 +78,12 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_app,
+    get_app_languages,
     get_build_by_version,
     get_build_ids,
     get_latest_build_doc,
     get_latest_released_app_doc,
     wrap_app,
-    get_app_languages
 )
 from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
 from corehq.apps.app_manager.exceptions import (
@@ -123,7 +122,6 @@ from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.tasks import prune_auto_generated_builds
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.util import (
-    LatestAppInfo,
     actions_use_usercase,
     expire_get_latest_app_release_by_location_cache,
     get_and_assert_practice_user_in_domain,
@@ -131,7 +129,6 @@ from corehq.apps.app_manager.util import (
     get_latest_app_release_by_location,
     get_latest_enabled_build_for_profile,
     get_latest_enabled_versions_per_profile,
-    is_linked_app,
     is_remote_app,
     is_usercase_in_use,
     module_offers_search,
@@ -150,7 +147,7 @@ from corehq.apps.builds.models import (
     CommCareBuildConfig,
 )
 from corehq.apps.builds.utils import get_default_build_spec
-from corehq.apps.domain.models import Domain, cached_property
+from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import (
     ApplicationMediaMixin,
     CommCareMultimedia,
@@ -194,6 +191,7 @@ ANDROID_LOGO_PROPERTY_MAPPING = {
     'hq_logo_android_home': 'brand-banner-home',
     'hq_logo_android_login': 'brand-banner-login',
     'hq_logo_android_demo': 'brand-banner-home-demo',
+    'hq_logo_web_apps': 'brand-banner-web-apps',
 }
 
 
@@ -423,6 +421,8 @@ class FormActions(DocumentSchema):
         names.update(list(self.case_preload.preload.values()))
         for subcase in self.subcases:
             names.update(list(subcase.case_properties.keys()))
+        names.update(list(self.usercase_update.update.keys()))
+        names.update(list(self.usercase_preload.preload.values()))
         return names
 
     def count_subcases_per_repeat_context(self):
@@ -983,7 +983,6 @@ class FormBase(DocumentSchema):
     form_type = None
 
     name = DictProperty(str)
-    name_enum = SchemaListProperty(MappingItem)
     unique_id = StringProperty()
     show_count = BooleanProperty(default=False)
     xmlns = StringProperty()
@@ -1001,7 +1000,6 @@ class FormBase(DocumentSchema):
         default=None,
     )
     auto_gps_capture = BooleanProperty(default=False)
-    no_vellum = BooleanProperty(default=False)
     form_links = SchemaListProperty(FormLink)
     schedule_form_id = StringProperty()
     custom_assertions = SchemaListProperty(CustomAssertion)
@@ -1071,6 +1069,10 @@ class FormBase(DocumentSchema):
             or self.get_action_type() != 'none'
             or self.form_type == 'advanced_form'
         )
+
+    @property
+    def can_edit_in_vellum(self):
+        return self.form_type != 'shadow_form'
 
     @case_references.setter
     def case_references(self, case_references):
@@ -1834,6 +1836,7 @@ class DetailColumn(IndexedSchema):
     advanced = StringProperty(default="")
     filter_xpath = StringProperty(default="")
     time_ago_interval = FloatProperty(default=365.25)
+    date_format = StringProperty(default="%d/%m/%y")
 
     @property
     def enum_dict(self):
@@ -2043,12 +2046,27 @@ class CaseList(IndexedSchema, NavMenuItemMediaMixin):
         return self._module.get_app()
 
 
+class Itemset(DocumentSchema):
+    instance_id = StringProperty()
+    instance_uri = StringProperty()
+
+    nodeset = StringProperty()
+
+    label = StringProperty()
+    value = StringProperty()
+    sort = StringProperty()
+
+
 class CaseSearchProperty(DocumentSchema):
     """
     Case properties available to search on.
     """
     name = StringProperty()
     label = DictProperty()
+    appearance = StringProperty()
+    input_ = StringProperty()
+
+    itemset = SchemaProperty(Itemset)
 
 
 class DefaultCaseSearchProperty(DocumentSchema):
@@ -2125,7 +2143,6 @@ class CaseListForm(NavMenuItemMediaMixin):
 
 class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, CommentMixin):
     name = DictProperty(str)
-    name_enum = SchemaListProperty(MappingItem)
     unique_id = StringProperty()
     case_type = StringProperty()
     case_list_form = SchemaProperty(CaseListForm)
@@ -2932,7 +2949,6 @@ class AdvancedModule(ModuleBase):
         name = name if name else _("Untitled Form")
         form = ShadowForm(
             name={lang: name},
-            no_vellum=True,
         )
         form.schedule = FormSchedule(enabled=False)
 
@@ -3146,7 +3162,7 @@ def get_all_mobile_filter_configs():
         MobileFilterConfig('StaticDatespanFilter', StaticDatespanFilter, _('A standard date range')),
         MobileFilterConfig('CustomDatespanFilter', CustomDatespanFilter, _('A custom range relative to today')),
         MobileFilterConfig('CustomMonthFilter', CustomMonthFilter,
-                           _("Custom Month Filter (you probably don't want this")),
+                           _("Custom Month Filter (you probably don't want this)")),
         MobileFilterConfig('MobileSelectFilter', MobileSelectFilter, _('Show choices on mobile device')),
         MobileFilterConfig('AncestorLocationTypeFilter', AncestorLocationTypeFilter,
                            _("Ancestor location of the user's assigned location of a particular type")),
@@ -3520,7 +3536,7 @@ class ReportModule(ModuleBase):
         return ReportModuleSuiteHelper(self).get_custom_entries()
 
     def get_menus(self, build_profile_id=None):
-        from corehq.apps.app_manager.suite_xml.utils import get_module_enum_text, get_module_locale_id
+        from corehq.apps.app_manager.suite_xml.utils import get_module_locale_id
         kwargs = {}
         if self.get_app().enable_module_filtering and self.module_filter:
             kwargs['relevant'] = interpolate_xpath(self.module_filter)
@@ -3528,7 +3544,6 @@ class ReportModule(ModuleBase):
         menu = suite_models.LocalizedMenu(
             id=id_strings.menu_id(self),
             menu_locale_id=get_module_locale_id(self),
-            menu_enum_text=get_module_enum_text(self),
             media_image=self.uses_image(build_profile_id=build_profile_id),
             media_audio=self.uses_audio(build_profile_id=build_profile_id),
             image_locale_id=id_strings.module_icon_locale(self),
@@ -4045,7 +4060,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     @property
     @memoized
     def global_app_config(self):
-        return GlobalAppConfig.for_app(self)
+        return GlobalAppConfig.by_app(self)
 
     def rename_lang(self, old_lang, new_lang):
         validate_lang(new_lang)
@@ -4454,9 +4469,9 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         self.last_modified = datetime.datetime.utcnow()
         if not self._rev and not domain_has_apps(self.domain):
             domain_has_apps.clear(self.domain)
-
-        LatestAppInfo(self.master_id, self.domain).clear_caches()
-
+        if self.get_id:
+            # expire cache unless new application
+            self.global_app_config.clear_version_caches()
         get_all_case_properties.clear(self)
         get_usercase_properties.clear(self)
         get_app_languages.clear(self.domain)
@@ -4504,7 +4519,8 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
     def convert_to_application(self):
         self.doc_type = 'Application'
-        del self.master
+        del self.upstream_app_id
+        del self.upstream_version
         del self.linked_app_translations
         del self.linked_app_logo_refs
         del self.linked_app_attrs
@@ -4800,7 +4816,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
 
     @time_method()
     def create_profile(self, is_odk=False, with_media=False,
-                       template='app_manager/profile.xml', build_profile_id=None, commcare_flavor=None):
+                       build_profile_id=None, commcare_flavor=None):
         self__profile = self.profile
         app_profile = defaultdict(dict)
 
@@ -4858,7 +4874,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
             TARGET_COMMCARE: 'org.commcare.dalvik',
             TARGET_COMMCARE_LTS: 'org.commcare.lts',
         }.get(commcare_flavor)
-        return render_to_string(template, {
+        return render_to_string('app_manager/profile.xml', {
             'is_odk': is_odk,
             'app': self,
             'profile_url': profile_url,
@@ -4872,6 +4888,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
             'locale': locale,
             'apk_heartbeat_url': apk_heartbeat_url,
             'target_package_id': target_package_id,
+            'support_email': settings.SUPPORT_EMAIL if not settings.IS_DIMAGI_ENVIRONMENT else None,
         }).encode('utf-8')
 
     @property
@@ -5544,7 +5561,9 @@ class LinkedApplication(Application):
     linked_app_logo_refs = DictProperty()  # corresponding property: logo_refs
     linked_app_attrs = DictProperty()  # corresponds to app attributes
 
-    SUPPORTED_SETTINGS = ['target_commcare_flavor', 'practice_mobile_worker_id']
+    @property
+    def supported_settings(self):
+        return ['target_commcare_flavor', 'practice_mobile_worker_id']
 
     @property
     @memoized
@@ -5731,7 +5750,7 @@ class ExchangeApplication(models.Model):
 
 class ExchangeApplicationAdmin(admin.ModelAdmin):
     model = ExchangeApplication
-    list_display = ['domain', 'app_id']
+    list_display = ['domain', 'app_id', 'help_link', 'changelog_link']
     list_filter = ['domain', 'app_id']
 
 
@@ -5753,19 +5772,85 @@ class GlobalAppConfig(models.Model):
     class Meta(object):
         unique_together = ('domain', 'app_id')
 
+    _app = None
+
     @classmethod
-    def for_app(cls, app):
-        model, created = cls.objects.get_or_create(app_id=app.master_id, domain=app.domain, defaults={
+    def by_app(cls, app):
+        model = cls.by_app_id(app.domain, app.master_id)
+        model._app = app
+        return model
+
+    @classmethod
+    def by_app_id(cls, domain, app_id):
+        model, created = cls.objects.get_or_create(app_id=app_id, domain=domain, defaults={
             'apk_version': LATEST_APK_VALUE,
             'app_version': LATEST_APP_VALUE,
         })
         return model
 
     def save(self, force_insert=False, force_update=False, using=DEFAULT_DB_ALIAS, update_fields=None):
-        LatestAppInfo(self.app_id, self.domain).clear_caches()
+        if self.pk:
+            self.clear_version_caches()
         super().save(
             force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields
         )
+
+    @property
+    def app(self):
+        if not self._app:
+            app = get_app(self.domain, self.app_id, latest=True, target='release')
+            assert self.app_id == app.master_id, "this class doesn't handle copy app ids"
+            self._app = app
+        return self._app
+
+    def get_latest_apk_version(self):
+        self.app  # noqa validate app
+        if self.apk_prompt == "off":
+            return {}
+        else:
+            configured_version = self.apk_version
+            if configured_version == LATEST_APK_VALUE:
+                value = get_default_build_spec().version
+            else:
+                value = BuildSpec.from_string(configured_version).version
+            force = self.apk_prompt == "forced"
+            return {"value": value, "force": force}
+
+    def get_latest_app_version(self, build_profile_id):
+        self.app  # noqa validate app
+        if self.app_prompt == "off":
+            return {}
+        else:
+            force = self.app_prompt == "forced"
+            app_version = self.app_version
+            if app_version != LATEST_APP_VALUE:
+                return {"value": app_version, "force": force}
+            else:
+                if not self.app or not self.app.is_released:
+                    return {}
+                else:
+                    version = self.app.version
+                    if build_profile_id:
+                        latest = LatestEnabledBuildProfiles.for_app_and_profile(self.app_id, build_profile_id)
+                        if latest:
+                            version = latest.version
+                    return {"value": version, "force": force}
+
+    @classmethod
+    @quickcache(['domain', 'app_id', 'build_profile_id'])
+    def get_latest_version_info(cls, domain, app_id, build_profile_id):
+        config = GlobalAppConfig.by_app_id(domain, app_id)
+        return {
+            "latest_apk_version": config.get_latest_apk_version(),
+            "latest_ccz_version": config.get_latest_app_version(build_profile_id),
+        }
+
+    def clear_version_caches(self):
+        build_profile_ids = [''] + list(self.app.build_profiles.keys())
+        for build_profile_id in build_profile_ids:
+            GlobalAppConfig.get_latest_version_info.clear(
+                GlobalAppConfig, self.domain, self.app_id, build_profile_id
+            )
 
 
 class AppReleaseByLocation(models.Model):
@@ -5857,6 +5942,7 @@ class LatestEnabledBuildProfiles(models.Model):
 
     def save(self, *args, **kwargs):
         super(LatestEnabledBuildProfiles, self).save(*args, **kwargs)
+        GlobalAppConfig.by_app_id(self.domain, self.app_id).clear_version_caches()
         self.expire_cache(self.domain)
 
     @property

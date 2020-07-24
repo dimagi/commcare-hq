@@ -293,10 +293,10 @@ class TestTreeValidator(UploadTestUtils, TestCase):
     def setUp(self):
         super(TestTreeValidator, self).setUp()
         self.domain_obj = create_domain(self.domain)
-        self.user = WebUser.create(self.domain, 'username', 'password')
+        self.user = WebUser.create(self.domain, 'username', 'password', None, None)
 
     def tearDown(self):
-        self.user.delete()
+        self.user.delete(deleted_by=None)
         self.domain_obj.delete()
         super(TestTreeValidator, self).tearDown()
 
@@ -448,10 +448,10 @@ class TestBulkManagementNoInitialLocs(UploadTestUtils, TestCase):
     def setUp(self):
         super(TestBulkManagementNoInitialLocs, self).setUp()
         self.domain_obj = create_domain(self.domain)
-        self.user = WebUser.create(self.domain, 'username', 'password')
+        self.user = WebUser.create(self.domain, 'username', 'password', None, None)
 
     def tearDown(self):
-        self.user.delete()
+        self.user.delete(deleted_by=None)
         self.domain_obj.delete()
         super(TestBulkManagementNoInitialLocs, self).tearDown()
 
@@ -725,10 +725,10 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
 
     def setUp(self):
         super(TestBulkManagementWithInitialLocs, self).setUp()
-        self.user = WebUser.create(self.domain, 'username', 'password')
+        self.user = WebUser.create(self.domain, 'username', 'password', None, None)
 
     def tearDown(self):
-        self.user.delete()
+        self.user.delete(deleted_by=None)
         super(TestBulkManagementWithInitialLocs, self).tearDown()
 
     @property
@@ -1111,12 +1111,12 @@ class TestRestrictedUserUpload(UploadTestUtils, LocationHierarchyPerTest):
 
     def setUp(self):
         super(TestRestrictedUserUpload, self).setUp()
-        self.user = WebUser.create(self.domain, 'username', 'password')
+        self.user = WebUser.create(self.domain, 'username', 'password', None, None)
         self.user.set_location(self.domain, self.locations['Middlesex'])
         restrict_user_by_location(self.domain, self.user)
 
     def tearDown(self):
-        self.user.delete()
+        self.user.delete(deleted_by=None)
         super(TestRestrictedUserUpload, self).tearDown()
 
     def test_only_additions(self):

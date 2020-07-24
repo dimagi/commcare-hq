@@ -38,7 +38,7 @@ from corehq.apps.domain.views.accounting import (
     WireInvoiceView,
     pause_subscription,
 )
-from corehq.apps.domain.views.base import select
+from corehq.apps.domain.views.base import select, accept_all_invitations
 from corehq.apps.domain.views.fixtures import LocationFixtureConfigView
 from corehq.apps.domain.views.internal import (
     ActivateTransferDomainView,
@@ -72,6 +72,7 @@ from corehq.apps.domain.views.settings import (
     RecoveryMeasuresHistory,
 )
 from corehq.apps.domain.views.sms import SMSRatesView
+from corehq.apps.integration.urls import settings_patterns as integration_settings
 from corehq.apps.linked_domain.views import DomainLinkView
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.motech.repeaters.views import (
@@ -96,6 +97,7 @@ PASSWORD_RESET_DONE_KWARGS = {
 urlpatterns = [
     url(r'^domain/select/$', select, name='domain_select'),
     url(r'^domain/select_redirect/$', select, {'do_not_redirect': True}, name='domain_select_redirect'),
+    url('^accept_all_invitations/$', accept_all_invitations, name='accept_all_invitations'),
     url(r'^domain/transfer/(?P<guid>\w+)/activate$',
         ActivateTransferDomainView.as_view(), name='activate_transfer_domain'),
     url(r'^domain/transfer/(?P<guid>\w+)/deactivate$',
@@ -178,7 +180,7 @@ domain_settings = [
     url(r'^repeat_record_report/requeue/', requeue_repeat_record, name='requeue_repeat_record'),
     url(r'^repeat_record_report/generate_repeater_payloads/', generate_repeater_payloads,
         name='generate_repeater_payloads'),
-    url(r'^integration/', include('corehq.apps.integration.urls')),
+    url(r'^integration/', include(integration_settings)),
     url(r'^transfer/$', TransferDomainView.as_view(), name=TransferDomainView.urlname),
     url(r'^case_search/$', CaseSearchConfigView.as_view(), name=CaseSearchConfigView.urlname),
     url(r'^domain_links/$', DomainLinkView.as_view(), name=DomainLinkView.urlname),

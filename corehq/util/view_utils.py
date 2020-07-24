@@ -8,7 +8,6 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.urls import reverse as _reverse
-from django.utils.encoding import smart_text
 from django.utils.http import urlencode
 
 from dimagi.utils.logging import notify_exception
@@ -51,6 +50,7 @@ def json_error(f):
     """
     @wraps(f)
     def inner(request, *args, **kwargs):
+        from . import as_text
         try:
             response = f(request, *args, **kwargs)
 
@@ -71,7 +71,7 @@ def json_error(f):
         except BadRequest as e:
             return _get_json_exception_response(400, request, e)
         except Exception as e:
-            message = 'JSON exception response: {}'.format(smart_text(e))
+            message = f'JSON exception response: {as_text(e)}'
             notify_exception(request, message)
             return _get_json_exception_response(500, request, e)
     return inner

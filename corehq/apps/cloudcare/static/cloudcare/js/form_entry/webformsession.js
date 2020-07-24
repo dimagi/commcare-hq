@@ -120,14 +120,14 @@ function WebFormSession(params) {
     };
 
 
-    self.blockingRequestInProgress = false;
+    self.blockingStatus = Formplayer.Const.BLOCK_NONE;
     self.lastRequestHandled = -1;
     self.numPendingRequests = 0;
 
     // workaround for "forever loading" bugs...
     $(document).ajaxStop(function () {
         self.NUM_PENDING_REQUESTS = 0;
-        self.blockingRequestInProgress = false;
+        self.blockingStaus = Formplayer.Const.BLOCK_NONE;
     });
 }
 
@@ -148,11 +148,13 @@ WebFormSession.prototype.isOneQuestionPerScreen = function () {
 /**
  * Sends a request to the touchforms server
  * @param {Object} requestParams - request parameters to be sent
- * @param {function} callback - function to be called on success
- * @param {boolean} blocking - whether the request should be blocking
+ * @param {function} successCallback - function to be called on success
+ * @param {boolean} blocking - one of Formplayer.Const.BLOCK_*, defaults to BLOCK_NONE
  * @param {function} failureCallback - function to be called on failure
+ * @param {function} errorResponseCallback - function to be called on a "success" response with .status = 'error'
+ *      this function should return true to also run default behavior afterwards, or false to prevent it
  */
-WebFormSession.prototype.serverRequest = function (requestParams, callback, blocking, failureCallback) {
+WebFormSession.prototype.serverRequest = function (requestParams, successCallback, blocking, failureCallback, errorResponseCallback) {
     var self = this;
     var url = self.urls.xform;
     if (requestParams.action === Formplayer.Const.SUBMIT && self.NUM_PENDING_REQUESTS) {
@@ -168,10 +170,10 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
     requestParams['session_id'] = self.session_id;
     requestParams['debuggerEnabled'] = self.debuggerEnabled;
     requestParams['tz_offset_millis'] = (new Date()).getTimezoneOffset() * 60 * 1000 * -1;
-    if (this.blockingRequestInProgress) {
+    if (this.blockingStatus === Formplayer.Const.BLOCK_ALL) {
         return;
     }
-    this.blockingRequestInProgress = blocking || false;
+    this.blockingStatus = blocking || Formplayer.Const.BLOCK_NONE;
     $.publish('session.block', blocking);
 
     this.numPendingRequests++;
@@ -190,7 +192,7 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
             withCredentials: true,
         },
         success: function (resp) {
-            self.handleSuccess(resp, requestParams.action, callback);
+            self.handleSuccess(resp, requestParams.action, successCallback, errorResponseCallback);
         },
         error: function (resp, textStatus) {
             self.handleFailure(resp, requestParams.action, textStatus, failureCallback);
@@ -203,10 +205,13 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
  * @param {Object} response - touchforms response object
  * @param {function} callback - callback to be called if no errors occured
  */
-WebFormSession.prototype.handleSuccess = function (resp, action, callback) {
+WebFormSession.prototype.handleSuccess = function (resp, action, successCallback, errorResponseCallback) {
     var self = this;
+    errorResponseCallback = errorResponseCallback || function () { return true; };
     if (resp.status === 'error' || resp.error) {
-        self.onerror(resp);
+        if (errorResponseCallback()) {
+            self.onerror(resp);
+        }
     } else {
         // ignore responses older than the most-recently handled
         if (resp.seq_id && resp.seq_id < self.lastRequestHandled) {
@@ -215,7 +220,7 @@ WebFormSession.prototype.handleSuccess = function (resp, action, callback) {
         self.lastRequestHandled = resp.seq_id;
 
         try {
-            callback(resp);
+            successCallback(resp);
         } catch (err) {
             console.error(err);
             self.onerror({
@@ -224,8 +229,8 @@ WebFormSession.prototype.handleSuccess = function (resp, action, callback) {
         }
     }
 
-    $.publish('session.block', false);
-    this.blockingRequestInProgress = false;
+    this.blockingStatus = Formplayer.Const.BLOCK_NONE;
+    $.publish('session.block', this.blockingStatus);
 
     self.numPendingRequests--;
     if (self.numPendingRequests === 0) {
@@ -237,9 +242,14 @@ WebFormSession.prototype.handleSuccess = function (resp, action, callback) {
 };
 
 WebFormSession.prototype.handleFailure = function (resp, action, textStatus, failureCallback) {
-    var errorMessage;
+    var self = this;
+    var errorMessage = null;
+    var isHTML = false;
     if (resp.status === 423) {
         errorMessage = Formplayer.Errors.LOCK_TIMEOUT_ERROR;
+    } else if (resp.status === 401) {
+        errorMessage = Formplayer.Utils.reloginErrorHtml();
+        isHTML = true;
     } else if (textStatus === 'timeout') {
         errorMessage = Formplayer.Errors.TIMEOUT_ERROR;
     } else if (!window.navigator.onLine) {
@@ -251,15 +261,27 @@ WebFormSession.prototype.handleFailure = function (resp, action, textStatus, fai
     } else if (resp.hasOwnProperty('responseJSON') && resp.responseJSON !== undefined) {
         errorMessage = Formplayer.Utils.touchformsError(resp.responseJSON.message);
     }
+
+    hqImport('cloudcare/js/util').reportFormplayerErrorToHQ({
+        type: 'webformsession_request_failure',
+        request: action,
+        readableErrorMessage: errorMessage,
+        statusText: resp.statusText,
+        state: resp.state ? resp.state() : null,
+        status: resp.status,
+        domain: self.domain,
+        username: self.username,
+        restoreAs: self.restoreAs,
+    });
+
     if (failureCallback) {
         failureCallback();
     }
     this.onerror({
         human_readable_message: errorMessage,
+        is_html: isHTML,
     });
     this.onLoadingComplete();
-    //    $.publish('session.block', false);
-    //    this.blockingRequestInProgress = false;
 };
 
 /*
@@ -360,7 +382,7 @@ WebFormSession.prototype.answerQuestion = function (q) {
                 self.answerCallback(self.session_id);
             }
         },
-        false,
+        Formplayer.Const.BLOCK_SUBMIT,
         function () {
             q.serverError(
                 gettext("We were unable to save this answer. Please try again later."));
@@ -433,7 +455,7 @@ WebFormSession.prototype.newRepeat = function (repeat) {
         function (resp) {
             $.publish('session.reconcile', [resp, repeat]);
         },
-        true);
+        Formplayer.Const.BLOCK_ALL);
 };
 
 WebFormSession.prototype.deleteRepeat = function (repetition) {
@@ -448,7 +470,7 @@ WebFormSession.prototype.deleteRepeat = function (repetition) {
         function (resp) {
             $.publish('session.reconcile', [resp, repetition]);
         },
-        true);
+        Formplayer.Const.BLOCK_ALL);
 };
 
 WebFormSession.prototype.switchLanguage = function (lang) {
@@ -464,53 +486,82 @@ WebFormSession.prototype.switchLanguage = function (lang) {
 
 WebFormSession.prototype.submitForm = function (form) {
     var self = this,
-        answers = {},
         accumulate_answers,
         prevalidated = true;
 
     accumulate_answers = function (o) {
-        if (ko.utils.unwrapObservable(o.type) !== 'question') {
-            if (o.hasOwnProperty("children")) {
-                $.each(o.children(), function (i, val) {
-                    accumulate_answers(val);
-                });
-            }
-        } else {
-            if (o.isValid()) {
-                if (ko.utils.unwrapObservable(o.datatype) !== "info") {
-                    answers[getIx(o)] = ko.utils.unwrapObservable(o.answer);
+        var _answers = {},
+            _accumulate_answers;
+
+        _accumulate_answers = function (o) {
+            if (ko.utils.unwrapObservable(o.type) !== 'question') {
+                if (o.hasOwnProperty("children")) {
+                    $.each(o.children(), function (i, val) {
+                        _accumulate_answers(val);
+                    });
                 }
             } else {
-                prevalidated = false;
-            }
-        }
-    };
-    accumulate_answers(form);
-    this.serverRequest(
-        {
-            'action': Formplayer.Const.SUBMIT,
-            'answers': answers,
-            'prevalidated': prevalidated,
-        },
-        function (resp) {
-            if (resp.status == 'success') {
-                form.submitting();
-                self.onsubmit(resp);
-            } else {
-                $.each(resp.errors, function (ix, error) {
-                    self.serverError(getForIx(form, ix), error);
-                });
-                if (resp.notification) {
-                    alert("Form submission failed with error: \n\n" +
-                        resp.notification.message + ". \n\n " +
-                        "This must be corrected before the form can be submitted.");
+                if (o.isValid()) {
+                    if (ko.utils.unwrapObservable(o.datatype) !== "info") {
+                        _answers[getIx(o)] = ko.utils.unwrapObservable(o.answer);
+                    }
                 } else {
-                    alert("There are errors in this form's answers. " +
-                        "These must be corrected before the form can be submitted.");
+                    prevalidated = false;
                 }
             }
-        },
-        true);
+        };
+        _accumulate_answers(o);
+        return _answers;
+    };
+
+    form.isSubmitting(true);
+    var submitAttempts = 0,
+        timer = setInterval(function () {
+            var answers;
+            if (form.blockSubmit() && submitAttempts < 10) {
+                submitAttempts++;
+                return;
+            }
+            clearInterval(timer);
+
+            answers = accumulate_answers(form);
+            self.serverRequest(
+                {
+                    'action': Formplayer.Const.SUBMIT,
+                    'answers': answers,
+                    'prevalidated': prevalidated,
+                },
+                function (resp) {
+                    form.isSubmitting(false);
+                    if (resp.status === 'success') {
+                        self.onsubmit(resp);
+                    } else {
+                        $.each(resp.errors, function (ix, error) {
+                            self.serverError(getForIx(form, ix), error);
+                        });
+                        // todo: mark all these messages for translation
+                        if (resp.status === 'too-many-requests') {
+                            alert("We’re unable to submit this form right now due to high system usage. \n\n" +
+                                "Please keep this window open and try again in a minute, " +
+                                "or come back to this form in Incomplete Forms later.");
+                        } else if (resp.notification) {
+                            alert("Form submission failed with error: \n\n" +
+                                resp.notification.message + ". \n\n " +
+                                "This must be corrected before the form can be submitted.");
+                        } else {
+                            alert("There are errors in this form's answers. " +
+                                "These must be corrected before the form can be submitted.");
+                        }
+                    }
+                },
+                Formplayer.Const.BLOCK_ALL,
+                undefined,
+                function () {
+                    form.isSubmitting(false);
+                    return true;
+                }
+            );
+        }, 250);
 };
 
 WebFormSession.prototype.serverError = function (q, resp) {

@@ -23,7 +23,8 @@
   ],
   "server_environment": [
     "india",
-    "icds"
+    "icds",
+    "icds-staging"
   ],
   "report_id": "static-mpr_v2_9_vhnd_forms",
   "data_source_table": "static-vhnd_form",

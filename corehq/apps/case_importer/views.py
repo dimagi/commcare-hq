@@ -9,6 +9,7 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
+from corehq.apps.hqwebapp.decorators import waf_allow
 from dimagi.utils.web import json_response
 
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
@@ -31,7 +32,7 @@ from corehq.apps.reports.analytics.esaccessors import (
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.util.view_utils import absolute_reverse
-from corehq.util.workbook_reading import SpreadsheetFileExtError
+from corehq.util.workbook_reading import valid_extensions, SpreadsheetFileExtError, SpreadsheetFileInvalidError
 
 require_can_edit_data = require_permission(Permissions.edit_data)
 
@@ -65,6 +66,7 @@ def _case_importer_breadcrumb_context(page_name, domain):
     }
 
 
+@waf_allow('XSS_BODY')
 @require_can_edit_data
 @conditionally_location_safe(location_safe_case_imports_enabled)
 def excel_config(request, domain):
@@ -99,7 +101,7 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain):
     # views if your worker changes, so we have to store it elsewhere
     # using the soil framework.
 
-    if extension not in importer_util.ALLOWED_EXTENSIONS:
+    if extension not in valid_extensions:
         raise SpreadsheetFileExtError(
             'The file you chose could not be processed. '
             'Please check that it is saved as a Microsoft '
@@ -112,7 +114,7 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain):
                                     domain=domain)
 
     request.session[EXCEL_SESSION_ID] = case_upload.upload_id
-    
+
     case_upload.check_file()
     invalid_column_names = set()
     with case_upload.get_spreadsheet() as spreadsheet:
@@ -267,6 +269,7 @@ def excel_commit(request, domain):
     return HttpResponseRedirect(base.ImportCases.get_url(domain))
 
 
+@waf_allow('XSS_BODY')
 @csrf_exempt
 @require_POST
 @api_auth
@@ -278,8 +281,12 @@ def bulk_case_upload_api(request, domain, **kwargs):
     except ImporterError as e:
         error = get_importer_error_message(e)
     except SpreadsheetFileExtError:
-        error = "Please upload file with extension .xls or .xlsx"
-    return json_response({'code': 500, 'message': _(error)}, status_code=500)
+        error = "Please upload file with one of the following extensions: {}".format(
+            ', '.join(valid_extensions)
+        )
+    except SpreadsheetFileInvalidError as e:
+        error = str(e)
+    return json_response({'code': 500, 'message': error}, status_code=500)
 
 
 def _bulk_case_upload_api(request, domain):

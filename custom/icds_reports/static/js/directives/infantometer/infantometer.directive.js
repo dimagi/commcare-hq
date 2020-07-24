@@ -3,10 +3,10 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function InfantometerController($scope, $routeParams, $location, $filter, infrastructureService, locationsService,
     dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
-    baseControllersService, isAlertActive, isMobile) {
+    baseControllersService, isAlertActive, isMobile, haveAccessToFeatures) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
-        false, isMobile);
+        haveAccessToFeatures, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
     vm.serviceDataFunction = infrastructureService.getInfantometerData;
@@ -20,7 +20,7 @@ function InfantometerController($scope, $routeParams, $location, $filter, infras
     vm.data = {
         legendTitle: 'Percentage',
     };
-    vm.filters = ['gender', 'age'];
+    vm.filters = ['gender', 'age', 'data_period'];
     vm.rightLegend = {
         info: 'Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs that reported having an Infantometer. ',
     };
@@ -69,6 +69,7 @@ InfantometerController.$inject = [
     '$scope', '$routeParams', '$location', '$filter',
     'infrastructureService', 'locationsService', 'dateHelperService', 'navigationService', 'userLocationId',
     'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive', 'isMobile',
+    'haveAccessToFeatures',
 ];
 
 window.angular.module('icdsApp').directive('infantometer', ['templateProviderService', function (templateProviderService) {

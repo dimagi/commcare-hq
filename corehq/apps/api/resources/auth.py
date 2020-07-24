@@ -21,7 +21,7 @@ from corehq.apps.users.decorators import (
     require_permission,
     require_permission_raw,
 )
-from corehq.toggles import IS_CONTRACTOR
+from corehq.toggles import API_THROTTLE_WHITELIST, IS_CONTRACTOR
 
 
 def api_auth(view_func):
@@ -62,7 +62,11 @@ class LoginAndDomainAuthentication(Authentication):
             }
 
     def is_authenticated(self, request, **kwargs):
-        return self._auth_test(request, wrappers=[self._get_auth_decorator(request), api_auth], **kwargs)
+        return self._auth_test(request, wrappers=[
+            self._get_auth_decorator(request),
+            api_auth,
+            require_permission('access_api', login_decorator=self._get_auth_decorator(request)),
+        ], **kwargs)
 
     def _get_auth_decorator(self, request):
         # the initial digest request doesn't have any authorization, so default to
@@ -93,7 +97,10 @@ class LoginAndDomainAuthentication(Authentication):
             return response
 
     def get_identifier(self, request):
-        return request.couch_user.username
+        username = request.couch_user.username
+        if API_THROTTLE_WHITELIST.enabled(username):
+            return username
+        return f"{request.domain}_{username}"
 
 
 class RequirePermissionAuthentication(LoginAndDomainAuthentication):

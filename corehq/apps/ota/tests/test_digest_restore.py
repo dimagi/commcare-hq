@@ -29,13 +29,13 @@ class DigestOtaRestoreTest(TestCase):
         super(DigestOtaRestoreTest, cls).setUpClass()
         create_domain(cls.domain)
         create_domain(cls.wrong_domain)
-        cls.commcare_user = CommCareUser.create(cls.domain, cls.username, cls.password)
-        cls.web_user = WebUser.create(cls.domain, cls.web_username, cls.password)
+        cls.commcare_user = CommCareUser.create(cls.domain, cls.username, cls.password, None, None)
+        cls.web_user = WebUser.create(cls.domain, cls.web_username, cls.password, None, None)
 
     @classmethod
     def tearDownClass(cls):
-        cls.commcare_user.delete()
-        cls.web_user.delete()
+        cls.commcare_user.delete(deleted_by=None)
+        cls.web_user.delete(deleted_by=None)
         delete_all_domains()
         super(DigestOtaRestoreTest, cls).tearDownClass()
 

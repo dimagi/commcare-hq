@@ -25,12 +25,16 @@
   {% initial_page_data 'formplayer_url' formplayer_url %}
   {% initial_page_data 'is_dimagi' request.couch_user.is_dimagi %}
   {% initial_page_data 'language' request.user.language|default:'en' %}
-  {% initial_page_data 'maps_api_key' maps_api_key %}
+  {% initial_page_data 'mapbox_access_token' mapbox_access_token %}
   {% initial_page_data 'username' request.user.username %}
+  {% initial_page_data 'dialer_enabled' dialer_enabled %}
   {% registerurl 'list_case_exports' request.domain %}
   {% registerurl 'list_form_exports' request.domain %}
+  {% registerurl 'login_new_window' %}
   {% registerurl 'case_data' request.domain '---' %}
   {% registerurl 'render_form_data' request.domain '---' %}
+  {% registerurl 'report_formplayer_error' request.domain %}
+  {% registerurl 'dialer_view' request.domain %}
 
   <section id="case-crumbs" style="width: 800px"></section>
   <section id="cases"></section>

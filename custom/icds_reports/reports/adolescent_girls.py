@@ -42,7 +42,7 @@ def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False, be
         'valid': 0,
         'all': 0,
         'original_name': [],
-        'fillKey': 'Adolescent Girls'
+        'fillKey': 'Out of school Adolescent Girls'
     })
     average = []
     total_valid = 0
@@ -63,7 +63,9 @@ def get_adolescent_girls_data_map(domain, config, loc_level, show_test=False, be
         data_for_map[on_map_name]['original_name'].append(name)
 
     fills = OrderedDict()
-    fills.update({'Adolescent Girls': MapColors.BLUE})
+    fills.update({'Out of school Adolescent Girls': MapColors.BLUE})
+    if beta:
+        fills.update({'Not Launched': MapColors.GREY})
     fills.update({'defaultFill': MapColors.GREY})
 
     return {

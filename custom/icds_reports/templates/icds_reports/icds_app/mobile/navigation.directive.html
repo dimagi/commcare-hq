@@ -1,4 +1,4 @@
-{% load staticfiles %}
+{% load static %}
 {% load i18n %}
 <div class="sideNavigation" id="nav-menu">
     <img src="{% static 'icds_reports/mobile/images/white-close-icon.png' %}" class="close-icon" ng-click="closeMenu()">
@@ -20,7 +20,8 @@
             <div>
                 <div ng-show="expandedSectionId===menuItem['sectionId']">
                     <div ng-repeat="subPage in menuItem['sub_pages']"
-                         class="navigation-font pl-3 pr-3 mb-0" ng-show="subPage['showInMobile'] && !subPage['featureFlagOnly']"
+                         class="navigation-font pl-3 pr-3 mb-0"
+                         ng-show="subPage['showInMobile'] && !subPage['featureFlagOnly']"
                          ng-class="{'active-mobile-link': $location.path().indexOf(subPage['route']) !== -1}">
                         <a href="{$ goToStep(subPage['route'], $location.search()) $}" class="sub-links"
                             ng-click="closeMenu()" ng-bind="subPage['name']"></a>
@@ -29,7 +30,7 @@
             </div>
         </div>
         <hr>
-        <div class="menu-options navigation-font mb-0" ng-show="haveAccessToFeatures" ng-class="{'active-mobile-link': $location.path().indexOf('/service_delivery_dashboard') !== -1}">
+        <div class="menu-options navigation-font mb-0" ng-class="{'active-mobile-link': $location.path().indexOf('/service_delivery_dashboard') !== -1}">
             <i class="fa fa-tasks mr-3" aria-hidden="true"></i>
             <a  href="{$ goToStep('service_delivery_dashboard/', $location.search()) $}" class="sub-links" ng-click="closeMenu()">{% trans "Service Delivery Dashboard" %}</a>
         </div>
@@ -37,12 +38,12 @@
             <i class="fa fa-tasks mr-3" aria-hidden="true"></i>
             <a  href="{$ goToStep('awc_reports', $location.search()) $}" class="sub-links" ng-click="closeMenu()">{% trans "AWC Report" %}</a>
         </div>
-        <div class="menu-options navigation-font mb-0" ng-show="haveAccessToFeatures" ng-class="{'active-mobile-link': $location.path().indexOf('/fact_sheets') !== -1}">
+        <div class="menu-options navigation-font mb-0" ng-class="{'active-mobile-link': $location.path().indexOf('/fact_sheets') !== -1}">
             <i class="fa fa-file-text-o mr-3" aria-hidden="true"></i>
             <a  href="{$ goToStep('fact_sheets', $location.search()) $}" class="sub-links" ng-click="closeMenu()">{% trans "ICDS-CAS Fact Sheets" %}</a>
         </div>
         <hr>
-        <div class="menu-options navigation-font mb-0" ng-show="haveAccessToFeatures">
+        <div class="menu-options navigation-font mb-0">
             <i class="fa fa-exclamation-triangle mr-3" aria-hidden="true"></i>
             <span class="sub-links" ng-click="closeMenu()" ng-if="isWebUser" data-target="#modalReportIssue" data-toggle="modal">{% trans "Report an Issue" %}</span>
             <span class="sub-links" ng-click="reportAnIssue()" ng-if="!isWebUser">{% trans "Report an Issue" %}</span>

@@ -51,7 +51,6 @@ from corehq.apps.app_manager.models import (
     DetailTab,
     FixtureSelect,
     FormActionCondition,
-    MappingItem,
     Module,
     ModuleNotFoundException,
     OpenCaseAction,
@@ -94,6 +93,7 @@ from corehq.apps.domain.decorators import (
     track_domain_request,
 )
 from corehq.apps.domain.models import Domain
+from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.hqmedia.controller import MultimediaHTMLUploadController
 from corehq.apps.hqmedia.models import (
@@ -132,7 +132,6 @@ def get_module_view_context(request, app, module, lang=None):
         'lang': lang,
         'langs': app.langs,
         'module_type': module.module_type,
-        'name_enum': module.name_enum,
         'requires_case_details': module.requires_case_details(),
         'unique_id': module.unique_id,
     }
@@ -184,6 +183,8 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
         'js_options': {
             'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
             'is_search_enabled': case_search_enabled_for_domain(app.domain),
+            'search_prompt_appearance_enabled': app.enable_search_prompt_appearance,
+            'item_lists': item_lists_by_domain(request.domain) if app.enable_search_prompt_appearance else [],
             'search_properties': module.search_config.properties if module_offers_search(module) else [],
             'include_closed': module.search_config.include_closed if module_offers_search(module) else False,
             'default_properties': module.search_config.default_properties if module_offers_search(module) else [],
@@ -479,7 +480,6 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         "media_image": None,
         "module_filter": None,
         "name": None,
-        "name_enum": None,
         "parent_module": None,
         "put_in_root": None,
         "report_context_tile": None,
@@ -527,10 +527,6 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
                 {'message': error_message},
                 status_code=400
             )
-
-    if should_edit("name_enum"):
-        name_enum = json.loads(request.POST.get("name_enum"))
-        module.name_enum = [MappingItem(i) for i in name_enum]
 
     if should_edit("case_type"):
         case_type = request.POST.get("case_type", None)
@@ -767,10 +763,26 @@ def _update_search_properties(module, search_properties, lang='en'):
             label.update({lang: prop['label']})
         else:
             label = {lang: prop['label']}
-        yield {
+        ret = {
             'name': prop['name'],
-            'label': label
+            'label': label,
         }
+        if prop.get('appearance', '') == 'fixture':
+            ret['input_'] = 'select1'
+            fixture_props = json.loads(prop['fixture'])
+            ret['itemset'] = {
+                'instance_uri': fixture_props['instance_uri'],
+                'instance_id': fixture_props['instance_id'],
+                'nodeset': fixture_props['nodeset'],
+                'label': fixture_props['label'],
+                'value': fixture_props['value'],
+                'sort': fixture_props['sort'],
+            }
+
+        elif prop.get('appearance', '') == 'barcode_scan':
+            ret['appearance'] = 'barcode_scan'
+
+        yield ret
 
 
 @no_conflict_require_POST
@@ -967,10 +979,6 @@ def edit_report_module(request, domain, app_id, module_unique_id):
 
     module.media_image.update(params['multimedia']['mediaImage'])
     module.media_audio.update(params['multimedia']['mediaAudio'])
-
-    if 'name_enum' in params:
-        name_enum = json.loads(request.POST.get("name_enum"))
-        module.name_enum = [MappingItem(i) for i in name_enum]
 
     try:
         app.save()

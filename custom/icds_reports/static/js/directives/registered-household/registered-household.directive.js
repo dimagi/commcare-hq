@@ -3,10 +3,10 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function RegisteredHouseholdController($scope, $routeParams, $location, $filter, demographicsService,
     locationsService, dateHelperService, navigationService, userLocationId, storageService,
-    haveAccessToAllLocations, baseControllersService, isAlertActive, isMobile) {
+    haveAccessToAllLocations, baseControllersService, isAlertActive, isMobile, haveAccessToFeatures) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
-        false, isMobile);
+        haveAccessToFeatures, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
     vm.label = "Registered Household";
@@ -16,7 +16,7 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
     vm.data = {
         legendTitle: 'Total AWCs that have launched ICDS CAS',
     };
-    vm.filters = ['age', 'gender'];
+    vm.filters = ['age', 'gender', 'data_period'];
     vm.rightLegend = {
         info: 'Total AWCs that have launched ICDS CAS',
     };
@@ -69,6 +69,7 @@ RegisteredHouseholdController.$inject = [
     '$scope', '$routeParams', '$location', '$filter',
     'demographicsService', 'locationsService', 'dateHelperService', 'navigationService', 'userLocationId',
     'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive', 'isMobile',
+    'haveAccessToFeatures',
 ];
 
 window.angular.module('icdsApp').directive('registeredHousehold', ['templateProviderService', function (templateProviderService) {

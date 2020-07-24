@@ -137,7 +137,7 @@ class CustomDataModelMixin(object):
     @classmethod
     def get_validator(cls, domain):
         data_model = CustomDataFieldsDefinition.get_or_create(domain, cls.field_type)
-        return data_model.get_validator(cls)
+        return data_model.get_validator()
 
     @classmethod
     def page_name(cls):
@@ -197,7 +197,7 @@ class CustomDataModelMixin(object):
                     'choices': field.choices,
                     'regex': field.regex,
                     'regex_msg': field.regex_msg,
-                } for field in definition.field_set.all()
+                } for field in definition.get_fields()
             ])
             return CustomDataFieldsForm({'data_fields': serialized})
 

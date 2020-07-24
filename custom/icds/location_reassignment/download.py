@@ -1,9 +1,9 @@
 import io
 import itertools
+import zipfile
+from abc import ABCMeta, abstractmethod
 from collections import defaultdict
-from copy import deepcopy
 
-from memoized import memoized
 from openpyxl import Workbook
 from openpyxl.worksheet.datavalidation import DataValidation
 
@@ -15,33 +15,45 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.icds.location_reassignment.const import (
     AWC_CODE_COLUMN,
     AWC_NAME_COLUMN,
+    BLOCK_CODE,
+    CASE_ID_COLUMN,
+    CASE_NAME,
     CURRENT_LGD_CODE,
     CURRENT_NAME,
     CURRENT_PARENT_NAME,
     CURRENT_PARENT_SITE_CODE,
     CURRENT_PARENT_TYPE,
     CURRENT_SITE_CODE_COLUMN,
+    CURRENT_SUB_DISTRICT_NAME,
     EXTRACT_OPERATION,
+    HAVE_APPENDED_LOCATION_NAMES,
     HOUSEHOLD_ID_COLUMN,
     HOUSEHOLD_MEMBER_DETAILS_COLUMN,
+    LGD_CODE,
+    MAP_LOCATION_NAME,
     NEW_LGD_CODE,
     NEW_NAME,
     NEW_PARENT_SITE_CODE,
     NEW_SITE_CODE_COLUMN,
+    NEW_SUB_DISTRICT_NAME,
     NEW_USERNAME_COLUMN,
     OPERATION_COLUMN,
+    OPERATIONS_TO_IGNORE,
     PERSON_CASE_TYPE,
+    SHEETS_TO_IGNORE,
     SPLIT_OPERATION,
     USERNAME_COLUMN,
     VALID_OPERATIONS,
 )
 from custom.icds.location_reassignment.utils import (
+    get_case_ids_for_reassignment,
     get_household_case_ids,
     get_household_child_cases_by_owner,
+    split_location_name_and_site_code,
 )
 
 
-class Download(object):
+class DownloadUsers(object):
     def __init__(self, location):
         """
         Generates an Excel file stream
@@ -64,11 +76,15 @@ class Download(object):
         # setup details for the main location and all related locations
         self._location_details_by_location_id = {}
         for location in self._locations():
+            location_name = location.name
+            if location.location_type.code in HAVE_APPENDED_LOCATION_NAMES:
+                location_name, _ = split_location_name_and_site_code(location.name)
             self._location_details_by_location_id[location.location_id] = {
-                'name': location.name,
+                'name': location_name,
                 'type_name': location.location_type.name,
                 'site_code': location.site_code,
-                'lgd_code': location.metadata.get('lgd_code', ''),
+                'lgd_code': location.metadata.get(LGD_CODE, ''),
+                'sub_district_name': location.metadata.get(MAP_LOCATION_NAME, ''),
                 'parent_location_id': location.parent_location_id,
                 'location_type': location.location_type.code,
                 'assigned_users': [],
@@ -109,60 +125,55 @@ class Download(object):
             for row in rows:
                 worksheet.append([row.get(header) for header in uniq_headers])
             self._add_validation(worksheet)
+        self._add_extra_sheets(wb)
         return wb
 
-    @staticmethod
-    def _add_validation(worksheet):
-        operation_data_validation = DataValidation(type="list", formula1='"%s"' % (','.join(VALID_OPERATIONS)))
-        worksheet.add_data_validation(operation_data_validation)
-        for header_cell in worksheet[1]:
-            if header_cell.value == OPERATION_COLUMN:
-                letter = header_cell.column_letter
-                operation_data_validation.add(f"{letter}2:{letter}{worksheet.max_row}")
-
     def _create_rows(self):
-        def append_row(username):
-            row = deepcopy(location_content)
-            row[USERNAME_COLUMN] = username
-            row[NEW_USERNAME_COLUMN] = ''
-            row[OPERATION_COLUMN] = ''
-            rows[location_type].append(row)
-
         # location type code mapped to rows which is a list of dictionaries to pull headers later using keys
         rows = defaultdict(list)
         for location_id, location_details in self._location_details_by_location_id.items():
-            location_content = self._location_content(location_id)
             location_type = location_details['location_type']
             if location_details['assigned_users']:
                 for username in location_details['assigned_users']:
-                    append_row(username)
+                    rows[location_type].append(self._generate_row(username, location_type, location_id))
             else:
                 # set up one row for location that has no user assigned
-                append_row('')
+                rows[location_type].append(self._generate_row('', location_type, location_id))
         return rows
 
-    @memoized
-    def _location_content(self, location_id):
-        # memoized static content for each location
+    def _generate_row(self, username, location_type, location_id):
         location_details = self._location_details_by_location_id[location_id]
         location_parent_id = location_details['parent_location_id']
-        location_content = {
-            CURRENT_NAME: location_details['name'],
-            NEW_NAME: '',
+        row = {
             CURRENT_SITE_CODE_COLUMN: location_details['site_code'],
             NEW_SITE_CODE_COLUMN: '',
+            CURRENT_NAME: location_details['name'],
+            NEW_NAME: '',
+        }
+        if location_type == BLOCK_CODE:
+            row.update({
+                CURRENT_SUB_DISTRICT_NAME: location_details['sub_district_name'],
+                NEW_SUB_DISTRICT_NAME: '',
+            })
+        row.update({
+            USERNAME_COLUMN: username,
+            NEW_USERNAME_COLUMN: '',
             CURRENT_LGD_CODE: location_details['lgd_code'],
             NEW_LGD_CODE: '',
-        }
+        })
         if location_parent_id and location_parent_id in self._location_details_by_location_id:
             location_parent_details = self._location_details_by_location_id[location_parent_id]
-            location_content.update({
+            parent_name = location_parent_details['name']
+            if location_parent_details['location_type'] in HAVE_APPENDED_LOCATION_NAMES:
+                parent_name, _ = split_location_name_and_site_code(parent_name)
+            row.update({
                 CURRENT_PARENT_TYPE: location_parent_details['type_name'],
-                CURRENT_PARENT_NAME: location_parent_details['name'],
+                CURRENT_PARENT_NAME: parent_name,
                 CURRENT_PARENT_SITE_CODE: location_parent_details['site_code'],
                 NEW_PARENT_SITE_CODE: ''
             })
-        return location_content
+        row[OPERATION_COLUMN] = ''
+        return row
 
     @staticmethod
     def _extract_unique_headers(rows):
@@ -174,64 +185,165 @@ class Download(object):
                 uniq_headers.append(h)
         return uniq_headers
 
+    @staticmethod
+    def _add_validation(worksheet):
+        operations = [""] + VALID_OPERATIONS + OPERATIONS_TO_IGNORE
+        operation_data_validation = DataValidation(type="list", formula1='"%s"' % (','.join(operations)))
+        worksheet.add_data_validation(operation_data_validation)
+        for header_cell in worksheet[1]:
+            if header_cell.value == OPERATION_COLUMN:
+                letter = header_cell.column_letter
+                operation_data_validation.add(f"{letter}2:{letter}{worksheet.max_row}")
 
-class Households(object):
+    @staticmethod
+    def _add_extra_sheets(workbook):
+        for title, headers in SHEETS_TO_IGNORE.items():
+            worksheet = workbook.create_sheet(title)
+            worksheet.append(headers)
+
+
+class DownloadCases(metaclass=ABCMeta):
     valid_operations = [SPLIT_OPERATION, EXTRACT_OPERATION]
+    headers = None
+
+    def __init__(self, domain):
+        self.domain = domain
+        self.case_accessor = CaseAccessors(domain)
+
+    @abstractmethod
+    def dump(self, transitions):
+        """
+        :param transitions: transition objects
+        :return: filestream
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def _generate_data(self, transitions):
+        raise NotImplementedError
+
+    @abstractmethod
+    def _get_rows_for_location(self, location):
+        raise NotImplementedError
+
+    @abstractmethod
+    def _get_row_for_case(self, location, case):
+        raise NotImplementedError
+
+    def _dump_to_excel(self, sheets):
+        stream = io.BytesIO()
+        headers = [[site_code, self.headers] for site_code in sheets]
+        export_raw(headers, sheets.items(), stream)
+        stream.seek(0)
+        return stream
+
+
+class Households(DownloadCases):
+    """
+    Download Household cases assigned the old locations undergoing transition
+    """
     headers = [AWC_NAME_COLUMN, AWC_CODE_COLUMN, 'Name of Household', 'Date of Registration', 'Religion',
                'Caste', 'APL/BPL', 'Number of Household Members', HOUSEHOLD_MEMBER_DETAILS_COLUMN,
                HOUSEHOLD_ID_COLUMN]
 
-    def __init__(self, domain):
-        self.domain = domain
+    def dump(self, transitions):
+        """
+        :return: excel workbook with each tab titled as old location's site code,
+        which holds details all household cases assigned to it
+        """
+        sheets = self._generate_data(transitions)
+        if sheets:
+            return self._dump_to_excel(sheets)
+
+    def _generate_data(self, transitions):
+        rows = {}
+        for transition in transitions:
+            operation = transition.operation
+            if operation in self.valid_operations:
+                rows_for_transition = {}
+                for site_code in transition.old_site_codes:
+                    location = SQLLocation.active_objects.get(domain=self.domain, site_code=site_code)
+                    rows_for_transition[site_code] = self._get_rows_for_location(location)
+                rows.update(rows_for_transition)
+        return rows
+
+    def _get_rows_for_location(self, location):
+        rows = []
+        case_ids = get_household_case_ids(self.domain, location.location_id)
+        for case_id in case_ids:
+            rows.append(self._get_row_for_case(location, self.case_accessor.get_case(case_id)))
+        return rows
+
+    def _get_row_for_case(self, location, case):
+        person_cases = get_household_child_cases_by_owner(
+            self.domain, case.case_id, location.location_id, [PERSON_CASE_TYPE])
+        return [
+            '',
+            '',
+            case.name,
+            case.get_case_property('hh_reg_date'),
+            case.get_case_property('hh_religion'),
+            case.get_case_property('hh_caste'),
+            case.get_case_property('hh_bpl_apl'),
+            len(person_cases),
+            ", ".join([
+                "%s (%s/%s)" % (
+                    case.name, case.get_case_property('age_at_reg'), case.get_case_property('sex'))
+                for case in person_cases
+            ]),
+            case.case_id
+        ]
+
+
+class OtherCases(DownloadCases):
+    """
+    Download other cases that are not households or child cases of households
+    """
+    headers = [NEW_NAME, NEW_SITE_CODE_COLUMN, CASE_NAME, CASE_ID_COLUMN]
 
     def dump(self, transitions):
         """
-        :return: excel workbook with one tab with title as old location's site code,
-        which holds details all household cases assigned to it
+        :return: zip file with
+        one workbook per case type
+        with each sheet title as old location's site code,
+        which holds details of all cases assigned to it
         """
-        rows = {}
-        for operation, details in transitions.items():
+        data = self._generate_data(transitions)
+        if not data:
+            return None
+        zipstream = io.BytesIO()
+        with zipfile.ZipFile(zipstream, "w") as z:
+            for case_type, sheets in data.items():
+                excel_file = self._dump_to_excel(sheets)
+                z.writestr(f"{case_type}.xlsx", excel_file.read(), zipfile.ZIP_DEFLATED)
+        zipstream.seek(0)
+        return zipstream
+
+    def _generate_data(self, transitions):
+        # each case type mapped to sheets
+        # mapped to rows for cases of that case type assigned to that site code
+        data = defaultdict(dict)
+        for transition in transitions:
+            operation = transition.operation
             if operation in self.valid_operations:
-                rows.update(self._get_rows_for_location(operation, details))
-        if rows:
-            stream = io.BytesIO()
-            headers = [[site_code, self.headers] for site_code in rows]
-            export_raw(headers, rows.items(), stream)
-            stream.seek(0)
-            return stream
+                for site_code in transition.old_site_codes:
+                    location = SQLLocation.active_objects.get(domain=self.domain, site_code=site_code)
+                    for case_type, rows in self._get_rows_for_location(location).items():
+                        data[case_type][site_code] = rows
+        return data
 
-    def _get_rows_for_location(self, operation, details):
-        rows = {}
-        if operation == SPLIT_OPERATION:
-            for site_code in details.keys():
-                rows[site_code] = self._build_rows(site_code)
-        elif operation == EXTRACT_OPERATION:
-            for site_code in details.values():
-                rows[site_code] = self._build_rows(site_code)
-        return rows
+    def _get_rows_for_location(self, location):
+        rows_per_case_type = defaultdict(list)
+        _, case_ids = get_case_ids_for_reassignment(self.domain, location.location_id)
+        if case_ids:
+            for case in self.case_accessor.get_cases(case_ids):
+                rows_per_case_type[case.type].append(self._get_row_for_case(location, case))
+        return rows_per_case_type
 
-    def _build_rows(self, site_code):
-        rows = []
-        location = SQLLocation.active_objects.get(domain=self.domain, site_code=site_code)
-        case_ids = get_household_case_ids(self.domain, location.location_id)
-        for case_id in case_ids:
-            household_case = CaseAccessors(self.domain).get_case(case_id)
-            person_cases = get_household_child_cases_by_owner(
-                self.domain, case_id, location.location_id, [PERSON_CASE_TYPE])
-            rows.append([
-                '',
-                '',
-                household_case.name,
-                household_case.get_case_property('hh_reg_date'),
-                household_case.get_case_property('hh_religion'),
-                household_case.get_case_property('hh_caste'),
-                household_case.get_case_property('hh_bpl_apl'),
-                len(person_cases),
-                ", ".join([
-                    "%s (%s/%s)" % (
-                        case.name, case.get_case_property('age_at_reg'), case.get_case_property('sex'))
-                    for case in person_cases
-                ]),
-                household_case.case_id
-            ])
-        return rows
+    def _get_row_for_case(self, location, case):
+        return [
+            '',
+            '',
+            case.name,
+            case.case_id
+        ]

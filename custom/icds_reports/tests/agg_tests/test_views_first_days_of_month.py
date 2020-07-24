@@ -59,7 +59,7 @@ class Base(TestCase):
         # used instead of flag_enabled, because the patch is tricky to get into the required_decorator()
         # function at the appropriate time
         DASHBOARD_ICDS_REPORT.always_enabled = set([self.DOMAIN_NAME])
-        user = WebUser.create(self.DOMAIN_NAME, 'test', 'passwordtest', is_admin=True)
+        user = WebUser.create(self.DOMAIN_NAME, 'test', 'passwordtest', None, None, is_admin=True)
         user.is_authenticated = True
         user.is_superuser = False
         user.is_active = True
@@ -181,7 +181,7 @@ class Base(TestCase):
 
     def tearDown(self):
         if self.user:
-            self.user.delete()
+            self.user.delete(deleted_by=None)
         DASHBOARD_ICDS_REPORT.always_enabled = set()
 
     def _get_request(self, path):

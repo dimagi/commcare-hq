@@ -34,14 +34,6 @@ In its very basic form (a simple paginated view) it should look like:
         # required properties you must implement:
 
         @property
-        def parameters(self):
-            """
-            Specify a GET or POST from an HttpRequest object.
-            """
-            # Usually, something like:
-            return self.request.POST if self.request.method == 'POST' else self.request.GET
-
-        @property
         def total(self):
             # How many documents are you paginating through?
             return Puppy.get_total()
@@ -54,7 +46,7 @@ In its very basic form (a simple paginated view) it should look like:
                 "Breed",
                 "Age",
             ]
-            
+
         @property
         def page_context(self):
             # This should at least include the pagination_context that CRUDPaginatedViewMixin provides
@@ -122,7 +114,7 @@ If you want to create data with your paginated view, you must implement the foll
         def get_create_item_data(self, create_form):
             new_puppy = create_form.get_new_puppy()
             return {
-                'newItem': {
+                'itemData': {
                     'id': new_puppy._id,
                     'name': new_puppy.name,
                     'breed': new_puppy.breed,
@@ -158,7 +150,7 @@ The form returned in `get_create_form()` should make use of
                 InlineField('breed'),
                 InlineField('dob'),
                 StrictButton(
-                    mark_safe('<i class="icon-plus"></i> %s' % "Create Puppy"),
+                    mark_safe('<i class="fa fa-plus"></i> %s' % "Create Puppy"),
                     css_class='btn-primary',
                     type='submit'
                 )
@@ -240,10 +232,10 @@ The `UpdatePuppyForm` should look something like:
                 FormActions(
                     StrictButton(
                         "Update Puppy",
-                        css_class='btn-primary',
+                        css_class='btn btn-primary',
                         type='submit',
                     ),
-                    HTML('<button type="button" class="btn" data-dismiss="modal">Cancel</button>'),
+                    HTML('<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>'),
                     css_class="modal-footer'
                 )
             )

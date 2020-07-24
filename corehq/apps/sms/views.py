@@ -32,6 +32,7 @@ from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
 from dimagi.utils.couch import CriticalSection
+from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.logging import notify_exception
@@ -117,6 +118,7 @@ from corehq.apps.sms.util import (
     get_contact,
     get_or_create_sms_translations,
     get_sms_backend_classes,
+    is_superuser_or_contractor,
 )
 from corehq.apps.smsbillables.utils import \
     country_name_from_isd_code_or_empty as country_name_from_code
@@ -163,7 +165,7 @@ class BaseMessagingSectionView(BaseDomainView):
 
     @cached_property
     def is_system_admin(self):
-        return self.request.couch_user.is_superuser
+        return is_superuser_or_contractor(self.request.couch_user)
 
     @cached_property
     def is_granted_messaging_access(self):
@@ -621,6 +623,14 @@ def get_mobile_worker_contact_info(domain_obj, user_ids):
 
 
 def get_contact_info(domain):
+    # If the data has been cached, just retrieve it from there
+    cache_key = 'sms-chat-contact-list-%s' % domain
+    cache_expiration = 30 * 60
+    client = cache_core.get_redis_client()
+    cached_data = client.get(cache_key)
+    if cached_data:
+        return json.loads(cached_data)
+
     domain_obj = Domain.get_by_name(domain, strict=True)
     case_ids = []
     mobile_worker_ids = []
@@ -660,6 +670,15 @@ def get_contact_info(domain):
     for row in data:
         contact_info = contact_data.get(row[3])
         row[0] = contact_info[0] if contact_info else _('(unknown)')
+
+    # Save the data to the cache for faster lookup next time.
+    # If there isn't much data, don't bother with the cache, responsiveness is more important.
+    if len(data) > 100:
+        try:
+            client.set(cache_key, json.dumps(data))
+            client.expire(cache_key, cache_expiration)
+        except:
+            pass
 
     return data
 
@@ -948,10 +967,6 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
         return reverse(self.urlname, args=[self.domain])
 
     @property
-    def parameters(self):
-        return self.request.POST if self.request.method == 'POST' else self.request.GET
-
-    @property
     @memoized
     def total(self):
         return SQLMobileBackend.get_domain_backends(SQLMobileBackend.SMS, self.domain, count_only=True)
@@ -980,8 +995,9 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
 
         context = self.pagination_context
         context.update({
-            'initiate_new_form': InitiateAddSMSBackendForm(is_superuser=self.request.couch_user.is_superuser),
+            'initiate_new_form': InitiateAddSMSBackendForm(user=self.request.couch_user),
             'extra_backend_mappings': extra_backend_mappings,
+            'is_system_admin': self.is_system_admin,
         })
         return context
 
@@ -1108,8 +1124,8 @@ class AddGatewayViewMixin(object):
     """
 
     @property
-    def is_superuser(self):
-        return self.request.couch_user.is_superuser
+    def is_system_admin(self):
+        return is_superuser_or_contractor(self.request.couch_user)
 
     @property
     @memoized
@@ -1121,7 +1137,7 @@ class AddGatewayViewMixin(object):
     def backend_class(self):
         # Superusers can create/edit any backend
         # Regular users can only create/edit Telerivet backends for now
-        if not self.is_superuser and self.hq_api_id != SQLTelerivetBackend.get_api_id():
+        if not self.is_system_admin and self.hq_api_id != SQLTelerivetBackend.get_api_id():
             raise Http404()
         backend_classes = get_sms_backend_classes()
         try:
@@ -1327,10 +1343,6 @@ class GlobalSmsGatewayListView(CRUDPaginatedViewMixin, BaseAdminSectionView):
         return reverse(self.urlname)
 
     @property
-    def parameters(self):
-        return self.request.POST if self.request.method == 'POST' else self.request.GET
-
-    @property
     @memoized
     def total(self):
         return SQLMobileBackend.get_global_backends(SQLMobileBackend.SMS, count_only=True)
@@ -1348,7 +1360,7 @@ class GlobalSmsGatewayListView(CRUDPaginatedViewMixin, BaseAdminSectionView):
     def page_context(self):
         context = self.pagination_context
         context.update({
-            'initiate_new_form': InitiateAddSMSBackendForm(is_superuser=self.request.couch_user.is_superuser),
+            'initiate_new_form': InitiateAddSMSBackendForm(user=self.request.couch_user),
         })
         return context
 
@@ -1927,10 +1939,6 @@ class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPa
         return get_timezone_for_user(None, self.domain)
 
     @property
-    def parameters(self):
-        return self.request.POST if self.request.method == 'POST' else self.request.GET
-
-    @property
     def page_context(self):
         context = self.pagination_context
         context.update({
@@ -2117,23 +2125,41 @@ class WhatsAppTemplatesView(BaseMessagingSectionView):
     @property
     def page_context(self):
         context = super(WhatsAppTemplatesView, self).page_context
-        from corehq.messaging.smsbackends.turn.models import SQLTurnWhatsAppBackend, generate_template_string
-        try:
-            turn_backend = SQLTurnWhatsAppBackend.active_objects.get(domain=self.domain)
-        except SQLTurnWhatsAppBackend.MultipleObjectsReturned:
+        from corehq.messaging.smsbackends.turn.models import SQLTurnWhatsAppBackend
+        from corehq.messaging.smsbackends.infobip.models import InfobipBackend
+
+        turn_backend = SQLTurnWhatsAppBackend.active_objects.filter(
+            domain=self.domain,
+            hq_api_id=SQLTurnWhatsAppBackend.get_api_id()
+        )
+        infobip_backend = InfobipBackend.active_objects.filter(
+            domain=self.domain,
+            hq_api_id=InfobipBackend.get_api_id()
+        )
+
+        if (turn_backend.count() + infobip_backend.count()) > 1:
             messages.error(
                 self.request,
-                _("You have multiple Turn backends configured. Please remove the ones you don't use.")
+                _("You have multiple gateways that support whatsapp templates (infobip, turn) configured."
+                  " Please remove the ones you don't use.")
             )
-        except SQLTurnWhatsAppBackend.DoesNotExist:
+        elif (turn_backend.count() + infobip_backend.count()) == 0:
             messages.error(
                 self.request,
-                _("You have no Turn backends configured. Please configure one before proceeding ")
+                _("You have no gateways that support whatsapp templates (infobip, turn) configured."
+                  " Please configure one before proceeding ")
             )
         else:
-            templates = turn_backend.get_all_templates()
-            for template in templates:
-                template['template_string'] = generate_template_string(template)
-            context.update({'wa_templates': templates})
-        finally:
-            return context
+            wa_active_backend = turn_backend.get() if turn_backend.count() else infobip_backend.get()
+            templates = wa_active_backend.get_all_templates()
+            if templates is not None:
+                for template in templates:
+                    template['template_string'] = wa_active_backend.generate_template_string(template)
+                context.update({'wa_templates': templates})
+            else:
+                messages.error(
+                    self.request,
+                    wa_active_backend.get_generic_name()
+                    + _(" failed to fetch templates. Please make sure the gateway is configured properly.")
+                )
+        return context

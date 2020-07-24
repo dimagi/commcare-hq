@@ -1,7 +1,7 @@
 import openpyxl
 import os
 
-from datetime import date
+from datetime import date, datetime
 from django.core.management import call_command
 from openpyxl.utils import get_column_letter
 
@@ -24,7 +24,7 @@ class GetICDSSmsUsageTest(BaseICDSTest):
         cls.domain_obj = create_domain(cls.domain)
 
         def make_user(name, location):
-            user = CommCareUser.create(cls.domain, name, 'password')
+            user = CommCareUser.create(cls.domain, name, 'password', None, None)
             user.set_location(location)
             return user
 
@@ -57,6 +57,8 @@ class GetICDSSmsUsageTest(BaseICDSTest):
         cls.sms_list.append(SMS.objects.create(
             domain=cls.domain,
             date=date(2017, 4, 10),
+            datetime_to_process=datetime(2017, 4, 10, 0, 0, 0),
+            processed_timestamp=datetime(2017, 4, 10, 1, 0, 0),
             backend_api=AirtelTCLBackend.get_api_id(),
             direction='O',
             processed=True,
@@ -66,6 +68,8 @@ class GetICDSSmsUsageTest(BaseICDSTest):
         cls.sms_list.append(SMS.objects.create(
             domain=cls.domain,
             date=date(2017, 4, 10),
+            datetime_to_process=datetime(2017, 4, 10, 0, 0, 0),
+            processed_timestamp=datetime(2017, 4, 10, 1, 0, 0),
             backend_api=AirtelTCLBackend.get_api_id(),
             direction='O',
             processed=True,
@@ -75,6 +79,8 @@ class GetICDSSmsUsageTest(BaseICDSTest):
         cls.sms_list.append(SMS.objects.create(
             domain=cls.domain,
             date=date(2017, 4, 10),
+            datetime_to_process=datetime(2017, 4, 10, 0, 0, 0),
+            processed_timestamp=datetime(2017, 4, 10, 1, 0, 0),
             backend_api=AirtelTCLBackend.get_api_id(),
             direction='O',
             processed=True,
@@ -84,6 +90,8 @@ class GetICDSSmsUsageTest(BaseICDSTest):
         cls.sms_list.append(SMS.objects.create(
             domain=cls.domain,
             date=date(2017, 4, 10),
+            datetime_to_process=datetime(2017, 4, 10, 0, 0, 0),
+            processed_timestamp=datetime(2017, 4, 10, 1, 0, 0),
             backend_api=AirtelTCLBackend.get_api_id(),
             direction='O',
             processed=True,
@@ -98,8 +106,8 @@ class GetICDSSmsUsageTest(BaseICDSTest):
 
     @classmethod
     def tearDownClass(cls):
-        cls.users[0].delete()
-        cls.users[1].delete()
+        cls.users[0].delete(deleted_by=None)
+        cls.users[1].delete(deleted_by=None)
         SMS.objects.filter(
             domain=cls.domain,
         ).delete()

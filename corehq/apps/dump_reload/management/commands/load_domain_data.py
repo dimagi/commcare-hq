@@ -30,6 +30,10 @@ class Command(BaseCommand):
                                  'domain should always be the first loader to be invoked in case of '
                                  'very first import',
                             choices=[loader.slug for loader in LOADERS])
+        parser.add_argument('--object-filter',
+                            help="Regular expression to use to selectively load data. Will be matched"
+                                 " against a CouchDB 'doc_type' or Django model name: 'app_label.ModelName'."
+                                 "Use 'print_domain_stats' command to get a list of available types.")
 
     def handle(self, dump_file_path, **options):
         self.verbosity = options.get('verbosity')
@@ -47,13 +51,14 @@ class Command(BaseCommand):
         total_object_count = 0
         model_counts = Counter()
         loaders = options.get('loaders')
+        object_filter = options.get('object_filter')
         if loaders:
             loaders = [loader for loader in LOADERS if loader.slug in loaders]
         else:
             loaders = LOADERS
 
         for loader in loaders:
-            loader_total_object_count, loader_model_counts = self._load_data(loader, extracted_dir)
+            loader_total_object_count, loader_model_counts = self._load_data(loader, extracted_dir, object_filter)
             total_object_count += loader_total_object_count
             model_counts.update(loader_model_counts)
 
@@ -80,9 +85,10 @@ class Command(BaseCommand):
                 "Extracted dump already exists at {}. Delete it or use --use-extracted".format(target_dir))
         return target_dir
 
-    def _load_data(self, loader_class, extracted_dump_path):
+    def _load_data(self, loader_class, extracted_dump_path, object_filter):
         try:
-            return loader_class(self.stdout, self.stderr).load_from_file(extracted_dump_path, self.force)
+            loader = loader_class(object_filter, self.stdout, self.stderr)
+            return loader.load_from_file(extracted_dump_path, self.force)
         except DataExistsException as e:
             raise CommandError('Some data already exists. Use --force to load anyway: {}'.format(str(e)))
         except Exception as e:

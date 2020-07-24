@@ -100,7 +100,7 @@ def _delete_web_user_membership(domain_name):
     for web_user in list(active_web_users) + list(inactive_web_users):
         web_user.delete_domain_membership(domain_name)
         if settings.UNIT_TESTING and not web_user.domain_memberships:
-            web_user.delete()
+            web_user.delete(deleted_by=None)
         else:
             web_user.save()
 
@@ -207,7 +207,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('case_search', 'FuzzyProperties', 'domain'),
     ModelDeletion('case_search', 'IgnorePatterns', 'domain'),
     ModelDeletion('cloudcare', 'ApplicationAccess', 'domain'),
-    ModelDeletion('consumption', 'SQLDefaultConsumption', 'domain'),
+    ModelDeletion('consumption', 'DefaultConsumption', 'domain'),
     ModelDeletion('custom_data_fields', 'CustomDataFieldsDefinition', 'domain'),
     ModelDeletion('data_analytics', 'GIRRow', 'domain_name'),
     ModelDeletion('data_analytics', 'MALTRow', 'domain_name'),
@@ -222,6 +222,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('export', 'EmailExportWhenDoneRequest', 'domain'),
     CustomDeletion('export', _delete_data_files),
     ModelDeletion('locations', 'LocationFixtureConfiguration', 'domain'),
+    ModelDeletion('mobile_auth', 'SQLMobileAuthKeyRecord', 'domain'),
     ModelDeletion('ota', 'MobileRecoveryMeasure', 'domain'),
     ModelDeletion('ota', 'SerialIdBucket', 'domain'),
     ModelDeletion('phone', 'OwnershipCleanlinessFlag', 'domain'),
@@ -234,7 +235,8 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('translations', 'TransifexBlacklist', 'domain'),
     ModelDeletion('userreports', 'AsyncIndicator', 'domain'),
     ModelDeletion('users', 'DomainRequest', 'domain'),
-    ModelDeletion('users', 'SQLInvitation', 'domain'),
+    ModelDeletion('users', 'Invitation', 'domain'),
+    ModelDeletion('users', 'DomainPermissionsMirror', 'source'),
     ModelDeletion('zapier', 'ZapierSubscription', 'domain'),
     ModelDeletion('dhis2', 'Dhis2Connection', 'domain'),
     ModelDeletion('motech', 'RequestLog', 'domain'),

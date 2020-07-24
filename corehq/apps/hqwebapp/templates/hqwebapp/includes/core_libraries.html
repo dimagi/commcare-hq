@@ -71,7 +71,7 @@
 {% endcompress %}
 
 {% if ko or hq %}
-    <script src="{% static 'knockout/dist/knockout.js' %}"></script>{# already minified #}
+    <script src="{% static 'knockout/build/output/knockout-latest.js' %}"></script>{# already minified #}
 
     {% if hq %}
         {% compress js %}
@@ -103,5 +103,6 @@
         <script src="{% static 'hqwebapp/js/assert_properties.js' %}"></script>
         <script src="{% static 'hqwebapp/js/sticky_tabs.js' %}"></script>
         <script src="{% static 'hqwebapp/js/hq.helpers.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/inactivity.js' %}"></script>
     {% endcompress %}
 {% endif %}

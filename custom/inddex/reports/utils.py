@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from itertools import chain
 
 from dimagi.utils.logging import notify_exception
@@ -10,7 +10,8 @@ from custom.inddex.fixtures import InddexFixtureError
 
 
 class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularReport):
-    report_template_path = 'inddex/multi_report.html'
+    base_template = 'inddex/report_base.html'  # The base report page
+    report_template_path = 'inddex/multi_report.html'  # the async content
     exportable = True
     exportable_all = True
     export_only = False
@@ -54,9 +55,15 @@ class MultiTabularReport(DatespanMixin, CustomProjectReport, GenericTabularRepor
         ]
 
 
+def na_for_None(val):
+    return 'n/a' if val is None else val
+
+
 def _format_val(val):
     if isinstance(val, datetime):
         return val.strftime('%Y-%m-%d %H:%M:%S')
+    if isinstance(val, date):
+        return val.isoformat()
     if isinstance(val, bool):
         return "yes" if val else "no"
     if isinstance(val, int):

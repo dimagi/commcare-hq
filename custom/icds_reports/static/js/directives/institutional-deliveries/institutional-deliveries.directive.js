@@ -3,10 +3,10 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function InstitutionalDeliveriesController($scope, $routeParams, $location, $filter, maternalChildService,
     locationsService, dateHelperService, navigationService, userLocationId, storageService,
-    haveAccessToAllLocations, baseControllersService, isAlertActive, isMobile) {
+    haveAccessToAllLocations, baseControllersService, isAlertActive, isMobile, haveAccessToFeatures) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
-        false, isMobile);
+        haveAccessToFeatures, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
     vm.serviceDataFunction = maternalChildService.getInstitutionalDeliveriesData;
@@ -16,7 +16,7 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
     vm.data = {
         legendTitle: 'Percentage Children',
     };
-    vm.filters = ['gender', 'age'];
+    vm.filters = ['gender', 'age', 'data_period'];
     vm.rightLegend = {
         info: 'Of the total number of women enrolled for Anganwadi services who gave birth in the given month, the percentage who delivered in a public or private medical facility.\n' +
         '\n' +
@@ -78,7 +78,7 @@ InstitutionalDeliveriesController.$inject = [
     '$scope', '$routeParams', '$location', '$filter',
     'maternalChildService', 'locationsService', 'dateHelperService', 'navigationService',
     'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive',
-    'isMobile',
+    'isMobile', 'haveAccessToFeatures',
 ];
 
 window.angular.module('icdsApp').directive('institutionalDeliveries', ['templateProviderService', function (templateProviderService) {

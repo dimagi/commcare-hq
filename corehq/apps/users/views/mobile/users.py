@@ -4,21 +4,17 @@ import re
 from collections import defaultdict
 from datetime import datetime
 
-from braces.views import JsonRequestResponseMixin
-from couchdbkit import ResourceNotFound
-
-from corehq.apps.registration.forms import MobileWorkerAccountConfirmationForm
-from corehq.apps.users.account_confirmation import send_account_confirmation_if_necessary
-from corehq.util import get_document_or_404
-from corehq.util.metrics import metrics_counter
-from couchexport.models import Format
-from couchexport.writers import Excel2007ExportWriter
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+)
 from django.http.response import HttpResponseServerError, JsonResponse
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
@@ -28,12 +24,22 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView, View
+
+from braces.views import JsonRequestResponseMixin
+from couchdbkit import ResourceNotFound
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
 from djng.views.mixins import JSONResponseMixin, allow_remote_invocation
 from memoized import memoized
 
 from casexml.apps.phone.models import SyncLogSQL
+from couchexport.models import Format
+from couchexport.writers import Excel2007ExportWriter
+from dimagi.utils.web import json_response
+from soil import DownloadBase
+from soil.exceptions import TaskFailedError
+from soil.util import expose_cached_download, get_download_context
+
 from corehq import privileges
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
@@ -60,15 +66,20 @@ from corehq.apps.locations.permissions import (
     user_can_access_location_id,
 )
 from corehq.apps.ota.utils import demo_restore_date_created, turn_off_demo_mode
+from corehq.apps.registration.forms import MobileWorkerAccountConfirmationForm
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
-from corehq.apps.user_importer.importer import (
-    UserUploadError,
-    check_headers,
-)
+from corehq.apps.user_importer.importer import UserUploadError, check_headers
+from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups
+from corehq.apps.users.account_confirmation import (
+    send_account_confirmation_if_necessary,
+)
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
-from corehq.apps.users.dbaccessors.all_commcare_users import get_user_docs_by_username, user_exists
+from corehq.apps.users.dbaccessors.all_commcare_users import (
+    get_user_docs_by_username,
+    user_exists,
+)
 from corehq.apps.users.decorators import (
     require_can_edit_commcare_users,
     require_can_edit_or_view_commcare_users,
@@ -87,10 +98,10 @@ from corehq.apps.users.forms import (
 )
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.tasks import (
+    bulk_download_usernames_async,
     bulk_download_users_async,
     reset_demo_user_restore_task,
     turn_on_demo_mode_task,
-    bulk_download_usernames_async,
 )
 from corehq.apps.users.util import (
     can_add_extra_mobile_workers,
@@ -102,18 +113,26 @@ from corehq.apps.users.views import (
     BaseUserSettingsView,
     get_domain_languages,
 )
-from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL, USER_DATE_FORMAT
-from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD, TWO_STAGE_USER_PROVISIONING
+from corehq.const import (
+    GOOGLE_PLAY_STORE_COMMCARE_URL,
+    USER_CHANGE_VIA_BULK_IMPORTER,
+    USER_CHANGE_VIA_WEB,
+    USER_DATE_FORMAT,
+)
+from corehq.toggles import (
+    FILTERED_BULK_USER_DOWNLOAD,
+    TWO_STAGE_USER_PROVISIONING,
+)
+from corehq.util import get_document_or_404
 from corehq.util.dates import iso_string_to_datetime
+from corehq.util.metrics import metrics_counter
+from corehq.util.model_log import ModelAction, log_model_change
 from corehq.util.workbook_json.excel import (
     WorkbookJSONError,
     WorksheetNotFound,
     get_workbook,
 )
-from dimagi.utils.web import json_response
-from soil import DownloadBase
-from soil.exceptions import TaskFailedError
-from soil.util import expose_cached_download, get_download_context
+
 from .custom_data_fields import UserFieldsView
 
 BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
@@ -164,6 +183,7 @@ class EditCommCareUserView(BaseEditUserView):
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
             'has_any_sync_logs': self.has_any_sync_logs,
+            'token': self.backup_token,
         })
         return context
 
@@ -409,7 +429,7 @@ def delete_commcare_user(request, domain, user_id):
         messages.error(request, _("This is a location user. You must delete the "
                        "corresponding location before you can delete this user."))
         return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
-    user.retire()
+    user.retire(deleted_by=request.user, deleted_via=USER_CHANGE_VIA_WEB)
     messages.success(request, "User %s has been deleted. All their submissions and cases will be permanently deleted in the next few minutes" % user.username)
     return HttpResponseRedirect(reverse(MobileWorkerListView.urlname, args=[domain]))
 
@@ -438,7 +458,7 @@ def force_user_412(request, domain, user_id):
 @require_POST
 def restore_commcare_user(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
-    success, message = user.unretire()
+    success, message = user.unretire(unretired_by=request.user, unretired_via=USER_CHANGE_VIA_WEB)
     if success:
         messages.success(request, "User %s and all their submissions have been restored" % user.username)
     else:
@@ -598,21 +618,6 @@ def update_user_groups(request, domain, couch_user_id):
     return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id]))
 
 
-@require_can_edit_commcare_users
-@require_POST
-def update_user_data(request, domain, couch_user_id):
-    user_data = request.POST["user-data"]
-    if user_data:
-        updated_data = json.loads(user_data)
-        user = CommCareUser.get(couch_user_id)
-        assert user.doc_type == "CommCareUser"
-        assert user.domain == domain
-        user.user_data = updated_data
-        user.save(spawn_task=True)
-    messages.success(request, "User data updated!")
-    return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id]))
-
-
 @location_safe
 class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     template_name = 'users/mobile_workers.html'
@@ -663,7 +668,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         return {
             'new_mobile_worker_form': self.new_mobile_worker_form,
             'custom_fields_form': self.custom_data.form,
-            'custom_field_slugs': [f.slug for f in self.custom_data.fields],
+            'custom_fields_slugs': [f.slug for f in self.custom_data.fields],
             'can_bulk_edit_users': self.can_bulk_edit_users,
             'can_add_extra_users': self.can_add_extra_users,
             'can_access_all_locations': self.can_access_all_locations,
@@ -710,8 +715,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         exists = user_exists(full_username)
         if exists.exists:
             if exists.is_deleted:
-                result = {'warning': _('Username {} belonged to a user that was deleted.'
-                                       ' Reusing it may have unexpected consequences.').format(username)}
+                result = {'error': _('Username {} belonged to a user that was deleted'
+                                     ' and cannot be reused').format(username)}
             else:
                 result = {'error': _('Username {} is already taken').format(username)}
         else:
@@ -764,6 +769,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             self.domain,
             username,
             password,
+            created_by=self.request.user,
+            created_via=USER_CHANGE_VIA_WEB,
             email=email,
             device_id="Generated from HQ",
             first_name=first_name,
@@ -831,6 +838,9 @@ def _modify_user_status(request, domain, user_id, is_active):
         })
     user.is_active = is_active
     user.save(spawn_task=True)
+    change_message = "Activated User" if is_active else "Deactivated User"
+    log_model_change(request.user, user.get_django_user(), message=change_message,
+                     action=ModelAction.UPDATE)
     return json_response({
         'success': True,
     })
@@ -960,6 +970,8 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
                 self.domain,
                 username,
                 password,
+                created_by=request.user,
+                created_via=USER_CHANGE_VIA_WEB,
                 phone_number=phone_number,
                 device_id="Generated from HQ",
                 user_data=self.custom_data.get_data_to_save(),
@@ -1039,11 +1051,19 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
             messages.error(request, _(str(e)))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
+        upload_record = UserUploadRecord(
+            domain=self.domain,
+            user_id=request.couch_user.user_id
+        )
+        upload_record.save()
+
         task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
         task = import_users_and_groups.delay(
             self.domain,
             list(self.user_specs),
             list(self.group_specs),
+            request.couch_user,
+            upload_record.pk
         )
         task_ref.set_task(task)
         return HttpResponseRedirect(
@@ -1117,8 +1137,7 @@ def user_upload_job_poll(request, domain, download_id, template="users/mobile/pa
     return render(request, template, context)
 
 
-
-@require_can_edit_commcare_users
+@require_can_edit_or_view_commcare_users
 def user_download_job_poll(request, domain, download_id, template="hqwebapp/partials/shared_download_status.html"):
     try:
         context = get_download_context(download_id, 'Preparing download')
@@ -1128,9 +1147,20 @@ def user_download_job_poll(request, domain, download_id, template="hqwebapp/part
     return render(request, template, context)
 
 
-class DownloadUsersStatusView(BaseManageCommCareUserView):
+class DownloadUsersStatusView(BaseUserSettingsView):
     urlname = 'download_users_status'
     page_title = ugettext_noop('Download Users Status')
+
+    @method_decorator(require_can_edit_or_view_commcare_users)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': MobileWorkerListView.page_title,
+            'url': reverse(MobileWorkerListView.urlname, args=[self.domain]),
+        }]
 
     def get(self, request, *args, **kwargs):
         context = super(DownloadUsersStatusView, self).main_context
@@ -1150,13 +1180,14 @@ class DownloadUsersStatusView(BaseManageCommCareUserView):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
+@method_decorator([FILTERED_BULK_USER_DOWNLOAD.required_decorator()], name='dispatch')
 class FilteredUserDownload(BaseManageCommCareUserView):
     urlname = 'filter_and_download_commcare_users'
     page_title = ugettext_noop('Filter and Download')
 
     @method_decorator(require_can_edit_commcare_users)
     def get(self, request, domain, *args, **kwargs):
-        form = CommCareUserFilterForm(request.GET, domain=domain)
+        form = CommCareUserFilterForm(request.GET, domain=domain, couch_user=request.couch_user)
         context = self.main_context
         context.update({'form': form, 'count_users_url': reverse('count_users', args=[domain])})
         return render(
@@ -1274,7 +1305,7 @@ class DeleteCommCareUsers(BaseManageCommCareUserView, UsernameUploadMixin):
         deleted_count = 0
         for user_id, doc in user_docs_by_id.items():
             if user_id not in user_ids_with_forms:
-                CommCareUser.wrap(doc).delete()
+                CommCareUser.wrap(doc).delete(deleted_by=request.user, deleted_via=USER_CHANGE_VIA_BULK_IMPORTER)
                 deleted_count += 1
         if deleted_count:
             messages.success(request, f"{deleted_count} user(s) deleted.")
@@ -1327,8 +1358,9 @@ class CommCareUsersLookup(BaseManageCommCareUserView, UsernameUploadMixin):
 @require_can_edit_commcare_users
 def count_users(request, domain):
     from corehq.apps.users.dbaccessors.all_commcare_users import get_commcare_users_by_filters
-    form = CommCareUserFilterForm(request.GET, domain=domain)
-    user_filters = {}
+    if not FILTERED_BULK_USER_DOWNLOAD.enabled_for_request(request):
+        raise Http404()
+    form = CommCareUserFilterForm(request.GET, domain=domain, couch_user=request.couch_user)
     if form.is_valid():
         user_filters = form.cleaned_data
     else:
@@ -1339,10 +1371,9 @@ def count_users(request, domain):
     })
 
 
-@require_can_edit_commcare_users
+@require_can_edit_or_view_commcare_users
 def download_commcare_users(request, domain):
-    form = CommCareUserFilterForm(request.GET, domain=domain)
-    user_filters = {}
+    form = CommCareUserFilterForm(request.GET, domain=domain, couch_user=request.couch_user)
     if form.is_valid():
         user_filters = form.cleaned_data
     else:
@@ -1420,6 +1451,8 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
                 self.domain,
                 self.form.cleaned_data.get('username'),
                 self.form.cleaned_data.get('password'),
+                created_by=None,
+                created_via=USER_CHANGE_VIA_WEB,
                 email=email,
                 phone_number=self.invitation.phone_number,
                 device_id='Generated from HQ',
@@ -1437,6 +1470,7 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
         return self.get(request, *args, **kwargs)
 
 
+@location_safe
 @method_decorator(TWO_STAGE_USER_PROVISIONING.required_decorator(), name='dispatch')
 class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
     template_name = "users/commcare_user_confirm_account.html"

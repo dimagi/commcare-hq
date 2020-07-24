@@ -15,13 +15,13 @@ class AuthenticateAsFormTest(TestCase):
         super(AuthenticateAsFormTest, cls).setUpClass()
         cls.domain = Domain(name='pottery')
         cls.domain.save()
-        cls.mobile_worker = CommCareUser.create('potter', 'harry@potter.commcarehq.org', '123')
-        cls.regular = WebUser.create('pottery', 'awebuser', '***', is_active=True)
+        cls.mobile_worker = CommCareUser.create('potter', 'harry@potter.commcarehq.org', '123', None, None)
+        cls.regular = WebUser.create('pottery', 'awebuser', '***', None, None, is_active=True)
 
     @classmethod
     def tearDownClass(cls):
-        cls.mobile_worker.delete()
-        cls.regular.delete()
+        cls.mobile_worker.delete(deleted_by=None)
+        cls.regular.delete(deleted_by=None)
         cls.domain.delete()
         super(AuthenticateAsFormTest, cls).tearDownClass()
 
@@ -72,18 +72,18 @@ class AuthenticateAsIntegrationTest(TestCase):
         cls.username = 'cornelius'
         cls.regular_name = 'ron'
         cls.password = 'fudge'
-        cls.user = WebUser.create(cls.domain.name, cls.username, cls.password, is_active=True)
+        cls.user = WebUser.create(cls.domain.name, cls.username, cls.password, None, None, is_active=True)
 
         cls.user.is_superuser = True
         cls.user.save()
-        cls.mobile_worker = CommCareUser.create('potter', 'harry@potter.commcarehq.org', '123')
-        cls.regular = WebUser.create(cls.domain.name, cls.regular_name, cls.password, is_active=True)
+        cls.mobile_worker = CommCareUser.create('potter', 'harry@potter.commcarehq.org', '123', None, None)
+        cls.regular = WebUser.create(cls.domain.name, cls.regular_name, cls.password, None, None, is_active=True)
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
-        cls.mobile_worker.delete()
-        cls.regular.delete()
+        cls.user.delete(deleted_by=None)
+        cls.mobile_worker.delete(deleted_by=None)
+        cls.regular.delete(deleted_by=None)
         cls.domain.delete()
         super(AuthenticateAsIntegrationTest, cls).tearDownClass()
 

@@ -21,15 +21,11 @@ from corehq.apps.custom_data_fields.edit_entity import (
     CustomDataEditor,
     get_prefixed,
 )
-from corehq.apps.domain.models import Domain
 from corehq.apps.es import UserES
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.widgets import Select2Ajax
 from corehq.apps.locations.permissions import LOCATION_ACCESS_DENIED
-from corehq.apps.users.forms import (
-    NewMobileWorkerForm,
-    generate_strong_password,
-)
+from corehq.apps.locations.util import valid_location_site_code
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_display_string
 from corehq.util.quickcache import quickcache
@@ -246,8 +242,7 @@ class LocationForm(forms.Form):
 
         if site_code:
             site_code = site_code.lower()
-            slug_regex = re.compile(r'^[-_\w\d]+$')
-            if not slug_regex.match(site_code):
+            if not valid_location_site_code(site_code):
                 raise forms.ValidationError(_(
                     'The site code cannot contain spaces or special characters.'
                 ))
@@ -377,11 +372,12 @@ class LocationFormSet(object):
     _location_form_class = LocationForm
     _location_data_editor = CustomDataEditor
 
-    def __init__(self, location, request_user, is_new, bound_data=None, *args, **kwargs):
+    def __init__(self, location, request, is_new, bound_data=None, *args, **kwargs):
         self.location = location
         self.domain = location.domain
         self.is_new = is_new
-        self.request_user = request_user
+        self.request = request
+        self.request_user = request.couch_user
         self.location_form = self._location_form_class(location, bound_data, is_new=is_new)
         self.custom_location_data = self._get_custom_location_data(bound_data, is_new)
         self.forms = [self.location_form, self.custom_location_data]
@@ -404,27 +400,6 @@ class LocationFormSet(object):
 
         location_data = self.custom_location_data.get_data_to_save()
         self.location_form.save(metadata=location_data)
-
-    @property
-    @memoized
-    def user(self):
-        user_data = (self.custom_user_data.get_data_to_save()
-                     if self.custom_user_data.is_valid() else {})
-        username = self.user_form.cleaned_data.get('username', "")
-        password = self.user_form.cleaned_data.get('new_password', "")
-        first_name = self.user_form.cleaned_data.get('first_name', "")
-        last_name = self.user_form.cleaned_data.get('last_name', "")
-
-        return CommCareUser.create(
-            self.domain,
-            username,
-            password,
-            device_id="Generated from HQ",
-            first_name=first_name,
-            last_name=last_name,
-            user_data=user_data,
-            commit=False,
-        )
 
     def _get_custom_location_data(self, bound_data, is_new):
         from .views import LocationFieldsView

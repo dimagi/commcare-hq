@@ -98,24 +98,41 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             "(({} - child_health.opened_on::date)::integer >= 0) "
             "AND (child_health.closed = 0 OR (child_health.closed_on::date - {})::integer > 0)"
         ).format(end_month_string, start_month_string)
+        open_status_daily = (
+            "(child_health.opened_on::date <= {end_month_string}) "
+            "AND (child_health.closed = 0 OR child_health.closed_on::date > {end_month_string})"
+        ).format(end_month_string=end_month_string)
         alive_in_month = "(child_health.date_death IS NULL OR child_health.date_death - {} >= 0)".format(
             start_month_string
         )
+        alive_status_daily = "(child_health.date_death IS NULL OR child_health.date_death > {end_month_string})"\
+            .format(end_month_string=end_month_string)
         not_migrated = (
             "(agg_migration.is_migrated IS DISTINCT FROM 1 "
             "OR agg_migration.migration_date::date >= {start_month_string})"
         ).format(start_month_string=start_month_string)
+        not_migration_status_daily = (
+            "(agg_migration.is_migrated IS DISTINCT FROM 1)"
+        )
         registered = (
             "(agg_availing.is_registered IS DISTINCT FROM 0 "
             "OR agg_availing.registration_date::date >= {start_month_string})"
         ).format(start_month_string=start_month_string)
+        registered_status_daily = (
+            "(agg_availing.is_registered IS DISTINCT FROM 0 )"
+        )
         seeking_services = "({registered} AND {not_migrated})".format(
             registered=registered, not_migrated=not_migrated)
+        seeking_services_status_daily = "({registered_status_daily} AND {not_migration_status_daily})".format(
+            registered_status_daily=registered_status_daily, not_migration_status_daily=not_migration_status_daily)
         born_in_month = "({} AND person_cases.dob BETWEEN {} AND {})".format(
             seeking_services, start_month_string, end_month_string
         )
         valid_in_month = "({} AND {} AND {} AND {} <= 72)".format(
             open_in_month, alive_in_month, seeking_services, age_in_months
+        )
+        valid_status_daily = "({} AND {} AND {} AND {} <= 72)".format(
+            open_status_daily, alive_status_daily, seeking_services_status_daily, age_in_months
         )
         pse_eligible = "({} AND {} > 36)".format(valid_in_month, age_in_months_end)
         ebf_eligible = "({} AND {} <= 6)".format(valid_in_month, age_in_months)
@@ -273,8 +290,8 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             ("current_month_wasting",
                 "CASE "
                 "WHEN NOT {} THEN NULL "
-                "WHEN date_trunc('MONTH', gm.zscore_grading_wfh_last_recorded) != %(start_date)s "
-                "   THEN 'unmeasured' "
+                "WHEN date_trunc('MONTH', gm.zscore_grading_wfh_last_recorded) != %(start_date)s OR "
+                "date_trunc('MONTH', gm.height_child_last_recorded) is distinct from %(start_date)s THEN 'unmeasured' "
                 "WHEN gm.zscore_grading_wfh = 1 THEN 'severe' "
                 "WHEN gm.zscore_grading_wfh = 2 THEN 'moderate' "
                 "WHEN gm.zscore_grading_wfh = 3 THEN 'normal' "
@@ -347,7 +364,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
                       date_trunc('MONTH', child_tasks.due_list_date_7g_vit_a_9) = %(start_date)s
                   THEN 1 ELSE NULL END
             """),
-            ("mother_phone_number", "child_health.mother_phone_number"),
+            ("mother_phone_number", "mother_person_cases.phone_number"),
             ("date_death", "child_health.date_death"),
             ("mother_case_id", "child_health.mother_case_id"),
             ("state_id", "child_health.state_id"),
@@ -355,7 +372,14 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             ("birth_weight", "child_health.birth_weight"),
             ("child_person_case_id", "child_health.mother_id"),
             ("delivery_nature", "del_form.delivery_nature"),
-            ("term_days", "(del_form.add::DATE - del_form.edd::DATE) + 280")
+            ("term_days", "(del_form.add::DATE - del_form.edd::DATE) + 280"),
+            ("valid_status_daily", "CASE WHEN {} THEN 1 ELSE 0 END".format(valid_status_daily)),
+            ("migration_status_daily", "CASE WHEN {} THEN 0 ELSE 1 END".format(not_migration_status_daily)),
+            ("alive_status_daily", "CASE WHEN {} THEN 1 ELSE 0 END".format(alive_status_daily)),
+            ("duplicate_status_daily", "CASE WHEN NOT {} AND person_cases.reason_closure in ('dupe_reg',"
+                                       "'incorrect_reg') THEN 1 ELSE 0 END".format(open_status_daily)),
+            ("seeking_services_status_daily",
+             "CASE WHEN {} THEN 1 ELSE 0 END".format(seeking_services_status_daily))
         )
         yield """
         INSERT INTO "{child_tablename}" (
@@ -370,6 +394,9 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             LEFT OUTER JOIN "{person_cases_ucr}" person_cases ON child_health.mother_id = person_cases.doc_id
               AND child_health.state_id = person_cases.state_id
               AND child_health.supervisor_id = person_cases.supervisor_id
+            LEFT OUTER JOIN "{person_cases_ucr}" mother_person_cases ON child_health.mother_case_id = mother_person_cases.doc_id
+              AND child_health.state_id = mother_person_cases.state_id
+              AND child_health.supervisor_id = mother_person_cases.supervisor_id
             LEFT OUTER JOIN "{agg_cf_table}" cf ON child_health.doc_id = cf.case_id AND cf.month = %(start_date)s
               AND child_health.state_id = cf.state_id
               AND child_health.supervisor_id = cf.supervisor_id
@@ -426,7 +453,6 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             "next_month": month_formatter(self.month + relativedelta(months=1)),
             "state_id": state_id,
         }
-
         yield """ALTER TABLE "{tablename}" ATTACH PARTITION "{child_tablename}" FOR VALUES IN (%(state_id)s)""".format(
             tablename=self.temporary_tablename,
             child_tablename='{}_{}'.format(self.temporary_tablename, state_id[-5:]),

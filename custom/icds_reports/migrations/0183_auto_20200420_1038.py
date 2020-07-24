@@ -20,5 +20,3 @@ class Migration(migrations.Migration):
         migrations.RunSQL("ALTER TABLE child_health_monthly ADD COLUMN delivery_nature text"),
         migrations.RunSQL("ALTER TABLE child_health_monthly ADD COLUMN term_days smallint"),
     ]
-
-    operations.extend(get_view_migrations())

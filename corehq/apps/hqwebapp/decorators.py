@@ -1,4 +1,7 @@
+from collections import defaultdict
 from functools import wraps
+
+from django.urls import get_resolver
 
 
 def use_daterangepicker(view_func):
@@ -213,3 +216,38 @@ def use_ko_validation(view_func):
         request.use_ko_validation = True
         return view_func(class_based_view, request, *args, **kwargs)
     return _wrapped
+
+
+def waf_allow(kind, hard_code_pattern=None):
+    """
+    Using this decorator simply registers a function for later use
+
+    Since this is used to pull out metadata about our application,
+    and not to modify the functioning of the application itself,
+    there is no need to modify the function.
+
+    Use this decorator like this
+
+        @waf_allow('XSS_BODY')
+        def my_view(...): ...
+
+    to signify "if you put a WAF in front of this, make sure the XSS_BODY rule does not BLOCK this url pattern"
+
+    For super abstracted setups where getting at the original view is hard
+    you can use
+
+        waf_allow('XSS_BODY', hard_code_pattern=r'/url/regex/')
+
+    instead.
+    """
+    if hard_code_pattern:
+        waf_allow.views[kind].add(hard_code_pattern)
+        return
+
+    def inner(fn):
+        waf_allow.views[kind].add(fn)
+        return fn
+    return inner
+
+
+waf_allow.views = defaultdict(set)

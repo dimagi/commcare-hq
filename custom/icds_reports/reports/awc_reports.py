@@ -31,6 +31,7 @@ from custom.icds_reports.const import MapColors, CHILDREN_ENROLLED_FOR_ANGANWADI
     OUT_OF_SCHOOL_ADOLESCENT_GIRLS_11_14_YEARS
 
 from custom.icds_reports.messages import new_born_with_low_weight_help_text
+from custom.icds_reports.utils import phone_number_function
 
 
 @icds_quickcache(['domain', 'config', 'month', 'prev_month', 'two_before', 'loc_level', 'show_test'], timeout=30 * 60)
@@ -130,14 +131,20 @@ def get_awc_reports_system_usage(domain, config, month, prev_month, two_before, 
     }
 
 
-@icds_quickcache(['config', 'month', 'domain', 'show_test'], timeout=30 * 60)
-def get_awc_reports_pse(config, month, domain, show_test=False):
+@icds_quickcache(['config', 'month', 'domain', 'show_test', 'now_date'], timeout=30 * 60)
+def get_awc_reports_pse(config, month, domain, show_test=False, now_date=None):
     selected_month = datetime(*month)
     last_months = (selected_month - relativedelta(months=1))
     last_day_of_selected_month = (selected_month + relativedelta(months=1)) - relativedelta(days=1)
+    if now_date:
+        ninety_days_ago = datetime(*now_date) - timedelta(days=90)
+    else:
+        ninety_days_ago = datetime.today() - timedelta(days=90)
 
     map_image_data = DailyAttendanceView.objects.filter(
-        pse_date__range=(selected_month, last_day_of_selected_month), **config
+        pse_date__range=(selected_month, last_day_of_selected_month),
+        pse_date__gt=ninety_days_ago,
+        **config
     ).values(
         'awc_name', 'form_location_lat', 'form_location_long', 'image_name', 'doc_id', 'pse_date'
     ).order_by('-pse_date')
@@ -242,23 +249,24 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
         date_str = date.strftime("%d/%m/%Y")
         image_data = date_to_image_data.get(date_str)
 
-        if image_data:
-            image_name = image_data['image_name']
-            doc_id = image_data['doc_id']
+        if date > ninety_days_ago:
+            if image_data:
+                image_name = image_data['image_name']
+                doc_id = image_data['doc_id']
 
-            tmp_image.append({
-                'id': idx,
-                'image': absolute_reverse('icds_image_accessor', args=(domain, doc_id, image_name)),
-                'date': date_str
-            })
-        else:
-            tmp_image.append({
-                'id': idx,
-                'image': None,
-                'date': date_str
-            })
+                tmp_image.append({
+                    'id': idx,
+                    'image': absolute_reverse('icds_image_accessor', args=(domain, doc_id, image_name)),
+                    'date': date_str
+                })
+            else:
+                tmp_image.append({
+                    'id': idx,
+                    'image': None,
+                    'date': date_str
+                })
 
-        if (idx + 1) % 4 == 0:
+        if len(tmp_image) == 4:
             images.append(tmp_image)
             tmp_image = []
 
@@ -375,6 +383,20 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
             wfh_recorded_in_month_column(icds_feature_flag)
         )
 
+        immunization_age_filter = {'age_tranche__lte': 24}
+        fully_immunized_on_time = include_records_by_age_for_column(
+            immunization_age_filter,
+            'fully_immunized_on_time'
+        )
+        fully_immunized_late = include_records_by_age_for_column(
+            immunization_age_filter,
+            'fully_immunized_late'
+        )
+        fully_immunized_eligible = include_records_by_age_for_column(
+            immunization_age_filter,
+            'fully_immunized_eligible'
+        )
+
         queryset = AggChildHealthMonthly.objects.filter(
             month=date, **config
         ).values(
@@ -385,9 +407,9 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
             ),
             valid_weighed=Sum(nutrition_status_weighed),
             immunized=(
-                Sum('fully_immunized_on_time') + Sum('fully_immunized_late')
+                Sum(fully_immunized_on_time) + Sum(fully_immunized_late)
             ),
-            eligible=Sum('fully_immunized_eligible'),
+            eligible=Sum(fully_immunized_eligible),
             wasting=Sum(wasting_moderate) + Sum(wasting_severe),
             height_measured_in_month=Sum(height_measured_in_month),
             weighed_and_height_measured_in_month=Sum(weighed_and_height_measured_in_month),
@@ -445,7 +467,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
         default_interval=default_age_interval(icds_feature_flag)
     )
 
-    return {
+    kpi_dict = {
         'kpi': [
             [
                 {
@@ -629,13 +651,12 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Immunization Coverage (at age 1 year)'),
                     'help_text': _((
-                        "Of the total number of children enrolled for Anganwadi Services who are over a year old, "
-                        "the percentage of children who have received the complete immunization as per the "
-                        "National Immunization Schedule of India that is required by age 1."
-                        "<br/><br/> "
-                        "This includes the following immunizations:<br/> "
-                        "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/> "
-                        "If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1"
+                        "Of the total number of children enrolled for Anganwadi Services who are between"
+                        " 1-2 years old, the percentage of children who have received the complete immunization"
+                        " as per the National Immunization Schedule of India that is required by age 1."
+                        "<br/><br/> This includes the following immunizations:<br/> If Pentavalent path:"
+                        " Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/> If DPT/HepB path: DPT1/2/3, HepB1/2/3,"
+                        " OPV1/2/3, BCG, Measles, VitA1"
                     )),
                     'percent': percent_diff(
                         'immunized',
@@ -680,6 +701,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
             ]
         ]
     }
+    return kpi_dict
 
 
 @icds_quickcache(['domain', 'config', 'now_date', 'month', 'show_test', 'beta'], timeout=30 * 60)
@@ -937,7 +959,7 @@ def get_awc_report_infrastructure(domain, config, month, show_test=False, beta=F
                     'frequency': 'month'
                 },
                 {
-                    'label': _('AWCs with Weighing Scale: Mother and Child'),
+                    'label': _('Weighing Scale: Mother and Child'),
                     'help_text': None,
                     'value': get_infa_value(kpi_data, 'adult_weighing_scale'),
                     'all': '',
@@ -981,12 +1003,24 @@ def get_awc_report_infrastructure(domain, config, month, show_test=False, beta=F
     }
 
 
+def get_beneficiary_status(valid, migrated, alive, duplicate, seeking_services):
+    if valid:
+        return 'Active'
+    elif migrated:
+        return 'Migrated'
+    elif not seeking_services:
+        return 'Not availing'
+    elif duplicate:
+        return 'Duplicated'
+    elif not alive:
+        return 'Dead'
+    return 'N/A'
+
 @icds_quickcache([
     'start', 'length', 'draw', 'order', 'filters', 'month', 'two_before', 'icds_features_flag'
 ], timeout=30 * 60)
 def get_awc_report_beneficiary(start, length, draw, order, filters, month, two_before,
                                icds_features_flag):
-
     filters['month'] = datetime(*month)
     filters['open_in_month'] = 1
     filters['valid_in_month'] = 1
@@ -1037,8 +1071,13 @@ def get_awc_report_beneficiary(start, length, draw, order, filters, month, two_b
                 data_entered=True if row_data.recorded_height and row_data.recorded_weight else False
             ),
             pse_days_attended=row_data.pse_days_attended,
-            mother_phone_number=row_data.mother_phone_number,
-            aww_phone_number=row_data.aww_phone_number
+            mother_phone_number=phone_number_function(row_data.mother_phone_number),
+            aww_phone_number=row_data.aww_phone_number,
+            beneficiary_status=get_beneficiary_status(row_data.valid_status_daily,
+                                                      row_data.migration_status_daily,
+                                                      row_data.alive_status_daily,
+                                                      row_data.duplicate_status_daily,
+                                                      row_data.seeking_services_status_daily)
         )
 
     for row in data:
@@ -1080,6 +1119,11 @@ def get_beneficiary_details(case_id, awc_id, selected_month):
             'age': current_age(row.dob, datetime.now().date()),
             'sex': row.sex,
             'age_in_months': age_in_months,
+            'beneficiary_status': get_beneficiary_status(row.valid_status_daily,
+                                                         row.migration_status_daily,
+                                                         row.alive_status_daily,
+                                                         row.duplicate_status_daily,
+                                                         row.seeking_services_status_daily)
         })
         if age_in_months <= 60:
             if recorded_weight:
@@ -1282,10 +1326,10 @@ def get_awc_report_lactating(start, length, order, reversed_order, awc_id):
             age=row_data['age_in_months'] // 12 if row_data['age_in_months'] else row_data['age_in_months'],
             add=row_data['add'],
             delivery_nature=get_delivery_nature(row_data),
-            institutional_delivery='Y' if row_data['institutional_delivery'] else 'N',
+            institutional_delivery='Yes' if row_data['institutional_delivery'] else 'No',
             num_pnc_visits=row_data['num_pnc_visits'],
-            breastfed_at_birth='Y' if row_data['breastfed_at_birth'] else 'N',
-            is_ebf='Y' if row_data['is_ebf'] else 'N',
+            breastfed_at_birth='Yes' if row_data['breastfed_at_birth'] else 'No',
+            is_ebf='Yes' if row_data['is_ebf'] else 'No',
             num_rations_distributed=row_data['num_rations_distributed'],
         )
 

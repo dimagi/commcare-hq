@@ -15,13 +15,13 @@ from corehq.util.log import with_progress_bar
 from corehq.util.metrics import metrics_counter
 from corehq.util.pagination import ResumableFunctionIterator
 
-from .casediff import get_couch_cases
 from .couchsqlmigration import (
     DocCounter,
     Stopper,
     _iter_docs,
     get_main_forms_iteration_stop_date,
 )
+from .retrydb import get_couch_cases
 from .statedb import open_state_db
 
 log = logging.getLogger(__name__)

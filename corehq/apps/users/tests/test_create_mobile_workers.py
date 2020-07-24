@@ -23,12 +23,14 @@ class TestCreateMobileWorkers(TestCase):
             self.domain,
             'mw1',
             's3cr4t',
+            None,
+            None,
             email='mw1@example.com',
             device_id='my-pixel',
             first_name='Mobile',
             last_name='Worker',
         )
-        self.addCleanup(user.delete)
+        self.addCleanup(user.delete, deleted_by=None)
         self.assertEqual(self.domain, user.domain)
         self.assertEqual('mw1', user.username)
         self.assertEqual('mw1@example.com', user.email)
@@ -49,10 +51,12 @@ class TestCreateMobileWorkers(TestCase):
             self.domain,
             'mw1',
             's3cr4t',
+            None,
+            None,
             email='mw1@example.com',
             is_account_confirmed=False,
         )
-        self.addCleanup(user.delete)
+        self.addCleanup(user.delete, deleted_by=None)
         self.assertEqual(False, user.is_active)
         self.assertEqual(False, user.is_account_confirmed)
         # confirm user can't login
@@ -67,6 +71,8 @@ class TestCreateMobileWorkers(TestCase):
                 self.domain,
                 'mw1',
                 's3cr4t',
+                None,
+                None,
                 email='mw1@example.com',
                 is_active=True,
                 is_account_confirmed=False,

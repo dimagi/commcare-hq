@@ -9,10 +9,7 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.suite_xml.contributors import (
     SuiteContributorByModule,
 )
-from corehq.apps.app_manager.suite_xml.utils import (
-    get_module_enum_text,
-    get_module_locale_id,
-)
+from corehq.apps.app_manager.suite_xml.utils import get_module_locale_id
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Command,
     LocalizedMenu,
@@ -143,7 +140,6 @@ class MenuContributor(SuiteContributorByModule):
                         module_custom_icon = module.custom_icon
                         menu_kwargs.update({
                             'menu_locale_id': get_module_locale_id(module),
-                            'menu_enum_text': get_module_enum_text(module),
                             'media_image': module.uses_image(build_profile_id=self.build_profile_id),
                             'media_audio': module.uses_audio(build_profile_id=self.build_profile_id),
                             'image_locale_id': id_strings.module_icon_locale(module),
@@ -161,7 +157,6 @@ class MenuContributor(SuiteContributorByModule):
                             'media_image': module.default_media_image,
                             'media_audio': module.default_media_audio,
                             'locale_id': get_module_locale_id(module),
-                            'enum_text': get_module_enum_text(module),
                         })
                         menu = Menu(**menu_kwargs)
 

@@ -39,7 +39,7 @@ def product_fixture_generator_json(domain):
 
     custom_fields = CustomDataFieldsDefinition.get(domain, 'ProductFields')
     if custom_fields:
-        for f in custom_fields.fields:
+        for f in custom_fields.get_fields():
             fields.append(CUSTOM_DATA_SLUG + '/' + f.slug)
 
     uri = 'jr://fixture/{}'.format(ProductFixturesProvider.id)

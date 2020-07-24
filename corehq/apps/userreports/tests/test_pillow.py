@@ -17,7 +17,7 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.userreports.data_source_providers import (
     MockDataSourceProvider,
-)
+    DynamicDataSourceProvider)
 from corehq.apps.userreports.exceptions import StaleRebuildError
 from corehq.apps.userreports.models import (
     AsyncIndicator,
@@ -91,6 +91,96 @@ class ConfigurableReportTableManagerTest(SimpleTestCase):
         self.assertTrue(table_manager.needs_bootstrap())
 
 
+class ConfigurableReportTableManagerDbTest(TestCase):
+    def tearDown(self):
+        for data_source in DynamicDataSourceProvider().get_all_data_sources():
+            data_source.delete()
+
+    def test_table_adapters(self):
+        data_source_1 = get_sample_data_source()
+        ds_1_domain = data_source_1.domain
+        table_manager = ConfigurableReportTableManagerMixin([MockDataSourceProvider({
+            ds_1_domain: [data_source_1]
+        })])
+        table_manager.bootstrap()
+        self.assertEqual(1, len(table_manager.table_adapters_by_domain))
+        self.assertEqual(1, len(table_manager.table_adapters_by_domain[ds_1_domain]))
+        self.assertEqual(data_source_1, table_manager.table_adapters_by_domain[ds_1_domain][0].config)
+
+    def test_merge_table_adapters(self):
+        data_source_1 = get_sample_data_source()
+        data_source_1.save()
+        ds_1_domain = data_source_1.domain
+        table_manager = ConfigurableReportTableManagerMixin([MockDataSourceProvider({
+            ds_1_domain: [data_source_1]
+        })])
+        table_manager.bootstrap()
+        # test in same domain
+        data_source_2 = self._copy_data_source(data_source_1)
+        data_source_2.save()
+        table_manager._add_data_sources_to_table_adapters([data_source_2])
+        self.assertEqual(1, len(table_manager.table_adapters_by_domain))
+        self.assertEqual(2, len(table_manager.table_adapters_by_domain[ds_1_domain]))
+        self.assertEqual(
+            {data_source_1, data_source_2},
+            set([table_adapter.config for table_adapter in table_manager.table_adapters_by_domain[ds_1_domain]])
+        )
+        # test in a new domain
+        data_source_3 = self._copy_data_source(data_source_1)
+        ds3_domain = 'new_domain'
+        data_source_3.domain = ds3_domain
+        data_source_3.save()
+        table_manager._add_data_sources_to_table_adapters([data_source_3])
+        # should now be 2 domains in the map
+        self.assertEqual(2, len(table_manager.table_adapters_by_domain))
+        # ensure domain 1 unchanged
+        self.assertEqual(
+            {data_source_1, data_source_2},
+            set([table_adapter.config for table_adapter in table_manager.table_adapters_by_domain[ds_1_domain]])
+        )
+        self.assertEqual(1, len(table_manager.table_adapters_by_domain[ds3_domain]))
+        self.assertEqual(data_source_3, table_manager.table_adapters_by_domain[ds3_domain][0].config)
+
+        # finally pass in existing data sources and ensure they modify in place
+        table_manager._add_data_sources_to_table_adapters([data_source_1, data_source_3])
+        self.assertEqual(2, len(table_manager.table_adapters_by_domain))
+        self.assertEqual(
+            {data_source_1, data_source_2},
+            set([table_adapter.config for table_adapter in table_manager.table_adapters_by_domain[ds_1_domain]])
+        )
+        self.assertEqual(data_source_3, table_manager.table_adapters_by_domain[ds3_domain][0].config)
+
+    def test_complete_integration(self):
+        # initialize pillow with one data source
+        data_source_1 = get_sample_data_source()
+        data_source_1.save()
+        ds_1_domain = data_source_1.domain
+        table_manager = ConfigurableReportTableManagerMixin([DynamicDataSourceProvider()])
+        table_manager.bootstrap()
+        self.assertEqual(1, len(table_manager.table_adapters_by_domain))
+        self.assertEqual(1, len(table_manager.table_adapters_by_domain[ds_1_domain]))
+        self.assertEqual(data_source_1._id, table_manager.table_adapters_by_domain[ds_1_domain][0].config._id)
+
+        data_source_2 = self._copy_data_source(data_source_1)
+        data_source_2.save()
+        self.assertFalse(table_manager.needs_bootstrap())
+        # should call _pull_in_new_and_modified_data_sources
+        table_manager.bootstrap_if_needed()
+        self.assertEqual(1, len(table_manager.table_adapters_by_domain))
+        self.assertEqual(2, len(table_manager.table_adapters_by_domain[ds_1_domain]))
+        self.assertEqual(
+            {data_source_1._id, data_source_2._id},
+            set([table_adapter.config._id for table_adapter in table_manager.table_adapters_by_domain[ds_1_domain]])
+        )
+
+    def _copy_data_source(self, data_source):
+        data_source_json = data_source.to_json()
+        if data_source_json.get('_id'):
+            del data_source_json['_id']
+        return DataSourceConfiguration.wrap(data_source_json)
+
+
+
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class ChunkedUCRProcessorTest(TestCase):
     @classmethod
@@ -114,6 +204,7 @@ class ChunkedUCRProcessorTest(TestCase):
         delete_all_cases()
         delete_all_xforms()
         InvalidUCRData.objects.all().delete()
+        self.config = DataSourceConfiguration.get(self.config.data_source_id)
         self.config.validations = []
         self.config.save()
 
@@ -144,6 +235,7 @@ class ChunkedUCRProcessorTest(TestCase):
         return cases
 
     def _create_and_process_changes(self, docs=[]):
+        self.pillow = _get_pillow([self.config], processor_chunk_size=100)
         since = self.pillow.get_change_feed().get_latest_offsets()
         cases = self._create_cases(docs=docs)
         # run pillow and check changes
@@ -194,6 +286,9 @@ class ChunkedUCRProcessorTest(TestCase):
 
     @mock.patch('corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor.process_change')
     def test_invalid_data_bulk_processor(self, process_change):
+        # re-fetch from DB to bust object caches
+        self.config = DataSourceConfiguration.get(self.config.data_source_id)
+
         self.config.validations = [
             Validation.wrap({
                 "name": "impossible_condition",
@@ -221,6 +316,9 @@ class ChunkedUCRProcessorTest(TestCase):
 
     @mock.patch('corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor.process_changes_chunk')
     def test_invalid_data_serial_processor(self, process_changes_chunk):
+        # re-fetch from DB to bust object caches
+        self.config = DataSourceConfiguration.get(self.config.data_source_id)
+
         process_changes_chunk.side_effect = Exception
         self.config.validations = [
             Validation.wrap({
@@ -462,6 +560,7 @@ class ProcessRelatedDocTypePillowTest(TestCase):
         self.pillow.get_change_feed().get_latest_offsets()
 
     def tearDown(self):
+        self.config = DataSourceConfiguration.get(self.config.data_source_id)
         self.config.delete()
         self.adapter.drop_table()
         delete_all_cases()
@@ -470,14 +569,14 @@ class ProcessRelatedDocTypePillowTest(TestCase):
     def _post_case_blocks(self, iteration=0):
         return post_case_blocks(
             [
-                CaseBlock(
+                CaseBlock.deprecated_init(
                     create=iteration == 0,
                     case_id='parent-id',
                     case_name='parent-name',
                     case_type='bug',
                     update={'update-prop-parent': iteration},
                 ).as_xml(),
-                CaseBlock(
+                CaseBlock.deprecated_init(
                     create=iteration == 0,
                     case_id='child-id',
                     case_name='child-name',
@@ -556,14 +655,14 @@ class ReuseEvaluationContextTest(TestCase):
     def _post_case_blocks(self, iteration=0):
         return post_case_blocks(
             [
-                CaseBlock(
+                CaseBlock.deprecated_init(
                     create=iteration == 0,
                     case_id='parent-id',
                     case_name='parent-name',
                     case_type='bug',
                     update={'update-prop-parent': iteration},
                 ).as_xml(),
-                CaseBlock(
+                CaseBlock.deprecated_init(
                     create=iteration == 0,
                     case_id='child-id',
                     case_name='child-name',
@@ -630,6 +729,7 @@ class AsyncIndicatorTest(TestCase):
         delete_all_xforms()
         AsyncIndicator.objects.all().delete()
         InvalidUCRData.objects.all().delete()
+        self.config = DataSourceConfiguration.get(self.config.data_source_id)
         self.config.validations = []
         self.config.save()
 
@@ -639,14 +739,14 @@ class AsyncIndicatorTest(TestCase):
             since = self.pillow.get_change_feed().get_latest_offsets()
             form, cases = post_case_blocks(
                 [
-                    CaseBlock(
+                    CaseBlock.deprecated_init(
                         create=i == 0,
                         case_id=parent_id,
                         case_name='parent-name',
                         case_type='bug',
                         update={'update-prop-parent': i},
                     ).as_xml(),
-                    CaseBlock(
+                    CaseBlock.deprecated_init(
                         create=i == 0,
                         case_id=child_id,
                         case_name='child-name',
@@ -684,14 +784,14 @@ class AsyncIndicatorTest(TestCase):
         parent_id, child_id = uuid.uuid4().hex, uuid.uuid4().hex
         form, cases = post_case_blocks(
             [
-                CaseBlock(
+                CaseBlock.deprecated_init(
                     create=True,
                     case_id=parent_id,
                     case_name='parent-name',
                     case_type='bug',
                     update={'update-prop-parent': 0},
                 ).as_xml(),
-                CaseBlock(
+                CaseBlock.deprecated_init(
                     create=True,
                     case_id=child_id,
                     case_name='child-name',
@@ -719,6 +819,9 @@ class AsyncIndicatorTest(TestCase):
         self.assertEqual(indicators.count(), 1)
 
     def test_async_invalid_data(self):
+        # re-fetch from DB to bust object caches
+        self.config = DataSourceConfiguration.get(self.config.data_source_id)
+
         self.config.validations = [
             Validation.wrap({
                 "name": "impossible_condition",
@@ -741,14 +844,14 @@ class AsyncIndicatorTest(TestCase):
         for i in range(3):
             form, cases = post_case_blocks(
                 [
-                    CaseBlock(
+                    CaseBlock.deprecated_init(
                         create=i == 0,
                         case_id=parent_id,
                         case_name='parent-name',
                         case_type='bug',
                         update={'update-prop-parent': i},
                     ).as_xml(),
-                    CaseBlock(
+                    CaseBlock.deprecated_init(
                         create=i == 0,
                         case_id=child_id,
                         case_name='child-name',
@@ -813,7 +916,7 @@ def _save_sql_case(doc):
     with drop_connected_signals(case_post_save):
         form, cases = post_case_blocks(
             [
-                CaseBlock(
+                CaseBlock.deprecated_init(
                     create=True,
                     case_id=doc['_id'],
                     case_name=doc['name'],

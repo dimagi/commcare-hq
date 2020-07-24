@@ -16,7 +16,7 @@ class PhoneNumberReportTestCase(TestCase):
     def setUpClass(cls):
         super(PhoneNumberReportTestCase, cls).setUpClass()
         cls.domain = create_domain(cls.domain_name)
-        cls.couch_user = WebUser.create(None, "phone_report_test", "foobar")
+        cls.couch_user = WebUser.create(None, "phone_report_test", "foobar", None, None)
         cls.couch_user.add_domain_membership(cls.domain_name, is_admin=True)
         cls.couch_user.save()
 
@@ -24,7 +24,7 @@ class PhoneNumberReportTestCase(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.couch_user.delete()
+        cls.couch_user.delete(deleted_by=None)
         cls.domain.delete()
         super(PhoneNumberReportTestCase, cls).tearDownClass()
 

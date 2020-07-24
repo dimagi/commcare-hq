@@ -48,17 +48,24 @@
 
 trunk: master
 name: autostaging
+deploy_env: staging
 branches:
   - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
-  #- mk/location-reassignment-11-followup
-  - bmb/odata-qa-feedback  # Biyeun April 15
-    #  - fr/turn-backend        # Farid April 17 # Removed April 25 from conflict
-    #- dmr/track-sms-by-backend  # Danny April 22
-  - dmr/fix-build_full_schema-poll-condition  # Danny April 27
-  - dmr/require_can_edit_or_view_commcare_users-download_commcare_users  # Danny April 27
-  - sr-es-alias # Sravan April 29
-  - jls/migrate-CustomDataFieldsDefinition-1+jls/migrate-DefaultConsumption-3 # Jenny April 29
-  - jls/migrate-DefaultConsumption-3 # Jenny April 24
-  - jls/migrate-CustomDataFieldsDefinition-2 # Jenny April 29
+  - jls/sync-mixins-hard-fail # Jenny May 24
+  - rn_update_perfect_scrollbar # Rohit Negi May 4
+  - jls/migrate-MobileAuthKeyRecord-2 # Jenny May 16
+  - nh/repeaters_ui  # Norman May 28
+  - nh/charset  # Norman May 27
+  - jls/turn-off-analytics-logging # Jenny June 19
+  - nemanja1040:whatsapp_multimedia_messages  # Nemanja Stancic Jul 6
+  - solleks:cdg/edit_reports_permission  # Charlie July 6
+  - jls/linked-domain-report-links # Jenny July 7
+  - sr-alias-api # Sravan July 10
+  - ce/multi-domain-upload # Cal July 13
+  - kev/webapps-addresses-question # Kevin July 16
+  - ce/2fa-lockout
+  - fr/shadow-module-child-versioned # Farid July 22
+  - ce/enterprise-invited # Cal July 22
+  - cz/oauth2  # cory july 23
 
 submodules: {}

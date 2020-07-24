@@ -22,9 +22,9 @@
   {% include 'analytics/google.html' %}
 {% compress js %}
   <script src="{% static 'autotrack/autotrack.js' %}"></script>
-  <script src="{% static 'd3-3.5.17/d3.js' %}"></script>
+  <script src="{% static 'd3/d3.js' %}"></script>
   <script src="{% static 'nvd3-1.8.6/build/nv.d3.js' %}"></script>
-  <script src="{% static 'topojson/topojson.js' %}"></script>
+  <script src="{% static 'topojson/dist/topojson.js' %}"></script>
   <script src="{% static 'datamaps/dist/datamaps.ind.js' %}"></script>
 
   <script src="{% static 'angular/angular.js' %}"></script>
@@ -40,7 +40,7 @@ Split up compression due to a weird js dependency bug that makes it not work wit
 {% compress js %}
   <script src="{% static 'angular-datamaps/dist/angular-datamaps.js' %}"></script>
   {# only needed for importing location directive - not actually referenced by mobile dashboard #}
-  <script src="{% static 'angular-bootstrap/ui-bootstrap-tpls.min.js' %}"></script>
+  <script src="{% static 'angular-ui-bootstrap/dist/ui-bootstrap-tpls.js' %}"></script>
   {# only needed for importing awc report directive - not actually referenced by mobile dashboard #}
   <script src="{% static 'datatables/media/js/jquery.dataTables.min.js'%}"></script>
   <script src="{% static 'angular-datatables/dist/angular-datatables.min.js' %}"></script>
@@ -91,7 +91,7 @@ Split up compression due to a weird js dependency bug that makes it not work wit
           </div>
         </div>
         <img src="{% static 'icds_reports/mobile/images/share-icon.png' %}"
-             ng-if="isMobile && !filtersOpen && isWebView && haveAccessToFeatures" class="share-icon" ng-click="shareViaWhatsapp()">
+             ng-if="isMobile && !filtersOpen && isWebView" class="share-icon" ng-click="shareViaWhatsapp()">
       </div>
   </div>
   <script type="text/ng-template" id="reportIssueModal.html">

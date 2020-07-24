@@ -82,9 +82,8 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             # only do this if the database contains the citus extension
             return
 
-        from custom.icds_reports.utils.migrations import (
-            create_citus_distributed_table, create_citus_reference_table
-        )
+        from custom.icds_core.db import create_citus_reference_table
+        from custom.icds_core.db import create_citus_distributed_table
         with self.engine.begin() as connection:
             if config.distribution_type == 'hash':
                 if config.distribution_column not in self.get_table().columns:
@@ -96,8 +95,8 @@ class IndicatorSqlAdapter(IndicatorAdapter):
                 raise ValueError("unknown distribution type: %r" % config.distribution_type)
             return True
 
-    def rebuild_table(self, initiated_by=None, source=None, skip_log=False):
-        self.log_table_rebuild(initiated_by, source, skip=skip_log)
+    def rebuild_table(self, initiated_by=None, source=None, skip_log=False, diffs=None):
+        self.log_table_rebuild(initiated_by, source, skip=skip_log, diffs=diffs)
         self.session_helper.Session.remove()
         try:
             rebuild_table(self.engine, self.get_table())
@@ -168,9 +167,10 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         except Exception as e:
             self.handle_exception(doc, e)
 
-    def save_rows(self, rows):
+    def save_rows(self, rows, use_shard_col=True):
         """
         Saves rows to a data source after deleting the old rows
+        :param use_shard_col: use shard column along with doc id for searching rows to delete/update
         """
         if not rows:
             return
@@ -180,14 +180,14 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             {i.column.database_column_name.decode('utf-8'): i.value for i in row}
             for row in rows
         ]
-        if self.session_helper.is_citus_db:
+        if self.session_helper.is_citus_db and use_shard_col:
             config = self.config.sql_settings.citus_config
             if config.distribution_type == 'hash':
                 self._by_column_update(formatted_rows)
                 return
         doc_ids = set(row['doc_id'] for row in formatted_rows)
         table = self.get_table()
-        if self.supports_upsert():
+        if self.supports_upsert() and use_shard_col:
             queries = [self._upsert_query(table, formatted_rows)]
         else:
             delete = table.delete().where(table.c.doc_id.in_(doc_ids))
@@ -254,8 +254,8 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             rows.extend(self.get_all_values(doc))
         self.save_rows(rows)
 
-    def bulk_delete(self, docs):
-        if self.session_helper.is_citus_db:
+    def bulk_delete(self, docs, use_shard_col=True):
+        if self.session_helper.is_citus_db and use_shard_col:
             config = self.config.sql_settings.citus_config
             if config.distribution_type == 'hash':
                 self._citus_bulk_delete(docs, config.distribution_column)
@@ -311,8 +311,8 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             with self.session_context() as session:
                 session.execute(delete)
 
-    def delete(self, doc):
-        self.bulk_delete([doc])
+    def delete(self, doc, use_shard_col=True):
+        self.bulk_delete([doc], use_shard_col)
 
     def doc_exists(self, doc):
         with self.session_context() as session:
@@ -366,9 +366,9 @@ class MultiDBSqlAdapter(object):
         for adapter in self.all_adapters:
             adapter.build_table(initiated_by=initiated_by, source=source)
 
-    def rebuild_table(self, initiated_by=None, source=None, skip_log=False):
+    def rebuild_table(self, initiated_by=None, source=None, skip_log=False, diffs=None):
         for adapter in self.all_adapters:
-            adapter.rebuild_table(initiated_by=initiated_by, source=source, skip_log=skip_log)
+            adapter.rebuild_table(initiated_by=initiated_by, source=source, skip_log=skip_log, diffs=diffs)
 
     def drop_table(self, initiated_by=None, source=None, skip_log=False):
         for adapter in self.all_adapters:
@@ -379,17 +379,17 @@ class MultiDBSqlAdapter(object):
         for adapter in self.all_adapters:
             adapter.clear_table()
 
-    def save_rows(self, rows):
+    def save_rows(self, rows, use_shard_col=True):
         for adapter in self.all_adapters:
-            adapter.save_rows(rows)
+            adapter.save_rows(rows, use_shard_col)
 
     def bulk_save(self, docs):
         for adapter in self.all_adapters:
             adapter.bulk_save(docs)
 
-    def bulk_delete(self, docs):
+    def bulk_delete(self, docs, use_shard_col=True):
         for adapter in self.all_adapters:
-            adapter.bulk_delete(docs)
+            adapter.bulk_delete(docs, use_shard_col)
 
     def doc_exists(self, doc):
         return any([
@@ -451,12 +451,12 @@ def get_indicator_table(indicator_config, metadata, override_table_name=None):
             logger.error(f"Invalid index specified on {table_name} ({index.column_ids})")
     constraints = [PrimaryKeyConstraint(*indicator_config.pk_columns)]
     columns_and_indices = sql_columns + extra_indices + constraints
-    # todo: needed to add extend_existing=True to support multiple calls to this function for the same table.
-    # is that valid?
+    current_table = metadata.tables.get(table_name)
+    if current_table is not None:
+        metadata.remove(current_table)
     return sqlalchemy.Table(
         table_name,
         metadata,
-        extend_existing=True,
         *columns_and_indices
     )
 

@@ -38,7 +38,13 @@ def build_data_headers(keys, header_prefix='data'):
     )
 
 
-def parse_users(group_memoizer, domain, user_data_model, location_cache, user_filters, task, total_count):
+def parse_users(group_memoizer, domain, user_filters, task=None, total_count=None):
+    from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+    user_data_model = SQLCustomDataFieldsDefinition.get_or_create(
+        domain,
+        UserFieldsView.field_type
+    )
+    location_cache = LocationIdToSiteCodeCache(domain)
 
     def _get_group_names(user):
         return sorted([
@@ -107,7 +113,8 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache, user_fi
         unrecognized_user_data_keys.update(user_dict['uncategorized_data'])
         user_groups_length = max(user_groups_length, len(group_names))
         max_location_length = max(max_location_length, len(user_dict["location_code"]))
-        DownloadBase.set_progress(task, n, total_count)
+        if task:
+            DownloadBase.set_progress(task, n, total_count)
 
     user_headers = [
         'username', 'password', 'name', 'phone-number', 'email',
@@ -206,8 +213,6 @@ def _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, t
 
 
 def dump_users_and_groups(domain, download_id, user_filters, task):
-    from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-
     def _load_memoizer(domain):
         group_memoizer = GroupMemoizer(domain=domain)
         # load groups manually instead of calling group_memoizer.load_all()
@@ -224,21 +229,13 @@ def dump_users_and_groups(domain, download_id, user_filters, task):
         return group_memoizer
 
     group_memoizer = _load_memoizer(domain)
-    location_cache = LocationIdToSiteCodeCache(domain)
 
     users_groups_count = count_users_and_groups(domain, user_filters, group_memoizer)
     DownloadBase.set_progress(task, 0, users_groups_count)
 
-    user_data_model = CustomDataFieldsDefinition.get_or_create(
-        domain,
-        UserFieldsView.field_type
-    )
-
     user_headers, user_rows = parse_users(
         group_memoizer,
         domain,
-        user_data_model,
-        location_cache,
         user_filters,
         task,
         users_groups_count,

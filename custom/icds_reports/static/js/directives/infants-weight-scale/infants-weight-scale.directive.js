@@ -3,10 +3,10 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function InfantsWeightScaleController($scope, $routeParams, $location, $filter, infrastructureService,
     locationsService, dateHelperService, navigationService, userLocationId, storageService,
-    haveAccessToAllLocations, baseControllersService, isAlertActive, isMobile) {
+    haveAccessToAllLocations, baseControllersService, isAlertActive, isMobile, haveAccessToFeatures) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
-        false, isMobile);
+        haveAccessToFeatures, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
     vm.label = "AWCs Reported Weighing Scale: Infants";
@@ -15,7 +15,7 @@ function InfantsWeightScaleController($scope, $routeParams, $location, $filter, 
     vm.data = {
         legendTitle: 'Percentage',
     };
-    vm.filters = ['gender', 'age'];
+    vm.filters = ['gender', 'age', 'data_period'];
     vm.rightLegend = {
         info: 'Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs that reported having a weighing scale for infants',
     };
@@ -64,6 +64,7 @@ InfantsWeightScaleController.$inject = [
     '$scope', '$routeParams', '$location', '$filter',
     'infrastructureService', 'locationsService', 'dateHelperService', 'navigationService', 'userLocationId',
     'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive', 'isMobile',
+    'haveAccessToFeatures',
 ];
 
 window.angular.module('icdsApp').directive('infantsWeightScale', ['templateProviderService', function (templateProviderService) {

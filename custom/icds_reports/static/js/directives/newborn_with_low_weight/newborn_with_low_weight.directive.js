@@ -4,10 +4,10 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 function NewbornWithLowBirthController($scope, $routeParams, $location, $filter, maternalChildService,
     locationsService, dateHelperService, navigationService,
     userLocationId, storageService, genders, haveAccessToAllLocations, baseControllersService, isAlertActive,
-    isMobile) {
+    isMobile, haveAccessToFeatures) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         dateHelperService, navigationService, userLocationId, storageService, haveAccessToAllLocations,
-        null, isMobile);
+        haveAccessToFeatures, isMobile);
     var vm = this;
     vm.isAlertActive = isAlertActive;
     vm.serviceDataFunction = maternalChildService.getNewbornLowBirthData;
@@ -24,7 +24,7 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
     vm.data = {
         legendTitle: '% Newborns',
     };
-    vm.filters = ['age'];
+    vm.filters = ['age', 'data_period'];
 
     vm.rightLegend = {
         info: 'Of all the children born and weighed in the current month and enrolled for Anganwadi services, the percentage that had a birth weight less than 2500 grams. \n' +
@@ -128,7 +128,7 @@ NewbornWithLowBirthController.$inject = [
     '$scope', '$routeParams', '$location', '$filter',
     'maternalChildService', 'locationsService', 'dateHelperService', 'navigationService',
     'userLocationId', 'storageService', 'genders', 'haveAccessToAllLocations', 'baseControllersService',
-    'isAlertActive', 'isMobile',
+    'isAlertActive', 'isMobile', 'haveAccessToFeatures',
 ];
 
 window.angular.module('icdsApp').directive('newbornLowWeight', ['templateProviderService', function (templateProviderService) {

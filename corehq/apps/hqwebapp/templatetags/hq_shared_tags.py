@@ -29,7 +29,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException
 from corehq.apps.hqwebapp.models import MaintenanceAlert
 from corehq.motech.utils import pformat_json
-from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 
 register = template.Library()
@@ -113,15 +112,6 @@ def cachebuster(url):
     return resource_versions.get(url, "")
 
 
-@quickcache(['couch_user.username'])
-def _get_domain_list(couch_user):
-    domains = Domain.active_for_user(couch_user)
-    return [{
-        'url': reverse('domain_homepage', args=[domain_obj.name]),
-        'name': domain_obj.long_display_name(),
-    } for domain_obj in domains]
-
-
 @register.simple_tag(takes_context=True)
 def domains_for_user(context, request, selected_domain=None):
     """
@@ -130,12 +120,24 @@ def domains_for_user(context, request, selected_domain=None):
     the user doc updates via save.
     """
 
-    domain_list = _get_domain_list(request.couch_user)
-    ctxt = {
-        'domain_list': sorted(domain_list, key=lambda domain: domain['name'].lower()),
+    from corehq.apps.domain.views.base import get_domain_links_for_dropdown, get_mirror_domain_links_for_dropdown
+    domain_links = get_domain_links_for_dropdown(request.couch_user)
+
+    # Mirrored projects aren't in the dropdown, but show a hint they exist
+    show_all_projects_link = bool(get_mirror_domain_links_for_dropdown(request.couch_user))
+
+    # Too many domains and they won't all fit in the dropdown
+    dropdown_limit = 20
+    if len(domain_links) > dropdown_limit:
+        show_all_projects_link = True
+        domain_links = domain_links[:dropdown_limit]
+
+    context = {
+        'domain_links': domain_links,
+        'show_all_projects_link': show_all_projects_link,
         'current_domain': selected_domain,
     }
-    return mark_safe(render_to_string('hqwebapp/includes/domain_list_dropdown.html', ctxt, request))
+    return mark_safe(render_to_string('hqwebapp/includes/domain_list_dropdown.html', context, request))
 
 
 @register.simple_tag
@@ -229,9 +231,11 @@ def can_use_restore_as(request):
     if request.couch_user.is_superuser:
         return True
 
+    domain = getattr(request, 'domain', None)
+
     return (
-        request.couch_user.can_edit_commcare_users() and
-        has_privilege(request, privileges.LOGIN_AS)
+        request.couch_user.can_login_as(domain)
+        and has_privilege(request, privileges.LOGIN_AS)
     )
 
 

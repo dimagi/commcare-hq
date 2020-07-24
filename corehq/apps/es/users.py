@@ -50,6 +50,7 @@ class UserES(HQESQuery):
             is_practice_user,
             role_id,
             is_active,
+            username,
         ] + super(UserES, self).builtin_filters
 
     def show_inactive(self):
@@ -138,6 +139,7 @@ def location(location_id):
     # by any assigned-location primary or not
     return filters.OR(
         filters.AND(mobile_users(), filters.term('assigned_location_ids', location_id)),
+        # todo; this actually doesn't get applied since the below field is not indexed
         filters.AND(
             web_users(),
             filters.term('domain_memberships.assigned_location_ids', location_id)
@@ -150,7 +152,10 @@ def is_practice_user(practice_mode=True):
 
 
 def role_id(role_id):
-    return filters.term('domain_membership.role_id', role_id)
+    return filters.OR(
+        filters.term("domain_membership.role_id", role_id),     # mobile users
+        filters.term("domain_memberships.role_id", role_id)     # web users
+    )
 
 
 def is_active(active=True):

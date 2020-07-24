@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.apps.formplayer_api.smsforms.api import FormplayerInterface
 from corehq.apps.sms.api import (
@@ -10,9 +11,11 @@ from corehq.apps.sms.api import (
 )
 from corehq.apps.sms.messages import *
 from corehq.apps.sms.util import format_message_list, get_date_format
-from corehq.apps.smsforms.app import _responses_to_text, get_responses
-from corehq.apps.smsforms.models import SQLXFormsSession
+from corehq.apps.smsforms.app import _responses_to_text, get_responses, get_events_from_responses
+from corehq.apps.smsforms.models import SQLXFormsSession, XFormsSessionSynchronization, \
+    get_channel_for_contact
 from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
+from dimagi.utils.logging import notify_error
 
 
 def form_session_handler(v, text, msg):
@@ -23,10 +26,25 @@ def form_session_handler(v, text, msg):
     error message is displayed to the user.
     """
     with critical_section_for_smsforms_sessions(v.owner_id):
-        multiple, session = get_single_open_session_or_close_multiple(v.domain, v.owner_id)
-        if multiple:
-            send_sms_to_verified_number(v, get_message(MSG_MULTIPLE_SESSIONS, v))
-            return True
+        if toggles.ONE_PHONE_NUMBER_MULTIPLE_CONTACTS.enabled(v.domain):
+            channel = get_channel_for_contact(v.owner_id, v.phone_number)
+            running_session_info = XFormsSessionSynchronization.get_running_session_info_for_channel(channel)
+            if running_session_info.session_id:
+                session = SQLXFormsSession.by_session_id(running_session_info.session_id)
+                if not session.session_is_open:
+                    # This should never happen. But if it does we should set the channel free
+                    # and act like there was no available session
+                    notify_error("The supposedly running session was not open and was released. "
+                                 'No known way for this to happen, so worth investigating.')
+                    XFormsSessionSynchronization.clear_stale_channel_claim(channel)
+                    session = None
+            else:
+                session = None
+        else:
+            multiple, session = get_single_open_session_or_close_multiple(v.domain, v.owner_id)
+            if multiple:
+                send_sms_to_verified_number(v, get_message(MSG_MULTIPLE_SESSIONS, v))
+                return True
 
         if session:
             session.phone_number = v.phone_number
@@ -40,7 +58,7 @@ def form_session_handler(v, text, msg):
                 xforms_session_couch_id=session._id,
             )
             add_msg_tags(msg, inbound_metadata)
-
+            msg.save()
             try:
                 answer_next_question(v, text, msg, session)
             except Exception:
@@ -93,15 +111,16 @@ def answer_next_question(v, text, msg, session):
             mark_as_invalid_response(msg)
 
         text_responses = _responses_to_text(responses)
+        events = get_events_from_responses(responses)
         if len(text_responses) > 0:
             response_text = format_message_list(text_responses)
-            send_sms_to_verified_number(v, response_text, 
-                metadata=outbound_metadata)
+            send_sms_to_verified_number(v, response_text,
+                metadata=outbound_metadata, events=events)
     else:
         mark_as_invalid_response(msg)
         response_text = "%s %s" % (error_msg, event.text_prompt)
-        send_sms_to_verified_number(v, response_text, 
-            metadata=outbound_metadata)
+        send_sms_to_verified_number(v, response_text,
+            metadata=outbound_metadata, events=[event])
 
 
 def validate_answer(event, text, v):
