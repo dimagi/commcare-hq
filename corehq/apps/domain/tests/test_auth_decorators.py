@@ -1,3 +1,4 @@
+from django.contrib.auth.models import AnonymousUser
 from django.test import SimpleTestCase, TestCase, RequestFactory
 
 from corehq.apps.domain.decorators import _login_or_challenge
@@ -62,6 +63,19 @@ class LoginOrChallengeDBTest(TestCase):
         request = RequestFactory().get('/foobar/')
         request.user = user
         return request
+
+    def test_no_user_set(self):
+        # no matter what, no user = no success
+        for allow_cc_users in (True, False):
+            for allow_sessions in (True, False):
+                for require_domain in (True, False):
+                    decorator = _login_or_challenge(passing_decorator,
+                                                    allow_cc_users=allow_cc_users,
+                                                    allow_sessions=allow_sessions,
+                                                    require_domain=require_domain)
+                    test = decorator(sample_view)
+                    request = self._get_request(user=AnonymousUser())
+                    self.assertNotEqual(SUCCESS, test(request, self.domain_name))
 
     def test_no_cc_users_no_sessions(self):
         decorator = _login_or_challenge(passing_decorator, allow_cc_users=False, allow_sessions=False)
