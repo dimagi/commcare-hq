@@ -275,7 +275,10 @@ def get_location_from_site_code(site_code, location_cache):
         )
 
 
-DomainInfo = namedtuple('DomainInfo', ['validators', 'can_assign_locations', 'location_cache', 'roles_by_name', 'group_memoizer'])
+DomainInfo = namedtuple('DomainInfo', [
+    'validators', 'can_assign_locations', 'location_cache',
+    'roles_by_name', 'group_memoizer'
+])
 
 
 def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, group_memoizer=None, update_progress=None):
@@ -299,9 +302,21 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
         allowed_group_names = [group.name for group in domain_group_memoizer.groups]
         roles_by_name = {role.name: role for role in UserRole.by_domain(domain)}
         domain_user_specs = [spec for spec in user_specs if spec.get('domain', upload_domain) == domain]
-        validators = get_user_import_validators(domain_obj, domain_user_specs, allowed_group_names, list(roles_by_name), upload_domain)
+        validators = get_user_import_validators(
+            domain_obj,
+            domain_user_specs,
+            allowed_group_names,
+            list(roles_by_name),
+            upload_domain
+        )
 
-        domain_info = DomainInfo(validators, can_assign_locations, location_cache, roles_by_name, domain_group_memoizer)
+        domain_info = DomainInfo(
+            validators,
+            can_assign_locations,
+            location_cache,
+            roles_by_name,
+            domain_group_memoizer
+        )
         domain_info_by_domain[domain] = domain_info
         return domain_info
 
@@ -441,20 +456,20 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                     if remove_web_user:
                         if not current_user or not current_user.is_member_of(domain):
                             raise UserUploadError(_(
-                                "You cannot remove a web user that is not a member of this project. {web_user} is not a member.".format(web_user=web_user)
-                            ))
+                                "You cannot remove a web user that is not a member of this project. {web_user} is not a member.").format(web_user=web_user)
+                            )
                         else:
                             current_user.delete_domain_membership(domain)
                             current_user.save()
                     else:
                         if not role:
                             raise UserUploadError(_(
-                                "You cannot upload a web user without a role. {web_user} does not have a role".format(web_user=web_user)
-                            ))
+                                "You cannot upload a web user without a role. {web_user} does not have a role").format(web_user=web_user)
+                            )
                         if not current_user and is_account_confirmed:
                             raise UserUploadError(_(
-                                "You can only set 'Is Account Confirmed' to 'True' on an existing Web User. {web_user} is a new username.".format(web_user=web_user)
-                            ))
+                                "You can only set 'Is Account Confirmed' to 'True' on an existing Web User. {web_user} is a new username.").format(web_user=web_user)
+                            )
                         if current_user and not current_user.is_member_of(domain) and is_account_confirmed:
                             current_user.add_as_web_user(domain, role=role_qualified_id, location_id=user.location_id)
                         elif not current_user or not current_user.is_member_of(domain):
