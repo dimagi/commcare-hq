@@ -864,7 +864,7 @@ class DomainForms(Resource):
 
     class Meta(object):
         resource_name = 'domain_forms'
-        authentication = HQApiKeyAuthentication()
+        authentication = RequirePermissionAuthentication(Permissions.access_api)
         object_class = Form
         include_resource_uri = False
         allowed_methods = ['get']
@@ -875,13 +875,6 @@ class DomainForms(Resource):
         application_id = bundle.request.GET.get('application_id')
         if not application_id:
             raise NotFound('application_id parameter required')
-
-        domain = kwargs['domain']
-        couch_user = CouchUser.from_django_user(bundle.request.user)
-        if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION) or not couch_user.is_member_of(domain):
-            raise ImmediateHttpResponse(
-                HttpForbidden('You are not allowed to get list of forms for this domain')
-            )
 
         results = []
         application = Application.get(docid=application_id)
