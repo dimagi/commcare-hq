@@ -1,5 +1,6 @@
 import json
 from collections import defaultdict
+from copy import deepcopy
 from functools import partial
 
 from django.contrib import messages
@@ -466,20 +467,36 @@ def handle_shadow_child_modules(app, shadow_parent):
             app.delete_module(child.unique_id)
 
     # Add new modules
-    for shadow_child in source_module_children:
+    for source_child in source_module_children:
         changes = True
-        new_shadow = ShadowModule.new_module(shadow_child.default_name(), app.default_language)
-        new_shadow.source_module_id = shadow_child.unique_id
+        new_shadow = ShadowModule.new_module(source_child.default_name(), app.default_language)
+        new_shadow.source_module_id = source_child.unique_id
+
+        # ModuleBase properties
+        new_shadow.module_filter = source_child.module_filter
+        new_shadow.put_in_root = source_child.put_in_root
         new_shadow.root_module_id = shadow_parent.unique_id
-        new_shadow.put_in_root = shadow_child.put_in_root
+        new_shadow.fixture_select = deepcopy(source_child.fixture_select)
+        new_shadow.report_context_tile = source_child.report_context_tile
+        new_shadow.auto_select_case = source_child.auto_select_case
+        new_shadow.is_training_module = source_child.is_training_module
+
+        # ShadowModule properties
+        new_shadow.case_details = deepcopy(source_child.case_details)
+        new_shadow.ref_details = deepcopy(source_child.ref_details)
+        new_shadow.case_list = deepcopy(source_child.case_list)
+        new_shadow.referral_list = deepcopy(source_child.referral_list)
+        new_shadow.task_list = deepcopy(source_child.task_list)
+        new_shadow.parent_select = source_child.parent_select
+        new_shadow.search_config = source_child.search_config
 
         # move excluded form ids
-        shadow_child_form_ids = set(
+        source_child_form_ids = set(
             f.unique_id
             for f in app.get_module_by_unique_id(new_shadow.source_module_id).get_forms()
         )
-        new_shadow.excluded_form_ids = list(set(shadow_parent.excluded_form_ids) & shadow_child_form_ids)
-        shadow_parent.excluded_form_ids = list(set(shadow_parent.excluded_form_ids) - shadow_child_form_ids)
+        new_shadow.excluded_form_ids = list(set(shadow_parent.excluded_form_ids) & source_child_form_ids)
+        shadow_parent.excluded_form_ids = list(set(shadow_parent.excluded_form_ids) - source_child_form_ids)
 
         app.add_module(new_shadow)
 
