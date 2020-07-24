@@ -4,7 +4,6 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.contrib.humanize.templatetags.humanize import naturaltime
 
-from datetime import datetime as dt
 from dateutil.parser import parse
 from memoized import memoized
 
