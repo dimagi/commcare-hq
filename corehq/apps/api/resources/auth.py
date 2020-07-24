@@ -30,7 +30,7 @@ from corehq.apps.users.decorators import (
 from corehq.toggles import API_THROTTLE_WHITELIST, IS_CONTRACTOR
 
 
-def api_auth(view_func):
+def wrap_4xx_errors_for_apis(view_func):
     @wraps(view_func)
     def _inner(req, *args, **kwargs):
         try:
@@ -75,8 +75,7 @@ class LoginAuthentication(HQAuthenticationMixin, Authentication):
     def is_authenticated(self, request, **kwargs):
         return self._auth_test(request, wrappers=[
             self._get_auth_decorator(request),
-            #
-            # api_auth,
+            wrap_4xx_errors_for_apis,
         ], **kwargs)
 
     def _auth_test(self, request, wrappers, **kwargs):
@@ -126,7 +125,7 @@ class LoginAndDomainAuthentication(HQAuthenticationMixin, Authentication):
     def is_authenticated(self, request, **kwargs):
         return self._auth_test(request, wrappers=[
             self._get_auth_decorator(request),
-            api_auth,
+            wrap_4xx_errors_for_apis,
             require_permission('access_api', login_decorator=self._get_auth_decorator(request)),
         ], **kwargs)
 
@@ -163,7 +162,7 @@ class RequirePermissionAuthentication(LoginAndDomainAuthentication):
     def is_authenticated(self, request, **kwargs):
         wrappers = [
             require_permission(self.permission, login_decorator=self._get_auth_decorator(request)),
-            api_auth,
+            wrap_4xx_errors_for_apis,
         ]
         return self._auth_test(request, wrappers=wrappers, **kwargs)
 
@@ -183,7 +182,7 @@ class ODataAuthentication(LoginAndDomainAuthentication):
                 odata_permissions_check,
                 self._get_auth_decorator(request)
             ),
-            api_auth,
+            wrap_4xx_errors_for_apis,
         ]
         return self._auth_test(request, wrappers=wrappers, **kwargs)
 
@@ -197,7 +196,7 @@ class DomainAdminAuthentication(LoginAndDomainAuthentication):
         permission_check = lambda couch_user, domain: couch_user.is_domain_admin(domain)
         wrappers = [
             require_permission_raw(permission_check, login_decorator=self._get_auth_decorator(request)),
-            api_auth,
+            wrap_4xx_errors_for_apis,
         ]
         return self._auth_test(request, wrappers=wrappers, **kwargs)
 
@@ -216,7 +215,7 @@ class AdminAuthentication(LoginAndDomainAuthentication):
             self._permission_check,
             login_decorator=self._get_auth_decorator(request)
         )
-        wrappers = [decorator, api_auth]
+        wrappers = [decorator, wrap_4xx_errors_for_apis]
         # passing the domain is a hack to work around non-domain-specific requests
         # failing on auth
         return self._auth_test(request, wrappers=wrappers, domain='dimagi', **kwargs)
