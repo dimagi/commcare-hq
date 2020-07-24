@@ -100,8 +100,11 @@ hqDefine("motech/js/connection_settings_detail", [
                 name: $('#id_name').val(),
                 url: $('#id_url').val(),
                 auth_type: $('#id_auth_type').val(),
+                api_auth_settings: $('#id_api_auth_settings').val(),
                 username: $('#id_username').val(),
                 plaintext_password: $('#id_plaintext_password').val(),
+                client_id: $('#id_client_id').val(),
+                plaintext_client_secret: $('#id_plaintext_client_secret').val(),
                 skip_cert_verify: $('#id_skip_cert_verify').prop('checked'),
             };
             $testConnectionButton.disableButton();
