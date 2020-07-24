@@ -293,6 +293,14 @@ describe('Entries', function () {
         assert.equal(entry.answer(), Formplayer.Const.NO_ANSWER);
     });
 
+    it('Should return a AddressEntry', function () {
+        questionJSON.datatype = Formplayer.Const.STRING;
+        questionJSON.style = { raw: Formplayer.Const.ADDRESS };
+
+        entry = (new Question(questionJSON)).entry;
+        assert.isTrue(entry instanceof AddressEntry);
+    });
+
     it('Should allow decimals in a PhoneEntry', function () {
         questionJSON.datatype = Formplayer.Const.STRING;
         questionJSON.style = { raw: 'numeric' };
