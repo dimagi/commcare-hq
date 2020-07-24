@@ -131,13 +131,13 @@ class TestPPDData(TestCase):
                                                                 {'place': 'st2',
                                                                  'value': '34.75%'}],
                                            'indicator': 'Take Home Ration'},
-                                          {'Best performers': [{'place': 'st2', 'value': '1.20%'},
-                                                               {'place': 'st1', 'value': '1.16%'},
+                                          {'Best performers': [{'place': 'st2', 'value': '1.10%'},
+                                                               {'place': 'st1', 'value': '0.95%'},
                                                                {'place': 'st7', 'value': '0.00%'}],
                                            'Worst performers': [{'place': 'st7', 'value': '0.00%'},
-                                                                {'place': 'st1', 'value': '1.16%'},
+                                                                {'place': 'st1', 'value': '0.95%'},
                                                                 {'place': 'st2',
-                                                                 'value': '1.20%'}],
+                                                                 'value': '1.10%'}],
                                            'indicator': 'Supplementary Nutrition'}]]}
 
         self.assertDictEqual(expected, data)
@@ -164,7 +164,7 @@ class TestPPDData(TestCase):
                                           'Number of States Covered': 3},
                     'Service Delivery': {
                         '% of children between 3-6 years provided PSE for atleast 21+ days': '6.66%',
-                        '% of children between 3-6 years provided SNP for atleast 21+ days': '1.61%',
+                        '% of children between 3-6 years provided SNP for atleast 21+ days': '1.51%',
                         '% of children between 6 months -3 years, P&LW provided THR for atleast 21+ days': '43.65%',
                         '% of trimester three women counselled on immediate and EBF': '72.15%',
                         'Height Measurement Efficiency': '3.24%',
@@ -193,7 +193,7 @@ class TestPPDData(TestCase):
                                           'Number of States Covered': 3},
                     'Service Delivery': {
                         '% of children between 3-6 years provided PSE for atleast 21+ days': '5.54%',
-                        '% of children between 3-6 years provided SNP for atleast 21+ days': '1.23%',
+                        '% of children between 3-6 years provided SNP for atleast 21+ days': '1.08%',
                         '% of children between 6 months -3 years, P&LW provided THR for atleast 21+ days': '25.32%',
                         '% of trimester three women counselled on immediate and EBF': '59.09%',
                         'Height Measurement Efficiency': '2.24%',
