@@ -27,6 +27,7 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.models import (
     Application,
     CustomIcon,
+    ShadowModule,
     enable_usercase_if_necessary,
 )
 from corehq.apps.app_manager.util import generate_xmlns, update_form_unique_ids
@@ -433,3 +434,57 @@ def get_multimedia_sizes_for_build(domain, build_id, build_profile_id=None):
         media_object = media_objects[multimedia_id]
         total_size[media_object.doc_type] += media_object.content_length
     return total_size
+
+
+def handle_shadow_child_modules(app, shadow_parent):
+    """Creates or deletes shadow child modules if the parent module requires
+
+    Used primarily when changing the "source module id" of a shadow module
+    """
+    if shadow_parent.shadow_module_version == 1:
+        # For old-style shadow modules, we don't create any child-shadows
+        return False
+
+    if not shadow_parent.source_module_id:
+        return False
+
+    source_module_children = [
+        m for m in app.modules
+        if m.root_module_id == shadow_parent.source_module_id
+    ]
+
+    shadow_parent_children = [
+        m for m in app.modules
+        if m.root_module_id == shadow_parent.unique_id
+    ]
+    changes = False
+
+    # Delete unneeded modules
+    for child in shadow_parent_children:
+        if child.source_module_id not in source_module_children:
+            changes = True
+            app.delete_module(child.unique_id)
+
+    # Add new modules
+    for shadow_child in source_module_children:
+        changes = True
+        new_shadow = ShadowModule.new_module(shadow_child.default_name(), app.default_language)
+        new_shadow.source_module_id = shadow_child.unique_id
+        new_shadow.root_module_id = shadow_parent.unique_id
+        new_shadow.put_in_root = shadow_child.put_in_root
+
+        # move excluded form ids
+        shadow_child_form_ids = set(
+            f.unique_id
+            for f in app.get_module_by_unique_id(new_shadow.source_module_id).get_forms()
+        )
+        new_shadow.excluded_form_ids = list(set(shadow_parent.excluded_form_ids) & shadow_child_form_ids)
+        shadow_parent.excluded_form_ids = list(set(shadow_parent.excluded_form_ids) - shadow_child_form_ids)
+
+        app.add_module(new_shadow)
+
+    if changes:
+        app.move_child_modules_after_parents()
+        app.save()
+
+    return changes
