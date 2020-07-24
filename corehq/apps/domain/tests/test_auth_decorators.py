@@ -103,4 +103,4 @@ class LoginOrChallengeDBTest(TestCase):
         self.assertEqual(SUCCESS, test(request))
 
         request = self._get_request(self.commcare_django_user)
-        self.assertNotEqual(SUCCESS, test(request))
+        self.assertEqual(SUCCESS, test(request))
