@@ -21,6 +21,11 @@ MOTHER_INDEX_IDENTIFIER = "mother"
 PHONE_NUMBER_PROPERTY = "contact_phone_number"
 HAS_MOBILE_PROPERTY = "has_mobile"
 HAS_MOBILE_PROPERTY_NO_VALUE = "no"
+SEX_PROPERTY = "sex"
+SEX_PROPERTY_MALE_VALUE = "M"
+FEMALE_DEATH_TYPE_PROPERTY = "female_death_type"
+HAS_DIED_PROPERTY = "died"
+HAS_DIED_PROPERTY_YES_VALUE = "yes"
 
 
 class DataManagementDocProcessor(BaseDocProcessor):
@@ -103,6 +108,39 @@ class SanitizePhoneNumberDocProcessor(DataManagementDocProcessor):
             return False
         if doc.get(HAS_MOBILE_PROPERTY) == HAS_MOBILE_PROPERTY_NO_VALUE:
             return doc.get(PHONE_NUMBER_PROPERTY) == '91'
+        return False
+
+
+class SanitizeFemaleDeathTypeDocProcessor(DataManagementDocProcessor):
+    """Sanitize: Reset female_death_type attribute to "" (empty):
+       If the person record is MALE.
+       (OR)
+       If `died` attribute is not `yes`.
+
+    Args:
+        domain: Domain reference
+    """
+    def __init__(self, domain):
+        super().__init__(domain)
+        self.test_location_ids = find_test_awc_location_ids(self.domain)
+
+    def process_bulk_docs(self, docs, progress_logger):
+        if docs:
+            updates = {doc['_id']: {FEMALE_DEATH_TYPE_PROPERTY: ''} for doc in docs}
+            for doc in docs:
+                progress_logger.document_processed(doc, updates[doc['_id']])
+            submit_case_blocks(self._create_case_blocks(updates),
+                               self.domain, user_id=SYSTEM_USER_ID)
+        return True
+
+    def should_process(self, doc):
+        owner_id = doc.get('owner_id')
+        if owner_id and owner_id in self.test_location_ids:
+            return False
+        if doc.get(SEX_PROPERTY) == SEX_PROPERTY_MALE_VALUE:
+            return bool(doc.get(FEMALE_DEATH_TYPE_PROPERTY))
+        if doc.get(HAS_DIED_PROPERTY) != HAS_DIED_PROPERTY_YES_VALUE:
+            return bool(doc.get(FEMALE_DEATH_TYPE_PROPERTY))
         return False
 
 
