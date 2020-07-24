@@ -193,7 +193,7 @@ def api_key():
     return real_decorator
 
 
-def oauth2_check():
+def _oauth2_check():
     def auth_check(request):
         oauthlib_core = get_oauthlib_core()
         # as of now, this is only used in our APIs, so explictly check that particular scope
@@ -279,7 +279,7 @@ def login_or_api_key_ex(allow_cc_users=False, allow_sessions=True):
 
 def login_or_oauth2_ex(allow_cc_users=False, allow_sessions=True):
     return _login_or_challenge(
-        oauth2_check(),
+        _oauth2_check(),
         allow_cc_users=allow_cc_users,
         api_key=True,
         allow_sessions=allow_sessions
