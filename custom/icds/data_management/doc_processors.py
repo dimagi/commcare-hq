@@ -137,10 +137,12 @@ class SanitizeFemaleDeathTypeDocProcessor(DataManagementDocProcessor):
         owner_id = doc.get('owner_id')
         if owner_id and owner_id in self.test_location_ids:
             return False
-        if doc.get(SEX_PROPERTY) == SEX_PROPERTY_MALE_VALUE:
-            return bool(doc.get(FEMALE_DEATH_TYPE_PROPERTY))
-        if doc.get(HAS_DIED_PROPERTY) != HAS_DIED_PROPERTY_YES_VALUE:
-            return bool(doc.get(FEMALE_DEATH_TYPE_PROPERTY))
+        if doc.get(FEMALE_DEATH_TYPE_PROPERTY):
+            if (
+                doc.get(SEX_PROPERTY) == SEX_PROPERTY_MALE_VALUE
+                or doc.get(HAS_DIED_PROPERTY) != HAS_DIED_PROPERTY_YES_VALUE
+            ):
+                return True
         return False
 
 
