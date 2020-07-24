@@ -72,6 +72,7 @@ from corehq.apps.domain.views.settings import (
     RecoveryMeasuresHistory,
 )
 from corehq.apps.domain.views.sms import SMSRatesView
+from corehq.apps.integration.urls import settings_patterns as integration_settings
 from corehq.apps.linked_domain.views import DomainLinkView
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.motech.repeaters.views import (
@@ -179,7 +180,7 @@ domain_settings = [
     url(r'^repeat_record_report/requeue/', requeue_repeat_record, name='requeue_repeat_record'),
     url(r'^repeat_record_report/generate_repeater_payloads/', generate_repeater_payloads,
         name='generate_repeater_payloads'),
-    url(r'^integration/', include('corehq.apps.integration.urls')),
+    url(r'^integration/', include(integration_settings)),
     url(r'^transfer/$', TransferDomainView.as_view(), name=TransferDomainView.urlname),
     url(r'^case_search/$', CaseSearchConfigView.as_view(), name=CaseSearchConfigView.urlname),
     url(r'^domain_links/$', DomainLinkView.as_view(), name=DomainLinkView.urlname),

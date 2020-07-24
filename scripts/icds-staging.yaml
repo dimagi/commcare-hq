@@ -54,5 +54,10 @@ name: icds-autostaging
 deploy_env: icds-staging
 branches:
   - ap/restrict-unauthorized-users
-
+  - rn_correct_positioning_of_states
+  - dm/django2-upgrade # Sravan July 17th
+  - sk/local-ucr-custom-db  # Simon July 20
+  - saiprakash-v:prefix-to-adolescent-girls-label # sai July 22
+#  - sk/local-ucr  # Simon July 20 (replaced by sk/local-ucr-custom-db)
+#  - sk/custom-app-routing  # Simon July 20 (replaced by sk/local-ucr-custom-db)
 submodules: {}

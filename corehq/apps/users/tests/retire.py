@@ -1,7 +1,7 @@
 import uuid
 from xml.etree import cElementTree as ElementTree
 
-from django.contrib.admin.models import LogEntry, DELETION
+from django.contrib.admin.models import LogEntry
 from django.test import TestCase
 from django.utils.encoding import force_text
 
@@ -27,6 +27,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
 )
 from corehq.form_processor.models import UserArchivedRebuild
 from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.util.model_log import ModelAction
 
 
 class RetireUserTestCase(TestCase):
@@ -69,12 +70,13 @@ class RetireUserTestCase(TestCase):
         other_django_user = self.other_user.get_django_user()
 
         self.commcare_user.retire(deleted_by=other_django_user, deleted_via=deleted_via)
-        log_entry = LogEntry.objects.get(user_id=other_django_user.pk, action_flag=DELETION)
+        log_entry = LogEntry.objects.get(user_id=other_django_user.pk, action_flag=ModelAction.DELETE.value)
         self.assertEqual(log_entry.object_repr, force_text(django_user))
         self.assertEqual(log_entry.change_message, str({'deleted_via': deleted_via}))
 
     @run_with_all_backends
     def test_unretire_user(self):
+        other_django_user = self.other_user.get_django_user()
         case_ids = [uuid.uuid4().hex, uuid.uuid4().hex, uuid.uuid4().hex]
 
         caseblocks = []
@@ -96,7 +98,16 @@ class RetireUserTestCase(TestCase):
         form = FormAccessors(self.domain).get_form(xform.form_id)
         self.assertTrue(form.is_deleted)
 
-        self.commcare_user.unretire()
+        self.assertEqual(
+            list(LogEntry.objects.filter(user_id=other_django_user.pk, action_flag=ModelAction.UPDATE.value)),
+            []
+        )
+        self.commcare_user.unretire(unretired_by=other_django_user, unretired_via="Test")
+
+        log_entry = LogEntry.objects.get(user_id=other_django_user.pk, action_flag=ModelAction.UPDATE.value)
+        self.assertEqual(log_entry.object_repr, force_text(self.commcare_user.get_django_user()))
+        self.assertEqual(log_entry.change_message, str({'unretired_via': "Test"}))
+
         cases = CaseAccessors(self.domain).get_cases(case_ids)
         self.assertFalse(all([c.is_deleted for c in cases]))
         self.assertEqual(len(cases), 3)
@@ -141,7 +152,7 @@ class RetireUserTestCase(TestCase):
         self.assertTrue(form_2.is_deleted)
 
         # Both forms should be undeleted on `unretire()`
-        self.commcare_user.unretire()
+        self.commcare_user.unretire(unretired_by=None)
         form_1 = FormAccessors(self.domain).get_form(xform_1.form_id)
         self.assertFalse(form_1.is_deleted)
         form_2 = FormAccessors(self.domain).get_form(xform_2.form_id)

@@ -131,14 +131,20 @@ def get_awc_reports_system_usage(domain, config, month, prev_month, two_before, 
     }
 
 
-@icds_quickcache(['config', 'month', 'domain', 'show_test'], timeout=30 * 60)
-def get_awc_reports_pse(config, month, domain, show_test=False):
+@icds_quickcache(['config', 'month', 'domain', 'show_test', 'now_date'], timeout=30 * 60)
+def get_awc_reports_pse(config, month, domain, show_test=False, now_date=None):
     selected_month = datetime(*month)
     last_months = (selected_month - relativedelta(months=1))
     last_day_of_selected_month = (selected_month + relativedelta(months=1)) - relativedelta(days=1)
+    if now_date:
+        ninety_days_ago = datetime(*now_date) - timedelta(days=90)
+    else:
+        ninety_days_ago = datetime.today() - timedelta(days=90)
 
     map_image_data = DailyAttendanceView.objects.filter(
-        pse_date__range=(selected_month, last_day_of_selected_month), **config
+        pse_date__range=(selected_month, last_day_of_selected_month),
+        pse_date__gt=ninety_days_ago,
+        **config
     ).values(
         'awc_name', 'form_location_lat', 'form_location_long', 'image_name', 'doc_id', 'pse_date'
     ).order_by('-pse_date')
@@ -243,23 +249,24 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
         date_str = date.strftime("%d/%m/%Y")
         image_data = date_to_image_data.get(date_str)
 
-        if image_data:
-            image_name = image_data['image_name']
-            doc_id = image_data['doc_id']
+        if date > ninety_days_ago:
+            if image_data:
+                image_name = image_data['image_name']
+                doc_id = image_data['doc_id']
 
-            tmp_image.append({
-                'id': idx,
-                'image': absolute_reverse('icds_image_accessor', args=(domain, doc_id, image_name)),
-                'date': date_str
-            })
-        else:
-            tmp_image.append({
-                'id': idx,
-                'image': None,
-                'date': date_str
-            })
+                tmp_image.append({
+                    'id': idx,
+                    'image': absolute_reverse('icds_image_accessor', args=(domain, doc_id, image_name)),
+                    'date': date_str
+                })
+            else:
+                tmp_image.append({
+                    'id': idx,
+                    'image': None,
+                    'date': date_str
+                })
 
-        if (idx + 1) % 4 == 0:
+        if len(tmp_image) == 4:
             images.append(tmp_image)
             tmp_image = []
 
@@ -952,7 +959,7 @@ def get_awc_report_infrastructure(domain, config, month, show_test=False, beta=F
                     'frequency': 'month'
                 },
                 {
-                    'label': _('AWCs with Weighing Scale: Mother and Child'),
+                    'label': _('Weighing Scale: Mother and Child'),
                     'help_text': None,
                     'value': get_infa_value(kpi_data, 'adult_weighing_scale'),
                     'all': '',
