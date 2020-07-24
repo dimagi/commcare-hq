@@ -476,10 +476,10 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
 
         # m2
         self.shadow_module = self.factory.new_shadow_module(
-            'shadow_module', self.basic_module, with_form=False, shadow_module_version=2
+            'shadow_module', self.basic_module, with_form=False
         )
         self.shadow_child_module = self.factory.new_shadow_module(
-            'shadow_child', self.child_module, with_form=False, shadow_module_version=2
+            'shadow_child', self.child_module, with_form=False
         )
         self.shadow_child_module.root_module_id = self.shadow_module.unique_id
         self.shadow_child_module.put_in_root = True
