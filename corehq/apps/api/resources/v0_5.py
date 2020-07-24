@@ -939,21 +939,14 @@ class DomainUsernames(Resource):
 
     class Meta(object):
         resource_name = 'domain_usernames'
-        authentication = HQApiKeyAuthentication()
+        authentication = RequirePermissionAuthentication(Permissions.view_commcare_users)
         object_class = User
         include_resource_uri = False
         allowed_methods = ['get']
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
-
-        couch_user = CouchUser.from_django_user(bundle.request.user)
-        if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION) or not couch_user.is_member_of(domain):
-            raise ImmediateHttpResponse(
-                HttpForbidden('You are not allowed to get list of usernames for this domain')
-            )
         user_ids_username_pairs = get_all_user_id_username_pairs_by_domain(domain)
-
         results = [UserInfo(user_id=user_pair[0], user_name=raw_username(user_pair[1]))
                    for user_pair in user_ids_username_pairs]
         return results
