@@ -40,7 +40,13 @@ def api_auth(view_func):
     return _inner
 
 
-class LoginAndDomainAuthentication(Authentication):
+class HQAuthenticationMixin:
+
+    def _get_auth_decorator(self, request):
+        return self.decorator_map[determine_authtype_from_header(request)]
+
+
+class LoginAndDomainAuthentication(HQAuthenticationMixin, Authentication):
 
     def __init__(self, allow_session_auth=False, *args, **kwargs):
         """
@@ -69,9 +75,6 @@ class LoginAndDomainAuthentication(Authentication):
             api_auth,
             require_permission('access_api', login_decorator=self._get_auth_decorator(request)),
         ], **kwargs)
-
-    def _get_auth_decorator(self, request):
-        return self.decorator_map[determine_authtype_from_header(request)]
 
     def _auth_test(self, request, wrappers, **kwargs):
         PASSED_AUTH = 'is_authenticated'
