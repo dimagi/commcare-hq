@@ -216,9 +216,16 @@ def _oauth2_check():
 
 def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False, allow_sessions=True):
     """
-    kwargs:
-        allow_cc_users: authorize non-WebUser users
-        allow_sessions: allow session based authorization
+    challenge_fn: a decorator function that takes in a view and returns a wrapped version of that
+      view with additional "challenges" applied - namely checking authentication.
+      If the "challenges" are met the decorator function should:
+        1. Add a ".user" property to the request object.
+        2. Call the decorated view
+      If the "challenges" are not met, the decorator function should either return an
+      HttpUnauthorized response, or a response allowing the caller to provide additional
+      authentication details.
+    allow_cc_users: authorize non-WebUser users
+    allow_sessions: allow session based authorization
     """
     # ensure someone is logged in, or challenge
     # challenge_fn should itself be a decorator that can handle authentication
