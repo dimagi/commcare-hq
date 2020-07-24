@@ -215,6 +215,7 @@ DEFAULT_APPS = (
     'statici18n',
     'django_user_agents',
     'logentry_admin',
+    'oauth2_provider',
 )
 
 CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'
@@ -818,6 +819,13 @@ ELASTICSEARCH_MAJOR_VERSION = 1
 ES_SEARCH_TIMEOUT = 30
 
 BITLY_OAUTH_TOKEN = None
+
+OAUTH2_PROVIDER = {
+    'SCOPES': {
+        'access_apis': 'Access API data on all your CommCare projects',
+    },
+}
+
 
 # this should be overridden in localsettings
 INTERNAL_DATA = defaultdict(list)
