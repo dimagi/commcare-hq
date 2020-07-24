@@ -912,7 +912,7 @@ class DomainCases(Resource):
 
     class Meta(object):
         resource_name = 'domain_cases'
-        authentication = HQApiKeyAuthentication()
+        authentication = RequirePermissionAuthentication(Permissions.access_api)
         object_class = CaseType
         include_resource_uri = False
         allowed_methods = ['get']
@@ -921,12 +921,6 @@ class DomainCases(Resource):
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
-        couch_user = CouchUser.from_django_user(bundle.request.user)
-        if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION) or not couch_user.is_member_of(domain):
-            raise ImmediateHttpResponse(
-                HttpForbidden('You are not allowed to get list of case types for this domain')
-            )
-
         case_types = get_case_types_for_domain_es(domain)
         results = [CaseType(case_type=case_type) for case_type in case_types]
         return results
