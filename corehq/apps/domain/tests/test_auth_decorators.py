@@ -2,7 +2,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.test import SimpleTestCase, TestCase, RequestFactory
 
 from corehq.apps.domain.decorators import _login_or_challenge
-from corehq.apps.domain.shortcuts import create_domain, create_user
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser, CommCareUser
 
 SUCCESS = 'it worked!'
