@@ -1103,19 +1103,19 @@ class MigrationTestCase(BaseMigrationTestCase):
         with self.assertRaises(NotAllowed):
             user.retire(deleted_by=None)
         with self.assertRaises(NotAllowed):
-            user.unretire()
+            user.unretire(unretired_by=None)
 
         clear_local_domain_sql_backend_override(self.domain_name)
         self.assert_backend("couch")
         with self.assertRaises(NotAllowed):
             user.retire(deleted_by=None)
         with self.assertRaises(NotAllowed):
-            user.unretire()
+            user.unretire(unretired_by=None)
 
         self.do_migration(finish=True)
         self.do_migration(COMMIT)
         user.retire(deleted_by=None)
-        user.unretire()
+        user.unretire(unretired_by=None)
 
     def test_delete_cases_during_migration(self):
         from corehq.apps.hqcase.tasks import delete_exploded_cases

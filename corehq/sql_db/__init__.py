@@ -4,7 +4,6 @@ from django.core import checks
 from django.db import DEFAULT_DB_ALIAS
 
 from corehq.sql_db.exceptions import PartitionValidationError
-from corehq.sql_db.routers import AAA_APP
 
 
 @checks.register('settings')
@@ -105,7 +104,6 @@ def check_standby_databases(app_configs, **kwargs):
 
 @checks.register(checks.Tags.database, deploy=True)
 def check_db_tables(app_configs, **kwargs):
-    from corehq.sql_db.routers import ICDS_REPORTS_APP
     from corehq.sql_db.models import PartitionedModel
     from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
@@ -113,8 +111,8 @@ def check_db_tables(app_configs, **kwargs):
 
     # some apps only apply to specific envs
     env_specific_apps = {
-        ICDS_REPORTS_APP: settings.ICDS_ENVS,
-        AAA_APP: ('none',),
+        'icds_reports': settings.ICDS_ENVS,
+        'aaa': ('none',),
     }
 
     ignored_models = [

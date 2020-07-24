@@ -608,6 +608,10 @@ class PrivacySecurityForm(forms.Form):
         required=False,
         help_text=ugettext_lazy("All mobile workers in this project will be required to have a strong password")
     )
+    ga_opt_out = BooleanField(
+        label=ugettext_lazy("Disable Google Analytics"),
+        required=False,
+    )
 
     def __init__(self, *args, **kwargs):
         user_name = kwargs.pop('user_name')
@@ -622,8 +626,10 @@ class PrivacySecurityForm(forms.Form):
         self.helper[5] = twbscrispy.PrependedText('hipaa_compliant', '')
         self.helper[6] = twbscrispy.PrependedText('two_factor_auth', '')
         self.helper[7] = twbscrispy.PrependedText('strong_mobile_passwords', '')
+        self.helper[8] = twbscrispy.PrependedText('ga_opt_out', '')
 
         if not domain_has_privilege(domain, privileges.ADVANCED_DOMAIN_SECURITY):
+            self.helper.layout.pop(8)
             self.helper.layout.pop(7)
             self.helper.layout.pop(6)
         if not HIPAA_COMPLIANCE_CHECKBOX.enabled(user_name):
@@ -660,6 +666,7 @@ class PrivacySecurityForm(forms.Form):
                     apps_to_save.append(app)
         domain.secure_submissions = secure_submissions
         domain.hipaa_compliant = self.cleaned_data.get('hipaa_compliant', False)
+        domain.ga_opt_out = self.cleaned_data.get('ga_opt_out', False)
 
         domain.save()
 

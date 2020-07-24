@@ -15,7 +15,7 @@ from .const import MPM_ALL
 
 prometheus_soft_assert = soft_assert(to=[
     f'{name}@dimagi.com'
-    for name in ['skelly', 'rkumar', 'sreddy']
+    for name in ['skelly', 'rkumar']
 ])
 
 

@@ -70,6 +70,7 @@ from corehq.apps.registration.forms import MobileWorkerAccountConfirmationForm
 from corehq.apps.sms.models import SelfRegistrationInvitation
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.user_importer.importer import UserUploadError, check_headers
+from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.user_importer.tasks import import_users_and_groups
 from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary,
@@ -114,9 +115,9 @@ from corehq.apps.users.views import (
 )
 from corehq.const import (
     GOOGLE_PLAY_STORE_COMMCARE_URL,
-    USER_DATE_FORMAT,
     USER_CHANGE_VIA_BULK_IMPORTER,
     USER_CHANGE_VIA_WEB,
+    USER_DATE_FORMAT,
 )
 from corehq.toggles import (
     FILTERED_BULK_USER_DOWNLOAD,
@@ -125,6 +126,7 @@ from corehq.toggles import (
 from corehq.util import get_document_or_404
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.metrics import metrics_counter
+from corehq.util.model_log import ModelAction, log_model_change
 from corehq.util.workbook_json.excel import (
     WorkbookJSONError,
     WorksheetNotFound,
@@ -456,7 +458,7 @@ def force_user_412(request, domain, user_id):
 @require_POST
 def restore_commcare_user(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
-    success, message = user.unretire()
+    success, message = user.unretire(unretired_by=request.user, unretired_via=USER_CHANGE_VIA_WEB)
     if success:
         messages.success(request, "User %s and all their submissions have been restored" % user.username)
     else:
@@ -616,21 +618,6 @@ def update_user_groups(request, domain, couch_user_id):
     return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id]))
 
 
-@require_can_edit_commcare_users
-@require_POST
-def update_user_data(request, domain, couch_user_id):
-    user_data = request.POST["user-data"]
-    if user_data:
-        updated_data = json.loads(user_data)
-        user = CommCareUser.get(couch_user_id)
-        assert user.doc_type == "CommCareUser"
-        assert user.domain == domain
-        user.user_data = updated_data
-        user.save(spawn_task=True)
-    messages.success(request, "User data updated!")
-    return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, couch_user_id]))
-
-
 @location_safe
 class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     template_name = 'users/mobile_workers.html'
@@ -681,7 +668,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         return {
             'new_mobile_worker_form': self.new_mobile_worker_form,
             'custom_fields_form': self.custom_data.form,
-            'custom_field_slugs': [f.slug for f in self.custom_data.fields],
+            'custom_fields_slugs': [f.slug for f in self.custom_data.fields],
             'can_bulk_edit_users': self.can_bulk_edit_users,
             'can_add_extra_users': self.can_add_extra_users,
             'can_access_all_locations': self.can_access_all_locations,
@@ -851,6 +838,9 @@ def _modify_user_status(request, domain, user_id, is_active):
         })
     user.is_active = is_active
     user.save(spawn_task=True)
+    change_message = "Activated User" if is_active else "Deactivated User"
+    log_model_change(request.user, user.get_django_user(), message=change_message,
+                     action=ModelAction.UPDATE)
     return json_response({
         'success': True,
     })
@@ -1061,12 +1051,19 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
             messages.error(request, _(str(e)))
             return HttpResponseRedirect(reverse(UploadCommCareUsers.urlname, args=[self.domain]))
 
+        upload_record = UserUploadRecord(
+            domain=self.domain,
+            user_id=request.couch_user.user_id
+        )
+        upload_record.save()
+
         task_ref = expose_cached_download(payload=None, expiry=1 * 60 * 60, file_extension=None)
         task = import_users_and_groups.delay(
             self.domain,
             list(self.user_specs),
             list(self.group_specs),
-            request.couch_user
+            request.couch_user,
+            upload_record.pk
         )
         task_ref.set_task(task)
         return HttpResponseRedirect(

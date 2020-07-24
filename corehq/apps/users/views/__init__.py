@@ -469,7 +469,7 @@ class BaseRoleAccessView(BaseUserSettingsView):
         # skip the admin role since it's not editable
         for role in user_roles[1:]:
             try:
-                role.hasUsersAssigned = bool(role.ids_of_assigned_users)
+                role.hasUsersAssigned = role.has_users_assigned
             except TypeError:
                 # when query_result['hits'] returns None due to an ES issue
                 show_es_issue = True
@@ -510,10 +510,16 @@ class ListWebUsersView(BaseRoleAccessView):
     @property
     @memoized
     def invitations(self):
-        invitations = Invitation.by_domain(self.domain)
-        for invitation in invitations:
-            invitation.role_label = self.role_labels.get(invitation.role, "")
-        return invitations
+        return [
+            {
+                "uuid": str(invitation.uuid),
+                "email": invitation.email,
+                "email_marked_as_bounced": bool(invitation.email_marked_as_bounced),
+                "invited_on": invitation.invited_on,
+                "role_label": self.role_labels.get(invitation.role, ""),
+            }
+            for invitation in Invitation.by_domain(self.domain)
+        ]
 
     @property
     def page_context(self):
@@ -717,8 +723,7 @@ def post_user_role(request, domain):
         role.permissions.edit_users_in_locations = False
 
     role.save()
-    role.__setattr__('hasUsersAssigned',
-                     True if len(role.ids_of_assigned_users) > 0 else False)
+    role.__setattr__('hasUsersAssigned', role.has_users_assigned)
     return json_response(role)
 
 
