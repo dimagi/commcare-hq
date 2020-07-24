@@ -35,7 +35,7 @@ from corehq.apps.api.resources.auth import (
     AdminAuthentication,
     ODataAuthentication,
     RequirePermissionAuthentication,
-)
+    LoginAuthentication)
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import get_obj
 from corehq.apps.app_manager.models import Application
@@ -94,7 +94,7 @@ from . import (
     HqBaseResource,
     v0_1,
     v0_4,
-)
+    CorsResourceMixin)
 from .pagination import DoesNothingPaginator, NoCountingPaginator
 
 MOCK_BULK_USER_ES = None
@@ -811,13 +811,13 @@ UserDomain = namedtuple('UserDomain', 'domain_name project_name')
 UserDomain.__new__.__defaults__ = ('', '')
 
 
-class UserDomainsResource(Resource):
+class UserDomainsResource(CorsResourceMixin, Resource):
     domain_name = fields.CharField(attribute='domain_name')
     project_name = fields.CharField(attribute='project_name')
 
     class Meta(object):
         resource_name = 'user_domains'
-        authentication = HQApiKeyAuthentication()
+        authentication = LoginAuthentication()
         object_class = UserDomain
         include_resource_uri = False
 
