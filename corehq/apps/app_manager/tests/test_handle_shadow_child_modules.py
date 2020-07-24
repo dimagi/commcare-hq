@@ -1,3 +1,4 @@
+from django.core.management import call_command
 from django.test import TestCase
 
 from corehq.apps.app_manager.models import Application
@@ -6,8 +7,8 @@ from corehq.apps.app_manager.tests.util import delete_all_apps
 from corehq.apps.app_manager.views.utils import handle_shadow_child_modules
 
 
-class HandleShadowChildModulesTest(TestCase):
-    """Test the handle_shadow_child_modules function works
+class CreateShadowChildrenTest(TestCase):
+    """Test the create_shadow_children and find_shadow_children management commands
     """
 
     def setUp(self):

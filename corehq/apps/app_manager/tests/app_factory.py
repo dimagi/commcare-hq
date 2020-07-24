@@ -76,7 +76,7 @@ class AppFactory(object):
     def new_advanced_module(self, slug, case_type, with_form=True, parent_module=None, case_list_form=None):
         return self.new_module(AdvancedModule, slug, case_type, with_form, parent_module, case_list_form)
 
-    def new_shadow_module(self, slug, source_module, with_form=True, shadow_module_version=1):
+    def new_shadow_module(self, slug, source_module, with_form=True, shadow_module_version=2):
         module = self.app.add_module(ShadowModule.new_module('{} module'.format(slug), None))
         module.unique_id = '{}_module'.format(slug)
         module.source_module_id = source_module.unique_id
