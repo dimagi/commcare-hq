@@ -25,7 +25,6 @@ from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_brief_apps_in_domain,
 )
-from corehq.apps.app_manager.models import ExchangeApplication
 from corehq.apps.app_manager.util import is_remote_app
 from corehq.apps.builds.views import EditMenuView
 from corehq.apps.domain.views.internal import ProjectLimitsView
@@ -939,11 +938,6 @@ class ApplicationsTab(UITab):
                 _('New Application'),
                 url=(reverse('default_new_app', args=[self.domain])),
             ))
-            if ExchangeApplication.objects.count():
-                submenu_context.append(dropdown_dict(
-                    _('Import Template Application'),
-                    url=(reverse('app_exchange', args=[self.domain])),
-                ))
         if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled_for_request(self._request):
             submenu_context.append(dropdown_dict(
                 _('Translations'),
