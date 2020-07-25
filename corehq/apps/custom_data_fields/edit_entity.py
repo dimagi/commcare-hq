@@ -12,7 +12,7 @@ from corehq.apps.hqwebapp.crispy import HQFormHelper, HQModalFormHelper
 
 from .models import (
     CUSTOM_DATA_FIELD_PREFIX,
-    CustomDataFieldsDefinition,
+    SQLCustomDataFieldsDefinition,
     is_system_key,
 )
 
@@ -59,7 +59,7 @@ class CustomDataEditor(object):
     @property
     @memoized
     def model(self):
-        return CustomDataFieldsDefinition.get_or_create(
+        return SQLCustomDataFieldsDefinition.get_or_create(
             self.domain,
             self.field_view.field_type,
         )

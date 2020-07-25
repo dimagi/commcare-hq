@@ -8,14 +8,14 @@ a given entity type, such as User, Product, or Location.
 Editing the model
 -----------------
 
-``CustomDataFieldsDefinition``
+``SQLCustomDataFieldsDefinition``
     This is a SQL model describing a particular schema.  It lists the
     entity type, but aside from that is completely generic - there are no
     special functions here for *Custom User Data*, for example.
 
 ``CustomDataModelMixin``
     Each entity type must provide a subclass of this mixin to provide the
-    interface for editing the ``CustomDataFieldsDefinition``.  This
+    interface for editing the ``SQLCustomDataFieldsDefinition``.  This
     subclass handles permissions and integration with the rest of that
     entity's section of HQ.
 

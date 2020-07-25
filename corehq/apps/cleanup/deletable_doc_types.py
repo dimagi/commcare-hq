@@ -18,7 +18,6 @@ DELETABLE_COUCH_DOC_TYPES = {
     'CaseReminder': (MAIN_DB,),
     'CaseReminderHandler': (MAIN_DB,),
     'CaseReminderEvent': (MAIN_DB,),
-    'CustomDataFieldsDefinition': (settings.META_DB,),
     'DefaultConsumption': (MAIN_DB,),
     'Dhis2Connection': (MAIN_DB,),
     'ExportMigrationMeta': (settings.META_DB,),

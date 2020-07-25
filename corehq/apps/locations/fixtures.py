@@ -16,7 +16,7 @@ from corehq.apps.app_manager.const import (
     SYNC_FLAT_FIXTURES,
     SYNC_HIERARCHICAL_FIXTURE,
 )
-from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
+from corehq.apps.custom_data_fields.models import SQLCustomDataFieldsDefinition
 from corehq.apps.fixtures.utils import get_index_schema_node
 from corehq.apps.locations.models import (
     LocationFixtureConfiguration,
@@ -452,7 +452,7 @@ def _fill_in_location_element(xml_root, location, data_fields):
 
 def _get_location_data_fields(domain):
     from corehq.apps.locations.views import LocationFieldsView
-    fields_definition = CustomDataFieldsDefinition.get(domain, LocationFieldsView.field_type)
+    fields_definition = SQLCustomDataFieldsDefinition.get(domain, LocationFieldsView.field_type)
     if fields_definition:
         return fields_definition.get_fields()
     else:

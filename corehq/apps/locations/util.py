@@ -111,8 +111,8 @@ def parent_child(domain):
 
 def get_location_data_model(domain):
     from .views import LocationFieldsView
-    from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
-    return CustomDataFieldsDefinition.get_or_create(
+    from corehq.apps.custom_data_fields.models import SQLCustomDataFieldsDefinition
+    return SQLCustomDataFieldsDefinition.get_or_create(
         domain,
         LocationFieldsView.field_type,
     )

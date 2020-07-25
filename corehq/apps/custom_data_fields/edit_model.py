@@ -16,8 +16,8 @@ from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
 from corehq.toggles import REGEX_FIELD_VALIDATION
 
 from .models import (
-    CustomDataFieldsDefinition,
-    Field,
+    SQLCustomDataFieldsDefinition,
+    SQLField,
     validate_reserved_words,
 )
 
@@ -120,7 +120,7 @@ class CustomDataFieldForm(forms.Form):
 
 class CustomDataModelMixin(object):
     """
-    Provides the interface for editing the ``CustomDataFieldsDefinition``
+    Provides the interface for editing the ``SQLCustomDataFieldsDefinition``
     for each entity type.
     Each entity type must provide a subclass of this mixin.
     """
@@ -136,7 +136,7 @@ class CustomDataModelMixin(object):
 
     @classmethod
     def get_validator(cls, domain):
-        data_model = CustomDataFieldsDefinition.get_or_create(domain, cls.field_type)
+        data_model = SQLCustomDataFieldsDefinition.get_or_create(domain, cls.field_type)
         return data_model.get_validator()
 
     @classmethod
@@ -144,7 +144,7 @@ class CustomDataModelMixin(object):
         return _("Edit {} Fields").format(str(cls.entity_string))
 
     def get_definition(self):
-        return CustomDataFieldsDefinition.get_or_create(self.domain, self.field_type)
+        return SQLCustomDataFieldsDefinition.get_or_create(self.domain, self.field_type)
 
     def save_custom_fields(self):
         definition = self.get_definition()
@@ -165,7 +165,7 @@ class CustomDataModelMixin(object):
             choices = field.get('choices')
             regex = None
             regex_msg = None
-        return Field(
+        return SQLField(
             slug=field.get('slug'),
             is_required=field.get('is_required'),
             label=field.get('label'),

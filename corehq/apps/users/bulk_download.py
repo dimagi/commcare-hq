@@ -8,7 +8,7 @@ from soil.util import expose_download, get_download_file_path
 
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
+from corehq.apps.custom_data_fields.models import SQLCustomDataFieldsDefinition
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.user_importer.importer import BulkCacheBase, GroupMemoizer
@@ -40,7 +40,7 @@ def build_data_headers(keys, header_prefix='data'):
 
 def parse_users(group_memoizer, domain, user_filters, task=None, total_count=None):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-    user_data_model = CustomDataFieldsDefinition.get_or_create(
+    user_data_model = SQLCustomDataFieldsDefinition.get_or_create(
         domain,
         UserFieldsView.field_type
     )
