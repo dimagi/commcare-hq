@@ -64,5 +64,6 @@ branches:
   - ce/2fa-lockout
   - fr/shadow-module-child-versioned # Farid July 22
   - jls/CustomDataFieldsProfile # Jenny July 24
+  - jls/domain-mirror-reports # Jenny July 25
 
 submodules: {}
