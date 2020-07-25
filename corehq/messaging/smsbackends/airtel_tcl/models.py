@@ -104,7 +104,7 @@ class AirtelTCLBackend(SQLSMSBackend):
         making the request.
         """
         phone_number = strip_plus(phone_number)
-        if re.match('^(91)[6-9]{1}\d{9}$', phone_number):
+        if re.match(r'^(91)[6-9]{1}\d{9}$', phone_number):
             return phone_number[2:]
 
 
