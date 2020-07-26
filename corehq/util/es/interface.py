@@ -13,12 +13,9 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
 
     def _verify_is_alias(self, index_or_alias):
         from corehq.elastic import ES_META
-        if settings.ENABLE_ES_INTERFACE_LOGGING:
-            logger = logging.getLogger('es_interface')
-            all_es_aliases = [index_info.alias for index_info in ES_META.values()]
-            if index_or_alias not in all_es_aliases:
-                logger.info("Found a use case where an index is queried instead of alias")
-                logger.info(traceback.format_stack())
+        all_es_aliases = [index_info.alias for index_info in ES_META.values()]
+        if index_or_alias not in all_es_aliases:
+            raise Exception("All except write queries to Elasticsearch should use alias")
 
     def update_index_settings(self, index, settings_dict):
         assert set(settings_dict.keys()) == {'index'}, settings_dict.keys()
