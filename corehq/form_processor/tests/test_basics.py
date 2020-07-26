@@ -13,11 +13,14 @@ from casexml.apps.case.tests.util import deprecated_check_user_has_case
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from casexml.apps.phone.tests.utils import create_restore_user
+
+from corehq.apps.data_vault.models import VaultEntry
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import clear_domain_names
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.blobs import get_blob_db
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, XFormQuestionValueIterator
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
@@ -499,6 +502,60 @@ class FundamentalCaseTestsSQL(FundamentalCaseTests):
     def test_caching_form_attachment_during_submission(self):
         with patch.object(get_blob_db(), 'get', side_effect=Exception('unexpected blobdb read')):
             _submit_case_block(True, uuid.uuid4().hex, user_id='user2', update={})
+
+    def test_failed_form_with_case_with_secret(self):
+        with override_settings(XFORM_PRE_PROCESSORS={
+            DOMAIN: ['corehq.apps.data_vault.tests.test_utils.TestVaultPatternExtractor']}
+        ):
+            case_id = uuid.uuid4().hex
+            modified_on = datetime.utcnow()
+            self.assertEqual(VaultEntry.objects.count(), 0)
+
+            _submit_case_block(
+                True, case_id, user_id='user1', owner_id='owner1', case_type='demo',
+                case_name='this is a very long case name that exceeds the 255 char limit' * 5,
+                date_modified=modified_on, date_opened=modified_on, update={
+                    'dynamic': '123', 'secret_case_property': '7777777777'
+                }
+            )
+            with self.assertRaises(CaseNotFound):
+                self.casedb.get_case(case_id)
+            self.assertEqual(VaultEntry.objects.count(), 1)
+            vault_entry = VaultEntry.objects.last()
+            self.assertEqual(vault_entry.value, "7777777777")
+
+    def test_successful_form_with_case_with_secret(self):
+        with override_settings(XFORM_PRE_PROCESSORS={
+            DOMAIN: ['corehq.apps.data_vault.tests.test_utils.TestVaultPatternExtractor']}
+        ):
+            self.assertEqual(VaultEntry.objects.count(), 0)
+            case_id = uuid.uuid4().hex
+            modified_on = datetime.utcnow()
+            # create case
+            _submit_case_block(
+                True, case_id, user_id='user1', owner_id='owner1', case_type='demo',
+                case_name='secret_case', date_modified=modified_on, date_opened=modified_on, update={
+                    'dynamic': '123', 'secret_case_property': '0123456789'
+                }
+            )
+            case = self.casedb.get_case(case_id)
+            self.assertEqual(VaultEntry.objects.count(), 1)
+            vault_entry = VaultEntry.objects.last()
+            self.assertEqual(vault_entry.value, "0123456789")
+            self.assertEqual(case.get_case_property('secret_case_property'), f"vault:{vault_entry.key}")
+
+            # update case
+            _submit_case_block(
+                False, case_id, user_id='user2', owner_id='owner2',
+                case_name='update_secret_case', date_modified=modified_on, date_opened=modified_on, update={
+                    'secret_case_property': '9876543210'
+                }
+            )
+            case = self.casedb.get_case(case_id)
+            self.assertEqual(VaultEntry.objects.count(), 2)
+            vault_entry = VaultEntry.objects.last()
+            self.assertEqual(vault_entry.value, "9876543210")
+            self.assertEqual(case.get_case_property('secret_case_property'), f"vault:{vault_entry.key}")
 
 
 def _submit_case_block(create, case_id, **kwargs):
