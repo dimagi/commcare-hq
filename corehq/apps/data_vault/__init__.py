@@ -1,7 +1,7 @@
 from corehq.apps.data_vault.utils import _get_tracked_vault_entries
 
 
-def add_vault_entry(value):
+def new_vault_entry(value):
     from corehq.apps.data_vault.models import VaultEntry
     return VaultEntry(value=value)
 
