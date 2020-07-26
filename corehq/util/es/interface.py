@@ -31,25 +31,19 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         assert set(settings_dict.keys()) == {'index'}, settings_dict.keys()
         return self.es.indices.put_settings(settings_dict, index=index)
 
-    def _get_source(self, index, doc_type, doc_id, source_includes=None):
+    def _get_source(self, index_alias, doc_type, doc_id, source_includes=None):
         kwargs = {"_source_include": source_includes} if source_includes else {}
-        return self.es.get_source(index, doc_type, doc_id, **kwargs)
+        return self.es.get_source(index_alias, doc_type, doc_id, **kwargs)
 
-    def get_doc(self, index, doc_type, doc_id, source_includes=None):
-        doc = self._get_source(index, doc_type, doc_id, source_includes=source_includes)
-        doc['_id'] = doc_id
-        return doc
+    def doc_exists(self, index_alias, doc_id, doc_type):
+        return self.es.exists(index_alias, doc_type, doc_id)
 
-    def doc_exists(self, index, doc_id, doc_type):
-        return self.es.exists(index, doc_type, doc_id)
-
-    def _mget(self, index, body, doc_type):
+    def _mget(self, index_alias, body, doc_type):
         return self.es.mget(
-            index=index, doc_type=doc_type, body=body, _source=True)
+            index=index_alias, doc_type=doc_type, body=body, _source=True)
 
     def get_doc(self, index_alias, doc_type, doc_id, source_includes=None):
         self._verify_is_alias(index_alias)
-        doc = self.es.get_source(index_alias, doc_type, doc_id)
         doc = self._get_source(index_alias, doc_type, doc_id, source_includes=source_includes)
         doc['_id'] = doc_id
         return doc
@@ -136,8 +130,8 @@ class ElasticsearchInterface7(AbstractElasticsearchInterface):
     def get_aliases(self):
         return self.es.indices.get_alias()
 
-    def search(self, index=None, doc_type=None, body=None, params=None, **kwargs):
-        results = self.es.search(index=index, body=body, params=params or {}, **kwargs)
+    def search(self, index_alias=None, doc_type=None, body=None, params=None, **kwargs):
+        results = self.es.search(index=index_alias, body=body, params=params or {}, **kwargs)
         self._fix_hits_in_results(results)
         return results
 
@@ -148,30 +142,30 @@ class ElasticsearchInterface7(AbstractElasticsearchInterface):
     def create_doc(self, index, doc_type, doc_id, doc):
         self.es.create(index, body=self._without_id_field(doc), id=doc_id)
 
-    def doc_exists(self, index, doc_id, doc_type):
-        return self.es.exists(index, doc_id)
+    def doc_exists(self, index_alias, doc_id, doc_type):
+        return self.es.exists(index_alias, doc_id)
 
-    def _get_source(self, index, doc_type, doc_id, source_includes=None):
+    def _get_source(self, index_alias, doc_type, doc_id, source_includes=None):
         kwargs = {"_source_includes": source_includes} if source_includes else {}
-        return self.es.get_source(index, doc_id, **kwargs)
+        return self.es.get_source(index_alias, doc_id, **kwargs)
 
-    def _mget(self, index, body, doc_type):
+    def _mget(self, index_alias, body, doc_type):
         return self.es.mget(
-            index=index, body=body, _source=True)
+            index=index_alias, body=body, _source=True)
 
-    def update_doc(self, index, doc_type, doc_id, doc, params=None):
+    def update_doc(self, index_alias, doc_type, doc_id, doc, params=None):
         params = params or {}
         # not supported in ES7
         params.pop('retry_on_conflict', None)
-        self.es.index(index, body=self._without_id_field(doc), id=doc_id,
+        self.es.index(index_alias, body=self._without_id_field(doc), id=doc_id,
                       params=params)
 
-    def update_doc_fields(self, index, doc_type, doc_id, fields, params=None):
-        self.es.update(index, doc_id, body={"doc": self._without_id_field(fields)},
+    def update_doc_fields(self, index_alias, doc_type, doc_id, fields, params=None):
+        self.es.update(index_alias, doc_id, body={"doc": self._without_id_field(fields)},
                        params=params or {})
 
-    def delete_doc(self, index, doc_type, doc_id):
-        self.es.delete(index, doc_id)
+    def delete_doc(self, index_alias, doc_type, doc_id):
+        self.es.delete(index_alias, doc_id)
 
 
 ElasticsearchInterface = {
