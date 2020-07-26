@@ -2097,6 +2097,5 @@ if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
 
 PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requirements.txt')
 
-XFORM_PRE_PROCESSORS = {
-    'icds-cas': ['custom.icds.form_processor.steps.AadhaarNumberExtractor'],
-}
+# list of path to preprocessors for a domain
+XFORM_PRE_PROCESSORS = {}
