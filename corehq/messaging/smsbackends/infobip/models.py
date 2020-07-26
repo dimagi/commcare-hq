@@ -6,6 +6,7 @@ from corehq.apps.sms.models import SQLSMSBackend, SMS
 from corehq.apps.sms.util import clean_phone_number
 from corehq.messaging.smsbackends.infobip.forms import InfobipBackendForm
 from corehq.apps.smsbillables.exceptions import RetryBillableTaskException
+from corehq.messaging.util import send_fallback_message
 from corehq.messaging.whatsapputil import (
     WhatsAppTemplateStringException,
     is_whatsapp_template_message,
@@ -79,6 +80,8 @@ class InfobipBackend(SQLSMSBackend):
                 self._send_sms(config, to, msg, headers)
         except Exception:
             msg.set_system_error(SMS.ERROR_INVALID_DESTINATION_NUMBER)
+            if self.config.fallback_backend_id:
+                send_fallback_message(self.domain, self.config.fallback_backend_id, msg)
             return False
 
     def _send_omni_failover_message(self, config, to, msg, headers):

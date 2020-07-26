@@ -2,6 +2,9 @@ from corehq import toggles
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from django.conf import settings
 
+from corehq.apps.sms.api import send_sms_with_backend, MessageMetadata
+from corehq.apps.sms.models import MessagingEvent
+
 
 class MessagingRuleProgressHelper(object):
 
@@ -135,3 +138,23 @@ def show_messaging_dashboard(domain, couch_user):
         not toggles.HIDE_MESSAGING_DASHBOARD_FROM_NON_SUPERUSERS.enabled(domain) or
         couch_user.is_superuser
     )
+
+
+def send_fallback_message(domain, fallback_backend_id, msg):
+    logged_event = MessagingEvent.create_event_for_adhoc_sms(
+        domain, recipient=msg.recipient
+    )
+    logged_subevent = logged_event.create_subevent_for_single_sms(
+        recipient_doc_type=msg.recipient.doc_type, recipient_id=msg.recipient.get_id
+    )
+    metadata = MessageMetadata(
+        messaging_subevent_id=logged_subevent.pk,
+        custom_metadata={"fallback": "WhatsApp Contact Not Found"},
+    )
+    if send_sms_with_backend(
+        domain, msg.phone_number, msg.text, fallback_backend_id, metadata
+    ):
+        logged_subevent.completed()
+        logged_event.completed()
+    else:
+        logged_subevent.error(MessagingEvent.ERROR_INTERNAL_SERVER_ERROR)

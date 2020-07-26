@@ -1,9 +1,10 @@
-from corehq.apps.sms.api import MessageMetadata, send_sms_with_backend
-from corehq.apps.sms.models import SMS, MessagingEvent, SQLSMSBackend
+from corehq.apps.sms.models import SMS, SQLSMSBackend
 from corehq.apps.sms.util import clean_phone_number
 from corehq.messaging.smsbackends.turn.forms import TurnBackendForm
 from turn import TurnBusinessManagementClient, TurnClient
 from turn.exceptions import WhatsAppContactNotFound
+
+from corehq.messaging.util import send_fallback_message
 from corehq.messaging.whatsapputil import (
     WhatsAppTemplateStringException,
     is_whatsapp_template_message,
@@ -52,7 +53,7 @@ class SQLTurnWhatsAppBackend(SQLSMSBackend):
         except WhatsAppContactNotFound:
             msg.set_system_error(SMS.ERROR_INVALID_DESTINATION_NUMBER)
             if self.config.fallback_backend_id:
-                self._send_fallback_message(msg)
+                send_fallback_message(self.domain, self.config.fallback_backend_id, msg)
             return False
         # TODO: Add other exceptions here
 
@@ -77,25 +78,6 @@ class SQLTurnWhatsAppBackend(SQLSMSBackend):
 
     def _send_text_message(self, client, wa_id, msg):
         return client.messages.send_text(wa_id, msg.text)
-
-    def _send_fallback_message(self, msg):
-        logged_event = MessagingEvent.create_event_for_adhoc_sms(
-            self.domain, recipient=msg.recipient
-        )
-        logged_subevent = logged_event.create_subevent_for_single_sms(
-            recipient_doc_type=msg.recipient.doc_type, recipient_id=msg.recipient.get_id
-        )
-        metadata = MessageMetadata(
-            messaging_subevent_id=logged_subevent.pk,
-            custom_metadata={"fallback": "WhatsApp Contact Not Found"},
-        )
-        if send_sms_with_backend(
-            self.domain, msg.phone_number, msg.text, self.config.fallback_backend_id, metadata
-        ):
-            logged_subevent.completed()
-            logged_event.completed()
-        else:
-            logged_subevent.error(MessagingEvent.ERROR_INTERNAL_SERVER_ERROR)
 
     def get_all_templates(self):
         config = self.config
