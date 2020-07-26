@@ -1648,7 +1648,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             created_by,
             self_django_user,
             message=f"created_via: {created_via}",
-            fields_changed=None,
             action=ModelAction.CREATE
         )
 
