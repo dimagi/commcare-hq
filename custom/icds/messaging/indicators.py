@@ -17,6 +17,7 @@ from corehq.apps.locations.dbaccessors import (
 )
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_table_name
+from corehq.apps.users.util import filter_by_app
 from corehq.sql_db.connections import connection_manager
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
@@ -399,6 +400,21 @@ class LSAggregatePerformanceIndicator(LSIndicator):
     @memoized
     def restore_user(self):
         return OTARestoreCommCareUser(self.domain, self.user)
+
+    def _user_app_build_profile_id(self):
+        last_build = self._user_app_last_build
+        if last_build:
+            return last_build.build_profile_id
+
+    def _user_app_version(self):
+        last_build = self._user_app_last_build
+        if last_build:
+            return last_build.build_version
+
+    @property
+    @memoized
+    def _user_app_last_build(self):
+        return filter_by_app(self.user.reporting_metadata.last_builds, SUPERVISOR_APP_ID)
 
     def get_report_fixture(self, report_id):
         return get_report_fixture_for_user(self.domain, report_id, self.restore_user)
