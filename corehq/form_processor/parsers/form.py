@@ -118,7 +118,7 @@ def _create_new_xform(domain, instance_xml, attachments=None, auth_context=None)
 
 def get_submission_error(domain, instance_xml, error, auth_context):
     """
-    Handle's a hard failure from posting a form to couch.
+    Handle's a hard failure from posting a form.
     :returns: xform error instance with raw xml as attachment
     """
     try:
