@@ -31,7 +31,7 @@ from corehq.apps.users.permissions import has_permission_to_view_report
 from corehq.form_processor.exceptions import CouchSaveAborted, PostSaveError, XFormSaveError
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.parsers.form import process_xform_xml
+from corehq.form_processor.parsers.form import process_xform_xml, get_submission_error
 from corehq.form_processor.system_action import SYSTEM_ACTION_XMLNS, handle_system_action
 from corehq.form_processor.utils.metadata import scrub_meta
 from corehq.form_processor.submission_process_tracker import unfinished_submission
@@ -234,7 +234,11 @@ class SubmissionPost(object):
         if failure_response:
             return FormProcessingResult(failure_response, None, [], [], 'known_failures')
 
-        xform_context = SubmissionFormContext(instance_xml=self.instance.decode('utf-8'))
+        try:
+            xform_context = SubmissionFormContext(instance_xml=self.instance.decode())
+        except UnicodeDecodeError as e:
+            return get_submission_error(self.domain, self.instance, e, self.auth_context.to_json())
+
         if self.pre_processing_steps:
             form_processing_result = self._pre_process_form(xform_context)
             if form_processing_result:
@@ -251,15 +255,11 @@ class SubmissionPost(object):
             self.formdb.save_new_form(submitted_form)
 
             response = None
-            try:
-                xml = self.instance.decode()
-            except UnicodeDecodeError:
-                pass
-            else:
-                if 'log_subreport' in xml:
-                    response = self.get_exception_response_and_log(
-                        'Badly formed device log', submitted_form, self.path
-                    )
+            xml = self.instance.decode()
+            if 'log_subreport' in xml:
+                response = self.get_exception_response_and_log(
+                    'Badly formed device log', submitted_form, self.path
+                )
 
             if not response:
                 response = self.get_exception_response_and_log(
