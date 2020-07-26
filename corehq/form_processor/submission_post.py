@@ -235,6 +235,7 @@ class SubmissionPost(object):
             return FormProcessingResult(failure_response, None, [], [], 'known_failures')
 
         try:
+            # decode xml to ensure it can be decoded to string when and if needed in pre processing steps
             instance_xml = self.instance.decode() if isinstance(self.instance, bytes) else self.instance
         except UnicodeDecodeError as e:
             return get_submission_error(self.domain, self.instance, e, self.auth_context.to_json())
@@ -243,7 +244,8 @@ class SubmissionPost(object):
         form_processing_result = self._pre_process_form(xform_context)
         if form_processing_result:
             return form_processing_result
-        self.instance = xform_context.instance_xml
+        # encode xml back
+        self.instance = xform_context.instance_xml.encode()
 
         result = process_xform_xml(self.domain, self.instance, self.attachments, self.auth_context.to_json())
         submitted_form = result.submitted_form
