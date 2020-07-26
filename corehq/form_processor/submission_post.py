@@ -239,11 +239,10 @@ class SubmissionPost(object):
         except UnicodeDecodeError as e:
             return get_submission_error(self.domain, self.instance, e, self.auth_context.to_json())
 
-        if self.pre_processing_steps:
-            form_processing_result = self._pre_process_form(xform_context)
-            if form_processing_result:
-                return form_processing_result
-            self.instance = xform_context.instance_xml
+        form_processing_result = self._pre_process_form(xform_context)
+        if form_processing_result:
+            return form_processing_result
+        self.instance = xform_context.instance_xml
 
         result = process_xform_xml(self.domain, self.instance, self.attachments, self.auth_context.to_json())
         submitted_form = result.submitted_form
