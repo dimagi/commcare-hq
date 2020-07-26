@@ -72,7 +72,7 @@ class RetireUserTestCase(TestCase):
         self.commcare_user.retire(deleted_by=other_django_user, deleted_via=deleted_via)
         log_entry = LogEntry.objects.get(user_id=other_django_user.pk, action_flag=ModelAction.DELETE.value)
         self.assertEqual(log_entry.object_repr, force_text(django_user))
-        self.assertEqual(log_entry.change_message, str({'deleted_via': deleted_via}))
+        self.assertEqual(log_entry.change_message, f"deleted_via: {deleted_via}")
 
     @run_with_all_backends
     def test_unretire_user(self):

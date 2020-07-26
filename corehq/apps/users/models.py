@@ -1210,7 +1210,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             user = self.get_django_user()
             user.delete()
             if deleted_by:
-                log_model_change(user, deleted_by, message={'deleted_via': deleted_via}, action=ModelAction.DELETE)
+                log_model_change(user, deleted_by, message=f"deleted_via: {deleted_via}",
+                                 action=ModelAction.DELETE)
         except User.DoesNotExist:
             pass
         super(CouchUser, self).delete()  # Call the "real" delete() method.
@@ -1646,7 +1647,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         log_model_change(
             created_by,
             self_django_user,
-            message={'created_via': created_via},
+            message=f"created_via: {created_via}",
             fields_changed=None,
             action=ModelAction.CREATE
         )
@@ -1842,7 +1843,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             log_model_change(
                 unretired_by,
                 self.get_django_user(use_primary_db=True),
-                message={'unretired_via': unretired_via},
+                message=f"unretired_via': {unretired_via}",
             )
         return True, None
 
@@ -1881,7 +1882,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         else:
             django_user.delete()
             if deleted_by:
-                log_model_change(deleted_by, django_user, message={'deleted_via': deleted_via},
+                log_model_change(deleted_by, django_user, message=f"deleted_via: {deleted_via}",
                                  action=ModelAction.DELETE)
         self.save()
 
