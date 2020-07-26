@@ -15,7 +15,6 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.steps import VaultPatternExtractor
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     use_sql_backend,
@@ -301,7 +300,7 @@ class SubmissionSQLTransactionsTest(TestCase, TestFileMixin):
 
     def test_submit_with_vault_items(self):
         with override_settings(XFORM_PRE_PROCESSORS={
-                self.domain: ['corehq.apps.receiverwrapper.tests.test_submissions.TestVaultPatternExtractor']}
+                self.domain: ['corehq.apps.data_vault.tests.test_utils.TestVaultPatternExtractor']}
         ):
             self.assertEqual(VaultEntry.objects.count(), 0)
             form_xml = self.get_xml('form_with_vault_item')
@@ -314,10 +313,3 @@ class SubmissionSQLTransactionsTest(TestCase, TestFileMixin):
             self.assertFalse("0123456789" in saved_form_xml)
             self.assertTrue(
                 f"<secret_case_property>vault:{vault_entry.key}</secret_case_property>" in saved_form_xml)
-
-
-class TestVaultPatternExtractor(VaultPatternExtractor):
-    def __init__(self):
-        super(TestVaultPatternExtractor, self).__init__(
-            patterns=[r'<secret_case_property>(\d{10})<\/secret_case_property>'],
-        )
