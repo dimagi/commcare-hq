@@ -235,10 +235,11 @@ class SubmissionPost(object):
             return FormProcessingResult(failure_response, None, [], [], 'known_failures')
 
         try:
-            xform_context = SubmissionFormContext(instance_xml=self.instance.decode())
+            instance_xml = self.instance.decode() if isinstance(self.instance, bytes) else self.instance
         except UnicodeDecodeError as e:
             return get_submission_error(self.domain, self.instance, e, self.auth_context.to_json())
 
+        xform_context = SubmissionFormContext(instance_xml=instance_xml)
         form_processing_result = self._pre_process_form(xform_context)
         if form_processing_result:
             return form_processing_result
