@@ -13,7 +13,7 @@ from mock import patch
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     use_sql_backend,
@@ -82,6 +82,10 @@ class SubmissionTest(BaseSubmissionTest):
         expected = self._get_expected_json(xform_id, xmlns)
         self.assertEqual(foo, expected)
 
+    def _test_case_supports_non_bmp_chars(self, case_id):
+        case = CaseAccessors(self.domain.name).get_case(case_id)
+        self.assertEqual(case.name, "👕 👖 👔 👗 👙")
+
     def test_submit_simple_form(self):
         self._test(
             form='simple_form.xml',
@@ -117,6 +121,8 @@ class SubmissionTest(BaseSubmissionTest):
             form="form_data_with_non_bmp_chars.xml",
             xmlns='http://commcarehq.org/test/submit',
         )
+        case_id = 'ad38211be256653bceac8e2156475667'
+        self._test_case_supports_non_bmp_chars(case_id)
 
     @softer_assert()
     def test_submit_deprecated_form(self):
