@@ -11,6 +11,7 @@ from corehq.util.timezones.conversions import ServerTime
 from datetime import datetime
 from django.conf import settings
 
+
 class AirtelTCLBackend(SQLSMSBackend):
 
     LANG_ID_DECIMAL_NCR = '2'
@@ -106,7 +107,6 @@ class AirtelTCLBackend(SQLSMSBackend):
         phone_number = strip_plus(phone_number)
         if re.match(r'^(91)[6-9]\d{9}$', phone_number):
             return phone_number[2:]
-
 
         raise InvalidDestinationNumber()
 
