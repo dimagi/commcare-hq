@@ -31,6 +31,9 @@ from corehq.apps.data_dictionary.util import get_case_property_description_dict
 from corehq.util.timezones.conversions import PhoneTime
 from corehq.util.timezones.utils import get_timezone_for_request
 
+from collections import namedtuple
+PropertyDetail = namedtuple('PropertyDetail', ['field', 'header', 'useXpathExpression'])
+
 
 class AppCaseMetadataBuilder(object):
     def __init__(self, domain, app):
@@ -60,6 +63,8 @@ class AppCaseMetadataBuilder(object):
             self.meta.add_property_detail('long', module.case_type, module.unique_id, column)
         for column in module.case_details.short.columns:
             self.meta.add_property_detail('short', module.case_type, module.unique_id, column)
+        if module.case_details.short.filter:
+            self.meta.add_property_detail('short', module.case_type, module.unique_id, PropertyDetail(module.case_details.short.filter, {self.app.default_language: "[Filter]"}, True))
 
     def _add_form_contributions(self):
         for module in self.app.get_modules():
