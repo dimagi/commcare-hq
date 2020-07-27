@@ -208,7 +208,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('case_search', 'IgnorePatterns', 'domain'),
     ModelDeletion('cloudcare', 'ApplicationAccess', 'domain'),
     ModelDeletion('consumption', 'DefaultConsumption', 'domain'),
-    ModelDeletion('custom_data_fields', 'SQLCustomDataFieldsDefinition', 'domain'),
+    ModelDeletion('custom_data_fields', 'CustomDataFieldsDefinition', 'domain'),
     ModelDeletion('data_analytics', 'GIRRow', 'domain_name'),
     ModelDeletion('data_analytics', 'MALTRow', 'domain_name'),
     ModelDeletion('data_dictionary', 'CaseType', 'domain'),
