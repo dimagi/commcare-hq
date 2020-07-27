@@ -183,7 +183,7 @@ class ConfigurableReportTableManagerDbTest(TestCase):
             "column_id": "date",
             "type": "expression",
             "expression": {
-              "type": "missing_expression",
+                "type": "missing_expression",
             },
             "datatype": "datetime"
         }
