@@ -16,7 +16,7 @@ from corehq.apps.domain.decorators import (
     login_or_api_key,
     login_or_basic,
     login_or_digest,
-)
+    login_or_oauth2, oauth2_auth)
 from corehq.apps.users.decorators import (
     require_permission,
     require_permission_raw,
@@ -53,12 +53,14 @@ class LoginAndDomainAuthentication(Authentication):
                 'digest': login_or_digest,
                 'basic': login_or_basic,
                 'api_key': login_or_api_key,
+                'oauth2': login_or_oauth2,
             }
         else:
             self.decorator_map = {
                 'digest': digest_auth,
                 'basic': basic_auth,
                 'api_key': api_key_auth,
+                'oauth2': oauth2_auth,
             }
 
     def is_authenticated(self, request, **kwargs):
