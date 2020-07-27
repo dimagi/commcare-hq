@@ -85,7 +85,6 @@ fixture==1.5.11           # via -r requirements/dev-requirements.in
 flake8==3.7.9             # via -r requirements/dev-requirements.in
 flaky==3.6.0              # via -r requirements/test-requirements.in
 freezegun==0.3.12         # via -r requirements/test-requirements.in
-funcsigs==1.0.2           # via -r requirements/requirements.in
 gevent==1.4.0             # via -r requirements/requirements.in, django-websocket-redis, gipc
 ghdiff==0.4               # via -r requirements/requirements.in
 gipc==1.0.1               # via -r requirements/requirements.in
