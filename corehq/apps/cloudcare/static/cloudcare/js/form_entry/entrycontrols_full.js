@@ -939,6 +939,7 @@ function getEntry(question) {
             };
             if (question.stylesContains(Formplayer.Const.ADDRESS)) {
                 entry = new AddressEntry(question, {
+                    enableAutoUpdate: isPhoneMode,
                     broadcastStyles: question.stylesContaining(/broadcast-*/),
                 });
             } else if (question.stylesContains(Formplayer.Const.NUMERIC)) {
