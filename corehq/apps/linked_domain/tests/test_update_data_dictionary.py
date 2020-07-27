@@ -58,11 +58,11 @@ class TestUpdateDataDictionary(BaseLinkedAppsTest):
     def tearDown(self):
         self.suspected.delete()
         self.suspected_name.delete()
-        # date field is deleted during test
+        # suspected_date field is deleted during test
 
         self.confirmed.delete()
         self.confirmed_name.delete()
-        # date field is deleted during test
+        # confirmed_date field is deleted during test
         self.confirmed_test.delete()
 
 
@@ -74,105 +74,58 @@ class TestUpdateDataDictionary(BaseLinkedAppsTest):
 
         # Linked domain should now have master domain's data dictionary
         linked_data_dictionary = get_data_dictionary(self.linked_domain)
-        self.assertEqual(linked_data_dictionary, {
-            'Suspected' : {
-                'domain': self.linked_domain,
-                'description' : 'A suspected case',
-                'fully_generated' : True,
-                'properties' : {
-                    'Patient name': {
-                        'description': 'Name of patient',
-                        'deprecated': False,
-                        'data_type': 'plain',
-                        'group': '',
-                    },
-                    'Date opened': {
-                        'description': 'Date the case was opened',
-                        'deprecated': False,
-                        'data_type': 'date',
-                        'group': '',
-                    }
-                },
-            },
-            'Confirmed' : {
-                'domain': self.linked_domain,
-                'description' : 'A confirmed case',
-                'fully_generated' : True,
-                'properties' : {
-                    'Patient name': {
-                        'description': 'Name of patient',
-                        'deprecated': False,
-                        'data_type': 'plain',
-                        'group': '',
-                    },
-                    'Date opened': {
-                        'description': 'Date the case was opened',
-                        'deprecated': False,
-                        'data_type': 'date',
-                        'group': '',
-                    },
-                    'Test': {
-                        'description': 'Type of test performed',
-                        'deprecated': False,
-                        'data_type': 'plain',
-                        'group': '',
-                    }
-                }
+
+        def expected_property_type(description, data_type):
+            return {
+                'description': description,
+                'deprecated': False,
+                'data_type': data_type,
+                'group': '',
             }
+
+        patient_name = expected_property_type('Name of patient', 'plain')
+        date_opened = expected_property_type('Date the case was opened', 'date')
+        test_performed = expected_property_type('Type of test performed', 'plain')
+
+        suspected_properties = {'Patient name': patient_name,
+                                'Date opened': date_opened}
+        confirmed_properties = suspected_properties.copy()
+        confirmed_properties.update({'Test': test_performed})
+
+        def expected_case_type(domain, description, properties):
+            return {
+                'domain': domain,
+                'description' : description,
+                'fully_generated' : True,
+                'properties' : properties
+            }
+
+        self.assertEqual(linked_data_dictionary, {
+            'Suspected' : expected_case_type(self.linked_domain,
+                                             'A suspected case',
+                                             suspected_properties),
+            'Confirmed' : expected_case_type(self.linked_domain,
+                                             'A confirmed case',
+                                             confirmed_properties)
         })
 
         # Master domain's data dictionary should be untouched
         original_data_dictionary = get_data_dictionary(self.domain)
         self.assertEqual(original_data_dictionary, {
-            'Suspected' : {
-                'domain': self.domain,
-                'description' : 'A suspected case',
-                'fully_generated' : True,
-                'properties' : {
-                    'Patient name': {
-                        'description': 'Name of patient',
-                        'deprecated': False,
-                        'data_type': 'plain',
-                        'group': '',
-                    },
-                    'Date opened': {
-                        'description': 'Date the case was opened',
-                        'deprecated': False,
-                        'data_type': 'date',
-                        'group': '',
-                    }
-                }
-            },
-            'Confirmed' : {
-                'domain': self.domain,
-                'description' : 'A confirmed case',
-                'fully_generated' : True,
-                'properties' : {
-                    'Patient name': {
-                        'description': 'Name of patient',
-                        'deprecated': False,
-                        'data_type': 'plain',
-                        'group': '',
-                    },
-                    'Date opened': {
-                        'description': 'Date the case was opened',
-                        'deprecated': False,
-                        'data_type': 'date',
-                        'group': '',
-                    },
-                    'Test': {
-                        'description': 'Type of test performed',
-                        'deprecated': False,
-                        'data_type': 'plain',
-                        'group': '',
-                    }
-                }
-            }
+            'Suspected' : expected_case_type(self.domain,
+                                             'A suspected case',
+                                             suspected_properties),
+            'Confirmed' : expected_case_type(self.domain,
+                                             'A confirmed case',
+                                             confirmed_properties)
         })
 
         # Change the original domain and update the linked domain.
         self.suspected_date.delete()
+        del suspected_properties['Date opened']
+
         self.confirmed_date.delete()
+        del confirmed_properties['Date opened']
 
         self.archived = CaseType(domain=self.domain,
                                  name='Archived',
@@ -195,60 +148,22 @@ class TestUpdateDataDictionary(BaseLinkedAppsTest):
         self.archived_reason.save()
         update_data_dictionary(self.domain_link)
 
+        reason_archived = expected_property_type('Reason for archiving', 'plain')
+        archived_properties = suspected_properties.copy()
+        archived_properties.update({'Reason': reason_archived})
+
         # Checked that the linked domain has the new state.
         linked_data_dictionary = get_data_dictionary(self.linked_domain)
         self.assertEqual(linked_data_dictionary, {
-            'Suspected' : {
-                'domain': self.linked_domain,
-                'description' : 'A suspected case',
-                'fully_generated' : True,
-                'properties' : {
-                    'Patient name': {
-                        'description': 'Name of patient',
-                        'deprecated': False,
-                        'data_type': 'plain',
-                        'group': '',
-                    },
-                },
-            },
-            'Confirmed' : {
-                'domain': self.linked_domain,
-                'description' : 'A confirmed case',
-                'fully_generated' : True,
-                'properties' : {
-                    'Patient name': {
-                        'description': 'Name of patient',
-                        'deprecated': False,
-                        'data_type': 'plain',
-                        'group': '',
-                    },
-                    'Test': {
-                        'description': 'Type of test performed',
-                        'deprecated': False,
-                        'data_type': 'plain',
-                        'group': '',
-                    }
-                }
-            },
-            'Archived' : {
-                'domain': self.linked_domain,
-                'description' : 'An archived case',
-                'fully_generated' : True,
-                'properties' : {
-                    'Patient name': {
-                        'description': 'Name of patient',
-                        'deprecated': False,
-                        'data_type': 'plain',
-                        'group': '',
-                    },
-                    'Reason': {
-                        'description': 'Reason for archiving',
-                        'deprecated': False,
-                        'data_type': 'plain',
-                        'group': '',
-                    }
-                }
-            }
+            'Suspected' : expected_case_type(self.linked_domain,
+                                             'A suspected case',
+                                             suspected_properties),
+            'Confirmed' : expected_case_type(self.linked_domain,
+                                             'A confirmed case',
+                                             confirmed_properties),
+            'Archived' : expected_case_type(self.linked_domain,
+                                            'An archived case',
+                                            archived_properties)
         })
         self.addCleanup(self.archived_name.delete)
         self.addCleanup(self.archived_reason.delete)
