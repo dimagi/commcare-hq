@@ -308,9 +308,9 @@ def scan_es7(client, query=None, scroll='5m', **kwargs):
     query["sort"] = "_doc"
 
     # initial search
-    initial_resp = client.search(
-        body=query, scroll=scroll, size=SCROLL_PAGE_SIZE_LIMIT, **kwargs
-    )
+    es_interface = ElasticsearchInterface(client)
+    initial_resp = es_interface.search(
+        body=query, scroll=scroll, size=SCROLL_PAGE_SIZE_LIMIT, **kwargs)
 
     def fetch_all(initial_response):
         resp = initial_response

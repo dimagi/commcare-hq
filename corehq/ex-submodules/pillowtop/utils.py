@@ -251,7 +251,6 @@ def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=
                 doc = doc_transform(doc)
                 action.update({
                     "_op_type": "index",
-                    "_type": index_info.type,
                     "_id": doc['_id'],
                     "_source": doc
                 })

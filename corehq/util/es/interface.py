@@ -52,7 +52,7 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         from corehq.elastic import ESError
         self._verify_is_alias(index_alias)
         docs = []
-        results = self._mget(index=index_alias, doc_type=doc_type, body={'ids': doc_ids})
+        results = self._mget(index_alias=index_alias, doc_type=doc_type, body={'ids': doc_ids})
         for doc_result in results['docs']:
             if 'error' in doc_result:
                 raise ESError(doc_result['error'].get('reason', 'error doing bulk get'))
