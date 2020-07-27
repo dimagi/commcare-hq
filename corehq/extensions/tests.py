@@ -45,7 +45,6 @@ def demo_extension_3(**kwargs):
 
 
 def setup():
-    extensions.add_extension_points(None)
     extensions.load_extensions(["corehq.extensions.tests"])
 
 
