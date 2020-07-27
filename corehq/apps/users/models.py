@@ -1842,7 +1842,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             log_model_change(
                 unretired_by,
                 self.get_django_user(use_primary_db=True),
-                message=f"unretired_via': {unretired_via}",
+                message=f"unretired_via: {unretired_via}",
             )
         return True, None
 
