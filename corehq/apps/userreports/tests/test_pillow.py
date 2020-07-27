@@ -5,12 +5,14 @@ from datetime import datetime, timedelta
 from django.test import SimpleTestCase, TestCase, override_settings
 
 import mock
+from mock import patch
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.util import post_case_blocks
+from corehq.apps.userreports.expressions import ExpressionFactory
 from pillow_retry.models import PillowError
 
 from corehq.apps.change_feed import topics
@@ -94,7 +96,7 @@ class ConfigurableReportTableManagerTest(SimpleTestCase):
 class ConfigurableReportTableManagerDbTest(TestCase):
     def tearDown(self):
         for data_source in DynamicDataSourceProvider().get_all_data_sources():
-            data_source.delete()
+            data_source.get_db().delete_doc(data_source.get_id)
 
     def test_table_adapters(self):
         data_source_1 = get_sample_data_source()
@@ -172,6 +174,26 @@ class ConfigurableReportTableManagerDbTest(TestCase):
             {data_source_1._id, data_source_2._id},
             set([table_adapter.config._id for table_adapter in table_manager.table_adapters_by_domain[ds_1_domain]])
         )
+
+    @patch("corehq.apps.cachehq.mixins.invalidate_document")
+    def test_bad_spec_error(self, _):
+        ExpressionFactory.register("missing_expression", lambda x, y: x)
+        data_source_1 = get_sample_data_source()
+        data_source_1.configured_indicators[0] = {
+            "column_id": "date",
+            "type": "expression",
+            "expression": {
+              "type": "missing_expression",
+            },
+            "datatype": "datetime"
+        }
+        data_source_1.save()
+        del ExpressionFactory.spec_map["missing_expression"]
+        ds_1_domain = data_source_1.domain
+        table_manager = ConfigurableReportTableManagerMixin([DynamicDataSourceProvider()])
+        table_manager.bootstrap()
+        self.assertEqual(0, len(table_manager.table_adapters_by_domain))
+        self.assertEqual(0, len(table_manager.table_adapters_by_domain[ds_1_domain]))
 
     def _copy_data_source(self, data_source):
         data_source_json = data_source.to_json()
