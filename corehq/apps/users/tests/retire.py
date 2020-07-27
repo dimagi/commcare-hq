@@ -106,7 +106,7 @@ class RetireUserTestCase(TestCase):
 
         log_entry = LogEntry.objects.get(user_id=other_django_user.pk, action_flag=ModelAction.UPDATE.value)
         self.assertEqual(log_entry.object_repr, force_text(self.commcare_user.get_django_user()))
-        self.assertEqual(log_entry.change_message, str({'unretired_via': "Test"}))
+        self.assertEqual(log_entry.change_message, f"unretired_via: Test")
 
         cases = CaseAccessors(self.domain).get_cases(case_ids)
         self.assertFalse(all([c.is_deleted for c in cases]))
