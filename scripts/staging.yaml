@@ -64,7 +64,5 @@ branches:
   - ce/2fa-lockout
   - fr/shadow-module-child-versioned # Farid July 22
   - jls/CustomDataFieldsProfile # Jenny July 24
-  # - revert-27278-jls/migrate-CustomDataFieldsDefinition-3 # Jenny July 25
-  # - jls/domain-mirror-reports # Jenny July 25
 
 submodules: {}
