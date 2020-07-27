@@ -1,7 +1,7 @@
 import datetime
 import re
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _, ugettext_lazy
 
 from jsonobject.base import DefaultProperty
 
@@ -64,7 +64,7 @@ class AppCaseMetadataBuilder(object):
         for column in module.case_details.short.columns:
             self.meta.add_property_detail('short', module.case_type, module.unique_id, column)
         if module.case_details.short.filter:
-            self.meta.add_property_detail('short', module.case_type, module.unique_id, PropertyDetail(module.case_details.short.filter, {self.app.default_language: "[Filter]"}, True))
+            self.meta.add_property_detail('short', module.case_type, module.unique_id, PropertyDetail(module.case_details.short.filter, {self.app.default_language: _("[Filter]")}, True))
 
     def _add_form_contributions(self):
         for module in self.app.get_modules():
@@ -484,7 +484,7 @@ class AppCaseMetadata(JsonObject):
                     return parent_props
             else:
                 params = {'case_type': root_case_type, 'relationship': parent_rel}
-                raise CaseMetaException(_(
+                raise CaseMetaException(ugettext_lazy(
                     "Case type '%(case_type)s' has no '%(relationship)s' "
                     "relationship to any other case type.") % params)
 
