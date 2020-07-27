@@ -57,6 +57,7 @@ from corehq.apps.linked_domain.local_accessors import (
     get_fixture,
     get_toggles_previews,
     get_user_roles,
+    get_data_dictionary,
 )
 from corehq.apps.linked_domain.models import (
     AppLinkDetail,
@@ -173,6 +174,12 @@ def get_latest_released_app_source(request, domain, app_id):
     return JsonResponse(convert_app_for_remote_linking(latest_master_build))
 
 
+@login_or_api_key
+@require_linked_domain
+def data_dictionary(request, domain):
+    return JsonResponse(get_data_dictionary(domain))
+
+
 @require_can_edit_apps
 def pull_missing_multimedia(request, domain, app_id):
     async_update = request.POST.get('notify') == 'on'
@@ -209,6 +216,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         (master_apps, linked_apps) = self._get_apps()
         (master_fixtures, linked_fixtures) = self._get_fixtures(master_link)
         (master_reports, linked_reports) = self._get_reports()
+        (master_data_dictionary, linked_data_dictionary) = self._get_data_dictionary(master_link)
 
         # Models belonging to this domain's master domain, for the purpose of pulling
         model_status = self._get_model_status(master_link, linked_apps, linked_fixtures, linked_reports)
@@ -263,6 +271,11 @@ class DomainLinkView(BaseAdminProjectSettingsView):
             else:
                 master_list[report.get_id] = report
         return (master_list, linked_list)
+
+    def _get_data_dictionary(self, master_link):
+        master_data_dictionary = get_data_dictionary(self.domain)
+        linked_data_dictionary = get_data_dictionary(master_link.master_domain) if master_link else {}
+        return (master_data_dictionary, linked_data_dictionary)
 
     def _link_context(self, link, timezone):
         return {
