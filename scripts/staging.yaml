@@ -59,13 +59,12 @@ branches:
   - jls/turn-off-analytics-logging # Jenny June 19
   - nemanja1040:whatsapp_multimedia_messages  # Nemanja Stancic Jul 6
   - solleks:cdg/edit_reports_permission  # Charlie July 6
-  - jls/linked-domain-report-links # Jenny July 7
   - sr-alias-api # Sravan July 10
-  - ctsims/call_center_widgets # Clayton July 13
-  - ce/multi-domain-upload # Cal July 13
-  - ml/SAAS-10954-show-all-option  # Michelle July 15
-  - dm/django2-upgrade  # Danny / Daniel July 15
   - kev/webapps-addresses-question # Kevin July 16
   - ce/2fa-lockout
+  - fr/shadow-module-child-versioned # Farid July 22
+  - jls/CustomDataFieldsProfile # Jenny July 24
+  #- revert-27278-jls/migrate-CustomDataFieldsDefinition-3 # Jenny July 25
+  - jls/domain-mirror-reports # Jenny July 25
 
 submodules: {}

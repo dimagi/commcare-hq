@@ -123,6 +123,7 @@ FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
 FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
 SOFT_ASSERTS_LOG_FILE = "%s/%s" % (FILEPATH, "soft_asserts.log")
 MAIN_COUCH_SQL_DATAMIGRATION = "%s/%s" % (FILEPATH, "main_couch_sql_datamigration.log")
+ES_INTERFACE_LOG_FILE = "%s/%s" % (FILEPATH, "es_interface.log")
 
 LOCAL_LOGGING_CONFIG = {}
 
@@ -214,6 +215,7 @@ DEFAULT_APPS = (
     'statici18n',
     'django_user_agents',
     'logentry_admin',
+    'oauth2_provider',
 )
 
 CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'
@@ -366,9 +368,6 @@ HQ_APPS = (
 
     'custom.common',
 
-    'custom.icds',
-    'custom.icds.data_management',
-    'custom.icds_reports',
     'custom.nic_compliance',
     'custom.hki',
     'custom.champ',
@@ -781,6 +780,15 @@ LOCAL_APPS = ()
 LOCAL_MIDDLEWARE = ()
 LOCAL_PILLOWTOPS = {}
 
+LOCAL_STATIC_DATA_SOURCES = []
+LOCAL_STATIC_UCR_REPORTS = []
+LOCAL_CUSTOM_UCR_EXPRESSIONS = []
+LOCAL_CUSTOM_UCR_EXPRESSION_LISTS = []
+LOCAL_CUSTOM_UCR_REPORT_FILTERS = []
+LOCAL_CUSTOM_UCR_REPORT_FILTER_VALUES = []
+
+LOCAL_DOMAIN_MODULE_MAP = {}
+
 RUN_FORM_META_PILLOW = True
 RUN_CASE_SEARCH_PILLOW = True
 RUN_UNKNOWN_USER_PILLOW = True
@@ -811,6 +819,13 @@ ELASTICSEARCH_MAJOR_VERSION = 1
 ES_SEARCH_TIMEOUT = 30
 
 BITLY_OAUTH_TOKEN = None
+
+OAUTH2_PROVIDER = {
+    'SCOPES': {
+        'access_apis': 'Access API data on all your CommCare projects',
+    },
+}
+
 
 # this should be overridden in localsettings
 INTERNAL_DATA = defaultdict(list)
@@ -981,6 +996,7 @@ CUSTOM_LANDING_TEMPLATE = {
     # "default": 'login_and_password/login.html',
 }
 
+ENABLE_ES_INTERFACE_LOGGING = False
 ES_SETTINGS = None
 ES_XFORM_INDEX_NAME = "xforms_2016-07-07"
 ES_XFORM_DISABLE_ALL = False
@@ -1017,7 +1033,9 @@ REQUIRE_TWO_FACTOR_FOR_SUPERUSERS = False
 # that adds messages to the partition with the fewest unprocessed messages
 USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
 
+CUSTOM_DOMAIN_SPECIFIC_URL_MODULES = []
 LOCAL_CUSTOM_DB_ROUTING = {}
+
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1201,6 +1219,14 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
+        'es_interface-handler': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'verbose',
+            'filename': ES_INTERFACE_LOG_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
+        },
         'couch-request-handler': {
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
@@ -1358,6 +1384,11 @@ LOGGING = {
         'kafka': {
             'handlers': ['file'],
             'level': 'ERROR',
+            'propagate': False,
+        },
+        'es_interface': {
+            'handlers': ['es_interface-handler'],
+            'level': 'DEBUG',
             'propagate': False,
         },
     }
@@ -1807,17 +1838,10 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_3.json'),
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_4.json'),
     os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2019.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'dashboard', '*.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr', '*.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr', 'ucr_v2', '*.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr', '*.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr', 'dashboard', '*.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls', '*.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'other', '*.json'),
     os.path.join('custom', 'echis_reports', 'ucr', 'reports', '*.json'),
     os.path.join('custom', 'aaa', 'ucr', 'reports', '*.json'),
     os.path.join('custom', 'ccqa', 'ucr', 'reports', 'patients.json'),  # For testing static UCRs
-]
+] + LOCAL_STATIC_UCR_REPORTS
 
 
 STATIC_DATA_SOURCES = [
@@ -1833,49 +1857,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'malaria_consortium.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'weekly_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ag_care_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ag_care_cases_monthly.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'awc_locations.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'awc_mgt_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly_v2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_cases_monthly_v2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_delivery_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'daily_feeding_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'gm_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'hardware_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'home_visit_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'household_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'infrastructure_form.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'infrastructure_form_v2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'it_report_follow_issue.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_home_visit_forms_filled.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_app_usage_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_vhnd_form.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'person_cases_v3.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tasks_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tech_issue_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'thr_forms_v2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'usage_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'adolescent_girl_register_form_ucr.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'complementary_feeding_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'dashboard_growth_monitoring.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'postnatal_care_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'commcare_user_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'delivery_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'pregnant_tasks.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'child_tasks.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'thr_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'birth_preparedness_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'daily_feeding_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'migrations_form.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'availing_service_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'add_pregnancy_form.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'primary_private_school_form_ucr.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'cbe_form.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'commande_combined.json'),
@@ -1895,7 +1876,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'echis_reports', 'ucr', 'data_sources', '*.json'),
     os.path.join('custom', 'aaa', 'ucr', 'data_sources', '*.json'),
     os.path.join('custom', 'ccqa', 'ucr', 'data_sources', 'patients.json'),  # For testing static UCRs
-]
+] + LOCAL_STATIC_DATA_SOURCES
 
 for k, v in LOCAL_PILLOWTOPS.items():
     plist = PILLOWTOPS.get(k, [])
@@ -1942,21 +1923,16 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('eqa_expression', 'custom.eqa.expressions.eqa_expression'),
     ('cqi_action_item', 'custom.eqa.expressions.cqi_action_item'),
     ('eqa_percent_expression', 'custom.eqa.expressions.eqa_percent_expression'),
-]
+] + LOCAL_CUSTOM_UCR_EXPRESSIONS
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
-    ('mvp.ucr.reports.expressions.CUSTOM_UCR_EXPRESSIONS'),
-    ('custom.icds_reports.ucr.expressions.CUSTOM_UCR_EXPRESSIONS'),
-    ('corehq.apps.userreports.expressions.extension_expressions.CUSTOM_UCR_EXPRESSIONS'),
-]
+    'mvp.ucr.reports.expressions.CUSTOM_UCR_EXPRESSIONS',
+    'corehq.apps.userreports.expressions.extension_expressions.CUSTOM_UCR_EXPRESSIONS',
+] + LOCAL_CUSTOM_UCR_EXPRESSION_LISTS
 
-CUSTOM_UCR_REPORT_FILTERS = [
-    ('village_choice_list', 'custom.icds_reports.ucr.filter_spec.build_village_choice_list_filter_spec')
-]
+CUSTOM_UCR_REPORT_FILTERS = [] + LOCAL_CUSTOM_UCR_REPORT_FILTERS
 
-CUSTOM_UCR_REPORT_FILTER_VALUES = [
-    ('village_choice_list', 'custom.icds_reports.ucr.filter_value.VillageFilterValue')
-]
+CUSTOM_UCR_REPORT_FILTER_VALUES = [] + LOCAL_CUSTOM_UCR_REPORT_FILTER_VALUES
 
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
@@ -1967,9 +1943,6 @@ DOMAIN_MODULE_MAP = {
     'pact': 'pact',
 
     'ipm-senegal': 'custom.intrahealth',
-    'icds-test': 'custom.icds_reports',
-    'icds-cas': 'custom.icds_reports',
-    'icds-dashboard-qa': 'custom.icds_reports',
     'reach-test': 'custom.aaa',
     'reach-dashboard-qa': 'custom.aaa',
     'testing-ipm-senegal': 'custom.intrahealth',
@@ -2020,6 +1993,8 @@ DOMAIN_MODULE_MAP = {
 
     'ccqa': 'custom.ccqa',
 }
+
+DOMAIN_MODULE_MAP.update(LOCAL_DOMAIN_MODULE_MAP)
 
 THROTTLE_SCHED_REPORTS_PATTERNS = (
     # Regex patterns matching domains whose scheduled reports use a

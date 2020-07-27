@@ -140,7 +140,6 @@ class FormProcessorTestUtils(object):
                     'startkey': [doc_type],
                     'endkey': [doc_type, {}],
                 }
-
             FormProcessorTestUtils._delete_all_from_view(db, view, view_kwargs)
 
     @staticmethod
