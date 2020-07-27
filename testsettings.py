@@ -141,7 +141,7 @@ METRICS_PROVIDERS = [
 # timeout faster in tests
 ES_SEARCH_TIMEOUT = 5
 
-if os.path.exists("custom/icds"):
+if os.path.exists("extensions/icds/custom/icds"):
     STATIC_DATA_SOURCES.extend([
         "custom/icds_reports/ucr/data_sources/*.json",
         "custom/icds_reports/ucr/data_sources/dashboard/*.json"
