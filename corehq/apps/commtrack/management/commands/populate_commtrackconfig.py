@@ -29,6 +29,23 @@ class Command(PopulateSQLCommand):
         return None
 
     @classmethod
+    def diff_couch_and_sql(cls, doc, obj):
+        diffs = []
+        for attr in cls.attrs_to_sync():
+            diffs.append(cls.diff_attr(attr, doc, obj))
+        diffs.extend(cls.diff_lists(doc.get('actions', []), obj.all_actions, [
+            'action', 'subaction', '_keyword', 'caption'
+        ]))
+        for spec in cls.one_to_one_submodels():
+            normalize = float if spec["sql_class"] == SQLStockLevelsConfig else None
+            sql_submodel = getattr(obj, spec['sql_class'].__name__.lower())
+            couch_submodel = doc[spec['couch_attr']]
+            for attr in spec['fields']:
+                diffs.append(cls.diff_attr(attr, couch_submodel, sql_submodel, normalize=normalize))
+        diffs = [d for d in diffs if d]
+        return "\n".join(diffs) if diffs else None
+
+    @classmethod
     def attrs_to_sync(cls):
         return [
             "domain",

@@ -52,6 +52,30 @@ class PopulateSQLCommand(BaseCommand):
         raise NotImplementedError()
 
     @classmethod
+    def diff_attr(cls, name, doc, obj, normalize=None):
+        """
+        Helper for diff_couch_and_sql
+        """
+        couch = doc.get(name, None)
+        sql = getattr(obj, name, None)
+        if normalize:
+            couch = normalize(couch)
+            sql = normalize(sql)
+        if couch != sql:
+            return f"{name}: couch value '{couch}' != sql value '{sql}'"
+
+    @classmethod
+    def diff_lists(cls, docs, objects, attr_list):
+        diffs = []
+        if len(docs) != len(objects):
+            diffs.append(f"actions: {len(docs)} in couch != {len(attr_list)} in sql")
+        else:
+            for couch_field, sql_field in list(zip(docs, objects)):
+                for attr in attr_list:
+                    diffs.append(cls.diff_attr(attr, couch_field, sql_field))
+        return diffs
+
+    @classmethod
     def count_items_to_be_migrated(cls):
         couch_count = get_doc_count_by_type(cls.couch_db(), cls.couch_doc_type())
         sql_count = cls.sql_class().objects.count()
