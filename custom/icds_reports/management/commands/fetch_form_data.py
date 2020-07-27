@@ -52,6 +52,9 @@ forms = {
     "Infratructure Details": "static-infrastructure_form_v2",
     "VHSND Survey": "static-vhnd_form",
     "Visitor Register": "static-visitorbook_forms",
+    "AWC Visit Form": "static-awc_mgt_forms",
+    "Beneficiary Feedback": "static-ls_home_visit_forms_filled",
+    "VHSND observation Form": "static-ls_vhnd_form",
 }
 
 dates = [
@@ -122,7 +125,7 @@ class Command(BaseCommand):
                     rows = fetch_data(table_name, start_date, end_date)
                 # normal usage query
                 for row in rows:
-                    state_id = row['start_id']
+                    state_id = row['state_id']
                     csv_dict[f'{state_id}_{start_date.strftime("%Y-%m-%d")}'][form_name] = row['form_count']
         csv_dict = list(csv_dict.values())
         csv_columns = csv_dict[0].keys()
