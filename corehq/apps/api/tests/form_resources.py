@@ -5,6 +5,7 @@ from datetime import datetime
 from django.conf import settings
 from django.test import TestCase
 from django.utils.http import urlencode
+from nose.plugins.attrib import attr
 
 from casexml.apps.case.mock import CaseBlock
 from couchforms.models import XFormInstance
@@ -24,6 +25,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 from .utils import APIResourceTest, FakeFormESView
 
 
+@attr(es_test=True)
 class TestXFormInstanceResource(APIResourceTest):
     """
     Tests the XFormInstanceResource, currently only v0_4
@@ -188,6 +190,7 @@ class TestXFormInstanceResource(APIResourceTest):
         self.assertEqual(len(api_forms), 2)
 
 
+@attr(es_test=True)
 class TestXFormInstanceResourceQueries(APIResourceTest, ElasticTestMixin):
     """
     Tests that urlparameters get converted to expected ES queries.
@@ -202,7 +205,11 @@ class TestXFormInstanceResourceQueries(APIResourceTest, ElasticTestMixin):
 
         # A bit of a hack since none of Python's mocking libraries seem to do basic spies easily...
         def mock_run_query(es_query):
-            self.checkQuery(es_query['query']['filtered']['filter']['and'], expected_query, is_raw_query=True)
+            if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+                actual = es_query['query']['bool']['filter']
+            else:
+                actual = es_query['query']['filtered']['filter']['and']
+            self.checkQuery(actual, expected_query, is_raw_query=True)
             return prior_run_query(es_query)
 
         fake_xform_es.run_query = mock_run_query
@@ -279,14 +286,34 @@ class TestXFormInstanceResourceQueries(APIResourceTest, ElasticTestMixin):
         self.assertEqual(queries[2]['sort'], [{'received_on': {'missing': '_last', 'order': 'desc'}}])
 
     def test_get_list_archived(self):
-        expected = [
-            {'term': {'domain.exact': 'qwerty'}},
-            {'or': (
-                {'term': {'doc_type': 'xforminstance'}},
-                {'term': {'doc_type': 'xformarchived'}}
-            )},
-            {'match_all': {}}
-        ]
+        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+            expected = [
+                {
+                    "term": {
+                        "domain.exact": "qwerty"
+                    }
+                },
+                {
+                    "bool": {
+                        "should": [
+                            {"term": {"doc_type": "xforminstance"}},
+                            {"term": {"doc_type": "xformarchived"}}
+                        ]
+                    }
+                },
+                {
+                    "match_all": {}
+                }
+            ]
+        else:
+            expected = [
+                {'term': {'domain.exact': 'qwerty'}},
+                {'or': (
+                    {'term': {'doc_type': 'xforminstance'}},
+                    {'term': {'doc_type': 'xformarchived'}}
+                )},
+                {'match_all': {}}
+            ]
         self._test_es_query({'include_archived': 'true'}, expected)
 
 
