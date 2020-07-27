@@ -49,7 +49,6 @@ import requests
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 from sentry_sdk import last_event_id
-from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from two_factor.views import LoginView
 
 from corehq.apps.hqwebapp.decorators import waf_allow
@@ -92,6 +91,8 @@ from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import (
     CloudCareAuthenticationForm,
     EmailAuthenticationForm,
+    HQAuthenticationTokenForm,
+    HQBackupTokenForm
 )
 from corehq.apps.hqwebapp.login_utils import get_custom_login_page
 from corehq.apps.hqwebapp.utils import (
@@ -463,8 +464,8 @@ def iframe_domain_login(req, domain):
 class HQLoginView(LoginView):
     form_list = [
         ('auth', EmailAuthenticationForm),
-        ('token', AuthenticationTokenForm),
-        ('backup', BackupTokenForm),
+        ('token', HQAuthenticationTokenForm),
+        ('backup', HQBackupTokenForm),
     ]
     extra_context = {}
 
@@ -478,8 +479,8 @@ class HQLoginView(LoginView):
 class CloudCareLoginView(HQLoginView):
     form_list = [
         ('auth', CloudCareAuthenticationForm),
-        ('token', AuthenticationTokenForm),
-        ('backup', BackupTokenForm),
+        ('token', HQAuthenticationTokenForm),
+        ('backup', HQBackupTokenForm),
     ]
 
 
