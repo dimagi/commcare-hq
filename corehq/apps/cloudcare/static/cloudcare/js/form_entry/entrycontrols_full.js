@@ -927,6 +927,7 @@ function getEntry(question) {
 
     var displayOptions = _getDisplayOptions(question);
     var isPhoneMode = ko.utils.unwrapObservable(displayOptions.phoneMode);
+    var receiveStyle = (question.stylesContains(/receive-*/)) ? question.stylesContaining(/receive-*/)[0] : null;
 
     switch (question.datatype()) {
         case Formplayer.Const.STRING:
@@ -934,7 +935,7 @@ function getEntry(question) {
         case Formplayer.Const.BARCODE:
             options = {
                 enableAutoUpdate: isPhoneMode,
-                receiveStyle: (question.stylesContains(/receive-*/)) ? question.stylesContaining(/receive-*/)[0] : null,
+                receiveStyle: receiveStyle,
             };
             if (question.stylesContains(Formplayer.Const.ADDRESS)) {
                 entry = new AddressEntry(question, {
@@ -987,8 +988,7 @@ function getEntry(question) {
                      * The second word designates the matching type
                      */
                     matchType: question.style.raw().split(' ')[1],
-                    receiveStyle: (question.stylesContains(/receive-*/)) ?
-                        question.stylesContaining(/receive-*/)[0] : null,
+                    receiveStyle: receiveStyle,
                 });
             } else if (isLabel) {
                 entry = new ChoiceLabelEntry(question, {
@@ -996,7 +996,7 @@ function getEntry(question) {
                 });
             } else {
                 entry = new SingleSelectEntry(question, {
-                    receiveStyle: (question.stylesContains(/receive-*/)) ? question.stylesContaining(/receive-*/)[0] : null,
+                    receiveStyle: receiveStyle,
                 });
             }
             break;
