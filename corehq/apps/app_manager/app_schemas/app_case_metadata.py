@@ -63,7 +63,7 @@ class AppCaseMetadataBuilder(object):
             self.meta.add_property_detail('short', module.case_type, module.unique_id,
                                           column.field, column.header, column.useXpathExpression)
         if module.case_details.short.filter:
-            header = {self.app.default_language: _("[Filter]")}     # Fake a localized "header"
+            header = {lang: _("[Filter]") for lang in self.app.langs}   # Fake a localized "header"
             self.meta.add_property_detail('short', module.case_type, module.unique_id,
                                           module.case_details.short.filter, header, True)
 
