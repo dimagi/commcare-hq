@@ -9,7 +9,8 @@ from corehq.messaging.whatsapputil import (
     WhatsAppTemplateStringException,
     is_whatsapp_template_message,
     get_template_hsm_parts, WA_TEMPLATE_STRING,
-    extract_error_message_from_template_string
+    extract_error_message_from_template_string,
+    get_whatsapp_id
 )
 
 class SQLTurnWhatsAppBackend(SQLSMSBackend):
@@ -44,7 +45,7 @@ class SQLTurnWhatsAppBackend(SQLSMSBackend):
         client = TurnClient(config.client_auth_token)
         to = clean_phone_number(msg.phone_number)
         try:
-            wa_id = client.contacts.get_whatsapp_id(to)
+            wa_id = get_whatsapp_id(to, client)
 
             if is_whatsapp_template_message(msg.text):
                 return self._send_template_message(client, wa_id, msg)

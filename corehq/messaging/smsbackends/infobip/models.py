@@ -2,18 +2,21 @@ import requests
 import json
 from io import BytesIO
 from django.core.files.uploadedfile import UploadedFile
+from turn.exceptions import WhatsAppContactNotFound
+
+from corehq.messaging.util import send_fallback_message
 from corehq.apps.sms.models import SQLSMSBackend, SMS
 from corehq.apps.sms.util import clean_phone_number
 from corehq.messaging.smsbackends.infobip.forms import InfobipBackendForm
 from corehq.apps.smsbillables.exceptions import RetryBillableTaskException
-from corehq.messaging.util import send_fallback_message
 from corehq.messaging.whatsapputil import (
     WhatsAppTemplateStringException,
     is_whatsapp_template_message,
     get_template_hsm_parts, WA_TEMPLATE_STRING,
     extract_error_message_from_template_string,
     is_multimedia_message,
-    get_multimedia_urls
+    get_multimedia_urls,
+    get_whatsapp_id
 )
 
 INFOBIP_DOMAIN = "api.infobip.com"
@@ -38,7 +41,8 @@ class InfobipBackend(SQLSMSBackend):
             'account_sid',
             'auth_token',
             'personalized_subdomain',
-            'scenario_key'
+            'scenario_key',
+            'fallback_backend_id',
         ]
 
     @classmethod
@@ -75,10 +79,11 @@ class InfobipBackend(SQLSMSBackend):
         }
         try:
             if config.scenario_key:
+                get_whatsapp_id(to)
                 self._send_omni_failover_message(config, to, msg, headers)
             else:
                 self._send_sms(config, to, msg, headers)
-        except Exception:
+        except WhatsAppContactNotFound:
             msg.set_system_error(SMS.ERROR_INVALID_DESTINATION_NUMBER)
             if self.config.fallback_backend_id:
                 send_fallback_message(self.domain, self.config.fallback_backend_id, msg)
