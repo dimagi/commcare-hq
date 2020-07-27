@@ -59,7 +59,7 @@ DROP TABLE IF EXISTS temp_agg_child_health_rhit;
 CREATE UNLOGGED TABLE temp_agg_child_health_rhit AS (select state_id,supervisor_id,awc_id,month,gender,age_tranche,caste,disabled,minority,resident, rations_21_plus_distributed, days_ration_given_child from agg_child_health where 1=0);
 SELECT create_distributed_table('temp_agg_child_health_rhit', 'supervisor_id');
 INSERT INTO temp_agg_child_health_rhit(
-state_id,
+        state_id,
         supervisor_id,
         awc_id,
         month,
@@ -145,7 +145,7 @@ from (
         agg_child_health.gender=ut.gender AND
         agg_child_health.age_tranche=ut.age_tranche AND
         agg_child_health.aggregation_level=4 AND
-        agg_child_health.month = '{month}'
+        agg_child_health.month = '{month}';
 
 
 UPDATE agg_child_health
