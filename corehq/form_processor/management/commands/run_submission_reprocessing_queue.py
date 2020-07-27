@@ -10,13 +10,15 @@ from dimagi.utils.logging import notify_exception
 
 from corehq.form_processor.tasks import reprocess_submission
 from corehq.util.metrics import metrics_gauge
+from corehq.util.metrics.const import MPM_MAX
 
 BATCH_SIZE = 1000
 
 
 def _record_datadog_metrics():
     count = UnfinishedSubmissionStub.objects.count()
-    metrics_gauge('commcare.submission_reprocessing.queue_size', count)
+    metrics_gauge('commcare.submission_reprocessing.queue_size', count,
+        multiprocess_mode=MPM_MAX)
 
 
 class SubmissionReprocessingEnqueuingOperation(BaseCommand):

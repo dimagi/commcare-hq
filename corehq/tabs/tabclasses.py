@@ -25,7 +25,6 @@ from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_brief_apps_in_domain,
 )
-from corehq.apps.app_manager.models import ExchangeApplication
 from corehq.apps.app_manager.util import is_remote_app
 from corehq.apps.builds.views import EditMenuView
 from corehq.apps.domain.views.internal import ProjectLimitsView
@@ -38,11 +37,11 @@ from corehq.apps.hqadmin.reports import (
     DeviceLogSoftAssertReport,
     UserAuditReport,
     UserListReport,
+    DeployHistoryReport,
 )
 from corehq.apps.hqadmin.views.system import GlobalThresholds
 from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
-from corehq.apps.linked_domain.dbaccessors import is_linked_domain
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.receiverwrapper.rate_limiter import (
     SHOULD_RATE_LIMIT_SUBMISSIONS,
@@ -71,6 +70,7 @@ from corehq.apps.users.permissions import (
     can_download_data_files,
     can_view_sms_exports,
 )
+from corehq.apps.integration.views import DialerSettingsView
 from corehq.feature_previews import (
     EXPLORE_CASE_DATA_PREVIEW,
     is_eligible_for_ecd_preview,
@@ -98,8 +98,14 @@ from corehq.tabs.utils import (
     sidebar_to_dropdown,
 )
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
-from custom.icds.view_utils import is_icds_cas_project
-from custom.icds.views.hosted_ccz import ManageHostedCCZ, ManageHostedCCZLink
+from custom.icds_core.const import (
+    LocationReassignmentDownloadOnlyView_urlname,
+    LocationReassignmentView_urlname,
+    ManageHostedCCZ_urlname,
+    ManageHostedCCZLink_urlname,
+    SMSUsageReport_urlname,
+)
+from custom.icds_core.view_utils import is_icds_cas_project
 
 
 class ProjectReportsTab(UITab):
@@ -161,17 +167,16 @@ class ProjectReportsTab(UITab):
                 'icon': 'icon-tasks fa fa-wrench',
             })
         if toggles.PERFORM_LOCATION_REASSIGNMENT.enabled(self.couch_user.username):
-            from custom.icds.location_reassignment.views import LocationReassignmentDownloadOnlyView
             tools.append({
-                'title': _(LocationReassignmentDownloadOnlyView.section_name),
-                'url': reverse(LocationReassignmentDownloadOnlyView.urlname, args=[self.domain]),
+                'title': _("Download Location Reassignment Template"),
+                'url': reverse(LocationReassignmentDownloadOnlyView_urlname, args=[self.domain]),
                 'icon': 'icon-tasks fa fa-download',
             })
         return [(_("Tools"), tools)]
 
     def _get_report_builder_items(self):
         user_reports = []
-        if self.couch_user.can_edit_data():
+        if self.couch_user.can_edit_reports():
             has_access = has_report_builder_access(self._request)
             user_reports = [(
                 _("Report Builder"),
@@ -316,7 +321,7 @@ class SetupTab(UITab):
                     url=reverse(item[1].urlname, args=[self.domain])
                 ) for item in dropdown_items
             ] + [
-                dropdown_dict(None, is_divider=True),
+                self.divider,
                 dropdown_dict(_("View All"), url=reverse(ProductListView.urlname, args=[self.domain])),
             ]
 
@@ -882,7 +887,7 @@ class ProjectDataTab(UITab):
             ))
 
         if items:
-            items += [dropdown_dict(None, is_divider=True)]
+            items += [self.divider]
         items += [dropdown_dict(_("View All"), url=self.url)]
         return items
 
@@ -929,16 +934,11 @@ class ApplicationsTab(UITab):
             ))
 
         if self.couch_user.can_edit_apps():
-            submenu_context.append(dropdown_dict(None, is_divider=True))
+            submenu_context.append(self.divider)
             submenu_context.append(dropdown_dict(
                 _('New Application'),
                 url=(reverse('default_new_app', args=[self.domain])),
             ))
-            if ExchangeApplication.objects.count():
-                submenu_context.append(dropdown_dict(
-                    _('Import Template Application'),
-                    url=(reverse('app_exchange', args=[self.domain])),
-                ))
         if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled_for_request(self._request):
             submenu_context.append(dropdown_dict(
                 _('Translations'),
@@ -946,8 +946,8 @@ class ApplicationsTab(UITab):
             ))
         if toggles.MANAGE_CCZ_HOSTING.enabled_for_request(self._request):
             submenu_context.append(dropdown_dict(
-                ManageHostedCCZ.page_title,
-                url=reverse(ManageHostedCCZ.urlname, args=[self.domain])
+                _("Manage CCZ Hosting"),
+                url=reverse(ManageHostedCCZ_urlname, args=[self.domain])
             ))
         return submenu_context
 
@@ -1056,7 +1056,6 @@ class MessagingTab(UITab):
         messages_urls = []
 
         if self.can_use_outbound_sms:
-            from custom.icds.views.custom_sms_report import SMSUsageReport
             messages_urls.extend([
                 {
                     'title': _('Compose SMS Message'),
@@ -1067,7 +1066,7 @@ class MessagingTab(UITab):
                 messages_urls.extend([
                     {
                         'title': _('Get Custom SMS Usage Report'),
-                        'url': reverse(SMSUsageReport.urlname, args=[self.domain])
+                        'url': reverse(SMSUsageReport_urlname, args=[self.domain])
                     },
                 ])
 
@@ -1229,7 +1228,7 @@ class MessagingTab(UITab):
             ))
 
         if result:
-            result.append(dropdown_dict(None, is_divider=True))
+            result.append(self.divider)
 
         result.append(dropdown_dict(_("Messages"), is_header=True))
         result.append(dropdown_dict(
@@ -1242,7 +1241,7 @@ class MessagingTab(UITab):
         ))
 
         if result:
-            result.append(dropdown_dict(None, is_divider=True))
+            result.append(self.divider)
 
         view_all_view = MessagingDashboardView.urlname if self.show_dashboard else 'sms_compose_message'
         result.append(dropdown_dict(
@@ -1533,10 +1532,9 @@ class ProjectUsersTab(UITab):
             })
 
         if toggles.PERFORM_LOCATION_REASSIGNMENT.enabled(self.couch_user.username):
-            from custom.icds.location_reassignment.views import LocationReassignmentView
             menu.append({
                 'title': _("Location Reassignment"),
-                'url': reverse(LocationReassignmentView.urlname, args=[self.domain])
+                'url': reverse(LocationReassignmentView_urlname, args=[self.domain])
             })
 
         return menu
@@ -1605,11 +1603,11 @@ class HostedCCZTab(UITab):
     def sidebar_items(self):
         items = super(HostedCCZTab, self).sidebar_items
         items.append((_('Manage CCZ Hostings'), [
-            {'url': reverse(ManageHostedCCZLink.urlname, args=[self.domain]),
-             'title': ManageHostedCCZLink.page_title
+            {'url': reverse(ManageHostedCCZLink_urlname, args=[self.domain]),
+             'title': _("Manage CCZ Hosting Links")
              },
-            {'url': reverse(ManageHostedCCZ.urlname, args=[self.domain]),
-             'title': ManageHostedCCZ.page_title
+            {'url': reverse(ManageHostedCCZ_urlname, args=[self.domain]),
+             'title': _("Manage CCZ Hosting")
              },
         ]))
         return items
@@ -1919,6 +1917,12 @@ def _get_integration_section(domain):
             'url': reverse(OpenmrsImporterView.urlname, args=[domain])
         })
 
+    if toggles.WIDGET_DIALER.enabled(domain):
+        integration.append({
+            'title': _(DialerSettingsView.page_title),
+            'url': reverse(DialerSettingsView.urlname, args=[domain])
+        })
+
     return integration
 
 
@@ -2007,7 +2011,6 @@ class MySettingsTab(UITab):
 class AccountingTab(UITab):
     title = ugettext_noop("Accounting")
     view = "accounting_default"
-    dispatcher = AccountingAdminInterfaceDispatcher
 
     url_prefix_formats = ('/hq/accounting/',)
     show_by_default = False
@@ -2019,7 +2022,7 @@ class AccountingTab(UITab):
     @property
     @memoized
     def sidebar_items(self):
-        items = super(AccountingTab, self).sidebar_items
+        items = AccountingAdminInterfaceDispatcher.navigation_sections(request=self._request, domain=self.domain)
 
         from corehq.apps.accounting.views import ManageAccountingAdminsView
         items.append(('Permissions', (
@@ -2063,7 +2066,6 @@ class AccountingTab(UITab):
 class SMSAdminTab(UITab):
     title = ugettext_noop("SMS Connectivity & Billing")
     view = "default_sms_admin_interface"
-    dispatcher = SMSAdminInterfaceDispatcher
 
     url_prefix_formats = ('/hq/sms/',)
     show_by_default = False
@@ -2073,7 +2075,7 @@ class SMSAdminTab(UITab):
     def sidebar_items(self):
         from corehq.apps.sms.views import (GlobalSmsGatewayListView,
             AddGlobalGatewayView, EditGlobalGatewayView)
-        items = super(SMSAdminTab, self).sidebar_items
+        items = SMSAdminInterfaceDispatcher.navigation_sections(request=self._request, domain=self.domain)
         items.append((_('SMS Connectivity'), [
             {'title': _('Gateways'),
              'url': reverse(GlobalSmsGatewayListView.urlname),
@@ -2124,7 +2126,7 @@ class AdminTab(UITab):
         submenu_context.extend([
             dropdown_dict(_("Feature Flags"), url=reverse("toggle_list")),
             dropdown_dict(_("SMS Connectivity & Billing"), url=reverse("default_sms_admin_interface")),
-            dropdown_dict(None, is_divider=True),
+            self.divider,
             dropdown_dict(_("Django Admin"), url="/admin"),
             dropdown_dict(_("View All"), url=self.url),
         ])
@@ -2212,6 +2214,8 @@ class AdminTab(UITab):
             (_('Administrative Reports'), [
                 {'title': _('User List'),
                  'url': UserListReport.get_url()},
+                {'title': _('Deploy History'),
+                 'url': DeployHistoryReport.get_url()},
                 {'title': _('Download Malt table'),
                  'url': reverse('download_malt')},
                 {'title': _('Download Global Impact Report'),

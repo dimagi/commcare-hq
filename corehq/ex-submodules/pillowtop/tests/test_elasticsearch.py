@@ -27,6 +27,7 @@ class ElasticPillowTest(SimpleTestCase):
 
     def setUp(self):
         self.index = TEST_INDEX_INFO.index
+        self.es_alias = TEST_INDEX_INFO.alias
         self.es = get_es_new()
         self.es_interface = ElasticsearchInterface(self.es)
         with trap_extra_setup(ConnectionError):
@@ -62,11 +63,11 @@ class ElasticPillowTest(SimpleTestCase):
         initialize_index_and_mapping(self.es, TEST_INDEX_INFO)
         doc_id = uuid.uuid4().hex
         doc = {'_id': doc_id, 'doc_type': 'CommCareCase', 'type': 'mother'}
-        self.assertEqual(0, get_doc_count(self.es, self.index))
-        self.es_interface.create_doc(self.index, 'case', doc_id, doc)
-        self.assertEqual(0, get_doc_count(self.es, self.index, refresh_first=False))
+        self.assertEqual(0, get_doc_count(self.es, self.es_alias))
+        self.es_interface.create_doc(self.es_alias, 'case', doc_id, doc)
+        self.assertEqual(0, get_doc_count(self.es, self.es_alias, refresh_first=False))
         self.es.indices.refresh(self.index)
-        self.assertEqual(1, get_doc_count(self.es, self.index, refresh_first=False))
+        self.assertEqual(1, get_doc_count(self.es, self.es_alias, refresh_first=False))
 
     def test_index_operations(self):
         initialize_index_and_mapping(self.es, TEST_INDEX_INFO)
@@ -156,6 +157,7 @@ class TestSendToElasticsearch(SimpleTestCase):
         self.es = get_es_new()
         self.es_interface = ElasticsearchInterface(self.es)
         self.index = TEST_INDEX_INFO.index
+        self.es_alias = TEST_INDEX_INFO.alias
 
         with trap_extra_setup(ConnectionError):
             ensure_index_deleted(self.index)
@@ -171,10 +173,10 @@ class TestSendToElasticsearch(SimpleTestCase):
     def _send_to_es_and_check(self, doc, update=False, es_merge_update=False,
                               delete=False, esgetter=None):
         if update and es_merge_update:
-            old_doc = self.es_interface.get_doc(self.index, TEST_INDEX_INFO.type, doc['_id'])
+            old_doc = self.es_interface.get_doc(self.es_alias, TEST_INDEX_INFO.type, doc['_id'])
 
         send_to_elasticsearch(
-            index=self.index,
+            alias=self.es_alias,
             doc_type=TEST_INDEX_INFO.type,
             doc_id=doc['_id'],
             es_getter=esgetter or get_es_new,
@@ -188,7 +190,7 @@ class TestSendToElasticsearch(SimpleTestCase):
 
         if not delete:
             self.assertEqual(1, get_doc_count(self.es, self.index))
-            es_doc = self.es_interface.get_doc(self.index, TEST_INDEX_INFO.type, doc['_id'])
+            es_doc = self.es_interface.get_doc(self.es_alias, TEST_INDEX_INFO.type, doc['_id'])
             if es_merge_update:
                 old_doc.update(es_doc)
                 for prop in doc:

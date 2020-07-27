@@ -44,6 +44,13 @@ def test_csv_file_encrypted(self, open_workbook, ext):
             pass
 
 
+@run_on_csv_adapter(SpreadsheetErrorsTest)
+def test_mismatched_row_lengths(self, open_workbook, ext):
+    with self.assertRaises(SpreadsheetFileInvalidError):
+        with open_workbook(get_file('mixed', ext)):
+            pass
+
+
 @run_on_all_adapters_except_csv(SpreadsheetErrorsTest)
 def test_file_encrypted(self, open_workbook, ext):
     with self.assertRaises(SpreadsheetFileEncrypted) as cxt:

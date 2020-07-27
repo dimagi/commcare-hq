@@ -2046,6 +2046,17 @@ class CaseList(IndexedSchema, NavMenuItemMediaMixin):
         return self._module.get_app()
 
 
+class Itemset(DocumentSchema):
+    instance_id = StringProperty()
+    instance_uri = StringProperty()
+
+    nodeset = StringProperty()
+
+    label = StringProperty()
+    value = StringProperty()
+    sort = StringProperty()
+
+
 class CaseSearchProperty(DocumentSchema):
     """
     Case properties available to search on.
@@ -2053,6 +2064,9 @@ class CaseSearchProperty(DocumentSchema):
     name = StringProperty()
     label = DictProperty()
     appearance = StringProperty()
+    input_ = StringProperty()
+
+    itemset = SchemaProperty(Itemset)
 
 
 class DefaultCaseSearchProperty(DocumentSchema):
@@ -4802,7 +4816,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
 
     @time_method()
     def create_profile(self, is_odk=False, with_media=False,
-                       template='app_manager/profile.xml', build_profile_id=None, commcare_flavor=None):
+                       build_profile_id=None, commcare_flavor=None):
         self__profile = self.profile
         app_profile = defaultdict(dict)
 
@@ -4860,7 +4874,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
             TARGET_COMMCARE: 'org.commcare.dalvik',
             TARGET_COMMCARE_LTS: 'org.commcare.lts',
         }.get(commcare_flavor)
-        return render_to_string(template, {
+        return render_to_string('app_manager/profile.xml', {
             'is_odk': is_odk,
             'app': self,
             'profile_url': profile_url,
@@ -4874,6 +4888,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
             'locale': locale,
             'apk_heartbeat_url': apk_heartbeat_url,
             'target_package_id': target_package_id,
+            'support_email': settings.SUPPORT_EMAIL if not settings.IS_DIMAGI_ENVIRONMENT else None,
         }).encode('utf-8')
 
     @property

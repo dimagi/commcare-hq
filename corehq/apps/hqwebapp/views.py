@@ -49,7 +49,6 @@ import requests
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 from sentry_sdk import last_event_id
-from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from two_factor.views import LoginView
 
 from corehq.apps.hqwebapp.decorators import waf_allow
@@ -92,6 +91,8 @@ from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import (
     CloudCareAuthenticationForm,
     EmailAuthenticationForm,
+    HQAuthenticationTokenForm,
+    HQBackupTokenForm
 )
 from corehq.apps.hqwebapp.login_utils import get_custom_login_page
 from corehq.apps.hqwebapp.utils import (
@@ -114,7 +115,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.context_processors import commcare_hq_names
-from corehq.util.metrics.const import TAG_UNKNOWN
+from corehq.util.metrics.const import TAG_UNKNOWN, MPM_MAX
 from corehq.util.metrics.utils import sanitize_url
 from corehq.util.view_utils import reverse
 from no_exceptions.exceptions import Http403
@@ -312,7 +313,7 @@ def server_up(req):
             'status': 'failed' if not status.success else 'ok',
             'check': check_name
         }
-        metrics_gauge('commcare.serverup.check', status.duration, tags=tags)
+        metrics_gauge('commcare.serverup.check', status.duration, tags=tags, multiprocess_mode=MPM_MAX)
 
     if failed_checks and not is_deploy_in_progress():
         status_messages = [
@@ -463,8 +464,8 @@ def iframe_domain_login(req, domain):
 class HQLoginView(LoginView):
     form_list = [
         ('auth', EmailAuthenticationForm),
-        ('token', AuthenticationTokenForm),
-        ('backup', BackupTokenForm),
+        ('token', HQAuthenticationTokenForm),
+        ('backup', HQBackupTokenForm),
     ]
     extra_context = {}
 
@@ -478,8 +479,8 @@ class HQLoginView(LoginView):
 class CloudCareLoginView(HQLoginView):
     form_list = [
         ('auth', CloudCareAuthenticationForm),
-        ('token', AuthenticationTokenForm),
-        ('backup', BackupTokenForm),
+        ('token', HQAuthenticationTokenForm),
+        ('backup', HQBackupTokenForm),
     ]
 
 

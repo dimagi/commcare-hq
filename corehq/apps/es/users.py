@@ -62,10 +62,16 @@ class UserES(HQESQuery):
         return query.is_active(False)
 
 
-def domain(domain):
+def domain(domain, allow_mirroring=False):
+    domains = [domain]
+    if allow_mirroring:
+        from corehq.apps.users.models import DomainPermissionsMirror
+        source_domain = DomainPermissionsMirror.source_domain(domain)
+        if source_domain:
+            domains.append(source_domain)
     return filters.OR(
-        filters.term("domain.exact", domain),
-        filters.term("domain_memberships.domain.exact", domain)
+        filters.term("domain.exact", domains),
+        filters.term("domain_memberships.domain.exact", domains)
     )
 
 
@@ -139,6 +145,7 @@ def location(location_id):
     # by any assigned-location primary or not
     return filters.OR(
         filters.AND(mobile_users(), filters.term('assigned_location_ids', location_id)),
+        # todo; this actually doesn't get applied since the below field is not indexed
         filters.AND(
             web_users(),
             filters.term('domain_memberships.assigned_location_ids', location_id)

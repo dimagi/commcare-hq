@@ -9,7 +9,7 @@ from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.xform import get_case_updates
 from dimagi.utils.couch.undo import DELETED_SUFFIX
-from pillowtop.es_utils import initialize_index
+from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.callcenter.const import CALLCENTER_USER
@@ -60,7 +60,7 @@ class CallCenterUtilsTests(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
         cls.domain.delete()
         super(CallCenterUtilsTests, cls).tearDownClass()
 
@@ -78,7 +78,7 @@ class CallCenterUtilsTests(TestCase):
 
     def test_sync_full_name(self):
         other_user = CommCareUser.create(TEST_DOMAIN, 'user7', '***', None, None)
-        self.addCleanup(other_user.delete)
+        self.addCleanup(other_user.delete, deleted_by=None)
         name = 'Ricky Bowwood'
         other_user.set_full_name(name)
         sync_call_center_user_case(other_user)
@@ -108,7 +108,7 @@ class CallCenterUtilsTests(TestCase):
 
     def test_sync_update_update(self):
         other_user = CommCareUser.create(TEST_DOMAIN, 'user2', '***', None, None)
-        self.addCleanup(other_user.delete)
+        self.addCleanup(other_user.delete, deleted_by=None)
         sync_call_center_user_case(other_user)
         case = self._get_user_case(other_user._id)
         self.assertIsNotNone(case)
@@ -214,7 +214,7 @@ class CallCenterUtilsUserCaseTests(TestCase):
         self.user = CommCareUser.create(TEST_DOMAIN, 'user1', '***', None, None, commit=False)  # Don't commit yet
 
     def tearDown(self):
-        self.user.delete()
+        self.user.delete(deleted_by=None)
 
     @classmethod
     def tearDownClass(cls):
@@ -375,7 +375,7 @@ class CallCenterUtilsUserCaseTests(TestCase):
         self.assertEqual(2, len(old_user_case.xform_ids))
 
         new_user = CommCareUser.get_by_username(format_username('the_bunk', TEST_DOMAIN))
-        self.addCleanup(new_user.delete)
+        self.addCleanup(new_user.delete, deleted_by=None)
         new_user_case = accessor.get_case_by_domain_hq_user_id(new_user._id, USERCASE_TYPE)
         self.assertEqual(new_user_case.owner_id, new_user.get_id)
         self.assertEqual(1, len(new_user_case.xform_ids))
@@ -450,7 +450,7 @@ class CallCenterDomainTest(SimpleTestCase):
         self.index_info = DOMAIN_INDEX_INFO
         self.elasticsearch = get_es_new()
         ensure_index_deleted(self.index_info.index)
-        initialize_index(self.elasticsearch, self.index_info)
+        initialize_index_and_mapping(self.elasticsearch, self.index_info)
         import time
         time.sleep(1)  # without this we get a 503 response about 30% of the time
 

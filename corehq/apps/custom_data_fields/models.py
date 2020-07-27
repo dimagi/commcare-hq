@@ -5,18 +5,6 @@ from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils.translation import ugettext as _
 
-from dimagi.ext.couchdbkit import (
-    BooleanProperty,
-    Document,
-    SchemaListProperty,
-    StringListProperty,
-    StringProperty,
-)
-from dimagi.ext.jsonobject import JsonObject
-from dimagi.utils.couch.migration import SyncCouchToSQLMixin, SyncSQLToCouchMixin
-
-from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
-
 CUSTOM_DATA_FIELD_PREFIX = "data-field"
 # If mobile-worker is demo, this will be set to value 'demo'
 COMMCARE_USER_TYPE_KEY = 'user_type'
@@ -44,61 +32,49 @@ def is_system_key(slug):
     return False
 
 
-class SQLField(models.Model):
+class Field(models.Model):
     slug = models.CharField(max_length=127)
     is_required = models.BooleanField(default=False)
     label = models.CharField(max_length=255)
     choices = JSONField(default=list, null=True)
     regex = models.CharField(max_length=127, null=True)
     regex_msg = models.CharField(max_length=255, null=True)
-    definition = models.ForeignKey('SQLCustomDataFieldsDefinition', on_delete=models.CASCADE)
+    definition = models.ForeignKey('CustomDataFieldsDefinition', on_delete=models.CASCADE)
 
     class Meta:
-        db_table = "custom_data_fields_field"
         order_with_respect_to = "definition"
 
+    def validate_choices(self, value):
+        if self.choices and value and str(value) not in self.choices:
+            return _(
+                "'{value}' is not a valid choice for {label}. The available "
+                "options are: {options}."
+            ).format(
+                value=value,
+                label=self.label,
+                options=', '.join(self.choices),
+            )
 
-class CustomDataField(JsonObject):
-    slug = StringProperty()
-    is_required = BooleanProperty(default=False)
-    label = StringProperty(default='')
-    choices = StringListProperty()
-    regex = StringProperty()
-    regex_msg = StringProperty()
+    def validate_regex(self, value):
+        if self.regex and value and not re.search(self.regex, value):
+            return _("'{value}' is not a valid match for {label}").format(
+                value=value, label=self.label)
+
+    def validate_required(self, value):
+        if self.is_required and not value:
+            return _(
+                "{label} is required."
+            ).format(
+                label=self.label
+            )
 
 
-class SQLCustomDataFieldsDefinition(SyncSQLToCouchMixin, models.Model):
+class CustomDataFieldsDefinition(models.Model):
     field_type = models.CharField(max_length=126)
     domain = models.CharField(max_length=255, null=True)
-    couch_id = models.CharField(max_length=126, null=True, db_index=True)
 
     class Meta:
-        db_table = "custom_data_fields_customdatafieldsdefinition"
         unique_together = ('domain', 'field_type')
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return ["domain", "field_type"]
-
-    def _migration_sync_to_couch(self, couch_obj):
-        for field_name in self._migration_get_fields():
-            value = getattr(self, field_name)
-            setattr(couch_obj, field_name, value)
-        couch_obj.fields = [
-            CustomDataField(
-                slug=field.slug,
-                is_required=field.is_required,
-                label=field.label,
-                choices=field.choices,
-                regex=field.regex,
-                regex_msg=field.regex_msg,
-            ) for field in self.get_fields()
-        ]
-        couch_obj.save(sync_to_sql=False)
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return CustomDataFieldsDefinition
 
     @classmethod
     def get(cls, domain, field_type):
@@ -121,53 +97,27 @@ class SQLCustomDataFieldsDefinition(SyncSQLToCouchMixin, models.Model):
                 (required_only and not field.is_required)
                 or (not include_system and is_system_key(field.slug))
             )
-        order = self.get_sqlfield_order()
-        fields = [SQLField.objects.get(id=o) for o in order]
+        order = self.get_field_order()
+        fields = [Field.objects.get(id=o) for o in order]
         return [f for f in fields if _is_match(f)]
 
     # Note that this does not save
     def set_fields(self, fields):
-        self.sqlfield_set.all().delete()
-        self.sqlfield_set.set(fields, bulk=False)
-        self.set_sqlfield_order([f.id for f in fields])
+        self.field_set.all().delete()
+        self.field_set.set(fields, bulk=False)
+        self.set_field_order([f.id for f in fields])
 
-    def get_validator(self, data_field_class):
+    def get_validator(self):
         """
         Returns a validator to be used in bulk import
         """
-        def validate_choices(field, value):
-            if field.choices and value and str(value) not in field.choices:
-                return _(
-                    "'{value}' is not a valid choice for {slug}, the available "
-                    "options are: {options}."
-                ).format(
-                    value=value,
-                    slug=field.slug,
-                    options=', '.join(field.choices),
-                )
-
-        def validate_regex(field, value):
-            if field.regex and value and not re.search(field.regex, value):
-                return _("'{value}' is not a valid match for {slug}").format(
-                    value=value, slug=field.slug)
-
-        def validate_required(field, value):
-            if field.is_required and not value:
-                return _(
-                    "Cannot create or update a {entity} without "
-                    "the required field: {field}."
-                ).format(
-                    entity=data_field_class.entity_string,
-                    field=field.slug
-                )
-
         def validate_custom_fields(custom_fields):
             errors = []
             for field in self.get_fields():
                 value = custom_fields.get(field.slug, None)
-                errors.append(validate_required(field, value))
-                errors.append(validate_choices(field, value))
-                errors.append(validate_regex(field, value))
+                errors.append(field.validate_required(value))
+                errors.append(field.validate_choices(value))
+                errors.append(field.validate_regex(value))
             return ' '.join(filter(None, errors))
 
         return validate_custom_fields
@@ -182,7 +132,7 @@ class SQLCustomDataFieldsDefinition(SyncSQLToCouchMixin, models.Model):
             return {}, {}
         model_data = {}
         uncategorized_data = {}
-        slugs = {field.slug for field in self.sqlfield_set.all()}
+        slugs = {field.slug for field in self.field_set.all()}
         for k, v in data_dict.items():
             if k in slugs:
                 model_data[k] = v
@@ -192,37 +142,3 @@ class SQLCustomDataFieldsDefinition(SyncSQLToCouchMixin, models.Model):
                 uncategorized_data[k] = v
 
         return model_data, uncategorized_data
-
-
-class CustomDataFieldsDefinition(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
-    """
-    Per-project user-defined fields such as custom user data.
-    """
-    field_type = StringProperty()
-    base_doc = "CustomDataFieldsDefinition"
-    domain = StringProperty()
-    fields = SchemaListProperty(CustomDataField)
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return ["domain", "field_type"]
-
-    def _migration_sync_to_sql(self, sql_object):
-        for field_name in self._migration_get_fields():
-            value = getattr(self, field_name)
-            setattr(sql_object, field_name, value)
-        sql_object.set_fields([
-            SQLField(
-                slug=field.slug,
-                is_required=field.is_required,
-                label=field.label,
-                choices=field.choices,
-                regex=field.regex,
-                regex_msg=field.regex_msg,
-            ) for field in self.fields
-        ])
-        sql_object.save(sync_to_couch=False)
-
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        return SQLCustomDataFieldsDefinition

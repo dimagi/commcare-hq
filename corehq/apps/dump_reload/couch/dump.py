@@ -41,7 +41,6 @@ DOC_PROVIDERS = {
     DocTypeIDProvider(['ExportDataSchema']),
     DocTypeIDProvider(['CaseExportInstance']),
     DocTypeIDProvider(['CaseExportDataSchema']),
-    DocTypeIDProvider(['CustomDataFieldsDefinition']),
     DocTypeIDProvider(['FixtureOwnership']),
     DocTypeIDProvider(['FixtureDataType']),
     DocTypeIDProvider(['FixtureDataItem']),

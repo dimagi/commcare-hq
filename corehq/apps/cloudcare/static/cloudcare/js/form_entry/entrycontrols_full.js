@@ -119,6 +119,27 @@ EntrySingleAnswer.prototype.constructor = Entry;
 EntrySingleAnswer.prototype.onAnswerChange = function (newValue) {
     this.question.onchange();
 };
+EntrySingleAnswer.prototype.enableReceiver = function (question, options) {
+    var self = this;
+    if (options.receiveStyle) {
+        var match = options.receiveStyle.match(/receive-(.*)-(.*)/);
+        if (match) {
+            var receiveTopic = match[1];
+            var receiveTopicField = match[2];
+            question.parentPubSub.subscribe(function (addr) {
+                if (addr === Formplayer.Const.NO_ANSWER) {
+                    self.rawAnswer(Formplayer.Const.NO_ANSWER);
+                } else if (addr[receiveTopicField]) {
+                    self.receiveValue(addr[receiveTopicField]);
+                }
+            }, null, receiveTopic);
+        }
+    }
+};
+EntrySingleAnswer.prototype.receiveValue = function (value) {
+    var self = this;
+    self.rawAnswer(value);
+};
 
 
 /**
@@ -187,6 +208,7 @@ function FreeTextEntry(question, options) {
                 return gettext('Free response');
         }
     };
+    self.enableReceiver(question, options);
 }
 FreeTextEntry.prototype = Object.create(EntrySingleAnswer.prototype);
 FreeTextEntry.prototype.constructor = EntrySingleAnswer;
@@ -196,6 +218,99 @@ FreeTextEntry.prototype.onPreProcess = function (newValue) {
     }
     this.question.error(this.getErrorMessage(newValue));
 };
+
+
+/**
+ * The entry that represents an address entry.
+ * Takes in a `broadcastStyles` list of strings in format `broadcast-<topic>` to broadcast
+ * the address item that is selected. Item contains `full`, `street`, `city`, `state_short`, `state_long`, `zipcode`.
+ */
+function AddressEntry(question, options) {
+    var self = this;
+    FreeTextEntry.call(self, question, options);
+    self.templateType = 'address';
+    self.broadcastTopics = [];
+    self.editing = true;
+
+    // Callback for the geocoder when an address item is selected. We intercept here and broadcast to
+    // subscribers.
+    self.geocoderItemCallback = function (item) {
+        self.rawAnswer(item.place_name);
+        self.editing = false;
+        self.broadcastTopics.forEach(function (broadcastTopic) {
+            var broadcastObj = {
+                full: item.place_name,
+            };
+            item.context.forEach(function (contextValue) {
+                try {
+                    if (contextValue.id.startsWith('postcode')) {
+                        broadcastObj.zipcode = contextValue.text;
+                    } else if (contextValue.id.startsWith('place')) {
+                        broadcastObj.city = contextValue.text;
+                    } else if (contextValue.id.startsWith('region')) {
+                        broadcastObj.state_short = contextValue.short_code.replace('US-', '');
+                        broadcastObj.state_long = contextValue.text;
+                    }
+                } catch (err) {
+                    // Swallow error, broadcast best effort. Consider logging.
+                }
+            });
+            // street composed of (optional) number and street name.
+            broadcastObj.street = item.address || '';
+            broadcastObj.street += ' ' + item.text;
+
+            question.parentPubSub.notifySubscribers(broadcastObj, broadcastTopic);
+        });
+        // The default full address returned to the search bar
+        return item.place_name;
+    };
+
+    // geocoder function called when user presses 'x', broadcast a no answer to subscribers.
+    self.geocoderOnClearCallback = function () {
+        self.answer(Formplayer.Const.NO_ANSWER);
+        self.editing = true;
+        self.broadcastTopics.forEach(function (broadcastTopic) {
+            question.parentPubSub.notifySubscribers(Formplayer.Const.NO_ANSWER, broadcastTopic);
+        });
+    };
+
+    self.afterRender = function () {
+        if (options.broadcastStyles) {
+            options.broadcastStyles.forEach(function (broadcast) {
+                var match = broadcast.match(/broadcast-(.*)/);
+                if (match) {
+                    self.broadcastTopics.push(match[1]);
+                }
+            });
+        }
+
+        var geocoder = new MapboxGeocoder({
+            accessToken: window.MAPBOX_ACCESS_TOKEN,
+            types: 'address',
+            enableEventLogging: false,
+            // proximity set to NYC
+            proximity: { longitude: -74.006058, latitude: 40.712772},
+            getItemValue: self.geocoderItemCallback,
+        });
+        geocoder.on('clear', self.geocoderOnClearCallback);
+        geocoder.addTo('#' + self.entryId);
+        // Must add the form-control class to the input created by mapbox in order to edit.
+        var inputEl = $('input.mapboxgl-ctrl-geocoder--input');
+        inputEl.addClass('form-control');
+        inputEl.on('keydown', _.debounce(self._inputOnKeyDown, 200));
+    };
+
+    self._inputOnKeyDown = function () {
+        // On key down, switch to editing mode so we unregister an answer.
+        if (!self.editing) {
+            self.rawAnswer(Formplayer.Const.NO_ANSWER);
+            self.editing = true;
+        }
+    };
+}
+AddressEntry.prototype = Object.create(FreeTextEntry.prototype);
+AddressEntry.prototype.constructor = FreeTextEntry;
+
 
 /**
  * The entry that defines an integer input. Only accepts whole numbers
@@ -219,6 +334,7 @@ function IntEntry(question, options) {
         return 'Number';
     };
 
+    self.enableReceiver(question, options);
 }
 IntEntry.prototype = Object.create(FreeTextEntry.prototype);
 IntEntry.prototype.constructor = FreeTextEntry;
@@ -251,6 +367,7 @@ function PhoneEntry(question, options) {
         return 'Phone number or Numeric ID';
     };
 
+    this.enableReceiver(question, options);
 }
 PhoneEntry.prototype = Object.create(FreeTextEntry.prototype);
 PhoneEntry.prototype.constructor = FreeTextEntry;
@@ -318,6 +435,8 @@ function SingleSelectEntry(question, options) {
     self.isValid = function () {
         return true;
     };
+
+    self.enableReceiver(question, options);
 }
 SingleSelectEntry.prototype = Object.create(EntrySingleAnswer.prototype);
 SingleSelectEntry.prototype.constructor = EntrySingleAnswer;
@@ -328,6 +447,21 @@ SingleSelectEntry.prototype.onPreProcess = function (newValue) {
         } else {
             this.answer(+newValue);
         }
+    }
+};
+SingleSelectEntry.prototype.receiveValue = function (value) {
+    var self = this;
+    var found = false;
+    var choices = self.choices();
+    for (var i = 0; i < choices.length; i++) {
+        if (choices[i] === value) {
+            self.rawAnswer(i + 1);
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
+        self.rawAnswer(Formplayer.Const.NO_ANSWER);
     }
 };
 
@@ -483,6 +617,8 @@ function ComboboxEntry(question, options) {
     self.afterRender = function () {
         self.renderAtwho();
     };
+
+    self.enableReceiver(question, options);
 }
 
 ComboboxEntry.filter = function (query, d, matchType) {
@@ -533,6 +669,21 @@ ComboboxEntry.prototype.onPreProcess = function (newValue) {
         this.question.error(null);
     } else {
         this.question.error(gettext('Not a valid choice'));
+    }
+};
+ComboboxEntry.prototype.receiveValue = function (value) {
+    var self = this;
+    var found = false;
+    var options = self.options();
+    for (var i = 0; i < options.length; i++) {
+        if (options[i].name === value) {
+            self.rawAnswer(options[i].name);
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
+        self.rawAnswer(Formplayer.Const.NO_ANSWER);
     }
 };
 
@@ -677,7 +828,6 @@ function GeoPointEntry(question, options) {
     var self = this;
     EntryArrayAnswer.call(self, question, options);
     self.templateType = 'geo';
-    self.apiKey = 'https://maps.googleapis.com/maps/api/js?key=' + window.GMAPS_API_KEY + '&sensor=false';
     self.map = null;
 
     self.DEFAULT = {
@@ -691,41 +841,39 @@ function GeoPointEntry(question, options) {
         self.rawAnswer([]);
     };
 
-    self.gMapsCallback = function () {
-        self.geocoder = new google.maps.Geocoder();
-        self.map = new google.maps.Map($('#' + self.entryId)[0], {
-            mapTypeId: google.maps.MapTypeId.ROADMAP,
-            center: new google.maps.LatLng(self.DEFAULT.lat, self.DEFAULT.lon),
-            zoom: self.DEFAULT.zoom,
-        });
-        if (self.rawAnswer().length) {
-            self.map.setCenter(new google.maps.LatLng(self.rawAnswer()[0], self.rawAnswer()[1]));
-            self.map.setZoom(self.DEFAULT.anszoom);
+    self.loadMap = function () {
+        if (window.MAPBOX_ACCESS_TOKEN) {
+            self.map = L.map(self.entryId).setView([self.DEFAULT.lat, self.DEFAULT.lon], self.DEFAULT.zoom);
+            L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token='
+                        + window.MAPBOX_ACCESS_TOKEN, {
+                id: 'mapbox/streets-v11',
+                attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
+                             ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            }).addTo(self.map);
+            self.map.on('move', self.updateCenter);
+
+            self.centerMarker = L.marker(self.map.getCenter()).addTo(self.map);
+
+            L.mapbox.accessToken = window.MAPBOX_ACCESS_TOKEN;
+            self.geocoder = L.mapbox.geocoder('mapbox.places');
+        } else {
+            question.error(gettext('Map layer not configured.'));
         }
-        google.maps.event.addListener(self.map, "center_changed", self.updateCenter.bind(self));
-        var marker = new google.maps.Marker({
-            map: self.map,
-        });
-        marker.bindTo('position', self.map, 'center');
+
     };
 
     self.afterRender = function () {
-        if (typeof google === "undefined" && !window.gMapsRequested) {
-            // First entry to attempt to load google
-            window.gMapsRequested = true;
-            $.getScript(self.apiKey, self.gMapsCallback);
-        } else if (typeof google === "undefined" && window.gMapsRequested) {
-            // Waiting for gmaps to load, recursively call afterRender
-            setTimeout(self.afterRender, 400);
+        if (typeof L === 'undefined') {
+            question.error(gettext('Could not load map. Please try again later.'));
         } else {
-            // google has already been loaded
-            self.gMapsCallback();
+            self.loadMap();
         }
     };
 
     self.updateCenter = function () {
         var center = self.map.getCenter();
-        self.rawAnswer([center.lat(), center.lng()]);
+        self.centerMarker.setLatLng(center);
+        self.rawAnswer([center.lat, center.lng]);
     };
 
     self.formatLat = function () {
@@ -744,12 +892,13 @@ function GeoPointEntry(question, options) {
 
     self.search = function (form) {
         var query = $(form).find('.query').val();
-        self.geocoder.geocode({
-            'address': query,
-        }, function (results, status) {
-            if (status === google.maps.GeocoderStatus.OK) {
-                self.map.fitBounds(results[0].geometry.viewport);
-                self.map.setCenter(results[0].geometry.location);
+        self.geocoder.query(query, function (err, data) {
+            if (err === null) {
+                if (data.lbounds !== null) {
+                    self.map.fitBounds(data.lbounds);
+                } else if (data.latlng !== null) {
+                    self.map.setView([data.latlng[0], data.latlng[1]], self.DEFAULT.zoom);
+                }
             }
         });
     };
@@ -778,20 +927,24 @@ function getEntry(question) {
 
     var displayOptions = _getDisplayOptions(question);
     var isPhoneMode = ko.utils.unwrapObservable(displayOptions.phoneMode);
+    var receiveStyle = (question.stylesContains(/receive-*/)) ? question.stylesContaining(/receive-*/)[0] : null;
 
     switch (question.datatype()) {
         case Formplayer.Const.STRING:
             // Barcode uses text box for CloudCare so it's possible to still enter a barcode field
         case Formplayer.Const.BARCODE:
-            isNumeric = style === Formplayer.Const.NUMERIC;
-            if (isNumeric) {
-                entry = new PhoneEntry(question, {
-                    enableAutoUpdate: isPhoneMode,
+            options = {
+                enableAutoUpdate: isPhoneMode,
+                receiveStyle: receiveStyle,
+            };
+            if (question.stylesContains(Formplayer.Const.ADDRESS)) {
+                entry = new AddressEntry(question, {
+                    broadcastStyles: question.stylesContaining(/broadcast-*/),
                 });
+            } else if (question.stylesContains(Formplayer.Const.NUMERIC)) {
+                entry = new PhoneEntry(question, options);
             } else {
-                entry = new FreeTextEntry(question, {
-                    enableAutoUpdate: isPhoneMode,
-                });
+                entry = new FreeTextEntry(question, options);
             }
             break;
         case Formplayer.Const.INT:
@@ -814,7 +967,7 @@ function getEntry(question) {
         case Formplayer.Const.SELECT:
             isMinimal = style === Formplayer.Const.MINIMAL;
             if (style) {
-                isCombobox = style.startsWith(Formplayer.Const.COMBOBOX);
+                isCombobox = question.stylesContains(Formplayer.Const.COMBOBOX);
             }
             if (style) {
                 isLabel = style === Formplayer.Const.LABEL || style === Formplayer.Const.LIST_NOLABEL;
@@ -824,7 +977,6 @@ function getEntry(question) {
             if (isMinimal) {
                 entry = new DropdownEntry(question, {});
             } else if (isCombobox) {
-
                 entry = new ComboboxEntry(question, {
                     /*
                      * The appearance attribute is either:
@@ -836,13 +988,16 @@ function getEntry(question) {
                      * The second word designates the matching type
                      */
                     matchType: question.style.raw().split(' ')[1],
+                    receiveStyle: receiveStyle,
                 });
             } else if (isLabel) {
                 entry = new ChoiceLabelEntry(question, {
                     hideLabel: hideLabel,
                 });
             } else {
-                entry = new SingleSelectEntry(question, {});
+                entry = new SingleSelectEntry(question, {
+                    receiveStyle: receiveStyle,
+                });
             }
             break;
         case Formplayer.Const.MULTI_SELECT:

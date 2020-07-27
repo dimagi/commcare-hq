@@ -47,7 +47,7 @@ class LocationTypesViewTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.couch_user.delete()
+        cls.couch_user.delete(deleted_by=None)
         cls.project.delete()
         super(LocationTypesViewTest, cls).tearDownClass()
 

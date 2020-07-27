@@ -790,9 +790,12 @@ class RestoreConfig(object):
 
         tags['type'] = 'sync' if self.params.sync_log_id else 'restore'
 
-        if settings.ENTERPRISE_MODE and self.params.app and self.params.app.copy_of:
-            app_name = slugify(self.params.app.name)
-            tags['app'] = '{}-{}'.format(app_name, self.params.app.version)
+        if settings.ENTERPRISE_MODE:
+            if self.params.app and self.params.app.copy_of:
+                app_name = slugify(self.params.app.name)
+                tags['app'] = '{}-{}'.format(app_name, self.params.app.version)
+            else:
+                tags['app'] = ''
 
         metrics_counter('commcare.restores.count', tags=tags)
         metrics_histogram(
