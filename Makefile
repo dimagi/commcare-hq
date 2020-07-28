@@ -13,7 +13,6 @@ requirements:
 	pip-compile -o $(REQUIREMENTS_TXT_DIR)/test-requirements.txt requirements/test-requirements.in --allow-unsafe
 	pip-compile -o $(REQUIREMENTS_TXT_DIR)/dev-requirements.txt requirements/dev-requirements.in --allow-unsafe
 	scripts/pip-post-compile.sh $(REQUIREMENTS_TXT_DIR)/*requirements.txt
-	cp $(REQUIREMENTS_TXT_DIR)/*requirements.txt requirements-python3/  # TODO remove once commcare-cloud no longer depends on it
 
 upgrade-requirements: export CUSTOM_COMPILE_COMMAND=`make requirements` or `make upgrade-requirements`
 upgrade-requirements:
@@ -22,7 +21,6 @@ upgrade-requirements:
 	pip-compile --upgrade -o $(REQUIREMENTS_TXT_DIR)/test-requirements.txt requirements/test-requirements.in --allow-unsafe
 	pip-compile --upgrade -o $(REQUIREMENTS_TXT_DIR)/dev-requirements.txt requirements/dev-requirements.in --allow-unsafe
 	scripts/pip-post-compile.sh $(REQUIREMENTS_TXT_DIR)/*requirements.txt
-	cp $(REQUIREMENTS_TXT_DIR)/*requirements.txt requirements-python3/  # TODO remove once commcare-cloud no longer depends on it
 
 docs:
 	cd docs && $(MAKE) html; cd -
