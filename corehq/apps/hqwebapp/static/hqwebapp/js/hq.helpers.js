@@ -42,7 +42,11 @@ hqDefine("hqwebapp/js/hq.helpers", [
 
     window.onerror = function (message, file, line, col, error) {
         var stack = error ? error.stack : null;
-        if (!stack && (message === 'Script error' || message === 'Script error.')) {
+        if (!stack && (
+                message === 'Script error'
+                || message === 'Script error.'
+                || message === 'ResizeObserver loop limit exceeded'
+        )) {
             return false;
         }
         $.post('/jserror/', {
