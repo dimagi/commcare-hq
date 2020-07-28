@@ -614,8 +614,8 @@ def is_opt_message(text, keyword_list):
 def get_opt_keywords(msg):
     backend_class = get_sms_backend_classes().get(msg.backend_api, SQLSMSBackend)
     return (
-        backend_class.get_opt_in_keywords(),
-        backend_class.get_opt_out_keywords(),
+        list(set(backend_class.get_opt_in_keywords()) | set(msg.outbound_backend.opt_in_keywords)),
+        list(set(backend_class.get_opt_out_keywords()) | set(msg.outbound_backend.opt_out_keywords)),
         backend_class.get_pass_through_opt_in_keywords(),
     )
 
