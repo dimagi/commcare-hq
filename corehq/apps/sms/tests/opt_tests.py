@@ -146,7 +146,7 @@ class OptTestCase(DomainSubscriptionMixin, TestCase):
         self.assertEqual(sms.direction, 'O')
         self.assertEqual(sms.text, 'hello')
 
-        incoming('99912345678', 'restop', 'TEST')
+        incoming('19912345678', 'restop', 'TEST')
         self.assertEqual(PhoneBlacklist.objects.count(), 1)
         phone_number = PhoneBlacklist.objects.get(phone_number='19912345678')
         self.assertFalse(phone_number.send_sms)
