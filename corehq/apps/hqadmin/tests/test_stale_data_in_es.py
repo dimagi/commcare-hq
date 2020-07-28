@@ -290,6 +290,7 @@ class TestStaleDataInESSQL(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        delete_all_cases()
         cls.project = Domain.get_or_create_with_name(
             cls.project_name, is_active=True, use_sql_backend=cls.use_sql_backend)
         cls.project.save()
