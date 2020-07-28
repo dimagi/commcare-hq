@@ -57,21 +57,8 @@ forms = {
     "VHSND observation Form": "static-ls_vhnd_form",
 }
 
-dates = [
-    date(2019, 9, 29),
-    date(2019, 10, 6),
-    date(2019, 10, 13),
-    date(2019, 10, 20),
-    date(2019, 10, 27),
-    date(2019, 11, 3),
-    date(2019, 11, 10),
-    date(2019, 11, 17),
-    date(2019, 11, 24),
-    date(2019, 12, 1),
-    date(2019, 12, 8),
-    date(2019, 12, 15),
-    date(2019, 12, 22),
-]
+START_DATE = date(2019, 9, 29)
+END_DATE = date(2019, 12, 22)
 
 
 @transaction.atomic
@@ -86,13 +73,14 @@ def _run_custom_sql_script(command):
         return dict(data)
 
 
-def fetch_data(table_name, start_date, end_date, usage_field_name=''):
-    if usage_field_name != '':
+def fetch_data(table_name, start_date, end_date, usage_field_name=None):
+    if usage_field_name:
         data = _run_custom_sql_script(
             query_usage.format(table_name=table_name, start_date=start_date, end_date=end_date,
                                usage_field_name=usage_field_name))
     else:
-        data = _run_custom_sql_script(query.format(table_name=table_name, start_date=start_date, end_date=end_date))
+        data = _run_custom_sql_script(
+            query.format(table_name=table_name, start_date=start_date, end_date=end_date))
     return data
 
 
@@ -104,19 +92,22 @@ class Command(BaseCommand):
             states[loc['state_id']] = loc['state_name']
         csv_dict = {}
         for state_id, state_name in states.items():
-            for dat in dates:
+            start_date = START_DATE
+            last_date = END_DATE
+            while start_date <= last_date:
                 dummy_dict = {
                     'state_name': state_name,
-                    'date': dat
+                    'date': start_date
                 }
                 for form in forms.keys():
                     dummy_dict[form] = 0
-                csv_dict[f'{state_id}_{dat.strftime("%Y-%m-%d")}'] = dummy_dict
-
+                csv_dict[f'{state_id}_{start_date.strftime("%Y-%m-%d")}'] = dummy_dict
+                start_date = start_date + relativedelta(days=7)
         for form_name, form_id in forms.items():
             table_name = get_table_name('icds-cas', form_id)
-            for dat in dates:
-                start_date = dat
+            start_date = START_DATE
+            last_date = END_DATE
+            while start_date <= last_date:
                 end_date = start_date + relativedelta(days=7)
                 if form_id == 'static-usage_forms':
                     usage_field_name = usage_forms[form_name]
@@ -127,6 +118,7 @@ class Command(BaseCommand):
                 for row in rows:
                     state_id = row['state_id']
                     csv_dict[f'{state_id}_{start_date.strftime("%Y-%m-%d")}'][form_name] = row['form_count']
+                start_date = end_date
         csv_dict = list(csv_dict.values())
         csv_columns = csv_dict[0].keys()
         with open('form_data.csv', 'w') as csvfile:
@@ -134,4 +126,3 @@ class Command(BaseCommand):
             writer.writeheader()
             for data in csv_dict:
                 writer.writerow(data)
-
