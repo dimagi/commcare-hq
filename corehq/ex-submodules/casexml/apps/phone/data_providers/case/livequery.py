@@ -266,7 +266,7 @@ def do_livequery(timing_context, restore_state, response, async_task=None):
                 timing_context,
                 restore_state,
                 response,
-                batch_cases(iaccessor, sync_ids, restore_state.domain),
+                batch_cases(iaccessor, sync_ids),
                 init_progress(async_task, len(sync_ids)),
             )
 
@@ -301,7 +301,7 @@ class PrefetchIndexCaseAccessor(object):
         return self.accessor.get_cases(case_ids, **kw)
 
 
-def batch_cases(accessor, case_ids, domain):
+def batch_cases(accessor, case_ids):
     def take(n, iterable):
         # https://docs.python.org/2/library/itertools.html#recipes
         return list(islice(iterable, n))
@@ -312,7 +312,7 @@ def batch_cases(accessor, case_ids, domain):
         len(case_ids),
         'cases',
         [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000],
-        tags={'domain': domain}
+        tags={'domain': accessor.domain}
     )
     ids = iter(case_ids)
     while True:
