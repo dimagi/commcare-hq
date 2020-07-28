@@ -207,6 +207,7 @@ class TestWebUserResource(APIResourceTest):
             "edit_web_users": True,
             "view_web_users": True,
             "view_roles": True,
+            "edit_reports": True,
             "view_reports": True
         },
         "phone_numbers": [
@@ -233,6 +234,7 @@ class TestWebUserResource(APIResourceTest):
             'edit_users_in_locations',
             'edit_data',
             'edit_apps',
+            'edit_reports',
             'view_reports',
         ]:
             self.assertEqual(getattr(role.permissions, perm), json_user['permissions'][perm])

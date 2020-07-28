@@ -410,6 +410,10 @@ To run a particular test or subset of tests
     $ ./manage.py test corehq/apps/app_manager
     $ ./manage.py test corehq/apps/app_manager/tests/test_suite.py:SuiteTest
     $ ./manage.py test corehq/apps/app_manager/tests/test_suite.py:SuiteTest.test_picture_format
+    
+To use the `pdb` debugger in tests, include the `s` flag:
+
+    $ ./manage.py test -s <test.module.path>[:<TestClass>[.<test_name>]]
 
 If database tests are failing because of a `permission denied` error, give your
 Postgres user permissions to create a database.
