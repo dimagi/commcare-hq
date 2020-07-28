@@ -10,7 +10,7 @@ hqDefine("icds/js/custom_sms_report",[
     var $startDate = $('#report_start_date');
     var $endDate = $('#report_end_date');
     var $submitBtn = $('#request_report');
-    if ( initialPageData.get('disable_submit')) {
+    if (initialPageData.get('disable_submit')) {
         $submitBtn.attr('disabled', true);
     }
     $el.createBootstrap3DefaultDateRangePicker();
