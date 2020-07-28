@@ -82,10 +82,6 @@ class SubmissionTest(BaseSubmissionTest):
         expected = self._get_expected_json(xform_id, xmlns)
         self.assertEqual(foo, expected)
 
-    def _test_case_supports_non_bmp_chars(self, case_id):
-        case = CaseAccessors(self.domain.name).get_case(case_id)
-        self.assertEqual(case.name, "👕 👖 👔 👗 👙")
-
     def test_submit_simple_form(self):
         self._test(
             form='simple_form.xml',
@@ -122,7 +118,8 @@ class SubmissionTest(BaseSubmissionTest):
             xmlns='http://commcarehq.org/test/submit',
         )
         case_id = 'ad38211be256653bceac8e2156475667'
-        self._test_case_supports_non_bmp_chars(case_id)
+        case = CaseAccessors(self.domain.name).get_case(case_id)
+        self.assertEqual(case.name, "👕 👖 👔 👗 👙")
 
     @softer_assert()
     def test_submit_deprecated_form(self):
