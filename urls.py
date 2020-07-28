@@ -94,7 +94,7 @@ domain_specific = [
 for module in settings.CUSTOM_DOMAIN_SPECIFIC_URL_MODULES:
     domain_specific.append(url(r'^', include(module)))
 
-for url_modules in extensions.get_contributions("domain_specific_urls"):
+for url_modules in extensions.hook.domain_specific_urls():
     for module in url_modules:
         domain_specific.append(url(r'^', include(module)))
 

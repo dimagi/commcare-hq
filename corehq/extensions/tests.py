@@ -50,7 +50,7 @@ def setup():
 
 def test_commcare_extensions():
     def check(kwargs, expected):
-        results = extensions.get_extension_point_contributions("ext_point_a", **kwargs)
+        results = extensions.registry.ext_point_a(**kwargs)
         testil.eq(results, expected)
 
     cases = [

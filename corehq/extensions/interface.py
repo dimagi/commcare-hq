@@ -44,9 +44,43 @@ class Extension:
         return f"{self.callable_ref}"
 
 
+class ExtensionCaller:
+    def __init__(self, extension_point):
+        self.extension_point = extension_point
+        self.extensions = []
+
+    def add_extension(self, extension):
+        self.extensions.append(extension)
+
+    def __call__(self, *args, **kwargs):
+        results = []
+        for extension in self.extensions:
+            try:
+                result = extension(**kwargs)
+                if result is not None:
+                    results.append(result)
+            except Exception:  # noqa
+                notify_exception(
+                    None,
+                    message="Error calling extension",
+                    details={
+                        "extention_point": self.extension_point.name,
+                        "extension": extension,
+                        "kwargs": kwargs
+                    },
+                )
+        return results
+
+
+class _Registry(object):
+    """Extension implementation holder object for performing 1:N calls where N is the number
+    of registered extensions.
+    """
+
+
 class CommCareExtensions:
     def __init__(self):
-        self.registry = defaultdict(list)
+        self.registry = _Registry()
         self.extension_point_registry = {}
         self.locked = False
 
@@ -124,25 +158,10 @@ class CommCareExtensions:
         if extension.point not in self.extension_point_registry:
             raise ExtensionError(f"unknown extension point '{extension.point}'")
 
-        extension.validate(self.extension_point_registry[extension.point])
-        self.registry[extension.point].append(extension)
-
-    def get_extension_point_contributions(self, extension_point, **kwargs):
-        extensions = self.registry[extension_point]
-        results = []
-        for extension in extensions:
-            try:
-                result = extension(**kwargs)
-                if result is not None:
-                    results.append(result)
-            except Exception:  # noqa
-                notify_exception(
-                    None,
-                    message="Error calling extension",
-                    details={
-                        "extention_point": extension_point,
-                        "extension": extension,
-                        "kwargs": kwargs
-                    },
-                )
-        return results
+        extension_point = self.extension_point_registry[extension.point]
+        extension.validate(extension_point)
+        caller = getattr(self.registry, extension.point, None)
+        if caller is None:
+            caller = ExtensionCaller(extension_point)
+            setattr(self.registry, extension_point.name, caller)
+        caller.add_extension(extension)
