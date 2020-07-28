@@ -1018,14 +1018,14 @@ class BackendForm(Form):
         if not keywords:
             return []
         else:
-            return [kw.strip() for kw in keywords.split(',')]
+            return [kw.strip().upper() for kw in keywords.split(',')]
 
     def clean_opt_in_keywords(self):
         keywords = self.cleaned_data.get('opt_in_keywords')
         if not keywords:
             return []
         else:
-            return [kw.strip() for kw in keywords.split(',')]
+            return [kw.strip().upper() for kw in keywords.split(',')]
 
     def clean_reply_to_phone_number(self):
         value = self.cleaned_data.get("reply_to_phone_number")
