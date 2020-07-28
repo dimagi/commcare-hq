@@ -11,6 +11,10 @@ class CustomSMSReportTracker(object):
         return 'custom-sms-report-tracker'
 
     @property
+    def key_expiry(self):
+        return 48 * 60 * 60
+
+    @property
     def active_reports(self):
         unfiltered_report_list = self.client.get(self.report_key)
         if(unfiltered_report_list):
@@ -41,3 +45,4 @@ class CustomSMSReportTracker(object):
 
     def save_report_info(self, reports):
         self.client.set(self.report_key, json.dumps(reports))
+        self.client.expire(self.report_key, self.key_expiry)
