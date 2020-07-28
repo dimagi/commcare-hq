@@ -1,6 +1,7 @@
 /* global moment */
 
-function CasExportController($window, $location, locationHierarchy, locationsService, downloadService, userLocationId, isAlertActive) {
+function CasExportController($window, $location, locationHierarchy, locationsService, downloadService, userLocationId, isAlertActive,
+                             haveAccessToAllLocations) {
     var vm = this;
     vm.isAlertActive = isAlertActive;
 
@@ -9,7 +10,7 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
     vm.years = [];
     vm.yearsCopy = [];
 
-    vm.selectedLocations = []
+    vm.selectedLocations = [];
     vm.userLocationId = userLocationId;
     vm.selectedLocationId = vm.userLocationId;
     vm.selectedIndicator = null;
@@ -129,6 +130,24 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
         return locationsService.getLocations(level, locationsCache, vm.selectedLocations, true);
     };
 
+    vm.userHaveAccessToAllLocations = function (locations) {
+        var haveAccessToAllLocationsForLevel = true;
+        window.angular.forEach(locations, function (location) {
+            if (!location.user_have_access) {
+                haveAccessToAllLocationsForLevel = false;
+            }
+        });
+        return haveAccessToAllLocationsForLevel;
+    };
+
+    vm.userLocationIdIsNull = function () {
+        return ["null", "undefined"].indexOf(vm.userLocationId) !== -1;
+    };
+
+    vm.preventShowingAllOption = function (locations) {
+        return ((!vm.userLocationIdIsNull() && !vm.userHaveAccessToAllLocations(locations))) && !haveAccessToAllLocations;
+    };
+
     vm.isLocationDisabled = function (level) {
         return locationsService.isLocationDisabled(level, vm);
     };
@@ -159,7 +178,8 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
     };
 }
 
-CasExportController.$inject = ['$window', '$location', 'locationHierarchy', 'locationsService', 'downloadService', 'userLocationId', 'isAlertActive'];
+CasExportController.$inject = ['$window', '$location', 'locationHierarchy', 'locationsService', 'downloadService', 'userLocationId', 'isAlertActive',
+    'haveAccessToAllLocations'];
 
 window.angular.module('icdsApp').directive("casExport", function () {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;
