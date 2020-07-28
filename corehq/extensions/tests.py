@@ -44,13 +44,9 @@ def demo_extension_3(**kwargs):
     return "p3"
 
 
-def setup():
-    extensions.load_extensions(["corehq.extensions.tests"])
-
-
 def test_commcare_extensions():
     def check(kwargs, expected):
-        results = extensions.registry.ext_point_a(**kwargs)
+        results = ext_point_a(**kwargs)
         testil.eq(results, expected)
 
     cases = [
@@ -63,14 +59,9 @@ def test_commcare_extensions():
         yield check, kwargs, expected
 
 
-def test_validation_missing_point():
-    with testil.assert_raises(ExtensionError, msg="unknown extension point 'missing'"):
-        extensions.register_extension(Extension("missing", demo_extension_2, None))
-
-
 def test_validation_not_callable():
-    with testil.assert_raises(TypeError):
-        extensions.register_extension(Extension("ext_point_a", "corehq.missing", None))
+    with testil.assert_raises(ExtensionError, msg=re.compile("callable")):
+        ext_point_a.extend("not callable")
 
 
 def test_validation_callable_args():
@@ -78,18 +69,18 @@ def test_validation_callable_args():
         pass
 
     with testil.assert_raises(ExtensionError, msg=re.compile("consumed.*arg1")):
-        extensions.register_extension(Extension("ext_point_a", bad_spec, None))
+        ext_point_a.extend(bad_spec)
 
 
 @generate_cases([
-    ([["d1"]], {}, re.compile("Incorrect usage")),
+    ([["d1"]], {}, re.compile(r"callable: \['d1'\]")),
     ([], {"domains": "d1"}, re.compile("domains must be a list")),
 ])
 def test_decorator(self, args, kwargs, exception_message):
     ext = CommCareExtensions()
-    ext.extension_point(ext_point_a)
-    with testil.assert_raises(AssertionError, msg=exception_message):
-        @ext_point_a.extend(*args, **kwargs)
+    ext_point = ext.extension_point(lambda: None)
+    with testil.assert_raises(ExtensionError, msg=exception_message):
+        @ext_point.extend(*args, **kwargs)
         def impl():
             pass
 

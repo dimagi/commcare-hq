@@ -11,22 +11,15 @@ class ExtensionError(Exception):
     pass
 
 
-@attr.s(frozen=True)
-class ExtensionPoint:
-    name = attr.ib()
-    providing_args = attr.ib()
-
-
 class Extension:
     def __init__(self, point, callable_ref, domains):
         self.point = point
         self.callable = callable_ref
         self.domains = domains
-        self._callable = None
 
-    def validate(self, extension_point):
+    def validate(self, expected_args):
         spec = inspect.getfullargspec(self.callable)
-        unconsumed_args = set(extension_point.providing_args) - set(spec.args)
+        unconsumed_args = set(expected_args) - set(spec.args)
         if unconsumed_args and not spec.varkw:
             raise ExtensionError(f"Not all extension point args are consumed: {unconsumed_args}")
 
@@ -41,16 +34,33 @@ class Extension:
             return self.callable(**kwargs)
 
     def __repr__(self):
-        return f"{self.callable_ref}"
+        return f"{self.callable}"
 
 
-class ExtensionCaller:
-    def __init__(self, extension_point):
-        self.extension_point = extension_point
+class ExtensionPoint:
+    def __init__(self, manager, name, providing_args):
+        self.manager = manager
+        self.name = name
+        self.providing_args = providing_args
         self.extensions = []
 
-    def add_extension(self, extension):
-        self.extensions.append(extension)
+    def extend(self, impl=None, *, domains=None):
+
+        def _extend(impl):
+            if self.manager.locked:
+                raise ExtensionError(
+                    "Late extension definition. Extensions must be defined before setup is complete"
+                )
+            if not callable(impl):
+                raise ExtensionError(f"Extension point implementation must be callable: {impl!r}")
+            extension = Extension(self.name, impl, domains)
+            extension.validate(self.providing_args)
+            self.extensions.append(extension)
+            return impl
+
+        if domains is not None and not isinstance(domains, list):
+            raise ExtensionError("domains must be a list")
+        return _extend if impl is None else _extend(impl)
 
     def __call__(self, *args, **kwargs):
         results = []
@@ -64,7 +74,7 @@ class ExtensionCaller:
                     None,
                     message="Error calling extension",
                     details={
-                        "extention_point": self.extension_point.name,
+                        "extention_point": self.name,
                         "extension": extension,
                         "kwargs": kwargs
                     },
@@ -80,57 +90,11 @@ class _Registry(object):
 
 class CommCareExtensions:
     def __init__(self):
-        self.registry = _Registry()
-        self.extension_point_registry = {}
+        self.registry = {}
         self.locked = False
 
     def extension_point(self, func):
-        """Decorator for creating an extension point.
-
-        Usage:
-
-            @extension_point
-            def get_menu_items(menu_name, domain) -> List[str]:
-                '''This function serves to define the extension point
-                and should only have a docstring and no implementation
-                '''
-
-            # Use the extension point function as a decorator to tag
-            # implementation functions or methods.
-
-            @get_menu_items.extend
-            def extra_menu_items(menu_name, domain):
-                # actual implementation which will get called
-                return ["Option A"] if menu_name == "options" else []
-
-            # Extensions may also be limited to specific domains (only
-            # for extension points that pass a domain argument).
-            # Domains must be passed as a keyword argument and must be
-            # a list.
-
-            @get_menu_items.extend(domains=["more_options"])
-            def menu_items_for_more_options_domain(menu_name, domain):
-                assert domain == "more_options"
-                return ["Option B"]
-        """
-        def extend(impl=None, *, domains=None):
-
-            def _extend(impl):
-                if self.locked:
-                    raise ExtensionError(
-                        "Late extension definition. Extensions must be defined before setup is complete"
-                    )
-                assert callable(impl), (
-                    f"Incorrect usage of extension decorator. See docs below:"
-                    f"\n\n{self.extension_point.__doc__}"
-                )
-                self.register_extension(Extension(func.__name__, impl, domains))
-                return impl
-
-            if domains is not None:
-                assert isinstance(domains, list), "domains must be a list"
-            return _extend if impl is None else _extend(impl)
-
+        """Decorator for creating an extension point."""
         if self.locked:
             raise ExtensionError(
                 "Late extension point definition. Extension points must "
@@ -138,9 +102,9 @@ class CommCareExtensions:
             )
         name = func.__name__
         args = inspect.getfullargspec(func).args
-        self.extension_point_registry[name] = ExtensionPoint(name, args)
-        func.extend = extend
-        return func
+        point = ExtensionPoint(self, name, args)
+        self.registry[name] = point
+        return point
 
     def load_extensions(self, implementations):
         for module_name in implementations:
@@ -153,15 +117,3 @@ class CommCareExtensions:
     def resolve_module(self, module_or_name):
         if isinstance(module_or_name, str):
             importlib.import_module(module_or_name)
-
-    def register_extension(self, extension):
-        if extension.point not in self.extension_point_registry:
-            raise ExtensionError(f"unknown extension point '{extension.point}'")
-
-        extension_point = self.extension_point_registry[extension.point]
-        extension.validate(extension_point)
-        caller = getattr(self.registry, extension.point, None)
-        if caller is None:
-            caller = ExtensionCaller(extension_point)
-            setattr(self.registry, extension_point.name, caller)
-        caller.add_extension(extension)

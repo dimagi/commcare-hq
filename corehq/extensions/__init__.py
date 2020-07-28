@@ -13,7 +13,7 @@ Create and extension point
     from corehq import extensions
 
     @extensions.extension_point
-    def get_things(arg1: int, keyword: bool = False):
+    def get_things(arg1: int, keyword: bool = False) -> List[str]:
         '''Docs for the extension point'''
 
 
@@ -43,17 +43,17 @@ of domains as a keyword argument (it must be a keyword argument).
 
 Calling an extension point
 --------------------------
-An extension point is called as a normal function throught the `hook` interface. Results are
+An extension point is called as a normal function. Results are
 returned as a list with any `None` values removed.
 
 ::
 
-    from corehq import extensions
+    from xyz import get_things
 
-    results = extensions.hook.get_things(10, True)
+    results = get_things(10, True)
 """
 from corehq.extensions.interface import CommCareExtensions
+from . import extension_points
 
 extension_manager = CommCareExtensions()
 extension_point = extension_manager.extension_point
-hook = extension_manager.registry
