@@ -615,7 +615,7 @@ def get_opt_keywords(msg):
     backend_class = get_sms_backend_classes().get(msg.backend_api, SQLSMSBackend)
     try:
         backend_model = msg.outbound_backend
-    except BadSMSConfigException:
+    except (BadSMSConfigException, SQLMobileBackend.DoesNotExist):
         # Backend not found, we will just use the default
         custom_opt_out = []
         custom_opt_in = []
