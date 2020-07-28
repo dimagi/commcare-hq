@@ -1,8 +1,5 @@
 import importlib
 import inspect
-from collections import defaultdict
-
-import attr
 
 from dimagi.utils.logging import notify_exception
 

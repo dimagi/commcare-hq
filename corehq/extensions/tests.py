@@ -2,7 +2,7 @@ import re
 
 import testil
 
-from corehq.extensions.interface import CommCareExtensions, Extension, ExtensionError
+from corehq.extensions.interface import CommCareExtensions, ExtensionError
 from corehq.util.test_utils import generate_cases
 
 extensions = CommCareExtensions()
