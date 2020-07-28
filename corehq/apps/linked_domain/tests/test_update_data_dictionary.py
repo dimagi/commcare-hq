@@ -56,13 +56,7 @@ class TestUpdateDataDictionary(BaseLinkedAppsTest):
 
     def tearDown(self):
         self.suspected.delete()
-        self.suspected_name.delete()
-        # suspected_date field is deleted during test
-
         self.confirmed.delete()
-        self.confirmed_name.delete()
-        # confirmed_date field is deleted during test
-        self.confirmed_test.delete()
 
     def test_update_data_dictionary(self):
         self.assertEqual({}, get_data_dictionary(self.linked_domain))

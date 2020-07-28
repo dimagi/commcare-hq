@@ -225,10 +225,7 @@ def update_data_dictionary(domain_link):
         master_results = local_get_data_dictionary(domain_link.master_domain)
 
     # Start from an empty set of CaseTypes and CaseProperties in the linked domain.
-    linked_case_types = CaseType.objects.filter(domain=domain_link.linked_domain)
-    for linked_case_type in linked_case_types:
-        CaseProperty.objects.filter(case_type=linked_case_type).delete()
-    linked_case_types.delete()
+    CaseType.objects.filter(domain=domain_link.linked_domain).delete()
 
     # Create CaseType and CaseProperty as necessary
     for case_type_name, case_type_desc in master_results.items():
