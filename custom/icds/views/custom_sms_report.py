@@ -63,7 +63,7 @@ class SMSUsageReport(BaseMessagingSectionView):
                         end_date=end_date,
                     ))
                 return self.get(*args, **kwargs)
-            send_custom_sms_report.delay(start_date, end_date, user_email)
+            send_custom_sms_report.delay(str(start_date), str(end_date), user_email)
             messages.success(self.request, _(
                 "Report will we soon emailed to your email i.e {user_email}"
                 .format(user_email=user_email))
