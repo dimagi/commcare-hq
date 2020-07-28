@@ -81,7 +81,7 @@ def _prepare_display_message(reports_in_progress, report_count):
         report_text='reports' if report_count > 1 else 'report',
     )
     for index, report in enumerate(reports_in_progress):
-        message += _('{start_date}-{end_date}').format(
+        message += _('{start_date} to {end_date}').format(
             start_date=report['start_date'],
             end_date=report['end_date']
         )
