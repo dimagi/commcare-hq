@@ -10,7 +10,7 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
     vm.years = [];
     vm.yearsCopy = [];
 
-    vm.selectedLocations = [];
+    vm.selectedLocations = []
     vm.userLocationId = userLocationId;
     vm.selectedLocationId = vm.userLocationId;
     vm.selectedIndicator = null;
