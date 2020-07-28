@@ -37,7 +37,7 @@ def load_locs_json(domain, selected_loc_id=None, user=None, show_test=False):
 
     project = Domain.get_by_name(domain)
 
-    locations = SQLLocation.root_locations(domain)
+    locations = SQLLocation.objects.accessible_to_user(domain, user)
     if not show_test:
         locations = [
             loc for loc in locations if loc.metadata.get('is_test_location', 'real') != 'test'
