@@ -95,5 +95,5 @@ def _prepare_display_message(reports_in_progress, report_count):
 
 def _report_already_in_progress(reports, start_date, end_date):
     similar_reports = [report for report in reports
-        if report['start_date'] == start_date and report['end_date'] == end_date]
-    return len(similar_reports) > 1
+        if report['start_date'] == str(start_date) and report['end_date'] == str(end_date)]
+    return len(similar_reports) >= 1
