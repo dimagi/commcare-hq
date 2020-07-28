@@ -72,7 +72,9 @@ def send_custom_sms_report(start_date, end_date, email):
     subject = _('Monthly SMS report')
     recipients = [email]
     filename = call_command('get_icds_sms_usage', 'icds-cas', str(start_date), str(end_date))
+    report_tracker = CustomSMSReportTracker()
     try:
+        report_tracker.add_report_to_list(str(start_date), str(end_date))
         with open(filename, 'rb') as f:
             cached_download = expose_cached_download(
                 f.read(), expiry=24 * 60 * 60, file_extension=file_extention_from_filename(filename),
@@ -87,6 +89,7 @@ def send_custom_sms_report(start_date, end_date, email):
             """).format(link=link, start_date=start_date, end_date=end_date)
             send_html_email_async.delay(subject, recipients, message,
                                         email_from=settings.DEFAULT_FROM_EMAIL)
+            report_tracker.remove_report_from_list(str(start_date), str(end_date))
     except Exception as e:
         message = _("""
             Hi,
@@ -95,6 +98,7 @@ def send_custom_sms_report(start_date, end_date, email):
         """)
         send_html_email_async.delay(subject, recipients, message,
                                     email_from=settings.DEFAULT_FROM_EMAIL)
+        report_tracker.remove_report_from_list(str(start_date), str(end_date))
         raise e
 
 
