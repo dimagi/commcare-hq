@@ -118,14 +118,19 @@ class StaticChoiceProvider(ChoiceProvider):
         super(StaticChoiceProvider, self).__init__(None, None)
 
     def query(self, query_context):
+        default = self.default_value(query_context.user)
+        if not default:
+            default = [Choice(SHOW_ALL_CHOICE, "[{}]".format(ugettext('Show All')))]
         filtered_set = [choice for choice in self.choices
                         if any(query_context.query in text for text in choice.searchable_text)]
-        return filtered_set[query_context.offset:query_context.offset + query_context.limit]
+        return default + filtered_set[query_context.offset:query_context.offset + query_context.limit]
 
     def get_choices_for_known_values(self, values, user):
         return {choice for choice in self.choices
                 if choice.value in values}
 
+    def default_value(self, user):
+        return None
 
 class ChainableChoiceProvider(ChoiceProvider, metaclass=ABCMeta):
     @abstractmethod
