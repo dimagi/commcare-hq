@@ -40,6 +40,12 @@ class SMSUsageReport(BaseMessagingSectionView):
         }
 
     def post(self, request, *args, **kwargs):
+        reports_in_progress = self.report_tracker.active_reports
+        if len(reports_in_progress) >= 3:
+            messages.warning(self.request,
+                _("{report_count} are currently in progress. Please wait for them to finish")
+                .format(report_count=len(reports_in_progress)))
+            return self.get(*args, **kwargs)
         self.request_form = CustomSMSReportRequestForm(request.POST)
         user_email = request.user.email
         if not user_email:
@@ -49,6 +55,14 @@ class SMSUsageReport(BaseMessagingSectionView):
             data = self.request_form.cleaned_data
             start_date = data['start_date']
             end_date = data['end_date']
+            if(_report_already_in_progress(reports_in_progress, start_date, end_date)):
+                messages.warning(
+                    self.request,
+                    _("Report for duration {start_date}-{end_date} already in progress").format(
+                        start_date=start_date,
+                        end_date=end_date,
+                    ))
+                return self.get(*args, **kwargs)
             send_custom_sms_report.delay(start_date, end_date, user_email)
             messages.success(self.request, _(
                 "Report will we soon emailed to your email i.e {user_email}"
@@ -78,3 +92,8 @@ def _prepare_display_message(reports_in_progress, report_count):
     )
     return message
 
+
+def _report_already_in_progress(reports, start_date, end_date):
+    similar_reports=[report for report in reports
+        if report['start_date'] == start_date and report['end_date'] == end_date
+    return len(similar_reports) > 1
