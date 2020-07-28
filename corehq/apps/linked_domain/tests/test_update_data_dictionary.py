@@ -1,9 +1,9 @@
 from corehq.apps.data_dictionary.models import CaseType, CaseProperty
 
-from corehq.apps.linked_domain.exceptions import UnsupportedActionError
 from corehq.apps.linked_domain.local_accessors import get_data_dictionary
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
 from corehq.apps.linked_domain.updates import update_data_dictionary
+
 
 class TestUpdateDataDictionary(BaseLinkedAppsTest):
     def setUp(self):
@@ -53,7 +53,6 @@ class TestUpdateDataDictionary(BaseLinkedAppsTest):
                                            data_type='plain',
                                            group='')
         self.confirmed_test.save()
-        
 
     def tearDown(self):
         self.suspected.delete()
@@ -64,7 +63,6 @@ class TestUpdateDataDictionary(BaseLinkedAppsTest):
         self.confirmed_name.delete()
         # confirmed_date field is deleted during test
         self.confirmed_test.delete()
-
 
     def test_update_data_dictionary(self):
         self.assertEqual({}, get_data_dictionary(self.linked_domain))
@@ -95,29 +93,29 @@ class TestUpdateDataDictionary(BaseLinkedAppsTest):
         def expected_case_type(domain, description, properties):
             return {
                 'domain': domain,
-                'description' : description,
-                'fully_generated' : True,
-                'properties' : properties
+                'description': description,
+                'fully_generated': True,
+                'properties': properties
             }
 
         self.assertEqual(linked_data_dictionary, {
-            'Suspected' : expected_case_type(self.linked_domain,
-                                             'A suspected case',
-                                             suspected_properties),
-            'Confirmed' : expected_case_type(self.linked_domain,
-                                             'A confirmed case',
-                                             confirmed_properties)
+            'Suspected': expected_case_type(self.linked_domain,
+                                            'A suspected case',
+                                            suspected_properties),
+            'Confirmed': expected_case_type(self.linked_domain,
+                                            'A confirmed case',
+                                            confirmed_properties)
         })
 
         # Master domain's data dictionary should be untouched
         original_data_dictionary = get_data_dictionary(self.domain)
         self.assertEqual(original_data_dictionary, {
-            'Suspected' : expected_case_type(self.domain,
-                                             'A suspected case',
-                                             suspected_properties),
-            'Confirmed' : expected_case_type(self.domain,
-                                             'A confirmed case',
-                                             confirmed_properties)
+            'Suspected': expected_case_type(self.domain,
+                                            'A suspected case',
+                                            suspected_properties),
+            'Confirmed': expected_case_type(self.domain,
+                                            'A confirmed case',
+                                            confirmed_properties)
         })
 
         # Change the original domain and update the linked domain.
@@ -155,15 +153,15 @@ class TestUpdateDataDictionary(BaseLinkedAppsTest):
         # Checked that the linked domain has the new state.
         linked_data_dictionary = get_data_dictionary(self.linked_domain)
         self.assertEqual(linked_data_dictionary, {
-            'Suspected' : expected_case_type(self.linked_domain,
-                                             'A suspected case',
-                                             suspected_properties),
-            'Confirmed' : expected_case_type(self.linked_domain,
-                                             'A confirmed case',
-                                             confirmed_properties),
-            'Archived' : expected_case_type(self.linked_domain,
-                                            'An archived case',
-                                            archived_properties)
+            'Suspected': expected_case_type(self.linked_domain,
+                                            'A suspected case',
+                                            suspected_properties),
+            'Confirmed': expected_case_type(self.linked_domain,
+                                            'A confirmed case',
+                                            confirmed_properties),
+            'Archived': expected_case_type(self.linked_domain,
+                                           'An archived case',
+                                           archived_properties)
         })
         self.addCleanup(self.archived_name.delete)
         self.addCleanup(self.archived_reason.delete)
