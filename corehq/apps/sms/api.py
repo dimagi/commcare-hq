@@ -613,9 +613,18 @@ def is_opt_message(text, keyword_list):
 
 def get_opt_keywords(msg):
     backend_class = get_sms_backend_classes().get(msg.backend_api, SQLSMSBackend)
+    try:
+        backend_model = msg.outbound_backend
+    except BadSMSConfigException:
+        # Backend not found, we will just use the default
+        custom_opt_out = set()
+        custom_opt_in = set()
+    else:
+        custom_opt_out = set(backend_model.opt_out_keywords)
+        custom_opt_in = set(backend_model.opt_in_keywords)
     return (
-        list(set(backend_class.get_opt_in_keywords()) | set(msg.outbound_backend.opt_in_keywords)),
-        list(set(backend_class.get_opt_out_keywords()) | set(msg.outbound_backend.opt_out_keywords)),
+        list(set(backend_class.get_opt_in_keywords()) | custom_opt_in),
+        list(set(backend_class.get_opt_out_keywords()) | custom_opt_out),
         backend_class.get_pass_through_opt_in_keywords(),
     )
 
