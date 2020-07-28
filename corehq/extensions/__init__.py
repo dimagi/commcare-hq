@@ -53,7 +53,6 @@ returned as a list with any `None` values removed.
     results = get_things(10, True)
 """
 from corehq.extensions.interface import CommCareExtensions
-from . import extension_points  # noqa F401
 
 extension_manager = CommCareExtensions()
 extension_point = extension_manager.extension_point
