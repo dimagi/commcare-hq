@@ -355,6 +355,7 @@ def product_importer_job_poll(request, domain, download_id,
     return render(request, template, context)
 
 
+@login_and_domain_required
 def download_products(request, domain):
     def _parse_custom_properties(product):
         product_data_model = CustomDataFieldsDefinition.get_or_create(
