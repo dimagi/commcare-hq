@@ -13,7 +13,7 @@ from mock import patch
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     use_sql_backend,
@@ -111,6 +111,15 @@ class SubmissionTest(BaseSubmissionTest):
             form='namespace_in_meta.xml',
             xmlns='http://bihar.commcarehq.org/pregnancy/new',
         )
+
+    def test_submit_with_non_bmp_chars(self):
+        self._test(
+            form="form_data_with_non_bmp_chars.xml",
+            xmlns='http://commcarehq.org/test/submit',
+        )
+        case_id = 'ad38211be256653bceac8e2156475667'
+        case = CaseAccessors(self.domain.name).get_case(case_id)
+        self.assertEqual(case.name, "👕 👖 👔 👗 👙")
 
     @softer_assert()
     def test_submit_deprecated_form(self):
