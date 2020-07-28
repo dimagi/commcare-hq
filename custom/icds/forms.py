@@ -209,6 +209,7 @@ class CustomSMSReportRequestForm(forms.Form):
             twbscrispy.StrictButton(
                 _('Generate Report'),
                 type='submit',
+                id='request_report',
                 css_class='btn-primary',
             )
         )
