@@ -1475,12 +1475,19 @@ def create_service_delivery_report(excel_data, data_type, config):
                                                       'Growth Monitoring (Children 3-5 years)',
                                                       ]
 
-    secondary_headers = ['Not provided',
-                         'Provided for 1-7 days',
-                         'Provided for 8-14 days',
-                         'Provided for 15-20 days',
-                         'Provided for 21-24 days',
-                         'Provided for at least 25 days (>=25 days)']
+    secondary_headers_sn = ['Not provided',
+                            'Provided for 1-7 days',
+                            'Provided for 8-14 days',
+                            'Provided for 15-20 days',
+                            'Provided for 21-24 days',
+                            'Provided for at least 25 days (>=25 days)']
+
+    secondary_headers_pse = ['Not Attended',
+                             'Attended for 1-7 days',
+                             'Attended for 8-14 days',
+                             'Attended for 15-20 days',
+                             'Attended for 21-24 days',
+                             'Attended for at least 25 days (>=25 days)']
 
     workbook = Workbook()
     worksheet = workbook.active
@@ -1540,6 +1547,13 @@ def create_service_delivery_report(excel_data, data_type, config):
                                                    get_column_letter(current_column_location + 17)))
 
             current_column_location_sec_header = current_column_location
+
+            if primary_header in ['Supplementary Nutrition (Children 3-6 years)',
+                                  'Take Home Ration  (Pregnant women, lactating women and children 0-3 years)']:
+                secondary_headers = secondary_headers_sn
+            else:
+                secondary_headers = secondary_headers_pse
+
             for sec_header in secondary_headers:
                 cell_name = get_column_letter(current_column_location_sec_header)
                 cell = worksheet['{}2'.format(cell_name)]

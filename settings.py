@@ -215,6 +215,7 @@ DEFAULT_APPS = (
     'statici18n',
     'django_user_agents',
     'logentry_admin',
+    'oauth2_provider',
 )
 
 CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'
@@ -367,9 +368,6 @@ HQ_APPS = (
 
     'custom.common',
 
-    'custom.icds',
-    'custom.icds.data_management',
-    'custom.icds_reports',
     'custom.nic_compliance',
     'custom.hki',
     'custom.champ',
@@ -782,6 +780,15 @@ LOCAL_APPS = ()
 LOCAL_MIDDLEWARE = ()
 LOCAL_PILLOWTOPS = {}
 
+LOCAL_STATIC_DATA_SOURCES = []
+LOCAL_STATIC_UCR_REPORTS = []
+LOCAL_CUSTOM_UCR_EXPRESSIONS = []
+LOCAL_CUSTOM_UCR_EXPRESSION_LISTS = []
+LOCAL_CUSTOM_UCR_REPORT_FILTERS = []
+LOCAL_CUSTOM_UCR_REPORT_FILTER_VALUES = []
+
+LOCAL_DOMAIN_MODULE_MAP = {}
+
 RUN_FORM_META_PILLOW = True
 RUN_CASE_SEARCH_PILLOW = True
 RUN_UNKNOWN_USER_PILLOW = True
@@ -791,8 +798,28 @@ RUN_UNKNOWN_USER_PILLOW = True
 # databases.
 CASE_ES_DROP_FORM_FIELDS = False
 
+# Repeaters in the order in which they should appear in "Data Forwarding"
+REPEATER_CLASSES = [
+    'corehq.motech.repeaters.models.FormRepeater',
+    'corehq.motech.repeaters.models.CaseRepeater',
+    'corehq.motech.repeaters.models.CreateCaseRepeater',
+    'corehq.motech.repeaters.models.UpdateCaseRepeater',
+    'corehq.motech.repeaters.models.ReferCaseRepeater',
+    'corehq.motech.repeaters.models.ShortFormRepeater',
+    'corehq.motech.repeaters.models.AppStructureRepeater',
+    'corehq.motech.repeaters.models.UserRepeater',
+    'corehq.motech.repeaters.models.LocationRepeater',
+    'corehq.motech.openmrs.repeaters.OpenmrsRepeater',
+    'corehq.motech.dhis2.repeaters.Dhis2Repeater',
+    'corehq.motech.dhis2.repeaters.Dhis2EntityRepeater',
+]
+
+# Override this in localsettings to add new repeater types
+LOCAL_REPEATER_CLASSES = []
+
 # tuple of fully qualified repeater class names that are enabled.
 # Set to None to enable all or empty tuple to disable all.
+# This will not prevent users from creating
 REPEATERS_WHITELIST = None
 
 # If ENABLE_PRELOGIN_SITE is set to true, redirect to Dimagi.com urls
@@ -812,6 +839,13 @@ ELASTICSEARCH_MAJOR_VERSION = 1
 ES_SEARCH_TIMEOUT = 30
 
 BITLY_OAUTH_TOKEN = None
+
+OAUTH2_PROVIDER = {
+    'SCOPES': {
+        'access_apis': 'Access API data on all your CommCare projects',
+    },
+}
+
 
 # this should be overridden in localsettings
 INTERNAL_DATA = defaultdict(list)
@@ -1019,7 +1053,9 @@ REQUIRE_TWO_FACTOR_FOR_SUPERUSERS = False
 # that adds messages to the partition with the fewest unprocessed messages
 USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
 
+CUSTOM_DOMAIN_SPECIFIC_URL_MODULES = []
 LOCAL_CUSTOM_DB_ROUTING = {}
+
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1049,6 +1085,8 @@ AVAILABLE_CUSTOM_REMINDER_RECIPIENTS.update(LOCAL_AVAILABLE_CUSTOM_REMINDER_RECI
 AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS.update(LOCAL_AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS)
 AVAILABLE_CUSTOM_RULE_CRITERIA.update(LOCAL_AVAILABLE_CUSTOM_RULE_CRITERIA)
 AVAILABLE_CUSTOM_RULE_ACTIONS.update(LOCAL_AVAILABLE_CUSTOM_RULE_ACTIONS)
+
+REPEATER_CLASSES.extend(LOCAL_REPEATER_CLASSES)
 
 # The defaults above are given as a function of (or rather a closure on) DEBUG,
 # so if not overridden they need to be evaluated after DEBUG is set
@@ -1425,20 +1463,6 @@ FIXTURES_DB = 'fixtures'
 DOMAINS_DB = 'domains'
 APPS_DB = 'apps'
 META_DB = 'meta'
-
-_serializer = 'corehq.util.python_compatibility.Py3PickleSerializer'
-for _name in ["default", "redis"]:
-    if _name not in CACHES:  # noqa: F405
-        continue
-    _options = CACHES[_name].setdefault('OPTIONS', {})  # noqa: F405
-    assert _options.get('SERIALIZER', _serializer) == _serializer, (
-        "Refusing to change SERIALIZER. Remove that option from "
-        "localsettings or whereever redis caching is configured. {}"
-        .format(_options)
-    )
-    _options['SERIALIZER'] = _serializer
-del _name, _options, _serializer
-
 
 COUCHDB_APPS = [
     'api',
@@ -1822,17 +1846,10 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_3.json'),
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_4.json'),
     os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2019.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'dashboard', '*.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr', '*.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr', 'ucr_v2', '*.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr', '*.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr', 'dashboard', '*.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls', '*.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'other', '*.json'),
     os.path.join('custom', 'echis_reports', 'ucr', 'reports', '*.json'),
     os.path.join('custom', 'aaa', 'ucr', 'reports', '*.json'),
     os.path.join('custom', 'ccqa', 'ucr', 'reports', 'patients.json'),  # For testing static UCRs
-]
+] + LOCAL_STATIC_UCR_REPORTS
 
 
 STATIC_DATA_SOURCES = [
@@ -1848,49 +1865,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'malaria_consortium.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'weekly_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ag_care_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ag_care_cases_monthly.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'awc_locations.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'awc_mgt_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly_v2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_cases_monthly_v2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_delivery_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'daily_feeding_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'gm_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'hardware_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'home_visit_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'household_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'infrastructure_form.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'infrastructure_form_v2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'it_report_follow_issue.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_home_visit_forms_filled.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_app_usage_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_vhnd_form.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'person_cases_v3.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tasks_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tech_issue_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'thr_forms_v2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'usage_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'adolescent_girl_register_form_ucr.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'complementary_feeding_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'dashboard_growth_monitoring.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'postnatal_care_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'commcare_user_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'delivery_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'pregnant_tasks.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'child_tasks.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'thr_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'birth_preparedness_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'daily_feeding_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'migrations_form.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'availing_service_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'add_pregnancy_form.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'primary_private_school_form_ucr.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'cbe_form.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'commande_combined.json'),
@@ -1910,7 +1884,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'echis_reports', 'ucr', 'data_sources', '*.json'),
     os.path.join('custom', 'aaa', 'ucr', 'data_sources', '*.json'),
     os.path.join('custom', 'ccqa', 'ucr', 'data_sources', 'patients.json'),  # For testing static UCRs
-]
+] + LOCAL_STATIC_DATA_SOURCES
 
 for k, v in LOCAL_PILLOWTOPS.items():
     plist = PILLOWTOPS.get(k, [])
@@ -1957,21 +1931,16 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('eqa_expression', 'custom.eqa.expressions.eqa_expression'),
     ('cqi_action_item', 'custom.eqa.expressions.cqi_action_item'),
     ('eqa_percent_expression', 'custom.eqa.expressions.eqa_percent_expression'),
-]
+] + LOCAL_CUSTOM_UCR_EXPRESSIONS
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
-    ('mvp.ucr.reports.expressions.CUSTOM_UCR_EXPRESSIONS'),
-    ('custom.icds_reports.ucr.expressions.CUSTOM_UCR_EXPRESSIONS'),
-    ('corehq.apps.userreports.expressions.extension_expressions.CUSTOM_UCR_EXPRESSIONS'),
-]
+    'mvp.ucr.reports.expressions.CUSTOM_UCR_EXPRESSIONS',
+    'corehq.apps.userreports.expressions.extension_expressions.CUSTOM_UCR_EXPRESSIONS',
+] + LOCAL_CUSTOM_UCR_EXPRESSION_LISTS
 
-CUSTOM_UCR_REPORT_FILTERS = [
-    ('village_choice_list', 'custom.icds_reports.ucr.filter_spec.build_village_choice_list_filter_spec')
-]
+CUSTOM_UCR_REPORT_FILTERS = [] + LOCAL_CUSTOM_UCR_REPORT_FILTERS
 
-CUSTOM_UCR_REPORT_FILTER_VALUES = [
-    ('village_choice_list', 'custom.icds_reports.ucr.filter_value.VillageFilterValue')
-]
+CUSTOM_UCR_REPORT_FILTER_VALUES = [] + LOCAL_CUSTOM_UCR_REPORT_FILTER_VALUES
 
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
@@ -1982,9 +1951,6 @@ DOMAIN_MODULE_MAP = {
     'pact': 'pact',
 
     'ipm-senegal': 'custom.intrahealth',
-    'icds-test': 'custom.icds_reports',
-    'icds-cas': 'custom.icds_reports',
-    'icds-dashboard-qa': 'custom.icds_reports',
     'reach-test': 'custom.aaa',
     'reach-dashboard-qa': 'custom.aaa',
     'testing-ipm-senegal': 'custom.intrahealth',
@@ -2035,6 +2001,8 @@ DOMAIN_MODULE_MAP = {
 
     'ccqa': 'custom.ccqa',
 }
+
+DOMAIN_MODULE_MAP.update(LOCAL_DOMAIN_MODULE_MAP)
 
 THROTTLE_SCHED_REPORTS_PATTERNS = (
     # Regex patterns matching domains whose scheduled reports use a
