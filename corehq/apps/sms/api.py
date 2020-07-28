@@ -710,7 +710,6 @@ def process_incoming(msg):
             'backend': _get_backend_tag(backend_id=msg.backend_id),
             'status': status,
         })
-        print(status)
 
 
 def _allow_load_handlers(v, is_two_way, has_domain_two_way_scope):
