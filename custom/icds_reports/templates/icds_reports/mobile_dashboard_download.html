@@ -10,7 +10,7 @@
         <div class="col-sm-3">
           <img style="width: 100%" src="{% static 'icds/img/ICDS-CAS_banner.png' %}" alt="ICDS-CAS"/>
         </div>
-        {% if request.domain == 'icds-cas' %}
+        {% if request.get_host == 'icds-cas.gov.in' %}
           <div class="col-sm-9">
             <div>
               <h2>Download the ICDS-CAS Mobile Dashboard Application</h2>
