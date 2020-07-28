@@ -64,11 +64,11 @@ hqDefine('app_manager/js/app_manager', function () {
     };
 
     module.updateDOM = function (update) {
-        if (update.hasOwnProperty('app-version')) {
+        if (_.has(update, 'app-version')) {
             var appVersion = update['app-version'];
             $('.variable-version').text(appVersion);
         }
-        if (update.hasOwnProperty('commcare-version')) {
+        if (_.has(update, 'commcare-version')) {
             module.setCommcareVersion(update['commcare-version']);
         }
         if (module.fetchAndShowFormValidation) {
@@ -419,15 +419,18 @@ hqDefine('app_manager/js/app_manager', function () {
                         var key;
                         module.updateDOM(data.update);
                         for (key in data.corrections) {
-                            if (data.corrections.hasOwnProperty(key)) {
+                            if (_.has(data.corrections, key)) {
                                 $form.find('[name="' + key + '"]').val(data.corrections[key]);
                                 $(document).trigger('correction', [key, data.corrections[key]]);
                             }
                         }
-                        if (data.hasOwnProperty('case_list-show') &&
-                                module.hasOwnProperty('module_view')) {
+                        if (_.has(data, 'case_list-show') &&
+                            _.has(module, 'module_view')) {
                             var requiresCaseDetails = hqImport('app_manager/js/details/screen_config').state.requiresCaseDetails;
                             requiresCaseDetails(data['case_list-show']);
+                        }
+                        if (_.has(data, 'redirect')) {
+                            window.location = data.redirect;
                         }
                         $form.trigger('saved-app-manager-form');
                     },
