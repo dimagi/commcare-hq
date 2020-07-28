@@ -617,14 +617,14 @@ def get_opt_keywords(msg):
         backend_model = msg.outbound_backend
     except BadSMSConfigException:
         # Backend not found, we will just use the default
-        custom_opt_out = set()
-        custom_opt_in = set()
+        custom_opt_out = []
+        custom_opt_in = []
     else:
-        custom_opt_out = set(backend_model.opt_out_keywords)
-        custom_opt_in = set(backend_model.opt_in_keywords)
+        custom_opt_out = backend_model.opt_out_keywords
+        custom_opt_in = backend_model.opt_in_keywords
     return (
-        list(set(backend_class.get_opt_in_keywords()) | custom_opt_in),
-        list(set(backend_class.get_opt_out_keywords()) | custom_opt_out),
+        backend_class.get_opt_in_keywords() + custom_opt_in,
+        backend_class.get_opt_out_keywords() + custom_opt_out,
         backend_class.get_pass_through_opt_in_keywords(),
     )
 
@@ -710,6 +710,7 @@ def process_incoming(msg):
             'backend': _get_backend_tag(backend_id=msg.backend_id),
             'status': status,
         })
+        print(status)
 
 
 def _allow_load_handlers(v, is_two_way, has_domain_two_way_scope):
