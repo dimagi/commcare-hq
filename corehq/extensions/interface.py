@@ -48,7 +48,7 @@ class CommCareExtensions:
     def __init__(self):
         self.registry = defaultdict(list)
         self.extension_point_registry = {}
-        self.extensions = []
+        self.locked = False
 
     def extension_point(self, func):
         """Decorator for creating an extension point.
@@ -90,7 +90,7 @@ class CommCareExtensions:
                     f"Incorrect usage of extension decorator. See docs below:"
                     f"\n\n{self.extension_point.__doc__}"
                 )
-                self.extensions.append(Extension(func.__name__, impl, domains))
+                self.register_extension(Extension(func.__name__, impl, domains))
                 return impl
 
             if domains is not None:
@@ -108,16 +108,10 @@ class CommCareExtensions:
         func.extend = extend
         return func
 
-    @property
-    def locked(self):
-        return self.extensions is None
-
     def load_extensions(self, implementations):
         for module_name in implementations:
             self.resolve_module(module_name)
-        for extension in self.extensions:
-            self.register_extension(extension)
-        self.extensions = None
+        self.locked = True
 
     def add_extension_points(self, module_or_name):
         self.resolve_module(module_or_name)
