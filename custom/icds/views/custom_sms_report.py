@@ -78,22 +78,22 @@ class SMSUsageReport(BaseMessagingSectionView):
 def _prepare_display_message(reports_in_progress, report_count):
     message = _('Currently {reports_count} {report_text} for duration\n').format(
         reports_count=report_count,
-        report_text='reports' if report_count>1 else 'report',
+        report_text='reports' if report_count > 1 else 'report',
     )
     for index, report in enumerate(reports_in_progress):
-        message+=_('{start_date}-{end_date}').format(
+        message += _('{start_date}-{end_date}').format(
             start_date=report['start_date'],
             end_date=report['end_date']
         )
-        if index!=report_count-1:
-            message+=', '
-    message+=_(' {is_or_are} in progress').format(
-        is_or_are='are' if report_count>1 else 'is',
+        if index != report_count - 1:
+            message += ', '
+    message += _(' {is_or_are} in progress').format(
+        is_or_are='are' if report_count > 1 else 'is',
     )
     return message
 
 
 def _report_already_in_progress(reports, start_date, end_date):
-    similar_reports=[report for report in reports
-        if report['start_date'] == start_date and report['end_date'] == end_date
+    similar_reports = [report for report in reports
+        if report['start_date'] == start_date and report['end_date'] == end_date]
     return len(similar_reports) > 1

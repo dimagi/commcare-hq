@@ -4,14 +4,15 @@ hqDefine("icds/js/custom_sms_report",[
     'hqwebapp/js/daterangepicker.config', //createBootstrap3DefaultDateRangePicker
 ], function (
     $,
-    initial_page_data
+    initialPageData
 ) {
     var $el = $('#date_range_selector');
     var $startDate = $('#report_start_date');
     var $endDate = $('#report_end_date');
-    var $submit_btn = $('#request_report');
-    if(initial_page_data.get('disable_submit'))
-        $submit_btn.attr('disabled', true);
+    var $submitBtn = $('#request_report');
+    if (initialPageData.get('disable_submit')){
+        $submitBtn.attr('disabled', true);
+    }
     $el.createBootstrap3DefaultDateRangePicker();
     $el.on('apply change', function () {
         var separator = $().getDateRangeSeparator();
