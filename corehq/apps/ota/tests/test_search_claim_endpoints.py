@@ -2,6 +2,7 @@ import re
 from collections import OrderedDict
 from uuid import uuid4
 
+from django.conf import settings
 from django.test import Client, TestCase
 from django.urls import reverse
 
@@ -544,51 +545,103 @@ class CaseClaimEndpointTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
-        expected_query = {
-            'query': {
-                'filtered': {
-                    'filter': {
-                        'and': [
-                            {'term': {'domain.exact': DOMAIN}},
-                            {'term': {'type.exact': CASE_TYPE}},
-                            {'term': {'closed': False}},
-                            {'match_all': {}}
-                        ]
-                    },
-                    'query': {
-                        'bool': {
-                            'must': [
-                                {
-                                    'nested': {
-                                        'path': 'case_properties',
-                                        'query': {
-                                            'filtered': {
-                                                'filter': {
-                                                    "and": (
+        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+            expected_query = {
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {"term": {"domain.exact": "swashbucklers"}},
+                            {"term": {"type.exact": "case"}},
+                            {"term": {"closed": False}},
+                            {"match_all": {}}
+                        ],
+                        "must": {
+                            "bool": {
+                                "must": [
+                                    {
+                                        "nested": {
+                                            "path": "case_properties",
+                                            "query": {
+                                                "bool": {
+                                                    "filter": [
                                                         {
-                                                            'term': {'case_properties.key.exact': 'name'}
-                                                        },
-                                                        {
-                                                            'term': {'case_properties.value.exact': some_case_name}
+                                                            "bool": {
+                                                                "filter": [
+                                                                    {
+                                                                        "term": {
+                                                                            "case_properties.key.exact": "name"
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "term": {
+                                                                            "case_properties.value.exact": "wut"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
                                                         }
-                                                    )
-                                                },
-                                                'query': {
-                                                    'match_all': {
+                                                    ],
+                                                    "must": {
+                                                        "match_all": {}
                                                     }
                                                 }
                                             }
                                         }
-                                    }
-                                },
-                                new_must_clause
-                            ]
+                                    },
+                                    new_must_clause
+                                ]
+                            }
                         }
                     }
-                }
-            },
-            'size': CASE_SEARCH_MAX_RESULTS
-        }
+                },
+                "size": CASE_SEARCH_MAX_RESULTS
+            }
+        else:
+            expected_query = {
+                'query': {
+                    'filtered': {
+                        'filter': {
+                            'and': [
+                                {'term': {'domain.exact': DOMAIN}},
+                                {'term': {'type.exact': CASE_TYPE}},
+                                {'term': {'closed': False}},
+                                {'match_all': {}}
+                            ]
+                        },
+                        'query': {
+                            'bool': {
+                                'must': [
+                                    {
+                                        'nested': {
+                                            'path': 'case_properties',
+                                            'query': {
+                                                'filtered': {
+                                                    'filter': {
+                                                        "and": (
+                                                            {
+                                                                'term': {'case_properties.key.exact': 'name'}
+                                                            },
+                                                            {
+                                                                'term': {'case_properties.value.exact': some_case_name}
+                                                            }
+                                                        )
+                                                    },
+                                                    'query': {
+                                                        'match_all': {
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    new_must_clause
+                                ]
+                            }
+                        }
+                    }
+                },
+                'size': CASE_SEARCH_MAX_RESULTS
+            }
         run_query_mock.assert_called_with(
             "case_search",
             expected_query,
