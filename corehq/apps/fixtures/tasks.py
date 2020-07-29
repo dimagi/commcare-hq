@@ -55,10 +55,10 @@ def send_upload_fixture_complete_email(email, domain, time_start, time_end, mess
 
 
 @task
-def async_fixture_download(table_ids, domain, download_id):
+def async_fixture_download(table_ids, domain, download_id, owner_id):
     task = async_fixture_download
     DownloadBase.set_progress(task, 0, 100)
-    prepare_fixture_download(table_ids, domain, task, download_id)
+    prepare_fixture_download(table_ids, domain, task, download_id, owner_id)
     DownloadBase.set_progress(task, 100, 100)
 
 
