@@ -1,3 +1,10 @@
+from decimal import Decimal, InvalidOperation
+
+from django.template import TemplateDoesNotExist
+from django.template.loader import render_to_string
+
+from dimagi.utils.logging import notify_exception
+
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CommCareUser
@@ -5,31 +12,30 @@ from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from custom.icds.case_relationships import (
-    child_person_case_from_tasks_case,
     child_person_case_from_child_health_case,
     mother_person_case_from_ccs_record_case,
 )
-from custom.icds.const import (STATE_TYPE_CODE, ANDHRA_PRADESH_SITE_CODE, MAHARASHTRA_SITE_CODE,
-    HINDI, TELUGU, MARATHI, AWC_LOCATION_TYPE_CODE, SUPERVISOR_LOCATION_TYPE_CODE)
+from custom.icds.const import (
+    AWC_LOCATION_TYPE_CODE,
+    SUPERVISOR_LOCATION_TYPE_CODE,
+)
 from custom.icds.exceptions import CaseRelationshipError
-from custom.icds.messaging.custom_recipients import skip_notifying_missing_ccs_record_parent
+from custom.icds.messaging.custom_recipients import (
+    skip_notifying_missing_ccs_record_parent,
+)
 from custom.icds.messaging.indicators import (
     DEFAULT_LANGUAGE,
+    AWWAggregatePerformanceIndicator,
     AWWAggregatePerformanceIndicatorV2,
     AWWIndicator,
-    LSIndicator,
     AWWSubmissionPerformanceIndicator,
-    AWWAggregatePerformanceIndicator,
     AWWVHNDSurveyIndicator,
     LSAggregatePerformanceIndicator,
-    LSVHNDSurveyIndicator,
     LSAggregatePerformanceIndicatorV2,
+    LSIndicator,
     LSSubmissionPerformanceIndicator,
+    LSVHNDSurveyIndicator,
 )
-from decimal import Decimal, InvalidOperation
-from dimagi.utils.logging import notify_exception
-from django.template import TemplateDoesNotExist
-from django.template.loader import render_to_string
 
 GROWTH_MONITORING_XMLNS = 'http://openrosa.org/formdesigner/b183124a25f2a0ceab266e4564d3526199ac4d75'
 
