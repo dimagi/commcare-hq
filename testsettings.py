@@ -178,10 +178,3 @@ if os.path.exists("custom/icds"):
     for app in icds_apps:
         if app not in INSTALLED_APPS:
             INSTALLED_APPS = (app,) + tuple(INSTALLED_APPS)
-
-    CUSTOM_DOMAIN_SPECIFIC_URL_MODULES.extend([
-        'custom.icds_reports.urls',
-        'custom.icds.urls',
-        'custom.icds.data_management.urls'
-    ])
-    CUSTOM_DOMAIN_SPECIFIC_URL_MODULES = list(set(CUSTOM_DOMAIN_SPECIFIC_URL_MODULES))
