@@ -1,16 +1,32 @@
+from typing import List, Dict
+
 from corehq.extensions import extension_point
 
 
 @extension_point
-def domain_specific_urls():
-    """Return a list of URL module strings to be included in the domain specific URL patterns."""
+def domain_specific_urls() -> List[str]:
+    """Add domain specific URLs to the Django URLs module.
+
+    Parameters:
+        None
+
+    Returns:
+        A list of URL module strings
+    """
 
 
 @extension_point
-def uitab_dropdown_items(tab, domain, request):
-    """Called by UI tabs during rendering.
+def uitab_dropdown_items(tab, domain, request) -> List[Dict]:
+    """Add dropdown items to UI Tabs.
 
-    :returns: Dict with keys:
+    Parameters:
+        :param tab: Name of the tab that items will be added to
+        :param domain: The domain of the current request
+        :param request: The current request
+
+    Returns:
+        A dict with the following keys:
+
         * title
         * url (default=None)
         * html (default=None)

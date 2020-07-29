@@ -37,6 +37,7 @@ class ExtensionPoint:
         self.definition_function = definition_function
         self.providing_args = inspect.getfullargspec(definition_function).args
         self.extensions = []
+        self.__doc__ = inspect.getdoc(definition_function)
 
     def extend(self, impl=None, *, domains=None):
 
