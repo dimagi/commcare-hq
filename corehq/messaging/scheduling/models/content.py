@@ -237,13 +237,6 @@ class SMSSurveyContent(Content):
             logged_subevent.error(MessagingEvent.ERROR_NO_TWO_WAY_PHONE_NUMBER)
             return
 
-        # The SMS framework already checks if the number has opted out before sending to
-        # it. But for this use case we check for it here because we don't want to start
-        # the survey session if they've opted out.
-        if self.phone_has_opted_out(phone_entry_or_number):
-            logged_subevent.error(MessagingEvent.ERROR_PHONE_OPTED_OUT)
-            return
-
         with self.get_critical_section(recipient):
             # Get the case to submit the form against, if any
             case_id = None
