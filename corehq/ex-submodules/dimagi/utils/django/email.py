@@ -107,7 +107,7 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
     except SMTPDataError as e:
         # If the SES configuration has not been properly set up, resend the message
         if (
-            "Configuration Set does not exist" in e.smtp_error
+            b"Configuration Set does not exist" in e.smtp_error
             and SES_CONFIGURATION_SET_HEADER in msg.extra_headers
         ):
             del msg.extra_headers[SES_CONFIGURATION_SET_HEADER]
