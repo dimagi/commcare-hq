@@ -111,13 +111,10 @@ class SQLXFormsSession(models.Model):
         if not self.session_is_open:
             return
 
-        try:
-            if self.submit_partially_completed_forms:
-                submit_unfinished_form(self)
-        finally:
-            # this needs to be called after the submission, but regardless of whether it succeeded
-            # thus the try/finally
-            self.mark_completed(False)
+        if self.submit_partially_completed_forms:
+            submit_unfinished_form(self)
+
+        self.mark_completed(False)
 
     def mark_completed(self, completed):
         self.session_is_open = False
