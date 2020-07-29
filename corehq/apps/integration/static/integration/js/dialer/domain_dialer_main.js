@@ -59,14 +59,14 @@ hqDefine("integration/js/dialer/domain_dialer_main", [
                     dialer_utils.addToSystemLog("Unique Contact ID assigned: " + contact.getContactId());
                     dialer_utils.addToSystemLog("Call assigned to Queue: " + contact.getQueue().name);
                     inCall = true;
-                    document.getElementById("phoneButton").disabled = true;
+                    document.getElementById("button-dial").disabled = true;
                 });
 
                 contact.onConnected(function(contact) {
                     document.getElementById("contactStatus").innerHTML = gettext("Connected");
                     dialer_utils.addToSystemLog("Call connected");
                     inCall = true;
-                    document.getElementById("phoneButton").disabled = true;
+                    document.getElementById("button-dial").disabled = true;
                 });
             
                 contact.onEnded(function(contact) {
@@ -75,7 +75,7 @@ hqDefine("integration/js/dialer/domain_dialer_main", [
                 //		window.alert("Your call has ended. Please close this window now.");    
                 //	}
                     document.getElementById("contactStatus").innerHTML = gettext("Disconnected");
-                    document.getElementById("phoneButton").disabled = false;
+                    document.getElementById("button-dial").disabled = false;
                     dialer_utils.addToSystemLog("Call disconnected or cleared");
                     inCall = false
                 });
