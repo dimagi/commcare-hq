@@ -566,7 +566,7 @@ class CaseClaimEndpointTests(TestCase):
                                                     "filter": [
                                                         {
                                                             "bool": {
-                                                                "filter": [
+                                                                "filter": (
                                                                     {
                                                                         "term": {
                                                                             "case_properties.key.exact": "name"
@@ -577,7 +577,7 @@ class CaseClaimEndpointTests(TestCase):
                                                                             "case_properties.value.exact": "wut"
                                                                         }
                                                                     }
-                                                                ]
+                                                                )
                                                             }
                                                         }
                                                     ],
