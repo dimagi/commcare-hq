@@ -1,0 +1,14 @@
+Aggregate Performance Report over the last 30 days for your AWCs
+
+1. Number of visits / Number of desired visits: {{ visits }} / {{visits_goal}}
+2. Number of visits on time / Number of visits: {{ on_time_visits }} / {{ visits }}
+
+THR Distribution: {{ ccs_gte_21 }} / {{ ccs_total }}
+
+Number of children weighed: {{ weighed_num }} / {{ weighed_denom }}
+
+Days AWC open / Goal: {{ avg_days_open }} / 25
+
+Adolescent Girls Services: {{ ag_services_gte21 }} / {{ total_ag_oos }}
+
+Community-Based Events conducted: {{ cbe_conducted }}

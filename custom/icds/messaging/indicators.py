@@ -1,3 +1,4 @@
+import math
 from datetime import datetime, timedelta
 
 from django.conf import settings
@@ -29,6 +30,13 @@ from custom.icds.const import (
     HOME_VISIT_REPORT_ID,
     SUPERVISOR_APP_ID,
     THR_REPORT_ID,
+    UCR_V2_AG,
+    UCR_V2_AG_MONTHLY,
+    UCR_V2_CBE_LAST_MONTH,
+    UCR_V2_LS_DAYS_AWC_OPEN,
+    UCR_V2_MPR_5_CCS_RECORD,
+    UCR_V2_MPR_5_CHILD_HEALTH_CASES_MONTHLY,
+    UCR_V2_MPR_5_CHILD_HEALTH_PT1, UCR_V2_LS_TIMELY_HOME_VISITS,
 )
 from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.models.aggregate import AggregateInactiveAWW
@@ -207,8 +215,46 @@ class AWWAggregatePerformanceIndicatorV2(AWWIndicator):
     template = 'aww_aggregate_performance_v2.txt'
     slug = 'aww_v2'
 
+    def get_total_count_from_fixture(self, fixture, attribute):
+        xpath = './rows/row[@is_total_row="True"]'
+        rows = fixture.findall(xpath)
+        location_name = self.user.sql_location.name
+        for row in rows:
+            owner_id = row.find('./column[@id="owner_id"]')
+            if owner_id.text == location_name:
+                try:
+                    return row.find('./column[@id="{}"]'.format(attribute)).text
+                except:
+                    raise IndicatorError(
+                        "Attribute {} not found in restore for AWC {}".format(attribute, location_name)
+                    )
+
+        return 0
+
+    # ToDo: copied from AWWAggregatePerformanceIndicatorm, need to DRY
+    def get_value_from_fixture(self, fixture, attribute):
+        xpath = './rows/row[@is_total_row="False"]'
+        rows = fixture.findall(xpath)
+        location_name = self.user.sql_location.name
+        for row in rows:
+            owner_id = row.find('./column[@id="owner_id"]')
+            if owner_id.text == location_name:
+                try:
+                    return row.find('./column[@id="{}"]'.format(attribute)).text
+                except:
+                    raise IndicatorError(
+                        "Attribute {} not found in restore for AWC {}".format(attribute, location_name)
+                    )
+
+        return 0
+
     def get_messages(self, language_code=None):
-        pass
+        if self.supervisor is None:
+            return []
+
+        ls_agg_perf_indicator = LSAggregatePerformanceIndicatorV2(self.domain, self.supervisor)
+        data = _get_data_for_performance_indicator(self, ls_agg_perf_indicator)
+        return [self.render_template(data, language_code=language_code)]
 
 
 # All process_sms tasks should hopefully be finished in 4 hours
@@ -475,4 +521,136 @@ class LSAggregatePerformanceIndicatorV2(LSIndicator):
     slug = 'ls_v2'
 
     def get_messages(self, language_code=None):
-        pass
+        data = _get_data_for_performance_indicator(self, self)
+        num_awc_locations = len(self.awc_locations)
+        num_days_open = data.pop('num_days_open')
+        avg_days_open = 0
+        if num_awc_locations:
+            avg_days_open = int(round(num_days_open / num_awc_locations))
+
+        data.update({
+            "avg_days_open": avg_days_open,
+        })
+        return [self.render_template(data, language_code=language_code)]
+
+    def get_total_count_from_fixture(self, fixture, attribute):
+        return self.get_value_from_fixture(fixture, attribute)
+
+    # ToDo: Copied from LSAggregatePerformanceIndicator, need to DRY
+    def get_value_from_fixture(self, fixture, attribute):
+        xpath = './rows/row[@is_total_row="True"]/column[@id="{}"]'.format(attribute)
+        try:
+            return fixture.findall(xpath)[0].text
+        except:
+            raise IndicatorError("{} not found in fixture {} for user {}".format(
+                attribute, fixture, self.user.get_id
+            ))
+
+    # ToDo: Copied from LSAggregatePerformanceIndicator, need to DRY
+    @property
+    @memoized
+    def restore_user(self):
+        return OTARestoreCommCareUser(self.domain, self.user)
+
+    # ToDo: Copied from LSAggregatePerformanceIndicator, need to DRY
+    def get_report_fixture(self, report_id):
+        return get_report_fixture_for_user(self.domain, report_id, self.restore_user)
+
+    @property
+    @memoized
+    def ucr_v2_ls_timely_home_visits_fixture(self):
+        return self.get_report_fixture(UCR_V2_LS_TIMELY_HOME_VISITS)
+
+    @property
+    @memoized
+    def ucr_v2_mpr_5_ccs_record_fixture(self):
+        return self.get_report_fixture(UCR_V2_MPR_5_CCS_RECORD)
+
+    @property
+    @memoized
+    def ucr_v2_mpr_5_child_health_pt1_fixture(self):
+        return self.get_report_fixture(UCR_V2_MPR_5_CHILD_HEALTH_PT1)
+
+    @property
+    @memoized
+    def ucr_v2_mpr_5_child_health_cases_monthly_fixture(self):
+        return self.get_report_fixture(UCR_V2_MPR_5_CHILD_HEALTH_CASES_MONTHLY)
+
+    @property
+    @memoized
+    def ucr_v2_ls_days_awc_open_fixture(self):
+        return self.get_report_fixture(UCR_V2_LS_DAYS_AWC_OPEN)
+
+    @property
+    @memoized
+    def ucr_v2_ag_monthly_fixture(self):
+        return self.get_report_fixture(UCR_V2_AG_MONTHLY)
+
+    @property
+    @memoized
+    def ucr_v2_ag_fixture(self):
+        return self.get_report_fixture(UCR_V2_AG)
+
+    @property
+    @memoized
+    def ucr_v2_cbe_last_month_fixture(self):
+        return self.get_report_fixture(UCR_V2_CBE_LAST_MONTH)
+
+
+def _get_data_for_performance_indicator(indicator_obj, ls_indicator_obj):
+    visits = indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_ls_timely_home_visits_fixture, 'count')
+
+    count_bp = indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_mpr_5_ccs_record_fixture, 'count_bp')
+    count_ebf = indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_mpr_5_ccs_record_fixture, 'count_ebf')
+    count_cf = indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_mpr_5_child_health_pt1_fixture,
+                                                    'count_cf')
+    count_pnc = indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_mpr_5_ccs_record_fixture,
+                                                     'count_pnc')
+    visits_goal = math.ceil(
+        (int(count_bp) * 0.44) + int(count_ebf) + (int(count_pnc) * 6) + (int(count_cf) * 0.39)
+    )
+
+    on_time_visits = indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_ls_timely_home_visits_fixture,
+                                                          'visit_on_time')
+
+    ccs_gte_21 = (
+        int(indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_mpr_5_ccs_record_fixture,
+                                                 'thr_rations_gte_21')) +
+        int(indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_mpr_5_child_health_pt1_fixture,
+                                                 'thr_rations_gte_21'))
+    )
+    ccs_total = (
+        int(indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_mpr_5_ccs_record_fixture,
+                                                 'open_in_month')) +
+        int(indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_mpr_5_child_health_pt1_fixture,
+                                                 'open_in_month'))
+    )
+    weighed_num = indicator_obj.get_value_from_fixture(
+        ls_indicator_obj.ucr_v2_mpr_5_child_health_cases_monthly_fixture, 'weighed_in_month')
+    weighed_denom = indicator_obj.get_value_from_fixture(
+        ls_indicator_obj.ucr_v2_mpr_5_child_health_cases_monthly_fixture, 'open_in_month')
+    num_days_open = indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_ls_days_awc_open_fixture,
+                                                         'awc_opened_count')
+
+    ag_services_gte21 = (
+        int(indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_ag_monthly_fixture,
+                                                 'thr_21_plus_days')) +
+        int(indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_ag_monthly_fixture,
+                                                 'hcm_21_plus_days'))
+    )
+    total_ag_oos = indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_ag_fixture, 'out_of_school')
+    cbe_conducted = indicator_obj.get_total_count_from_fixture(
+        ls_indicator_obj.ucr_v2_cbe_last_month_fixture, 'cbe_conducted')
+    return {
+        'visits': visits,
+        'visits_goal': visits_goal,
+        'on_time_visits': on_time_visits,
+        'ccs_gte_21': ccs_gte_21,
+        'ccs_total': ccs_total,
+        'weighed_num': weighed_num,
+        'weighed_denom': weighed_denom,
+        'num_days_open': num_days_open,
+        'ag_services_gte21': ag_services_gte21,
+        'total_ag_oos': total_ag_oos,
+        'cbe_conducted': cbe_conducted
+    }
