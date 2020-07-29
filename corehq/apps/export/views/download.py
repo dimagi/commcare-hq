@@ -333,6 +333,7 @@ def prepare_custom_export(request, domain):
         view_helper.model,
         request.couch_user.username,
         filters=export_filters,
+        owner_id=request.couch_user.get_id,
         filename=filename,
     )
 
