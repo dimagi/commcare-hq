@@ -244,11 +244,11 @@ class ScheduleInstance(PartitionedModel):
             return True
 
         for key, value in self.memoized_schedule.user_data_filter.items():
-            if key not in contact.user_data:
+            if key not in contact.metadata:
                 return False
 
             allowed_values_set = self.convert_to_set(value)
-            actual_values_set = self.convert_to_set(contact.user_data[key])
+            actual_values_set = self.convert_to_set(contact.metadata[key])
 
             if actual_values_set.isdisjoint(allowed_values_set):
                 return False

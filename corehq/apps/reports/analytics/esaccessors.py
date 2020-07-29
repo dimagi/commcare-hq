@@ -304,12 +304,12 @@ def get_group_stubs(group_ids):
         .values('_id', 'name', 'case_sharing', 'reporting'))
 
 
-def get_user_stubs(user_ids):
+def get_user_stubs(user_ids, extra_fields=None):
     from corehq.apps.reports.util import SimplifiedUserInfo
     return (UserES()
         .user_ids(user_ids)
         .show_inactive()
-        .values(*SimplifiedUserInfo.ES_FIELDS))
+        .values(*SimplifiedUserInfo.ES_FIELDS, *(extra_fields or [])))
 
 
 def get_forms(domain, startdate, enddate, user_ids=None, app_ids=None, xmlnss=None, by_submission_time=True):
