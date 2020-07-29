@@ -134,6 +134,8 @@ def static_negative_growth_indicator(recipient, schedule_instance):
 
 
 def get_user_from_usercase(usercase):
+    if usercase.type != USERCASE_TYPE:
+        raise ValueError("Expected '%s' case" % USERCASE_TYPE)
     user = get_wrapped_owner(get_owner_id(usercase))
     if not isinstance(user, CommCareUser):
         return None
@@ -252,9 +254,6 @@ def run_indicator_for_user(user, indicator_class, language_code=None):
 
 
 def run_indicator_for_usercase(usercase, indicator_class):
-    if usercase.type != USERCASE_TYPE:
-        raise ValueError("Expected '%s' case" % USERCASE_TYPE)
-
     user = get_user_from_usercase(usercase)
     if user and user.location:
         return run_indicator_for_user(user, indicator_class, language_code=usercase.get_language_code())
@@ -279,8 +278,6 @@ def _use_v2_indicators(usercase, app_id):
 
 
 def _get_app_version_used_by_usercase(app_id, usercase):
-    if usercase.type != USERCASE_TYPE:
-        raise ValueError("Expected '%s' case" % USERCASE_TYPE)
     user = get_user_from_usercase(usercase)
     last_build_details = _get_reported_last_build_of_app_by_user(app_id, user)
     if last_build_details:
