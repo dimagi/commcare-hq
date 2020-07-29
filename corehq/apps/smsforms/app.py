@@ -120,6 +120,8 @@ def submit_unfinished_form(session):
     # Get and clean the raw xml
     try:
         response = FormplayerInterface(session.session_id, session.domain).get_raw_instance()
+        if response.get('status') == 'error':
+            raise TouchformsError(response.get('exception'))
         xml = response['output']
     except InvalidSessionIdException:
         return
