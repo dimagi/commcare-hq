@@ -9,10 +9,10 @@ from custom.icds_core.const import ManageHostedCCZ_urlname
 @uitab_dropdown_items.extend(domains=["icds-cas"])
 def icds_uitab_dropdown_items(tab, domain, request):
     if tab == 'ApplicationsTab' and toggles.MANAGE_CCZ_HOSTING.enabled_for_request(request):
-        return {
+        return [{
             "title": _("Manage CCZ Hosting"),
             "url": reverse(ManageHostedCCZ_urlname, args=[domain]),
-        }
+        }]
 
 
 @domain_specific_urls.extend()
