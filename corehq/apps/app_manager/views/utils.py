@@ -1,5 +1,6 @@
 import json
 from collections import defaultdict
+from copy import deepcopy
 from functools import partial
 
 from django.contrib import messages
@@ -27,6 +28,7 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.models import (
     Application,
     CustomIcon,
+    ShadowModule,
     enable_usercase_if_necessary,
 )
 from corehq.apps.app_manager.util import generate_xmlns, update_form_unique_ids
@@ -433,3 +435,73 @@ def get_multimedia_sizes_for_build(domain, build_id, build_profile_id=None):
         media_object = media_objects[multimedia_id]
         total_size[media_object.doc_type] += media_object.content_length
     return total_size
+
+
+def handle_shadow_child_modules(app, shadow_parent):
+    """Creates or deletes shadow child modules if the parent module requires
+
+    Used primarily when changing the "source module id" of a shadow module
+    """
+    if shadow_parent.shadow_module_version == 1:
+        # For old-style shadow modules, we don't create any child-shadows
+        return False
+
+    if not shadow_parent.source_module_id:
+        return False
+
+    source_module_children = [
+        m for m in app.modules
+        if m.root_module_id == shadow_parent.source_module_id
+    ]
+
+    shadow_parent_children = [
+        m for m in app.modules
+        if m.root_module_id == shadow_parent.unique_id
+    ]
+    changes = False
+
+    # Delete unneeded modules
+    for child in shadow_parent_children:
+        if child.source_module_id not in source_module_children:
+            changes = True
+            app.delete_module(child.unique_id)
+
+    # Add new modules
+    for source_child in source_module_children:
+        changes = True
+        new_shadow = ShadowModule.new_module(source_child.default_name(), app.default_language)
+        new_shadow.source_module_id = source_child.unique_id
+
+        # ModuleBase properties
+        new_shadow.module_filter = source_child.module_filter
+        new_shadow.put_in_root = source_child.put_in_root
+        new_shadow.root_module_id = shadow_parent.unique_id
+        new_shadow.fixture_select = deepcopy(source_child.fixture_select)
+        new_shadow.report_context_tile = source_child.report_context_tile
+        new_shadow.auto_select_case = source_child.auto_select_case
+        new_shadow.is_training_module = source_child.is_training_module
+
+        # ShadowModule properties
+        new_shadow.case_details = deepcopy(source_child.case_details)
+        new_shadow.ref_details = deepcopy(source_child.ref_details)
+        new_shadow.case_list = deepcopy(source_child.case_list)
+        new_shadow.referral_list = deepcopy(source_child.referral_list)
+        new_shadow.task_list = deepcopy(source_child.task_list)
+        new_shadow.parent_select = source_child.parent_select
+        new_shadow.search_config = source_child.search_config
+
+        # move excluded form ids
+        source_child_form_ids = set(
+            f.unique_id
+            for f in app.get_module_by_unique_id(new_shadow.source_module_id).get_forms()
+        )
+        new_shadow.excluded_form_ids = list(set(shadow_parent.excluded_form_ids) & source_child_form_ids)
+        shadow_parent.excluded_form_ids = list(set(shadow_parent.excluded_form_ids) - source_child_form_ids)
+
+        app.add_module(new_shadow)
+
+    if changes:
+        app.move_child_modules_after_parents()
+        app.save()
+
+    return changes
