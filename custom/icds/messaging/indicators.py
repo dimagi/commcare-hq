@@ -166,9 +166,9 @@ class LSIndicator(SMSIndicator):
         return {l.location_id: l.name for l in self.child_locations}
 
 
-class AWWAggregatePerformanceIndicator(AWWIndicator):
-    template = 'aww_aggregate_performance.txt'
-    slug = 'aww_2'
+class BaseAWWAggregatePerformanceIndicator(AWWIndicator):
+    def get_messages(self, language_code=None):
+        raise NotImplementedError()
 
     def get_value_from_fixture(self, fixture, attribute):
         xpath = './rows/row[@is_total_row="False"]'
@@ -183,8 +183,12 @@ class AWWAggregatePerformanceIndicator(AWWIndicator):
                     raise IndicatorError(
                         "Attribute {} not found in restore for AWC {}".format(attribute, location_name)
                     )
-
         return 0
+
+
+class AWWAggregatePerformanceIndicator(BaseAWWAggregatePerformanceIndicator):
+    template = 'aww_aggregate_performance.txt'
+    slug = 'aww_2'
 
     def get_messages(self, language_code=None):
         if self.supervisor is None:
@@ -211,7 +215,7 @@ class AWWAggregatePerformanceIndicator(AWWIndicator):
         return [self.render_template(context, language_code=language_code)]
 
 
-class AWWAggregatePerformanceIndicatorV2(AWWIndicator):
+class AWWAggregatePerformanceIndicatorV2(BaseAWWAggregatePerformanceIndicator):
     template = 'aww_aggregate_performance_v2.txt'
     slug = 'aww_v2'
 
@@ -228,24 +232,6 @@ class AWWAggregatePerformanceIndicatorV2(AWWIndicator):
                     raise IndicatorError(
                         "Attribute {} not found in restore for AWC {}".format(attribute, location_name)
                     )
-
-        return 0
-
-    # ToDo: copied from AWWAggregatePerformanceIndicatorm, need to DRY
-    def get_value_from_fixture(self, fixture, attribute):
-        xpath = './rows/row[@is_total_row="False"]'
-        rows = fixture.findall(xpath)
-        location_name = self.user.sql_location.name
-        for row in rows:
-            owner_id = row.find('./column[@id="owner_id"]')
-            if owner_id.text == location_name:
-                try:
-                    return row.find('./column[@id="{}"]'.format(attribute)).text
-                except:
-                    raise IndicatorError(
-                        "Attribute {} not found in restore for AWC {}".format(attribute, location_name)
-                    )
-
         return 0
 
     def get_messages(self, language_code=None):
@@ -448,9 +434,9 @@ def compute_awws_in_vhnd_timeframe(domain):
         return {row[0] for row in cursor.fetchall()}
 
 
-class LSAggregatePerformanceIndicator(LSIndicator):
-    template = 'ls_aggregate_performance.txt'
-    slug = 'ls_1'
+class BaseLSAggregatePerformanceIndicator(LSIndicator):
+    def get_messages(self, language_code=None):
+        raise NotImplementedError()
 
     @property
     @memoized
@@ -459,6 +445,20 @@ class LSAggregatePerformanceIndicator(LSIndicator):
 
     def get_report_fixture(self, report_id):
         return get_report_fixture_for_user(self.domain, report_id, self.restore_user)
+
+    def get_value_from_fixture(self, fixture, attribute):
+        xpath = './rows/row[@is_total_row="True"]/column[@id="{}"]'.format(attribute)
+        try:
+            return fixture.findall(xpath)[0].text
+        except:
+            raise IndicatorError("{} not found in fixture {} for user {}".format(
+                attribute, fixture, self.user.get_id
+            ))
+
+
+class LSAggregatePerformanceIndicator(BaseLSAggregatePerformanceIndicator):
+    template = 'ls_aggregate_performance.txt'
+    slug = 'ls_1'
 
     @property
     @memoized
@@ -479,15 +479,6 @@ class LSAggregatePerformanceIndicator(LSIndicator):
     @memoized
     def days_open_fixture(self):
         return self.get_report_fixture(DAYS_AWC_OPEN_REPORT_ID)
-
-    def get_value_from_fixture(self, fixture, attribute):
-        xpath = './rows/row[@is_total_row="True"]/column[@id="{}"]'.format(attribute)
-        try:
-            return fixture.findall(xpath)[0].text
-        except:
-            raise IndicatorError("{} not found in fixture {} for user {}".format(
-                attribute, fixture, self.user.get_id
-            ))
 
     def get_messages(self, language_code=None):
         on_time_visits = self.get_value_from_fixture(self.visits_fixture, 'visit_on_time')
@@ -516,7 +507,7 @@ class LSAggregatePerformanceIndicator(LSIndicator):
         return [self.render_template(context, language_code=language_code)]
 
 
-class LSAggregatePerformanceIndicatorV2(LSIndicator):
+class LSAggregatePerformanceIndicatorV2(BaseLSAggregatePerformanceIndicator):
     template = 'ls_aggregate_performance_v2.txt'
     slug = 'ls_v2'
 
@@ -535,26 +526,6 @@ class LSAggregatePerformanceIndicatorV2(LSIndicator):
 
     def get_total_count_from_fixture(self, fixture, attribute):
         return self.get_value_from_fixture(fixture, attribute)
-
-    # ToDo: Copied from LSAggregatePerformanceIndicator, need to DRY
-    def get_value_from_fixture(self, fixture, attribute):
-        xpath = './rows/row[@is_total_row="True"]/column[@id="{}"]'.format(attribute)
-        try:
-            return fixture.findall(xpath)[0].text
-        except:
-            raise IndicatorError("{} not found in fixture {} for user {}".format(
-                attribute, fixture, self.user.get_id
-            ))
-
-    # ToDo: Copied from LSAggregatePerformanceIndicator, need to DRY
-    @property
-    @memoized
-    def restore_user(self):
-        return OTARestoreCommCareUser(self.domain, self.user)
-
-    # ToDo: Copied from LSAggregatePerformanceIndicator, need to DRY
-    def get_report_fixture(self, report_id):
-        return get_report_fixture_for_user(self.domain, report_id, self.restore_user)
 
     @property
     @memoized
