@@ -1020,9 +1020,10 @@ def location_export(request, domain):
         return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
     include_consumption = request.GET.get('include_consumption') == 'true'
     root_location_id = request.GET.get('root_location_id')
+    owner_id = request.couch_user.get_id
     download = DownloadBase()
     res = download_locations_async.delay(domain, download.download_id, include_consumption,
-                                         headers_only, root_location_id)
+                                         headers_only, owner_id, root_location_id)
     download.set_task(res)
     return redirect(DownloadLocationStatusView.urlname, domain, download.download_id)
 
