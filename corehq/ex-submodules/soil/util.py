@@ -136,12 +136,13 @@ def get_download_file_path(use_transfer, filename):
     return fpath
 
 
-def expose_download(use_transfer, file_path, filename, download_id, file_type):
+def expose_download(use_transfer, file_path, filename, download_id, file_type, owner_ids=None):
     common_kwargs = {
         'mimetype': Format.from_format(file_type).mimetype,
         'content_disposition': 'attachment; filename="{fname}"'.format(fname=filename),
         'download_id': download_id,
         'expiry': (1 * 60 * 60),
+        'owner_ids': owner_ids,
     }
     if use_transfer:
         expose_file_download(
@@ -157,7 +158,7 @@ def expose_download(use_transfer, file_path, filename, download_id, file_type):
         )
 
 
-def expose_zipped_blob_download(data_path, filename, format, domain):
+def expose_zipped_blob_download(data_path, filename, format, domain, owner_ids=None):
     """Expose zipped file content as a blob download
 
     :param data_path: Path to data file. Will be deleted.
@@ -181,7 +182,8 @@ def expose_zipped_blob_download(data_path, filename, format, domain):
             filename,
             expiry=expiry_mins * 60,
             mimetype=file_format.mimetype,
-            content_disposition=file_name_header
+            content_disposition=file_name_header,
+            owner_ids=owner_ids,
         )
         with open(zip_temp_path, 'rb') as file_:
             get_blob_db().put(
