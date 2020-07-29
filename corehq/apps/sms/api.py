@@ -521,7 +521,7 @@ def process_sms_registration(msg):
                         username = process_username(username, domain_obj)
                         password = random_password()
                         new_user = CommCareUser.create(domain_obj.name, username, password, created_by=None,
-                                                       created_via=USER_CHANGE_VIA_SMS, user_data=user_data)
+                                                       created_via=USER_CHANGE_VIA_SMS, metadata=user_data)
                         new_user.add_phone_number(cleaned_phone_number)
                         new_user.save()
 

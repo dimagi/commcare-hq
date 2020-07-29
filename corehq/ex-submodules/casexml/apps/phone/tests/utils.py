@@ -32,7 +32,7 @@ def create_restore_user(
             created_by=None,
             created_via=None,
             first_name=first_name,
-            user_data={
+            metadata={
                 'something': 'arbitrary'
             }
         )
