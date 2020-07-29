@@ -45,18 +45,18 @@ def demo_extension_3(**kwargs):
 
 
 def test_commcare_extensions():
-    def check(kwargs, expected):
-        results = ext_point_a(**kwargs)
+    def check(args, kwargs, expected):
+        results = ext_point_a(*args, **kwargs)
         testil.eq(results, expected)
 
     cases = [
-        ({"arg1": 1, "domain": "d1"}, ["p2", "p3"]),
-        ({"arg1": 2, "domain": "d1"}, ["p3"]),
-        ({"arg1": 1, "domain": "d2"}, ["p1", "p2"]),
-        ({"arg1": 2, "domain": "d2"}, []),
+        ([], {"arg1": 1, "domain": "d1"}, ["p2", "p3"]),
+        ([], {"arg1": 2, "domain": "d1"}, ["p3"]),
+        ([1, "d2"], {}, ["p1", "p2"]),
+        ([], {"arg1": 2, "domain": "d2"}, []),
     ]
-    for kwargs, expected in cases:
-        yield check, kwargs, expected
+    for args, kwargs, expected in cases:
+        yield check, args, kwargs, expected
 
 
 def test_validation_not_callable():

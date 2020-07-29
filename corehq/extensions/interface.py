@@ -12,7 +12,7 @@ class Extension:
     def __init__(self, point, callable_ref, domains):
         self.point = point
         self.callable = callable_ref
-        self.domains = domains
+        self.domains = set(domains) if domains else None
 
     def validate(self, expected_args):
         spec = inspect.getfullargspec(self.callable)
@@ -20,25 +20,22 @@ class Extension:
         if unconsumed_args and not spec.varkw:
             raise ExtensionError(f"Not all extension point args are consumed: {unconsumed_args}")
 
-    def should_call(self, **kwargs):
-        if self.domains is None or 'domain' not in kwargs:
-            return True
+    def call_form_domain(self, domain):
+        return self.domains is None or domain in self.domains
 
-        return kwargs['domain'] in self.domains
-
-    def __call__(self, **kwargs):
-        if self.should_call(**kwargs):
-            return self.callable(**kwargs)
+    def __call__(self, *args, **kwargs):
+        return self.callable(*args, **kwargs)
 
     def __repr__(self):
         return f"{self.callable}"
 
 
 class ExtensionPoint:
-    def __init__(self, manager, name, providing_args):
+    def __init__(self, manager, name, definition_function):
         self.manager = manager
         self.name = name
-        self.providing_args = providing_args
+        self.definition_function = definition_function
+        self.providing_args = inspect.getfullargspec(definition_function).args
         self.extensions = []
 
     def extend(self, impl=None, *, domains=None):
@@ -61,7 +58,11 @@ class ExtensionPoint:
 
     def __call__(self, *args, **kwargs):
         results = []
+        callargs = inspect.getcallargs(self.definition_function, *args, **kwargs)
+        domain = callargs.get('domain')
         for extension in self.extensions:
+            if domain and not extension.call_form_domain(domain):
+                continue
             try:
                 result = extension(*args, **kwargs)
                 if result is not None:
@@ -98,8 +99,7 @@ class CommCareExtensions:
                 "be defined before setup is complete"
             )
         name = func.__name__
-        args = inspect.getfullargspec(func).args
-        point = ExtensionPoint(self, name, args)
+        point = ExtensionPoint(self, name, func)
         self.registry[name] = point
         return point
 
