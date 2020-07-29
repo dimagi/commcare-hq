@@ -80,7 +80,7 @@ def send_first_message(domain, recipient, phone_entry_or_number, session, respon
     logged_subevent.completed()
 
 
-@task(serializer='pickle', queue='reminder_queue', bind=True, max_retries=3, default_retry_delay=15 * 60)
+@no_result_task(serializer='pickle', queue='reminder_queue')
 def handle_due_survey_action(self, domain, contact_id, session_id):
     with critical_section_for_smsforms_sessions(contact_id):
         session = SQLXFormsSession.by_session_id(session_id)
@@ -127,15 +127,26 @@ def handle_due_survey_action(self, domain, contact_id, session_id):
             session.move_to_next_action()
             session.save()
         else:
+            close_session.delay(contact_id, session_id)
+
+
+@task(serializer='pickle', queue='reminder_queue', bind=True, max_retries=3, default_retry_delay=15 * 60)
+def close_session(self, contact_id, session_id):
+    with critical_section_for_smsforms_sessions(contact_id):
+        session = SQLXFormsSession.by_session_id(session_id)
+        try:
+            session.close(force=False)
+        except TouchformsError as e:
             try:
-                session.close()
+                self.retry(exc=e)
             except TouchformsError as e:
-                try:
-                    self.retry(exc=e)
-                except MaxRetriesExceededError:
-                    # Eventually the session needs to get closed
-                    session.mark_completed(False)
-            session.save()
+                raise e
+            finally:
+                # Eventually the session needs to get closed
+                session.mark_completed(False)
+                session.save()
+                return
+        session.save()
 
 
 def session_is_stale(session):
