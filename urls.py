@@ -91,9 +91,6 @@ domain_specific = [
     url(r'^integration/', include('corehq.apps.integration.urls')),
 ]
 
-for module in settings.CUSTOM_DOMAIN_SPECIFIC_URL_MODULES:
-    domain_specific.append(url(r'^', include(module)))
-
 for url_modules in extension_points.domain_specific_urls():
     for module in url_modules:
         domain_specific.append(url(r'^', include(module)))

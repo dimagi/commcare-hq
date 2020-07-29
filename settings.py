@@ -1026,7 +1026,6 @@ REQUIRE_TWO_FACTOR_FOR_SUPERUSERS = False
 # that adds messages to the partition with the fewest unprocessed messages
 USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
 
-CUSTOM_DOMAIN_SPECIFIC_URL_MODULES = []
 LOCAL_CUSTOM_DB_ROUTING = {}
 
 COMMCARE_EXTENSIONS = [
