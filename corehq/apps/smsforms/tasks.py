@@ -80,7 +80,7 @@ def send_first_message(domain, recipient, phone_entry_or_number, session, respon
 
 
 @no_result_task(serializer='pickle', queue='reminder_queue')
-def handle_due_survey_action(self, domain, contact_id, session_id):
+def handle_due_survey_action(domain, contact_id, session_id):
     with critical_section_for_smsforms_sessions(contact_id):
         session = SQLXFormsSession.by_session_id(session_id)
         if (
