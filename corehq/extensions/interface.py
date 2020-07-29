@@ -20,7 +20,7 @@ class Extension:
         if unconsumed_args and not spec.varkw:
             raise ExtensionError(f"Not all extension point args are consumed: {unconsumed_args}")
 
-    def call_for_domain(self, domain):
+    def should_call_for_domain(self, domain):
         return self.domains is None or domain in self.domains
 
     def __call__(self, *args, **kwargs):
