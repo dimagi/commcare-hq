@@ -45,7 +45,7 @@ class SMSRatesAsyncHandler(BaseAsyncHandler):
         direction = self.data.get('direction')
 
         gateway_fee = SmsGatewayFee.get_by_criteria(
-            backend_api_id, direction, backend_instance=gateway,
+            backend_api_id, direction, backend_couch_id=gateway,
             country_code=country_code,
         )
         usage_fee = SmsUsageFee.get_by_criteria(direction, self.request.domain)
@@ -121,11 +121,11 @@ class PublicSMSRatesAsyncHandler(BaseAsyncHandler):
     def get_rate_table(self, country_code):
         backends = SQLMobileBackend.get_global_backends(SQLMobileBackend.SMS)
 
-        def _directed_fee(direction, backend_api_id, backend_instance_id):
+        def _directed_fee(direction, backend_api_id, backend_couch_id):
             gateway_fee = SmsGatewayFee.get_by_criteria(
                 backend_api_id,
                 direction,
-                backend_instance=backend_instance_id,
+                backend_couch_id=backend_couch_id,
                 country_code=country_code
             )
             if not gateway_fee or gateway_fee.amount is None:

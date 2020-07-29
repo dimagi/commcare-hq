@@ -22,7 +22,7 @@ class InfobipIncomingMessageView(IncomingBackendView):
             if message_content.get('type') == 'TEXT':
                 body = message_content.get('text', '')
             elif message_content.get('type') in ['IMAGE', 'AUDIO', 'VIDEO', 'DOCUMENT']:
-                body = message_content.get('caption', '')
+                body = message_content.get('caption', 'media')
                 media_url = message_content.get('url', None)
                 if media_url:
                     media_urls.append(media_url)

@@ -1,19 +1,16 @@
 from django.db import migrations
 
-from corehq.apps.smsbillables.management.commands.bootstrap_gateway_fees import (
-    bootstrap_infobip_gateway,
-)
 
-def add_infobip_gateway_fee_for_migration(apps, schema_editor):
-    bootstrap_infobip_gateway(apps)
+def noop(*args, **kwargs):
+    pass
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('smsbillables', '0020_update_sislog_fees'),
+        ('smsbillables', '0020_update_sislog_fees')
     ]
 
     operations = [
-        migrations.RunPython(add_infobip_gateway_fee_for_migration),
+        migrations.RunPython(noop)
     ]
