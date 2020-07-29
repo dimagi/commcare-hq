@@ -1,4 +1,3 @@
-from celery.exceptions import MaxRetriesExceededError
 from celery.task import task
 from datetime import timedelta
 
