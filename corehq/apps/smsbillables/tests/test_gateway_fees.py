@@ -71,29 +71,29 @@ class TestGatewayFee(TestCase):
 
     def create_instance_gateway_fees(self):
         for direction, backend in self.instance_fees.items():
-            for backend_api_id, (backend_instance, amount) in backend.items():
-                SmsGatewayFee.create_new(backend_api_id, direction, amount, backend_instance=backend_instance)
+            for backend_api_id, (backend_couch_id, amount) in backend.items():
+                SmsGatewayFee.create_new(backend_api_id, direction, amount, backend_couch_id=backend_couch_id)
 
     def create_most_specific_gateway_fees(self):
         for direction, backend in self.most_specific_fees.items():
             for backend_api_id, country in backend.items():
-                for country_code, (backend_instance, amount) in country.items():
+                for country_code, (backend_couch_id, amount) in country.items():
                     SmsGatewayFee.create_new(backend_api_id, direction, amount,
-                                             country_code=country_code, backend_instance=backend_instance)
+                                             country_code=country_code, backend_couch_id=backend_couch_id)
 
     def create_prefix_gateway_fees(self):
         for direction, backend in self.prefix_fees.items():
             for backend_api_id, country in backend.items():
                 for country_code, prfx in country.items():
                     for prefix, backend_instance_and_amount in prfx.items():
-                        for backend_instance, amount in backend_instance_and_amount.items():
+                        for backend_couch_id, amount in backend_instance_and_amount.items():
                             SmsGatewayFee.create_new(
                                 backend_api_id,
                                 direction,
                                 amount,
                                 country_code=country_code,
                                 prefix=prefix,
-                                backend_instance=backend_instance,
+                                backend_couch_id=backend_couch_id,
                             )
 
     def test_least_specific_fees(self):

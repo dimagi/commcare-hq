@@ -1,20 +1,16 @@
 from django.db import migrations
 
-from corehq.apps.smsbillables.management.commands.bootstrap_smsgh_gateway import (
-    bootstrap_smsgh_gateway,
-)
 
-
-def create_smsgh_rates(apps, schema_editor):
-    bootstrap_smsgh_gateway(apps)
+def noop(*args, **kwargs):
+    pass
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('smsbillables', '0003_update_twilio_rates_outgoing'),
+        ('smsbillables', '0003_update_twilio_rates_outgoing')
     ]
 
-    operations = {
-        migrations.RunPython(create_smsgh_rates),
-    }
+    operations = [
+        migrations.RunPython(noop)
+    ]

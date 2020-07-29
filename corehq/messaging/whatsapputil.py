@@ -1,5 +1,9 @@
 import re
 from collections import namedtuple
+
+from turn import TurnClient
+
+from django.conf import settings
 from corehq.apps.domain.models import Domain
 from dimagi.utils.web import get_url_base
 
@@ -15,9 +19,11 @@ def is_whatsapp_template_message(message_text):
 
 
 def is_multimedia_message(msg):
-    return 'caption_image' in msg.custom_metadata\
-           or 'caption_audio' in msg.custom_metadata\
-           or 'caption_video' in msg.custom_metadata
+    return msg.custom_metadata is not None and (
+        'caption_image' in msg.custom_metadata
+        or 'caption_audio' in msg.custom_metadata
+        or 'caption_video' in msg.custom_metadata
+    )
 
 
 def get_multimedia_urls(msg):
@@ -56,3 +62,9 @@ def get_template_hsm_parts(message_text):
         return HsmParts(template_name=parts[1], lang_code=parts[2], params=params)
     except IndexError:
         raise WhatsAppTemplateStringException
+
+
+def get_whatsapp_id(to, client=None):
+    client = client or TurnClient(settings.TURN_API_KEY)
+    wa_id = client.contacts.get_whatsapp_id(to)
+    return wa_id

@@ -33,13 +33,13 @@ def bootstrap_grapevine_gateway(apps):
     for backend in relevant_backends:
         SmsGatewayFee.create_new(
             SQLGrapevineBackend.get_api_id(), INCOMING, Decimal('0.10'),
-            currency=currency, backend_instance=backend.couch_id,
+            currency=currency, backend_couch_id=backend.couch_id,
             fee_class=sms_gateway_fee_class,
             criteria_class=sms_gateway_fee_criteria_class,
         )
         SmsGatewayFee.create_new(
             SQLGrapevineBackend.get_api_id(), OUTGOING, Decimal('0.22'),
-            currency=currency, backend_instance=backend.couch_id,
+            currency=currency, backend_couch_id=backend.couch_id,
             fee_class=sms_gateway_fee_class,
             criteria_class=sms_gateway_fee_criteria_class,
         )
