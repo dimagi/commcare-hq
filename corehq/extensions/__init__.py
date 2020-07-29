@@ -58,19 +58,20 @@ Registering an extension point implementation
     from xyz import get_things
 
     @get_things.extend()
-    def some_things(arg1, keyword=False):
+    def some_things(arg1, domain, keyword=False):
         return ["thing2", "thing1"]
 
 
 Extensions may also be limited to specific domains by passing the list
-of domains as a keyword argument (it must be a keyword argument).
+of domains as a keyword argument (it must be a keyword argument). This is only supported
+if the extension point defines a `domain` argument.
 
 ::
 
     from xyz import get_things
 
     @get_things.extend(domains=["cat", "hat"])
-    def custom_domain_things(arg1, keyword=False):
+    def custom_domain_things(arg1, domain, keyword=False):
         return ["thing3", "thing4"]
 
 
