@@ -15,6 +15,7 @@ from custom.icds.exceptions import CaseRelationshipError
 from custom.icds.messaging.custom_recipients import skip_notifying_missing_ccs_record_parent
 from custom.icds.messaging.indicators import (
     DEFAULT_LANGUAGE,
+    AWWAggregatePerformanceIndicatorV2,
     AWWIndicator,
     LSIndicator,
     AWWSubmissionPerformanceIndicator,
@@ -22,6 +23,7 @@ from custom.icds.messaging.indicators import (
     AWWVHNDSurveyIndicator,
     LSAggregatePerformanceIndicator,
     LSVHNDSurveyIndicator,
+    LSAggregatePerformanceIndicatorV2,
     LSSubmissionPerformanceIndicator,
 )
 from decimal import Decimal, InvalidOperation
@@ -254,7 +256,17 @@ def aww_1(recipient, case_schedule_instance):
 
 
 def aww_2(recipient, case_schedule_instance):
-    return run_indicator_for_usercase(case_schedule_instance.case, AWWAggregatePerformanceIndicator)
+    indicator_class = AWWAggregatePerformanceIndicator
+    if _use_v2_indicators(case_schedule_instance.case):
+        indicator_class = AWWAggregatePerformanceIndicatorV2
+    return run_indicator_for_usercase(case_schedule_instance.case, indicator_class)
+
+
+def _use_v2_indicators(usercase):
+    if usercase.type != USERCASE_TYPE:
+        raise ValueError("Expected '%s' case" % USERCASE_TYPE)
+    # ToDo: add condition to check for functional version of the app
+    return True
 
 
 def phase2_aww_1(recipient, case_schedule_instance):
@@ -262,7 +274,10 @@ def phase2_aww_1(recipient, case_schedule_instance):
 
 
 def ls_1(recipient, case_schedule_instance):
-    return run_indicator_for_usercase(case_schedule_instance.case, LSAggregatePerformanceIndicator)
+    indicator_class = LSAggregatePerformanceIndicator
+    if _use_v2_indicators(case_schedule_instance.case):
+        indicator_class = LSAggregatePerformanceIndicatorV2
+    return run_indicator_for_usercase(case_schedule_instance.case, indicator_class)
 
 
 def ls_2(recipient, case_schedule_instance):

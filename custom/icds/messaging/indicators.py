@@ -201,6 +201,14 @@ class AWWAggregatePerformanceIndicator(AWWIndicator):
         return [self.render_template(context, language_code=language_code)]
 
 
+class AWWAggregatePerformanceIndicatorV2(AWWIndicator):
+    template = 'aww_aggregate_performance_v2.txt'
+    slug = 'aww_v2'
+
+    def get_messages(self, language_code=None):
+        pass
+
+
 # All process_sms tasks should hopefully be finished in 4 hours
 @quickcache([], timeout=60 * 60 * 4)
 def is_aggregate_inactive_aww_data_fresh(send_email=False):
@@ -458,3 +466,11 @@ class LSAggregatePerformanceIndicator(LSIndicator):
         }
 
         return [self.render_template(context, language_code=language_code)]
+
+
+class LSAggregatePerformanceIndicatorV2(LSIndicator):
+    template = 'ls_aggregate_performance_v2.txt'
+    slug = 'ls_v2'
+
+    def get_messages(self, language_code=None):
+        pass
