@@ -120,9 +120,10 @@ class StaticChoiceProvider(ChoiceProvider):
     def query(self, query_context):
         default = self.default_value(query_context.user)
         if not default:
-            default = SearchableChoice(SHOW_ALL_CHOICE, "[{}]".format(ugettext('Show All')), "[{}]".format(ugettext('Show All')))
+            default = SearchableChoice(SHOW_ALL_CHOICE,
+                                       "[{}]".format(ugettext('Show All')), "[{}]".format(ugettext('Show All')))
         filtered_set = [choice for choice in self.choices
-                        if choice == default or any(query_context.query in text for text in choice.searchable_text)]
+                       if choice == default or any(query_context.query in text for text in choice.searchable_text)]
         return filtered_set[query_context.offset:query_context.offset + query_context.limit]
 
     def get_choices_for_known_values(self, values, user):
@@ -430,7 +431,7 @@ class AbstractMultiProvider(ChoiceProvider):
             else:
                 offset -= choice_provider.query_count(query, user=user)
 
-        if choices[0] == None:
+        if choices[0] is None:
             if not default:
                 default = [Choice(SHOW_ALL_CHOICE, "[{}]".format(ugettext('Show All')))]
             choices[0] = default[0]
