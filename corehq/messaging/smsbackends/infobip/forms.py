@@ -1,7 +1,10 @@
 from corehq.apps.sms.forms import BackendForm
 from dimagi.utils.django.fields import TrimmedCharField
+from django.forms import ChoiceField
 from crispy_forms import layout as crispy
 from django.utils.translation import ugettext_lazy as _
+
+from corehq.apps.sms.models import SQLMobileBackend
 
 
 class InfobipBackendForm(BackendForm):
@@ -23,6 +26,10 @@ class InfobipBackendForm(BackendForm):
                     "without automatic failover to another channel according to the specific scenario."),
         required=False
     )
+    fallback_backend_id = ChoiceField(
+        label=_("Fallback Backend"),
+        required=False
+    )
 
     def clean_scenario_key(self):
         value = self.cleaned_data.get("scenario_key") or ""
@@ -30,10 +37,21 @@ class InfobipBackendForm(BackendForm):
 
     @property
     def gateway_specific_fields(self):
+        domain_backends = SQLMobileBackend.get_domain_backends(
+            SQLMobileBackend.SMS,
+            self.domain,
+        )
+        backend_choices = [('', _("No Fallback Backend"))]
+        backend_choices.extend([
+            (backend.couch_id, backend.name) for backend in domain_backends
+            if backend.id != self.backend_id
+        ])
+        self.fields['fallback_backend_id'].choices = backend_choices
         return crispy.Fieldset(
             _("Infobip Settings"),
             'account_sid',
             'auth_token',
             'personalized_subdomain',
-            'scenario_key'
+            'scenario_key',
+            'fallback_backend_id'
         )
