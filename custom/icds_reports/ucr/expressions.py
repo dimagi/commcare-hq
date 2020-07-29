@@ -348,7 +348,7 @@ icds_ucr_quickcache = get_django_quickcache(memoize_timeout=60, timeout=60 * 60)
 @icds_ucr_quickcache(('user_id',))
 def _get_user_location_id(user_id):
     user = CommCareUser.get_db().get(user_id)
-    return user.get('user_data', {}).get('commcare_location_id')
+    return user.metadata.get('commcare_location_id')
 
 
 class ICDSUserLocation(JsonObject):

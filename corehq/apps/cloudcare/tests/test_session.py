@@ -1,16 +1,23 @@
 import uuid
 
-from django.test import SimpleTestCase
+from django.test import TestCase
 
 from casexml.apps.case.models import CommCareCase
 
 from corehq.apps.cloudcare.touchforms_api import (
     get_user_contributions_to_touchforms_session,
 )
+from corehq.apps.custom_data_fields.models import (
+    CustomDataFieldsDefinition,
+    CustomDataFieldsProfile,
+    Field,
+    PROFILE_SLUG,
+)
+from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.apps.users.models import CommCareUser, WebUser
 
 
-class SessionUtilsTest(SimpleTestCase):
+class SessionUtilsTest(TestCase):
 
     def test_load_session_data_for_mobile_worker(self):
         user = CommCareUser(
@@ -37,6 +44,26 @@ class SessionUtilsTest(SimpleTestCase):
         user_data = get_user_contributions_to_touchforms_session(user)['user_data']
         self.assertEqual('first', user_data['commcare_first_name'])
         self.assertEqual('last', user_data['commcare_last_name'])
+
+    def test_user_data_profile(self):
+        definition = CustomDataFieldsDefinition(domain='cloudcare-tests', field_type=UserFieldsView.field_type)
+        definition.save()
+        definition.set_fields([
+            Field(slug='word', label='A Word'),
+        ])
+        definition.save()
+        profile = CustomDataFieldsProfile(name='prof', fields={'word': 'supernova'}, definition=definition)
+        profile.save()
+        user = CommCareUser(
+            domain='cloudcare-tests',
+            username='worker@cloudcare-tests.commcarehq.org',
+            _id=uuid.uuid4().hex,
+            metadata={PROFILE_SLUG: profile.id},
+        )
+        user_data = get_user_contributions_to_touchforms_session(user)['user_data']
+        self.assertEqual(profile.id, user_data[PROFILE_SLUG])
+        self.assertEqual('supernova', user_data['word'])
+        definition.delete()
 
     def test_load_session_data_for_web_user(self):
         user = WebUser(
