@@ -2,11 +2,44 @@
 CommCare Extensions
 ===================
 
-This package provides the utilities to register extension points and their implementations
+This document describes the mechanisms that can be used to extend CommCare's functionality. There are a number
+of legacy mechanisms that are used which are not described in this document. This document will focus on
+the use of pre-defined *extension points* to add functionality to CommCare.
+
+Where to put custom code
+------------------------
+The custom code for extending CommCare may be part of the main `commcare-hq` repository or it may have its own
+repository. In the case where it is in a separate repository the code may be 'added' to CommCare by cloning the
+custom repository into the `extensions` folder in the root of the CommCare source:
+
+::
+
+    /commcare-hq
+      /corehq
+      /custom
+      ...
+      /extensions
+        /custom_repo
+          /custom
+            /app1/models.py
+            /app2/models.py
+
+The code in the custom repository must be contained within the `custom` namespace package (without an
+`__init__.py` file). Using this structure the custom code will be available to CommCare with the same package
+structure as it is in the custom repository. In the example above the following import statement will work
+in CommCare as well as in the custom code:
+
+::
+
+    from custom.app1 models import *
+
+Extensions Points
+-----------------
+The `corehq/extensions` package provides the utilities to register extension points and their implementations
 and to call retrieve the results from all the registered implementations.
 
 Create and extension point
---------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ::
 
@@ -18,7 +51,7 @@ Create and extension point
 
 
 Registering an extension point implementation
----------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ::
 
@@ -42,7 +75,7 @@ of domains as a keyword argument (it must be a keyword argument).
 
 
 Calling an extension point
---------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 An extension point is called as a normal function. Results are
 returned as a list with any `None` values removed.
 
@@ -52,6 +85,7 @@ returned as a list with any `None` values removed.
 
     results = get_things(10, True)
 """
+
 from corehq.extensions.interface import CommCareExtensions
 
 extension_manager = CommCareExtensions()
