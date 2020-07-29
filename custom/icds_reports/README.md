@@ -45,11 +45,11 @@ LOCAL_CUSTOM_UCR_REPORT_FILTER_VALUES = [
     ("village_choice_list", "custom.icds_reports.ucr.filter_value.VillageFilterValue"),
 ]
 
-LOCAL_APPS = [
+LOCAL_APPS = (
     "custom.icds",
     "custom.icds.data_management",
     "custom.icds_reports",
-]
+)
 
 CUSTOM_DOMAIN_SPECIFIC_URL_MODULES = [
     "custom.icds_reports.urls",
