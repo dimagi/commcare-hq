@@ -17,9 +17,10 @@ def generate_repeater_payloads(request, domain):
         repeater_id = request.POST.get('repeater_id')
         data = csv.reader(request.FILES['payload_ids_file'])
         payload_ids = [row[0] for row in data]
+        owner_id = request.couch_user.get_id
     except Exception as e:
         messages.error(request, _("Could not process the file. %s") % str(e))
     else:
-        send_repeater_payloads.delay(repeater_id, payload_ids, email_id)
+        send_repeater_payloads.delay(repeater_id, payload_ids, email_id, owner_id)
         messages.success(request, _("Successfully queued request. You should receive an email shortly."))
     return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))

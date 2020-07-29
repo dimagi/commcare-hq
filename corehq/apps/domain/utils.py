@@ -100,7 +100,7 @@ def guess_domain_language(domain_name):
 
 
 @task(serializer='pickle', queue='background_queue')
-def send_repeater_payloads(repeater_id, payload_ids, email_id):
+def send_repeater_payloads(repeater_id, payload_ids, email_id, owner_id):
     from corehq.motech.repeaters.models import Repeater, RepeatRecord
     repeater = Repeater.get(repeater_id)
     repeater_type = repeater.doc_type
@@ -160,6 +160,7 @@ def send_repeater_payloads(repeater_id, payload_ids, email_id):
         result_file_name,
         Format.CSV,
         repeater.domain,
+        owner_ids=[owner_id],
     )
     email_result(download_url)
 
