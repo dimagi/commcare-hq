@@ -80,7 +80,7 @@ def send_first_message(domain, recipient, phone_entry_or_number, session, respon
     logged_subevent.completed()
 
 
-@task(serializer='pickle', queue='reminder_queue', max_retries=3, default_retry_delay=15 * 60)
+@task(serializer='pickle', queue='reminder_queue', bind=True, max_retries=3, default_retry_delay=15 * 60)
 def handle_due_survey_action(self, domain, contact_id, session_id):
     with critical_section_for_smsforms_sessions(contact_id):
         session = SQLXFormsSession.by_session_id(session_id)
