@@ -1,7 +1,9 @@
+from celery.exceptions import MaxRetriesExceededError
+from celery.task import task
 from datetime import timedelta
 
 from corehq import toggles
-from corehq.apps.formplayer_api.smsforms.api import FormplayerInterface
+from corehq.apps.formplayer_api.smsforms.api import FormplayerInterface, TouchformsError
 from corehq.apps.sms.api import MessageMetadata, send_sms_to_verified_number, send_sms
 from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.sms.util import format_message_list
@@ -78,8 +80,8 @@ def send_first_message(domain, recipient, phone_entry_or_number, session, respon
     logged_subevent.completed()
 
 
-@no_result_task(serializer='pickle', queue='reminder_queue')
-def handle_due_survey_action(domain, contact_id, session_id):
+@task(serializer='pickle', queue='reminder_queue', max_retries=3, default_retry_delay=15 * 60)
+def handle_due_survey_action(self, domain, contact_id, session_id):
     with critical_section_for_smsforms_sessions(contact_id):
         session = SQLXFormsSession.by_session_id(session_id)
         if (
@@ -125,8 +127,14 @@ def handle_due_survey_action(domain, contact_id, session_id):
             session.move_to_next_action()
             session.save()
         else:
-            # Close the session
-            session.close()
+            try:
+                session.close()
+            except TouchformsError as e:
+                try:
+                    self.retry(exc=e)
+                except MaxRetriesExceededError:
+                    # Eventually the session needs to get closed
+                    session.mark_completed(False)
             session.save()
 
 
