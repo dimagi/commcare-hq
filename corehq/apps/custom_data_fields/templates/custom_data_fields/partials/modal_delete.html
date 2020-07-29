@@ -9,13 +9,17 @@
   aria-hidden="true"
 >
   <div class="modal-dialog">
-    <div class="modal-content">
+    <div class="modal-content" data-bind="with: modalModel">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-        <h3 class="modal-title" id="delete-confirm-modal-label">{% trans "Are you sure you want to delete this field?" %}</h3>
+        <h3 class="modal-title" id="delete-confirm-modal-label">
+            {% blocktrans with "<!-- ko text: modalName --><!-- /ko -->" as item %}
+              Are you sure you want to delete {{ item }}?
+            {% endblocktrans %}
+        </h3>
       </div>
 
-      <div class="modal-body" style="line-height: 18px">
+      <div class="modal-body" style="line-height: 18px" data-bind="css: {hide: !hasModalDetail}">
         {% blocktrans with entity_string=view.entity_string|lower %}
           <p>
             Deleting this field can cause you to lose data for any {{ entity_string }} with information stored in this field.
@@ -28,12 +32,12 @@
       </div>
 
       <div class="modal-footer">
-        <a href="#" data-dismiss="modal" class="btn btn-default">Cancel</a>
+        <a href="#" data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</a>
         <button aria-hidden="true"
                 data-dismiss="modal"
-                data-bind="click: $root.confirmRemoveField"
+                data-bind="click: $root.confirmRemoveModel"
                 class="btn btn-danger">
-          {% trans "Delete Field" %}
+          {% trans "Delete" %}
         </button>
       </div>
     </div>
