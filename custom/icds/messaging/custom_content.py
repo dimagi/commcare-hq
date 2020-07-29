@@ -6,17 +6,22 @@ from django.template.loader import render_to_string
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.app_manager.dbaccessors import get_build_by_version
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.util import filter_by_app
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+from corehq.util.quickcache import quickcache
 from custom.icds.case_relationships import (
     child_person_case_from_child_health_case,
     mother_person_case_from_ccs_record_case,
 )
 from custom.icds.const import (
     AWC_LOCATION_TYPE_CODE,
+    AWW_APP_ID,
+    SUPERVISOR_APP_ID,
     SUPERVISOR_LOCATION_TYPE_CODE,
 )
 from custom.icds.exceptions import CaseRelationshipError
@@ -263,16 +268,38 @@ def aww_1(recipient, case_schedule_instance):
 
 def aww_2(recipient, case_schedule_instance):
     indicator_class = AWWAggregatePerformanceIndicator
-    if _use_v2_indicators(case_schedule_instance.case):
+    if _use_v2_indicators(case_schedule_instance.case, AWW_APP_ID):
         indicator_class = AWWAggregatePerformanceIndicatorV2
     return run_indicator_for_usercase(case_schedule_instance.case, indicator_class)
 
 
-def _use_v2_indicators(usercase):
+def _use_v2_indicators(usercase, app_id):
+    app_version_in_use = _get_app_version_used_by_usercase(app_id, usercase)
+    return app_version_in_use and _has_functional_version_set(usercase.domain, app_id, app_version_in_use)
+
+
+def _get_app_version_used_by_usercase(app_id, usercase):
     if usercase.type != USERCASE_TYPE:
         raise ValueError("Expected '%s' case" % USERCASE_TYPE)
-    # ToDo: add condition to check for functional version of the app
-    return True
+    user = get_user_from_usercase(usercase)
+    last_build_details = _get_reported_last_build_of_app_by_user(app_id, user)
+    if last_build_details:
+        return last_build_details.build_version
+
+
+def _get_reported_last_build_of_app_by_user(app_id, user):
+    return filter_by_app(user.reporting_metadata.last_builds, app_id)
+
+
+@quickcache(['domain', 'app_id', 'version'], timeout=24 * 60 * 60, memoize_timeout=4 * 60 * 60)
+def _has_functional_version_set(domain, app_id, version):
+    return bool(_get_build_functional_version(domain, app_id, version))
+
+
+def _get_build_functional_version(domain, app_id, version):
+    app_build = get_build_by_version(domain, app_id, version)
+    if app_build:
+        return app_build.profile.get('custom_properties', {}).get('cc-app-version-tag')
 
 
 def phase2_aww_1(recipient, case_schedule_instance):
@@ -281,7 +308,7 @@ def phase2_aww_1(recipient, case_schedule_instance):
 
 def ls_1(recipient, case_schedule_instance):
     indicator_class = LSAggregatePerformanceIndicator
-    if _use_v2_indicators(case_schedule_instance.case):
+    if _use_v2_indicators(case_schedule_instance.case, SUPERVISOR_APP_ID):
         indicator_class = LSAggregatePerformanceIndicatorV2
     return run_indicator_for_usercase(case_schedule_instance.case, indicator_class)
 
