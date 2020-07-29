@@ -1,3 +1,4 @@
+from copy import copy
 from functools import partial
 
 from django.utils.translation import ugettext as _
@@ -173,6 +174,8 @@ def update_user_roles(domain_link):
         reduce=False,
     )
     local_roles_by_name = {role.name: role for role in local_roles}
+
+    # Update downstream roles based on upstream roles
     for role_def in master_results:
         role = local_roles_by_name.get(role_def['name'])
         if role:
@@ -180,8 +183,21 @@ def update_user_roles(domain_link):
         else:
             role_json = {'domain': domain_link.linked_domain}
 
+        role_def = copy(role_def)
+        role_def.pop('_id')
         role_json.update(role_def)
+        local_roles_by_name[role_json['name']] = role_json
         UserRole.wrap(role_json).save()
+
+    # Update assignable_by ids - must be done after main update to guarantee all local roles have ids
+    master_roles_by_id = {role['_id']: role for role in master_results}
+    for role in local_roles_by_name.values():
+        if role['assignable_by']:
+            role['assignable_by'] = [
+                local_roles_by_name[master_roles_by_id[role_id]['name']]['_id']
+                for role_id in role['assignable_by']
+            ]
+            UserRole.wrap(role).save()
 
 
 def update_case_search_config(domain_link):
