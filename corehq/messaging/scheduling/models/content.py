@@ -192,14 +192,6 @@ class SMSSurveyContent(Content):
 
         return app, module, form, form_requires_input(form)
 
-    def phone_has_opted_out(self, phone_entry_or_number):
-        if isinstance(phone_entry_or_number, PhoneNumber):
-            pb = PhoneBlacklist.get_by_phone_number_or_none(phone_entry_or_number.phone_number)
-        else:
-            pb = PhoneBlacklist.get_by_phone_number_or_none(phone_entry_or_number)
-
-        return pb is not None and not pb.send_sms
-
     def get_critical_section(self, recipient):
         if self.critical_section_already_acquired:
             return no_op_context_manager()
