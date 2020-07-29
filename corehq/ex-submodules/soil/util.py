@@ -26,14 +26,14 @@ from zipfile import ZipFile
 
 def expose_cached_download(payload, expiry, file_extension, mimetype=None,
                            content_disposition=None, download_id=None,
-                           extras=None):
+                           extras=None, owner_ids=None):
     """
     Expose a cache download object.
     """
     ref = CachedDownload.create(payload, expiry, mimetype=mimetype,
                                 content_disposition=content_disposition,
                                 download_id=download_id, extras=extras,
-                                suffix=file_extension)
+                                suffix=file_extension, owner_ids=owner_ids)
     ref.save(expiry)
     return ref
 

@@ -47,7 +47,7 @@ class DownloadBase(object):
                  content_disposition='attachment; filename="download.txt"',
                  transfer_encoding=None, extras=None, download_id=None,
                  cache_backend=SOIL_DEFAULT_CACHE, content_type=None,
-                 suffix=None, message=None):
+                 suffix=None, message=None, owner_ids=None):
 
         if download_id is None:
             download_id = self.new_id_prefix + uuid.uuid4().hex
@@ -63,6 +63,8 @@ class DownloadBase(object):
         # legacy default
         self.suffix = suffix or ''
         self.message = message
+
+        self.owner_ids = owner_ids
 
     def get_cache(self):
         return cache.caches[self.cache_backend]
@@ -200,11 +202,11 @@ class CachedDownload(DownloadBase):
                  content_disposition='attachment; filename="download.txt"',
                  transfer_encoding=None, extras=None, download_id=None,
                  cache_backend=SOIL_DEFAULT_CACHE, content_type=None,
-                 suffix=None):
+                 suffix=None, owner_ids=None):
         super(CachedDownload, self).__init__(
             content_type if content_type else mimetype, content_disposition,
             transfer_encoding, extras, download_id, cache_backend,
-            suffix=suffix)
+            suffix=suffix, owner_ids=owner_ids)
         self.cacheindex = cacheindex
 
     def get_content(self):
