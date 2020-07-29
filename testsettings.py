@@ -178,3 +178,7 @@ if os.path.exists("custom/icds"):
     for app in icds_apps:
         if app not in INSTALLED_APPS:
             INSTALLED_APPS = (app,) + tuple(INSTALLED_APPS)
+
+    COMMCARE_EXTENSIONS = [
+        "custom.icds.commcare_extensions",
+    ]

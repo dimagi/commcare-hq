@@ -1056,9 +1056,7 @@ USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
 
 LOCAL_CUSTOM_DB_ROUTING = {}
 
-COMMCARE_EXTENSIONS = [
-    "custom.icds.commcare_extensions",
-]
+COMMCARE_EXTENSIONS = []
 
 try:
     # try to see if there's an environmental variable set for local_settings
