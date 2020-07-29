@@ -64,7 +64,7 @@ class ExtensionPoint:
         callargs = inspect.getcallargs(self.definition_function, *args, **kwargs)
         domain = callargs.get('domain')
         for extension in self.extensions:
-            if domain and not extension.call_for_domain(domain):
+            if domain and not extension.should_call_for_domain(domain):
                 continue
             try:
                 result = extension(*args, **kwargs)
