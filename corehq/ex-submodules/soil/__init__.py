@@ -280,14 +280,15 @@ class BlobDownload(DownloadBase):
                  content_disposition='attachment; filename="download.txt"',
                  transfer_encoding=None, extras=None, download_id=None,
                  cache_backend=SOIL_DEFAULT_CACHE,
-                 content_type=None):
+                 content_type=None, owner_ids=None):
         super(BlobDownload, self).__init__(
             mimetype=content_type if content_type else mimetype,
             content_disposition=content_disposition,
             transfer_encoding=transfer_encoding,
             extras=extras,
             download_id=download_id,
-            cache_backend=cache_backend
+            cache_backend=cache_backend,
+            owner_ids=owner_ids,
         )
         self.identifier = identifier
 

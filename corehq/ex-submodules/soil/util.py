@@ -52,7 +52,8 @@ def expose_blob_download(
         expiry,
         mimetype='text/plain',
         content_disposition=None,
-        download_id=None):
+        download_id=None,
+        owner_ids=None):
     """
     Expose a blob object for download
     """
@@ -62,6 +63,7 @@ def expose_blob_download(
         mimetype=mimetype,
         content_disposition=content_disposition,
         download_id=download_id,
+        owner_ids=owner_ids,
     )
     ref.save(expiry)
     return ref

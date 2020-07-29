@@ -36,22 +36,32 @@ class TestBlobDownload(TestCase):
         self.assertEqual(next(response.streaming_content), b'content')
 
 
-class TestAuthenticatedDownload(TestCase):
+class TestAuthenticatedDownloadBase(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(TestAuthenticatedDownloadBase, cls).setUpClass()
+
+        cls.domain = 'test-domain'
+        cls.domain_obj = create_domain(cls.domain)
+        cls.couch_user = WebUser.create(None, "test", "foobar", None, None)
+        cls.couch_user.add_domain_membership(cls.domain, is_admin=True)
+        cls.couch_user.save()
+
     def setUp(self):
-        super(TestAuthenticatedDownload, self).setUp()
-        self.domain = 'test-domain'
-        self.domain_obj = create_domain(self.domain)
-        self.couch_user = WebUser.create(None, "test", "foobar", None, None)
-        self.couch_user.add_domain_membership(self.domain, is_admin=True)
-        self.couch_user.save()
+        super(TestAuthenticatedDownloadBase, self).setUp()
+
         self.client = Client()
         self.client.login(username='test', password='foobar')
 
-    def tearDown(self):
-        self.couch_user.delete(deleted_by=None)
-        self.domain_obj.delete()
-        super(TestAuthenticatedDownload, self).tearDown()
+    @classmethod
+    def tearDownClass(cls):
+        cls.couch_user.delete(deleted_by=None)
+        cls.domain_obj.delete()
 
+        super(TestAuthenticatedDownloadBase, cls).tearDownClass()
+
+
+class TestAuthenticatedCachedDownload(TestAuthenticatedDownloadBase):
     def test_no_auth_needed(self):
         ref = expose_cached_download(
             BytesIO(b'content'),
@@ -78,5 +88,52 @@ class TestAuthenticatedDownload(TestCase):
             file_extension='txt',
             owner_ids=['foo'],
         )
+        response = self.client.get(reverse('retrieve_download', args=[ref.download_id]) + "?get_file")
+        self.assertEqual(response.status_code, 403)
+
+
+class TestAuthenticatedBlobDownload(TestAuthenticatedDownloadBase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.db = TemporaryFilesystemBlobDB()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.db.close()
+        super().tearDownClass()
+
+    def test_no_auth_needed(self):
+        ref = expose_blob_download(
+            'identifier',
+            expiry=60,
+            content_disposition='text/xml',
+        )
+        self.db.put(BytesIO(b'content'), meta=new_meta(key=ref.download_id))
+
+        response = BlobDownload.get(ref.download_id).toHttpResponse()
+        self.assertEqual(next(response.streaming_content), b'content')
+
+    def test_user_auth_required_access_allowed(self):
+        ref = expose_blob_download(
+            'identifier',
+            expiry=60,
+            content_disposition='text/xml',
+            owner_ids=[self.couch_user.get_id]
+        )
+        self.db.put(BytesIO(b'content'), meta=new_meta(key=ref.download_id))
+
+        response = self.client.get(reverse('retrieve_download', args=[ref.download_id]) + "?get_file")
+        self.assertEqual(next(response.streaming_content), b'content')
+
+    def test_user_auth_required_access_denied(self):
+        ref = expose_blob_download(
+            'identifier',
+            expiry=60,
+            content_disposition='text/xml',
+            owner_ids=['foo']
+        )
+        self.db.put(BytesIO(b'content'), meta=new_meta(key=ref.download_id))
+
         response = self.client.get(reverse('retrieve_download', args=[ref.download_id]) + "?get_file")
         self.assertEqual(response.status_code, 403)
