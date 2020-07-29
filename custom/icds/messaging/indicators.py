@@ -42,7 +42,7 @@ REPORT_IDS = [
 
 
 @quickcache(['domain'], timeout=4 * 60 * 60, memoize_timeout=4 * 60 * 60)
-def get_report_configs(domain):
+def get_latest_report_configs(domain):
     app = get_app(domain, SUPERVISOR_APP_ID, latest=True)
     return {
         report_config.report_id: report_config
@@ -53,14 +53,15 @@ def get_report_configs(domain):
 
 
 @quickcache(['domain', 'report_id', 'ota_user.user_id'], timeout=12 * 60 * 60)
-def _get_report_fixture_for_user(domain, report_id, ota_user):
+def _get_cached_report_fixture_for_user(domain, report_id, ota_user):
     """
     :param domain: the domain
-    :param report_id: the index to the result from get_report_configs()
+    :param report_id: the index to the result from get_latest_report_configs()
     :param ota_user: the OTARestoreCommCareUser for which to get the report fixture
     """
+    report_config = get_latest_report_configs(domain)[report_id]
     [xml] = ReportFixturesProviderV1().report_config_to_fixture(
-        get_report_configs(domain)[report_id], ota_user
+        report_config, ota_user
     )
     return etree.tostring(xml)
 
@@ -70,7 +71,7 @@ def get_report_fixture_for_user(domain, report_id, ota_user):
     The Element objects used by the lxml library don't cache properly.
     So instead we cache the XML string and convert back here.
     """
-    return etree.fromstring(_get_report_fixture_for_user(domain, report_id, ota_user))
+    return etree.fromstring(_get_cached_report_fixture_for_user(domain, report_id, ota_user))
 
 
 class IndicatorError(Exception):
