@@ -163,9 +163,7 @@ class SQLHttpBackend(SQLSMSBackend):
 
     @staticmethod
     def _encode_http_message(text, charset=None):
-        if charset:
-            return text.encode(charset)
         try:
-            return text.encode("iso-8859-1")
+            return text.encode(charset if charset else "iso-8859-1")
         except UnicodeEncodeError:
             return text.encode("utf-8")
