@@ -58,7 +58,7 @@ branches:
   - nh/charset  # Norman May 27
   - jls/turn-off-analytics-logging # Jenny June 19
   - nemanja1040:whatsapp_multimedia_messages  # Nemanja Stancic Jul 6
-  - solleks:cdg/edit_reports_permission  # Charlie July 6
+  - solleks:cdg/data_dictionary_erm  # Charlie July 29
   - sr-alias-api # Sravan July 10
   - ce/2fa-lockout
   - fr/shadow-module-child-versioned # Farid July 22
