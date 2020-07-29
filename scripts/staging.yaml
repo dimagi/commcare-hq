@@ -57,7 +57,7 @@ branches:
   - nh/repeaters_ui  # Norman May 28
   - nh/charset  # Norman May 27
   - jls/turn-off-analytics-logging # Jenny June 19
-  - solleks:cdg/edit_reports_permission  # Charlie July 6
+  - solleks:cdg/data_dictionary_erm  # Charlie July 29
   - sr-alias-api # Sravan July 10
   - fr/shadow-module-child-versioned # Farid July 22
   - jls/CustomDataFieldsProfile # Jenny July 24
