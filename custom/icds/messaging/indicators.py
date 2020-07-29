@@ -53,6 +53,7 @@ REPORT_IDS = [
 
 @quickcache(['domain'], timeout=4 * 60 * 60, memoize_timeout=4 * 60 * 60)
 def get_latest_report_configs(domain):
+    # ToDo: might need to pass version here to fetch necessary report configs
     app = get_app(domain, SUPERVISOR_APP_ID, latest=True)
     return {
         report_config.report_id: report_config
@@ -235,6 +236,7 @@ class AWWAggregatePerformanceIndicatorV2(BaseAWWAggregatePerformanceIndicator):
         return 0
 
     def get_messages(self, language_code=None):
+        # ToDo: return if language_code or if template does not exist for language_code
         if self.supervisor is None:
             return []
 
@@ -512,6 +514,7 @@ class LSAggregatePerformanceIndicatorV2(BaseLSAggregatePerformanceIndicator):
     slug = 'ls_v2'
 
     def get_messages(self, language_code=None):
+        # ToDo: return if language_code or if template does not exist for language_code
         data = _get_data_for_performance_indicator(self, self)
         num_awc_locations = len(self.awc_locations)
         num_days_open = data.pop('num_days_open')
