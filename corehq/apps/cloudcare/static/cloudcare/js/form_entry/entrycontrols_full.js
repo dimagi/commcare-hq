@@ -267,7 +267,7 @@ function AddressEntry(question, options) {
 
     // geocoder function called when user presses 'x', broadcast a no answer to subscribers.
     self.geocoderOnClearCallback = function () {
-        self.answer(Formplayer.Const.NO_ANSWER);
+        self.rawAnswer(Formplayer.Const.NO_ANSWER);
         self.editing = true;
         self.broadcastTopics.forEach(function (broadcastTopic) {
             question.parentPubSub.notifySubscribers(Formplayer.Const.NO_ANSWER, broadcastTopic);
@@ -933,10 +933,13 @@ function getEntry(question) {
         case Formplayer.Const.STRING:
             // Barcode uses text box for CloudCare so it's possible to still enter a barcode field
         case Formplayer.Const.BARCODE:
-            options = {
-                enableAutoUpdate: isPhoneMode,
-                receiveStyle: receiveStyle,
-            };
+            // If it's a receiver, it cannot autoupdate because updates will come quickly which messes with the
+            // autoupdate rate limiting.
+            if (receiveStyle) {
+                options.receiveStyle = receiveStyle;
+            } else {
+                options.enableAutoUpdate = isPhoneMode;
+            }
             if (question.stylesContains(Formplayer.Const.ADDRESS)) {
                 entry = new AddressEntry(question, {
                     broadcastStyles: question.stylesContaining(/broadcast-*/),

@@ -260,6 +260,11 @@ you might run into issues. Here are minimum version requirements for these packa
     $ node --version
     $ v12.18.1
 
+On a clean Ubuntu 18.04 LTS install, the packaged nodejs version is v8. The easiest way to get onto the current nodejs v12 is 
+
+    $ curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
+    $ sudo apt-get install -y nodejs
+
 ### Using LESS: 2 Options
 
 #### Option 1: Let Client Side Javascript (less.js) handle it for you
