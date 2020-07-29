@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod
 from functools import partial
 
 from django.test import SimpleTestCase
+from django.utils.translation import ugettext
 
 import mock
 
@@ -23,7 +24,7 @@ from corehq.apps.userreports.reports.filters.choice_providers import (
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser, DomainMembership, WebUser
 from corehq.apps.users.util import normalize_username
-
+from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE
 
 class StaticChoiceProviderTest(SimpleTestCase):
 
@@ -367,6 +368,7 @@ class OwnerChoiceProviderTest(LocationHierarchyTestCase, ChoiceProviderTestMixin
         cls.location = cls.locations['Massachusetts']
         cls.docs = [cls.group, cls.mobile_worker, cls.web_user, cls.location]
         cls.choices = [
+            SearchableChoice(SHOW_ALL_CHOICE, "[{}]".format(ugettext('Show All')), "[{}]".format(ugettext('Show All'))),
             SearchableChoice(cls.group.get_id, cls.group.name, [cls.group.name]),
             SearchableChoice(cls.mobile_worker.get_id, cls.mobile_worker.raw_username,
                              [cls.mobile_worker.username]),
