@@ -54,6 +54,8 @@ class ExtensionPoint:
 
         if domains is not None and not isinstance(domains, list):
             raise ExtensionError("domains must be a list")
+        if domains is not None and "domain" not in self.providing_args:
+            raise ExtensionError("domain filtering not supported for this extension point")
         return _extend if impl is None else _extend(impl)
 
     def __call__(self, *args, **kwargs):

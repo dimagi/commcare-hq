@@ -75,6 +75,7 @@ def test_validation_callable_args():
 @generate_cases([
     ([["d1"]], {}, re.compile(r"callable: \['d1'\]")),
     ([], {"domains": "d1"}, re.compile("domains must be a list")),
+    ([], {"domains": ["d1"]}, re.compile("domain filtering not supported")),
 ])
 def test_decorator(self, args, kwargs, exception_message):
     ext = CommCareExtensions()

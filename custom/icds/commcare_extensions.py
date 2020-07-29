@@ -15,7 +15,7 @@ def icds_uitab_dropdown_items(tab, domain, request):
         }
 
 
-@domain_specific_urls.extend(domains=["icds-cas"])
+@domain_specific_urls.extend()
 def urls_domain_specific():
     return [
         'custom.icds_reports.urls',
