@@ -1,10 +1,15 @@
 from io import BytesIO
+from tempfile import mkstemp
 
 from django.test import Client, TestCase
 from django.urls import reverse
 
 from soil import BlobDownload
-from soil.util import expose_blob_download, expose_cached_download
+from soil.util import (
+    expose_blob_download,
+    expose_cached_download,
+    expose_file_download,
+)
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
@@ -88,6 +93,39 @@ class TestAuthenticatedCachedDownload(TestAuthenticatedDownloadBase):
             file_extension='txt',
             owner_ids=['foo'],
         )
+        response = self.client.get(reverse('retrieve_download', args=[ref.download_id]) + "?get_file")
+        self.assertEqual(response.status_code, 403)
+
+
+class TestAuthenticatedFileDownload(TestAuthenticatedDownloadBase):
+    @classmethod
+    def setUpClass(cls):
+        super(TestAuthenticatedFileDownload, cls).setUpClass()
+
+        fd, cls.path = mkstemp()
+        with open(fd, 'w') as f:
+            f.write('content')
+
+    def test_no_auth_needed(self):
+        ref = expose_file_download(self.path, expiry=60)
+        response = self.client.get(reverse('retrieve_download', args=[ref.download_id]) + "?get_file")
+        self.assertEqual(next(response.streaming_content), b'content')
+
+    def test_user_auth_required_access_allowed(self):
+        ref = expose_file_download(self.path, expiry=60, owner_ids=[self.couch_user.get_id])
+        response = self.client.get(reverse('retrieve_download', args=[ref.download_id]) + "?get_file")
+        self.assertEqual(next(response.streaming_content), b'content')
+
+        ref = expose_file_download(self.path, expiry=60, owner_ids=[self.couch_user.get_id], use_transfer=True)
+        response = self.client.get(reverse('retrieve_download', args=[ref.download_id]) + "?get_file")
+        self.assertEqual(next(response.streaming_content), b'content')
+
+    def test_user_auth_required_access_denied(self):
+        ref = expose_file_download(self.path, expiry=60, owner_ids=['foo'])
+        response = self.client.get(reverse('retrieve_download', args=[ref.download_id]) + "?get_file")
+        self.assertEqual(response.status_code, 403)
+
+        ref = expose_file_download(self.path, expiry=60, owner_ids=['foo'], use_transfer=True)
         response = self.client.get(reverse('retrieve_download', args=[ref.download_id]) + "?get_file")
         self.assertEqual(response.status_code, 403)
 

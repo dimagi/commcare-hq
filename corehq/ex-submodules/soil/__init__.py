@@ -235,10 +235,10 @@ class FileDownload(DownloadBase):
     def __init__(self, filename, mimetype="text/plain",
                  content_disposition='attachment; filename="download.txt"',
                  transfer_encoding=None, extras=None, download_id=None, cache_backend=SOIL_DEFAULT_CACHE,
-                 use_transfer=False, content_type=None):
+                 use_transfer=False, content_type=None, owner_ids=None):
         super(FileDownload, self).__init__(
                 content_type if content_type else mimetype, content_disposition,
-                transfer_encoding, extras, download_id, cache_backend)
+                transfer_encoding, extras, download_id, cache_backend, owner_ids=owner_ids)
         self.filename = filename
         self.use_transfer = use_transfer
 
