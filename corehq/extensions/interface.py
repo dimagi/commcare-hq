@@ -63,7 +63,7 @@ class ExtensionPoint:
         results = []
         for extension in self.extensions:
             try:
-                result = extension(**kwargs)
+                result = extension(*args, **kwargs)
                 if result is not None:
                     results.append(result)
             except Exception:  # noqa

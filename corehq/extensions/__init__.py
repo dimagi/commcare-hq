@@ -3,9 +3,9 @@ CommCare Extensions
 ===================
 
 This package provides the utilities to register extension points and their implementations
-and to call retrieve the results from all the registered implementations.
+and to retrieve the results from all the registered implementations.
 
-Create and extension point
+Create an extension point
 --------------------------
 
 ::
