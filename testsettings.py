@@ -146,6 +146,7 @@ if os.path.exists("custom/icds"):
         "custom/icds_reports/ucr/data_sources/*.json",
         "custom/icds_reports/ucr/data_sources/dashboard/*.json"
     ])
+    STATIC_DATA_SOURCES = list(set(STATIC_DATA_SOURCES))
 
     STATIC_UCR_REPORTS.extend([
         "custom/icds_reports/ucr/reports/dashboard/*.j,son",
@@ -158,12 +159,16 @@ if os.path.exists("custom/icds"):
     ])
 
     CUSTOM_UCR_EXPRESSION_LISTS.append("custom.icds_reports.ucr.expressions.CUSTOM_UCR_EXPRESSIONS")
+    CUSTOM_UCR_EXPRESSION_LISTS = list(set(CUSTOM_UCR_EXPRESSION_LISTS))
+
     CUSTOM_UCR_REPORT_FILTERS.append(
-        ['village_choice_list', 'custom.icds_reports.ucr.filter_spec.build_village_choice_list_filter_spec']
+        ('village_choice_list', 'custom.icds_reports.ucr.filter_spec.build_village_choice_list_filter_spec'),
     )
+    CUSTOM_UCR_REPORT_FILTERS = list(set(CUSTOM_UCR_REPORT_FILTERS))
     CUSTOM_UCR_REPORT_FILTER_VALUES.append(
-        ['village_choice_list', 'custom.icds_reports.ucr.filter_value.VillageFilterValue']
+        ('village_choice_list', 'custom.icds_reports.ucr.filter_value.VillageFilterValue'),
     )
+    CUSTOM_UCR_REPORT_FILTER_VALUES = list(set(CUSTOM_UCR_REPORT_FILTER_VALUES))
 
     icds_apps = [
         "custom.icds",
@@ -174,8 +179,9 @@ if os.path.exists("custom/icds"):
         if app not in INSTALLED_APPS:
             INSTALLED_APPS = (app,) + tuple(INSTALLED_APPS)
 
-    CUSTOM_DOMAIN_SPECIFIC_URL_MODULES = [
+    CUSTOM_DOMAIN_SPECIFIC_URL_MODULES.extend([
         'custom.icds_reports.urls',
         'custom.icds.urls',
         'custom.icds.data_management.urls'
-    ]
+    ])
+    CUSTOM_DOMAIN_SPECIFIC_URL_MODULES = list(set(CUSTOM_DOMAIN_SPECIFIC_URL_MODULES))

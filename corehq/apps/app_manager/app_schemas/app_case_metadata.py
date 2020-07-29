@@ -1,7 +1,7 @@
 import datetime
 import re
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _, ugettext_lazy
 
 from jsonobject.base import DefaultProperty
 
@@ -57,9 +57,15 @@ class AppCaseMetadataBuilder(object):
 
     def _add_module_contribution(self, module):
         for column in module.case_details.long.columns:
-            self.meta.add_property_detail('long', module.case_type, module.unique_id, column)
+            self.meta.add_property_detail('long', module.case_type, module.unique_id,
+                                          column.field, column.header, column.useXpathExpression)
         for column in module.case_details.short.columns:
-            self.meta.add_property_detail('short', module.case_type, module.unique_id, column)
+            self.meta.add_property_detail('short', module.case_type, module.unique_id,
+                                          column.field, column.header, column.useXpathExpression)
+        if module.case_details.short.filter:
+            header = {lang: _("[Filter]") for lang in self.app.langs}   # Fake a localized "header"
+            self.meta.add_property_detail('short', module.case_type, module.unique_id,
+                                          module.case_details.short.filter, header, True)
 
     def _add_form_contributions(self):
         for module in self.app.get_modules():
@@ -479,7 +485,7 @@ class AppCaseMetadata(JsonObject):
                     return parent_props
             else:
                 params = {'case_type': root_case_type, 'relationship': parent_rel}
-                raise CaseMetaException(_(
+                raise CaseMetaException(ugettext_lazy(
                     "Case type '%(case_type)s' has no '%(relationship)s' "
                     "relationship to any other case type.") % params)
 
@@ -513,8 +519,8 @@ class AppCaseMetadata(JsonObject):
             form.errors.append(message)
         return prop
 
-    def add_property_detail(self, detail_type, root_case_type, module_id, column):
-        field = column.field
+    def add_property_detail(self, detail_type, root_case_type, module_id,
+                            field, header, is_detail_calculation=False):
         if field == '#owner_name':
             return None
 
@@ -526,7 +532,7 @@ class AppCaseMetadata(JsonObject):
 
         error = None
         try:
-            if column.useXpathExpression:
+            if is_detail_calculation:
                 props = [self.get_type(root_case_type).get_property(field, allow_parent=True)]
             else:
                 props = self.get_property_list(root_case_type, field)
@@ -534,7 +540,7 @@ class AppCaseMetadata(JsonObject):
             props = [self.add_property_error(root_case_type, field, form_id=None, message=None)]
             error = str(e)
         for prop in props:
-            prop.add_detail(detail_type, module_id, column.header, column.useXpathExpression, error)
+            prop.add_detail(detail_type, module_id, header, is_detail_calculation, error)
 
     def get_error_property(self, case_type, name):
         type_ = self.get_type(case_type)

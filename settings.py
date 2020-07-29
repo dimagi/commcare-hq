@@ -215,6 +215,7 @@ DEFAULT_APPS = (
     'statici18n',
     'django_user_agents',
     'logentry_admin',
+    'oauth2_provider',
 )
 
 CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'
@@ -798,8 +799,28 @@ RUN_UNKNOWN_USER_PILLOW = True
 # databases.
 CASE_ES_DROP_FORM_FIELDS = False
 
+# Repeaters in the order in which they should appear in "Data Forwarding"
+REPEATER_CLASSES = [
+    'corehq.motech.repeaters.models.FormRepeater',
+    'corehq.motech.repeaters.models.CaseRepeater',
+    'corehq.motech.repeaters.models.CreateCaseRepeater',
+    'corehq.motech.repeaters.models.UpdateCaseRepeater',
+    'corehq.motech.repeaters.models.ReferCaseRepeater',
+    'corehq.motech.repeaters.models.ShortFormRepeater',
+    'corehq.motech.repeaters.models.AppStructureRepeater',
+    'corehq.motech.repeaters.models.UserRepeater',
+    'corehq.motech.repeaters.models.LocationRepeater',
+    'corehq.motech.openmrs.repeaters.OpenmrsRepeater',
+    'corehq.motech.dhis2.repeaters.Dhis2Repeater',
+    'corehq.motech.dhis2.repeaters.Dhis2EntityRepeater',
+]
+
+# Override this in localsettings to add new repeater types
+LOCAL_REPEATER_CLASSES = []
+
 # tuple of fully qualified repeater class names that are enabled.
 # Set to None to enable all or empty tuple to disable all.
+# This will not prevent users from creating
 REPEATERS_WHITELIST = None
 
 # If ENABLE_PRELOGIN_SITE is set to true, redirect to Dimagi.com urls
@@ -819,6 +840,13 @@ ELASTICSEARCH_MAJOR_VERSION = 1
 ES_SEARCH_TIMEOUT = 30
 
 BITLY_OAUTH_TOKEN = None
+
+OAUTH2_PROVIDER = {
+    'SCOPES': {
+        'access_apis': 'Access API data on all your CommCare projects',
+    },
+}
+
 
 # this should be overridden in localsettings
 INTERNAL_DATA = defaultdict(list)
@@ -1060,6 +1088,8 @@ AVAILABLE_CUSTOM_REMINDER_RECIPIENTS.update(LOCAL_AVAILABLE_CUSTOM_REMINDER_RECI
 AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS.update(LOCAL_AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS)
 AVAILABLE_CUSTOM_RULE_CRITERIA.update(LOCAL_AVAILABLE_CUSTOM_RULE_CRITERIA)
 AVAILABLE_CUSTOM_RULE_ACTIONS.update(LOCAL_AVAILABLE_CUSTOM_RULE_ACTIONS)
+
+REPEATER_CLASSES.extend(LOCAL_REPEATER_CLASSES)
 
 # The defaults above are given as a function of (or rather a closure on) DEBUG,
 # so if not overridden they need to be evaluated after DEBUG is set
@@ -1436,20 +1466,6 @@ FIXTURES_DB = 'fixtures'
 DOMAINS_DB = 'domains'
 APPS_DB = 'apps'
 META_DB = 'meta'
-
-_serializer = 'corehq.util.python_compatibility.Py3PickleSerializer'
-for _name in ["default", "redis"]:
-    if _name not in CACHES:  # noqa: F405
-        continue
-    _options = CACHES[_name].setdefault('OPTIONS', {})  # noqa: F405
-    assert _options.get('SERIALIZER', _serializer) == _serializer, (
-        "Refusing to change SERIALIZER. Remove that option from "
-        "localsettings or whereever redis caching is configured. {}"
-        .format(_options)
-    )
-    _options['SERIALIZER'] = _serializer
-del _name, _options, _serializer
-
 
 COUCHDB_APPS = [
     'api',

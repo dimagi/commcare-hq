@@ -1180,6 +1180,8 @@ class AddGatewayViewMixin(object):
             if self.use_load_balancing:
                 self.backend.load_balancing_numbers = self.backend_form.cleaned_data['phone_numbers']
 
+            self.backend.opt_out_keywords = self.backend_form.cleaned_data.get('opt_out_keywords')
+            self.backend.opt_in_keywords = self.backend_form.cleaned_data.get('opt_in_keywords')
             self.backend.save()
             if not self.backend.is_global:
                 self.backend.set_shared_domains(self.backend_form.cleaned_data.get('authorized_domains'))
@@ -1293,6 +1295,8 @@ class EditDomainGatewayView(AddDomainGatewayView):
             'give_other_domains_access': len(authorized_domains) > 0,
             'authorized_domains': ','.join(authorized_domains),
             'reply_to_phone_number': self.backend.reply_to_phone_number,
+            'opt_out_keywords': ','.join(self.backend.opt_out_keywords),
+            'opt_in_keywords': ','.join(self.backend.opt_in_keywords),
         }
         initial.update(self.backend.get_extra_fields())
 
@@ -2152,7 +2156,14 @@ class WhatsAppTemplatesView(BaseMessagingSectionView):
         else:
             wa_active_backend = turn_backend.get() if turn_backend.count() else infobip_backend.get()
             templates = wa_active_backend.get_all_templates()
-            for template in templates:
-                template['template_string'] = wa_active_backend.generate_template_string(template)
-            context.update({'wa_templates': templates})
+            if templates is not None:
+                for template in templates:
+                    template['template_string'] = wa_active_backend.generate_template_string(template)
+                context.update({'wa_templates': templates})
+            else:
+                messages.error(
+                    self.request,
+                    wa_active_backend.get_generic_name()
+                    + _(" failed to fetch templates. Please make sure the gateway is configured properly.")
+                )
         return context
