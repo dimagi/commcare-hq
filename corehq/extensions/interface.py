@@ -82,12 +82,6 @@ class ExtensionPoint:
         return results
 
 
-class _Registry(object):
-    """Extension implementation holder object for performing 1:N calls where N is the number
-    of registered extensions.
-    """
-
-
 class CommCareExtensions:
     def __init__(self):
         self.registry = {}
