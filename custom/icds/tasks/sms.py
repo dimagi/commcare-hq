@@ -72,10 +72,10 @@ def send_monthly_sms_report():
 def send_custom_sms_report(start_date: str, end_date: str, email, domain):
     subject = _('Monthly SMS report')
     recipients = [email]
-    report_tracker = CustomSMSReportTracker(domain)
-    report_tracker.add_report_to_list(start_date, end_date)
+
     try:
         filename = call_command('get_icds_sms_usage', 'icds-cas', start_date, end_date)
+
         with open(filename, 'rb') as f:
             cached_download = expose_cached_download(
                 f.read(), expiry=24 * 60 * 60, file_extension=file_extention_from_filename(filename),
@@ -100,7 +100,8 @@ def send_custom_sms_report(start_date: str, end_date: str, email, domain):
                                     email_from=settings.DEFAULT_FROM_EMAIL)
         raise e
     finally:
-        report_tracker.remove_report_from_list(start_date, end_date)
+        report_tracker = CustomSMSReportTracker(domain)
+        report_tracker.remove_report(start_date, end_date)
 
 
 @receiver(post_save, sender=DailyOutboundSMSLimitReached)
