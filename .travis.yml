@@ -35,7 +35,7 @@ before_script:
   - chmod 600 .travis/deploy_key.pem
   - ssh-add .travis/deploy_key.pem
   - mkdir -p extensions/icds/
-  - git clone git@github.com:dimagi/icds-test-split.git extensions/icds/ --depth=1
+  - git clone git@github.com:dimagi/commcare-icds.git extensions/icds/ --depth=1
   - cd extensions/icds/ && git fetch origin $TRAVIS_BRANCH && git checkout $TRAVIS_BRANCH || echo "Branch $TRAVIS_BRANCH not found in ICDS repo. Defaulting to 'master'"
   - cd $TRAVIS_BUILD_DIR
 script:
