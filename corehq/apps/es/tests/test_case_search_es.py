@@ -520,7 +520,7 @@ class TestCaseSearchLookups(TestCase):
                 {'_id': 'c4'},
             ],
             CaseSearchES().domain(self.domain).filter(case_property_missing('name')),
-            ['c3'] # todo; flag farid
+            ['c3']
         )
 
     def test_full_text_query(self):
