@@ -228,20 +228,16 @@ class AWWAggregatePerformanceIndicatorV2(BaseAWWAggregatePerformanceIndicator):
     template = 'aww_aggregate_performance_v2.txt'
     slug = 'aww_v2'
 
-    def get_total_count_from_fixture(self, fixture, attribute):
-        xpath = './rows/row[@is_total_row="True"]'
+    def get_rows_count_from_fixture(self, fixture):
+        count = 0
+        xpath = './rows/row[@is_total_row="False"]'
         rows = fixture.findall(xpath)
         location_name = self.user.sql_location.name
         for row in rows:
-            owner_id = row.find('./column[@id="owner_id"]')
+            owner_id = row.find('./column[@id="awc_id"]')
             if owner_id.text == location_name:
-                try:
-                    return row.find('./column[@id="{}"]'.format(attribute)).text
-                except:
-                    raise IndicatorError(
-                        "Attribute {} not found in restore for AWC {}".format(attribute, location_name)
-                    )
-        return 0
+                count += 1
+        return count
 
     def get_messages(self, language_code=None):
         # ToDo: return if language_code or if template does not exist for language_code
@@ -536,8 +532,10 @@ class LSAggregatePerformanceIndicatorV2(BaseLSAggregatePerformanceIndicator):
         })
         return [self.render_template(data, language_code=language_code)]
 
-    def get_total_count_from_fixture(self, fixture, attribute):
-        return self.get_value_from_fixture(fixture, attribute)
+    def get_rows_count_from_fixture(self, fixture):
+        xpath = './rows/row[@is_total_row="False"]'
+        rows = fixture.findall(xpath)
+        return len(rows)
 
     @property
     @memoized
@@ -622,8 +620,7 @@ def _get_data_for_performance_indicator(indicator_obj, ls_indicator_obj):
                                                    'hcm_21_plus_days'))
     )
     total_ag_oos = indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_ag_fixture, 'out_of_school')
-    cbe_conducted = indicator_obj.get_total_count_from_fixture(
-        ls_indicator_obj.ucr_v2_cbe_last_month_fixture, 'cbe_conducted')
+    cbe_conducted = indicator_obj.get_rows_count_from_fixture(ls_indicator_obj.ucr_v2_cbe_last_month_fixture)
     return {
         'visits': visits,
         'visits_goal': visits_goal,
