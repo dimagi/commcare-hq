@@ -177,7 +177,7 @@ class AppsPaginator(TilePaginator):
         def _get_app_url(app):
             return (
                 _get_view_app_url(app)
-                if self.request.couch_user.can_edit_apps()
+                if self.request.couch_user.can_view_apps()
                 else _get_release_manager_url(app)
             )
 
