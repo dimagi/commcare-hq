@@ -81,6 +81,30 @@ class TestTrumpiaBackend(SimpleTestCase):
             "Gateway error: status MRME0201: Internal Error.")
         self.assertTrue(msg.error)
 
+    def test_errorcode_16(self):
+        msg = self.mock_send(
+            response={"requestID": "1234561234567asdf123"},
+            report={
+                "statuscode": "0",
+                "errorcode": "16",
+                "errormessage": "Blocked Number : 15554443333",
+            },
+        )
+        self.assertEqual(msg.backend_message_id, "1234561234567asdf123")
+        self.assertEqual(msg.system_error_message,
+            "Gateway error: error 16: Blocked Number : 15554443333")
+        self.assertTrue(msg.error)
+
+    def test_status_without_message(self):
+        msg = self.mock_send(
+            response={"requestID": "1234561234567asdf123"},
+            report={"statuscode": "?", "something": "else"},
+        )
+        self.assertEqual(msg.backend_message_id, "1234561234567asdf123")
+        self.assertEqual(msg.system_error_message,
+            "Gateway error: {'statuscode': '?', 'something': 'else'}")
+        self.assertTrue(msg.error)
+
     def test_405(self):
         msg = self.mock_send(status_code=405)
         self.assertEqual(msg.system_error_message, "Gateway error: 405")

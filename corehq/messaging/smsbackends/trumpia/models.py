@@ -67,8 +67,10 @@ class TrumpiaBackend(SQLSMSBackend):
             if data.get("message") == "In progress":
                 msg.set_status_pending()
                 return
-            if "statuscode" in data:
-                message = f"status {data['statuscode']}: {data.get('message')}"
+            if "errorcode" in data and "errormessage" in data:
+                message = f"error {data['errorcode']}: {data['errormessage']}"
+            elif "statuscode" in data and "message" in data:
+                message = f"status {data['statuscode']}: {data['message']}"
             else:
                 message = repr(data)
         else:
