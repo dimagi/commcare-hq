@@ -598,15 +598,15 @@ def _get_data_for_performance_indicator(indicator_obj, ls_indicator_obj):
 
     ccs_gte_21 = (
         int(indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_mpr_5_ccs_record_fixture,
-                                                 'thr_rations_gte_21')) +
-        int(indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_mpr_5_child_health_pt1_fixture,
                                                  'thr_rations_gte_21'))
+        + int(indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_mpr_5_child_health_pt1_fixture,
+                                                   'thr_rations_gte_21'))
     )
     ccs_total = (
         int(indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_mpr_5_ccs_record_fixture,
-                                                 'open_in_month')) +
-        int(indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_mpr_5_child_health_pt1_fixture,
                                                  'open_in_month'))
+        + int(indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_mpr_5_child_health_pt1_fixture,
+                                                   'open_in_month'))
     )
     weighed_num = indicator_obj.get_value_from_fixture(
         ls_indicator_obj.ucr_v2_mpr_5_child_health_cases_monthly_fixture, 'weighed_in_month')
@@ -617,9 +617,9 @@ def _get_data_for_performance_indicator(indicator_obj, ls_indicator_obj):
 
     ag_services_gte21 = (
         int(indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_ag_monthly_fixture,
-                                                 'thr_21_plus_days')) +
-        int(indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_ag_monthly_fixture,
-                                                 'hcm_21_plus_days'))
+                                                 'thr_21_plus_days'))
+        + int(indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_ag_monthly_fixture,
+                                                   'hcm_21_plus_days'))
     )
     total_ag_oos = indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_ag_fixture, 'out_of_school')
     cbe_conducted = indicator_obj.get_total_count_from_fixture(

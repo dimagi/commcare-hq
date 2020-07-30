@@ -458,7 +458,8 @@ class CustomContent(Content):
         # we shouldn't send anything, so we don't log an error for that.
         try:
             for message in self.get_list_of_messages(recipient):
-                self.send_sms_message(logged_event.domain, recipient, phone_entry_or_number, message, logged_subevent)
+                self.send_sms_message(logged_event.domain, recipient, phone_entry_or_number, message,
+                                      logged_subevent)
         except:
             error = sys.exc_info()[1]
             logged_subevent.error(MessagingEvent.ERROR_CANNOT_RENDER_MESSAGE, additional_error_text=str(error))
