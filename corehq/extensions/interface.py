@@ -15,22 +15,22 @@ class ExtensionError(Exception):
 
 class ResultFormat(Enum):
     FLATTEN = 'flatten'
-    SINGLE = 'single'
+    FIRST = 'first'
 
 
 def flatten_results(point, results):
     return list(itertools.chain.from_iterable(results))
 
 
-def single_value(point, results):
-    if len(results) > 1:
-        logger.warning("Multiple results returned from single value extension point: %s", point.name)
-
-    return results[0] if results else None
+def first_result(point, results):
+    try:
+        return next(results)
+    except StopIteration:
+        pass
 
 
 RESULT_FORMATTERS = {
-    ResultFormat.SINGLE: single_value,
+    ResultFormat.FIRST: first_result,
     ResultFormat.FLATTEN: flatten_results
 }
 
@@ -88,16 +88,23 @@ class ExtensionPoint:
         return _extend if impl is None else _extend(impl)
 
     def __call__(self, *args, **kwargs):
-        results = []
         callargs = inspect.getcallargs(self.definition_function, *args, **kwargs)
         domain = callargs.get('domain')
-        for extension in self.extensions:
-            if domain and not extension.should_call_for_domain(domain):
-                continue
+        extensions = [
+            extension for extension in self.extensions
+            if not domain or extension.should_call_for_domain(domain)
+        ]
+        results = self._get_results(extensions, *args, **kwargs)
+        if self.result_formatter:
+            return self.result_formatter(self, results)
+        return list(results)
+
+    def _get_results(self, extensions, *args, **kwargs):
+        for extension in extensions:
             try:
                 result = extension(*args, **kwargs)
                 if result is not None:
-                    results.append(result)
+                    yield result
             except Exception:  # noqa
                 notify_exception(
                     None,
@@ -108,10 +115,6 @@ class ExtensionPoint:
                         "kwargs": kwargs
                     },
                 )
-
-        if self.result_formatter:
-            return self.result_formatter(self, results)
-        return results
 
 
 class CommCareExtensions:

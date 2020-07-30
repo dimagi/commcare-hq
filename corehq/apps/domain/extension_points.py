@@ -3,7 +3,7 @@ from typing import Optional
 from corehq.extensions import extension_point, ResultFormat
 
 
-@extension_point(result_format=ResultFormat.SINGLE)
+@extension_point(result_format=ResultFormat.FIRST)
 def custom_domain_module(domain) -> Optional[str]:
     """Custom reporting modules
 

@@ -131,7 +131,7 @@ def test_flatten_results():
 def test_single_value():
     ext = CommCareExtensions()
 
-    @ext.extension_point(result_format=ResultFormat.SINGLE)
+    @ext.extension_point(result_format=ResultFormat.FIRST)
     def ext_point_d():
         """test"""
 
@@ -146,20 +146,11 @@ def test_single_value():
     testil.eq(ext_point_d(), 1)
 
 
-def test_single_value_error():
+def test_single_value_none():
     ext = CommCareExtensions()
 
-    @ext.extension_point(result_format=ResultFormat.SINGLE)
-    def ext_point_d():
-        """test"""
+    @ext.extension_point(result_format=ResultFormat.FIRST)
+    def ext_point():
+        pass
 
-    @ext_point_d.extend
-    def extend_1():
-        return 1
-
-    @ext_point_d.extend
-    def extend_2():
-        return 2
-
-    with testil.assert_raises(ExtensionError):
-        ext_point_d()
+    testil.eq(ext_point(), None)
