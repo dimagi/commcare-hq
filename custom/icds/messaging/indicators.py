@@ -5,7 +5,7 @@ from django.conf import settings
 from django.db import connections
 from django.db.models import Max
 from django.template import TemplateDoesNotExist
-from django.template.loader import render_to_string
+from django.template.loader import render_to_string, get_template
 
 import pytz
 from lxml import etree
@@ -284,8 +284,8 @@ class AWWAggregatePerformanceIndicatorV2(BaseAWWAggregatePerformanceIndicator):
         return count
 
     def get_messages(self, language_code=None):
-        # ToDo: return if language_code or if template does not exist for language_code
         from custom.icds.messaging.custom_content import get_reported_last_build_of_app_by_user
+        get_template(self.template)  # fail early if template missing
         if self.supervisor is None:
             return []
 
@@ -595,7 +595,7 @@ class LSAggregatePerformanceIndicatorV2(BaseLSAggregatePerformanceIndicator):
         return get_v2_report_fixture_for_user(self.domain, report_id, self.restore_user, self.app_version)
 
     def get_messages(self, language_code=None):
-        # ToDo: return if language_code or if template does not exist for language_code
+        get_template(self.template)  # fail early if template missing
         data = _get_data_for_performance_indicator(self, self)
         num_awc_locations = len(self.awc_locations)
         num_days_open = data.pop('num_days_open', 0)
