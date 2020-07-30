@@ -7,7 +7,6 @@ from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.export.esaccessors import get_groups_user_ids
 from corehq.apps.groups.models import Group
-from corehq.apps.es.tests.utils import run_on_es2
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
@@ -61,8 +60,3 @@ class TestGroupUserIds(SimpleTestCase):
 
         user_ids = get_groups_user_ids([group1._id])
         self.assertEqual(set(user_ids), set(['billy']))
-
-
-@run_on_es2
-class TestGroupUserIdsES(TestGroupUserIds):
-    pass
