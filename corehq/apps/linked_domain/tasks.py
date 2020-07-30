@@ -47,20 +47,20 @@ class ReleaseManager():
     def results(self):
         return (self.successes_by_domain, self.errors_by_domain)
 
-    def _add_error(self, domain, html, text=None):
+    def add_error(self, domain, html, text=None):
         text = text or html
         self.errors_by_domain['html'][domain].append(html)
         self.errors_by_domain['text'][domain].append(text)
 
-    def _add_success(self, domain, html, text=None):
+    def add_success(self, domain, html, text=None):
         text = text or html
         self.successes_by_domain['html'][domain].append(html)
         self.successes_by_domain['text'][domain].append(text)
 
-    def _update_successes(self, successes):
+    def update_successes(self, successes):
         self._update_messages(self.successes_by_domain, successes)
 
-    def _update_errors(self, errors):
+    def update_errors(self, errors):
         self._update_messages(self.errors_by_domain, errors)
 
     def _update_messages(self, attr, messages):
@@ -68,10 +68,10 @@ class ReleaseManager():
             for domain, msgs in messages[fmt].items():
                 attr[fmt][domain].extend(msgs)
 
-    def _get_error_domain_count(self):
+    def get_error_domain_count(self):
         return len(self.errors_by_domain['html'])
 
-    def _get_success_domain_count(self):
+    def get_success_domain_count(self):
         return len(self.successes_by_domain['html'])
 
     def _get_errors(self, domain, html=True):
@@ -90,7 +90,7 @@ class ReleaseManager():
         chord(header)(callback)
 
     def get_email_message(self, models, linked_domains, html=True):
-        error_domain_count = self._get_error_domain_count()
+        error_domain_count = self.get_error_domain_count()
         message = _("""
 Release complete. {} project(s) succeeded. {}
 
@@ -99,7 +99,7 @@ The following content was released:
 
 The following linked project spaces received content:
         """).format(
-            self._get_success_domain_count(),
+            self.get_success_domain_count(),
             _("{} project(s) encountered errors.").format(error_domain_count) if error_domain_count else "",
             "\n".join(["- " + m['name'] for m in models])
         )
@@ -198,12 +198,12 @@ def release_domain(master_domain, linked_domain, username, models, build_apps=Fa
             notify_exception(None, "Exception pushing linked domains: {}".format(e))
 
         if errors:
-            manager._add_error(
+            manager.add_error(
                 domain_link.linked_domain,
                 _("Could not update {}: {}").format(model['name'], errors[0]),
                 text=_("Could not update {}: {}").format(model['name'], errors[1]))
         else:
-            manager._add_success(domain_link.linked_domain, _("Updated {} successfully").format(model['name']))
+            manager.add_success(domain_link.linked_domain, _("Updated {} successfully").format(model['name']))
 
     return manager.results()
 
@@ -218,11 +218,11 @@ def send_email(results, master_domain, username, models, linked_domains):
 
     for result in results:
         (successes, errors) = result
-        manager._update_successes(successes)
-        manager._update_errors(errors)
+        manager.update_successes(successes)
+        manager.update_errors(errors)
 
     subject = _("Linked project release complete.")
-    if manager._get_error_domain_count():
+    if manager.get_error_domain_count():
         subject += _(" Errors occurred.")
 
     email = manager.user.email or manager.user.username
