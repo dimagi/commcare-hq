@@ -13,7 +13,6 @@ from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.pillows.user import transform_user_for_elasticsearch
 from corehq.util.elastic import ensure_index_deleted
-from corehq.apps.es.tests.utils import run_on_es2
 
 
 @attr(es_test=True)
