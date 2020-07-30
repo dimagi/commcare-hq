@@ -50,7 +50,7 @@ class Command(BaseCommand):
             type=int,
             default=None,
         )
-        parser.add_argument('--commit', help='Last git commit sha', default=False)
+        parser.add_argument('--commit', help='Last git commit sha', default=None)
 
     def handle(self, **options):
         compare_url = options.get('url', None)
