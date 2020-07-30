@@ -16,7 +16,7 @@ def static_ucr_data_source_paths() -> List[str]:
 
 
 @extension_point(result_format=ResultFormat.FLATTEN)
-def static_ucr_reports() -> List[str]:
+def static_ucr_report_paths() -> List[str]:
     """Pass additional paths to static UCR reports.
 
     Parameters:

@@ -2249,10 +2249,13 @@ They conform to a slightly different style:
        }
    }
 
-Having defined the data source you need to add the path to the data
-source file to the ``STATIC_DATA_SOURCES`` setting in ``settings.py``.
+Having defined the data source you need to use the ``static_ucr_data_source_paths``
+extension point to make CommCare aware of your data source.
 Now when the static data source pillow is run it will pick up the data
 source and rebuild it.
+
+Alternatively, the legacy method is to add the path to the data
+source file to the ``STATIC_DATA_SOURCES`` setting in ``settings.py``.
 
 Changes to the data source require restarting the pillow which will
 rebuild the SQL table. Alternately you can use the UI to rebuild the
@@ -2274,6 +2277,13 @@ Static configurable reports have the following style:
            ... put the normal report configuration here
        }
    }
+
+Having defined the report you need to use the ``static_ucr_report_paths``
+extension point to make CommCare aware of your report.
+
+Alternatively, the legacy method is to add the path to the data
+source file to the ``STATIC_UCR_REPORTS`` setting in ``settings.py``.
+
 
 Custom configurable reports
 ---------------------------
