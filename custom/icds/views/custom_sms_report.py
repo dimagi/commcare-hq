@@ -29,12 +29,12 @@ class SMSUsageReport(BaseMessagingSectionView):
         report_count = len(reports_in_progress)
         disable_submit = report_count >= 3
         if disable_submit:
-            messages.warning(self.request, 'Only 3 concurrent reports are allowed at a time.\
+            messages.error(self.request, 'Only 3 concurrent reports are allowed at a time.\
                 Please wait for them to finish.')
         if report_count > 0:
             display_message = _prepare_display_message(reports_in_progress, report_count)
             messages.info(self.request, display_message)
-        self.request_form = CustomSMSReportRequestForm()
+        self.request_form = CustomSMSReportRequestForm(disable_submit=disable_submit)
         return {
             'request_form': self.request_form,
             'disable_submit': disable_submit,
@@ -46,6 +46,7 @@ class SMSUsageReport(BaseMessagingSectionView):
         report_count = len(reports_in_progress)
 
         self.request_form = CustomSMSReportRequestForm(request.POST)
+
         if self.request_form.is_valid() and report_count < 3:
             user_email = self.request.user.email
             data = self.request_form.cleaned_data
@@ -53,6 +54,8 @@ class SMSUsageReport(BaseMessagingSectionView):
             end_date = data['end_date']
             if self.set_error_messages(reports_in_progress, start_date, end_date):
                 return self.get(*args, **kwargs)
+
+            report_tracker.add_report(str(start_date), str(end_date))
 
             send_custom_sms_report.delay(str(start_date), str(end_date), user_email, self.request.domain)
 
@@ -72,7 +75,7 @@ class SMSUsageReport(BaseMessagingSectionView):
             messages.error(self.request, _("Unable to find any email associated with your account"))
             has_errors = True
         if _report_already_in_progress(reports, str(start_date), str(end_date)):
-            messages.warning(
+            messages.error(
                 self.request,
                 _("Report for duration {start_date}-{end_date} already in progress").format(
                     start_date=start_date,
@@ -83,19 +86,14 @@ class SMSUsageReport(BaseMessagingSectionView):
 
 
 def _prepare_display_message(reports_in_progress, report_count):
-    message = _('Reports in progress: ').format(
-        reports_count=report_count,
-    )
+    message = _('Reports in progress: ')
     for index, report in enumerate(reports_in_progress):
-        message += '"{start_date} -- {end_date}"'.format(
-            start_date=report['start_date'],
-            end_date=report['end_date']
-        )
+        message += '"{report_id}"'.format(report_id=report)
         if index != report_count - 1:
             message += ', '
     return message
 
 
 def _report_already_in_progress(reports, start_date: str, end_date: str):
-    return any(report['start_date'] == str(start_date) and report['end_date'] == str(end_date)
-        for report in reports)
+    report_id = start_date + '--' + end_date
+    return any(report == report_id for report in reports)
