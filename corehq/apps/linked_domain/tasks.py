@@ -82,29 +82,32 @@ class ReleaseManager():
                 self._add_error(linked_domain, _("Project space {} is no longer linked to {}. No content "
                                                  "was released to it.").format(self.master_domain, linked_domain))
                 continue
-            domain_link = domain_links_by_linked_domain[linked_domain]
-            for model in self.models:
-                errors = None
-                try:
-                    if model['type'] == MODEL_APP:
-                        errors = self._release_app(domain_link, model, self.user, build_apps)
-                    elif model['type'] == MODEL_REPORT:
-                        errors = self._release_report(domain_link, model)
-                    elif model['type'] == MODEL_CASE_SEARCH:
-                        errors = self._release_case_search(domain_link, model, self.user)
-                    else:
-                        errors = self._release_model(domain_link, model, self.user)
-                except Exception as e:   # intentionally broad
-                    errors = [str(e), str(e)]
-                    notify_exception(None, "Exception pushing linked domains: {}".format(e))
 
-                if errors:
-                    self._add_error(
-                        linked_domain,
-                        _("Could not update {}: {}").format(model['name'], errors[0]),
-                        text=_("Could not update {}: {}").format(model['name'], errors[1]))
+            self.release_domain(domain_links_by_linked_domain[linked_domain], build_apps)
+
+    def release_domain(self, domain_link, build_apps=False):
+        for model in self.models:
+            errors = None
+            try:
+                if model['type'] == MODEL_APP:
+                    errors = self._release_app(domain_link, model, self.user, build_apps)
+                elif model['type'] == MODEL_REPORT:
+                    errors = self._release_report(domain_link, model)
+                elif model['type'] == MODEL_CASE_SEARCH:
+                    errors = self._release_case_search(domain_link, model, self.user)
                 else:
-                    self._add_success(linked_domain, _("Updated {} successfully").format(model['name']))
+                    errors = self._release_model(domain_link, model, self.user)
+            except Exception as e:   # intentionally broad
+                errors = [str(e), str(e)]
+                notify_exception(None, "Exception pushing linked domains: {}".format(e))
+
+            if errors:
+                self._add_error(
+                    domain_link.linked_domain,
+                    _("Could not update {}: {}").format(model['name'], errors[0]),
+                    text=_("Could not update {}: {}").format(model['name'], errors[1]))
+            else:
+                self._add_success(domain_link.linked_domain, _("Updated {} successfully").format(model['name']))
 
     def send_email(self):
         subject = _("Linked project release complete.")
