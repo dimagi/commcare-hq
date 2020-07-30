@@ -1,5 +1,5 @@
 import math
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 from django.conf import settings
 from django.db import connections
@@ -221,19 +221,7 @@ class BaseAWWAggregatePerformanceIndicator(AWWIndicator):
         raise NotImplementedError()
 
     def get_value_from_fixture(self, fixture, attribute):
-        xpath = './rows/row[@is_total_row="False"]'
-        rows = fixture.findall(xpath)
-        location_name = self.user.sql_location.name
-        for row in rows:
-            owner_id = row.find('./column[@id="owner_id"]')
-            if owner_id.text == location_name:
-                try:
-                    return row.find('./column[@id="{}"]'.format(attribute)).text
-                except:
-                    raise IndicatorError(
-                        "Attribute {} not found in restore for AWC {}".format(attribute, location_name)
-                    )
-        return 0
+        raise NotImplementedError()
 
 
 class AWWAggregatePerformanceIndicator(BaseAWWAggregatePerformanceIndicator):
@@ -263,6 +251,21 @@ class AWWAggregatePerformanceIndicator(BaseAWWAggregatePerformanceIndicator):
         }
 
         return [self.render_template(context, language_code=language_code)]
+
+    def get_value_from_fixture(self, fixture, attribute):
+        xpath = './rows/row[@is_total_row="False"]'
+        rows = fixture.findall(xpath)
+        location_name = self.user.sql_location.name
+        for row in rows:
+            owner_id = row.find('./column[@id="owner_id"]')
+            if owner_id.text == location_name:
+                try:
+                    return row.find('./column[@id="{}"]'.format(attribute)).text
+                except:
+                    raise IndicatorError(
+                        "Attribute {} not found in restore for AWC {}".format(attribute, location_name)
+                    )
+        return 0
 
 
 class AWWAggregatePerformanceIndicatorV2(BaseAWWAggregatePerformanceIndicator):
@@ -294,6 +297,23 @@ class AWWAggregatePerformanceIndicatorV2(BaseAWWAggregatePerformanceIndicator):
                                                                   supervisor_user_app_version)
         data = _get_data_for_performance_indicator(self, ls_agg_perf_indicator)
         return [self.render_template(data, language_code=language_code)]
+
+    def get_value_from_fixture(self, fixture, attribute):
+        xpath = './rows/row[@is_total_row="False"]'
+        rows = fixture.findall(xpath)
+        location_name = self.user.sql_location.name
+        last_month_string = get_last_month_string()
+        for row in rows:
+            owner_id = row.find('./column[@id="owner_id"]')
+            month = row.find('./column[@id="month"]')
+            if owner_id.text == location_name and month is not None and month.text == last_month_string:
+                try:
+                    return row.find('./column[@id="{}"]'.format(attribute)).text
+                except:
+                    raise IndicatorError(
+                        "Attribute {} not found in restore for AWC {}".format(attribute, location_name)
+                    )
+        return 0
 
 
 # All process_sms tasks should hopefully be finished in 4 hours
@@ -691,3 +711,10 @@ def _get_data_for_performance_indicator(indicator_obj, ls_indicator_obj):
         'total_ag_oos': total_ag_oos,
         'cbe_conducted': cbe_conducted
     }
+
+
+def get_last_month_string():
+    today = date.today()
+    first = today.replace(day=1)
+    last_month = first - timedelta(days=1)
+    return last_month.strftime("%Y-%m")
