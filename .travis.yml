@@ -37,6 +37,7 @@ before_script:
   - mkdir -p extensions/icds/
   - git clone git@github.com:dimagi/icds-test-split.git extensions/icds/ --depth=1
   - cd extensions/icds/ && git fetch origin $TRAVIS_BRANCH && git checkout $TRAVIS_BRANCH || echo "Branch $TRAVIS_BRANCH not found in ICDS repo. Defaulting to 'master'"
+  - cd $TRAVIS_BUILD_DIR
 script:
   # workaround for env vars
   - export TRAVIS_HQ_USERNAME=$TRAVIS_HQ_USERNAME
