@@ -5,6 +5,5 @@
 {% load crispy_forms_tags %}
 {% requirejs_main "icds/js/custom_sms_report" %}
 {% block page_content %}
-{% initial_page_data 'disable_submit' disable_submit %}
   {% crispy request_form %}
 {% endblock %}

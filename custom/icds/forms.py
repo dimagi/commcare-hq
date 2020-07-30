@@ -199,6 +199,8 @@ class CustomSMSReportRequestForm(forms.Form):
     ), required=True)
 
     def __init__(self, *args, **kwargs):
+        disable_submit = kwargs.pop('disable_submit') if 'disable_submit' in kwargs else False
+        print(disable_submit)
         super(CustomSMSReportRequestForm, self).__init__(*args, **kwargs)
         self.helper = HQFormHelper()
         self.helper.form_method = 'post'
@@ -209,8 +211,8 @@ class CustomSMSReportRequestForm(forms.Form):
             twbscrispy.StrictButton(
                 _('Generate Report'),
                 type='submit',
-                id='request_report',
                 css_class='btn-primary',
+                **({'disabled': True} if disable_submit else {}),
             )
         )
 
