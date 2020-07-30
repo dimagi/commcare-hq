@@ -22,6 +22,7 @@ urlpatterns = [
     url(r'^app_by_version/(?P<app_id>[\w-]+)/(?P<version>\d+)/$', app_by_version, name='app_by_version'),
     url(r'^case_search_config/$', case_search_config, name='case_search_config'),
     url(r'^custom_data_models/$', custom_data_models, name='custom_data_models'),
+    url(r'^data_dictionary/$', fixture, name='data_dictionary'),
     url(r'^fixture/(?P<tag>[\w_-]+)$', fixture, name='fixture'),
     url(r'^ucr_config/(?P<config_id>[\w-]+)/$', ucr_config, name='ucr_config'),
     url(r'^toggles/$', toggles_and_previews, name='toggles'),
