@@ -699,8 +699,10 @@ ComboboxEntry.prototype.receiveMessage = function (message, field) {
     var self = this;
     var options = self.options();
     var fieldsByPriority = field.split("||");
-    for (var fieldByPriority of fieldsByPriority) {
-        for (var option of options) {
+    for (var i = 0; i < fieldsByPriority.length; i++) {
+        var fieldByPriority = fieldsByPriority[i];
+        for (var j = 0; j < options.length; j++) {
+            var option = options[j];
             if (option.name === message[fieldByPriority]) {
                 self.rawAnswer(option.name);
                 return;
