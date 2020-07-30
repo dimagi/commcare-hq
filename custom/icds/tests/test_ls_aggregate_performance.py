@@ -168,7 +168,7 @@ class TestGetReportFixture(TestCase):
             'uuid': 'abcdef'
         })
         with mock.patch.object(ConfigurableReportDataSource, 'get_data') as get_data_mock, \
-            mock.patch('custom.icds.messaging.indicators.get_report_configs') as get_report_configs:
+            mock.patch('custom.icds.messaging.indicators.get_latest_report_configs') as get_report_configs:
             get_report_configs.return_value = {'test_id': app_report_config}
             get_data_mock.return_value = [{'owner': 'bob', 'count': 3, 'is_starred': True}]
 
