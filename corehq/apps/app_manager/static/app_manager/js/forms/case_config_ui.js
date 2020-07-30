@@ -317,14 +317,33 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 self.case_name = null;
             }
 
+            self.sortProperties = function(p1, p2) {
+                var validPaths = [];
+                var validQuestions = caseConfig.questions();
+                var i;
+                for (i=0; i<validQuestions.length; i++) {
+                    validPaths.push(validQuestions[i].value);
+                }
+
+                if (validPaths.includes(p1.path()) && validPaths.includes(p2.path())) {
+                    return 0;
+                } else if (!validPaths.includes(p1.path())) {
+                    return -1;
+                } else {
+                    return 1;
+                }
+            };
+
             // Pagination and search
             self.searchAndFilter = true;
             self.case_property_query = ko.observable('');
             self.filtered_case_properties = ko.computed(function () {
                 var query = self.case_property_query() || '';
-                return _.filter(self.case_properties(), function (item) {
+                var props = _.filter(self.case_properties(), function (item) {
                     return (item.path() || '').indexOf(query) !== -1 || (item.key() || '').indexOf(query) !== -1;
                 });
+                props.sort(self.sortProperties);
+                return props;
             });
             self.visible_case_properties = ko.observableArray();
             self.pagination_reset_flag = ko.observable(false);
