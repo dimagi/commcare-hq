@@ -39,9 +39,6 @@ from custom.icds.const import (
     UCR_V2_MPR_5_CHILD_HEALTH_CASES_MONTHLY_ALIAS,
     UCR_V2_MPR_5_CHILD_HEALTH_PT1_ALIAS,
 )
-from custom.icds.messaging.custom_content import (
-    get_reported_last_build_of_app_by_user,
-)
 from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.models.aggregate import AggregateInactiveAWW
 
@@ -285,6 +282,7 @@ class AWWAggregatePerformanceIndicatorV2(BaseAWWAggregatePerformanceIndicator):
 
     def get_messages(self, language_code=None):
         # ToDo: return if language_code or if template does not exist for language_code
+        from custom.icds.messaging.custom_content import get_reported_last_build_of_app_by_user
         if self.supervisor is None:
             return []
 
