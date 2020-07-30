@@ -99,6 +99,7 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     js-guide/README
     databases
     metrics
+    extensions
 
 .. toctree::
     :caption: Documentation Tips

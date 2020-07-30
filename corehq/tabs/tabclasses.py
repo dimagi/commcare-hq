@@ -944,11 +944,7 @@ class ApplicationsTab(UITab):
                 _('Translations'),
                 url=(reverse('convert_translations', args=[self.domain])),
             ))
-        if toggles.MANAGE_CCZ_HOSTING.enabled_for_request(self._request):
-            submenu_context.append(dropdown_dict(
-                _("Manage CCZ Hosting"),
-                url=reverse(ManageHostedCCZ_urlname, args=[self.domain])
-            ))
+
         return submenu_context
 
     @property

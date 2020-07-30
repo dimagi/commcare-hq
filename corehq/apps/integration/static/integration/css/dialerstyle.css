@@ -203,9 +203,10 @@
 	width: 180px;
 	height: 15px;
 	font-family: Arial, Helvetica, sans-serif;
-	font-size: 12pt;
+	font-size: 10pt;
 	font-weight: normal;
 	margin-left: 10px;
+    margin-top: 5px;
 }
 
 .panelContentDouble{
@@ -213,10 +214,10 @@
 	width: 180px;
 	height: 40px;
 	font-family: Arial, Helvetica, sans-serif;
-	font-size: 12pt;
+	font-size: 10pt;
 	font-weight: normal;
-	color: white;
 	margin-left: 10px;
+    margin-top: 5px;
 }
 
 .buttonContainer{
@@ -224,7 +225,7 @@
 	align-items: center;
 	justify-content: center;
 	width: 170px;
-	height: 30px;	
+	height: 40px;	
 	padding:10px 5px 5px 5px;
 }
 
