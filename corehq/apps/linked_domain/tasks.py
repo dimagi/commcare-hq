@@ -30,16 +30,15 @@ def pull_missing_multimedia_for_app_and_notify_task(domain, app_id, email=None):
 
 @task(queue='background_queue')
 def push_models(master_domain, models, linked_domains, build_apps, username):
-    user = CouchUser.get_by_username(username)
-    manager = ReleaseManager(master_domain, user)
+    manager = ReleaseManager(master_domain, username)
     manager.release(models, linked_domains, build_apps)
     manager.send_email()
 
 
 class ReleaseManager():
-    def __init__(self, master_domain, user):
+    def __init__(self, master_domain, username):
         self.master_domain = master_domain
-        self.user = user
+        self.user = CouchUser.get_by_username(username)
         self.linked_domains = []
         self.models = []
         self._reset()

@@ -21,7 +21,7 @@ class TestReleaseManager(BaseLinkedAppsTest):
     def setUpClass(cls):
         super().setUpClass()
         cls.user = WebUser.create(cls.domain, 'fiona', 'secret', None, None)
-        cls.manager = ReleaseManager(cls.domain, cls.user)
+        cls.manager = ReleaseManager(cls.domain, cls.user.username)
         master1_module = cls.master1.add_module(Module.new_module('Module for master1', None))
         master1_module.new_form('Form for master1', 'en', get_blank_form_xml('Form for master1'))
         cls.extra_domain = 'antarctica'
