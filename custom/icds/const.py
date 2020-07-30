@@ -1,3 +1,4 @@
+AWW_APP_ID = '48cc1709b7f62ffea24cc6634a004745'
 SUPERVISOR_APP_ID = '48cc1709b7f62ffea24cc6634a00660c'
 VHND_SURVEY_XMLNS = "http://openrosa.org/formdesigner/A1C9EF1B-8B42-43AB-BA81-9484DB9D8293"
 
@@ -5,6 +6,14 @@ CHILDREN_WEIGHED_REPORT_ID = 'static-icds-cas-static-ls_children_weighed'
 DAYS_AWC_OPEN_REPORT_ID = 'static-icds-cas-static-ls_awc_days_open'
 HOME_VISIT_REPORT_ID = 'static-icds-cas-static-ls_timely_home_visits'
 THR_REPORT_ID = 'static-icds-cas-static-ls_thr_30_days'
+UCR_V2_LS_TIMELY_HOME_VISITS_ALIAS = 'ucr_v2_ls_timely_home_visits'
+UCR_V2_MPR_5_CCS_RECORD_ALIAS = 'ucr_v2_mpr_5_ccs_record'
+UCR_V2_MPR_5_CHILD_HEALTH_PT1_ALIAS = 'ucr_v2_mpr_5_child_health_pt1'
+UCR_V2_MPR_5_CHILD_HEALTH_CASES_MONTHLY_ALIAS = 'ucr_v2_mpr_5_child_health_cases_monthly'
+UCR_V2_LS_DAYS_AWC_OPEN_ALIAS = 'ucr_v2_ls_days_awc_open'
+UCR_V2_AG_MONTHLY_ALIAS = 'ucr_v2_ag_monthly'
+UCR_V2_AG_ALIAS = 'ucr_v2_ag'
+UCR_V2_CBE_LAST_MONTH_ALIAS = 'ucr_v2_cbe_last_month'
 
 AWC_LOCATION_TYPE_CODE = 'awc'
 SUPERVISOR_LOCATION_TYPE_CODE = 'supervisor'

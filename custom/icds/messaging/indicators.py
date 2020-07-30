@@ -1,20 +1,24 @@
-from datetime import datetime, timedelta
+import math
+from datetime import datetime, timedelta, date
 
-import pytz
 from django.conf import settings
 from django.db import connections
 from django.db.models import Max
 from django.template import TemplateDoesNotExist
-from django.template.loader import render_to_string
+from django.template.loader import render_to_string, get_template
+
+import pytz
 from lxml import etree
 from memoized import memoized
 
 from casexml.apps.phone.models import OTARestoreCommCareUser
-from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.app_manager.fixtures.mobile_ucr import ReportFixturesProviderV1
-from corehq.apps.locations.dbaccessors import (
-    get_users_by_location_id,
+from dimagi.utils.couch import CriticalSection
+
+from corehq.apps.app_manager.dbaccessors import get_app, get_build_by_version, wrap_app
+from corehq.apps.app_manager.fixtures.mobile_ucr import (
+    ReportFixturesProviderV1,
 )
+from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import connection_manager
@@ -26,10 +30,17 @@ from custom.icds.const import (
     HOME_VISIT_REPORT_ID,
     SUPERVISOR_APP_ID,
     THR_REPORT_ID,
+    UCR_V2_AG_ALIAS,
+    UCR_V2_AG_MONTHLY_ALIAS,
+    UCR_V2_CBE_LAST_MONTH_ALIAS,
+    UCR_V2_LS_DAYS_AWC_OPEN_ALIAS,
+    UCR_V2_LS_TIMELY_HOME_VISITS_ALIAS,
+    UCR_V2_MPR_5_CCS_RECORD_ALIAS,
+    UCR_V2_MPR_5_CHILD_HEALTH_CASES_MONTHLY_ALIAS,
+    UCR_V2_MPR_5_CHILD_HEALTH_PT1_ALIAS,
 )
 from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.models.aggregate import AggregateInactiveAWW
-from dimagi.utils.couch import CriticalSection
 
 DEFAULT_LANGUAGE = 'hin'
 
@@ -40,9 +51,21 @@ REPORT_IDS = [
     DAYS_AWC_OPEN_REPORT_ID,
 ]
 
+REPORT_ALIASES = [
+    UCR_V2_AG_ALIAS,
+    UCR_V2_AG_MONTHLY_ALIAS,
+    UCR_V2_CBE_LAST_MONTH_ALIAS,
+    UCR_V2_LS_DAYS_AWC_OPEN_ALIAS,
+    UCR_V2_MPR_5_CCS_RECORD_ALIAS,
+    UCR_V2_MPR_5_CHILD_HEALTH_CASES_MONTHLY_ALIAS,
+    UCR_V2_MPR_5_CHILD_HEALTH_PT1_ALIAS,
+    UCR_V2_LS_TIMELY_HOME_VISITS_ALIAS,
+]
+
 
 @quickcache(['domain'], timeout=4 * 60 * 60, memoize_timeout=4 * 60 * 60)
-def get_report_configs(domain):
+def get_latest_report_configs(domain):
+    # ToDo: might need to pass version here to fetch necessary report configs
     app = get_app(domain, SUPERVISOR_APP_ID, latest=True)
     return {
         report_config.report_id: report_config
@@ -52,15 +75,45 @@ def get_report_configs(domain):
     }
 
 
+@quickcache(['domain', 'app_version'], timeout=4 * 60 * 60, memoize_timeout=4 * 60 * 60)
+def get_v2_report_configs(domain, app_version):
+    if app_version:
+        app = wrap_app(get_build_by_version(domain, SUPERVISOR_APP_ID, app_version, return_doc=True))
+    else:
+        app = get_app(domain, SUPERVISOR_APP_ID, latest=True)
+    return {
+        report_config.report_slug: report_config
+        for module in app.get_report_modules()
+        for report_config in module.report_configs
+        if report_config.report_slug in REPORT_ALIASES
+    }
+
+
 @quickcache(['domain', 'report_id', 'ota_user.user_id'], timeout=12 * 60 * 60)
-def _get_report_fixture_for_user(domain, report_id, ota_user):
+def _get_cached_report_fixture_for_user(domain, report_id, ota_user):
     """
     :param domain: the domain
-    :param report_id: the index to the result from get_report_configs()
+    :param report_id: the index to the result from get_latest_report_configs()
     :param ota_user: the OTARestoreCommCareUser for which to get the report fixture
     """
+    report_config = get_latest_report_configs(domain)[report_id]
     [xml] = ReportFixturesProviderV1().report_config_to_fixture(
-        get_report_configs(domain)[report_id], ota_user
+        report_config, ota_user
+    )
+    return etree.tostring(xml)
+
+
+@quickcache(['domain', 'report_slug', 'ota_user.user_id', 'app_version'], timeout=12 * 60 * 60)
+def _get_cached_v2_report_fixture_for_user(domain, report_slug, ota_user, app_version):
+    """
+    :param domain: the domain
+    :param report_slug: the alias to the result from get_v2_report_configs()
+    :param ota_user: the OTARestoreCommCareUser for which to get the report fixture
+    """
+    report_config = get_v2_report_configs(domain, app_version)[report_slug]
+    # ToDo: should we be using ReportFixturesProviderV2?
+    [xml] = ReportFixturesProviderV1().report_config_to_fixture(
+        report_config, ota_user
     )
     return etree.tostring(xml)
 
@@ -70,7 +123,15 @@ def get_report_fixture_for_user(domain, report_id, ota_user):
     The Element objects used by the lxml library don't cache properly.
     So instead we cache the XML string and convert back here.
     """
-    return etree.fromstring(_get_report_fixture_for_user(domain, report_id, ota_user))
+    return etree.fromstring(_get_cached_report_fixture_for_user(domain, report_id, ota_user))
+
+
+def get_v2_report_fixture_for_user(domain, report_slug, ota_user, app_version):
+    """
+    The Element objects used by the lxml library don't cache properly.
+    So instead we cache the XML string and convert back here.
+    """
+    return etree.fromstring(_get_cached_v2_report_fixture_for_user(domain, report_slug, ota_user, app_version))
 
 
 class IndicatorError(Exception):
@@ -155,25 +216,17 @@ class LSIndicator(SMSIndicator):
         return {l.location_id: l.name for l in self.child_locations}
 
 
-class AWWAggregatePerformanceIndicator(AWWIndicator):
-    template = 'aww_aggregate_performance.txt'
-    slug = 'aww_2'
+class BaseAWWAggregatePerformanceIndicator(AWWIndicator):
+    def get_messages(self, language_code=None):
+        raise NotImplementedError()
 
     def get_value_from_fixture(self, fixture, attribute):
-        xpath = './rows/row[@is_total_row="False"]'
-        rows = fixture.findall(xpath)
-        location_name = self.user.sql_location.name
-        for row in rows:
-            owner_id = row.find('./column[@id="owner_id"]')
-            if owner_id.text == location_name:
-                try:
-                    return row.find('./column[@id="{}"]'.format(attribute)).text
-                except:
-                    raise IndicatorError(
-                        "Attribute {} not found in restore for AWC {}".format(attribute, location_name)
-                    )
+        raise NotImplementedError()
 
-        return 0
+
+class AWWAggregatePerformanceIndicator(BaseAWWAggregatePerformanceIndicator):
+    template = 'aww_aggregate_performance.txt'
+    slug = 'aww_2'
 
     def get_messages(self, language_code=None):
         if self.supervisor is None:
@@ -198,6 +251,69 @@ class AWWAggregatePerformanceIndicator(AWWIndicator):
         }
 
         return [self.render_template(context, language_code=language_code)]
+
+    def get_value_from_fixture(self, fixture, attribute):
+        xpath = './rows/row[@is_total_row="False"]'
+        rows = fixture.findall(xpath)
+        location_name = self.user.sql_location.name
+        for row in rows:
+            owner_id = row.find('./column[@id="owner_id"]')
+            if owner_id.text == location_name:
+                try:
+                    return row.find('./column[@id="{}"]'.format(attribute)).text
+                except:
+                    raise IndicatorError(
+                        "Attribute {} not found in restore for AWC {}".format(attribute, location_name)
+                    )
+        return 0
+
+
+class AWWAggregatePerformanceIndicatorV2(BaseAWWAggregatePerformanceIndicator):
+    template = 'aww_aggregate_performance_v2.txt'
+    slug = 'aww_v2'
+
+    def get_rows_count_from_fixture(self, fixture):
+        count = 0
+        xpath = './rows/row[@is_total_row="False"]'
+        rows = fixture.findall(xpath)
+        location_name = self.user.sql_location.name
+        for row in rows:
+            owner_id = row.find('./column[@id="awc_id"]')
+            if owner_id.text == location_name:
+                count += 1
+        return count
+
+    def get_messages(self, language_code=None):
+        from custom.icds.messaging.custom_content import get_reported_last_build_of_app_by_user
+        get_template(self.template)  # fail early if template missing
+        if self.supervisor is None:
+            return []
+
+        supervisor_user_last_build = get_reported_last_build_of_app_by_user(SUPERVISOR_APP_ID, self.supervisor)
+        supervisor_user_app_version = None
+        if supervisor_user_last_build:
+            supervisor_user_app_version = supervisor_user_last_build.build_version
+        ls_agg_perf_indicator = LSAggregatePerformanceIndicatorV2(self.domain, self.supervisor,
+                                                                  supervisor_user_app_version)
+        data = _get_data_for_performance_indicator(self, ls_agg_perf_indicator)
+        return [self.render_template(data, language_code=language_code)]
+
+    def get_value_from_fixture(self, fixture, attribute):
+        xpath = './rows/row[@is_total_row="False"]'
+        rows = fixture.findall(xpath)
+        location_name = self.user.sql_location.name
+        last_month_string = get_last_month_string()
+        for row in rows:
+            owner_id = row.find('./column[@id="owner_id"]')
+            month = row.find('./column[@id="month"]')
+            if owner_id.text == location_name and month is not None and month.text == last_month_string:
+                try:
+                    return row.find('./column[@id="{}"]'.format(attribute)).text
+                except:
+                    raise IndicatorError(
+                        "Attribute {} not found in restore for AWC {}".format(attribute, location_name)
+                    )
+        return 0
 
 
 # All process_sms tasks should hopefully be finished in 4 hours
@@ -391,14 +507,31 @@ def compute_awws_in_vhnd_timeframe(domain):
         return {row[0] for row in cursor.fetchall()}
 
 
-class LSAggregatePerformanceIndicator(LSIndicator):
-    template = 'ls_aggregate_performance.txt'
-    slug = 'ls_1'
+class BaseLSAggregatePerformanceIndicator(LSIndicator):
+    def get_messages(self, language_code=None):
+        raise NotImplementedError()
 
     @property
     @memoized
     def restore_user(self):
         return OTARestoreCommCareUser(self.domain, self.user)
+
+    def get_report_fixture(self, report_id):
+        raise NotImplementedError()
+
+    def get_value_from_fixture(self, fixture, attribute):
+        xpath = './rows/row[@is_total_row="True"]/column[@id="{}"]'.format(attribute)
+        try:
+            return fixture.findall(xpath)[0].text
+        except:
+            raise IndicatorError("{} not found in fixture {} for user {}".format(
+                attribute, fixture, self.user.get_id
+            ))
+
+
+class LSAggregatePerformanceIndicator(BaseLSAggregatePerformanceIndicator):
+    template = 'ls_aggregate_performance.txt'
+    slug = 'ls_1'
 
     def get_report_fixture(self, report_id):
         return get_report_fixture_for_user(self.domain, report_id, self.restore_user)
@@ -422,15 +555,6 @@ class LSAggregatePerformanceIndicator(LSIndicator):
     @memoized
     def days_open_fixture(self):
         return self.get_report_fixture(DAYS_AWC_OPEN_REPORT_ID)
-
-    def get_value_from_fixture(self, fixture, attribute):
-        xpath = './rows/row[@is_total_row="True"]/column[@id="{}"]'.format(attribute)
-        try:
-            return fixture.findall(xpath)[0].text
-        except:
-            raise IndicatorError("{} not found in fixture {} for user {}".format(
-                attribute, fixture, self.user.get_id
-            ))
 
     def get_messages(self, language_code=None):
         on_time_visits = self.get_value_from_fixture(self.visits_fixture, 'visit_on_time')
@@ -457,3 +581,140 @@ class LSAggregatePerformanceIndicator(LSIndicator):
         }
 
         return [self.render_template(context, language_code=language_code)]
+
+
+class LSAggregatePerformanceIndicatorV2(BaseLSAggregatePerformanceIndicator):
+    template = 'ls_aggregate_performance_v2.txt'
+    slug = 'ls_v2'
+
+    def __init__(self, domain, user, app_version):
+        super().__init__(domain, user)
+        self.app_version = app_version
+
+    def get_report_fixture(self, report_id):
+        return get_v2_report_fixture_for_user(self.domain, report_id, self.restore_user, self.app_version)
+
+    def get_messages(self, language_code=None):
+        get_template(self.template)  # fail early if template missing
+        data = _get_data_for_performance_indicator(self, self)
+        num_awc_locations = len(self.awc_locations)
+        num_days_open = data.pop('num_days_open', 0)
+        num_days_open = int(num_days_open) if num_days_open else 0
+        avg_days_open = 0
+        if num_awc_locations:
+            avg_days_open = int(round(num_days_open / num_awc_locations))
+
+        data.update({
+            "avg_days_open": avg_days_open,
+        })
+        return [self.render_template(data, language_code=language_code)]
+
+    def get_rows_count_from_fixture(self, fixture):
+        xpath = './rows/row[@is_total_row="False"]'
+        rows = fixture.findall(xpath)
+        return len(rows)
+
+    @property
+    @memoized
+    def ucr_v2_ls_timely_home_visits_fixture(self):
+        return self.get_report_fixture(UCR_V2_LS_TIMELY_HOME_VISITS_ALIAS)
+
+    @property
+    @memoized
+    def ucr_v2_mpr_5_ccs_record_fixture(self):
+        return self.get_report_fixture(UCR_V2_MPR_5_CCS_RECORD_ALIAS)
+
+    @property
+    @memoized
+    def ucr_v2_mpr_5_child_health_pt1_fixture(self):
+        return self.get_report_fixture(UCR_V2_MPR_5_CHILD_HEALTH_PT1_ALIAS)
+
+    @property
+    @memoized
+    def ucr_v2_mpr_5_child_health_cases_monthly_fixture(self):
+        return self.get_report_fixture(UCR_V2_MPR_5_CHILD_HEALTH_CASES_MONTHLY_ALIAS)
+
+    @property
+    @memoized
+    def ucr_v2_ls_days_awc_open_fixture(self):
+        return self.get_report_fixture(UCR_V2_LS_DAYS_AWC_OPEN_ALIAS)
+
+    @property
+    @memoized
+    def ucr_v2_ag_monthly_fixture(self):
+        return self.get_report_fixture(UCR_V2_AG_MONTHLY_ALIAS)
+
+    @property
+    @memoized
+    def ucr_v2_ag_fixture(self):
+        return self.get_report_fixture(UCR_V2_AG_ALIAS)
+
+    @property
+    @memoized
+    def ucr_v2_cbe_last_month_fixture(self):
+        return self.get_report_fixture(UCR_V2_CBE_LAST_MONTH_ALIAS)
+
+
+def _get_data_for_performance_indicator(indicator_obj, ls_indicator_obj):
+    visits = indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_ls_timely_home_visits_fixture, 'count')
+
+    count_bp = indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_mpr_5_ccs_record_fixture, 'count_bp')
+    count_ebf = indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_mpr_5_ccs_record_fixture, 'count_ebf')
+    count_cf = indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_mpr_5_child_health_pt1_fixture,
+                                                    'count_cf')
+    count_pnc = indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_mpr_5_ccs_record_fixture,
+                                                     'count_pnc')
+    visits_goal = math.ceil(
+        (int(count_bp) * 0.44) + int(count_ebf) + (int(count_pnc) * 6) + (int(count_cf) * 0.39)
+    )
+
+    on_time_visits = indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_ls_timely_home_visits_fixture,
+                                                          'visit_on_time')
+
+    ccs_gte_21 = (
+        int(indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_mpr_5_ccs_record_fixture,
+                                                 'thr_rations_gte_21'))
+        + int(indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_mpr_5_child_health_pt1_fixture,
+                                                   'thr_rations_gte_21'))
+    )
+    ccs_total = (
+        int(indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_mpr_5_ccs_record_fixture,
+                                                 'open_in_month'))
+        + int(indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_mpr_5_child_health_pt1_fixture,
+                                                   'open_in_month'))
+    )
+    weighed_num = indicator_obj.get_value_from_fixture(
+        ls_indicator_obj.ucr_v2_mpr_5_child_health_cases_monthly_fixture, 'weighed_in_month')
+    weighed_denom = indicator_obj.get_value_from_fixture(
+        ls_indicator_obj.ucr_v2_mpr_5_child_health_cases_monthly_fixture, 'open_in_month')
+    num_days_open = indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_ls_days_awc_open_fixture,
+                                                         'awc_opened_count')
+
+    ag_services_gte21 = (
+        int(indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_ag_monthly_fixture,
+                                                 'thr_21_plus_days'))
+        + int(indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_ag_monthly_fixture,
+                                                   'hcm_21_plus_days'))
+    )
+    total_ag_oos = indicator_obj.get_value_from_fixture(ls_indicator_obj.ucr_v2_ag_fixture, 'out_of_school')
+    cbe_conducted = indicator_obj.get_rows_count_from_fixture(ls_indicator_obj.ucr_v2_cbe_last_month_fixture)
+    return {
+        'visits': visits,
+        'visits_goal': visits_goal,
+        'on_time_visits': on_time_visits,
+        'ccs_gte_21': ccs_gte_21,
+        'ccs_total': ccs_total,
+        'weighed_num': weighed_num,
+        'weighed_denom': weighed_denom,
+        'num_days_open': num_days_open,
+        'ag_services_gte21': ag_services_gte21,
+        'total_ag_oos': total_ag_oos,
+        'cbe_conducted': cbe_conducted
+    }
+
+
+def get_last_month_string():
+    today = date.today()
+    first = today.replace(day=1)
+    last_month = first - timedelta(days=1)
+    return last_month.strftime("%Y-%m")

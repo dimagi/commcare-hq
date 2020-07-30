@@ -21,7 +21,7 @@ from custom.icds.messaging.indicators import (
     AWWAggregatePerformanceIndicator,
     IndicatorError,
     LSAggregatePerformanceIndicator,
-    _get_report_fixture_for_user,
+    _get_cached_report_fixture_for_user,
 )
 from lxml import etree
 from mock import Mock, patch
@@ -168,10 +168,10 @@ class TestGetReportFixture(TestCase):
             'uuid': 'abcdef'
         })
         with mock.patch.object(ConfigurableReportDataSource, 'get_data') as get_data_mock, \
-            mock.patch('custom.icds.messaging.indicators.get_report_configs') as get_report_configs:
+            mock.patch('custom.icds.messaging.indicators.get_latest_report_configs') as get_report_configs:
             get_report_configs.return_value = {'test_id': app_report_config}
             get_data_mock.return_value = [{'owner': 'bob', 'count': 3, 'is_starred': True}]
 
             with mock_datasource_config():
-                fixture = _get_report_fixture_for_user(self.domain, 'test_id', self.user).decode('utf8')
+                fixture = _get_cached_report_fixture_for_user(self.domain, 'test_id', self.user).decode('utf8')
                 self.assertIn(self.report_config1.get_id, fixture)
