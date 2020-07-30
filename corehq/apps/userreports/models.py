@@ -1,4 +1,5 @@
 import glob
+import itertools
 import json
 import os
 import re
@@ -18,6 +19,7 @@ from couchdbkit.exceptions import BadValueError
 from django_bulk_update.helper import bulk_update as bulk_update_helper
 from memoized import memoized
 
+from corehq.apps.userreports.extension_points import static_ucr_data_source_paths
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -833,7 +835,9 @@ class StaticDataSourceConfiguration(JsonObject):
         :return: Generator of all wrapped configs read from disk
         """
         def __get_all():
-            for path_or_glob in settings.STATIC_DATA_SOURCES:
+            paths = settings.STATIC_DATA_SOURCES
+            paths.extend(itertools.chain.from_iterable(static_ucr_data_source_paths()))
+            for path_or_glob in paths:
                 if os.path.isfile(path_or_glob):
                     yield _get_wrapped_object_from_file(path_or_glob, cls)
                 else:
@@ -917,7 +921,9 @@ class StaticReportConfiguration(JsonObject):
     @classmethod
     def _all(cls):
         def __get_all():
-            for path_or_glob in settings.STATIC_UCR_REPORTS:
+            paths = settings.STATIC_UCR_REPORTS
+            paths.extend(itertools.chain.from_iterable(static_ucr_data_source_paths()))
+            for path_or_glob in paths:
                 if os.path.isfile(path_or_glob):
                     yield _get_wrapped_object_from_file(path_or_glob, cls)
                 else:

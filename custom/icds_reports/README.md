@@ -18,21 +18,6 @@ This does not include populating any data.
 - Add the following to localsettings:
 
 ```
-LOCAL_STATIC_DATA_SOURCES = [
-    "custom/icds_reports/ucr/data_sources/*.json",
-    "custom/icds_reports/ucr/data_sources/dashboard/*.json",
-]
-
-LOCAL_STATIC_UCR_REPORTS = [
-    "custom/icds_reports/ucr/reports/dashboard/*.j,son",
-    "custom/icds_reports/ucr/reports/asr/*.json",
-    "custom/icds_reports/ucr/reports/asr/ucr_v2/*.json",
-    "custom/icds_reports/ucr/reports/mpr/*.json",
-    "custom/icds_reports/ucr/reports/mpr/dashboard/*.json",
-    "custom/icds_reports/ucr/reports/ls/*.json",
-    "custom/icds_reports/ucr/reports/other/*.json",
-]
-
 LOCAL_CUSTOM_UCR_EXPRESSION_LISTS = [
     "custom.icds_reports.ucr.expressions.CUSTOM_UCR_EXPRESSIONS",
 ]

@@ -781,8 +781,6 @@ LOCAL_APPS = ()
 LOCAL_MIDDLEWARE = ()
 LOCAL_PILLOWTOPS = {}
 
-LOCAL_STATIC_DATA_SOURCES = []
-LOCAL_STATIC_UCR_REPORTS = []
 LOCAL_CUSTOM_UCR_EXPRESSIONS = []
 LOCAL_CUSTOM_UCR_EXPRESSION_LISTS = []
 LOCAL_CUSTOM_UCR_REPORT_FILTERS = []
@@ -1850,7 +1848,7 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'echis_reports', 'ucr', 'reports', '*.json'),
     os.path.join('custom', 'aaa', 'ucr', 'reports', '*.json'),
     os.path.join('custom', 'ccqa', 'ucr', 'reports', 'patients.json'),  # For testing static UCRs
-] + LOCAL_STATIC_UCR_REPORTS
+]
 
 
 STATIC_DATA_SOURCES = [
@@ -1885,7 +1883,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'echis_reports', 'ucr', 'data_sources', '*.json'),
     os.path.join('custom', 'aaa', 'ucr', 'data_sources', '*.json'),
     os.path.join('custom', 'ccqa', 'ucr', 'data_sources', 'patients.json'),  # For testing static UCRs
-] + LOCAL_STATIC_DATA_SOURCES
+]
 
 for k, v in LOCAL_PILLOWTOPS.items():
     plist = PILLOWTOPS.get(k, [])
