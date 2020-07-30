@@ -321,7 +321,7 @@ HQ_APPS = (
     'corehq.apps.reports.app_config.ReportsModule',
     'corehq.apps.reports_core',
     'corehq.apps.saved_reports',
-    'corehq.apps.userreports',
+    'corehq.apps.userreports.app_config.UserReports',
     'corehq.apps.aggregate_ucrs',
     'corehq.apps.data_interfaces',
     'corehq.apps.export',
@@ -780,9 +780,6 @@ OPEN_EXCHANGE_RATES_API_ID = ''
 LOCAL_APPS = ()
 LOCAL_MIDDLEWARE = ()
 LOCAL_PILLOWTOPS = {}
-
-LOCAL_CUSTOM_UCR_REPORT_FILTERS = []
-LOCAL_CUSTOM_UCR_REPORT_FILTER_VALUES = []
 
 LOCAL_DOMAIN_MODULE_MAP = {}
 
@@ -1931,10 +1928,6 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('location_parent_id', 'corehq.apps.locations.ucr_expressions.location_parent_id'),
     ('ancestor_location', 'corehq.apps.locations.ucr_expressions.ancestor_location'),
 ]
-
-CUSTOM_UCR_REPORT_FILTERS = [] + LOCAL_CUSTOM_UCR_REPORT_FILTERS
-
-CUSTOM_UCR_REPORT_FILTER_VALUES = [] + LOCAL_CUSTOM_UCR_REPORT_FILTER_VALUES
 
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',

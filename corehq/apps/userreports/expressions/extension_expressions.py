@@ -1,6 +1,6 @@
 from dimagi.ext.jsonobject import DictProperty, JsonObject, StringProperty
 
-from corehq.apps.userreports.expressions import ExpressionFactory
+from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import TypeProperty
 
 

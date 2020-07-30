@@ -4,9 +4,17 @@ from django.urls import reverse
 from django.utils.translation import ugettext as _
 
 from corehq import toggles
-from corehq.apps.userreports.extension_points import static_ucr_data_source_paths, static_ucr_reports, \
-    custom_ucr_expressions
-from corehq.extensions.extension_points import uitab_dropdown_items, domain_specific_urls
+from corehq.apps.userreports.extension_points import (
+    custom_ucr_expressions,
+    custom_ucr_report_filter_values,
+    custom_ucr_report_filters,
+    static_ucr_data_source_paths,
+    static_ucr_reports,
+)
+from corehq.extensions.extension_points import (
+    domain_specific_urls,
+    uitab_dropdown_items,
+)
 from custom.icds.const import ICDS_APPS_ROOT
 from custom.icds_core.const import ManageHostedCCZ_urlname
 
@@ -68,4 +76,18 @@ def icds_ucr_expressions():
         ('icds_user_location', 'custom.icds_reports.ucr.expressions.icds_user_location'),
         ('icds_awc_owner_id', 'custom.icds_reports.ucr.expressions.awc_owner_id'),
         ('icds_village_owner_id', 'custom.icds_reports.ucr.expressions.village_owner_id'),
+    ]
+
+
+@custom_ucr_report_filters.extend()
+def icds_ucr_report_filters():
+    return [
+        ('village_choice_list', 'custom.icds_reports.ucr.filter_spec.build_village_choice_list_filter_spec'),
+    ]
+
+
+@custom_ucr_report_filter_values.extend()
+def icds_ucr_report_filter_values():
+    return [
+        ("village_choice_list", "custom.icds_reports.ucr.filter_value.VillageFilterValue"),
     ]

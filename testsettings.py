@@ -142,15 +142,6 @@ METRICS_PROVIDERS = [
 ES_SEARCH_TIMEOUT = 5
 
 if os.path.exists("custom/icds"):
-    CUSTOM_UCR_REPORT_FILTERS.append(
-        ('village_choice_list', 'custom.icds_reports.ucr.filter_spec.build_village_choice_list_filter_spec'),
-    )
-    CUSTOM_UCR_REPORT_FILTERS = list(set(CUSTOM_UCR_REPORT_FILTERS))
-    CUSTOM_UCR_REPORT_FILTER_VALUES.append(
-        ('village_choice_list', 'custom.icds_reports.ucr.filter_value.VillageFilterValue'),
-    )
-    CUSTOM_UCR_REPORT_FILTER_VALUES = list(set(CUSTOM_UCR_REPORT_FILTER_VALUES))
-
     icds_apps = [
         "custom.icds",
         "custom.icds.data_management",

@@ -12,7 +12,7 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.util import post_case_blocks
-from corehq.apps.userreports.expressions import ExpressionFactory
+from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from pillow_retry.models import PillowError
 
 from corehq.apps.change_feed import topics

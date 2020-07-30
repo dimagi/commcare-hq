@@ -47,7 +47,7 @@ from corehq.apps.userreports.columns import (
 )
 from corehq.apps.userreports.const import DEFAULT_MAXIMUM_EXPANSION
 from corehq.apps.userreports.exceptions import BadSpecError, InvalidQueryColumn
-from corehq.apps.userreports.expressions import ExpressionFactory
+from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.transforms.factory import TransformFactory
