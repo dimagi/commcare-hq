@@ -111,12 +111,12 @@ WS4REDIS_CONNECTION = {
     'host': redis_host,
 }
 
-ELASTICSEARCH_HOST = 'elasticsearch'
-ELASTICSEARCH_PORT = 9200
-ELASTICSEARCH_MAJOR_VERSION = 7
+ELASTICSEARCH_HOST = 'elasticsearch2'
+ELASTICSEARCH_PORT = 6200 # ES 2 port
+ELASTICSEARCH_MAJOR_VERSION = 2
 # to enable v2 ES tests
 if os.environ.get('ELASTICSEARCH_2_PORT'):
-    ELASTICSEARCH_HOST = 'elasticsearch2'
+    ELASTICSEARCH_HOST = 'elasticsearch7'
     ELASTICSEARCH_PORT = int(os.environ.get('ELASTICSEARCH_2_PORT'))
 
 if os.environ.get('ELASTICSEARCH_MAJOR_VERSION'):

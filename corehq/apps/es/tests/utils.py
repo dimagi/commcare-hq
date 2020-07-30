@@ -69,9 +69,9 @@ def reload_modules():
 def skip_and_reload_decorator(decorator):
     @functools.wraps(decorator)
     def decorate(cls):
-        if not getattr(settings, 'ELASTICSEARCH_2_PORT', False):
+        if not getattr(settings, 'ELASTICSEARCH_7_PORT', False):
             setattr(cls, '__unittest_skip__', True)
-            setattr(cls, '__unittest_skip_why__', 'settings.ELASTICSEARCH_2_PORT is not defined')
+            setattr(cls, '__unittest_skip_why__', 'settings.ELASTICSEARCH_7_PORT is not defined')
             return cls
         builtins = ['setUp', 'setUpClass', 'tearDown', 'tearDownClass']
         for (method_name, method) in inspect.getmembers(cls):
@@ -84,7 +84,7 @@ def skip_and_reload_decorator(decorator):
 def reload_modules_decorator(fn):
     @functools.wraps(fn)
     def wrap(*args):
-        with override_settings(ELASTICSEARCH_MAJOR_VERSION=2, ELASTICSEARCH_PORT=getattr('settings', 'ELASTICSEARCH_2_PORT', 5200)):
+        with override_settings(ELASTICSEARCH_MAJOR_VERSION=2, ELASTICSEARCH_PORT=getattr('settings', 'ELASTICSEARCH_7_PORT', 5200)):
             reload_modules()
             res = fn(*args)
         reload_modules()
