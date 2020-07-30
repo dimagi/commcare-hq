@@ -49,6 +49,9 @@ class ReleaseManager():
         self.models = models or []
         self.linked_domains = linked_domains or []
 
+    def results(self):
+        return (self.successes_by_domain, self.errors_by_domain)
+
     def _add_error(self, domain, html, text=None):
         text = text or html
         self.errors_by_domain['html'][domain].append(html)
@@ -58,6 +61,17 @@ class ReleaseManager():
         text = text or html
         self.successes_by_domain['html'][domain].append(html)
         self.successes_by_domain['text'][domain].append(text)
+
+    def _update_successes(self, successes):
+        self._update_messages(self.successes_by_domain, successes)
+
+    def _update_errors(self, errors):
+        self._update_messages(self.errors_by_domain, errors)
+
+    def _update_messages(self, attr, messages):
+        for fmt in ('html', 'text'):
+            for domain, msgs in messages[fmt].items():
+                attr[fmt][domain].extend(msgs)
 
     def _get_error_domain_count(self):
         return len(self.errors_by_domain['html'])
@@ -82,31 +96,10 @@ class ReleaseManager():
                                                  "was released to it.").format(self.master_domain, linked_domain))
                 continue
 
-            self.release_domain(domain_links_by_linked_domain[linked_domain], build_apps)
-
-    def release_domain(self, domain_link, build_apps=False):
-        for model in self.models:
-            errors = None
-            try:
-                if model['type'] == MODEL_APP:
-                    errors = self._release_app(domain_link, model, self.user, build_apps)
-                elif model['type'] == MODEL_REPORT:
-                    errors = self._release_report(domain_link, model)
-                elif model['type'] == MODEL_CASE_SEARCH:
-                    errors = self._release_case_search(domain_link, model, self.user)
-                else:
-                    errors = self._release_model(domain_link, model, self.user)
-            except Exception as e:   # intentionally broad
-                errors = [str(e), str(e)]
-                notify_exception(None, "Exception pushing linked domains: {}".format(e))
-
-            if errors:
-                self._add_error(
-                    domain_link.linked_domain,
-                    _("Could not update {}: {}").format(model['name'], errors[0]),
-                    text=_("Could not update {}: {}").format(model['name'], errors[1]))
-            else:
-                self._add_success(domain_link.linked_domain, _("Updated {} successfully").format(model['name']))
+            (successes, errors) = release_domain(domain_links_by_linked_domain[linked_domain],
+                                                 self.user.username, models, build_apps)
+            self._update_successes(successes)
+            self._update_errors(errors)
 
     def send_email(self):
         subject = _("Linked project release complete.")
@@ -202,3 +195,31 @@ The following linked project spaces received content:
     def _error_tuple(self, html, text=None):
         text = text or html
         return (html, text)
+
+
+def release_domain(domain_link, username, models, build_apps=False):
+    manager = ReleaseManager(domain_link.master_domain, username)
+    for model in models:
+        errors = None
+        try:
+            if model['type'] == MODEL_APP:
+                errors = manager._release_app(domain_link, model, manager.user, build_apps)
+            elif model['type'] == MODEL_REPORT:
+                errors = manager._release_report(domain_link, model)
+            elif model['type'] == MODEL_CASE_SEARCH:
+                errors = manager._release_case_search(domain_link, model, manager.user)
+            else:
+                errors = manager._release_model(domain_link, model, manager.user)
+        except Exception as e:   # intentionally broad
+            errors = [str(e), str(e)]
+            notify_exception(None, "Exception pushing linked domains: {}".format(e))
+
+        if errors:
+            manager._add_error(
+                domain_link.linked_domain,
+                _("Could not update {}: {}").format(model['name'], errors[0]),
+                text=_("Could not update {}: {}").format(model['name'], errors[1]))
+        else:
+            manager._add_success(domain_link.linked_domain, _("Updated {} successfully").format(model['name']))
+
+    return manager.results()
