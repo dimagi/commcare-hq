@@ -525,7 +525,8 @@ class LSAggregatePerformanceIndicatorV2(BaseLSAggregatePerformanceIndicator):
         # ToDo: return if language_code or if template does not exist for language_code
         data = _get_data_for_performance_indicator(self, self)
         num_awc_locations = len(self.awc_locations)
-        num_days_open = data.pop('num_days_open')
+        num_days_open = data.pop('num_days_open', 0)
+        num_days_open = int(num_days_open) if num_days_open else 0
         avg_days_open = 0
         if num_awc_locations:
             avg_days_open = int(round(num_days_open / num_awc_locations))
