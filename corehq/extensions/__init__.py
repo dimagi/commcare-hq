@@ -126,7 +126,7 @@ point implementations until a value is found.
     ["thing2", "thing1"]
 """
 
-from corehq.extensions.interface import CommCareExtensions, ResultFormat
+from corehq.extensions.interface import CommCareExtensions, ResultFormat  # noqa F401
 
 extension_manager = CommCareExtensions()
 extension_point = extension_manager.extension_point

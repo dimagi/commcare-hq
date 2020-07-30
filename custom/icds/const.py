@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 ICDS_APPS_ROOT = Path(__file__).parent.parent
