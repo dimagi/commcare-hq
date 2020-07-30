@@ -30,13 +30,17 @@ from custom.icds.const import (
     HOME_VISIT_REPORT_ID,
     SUPERVISOR_APP_ID,
     THR_REPORT_ID,
-    UCR_V2_AG,
-    UCR_V2_AG_MONTHLY,
-    UCR_V2_CBE_LAST_MONTH,
-    UCR_V2_LS_DAYS_AWC_OPEN,
-    UCR_V2_MPR_5_CCS_RECORD,
-    UCR_V2_MPR_5_CHILD_HEALTH_CASES_MONTHLY,
-    UCR_V2_MPR_5_CHILD_HEALTH_PT1, UCR_V2_LS_TIMELY_HOME_VISITS,
+    UCR_V2_AG_ALIAS,
+    UCR_V2_AG_MONTHLY_ALIAS,
+    UCR_V2_CBE_LAST_MONTH_ALIAS,
+    UCR_V2_LS_DAYS_AWC_OPEN_ALIAS,
+    UCR_V2_LS_TIMELY_HOME_VISITS_ALIAS,
+    UCR_V2_MPR_5_CCS_RECORD_ALIAS,
+    UCR_V2_MPR_5_CHILD_HEALTH_CASES_MONTHLY_ALIAS,
+    UCR_V2_MPR_5_CHILD_HEALTH_PT1_ALIAS,
+)
+from custom.icds.messaging.custom_content import (
+    get_reported_last_build_of_app_by_user,
 )
 from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.models.aggregate import AggregateInactiveAWW
@@ -48,14 +52,17 @@ REPORT_IDS = [
     THR_REPORT_ID,
     CHILDREN_WEIGHED_REPORT_ID,
     DAYS_AWC_OPEN_REPORT_ID,
-    UCR_V2_AG,
-    UCR_V2_AG_MONTHLY,
-    UCR_V2_CBE_LAST_MONTH,
-    UCR_V2_LS_DAYS_AWC_OPEN,
-    UCR_V2_MPR_5_CCS_RECORD,
-    UCR_V2_MPR_5_CHILD_HEALTH_CASES_MONTHLY,
-    UCR_V2_MPR_5_CHILD_HEALTH_PT1, UCR_V2_LS_TIMELY_HOME_VISITS,
+]
 
+REPORT_ALIASES = [
+    UCR_V2_AG_ALIAS,
+    UCR_V2_AG_MONTHLY_ALIAS,
+    UCR_V2_CBE_LAST_MONTH_ALIAS,
+    UCR_V2_LS_DAYS_AWC_OPEN_ALIAS,
+    UCR_V2_MPR_5_CCS_RECORD_ALIAS,
+    UCR_V2_MPR_5_CHILD_HEALTH_CASES_MONTHLY_ALIAS,
+    UCR_V2_MPR_5_CHILD_HEALTH_PT1_ALIAS,
+    UCR_V2_LS_TIMELY_HOME_VISITS_ALIAS,
 ]
 
 
@@ -281,7 +288,12 @@ class AWWAggregatePerformanceIndicatorV2(BaseAWWAggregatePerformanceIndicator):
         if self.supervisor is None:
             return []
 
-        ls_agg_perf_indicator = LSAggregatePerformanceIndicatorV2(self.domain, self.supervisor)
+        supervisor_user_last_build = get_reported_last_build_of_app_by_user(SUPERVISOR_APP_ID, self.supervisor)
+        supervisor_user_app_version = None
+        if supervisor_user_last_build:
+            supervisor_user_app_version = supervisor_user_last_build.build_version
+        ls_agg_perf_indicator = LSAggregatePerformanceIndicatorV2(self.domain, self.supervisor,
+                                                                  supervisor_user_app_version)
         data = _get_data_for_performance_indicator(self, ls_agg_perf_indicator)
         return [self.render_template(data, language_code=language_code)]
 
@@ -487,7 +499,7 @@ class BaseLSAggregatePerformanceIndicator(LSIndicator):
         return OTARestoreCommCareUser(self.domain, self.user)
 
     def get_report_fixture(self, report_id):
-        return get_report_fixture_for_user(self.domain, report_id, self.restore_user)
+        raise NotImplementedError()
 
     def get_value_from_fixture(self, fixture, attribute):
         xpath = './rows/row[@is_total_row="True"]/column[@id="{}"]'.format(attribute)
@@ -502,6 +514,9 @@ class BaseLSAggregatePerformanceIndicator(LSIndicator):
 class LSAggregatePerformanceIndicator(BaseLSAggregatePerformanceIndicator):
     template = 'ls_aggregate_performance.txt'
     slug = 'ls_1'
+
+    def get_report_fixture(self, report_id):
+        return get_report_fixture_for_user(self.domain, report_id, self.restore_user)
 
     @property
     @memoized
@@ -554,6 +569,13 @@ class LSAggregatePerformanceIndicatorV2(BaseLSAggregatePerformanceIndicator):
     template = 'ls_aggregate_performance_v2.txt'
     slug = 'ls_v2'
 
+    def __init__(self, domain, user, app_version):
+        super().__init__(domain, user)
+        self.app_version = app_version
+
+    def get_report_fixture(self, report_id):
+        return get_v2_report_fixture_for_user(self.domain, report_id, self.restore_user, self.app_version)
+
     def get_messages(self, language_code=None):
         # ToDo: return if language_code or if template does not exist for language_code
         data = _get_data_for_performance_indicator(self, self)
@@ -577,42 +599,42 @@ class LSAggregatePerformanceIndicatorV2(BaseLSAggregatePerformanceIndicator):
     @property
     @memoized
     def ucr_v2_ls_timely_home_visits_fixture(self):
-        return self.get_report_fixture(UCR_V2_LS_TIMELY_HOME_VISITS)
+        return self.get_report_fixture(UCR_V2_LS_TIMELY_HOME_VISITS_ALIAS)
 
     @property
     @memoized
     def ucr_v2_mpr_5_ccs_record_fixture(self):
-        return self.get_report_fixture(UCR_V2_MPR_5_CCS_RECORD)
+        return self.get_report_fixture(UCR_V2_MPR_5_CCS_RECORD_ALIAS)
 
     @property
     @memoized
     def ucr_v2_mpr_5_child_health_pt1_fixture(self):
-        return self.get_report_fixture(UCR_V2_MPR_5_CHILD_HEALTH_PT1)
+        return self.get_report_fixture(UCR_V2_MPR_5_CHILD_HEALTH_PT1_ALIAS)
 
     @property
     @memoized
     def ucr_v2_mpr_5_child_health_cases_monthly_fixture(self):
-        return self.get_report_fixture(UCR_V2_MPR_5_CHILD_HEALTH_CASES_MONTHLY)
+        return self.get_report_fixture(UCR_V2_MPR_5_CHILD_HEALTH_CASES_MONTHLY_ALIAS)
 
     @property
     @memoized
     def ucr_v2_ls_days_awc_open_fixture(self):
-        return self.get_report_fixture(UCR_V2_LS_DAYS_AWC_OPEN)
+        return self.get_report_fixture(UCR_V2_LS_DAYS_AWC_OPEN_ALIAS)
 
     @property
     @memoized
     def ucr_v2_ag_monthly_fixture(self):
-        return self.get_report_fixture(UCR_V2_AG_MONTHLY)
+        return self.get_report_fixture(UCR_V2_AG_MONTHLY_ALIAS)
 
     @property
     @memoized
     def ucr_v2_ag_fixture(self):
-        return self.get_report_fixture(UCR_V2_AG)
+        return self.get_report_fixture(UCR_V2_AG_ALIAS)
 
     @property
     @memoized
     def ucr_v2_cbe_last_month_fixture(self):
-        return self.get_report_fixture(UCR_V2_CBE_LAST_MONTH)
+        return self.get_report_fixture(UCR_V2_CBE_LAST_MONTH_ALIAS)
 
 
 def _get_data_for_performance_indicator(indicator_obj, ls_indicator_obj):
