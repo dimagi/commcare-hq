@@ -16,7 +16,6 @@ class SMSUsageReport(BaseMessagingSectionView):
     template_name = 'icds/sms/custom_sms_report.html'
     urlname = SMSUsageReport_urlname
     page_title = _('Custom SMS Usage Report')
-    report_tracker = CustomSMSReportTracker()
 
     @use_daterangepicker
     def dispatch(self, *args, **kwargs):
@@ -25,11 +24,13 @@ class SMSUsageReport(BaseMessagingSectionView):
 
     @property
     def page_context(self):
-        reports_in_progress = self.report_tracker.active_reports
+        report_tracker = CustomSMSReportTracker(self.request.domain)
+        reports_in_progress = report_tracker.active_reports
         report_count = len(reports_in_progress)
-        disable_submit = True if report_count >= 3 else False
+        disable_submit = report_count >= 3
         if disable_submit:
-            messages.info(self.request, 'Only 3 concurrent reports are allowed at a time.')
+            messages.warning(self.request, 'Only 3 concurrent reports are allowed at a time.\
+                Please wait for them to finish.')
         if report_count > 0:
             display_message = _prepare_display_message(reports_in_progress, report_count)
             messages.info(self.request, display_message)
@@ -40,30 +41,21 @@ class SMSUsageReport(BaseMessagingSectionView):
         }
 
     def post(self, request, *args, **kwargs):
-        reports_in_progress = self.report_tracker.active_reports
-        if len(reports_in_progress) >= 3:
-            messages.warning(self.request,
-                _("{report_count} are currently in progress. Please wait for them to finish")
-                .format(report_count=len(reports_in_progress)))
-            return self.get(*args, **kwargs)
+        report_tracker = CustomSMSReportTracker(request.domain)
+        reports_in_progress = report_tracker.active_reports
+        report_count = len(reports_in_progress)
+
         self.request_form = CustomSMSReportRequestForm(request.POST)
-        user_email = request.user.email
-        if not user_email:
-            messages.error(self.request, _("Unable to find any email associated with your account"))
-            return self.get(*args, **kwargs)
-        if self.request_form.is_valid():
+        if self.request_form.is_valid() and report_count < 3:
+            user_email = self.request.user.email
             data = self.request_form.cleaned_data
             start_date = data['start_date']
             end_date = data['end_date']
-            if(_report_already_in_progress(reports_in_progress, start_date, end_date)):
-                messages.warning(
-                    self.request,
-                    _("Report for duration {start_date}-{end_date} already in progress").format(
-                        start_date=start_date,
-                        end_date=end_date,
-                    ))
+            if self.set_error_messages(reports_in_progress, start_date, end_date):
                 return self.get(*args, **kwargs)
-            send_custom_sms_report.delay(str(start_date), str(end_date), user_email)
+
+            send_custom_sms_report.delay(str(start_date), str(end_date), user_email, self.request.domain)
+
             messages.success(self.request, _(
                 "Report will we soon emailed to your email i.e {user_email}"
                 .format(user_email=user_email))
@@ -74,26 +66,36 @@ class SMSUsageReport(BaseMessagingSectionView):
                     messages.error(self.request, message)
         return self.get(*args, **kwargs)
 
+    def set_error_messages(self, reports, start_date, end_date):
+        has_errors = False
+        if not self.request.user.email:
+            messages.error(self.request, _("Unable to find any email associated with your account"))
+            has_errors = True
+        if _report_already_in_progress(reports, str(start_date), str(end_date)):
+            messages.warning(
+                self.request,
+                _("Report for duration {start_date}-{end_date} already in progress").format(
+                    start_date=start_date,
+                    end_date=end_date,
+                ))
+            has_errors = True
+        return has_errors
+
 
 def _prepare_display_message(reports_in_progress, report_count):
-    message = _('Currently {reports_count} {report_text} for duration\n').format(
+    message = _('Reports in progress: ').format(
         reports_count=report_count,
-        report_text='reports' if report_count > 1 else 'report',
     )
     for index, report in enumerate(reports_in_progress):
-        message += _('{start_date} to {end_date}').format(
+        message += '"{start_date} -- {end_date}"'.format(
             start_date=report['start_date'],
             end_date=report['end_date']
         )
         if index != report_count - 1:
             message += ', '
-    message += _(' {is_or_are} in progress').format(
-        is_or_are='are' if report_count > 1 else 'is',
-    )
     return message
 
 
-def _report_already_in_progress(reports, start_date, end_date):
-    similar_reports = [report for report in reports
-        if report['start_date'] == str(start_date) and report['end_date'] == str(end_date)]
-    return len(similar_reports) >= 1
+def _report_already_in_progress(reports, start_date: str, end_date: str):
+    return any(report['start_date'] == str(start_date) and report['end_date'] == str(end_date)
+        for report in reports)
