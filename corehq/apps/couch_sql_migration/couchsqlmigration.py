@@ -110,6 +110,7 @@ from .util import (
     str_to_datetime,
     worker_pool,
 )
+from corehq.apps.domain.utils import get_custom_domain_module
 
 log = logging.getLogger(__name__)
 
@@ -720,7 +721,7 @@ class CouchSqlDomainMigrator:
             msgs.append("does not have SQL backend enabled")
         if COUCH_SQL_MIGRATION_BLACKLIST.enabled(domain_name, NAMESPACE_DOMAIN):
             msgs.append("is blacklisted")
-        if domain_name in settings.DOMAIN_MODULE_MAP:
+        if get_custom_domain_module(domain_name):
             msgs.append("has custom reports")
         if msgs:
             raise MigrationRestricted("{}: {}".format(domain_name, "; ".join(msgs)))

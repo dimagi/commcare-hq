@@ -10,8 +10,10 @@ from django.conf import settings
 
 import csv
 from celery.task import task
+from memoized import memoized
 
 from corehq.apps.domain.dbaccessors import iter_all_domains_and_deleted_domains_with_name
+from corehq.apps.domain.extension_points import custom_domain_module
 from corehq.util.test_utils import unit_testing_only
 from couchexport.models import Format
 from dimagi.utils.django.email import send_HTML_email
@@ -28,6 +30,14 @@ new_domain_re = r"(?:[a-z0-9]+\-)*[a-z0-9]+" # lowercase letters, numbers, and '
 grandfathered_domain_re = r"[a-z0-9\-\.:]+"
 legacy_domain_re = r"[\w\.:-]+"
 domain_url_re = re.compile(r'^/a/(?P<domain>%s)/' % legacy_domain_re)
+
+
+@memoized
+def get_custom_domain_module(domain):
+    if domain in settings.DOMAIN_MODULE_MAP:
+        return settings.DOMAIN_MODULE_MAP[domain]
+
+    return custom_domain_module(domain)
 
 
 def normalize_domain_name(domain):

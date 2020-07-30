@@ -67,6 +67,7 @@ from .exceptions import (
     NameUnavailableException,
 )
 from .project_access.models import SuperuserProjectEntryRecord  # noqa
+from .utils import get_custom_domain_module
 
 lang_lookup = defaultdict(str)
 
@@ -805,7 +806,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         import and return the python module corresponding to domain_name, or
         None if it doesn't exist.
         """
-        module_name = settings.DOMAIN_MODULE_MAP.get(domain_name, domain_name)
+        module_name = get_custom_domain_module(domain_name) or domain_name
 
         try:
             return import_module(module_name) if module_name else None
