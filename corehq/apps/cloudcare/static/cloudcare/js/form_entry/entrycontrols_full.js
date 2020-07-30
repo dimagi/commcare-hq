@@ -126,19 +126,24 @@ EntrySingleAnswer.prototype.enableReceiver = function (question, options) {
         if (match) {
             var receiveTopic = match[1];
             var receiveTopicField = match[2];
-            question.parentPubSub.subscribe(function (addr) {
-                if (addr === Formplayer.Const.NO_ANSWER) {
+            question.parentPubSub.subscribe(function (message) {
+                if (message === Formplayer.Const.NO_ANSWER) {
                     self.rawAnswer(Formplayer.Const.NO_ANSWER);
-                } else if (addr[receiveTopicField]) {
-                    self.receiveValue(addr[receiveTopicField]);
+                } else if (message, receiveTopicField) {
+                    self.receiveMessage(message, receiveTopicField);
                 }
             }, null, receiveTopic);
         }
     }
 };
-EntrySingleAnswer.prototype.receiveValue = function (value) {
+EntrySingleAnswer.prototype.receiveMessage = function (message, field) {
+    // Default implementation, if field is in message register answer.
     var self = this;
-    self.rawAnswer(value);
+    if (message[field]) {
+        self.rawAnswer(message[field]);
+    } else {
+        self.rawAnswer(Formplayer.Const.NO_ANSWER);
+    }
 };
 
 
@@ -223,7 +228,8 @@ FreeTextEntry.prototype.onPreProcess = function (newValue) {
 /**
  * The entry that represents an address entry.
  * Takes in a `broadcastStyles` list of strings in format `broadcast-<topic>` to broadcast
- * the address item that is selected. Item contains `full`, `street`, `city`, `state_short`, `state_long`, `zipcode`.
+ * the address item that is selected. Item contains `full`, `street`, `city`, `us_state`, `us_state_long`,
+ * `zipcode`, `country`, `country_short`, `region`.
  */
 function AddressEntry(question, options) {
     var self = this;
@@ -247,9 +253,23 @@ function AddressEntry(question, options) {
                         broadcastObj.zipcode = contextValue.text;
                     } else if (contextValue.id.startsWith('place')) {
                         broadcastObj.city = contextValue.text;
+                    } else if (contextValue.id.startsWith('country')) {
+                        broadcastObj.country = contextValue.text;
+                        if (contextValue.short_code) {
+                            broadcastObj.country_short = contextValue.short_code;
+                        }
                     } else if (contextValue.id.startsWith('region')) {
-                        broadcastObj.state_short = contextValue.short_code.replace('US-', '');
+                        broadcastObj.region = contextValue.text;
+                        // TODO: Deprecate state_short and state_long.
                         broadcastObj.state_long = contextValue.text;
+                        if (contextValue.short_code) {
+                            broadcastObj.state_short = contextValue.short_code.replace('US-', '');
+                        }
+                        // If US region, it's actually a state so add us_state.
+                        if (contextValue.short_code && contextValue.short_code.startsWith('US-')) {
+                            broadcastObj.us_state = contextValue.text;
+                            broadcastObj.us_state_short = contextValue.short_code.replace('US-', '');
+                        }
                     }
                 } catch (err) {
                     // Swallow error, broadcast best effort. Consider logging.
@@ -449,20 +469,20 @@ SingleSelectEntry.prototype.onPreProcess = function (newValue) {
         }
     }
 };
-SingleSelectEntry.prototype.receiveValue = function (value) {
+SingleSelectEntry.prototype.receiveMessage = function (message, field) {
+    // Iterate through choices and select the one that matches the message[field]
     var self = this;
-    var found = false;
-    var choices = self.choices();
-    for (var i = 0; i < choices.length; i++) {
-        if (choices[i] === value) {
-            self.rawAnswer(i + 1);
-            found = true;
-            break;
+    if (message[field]) {
+        var choices = self.choices();
+        for (var i = 0; i < choices.length; i++) {
+            if (choices[i] === message[field]) {
+                self.rawAnswer(i + 1);
+                return;
+            }
         }
     }
-    if (!found) {
-        self.rawAnswer(Formplayer.Const.NO_ANSWER);
-    }
+    // either field is not in message or message[field] is not an option.
+    self.rawAnswer(Formplayer.Const.NO_ANSWER);
 };
 
 /**
@@ -671,20 +691,24 @@ ComboboxEntry.prototype.onPreProcess = function (newValue) {
         this.question.error(gettext('Not a valid choice'));
     }
 };
-ComboboxEntry.prototype.receiveValue = function (value) {
+ComboboxEntry.prototype.receiveMessage = function (message, field) {
+    // Iterates through options and selects an option that matches message[field].
+    // Registers a no answer if message[field] is not in options.
+    // Also accepts fields in format `field1||field2||...||fieldn` it will find the
+    // first message[fieldi] that matches an option.
     var self = this;
-    var found = false;
     var options = self.options();
-    for (var i = 0; i < options.length; i++) {
-        if (options[i].name === value) {
-            self.rawAnswer(options[i].name);
-            found = true;
-            break;
+    var fieldsByPriority = field.split("||");
+    for (var fieldByPriority of fieldsByPriority) {
+        for (var option of options) {
+            if (option.name === message[fieldByPriority]) {
+                self.rawAnswer(option.name);
+                return;
+            }
         }
     }
-    if (!found) {
-        self.rawAnswer(Formplayer.Const.NO_ANSWER);
-    }
+    // no options match message[field]
+    self.rawAnswer(Formplayer.Const.NO_ANSWER);
 };
 
 $.datetimepicker.setDateFormatter({
