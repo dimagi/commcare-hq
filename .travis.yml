@@ -37,7 +37,7 @@ before_script:
   - ssh-add .travis/deploy_key.pem
   - mkdir -p extensions/icds/
   - git clone git@github.com:dimagi/commcare-icds.git extensions/icds/ --depth=1
-  - cd extensions/icds/ && git fetch origin $TRAVIS_BRANCH && git checkout $TRAVIS_BRANCH || echo "Branch $TRAVIS_BRANCH not found in ICDS repo. Defaulting to 'master'"
+  - cd extensions/icds/ && git fetch origin $TRAVIS_PULL_REQUEST_BRANCH && git checkout $TRAVIS_PULL_REQUEST_BRANCH || echo "Branch $TRAVIS_PULL_REQUEST_BRANCH not found in ICDS repo. Defaulting to 'master'"
   - cd $TRAVIS_BUILD_DIR
 script:
   # workaround for env vars
