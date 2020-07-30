@@ -6,7 +6,7 @@ from django.template.loader import render_to_string
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
-from corehq.apps.app_manager.dbaccessors import get_build_by_version
+from corehq.apps.app_manager.dbaccessors import get_build_by_version, wrap_app
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import filter_by_app
@@ -294,9 +294,8 @@ def _has_functional_version_set(domain, app_id, version):
 
 
 def _get_build_functional_version(domain, app_id, version):
-    app_build = get_build_by_version(domain, app_id, version)
-    if app_build:
-        return app_build.profile.get('custom_properties', {}).get('cc-app-version-tag')
+    app_build = wrap_app(get_build_by_version(domain, app_id, version, return_doc=True))
+    return app_build.profile.get('custom_properties', {}).get('cc-app-version-tag')
 
 
 def phase2_aww_1(recipient, case_schedule_instance):

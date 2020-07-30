@@ -14,7 +14,7 @@ from memoized import memoized
 from casexml.apps.phone.models import OTARestoreCommCareUser
 from dimagi.utils.couch import CriticalSection
 
-from corehq.apps.app_manager.dbaccessors import get_app, get_build_by_version
+from corehq.apps.app_manager.dbaccessors import get_app, get_build_by_version, wrap_app
 from corehq.apps.app_manager.fixtures.mobile_ucr import (
     ReportFixturesProviderV1,
 )
@@ -78,7 +78,7 @@ def get_latest_report_configs(domain):
 @quickcache(['domain', 'app_version'], timeout=4 * 60 * 60, memoize_timeout=4 * 60 * 60)
 def get_v2_report_configs(domain, app_version):
     if app_version:
-        app = get_build_by_version(domain, SUPERVISOR_APP_ID, app_version)
+        app = wrap_app(get_build_by_version(domain, SUPERVISOR_APP_ID, app_version, return_doc=True))
     else:
         app = get_app(domain, SUPERVISOR_APP_ID, latest=True)
     return {
