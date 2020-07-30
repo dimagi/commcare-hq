@@ -2188,6 +2188,21 @@ class TestAWCReport(TestCase):
                     'is_ebf': 'No'}
             )
 
+    def test_awc_report_lactating_breastfed_status(self):
+        with mock.patch('custom.icds_reports.reports.awc_reports.date', SecondDayOfMay):
+            data = get_awc_report_lactating(
+                start=0,
+                length=10,
+                order='age',
+                reversed_order=False,
+                awc_id='a49'
+            )
+            for item in data:
+                if item['case_id'] == 'e4c3c2ae-6732-4f6e-a7b0-9e674a177edb':
+                    self.assertEqual(
+                        item['breastfed_at_birth'], 'Yes'
+                    )
+
     def test_awc_report_lactating_second_record(self):
         with mock.patch('custom.icds_reports.reports.awc_reports.date', SecondDayOfMay):
             data = get_awc_report_lactating(

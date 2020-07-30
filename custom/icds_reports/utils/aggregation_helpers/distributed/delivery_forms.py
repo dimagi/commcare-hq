@@ -30,7 +30,7 @@ class DeliveryFormsAggregationDistributedHelper(StateBasedAggregationDistributed
         return """
         INSERT INTO "{tablename}" (
           case_id, state_id, supervisor_id, month, latest_time_end_processed,
-          breastfed_at_birth, valid_visits, where_born, num_children_del, still_live_birth
+          breastfed_at_birth, breastfed_at_birth_original_status, valid_visits, where_born, num_children_del, still_live_birth
         ) (
           SELECT
             DISTINCT ucr.case_load_ccs_record0 AS case_id,
@@ -46,9 +46,9 @@ class DeliveryFormsAggregationDistributedHelper(StateBasedAggregationDistributed
             LAST_VALUE(ucr.where_born) OVER w AS where_born,
             LAST_VALUE(ucr.num_children_del) OVER w AS num_children_del,
             LAST_VALUE(ucr.still_live_birth) OVER w AS still_live_birth
-          FROM ({ucr_tablename}) ucr 
+          FROM "{ucr_tablename}" ucr 
           FULL OUTER JOIN (
-            SELECT * FROM {ucr_tablename} where MONTH = %(prev_month_start)s
+            SELECT * FROM "{ucr_tablename}" where timeend_with_time >= %(prev_month_start)s and timeend_with_time < %(current_month_start)s
           ) prev_month
           ON ucr.supervisor_id = prev_month.supervisor_id AND
           ucr.case_load_ccs_record0 = prev_month.case_load_ccs_record0
