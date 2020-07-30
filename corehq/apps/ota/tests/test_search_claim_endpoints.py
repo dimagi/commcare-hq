@@ -14,7 +14,6 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.util import post_case_blocks
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
-from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.case_search.models import (
@@ -31,7 +30,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.elastic import ES_DEFAULT_INSTANCE, get_es_new
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
-from corehq.pillows.case_search import CaseSearchReindexerFactory
+from corehq.pillows.case_search import CaseSearchReindexerFactory, domains_needing_search_index
 from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_INDEX,
     CASE_SEARCH_INDEX_INFO,
@@ -486,6 +485,7 @@ class CaseClaimEndpointTests(TestCase):
             owner_id=OWNER_ID,
             update={'opened_by': OWNER_ID},
         ).as_xml()], {'domain': DOMAIN})
+        domains_needing_search_index.clear()
         CaseSearchReindexerFactory(domain=DOMAIN).build().reindex()
         es = get_es_new()
         es.indices.refresh(CASE_SEARCH_INDEX)
