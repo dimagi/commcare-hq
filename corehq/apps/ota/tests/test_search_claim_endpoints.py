@@ -413,7 +413,6 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
                                                             }
                                                         }
                                                     )
-    
                                                 },
                                                 "query": {
                                                     "match_all": {
