@@ -128,7 +128,7 @@ class CcsMbtDistributedHelper(MBTDistributedHelper):
                 'edd',
                 'delivery_nature',
                 'is_ebf',
-                'breastfed_at_birth',
+                'breastfed_at_birth_original_status',
                 'anc_1',
                 'anc_2',
                 'anc_3',

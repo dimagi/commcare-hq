@@ -1308,7 +1308,7 @@ def get_awc_report_lactating(start, length, order, reversed_order, awc_id):
             case_id__in=case_ids,
         ).order_by('case_id', '-month').distinct('case_id').values(
             'case_id', 'person_name', 'age_in_months', 'add', 'delivery_nature', 'institutional_delivery',
-            'num_pnc_visits', 'breastfed_at_birth', 'is_ebf', 'num_rations_distributed', 'month'
+            'num_pnc_visits', 'breastfed_at_birth_original_status', 'is_ebf', 'num_rations_distributed', 'month'
         )
         data_count = data.count()
     else:
@@ -1328,7 +1328,7 @@ def get_awc_report_lactating(start, length, order, reversed_order, awc_id):
             delivery_nature=get_delivery_nature(row_data),
             institutional_delivery='Yes' if row_data['institutional_delivery'] else 'No',
             num_pnc_visits=row_data['num_pnc_visits'],
-            breastfed_at_birth='Yes' if row_data['breastfed_at_birth'] else 'No',
+            breastfed_at_birth='Yes' if row_data['breastfed_at_birth_original_status'] else 'No',
             is_ebf='Yes' if row_data['is_ebf'] else 'No',
             num_rations_distributed=row_data['num_rations_distributed'],
         )

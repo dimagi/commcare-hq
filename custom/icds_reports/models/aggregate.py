@@ -167,6 +167,7 @@ class CcsRecordMonthly(models.Model, AggregateMixin):
     delivery_nature = models.SmallIntegerField(blank=True, null=True)
     is_ebf = models.SmallIntegerField(blank=True, null=True)
     breastfed_at_birth = models.SmallIntegerField(blank=True, null=True)
+    breastfed_at_birth_original_status = models.SmallIntegerField(blank=True, null=True)
     anc_1 = models.DateField(blank=True, null=True)
     anc_2 = models.DateField(blank=True, null=True)
     anc_3 = models.DateField(blank=True, null=True)
@@ -1378,6 +1379,10 @@ class AggregateCcsRecordDeliveryForms(models.Model, AggregateMixin):
     breastfed_at_birth = models.PositiveSmallIntegerField(
         null=True,
         help_text="whether any child was breastfed at birth"
+    )
+    breastfed_at_birth_original_status = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="original status whether any child was breastfed at birth at delivery month"
     )
     valid_visits = models.PositiveSmallIntegerField(
         help_text="number of qualified visits for the incentive report",

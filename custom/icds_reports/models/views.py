@@ -823,6 +823,7 @@ class CcsRecordMonthlyView(models.Model):
     bp_dia = models.SmallIntegerField(blank=True, null=True)
     bp_sys = models.SmallIntegerField(blank=True, null=True)
     breastfed_at_birth = models.SmallIntegerField(blank=True, null=True)
+    breastfed_at_birth_original_status = models.SmallIntegerField(blank=True, null=True)
     case_id = models.TextField(primary_key=True)
     convulsions = models.SmallIntegerField(blank=True, null=True)
     counsel_accessible_postpartum_fp = models.IntegerField(blank=True, null=True)

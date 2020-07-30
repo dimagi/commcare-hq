@@ -33,6 +33,7 @@ CREATE VIEW ccs_record_monthly_view AS
         "ccs_record_monthly"."bp_dia" AS "bp_dia",
         "ccs_record_monthly"."bp_sys" AS "bp_sys",
         "ccs_record_monthly"."breastfed_at_birth" AS "breastfed_at_birth",
+        "ccs_record_monthly"."breastfed_at_birth_original_status" AS "breastfed_at_birth_original_status",
         "ccs_record_monthly"."case_id" AS "case_id",
         "ccs_record_monthly"."convulsions" AS "convulsions",
         "ccs_record_monthly"."counsel_accessible_postpartum_fp" AS "counsel_accessible_postpartum_fp",

@@ -243,6 +243,7 @@ class CcsRecordMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribute
             ('bp_date', 'agg_bp.latest_time_end_processed::DATE'),
             ('is_ebf', 'agg_pnc.is_ebf'),
             ('breastfed_at_birth', 'agg_delivery.breastfed_at_birth'),
+            ('breastfed_at_birth_original_status', 'agg_delivery.breastfed_at_birth_original_status'),
             ('person_name', 'person_cases.name'),
             ('edd', 'case_list.edd'),
             ('delivery_nature', 'case_list.delivery_nature'),
