@@ -141,7 +141,6 @@ def REPORTS(project):
         sms.ScheduleInstanceReport,
     ])
 
-    messaging_reports += getattr(Domain.get_module_by_name(project.name), 'MESSAGING_REPORTS', ())
     messaging_reports = _filter_reports(report_set, messaging_reports)
     messaging = (ugettext_lazy("Messaging"), messaging_reports)
     reports.append(messaging)
