@@ -95,8 +95,7 @@ class UITab(object):
         tab_name = self.__class__.__name__
         items.extend([
             dropdown_dict(**item)
-            for item in items
-            for items in extension_points.uitab_dropdown_items(
+            for item in extension_points.uitab_dropdown_items(
                 tab=tab_name, domain=self.domain, request=self._request
             )
         ])

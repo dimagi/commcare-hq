@@ -108,3 +108,21 @@ def test_late_extension_point_definition():
         @ext.extension_point
         def ext_point_c():
             """testing..."""
+
+
+def test_flatten_results():
+    ext = CommCareExtensions()
+
+    @ext.extension_point(flatten_results=True)
+    def ext_point_d():
+        """test"""
+
+    @ext_point_d.extend
+    def extend_1():
+        return [1, 2]
+
+    @ext_point_d.extend
+    def extend_2():
+        return [3, 4]
+
+    testil.eq(ext_point_d(), [1, 2, 3, 4])

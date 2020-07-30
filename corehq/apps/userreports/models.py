@@ -1,5 +1,4 @@
 import glob
-import itertools
 import json
 import os
 import re
@@ -836,7 +835,7 @@ class StaticDataSourceConfiguration(JsonObject):
         """
         def __get_all():
             paths = settings.STATIC_DATA_SOURCES
-            paths.extend(itertools.chain.from_iterable(static_ucr_data_source_paths()))
+            paths.extend(static_ucr_data_source_paths())
             for path_or_glob in paths:
                 if os.path.isfile(path_or_glob):
                     yield _get_wrapped_object_from_file(path_or_glob, cls)
@@ -922,7 +921,7 @@ class StaticReportConfiguration(JsonObject):
     def _all(cls):
         def __get_all():
             paths = settings.STATIC_UCR_REPORTS
-            paths.extend(itertools.chain.from_iterable(static_ucr_data_source_paths()))
+            paths.extend(static_ucr_data_source_paths())
             for path_or_glob in paths:
                 if os.path.isfile(path_or_glob):
                     yield _get_wrapped_object_from_file(path_or_glob, cls)

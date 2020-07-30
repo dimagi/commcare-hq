@@ -85,6 +85,29 @@ returned as a list with any `None` values removed.
     from xyz import get_things
 
     results = get_things(10, True)
+
+
+Flattening results
+^^^^^^^^^^^^^^^^^^
+By default the results from calling an extension point are returned as a list
+where each element is the results from each implementation:
+
+::
+
+    > get_things(10, True)
+    [["thing2", "thing1"], ["thing3", "thing4"]]
+
+If you want the results returned as a single flattened list you can pass
+`flatten_results=True` when defining the extension point:
+
+::
+
+    @extensions.extension_point(flatten_results=True)
+    def get_things(arg1: int, keyword: bool = False) -> List[str]:
+        pass
+
+    > get_things(10, True)
+    ["thing2", "thing1", "thing3", "thing4"]
 """
 
 from corehq.extensions.interface import CommCareExtensions

@@ -1,5 +1,6 @@
 import importlib
 import inspect
+import itertools
 
 from dimagi.utils.logging import notify_exception
 
@@ -31,12 +32,13 @@ class Extension:
 
 
 class ExtensionPoint:
-    def __init__(self, manager, name, definition_function):
+    def __init__(self, manager, name, definition_function, flatten_results=False):
         self.manager = manager
         self.name = name
         self.definition_function = definition_function
         self.providing_args = inspect.getfullargspec(definition_function).args
         self.extensions = []
+        self.flatten_results = flatten_results
         self.__doc__ = inspect.getdoc(definition_function)
 
     def extend(self, impl=None, *, domains=None):
@@ -80,7 +82,7 @@ class ExtensionPoint:
                         "kwargs": kwargs
                     },
                 )
-        return results
+        return list(itertools.chain.from_iterable(results)) if self.flatten_results else results
 
 
 class CommCareExtensions:
@@ -88,17 +90,22 @@ class CommCareExtensions:
         self.registry = {}
         self.locked = False
 
-    def extension_point(self, func):
+    def extension_point(self, func=None, *, flatten_results=False):
         """Decorator for creating an extension point."""
-        if self.locked:
-            raise ExtensionError(
-                "Late extension point definition. Extension points must "
-                "be defined before setup is complete"
-            )
-        name = func.__name__
-        point = ExtensionPoint(self, name, func)
-        self.registry[name] = point
-        return point
+        def _decorator(func):
+            if self.locked:
+                raise ExtensionError(
+                    "Late extension point definition. Extension points must "
+                    "be defined before setup is complete"
+                )
+            if not callable(func):
+                raise ExtensionError(f"Extension point must be callable: {func!r}")
+            name = func.__name__
+            point = ExtensionPoint(self, name, func, flatten_results=flatten_results)
+            self.registry[name] = point
+            return point
+
+        return _decorator if func is None else _decorator(func)
 
     def load_extensions(self, implementations):
         for module_name in implementations:
