@@ -126,7 +126,7 @@ BOOL = "bool"
 class ESQuery(object):
     """
     This query builder only outputs the following query structure::
-    # Todo update docs
+    # Note that this output depends on ES version being used
         {
             "query": {
                 "bool": {
