@@ -2,6 +2,7 @@ from collections import OrderedDict
 
 from django import forms
 from django.core.validators import RegexValidator
+from django.forms.widgets import Select
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 
@@ -9,10 +10,12 @@ from crispy_forms.layout import HTML, Div, Field, Fieldset, Layout
 from memoized import memoized
 
 from corehq.apps.hqwebapp.crispy import HQFormHelper, HQModalFormHelper
+from corehq import toggles
 
 from .models import (
     CUSTOM_DATA_FIELD_PREFIX,
     CustomDataFieldsDefinition,
+    PROFILE_SLUG,
     is_system_key,
 )
 
@@ -109,6 +112,19 @@ class CustomDataEditor(object):
 
     def init_form(self, post_dict=None):
         fields = OrderedDict()
+        if toggles.CUSTOM_DATA_FIELDS_PROFILES.enabled(self.domain):
+            profiles = self.model.get_profiles()
+            if profiles:
+                fields[PROFILE_SLUG] = forms.IntegerField(
+                    label=_('Profile'),
+                    required=False,
+                    widget=Select(choices=[('', _('Select a profile'))] + [
+                        (p.id, p.name)
+                        for p in profiles
+                    ], attrs={
+                        'class': 'hqwebapp-select2',
+                    })
+                )
         for field in self.fields:
             fields[field.slug] = self._make_field(field)
 
@@ -116,7 +132,10 @@ class CustomDataEditor(object):
             field_names = [
                 Field(
                     field_name,
-                    data_bind="value: {}.{}".format(self.ko_model, field_name),
+                    data_bind=f"""
+                        value: {self.ko_model}.{field_name}.value,
+                        disable: {self.ko_model}.{field_name}.disable,
+                    """
                 )
                 for field_name, field in fields.items()
             ]
@@ -132,7 +151,11 @@ class CustomDataEditor(object):
 
         additional_fields = []
         if field_names:
-            additional_fields.append(Fieldset(_("Additional Information"), *field_names))
+            additional_fields.append(Fieldset(
+                _("Additional Information"),
+                *field_names,
+                css_class="custom-data-fieldset"
+            ))
         if post_dict is None:
             additional_fields.append(self.uncategorized_form)
         CustomDataForm.helper.layout = Layout(
