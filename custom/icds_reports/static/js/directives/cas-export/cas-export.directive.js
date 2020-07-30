@@ -1,7 +1,6 @@
 /* global moment */
 
-function CasExportController($window, $location, locationHierarchy, locationsService, downloadService, userLocationId, isAlertActive,
-                             haveAccessToAllLocations) {
+function CasExportController($window, $location, locationHierarchy, locationsService, downloadService, userLocationId, isAlertActive) {
     var vm = this;
     vm.isAlertActive = isAlertActive;
 
@@ -130,7 +129,7 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
         return locationsService.getLocations(level, locationsCache, vm.selectedLocations, true);
     };
 
-    vm.userHaveAccessToAllLocations = function (locations) {
+    vm.accessToAllLocationsForLevel = function (locations) {
         var haveAccessToAllLocationsForLevel = true;
         window.angular.forEach(locations, function (location) {
             if (!location.user_have_access) {
@@ -145,7 +144,7 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
     };
 
     vm.preventShowingAllOption = function (locations) {
-        return ((!vm.userLocationIdIsNull() && !vm.userHaveAccessToAllLocations(locations))) && !haveAccessToAllLocations;
+        return !vm.userLocationIdIsNull() && !vm.accessToAllLocationsForLevel(locations);
     };
 
     vm.isLocationDisabled = function (level) {
@@ -178,8 +177,7 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
     };
 }
 
-CasExportController.$inject = ['$window', '$location', 'locationHierarchy', 'locationsService', 'downloadService', 'userLocationId', 'isAlertActive',
-    'haveAccessToAllLocations'];
+CasExportController.$inject = ['$window', '$location', 'locationHierarchy', 'locationsService', 'downloadService', 'userLocationId', 'isAlertActive'];
 
 window.angular.module('icdsApp').directive("casExport", function () {
     var url = hqImport('hqwebapp/js/initial_page_data').reverse;
