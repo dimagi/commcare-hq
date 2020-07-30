@@ -102,7 +102,7 @@ function _run_tests() {
         # TODO make it possible to run a subset of python-sharded tests
         TESTS="--attr=sql_backend"
     elif [ "$TEST" == "python-elasticsearch-v2" ]; then
-        export ELASTICSEARCH_7_PORT=6200
+        export ELASTICSEARCH_2_PORT=6200
         export ELASTICSEARCH_MAJOR_VERSION=2
         TESTS="--attr=es_test"
     else
