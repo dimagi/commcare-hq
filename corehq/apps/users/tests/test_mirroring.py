@@ -54,6 +54,7 @@ class DomainPermissionsMirrorTest(TestCase):
                 view_groups=True,
                 edit_groups=False,
                 edit_apps=True,     # needed for InternalFixtureResource
+                view_apps=True,
             )
         )
 

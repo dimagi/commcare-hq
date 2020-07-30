@@ -42,6 +42,7 @@ class AllCommCareUsersTest(TestCase):
             cls.ccdomain.name,
             Permissions(
                 edit_apps=True,
+                view_apps=True,
                 edit_web_users=True,
                 view_web_users=True,
                 view_roles=True,

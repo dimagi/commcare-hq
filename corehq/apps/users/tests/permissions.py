@@ -26,11 +26,13 @@ class PermissionsTest(TestCase):
         )
         p2 = Permissions(
             edit_apps=True,
+            view_apps=True,
             view_reports=True,
             view_report_list=['report2'],
         )
         self.assertEqual(p1 | p2, Permissions(
             edit_apps=True,
+            view_apps=True,
             edit_web_users=True,
             view_web_users=True,
             view_roles=True,
