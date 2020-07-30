@@ -30,6 +30,7 @@ install:
 before_script:
   - docker version
   - docker-compose version
+  - env
   # checkout the ICDS code from it's own repo
   - eval "$(ssh-agent -s)" #start the ssh agent
   - chmod 600 .travis/deploy_key.pem
