@@ -40,7 +40,7 @@ function setup() {
 
 function run_tests() {
     TEST="$1"
-    if [ "$TEST" != "javascript" -a "$TEST" != "python" -a "$TEST" != "python-sharded" -a "$TEST" != "python-sharded-and-javascript" -a "$TEST" != "python-elasticsearch-v2"]; then
+    if [ "$TEST" != "javascript" -a "$TEST" != "python" -a "$TEST" != "python-sharded" -a "$TEST" != "python-sharded-and-javascript" -a "$TEST" != "python-elasticsearch-v7"]; then
         echo "Unknown test suite: $TEST"
         exit 1
     fi
@@ -101,7 +101,7 @@ function _run_tests() {
         export USE_PARTITIONED_DATABASE=yes
         # TODO make it possible to run a subset of python-sharded tests
         TESTS="--attr=sql_backend"
-    elif [ "$TEST" == "python-elasticsearch-v2" ]; then
+    elif [ "$TEST" == "python-elasticsearch-v7" ]; then
         export ELASTICSEARCH_7_PORT=6200
         export ELASTICSEARCH_MAJOR_VERSION=2
         TESTS="--attr=es_test"

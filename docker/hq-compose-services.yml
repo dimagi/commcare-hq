@@ -58,7 +58,7 @@ services:
       ES_CLUSTER_NAME: ES_CLUSTER_NAME
       ES_JAVA_OPTS: "-Des.script.engine.groovy.inline.aggs=true -Des.script.engine.groovy.inline.search=true"
     ports:
-      - "6200:6200" # is used in python-elasticsearch-v2 build matrix
+      - "6200:6200" # is used in python-elasticsearch-v7 build matrix
 
   kafka:
     extends:
