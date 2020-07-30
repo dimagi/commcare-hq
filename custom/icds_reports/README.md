@@ -18,10 +18,6 @@ This does not include populating any data.
 - Add the following to localsettings:
 
 ```
-LOCAL_CUSTOM_UCR_EXPRESSION_LISTS = [
-    "custom.icds_reports.ucr.expressions.CUSTOM_UCR_EXPRESSIONS",
-]
-
 LOCAL_CUSTOM_UCR_REPORT_FILTERS = [
     ("village_choice_list", "custom.icds_reports.ucr.filter_spec.build_village_choice_list_filter_spec"),
 ]

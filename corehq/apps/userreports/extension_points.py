@@ -25,3 +25,20 @@ def static_ucr_reports() -> List[str]:
     Returns:
         List of paths or globs to the static report definition files
     """
+
+
+@extension_point(flatten_results=True)
+def custom_ucr_expressions() -> List[str]:
+    """Additional UCR expression functions
+
+    Parameters:
+        None
+
+    Returns:
+        List of Tuple[expression_name, python path to expression function]
+
+        The function must take two arguments:
+
+        * spec: Dict
+        * context: FactoryContext
+    """

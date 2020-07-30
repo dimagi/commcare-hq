@@ -781,8 +781,6 @@ LOCAL_APPS = ()
 LOCAL_MIDDLEWARE = ()
 LOCAL_PILLOWTOPS = {}
 
-LOCAL_CUSTOM_UCR_EXPRESSIONS = []
-LOCAL_CUSTOM_UCR_EXPRESSION_LISTS = []
 LOCAL_CUSTOM_UCR_REPORT_FILTERS = []
 LOCAL_CUSTOM_UCR_REPORT_FILTER_VALUES = []
 
@@ -1054,6 +1052,12 @@ USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
 
 LOCAL_CUSTOM_DB_ROUTING = {}
 
+DEFAULT_COMMCARE_EXTENSIONS = [
+    "custom.abt.commcare_extensions",
+    "custom.eqa.commcare_extensions",
+    "mvp.commcare_extensions",
+    "custom.succeed.commcare_extensions",
+]
 COMMCARE_EXTENSIONS = []
 
 try:
@@ -1086,6 +1090,8 @@ AVAILABLE_CUSTOM_RULE_CRITERIA.update(LOCAL_AVAILABLE_CUSTOM_RULE_CRITERIA)
 AVAILABLE_CUSTOM_RULE_ACTIONS.update(LOCAL_AVAILABLE_CUSTOM_RULE_ACTIONS)
 
 REPEATER_CLASSES.extend(LOCAL_REPEATER_CLASSES)
+
+COMMCARE_EXTENSIONS.extend(DEFAULT_COMMCARE_EXTENSIONS)
 
 # The defaults above are given as a function of (or rather a closure on) DEBUG,
 # so if not overridden they need to be evaluated after DEBUG is set
@@ -1920,22 +1926,11 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
 ]
 
 CUSTOM_UCR_EXPRESSIONS = [
-    ('abt_supervisor', 'custom.abt.reports.expressions.abt_supervisor_expression'),
-    ('abt_supervisor_v2', 'custom.abt.reports.expressions.abt_supervisor_v2_expression'),
-    ('abt_supervisor_v2019', 'custom.abt.reports.expressions.abt_supervisor_v2019_expression'),
-    ('succeed_referenced_id', 'custom.succeed.expressions.succeed_referenced_id'),
+    ('indexed_case', 'corehq.apps.userreports.expressions.extension_expressions.indexed_case_expression'),
     ('location_type_name', 'corehq.apps.locations.ucr_expressions.location_type_name'),
     ('location_parent_id', 'corehq.apps.locations.ucr_expressions.location_parent_id'),
     ('ancestor_location', 'corehq.apps.locations.ucr_expressions.ancestor_location'),
-    ('eqa_expression', 'custom.eqa.expressions.eqa_expression'),
-    ('cqi_action_item', 'custom.eqa.expressions.cqi_action_item'),
-    ('eqa_percent_expression', 'custom.eqa.expressions.eqa_percent_expression'),
-] + LOCAL_CUSTOM_UCR_EXPRESSIONS
-
-CUSTOM_UCR_EXPRESSION_LISTS = [
-    'mvp.ucr.reports.expressions.CUSTOM_UCR_EXPRESSIONS',
-    'corehq.apps.userreports.expressions.extension_expressions.CUSTOM_UCR_EXPRESSIONS',
-] + LOCAL_CUSTOM_UCR_EXPRESSION_LISTS
+]
 
 CUSTOM_UCR_REPORT_FILTERS = [] + LOCAL_CUSTOM_UCR_REPORT_FILTERS
 

@@ -1,3 +1,5 @@
+.. _commcare_extensions:
+
 .. automodule:: corehq.extensions
 
 Extension points

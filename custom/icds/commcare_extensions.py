@@ -4,7 +4,8 @@ from django.urls import reverse
 from django.utils.translation import ugettext as _
 
 from corehq import toggles
-from corehq.apps.userreports.extension_points import static_ucr_data_source_paths, static_ucr_reports
+from corehq.apps.userreports.extension_points import static_ucr_data_source_paths, static_ucr_reports, \
+    custom_ucr_expressions
 from corehq.extensions.extension_points import uitab_dropdown_items, domain_specific_urls
 from custom.icds.const import ICDS_APPS_ROOT
 from custom.icds_core.const import ManageHostedCCZ_urlname
@@ -47,3 +48,24 @@ def icds_ucr_reports():
         "icds_reports/ucr/reports/ls/*.json",
         "icds_reports/ucr/reports/other/*.json",
     ]]
+
+
+@custom_ucr_expressions.extend()
+def icds_ucr_expressions():
+    return [
+        ('icds_parent_id', 'custom.icds_reports.ucr.expressions.parent_id'),
+        ('icds_parent_parent_id', 'custom.icds_reports.ucr.expressions.parent_parent_id'),
+        ('icds_get_case_forms_by_date', 'custom.icds_reports.ucr.expressions.get_case_forms_by_date'),
+        ('icds_get_all_forms_repeats', 'custom.icds_reports.ucr.expressions.get_all_forms_repeats'),
+        ('icds_get_last_form_repeat', 'custom.icds_reports.ucr.expressions.get_last_form_repeat'),
+        ('icds_get_case_history', 'custom.icds_reports.ucr.expressions.get_case_history'),
+        ('icds_get_case_history_by_date', 'custom.icds_reports.ucr.expressions.get_case_history_by_date'),
+        ('icds_get_last_case_property_update', 'custom.icds_reports.ucr.expressions.get_last_case_property_update'),
+        ('icds_get_case_forms_in_date', 'custom.icds_reports.ucr.expressions.get_forms_in_date_expression'),
+        ('icds_get_app_version', 'custom.icds_reports.ucr.expressions.get_app_version'),
+        ('icds_datetime_now', 'custom.icds_reports.ucr.expressions.datetime_now'),
+        ('icds_boolean', 'custom.icds_reports.ucr.expressions.boolean_question'),
+        ('icds_user_location', 'custom.icds_reports.ucr.expressions.icds_user_location'),
+        ('icds_awc_owner_id', 'custom.icds_reports.ucr.expressions.awc_owner_id'),
+        ('icds_village_owner_id', 'custom.icds_reports.ucr.expressions.village_owner_id'),
+    ]
