@@ -781,8 +781,6 @@ LOCAL_APPS = ()
 LOCAL_MIDDLEWARE = ()
 LOCAL_PILLOWTOPS = {}
 
-LOCAL_DOMAIN_MODULE_MAP = {}
-
 RUN_FORM_META_PILLOW = True
 RUN_CASE_SEARCH_PILLOW = True
 RUN_UNKNOWN_USER_PILLOW = True
@@ -1988,8 +1986,6 @@ DOMAIN_MODULE_MAP = {
 
     'ccqa': 'custom.ccqa',
 }
-
-DOMAIN_MODULE_MAP.update(LOCAL_DOMAIN_MODULE_MAP)
 
 THROTTLE_SCHED_REPORTS_PATTERNS = (
     # Regex patterns matching domains whose scheduled reports use a

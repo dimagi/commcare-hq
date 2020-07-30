@@ -1,12 +1,38 @@
 import importlib
 import inspect
 import itertools
+import logging
+from enum import Enum
 
 from dimagi.utils.logging import notify_exception
+
+logger = logging.getLogger("commcare.extensions")
 
 
 class ExtensionError(Exception):
     pass
+
+
+class ResultFormat(Enum):
+    FLATTEN = 'flatten'
+    SINGLE = 'single'
+
+
+def flatten_results(point, results):
+    return list(itertools.chain.from_iterable(results))
+
+
+def single_value(point, results):
+    if len(results) > 1:
+        logger.warning("Multiple results returned from single value extension point: %s", point.name)
+
+    return results[0] if results else None
+
+
+RESULT_FORMATTERS = {
+    ResultFormat.SINGLE: single_value,
+    ResultFormat.FLATTEN: flatten_results
+}
 
 
 class Extension:
@@ -32,13 +58,13 @@ class Extension:
 
 
 class ExtensionPoint:
-    def __init__(self, manager, name, definition_function, flatten_results=False):
+    def __init__(self, manager, name, definition_function, result_formatter=None):
         self.manager = manager
         self.name = name
         self.definition_function = definition_function
         self.providing_args = inspect.getfullargspec(definition_function).args
         self.extensions = []
-        self.flatten_results = flatten_results
+        self.result_formatter = result_formatter
         self.__doc__ = inspect.getdoc(definition_function)
 
     def extend(self, impl=None, *, domains=None):
@@ -82,15 +108,19 @@ class ExtensionPoint:
                         "kwargs": kwargs
                     },
                 )
-        return list(itertools.chain.from_iterable(results)) if self.flatten_results else results
+
+        if self.result_formatter:
+            return self.result_formatter(self, results)
+        return results
 
 
 class CommCareExtensions:
+
     def __init__(self):
         self.registry = {}
         self.locked = False
 
-    def extension_point(self, func=None, *, flatten_results=False):
+    def extension_point(self, func=None, *, result_format=None):
         """Decorator for creating an extension point."""
         def _decorator(func):
             if self.locked:
@@ -100,8 +130,10 @@ class CommCareExtensions:
                 )
             if not callable(func):
                 raise ExtensionError(f"Extension point must be callable: {func!r}")
+
             name = func.__name__
-            point = ExtensionPoint(self, name, func, flatten_results=flatten_results)
+            formatter = RESULT_FORMATTERS[result_format] if result_format else None
+            point = ExtensionPoint(self, name, func, result_formatter=formatter)
             self.registry[name] = point
             return point
 

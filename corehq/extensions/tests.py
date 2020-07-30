@@ -2,7 +2,7 @@ import re
 
 import testil
 
-from corehq.extensions.interface import CommCareExtensions, ExtensionError
+from corehq.extensions.interface import CommCareExtensions, ExtensionError, ResultFormat
 from corehq.util.test_utils import generate_cases
 
 extensions = CommCareExtensions()
@@ -113,7 +113,7 @@ def test_late_extension_point_definition():
 def test_flatten_results():
     ext = CommCareExtensions()
 
-    @ext.extension_point(flatten_results=True)
+    @ext.extension_point(result_format=ResultFormat.FLATTEN)
     def ext_point_d():
         """test"""
 
@@ -126,3 +126,40 @@ def test_flatten_results():
         return [3, 4]
 
     testil.eq(ext_point_d(), [1, 2, 3, 4])
+
+
+def test_single_value():
+    ext = CommCareExtensions()
+
+    @ext.extension_point(result_format=ResultFormat.SINGLE)
+    def ext_point_d():
+        """test"""
+
+    @ext_point_d.extend
+    def extend_1():
+        return None
+
+    @ext_point_d.extend
+    def extend_2():
+        return 1
+
+    testil.eq(ext_point_d(), 1)
+
+
+def test_single_value_error():
+    ext = CommCareExtensions()
+
+    @ext.extension_point(result_format=ResultFormat.SINGLE)
+    def ext_point_d():
+        """test"""
+
+    @ext_point_d.extend
+    def extend_1():
+        return 1
+
+    @ext_point_d.extend
+    def extend_2():
+        return 2
+
+    with testil.assert_raises(ExtensionError):
+        ext_point_d()

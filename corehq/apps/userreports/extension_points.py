@@ -1,9 +1,9 @@
 from typing import List, Tuple
 
-from corehq.extensions import extension_point
+from corehq.extensions import extension_point, ResultFormat
 
 
-@extension_point(flatten_results=True)
+@extension_point(result_format=ResultFormat.FLATTEN)
 def static_ucr_data_source_paths() -> List[str]:
     """Pass additional paths to static UCR data sources.
 
@@ -15,7 +15,7 @@ def static_ucr_data_source_paths() -> List[str]:
     """
 
 
-@extension_point(flatten_results=True)
+@extension_point(result_format=ResultFormat.FLATTEN)
 def static_ucr_reports() -> List[str]:
     """Pass additional paths to static UCR reports.
 
@@ -27,7 +27,7 @@ def static_ucr_reports() -> List[str]:
     """
 
 
-@extension_point(flatten_results=True)
+@extension_point(result_format=ResultFormat.FLATTEN)
 def custom_ucr_expressions() -> List[Tuple[str, str]]:
     """Additional UCR expression functions
 
@@ -44,7 +44,7 @@ def custom_ucr_expressions() -> List[Tuple[str, str]]:
     """
 
 
-@extension_point(flatten_results=True)
+@extension_point(result_format=ResultFormat.FLATTEN)
 def custom_ucr_report_filters() -> List[Tuple[str, str]]:
     """Custom UCR report filter functions
 
@@ -60,7 +60,7 @@ def custom_ucr_report_filters() -> List[Tuple[str, str]]:
         * report: ReportConfiguration instance"""
 
 
-@extension_point(flatten_results=True)
+@extension_point(result_format=ResultFormat.FLATTEN)
 def custom_ucr_report_filter_values() -> List[Tuple[str, str]]:
     """Custom filter values
 

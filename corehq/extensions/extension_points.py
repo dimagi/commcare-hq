@@ -1,9 +1,9 @@
 from typing import List, Dict
 
-from corehq.extensions import extension_point
+from corehq.extensions import extension_point, ResultFormat
 
 
-@extension_point(flatten_results=True)
+@extension_point(result_format=ResultFormat.FLATTEN)
 def domain_specific_urls() -> List[str]:
     """Add domain specific URLs to the Django URLs module.
 
@@ -15,7 +15,7 @@ def domain_specific_urls() -> List[str]:
     """
 
 
-@extension_point(flatten_results=True)
+@extension_point(result_format=ResultFormat.FLATTEN)
 def uitab_dropdown_items(tab, domain, request) -> List[Dict]:
     """Add dropdown items to UI Tabs.
 

@@ -98,11 +98,11 @@ where each element is the results from each implementation:
     [["thing2", "thing1"], ["thing3", "thing4"]]
 
 If you want the results returned as a single flattened list you can pass
-`flatten_results=True` when defining the extension point:
+`result_format=ResultFormat.FLATTEN` when defining the extension point:
 
 ::
 
-    @extensions.extension_point(flatten_results=True)
+    @extensions.extension_point(result_format=ResultFormat.FLATTEN)
     def get_things(arg1: int, keyword: bool = False) -> List[str]:
         pass
 
@@ -110,7 +110,7 @@ If you want the results returned as a single flattened list you can pass
     ["thing2", "thing1", "thing3", "thing4"]
 """
 
-from corehq.extensions.interface import CommCareExtensions
+from corehq.extensions.interface import CommCareExtensions, ResultFormat
 
 extension_manager = CommCareExtensions()
 extension_point = extension_manager.extension_point

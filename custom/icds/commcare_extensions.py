@@ -4,6 +4,7 @@ from django.urls import reverse
 from django.utils.translation import ugettext as _
 
 from corehq import toggles
+from corehq.apps.domain.extension_points import custom_domain_module
 from corehq.apps.userreports.extension_points import (
     custom_ucr_expressions,
     custom_ucr_report_filter_values,
@@ -91,3 +92,12 @@ def icds_ucr_report_filter_values():
     return [
         ("village_choice_list", "custom.icds_reports.ucr.filter_value.VillageFilterValue"),
     ]
+
+
+@custom_domain_module.extend()
+def icds_custom_domain_module(domain):
+    return {
+        "icds-test": "custom.icds_reports",
+        "icds-cas": "custom.icds_reports",
+        "icds-dashboard-qa": "custom.icds_reports",
+    }.get(domain, None)
