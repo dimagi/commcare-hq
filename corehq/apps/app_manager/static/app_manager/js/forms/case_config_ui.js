@@ -323,7 +323,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
 
                 _.each(validQuestions, function (question) {
                     validPaths.push(question.value);
-                })
+                });
 
                 if (validPaths.includes(p1.path()) && validPaths.includes(p2.path())) {
                     return 0;
