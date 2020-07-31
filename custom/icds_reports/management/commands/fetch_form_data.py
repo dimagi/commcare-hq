@@ -69,8 +69,8 @@ def _run_custom_sql_script(command):
         return data
     with connections[db_alias].cursor() as cursor:
         cursor.execute(command)
-        data = cursor.fetchall()
-        return dict(data)
+        row = [dict(zip([column[0] for column in cursor.description], row)) for row in cursor.fetchall()]
+        return row
 
 
 def fetch_data(table_name, start_date, end_date, usage_field_name=None):
@@ -87,7 +87,8 @@ def fetch_data(table_name, start_date, end_date, usage_field_name=None):
 class Command(BaseCommand):
     def handle(self, **options):
         states = {}
-        locations = AwcLocation.objects.filter(state_is_test=0).values('state_id', 'state_name')
+        filters = {'state_is_test': 0, 'aggregation_level': 1}
+        locations = AwcLocation.objects.filter(**filters).values('state_id', 'state_name')
         for loc in locations:
             states[loc['state_id']] = loc['state_name']
         csv_dict = {}
@@ -117,7 +118,9 @@ class Command(BaseCommand):
                 # normal usage query
                 for row in rows:
                     state_id = row['state_id']
-                    csv_dict[f'{state_id}_{start_date.strftime("%Y-%m-%d")}'][form_name] = row['form_count']
+                    dict_key = f"{state_id}_{start_date.strftime('%Y-%m-%d')}"
+                    if dict_key in csv_dict.keys():
+                        csv_dict[dict_key][form_name] = row['form_count']
                 start_date = end_date
         csv_dict = list(csv_dict.values())
         csv_columns = csv_dict[0].keys()
