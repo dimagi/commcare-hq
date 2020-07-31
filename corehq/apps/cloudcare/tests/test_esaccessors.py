@@ -52,37 +52,6 @@ class TestCloudcareESAccessors(SimpleTestCase):
         self.es.indices.refresh(USER_INDEX)
         return user
 
-    def test_login_as_user_query_user_data(self):
-        self._send_user_to_es(user_data={'wild': 'child', 'wall': 'flower'})
-        self._send_user_to_es(user_data={})
-        self._send_user_to_es()
-        self._send_user_to_es(user_data={'wild': 'wrong'})
-
-        self.assertEqual(
-            login_as_user_query(
-                self.domain,
-                MagicMock(),
-                'child',
-                10,
-                0,
-                user_data_fields=['wild'],
-            ).count(),
-            1
-        )
-
-        # Do not fuzzy match
-        self.assertEqual(
-            login_as_user_query(
-                self.domain,
-                MagicMock(),
-                'chil',
-                10,
-                0,
-                user_data_fields=['wild'],
-            ).count(),
-            0
-        )
-
     def test_login_as_user_query_username(self):
         self._send_user_to_es(username='superman')
         self._send_user_to_es(username='superwoman')
@@ -97,24 +66,6 @@ class TestCloudcareESAccessors(SimpleTestCase):
                 0,
             ).count(),
             2,
-        )
-
-    def test_login_as_user_query_username_or_user_data(self):
-        self._send_user_to_es(username='superman')
-        self._send_user_to_es(username='batman', user_data={'wild': 'nope'})
-        self._send_user_to_es(username='robin', user_data={'wild': 'super'})
-        self._send_user_to_es(username='superwoman', user_data={'wild': 'super'})
-
-        self.assertEqual(
-            login_as_user_query(
-                self.domain,
-                MagicMock(),
-                'super',
-                10,
-                0,
-                user_data_fields=['wild'],
-            ).count(),
-            3,
         )
 
     def test_login_as_user_query_all(self):
@@ -143,8 +94,7 @@ class TestCloudcareESAccessors(SimpleTestCase):
                     MagicMock(username='batman'),
                     None,
                     10,
-                    0,
-                    []
+                    0
                 ).count(),
                 1
             )
@@ -161,8 +111,7 @@ class TestCloudcareESAccessors(SimpleTestCase):
                     MagicMock(username='batman'),
                     None,
                     10,
-                    0,
-                    []
+                    0
                 ).count(),
                 2
             )
