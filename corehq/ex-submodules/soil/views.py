@@ -8,12 +8,10 @@ from django.http import (
     Http404,
     HttpResponse,
     HttpResponseForbidden,
-    HttpResponseRedirect,
     HttpResponseServerError,
 )
 from django.shortcuts import render
 from django.template.context import RequestContext
-from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
 from soil import DownloadBase
