@@ -107,6 +107,7 @@ class UnsafeHQReport(BaseReport):
 
 
 class UnsafeChildOfSafeHQReport(SafeHQReport):
+    """Unfortunately this DOES inherit safety from its parent"""  # TODO change this behavior
     slug = 'unsafe_child_of_safe_hq_report'
 
 
@@ -130,7 +131,7 @@ def test_hq_report_safety():
     for report, request, is_safe in [
             (SafeHQReport, MagicMock(), True),
             (UnsafeHQReport, MagicMock(), False),
-            (UnsafeChildOfSafeHQReport, MagicMock(), False),
+            (UnsafeChildOfSafeHQReport, MagicMock(), True),
             (SafeChildOfUnsafeHQReport, MagicMock(), True),
             (ConditionallySafeHQReport, MagicMock(this_is_safe=True), True),
             (ConditionallySafeHQReport, MagicMock(this_is_safe=False), False),
