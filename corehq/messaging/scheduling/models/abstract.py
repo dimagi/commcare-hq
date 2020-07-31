@@ -443,6 +443,12 @@ class Content(models.Model):
         :param message_dict: a dictionary of {language code: message}
         :param preferred_language_code: the language code of the user's preferred language
         """
+
+        # If: message_dict contains no translations i.e. only contains * ;
+        # Then: treat it as an alert and send the message.
+        if {'*'} == message_dict.keys():
+            return Content.get_cleaned_message(message_dict, '*')
+
         result = Content.get_cleaned_message(message_dict, preferred_language_code)
 
         if domain_obj.sms_language_fallback == LANGUAGE_FALLBACK_NONE:
