@@ -185,9 +185,12 @@ class SMSIndicator(object):
         except TemplateDoesNotExist:
             return self._render_template(context, DEFAULT_LANGUAGE)
 
+    def _template_path(self, language_code):
+        return 'icds/messaging/indicators/%s/%s' % (language_code, self.template)
+
     def _render_template(self, context, language_code):
-        template_name = 'icds/messaging/indicators/%s/%s' % (language_code, self.template)
-        return render_to_string(template_name, context).strip()
+        template_path = self._template_path(language_code)
+        return render_to_string(template_path, context).strip()
 
 
 class AWWIndicator(SMSIndicator):
@@ -286,7 +289,7 @@ class AWWAggregatePerformanceIndicatorV2(BaseAWWAggregatePerformanceIndicator):
 
     def get_messages(self, language_code=None):
         from custom.icds.messaging.custom_content import get_reported_last_build_of_app_by_user
-        get_template(self.template)  # fail early if template missing
+        get_template(self._template_path(language_code))  # fail early if template missing
         if self.supervisor is None:
             return []
 
@@ -591,7 +594,7 @@ class LSAggregatePerformanceIndicatorV2(BaseLSAggregatePerformanceIndicator):
         return get_v2_report_fixture_for_user(self.domain, report_id, self.restore_user, self.app_version)
 
     def get_messages(self, language_code=None):
-        get_template(self.template)  # fail early if template missing
+        get_template(self._template_path(language_code))  # fail early if template missing
         data = _get_data_for_performance_indicator(self, self)
         num_awc_locations = len(self.awc_locations)
         num_days_open = data.pop('num_days_open', 0)
