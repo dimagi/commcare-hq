@@ -283,7 +283,7 @@ class CustomDataModelMixin(object):
             if profile.id not in seen:
                 if profile.has_users_assigned:
                     errors.append(_("Could not delete profile '{}' because it has users "
-                                    "assigned.")).format(profile.name)
+                                    "assigned.").format(profile.name))
                 else:
                     profile.delete()
 
