@@ -84,7 +84,13 @@ def test_conditionally_safe_django_views():
 class ExampleReportDispatcher(ReportDispatcher):
     @classmethod
     def get_reports(cls, domain):
-        return [('All Reports', [r for r, is_safe in EXAMPLE_REPORTS])]
+        return [('All Reports', [
+            SafeHQReport,
+            UnsafeHQReport,
+            UnsafeChildOfSafeHQReport,
+            SafeChildOfUnsafeHQReport,
+            ConditionallySafeHQReport,
+        ])]
 
 
 class BaseReport(GenericReportView):
@@ -109,20 +115,24 @@ class SafeChildOfUnsafeHQReport(UnsafeHQReport):
     slug = 'safe_child_of_unsafe_hq_report'
 
 
-EXAMPLE_REPORTS = [
-    (SafeHQReport, True),
-    (UnsafeHQReport, False),
-    (UnsafeChildOfSafeHQReport, False),
-    (SafeChildOfUnsafeHQReport, True),
-]
+@conditionally_location_safe(_sometimes_safe)
+class ConditionallySafeHQReport(BaseReport):
+    slug = 'conditionally_safe_hq_report'
 
 
 def test_hq_report_safety():
-    for report, is_safe in EXAMPLE_REPORTS:
-        def _assert(report, is_safe):
-            view_fn = report.dispatcher.as_view()
-            view_kwargs = {'domain': 'foo', 'report_slug': report.slug}
-            assert is_location_safe(view_fn, MagicMock(), (), view_kwargs) == is_safe, \
-                f"{report} {'IS NOT' if is_safe else 'IS'} marked as location-safe"
+    def _assert(report, request, is_safe):
+        view_fn = report.dispatcher.as_view()
+        view_kwargs = {'domain': 'foo', 'report_slug': report.slug}
+        assert is_location_safe(view_fn, request, (), view_kwargs) == is_safe, \
+            f"{report} {'IS NOT' if is_safe else 'IS'} marked as location-safe"
 
-        yield _assert, report, is_safe
+    for report, request, is_safe in [
+            (SafeHQReport, MagicMock(), True),
+            (UnsafeHQReport, MagicMock(), False),
+            (UnsafeChildOfSafeHQReport, MagicMock(), False),
+            (SafeChildOfUnsafeHQReport, MagicMock(), True),
+            (ConditionallySafeHQReport, MagicMock(this_is_safe=True), True),
+            (ConditionallySafeHQReport, MagicMock(this_is_safe=False), False),
+    ]:
+        yield _assert, report, request, is_safe
