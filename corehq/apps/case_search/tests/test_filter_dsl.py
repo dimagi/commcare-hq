@@ -1,9 +1,11 @@
+from django.conf import settings
 from django.test import SimpleTestCase, TestCase
 
 from corehq.util.es.elasticsearch import ConnectionError
 from eulxml.xpath import parse as parse_xpath
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
+from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.case_search.filter_dsl import (

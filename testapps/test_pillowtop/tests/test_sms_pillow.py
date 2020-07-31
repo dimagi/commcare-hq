@@ -1,3 +1,5 @@
+from nose.plugins.attrib import attr
+
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
 from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
@@ -15,6 +17,7 @@ from mock import patch
 
 
 @patch('corehq.apps.sms.change_publishers.do_publish')
+@attr(es_test=True)
 class SqlSMSPillowTest(TestCase):
 
     domain = 'sms-pillow-test-domain'

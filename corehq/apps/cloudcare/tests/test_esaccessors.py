@@ -3,6 +3,7 @@ import uuid
 from django.test import SimpleTestCase
 
 from mock import MagicMock, patch
+from nose.plugins.attrib import attr
 
 from pillowtop.es_utils import initialize_index_and_mapping
 
@@ -14,6 +15,7 @@ from corehq.pillows.user import transform_user_for_elasticsearch
 from corehq.util.elastic import ensure_index_deleted
 
 
+@attr(es_test=True)
 class TestCloudcareESAccessors(SimpleTestCase):
 
     @classmethod

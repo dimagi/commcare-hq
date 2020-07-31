@@ -3,6 +3,7 @@ import base64
 from django.core.management import call_command
 from django.test import Client
 from django.urls import reverse
+from nose.plugins.attrib import attr
 
 from corehq.apps.domain.utils import clear_domain_names
 
@@ -84,6 +85,7 @@ class OdataTestMixin(object):
         return reverse(self.view_urlname, kwargs={'domain': self.domain.name, 'config_id': self.instance._id})
 
 
+@attr(es_test=True)
 class CaseOdataTestMixin(OdataTestMixin):
 
     @classmethod
@@ -114,6 +116,7 @@ class CaseOdataTestMixin(OdataTestMixin):
         )
 
 
+@attr(es_test=True)
 class FormOdataTestMixin(OdataTestMixin):
 
     @classmethod

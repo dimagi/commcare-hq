@@ -2,6 +2,7 @@ from django.test import TestCase
 from django.test.client import Client
 from django.urls import reverse
 
+from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.app_manager.models import Application
@@ -13,6 +14,7 @@ from corehq.util.elastic import delete_es_index
 from corehq.util.test_utils import flag_enabled
 
 
+@attr(es_test=True)
 class TestPaginateReleases(TestCase):
     @classmethod
     def setUpClass(cls):

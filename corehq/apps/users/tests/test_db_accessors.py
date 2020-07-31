@@ -1,5 +1,7 @@
 from django.test import TestCase
 
+from nose.plugins.attrib import attr
+
 from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.tests.util import delete_all_locations, make_loc
@@ -23,6 +25,7 @@ from corehq.apps.users.models import (
 )
 
 
+@attr(es_test=True)
 class AllCommCareUsersTest(TestCase):
 
     @classmethod

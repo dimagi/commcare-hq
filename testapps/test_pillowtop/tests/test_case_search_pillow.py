@@ -2,6 +2,7 @@ import uuid
 
 from django.test import override_settings, TestCase
 from mock import MagicMock, patch
+from nose.plugins.attrib import attr
 
 from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
 from corehq.apps.case_search.exceptions import CaseSearchNotEnabledException
@@ -32,6 +33,7 @@ from corehq.util.test_utils import create_and_save_a_case
 from pillowtop.es_utils import initialize_index_and_mapping
 
 
+@attr(es_test=True)
 class CaseSearchPillowTest(TestCase):
 
     domain = 'meereen'

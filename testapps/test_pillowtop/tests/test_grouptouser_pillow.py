@@ -17,9 +17,11 @@ from corehq.pillows.groups_to_user import update_es_user_with_groups, get_group_
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
+from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
 
+@attr(es_test=True)
 class GroupToUserPillowTest(SimpleTestCase):
 
     domain = 'grouptouser-pillowtest-domain'
@@ -138,6 +140,7 @@ def _create_es_user(es_client, user_id, domain):
     return user
 
 
+@attr(es_test=True)
 class GroupToUserPillowDbTest(TestCase):
 
     def setUp(self):
@@ -195,6 +198,7 @@ def _group_to_change_meta(group):
     )
 
 
+@attr(es_test=True)
 class GroupsToUserReindexerTest(TestCase):
 
     def setUp(self):

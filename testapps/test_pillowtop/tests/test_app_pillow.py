@@ -19,10 +19,12 @@ from corehq.pillows.application import get_app_to_elasticsearch_pillow
 from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
+from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 from pillowtop.feed.couch import get_current_seq
 
 
+@attr(es_test=True)
 class AppPillowTest(TestCase):
 
     domain = 'app-pillowtest-domain'

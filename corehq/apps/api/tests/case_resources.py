@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime
 
 from django.utils.http import urlencode
+from nose.plugins.attrib import attr
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
@@ -23,6 +24,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 from .utils import APIResourceTest, FakeFormESView
 
 
+@attr(es_test=True)
 class TestCommCareCaseResource(APIResourceTest):
     resource = v0_4.CommCareCaseResource
 
@@ -166,6 +168,7 @@ class TestCommCareCaseResource(APIResourceTest):
         self.assertEqual(child_cases[0]['id'], child_case_id)
 
 
+@attr(es_test=True)
 class TestCommCareCaseResourceQueries(APIResourceTest, ElasticTestMixin):
     """
     Tests the CommCareCaseREsource, currently only v0_4
