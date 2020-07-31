@@ -58,4 +58,5 @@ branches:
   - saiprakash-v:prefix-to-adolescent-girls-label # sai July 22
   - saiprakash-v:staging-apk # sai July 28
   - mk/change-sms-ucr-references # MK July 31
+  - sb/icds-1686-logout-fix #SB July 31
 submodules: {}
