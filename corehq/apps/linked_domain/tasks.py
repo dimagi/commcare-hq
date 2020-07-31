@@ -86,7 +86,8 @@ class ReleaseManager():
             release_domain.si(self.master_domain, linked_domain, self.user.username, models, build_apps)
             for linked_domain in linked_domains
         ]
-        callback = send_email.s(self.master_domain, self.user.username, models, linked_domains)
+        callback = send_linked_domain_release_email.s(self.master_domain, self.user.username,
+                                                      models, linked_domains)
         chord(header)(callback)
 
     def get_email_message(self, models, linked_domains, html=True):
@@ -209,7 +210,7 @@ def release_domain(master_domain, linked_domain, username, models, build_apps=Fa
 
 
 @task(queue='background_queue')
-def send_email(results, master_domain, username, models, linked_domains):
+def send_linked_domain_release_email(results, master_domain, username, models, linked_domains):
     manager = ReleaseManager(master_domain, username)
 
     # chord sends a list of results only if there were multiple tasks
