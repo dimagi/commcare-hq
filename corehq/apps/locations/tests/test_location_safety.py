@@ -5,7 +5,7 @@ from mock import MagicMock
 from corehq.apps.reports.dispatcher import ReportDispatcher
 from corehq.apps.reports.generic import GenericReportView
 
-from ..permissions import is_location_safe, location_safe
+from ..permissions import conditionally_location_safe, is_location_safe, location_safe
 
 
 @location_safe
@@ -49,6 +49,36 @@ def test_django_view_safety():
             (SafeChildofUnsafeClsView.as_view(), True),
     ]:
         yield _assert, view, is_safe
+
+
+def _sometimes_safe(view_fn, request, *args, **kwargs):
+    return request.this_is_safe
+
+
+@conditionally_location_safe(_sometimes_safe)
+def conditionally_safe_fn_view(request, domain):
+    return "hello"
+
+
+@conditionally_location_safe(_sometimes_safe)
+class ConditionallySafeClsView(View):
+    pass
+
+
+def test_conditionally_safe_django_views():
+    safe_request = MagicMock(this_is_safe=True)
+    unsafe_request = MagicMock(this_is_safe=False)
+    def _assert(view_fn, request, is_safe):
+        assert is_location_safe(view_fn, request, (), {}) == is_safe, \
+            f"{view_fn} {'IS NOT' if is_safe else 'IS'} marked as location-safe"
+
+    for view in [
+            conditionally_safe_fn_view,
+            ConditionallySafeClsView.as_view(),
+    ]:
+        yield _assert, view, safe_request, True
+        yield _assert, view, unsafe_request, False
+
 
 
 class ExampleReportDispatcher(ReportDispatcher):
