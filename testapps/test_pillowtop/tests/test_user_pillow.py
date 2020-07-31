@@ -1,4 +1,5 @@
 from django.conf import settings
+from nose.plugins.attrib import attr
 
 from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed import topics
@@ -28,6 +29,7 @@ from .base import BasePillowTestCase
 TEST_DOMAIN = 'user-pillow-test'
 
 
+@attr(es_test=True)
 class UserPillowTestBase(BasePillowTestCase):
     def setUp(self):
         super(UserPillowTestBase, self).setUp()
@@ -47,6 +49,7 @@ class UserPillowTestBase(BasePillowTestCase):
         super(UserPillowTestBase, self).tearDown()
 
 
+@attr(es_test=True)
 class UserPillowTest(UserPillowTestBase):
 
     def test_kafka_user_pillow(self):

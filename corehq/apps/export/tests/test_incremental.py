@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from django.test import TestCase
 
 from couchexport.models import Format
+from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
 import requests_mock
@@ -36,6 +37,7 @@ from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
 
 
+@attr(es_test=True)
 class TestIncrementalExport(TestCase):
     @classmethod
     def setUpClass(cls):

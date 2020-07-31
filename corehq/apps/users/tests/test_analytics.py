@@ -1,4 +1,5 @@
 from django.test import TestCase
+from nose.plugins.attrib import attr
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.analytics import (
@@ -14,6 +15,7 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.elastic import reset_es_index
 
 
+@attr(es_test=True)
 class UserAnalyticsTest(TestCase):
 
     @classmethod

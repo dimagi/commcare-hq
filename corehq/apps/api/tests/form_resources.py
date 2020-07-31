@@ -5,6 +5,7 @@ from datetime import datetime
 from django.conf import settings
 from django.test import TestCase
 from django.utils.http import urlencode
+from nose.plugins.attrib import attr
 
 from casexml.apps.case.mock import CaseBlock
 from couchforms.models import XFormInstance
@@ -24,6 +25,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 from .utils import APIResourceTest, FakeFormESView
 
 
+@attr(es_test=True)
 class TestXFormInstanceResource(APIResourceTest):
     """
     Tests the XFormInstanceResource, currently only v0_4
@@ -188,6 +190,7 @@ class TestXFormInstanceResource(APIResourceTest):
         self.assertEqual(len(api_forms), 2)
 
 
+@attr(es_test=True)
 class TestXFormInstanceResourceQueries(APIResourceTest, ElasticTestMixin):
     """
     Tests that urlparameters get converted to expected ES queries.

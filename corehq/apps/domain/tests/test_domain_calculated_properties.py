@@ -2,6 +2,7 @@ import datetime
 import json
 
 from django.test import TestCase
+from nose.plugins.attrib import attr
 
 from corehq.apps.es.sms import SMSES
 from corehq.apps.sms.models import INCOMING, OUTGOING
@@ -19,6 +20,7 @@ from corehq.util.elastic import ensure_index_deleted
 from pillowtop.processors.elastic import send_to_elasticsearch
 
 
+@attr(es_test=True)
 class DomainCalculatedPropertiesTest(TestCase):
 
     @classmethod

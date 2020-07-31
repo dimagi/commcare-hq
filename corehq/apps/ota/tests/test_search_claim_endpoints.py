@@ -7,6 +7,7 @@ from django.urls import reverse
 
 from flaky import flaky
 from mock import patch
+from nose.plugins.attrib import attr
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases
@@ -50,7 +51,8 @@ DATE_PATTERN = r'\d{4}-\d{2}-\d{2}'
 # cf. http://www.theguardian.com/environment/2016/apr/17/boaty-mcboatface-wins-poll-to-name-polar-research-vessel
 
 
-class CaseSearchTests(TestCase, ElasticTestMixin):
+@attr(es_test=True)
+class CaseSearchTests(ElasticTestMixin, TestCase):
     def setUp(self):
         super(CaseSearchTests, self).setUp()
         self.config, created = CaseSearchConfig.objects.get_or_create(pk=DOMAIN, enabled=True)
@@ -276,6 +278,7 @@ class CaseSearchTests(TestCase, ElasticTestMixin):
         )
 
 
+@attr(es_test=True)
 class CaseClaimEndpointTests(TestCase):
     def setUp(self):
         self.domain = create_domain(DOMAIN)
