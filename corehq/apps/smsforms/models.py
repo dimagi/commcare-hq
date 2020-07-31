@@ -11,6 +11,7 @@ from django.utils.translation import ugettext_noop
 from couchdbkit import MultipleResultsFound
 
 from corehq import toggles
+from corehq.apps.formplayer_api.smsforms.api import TouchformsError
 from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.sms.util import strip_plus
@@ -105,19 +106,21 @@ class SQLXFormsSession(models.Model):
     def _id(self):
         return self.couch_id
 
-    def close(self):
+    def close(self, force=True):
         from corehq.apps.smsforms.app import submit_unfinished_form
 
         if not self.session_is_open:
             return
 
-        try:
-            if self.submit_partially_completed_forms:
+        if self.submit_partially_completed_forms:
+            try:
                 submit_unfinished_form(self)
-        finally:
-            # this needs to be called after the submission, but regardless of whether it succeeded
-            # thus the try/finally
-            self.mark_completed(False)
+            except TouchformsError as e:
+                if not force:
+                    # Allow caller to handle and potentially retry
+                    raise e
+
+        self.mark_completed(False)
 
     def mark_completed(self, completed):
         self.session_is_open = False

@@ -1,21 +1,13 @@
-import datetime
-import json
 import os
 import re
 import sys
-import tempfile
 from collections import Counter
 
 from django.conf import settings
 
-import csv
-from celery.task import task
 
 from corehq.apps.domain.dbaccessors import iter_all_domains_and_deleted_domains_with_name
 from corehq.util.test_utils import unit_testing_only
-from couchexport.models import Format
-from dimagi.utils.django.email import send_HTML_email
-from soil.util import expose_zipped_blob_download
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import DomainES
@@ -97,72 +89,6 @@ def guess_domain_language(domain_name):
     domain_obj = Domain.get_by_name(domain_name)
     counter = Counter([app.default_language for app in domain_obj.applications() if not app.is_remote_app()])
     return counter.most_common(1)[0][0] if counter else 'en'
-
-
-@task(serializer='pickle', queue='background_queue')
-def send_repeater_payloads(repeater_id, payload_ids, email_id, owner_id):
-    from corehq.motech.repeaters.models import Repeater, RepeatRecord
-    repeater = Repeater.get(repeater_id)
-    repeater_type = repeater.doc_type
-    payloads = dict()
-    headers = ['note']
-    result_file_name = "bulk-payloads-%s-%s-%s.csv" % (
-        repeater.doc_type, repeater.get_id,
-        datetime.datetime.utcnow().strftime("%Y-%m-%d--%H-%M-%S")
-    )
-
-    def get_payload(payload_id):
-        dummy_repeat_record = RepeatRecord(
-            domain=repeater.domain,
-            next_check=datetime.datetime.utcnow(),
-            repeater_id=repeater.get_id,
-            repeater_type=repeater_type,
-            payload_id=payload_id,
-        )
-        payload = repeater.get_payload(dummy_repeat_record)
-        if isinstance(payload, dict):
-            return payload
-        else:
-            return json.loads(payload)
-
-    def populate_payloads(headers):
-        for payload_id in payload_ids:
-            try:
-                payload = get_payload(payload_id)
-                payloads[payload_id] = payload
-                headers = list(set(headers + list(payload)))
-            except Exception as e:
-                payloads[payload_id] = {'note': 'Could not generate payload, %s' % str(e)}
-        return headers
-
-    def create_result_file():
-        _, temp_file_path = tempfile.mkstemp()
-        with open(temp_file_path, 'w') as csvfile:
-            headers.append('payload_id')
-            writer = csv.DictWriter(csvfile, fieldnames=headers)
-            writer.writeheader()
-            for payload_id, payload in payloads.items():
-                row = payload
-                row['payload_id'] = payload_id
-                writer.writerow(row)
-        return temp_file_path
-
-    def email_result(download_url):
-        send_HTML_email('Bulk Payload generated for %s' % repeater_type,
-                        email_id,
-                        'This email is to just let you know that there is a '
-                        'download waiting for you at %s. It will expire in 24 hours' % download_url)
-
-    headers = populate_payloads(headers)
-    temp_file_path = create_result_file()
-    download_url = expose_zipped_blob_download(
-        temp_file_path,
-        result_file_name,
-        Format.CSV,
-        repeater.domain,
-        owner_ids=[owner_id],
-    )
-    email_result(download_url)
 
 
 def silence_during_tests():

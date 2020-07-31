@@ -51,10 +51,8 @@ LOCAL_APPS = (
     "custom.icds_reports",
 )
 
-CUSTOM_DOMAIN_SPECIFIC_URL_MODULES = [
-    "custom.icds_reports.urls",
-    "custom.icds.urls",
-    "custom.icds.data_management.urls",
+COMMCARE_EXTENSIONS = [
+    "custom.icds.commcare_extensions",
 ]
 ```
 

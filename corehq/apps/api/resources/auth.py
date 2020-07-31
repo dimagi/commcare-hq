@@ -100,7 +100,7 @@ class LoginAndDomainAuthentication(Authentication):
 
     def get_identifier(self, request):
         username = request.couch_user.username
-        if API_THROTTLE_WHITELIST.enabled(username):
+        if API_THROTTLE_WHITELIST.enabled(username) or not hasattr(request, 'domain'):
             return username
         return f"{request.domain}_{username}"
 
