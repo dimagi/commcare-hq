@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from corehq import feature_previews, toggles
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.data_dictionary.models import CaseType, CaseProperty
@@ -17,13 +19,13 @@ def get_toggles_previews(domain):
 
 
 def get_custom_data_models(domain, limit_types=None):
-    fields = {}
+    fields = defaultdict(dict)
     for field_view in [LocationFieldsView, ProductFieldsView, UserFieldsView]:
         if limit_types and field_view.field_type not in limit_types:
             continue
         model = CustomDataFieldsDefinition.get(domain, field_view.field_type)
         if model:
-            fields[field_view.field_type] = [
+            fields[field_view.field_type]['fields'] = [
                 {
                     'slug': field.slug,
                     'is_required': field.is_required,
@@ -33,6 +35,11 @@ def get_custom_data_models(domain, limit_types=None):
                     'regex_msg': field.regex_msg,
                 } for field in model.get_fields()
             ]
+            if field_view.show_profiles:
+                fields[field_view.field_type]['profiles'] = [
+                    profile.to_json()
+                    for profile in model.get_profiles()
+                ]
     return fields
 
 
