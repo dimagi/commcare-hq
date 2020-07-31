@@ -9,6 +9,7 @@ MODEL_USER_DATA = 'custom_user_data'
 MODEL_CASE_SEARCH = 'case_search_data'
 MODEL_APP = 'app'
 MODEL_REPORT = 'report'
+MODEL_DATA_DICTIONARY = 'data_dictionary'
 
 LINKED_MODELS = [
     (MODEL_APP, ugettext_lazy('Application')),
@@ -20,6 +21,7 @@ LINKED_MODELS = [
     (MODEL_FIXTURE, ugettext_lazy('Lookup Table')),
     (MODEL_CASE_SEARCH, ugettext_lazy('Case Search Settings')),
     (MODEL_REPORT, ugettext_lazy('Report')),
+    (MODEL_DATA_DICTIONARY, ugettext_lazy('Data Dictionary')),
 ]
 
 LINKED_MODELS_MAP = dict(LINKED_MODELS)
