@@ -19,7 +19,7 @@ SMS_MAPPING = {
         'backend_id': {'type': 'string'},
         'base_doc': {'type': 'string'},
         'billed': {'type': 'boolean'},
-        'couch_recipient': {'type': 'string'},
+        'couch_recipient': {'type': 'string', 'index': 'not_analyzed'},
         'couch_recipient_doc_type': {'type': 'string'},
         'date': {
             'format': DATE_FORMATS_STRING,
