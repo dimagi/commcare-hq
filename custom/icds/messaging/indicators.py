@@ -288,7 +288,6 @@ class AWWAggregatePerformanceIndicatorV2(BaseAWWAggregatePerformanceIndicator):
         return count
 
     def get_messages(self, language_code=None):
-        from custom.icds.messaging.custom_content import get_reported_last_build_of_app_by_user
         get_template(self._template_path(language_code))  # fail early if template missing
         if self.supervisor is None:
             return []
