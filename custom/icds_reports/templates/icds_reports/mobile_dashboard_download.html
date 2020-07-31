@@ -44,7 +44,13 @@
               </thead>
               <tbody>
               <tr>
-                <td><a href="{% static 'media/cas-mobile-dashboard.apk' %}">cas-mobile-dashboard.apk</a></td>
+                <td>
+                  {% if request.get_host == 'icds-cas.gov.in' %}
+                    <a href="{% static 'media/cas-mobile-dashboard.apk' %}">cas-mobile-dashboard.apk</a>
+                  {% else %}
+                    <a href="{% static 'media/cas-staging-mobile-dashboard.apk' %}">cas-staging-mobile-dashboard.apk</a>
+                  {% endif %}
+                </td>
                 <td>Setup file to install CAS Mobile Dashboard on your device</td>
                 <td>1.0</td>
                 <td>9th March 2020</td>
