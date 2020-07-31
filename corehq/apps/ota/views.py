@@ -54,6 +54,7 @@ from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.utils.xform import adjust_text_to_datetime
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.util.quickcache import quickcache
+from custom.icds_core.view_utils import check_authorization
 
 from .models import DeviceLogRequest, MobileRecoveryMeasure, SerialIdBucket
 from .utils import (
@@ -258,6 +259,10 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     )
 
     app = get_app_cached(domain, app_id) if app_id else None
+    if app:
+        error_response = check_authorization(domain, couch_user, app.master_id)
+        if error_response:
+            return error_response, None
     restore_config = RestoreConfig(
         project=project,
         restore_user=restore_user,
@@ -295,19 +300,23 @@ def heartbeat(request, domain, app_build_id):
     """
     app_id = request.GET.get('app_id', '')
     build_profile_id = request.GET.get('build_profile_id', '')
-
+    master_app_id = app_id
     try:
         info = GlobalAppConfig.get_latest_version_info(domain, app_id, build_profile_id)
     except (Http404, AssertionError):
         # If it's not a valid master app id, find it by talking to couch
-        notify_exception(request, 'Received an invalid heartbeat request')
         app = get_app_cached(domain, app_build_id)
+        notify_exception(request, 'Received an invalid heartbeat request')
+        master_app_id = app.master_id if app else None
         info = GlobalAppConfig.get_latest_version_info(domain, app.master_id, build_profile_id)
 
     info["app_id"] = app_id
-
-    if not toggles.SKIP_UPDATING_USER_REPORTING_METADATA.enabled(domain):
-        update_user_reporting_data(app_build_id, app_id, build_profile_id, request.couch_user, request)
+    if master_app_id:
+        error_response = check_authorization(domain, request.couch_user, master_app_id)
+        if error_response:
+            return error_response
+        if not toggles.SKIP_UPDATING_USER_REPORTING_METADATA.enabled(domain):
+            update_user_reporting_data(app_build_id, app_id, build_profile_id, request.couch_user, request)
 
     if _should_force_log_submission(request):
         info['force_logs'] = True
