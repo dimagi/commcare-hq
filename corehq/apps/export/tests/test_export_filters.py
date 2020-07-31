@@ -1,5 +1,6 @@
 import uuid
 
+from django.conf import settings
 from django.test import SimpleTestCase
 
 from corehq.util.es.elasticsearch import ConnectionError
@@ -42,14 +43,15 @@ from corehq.util.test_utils import trap_extra_setup
 class ExportFilterTest(SimpleTestCase):
 
     def test_or_filter(self):
+        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+            exepcted = {'bool': {'should': ({'term': {'owner_id': 'foo'}},
+                                            {'term': {'owner_id': 'bar'}})}}
+        else:
+            exepcted = {'or': ({'term': {'owner_id': 'foo'}},
+                               {'term': {'owner_id': 'bar'}})}
         self.assertEqual(
             OR(OwnerFilter("foo"), OwnerFilter("bar")).to_es_filter(),
-            {
-                'or': (
-                    {'term': {'owner_id': 'foo'}},
-                    {'term': {'owner_id': 'bar'}}
-                )
-            }
+            exepcted
         )
 
 
