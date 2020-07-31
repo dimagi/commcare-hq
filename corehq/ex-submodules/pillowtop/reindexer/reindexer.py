@@ -1,7 +1,6 @@
 from abc import ABCMeta, abstractmethod
 
 from corehq.util.es.elasticsearch import TransportError
-from corehq.util.es.elasticsearch import bulk
 from corehq.util.es.interface import ElasticsearchInterface
 
 from pillowtop.es_utils import (
