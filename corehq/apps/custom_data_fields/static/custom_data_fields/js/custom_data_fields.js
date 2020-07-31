@@ -5,14 +5,16 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/toggles',
-    'hqwebapp/js/knockout_bindings.ko',     // needed for sortable binding
+    'hqwebapp/js/ui_elements/ui-element-key-val-list',
+    'hqwebapp/js/knockout_bindings.ko',     // needed for sortable and jqueryElement bindings
 ], function (
     $,
     ko,
     _,
     assertProperties,
     initialPageData,
-    toggles
+    toggles,
+    uiElementKeyValueList
 ) {
     function Choice(choice) {
         var self = {};
@@ -39,6 +41,11 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         self.validationMode = ko.observable(options.choices.length ? 'choice' : 'regex');
         self.regex = ko.observable(options.regex);
         self.regex_msg = ko.observable(options.regex_msg);
+
+        self.hasModalDetail = true;
+        self.modalName = ko.computed(function () {
+            return self.label() || self.slug();
+        });
 
         if (!toggles.toggleEnabled('REGEX_FIELD_VALIDATION')) {
             // if toggle isn't enabled - always show "choice" option
@@ -87,14 +94,46 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         return self;
     }
 
+    function Profile(options) {
+        assertProperties.assertRequired(options, ['id', 'name', 'fields']);
+        var self = {};
+
+        self.id = ko.observable(options.id);
+        self.name = ko.observable(options.name);
+        self.serializedFields = ko.observable();
+
+        self.hasModalDetail = false;
+        self.modalName = ko.computed(function () {
+            return self.name();
+        });
+
+        self.fields = uiElementKeyValueList.new(
+            String(Math.random()).slice(2),
+            gettext("Profile")
+        );
+        self.fields.val(options.fields);
+        self.$fields = self.fields.ui;
+
+        self.serialize = function () {
+            return {
+                id: self.id(),
+                name: self.name(),
+                fields: self.fields.val(),
+            };
+        };
+
+        return self;
+    }
+
     function CustomDataFieldsModel(options) {
-        assertProperties.assertRequired(options, ['custom_fields']);
+        assertProperties.assertRequired(options, ['custom_fields', 'custom_fields_profiles']);
 
         var self = {};
         self.data_fields = ko.observableArray();
+        self.profiles = ko.observableArray();
         self.purge_existing = ko.observable(false);
-        // The data field that the "remove field modal" currently refers to.
-        self.modalField = ko.observable();
+        // The field  or profile that the removal modal currently refers to.
+        self.modalModel = ko.observable();
 
         self.addField = function () {
             self.data_fields.push(Field({
@@ -107,34 +146,37 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
             }));
         };
 
-        self.removeField = function (field) {
-            self.data_fields.remove(field);
+        self.removeModel = function (model) {
+            self.data_fields.remove(model);
+            self.profiles.remove(model);
         };
 
-        self.setModalField = function (field) {
-            self.modalField(field);
+        self.setModalModel = function (model) {
+            self.modalModel(model);
         };
 
-        self.confirmRemoveField = function () {
-            // Remove the field that the "remove field modal" currently refers to.
-            self.removeField(self.modalField());
+        self.confirmRemoveModel = function () {
+            self.removeModel(self.modalModel());
         };
 
-        self.serialize = function () {
-            var fields = [];
-            var fieldsToRemove = [];
-            _.each(self.data_fields(), function (field) {
-                if (field.slug() || field.label()) {
-                    fields.push(field.serialize());
-                } else {
-                    fieldsToRemove.push(field);
-                }
+        self.addProfile = function () {
+            self.profiles.push(Profile({
+                id: '',
+                name: '',
+                fields: {},
+            }));
+        };
+
+        self.serializeFields = function () {
+            return _.map(self.data_fields(), function (field) {
+                return field.serialize();
             });
+        };
 
-            _.each(fieldsToRemove, function (field) {
-                self.removeField(field);
+        self.serializeProfiles = function () {
+            return _.map(self.profiles(), function (profile) {
+                return profile.serialize();
             });
-            return fields;
         };
 
         self.submitFields = function (fieldsForm) {
@@ -150,7 +192,12 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
 
             $('<input type="hidden">')
                 .attr('name', 'data_fields')
-                .attr('value', JSON.stringify(self.serialize()))
+                .attr('value', JSON.stringify(self.serializeFields()))
+                .appendTo(customDataFieldsForm);
+
+            $('<input type="hidden">')
+                .attr('name', 'profiles')
+                .attr('value', JSON.stringify(self.serializeProfiles()))
                 .appendTo(customDataFieldsForm);
 
             $('<input type="hidden">')
@@ -169,6 +216,9 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
                 $("#save-custom-fields").prop("disabled", false);
             });
         });
+        _.each(options.custom_fields_profiles, function (profile) {
+            self.profiles.push(Profile(profile));
+        });
 
         return self;
     }
@@ -176,8 +226,12 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
     $(function () {
         var customDataFieldsModel = CustomDataFieldsModel({
             custom_fields: initialPageData.get('custom_fields'),
+            custom_fields_profiles: initialPageData.get('custom_fields_profiles'),
         });
         customDataFieldsModel.data_fields.subscribe(function () {
+            $("#save-custom-fields").prop("disabled", false);
+        });
+        customDataFieldsModel.profiles.subscribe(function () {
             $("#save-custom-fields").prop("disabled", false);
         });
 
