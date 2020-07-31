@@ -101,7 +101,7 @@ The following linked project spaces received content:
         """).format(
             self.get_success_domain_count(),
             _("{} project(s) encountered errors.").format(error_domain_count) if error_domain_count else "",
-            "\n".join(["- " + m['name'] for m in models])
+            "\n".join(["- {}".format(m['name']) for m in models])
         )
         for linked_domain in sorted(linked_domains):
             if not self._get_errors(linked_domain, html):
