@@ -6,12 +6,11 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 
-from corehq.util.metrics import metrics_gauge_task, metrics_counter, metrics_histogram_timer
-from corehq.util.metrics.const import MPM_MAX
 from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.motech.models import RequestLog
 from corehq.motech.repeaters.const import (
     CHECK_REPEATERS_INTERVAL,
@@ -24,7 +23,13 @@ from corehq.motech.repeaters.dbaccessors import (
     iterate_repeat_records,
 )
 from corehq.privileges import DATA_FORWARDING, ZAPIER_INTEGRATION
-from corehq.util.metrics import make_buckets_from_timedeltas
+from corehq.util.metrics import (
+    make_buckets_from_timedeltas,
+    metrics_counter,
+    metrics_gauge_task,
+    metrics_histogram_timer,
+)
+from corehq.util.metrics.const import MPM_MAX
 from corehq.util.soft_assert import soft_assert
 
 _check_repeaters_buckets = make_buckets_from_timedeltas(
@@ -120,6 +125,7 @@ def process_repeat_record(repeat_record):
         return
     if not repeater.is_connection_working():
         repeater.pause()
+        notify_repeater_admins(repeater)
 
     try:
         if repeater.paused:
@@ -143,3 +149,14 @@ repeaters_overdue = metrics_gauge_task(
     run_every=crontab(),  # every minute
     multiprocess_mode=MPM_MAX
 )
+
+
+def notify_repeater_admins(repeater):
+    if repeater.notify_addresses:
+        send_mail_async.delay(
+            'Data forwarding paused',
+            f'Forwarding data to {repeater} has consistently failed, and has '
+            'been paused.',
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=repeater.notify_addresses,
+        )
