@@ -87,7 +87,7 @@ class CustomDataEditor(object):
         self.existing_custom_data = None
         self.form = self.init_form(add_prefix(cleaned_data, self.prefix))
         self.form.is_valid()
-        return dict(cleaned_data, **system_data)
+        return dict(system_data, **cleaned_data)    # cleaned_dataa may overwrite existing system data
 
     def _make_field(self, field):
         if field.regex:
