@@ -3,12 +3,19 @@ import re
 from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields import JSONField
 from django.db import models
+from django.db.models.functions import Lower
 from django.utils.translation import ugettext as _
+
+from corehq.apps.es.users import UserES, filters
 
 CUSTOM_DATA_FIELD_PREFIX = "data-field"
 # If mobile-worker is demo, this will be set to value 'demo'
 COMMCARE_USER_TYPE_KEY = 'user_type'
 COMMCARE_USER_TYPE_DEMO = 'demo'
+
+# This stores the id of the user's CustomDataFieldsProfile, if any
+PROFILE_SLUG = "commcare_profile"
+
 # This list is used to grandfather in existing data, any new fields should use
 # the system prefix defined below
 SYSTEM_FIELDS = ("commtrack-supply-point", 'name', 'type', 'owner_id', 'external_id', 'hq_user_id',
@@ -107,6 +114,9 @@ class CustomDataFieldsDefinition(models.Model):
         self.field_set.set(fields, bulk=False)
         self.set_field_order([f.id for f in fields])
 
+    def get_profiles(self):
+        return list(CustomDataFieldsProfile.objects.filter(definition=self).order_by(Lower('name')))
+
     def get_validator(self):
         """
         Returns a validator to be used in bulk import
@@ -142,3 +152,29 @@ class CustomDataFieldsDefinition(models.Model):
                 uncategorized_data[k] = v
 
         return model_data, uncategorized_data
+
+
+class CustomDataFieldsProfile(models.Model):
+    name = models.CharField(max_length=126)
+    fields = JSONField(default=dict, null=True)
+    definition = models.ForeignKey('CustomDataFieldsDefinition', on_delete=models.CASCADE)
+
+    @property
+    def has_users_assigned(self):
+        return bool(
+            UserES().domain(self.definition.domain)
+                    .mobile_users()
+                    .filter(
+                        filters.nested('user_data_es',
+                        filters.AND(
+                            filters.term('user_data_es.key', PROFILE_SLUG),
+                            filters.term('user_data_es.value', self.id)
+                        ))).count()
+        )
+
+    def to_json(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'fields': self.fields,
+        }
