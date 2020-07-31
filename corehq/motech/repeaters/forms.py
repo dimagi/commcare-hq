@@ -19,7 +19,6 @@ from corehq.apps.reports.analytics.esaccessors import (
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.users.util import raw_username
 from corehq.motech.const import BASIC_AUTH, DIGEST_AUTH
-from corehq.motech.repeaters.dbaccessors import get_repeaters_by_domain
 from corehq.motech.repeaters.repeater_generators import RegisterGenerator
 
 
@@ -267,42 +266,3 @@ class OpenmrsRepeaterForm(CaseRepeaterForm):
                     'Specify a location so that CommCare can set an owner for cases added via the Atom feed.'
                 ))
         return cleaned_data
-
-
-class EmailBulkPayload(forms.Form):
-    repeater_id = forms.ChoiceField(label=_("Repeater"))
-    payload_ids_file = forms.FileField(
-        label=_("Payload IDs"),
-        required=True,
-    )
-    email_id = forms.EmailField(
-        label=_("Email ID"),
-        required=True,
-    )
-
-    def __init__(self, *args, **kwargs):
-        self.domain = kwargs.pop('domain')
-        super(EmailBulkPayload, self).__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-10'
-        self.helper.offset_class = 'col-sm-offset-3 col-md-offset-2'
-        self.fields['repeater_id'].choices = \
-            [(repeater.get_id, '{}: {}'.format(
-                repeater.doc_type,
-                repeater.url,
-            )) for repeater in get_repeaters_by_domain(self.domain)]
-        self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _("Email Bulk Payload"),
-                crispy.Field('repeater_id'),
-                crispy.Field('payload_ids_file'),
-                crispy.Field('email_id'),
-                twbscrispy.StrictButton(
-                    _("Email Payloads"),
-                    type="submit",
-                    css_class='btn-primary',
-                )
-            )
-        )
