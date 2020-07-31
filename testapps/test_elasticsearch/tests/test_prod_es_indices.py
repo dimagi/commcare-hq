@@ -70,13 +70,6 @@ EXPECTED_PROD_INDICES = [
                             ],
                             "type": "custom",
                             "tokenizer": "whitespace"
-                        },
-                        "sortable_exact": {
-                            "filter": [
-                                "lowercase"
-                            ],
-                            "type": "custom",
-                            "tokenizer": "keyword"
                         }
                     }
                 }
@@ -119,13 +112,6 @@ EXPECTED_PROD_INDICES = [
                             ],
                             "type": "custom",
                             "tokenizer": "whitespace"
-                        },
-                        "sortable_exact": {
-                            "filter": [
-                                "lowercase"
-                            ],
-                            "type": "custom",
-                            "tokenizer": "keyword"
                         }
                     }
                 }
@@ -172,13 +158,6 @@ EXPECTED_PROD_INDICES = [
                             ],
                             "type": "custom",
                             "tokenizer": "whitespace"
-                        },
-                        "sortable_exact": {
-                            "filter": [
-                                "lowercase"
-                            ],
-                            "type": "custom",
-                            "tokenizer": "keyword"
                         }
                     }
                 }
@@ -222,13 +201,6 @@ EXPECTED_PROD_INDICES = [
                             ],
                             "type": "custom",
                             "tokenizer": "whitespace"
-                        },
-                        "sortable_exact": {
-                            "filter": [
-                                "lowercase"
-                            ],
-                            "type": "custom",
-                            "tokenizer": "keyword"
                         }
                     }
                 }
@@ -251,13 +223,6 @@ EXPECTED_PROD_INDICES = [
                             ],
                             "type": "custom",
                             "tokenizer": "whitespace"
-                        },
-                        "sortable_exact": {
-                            "filter": [
-                                "lowercase"
-                            ],
-                            "type": "custom",
-                            "tokenizer": "keyword"
                         }
                     }
                 }
@@ -280,13 +245,6 @@ EXPECTED_PROD_INDICES = [
                             ],
                             "type": "custom",
                             "tokenizer": "whitespace"
-                        },
-                        "sortable_exact": {
-                            "filter": [
-                                "lowercase"
-                            ],
-                            "type": "custom",
-                            "tokenizer": "keyword"
                         }
                     }
                 }
@@ -309,13 +267,6 @@ EXPECTED_PROD_INDICES = [
                             ],
                             "type": "custom",
                             "tokenizer": "whitespace"
-                        },
-                        "sortable_exact": {
-                            "filter": [
-                                "lowercase"
-                            ],
-                            "type": "custom",
-                            "tokenizer": "keyword"
                         }
                     }
                 }

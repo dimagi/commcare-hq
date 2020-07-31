@@ -22,12 +22,7 @@ ANALYZERS = {
     "comma": {
         "type": "pattern",
         "pattern": r"\s*,\s*"
-    },
-    "sortable_exact": {
-        "type": "custom",
-        "tokenizer": "keyword",
-        "filter": ["lowercase"]
-    },
+    }
 }
 
 REMOVE_SETTING = None
@@ -57,7 +52,7 @@ ES_INDEX_SETTINGS = {
     'default': {
         "settings": {
             "number_of_replicas": 0,
-            "analysis": _get_analysis('default', 'sortable_exact'),
+            "analysis": _get_analysis('default'),
         },
     },
     # Default settings for aliases on all environments (overrides default settings)
@@ -160,7 +155,10 @@ def initialize_index(es, index_info):
 
 def mapping_exists(es, index_info):
     try:
-        return es.indices.get_mapping(index_info.index, index_info.type)
+        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+            return es.indices.get_mapping(index_info.index).get(index_info.index, {}).get('mappings', None)
+        else:
+            return es.indices.get_mapping(index_info.index, index_info.type)
     except TransportError:
         return {}
 
@@ -187,7 +185,7 @@ def assume_alias(es, index, alias):
     This operation assigns the alias to the index and removes the alias
     from any other indices it might be assigned to.
     """
-    if es.indices.exists_alias(None, alias):
+    if es.indices.exists_alias(name=alias):
         # this part removes the conflicting aliases
         alias_indices = list(es.indices.get_alias(alias))
         for aliased_index in alias_indices:
