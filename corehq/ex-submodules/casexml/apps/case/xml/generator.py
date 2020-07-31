@@ -84,7 +84,7 @@ class CaseXMLGeneratorBase(object):
 
     def get_index_element(self, index):
         elem = safe_element(index.identifier, index.referenced_id)
-        elem.attrib.set("case_type", index.referenced_type)
+        elem.set("case_type", index.referenced_type)
         if getattr(index, 'relationship') and index.relationship == "extension":
             elem.attrib.update({"relationship": index.relationship})
         return elem
@@ -162,7 +162,7 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
             "user_id": self.case.user_id or '',
         })
         if self.case.modified_on:
-            root.attrib.set("date_modified", datetime_to_xml_string(self.case.modified_on))
+            root.set("date_modified", datetime_to_xml_string(self.case.modified_on))
         return root
 
     def get_case_type_element(self):
