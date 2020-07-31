@@ -6,6 +6,12 @@ from mock import patch, mock
 
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.commtrack.tests.util import make_loc
+from corehq.apps.custom_data_fields.models import (
+    CustomDataFieldsDefinition,
+    CustomDataFieldsProfile,
+    Field,
+    PROFILE_SLUG,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.user_importer.importer import (
     create_or_update_users_and_groups,
@@ -13,6 +19,7 @@ from corehq.apps.user_importer.importer import (
 from corehq.apps.user_importer.tasks import import_users_and_groups
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser, DomainPermissionsMirror, Permissions, UserRole, WebUser
+from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 
 
 class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
@@ -29,11 +36,38 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         cls.patcher = patch('corehq.apps.user_importer.tasks.UserUploadRecord')
         cls.patcher.start()
 
+        cls.definition = CustomDataFieldsDefinition(domain=cls.domain_name,
+                                                    field_type=UserFieldsView.field_type)
+        cls.definition.save()
+        cls.definition.set_fields([
+            Field(
+                slug='key',
+                is_required=False,
+                label='Key',
+                regex='^[A-F]',
+                regex_msg='Starts with A-F',
+            ),
+            Field(
+                slug='mode',
+                is_required=False,
+                label='Mode',
+                choices=['major', 'minor']
+            ),
+        ])
+        cls.definition.save()
+        cls.profile = CustomDataFieldsProfile(
+            name='melancholy',
+            fields={'mode': 'minor'},
+            definition=cls.definition,
+        )
+        cls.profile.save()
+
     @classmethod
     def tearDownClass(cls):
         cls.domain.delete()
         cls.other_domain.delete()
         cls.patcher.stop()
+        cls.definition.delete()
         super().tearDownClass()
 
     def tearDown(self):
@@ -85,7 +119,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             mock.MagicMock()
         )
         self.assertEqual(self.user.location_id, self.loc1._id)
-        self.assertEqual(self.user.location_id, self.user.user_data.get('commcare_location_id'))
+        self.assertEqual(self.user.location_id, self.user.metadata.get('commcare_location_id'))
         # multiple locations
         self.assertListEqual([self.loc1._id], self.user.assigned_location_ids)
 
@@ -114,11 +148,11 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         # first location should be primary location
         self.assertEqual(self.user.location_id, self.loc1._id)
-        self.assertEqual(self.user.location_id, self.user.user_data.get('commcare_location_id'))
+        self.assertEqual(self.user.location_id, self.user.metadata.get('commcare_location_id'))
         # multiple locations
         self.assertListEqual([l._id for l in [self.loc1, self.loc2]], self.user.assigned_location_ids)
         # non-primary location
-        self.assertTrue(self.loc2._id in self.user.user_data.get('commcare_location_ids'))
+        self.assertTrue(self.loc2._id in self.user.metadata.get('commcare_location_ids'))
 
     @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def test_location_remove(self):
@@ -143,7 +177,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
         # user should have no locations
         self.assertEqual(self.user.location_id, None)
-        self.assertEqual(self.user.user_data.get('commcare_location_id'), None)
+        self.assertEqual(self.user.metadata.get('commcare_location_id'), None)
         self.assertListEqual(self.user.assigned_location_ids, [])
 
     @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
@@ -158,8 +192,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
         # user's primary location should be loc1
         self.assertEqual(self.user.location_id, self.loc1._id)
-        self.assertEqual(self.user.user_data.get('commcare_location_id'), self.loc1._id)
-        self.assertEqual(self.user.user_data.get('commcare_location_ids'), " ".join([self.loc1._id, self.loc2._id]))
+        self.assertEqual(self.user.metadata.get('commcare_location_id'), self.loc1._id)
+        self.assertEqual(self.user.metadata.get('commcare_location_ids'), " ".join([self.loc1._id, self.loc2._id]))
         self.assertListEqual(self.user.assigned_location_ids, [self.loc1._id, self.loc2._id])
 
         # reassign to loc2
@@ -171,8 +205,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
         # user's location should now be loc2
         self.assertEqual(self.user.location_id, self.loc2._id)
-        self.assertEqual(self.user.user_data.get('commcare_location_ids'), self.loc2._id)
-        self.assertEqual(self.user.user_data.get('commcare_location_id'), self.loc2._id)
+        self.assertEqual(self.user.metadata.get('commcare_location_ids'), self.loc2._id)
+        self.assertEqual(self.user.metadata.get('commcare_location_id'), self.loc2._id)
         self.assertListEqual(self.user.assigned_location_ids, [self.loc2._id])
 
     @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
@@ -195,7 +229,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
         # user's location should now be loc2
         self.assertEqual(self.user.location_id, self.loc2._id)
-        self.assertEqual(self.user.user_data.get('commcare_location_id'), self.loc2._id)
+        self.assertEqual(self.user.metadata.get('commcare_location_id'), self.loc2._id)
         self.assertListEqual(self.user.assigned_location_ids, [self.loc2._id])
 
     def setup_locations(self):
@@ -228,6 +262,79 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             mock.MagicMock()
         )
         self.assertEqual(self.user.full_name, "")
+
+    def test_metadata(self):
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(data={'key': 'F#'})],
+            [],
+            None,
+            mock.MagicMock()
+        )
+        self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain', 'key': 'F#'})
+
+    def test_metadata_profile(self):
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(data={'key': 'F#', PROFILE_SLUG: self.profile.id})],
+            [],
+            None,
+            mock.MagicMock()
+        )
+        self.assertEqual(self.user.metadata, {
+            'commcare_project': 'mydomain',
+            'key': 'F#',
+            'mode': 'minor',
+            PROFILE_SLUG: self.profile.id,
+        })
+
+    def test_metadata_profile_redundant(self):
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(data={PROFILE_SLUG: self.profile.id, 'mode': 'minor'})],
+            [],
+            None,
+            mock.MagicMock()
+        )
+        self.assertEqual(self.user.metadata, {
+            'commcare_project': 'mydomain',
+            'mode': 'minor',
+            PROFILE_SLUG: self.profile.id,
+        })
+
+    def test_metadata_profile_blank(self):
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(data={PROFILE_SLUG: self.profile.id, 'mode': ''})],
+            [],
+            None,
+            mock.MagicMock()
+        )
+        self.assertEqual(self.user.metadata, {
+            'commcare_project': 'mydomain',
+            'mode': 'minor',
+            PROFILE_SLUG: self.profile.id,
+        })
+
+    def test_metadata_profile_conflict(self):
+        rows = import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(data={PROFILE_SLUG: self.profile.id, 'mode': 'major'})],
+            [],
+            None,
+            mock.MagicMock()
+        )['messages']['rows']
+        self.assertEqual(rows[0]['flag'], "metadata properties conflict with profile: mode")
+
+    def test_metadata_profile_unknown(self):
+        rows = import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(data={PROFILE_SLUG: self.profile.id + 100})],
+            [],
+            None,
+            mock.MagicMock()
+        )['messages']['rows']
+        self.assertEqual(rows[0]['flag'], "Could not find profile")
 
     def test_upper_case_email(self):
         """

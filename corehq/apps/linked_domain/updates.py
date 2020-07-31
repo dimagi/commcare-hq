@@ -11,6 +11,7 @@ from corehq.apps.case_search.models import (
 )
 from corehq.apps.custom_data_fields.models import (
     CustomDataFieldsDefinition,
+    CustomDataFieldsProfile,
     Field,
 )
 from corehq.apps.data_dictionary.models import (
@@ -114,7 +115,8 @@ def update_custom_data_models(domain_link, limit_types=None):
     else:
         master_results = local_custom_data_models(domain_link.master_domain, limit_types)
 
-    for field_type, field_definitions in master_results.items():
+    for field_type, data in master_results.items():
+        field_definitions = data.get('fields', [])
         model = CustomDataFieldsDefinition.get_or_create(domain_link.linked_domain, field_type)
         model.set_fields([
             Field(
@@ -127,6 +129,19 @@ def update_custom_data_models(domain_link, limit_types=None):
             ) for field_def in field_definitions
         ])
         model.save()
+
+        old_profiles = {profile.name: profile for profile in model.get_profiles()}
+        for profile in data.get('profiles'):
+            old_profile = old_profiles.get(profile['name'], None)
+            if old_profile:
+                old_profile.fields = profile['fields']
+                old_profile.save()
+            else:
+                CustomDataFieldsProfile(
+                    name=profile['name'],
+                    definition=model,
+                    fields=profile['fields'],
+                ).save()
 
 
 def update_fixture(domain_link, tag):
