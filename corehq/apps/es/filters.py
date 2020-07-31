@@ -15,6 +15,7 @@ Contributing:
 Additions to this file should be added to the ``builtin_filters`` method on
 either ESQuery or HQESQuery, as appropriate (is it an HQ thing?).
 """
+from django.conf import settings
 
 
 def match_all():
@@ -38,12 +39,19 @@ def term(field, value):
 
 def OR(*filters):
     """Filter docs to match any of the filters passed in"""
-    return {"or": filters}
+    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+        return {"bool": {"should": filters}}
+    else:
+        return {"or": filters}
 
 
 def AND(*filters):
     """Filter docs to match all of the filters passed in"""
-    return {"and": filters}
+    # return {"and": filters}
+    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+        return {"bool": {"filter": filters}}
+    else:
+        return {"and": filters}
 
 
 def NOT(filter_):
@@ -62,7 +70,10 @@ def NOT(filter_):
         # but prevents {'not': {'not': A}}, in favor of just A
         return filter_['not']
     else:
-        return {"not": filter_}
+        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+            return {"bool": {"must_not": filter_}}
+        else:
+            return {"not": filter_}
 
 
 def not_term(field, value):
@@ -105,13 +116,26 @@ def doc_id(doc_id):
 
 def missing(field, exist=True, null=True):
     """Only return docs missing a value for ``field``"""
-    return {
-        "missing": {
-            "field": field,
-            "existence": exist,
-            "null_value": null
+    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+        # null and empty values are considered to be missing
+        return {
+            "bool": {"must_not": exists(field)}
         }
-    }
+    else:
+        return {
+            "missing": {
+                "field": field,
+                "existence": exist,
+                "null_value": null
+            }
+        }
+
+
+def field_exists(field):
+    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+        return exists(field)
+    else:
+        return {"not": {"missing": {"field": field}}}
 
 
 def exists(field):
@@ -132,12 +156,24 @@ def non_null(field):
 
 def nested(path, filter_):
     """Query nested documents which normally can't be queried directly"""
-    return {
-        "nested": {
-            "path": path,
-            "filter": filter_
+    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+        return {
+            "nested": {
+                "path": path,
+                "query": {
+                    "bool": {
+                        "filter": filter_
+                    }
+                }
+            }
         }
-    }
+    else:
+        return {
+            "nested": {
+                "path": path,
+                "filter": filter_
+            }
+        }
 
 
 def regexp(field, regex):

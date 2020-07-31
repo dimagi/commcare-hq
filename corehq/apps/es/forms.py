@@ -11,10 +11,10 @@ from .es_query import HQESQuery
 class FormES(HQESQuery):
     index = 'forms'
     default_filters = {
-        'is_xform_instance': {"term": {"doc_type": "xforminstance"}},
-        'has_xmlns': {"not": {"missing": {"field": "xmlns"}}},
-        'has_user': {"not": {"missing": {"field": "form.meta.userID"}}},
-        'has_domain': {"not": {"missing": {"field": "domain"}}}
+        'is_xform_instance': filters.term("doc_type", "xforminstance"),
+        'has_xmlns': filters.field_exists("xmlns"),
+        'has_user': filters.field_exists("form.meta.userID"),
+        'has_domain': filters.field_exists("domain"),
     }
 
     @property
