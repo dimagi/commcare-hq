@@ -247,7 +247,7 @@ def iter_es_docs_from_query(query):
 def scroll_query(index_name, q, es_instance_alias=ES_DEFAULT_INSTANCE):
     es_meta = ES_META[index_name]
     try:
-        return scan(
+        return _scan(
             get_es_instance(es_instance_alias),
             index_alias=es_meta.alias,
             doc_type=es_meta.type,
@@ -268,7 +268,7 @@ class ScanResult(object):
             yield x
 
 
-def scan(client, query=None, scroll='5m', **kwargs):
+def _scan(client, query=None, scroll='5m', **kwargs):
     """
     This is a copy of elasticsearch.helpers.scan, except this function returns
     a ScanResult (which includes the total number of documents), and removes
@@ -293,42 +293,91 @@ def scan(client, query=None, scroll='5m', **kwargs):
         )
 
     """
-    kwargs['search_type'] = 'scan'
+    # Tentative change. Not sure if we have good enough test coverage
+    # for this function to rely on tests to tell us if this is fully
+    # backward compatible with ES2. The happy path is at least tested by
+    # https://github.com/dimagi/commcare-hq/blob/104765a7e1be3be5e45f7f157f197e115eb57a66/corehq/apps/reports/tests/test_esaccessors.py#L971-L971
+    # More tests may be necessary to confirm it's fully backward compatible.
+    # TODO remove commented out code if backward compatible else revert comments.
+    #if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+    return _scan_es7(client, query=query, scroll=scroll, **kwargs)
+    #else:
+    #    return _scan_es2(client, query=query, scroll=scroll, **kwargs)
+
+
+def _scan_es7(client, query=None, scroll='5m', **kwargs):
+
+    # doc-type is not a valid kwarg for ES7
+    kwargs.pop('doc_type', None)
+
+    query = query.copy() if query else {}
+    query["sort"] = "_doc"
+
     # initial search
     es_interface = ElasticsearchInterface(client)
-    initial_resp = es_interface.search(body=query, scroll=scroll, **kwargs)
+    initial_resp = es_interface.search(
+        body=query, scroll=scroll, size=SCROLL_PAGE_SIZE_LIMIT, **kwargs)
 
     def fetch_all(initial_response):
-
         resp = initial_response
         scroll_id = resp.get('_scroll_id')
-        if scroll_id is None:
-            return
-        iteration = 0
 
-        while True:
-
-            start = int(time.time() * 1000)
-            resp = es_interface.scroll(scroll_id, scroll=scroll)
-            for hit in resp['hits']['hits']:
+        while scroll_id and resp["hits"]["hits"]:
+            for hit in resp["hits"]["hits"]:
                 yield hit
 
-            # check if we have any errrors
+            # check if we have any errors
             if resp["_shards"]["failed"]:
                 logging.getLogger('elasticsearch.helpers').warning(
                     'Scroll request has failed on %d shards out of %d.',
                     resp['_shards']['failed'], resp['_shards']['total']
                 )
+            resp = client.scroll(
+                body={"scroll_id": scroll_id, "scroll": scroll}
+            )
+            scroll_id = resp.get("_scroll_id")
 
-            scroll_id = resp.get('_scroll_id')
-            # end of scroll
-            if scroll_id is None or not resp['hits']['hits']:
-                break
-
-            iteration += 1
-
-    count = initial_resp.get("hits", {}).get("total", None)
+    count = initial_resp.get("hits", {}).get("total", {}).get('value', None)
     return ScanResult(count, fetch_all(initial_resp))
+
+
+#def _scan_es2(client, query=None, scroll='5m', **kwargs):
+#    kwargs['search_type'] = 'scan'
+#    # initial search
+#    es_interface = ElasticsearchInterface(client)
+#    initial_resp = es_interface.search(body=query, scroll=scroll, **kwargs)
+
+#    def fetch_all(initial_response):
+
+#        resp = initial_response
+#        scroll_id = resp.get('_scroll_id')
+#        if scroll_id is None:
+#            return
+#        iteration = 0
+
+#        while True:
+
+#            start = int(time.time() * 1000)
+#            resp = es_interface.scroll(scroll_id, scroll=scroll)
+#            for hit in resp['hits']['hits']:
+#                yield hit
+
+#            # check if we have any errrors
+#            if resp["_shards"]["failed"]:
+#                logging.getLogger('elasticsearch.helpers').warning(
+#                    'Scroll request has failed on %d shards out of %d.',
+#                    resp['_shards']['failed'], resp['_shards']['total']
+#                )
+
+#            scroll_id = resp.get('_scroll_id')
+#            # end of scroll
+#            if scroll_id is None or not resp['hits']['hits']:
+#                break
+
+#            iteration += 1
+
+#    count = initial_resp.get("hits", {}).get("total", None)
+#    return ScanResult(count, fetch_all(initial_resp))
 
 
 SIZE_LIMIT = 1000000
