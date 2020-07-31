@@ -156,7 +156,7 @@ class CustomDataFieldsDefinition(models.Model):
 
 class CustomDataFieldsProfile(models.Model):
     name = models.CharField(max_length=126)
-    fields = JSONField(default=list, null=True)
+    fields = JSONField(default=dict, null=True)
     definition = models.ForeignKey('CustomDataFieldsDefinition', on_delete=models.CASCADE)
 
     @property
