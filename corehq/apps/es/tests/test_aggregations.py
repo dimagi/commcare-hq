@@ -1,6 +1,7 @@
 from copy import deepcopy
 from nose.plugins.attrib import attr
 
+from django.conf import settings
 from django.test.testcases import SimpleTestCase
 
 from corehq.apps.es import filters
@@ -33,17 +34,40 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                 .terms_aggregation('form.meta.userID', 'form.meta.userID')
 
     def test_nesting_aggregations(self):
-        json_output = {
-            "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {"match_all": {}}
-                        ]
-                    },
-                    "query": {"match_all": {}}
+        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+            query = {
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "match_all": {}
+                            }
+                        ],
+                        "must": {
+                            "match_all": {}
+                        }
+                    }
                 }
-            },
+            }
+        else:
+            query = {
+                "query": {
+                    "filtered": {
+                        "filter": {
+                            "and": [
+                                {
+                                    "match_all": {}
+                                }
+                            ]
+                        },
+                        "query": {
+                            "match_all": {}
+                        }
+                    }
+                }
+            }
+        json_output = {
+            **query,
             "aggs": {
                 "users": {
                     "terms": {
@@ -168,17 +192,40 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
         })
 
     def test_range_aggregation(self):
-        json_output = {
-            "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {"match_all": {}}
-                        ]
-                    },
-                    "query": {"match_all": {}}
+        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+            query = {
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "match_all": {}
+                            }
+                        ],
+                        "must": {
+                            "match_all": {}
+                        }
+                    }
                 }
-            },
+            }
+        else:
+            query = {
+                "query": {
+                    "filtered": {
+                        "filter": {
+                            "and": [
+                                {
+                                    "match_all": {}
+                                }
+                            ]
+                        },
+                        "query": {
+                            "match_all": {}
+                        }
+                    }
+                }
+            }
+        json_output = {
+            **query,
             "aggs": {
                 "by_date": {
                     "range": {
@@ -205,17 +252,40 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
         self.checkQuery(query, json_output)
 
     def test_stats_aggregation(self):
-        json_output = {
-            "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {"match_all": {}}
-                        ]
-                    },
-                    "query": {"match_all": {}}
+        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+            query = {
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "match_all": {}
+                            }
+                        ],
+                        "must": {
+                            "match_all": {}
+                        }
+                    }
                 }
-            },
+            }
+        else:
+            query = {
+                "query": {
+                    "filtered": {
+                        "filter": {
+                            "and": [
+                                {
+                                    "match_all": {}
+                                }
+                            ]
+                        },
+                        "query": {
+                            "match_all": {}
+                        }
+                    }
+                }
+            }
+        json_output = {
+            **query,
             "aggs": {
                 "name_stats": {
                     "stats": {
@@ -232,17 +302,40 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
         self.checkQuery(query, json_output)
 
     def test_extended_stats_aggregation(self):
-        json_output = {
-            "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {"match_all": {}}
-                        ]
-                    },
-                    "query": {"match_all": {}}
+        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+            query = {
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "match_all": {}
+                            }
+                        ],
+                        "must": {
+                            "match_all": {}
+                        }
+                    }
                 }
-            },
+            }
+        else:
+            query = {
+                "query": {
+                    "filtered": {
+                        "filter": {
+                            "and": [
+                                {
+                                    "match_all": {}
+                                }
+                            ]
+                        },
+                        "query": {
+                            "match_all": {}
+                        }
+                    }
+                }
+            }
+        json_output = {
+            **query,
             "aggs": {
                 "name_stats": {
                     "extended_stats": {
@@ -259,17 +352,40 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
         self.checkQuery(query, json_output)
 
     def test_top_hits_aggregation(self):
-        json_output = {
-            "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {"match_all": {}}
-                        ]
-                    },
-                    "query": {"match_all": {}}
+        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+            query = {
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "match_all": {}
+                            }
+                        ],
+                        "must": {
+                            "match_all": {}
+                        }
+                    }
                 }
-            },
+            }
+        else:
+            query = {
+                "query": {
+                    "filtered": {
+                        "filter": {
+                            "and": [
+                                {
+                                    "match_all": {}
+                                }
+                            ]
+                        },
+                        "query": {
+                            "match_all": {}
+                        }
+                    }
+                }
+            }
+        json_output = {
+            **query,
             "aggs": {
                 "name_top_hits": {
                     "top_hits": {
@@ -300,17 +416,40 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
         self.checkQuery(query, json_output)
 
     def test_missing_aggregation(self):
-        json_output = {
-            "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {"match_all": {}}
-                        ]
-                    },
-                    "query": {"match_all": {}}
+        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+            query = {
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "match_all": {}
+                            }
+                        ],
+                        "must": {
+                            "match_all": {}
+                        }
+                    }
                 }
-            },
+            }
+        else:
+            query = {
+                "query": {
+                    "filtered": {
+                        "filter": {
+                            "and": [
+                                {
+                                    "match_all": {}
+                                }
+                            ]
+                        },
+                        "query": {
+                            "match_all": {}
+                        }
+                    }
+                }
+            }
+        json_output = {
+            **query,
             "aggs": {
                 "missing_user_id": {
                     "missing": {
@@ -329,17 +468,40 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
         self.checkQuery(query, json_output)
 
     def test_date_histogram(self):
-        json_output = {
-            "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {"match_all": {}}
-                        ]
-                    },
-                    "query": {"match_all": {}}
+        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+            query = {
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "match_all": {}
+                            }
+                        ],
+                        "must": {
+                            "match_all": {}
+                        }
+                    }
                 }
-            },
+            }
+        else:
+            query = {
+                "query": {
+                    "filtered": {
+                        "filter": {
+                            "and": [
+                                {
+                                    "match_all": {}
+                                }
+                            ]
+                        },
+                        "query": {
+                            "match_all": {}
+                        }
+                    }
+                }
+            }
+        json_output = {
+            **query,
             "aggs": {
                 "by_day": {
                     "date_histogram": {
@@ -378,17 +540,40 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
         self.assertEqual(output, expected_output)
 
     def test_nested_aggregation(self):
-        json_output = {
-            "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {"match_all": {}}
-                        ]
-                    },
-                    "query": {"match_all": {}}
+        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+            query = {
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "match_all": {}
+                            }
+                        ],
+                        "must": {
+                            "match_all": {}
+                        }
+                    }
                 }
-            },
+            }
+        else:
+            query = {
+                "query": {
+                    "filtered": {
+                        "filter": {
+                            "and": [
+                                {
+                                    "match_all": {}
+                                }
+                            ]
+                        },
+                        "query": {
+                            "match_all": {}
+                        }
+                    }
+                }
+            }
+        json_output = {
+            **query,
             "aggs": {
                 "case_actions": {
                     "nested": {
@@ -407,17 +592,40 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
         self.checkQuery(query, json_output)
 
     def test_terms_aggregation_with_order(self):
-        json_output = {
-            "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {"match_all": {}}
-                        ]
-                    },
-                    "query": {"match_all": {}}
+        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+            query = {
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "match_all": {}
+                            }
+                        ],
+                        "must": {
+                            "match_all": {}
+                        }
+                    }
                 }
-            },
+            }
+        else:
+            query = {
+                "query": {
+                    "filtered": {
+                        "filter": {
+                            "and": [
+                                {
+                                    "match_all": {}
+                                }
+                            ]
+                        },
+                        "query": {
+                            "match_all": {}
+                        }
+                    }
+                }
+            }
+        json_output = {
+            **query,
             "aggs": {
                 "name": {
                     "terms": {
