@@ -342,14 +342,12 @@ class LoginAsUsers(View):
         })
 
     def _user_query(self, search_string, page, limit):
-        user_data_fields = []
         return login_as_user_query(
             self.domain,
             self.couch_user,
             search_string,
             limit,
             page * limit,
-            user_data_fields=user_data_fields
         )
 
     def _format_user(self, user_json):
