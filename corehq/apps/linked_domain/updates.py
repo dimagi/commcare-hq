@@ -13,6 +13,10 @@ from corehq.apps.custom_data_fields.models import (
     CustomDataFieldsDefinition,
     Field,
 )
+from corehq.apps.data_dictionary.models import (
+    CaseType,
+    CaseProperty
+)
 from corehq.apps.fixtures.dbaccessors import (
     delete_fixture_items_for_data_type,
     get_fixture_data_type_by_tag,
@@ -29,6 +33,7 @@ from corehq.apps.linked_domain.const import (
     MODEL_USER_DATA,
     MODEL_REPORT,
     MODEL_ROLES,
+    MODEL_DATA_DICTIONARY,
 )
 from corehq.apps.linked_domain.exceptions import UnsupportedActionError
 from corehq.apps.linked_domain.local_accessors import \
@@ -39,6 +44,8 @@ from corehq.apps.linked_domain.local_accessors import \
     get_toggles_previews as local_toggles_previews
 from corehq.apps.linked_domain.local_accessors import \
     get_user_roles as local_get_user_roles
+from corehq.apps.linked_domain.local_accessors import \
+    get_data_dictionary as local_get_data_dictionary
 from corehq.apps.linked_domain.remote_accessors import \
     get_case_search_config as remote_get_case_search_config
 from corehq.apps.linked_domain.remote_accessors import \
@@ -49,6 +56,8 @@ from corehq.apps.linked_domain.remote_accessors import \
     get_toggles_previews as remote_toggles_previews
 from corehq.apps.linked_domain.remote_accessors import \
     get_user_roles as remote_get_user_roles
+from corehq.apps.linked_domain.remote_accessors import \
+    get_data_dictionary as remote_get_data_dictionary
 from corehq.apps.linked_domain.ucr import update_linked_ucr
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
@@ -71,6 +80,7 @@ def update_model_type(domain_link, model_type, model_detail=None):
         MODEL_USER_DATA: partial(update_custom_data_models, limit_types=[UserFieldsView.field_type]),
         MODEL_CASE_SEARCH: update_case_search_config,
         MODEL_REPORT: update_linked_ucr,
+        MODEL_DATA_DICTIONARY: update_data_dictionary,
     }.get(model_type)
 
     kwargs = model_detail or {}
@@ -222,6 +232,33 @@ def update_case_search_config(domain_link):
 
     if query_addition:
         CaseSearchQueryAddition.create_from_json(domain_link.linked_domain, query_addition)
+
+
+def update_data_dictionary(domain_link):
+    if domain_link.is_remote:
+        master_results = remote_get_data_dictionary(domain_link)
+    else:
+        master_results = local_get_data_dictionary(domain_link.master_domain)
+
+    # Start from an empty set of CaseTypes and CaseProperties in the linked domain.
+    CaseType.objects.filter(domain=domain_link.linked_domain).delete()
+
+    # Create CaseType and CaseProperty as necessary
+    for case_type_name, case_type_desc in master_results.items():
+        case_type_obj = CaseType.get_or_create(domain_link.linked_domain, case_type_name)
+        case_type_obj.description = case_type_desc['description']
+        case_type_obj.fully_generated = case_type_desc['fully_generated']
+        case_type_obj.save()
+
+        for case_property_name, case_property_desc in case_type_desc['properties'].items():
+            case_property_obj = CaseProperty.get_or_create(case_property_name,
+                                                           case_type_obj.name,
+                                                           domain_link.linked_domain)
+            case_property_obj.description = case_property_desc['description']
+            case_property_obj.deprecated = case_property_desc['deprecated']
+            case_property_obj.data_type = case_property_desc['data_type']
+            case_property_obj.group = case_property_desc['group']
+            case_property_obj.save()
 
 
 def _convert_reports_permissions(domain_link, master_results):

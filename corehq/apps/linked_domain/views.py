@@ -57,6 +57,7 @@ from corehq.apps.linked_domain.local_accessors import (
     get_fixture,
     get_toggles_previews,
     get_user_roles,
+    get_data_dictionary,
 )
 from corehq.apps.linked_domain.models import (
     AppLinkDetail,
@@ -171,6 +172,12 @@ def get_latest_released_app_source(request, domain, app_id):
         raise Http404
 
     return JsonResponse(convert_app_for_remote_linking(latest_master_build))
+
+
+@login_or_api_key
+@require_linked_domain
+def data_dictionary(request, domain):
+    return JsonResponse(get_data_dictionary(domain))
 
 
 @require_can_edit_apps
