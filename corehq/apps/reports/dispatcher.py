@@ -72,8 +72,9 @@ class ReportDispatcher(View):
         """
         return True
 
-    def get_reports(self, domain):
-        attr_name = self.map_name
+    @classmethod
+    def get_reports(cls, domain):
+        attr_name = cls.map_name
         from corehq import reports
         if domain:
             domain_obj = Domain.get_by_name(domain)
@@ -100,12 +101,13 @@ class ReportDispatcher(View):
 
         return corehq_reports + custom_reports
 
-    def get_report(self, domain, report_slug, *args):
+    @classmethod
+    def get_report(cls, domain, report_slug, *args):
         """
         Returns the report class for `report_slug`, or None if no report is
         found.
         """
-        for name, group in self.get_reports(domain):
+        for name, group in cls.get_reports(domain):
             for report in group:
                 if report.slug == report_slug:
                     return report

@@ -599,9 +599,10 @@ class CustomConfigurableReportDispatcher(ReportDispatcher):
             raise Http404
         return report_class.as_view()(request, domain=domain, subreport_slug=report_config_id, **kwargs)
 
-    def get_report(self, domain, slug, config_id):
+    @classmethod
+    def get_report(cls, domain, slug, config_id):
         try:
-            report_class = self._report_class(domain, config_id)
+            report_class = cls._report_class(domain, config_id)
         except BadSpecError:
             return None
         return report_class.get_report(domain, slug, config_id)
