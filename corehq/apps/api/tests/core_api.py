@@ -1,9 +1,11 @@
 import json
 
 from datetime import datetime
+from django.conf import settings
 from django.test import SimpleTestCase, TestCase
 from django.test.client import RequestFactory
 from mock import patch
+from nose.plugins.attrib import attr
 
 from django.urls import reverse
 from django.utils.http import urlencode
@@ -84,6 +86,14 @@ class TestElasticAPIQuerySet(TestCase):
 
         list(queryset.order_by('one', '-two', 'three'))
         self.assertEqual(es.queries[3]['sort'], [{'one': asc_}, {'two': desc_}, {'three': asc_}])
+
+    def test_count(self):
+        es = FakeFormESView()
+        for i in range(0, 1300):
+            es.add_doc(i, {'i': i})
+
+        queryset = ElasticAPIQuerySet(es_client=es, payload={})
+        self.assertEqual(queryset.count(), 1300)
 
 
 class ToManySourceModel(object):
@@ -495,7 +505,8 @@ class TestApiKey(APIResourceTest):
         self.assertEqual(response.status_code, 401)
 
 
-class TestParamstoESFilters(SimpleTestCase, ElasticTestMixin):
+@attr(es_test=True)
+class TestParamstoESFilters(ElasticTestMixin, SimpleTestCase):
 
     def test_search_param(self):
         # GET param _search can accept a custom query from Data export tool
@@ -539,11 +550,40 @@ class TestParamstoESFilters(SimpleTestCase, ElasticTestMixin):
             "/a/test_domain/api/v0.5/form/",
             data={'_search': json.dumps(query)}
         )
-        expected = {
-            "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
+        if settings.ELASTICSEARCH_MAJOR_VERSION == 2:
+            expected = {
+                "query": {
+                    "filtered": {
+                        "filter": {
+                            "and": [
+                                {
+                                    "term": {
+                                        "domain.exact": "test_domain"
+                                    }
+                                },
+                                {
+                                    "term": {
+                                        "doc_type": "xforminstance"
+                                    }
+                                },
+                                query['filter'],
+                                {
+                                    "match_all": {}
+                                }
+                            ]
+                        },
+                        "query": {
+                            "match_all": {}
+                        }
+                    }
+                },
+                "size": 1000000
+            }
+        else:
+            expected = {
+                "query": {
+                    "bool": {
+                        "filter": [
                             {
                                 "term": {
                                     "domain.exact": "test_domain"
@@ -554,19 +594,73 @@ class TestParamstoESFilters(SimpleTestCase, ElasticTestMixin):
                                     "doc_type": "xforminstance"
                                 }
                             },
-                            query['filter'],
+                            {
+                                "bool": {
+                                    "should": [
+                                        {
+                                            "bool": {
+                                                "filter": [
+                                                    {
+                                                        "bool": {
+                                                            "must_not": {
+                                                                "bool": {
+                                                                    "must_not": {
+                                                                        "exists": {
+                                                                            "field": "server_modified_on"
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    {
+                                                        "range": {
+                                                            "server_modified_on": {
+                                                                "gte": "2019-01-01T00:00:00",
+                                                                "lte": "2019-01-02T00:00:00"
+                                                            }
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "bool": {
+                                                "filter": [
+                                                    {
+                                                        "bool": {
+                                                            "must_not": {
+                                                                "exists": {
+                                                                    "field": "server_modified_on"
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    {
+                                                        "range": {
+                                                            "received_on": {
+                                                                "gte": "2019-01-01T00:00:00",
+                                                                "lte": "2019-01-02T00:00:00"
+                                                            }
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
                             {
                                 "match_all": {}
                             }
-                        ]
-                    },
-                    "query": {
-                        "match_all": {}
+                        ],
+                        "must": {
+                            "match_all": {}
+                        }
                     }
-                }
-            },
-            "size": 1000000
-        }
+                },
+                "size": 1000000
+            }
         self.checkQuery(
             es_query_from_get_params(request.GET, 'test_domain'),
             expected,
@@ -586,46 +680,48 @@ class TestParamstoESFilters(SimpleTestCase, ElasticTestMixin):
             "/a/test_domain/api/v0.5/form/",
             data={'_search': json.dumps(query)}
         )
-        expected = {
-            "filter": {
-                "and": [
-                    {
-                        "term": {
-                            "domain.exact": "test_domain"
-                        }
-                    },
-                    query['filter']
-                ]
-            }
-        }
-        expected = {
-            "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {
-                                "term": {
-                                    "domain.exact": "test_domain"
-                                }
-                            },
-                            {
-                                "term": {
-                                    "doc_type": "xforminstance"
-                                }
-                            },
-                            query['filter'],
-                            {
-                                "match_all": {}
-                            }
-                        ]
-                    },
-                    "query": {
-                        "match_all": {}
+        _filter = {
+            "and": [
+                {
+                    "term": {
+                        "domain.exact": "test_domain"
                     }
+                },
+                {
+                    "term": {
+                        "doc_type": "xforminstance"
+                    }
+                },
+                query['filter'],
+                {
+                    "match_all": {}
                 }
-            },
-            "size": 1000000
+            ]
         }
+        if settings.ELASTICSEARCH_MAJOR_VERSION == 2:
+            expected = {
+                "query": {
+                    "filtered": {
+                        "filter": _filter,
+                        "query": {
+                            "match_all": {}
+                        }
+                    }
+                },
+                "size": 1000000
+            }
+        else:
+            expected = {
+                "query": {
+                    "bool": {
+                        "filter": _filter["and"],
+                        "must": {
+                            "match_all": {}
+                        }
+                    }
+                },
+                "size": 1000000
+            }
         self.checkQuery(
             es_query_from_get_params(request.GET, 'test_domain'),
             expected,

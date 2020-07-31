@@ -2,6 +2,7 @@ import json
 import uuid
 from datetime import datetime
 
+from django.conf import settings
 from django.utils.http import urlencode
 from nose.plugins.attrib import attr
 
@@ -181,8 +182,11 @@ class TestCommCareCaseResourceQueries(APIResourceTest, ElasticTestMixin):
 
         response = self._assert_auth_get_resource('%s?%s' % (self.list_endpoint, urlencode(url_params)))
         self.assertEqual(response.status_code, 200)
-        self.checkQuery(
-            fake_es.queries[0]['query']['filtered']['filter']['and'], expected_query, is_raw_query=True)
+        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+            actual = fake_es.queries[0]['query']['bool']['filter']
+        else:
+            actual = fake_es.queries[0]['query']['filtered']['filter']['and']
+        self.checkQuery(actual, expected_query, is_raw_query=True)
 
     def test_get_list_legacy_filters(self):
         expected = [
