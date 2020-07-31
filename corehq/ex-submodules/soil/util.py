@@ -14,7 +14,6 @@ from dimagi.utils.web import get_url_base
 
 from soil import DownloadBase, CachedDownload, FileDownload, MultipleTaskDownload, BlobDownload
 from soil.exceptions import TaskFailedError
-from soil.heartbeat import is_alive, heartbeat_enabled
 from soil.progress import get_task_status
 
 from corehq.util.view_utils import absolute_reverse
@@ -95,7 +94,7 @@ def get_download_context(download_id, message=None, require_result=False):
         'result': task_status.result,
         'error': task_status.error,
         'is_ready': is_ready,
-        'is_alive': is_alive() if heartbeat_enabled() else True,
+        'is_alive': True,       # TODO: Fix this
         'progress': task_status.progress._asdict(),
         'download_id': download_id,
         'allow_dropbox_sync': isinstance(download_data, FileDownload) and download_data.use_transfer,

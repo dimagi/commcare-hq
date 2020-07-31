@@ -5,7 +5,6 @@ A collection of functions which test the most basic operations of various servic
 import datetime
 import logging
 import re
-import time
 import uuid
 from io import BytesIO
 
@@ -18,11 +17,8 @@ from django.db.utils import OperationalError
 import requests
 import urllib3
 
-from soil import heartbeat
-
 import attr
 import gevent
-from celery import Celery
 from corehq.apps.app_manager.models import Application
 from corehq.apps.change_feed.connection import (
     get_kafka_client,
@@ -31,7 +27,6 @@ from corehq.apps.change_feed.connection import (
 from corehq.apps.es import GroupES
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.apps.hqadmin.escheck import check_es_cluster_health
-from corehq.apps.hqadmin.utils import parse_celery_pings, parse_celery_workers
 from corehq.blobs import CODES, get_blob_db
 from corehq.celery_monitoring.heartbeat import (
     Heartbeat,
@@ -187,11 +182,6 @@ def check_celery():
         return ServiceStatus(True, "OK")
 
 
-def check_heartbeat():
-    is_alive = heartbeat.is_alive()
-    return ServiceStatus(is_alive, "OK" if is_alive else "DOWN")
-
-
 def check_postgres():
     connected = True
     status_str = ""
@@ -283,10 +273,6 @@ CHECKS = {
     'celery': {
         "always_check": False,
         "check_func": check_celery,
-    },
-    'heartbeat': {
-        "always_check": False,
-        "check_func": check_heartbeat,
     },
     'elasticsearch': {
         "always_check": True,
