@@ -1,5 +1,3 @@
-{# NOTE: Django assumes templates are stored with UTF-8 encoding by default. Be sure to save this template with UTF-8 encoding. #}
-
 గడచిన 30 రోజుల మీ అంగన్వాడీ కేంద్రం(AWC) పనితీరు నివేదిక
 
 1. మొత్తం చేసిన సందర్శనలు/ మొత్తం చేయవలసిన సందర్శనలు: {{ visits }} / 65

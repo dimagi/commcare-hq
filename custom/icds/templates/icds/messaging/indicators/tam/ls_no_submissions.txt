@@ -1,9 +1,9 @@
 {# NOTE: Django assumes templates are stored with UTF-8 encoding by default. Be sure to save this template with UTF-8 encoding. #}
 
 {% if location_names and timeframe == 'week' %}
-பின்வரும் ஏ.டீ.ஈ.சி ஐ.சி.எஸ்.எஸ்.எஸ்.எஸ். சி.எஸ்.எஸ் பயன்பாட்டில் எந்தவொரு நடவடிக்கையும் செய்யவில்லை: {{ location_names }}
+கீழ்க்கண்ட அங்கன்வாடி மையம் ICDS CAS செயலியில் கடந்த ஒரு வார காலமாக எந்தவொரு செயலும் செய்யப்படவில்லை {{ location_names }}. இவா்களை தொடர்ந்து கண்காணித்து உதவவும்.
 {% endif %}
 
 {% if location_names and timeframe == 'month' %}
-பின்வரும் AWC ICDS CAS பயன்பாட்டில் எந்தவொரு மாதத்திலும் எந்த நடவடிக்கையும் செய்யவில்லை: {{ location_names }} உதவி வழங்குவதற்கு தயவுசெய்து அவர்களுடன் தொடரவும்.
+கீழ்க்கண்ட அங்கன்வாடி மையம் கடந்த ஒரு மாத காலமாக ICDS CAS செயலியில் எந்தவொரு செயலும் மேற்கொள்ளப்படவில்லை {{ location_names }}. இவா்களை தொடர்ந்து கண்காணித்து உதவவும். 
 {% endif %}

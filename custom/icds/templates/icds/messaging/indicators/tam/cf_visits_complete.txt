@@ -1,3 +1,3 @@
 {# NOTE: Django assumes templates are stored with UTF-8 encoding by default. Be sure to save this template with UTF-8 encoding. #}
 
-வாழ்த்துக்கள்! நீங்கள் {{ beneficiary }} முழுமையான ஊட்டச்சத்து வருகை செய்துள்ளீர்கள்
+வாழ்த்துக்கள்!  {{ beneficiary }} பயனாளிக்கு உாிய அனைத்து கூடுதல் உணவு அளிப்பது சம்மந்தமான பாா்வைகளையும் மேற்கொண்டுள்ளீா்கள்.

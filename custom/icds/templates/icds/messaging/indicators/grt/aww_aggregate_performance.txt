@@ -1,10 +1,10 @@
-Re·anggipa sal 30 ni gisepo  nang·ni AWC-rangna  kam ka∙e onnani report 
+Nang·ni AWC-na  re·anggipa sal 30-ni gisepo  kam ka∙e onnani  chu·gimik report 
 
-1. Badita chang re·e niaha/ Badita chang re·na nangnikkuenga: {{ visits }} / 65
-2. Badita chang somoi gita re·e niaha / Badita chang re·e niaha: {{ on_time_visits }} / {{ visits }}
+1. Badita chang visit ka∙aha/ Badita chang visit ka∙na nangnikkuenga : {{ visits }} / 65
+2. Badita chang somoi gita visit ka∙aha / Badita chang visit ka∙aha: {{ on_time_visits }} / {{ visits }}
 
-THR sualatani: {{ thr_distribution }}
+THR On·a: {{ thr_distribution }}
 
 Badita sak bi·sarangni jrimaniko ra·aha: {{ children_weighed }}
 
-Badita sal AWC ko  kuliaha ba average / Dakna nangani: {{ days_open }} / 25
+Badita sal AWC-ko kuliaha / Miksongani: {{ days_open }} / 25

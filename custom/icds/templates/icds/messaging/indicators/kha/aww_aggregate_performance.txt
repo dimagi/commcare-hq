@@ -1,9 +1,9 @@
 Ka Report shaphang ka Jingtip kyllum jong ki jingtreikam hapoh ki 30 sngi ba lah leit jong ka Anganwadi Centre
 
-1. Nombar jong ka jingleit jngoh/ Nombar ba kwah ban leit: {{ visits }} / 65
+1. Nombar jong ka jingleit jngoh/ Nombar ba kwah ban leit : {{ visits }} / 65
 2. Nombar jong ka jingleit jngoh biang por/ Nombar jong ka jingleit jngoh: {{ on_time_visits }} / {{ visits }}
 
-Ka jingai THR: {{ thr_distribution }}
+Ka jingai THR : {{ thr_distribution }}
 
 Ka jingdon jong ki khynnah ba lah thew: {{ children_weighed }}
 
