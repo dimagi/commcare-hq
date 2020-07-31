@@ -26,14 +26,14 @@ from zipfile import ZipFile
 
 def expose_cached_download(payload, expiry, file_extension, mimetype=None,
                            content_disposition=None, download_id=None,
-                           extras=None):
+                           extras=None, owner_ids=None):
     """
     Expose a cache download object.
     """
     ref = CachedDownload.create(payload, expiry, mimetype=mimetype,
                                 content_disposition=content_disposition,
                                 download_id=download_id, extras=extras,
-                                suffix=file_extension)
+                                suffix=file_extension, owner_ids=owner_ids)
     ref.save(expiry)
     return ref
 
@@ -52,7 +52,8 @@ def expose_blob_download(
         expiry,
         mimetype='text/plain',
         content_disposition=None,
-        download_id=None):
+        download_id=None,
+        owner_ids=None):
     """
     Expose a blob object for download
     """
@@ -62,6 +63,7 @@ def expose_blob_download(
         mimetype=mimetype,
         content_disposition=content_disposition,
         download_id=download_id,
+        owner_ids=owner_ids,
     )
     ref.save(expiry)
     return ref
@@ -134,12 +136,13 @@ def get_download_file_path(use_transfer, filename):
     return fpath
 
 
-def expose_download(use_transfer, file_path, filename, download_id, file_type):
+def expose_download(use_transfer, file_path, filename, download_id, file_type, owner_ids=None):
     common_kwargs = {
         'mimetype': Format.from_format(file_type).mimetype,
         'content_disposition': 'attachment; filename="{fname}"'.format(fname=filename),
         'download_id': download_id,
         'expiry': (1 * 60 * 60),
+        'owner_ids': owner_ids,
     }
     if use_transfer:
         expose_file_download(

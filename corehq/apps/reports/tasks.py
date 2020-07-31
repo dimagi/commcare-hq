@@ -250,6 +250,7 @@ def build_form_multimedia_zip(
         datespan,
         user_types,
         download_id,
+        owner_id,
 ):
     from corehq.apps.export.models import FormExportInstance
     export = FormExportInstance.get(export_id)
@@ -269,7 +270,7 @@ def build_form_multimedia_zip(
             _write_attachments_to_file(temp_path, num_forms, forms_info, case_id_to_name)
         with open(temp_path, 'rb') as f:
             zip_name = 'multimedia-{}'.format(unidecode(export.name))
-            _save_and_expose_zip(f, zip_name, domain, download_id)
+            _save_and_expose_zip(f, zip_name, domain, download_id, owner_id)
 
     DownloadBase.set_progress(build_form_multimedia_zip, num_forms, num_forms)
 
@@ -331,7 +332,7 @@ def _write_attachments_to_file(fpath, num_forms, forms_info, case_id_to_name):
                 DownloadBase.set_progress(build_form_multimedia_zip, form_number, num_forms)
 
 
-def _save_and_expose_zip(f, zip_name, domain, download_id):
+def _save_and_expose_zip(f, zip_name, domain, download_id, owner_id):
     expiry_minutes = 60
     get_blob_db().put(
         f,
@@ -347,6 +348,7 @@ def _save_and_expose_zip(f, zip_name, domain, download_id):
         mimetype='application/zip',
         content_disposition=safe_filename_header(zip_name, 'zip'),
         download_id=download_id,
+        owner_ids=[owner_id],
     )
 
 
