@@ -68,6 +68,7 @@ class ConditionallySafeClsView(View):
 def test_conditionally_safe_django_views():
     safe_request = MagicMock(this_is_safe=True)
     unsafe_request = MagicMock(this_is_safe=False)
+
     def _assert(view_fn, request, is_safe):
         assert is_location_safe(view_fn, request, (), {}) == is_safe, \
             f"{view_fn} {'IS NOT' if is_safe else 'IS'} marked as location-safe"
@@ -78,7 +79,6 @@ def test_conditionally_safe_django_views():
     ]:
         yield _assert, view, safe_request, True
         yield _assert, view, unsafe_request, False
-
 
 
 class ExampleReportDispatcher(ReportDispatcher):
