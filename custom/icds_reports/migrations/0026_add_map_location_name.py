@@ -1,8 +1,9 @@
+from corehq.sql_db.operations import RawSQLMigration
 from django.db import migrations
 
-from corehq.sql_db.operations import RawSQLMigration
+from custom.icds_reports.const import SQL_TEMPLATES_ROOT
 
-migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates'))
+migrator = RawSQLMigration((SQL_TEMPLATES_ROOT,))
 
 
 class Migration(migrations.Migration):

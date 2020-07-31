@@ -26,6 +26,9 @@ Postgres and Couch data.
 * CouchDB
   * From a non-Docker install: Copy `/var/lib/couchdb2/`
   * From a Docker install: Copy `~/.local/share/dockerhq/couchdb2`.
+  
+* Shared Directory
+  * If you are following the default instructions, copy the `sharedfiles` directory from the HQ root folder, otherwise copy the directory referenced by `SHARED_DRIVE_ROOT` in `localsettings.py`
 
 Save those backups to somewhere you'll be able to access from the new environment.
 
@@ -201,6 +204,10 @@ If you previously created backups of another HQ install's data, you can now copy
         $ ./scripts/docker start couch
 
   * Fire up Fauxton to check that the dbs are there: http://0.0.0.0:5984/_utils/
+  
+* Shared Directory
+  * If you are following the default instructions, move/merge the `sharedfiles` directory into the HQ root, otherwise do so into the `SHARED_DRIVE_ROOT` directory referenced in `localsettings.py`
+
 
 
 ### Set up your Django environment
@@ -259,6 +266,11 @@ you might run into issues. Here are minimum version requirements for these packa
     $ 6.14.4
     $ node --version
     $ v12.18.1
+
+On a clean Ubuntu 18.04 LTS install, the packaged nodejs version is v8. The easiest way to get onto the current nodejs v12 is 
+
+    $ curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
+    $ sudo apt-get install -y nodejs
 
 ### Using LESS: 2 Options
 
