@@ -103,7 +103,7 @@ function _run_tests() {
         TESTS="--attr=sql_backend"
     elif [ "$TEST" == "python-elasticsearch-v7" ]; then
         export ELASTICSEARCH_7_PORT=9200
-        export ELASTICSEARCH_MAJOR_VERSION=2
+        export ELASTICSEARCH_MAJOR_VERSION=7
         TESTS="--attr=es_test"
     else
         TESTS=""
