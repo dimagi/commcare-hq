@@ -279,6 +279,10 @@ def _use_v2_indicators(usercase, app_id):
 
 def _get_app_version_used_by_usercase(app_id, usercase):
     user = get_user_from_usercase(usercase)
+    return get_app_version_used_by_user(app_id, user)
+
+
+def get_app_version_used_by_user(app_id, user):
     last_build_details = get_reported_last_build_of_app_by_user(app_id, user)
     if last_build_details:
         return last_build_details.build_version

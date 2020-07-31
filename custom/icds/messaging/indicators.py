@@ -39,6 +39,7 @@ from custom.icds.const import (
     UCR_V2_MPR_5_CHILD_HEALTH_CASES_MONTHLY_ALIAS,
     UCR_V2_MPR_5_CHILD_HEALTH_PT1_ALIAS,
 )
+from custom.icds.messaging.custom_content import get_app_version_used_by_user
 from custom.icds_reports.cache import icds_quickcache
 from custom.icds_reports.models.aggregate import AggregateInactiveAWW
 
@@ -289,12 +290,7 @@ class AWWAggregatePerformanceIndicatorV2(BaseAWWAggregatePerformanceIndicator):
         if self.supervisor is None:
             return []
 
-        supervisor_user_last_build = get_reported_last_build_of_app_by_user(SUPERVISOR_APP_ID, self.supervisor)
-        supervisor_user_app_version = None
-        if supervisor_user_last_build:
-            supervisor_user_app_version = supervisor_user_last_build.build_version
-        ls_agg_perf_indicator = LSAggregatePerformanceIndicatorV2(self.domain, self.supervisor,
-                                                                  supervisor_user_app_version)
+        ls_agg_perf_indicator = LSAggregatePerformanceIndicatorV2(self.domain, self.supervisor)
         data = _get_data_for_performance_indicator(self, ls_agg_perf_indicator)
         return [self.render_template(data, language_code=language_code)]
 
@@ -587,9 +583,9 @@ class LSAggregatePerformanceIndicatorV2(BaseLSAggregatePerformanceIndicator):
     template = 'ls_aggregate_performance_v2.txt'
     slug = 'ls_v2'
 
-    def __init__(self, domain, user, app_version):
+    def __init__(self, domain, user):
         super().__init__(domain, user)
-        self.app_version = app_version
+        self.app_version = get_app_version_used_by_user(SUPERVISOR_APP_ID, user)
 
     def get_report_fixture(self, report_id):
         return get_v2_report_fixture_for_user(self.domain, report_id, self.restore_user, self.app_version)
