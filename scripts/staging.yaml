@@ -65,6 +65,7 @@ branches:
   - kev/combobox-add-ors # Kevin July 30
   - fr/authenticated-soil-downloads # Farid July 31
   - jls/linked-domains-parallel-release # Jenny July 31
+  - jls/view-apps-permission # Jenny July 31
  
 
 submodules: {}
