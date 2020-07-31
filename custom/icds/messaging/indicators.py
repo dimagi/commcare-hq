@@ -519,13 +519,7 @@ class BaseLSAggregatePerformanceIndicator(LSIndicator):
         raise NotImplementedError()
 
     def get_value_from_fixture(self, fixture, attribute):
-        xpath = './rows/row[@is_total_row="True"]/column[@id="{}"]'.format(attribute)
-        try:
-            return fixture.findall(xpath)[0].text
-        except:
-            raise IndicatorError("{} not found in fixture {} for user {}".format(
-                attribute, fixture, self.user.get_id
-            ))
+        raise NotImplementedError()
 
 
 class LSAggregatePerformanceIndicator(BaseLSAggregatePerformanceIndicator):
@@ -534,6 +528,15 @@ class LSAggregatePerformanceIndicator(BaseLSAggregatePerformanceIndicator):
 
     def get_report_fixture(self, report_id):
         return get_report_fixture_for_user(self.domain, report_id, self.restore_user)
+
+    def get_value_from_fixture(self, fixture, attribute):
+        xpath = './rows/row[@is_total_row="True"]/column[@id="{}"]'.format(attribute)
+        try:
+            return fixture.findall(xpath)[0].text
+        except:
+            raise IndicatorError("{} not found in fixture {} for user {}".format(
+                attribute, fixture, self.user.get_id
+            ))
 
     @property
     @memoized
@@ -592,6 +595,22 @@ class LSAggregatePerformanceIndicatorV2(BaseLSAggregatePerformanceIndicator):
 
     def get_report_fixture(self, report_id):
         return get_v2_report_fixture_for_user(self.domain, report_id, self.restore_user, self.app_version)
+
+    def get_value_from_fixture(self, fixture, attribute):
+        xpath = './rows/row[@is_total_row="False"]'
+        rows = fixture.findall(xpath)
+        last_month_string = get_last_month_string()
+        total = 0
+        for row in rows:
+            month = row.find('./column[@id="month"]')
+            if month is not None and month.text == last_month_string:
+                try:
+                    total += int(row.find('./column[@id="{}"]'.format(attribute)).text)
+                except:
+                    raise IndicatorError("{} not found in fixture {} for user {}".format(
+                        attribute, fixture, self.user.get_id
+                    ))
+        return total
 
     def get_messages(self, language_code=None):
         get_template(self._template_path(language_code))  # fail early if template missing
