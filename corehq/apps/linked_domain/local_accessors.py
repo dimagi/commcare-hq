@@ -1,5 +1,6 @@
 from corehq import feature_previews, toggles
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
+from corehq.apps.data_dictionary.models import CaseType, CaseProperty
 from corehq.apps.fixtures.dbaccessors import get_fixture_data_type_by_tag, get_fixture_items_for_data_type
 from corehq.apps.linked_domain.util import _clean_json
 from corehq.apps.locations.views import LocationFieldsView
@@ -48,3 +49,25 @@ def get_user_roles(domain):
         return _clean_json(role.to_json())
 
     return [_to_json(role) for role in UserRole.by_domain(domain)]
+
+
+def get_data_dictionary(domain):
+    data_dictionary = {}
+    for case_type in CaseType.objects.filter(domain=domain):
+        entry = {
+            'domain': domain,
+            'description': case_type.description,
+            'fully_generated': case_type.fully_generated
+        }
+
+        entry['properties'] = {
+            property.name: {
+                'description': property.description,
+                'deprecated': property.deprecated,
+                'data_type': property.data_type,
+                'group': property.group
+            }
+            for property in CaseProperty.objects.filter(case_type=case_type)}
+
+        data_dictionary[case_type.name] = entry
+    return data_dictionary
