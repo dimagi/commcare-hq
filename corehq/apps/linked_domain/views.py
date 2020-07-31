@@ -24,10 +24,7 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.app_manager.util import is_linked_app
-from corehq.apps.case_search.models import (
-    CaseSearchConfig,
-    CaseSearchQueryAddition,
-)
+from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_or_api_key,
@@ -138,12 +135,7 @@ def case_search_config(request, domain):
     except CaseSearchConfig.DoesNotExist:
         config = None
 
-    try:
-        addition = CaseSearchQueryAddition.objects.get(domain=domain).to_json()
-    except CaseSearchQueryAddition.DoesNotExist:
-        addition = None
-
-    return JsonResponse({'config': config, 'addition': addition})
+    return JsonResponse({'config': config})
 
 
 @login_or_api_key

@@ -45,7 +45,6 @@ from corehq.apps.case_importer.tracking.models import (
 )
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
-    CaseSearchQueryAddition,
     FuzzyProperties,
     IgnorePatterns,
 )
@@ -460,7 +459,6 @@ class TestDeleteDomain(TestCase):
     def _assert_case_search_counts(self, domain_name, count):
         self._assert_queryset_count([
             CaseSearchConfig.objects.filter(domain=domain_name),
-            CaseSearchQueryAddition.objects.filter(domain=domain_name),
             FuzzyProperties.objects.filter(domain=domain_name),
             IgnorePatterns.objects.filter(domain=domain_name),
         ], count)
@@ -468,7 +466,6 @@ class TestDeleteDomain(TestCase):
     def test_case_search(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             CaseSearchConfig.objects.create(domain=domain_name)
-            CaseSearchQueryAddition.objects.create(domain=domain_name)
             FuzzyProperties.objects.create(domain=domain_name)
             IgnorePatterns.objects.create(domain=domain_name)
             self._assert_case_search_counts(domain_name, 1)

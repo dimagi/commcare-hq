@@ -6,7 +6,6 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from flaky import flaky
-from mock import patch
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases
@@ -16,16 +15,14 @@ from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.case_search.models import (
     CLAIM_CASE_TYPE,
-    SEARCH_QUERY_ADDITION_KEY,
     CaseSearchConfig,
-    CaseSearchQueryAddition,
     IgnorePatterns,
 )
 from corehq.apps.case_search.utils import CaseSearchCriteria
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import ElasticTestMixin
 from corehq.apps.users.models import CommCareUser
-from corehq.elastic import ES_DEFAULT_INSTANCE, get_es_new
+from corehq.elastic import get_es_new
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.pillows.case_search import CaseSearchReindexerFactory
@@ -302,8 +299,6 @@ class CaseClaimEndpointTests(TestCase):
         ensure_index_deleted(CASE_SEARCH_INDEX)
         self.user.delete(deleted_by=None)
         self.domain.delete()
-        for query_addition in CaseSearchQueryAddition.objects.all():
-            query_addition.delete()
         cache = get_redis_default_cache()
         cache.clear()
 
@@ -453,141 +448,3 @@ class CaseClaimEndpointTests(TestCase):
                             re.sub(DATE_PATTERN, FIXED_DATESTAMP,
                                    re.sub(PATTERN, TIMESTAMP, response.content.decode('utf-8')))),
             known_result)
-
-    @patch('corehq.apps.es.es_query.run_query')
-    def test_search_query_addition(self, run_query_mock):
-        self.maxDiff = None
-        new_must_clause = {
-            "bool": {
-                "should": [
-                    {
-                        "nested": {
-                            "path": "case_properties",
-                            "query": {
-                                "filtered": {
-                                    "filter": {
-                                        "and": [
-                                            {
-                                                "term": {
-                                                    "case_properties.key.exact": "is_inactive"
-                                                }
-                                            },
-                                            {
-                                                "term": {
-                                                    "case_properties.value.exact": "yes"
-                                                }
-                                            }
-                                        ]
-                                    },
-                                    "query": {
-                                        "match_all": {
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    {
-                        "nested": {
-                            "path": "case_properties",
-                            "query": {
-                                "filtered": {
-                                    "filter": {
-                                        "and": [
-                                            {
-                                                "term": {
-                                                    "case_properties.key.exact": "awaiting_claim"
-                                                }
-                                            },
-                                            {
-                                                "term": {
-                                                    "case_properties.value.exact": "yes"
-                                                }
-                                            }
-                                        ]
-                                    },
-                                    "query": {
-                                        "match_all": {
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                ]
-            }
-        }
-
-        query_partial = {
-            "bool": {
-                "must": [
-                    new_must_clause
-                ]
-            }
-        }
-
-        query_addition = CaseSearchQueryAddition(domain=DOMAIN, name="foo", query_addition=query_partial)
-        query_addition.save()
-
-        client = Client()
-        client.login(username=USERNAME, password=PASSWORD)
-        url = reverse('remote_search', kwargs={'domain': DOMAIN})
-        some_case_name = "wut"
-        response = client.get(
-            url,
-            {'name': some_case_name, 'case_type': CASE_TYPE, SEARCH_QUERY_ADDITION_KEY: query_addition.id}
-        )
-
-        self.assertEqual(response.status_code, 200)
-
-        expected_query = {
-            'query': {
-                'filtered': {
-                    'filter': {
-                        'and': [
-                            {'term': {'domain.exact': DOMAIN}},
-                            {'term': {'type.exact': CASE_TYPE}},
-                            {'term': {'closed': False}},
-                            {'match_all': {}}
-                        ]
-                    },
-                    'query': {
-                        'bool': {
-                            'must': [
-                                {
-                                    'nested': {
-                                        'path': 'case_properties',
-                                        'query': {
-                                            'filtered': {
-                                                'filter': {
-                                                    "and": (
-                                                        {
-                                                            'term': {'case_properties.key.exact': 'name'}
-                                                        },
-                                                        {
-                                                            'term': {'case_properties.value.exact': some_case_name}
-                                                        }
-                                                    )
-                                                },
-                                                'query': {
-                                                    'match_all': {
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                },
-                                new_must_clause
-                            ]
-                        }
-                    }
-                }
-            },
-            'size': CASE_SEARCH_MAX_RESULTS
-        }
-        run_query_mock.assert_called_with(
-            "case_search",
-            expected_query,
-            debug_host=None,
-            es_instance_alias=ES_DEFAULT_INSTANCE,
-        )

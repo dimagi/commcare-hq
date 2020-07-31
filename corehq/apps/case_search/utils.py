@@ -2,14 +2,10 @@ import re
 
 from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
-    SEARCH_QUERY_ADDITION_KEY,
     SEARCH_QUERY_CUSTOM_VALUE,
     UNSEARCHABLE_KEYS,
     CaseSearchConfig,
-    CaseSearchQueryAddition,
     FuzzyProperties,
-    merge_queries,
-    replace_custom_query_variables,
 )
 from corehq.apps.es.case_search import CaseSearchES
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAX_RESULTS
@@ -23,7 +19,6 @@ class CaseSearchCriteria(object):
         self.domain = domain
         self.case_type = case_type
         self.criteria = criteria
-        self.query_addition_debug_details = {}
 
         self.config = self._get_config()
         self.search_es = self._get_initial_search_es()
@@ -62,7 +57,6 @@ class CaseSearchCriteria(object):
         self._add_owner_id()
         self._add_blacklisted_owner_ids()
         self._add_case_property_queries()
-        self._add_case_search_additions()
 
     def _add_include_closed(self):
         try:
@@ -102,16 +96,3 @@ class CaseSearchCriteria(object):
                 to_remove = re.escape(removal_regex.regex)
                 value = re.sub(to_remove, '', value)
             self.search_es = self.search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
-
-    def _add_case_search_additions(self):
-        query_addition_id = self.criteria.pop(SEARCH_QUERY_ADDITION_KEY, None)
-        if query_addition_id:
-            ignore_patterns = self.config.ignore_patterns.filter(domain=self.domain, case_type=self.case_type)
-            query_addition = CaseSearchQueryAddition.objects.get(
-                id=query_addition_id, domain=self.domain).query_addition
-            query_addition = replace_custom_query_variables(query_addition, self.criteria, ignore_patterns)
-            self.query_addition_debug_details['original_query'] = self.search_es.get_query()
-            self.query_addition_debug_details['query_addition'] = query_addition
-            new_query = merge_queries(self.search_es.get_query(), query_addition)
-            self.query_addition_debug_details['new_query'] = new_query
-            self.search_es = self.search_es.set_query(new_query)
