@@ -4,7 +4,7 @@ from pillowtop.es_utils import ElasticsearchIndexInfo, REPORT_CASE_HQ_INDEX_NAME
 
 REPORT_CASE_INDEX = prefix_for_tests("report_cases_czei39du507m9mmpqk3y01x72a3ux4p0")
 
-REPORT_CASE_MAPPING={'_meta': {'comment': '2013-11-05 dmyung',
+REPORT_CASE_MAPPING = {'_meta': {'comment': '2013-11-05 dmyung',
            'created': None},
  'date_detection': False,
  'date_formats': ['yyyy-MM-dd',
