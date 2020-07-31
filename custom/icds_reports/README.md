@@ -15,6 +15,46 @@ This does not include populating any data.
 - Add an `'icds-ucr'` entry to `settings.REPORTING_DATABASES` pointing at the desired key from
   `settings.DATABASES` where you want the report data tables to live.
 - Update your `settings.SERVER_ENVIRONMENT` to `'icds'`
+- Add the following to localsettings:
+
+```
+LOCAL_STATIC_DATA_SOURCES = [
+    "custom/icds_reports/ucr/data_sources/*.json",
+    "custom/icds_reports/ucr/data_sources/dashboard/*.json",
+]
+
+LOCAL_STATIC_UCR_REPORTS = [
+    "custom/icds_reports/ucr/reports/dashboard/*.j,son",
+    "custom/icds_reports/ucr/reports/asr/*.json",
+    "custom/icds_reports/ucr/reports/asr/ucr_v2/*.json",
+    "custom/icds_reports/ucr/reports/mpr/*.json",
+    "custom/icds_reports/ucr/reports/mpr/dashboard/*.json",
+    "custom/icds_reports/ucr/reports/ls/*.json",
+    "custom/icds_reports/ucr/reports/other/*.json",
+]
+
+LOCAL_CUSTOM_UCR_EXPRESSION_LISTS = [
+    "custom.icds_reports.ucr.expressions.CUSTOM_UCR_EXPRESSIONS",
+]
+
+LOCAL_CUSTOM_UCR_REPORT_FILTERS = [
+    ("village_choice_list", "custom.icds_reports.ucr.filter_spec.build_village_choice_list_filter_spec"),
+]
+
+LOCAL_CUSTOM_UCR_REPORT_FILTER_VALUES = [
+    ("village_choice_list", "custom.icds_reports.ucr.filter_value.VillageFilterValue"),
+]
+
+LOCAL_APPS = (
+    "custom.icds",
+    "custom.icds.data_management",
+    "custom.icds_reports",
+)
+
+COMMCARE_EXTENSIONS = [
+    "custom.icds.commcare_extensions",
+]
+```
 
 ## Citus setup
 

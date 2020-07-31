@@ -7,8 +7,8 @@ from django.utils.functional import cached_property
 from mock import Mock, patch
 
 from corehq.apps.custom_data_fields.models import (
-    SQLCustomDataFieldsDefinition,
-    SQLField,
+    CustomDataFieldsDefinition,
+    Field,
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
@@ -1052,10 +1052,10 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
 
     def test_download_reupload_no_changes(self):
         # Make sure there's a bunch of data
-        loc_fields = SQLCustomDataFieldsDefinition.get_or_create(self.domain, 'LocationFields')
+        loc_fields = CustomDataFieldsDefinition.get_or_create(self.domain, 'LocationFields')
         loc_fields.set_fields([
-            SQLField(slug='favorite_color'),
-            SQLField(slug='language'),
+            Field(slug='favorite_color'),
+            Field(slug='language'),
         ])
         loc_fields.save()
 

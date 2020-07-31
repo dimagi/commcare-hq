@@ -1,3 +1,4 @@
+from copy import copy
 from functools import partial
 
 from django.utils.translation import ugettext as _
@@ -9,8 +10,8 @@ from corehq.apps.case_search.models import (
     CaseSearchQueryAddition,
 )
 from corehq.apps.custom_data_fields.models import (
-    SQLField,
-    SQLCustomDataFieldsDefinition,
+    CustomDataFieldsDefinition,
+    Field,
 )
 from corehq.apps.fixtures.dbaccessors import (
     delete_fixture_items_for_data_type,
@@ -104,9 +105,9 @@ def update_custom_data_models(domain_link, limit_types=None):
         master_results = local_custom_data_models(domain_link.master_domain, limit_types)
 
     for field_type, field_definitions in master_results.items():
-        model = SQLCustomDataFieldsDefinition.get_or_create(domain_link.linked_domain, field_type)
+        model = CustomDataFieldsDefinition.get_or_create(domain_link.linked_domain, field_type)
         model.set_fields([
-            SQLField(
+            Field(
                 slug=field_def['slug'],
                 is_required=field_def['is_required'],
                 label=field_def['label'],
@@ -173,6 +174,8 @@ def update_user_roles(domain_link):
         reduce=False,
     )
     local_roles_by_name = {role.name: role for role in local_roles}
+
+    # Update downstream roles based on upstream roles
     for role_def in master_results:
         role = local_roles_by_name.get(role_def['name'])
         if role:
@@ -180,8 +183,21 @@ def update_user_roles(domain_link):
         else:
             role_json = {'domain': domain_link.linked_domain}
 
+        role_def = copy(role_def)
+        role_def.pop('_id')
         role_json.update(role_def)
+        local_roles_by_name[role_json['name']] = role_json
         UserRole.wrap(role_json).save()
+
+    # Update assignable_by ids - must be done after main update to guarantee all local roles have ids
+    master_roles_by_id = {role['_id']: role for role in master_results}
+    for role in local_roles_by_name.values():
+        if role['assignable_by']:
+            role['assignable_by'] = [
+                local_roles_by_name[master_roles_by_id[role_id]['name']]['_id']
+                for role_id in role['assignable_by']
+            ]
+            UserRole.wrap(role).save()
 
 
 def update_case_search_config(domain_link):

@@ -2,11 +2,15 @@ from datetime import datetime
 
 from django.test import TestCase
 
+from pillowtop.es_utils import initialize_index_and_mapping
+
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.elastic import refresh_elasticsearch_index
+from corehq.elastic import get_es_new
+from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
+from corehq.util.elastic import ensure_index_deleted
 from corehq.util.es.testing import sync_users_to_es
 
 
@@ -99,11 +103,15 @@ class CCUserLocationAssignmentTest(TestCase):
 
     @sync_users_to_es()
     def test_deleting_location_updates_user(self):
+        self.es = get_es_new()
+        ensure_index_deleted(USER_INDEX)
+        initialize_index_and_mapping(self.es, USER_INDEX_INFO)
         self.user.reset_locations(self.loc_ids)
-        refresh_elasticsearch_index('users')
+        self.es.indices.refresh(USER_INDEX)
         self.loc1.sql_location.full_delete()
         self.loc2.sql_location.full_delete()
         self.assertAssignedLocations([])
+        ensure_index_deleted(USER_INDEX)
 
     def test_no_commit(self):
         self.user.set_location(self.loc1, commit=False)

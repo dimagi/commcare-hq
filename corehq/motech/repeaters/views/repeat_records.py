@@ -42,7 +42,6 @@ from corehq.motech.repeaters.dbaccessors import (
     get_repeat_record_count,
     get_repeat_records_by_payload_id,
 )
-from corehq.motech.repeaters.forms import EmailBulkPayload
 from corehq.motech.repeaters.models import RepeatRecord
 from corehq.motech.utils import pformat_json
 from corehq.util.xml_utils import indent_xml
@@ -57,7 +56,6 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     ajax_pagination = True
     asynchronous = False
     sortable = False
-    custom_filter_action_template = "domain/partials/custom_repeat_record_report.html"
 
     fields = [
         'corehq.apps.reports.filters.select.RepeaterFilter',
@@ -263,7 +261,6 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         form_query_string_cancellable = _change_record_state(form_query_string, 'PENDING')
 
         context.update(
-            email_bulk_payload_form=EmailBulkPayload(domain=self.domain),
             total=total,
             total_cancel=total_cancel,
             total_requeue=total_requeue,
