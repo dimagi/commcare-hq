@@ -1,6 +1,8 @@
 import re
 from datetime import datetime, timedelta
 
+from couchdbkit import ResourceNotFound
+
 from django.utils.translation import ugettext as _
 
 from memoized import memoized
@@ -147,7 +149,10 @@ class EnterpriseWebUserReport(EnterpriseReport):
                     return role
                 else:
                     role_id = role[len('user-role:'):]
-                    return UserRole.get(role_id).name
+                    try:
+                        return UserRole.get(role_id).name
+                    except ResourceNotFound:
+                        return _('Unknown Role')
             else:
                 return 'N/A'
         rows = []
