@@ -40,7 +40,9 @@ def test_view_safety():
     for view, is_safe in [
             (safe_fn_view, True),
             (unsafe_fn_view, False),
-            (SafeClsView, True),
-            (UnsafeClsView, False),
+            (SafeClsView.as_view(), True),
+            (UnsafeClsView.as_view(), False),
+            (UnSafeChildOfSafeClsView.as_view(), True),
+            (SafeChildofUnsafeClsView.as_view(), True),
     ]:
         yield _assert, view, is_safe
