@@ -1,6 +1,6 @@
 import settings
 from casexml.apps.case.xml import V1, V2, V3, check_version, V2_NAMESPACE
-from xml.etree import cElementTree as ElementTree
+from lxml import etree as ElementTree
 import logging
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from dateutil.parser import parse as parse_datetime
@@ -49,8 +49,8 @@ def get_dynamic_element(key, val):
     element = ElementTree.Element(key)
     if isinstance(val, dict):
         element.text = str(val.get('#text', ''))
-        element.attrib = {
-            k[1:]: str(v) for k, v in val.items() if k and k.startswith("@")}
+        element.attrib.update({
+            k[1:]: str(v) for k, v in val.items() if k and k.startswith("@")})
     else:
         # assume it's a string. Hopefully this is valid
         element.text = str(val)
@@ -84,7 +84,7 @@ class CaseXMLGeneratorBase(object):
 
     def get_index_element(self, index):
         elem = safe_element(index.identifier, index.referenced_id)
-        elem.attrib = {"case_type": index.referenced_type}
+        elem.attrib.set("case_type", index.referenced_type)
         if getattr(index, 'relationship') and index.relationship == "extension":
             elem.attrib.update({"relationship": index.relationship})
         return elem
@@ -156,13 +156,13 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
 
     def get_root_element(self):
         root = safe_element("case")
-        root.attrib = {
+        root.attrib.update({
             "xmlns": V2_NAMESPACE,
             "case_id": self.case.case_id,
             "user_id": self.case.user_id or '',
-        }
+        })
         if self.case.modified_on:
-            root.attrib["date_modified"] = datetime_to_xml_string(self.case.modified_on)
+            root.attrib.set("date_modified", datetime_to_xml_string(self.case.modified_on))
         return root
 
     def get_case_type_element(self):
@@ -200,10 +200,10 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
                 for k, a in self.case.case_attachments.items():
                     aroot = safe_element(k)
                     # moved to attrs in v2
-                    aroot.attrib = {
+                    aroot.attrib.update({
                         "src": self.case.get_attachment_server_url(k),
                         "from": "remote"
-                    }
+                    })
                     attachment_elem.append(aroot)
                 element.append(attachment_elem)
 
@@ -235,12 +235,12 @@ class CaseDBXMLGenerator(V2CaseXMLGenerator):
     def get_root_element(self):
         from corehq.apps.users.cases import get_owner_id
         root = safe_element("case")
-        root.attrib = {
+        root.attrib.update({
             "case_id": self.case.case_id,
             "case_type": self.case.type,
             "owner_id": get_owner_id(self.case),
             "status": "closed" if self.case.closed else "open",
-        }
+        })
         return root
 
     def add_base_properties(self, element):

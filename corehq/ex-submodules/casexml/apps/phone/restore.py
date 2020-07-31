@@ -124,7 +124,7 @@ class RestoreContent(object):
             self.num_items += num - 1
             self.response_body.write(xml_element)
         else:
-            self.response_body.write(xml_util.tostring(xml_element))
+            self.response_body.write(ElementTree.tostring(xml_element, encoding='utf-8'))
 
     def extend(self, iterable):
         for element in iterable:
