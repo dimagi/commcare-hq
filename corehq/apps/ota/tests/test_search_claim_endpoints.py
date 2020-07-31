@@ -2,6 +2,7 @@ import re
 from collections import OrderedDict
 from uuid import uuid4
 
+from django.conf import settings
 from django.test import Client, TestCase
 from django.urls import reverse
 
@@ -29,7 +30,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.elastic import ES_DEFAULT_INSTANCE, get_es_new
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
-from corehq.pillows.case_search import CaseSearchReindexerFactory
+from corehq.pillows.case_search import CaseSearchReindexerFactory, domains_needing_search_index
 from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_INDEX,
     CASE_SEARCH_INDEX_INFO,
@@ -61,22 +62,67 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
         criteria = {
             "commcare_blacklisted_owner_ids": "id1 id2 id3,id4"
         }
-        expected = {'query':
-                    {'filtered':
-                     {'filter':
-                      {'and': [
-                          {'term': {'domain.exact': 'swashbucklers'}},
-                          {"term": {"type.exact": "case_type"}},
-                          {"term": {"closed": False}},
-                          {'not': {'term': {'owner_id': 'id1'}}},
-                          {'not': {'term': {'owner_id': 'id2'}}},
-                          {'not': {'term': {'owner_id': 'id3,id4'}}},
-                          {'match_all': {}}
-                      ]},
-                      "query": {
-                          "match_all": {}
-                      }}},
-                    'size': CASE_SEARCH_MAX_RESULTS}
+        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+            expected = {
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {'term': {'domain.exact': 'swashbucklers'}},
+                            {"term": {"type.exact": "case_type"}},
+                            {"term": {"closed": False}},
+                            {
+                                "bool": {
+                                    "must_not": {
+                                        "term": {
+                                            "owner_id": "id1"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "bool": {
+                                    "must_not": {
+                                        "term": {
+                                            "owner_id": "id2"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "bool": {
+                                    "must_not": {
+                                        "term": {
+                                            "owner_id": "id3,id4"
+                                        }
+                                    }
+                                }
+                            },
+                            {"match_all": {}}
+                        ],
+                        "must": {
+                            "match_all": {}
+                        }
+                    }
+                },
+                "size": CASE_SEARCH_MAX_RESULTS
+            }
+        else:
+            expected = {'query':
+                        {'filtered':
+                        {'filter':
+                        {'and': [
+                            {'term': {'domain.exact': 'swashbucklers'}},
+                            {"term": {"type.exact": "case_type"}},
+                            {"term": {"closed": False}},
+                            {'not': {'term': {'owner_id': 'id1'}}},
+                            {'not': {'term': {'owner_id': 'id2'}}},
+                            {'not': {'term': {'owner_id': 'id3,id4'}}},
+                            {'match_all': {}}
+                        ]},
+                        "query": {
+                            "match_all": {}
+                        }}},
+                        'size': CASE_SEARCH_MAX_RESULTS}
 
         self.checkQuery(
             CaseSearchCriteria(DOMAIN, 'case_type', criteria).search_es,
@@ -126,155 +172,295 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
             ('other_name', "this word should not be gone"),
         ])
 
-        expected = {"query": {
-            "filtered": {
-                "filter": {
-                    "and": [
-                        {
-                            "term": {
-                                "domain.exact": "swashbucklers"
-                            }
-                        },
-                        {
-                            "term": {
-                                "type.exact": "case_type"
-                            }
-                        },
-                        {
-                            "term": {
-                                "closed": False
-                            }
-                        },
-                        {
-                            "match_all": {}
-                        }
-                    ]
-                },
+        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+            expected = {
                 "query": {
                     "bool": {
-                        "must": [
-                            {
-                                "nested": {
-                                    "path": "case_properties",
-                                    "query": {
-                                        "filtered": {
-                                            "filter": {
-                                                "and": (
-                                                    {
-                                                        "term": {
-                                                            "case_properties.key.exact": "phone_number"
-                                                        }
-                                                    },
-                                                    {
-                                                        "term": {
-                                                            "case_properties.value.exact": "91999"
-                                                        }
-                                                    }
-                                                ),
-                                            },
+                        "filter": [
+                            {'term': {'domain.exact': 'swashbucklers'}},
+                            {"term": {"type.exact": "case_type"}},
+                            {"term": {"closed": False}},
+                            {"match_all": {}}
+                        ],
+                        "must": {
+                            "bool": {
+                                "must": [
+                                    {
+                                        "nested": {
+                                            "path": "case_properties",
                                             "query": {
-                                                "match_all": {
+                                                "bool": {
+                                                    "filter": [
+                                                        {
+                                                            "bool": {
+                                                                "filter": [
+                                                                    {
+                                                                        "term": {
+                                                                            "case_properties.key.exact": "phone_number"
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "term": {
+                                                                            "case_properties.value.exact": "91999"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        }
+                                                    ],
+                                                    "must": {
+                                                        "match_all": {}
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "nested": {
+                                            "path": "case_properties",
+                                            "query": {
+                                                "bool": {
+                                                    "filter": [
+                                                        {
+                                                            "bool": {
+                                                                "filter": [
+                                                                    {
+                                                                        "term": {
+                                                                            "case_properties.key.exact": "special_id"
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "term": {
+                                                                            "case_properties.value.exact": "abc123546"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        }
+                                                    ],
+                                                    "must": {
+                                                        "match_all": {}
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "nested": {
+                                            "path": "case_properties",
+                                            "query": {
+                                                "bool": {
+                                                    "filter": [
+                                                        {
+                                                            "bool": {
+                                                                "filter": [
+                                                                    {
+                                                                        "term": {
+                                                                            "case_properties.key.exact": "name"
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "term": {
+                                                                            "case_properties.value.exact": "this should be"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        }
+                                                    ],
+                                                    "must": {
+                                                        "match_all": {}
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    {
+                                        "nested": {
+                                            "path": "case_properties",
+                                            "query": {
+                                                "bool": {
+                                                    "filter": [
+                                                        {
+                                                            "bool": {
+                                                                "filter": [
+                                                                    {
+                                                                        "term": {
+                                                                            "case_properties.key.exact": "other_name"
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "term": {
+                                                                            "case_properties.value.exact": "this word should not be gone"
+                                                                        }
+                                                                    }
+                                                                ]
+                                                            }
+                                                        }
+                                                    ],
+                                                    "must": {
+                                                        "match_all": {}
+                                                    }
                                                 }
                                             }
                                         }
                                     }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "size": CASE_SEARCH_MAX_RESULTS
+            }
+        else:
+            expected = {"query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {
+                                "term": {
+                                    "domain.exact": "swashbucklers"
                                 }
                             },
                             {
-                                "nested": {
-                                    "path": "case_properties",
-                                    "query": {
-                                        "filtered": {
-                                            "filter": {
-                                                "and": (
-                                                    {
-                                                        "term": {
-                                                            "case_properties.key.exact": "special_id"
-                                                        }
-                                                    },
-                                                    {
-                                                        "term": {
-                                                            "case_properties.value.exact": "abc123546"
-                                                        }
-                                                    }
-                                                )
-
-                                            },
-                                            "query": {
-                                                "match_all": {
-                                                }
-                                            }
-                                        }
-                                    }
+                                "term": {
+                                    "type.exact": "case_type"
                                 }
                             },
                             {
-                                "nested": {
-                                    "path": "case_properties",
-                                    "query": {
-                                        "filtered": {
-                                            "filter": {
-                                                "and": (
-                                                    {
-                                                        "term": {
-                                                            "case_properties.key.exact": "name"
-                                                        }
-                                                    },
-                                                    {
-                                                        "term": {
-                                                            "case_properties.value.exact": "this should be"
-                                                        }
-                                                    }
-                                                )
-
-                                            },
-                                            "query": {
-                                                "match_all": {
-                                                }
-                                            }
-                                        }
-                                    }
+                                "term": {
+                                    "closed": False
                                 }
                             },
                             {
-                                "nested": {
-                                    "path": "case_properties",
-                                    "query": {
-                                        "filtered": {
-                                            "filter": {
-                                                "and": (
-                                                    {
-                                                        "term": {
-                                                            "case_properties.key.exact": "other_name"
-                                                        }
-                                                    },
-                                                    {
-                                                        "term": {
-                                                            "case_properties.value.exact": (
-                                                                "this word should not be gone"
-                                                            )
-                                                        }
-                                                    }
-                                                )
-                                            },
-                                            "query": {
-                                                "match_all": {
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
+                                "match_all": {}
                             }
                         ]
+                    },
+                    "query": {
+                        "bool": {
+                            "must": [
+                                {
+                                    "nested": {
+                                        "path": "case_properties",
+                                        "query": {
+                                            "filtered": {
+                                                "filter": {
+                                                    "and": (
+                                                        {
+                                                            "term": {
+                                                                "case_properties.key.exact": "phone_number"
+                                                            }
+                                                        },
+                                                        {
+                                                            "term": {
+                                                                "case_properties.value.exact": "91999"
+                                                            }
+                                                        }
+                                                    ),
+                                                },
+                                                "query": {
+                                                    "match_all": {
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "nested": {
+                                        "path": "case_properties",
+                                        "query": {
+                                            "filtered": {
+                                                "filter": {
+                                                    "and": (
+                                                        {
+                                                            "term": {
+                                                                "case_properties.key.exact": "special_id"
+                                                            }
+                                                        },
+                                                        {
+                                                            "term": {
+                                                                "case_properties.value.exact": "abc123546"
+                                                            }
+                                                        }
+                                                    )
+                                                },
+                                                "query": {
+                                                    "match_all": {
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "nested": {
+                                        "path": "case_properties",
+                                        "query": {
+                                            "filtered": {
+                                                "filter": {
+                                                    "and": (
+                                                        {
+                                                            "term": {
+                                                                "case_properties.key.exact": "name"
+                                                            }
+                                                        },
+                                                        {
+                                                            "term": {
+                                                                "case_properties.value.exact": "this should be"
+                                                            }
+                                                        }
+                                                    )
+                                                },
+                                                "query": {
+                                                    "match_all": {
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "nested": {
+                                        "path": "case_properties",
+                                        "query": {
+                                            "filtered": {
+                                                "filter": {
+                                                    "and": (
+                                                        {
+                                                            "term": {
+                                                                "case_properties.key.exact": "other_name"
+                                                            }
+                                                        },
+                                                        {
+                                                            "term": {
+                                                                "case_properties.value.exact": (
+                                                                    "this word should not be gone"
+                                                                )
+                                                            }
+                                                        }
+                                                    )
+                                                },
+                                                "query": {
+                                                    "match_all": {
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
                     }
                 }
+            },
+                "size": CASE_SEARCH_MAX_RESULTS,
             }
-        },
-            "size": CASE_SEARCH_MAX_RESULTS,
-        }
         self.checkQuery(
             CaseSearchCriteria(DOMAIN, 'case_type', criteria).search_es,
             expected,
+            validate_query=False
         )
 
 
@@ -297,6 +483,7 @@ class CaseClaimEndpointTests(TestCase):
             owner_id=OWNER_ID,
             update={'opened_by': OWNER_ID},
         ).as_xml()], {'domain': DOMAIN})
+        domains_needing_search_index.clear()
         CaseSearchReindexerFactory(domain=DOMAIN).build().reindex()
         es = get_es_new()
         es.indices.refresh(CASE_SEARCH_INDEX)
@@ -543,51 +730,103 @@ class CaseClaimEndpointTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
-        expected_query = {
-            'query': {
-                'filtered': {
-                    'filter': {
-                        'and': [
-                            {'term': {'domain.exact': DOMAIN}},
-                            {'term': {'type.exact': CASE_TYPE}},
-                            {'term': {'closed': False}},
-                            {'match_all': {}}
-                        ]
-                    },
-                    'query': {
-                        'bool': {
-                            'must': [
-                                {
-                                    'nested': {
-                                        'path': 'case_properties',
-                                        'query': {
-                                            'filtered': {
-                                                'filter': {
-                                                    "and": (
+        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+            expected_query = {
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {"term": {"domain.exact": "swashbucklers"}},
+                            {"term": {"type.exact": "case"}},
+                            {"term": {"closed": False}},
+                            {"match_all": {}}
+                        ],
+                        "must": {
+                            "bool": {
+                                "must": [
+                                    {
+                                        "nested": {
+                                            "path": "case_properties",
+                                            "query": {
+                                                "bool": {
+                                                    "filter": [
                                                         {
-                                                            'term': {'case_properties.key.exact': 'name'}
-                                                        },
-                                                        {
-                                                            'term': {'case_properties.value.exact': some_case_name}
+                                                            "bool": {
+                                                                "filter": (
+                                                                    {
+                                                                        "term": {
+                                                                            "case_properties.key.exact": "name"
+                                                                        }
+                                                                    },
+                                                                    {
+                                                                        "term": {
+                                                                            "case_properties.value.exact": "wut"
+                                                                        }
+                                                                    }
+                                                                )
+                                                            }
                                                         }
-                                                    )
-                                                },
-                                                'query': {
-                                                    'match_all': {
+                                                    ],
+                                                    "must": {
+                                                        "match_all": {}
                                                     }
                                                 }
                                             }
                                         }
-                                    }
-                                },
-                                new_must_clause
-                            ]
+                                    },
+                                    new_must_clause
+                                ]
+                            }
                         }
                     }
-                }
-            },
-            'size': CASE_SEARCH_MAX_RESULTS
-        }
+                },
+                "size": CASE_SEARCH_MAX_RESULTS
+            }
+        else:
+            expected_query = {
+                'query': {
+                    'filtered': {
+                        'filter': {
+                            'and': [
+                                {'term': {'domain.exact': DOMAIN}},
+                                {'term': {'type.exact': CASE_TYPE}},
+                                {'term': {'closed': False}},
+                                {'match_all': {}}
+                            ]
+                        },
+                        'query': {
+                            'bool': {
+                                'must': [
+                                    {
+                                        'nested': {
+                                            'path': 'case_properties',
+                                            'query': {
+                                                'filtered': {
+                                                    'filter': {
+                                                        "and": (
+                                                            {
+                                                                'term': {'case_properties.key.exact': 'name'}
+                                                            },
+                                                            {
+                                                                'term': {'case_properties.value.exact': some_case_name}
+                                                            }
+                                                        )
+                                                    },
+                                                    'query': {
+                                                        'match_all': {
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    new_must_clause
+                                ]
+                            }
+                        }
+                    }
+                },
+                'size': CASE_SEARCH_MAX_RESULTS
+            }
         run_query_mock.assert_called_with(
             "case_search",
             expected_query,
