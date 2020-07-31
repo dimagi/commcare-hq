@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.utils.http import urlencode
 
 from flaky import flaky
+from nose.plugins.attrib import attr
 
 from corehq.apps.api.resources import v0_5
 from corehq.apps.es.tests.utils import es_test

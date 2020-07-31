@@ -1,4 +1,5 @@
 from django.test import TestCase
+from nose.plugins.attrib import attr
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test

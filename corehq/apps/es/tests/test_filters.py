@@ -1,6 +1,7 @@
 from datetime import date
 
 from django.test import SimpleTestCase
+from nose.plugins.attrib import attr
 
 from corehq.apps.es import filters
 from corehq.apps.es.es_query import HQESQuery

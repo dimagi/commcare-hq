@@ -2,6 +2,7 @@ import uuid
 
 from django.test import override_settings, TestCase
 from mock import MagicMock, patch
+from nose.plugins.attrib import attr
 
 from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
 from corehq.apps.case_search.exceptions import CaseSearchNotEnabledException

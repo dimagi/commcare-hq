@@ -5,6 +5,7 @@ from django.test import TestCase
 
 from corehq.util.es.elasticsearch import ConnectionError
 
+from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.callcenter.views import CallCenterOwnerOptionsView

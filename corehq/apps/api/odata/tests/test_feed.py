@@ -2,6 +2,7 @@ import json
 
 from django.test import TestCase
 from django.urls import reverse
+from nose.plugins.attrib import attr
 
 from corehq.apps.api.odata.tests.utils import (
     ensure_es_case_index_deleted,

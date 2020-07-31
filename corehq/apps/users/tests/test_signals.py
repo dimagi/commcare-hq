@@ -7,6 +7,7 @@ from mock import MagicMock, patch
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 # Also, you need to patch the path to the function in the file where the signal
 # handler uses it, not where it's actually defined.  That's quite a gotcha.
+from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.reports.analytics.esaccessors import get_user_stubs

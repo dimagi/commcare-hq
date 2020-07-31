@@ -1,4 +1,5 @@
 from copy import deepcopy
+from nose.plugins.attrib import attr
 
 from django.test.testcases import SimpleTestCase
 

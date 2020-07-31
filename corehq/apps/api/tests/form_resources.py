@@ -5,6 +5,7 @@ from datetime import datetime
 from django.conf import settings
 from django.test import TestCase
 from django.utils.http import urlencode
+from nose.plugins.attrib import attr
 
 from casexml.apps.case.mock import CaseBlock
 from couchforms.models import XFormInstance

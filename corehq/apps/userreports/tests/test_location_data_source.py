@@ -3,6 +3,7 @@ from datetime import datetime
 
 from django.test import TestCase
 
+from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.domain.shortcuts import create_domain

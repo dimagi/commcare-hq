@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from django.test import TestCase
 
 from couchexport.models import Format
+from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
 import requests_mock

@@ -10,6 +10,7 @@ from testil import tempdir
 
 from casexml.apps.case.tests.util import delete_all_xforms
 from couchforms.models import XFormInstance
+from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.app_manager.models import Application, Module
