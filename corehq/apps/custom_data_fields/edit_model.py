@@ -57,7 +57,7 @@ class CustomDataFieldsForm(forms.Form):
     @classmethod
     def verify_no_profiles_missing_fields(cls, data_fields, profiles):
         errors = set()
-        slugs = {field['slug'].lower()
+        slugs = {field['slug']
                  for field in data_fields if 'slug' in field}
         for profile in profiles:
             for field in json.loads(profile.get('fields', "{}")).keys():
