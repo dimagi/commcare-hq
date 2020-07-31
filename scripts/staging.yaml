@@ -66,6 +66,8 @@ branches:
   - fr/authenticated-soil-downloads # Farid July 31
   - jls/linked-domains-parallel-release # Jenny July 31
   - jls/view-apps-permission # Jenny July 31
+  - ml/SAAS-11077-deleted-case-properties-position # Michelle July 31
+  - ml/SAAS-10954-show-all-filter # Michelle July 31
  
 
 submodules: {}
