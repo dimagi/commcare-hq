@@ -320,10 +320,10 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             self.sortProperties = function (p1, p2) {
                 var validPaths = [];
                 var validQuestions = caseConfig.questions();
-                var i;
-                for (i = 0; i < validQuestions.length; i++) {
-                    validPaths.push(validQuestions[i].value);
-                }
+
+                _.each(validQuestions, function (question) {
+                    validPaths.push(question.value);
+                })
 
                 if (validPaths.includes(p1.path()) && validPaths.includes(p2.path())) {
                     return 0;
