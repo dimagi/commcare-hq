@@ -1,26 +1,33 @@
+import datetime
 import os
 import tempfile
-
 from wsgiref.util import FileWrapper
+from zipfile import ZipFile
 
 from django.conf import settings
-from django.utils.translation import ugettext as _
 from django.urls import reverse
+from django.utils.translation import ugettext as _
 
 from couchexport.models import Format
-
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.web import get_url_base
-
-from soil import DownloadBase, CachedDownload, FileDownload, MultipleTaskDownload, BlobDownload
+from soil import (
+    BlobDownload,
+    CachedDownload,
+    DownloadBase,
+    FileDownload,
+    MultipleTaskDownload,
+)
 from soil.exceptions import TaskFailedError
 from soil.progress import get_task_status
 
-from corehq.util.view_utils import absolute_reverse
 from corehq.blobs import CODES, get_blob_db
+from corehq.celery_monitoring.heartbeat import (
+    Heartbeat,
+    HeartbeatNeverRecorded,
+)
 from corehq.util.files import safe_filename_header
-
-from zipfile import ZipFile
+from corehq.util.view_utils import absolute_reverse
 
 
 def expose_cached_download(payload, expiry, file_extension, mimetype=None,
@@ -94,13 +101,24 @@ def get_download_context(download_id, message=None, require_result=False):
         'result': task_status.result,
         'error': task_status.error,
         'is_ready': is_ready,
-        'is_alive': True,       # TODO: Fix this
+        'is_alive': _is_alive(),
         'progress': task_status.progress._asdict(),
         'download_id': download_id,
         'allow_dropbox_sync': isinstance(download_data, FileDownload) and download_data.use_transfer,
         'has_file': download_data is not None and download_data.has_file,
         'custom_message': message,
     }
+
+
+def _is_alive():
+    queue = getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
+    try:
+        blockage = Heartbeat(queue).get_blockage_duration()
+        if blockage > datetime.timedelta(minutes=5):
+            return False
+        return True
+    except HeartbeatNeverRecorded:
+        return False
 
 
 def process_email_request(domain, download_id, email_address):
