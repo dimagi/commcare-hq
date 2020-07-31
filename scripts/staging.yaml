@@ -63,6 +63,7 @@ branches:
   - jls/CustomDataFieldsProfile # Jenny July 24
 #  - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
   - kev/combobox-add-ors # Kevin July 30
+  - fr/authenticated-soil-downloads # Farid July 31
  
 
 submodules: {}
