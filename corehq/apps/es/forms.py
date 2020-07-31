@@ -71,7 +71,7 @@ def completed(gt=None, gte=None, lt=None, lte=None):
 
 
 def user_id(user_ids):
-    if not isinstance(user_ids, (list, set)):
+    if not isinstance(user_ids, (list, set, tuple)):
         user_ids = [user_ids]
     return filters.term(
         'form.meta.userID',

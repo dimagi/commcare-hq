@@ -1,7 +1,6 @@
 from django.utils.translation import ugettext_noop
 from corehq.apps.reports.dont_use.fields import ReportSelectField
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
-from corehq.elastic import es_query
 from corehq.apps.es import CaseES
 from custom.succeed.utils import (
     CONFIG
@@ -75,40 +74,17 @@ class PatientNameFilterMixin(object):
 
     @property
     def options(self):
-        q = { "query": {
-                "filtered": {
-                    "query": {
-                        "match_all": {}
-                    },
-                    "filter": {
-                        "and": [
-                            {"term": {"domain.exact": self.domain}},
-                            {"term": {"type.exact": "participant"}},
-                        ]
-                    }
-                }
-            }
-        }
-        es_filters = q["query"]["filtered"]["filter"]
 
-        def _filter_gen(key, flist):
-            return {"terms": {
-                key: [item.lower() for item in flist if item]
-            }}
-
+        query = CaseES("report_cases").domain(self.domain).case_type("participant")
         user = self.request.couch_user
-        if not user.is_web_user():
-            owner_ids = user.get_group_ids()
-            user_ids = [user._id]
-            owner_filters = _filter_gen('owner_id', owner_ids)
-            user_filters = _filter_gen('user_id', user_ids)
-            filters = [_f for _f in [owner_filters, user_filters] if _f]
-            subterms = []
-            subterms.append({'or': filters})
-            es_filters["and"].append({'and': subterms} if subterms else {})
+        if user.is_web_user():
+            owner_ids = [o.lower() for o in user.get_group_ids() if o]
+            if owner_ids:
+                query.owner(owner_ids)
+            query.user(user._id.lower())
 
-        es_results = es_query(q=q, es_index='report_cases', dict_only=False)
-        return [(case['_source']['_id'], case['_source']['full_name']['#value']) for case in es_results['hits'].get('hits', [])]
+        results = query.run().raw_hits
+        return [(case['_source']['_id'], case['_source']['full_name']['#value']) for case in results]
 
 
 class PatientName(PatientNameFilterMixin, BaseSingleOptionFilter):
