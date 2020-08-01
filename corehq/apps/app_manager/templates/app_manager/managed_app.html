@@ -144,6 +144,14 @@
           </button>
         </div>
       {% endif %}
+      {% if show_shadow_module_v1 %}
+        <div class="pull-left">
+          <button type="button" class="popover-additem-option new-module" data-type="shadow-v1">
+            <i class="fa fa-moon-o"></i> {% trans "Shadow Menu V1" %}
+            <p>{% blocktrans %}Old style shadow menu with deprecated child behaviour{% endblocktrans %}</p>
+          </button>
+        </div>
+      {% endif %}
       {% if show_training_modules %}
         <div class="pull-left">
           <button type="button" class="popover-additem-option new-module" data-type="training">
