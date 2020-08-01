@@ -356,7 +356,7 @@ class LoginAsUsers(View):
         user = CouchUser.wrap_correctly(user_json)
         formatted_user = {
             'username': user.raw_username,
-            'customFields': user.user_data,
+            'customFields': user.metadata,
             'first_name': user.first_name,
             'last_name': user.last_name,
             'phoneNumbers': user.phone_numbers,
