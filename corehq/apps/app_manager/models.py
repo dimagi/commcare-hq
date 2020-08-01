@@ -3601,6 +3601,12 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     parent_select = SchemaProperty(ParentSelect)
     search_config = SchemaProperty(CaseSearch)
 
+    # Current allowed versions are '1' and '2'. version 1 had incorrect child
+    # module behaviour, which was fixed for version 2. Apps in the wild were
+    # depending on the old behaviour, so the new behaviour is applicable only
+    # for new modules / apps.
+    shadow_module_version = IntegerProperty(default=1)
+
     get_forms = IndexedSchema.Getter('forms')
 
     @classmethod
@@ -3629,11 +3635,23 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
             return 'none'
         return self.source_module.requires
 
+    _root_module_id = ModuleBase.root_module_id
+
     @property
     def root_module_id(self):
-        if not self.source_module:
-            return None
-        return self.source_module.root_module_id
+        if self.shadow_module_version == 1:
+            if not self.source_module:
+                return None
+            return self.source_module.root_module_id
+
+        return self._root_module_id
+
+    @root_module_id.setter
+    def root_module_id(self, value):
+        if self.shadow_module_version == 1:
+            raise AttributeError("Can't set root_module_id on modules with shadow_module_version = 1")
+        else:
+            self._root_module_id = value
 
     def get_suite_forms(self):
         if not self.source_module:
@@ -3667,7 +3685,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         return self.source_module.all_forms_require_a_case()
 
     @classmethod
-    def new_module(cls, name, lang):
+    def new_module(cls, name, lang, shadow_module_version=2):
         lang = lang or 'en'
         detail = Detail(
             columns=[DetailColumn(
@@ -3683,6 +3701,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
                 short=Detail(detail.to_json()),
                 long=Detail(detail.to_json()),
             ),
+            shadow_module_version=shadow_module_version,
         )
         module.get_or_create_unique_id()
         return module
