@@ -55,6 +55,7 @@ class Command(BaseCommand):
         )
         head = git_snapshot['commits'][0]
 
+        print(f"You are currently deploying commit: {head}")
         if options['check']:
             if get_preindex_complete(head):
                 print("Preindex is complete")
