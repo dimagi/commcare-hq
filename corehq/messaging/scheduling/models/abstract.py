@@ -444,8 +444,7 @@ class Content(models.Model):
         :param preferred_language_code: the language code of the user's preferred language
         """
 
-        # If: message_dict contains no translations i.e. only contains * ;
-        # Then: treat it as an alert and send the message.
+        # return untranslated content, if no translations set
         if {'*'} == message_dict.keys():
             return Content.get_cleaned_message(message_dict, '*')
 
