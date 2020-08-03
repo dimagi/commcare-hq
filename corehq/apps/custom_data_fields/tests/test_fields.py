@@ -1,11 +1,11 @@
 from django.test import SimpleTestCase
 
-from corehq.apps.custom_data_fields.models import SQLField
+from corehq.apps.custom_data_fields.models import Field
 
 
 class TestCustomDataFieldsFields(SimpleTestCase):
     def test_validate_required(self):
-        required_field = SQLField(
+        required_field = Field(
             slug='favorite_chordata',
             is_required=True,
             label='Favorite Chordata',
@@ -13,7 +13,7 @@ class TestCustomDataFieldsFields(SimpleTestCase):
         self.assertIsNone(required_field.validate_required('sea lamprey'))
         self.assertEqual(required_field.validate_required(None), 'Favorite Chordata is required.')
 
-        optional_field = SQLField(
+        optional_field = Field(
             slug='fav_echinoderm',
             is_required=False,
             label='Favorite Echinoderm',
@@ -22,7 +22,7 @@ class TestCustomDataFieldsFields(SimpleTestCase):
         self.assertIsNone(optional_field.validate_required(None))
 
     def test_validate_choices(self):
-        field = SQLField(
+        field = Field(
             slug='warm_color',
             label='Warm Color',
             choices=[
@@ -38,7 +38,7 @@ class TestCustomDataFieldsFields(SimpleTestCase):
         )
 
     def test_validate_regex(self):
-        field = SQLField(
+        field = Field(
             slug='s_word',
             label='Word starting with the letter S',
             regex='^[Ss]',

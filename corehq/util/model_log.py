@@ -33,7 +33,7 @@ def log_model_change(user, model_object, message=None, fields_changed=None, acti
         if not fields_changed:
             raise ValueError("'fields_changed' must not be empty")
 
-        message = {'changed': {'fields': fields_changed}}
+        message = [{'changed': {'fields': fields_changed}}]
 
     return LogEntry.objects.log_action(
         user_id=user.pk,

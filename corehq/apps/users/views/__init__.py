@@ -80,6 +80,7 @@ from corehq.apps.sms.verify import (
     initiate_sms_verification_workflow,
 )
 from corehq.apps.translations.models import SMSTranslations
+from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.decorators import (
     require_can_edit_or_view_web_users,
     require_can_edit_web_users,
@@ -583,6 +584,7 @@ class ListRolesView(BaseRoleAccessView):
                 toggles.DHIS2_INTEGRATION.enabled(self.domain)
             ),
             'web_apps_privilege': self.web_apps_privilege,
+            'has_report_builder_access': has_report_builder_access(self.request)
         }
 
 
@@ -703,6 +705,18 @@ def post_user_role(request, domain):
         old_role = UserRole.get(role.get_id)
         assert(old_role.doc_type == UserRole.__name__)
         assert(old_role.domain == domain)
+
+    if not role.permissions.access_all_locations:
+        # The following permissions cannot be granted to location-restricted
+        # roles.
+        role.permissions.edit_web_users = False
+        role.permissions.view_web_users = False
+        role.permissions.edit_groups = False
+        role.permissions.view_groups = False
+        role.permissions.edit_apps = False
+        role.permissions.view_roles = False
+        role.permissions.edit_reports = False
+        role.permissions.edit_billing = False
 
     if role.permissions.edit_web_users:
         role.permissions.view_web_users = True

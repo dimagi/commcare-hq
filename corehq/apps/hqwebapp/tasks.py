@@ -84,7 +84,7 @@ def send_mail_async(self, subject, message, from_email, recipient_list, messagin
     except SMTPDataError as e:
         # If the SES configuration has not been properly set up, resend the message
         if (
-            "Configuration Set does not exist" in e.smtp_error
+            "Configuration Set does not exist" in repr(e.smtp_error)
             and SES_CONFIGURATION_SET_HEADER in message.extra_headers
         ):
             del message.extra_headers[SES_CONFIGURATION_SET_HEADER]

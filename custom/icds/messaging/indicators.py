@@ -403,11 +403,6 @@ class LSAggregatePerformanceIndicator(LSIndicator):
     def get_report_fixture(self, report_id):
         return get_report_fixture_for_user(self.domain, report_id, self.restore_user)
 
-    def clear_caches(self):
-        get_report_configs.clear(self.domain)
-        for report_id in REPORT_IDS:
-            get_report_fixture_for_user.clear(self.domain, report_id, self.restore_user)
-
     @property
     @memoized
     def visits_fixture(self):

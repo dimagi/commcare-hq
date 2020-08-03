@@ -512,6 +512,67 @@
             {# END Roles & Permissions permissions #}
 
             <legend>
+              {% trans "Reports" %}
+            </legend>
+
+            {% if has_report_builder_access %}
+              <div class="form-group" data-bind="visible: permissions.access_all_locations">
+                <label class="col-sm-4 control-label">
+                  {% trans "Create and Edit Reports" %}
+                </label>
+                <div class="col-sm-8 controls">
+                  <div class="form-check">
+                    <input type="checkbox"
+                           id="create-and-edit-reports-checkbox"
+                           data-bind="checked: permissions.edit_reports, disable: !$root.allowEdit" />
+                    <label for="create-and-edit-reports-checkbox">
+                      {% trans "Allow role to create and edit reports in report builder." %}
+                    </label>
+                  </div>
+                </div>
+              </div>
+            {% endif %}
+
+            <div class="form-group">
+              <label class="col-sm-4 control-label">
+                {% trans "Access All Reports" %}
+              </label>
+              <div class="col-sm-8 controls">
+                <div class="form-check">
+                  <input type="checkbox"
+                         id="access-all-reports-checkbox"
+                         data-bind="checked: reportPermissions.all, disable: !$root.allowEdit" />
+                  <label for="access-all-reports-checkbox">
+                    {% trans "Allow role to access all reports." %}
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="form-group" data-bind="visible: !reportPermissions.all()">
+              <label class="col-sm-4 control-label">
+                {% trans "Access Specific Reports" %}
+              </label>
+              <div class="col-sm-8 controls">
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                    {% trans "Select which reports the role can access:" %}
+                  </div>
+                  <div class="panel-body"
+                       data-bind="foreach: reportPermissions.specific, slideVisible: !reportPermissions.all()">
+                    <div class="form-check">
+                      <input type="checkbox"
+                             data-bind="checked: value, attr: { 'id': slug() + '-checkbox' },
+                                        disable: !$root.allowEdit" />
+                      <label data-bind="attr: { 'for': slug() + '-checkbox' }">
+                        <span data-bind="html: name"></span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <legend>
               {% trans "Other Settings" %}
             </legend>
 
@@ -578,44 +639,6 @@
                     on the Pro plan and above. Saving this role will enable
                     full organization access for the assigned users.
                   {% endblocktrans %}
-                </div>
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="col-sm-4 control-label">
-                {% trans "Access All Reports" %}
-              </label>
-              <div class="col-sm-8 controls">
-                <div class="form-check">
-                  <input type="checkbox"
-                         id="access-all-reports-checkbox"
-                         data-bind="checked: reportPermissions.all, disable: !$root.allowEdit" />
-                  <label for="access-all-reports-checkbox">
-                    {% trans "Allow role to access all reports." %}
-                  </label>
-                </div>
-              </div>
-            </div>
-            <div class="form-group" data-bind="visible: !reportPermissions.all()">
-              <label class="col-sm-4 control-label">
-                {% trans "Access Specific Reports" %}
-              </label>
-              <div class="col-sm-8 controls">
-                <div class="panel panel-default">
-                  <div class="panel-heading">
-                    {% trans "Select which reports the role can access:" %}
-                  </div>
-                  <div class="panel-body"
-                       data-bind="foreach: reportPermissions.specific, slideVisible: !reportPermissions.all()">
-                    <div class="form-check">
-                      <input type="checkbox"
-                             data-bind="checked: value, attr: { 'id': slug() + '-checkbox' },
-                                        disable: !$root.allowEdit" />
-                      <label data-bind="attr: { 'for': slug() + '-checkbox' }">
-                        <span data-bind="html: name"></span>
-                      </label>
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
