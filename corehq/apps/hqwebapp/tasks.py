@@ -67,6 +67,10 @@ def send_mail_async(self, subject, message, from_email, recipient_list, messagin
         return
 
     headers = {}
+
+    if settings.RETURN_PATH_EMAIL:
+        headers['Return-Path'] = settings.RETURN_PATH_EMAIL
+
     if messaging_event_id is not None:
         headers[COMMCARE_MESSAGE_ID_HEADER] = messaging_event_id
     if settings.SES_CONFIGURATION_SET is not None:
