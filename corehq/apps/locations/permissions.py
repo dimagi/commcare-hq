@@ -212,11 +212,7 @@ def conditionally_location_safe(conditional_function):
     Note - for the page to show up in the menus, the function should not rely on `request`.
     """
     def _inner(view_fn):
-        # Django class-based views
-        if isinstance(view_fn, type) and issubclass(view_fn, View):
-            view_fn = method_decorator(_inner, 'dispatch')(view_fn)
-        else:
-            view_fn._conditionally_location_safe_function = conditional_function
+        view_fn._conditionally_location_safe_function = conditional_function
         return view_fn
     return _inner
 
@@ -239,27 +235,31 @@ def is_location_safe(view_fn, request, view_args, view_kwargs):
     request, view_args and kwargs are also needed because view_fn alone doesn't always
     contain enough information
     """
+    # Tastypie
+    if 'resource_name' in view_kwargs:
+        return view_kwargs['resource_name'] in LOCATION_SAFE_TASTYPIE_RESOURCES
+
+    # HQ report - get report class
     if getattr(view_fn, 'is_hq_report', False):
         dispatcher = view_fn.view_class
         report_class = dispatcher.get_report(view_kwargs['domain'], view_kwargs['report_slug'])
         view_fn = report_class
 
-    if getattr(view_fn, 'is_location_safe', False):
-        if isinstance(view_fn, type):
-            return _has_own_location_safe_attribute(view_fn)
-        if hasattr(view_fn, "view_class"):
-            return _has_own_location_safe_attribute(view_fn.view_class)
+    # Django view - get view class
+    if hasattr(view_fn, "view_class"):
+        view_fn = view_fn.view_class
+
+    if _get_own_property(view_fn, 'is_location_safe'):
         return True
-    if 'resource_name' in view_kwargs:
-        return view_kwargs['resource_name'] in LOCATION_SAFE_TASTYPIE_RESOURCES
-    if getattr(view_fn, '_conditionally_location_safe_function', False):
-        return view_fn._conditionally_location_safe_function(view_fn, request, *view_args, **view_kwargs)
+    conditional_fn = _get_own_property(view_fn, '_conditionally_location_safe_function')
+    if conditional_fn:
+        return conditional_fn(view_fn, request, *view_args, **view_kwargs)
 
     return False
 
 
-def _has_own_location_safe_attribute(class_):
-    return 'is_location_safe' in getattr(class_, "__dict__", {})
+def _get_own_property(view_fn, prop_name):
+    return view_fn.__dict__.get(prop_name, None)
 
 
 def report_class_is_location_safe(report_class):

@@ -65,6 +65,10 @@ class ConditionallySafeClsView(View):
     pass
 
 
+class UnsafeChildOfConditionallySafeClsView(ConditionallySafeClsView):
+    pass
+
+
 def test_conditionally_safe_django_views():
     safe_request = MagicMock(this_is_safe=True)
     unsafe_request = MagicMock(this_is_safe=False)
@@ -79,6 +83,11 @@ def test_conditionally_safe_django_views():
     ]:
         yield _assert, view, safe_request, True
         yield _assert, view, unsafe_request, False
+
+    # conditionally safe views shouldn't inherit safety
+    view = UnsafeChildOfConditionallySafeClsView.as_view()
+    yield _assert, view, safe_request, False
+    yield _assert, view, unsafe_request, False
 
 
 class ExampleReportDispatcher(ReportDispatcher):
