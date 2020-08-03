@@ -64,6 +64,9 @@ class LoginOrChallengeDBTest(TestCase):
         request.user = user
         return request
 
+    def assertForbidden(self, result):
+        self.assertNotEqual(SUCCESS, result)
+
     def test_no_user_set(self):
         # no matter what, no user = no success
         for allow_cc_users in (True, False):
@@ -75,7 +78,7 @@ class LoginOrChallengeDBTest(TestCase):
                                                     require_domain=require_domain)
                     test = decorator(sample_view)
                     request = self._get_request(user=AnonymousUser())
-                    self.assertNotEqual(SUCCESS, test(request, self.domain_name))
+                    self.assertForbidden(test(request, self.domain_name))
 
     def test_no_cc_users_no_sessions(self):
         decorator = _login_or_challenge(passing_decorator, allow_cc_users=False, allow_sessions=False)
@@ -85,7 +88,7 @@ class LoginOrChallengeDBTest(TestCase):
         self.assertEqual(SUCCESS, test(request, self.domain_name))
 
         request = self._get_request(self.commcare_django_user)
-        self.assertNotEqual(SUCCESS, test(request, self.domain_name))
+        self.assertForbidden(test(request, self.domain_name))
 
     def test_no_cc_users_with_sessions(self):
         decorator = _login_or_challenge(passing_decorator, allow_cc_users=False, allow_sessions=True)
