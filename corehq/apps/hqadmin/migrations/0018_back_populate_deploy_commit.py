@@ -6,10 +6,11 @@ from corehq.util.django_migrations import skip_on_fresh_install
 
 @skip_on_fresh_install
 def back_populate(apps, schema_editor):
-    HqDeploy = apps.get_model('hqadmin', 'HqDeploy')
+    HqDeploy = apps.get_model('hqadmin', 'hqdeploy')
     for deploy in HqDeploy.objects.all():
         if not deploy.commit:
             deploy.commit = _get_commit_from_url(deploy.diff_url)
+            deploy.save()
 
 
 def _get_commit_from_url(diff_url):
@@ -18,7 +19,7 @@ def _get_commit_from_url(diff_url):
         last_deploy_sha, current_deploy_sha = ref_comparison.split('...')
         return current_deploy_sha
     except ValueError:
-        # not a real diff_url
+        # print('not a real diff_url', diff_url)
         return None
 
 
@@ -29,5 +30,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(back_populate),
+        migrations.RunPython(back_populate, reverse_code=migrations.RunPython.noop, elidable=True),
     ]
