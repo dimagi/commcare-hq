@@ -354,7 +354,6 @@ HQ_APPS = (
     'corehq.apps.case_search',
     'corehq.apps.zapier.apps.ZapierConfig',
     'corehq.apps.translations',
-    'corehq.extensions.app_config.ExtensionAppConfig',
 
     # custom reports
     'pact',
@@ -376,6 +375,8 @@ HQ_APPS = (
     'custom.inddex',
 
     'custom.ccqa',
+
+    'corehq.extensions.app_config.ExtensionAppConfig',  # this should be last in the list
 )
 
 # any built-in management commands we want to override should go in hqscripts

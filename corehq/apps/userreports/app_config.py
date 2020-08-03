@@ -4,14 +4,20 @@ from django.apps import AppConfig
 from django.conf import settings
 from django.utils.module_loading import import_string
 
+from corehq.extensions.signals import extensions_loaded
+
 
 class UserReports(AppConfig):
     name = 'corehq.apps.userreports'
 
     def ready(self):
-        register_filters()
-        register_expressions()
-        register_filter_values()
+        extensions_loaded.connect(process_extensions)
+
+
+def process_extensions(**kwargs):
+    register_filters()
+    register_expressions()
+    register_filter_values()
 
 
 def register_filters():
