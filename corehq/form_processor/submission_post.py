@@ -238,14 +238,14 @@ class SubmissionPost(object):
             # decode xml to ensure it can be decoded to string when and if needed in pre processing steps
             instance_xml = self.instance.decode() if isinstance(self.instance, bytes) else self.instance
         except UnicodeDecodeError as e:
-            return get_submission_error(self.domain, self.instance, e, self.auth_context.to_json())
-
-        xform_context = SubmissionFormContext(instance_xml=instance_xml)
-        form_processing_result = self._pre_process_form(xform_context)
-        if form_processing_result:
-            return form_processing_result
-        # encode xml back
-        self.instance = xform_context.instance_xml.encode()
+            xform_context = SubmissionFormContext(instance_xml=self.instance)
+        else:
+            xform_context = SubmissionFormContext(instance_xml=instance_xml)
+            form_processing_result = self._pre_process_form(xform_context)
+            if form_processing_result:
+                return form_processing_result
+            # encode xml back
+            self.instance = xform_context.instance_xml.encode()
 
         result = process_xform_xml(self.domain, self.instance, self.attachments, self.auth_context.to_json())
         submitted_form = result.submitted_form
@@ -257,11 +257,15 @@ class SubmissionPost(object):
             self.formdb.save_new_form(submitted_form)
 
             response = None
-            xml = self.instance.decode()
-            if 'log_subreport' in xml:
-                response = self.get_exception_response_and_log(
-                    'Badly formed device log', submitted_form, self.path
-                )
+            try:
+                xml = self.instance.decode()
+            except UnicodeDecodeError:
+                pass
+            else:
+                if 'log_subreport' in xml:
+                    response = self.get_exception_response_and_log(
+                        'Badly formed device log', submitted_form, self.path
+                    )
 
             if not response:
                 response = self.get_exception_response_and_log(
