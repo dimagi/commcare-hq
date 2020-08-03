@@ -12,6 +12,7 @@ from celery.task import task, periodic_task
 from corehq.util.bounced_email_manager import BouncedEmailManager
 from corehq.util.metrics import metrics_gauge_task, metrics_track_errors
 from corehq.util.metrics.const import MPM_MAX
+from corehq.util.models import TransientBounceEmail
 from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER, SES_CONFIGURATION_SET_HEADER
 from dimagi.utils.logging import notify_exception
 
@@ -196,6 +197,21 @@ def process_bounced_emails():
                     'error': e,
                 }
             )
+
+
+@periodic_task(run_every=crontab(minute=0, hour=3), queue='background_queue')
+def clean_expired_transient_emails():
+    try:
+        TransientBounceEmail.delete_expired_bounces()
+    except Exception as e:
+        notify_exception(
+            None,
+            message="Encountered error while deleting expired "
+                    "transient bounce emails",
+            details={
+                'error': e,
+            }
+        )
 
 
 def get_maintenance_alert_active():
