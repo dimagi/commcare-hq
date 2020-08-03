@@ -14,10 +14,10 @@ from corehq.apps.commtrack.tests.util import bootstrap_domain
 from dimagi.utils.dates import DateSpan
 from pillowtop.es_utils import initialize_index_and_mapping
 
-from corehq.apps.es import CaseES
+from corehq.apps.es import CaseES, UserES
 from corehq.apps.es.aggregations import MISSING_KEY
 from corehq.apps.groups.models import Group
-from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS
+from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS, get_case_by_identifier
 from corehq.apps.locations.tests.util import setup_locations_and_types, restrict_user_by_location
 from corehq.apps.reports.analytics.esaccessors import (
     get_active_case_counts_by_owner,
@@ -43,9 +43,10 @@ from corehq.apps.reports.analytics.esaccessors import (
     scroll_case_names,
 )
 from corehq.apps.reports.standard.cases.utils import query_location_restricted_cases
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, DomainPermissionsMirror
 from corehq.blobs.mixin import BlobMetaRef
 from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CaseTransaction, CommCareCaseSQL
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils import TestFormMetadata
@@ -810,7 +811,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.assertEqual(user_ids, 'u2')
 
 
-class TestUserESAccessors(SimpleTestCase):
+class TestUserESAccessors(TestCase):
 
     def setUp(self):
         super(TestUserESAccessors, self).setUp()
@@ -870,6 +871,20 @@ class TestUserESAccessors(SimpleTestCase):
             'doc_type': self.doc_type,
             'location_id': None
         })
+
+    def test_domain_allow_mirroring(self):
+        source_domain = self.domain + "-source"
+        mirror = DomainPermissionsMirror(source=source_domain, mirror=self.domain)
+        mirror.save()
+        self._send_user_to_es('123')
+
+        self.assertEqual(['superman'], UserES().domain(self.domain).values_list('username', flat=True))
+        self.assertEqual([], UserES().domain(source_domain).values_list('username', flat=True))
+        self.assertEqual(
+            ['superman'],
+            UserES().domain(self.domain, allow_mirroring=True).values_list('username', flat=True)
+        )
+        mirror.delete()
 
 
 class TestGroupESAccessors(SimpleTestCase):
@@ -938,6 +953,7 @@ class TestCaseESAccessors(BaseESAccessorsTest):
             type=case_type or self.case_type,
             opened_on=opened_on or datetime.now(),
             opened_by=user_id or self.user_id,
+            modified_on=datetime.now(),
             closed_on=closed_on,
             closed_by=user_id or self.user_id,
             actions=actions,
@@ -1107,6 +1123,30 @@ class TestCaseESAccessors(BaseESAccessorsTest):
 
         self.assertEqual({'t1', 't2'}, get_case_types_for_domain_es(self.domain))
 
+    def test_case_by_identifier(self):
+        self._send_case_to_es(case_type='ccuser')
+        case = self._send_case_to_es()
+        case.external_id = '123'
+        case.save()
+        case = CaseAccessors(self.domain).get_case(case.case_id)
+        case_json = case.to_json()
+        case_json['contact_phone_number'] = '234'
+        es_case = transform_case_for_elasticsearch(case_json)
+        send_to_elasticsearch('cases', es_case)
+        self.es.indices.refresh(CASE_INDEX)
+        self.assertEqual(
+            get_case_by_identifier(self.domain, case.case_id).case_id,
+            case.case_id
+        )
+        self.assertEqual(
+            get_case_by_identifier(self.domain, '234').case_id,
+            case.case_id
+        )
+        self.assertEqual(
+            get_case_by_identifier(self.domain, '123').case_id,
+            case.case_id
+        )
+
     def test_location_restricted_cases(self):
         domain_obj = bootstrap_domain(self.domain)
         self.addCleanup(domain_obj.delete)
@@ -1163,6 +1203,7 @@ class TestCaseESAccessorsSQL(TestCaseESAccessors):
             opened_on=opened_on or datetime.now(),
             opened_by=user_id or self.user_id,
             closed_on=closed_on,
+            modified_on=datetime.now(),
             closed_by=user_id or self.user_id,
             server_modified_on=datetime.utcnow(),
             closed=bool(closed_on)

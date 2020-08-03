@@ -1,7 +1,9 @@
-from corehq.util.elastic import es_index
-from pillowtop.es_utils import ElasticsearchIndexInfo
+from corehq.util.elastic import prefix_for_tests
+from pillowtop.es_utils import ElasticsearchIndexInfo, DOMAIN_HQ_INDEX_NAME
 
-DOMAIN_INDEX = es_index("hqdomains_2020-02-10")
+DOMAIN_INDEX = prefix_for_tests("hqdomains_2020-02-10")
+DOMAIN_ES_ALIAS = prefix_for_tests('hqdomains')
+
 DOMAIN_MAPPING = {
  '_all': {'enabled': False},
  '_meta': {'comment': '', 'created': None},
@@ -258,7 +260,8 @@ DOMAIN_MAPPING = {
 
 DOMAIN_INDEX_INFO = ElasticsearchIndexInfo(
     index=DOMAIN_INDEX,
-    alias='hqdomains',
+    alias=DOMAIN_ES_ALIAS,
     type='hqdomain',
     mapping=DOMAIN_MAPPING,
+    hq_index_name=DOMAIN_HQ_INDEX_NAME
 )

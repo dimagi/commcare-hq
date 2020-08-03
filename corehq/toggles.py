@@ -109,9 +109,14 @@ TAG_SOLUTIONS_CONDITIONAL = Tag(
 TAG_SOLUTIONS_LIMITED = Tag(
     name='Solutions - Limited Use',
     css_class='info',
-    description="These features are only available for our services projects. This may affect support and "
-    "pricing when the project is transitioned to a subscription. Limited Use Solutions Feature Flags cannot be "
-    "enabled by GS before emailing solutions-tech@dimagi.com and requesting the feature."
+    description=mark_safe(
+        'These features are only available for our services projects. This '
+        'may affect support and pricing when the project is transitioned to a '
+        'subscription. Limited Use Solutions Feature Flags cannot be enabled '
+        'by GS before submitting a <a href="https://docs.google.com/forms/d/e/'
+        '1FAIpQLSfsX0K05nqflGdboeRgaa40HMfFb2DjGUbP4cKJL76ieS_TAA/viewform">'
+        'SolTech Feature Flag Request</a>.'
+    )
 )
 TAG_INTERNAL = Tag(
     name='Internal Engineering Tools',
@@ -1965,6 +1970,13 @@ REFER_CASE_REPEATER = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
+WIDGET_DIALER = StaticToggle(
+    'widget_dialer',
+    'COVID: Enable usage of AWS Connect Dialer',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
 RESTRICT_LOGIN_AS = StaticToggle(
     'restrict_login_as',
     'COVID: Limit allowed users for login as',
@@ -1998,4 +2010,11 @@ ONE_PHONE_NUMBER_MULTIPLE_CONTACTS = StaticToggle(
     Only use this feature if every form behind an SMS survey begins by identifying the contact.
     Otherwise the recipient has no way to know who they're supposed to be enter information about.
     """
+)
+
+ENABLE_ICDS_DASHBOARD_RELEASE_NOTES_UPDATE = StaticToggle(
+    'enable_icds_dashboard_release_notes_update',
+    'Enable updating ICDS dashboard release notes for specific users',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
 )

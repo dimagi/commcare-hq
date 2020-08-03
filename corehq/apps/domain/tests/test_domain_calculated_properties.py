@@ -46,7 +46,7 @@ class DomainCalculatedPropertiesTest(TestCase):
             'doc_type': SMS_INDEX_INFO.type,
         }
         send_to_elasticsearch(
-            index=SMS_INDEX_INFO.index,
+            alias=SMS_INDEX_INFO.alias,
             doc_type=SMS_INDEX_INFO.type,
             doc_id=sms_doc['_id'],
             es_getter=get_es_new,

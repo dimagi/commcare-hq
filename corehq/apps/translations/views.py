@@ -20,6 +20,7 @@ from corehq.apps.app_manager.ui_translations import (
     build_ui_translation_download_file,
     process_ui_translation_upload,
 )
+from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.translations.app_translations.download import (
     get_bulk_app_sheets_by_name,
     get_bulk_app_single_sheet_by_name,
@@ -116,16 +117,17 @@ def download_bulk_app_translations(request, domain, app_id):
     return export_response(temp, Format.XLS_2007, filename)
 
 
+@waf_allow('XSS_BODY')
 @no_conflict_require_POST
 @require_can_edit_apps
 @get_file("bulk_upload_file")
 def upload_bulk_app_translations(request, domain, app_id):
     lang = request.POST.get('language')
     validate = request.POST.get('validate')
-
     app = get_app(domain, app_id)
+    file = request.file
     try:
-        workbook = get_workbook(request.file)
+        workbook = get_workbook(file)
     except WorkbookJSONError as e:
         messages.error(request, str(e))
     else:
@@ -134,7 +136,7 @@ def upload_bulk_app_translations(request, domain, app_id):
                 msgs = [(messages.error, _("Please select language to validate."))]
             else:
                 try:
-                    msgs = validate_bulk_app_translation_upload(app, workbook, request.user.email, lang)
+                    msgs = validate_bulk_app_translation_upload(app, workbook, request.user.email, lang, file)
                 except BulkAppTranslationsException as e:
                     msgs = [(messages.error, str(e))]
         else:

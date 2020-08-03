@@ -17,6 +17,8 @@ hqDefine("cloudcare/js/formplayer/main", function () {
         };
         FormplayerFrontend.start(options);
 
+        hqImport("cloudcare/js/util").injectDialerContext();
+
         var $menuToggle = $('#commcare-menu-toggle'),
             $navbar = $('#hq-navigation'),
             $trialBanner = $('#cta-trial-banner');

@@ -25,7 +25,6 @@ from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_brief_apps_in_domain,
 )
-from corehq.apps.app_manager.models import ExchangeApplication
 from corehq.apps.app_manager.util import is_remote_app
 from corehq.apps.builds.views import EditMenuView
 from corehq.apps.domain.views.internal import ProjectLimitsView
@@ -38,6 +37,7 @@ from corehq.apps.hqadmin.reports import (
     DeviceLogSoftAssertReport,
     UserAuditReport,
     UserListReport,
+    DeployHistoryReport,
 )
 from corehq.apps.hqadmin.views.system import GlobalThresholds
 from corehq.apps.hqwebapp.models import GaTracker
@@ -70,6 +70,7 @@ from corehq.apps.users.permissions import (
     can_download_data_files,
     can_view_sms_exports,
 )
+from corehq.apps.integration.views import DialerSettingsView
 from corehq.feature_previews import (
     EXPLORE_CASE_DATA_PREVIEW,
     is_eligible_for_ecd_preview,
@@ -175,7 +176,7 @@ class ProjectReportsTab(UITab):
 
     def _get_report_builder_items(self):
         user_reports = []
-        if self.couch_user.can_edit_data():
+        if self.couch_user.can_edit_reports():
             has_access = has_report_builder_access(self._request)
             user_reports = [(
                 _("Report Builder"),
@@ -938,21 +939,12 @@ class ApplicationsTab(UITab):
                 _('New Application'),
                 url=(reverse('default_new_app', args=[self.domain])),
             ))
-            if ExchangeApplication.objects.count():
-                submenu_context.append(dropdown_dict(
-                    _('Import Template Application'),
-                    url=(reverse('app_exchange', args=[self.domain])),
-                ))
         if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled_for_request(self._request):
             submenu_context.append(dropdown_dict(
                 _('Translations'),
                 url=(reverse('convert_translations', args=[self.domain])),
             ))
-        if toggles.MANAGE_CCZ_HOSTING.enabled_for_request(self._request):
-            submenu_context.append(dropdown_dict(
-                _("Manage CCZ Hosting"),
-                url=reverse(ManageHostedCCZ_urlname, args=[self.domain])
-            ))
+
         return submenu_context
 
     @property
@@ -1921,6 +1913,12 @@ def _get_integration_section(domain):
             'url': reverse(OpenmrsImporterView.urlname, args=[domain])
         })
 
+    if toggles.WIDGET_DIALER.enabled(domain):
+        integration.append({
+            'title': _(DialerSettingsView.page_title),
+            'url': reverse(DialerSettingsView.urlname, args=[domain])
+        })
+
     return integration
 
 
@@ -2212,6 +2210,8 @@ class AdminTab(UITab):
             (_('Administrative Reports'), [
                 {'title': _('User List'),
                  'url': UserListReport.get_url()},
+                {'title': _('Deploy History'),
+                 'url': DeployHistoryReport.get_url()},
                 {'title': _('Download Malt table'),
                  'url': reverse('download_malt')},
                 {'title': _('Download Global Impact Report'),

@@ -15,7 +15,7 @@ from django.db.models import (
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
-from corehq.sql_db.connections import get_aaa_db_alias
+from custom.aaa.const import get_aaa_db_alias
 from custom.aaa.models import (
     CcsRecord,
     Child,

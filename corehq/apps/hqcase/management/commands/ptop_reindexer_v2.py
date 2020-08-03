@@ -131,7 +131,14 @@ class Command(SubCommand):
         cleanup = options.pop('cleanup')
         noinput = options.pop('noinput')
 
-        for option in ['settings', 'pythonpath', 'verbosity', 'traceback', 'no_color']:
+        for option in [
+            'settings',
+            'pythonpath',
+            'verbosity',
+            'traceback',
+            'no_color',
+            'force_color',
+        ]:
             options.pop(option, None)
 
         def confirm():

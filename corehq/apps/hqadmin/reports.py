@@ -2,6 +2,7 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.contrib.humanize.templatetags.humanize import naturaltime
 
 from dateutil.parser import parse
 from memoized import memoized
@@ -22,6 +23,7 @@ from corehq.apps.sms.filters import RequiredPhoneNumberFilter
 from corehq.apps.sms.mixin import apply_leniency
 from corehq.apps.sms.models import PhoneNumber
 from corehq.const import SERVER_DATETIME_FORMAT
+from corehq.apps.hqadmin.models import HqDeploy
 
 
 class AdminReport(GenericTabularReport):
@@ -71,25 +73,29 @@ class DeviceLogSoftAssertReport(BaseDeviceLogReport, AdminReport):
         logs = self._filter_logs()
         rows = self._create_rows(
             logs,
-            range=slice(self.pagination.start, self.pagination.start + self.pagination.count)
+            range=slice(self.pagination.start,
+                        self.pagination.start + self.pagination.count)
         )
         return rows
 
     def _filter_logs(self):
         logs = DeviceReportEntry.objects.filter(
-            date__range=[self.datespan.startdate_param_utc, self.datespan.enddate_param_utc]
+            date__range=[self.datespan.startdate_param_utc,
+                         self.datespan.enddate_param_utc]
         ).filter(type='soft-assert')
 
         if self.selected_domain is not None:
             logs = logs.filter(domain__exact=self.selected_domain)
 
         if self.selected_commcare_version is not None:
-            logs = logs.filter(app_version__contains='"{}"'.format(self.selected_commcare_version))
+            logs = logs.filter(app_version__contains='"{}"'.format(
+                self.selected_commcare_version))
 
         return logs
 
     def _create_row(self, log, *args, **kwargs):
-        row = super(DeviceLogSoftAssertReport, self)._create_row(log, *args, **kwargs)
+        row = super(DeviceLogSoftAssertReport, self)._create_row(
+            log, *args, **kwargs)
         row.append(log.domain)
         return row
 
@@ -134,7 +140,8 @@ class AdminPhoneNumberReport(PhoneNumberReport):
             return
 
         if paginate and self.pagination:
-            data = data[self.pagination.start:self.pagination.start + self.pagination.count]
+            data = data[
+                self.pagination.start:self.pagination.start + self.pagination.count]
 
         for number in data:
             yield self._fmt_row(number, owner_cache, link_user)
@@ -266,3 +273,47 @@ class UserListReport(GetParamsMixin, AdminReport):
         if date:
             return parse(date).strftime(SERVER_DATETIME_FORMAT)
         return "---"
+
+
+class DeployHistoryReport(GetParamsMixin, AdminReport):
+    base_template = 'reports/base_template.html'
+
+    slug = 'deploy_history_report'
+    name = ugettext_lazy("Deploy History Report")
+
+    emailable = False
+    exportable = False
+    ajax_pagination = True
+    default_rows = 10
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn(_("Date"), sortable=False),
+            DataTablesColumn(_("User"), sortable=False),
+            DataTablesColumn(_("Diff URL"), sortable=False),
+        )
+
+    @property
+    def rows(self):
+        deploy_list = HqDeploy.objects.all()
+        start = self.pagination.start
+        end = self.pagination.start + self.pagination.count
+        for deploy in deploy_list[start:end]:
+            yield [
+                self._format_date(deploy.date),
+                deploy.user,
+                self._hyperlink_diff_url(deploy.diff_url),
+            ]
+
+    @property
+    def total_records(self):
+        return HqDeploy.objects.count()
+
+    def _format_date(self, date):
+        if date:
+            return f'<div>{naturaltime(date)}</div><div>{date.strftime(SERVER_DATETIME_FORMAT)}</div>'
+        return "---"
+
+    def _hyperlink_diff_url(self, diff_url):
+        return f'<a href="{diff_url}">Diff with previous</a>'

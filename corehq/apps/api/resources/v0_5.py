@@ -271,7 +271,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                 pass
             else:
                 django_user.delete()
-                log_model_change(request.user, django_user, message={'deleted_via': USER_CHANGE_VIA_API},
+                log_model_change(request.user, django_user, message=f"deleted_via: {USER_CHANGE_VIA_API}",
                                  action=ModelAction.DELETE)
         return bundle
 
@@ -864,7 +864,7 @@ class DomainForms(Resource):
 
     class Meta(object):
         resource_name = 'domain_forms'
-        authentication = HQApiKeyAuthentication()
+        authentication = RequirePermissionAuthentication(Permissions.access_api)
         object_class = Form
         include_resource_uri = False
         allowed_methods = ['get']
@@ -875,13 +875,6 @@ class DomainForms(Resource):
         application_id = bundle.request.GET.get('application_id')
         if not application_id:
             raise NotFound('application_id parameter required')
-
-        domain = kwargs['domain']
-        couch_user = CouchUser.from_django_user(bundle.request.user)
-        if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION) or not couch_user.is_member_of(domain):
-            raise ImmediateHttpResponse(
-                HttpForbidden('You are not allowed to get list of forms for this domain')
-            )
 
         results = []
         application = Application.get(docid=application_id)
@@ -912,7 +905,7 @@ class DomainCases(Resource):
 
     class Meta(object):
         resource_name = 'domain_cases'
-        authentication = HQApiKeyAuthentication()
+        authentication = RequirePermissionAuthentication(Permissions.access_api)
         object_class = CaseType
         include_resource_uri = False
         allowed_methods = ['get']
@@ -921,12 +914,6 @@ class DomainCases(Resource):
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
-        couch_user = CouchUser.from_django_user(bundle.request.user)
-        if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION) or not couch_user.is_member_of(domain):
-            raise ImmediateHttpResponse(
-                HttpForbidden('You are not allowed to get list of case types for this domain')
-            )
-
         case_types = get_case_types_for_domain_es(domain)
         results = [CaseType(case_type=case_type) for case_type in case_types]
         return results
@@ -945,21 +932,14 @@ class DomainUsernames(Resource):
 
     class Meta(object):
         resource_name = 'domain_usernames'
-        authentication = HQApiKeyAuthentication()
+        authentication = RequirePermissionAuthentication(Permissions.view_commcare_users)
         object_class = User
         include_resource_uri = False
         allowed_methods = ['get']
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
-
-        couch_user = CouchUser.from_django_user(bundle.request.user)
-        if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION) or not couch_user.is_member_of(domain):
-            raise ImmediateHttpResponse(
-                HttpForbidden('You are not allowed to get list of usernames for this domain')
-            )
         user_ids_username_pairs = get_all_user_id_username_pairs_by_domain(domain)
-
         results = [UserInfo(user_id=user_pair[0], user_name=raw_username(user_pair[1]))
                    for user_pair in user_ids_username_pairs]
         return results

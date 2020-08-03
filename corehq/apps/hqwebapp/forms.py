@@ -2,6 +2,7 @@ import json
 
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.signals import user_login_failed
 from django.core.exceptions import ValidationError
 from django.http import QueryDict
 from django.middleware.csrf import get_token
@@ -13,10 +14,12 @@ from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.helper import FormHelper
 from memoized import memoized
+from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 
 from corehq.apps.domain.forms import NoAutocompleteMixin
 from corehq.apps.users.models import CouchUser
 
+LOCKOUT_MESSAGE = mark_safe(_('Sorry - you have attempted to login with an incorrect password too many times. Please <a href="/accounts/password_reset_email/">click here</a> to reset your password or contact the domain administrator.'))
 
 class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
     username = forms.EmailField(label=_("E-mail"), max_length=75,
@@ -34,8 +37,6 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
         return decode_password(self.cleaned_data['password'], self.clean_username())
 
     def clean(self):
-        lockout_message = mark_safe(_('Sorry - you have attempted to login with an incorrect password too many times. Please <a href="/accounts/password_reset_email/">click here</a> to reset your password or contact the domain administrator.'))
-
         username = self.cleaned_data.get('username')
         if username is None:
             raise ValidationError(_('Please enter a valid email address.'))
@@ -49,12 +50,12 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
         except ValidationError:
             user = CouchUser.get_by_username(username)
             if user and user.is_locked_out() and user.supports_lockout():
-                raise ValidationError(lockout_message)
+                raise ValidationError(LOCKOUT_MESSAGE)
             else:
                 raise
         user = CouchUser.get_by_username(username)
         if user and user.is_locked_out() and user.supports_lockout():
-            raise ValidationError(lockout_message)
+            raise ValidationError(LOCKOUT_MESSAGE)
         return cleaned_data
 
 
@@ -284,3 +285,39 @@ class FormListForm(object):
 
     def as_table(self):
         return render_to_string(self.template, self.get_context())
+
+
+class HQAuthenticationTokenForm(AuthenticationTokenForm):
+
+    def clean(self):
+        try:
+            cleaned_data = super(HQAuthenticationTokenForm, self).clean()
+        except ValidationError:
+            user_login_failed.send(sender=__name__, credentials={'username': self.user.username})
+            couch_user = CouchUser.get_by_username(self.user.username)
+            if couch_user and couch_user.is_locked_out() and couch_user.supports_lockout():
+                raise ValidationError(LOCKOUT_MESSAGE)
+            else:
+                raise
+        couch_user = CouchUser.get_by_username(self.user.username)
+        if couch_user and couch_user.is_locked_out() and couch_user.supports_lockout():
+            raise ValidationError(LOCKOUT_MESSAGE)
+        return cleaned_data
+
+
+class HQBackupTokenForm(BackupTokenForm):
+
+    def clean(self):
+        try:
+            cleaned_data = super(HQBackupTokenForm, self).clean()
+        except ValidationError:
+            user_login_failed.send(sender=__name__, credentials={'username': self.user.username})
+            couch_user = CouchUser.get_by_username(self.user.username)
+            if couch_user and couch_user.is_locked_out() and couch_user.supports_lockout():
+                raise ValidationError(LOCKOUT_MESSAGE)
+            else:
+                raise
+        couch_user = CouchUser.get_by_username(self.user.username)
+        if couch_user and couch_user.is_locked_out() and couch_user.supports_lockout():
+            raise ValidationError(LOCKOUT_MESSAGE)
+        return cleaned_data

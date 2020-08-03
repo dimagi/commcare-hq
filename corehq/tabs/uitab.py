@@ -3,6 +3,7 @@ from django.core.cache import cache
 from django.urls import reverse, resolve, Resolver404
 from django.utils.translation import get_language
 
+from corehq.extensions import extension_points
 from corehq.apps.domain.models import Domain
 from corehq.tabs.exceptions import UrlPrefixFormatError, UrlPrefixFormatsSuggestion
 from corehq.tabs.utils import sidebar_to_dropdown, dropdown_dict
@@ -90,11 +91,21 @@ class UITab(object):
 
     @property
     def filtered_dropdown_items(self):
+        items = self.dropdown_items
+        tab_name = self.__class__.__name__
+        items.extend([
+            dropdown_dict(**item)
+            for item in items
+            for items in extension_points.uitab_dropdown_items(
+                tab=tab_name, domain=self.domain, request=self._request
+            )
+        ])
+
         if self.can_access_all_locations:
-            return self.dropdown_items
+            return items
 
         filtered = []
-        for item in self.dropdown_items:
+        for item in items:
             if url_is_location_safe(item['url']):
                 filtered.append(item)
         return filtered

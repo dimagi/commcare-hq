@@ -171,7 +171,7 @@ def send_sms(domain, contact, phone_number, text, metadata=None, logged_subevent
 
 
 def send_sms_to_verified_number(verified_number, text, metadata=None,
-        logged_subevent=None):
+        logged_subevent=None, events=[]):
     """
     Sends an sms using the given verified phone number entry.
 
@@ -201,6 +201,15 @@ def send_sms_to_verified_number(verified_number, text, metadata=None,
         text = text
     )
     add_msg_tags(msg, metadata)
+
+    msg.custom_metadata = {}
+    for event in events:
+        multimedia_fields = ('caption_image', 'caption_audio', 'caption_video')
+        for field in multimedia_fields:
+            value = getattr(event, field, None)
+            if value is not None:
+                msg.custom_metadata[field] = value
+    msg.save()
 
     return queue_outgoing_sms(msg)
 
@@ -550,7 +559,7 @@ def process_sms_registration(msg):
 
 def incoming(phone_number, text, backend_api, timestamp=None,
              domain_scope=None, backend_message_id=None,
-             raw_text=None, backend_id=None):
+             raw_text=None, backend_id=None, media_urls=None):
     """
     entry point for incoming sms
 
@@ -559,6 +568,7 @@ def incoming(phone_number, text, backend_api, timestamp=None,
     backend_api - backend API ID of receiving sms backend
     timestamp - message received timestamp; defaults to now (UTC)
     domain_scope - set the domain scope for this SMS; see SMSBase.domain_scope for details
+    media_urls - list of urls for media download.
     """
     # Log message in message log
     if text is None:
@@ -575,6 +585,9 @@ def incoming(phone_number, text, backend_api, timestamp=None,
         backend_message_id=backend_message_id,
         raw_text=raw_text,
     )
+    if media_urls:
+        msg.custom_metadata = {"media_urls": media_urls}
+
     if settings.SMS_QUEUE_ENABLED:
         msg.processed = False
         msg.datetime_to_process = get_utcnow()
@@ -600,9 +613,18 @@ def is_opt_message(text, keyword_list):
 
 def get_opt_keywords(msg):
     backend_class = get_sms_backend_classes().get(msg.backend_api, SQLSMSBackend)
+    try:
+        backend_model = msg.outbound_backend
+    except (BadSMSConfigException, SQLMobileBackend.DoesNotExist):
+        # Backend not found, we will just use the default
+        custom_opt_out = []
+        custom_opt_in = []
+    else:
+        custom_opt_out = backend_model.opt_out_keywords
+        custom_opt_in = backend_model.opt_in_keywords
     return (
-        backend_class.get_opt_in_keywords(),
-        backend_class.get_opt_out_keywords(),
+        backend_class.get_opt_in_keywords() + custom_opt_in,
+        backend_class.get_opt_out_keywords() + custom_opt_out,
         backend_class.get_pass_through_opt_in_keywords(),
     )
 
@@ -753,7 +775,7 @@ def _process_incoming(msg):
             # Opt the phone number in, and then process the message normally
             PhoneBlacklist.opt_in_sms(msg.phone_number, domain=domain)
 
-        handled = False
+    handled = False
 
     if _domain_accepts_inbound(msg):
         if v and v.pending_verification:

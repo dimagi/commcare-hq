@@ -99,7 +99,7 @@ def system_ajax(request):
                 return JsonResponse({'error': "Unable to access CouchDB Tasks."}, status_code=500)
 
         if not is_bigcouch():
-            return JsonResponse(tasks)
+            return JsonResponse(tasks, safe=False)
         else:
             # group tasks by design doc
             task_map = defaultdict(dict)
@@ -117,14 +117,14 @@ def system_ajax(request):
                     task['progress_contribution'] = task['changes_done'] * 100 // total_changes
 
                 design_docs.append(meta)
-            return JsonResponse(design_docs)
+            return JsonResponse(design_docs, safe=False)
     elif type == "_stats":
         return JsonResponse({})
     elif type == "_logs":
         pass
     elif type == 'pillowtop':
         pillow_meta = get_all_pillows_json()
-        return JsonResponse(sorted(pillow_meta, key=lambda m: m['name'].lower()))
+        return JsonResponse(sorted(pillow_meta, key=lambda m: m['name'].lower()), safe=False)
     elif type == 'stale_pillows':
         es_index_status = [
             escheck.check_case_es_index(interval=3),
@@ -132,7 +132,7 @@ def system_ajax(request):
             escheck.check_reportcase_es_index(interval=3),
             escheck.check_reportxform_es_index(interval=3)
         ]
-        return JsonResponse(es_index_status)
+        return JsonResponse(es_index_status, safe=False)
 
     if celery_monitoring:
         if type == "flower_poll":

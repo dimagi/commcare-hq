@@ -35,18 +35,8 @@ class GetFormQuestionValuesTests(SimpleTestCase):
         value = get_form_question_values({'form': {'foo': {'bar': 'b\u0105z'}}})
         self.assertEqual(value, {'/data/foo/bar': 'b\u0105z'})
 
-    def test_utf8_answer(self):
-        value = get_form_question_values({'form': {'foo': {'bar': b'b\xc4\x85z'}}})
-        self.assertEqual(value, {'/data/foo/bar': b'b\xc4\x85z'})
-
     def test_unicode_question(self):
         value = get_form_question_values({'form': {'foo': {'b\u0105r': 'baz'}}})
-        self.assertEqual(value, {'/data/foo/b\u0105r': 'baz'})
-
-    def test_utf8_question(self):
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", UnicodeWarning)
-            value = get_form_question_values({'form': {'foo': {b'b\xc4\x85r': 'baz'}}})
         self.assertEqual(value, {'/data/foo/b\u0105r': 'baz'})
 
     def test_received_on(self):
