@@ -197,15 +197,9 @@ def location_safe(view):
     """
     view.is_location_safe = True
 
-    if isinstance(view, type):  # it's a class
-
-        # Django class-based views
-        if issubclass(view, View):
-            view = method_decorator(location_safe, 'dispatch')(view)
-
-        # tastypie resources
-        if issubclass(view, Resource):
-            LOCATION_SAFE_TASTYPIE_RESOURCES.add(view.Meta.resource_name)
+    # tastypie resources
+    if isinstance(view, type) and issubclass(view, Resource):
+        LOCATION_SAFE_TASTYPIE_RESOURCES.add(view.Meta.resource_name)
 
     return view
 
