@@ -1,11 +1,14 @@
+import re
+
 from django import forms
-from django.core.exceptions import ValidationError
+from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
-from crispy_forms.helper import FormHelper
+from email_validator import EmailNotValidError, validate_email
 
+from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.motech.auth import api_auth_settings_choices
 from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.motech.models import ConnectionSettings
@@ -14,7 +17,7 @@ from corehq.motech.models import ConnectionSettings
 class ConnectionSettingsForm(forms.ModelForm):
     url = forms.CharField(
         label=_('URL'),
-        help_text=_('e.g. "http://play.dhis2.org/demo/"')
+        help_text=_('e.g. "https://play.dhis2.org/dev/"')
     )
     api_auth_settings = forms.ChoiceField(
         label=_('API auth settings'),
@@ -34,7 +37,7 @@ class ConnectionSettingsForm(forms.ModelForm):
     plaintext_client_secret = forms.CharField(
         label=_('Client secret'),
         required=False,
-        widget=forms.PasswordInput,
+        widget=forms.PasswordInput(render_value=True),
     )
     skip_cert_verify = forms.BooleanField(
         label=_('Skip certificate verification'),
@@ -63,9 +66,10 @@ class ConnectionSettingsForm(forms.ModelForm):
             'notify_addresses_str',
         ]
 
-    def __init__(self, *args, domain, **kwargs):
-        self.domain = domain  # Passed by ``FormSet.form_kwargs``
-        if 'instance' in kwargs:
+    def __init__(self, domain, *args, **kwargs):
+        from corehq.motech.views import ConnectionSettingsListView
+
+        if kwargs.get('instance'):
             # `plaintext_password` is not a database field, and so
             # super().__init__() will not update `initial` with it. We
             # need to do that here.
@@ -88,67 +92,11 @@ class ConnectionSettingsForm(forms.ModelForm):
                 }
         super().__init__(*args, **kwargs)
 
-    def save(self, commit=True):
-        self.instance.domain = self.domain
-        self.instance.plaintext_password = self.cleaned_data['plaintext_password']
-        return super().save(commit)
-
-
-class BaseConnectionSettingsFormSet(forms.BaseModelFormSet):
-
-    def __init__(self, *args, domain, **kwargs):
-        super().__init__(*args, **kwargs)
         self.domain = domain
-        self.form_kwargs['domain'] = domain  # Passed by ``FormView.get_form_kwargs()``
-
-    def clean(self):
-        super().clean()
-        errors = [f'Unable to delete connection "{f.instance}": It is in use.'
-                  for f in self.not_deleted_forms]
-        if errors:
-            raise ValidationError(errors)
-
-    @property
-    def not_deleted_forms(self):
-        """
-        Returns a list of forms marked for deletion but whose
-        ConnectionSettings are in use.
-        """
-        deleted_forms = super().deleted_forms
-        ids_in_use = get_connection_ids_in_use(self.domain)
-        return [f for f in deleted_forms
-                if f.is_bound and f.instance.id in ids_in_use]
-
-
-def get_connection_ids_in_use(domain):
-    from corehq.motech.dhis2.dbaccessors import get_dataset_maps
-
-    dataset_maps = get_dataset_maps(domain)
-    # So far only DataSetMaps use ConnectionSettings. When more things
-    # do (like Repeaters), this must check those too.
-    return {m.connection_settings_id for m in dataset_maps
-            if m.connection_settings_id}
-
-
-ConnectionSettingsFormSet = forms.modelformset_factory(
-    model=ConnectionSettings,
-    form=ConnectionSettingsForm,
-    formset=BaseConnectionSettingsFormSet,
-    extra=1,
-    can_delete=True,
-)
-
-
-class ConnectionSettingsFormSetHelper(FormHelper):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.form_class = 'form-horizontal'
-        self.label_class = 'col-sm-3 col-md-2'
-        self.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.layout = crispy.Layout(
+        self.helper = hqcrispy.HQFormHelper()
+        self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                _('Remote Connection'),
+                _('Remote API Connection'),
                 crispy.Field('name'),
                 crispy.Field('url'),
                 crispy.Field('auth_type'),
@@ -159,13 +107,55 @@ class ConnectionSettingsFormSetHelper(FormHelper):
                 crispy.Field('plaintext_client_secret'),
                 twbscrispy.PrependedText('skip_cert_verify', ''),
                 crispy.Field('notify_addresses_str'),
-                twbscrispy.PrependedText(
-                    'DELETE', '',
-                    wrapper_class='alert alert-warning'
+                self.test_connection_button,
+            ),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _("Save"),
+                    type="submit",
+                    css_class="btn btn-primary",
+                ),
+                hqcrispy.LinkButton(
+                    _("Cancel"),
+                    reverse(
+                        ConnectionSettingsListView.urlname,
+                        kwargs={'domain': self.domain},
+                    ),
+                    css_class="btn btn-default",
                 ),
             ),
         )
-        self.add_input(
-            crispy.Submit('submit', _('Save Connections'))
+
+    @property
+    def test_connection_button(self):
+        return crispy.Div(
+            crispy.Div(
+                twbscrispy.StrictButton(
+                    _('Test Connection'),
+                    type='button',
+                    css_id='test-connection-button',
+                    css_class='btn btn-default disabled',
+                ),
+                crispy.Div(
+                    css_id='test-connection-result',
+                    css_class='text-success hide',
+                ),
+                css_class=hqcrispy.CSS_ACTION_CLASS,
+            ),
+            css_class='form-group'
         )
-        self.render_required_fields = True
+
+    def clean_notify_addresses_str(self):
+        emails = self.cleaned_data['notify_addresses_str']
+        are_valid = (validate_email(e) for e in re.split('[, ]+', emails) if e)
+        try:
+            all(are_valid)
+        except EmailNotValidError:
+            raise forms.ValidationError(_("Contains an invalid email address."))
+        return emails
+
+    def save(self, commit=True):
+        self.instance.domain = self.domain
+        self.instance.plaintext_password = self.cleaned_data['plaintext_password']
+        self.instance.plaintext_client_secret = self.cleaned_data['plaintext_client_secret']
+        return super().save(commit)
