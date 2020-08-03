@@ -35,7 +35,7 @@ class LoginOrChallengeTest(SimpleTestCase):
         request = object()
 
         test = passing_decorator(sample_view)
-        self.assertEqual('it worked!', test(request))
+        self.assertEqual(SUCCESS, test(request))
 
         test = failing_decorator(sample_view)
         self.assertEqual(CHECK_FAILED, test(request))
