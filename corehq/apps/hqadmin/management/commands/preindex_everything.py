@@ -53,7 +53,7 @@ class Command(BaseCommand):
             submodules=False,
             log_count=1,
         )
-        head = git_snapshot['commits'][0]
+        head = git_snapshot['commits'][0]['sha']
 
         if options['check']:
             if get_preindex_complete(head):
@@ -72,7 +72,7 @@ class Command(BaseCommand):
             clear_preindex_complete()
 
         commit_info = "\nCommit Info:\nOn Branch %s, SHA: %s" % (
-            git_snapshot['current_branch'], head['sha'])
+            git_snapshot['current_branch'], head)
 
         pre_message = list()
         pre_message.append("Heads up, %s has started preindexing" % username)
