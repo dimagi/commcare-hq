@@ -11,7 +11,7 @@ from lxml import etree
 from casexml.apps.case import const
 from casexml.apps.case.xform import get_case_updates
 
-from corehq.apps.data_vault import save_tracked_vault_entries, has_tracked_vault_entries
+from corehq.apps.data_vault import has_tracked_vault_entries
 from corehq.apps.data_vault.models import VaultEntry
 from corehq.form_processor.backends.sql.update_strategy import SqlCaseUpdateStrategy
 from corehq.form_processor.backends.sql.dbaccessors import (
