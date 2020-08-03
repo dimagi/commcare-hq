@@ -35,7 +35,6 @@ def get_failing_decorator(user=None):
     return challenge(lambda request: False, user)
 
 
-
 passing_decorator = get_passing_decorator()
 failing_decorator = get_failing_decorator()
 
@@ -48,6 +47,8 @@ class LoginOrChallengeTest(SimpleTestCase):
         test = passing_decorator(sample_view)
         self.assertEqual(SUCCESS, test(request))
 
+    def test_failing_challenge(self):
+        request = object()
         test = failing_decorator(sample_view)
         self.assertEqual(CHECK_FAILED, test(request))
 
