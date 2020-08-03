@@ -31,7 +31,7 @@ from corehq.apps.users.permissions import has_permission_to_view_report
 from corehq.form_processor.exceptions import CouchSaveAborted, PostSaveError, XFormSaveError
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.parsers.form import process_xform_xml, get_submission_error
+from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.system_action import SYSTEM_ACTION_XMLNS, handle_system_action
 from corehq.form_processor.utils.metadata import scrub_meta
 from corehq.form_processor.submission_process_tracker import unfinished_submission
@@ -237,7 +237,7 @@ class SubmissionPost(object):
         try:
             # decode xml to ensure it can be decoded to string when and if needed in pre processing steps
             instance_xml = self.instance.decode() if isinstance(self.instance, bytes) else self.instance
-        except UnicodeDecodeError as e:
+        except UnicodeDecodeError:
             xform_context = SubmissionFormContext(instance_xml=self.instance)
         else:
             xform_context = SubmissionFormContext(instance_xml=instance_xml)
