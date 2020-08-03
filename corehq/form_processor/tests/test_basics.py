@@ -505,7 +505,7 @@ class FundamentalCaseTestsSQL(FundamentalCaseTests):
 
     def test_failed_form_with_case_with_secret(self):
         with override_settings(XFORM_PRE_PROCESSORS={
-            DOMAIN: ['corehq.apps.data_vault.tests.utils.TestVaultPatternExtractor']}
+            DOMAIN: ['corehq.apps.data_vault.tests.utils.DummyVaultPatternExtractor']}
         ):
             case_id = uuid.uuid4().hex
             modified_on = datetime.utcnow()
@@ -526,7 +526,7 @@ class FundamentalCaseTestsSQL(FundamentalCaseTests):
 
     def test_successful_form_with_case_with_secret(self):
         with override_settings(XFORM_PRE_PROCESSORS={
-            DOMAIN: ['corehq.apps.data_vault.tests.utils.TestVaultPatternExtractor']}
+            DOMAIN: ['corehq.apps.data_vault.tests.utils.DummyVaultPatternExtractor']}
         ):
             self.assertEqual(VaultEntry.objects.count(), 0)
             case_id = uuid.uuid4().hex
