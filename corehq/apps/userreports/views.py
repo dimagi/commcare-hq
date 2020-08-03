@@ -96,7 +96,7 @@ from corehq.apps.userreports.exceptions import (
     UserQueryError,
     translate_programming_error,
 )
-from corehq.apps.userreports.expressions import ExpressionFactory
+from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.models import (
