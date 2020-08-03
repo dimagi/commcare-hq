@@ -1,7 +1,9 @@
+import re
+
 from corehq.form_processor.steps import VaultPatternExtractor
 
 
-AADHAAR_XFORM_SUBMISSION_PATTERNS = [r'<aadhar_number>(\d{12})<\/aadhar_number>']
+AADHAAR_XFORM_SUBMISSION_PATTERNS = [re.compile(r'<aadhar_number>(\d{12})</aadhar_number>')]
 AADHAAR_FORMS_XMLNSES = []
 
 
