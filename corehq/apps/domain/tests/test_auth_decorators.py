@@ -13,11 +13,13 @@ def sample_view(request, *args, **kwargs):
     return SUCCESS
 
 
-def challenge(check):
+def challenge(check, user):
     def decorator(view):
         def wrapper(request, *args, **kwargs):
             auth = check(request)
             if auth:
+                if user:
+                    request.user = user
                 return view(request, *args, **kwargs)
 
             return CHECK_FAILED
@@ -25,8 +27,17 @@ def challenge(check):
     return decorator
 
 
-passing_decorator = challenge(lambda request: True)
-failing_decorator = challenge(lambda request: False)
+def get_passing_decorator(user=None):
+    return challenge(lambda request: True, user)
+
+
+def get_failing_decorator(user=None):
+    return challenge(lambda request: False, user)
+
+
+
+passing_decorator = get_passing_decorator()
+failing_decorator = get_failing_decorator()
 
 
 class LoginOrChallengeTest(SimpleTestCase):
@@ -59,10 +70,26 @@ class LoginOrChallengeDBTest(TestCase):
         cls.domain.delete()
         super().tearDownClass()
 
-    def _get_request(self, user):
+    def _get_request(self, user=AnonymousUser()):
         request = RequestFactory().get('/foobar/')
+        # because of session auth,  we still have to populate an AnonymousUser user on the request
+        # in all scenarios because the challenge decorator isn't actually called before the user is accessed
         request.user = user
         return request
+
+    def _get_test_for_web_user(self, allow_cc_users, allow_sessions, require_domain=True):
+        web_decorator = _login_or_challenge(get_passing_decorator(self.web_django_user),
+                                            allow_cc_users=allow_cc_users,
+                                            allow_sessions=allow_sessions,
+                                            require_domain=require_domain)
+        return web_decorator(sample_view)
+
+    def _get_test_for_cc_user(self, allow_cc_users, allow_sessions, require_domain=True):
+        cc_decorator = _login_or_challenge(get_passing_decorator(self.commcare_django_user),
+                                           allow_cc_users=allow_cc_users,
+                                           allow_sessions=allow_sessions,
+                                           require_domain=require_domain)
+        return cc_decorator(sample_view)
 
     def assertForbidden(self, result):
         self.assertNotEqual(SUCCESS, result)
@@ -77,29 +104,29 @@ class LoginOrChallengeDBTest(TestCase):
                                                     allow_sessions=allow_sessions,
                                                     require_domain=require_domain)
                     test = decorator(sample_view)
-                    request = self._get_request(user=AnonymousUser())
+                    request = self._get_request()
                     self.assertForbidden(test(request, self.domain_name))
 
     def test_no_cc_users_no_sessions(self):
-        decorator = _login_or_challenge(passing_decorator, allow_cc_users=False, allow_sessions=False)
-        test = decorator(sample_view)
+        allow_cc_users = False
+        allow_sessions = False
+        web_test = self._get_test_for_web_user(allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
+        mobile_test = self._get_test_for_cc_user(allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
 
-        request = self._get_request(self.web_django_user)
-        self.assertEqual(SUCCESS, test(request, self.domain_name))
+        self.assertEqual(SUCCESS, web_test(self._get_request(), self.domain_name))
 
-        request = self._get_request(self.commcare_django_user)
-        self.assertForbidden(test(request, self.domain_name))
+        self.assertForbidden(mobile_test(self._get_request(), self.domain_name))
 
     def test_no_cc_users_with_sessions(self):
+        # with sessions, we just assume the user is already on the request, so the decorator doesn't matter
         decorator = _login_or_challenge(passing_decorator, allow_cc_users=False, allow_sessions=True)
         test = decorator(sample_view)
+        web_request = self._get_request(self.web_django_user)
+        mobile_request = self._get_request(self.commcare_django_user)
 
-        request = self._get_request(self.web_django_user)
-        self.assertEqual(SUCCESS, test(request, self.domain_name))
-
-        request = self._get_request(self.commcare_django_user)
+        self.assertEqual(SUCCESS, test(web_request, self.domain_name))
         # note: this behavior is surprising and arguably incorrect, but just documenting it here for now
-        self.assertEqual(SUCCESS, test(request, self.domain_name))
+        self.assertEqual(SUCCESS, test(mobile_request, self.domain_name))
 
     def test_with_cc_users(self):
         with_sessions = _login_or_challenge(passing_decorator, allow_cc_users=True, allow_sessions=True)
@@ -113,15 +140,16 @@ class LoginOrChallengeDBTest(TestCase):
             self.assertEqual(SUCCESS, test(request, self.domain_name))
 
     def test_no_domain_no_sessions(self):
-        decorator = _login_or_challenge(passing_decorator, allow_cc_users=True, allow_sessions=False,
-                                        require_domain=False)
-        test = decorator(sample_view)
+        allow_cc_users = True
+        allow_sessions = False
+        require_domain = False
+        web_test = self._get_test_for_web_user(allow_cc_users=allow_cc_users, allow_sessions=allow_sessions,
+                                               require_domain=require_domain)
+        mobile_test = self._get_test_for_cc_user(allow_cc_users=allow_cc_users, allow_sessions=allow_sessions,
+                                                 require_domain=require_domain)
 
-        request = self._get_request(self.web_django_user)
-        self.assertEqual(SUCCESS, test(request))
-
-        request = self._get_request(self.commcare_django_user)
-        self.assertEqual(SUCCESS, test(request))
+        self.assertEqual(SUCCESS, web_test(self._get_request()))
+        self.assertEqual(SUCCESS, mobile_test(self._get_request()))
 
     def test_no_domain_with_sessions(self):
         decorator = _login_or_challenge(passing_decorator, allow_cc_users=True, allow_sessions=True,
