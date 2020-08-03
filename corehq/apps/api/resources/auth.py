@@ -79,7 +79,7 @@ class LoginAuthentication(HQAuthenticationMixin, Authentication):
         ], **kwargs)
 
     def _auth_test(self, request, wrappers, **kwargs):
-        PASSED_AUTH = 'is_authenticated'
+        PASSED_AUTH = object()
 
         def dummy(request, **kwargs):
             return PASSED_AUTH
@@ -90,13 +90,9 @@ class LoginAuthentication(HQAuthenticationMixin, Authentication):
 
         try:
             response = wrapped_dummy(request, **kwargs)
+            return response is PASSED_AUTH
         except PermissionDenied:
-            response = HttpResponseForbidden()
-
-        if response == PASSED_AUTH:
-            return True
-        else:
-            return response
+            return False
 
 
 class LoginAndDomainAuthentication(HQAuthenticationMixin, Authentication):
