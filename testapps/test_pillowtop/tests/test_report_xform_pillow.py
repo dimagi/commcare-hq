@@ -2,6 +2,7 @@ from django.test import override_settings, TestCase
 from corehq.util.es.elasticsearch import ConnectionError
 
 from corehq.apps.es import FormES
+from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
@@ -10,7 +11,6 @@ from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
 from corehq.pillows.reportxform import ReportFormReindexerFactory
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup, get_form_ready_to_save
-from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 from testapps.test_pillowtop.utils import process_pillow_changes
 
@@ -18,7 +18,7 @@ DOMAIN = 'report-xform-pillowtest-domain'
 
 
 @override_settings(ES_XFORM_FULL_INDEX_DOMAINS=[DOMAIN])
-@attr(es_test=True)
+@es_test
 class ReportXformPillowTest(TestCase):
 
     def setUp(self):

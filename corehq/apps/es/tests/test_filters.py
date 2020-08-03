@@ -1,15 +1,14 @@
 from datetime import date
 
 from django.test import SimpleTestCase
-from nose.plugins.attrib import attr
 
 from corehq.apps.es import filters
 from corehq.apps.es.es_query import HQESQuery
-from corehq.apps.es.tests.utils import ElasticTestMixin
+from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.elastic import SIZE_LIMIT
 
 
-@attr(es_test=True)
+@es_test
 class TestFilters(ElasticTestMixin, SimpleTestCase):
 
     def test_nested_filter(self):

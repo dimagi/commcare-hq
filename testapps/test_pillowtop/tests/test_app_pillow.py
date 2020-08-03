@@ -13,18 +13,18 @@ from corehq.apps.change_feed.pillow import get_application_db_kafka_pillow
 from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
 from corehq.apps.change_feed.topics import get_topic_offset
 from corehq.apps.es import AppES
+from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.application import get_app_to_elasticsearch_pillow
 from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
-from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 from pillowtop.feed.couch import get_current_seq
 
 
-@attr(es_test=True)
+@es_test
 class AppPillowTest(TestCase):
 
     domain = 'app-pillowtest-domain'

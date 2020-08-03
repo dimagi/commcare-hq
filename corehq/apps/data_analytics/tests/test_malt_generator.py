@@ -3,7 +3,6 @@ import datetime
 from django.test import TestCase
 
 from dimagi.utils.dates import DateSpan
-from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.app_manager.const import AMPLIFIES_YES
@@ -13,6 +12,7 @@ from corehq.apps.data_analytics.malt_generator import MALTTableGenerator
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.data_analytics.tests.utils import save_to_es_analytics_db
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.smsforms.app import COMMCONNECT_DEVICE_ID
 from corehq.apps.users.models import CommCareUser
 from corehq.const import MISSING_APP_ID
@@ -21,7 +21,7 @@ from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 
 
-@attr(es_test=True)
+@es_test
 class MaltGeneratorTest(TestCase):
 
     DOMAIN_NAME = "test"

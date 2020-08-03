@@ -8,7 +8,6 @@ from django.conf import settings
 from django.test import TestCase, TransactionTestCase
 from django.test.utils import override_settings
 from django.utils.decorators import classproperty
-from nose.plugins.attrib import attr
 from nose.tools import nottest
 from unittest2 import skipIf, skipUnless
 

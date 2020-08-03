@@ -7,6 +7,7 @@ from corehq.apps.change_feed import data_sources, topics
 from corehq.apps.change_feed.document_types import change_meta_from_doc
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed.topics import get_topic_offset
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
 from corehq.apps.groups.tests.test_utils import delete_all_groups
 from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import reindex_and_clean
@@ -17,11 +18,10 @@ from corehq.pillows.groups_to_user import update_es_user_with_groups, get_group_
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
-from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
 
-@attr(es_test=True)
+@es_test
 class GroupToUserPillowTest(SimpleTestCase):
 
     domain = 'grouptouser-pillowtest-domain'
@@ -140,7 +140,7 @@ def _create_es_user(es_client, user_id, domain):
     return user
 
 
-@attr(es_test=True)
+@es_test
 class GroupToUserPillowDbTest(TestCase):
 
     def setUp(self):
@@ -198,7 +198,7 @@ def _group_to_change_meta(group):
     )
 
 
-@attr(es_test=True)
+@es_test
 class GroupsToUserReindexerTest(TestCase):
 
     def setUp(self):

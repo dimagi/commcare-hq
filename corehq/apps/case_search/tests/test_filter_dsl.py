@@ -4,7 +4,6 @@ from corehq.util.es.elasticsearch import ConnectionError
 from eulxml.xpath import parse as parse_xpath
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
-from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.case_search.filter_dsl import (
@@ -13,6 +12,7 @@ from corehq.apps.case_search.filter_dsl import (
     get_properties_from_ast,
 )
 from corehq.apps.es import CaseSearchES
+from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import transform_case_for_elasticsearch
@@ -21,7 +21,7 @@ from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import generate_cases, trap_extra_setup
 
 
-@attr(es_test=True)
+@es_test
 class TestFilterDsl(SimpleTestCase):
     def test_simple_filter(self):
         parsed = parse_xpath("name = 'farid'")
@@ -317,7 +317,7 @@ class TestFilterDsl(SimpleTestCase):
             build_filter_from_ast(None, parse_xpath("parent/name > other_property"))
 
 
-@attr(es_test=True)
+@es_test
 class TestFilterDslLookups(TestCase):
     maxDiff = None
 
@@ -457,7 +457,7 @@ class TestFilterDslLookups(TestCase):
         self.assertEqual([self.child_case_id], CaseSearchES().filter(built_filter).values_list('_id', flat=True))
 
 
-@attr(es_test=True)
+@es_test
 class TestGetProperties(SimpleTestCase):
     pass
 

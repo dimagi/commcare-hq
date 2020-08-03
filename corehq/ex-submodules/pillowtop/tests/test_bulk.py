@@ -7,7 +7,6 @@ from six.moves import range
 
 from casexml.apps.case.signals import case_post_save
 from corehq.util.es.interface import ElasticsearchInterface
-from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 from pillowtop.feed.interface import Change, ChangeMeta
 from pillowtop.pillow.interface import PillowBase
@@ -15,6 +14,7 @@ from pillowtop.processors.elastic import BulkElasticProcessor
 from pillowtop.tests.utils import TEST_INDEX_INFO
 from pillowtop.utils import bulk_fetch_changes_docs, get_errors_with_ids
 
+from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new
 from corehq.form_processor.document_stores import CaseDocumentStore
 from corehq.form_processor.signals import sql_case_post_save
@@ -54,7 +54,7 @@ class BulkTest(SimpleTestCase):
 
 
 @use_sql_backend
-@attr(es_test=True)
+@es_test
 class TestBulkDocOperations(TestCase):
     @classmethod
     def setUpClass(cls):

@@ -7,10 +7,10 @@ from mock import MagicMock, patch
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 # Also, you need to patch the path to the function in the file where the signal
 # handler uses it, not where it's actually defined.  That's quite a gotcha.
-from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.reports.analytics.esaccessors import get_user_stubs
+from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import doc_exists_in_es, get_es_new
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.es.elasticsearch import ConnectionError
@@ -27,7 +27,7 @@ from ..models import CommCareUser, WebUser
 @mock_out_couch()
 @patch('corehq.apps.users.models.CouchUser.sync_to_django_user', new=MagicMock())
 @patch('corehq.apps.users.models.CommCareUser.project', new=MagicMock())
-@attr(es_test=True)
+@es_test
 class TestUserSignals(SimpleTestCase):
 
     @patch('corehq.apps.analytics.signals.update_hubspot_properties.delay')
@@ -65,7 +65,7 @@ class TestUserSignals(SimpleTestCase):
 @patch('corehq.apps.callcenter.tasks.sync_user_cases')
 @patch('corehq.apps.cachehq.signals.invalidate_document')
 @patch('corehq.apps.users.signals._should_sync_to_es', return_value=True)
-@attr(es_test=True)
+@es_test
 class TestUserSyncToEs(SimpleTestCase):
 
     @classmethod

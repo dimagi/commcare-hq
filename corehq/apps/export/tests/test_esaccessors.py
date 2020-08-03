@@ -2,17 +2,17 @@ import uuid
 
 from django.test import SimpleTestCase
 
-from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.export.esaccessors import get_groups_user_ids
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 
 
-@attr(es_test=True)
+@es_test
 class TestGroupUserIds(SimpleTestCase):
     domain = 'group-es-domain'
 

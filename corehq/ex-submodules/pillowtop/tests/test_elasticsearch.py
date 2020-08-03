@@ -1,12 +1,12 @@
 import functools
 import uuid
 
-from nose.plugins.attrib import attr
 
 from django.conf import settings
 from django.test import SimpleTestCase
 from corehq.util.es.elasticsearch import ConnectionError
 
+from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
@@ -25,7 +25,7 @@ from pillowtop.processors.elastic import send_to_elasticsearch
 from .utils import get_doc_count, get_index_mapping, TEST_INDEX_INFO
 
 
-@attr(es_test=True)
+@es_test
 class ElasticPillowTest(SimpleTestCase):
 
     def setUp(self):
@@ -154,7 +154,7 @@ class ElasticPillowTest(SimpleTestCase):
                 .format(disallowed_setting))
 
 
-@attr(es_test=True)
+@es_test
 class TestSendToElasticsearch(SimpleTestCase):
 
     def setUp(self):

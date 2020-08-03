@@ -10,6 +10,7 @@ from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.tests.test_utils import delete_all_domains
 from corehq.apps.es import CaseES, CaseSearchES, DomainES, FormES, UserES, GroupES
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
 from corehq.apps.groups.tests.test_utils import delete_all_groups
 from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import reindex_and_clean
@@ -27,7 +28,6 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
 from corehq.util.elastic import delete_es_index, ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup, create_and_save_a_form, create_and_save_a_case, generate_cases
-from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 from pillowtop.utils import get_pillow_by_name
 from testapps.test_pillowtop.utils import real_pillow_settings
@@ -35,7 +35,7 @@ from testapps.test_pillowtop.utils import real_pillow_settings
 DOMAIN = 'reindex-test-domain'
 
 
-@attr(es_test=True)
+@es_test
 class PillowtopReindexerTest(TestCase):
     domain = DOMAIN
 

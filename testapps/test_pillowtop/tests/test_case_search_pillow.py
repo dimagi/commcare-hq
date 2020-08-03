@@ -2,7 +2,6 @@ import uuid
 
 from django.test import override_settings, TestCase
 from mock import MagicMock, patch
-from nose.plugins.attrib import attr
 
 from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
 from corehq.apps.case_search.exceptions import CaseSearchNotEnabledException
@@ -15,6 +14,7 @@ from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
 from corehq.apps.change_feed.topics import get_multi_topic_offset
 from corehq.apps.es import CaseSearchES
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.userreports.tests.utils import doc_to_change
 from corehq.elastic import get_es_new
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -33,7 +33,7 @@ from corehq.util.test_utils import create_and_save_a_case
 from pillowtop.es_utils import initialize_index_and_mapping
 
 
-@attr(es_test=True)
+@es_test
 class CaseSearchPillowTest(TestCase):
 
     domain = 'meereen'

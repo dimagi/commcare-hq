@@ -5,11 +5,11 @@ from django.test import TestCase
 
 from corehq.util.es.elasticsearch import ConnectionError
 
-from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import make_loc
@@ -28,7 +28,7 @@ CASE_TYPE = "cc-case-type"
 LOCATION_TYPE = "my-location"
 
 
-@attr(es_test=True)
+@es_test
 class CallCenterLocationOwnerOptionsViewTest(TestCase):
 
     @classmethod

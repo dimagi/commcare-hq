@@ -1,4 +1,5 @@
 import json
+from nose.plugins.attrib import attr
 
 
 class ElasticTestMixin(object):
@@ -14,3 +15,11 @@ class ElasticTestMixin(object):
         )
         # NOTE: This method thinks [a, b, c] != [b, c, a]
         self.assertEqual(raw_query, json_output, msg=msg)
+
+
+def es_test(test):
+    """Decorator for tagging ElasticSearch tests
+
+    :param test: A test class, method, or function.
+    """
+    return attr(es_test=True)(test)
