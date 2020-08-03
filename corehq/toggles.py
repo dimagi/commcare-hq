@@ -712,7 +712,7 @@ ROLE_WEBAPPS_PERMISSIONS = StaticToggle(
     'role_webapps_permissions',
     'ICDS: Toggle which webapps to see based on role',
     TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
+    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER],
 )
 
 
