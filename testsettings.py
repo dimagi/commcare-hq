@@ -141,7 +141,8 @@ METRICS_PROVIDERS = [
 # timeout faster in tests
 ES_SEARCH_TIMEOUT = 5
 
-if os.path.exists("custom/icds"):
+# icds version = ab702b37a1  (to force a build)
+if os.path.exists("extensions/icds/custom/icds"):
     icds_apps = [
         "custom.icds",
         "custom.icds.data_management",
