@@ -158,4 +158,5 @@ class ConnectionSettingsForm(forms.ModelForm):
         self.instance.domain = self.domain
         self.instance.plaintext_password = self.cleaned_data['plaintext_password']
         self.instance.plaintext_client_secret = self.cleaned_data['plaintext_client_secret']
+        self.instance.last_token = None
         return super().save(commit)
