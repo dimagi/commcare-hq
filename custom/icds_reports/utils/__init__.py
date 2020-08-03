@@ -22,7 +22,6 @@ from base64 import b64encode
 from io import BytesIO
 from dateutil.relativedelta import relativedelta
 from django.template.loader import render_to_string, get_template
-from django.conf import settings
 from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
@@ -720,6 +719,8 @@ def create_excel_file(excel_data, data_type, file_format, blob_key=None, timeout
 
 
 def create_pdf_file(pdf_context):
+    from custom.icds.const import ICDS_APPS_ROOT
+
     pdf_hash = uuid.uuid4().hex
     template = get_template("icds_reports/icds_app/pdf/issnip_monthly_register.html")
     resultFile = BytesIO()
@@ -728,7 +729,7 @@ def create_pdf_file(pdf_context):
         pdf_page = template.render(pdf_context)
     except Exception as ex:
         pdf_page = str(ex)
-    base_url = os.path.join(settings.FILEPATH, 'custom', 'icds_reports', 'static')
+    base_url = os.path.join(ICDS_APPS_ROOT, 'icds_reports', 'static')
     resultFile.write(HTML(string=pdf_page, base_url=base_url).write_pdf(
         stylesheets=[CSS(os.path.join(base_url, 'css', 'issnip_monthly_print_style.css')), ])
     )
