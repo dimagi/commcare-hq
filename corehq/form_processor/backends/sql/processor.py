@@ -108,7 +108,7 @@ class FormProcessorSQL(object):
                 ledger_value.db for ledger_value in stock_result.models_to_save
             }
 
-        if any(has_tracked_vault_entries(on_model=form) for form in filter(None, processed_forms)):
+        if processed_forms.submitted and has_tracked_vault_entries(on_model=processed_forms.submitted):
             db_names.add(router.db_for_write(VaultEntry))
 
         all_models = filter(None, chain(
