@@ -1,5 +1,4 @@
 from django.test import TestCase
-from corehq.apps.es.tests.utils import es_test
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test
