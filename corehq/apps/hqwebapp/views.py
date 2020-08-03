@@ -546,6 +546,11 @@ def dropbox_upload(request, download_id):
         logging.error("Download file request for expired/nonexistent file requested")
         raise Http404
 
+    if download.owner_ids and request.couch_user.get_id not in download.owner_ids:
+        return no_permissions(request, message=_(
+            "You do not have access to this file. It can only be uploaded to dropbox by the user who created it"
+        ))
+
     filename = download.get_filename()
     # Hack to get target filename from content disposition
     match = re.search('filename="([^"]*)"', download.content_disposition)
