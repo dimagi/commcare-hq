@@ -75,7 +75,7 @@ def process_xform_xml(domain, instance_xml, attachments=None, auth_context=None)
     try:
         return _create_new_xform(domain, instance_xml, attachments=attachments, auth_context=auth_context)
     except (MissingXMLNSError, XMLSyntaxError) as e:
-        return get_submission_error(domain, instance_xml, e, auth_context)
+        return _get_submission_error(domain, instance_xml, e, auth_context)
 
 
 def _create_new_xform(domain, instance_xml, attachments=None, auth_context=None):
@@ -116,7 +116,7 @@ def _create_new_xform(domain, instance_xml, attachments=None, auth_context=None)
     return FormProcessingResult(xform)
 
 
-def get_submission_error(domain, instance_xml, error, auth_context):
+def _get_submission_error(domain, instance_xml, error, auth_context):
     """
     Handle's a hard failure from posting a form.
     :returns: xform error instance with raw xml as attachment
