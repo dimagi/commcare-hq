@@ -3,14 +3,13 @@ import email
 import json
 import re
 
-from dateutil.parser import parse as parse_datetime
-
 from django.conf import settings
 
 from corehq.util.email_event_utils import (
     record_permanent_bounce,
     record_complaint,
     record_transient_bounce,
+    get_relevant_aws_meta,
 )
 from corehq.util.metrics import metrics_counter
 from corehq.util.models import (
@@ -18,7 +17,6 @@ from corehq.util.models import (
     BounceType,
     NotificationType,
     TransientBounceEmail,
-    AwsMeta,
 )
 from corehq.util.soft_assert import soft_assert
 
@@ -113,34 +111,10 @@ class BouncedEmailManager(object):
         if not message_info:
             return aws_info
 
-        mail_info = message_info.get('mail', {})
-        if message_info['notificationType'] == NotificationType.BOUNCE:
-            bounce_info = message_info['bounce']
-            for recipient in bounce_info['bouncedRecipients']:
-                aws_info.append(AwsMeta(
-                    notification_type=message_info['notificationType'],
-                    main_type=bounce_info['bounceType'],
-                    sub_type=bounce_info['bounceSubType'],
-                    timestamp=parse_datetime(bounce_info['timestamp']),
-                    email=recipient['emailAddress'],
-                    reason=recipient.get('diagnosticCode'),
-                    headers=mail_info.get('commonHeaders', {}),
-                    destination=mail_info.get('destination', []),
-                ))
-        elif message_info['notificationType'] == NotificationType.COMPLAINT:
-            complaint_info = message_info['complaint']
-            for recipient in complaint_info['complainedRecipients']:
-                aws_info.append(AwsMeta(
-                    notification_type=message_info['notificationType'],
-                    main_type=message_info.get('complaintFeedbackType'),
-                    sub_type=complaint_info.get('complaintSubType'),
-                    timestamp=parse_datetime(complaint_info['timestamp']),
-                    email=recipient['emailAddress'],
-                    reason=None,
-                    headers=mail_info.get('commonHeaders', {}),
-                    destination=mail_info.get('destination', []),
-                ))
-        else:
+        if message_info['notificationType'] not in [
+            NotificationType.BOUNCE,
+            NotificationType.COMPLAINT,
+        ]:
             metrics_counter(
                 'commcare.bounced_email_manager.unknown_notification_type'
             )
@@ -153,6 +127,8 @@ class BouncedEmailManager(object):
                 f'[{settings.SERVER_ENVIRONMENT}] '
                 f'Unknown AWS Notification Type sent to Inbox. '
             )
+        else:
+            aws_info = get_relevant_aws_meta(message_info)
 
         return aws_info
 
