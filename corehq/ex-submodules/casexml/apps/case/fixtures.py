@@ -28,7 +28,7 @@ class CaseDBFixture(object):
                 <date_opened/>
                 <last_modified/>
                 <case_property />
-                <index>
+                <index>corehq/ex-submodules/casexml/apps/case/fixtures.py
                     <a12345 case_type="" relationship="" />
                 </index>
                 <attachment>
@@ -44,7 +44,7 @@ class CaseDBFixture(object):
         https://github.com/dimagi/commcare/wiki/fixtures
         """
         element = safe_element("results")
-        element.attrib = {'id': self.id}
+        element.set('id', self.id)
 
         for case in self.cases:
             element.append(get_casedb_element(case))
