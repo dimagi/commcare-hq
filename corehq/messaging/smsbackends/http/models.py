@@ -137,8 +137,7 @@ class SQLHttpBackend(SQLSMSBackend):
         else:
             phone_number = strip_plus(phone_number)
 
-        charset = config.additional_params.get("_charset_")
-        params[config.message_param] = self._encode_http_message(msg.text, charset)
+        params[config.message_param] = self._encode_http_message(msg.text)
         params[config.number_param] = phone_number
 
         url_params = urlencode(params)
@@ -162,8 +161,8 @@ class SQLHttpBackend(SQLSMSBackend):
             six.reraise(BackendProcessingException, BackendProcessingException(msg), sys.exc_info()[2])
 
     @staticmethod
-    def _encode_http_message(text, charset=None):
+    def _encode_http_message(text):
         try:
-            return text.encode(charset if charset else "iso-8859-1")
+            return text.encode("iso-8859-1")
         except UnicodeEncodeError:
             return text.encode("utf-8")
