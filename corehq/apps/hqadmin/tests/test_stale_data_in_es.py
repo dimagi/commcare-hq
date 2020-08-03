@@ -27,7 +27,6 @@ from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.util.elastic import reset_es_index
 from corehq.util.es import elasticsearch
-from corehq.util.es.interface import ElasticsearchInterface
 
 
 class ExitEarlyException(Exception):

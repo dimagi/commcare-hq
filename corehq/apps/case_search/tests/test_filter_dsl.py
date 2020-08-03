@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.test import SimpleTestCase, TestCase
 
 from corehq.util.es.elasticsearch import ConnectionError
@@ -22,6 +21,7 @@ from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import generate_cases, trap_extra_setup
 
 
+@attr(es_test=True)
 class TestFilterDsl(SimpleTestCase):
     def test_simple_filter(self):
         parsed = parse_xpath("name = 'farid'")
@@ -317,6 +317,7 @@ class TestFilterDsl(SimpleTestCase):
             build_filter_from_ast(None, parse_xpath("parent/name > other_property"))
 
 
+@attr(es_test=True)
 class TestFilterDslLookups(TestCase):
     maxDiff = None
 
@@ -456,6 +457,7 @@ class TestFilterDslLookups(TestCase):
         self.assertEqual([self.child_case_id], CaseSearchES().filter(built_filter).values_list('_id', flat=True))
 
 
+@attr(es_test=True)
 class TestGetProperties(SimpleTestCase):
     pass
 
