@@ -61,7 +61,7 @@ class SubmissionFormContext(object):
         self.supplementary_models = []
 
 
-class FormProcessingResult(namedtuple('FormProcessingResult', 'response xform cases ledgers submission_type')):
+class FormProcessingResponse(namedtuple('FormProcessingResponse', 'response xform cases ledgers submission_type')):
     @property
     def case(self):
         assert len(self.cases) == 1
@@ -232,7 +232,7 @@ class SubmissionPost(object):
         report_submission_usage(self.domain)
         failure_response = self._handle_basic_failure_modes()
         if failure_response:
-            return FormProcessingResult(failure_response, None, [], [], 'known_failures')
+            return FormProcessingResponse(failure_response, None, [], [], 'known_failures')
 
         try:
             # decode xml to ensure it can be decoded to string when and if needed in pre processing steps
@@ -267,7 +267,7 @@ class SubmissionPost(object):
                 response = self.get_exception_response_and_log(
                     'Problem receiving submission', submitted_form, self.path
                 )
-            return FormProcessingResult(response, None, [], [], 'submission_error_log')
+            return FormProcessingResponse(response, None, [], [], 'submission_error_log')
 
         if submitted_form.xmlns == SYSTEM_ACTION_XMLNS:
             return self.handle_system_action(submitted_form)
@@ -349,7 +349,7 @@ class SubmissionPost(object):
                     submission_type = 'error'
 
             response = self._get_open_rosa_response(instance, **openrosa_kwargs)
-            return FormProcessingResult(response, instance, cases, ledgers, submission_type)
+            return FormProcessingResponse(response, instance, cases, ledgers, submission_type)
 
     def _pre_process_form(self, xform_context):
         """
@@ -545,7 +545,7 @@ class SubmissionPost(object):
         handle_system_action(form, self.auth_context)
         self.interface.save_processed_models([form])
         response = HttpResponse(status=201)
-        return FormProcessingResult(response, form, [], [], 'system-action')
+        return FormProcessingResponse(response, form, [], [], 'system-action')
 
     @tracer.wrap(name='submission.process_device_log')
     def process_device_log(self, device_log_form):
@@ -563,7 +563,7 @@ class SubmissionPost(object):
                 raise
 
         response = self._get_open_rosa_response(device_log_form)
-        return FormProcessingResult(response, device_log_form, [], [], 'device-log')
+        return FormProcessingResponse(response, device_log_form, [], [], 'device-log')
 
 
 def _transform_instance_to_error(interface, exception, instance):
