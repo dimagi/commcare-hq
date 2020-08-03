@@ -91,9 +91,8 @@ domain_specific = [
     url(r'^integration/', include('corehq.apps.integration.urls')),
 ]
 
-for url_modules in extension_points.domain_specific_urls():
-    for module in url_modules:
-        domain_specific.append(url(r'^', include(module)))
+for url_module in extension_points.domain_specific_urls():
+    domain_specific.append(url(r'^', include(url_module)))
 
 
 urlpatterns = [
