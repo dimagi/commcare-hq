@@ -67,7 +67,6 @@ domain_specific = [
     url(r'^data_dictionary/', include('corehq.apps.data_dictionary.urls')),
     url(r'^', include(hqwebapp_domain_specific)),
     url(r'^case/', include('corehq.apps.hqcase.urls')),
-    url(r'^case/', include('corehq.apps.case_search.urls')),
     url(r'^case_migrations/', include('corehq.apps.case_migrations.urls')),
     url(r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
     url(r'^fixtures/', include('corehq.apps.fixtures.urls')),
@@ -91,9 +90,8 @@ domain_specific = [
     url(r'^integration/', include('corehq.apps.integration.urls')),
 ]
 
-for url_modules in extension_points.domain_specific_urls():
-    for module in url_modules:
-        domain_specific.append(url(r'^', include(module)))
+for url_module in extension_points.domain_specific_urls():
+    domain_specific.append(url(r'^', include(url_module)))
 
 
 urlpatterns = [
