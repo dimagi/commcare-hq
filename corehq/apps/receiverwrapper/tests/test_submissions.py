@@ -300,7 +300,7 @@ class SubmissionSQLTransactionsTest(TestCase, TestFileMixin):
 
     def test_submit_with_vault_items(self):
         with override_settings(XFORM_PRE_PROCESSORS={
-                self.domain: ['corehq.apps.data_vault.tests.test_utils.TestVaultPatternExtractor']}
+                self.domain: ['corehq.apps.data_vault.tests.utils.TestVaultPatternExtractor']}
         ):
             self.assertEqual(VaultEntry.objects.count(), 0)
             form_xml = self.get_xml('form_with_vault_item')
