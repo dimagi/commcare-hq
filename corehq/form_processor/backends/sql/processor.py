@@ -124,11 +124,8 @@ class FormProcessorSQL(object):
                 # Save deprecated form first to avoid ID conflicts
                 if processed_forms.deprecated:
                     FormAccessorSQL.update_form(processed_forms.deprecated, publish_changes=False)
-                    # in case of rollback, vault entry pk is cleared through tracked models on form
-                    save_tracked_vault_entries(processed_forms.deprecated)
 
                 FormAccessorSQL.save_new_form(processed_forms.submitted)
-                save_tracked_vault_entries(processed_forms.submitted)
                 if cases:
                     for case in cases:
                         CaseAccessorSQL.save_case(case)
