@@ -48,6 +48,7 @@ from custom.icds_reports.const import (
     THR_REPORT_DAY_BENEFICIARY_TYPE,
     THR_21_DAYS_THRESHOLD_DATE
 )
+from custom.icds_reports.exceptions import InvalidLocationTypeException
 
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.queries import get_test_state_locations_id, get_test_district_locations_id
@@ -2314,7 +2315,7 @@ def filter_cas_data_export(export_file, location):
                     index_of_location_type_name_column = i
                     break
             else:
-                raise InvalidLocationType(f'{location.location_type.name} is not a valid location option for cas data exports')
+                raise InvalidLocationTypeException(f'{location.location_type.name} is not a valid location option for cas data exports')
             writer.writerow(headers)
             for row in reader:
                 if row[index_of_location_type_name_column] == location.name:
