@@ -59,7 +59,6 @@ from corehq.apps.domain.views.releases import (
     deactivate_release_restriction,
     toggle_release_restriction_by_app_profile,
 )
-from corehq.apps.domain.views.repeaters import generate_repeater_payloads
 from corehq.apps.domain.views.settings import (
     CaseSearchConfigView,
     DefaultProjectSettingsView,
@@ -178,8 +177,6 @@ domain_settings = [
     url(r'^repeat_record/', RepeatRecordView.as_view(), name=RepeatRecordView.urlname),
     url(r'^repeat_record_report/cancel/', cancel_repeat_record, name='cancel_repeat_record'),
     url(r'^repeat_record_report/requeue/', requeue_repeat_record, name='requeue_repeat_record'),
-    url(r'^repeat_record_report/generate_repeater_payloads/', generate_repeater_payloads,
-        name='generate_repeater_payloads'),
     url(r'^integration/', include(integration_settings)),
     url(r'^transfer/$', TransferDomainView.as_view(), name=TransferDomainView.urlname),
     url(r'^case_search/$', CaseSearchConfigView.as_view(), name=CaseSearchConfigView.urlname),

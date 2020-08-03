@@ -5,6 +5,7 @@ import uuid
 from collections import namedtuple
 from datetime import datetime, timedelta
 
+from django.contrib.postgres.fields import ArrayField
 from django.db import IntegrityError, connection, models, transaction
 from django.http import Http404
 from django.utils.translation import ugettext_lazy, ugettext_noop
@@ -1942,6 +1943,11 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
     # Some backends use their own inbound api key and not the default hq-generated one.
     # For those, we don't show the inbound api key on the edit backend page.
     show_inbound_api_key_during_edit = True
+
+    # Custom opt in/out keywords for gateways that allows users to configure their own at
+    # the gateway level, such as twilio advanced opt out
+    opt_in_keywords = ArrayField(models.TextField(), default=list)
+    opt_out_keywords = ArrayField(models.TextField(), default=list)
 
     class Meta(object):
         db_table = 'messaging_mobilebackend'

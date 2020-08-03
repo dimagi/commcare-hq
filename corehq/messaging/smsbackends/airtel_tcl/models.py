@@ -1,5 +1,6 @@
 import json
 import pytz
+import re
 import requests
 from corehq.apps.sms.models import SQLSMSBackend
 from corehq.messaging.smsbackends.airtel_tcl.exceptions import AirtelTCLError, InvalidDestinationNumber
@@ -104,7 +105,7 @@ class AirtelTCLBackend(SQLSMSBackend):
         making the request.
         """
         phone_number = strip_plus(phone_number)
-        if phone_number.startswith('91') and len(phone_number) > 2:
+        if re.match(r'^(91)[6-9]\d{9}$', phone_number):
             return phone_number[2:]
 
         raise InvalidDestinationNumber()

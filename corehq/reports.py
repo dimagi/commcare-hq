@@ -10,6 +10,7 @@ from corehq.apps.hqadmin.reports import (
     DeviceLogSoftAssertReport,
     UserAuditReport,
     UserListReport,
+    DeployHistoryReport,
 )
 from corehq.apps.linked_domain.views import DomainLinkHistoryReport
 from corehq.apps.reports.standard import (
@@ -339,6 +340,7 @@ ADMIN_REPORTS = (
         DeviceLogSoftAssertReport,
         AdminPhoneNumberReport,
         UserAuditReport,
+        DeployHistoryReport,
     )),
 )
 

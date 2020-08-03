@@ -1,3 +1,4 @@
+import os
 from datetime import date
 
 from django.conf import settings
@@ -9,6 +10,8 @@ from custom.icds_reports.data_pull.data_pulls import (
     MonthlyPerformance,
     VHSNDMonthlyReport,
 )
+
+SQL_TEMPLATES_ROOT = os.path.join(os.path.dirname(__file__), "migrations", "sql_templates")
 
 ISSUE_TRACKER_APP_ID = '48cc1709b7f62ffea24cc6634a005734'
 

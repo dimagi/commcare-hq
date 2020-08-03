@@ -271,7 +271,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                 pass
             else:
                 django_user.delete()
-                log_model_change(request.user, django_user, message={'deleted_via': USER_CHANGE_VIA_API},
+                log_model_change(request.user, django_user, message=f"deleted_via: {USER_CHANGE_VIA_API}",
                                  action=ModelAction.DELETE)
         return bundle
 
