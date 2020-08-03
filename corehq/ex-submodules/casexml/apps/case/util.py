@@ -2,7 +2,7 @@ from __future__ import generator_stop
 from collections import defaultdict, namedtuple
 import uuid
 
-from xml.etree import cElementTree as ElementTree
+from lxml import etree as ElementTree
 import datetime
 
 from django.conf import settings
