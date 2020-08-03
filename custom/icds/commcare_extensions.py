@@ -10,7 +10,7 @@ from corehq.apps.userreports.extension_points import (
     custom_ucr_report_filter_values,
     custom_ucr_report_filters,
     static_ucr_data_source_paths,
-    static_ucr_reports,
+    static_ucr_report_paths,
 )
 from corehq.extensions.extension_points import (
     domain_specific_urls,
@@ -46,7 +46,7 @@ def icds_ucr_data_sources():
     ]]
 
 
-@static_ucr_reports.extend()
+@static_ucr_report_paths.extend()
 def icds_ucr_reports():
     return [os.path.join(ICDS_APPS_ROOT, path) for path in [
         "icds_reports/ucr/reports/dashboard/*.j,son",
