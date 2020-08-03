@@ -2,10 +2,10 @@ import uuid
 
 from django.test import TestCase, override_settings
 
-from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.es import CaseES
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import reindex_and_clean
 from corehq.elastic import get_es_new
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
@@ -21,7 +21,7 @@ DOMAIN = 'report-case-pillowtest-domain'
 
 
 @override_settings(ES_CASE_FULL_INDEX_DOMAINS=[DOMAIN])
-@attr(es_test=True)
+@es_test
 class ReportCasePillowTest(BasePillowTestCase):
 
     def setUp(self):

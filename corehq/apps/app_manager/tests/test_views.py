@@ -7,7 +7,6 @@ from django.urls import reverse
 
 from mock import patch
 
-from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq import toggles
@@ -27,6 +26,7 @@ from corehq.apps.app_manager.views import (
 from corehq.apps.app_manager.views.forms import get_apps_modules
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.linked_domain.applications import create_linked_app
 from corehq.apps.users.models import WebUser
 from corehq.elastic import get_es_new, send_to_elasticsearch
@@ -37,7 +37,7 @@ from .test_form_versioning import BLANK_TEMPLATE, INVALID_TEMPLATE
 
 
 @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
-@attr(es_test=True)
+@es_test
 class TestViews(TestCase):
     app = None
     build = None

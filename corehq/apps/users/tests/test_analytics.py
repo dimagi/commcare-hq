@@ -1,7 +1,8 @@
 from django.test import TestCase
-from nose.plugins.attrib import attr
+from corehq.apps.es.tests.utils import es_test
 
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.analytics import (
     get_active_commcare_users_in_domain,
     get_count_of_active_commcare_users_in_domain,
@@ -15,7 +16,7 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.elastic import reset_es_index
 
 
-@attr(es_test=True)
+@es_test
 class UserAnalyticsTest(TestCase):
 
     @classmethod

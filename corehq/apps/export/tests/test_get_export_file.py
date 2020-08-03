@@ -5,13 +5,13 @@ from django.core.cache import cache
 from django.test import SimpleTestCase
 
 from corehq.util.es.elasticsearch import ConnectionError
+from corehq.apps.es.tests.utils import es_test
 from mock import patch
 from openpyxl import load_workbook
 
 from couchexport.export import get_writer
 from couchexport.models import Format
 from couchexport.transforms import couch_to_excel_datetime
-from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.export.const import (
@@ -674,7 +674,7 @@ class WriterTest(SimpleTestCase):
         self.assertTrue(export_save.called)
 
 
-@attr(es_test=True)
+@es_test
 class ExportTest(SimpleTestCase):
 
     @classmethod

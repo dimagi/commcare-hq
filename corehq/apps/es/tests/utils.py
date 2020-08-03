@@ -1,4 +1,5 @@
 import json
+from nose.plugins.attrib import attr
 
 from corehq.elastic import get_es_new
 from corehq.util.elastic import ensure_index_deleted
@@ -43,3 +44,11 @@ class ElasticTestMixin(object):
             # some queries need more setup to validate like initializing the specific index
             #   that they are querying.
             self.validate_query(raw_query)
+
+
+def es_test(test):
+    """Decorator for tagging ElasticSearch tests
+
+    :param test: A test class, method, or function.
+    """
+    return attr(es_test=True)(test)

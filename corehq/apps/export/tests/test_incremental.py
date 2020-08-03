@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 from django.test import TestCase
 
 from couchexport.models import Format
-from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
 import requests_mock
@@ -24,6 +23,7 @@ from corehq.apps.export.models.incremental import (
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.tests.util import setup_locations_and_types
 from corehq.apps.export.tests.util import DEFAULT_CASE_TYPE, new_case
@@ -38,7 +38,7 @@ from corehq.util.es.interface import ElasticsearchInterface
 from corehq.util.test_utils import trap_extra_setup
 
 
-@attr(es_test=True)
+@es_test
 class TestIncrementalExport(TestCase):
     @classmethod
     def setUpClass(cls):

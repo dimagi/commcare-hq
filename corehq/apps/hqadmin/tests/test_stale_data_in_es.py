@@ -3,13 +3,13 @@ from io import StringIO
 
 from django.core.management import call_command
 from django.test import TestCase
-from nose.plugins.attrib import attr
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 
 import mock
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.hqadmin.management.commands.stale_data_in_es import DataRow
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.elastic import get_es_new, send_to_elasticsearch
@@ -34,7 +34,7 @@ class ExitEarlyException(Exception):
     pass
 
 
-@attr(es_test=True)
+@es_test
 class TestStaleDataInESSQL(TestCase):
 
     use_sql_backend = True
@@ -313,7 +313,7 @@ class TestStaleDataInESSQL(TestCase):
         self._delete_cases_from_es(self.cases_to_delete_from_es)
 
 
-@attr(es_test=True)
+@es_test
 class TestStaleDataInESCouch(TestStaleDataInESSQL):
 
     use_sql_backend = False

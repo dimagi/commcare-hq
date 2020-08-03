@@ -1,5 +1,4 @@
 from copy import deepcopy
-from nose.plugins.attrib import attr
 
 from django.conf import settings
 from django.test.testcases import SimpleTestCase
@@ -21,11 +20,11 @@ from corehq.apps.es.aggregations import (
     TopHitsAggregation,
 )
 from corehq.apps.es.es_query import ESQuerySet, HQESQuery
-from corehq.apps.es.tests.utils import ElasticTestMixin
+from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.elastic import SIZE_LIMIT
 
 
-@attr(es_test=True)
+@es_test
 class TestAggregations(ElasticTestMixin, SimpleTestCase):
 
     def test_bad_aggregation_name(self):

@@ -17,10 +17,10 @@ from couchforms.analytics import (
     update_analytics_indexes,
 )
 from couchforms.models import XFormInstance, XFormError
-from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 from testapps.test_pillowtop.utils import process_pillow_changes
 
+from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -30,7 +30,7 @@ from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import DocTestMixin, get_form_ready_to_save, trap_extra_setup
 
 
-@attr(es_test=True)
+@es_test
 class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
     maxDiff = None
 
