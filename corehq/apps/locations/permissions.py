@@ -251,6 +251,10 @@ def is_location_safe(view_fn, request, view_args, view_kwargs):
         view_fn = report_class
 
     if getattr(view_fn, 'is_location_safe', False):
+        if isinstance(view_fn, type):
+            return _has_own_location_safe_attribute(view_fn)
+        if hasattr(view_fn, "view_class"):
+            return _has_own_location_safe_attribute(view_fn.view_class)
         return True
     if 'resource_name' in view_kwargs:
         return view_kwargs['resource_name'] in LOCATION_SAFE_TASTYPIE_RESOURCES
@@ -258,6 +262,10 @@ def is_location_safe(view_fn, request, view_args, view_kwargs):
         return view_fn._conditionally_location_safe_function(view_fn, request, *view_args, **view_kwargs)
 
     return False
+
+
+def _has_own_location_safe_attribute(class_):
+    return 'is_location_safe' in getattr(class_, "__dict__", {})
 
 
 def report_class_is_location_safe(report_class):

@@ -27,7 +27,7 @@ class UnsafeClsView(View):
 
 
 class UnSafeChildOfSafeClsView(SafeClsView):
-    """This inherits its parent class's safety"""  # TODO change this behavior
+    """This DOES NOT inherit its parent class's safety"""
 
 
 @location_safe
@@ -45,7 +45,7 @@ def test_django_view_safety():
             (unsafe_fn_view, False),
             (SafeClsView.as_view(), True),
             (UnsafeClsView.as_view(), False),
-            (UnSafeChildOfSafeClsView.as_view(), True),
+            (UnSafeChildOfSafeClsView.as_view(), False),
             (SafeChildofUnsafeClsView.as_view(), True),
     ]:
         yield _assert, view, is_safe
@@ -107,7 +107,7 @@ class UnsafeHQReport(BaseReport):
 
 
 class UnsafeChildOfSafeHQReport(SafeHQReport):
-    """Unfortunately this DOES inherit safety from its parent"""  # TODO change this behavior
+    """This DOES NOT inherit safety from its parent"""
     slug = 'unsafe_child_of_safe_hq_report'
 
 
@@ -131,7 +131,7 @@ def test_hq_report_safety():
     for report, request, is_safe in [
             (SafeHQReport, MagicMock(), True),
             (UnsafeHQReport, MagicMock(), False),
-            (UnsafeChildOfSafeHQReport, MagicMock(), True),
+            (UnsafeChildOfSafeHQReport, MagicMock(), False),
             (SafeChildOfUnsafeHQReport, MagicMock(), True),
             (ConditionallySafeHQReport, MagicMock(this_is_safe=True), True),
             (ConditionallySafeHQReport, MagicMock(this_is_safe=False), False),
