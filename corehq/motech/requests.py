@@ -149,7 +149,7 @@ class Requests(object):
 
     def post(self, endpoint, data=None, json=None, *args, **kwargs):
         kwargs.setdefault('headers', {
-            'Content-type': 'application/json',
+            'Content-type': 'application/json; charset=utf-8',
             'Accept': 'application/json'
         })
         url = get_endpoint_url(self.base_url, endpoint)
@@ -158,7 +158,7 @@ class Requests(object):
 
     def put(self, endpoint, data=None, json=None, *args, **kwargs):
         kwargs.setdefault('headers', {
-            'Content-type': 'application/json',
+            'Content-type': 'application/json; charset=utf-8',
             'Accept': 'application/json'
         })
         url = get_endpoint_url(self.base_url, endpoint)
@@ -226,7 +226,7 @@ def simple_post(domain, url, data, *, headers, auth_manager, verify,
         # non-ASCII characters as 'data:application/octet-stream;base64,...'
         data = data.encode('utf-8')
     default_headers = CaseInsensitiveDict({
-        "content-type": "text/xml",
+        "content-type": "text/xml; charset=utf-8",
         "content-length": str(len(data)),
     })
     default_headers.update(headers)
