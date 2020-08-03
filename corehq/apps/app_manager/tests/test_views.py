@@ -7,7 +7,6 @@ from django.urls import reverse
 
 from mock import patch
 
-from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq import toggles

@@ -2,7 +2,6 @@ import uuid
 
 from django.test import TestCase, override_settings
 
-from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.es import CaseES

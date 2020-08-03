@@ -5,7 +5,6 @@ from django.test import SimpleTestCase
 
 from corehq.util.es.elasticsearch import ConnectionError
 
-from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.export.esaccessors import get_case_export_base_query

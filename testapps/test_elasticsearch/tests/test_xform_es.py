@@ -11,7 +11,6 @@ from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.es.interface import ElasticsearchInterface
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
-from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
 WrappedJsonFormPair = namedtuple('WrappedJsonFormPair', ['wrapped_form', 'json_form'])

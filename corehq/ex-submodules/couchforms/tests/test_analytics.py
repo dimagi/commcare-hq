@@ -17,7 +17,6 @@ from couchforms.analytics import (
     update_analytics_indexes,
 )
 from couchforms.models import XFormInstance, XFormError
-from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 from testapps.test_pillowtop.utils import process_pillow_changes
 

@@ -7,7 +7,6 @@ from six.moves import range
 
 from casexml.apps.case.signals import case_post_save
 from corehq.util.es.interface import ElasticsearchInterface
-from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 from pillowtop.feed.interface import Change, ChangeMeta
 from pillowtop.pillow.interface import PillowBase

@@ -4,7 +4,6 @@ from datetime import datetime
 
 from django.conf import settings
 from django.utils.http import urlencode
-from nose.plugins.attrib import attr
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase

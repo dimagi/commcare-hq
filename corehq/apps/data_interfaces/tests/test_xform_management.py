@@ -1,7 +1,6 @@
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.http import HttpRequest, QueryDict
 from django.test import TestCase, Client
-from nose.plugins.attrib import attr
 
 from corehq.apps.data_interfaces.views import XFormManagementView
 from corehq.apps.domain.shortcuts import create_domain

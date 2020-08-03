@@ -2,7 +2,6 @@ import uuid
 
 from django.test import SimpleTestCase
 
-from nose.plugins.attrib import attr
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.export.esaccessors import get_groups_user_ids

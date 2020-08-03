@@ -2,7 +2,6 @@ import datetime
 import json
 
 from django.test import TestCase
-from nose.plugins.attrib import attr
 
 from corehq.apps.es.sms import SMSES
 from corehq.apps.es.tests.utils import es_test

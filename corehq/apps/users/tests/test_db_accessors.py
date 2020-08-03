@@ -1,7 +1,5 @@
 from django.test import TestCase
 
-from nose.plugins.attrib import attr
-
 from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.tests.utils import es_test

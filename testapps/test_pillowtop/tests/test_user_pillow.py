@@ -1,5 +1,4 @@
 from django.conf import settings
-from nose.plugins.attrib import attr
 
 from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed import topics
