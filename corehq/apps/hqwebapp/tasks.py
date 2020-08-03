@@ -183,7 +183,6 @@ def process_bounced_emails():
             with BouncedEmailManager(
                 delete_processed_messages=True
             ) as bounced_manager, metrics_track_errors('process_bounced_emails_task'):
-                bounced_manager.process_aws_notifications()
                 bounced_manager.process_daemon_messages()
         except Exception as e:
             notify_exception(
