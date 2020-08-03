@@ -3,12 +3,18 @@
 {% load hq_shared_tags %}
 
 <div class="appnav-item {% if module.unique_id == selected_module.unique_id %}{% if not form %}active{% endif %}{% endif %}">
-
+  {% if not module.source_module_id or not module.root_module_id %}
+    {# Don't show the delete button for child-shadow modules #}
     <a href="#module_confirm_delete_{{ module.unique_id }}"
        data-toggle="modal"
        class="appnav-delete">
       <i class="fa fa-trash-o"></i>
     </a>
+  {% else %}
+    <a class="appnav-delete">
+      <i class="fa fa-ban"></i>
+    </a>
+  {% endif %}
 
     <a href="{% url "view_module" domain app.id module.unique_id %}"
        class="appnav-title{% if module.doc_type != 'ReportModule' and module.doc_type != 'ShadowModule' %} appnav-title-secondary{% endif %} appnav-responsive">
