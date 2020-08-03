@@ -1,0 +1,84 @@
+{
+    "notificationType": "Bounce",
+    "bounce": {
+        "bounceType": "Transient",
+        "bounceSubType": "General",
+        "bouncedRecipients": [
+            {
+                "emailAddress": "transientEmail@company.org",
+                "action": "failed",
+                "status": "4.4.7",
+                "diagnosticCode": "smtp; 554 4.4.7 Message expired: unable to deliver in 840 minutes.<421 4.4.0 Unable to lookup DNS for company.org>"
+            }
+        ],
+        "timestamp": "2020-07-31T21:08:57.723Z",
+        "feedbackId": "<redacted>",
+        "reportingMTA": "dsn; test.smtp-out.amazonses.com"
+    },
+    "mail": {
+        "timestamp": "2020-07-31T06:01:50.000Z",
+        "source": "noreplyemail@company.com",
+        "sourceArn": "arn:aws:ses:<redacted>:identity/noreplyemail@company.com",
+        "sourceIp": "255.255.255.255",
+        "sendingAccountId": "<redacted>",
+        "messageId": "<redacted>",
+        "destination": [
+            "transientEmail@company.org"
+        ],
+        "headersTruncated": false,
+        "headers": [
+            {
+                "name": "Received",
+                "value": "from server-name (ec2-fake.compute-1.amazonaws.com [redacted]) by email-smtp.amazonaws.com with SMTP (SimpleEmailService-d-redacted) id redacted for transientEmail@company.org; Fri, 31 Jul 2020 06:01:50 +0000 (UTC)"
+            },
+            {
+                "name": "Content-Type",
+                "value": "multipart/mixed; boundary=\"===============2714251937794784700==\""
+            },
+            {
+                "name": "MIME-Version",
+                "value": "1.0"
+            },
+            {
+                "name": "Subject",
+                "value": "Scheduled report from CommCare HQ"
+            },
+            {
+                "name": "From",
+                "value": "noreplyemail@company.com"
+            },
+            {
+                "name": "To",
+                "value": "transientEmail@company.org"
+            },
+            {
+                "name": "Date",
+                "value": "Fri, 31 Jul 2020 06:01:50 -0000"
+            },
+            {
+                "name": "Message-ID",
+                "value": "<redacted@server-name>"
+            },
+            {
+                "name": "Return-Path",
+                "value": "noreplyemail@company.com"
+            },
+            {
+                "name": "X-SES-CONFIGURATION-SET",
+                "value": "fake-email-events"
+            }
+        ],
+        "commonHeaders": {
+            "returnPath": "noreplyemail@company.com",
+            "from": [
+                "noreplyemail@company.com"
+            ],
+            "date": "Fri, 31 Jul 2020 06:01:50 -0000",
+            "to": [
+                "transientEmail@company.org"
+            ],
+            "messageId": "<redacted>",
+            "subject": "Scheduled report from CommCare HQ"
+        }
+    }
+}
