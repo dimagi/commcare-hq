@@ -30,5 +30,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(back_populate, reverse_code=migrations.RunPython.noop, elidable=True),
+        migrations.RunPython(
+            back_populate, reverse_code=migrations.RunPython.noop, elidable=True),
     ]
