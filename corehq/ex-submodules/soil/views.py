@@ -46,6 +46,11 @@ def ajax_job_poll(request, download_id, template="soil/partials/dl_status.html")
     except TaskFailedError as e:
         context = {'error': list(e.errors) if e.errors else [_("An error occurred during the download.")]}
         return HttpResponseServerError(render(request, template, context))
+
+    download = DownloadBase.get(download_id)
+    if download and download.owner_ids and request.couch_user.get_id not in download.owner_ids:
+        return HttpResponseForbidden(_("You do not have access to this file"))
+
     return render(request, template, context)
 
 
