@@ -3,7 +3,7 @@ import os
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 
-from corehq import toggles
+from custom.icds import icds_toggles
 from corehq.apps.domain.extension_points import custom_domain_module
 from corehq.apps.userreports.extension_points import (
     custom_ucr_expressions,
@@ -16,13 +16,14 @@ from corehq.extensions.extension_points import (
     domain_specific_urls,
     uitab_dropdown_items,
 )
+from corehq.toggles import custom_toggle_modules
 from custom.icds.const import ICDS_APPS_ROOT
 from custom.icds_core.const import ManageHostedCCZ_urlname
 
 
 @uitab_dropdown_items.extend(domains=["icds-cas"])
 def icds_uitab_dropdown_items(tab, domain, request):
-    if tab == 'ApplicationsTab' and toggles.MANAGE_CCZ_HOSTING.enabled_for_request(request):
+    if tab == 'ApplicationsTab' and icds_toggles.MANAGE_CCZ_HOSTING.enabled_for_request(request):
         return [{
             "title": _("Manage CCZ Hosting"),
             "url": reverse(ManageHostedCCZ_urlname, args=[domain]),
@@ -101,3 +102,10 @@ def icds_custom_domain_module(domain):
         "icds-cas": "custom.icds_reports",
         "icds-dashboard-qa": "custom.icds_reports",
     }.get(domain, None)
+
+
+@custom_toggle_modules.extend()
+def icds_toggle_modules():
+    return [
+        "custom.icds.icds_toggles",
+    ]

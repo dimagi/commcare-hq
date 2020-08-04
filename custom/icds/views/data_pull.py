@@ -4,7 +4,7 @@ from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _
 
-from corehq import toggles
+from custom.icds import icds_toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.locations.permissions import location_safe
@@ -22,7 +22,7 @@ from custom.icds.utils.data_pull import (
 
 @location_safe
 @method_decorator([login_and_domain_required,
-                   toggles.RUN_CUSTOM_DATA_PULL_REQUESTS.required_decorator()], name='dispatch')
+                   icds_toggles.RUN_CUSTOM_DATA_PULL_REQUESTS.required_decorator()], name='dispatch')
 class CustomDataPull(BaseProjectDataView):
     urlname = 'icds_custom_data_pull'
     page_title = "ICDS Custom Data Pull"
