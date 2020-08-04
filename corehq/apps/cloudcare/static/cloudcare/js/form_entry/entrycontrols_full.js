@@ -129,7 +129,7 @@ EntrySingleAnswer.prototype.enableReceiver = function (question, options) {
             question.parentPubSub.subscribe(function (message) {
                 if (message === Formplayer.Const.NO_ANSWER) {
                     self.rawAnswer(Formplayer.Const.NO_ANSWER);
-                } else if (message, receiveTopicField) {
+                } else if (message) {
                     self.receiveMessage(message, receiveTopicField);
                 }
             }, null, receiveTopic);
@@ -695,7 +695,7 @@ ComboboxEntry.prototype.receiveMessage = function (message, field) {
     // Iterates through options and selects an option that matches message[field].
     // Registers a no answer if message[field] is not in options.
     // Also accepts fields in format `field1||field2||...||fieldn` it will find the
-    // first message[fieldi] that matches an option.
+    // first message[field] that matches an option.
     var self = this;
     var options = self.options();
     var fieldsByPriority = field.split("||");
