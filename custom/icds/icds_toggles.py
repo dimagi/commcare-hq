@@ -1,5 +1,6 @@
 from corehq.toggles import (
     NAMESPACE_DOMAIN,
+    NAMESPACE_OTHER,
     NAMESPACE_USER,
     TAG_CUSTOM,
     DynamicallyPredictablyRandomToggle,
@@ -131,4 +132,11 @@ ENABLE_ICDS_DASHBOARD_RELEASE_NOTES_UPDATE = StaticToggle(
     'Enable updating ICDS dashboard release notes for specific users',
     TAG_CUSTOM,
     [NAMESPACE_USER]
+)
+
+ICDS_UCR_ELASTICSEARCH_DOC_LOADING = DynamicallyPredictablyRandomToggle(
+    'icds_ucr_elasticsearch_doc_loading',
+    'ICDS: Load related form docs from ElasticSearch instead of Riak',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_OTHER],
 )

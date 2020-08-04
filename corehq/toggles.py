@@ -1476,13 +1476,6 @@ CUSTOM_ICON_BADGES = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-ICDS_UCR_ELASTICSEARCH_DOC_LOADING = DynamicallyPredictablyRandomToggle(
-    'icds_ucr_elasticsearch_doc_loading',
-    'ICDS: Load related form docs from ElasticSearch instead of Riak',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_OTHER],
-)
-
 COMPARE_UCR_REPORTS = DynamicallyPredictablyRandomToggle(
     'compare_ucr_reports',
     'Compare UCR reports against other reports or against other databases. '
