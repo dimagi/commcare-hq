@@ -34,11 +34,10 @@ class Command(BaseCommand):
 
     def handle(self, **options):
         query = """
-            SELECT "awc_location_months"."district_id", "child_health_monthly"."child_person_case_id" FROM "public"."child_health_monthly" "child_health_monthly"
-            LEFT JOIN "public"."awc_location_months" "awc_location_months" ON (
-                ("awc_location_months"."month" = "child_health_monthly"."month") AND
-                ("awc_location_months"."awc_id" = "child_health_monthly"."awc_id") AND
-                ("awc_location_months"."supervisor_id" = "child_health_monthly"."supervisor_id")
+            SELECT "awc_location"."district_id", "child_health_monthly"."child_person_case_id" FROM "public"."child_health_monthly" "child_health_monthly"
+            LEFT JOIN "public"."awc_location" "awc_location" ON (
+                ("awc_location"."doc_id" = "child_health_monthly"."awc_id") AND
+                ("awc_location"."supervisor_id" = "child_health_monthly"."supervisor_id")
             ) WHERE "child_health_monthly".month='{month}' AND "awc_location_months".state_id='{state_id}' AND "child_health_monthly".pse_eligible=1;
         """
 
@@ -52,15 +51,15 @@ class Command(BaseCommand):
             for item in _run_custom_sql_script(query.format(month=month, state_id=STATE_ID)):
                 person_case_ids[item[0]].append(item[1])
 
-            for key, val in person_case_ids:
+            for key, val in person_case_ids.items():
                 count_private_school_going = 0
                 district = get_district_ids[key] if key in get_district_ids.keys() else ''
                 for case in case_accessor.get_cases(val):
                     date_last_private_admit = case.get_case_property('date_last_private_admit')
                     date_return_private = case.get_case_property('date_return_private')
                     next_month = month + relativedelta(months=1)
-                    if date_last_private_admit is not None and parser.parse(date_last_private_admit) < next_month:
-                        if (not date_return_private) or parser.parse(date_return_private) >= next_month:
+                    if date_last_private_admit is not None and parser.parse(date_last_private_admit).date() < next_month:
+                        if (not date_return_private) or parser.parse(date_return_private).date() >= next_month:
                             count_private_school_going += 1
                 excel_data.append([district, count_private_school_going])
             fout = open(f'/home/cchq/private_students_{month}.csv', 'w')
