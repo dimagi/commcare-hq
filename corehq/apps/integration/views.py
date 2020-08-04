@@ -128,7 +128,7 @@ class HmacCalloutSettingsView(BaseProjectSettingsView):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['domain'] = self.domain
-        kwargs['initial'] =HmacCalloutSettings.objects.get_or_create(domain=self.domain)
+        kwargs['initial'] = HmacCalloutSettings.objects.get_or_create(domain=self.domain)
         return kwargs
 
     @property

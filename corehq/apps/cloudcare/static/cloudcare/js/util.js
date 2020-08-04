@@ -241,9 +241,7 @@ hqDefine('cloudcare/js/util',['integration/js/hmac_callout'], function () {
                 ));
             }
             window.mdAnchorRender = function (tokens, idx, options, env, self) {
-                for (r of renderers) {
-                    r(tokens, idx, options, env, self);
-                }
+                renderers.forEach(r => r(tokens, idx, options, env, self));
                 return self.renderToken(tokens, idx, options);
             }
         }

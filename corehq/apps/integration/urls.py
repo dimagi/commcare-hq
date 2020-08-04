@@ -1,6 +1,11 @@
 from django.conf.urls import url
 
-from corehq.apps.integration.views import BiometricIntegrationView, dialer_view, DialerSettingsView, HmacCalloutSettingsView
+from corehq.apps.integration.views import (
+    BiometricIntegrationView, 
+    dialer_view, 
+    DialerSettingsView, 
+    HmacCalloutSettingsView,
+)
 
 settings_patterns = [
     url(r'^biometric/$', BiometricIntegrationView.as_view(),
