@@ -217,3 +217,16 @@ class TestBouncedEmailManager(TestCase, TestFileMixin):
 
         transient_info = TransientBounceEmail.objects.filter(email=transient_email)
         self.assertTrue(transient_info.exists())
+
+    def test_send_event(self):
+        send_event = self._get_message('send_event')
+        sender_email = "jdoe@company-associate.com"
+        self.assertEqual(get_relevant_aws_meta(send_event), [])
+
+        handle_email_sns_event(send_event)
+
+        bounced_email = BouncedEmail.objects.filter(email=sender_email)
+        self.assertFalse(bounced_email.exists())
+
+        transient_info = TransientBounceEmail.objects.filter(email=sender_email)
+        self.assertFalse(transient_info.exists())
