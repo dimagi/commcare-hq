@@ -2,6 +2,7 @@ import json
 import uuid
 from datetime import datetime
 
+from django.conf import settings
 from django.utils.http import urlencode
 
 from casexml.apps.case.mock import CaseBlock
@@ -10,6 +11,7 @@ from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.api.resources import v0_3, v0_4
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import WebUser
 from corehq.elastic import get_es_new, send_to_elasticsearch
@@ -23,6 +25,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 from .utils import APIResourceTest, FakeFormESView
 
 
+@es_test
 class TestCommCareCaseResource(APIResourceTest):
     resource = v0_4.CommCareCaseResource
 
@@ -166,6 +169,7 @@ class TestCommCareCaseResource(APIResourceTest):
         self.assertEqual(child_cases[0]['id'], child_case_id)
 
 
+@es_test
 class TestCommCareCaseResourceQueries(APIResourceTest, ElasticTestMixin):
     """
     Tests the CommCareCaseREsource, currently only v0_4
@@ -178,8 +182,11 @@ class TestCommCareCaseResourceQueries(APIResourceTest, ElasticTestMixin):
 
         response = self._assert_auth_get_resource('%s?%s' % (self.list_endpoint, urlencode(url_params)))
         self.assertEqual(response.status_code, 200)
-        self.checkQuery(
-            fake_es.queries[0]['query']['filtered']['filter']['and'], expected_query, is_raw_query=True)
+        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+            actual = fake_es.queries[0]['query']['bool']['filter']
+        else:
+            actual = fake_es.queries[0]['query']['filtered']['filter']['and']
+        self.checkQuery(actual, expected_query, is_raw_query=True)
 
     def test_get_list_legacy_filters(self):
         expected = [

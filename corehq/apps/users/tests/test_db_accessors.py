@@ -2,6 +2,7 @@ from django.test import TestCase
 
 from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.locations.tests.util import delete_all_locations, make_loc
 from corehq.apps.users.dbaccessors.all_commcare_users import (
     delete_all_users,
@@ -23,6 +24,7 @@ from corehq.apps.users.models import (
 )
 
 
+@es_test
 class AllCommCareUsersTest(TestCase):
 
     @classmethod

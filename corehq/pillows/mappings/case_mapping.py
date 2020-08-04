@@ -41,7 +41,8 @@ CASE_MAPPING = {
                     },
                     'type': 'nested'},
         'closed': {'type': 'boolean'},
-        'closed_by': {'type': 'string'},
+        # todo; check with team
+        'closed_by': {"type": "string", "index": "not_analyzed"},
         'closed_on': {'format': DATE_FORMATS_STRING,
                       'type': 'date'},
         'computed_': {'enabled': False,
@@ -78,10 +79,12 @@ CASE_MAPPING = {
                             'name': {'index': 'analyzed',
                                      'type': 'string'}},
                  'type': 'multi_field'},
-        'opened_by': {'type': 'string'},
+        # todo; check with team
+        'opened_by': {"type": "string", "index": "not_analyzed"},
         'opened_on': {'format': DATE_FORMATS_STRING,
                       'type': 'date'},
-        'owner_id': {'type': 'string'},
+        # Todo; check with team whether okay to update this without triggering reindex for other envs
+        "owner_id": {"type": "string", "index": "not_analyzed"},
         'owner_type': {'type': 'string', "index": "not_analyzed", "null_value": NULL_VALUE},
         'referrals': {'enabled': False, 'type': 'object'},
         'server_modified_on': {'format': DATE_FORMATS_STRING,
