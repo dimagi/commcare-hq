@@ -292,6 +292,7 @@ class DeployHistoryReport(GetParamsMixin, AdminReport):
             DataTablesColumn(_("Date"), sortable=False),
             DataTablesColumn(_("User"), sortable=False),
             DataTablesColumn(_("Diff URL"), sortable=False),
+            DataTablesColumn(_("Commit"), sortable=False),
         )
 
     @property
@@ -304,6 +305,7 @@ class DeployHistoryReport(GetParamsMixin, AdminReport):
                 self._format_date(deploy.date),
                 deploy.user,
                 self._hyperlink_diff_url(deploy.diff_url),
+                self._shorten_and_hyperlink_commit(deploy.commit),
             ]
 
     @property
@@ -317,3 +319,8 @@ class DeployHistoryReport(GetParamsMixin, AdminReport):
 
     def _hyperlink_diff_url(self, diff_url):
         return f'<a href="{diff_url}">Diff with previous</a>'
+
+    def _shorten_and_hyperlink_commit(self, commit_sha):
+        if commit_sha:
+            return f'<a href="https://github.com/dimagi/commcare-hq/commit/{commit_sha}">{commit_sha[:7]}</a>'
+        return None

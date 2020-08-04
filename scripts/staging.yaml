@@ -57,8 +57,6 @@ branches:
   - nh/repeaters_ui  # Norman May 28
   - nh/charset  # Norman May 27
   - jls/turn-off-analytics-logging # Jenny June 19
-  - solleks:cdg/data_dictionary_erm  # Charlie July 29
-  - sr-alias-api # Sravan July 10
   - fr/shadow-module-child-versioned # Farid July 22
 #  - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
   - kev/combobox-add-ors # Kevin July 30
@@ -67,7 +65,7 @@ branches:
   - jls/view-apps-permission # Jenny July 31
   - ml/SAAS-11077-deleted-case-properties-position # Michelle July 31
   - ml/SAAS-10954-show-all-filter # Michelle July 31
-  - fr/staging-commits
   - jls/CustomDataFieldsProfile # Jenny July 24
-  - sk/remove-icds  # Simon Aug 3
+  - sr/es7-ref1 # Sravan Aug 4
+#  - sk/remove-icds  # Simon Aug 3
 submodules: {}
