@@ -193,6 +193,7 @@ class TestWebUserResource(APIResourceTest):
         "last_name": "Admin",
         "permissions": {
             "edit_apps": True,
+            "view_apps": True,
             "edit_commcare_users": True,
             "view_commcare_users": True,
             "edit_groups": True,
@@ -232,6 +233,7 @@ class TestWebUserResource(APIResourceTest):
             'edit_users_in_locations',
             'edit_data',
             'edit_apps',
+            'view_apps',
             'edit_reports',
             'view_reports',
         ]:
@@ -319,7 +321,9 @@ class TestWebUserResource(APIResourceTest):
 
     def test_create_with_custom_role(self):
         new_user_role = UserRole.get_or_create_with_permissions(
-            self.domain.name, Permissions(edit_apps=True, view_reports=True), 'awesomeness')
+            self.domain.name,
+            Permissions(edit_apps=True, view_apps=True, view_reports=True),
+            'awesomeness')
         user_json = deepcopy(self.default_user_json)
         user_json["role"] = new_user_role.name
         user_json["is_admin"] = False
