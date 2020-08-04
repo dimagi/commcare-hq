@@ -28,7 +28,7 @@ class CaseDBFixture(object):
                 <date_opened/>
                 <last_modified/>
                 <case_property />
-                <index>corehq/ex-submodules/casexml/apps/case/fixtures.py
+                <index>
                     <a12345 case_type="" relationship="" />
                 </index>
                 <attachment>
