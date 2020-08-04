@@ -44,3 +44,15 @@ def uitab_sidebar_items(tab_name, tab, domain, request) -> List[Tuple[str, List[
        * icon: Link icon
        * show_in_dropdown (optional): boolean
     """
+
+
+@extension_point(result_format=ResultFormat.FLATTEN)
+def uitab_classes():
+    """Add custom tabs to the top navigation
+
+    Parameters:
+        None
+
+    Returns:
+         List of UITab subclasses
+    """

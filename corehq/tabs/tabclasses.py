@@ -97,10 +97,6 @@ from corehq.tabs.utils import (
     regroup_sidebar_items,
     sidebar_to_dropdown,
 )
-from custom.icds_core.const import (
-    ManageHostedCCZ_urlname,
-    ManageHostedCCZLink_urlname,
-)
 from custom.icds_core.view_utils import is_icds_cas_project
 
 
@@ -1562,27 +1558,6 @@ class EnterpriseSettingsTab(UITab):
                            args=[self.domain])
         })
         items.append((_('Manage Enterprise'), enterprise_views))
-        return items
-
-
-class HostedCCZTab(UITab):
-    title = ugettext_noop('CCZ Hostings')
-    url_prefix_formats = (
-        '/a/{domain}/ccz/hostings/',
-    )
-    _is_viewable = False
-
-    @property
-    def sidebar_items(self):
-        items = super(HostedCCZTab, self).sidebar_items
-        items.append((_('Manage CCZ Hostings'), [
-            {'url': reverse(ManageHostedCCZLink_urlname, args=[self.domain]),
-             'title': _("Manage CCZ Hosting Links")
-             },
-            {'url': reverse(ManageHostedCCZ_urlname, args=[self.domain]),
-             'title': _("Manage CCZ Hosting")
-             },
-        ]))
         return items
 
 

@@ -15,7 +15,7 @@ from corehq.apps.userreports.extension_points import (
 from corehq.extensions.extension_points import domain_specific_urls
 from corehq.tabs.extension_points import (
     uitab_dropdown_items,
-    uitab_sidebar_items,
+    uitab_sidebar_items, uitab_classes,
 )
 from custom.icds.const import ICDS_APPS_ROOT
 from custom.icds_core.const import (
@@ -142,3 +142,11 @@ def icds_custom_domain_module(domain):
         "icds-cas": "custom.icds_reports",
         "icds-dashboard-qa": "custom.icds_reports",
     }.get(domain, None)
+
+
+@uitab_classes.extend()
+def icds_tabs():
+    from custom.icds.uitab import HostedCCZTab
+    return [
+        HostedCCZTab,
+    ]
