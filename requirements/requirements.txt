@@ -19,7 +19,7 @@ certifi==2019.9.11        # via requests, sentry-sdk
 cffi==1.13.2              # via cairocffi, csiphash, weasyprint
 chardet==3.0.4            # via ghdiff, requests
 cloudant==2.12.0          # via jsonobject-couchdbkit
-commcaretranslationchecker==0.9.3.5  # via -r requirements/requirements.in
+commcaretranslationchecker==0.9.7  # via -r requirements/requirements.in
 concurrent-log-handler==0.9.12  # via -r requirements/requirements.in
 contextlib2==0.5.5        # via schema
 csiphash==0.0.5           # via -r requirements/requirements.in

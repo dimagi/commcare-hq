@@ -36,7 +36,6 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.models import GlobalAppConfig
 from corehq.apps.builds.utils import get_default_build_spec
-from corehq.apps.case_search.models import QueryMergeException
 from corehq.apps.case_search.utils import CaseSearchCriteria
 from corehq.apps.domain.decorators import (
     check_domain_migration,
@@ -99,37 +98,22 @@ def search(request, domain):
         case_type = criteria.pop('case_type')
     except KeyError:
         return HttpResponse('Search request must specify case type', status=400)
-    try:
-        case_search_criteria = CaseSearchCriteria(domain, case_type, criteria)
-        search_es = case_search_criteria.search_es
-    except QueryMergeException as e:
-        return _handle_query_merge_exception(request, e)
+
+    case_search_criteria = CaseSearchCriteria(domain, case_type, criteria)
+    search_es = case_search_criteria.search_es
+
     try:
         hits = search_es.run().raw_hits
     except Exception as e:
-        return _handle_es_exception(request, e, case_search_criteria.query_addition_debug_details)
+        notify_exception(request, str(e), details=dict(
+            exception_type=type(e),
+        ))
+        return HttpResponse(status=500)
 
     # Even if it's a SQL domain, we just need to render the hits as cases, so CommCareCase.wrap will be fine
     cases = [CommCareCase.wrap(flatten_result(result, include_score=True)) for result in hits]
     fixtures = CaseDBFixture(cases).fixture
     return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
-
-
-def _handle_query_merge_exception(request, exception):
-    notify_exception(request, str(exception), details=dict(
-        exception_type=type(exception),
-        original_query=getattr(exception, "original_query", None),
-        query_addition=getattr(exception, "query_addition", None)
-    ))
-    return HttpResponse(status=500)
-
-
-def _handle_es_exception(request, exception, query_addition_debug_details):
-    notify_exception(request, str(exception), details=dict(
-        exception_type=type(exception),
-        **query_addition_debug_details
-    ))
-    return HttpResponse(status=500)
 
 
 @location_safe

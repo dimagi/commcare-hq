@@ -1,7 +1,9 @@
+.. _commcare_extensions:
+
 .. automodule:: corehq.extensions
 
-Extension points
-==================
+List Extension Points
+=====================
 
 You can list existing extension points and their implementations by running the following management command:
 

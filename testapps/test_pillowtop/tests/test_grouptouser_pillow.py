@@ -108,7 +108,7 @@ class GroupToUserPillowTest(SimpleTestCase):
             '_id': new_id,
             'users': [self.user_id]
         }
-        remove_group_from_users(group_doc, self.es_client)
+        remove_group_from_users(group_doc)
 
 
 def _assert_es_user_and_groups(test_case, es_client, user_id, group_ids=None, group_names=None):
