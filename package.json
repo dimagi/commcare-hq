@@ -5,6 +5,7 @@
   "description": "CommCare HQ Javascript Libraries",
   "private": true,
   "dependencies": {
+    "@mapbox/mapbox-gl-geocoder": "4.5.1",
     "At.js": "millerdev/At.js#master",
     "Caret.js": "INTELOGIE/Caret.js#0.3.1",
     "DOMPurify": "cure53/DOMPurify#2.0.12",
@@ -70,7 +71,6 @@
     "knockout-validation": "Knockout-Contrib/Knockout-Validation#2.0.4",
     "leaflet": "0.7.7",
     "less": "3.10.3",
-    "@mapbox/mapbox-gl-geocoder": "4.5.1",
     "markdown-it": "7.0.1",
     "moment": "2.12.0",
     "multiselect": "0.9.12",
@@ -90,13 +90,13 @@
     "zxcvbn": "4.2.0"
   },
   "devDependencies": {
+    "angular-mocks": "1.4.4",
+    "chai": "3.3.0",
+    "colors": "1.4.0",
     "grunt": "0.4.5",
     "grunt-cli": "0.1.13",
     "grunt-contrib-watch": "0.6.1",
     "grunt-mocha": "1.2.0",
-    "angular-mocks": "1.4.4",
-    "chai": "3.3.0",
-    "colors": "1.4.0",
     "jasmine-fixture": "2.0.0",
     "lodash": "4.17.19",
     "mocha": "2.5.3",
