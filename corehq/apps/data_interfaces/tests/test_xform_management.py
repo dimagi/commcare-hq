@@ -4,11 +4,13 @@ from django.test import TestCase, Client
 
 from corehq.apps.data_interfaces.views import XFormManagementView
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.models import WebUser
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.elastic import reset_es_index
 
 
+@es_test
 class XFormManagementTest(TestCase):
 
     @classmethod
