@@ -48,6 +48,7 @@ class HqTestFinderPlugin(Plugin):
         "submodules/django-digest-src",
         "submodules/toggle",
         "extensions/*",
+        "custom",
     ]
 
     def options(self, parser, env):
