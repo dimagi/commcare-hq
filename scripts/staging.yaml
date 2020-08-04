@@ -68,4 +68,5 @@ branches:
   - jls/CustomDataFieldsProfile # Jenny July 24
   - sr/es7-ref1 # Sravan Aug 4
 #  - sk/remove-icds  # Simon Aug 3
+  - ce/lxml-restore
 submodules: {}
