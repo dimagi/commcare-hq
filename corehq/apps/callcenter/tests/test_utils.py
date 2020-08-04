@@ -31,6 +31,13 @@ from corehq.apps.user_importer.importer import (
 )
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
+from corehq.apps.custom_data_fields.models import (
+    CustomDataFieldsDefinition,
+    CustomDataFieldsProfile,
+    Field,
+    PROFILE_SLUG,
+)
+from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
@@ -121,7 +128,20 @@ class CallCenterUtilsTests(TestCase):
         self.assertEqual(case.name, name)
 
     def test_sync_custom_user_data(self):
-        self.user.user_data = {
+        definition = CustomDataFieldsDefinition(domain=TEST_DOMAIN, field_type=UserFieldsView.field_type)
+        definition.save()
+        definition.set_fields([
+            Field(slug='from_profile', label='From Profile'),
+        ])
+        definition.save()
+        profile = CustomDataFieldsProfile(
+            name='callcenter_profile',
+            fields={'from_profile': 'yes'},
+            definition=definition,
+        )
+        profile.save()
+
+        self.user.metadata = {
             '': 'blank_key',
             'blank_val': '',
             'ok': 'good',
@@ -129,12 +149,17 @@ class CallCenterUtilsTests(TestCase):
             '8starts_with_a_number': '0',
             'xml_starts_with_xml': '0',
             '._starts_with_punctuation': '0',
+            PROFILE_SLUG: profile.id,
         }
         sync_call_center_user_case(self.user)
         case = self._get_user_case()
         self.assertIsNotNone(case)
         self.assertEqual(case.get_case_property('blank_val'), '')
         self.assertEqual(case.get_case_property('ok'), 'good')
+        self.assertEqual(case.get_case_property(PROFILE_SLUG), str(profile.id))
+        self.assertEqual(case.get_case_property('from_profile'), 'yes')
+        self.user.pop_metadata(PROFILE_SLUG)
+        definition.delete()
 
     def test_get_call_center_cases_for_user(self):
         factory = CaseFactory(domain=TEST_DOMAIN, case_defaults={
@@ -226,7 +251,7 @@ class CallCenterUtilsUserCaseTests(TestCase):
         """
         Custom user data should be synced when the user is created
         """
-        self.user.user_data = {
+        self.user.metadata = {
             'completed_training': 'yes',
         }
         self.user.save()
@@ -238,11 +263,11 @@ class CallCenterUtilsUserCaseTests(TestCase):
         """
         Custom user data should be synced when the user is updated
         """
-        self.user.user_data = {
+        self.user.metadata = {
             'completed_training': 'no',
         }
         self.user.save()
-        self.user.user_data = {
+        self.user.metadata = {
             'completed_training': 'yes',
         }
         sync_usercase(self.user)
@@ -254,7 +279,7 @@ class CallCenterUtilsUserCaseTests(TestCase):
         """
         Test that setting custom user data for owner_id and case_type don't change the case
         """
-        self.user.user_data = {
+        self.user.metadata = {
             'owner_id': 'someone else',
             'case_type': 'bob',
         }
@@ -298,7 +323,7 @@ class CallCenterUtilsUserCaseTests(TestCase):
         user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
         self.assertTrue(user_case.closed)
 
-        self.user.user_data = {'foo': 'bar'}
+        self.user.metadata = {'foo': 'bar'}
         self.user.save()
         user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
         self.assertTrue(user_case.closed)
@@ -320,7 +345,7 @@ class CallCenterUtilsUserCaseTests(TestCase):
         user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
         self.assertTrue(user_case.closed)
 
-        self.user.user_data = {'foo': 'bar'}
+        self.user.metadata = {'foo': 'bar'}
         self.user.is_active = True
         self.user.save()
         user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
@@ -328,7 +353,7 @@ class CallCenterUtilsUserCaseTests(TestCase):
         self.assertEqual(user_case.dynamic_case_properties()['foo'], 'bar')
 
     def test_update_no_change(self):
-        self.user.user_data = {
+        self.user.metadata = {
             'numeric': 123,
         }
         self.user.save()
