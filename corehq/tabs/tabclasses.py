@@ -70,7 +70,7 @@ from corehq.apps.users.permissions import (
     can_download_data_files,
     can_view_sms_exports,
 )
-from corehq.apps.integration.views import DialerSettingsView
+from corehq.apps.integration.views import DialerSettingsView, HmacCalloutSettingsView
 from corehq.feature_previews import (
     EXPLORE_CASE_DATA_PREVIEW,
     is_eligible_for_ecd_preview,
@@ -1917,6 +1917,12 @@ def _get_integration_section(domain):
         integration.append({
             'title': _(DialerSettingsView.page_title),
             'url': reverse(DialerSettingsView.urlname, args=[domain])
+        })
+
+    if toggles.HMAC_CALLOUT.enabled(domain):
+        integration.append({
+            'title': _(HmacCalloutSettingsView.page_title),
+            'url': reverse(HmacCalloutSettingsView.urlname, args=[domain])
         })
 
     return integration

@@ -1,6 +1,6 @@
 /*global FormplayerFrontend */
 
-hqDefine('cloudcare/js/util', function () {
+hqDefine('cloudcare/js/util',['integration/js/hmac_callout'], function () {
     if (!String.prototype.startsWith) {
         String.prototype.startsWith = function (searchString, position) {
             position = position || 0;
@@ -186,32 +186,66 @@ hqDefine('cloudcare/js/util', function () {
         }
     };
 
-    var injectDialerContext = function () {
+    function chainedRenderer(matcher, transform, target) {
+        return function (tokens, idx, options, env, self) {
+            var hIndex = tokens[idx].attrIndex('href');
+            var matched = false;
+            if (hIndex >= 0) {
+                var href =  tokens[idx].attrs[hIndex][1];
+                if (matcher(href)) {
+                    transform(href, hIndex, tokens[idx]);
+                    matched = true;
+                }
+            }
+            if (matched) {
+                var aIndex = tokens[idx].attrIndex('target');
+
+                if (aIndex < 0) {
+                    tokens[idx].attrPush(['target', target]); // add new attribute
+                } else {
+                    tokens[idx].attrs[aIndex][1] = target;    // replace value of existing attr
+                }
+            }
+            return matched;
+        };
+    }
+
+    var injectMarkdownAnchorTransforms = function () {
         var initialPageData = hqImport("hqwebapp/js/initial_page_data");
-        if (initialPageData.get('dialer_enabled') && window.mdAnchorRender) {
-            window.mdAnchorRender = function (tokens, idx, options, env, self) {
-                var hIndex = tokens[idx].attrIndex('href');
-                var dialed = false;
-                if (hIndex >= 0) {
-                    var href =  tokens[idx].attrs[hIndex][1];
-                    if (href.startsWith("tel://")) {
+        if (window.mdAnchorRender) {
+            renderers = [];
+            if (initialPageData.get('dialer_enabled')) {
+                renderers.push(chainedRenderer(
+                    function (href) { return href.startsWith("tel://"); },
+                    function (href, hIndex, anchor) {
                         var callout = href.substring("tel://".length);
                         var url = initialPageData.reverse("dialer_view");
-                        tokens[idx].attrs[hIndex][1] = url + "?callout_number=" + callout;
-                        dialed = true;
-                    }
-                }
-                if (dialed) {
-                    var aIndex = tokens[idx].attrIndex('target');
-
-                    if (aIndex < 0) {
-                        tokens[idx].attrPush(['target', 'dialer']); // add new attribute
-                    } else {
-                        tokens[idx].attrs[aIndex][1] = 'dialer';    // replace value of existing attr
-                    }
+                        anchor.attrs[hIndex][1] = url + "?callout_number=" + callout;
+                    },
+                    "dialer"
+                ));
+            }
+            if (initialPageData.get('hmac_root_url')) {
+                renderers.push(chainedRenderer(
+                    function (href) { return href.startsWith(initialPageData.get('hmac_root_url')); },
+                    function (href, hIndex, anchor) {
+                        var aIndex = anchor.attrIndex('onclick');
+                        clickBody = "hqImport('integration/js/hmac_callout').performCallout(this);return false;";
+                        if (aIndex < 0) {
+                            anchor.attrPush(['onclick', clickBody]);
+                        } else {
+                            anchor[aIndex][1] = clickBody;
+                        }
+                    },
+                    "hmac_callout"
+                ));
+            }
+            window.mdAnchorRender = function (tokens, idx, options, env, self) {
+                for (r of renderers) {
+                    r(tokens, idx, options, env, self);
                 }
                 return self.renderToken(tokens, idx, options);
-            };
+            }
         }
     };
 
@@ -228,6 +262,6 @@ hqDefine('cloudcare/js/util', function () {
         formplayerLoadingComplete: formplayerLoadingComplete,
         formplayerSyncComplete: formplayerSyncComplete,
         reportFormplayerErrorToHQ: reportFormplayerErrorToHQ,
-        injectDialerContext: injectDialerContext,
+        injectMarkdownAnchorTransforms: injectMarkdownAnchorTransforms,
     };
 });
