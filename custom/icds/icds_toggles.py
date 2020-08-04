@@ -125,3 +125,10 @@ ICDS_LOCATION_REASSIGNMENT_AGG = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+ENABLE_ICDS_DASHBOARD_RELEASE_NOTES_UPDATE = StaticToggle(
+    'enable_icds_dashboard_release_notes_update',
+    'Enable updating ICDS dashboard release notes for specific users',
+    TAG_CUSTOM,
+    [NAMESPACE_USER]
+)
