@@ -107,5 +107,4 @@ class ElasticsearchInterfaceDefault(AbstractElasticsearchInterface):
 ElasticsearchInterface = {
     1: ElasticsearchInterfaceDefault,
     2: ElasticsearchInterfaceDefault,
-    7: ElasticsearchInterface7,
 }[settings.ELASTICSEARCH_MAJOR_VERSION]
