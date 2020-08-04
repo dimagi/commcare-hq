@@ -1,4 +1,4 @@
-from typing import List, Dict, Tuple
+from typing import List
 
 from corehq.extensions import extension_point, ResultFormat
 
