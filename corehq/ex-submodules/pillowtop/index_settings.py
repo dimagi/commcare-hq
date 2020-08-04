@@ -1,5 +1,3 @@
-from copy import copy
-
 from django.conf import settings
 
 from corehq.elastic import SIZE_LIMIT
@@ -18,8 +16,8 @@ disallowed_settings_by_es_version = {
     ]
 }
 
+
 def _get_es_settings(es_settings):
-    es_settings = copy(es_settings)
     for setting in disallowed_settings_by_es_version[settings.ELASTICSEARCH_MAJOR_VERSION]:
         es_settings['index'].pop(setting)
     return es_settings
