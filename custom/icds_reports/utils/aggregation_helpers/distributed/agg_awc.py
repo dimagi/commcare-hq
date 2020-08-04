@@ -4,7 +4,7 @@ from dateutil.relativedelta import relativedelta
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
-from corehq.toggles import ICDS_LOCATION_REASSIGNMENT_AGG
+from custom.icds.icds_toggles import ICDS_LOCATION_REASSIGNMENT_AGG
 
 from custom.icds_reports.utils.aggregation_helpers import get_child_health_temp_tablename, transform_day_to_month, get_agg_child_temp_tablename, get_prev_agg_tablename, is_current_month
 from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE, AGG_THR_V2_TABLE, AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE

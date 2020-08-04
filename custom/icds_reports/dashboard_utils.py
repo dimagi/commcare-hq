@@ -3,7 +3,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.locations.util import location_hierarchy_config
-from corehq.toggles import ICDS_DASHBOARD_SHOW_MOBILE_APK, NAMESPACE_USER
+from custom.icds.icds_toggles import ICDS_DASHBOARD_SHOW_MOBILE_APK, NAMESPACE_USER
 from custom.icds_reports.const import NavigationSections
 from custom.icds_reports.const import SDDSections
 from custom.icds_reports.utils import (get_latest_issue_tracker_build_id)

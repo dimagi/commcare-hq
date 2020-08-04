@@ -13,7 +13,7 @@ from django.views.generic import TemplateView
 
 from couchexport.models import Format
 
-from corehq import toggles
+from custom.icds import icds_toggles
 from corehq.apps.app_manager.dbaccessors import (
     get_brief_apps_in_domain,
     get_build_doc_by_version,
@@ -42,7 +42,7 @@ from custom.nic_compliance.utils import verify_password
 
 
 @location_safe
-@method_decorator([login_and_domain_required, toggles.MANAGE_CCZ_HOSTING.required_decorator()], name='dispatch')
+@method_decorator([login_and_domain_required, icds_toggles.MANAGE_CCZ_HOSTING.required_decorator()], name='dispatch')
 class ManageHostedCCZLink(BaseDomainView):
     urlname = ManageHostedCCZLink_urlname
     page_title = ugettext_lazy("Manage CCZ Hosting Links")
@@ -90,7 +90,7 @@ class ManageHostedCCZLink(BaseDomainView):
 
 
 @require_GET
-@toggles.MANAGE_CCZ_HOSTING.required_decorator()
+@icds_toggles.MANAGE_CCZ_HOSTING.required_decorator()
 def ccz_hostings_json(request, domain):
     limit = int(request.GET.get('limit', 10))
     page = int(request.GET.get('page', 1))
@@ -138,7 +138,7 @@ class EditHostedCCZLink(ManageHostedCCZLink):
 
 
 @location_safe
-@method_decorator([login_and_domain_required, toggles.MANAGE_CCZ_HOSTING.required_decorator()], name='dispatch')
+@method_decorator([login_and_domain_required, icds_toggles.MANAGE_CCZ_HOSTING.required_decorator()], name='dispatch')
 class ManageHostedCCZ(BaseDomainView):
     urlname = ManageHostedCCZ_urlname
     page_title = ugettext_lazy("Manage CCZ Hosting")

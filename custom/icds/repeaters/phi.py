@@ -1,6 +1,6 @@
 from django.utils.translation import ugettext_lazy as _
 
-from corehq import toggles
+from custom.icds import icds_toggles
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.signals import sql_case_post_save
 from corehq.motech.repeaters.models import CaseRepeater
@@ -15,7 +15,7 @@ from custom.icds.repeaters.generators.phi import (
 class BasePHIRepeater(CaseRepeater):
     @classmethod
     def available_for_domain(cls, domain):
-        return toggles.PHI_CAS_INTEGRATION.enabled(domain)
+        return icds_toggles.PHI_CAS_INTEGRATION.enabled(domain)
 
 
 class SearchByParamsRepeater(BasePHIRepeater):
