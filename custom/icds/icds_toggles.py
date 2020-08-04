@@ -140,3 +140,18 @@ ICDS_UCR_ELASTICSEARCH_DOC_LOADING = DynamicallyPredictablyRandomToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_OTHER],
 )
+
+PERFORM_LOCATION_REASSIGNMENT = StaticToggle(
+    'location_reassignment',
+    'Ability to submit requests for location reassignment',
+    TAG_CUSTOM,
+    [NAMESPACE_USER],
+)
+
+ICDS_CUSTOM_SMS_REPORT = StaticToggle(
+    'icds_custom_sms_report',
+    'ICDS: Generate a custom SMS report with in the given time range. '
+    'The report that is generated will be emailed to the user who requested it',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)

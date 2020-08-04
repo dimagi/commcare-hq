@@ -3,7 +3,6 @@ import os
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 
-from corehq import toggles
 from custom.icds import icds_toggles
 from corehq.apps.domain.extension_points import custom_domain_module
 from corehq.apps.userreports.extension_points import (
@@ -40,7 +39,7 @@ def icds_uitab_dropdown_items(tab_name, tab, domain, request):
 @uitab_sidebar_items.extend(domains=["icds-cas"])
 def icds_uitab_sidebar_items(tab_name, tab, domain, request):
 
-    if tab_name == "ProjectReportsTab" and toggles.PERFORM_LOCATION_REASSIGNMENT.enabled_for_request(request):
+    if tab_name == "ProjectReportsTab" and icds_toggles.PERFORM_LOCATION_REASSIGNMENT.enabled_for_request(request):
         return [
             (_("Tools"), [
                 {
@@ -51,7 +50,7 @@ def icds_uitab_sidebar_items(tab_name, tab, domain, request):
             ]),
         ]
 
-    if tab_name == "ProjectUsersTab" and toggles.PERFORM_LOCATION_REASSIGNMENT.enabled_for_request(request):
+    if tab_name == "ProjectUsersTab" and icds_toggles.PERFORM_LOCATION_REASSIGNMENT.enabled_for_request(request):
         return [
             (_('Organization'), [
                 {
@@ -61,7 +60,7 @@ def icds_uitab_sidebar_items(tab_name, tab, domain, request):
             ])
         ]
 
-    if tab_name == "MessagingTab" and toggles.ICDS_CUSTOM_SMS_REPORT.enabled_for_request(request):
+    if tab_name == "MessagingTab" and icds_toggles.ICDS_CUSTOM_SMS_REPORT.enabled_for_request(request):
         return [
             (_("Messages"), [
                 {

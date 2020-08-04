@@ -1053,15 +1053,6 @@ ICDS_DASHBOARD_REPORT_FEATURES = StaticToggle(
     relevant_environments={"icds", "icds-staging"}
 )
 
-# move to ICDS
-ICDS_CUSTOM_SMS_REPORT = StaticToggle(
-    'icds_custom_sms_report',
-    'ICDS: Generate a custom SMS report with in the given time range. '
-    'The report that is generated will be emailed to the user who requested it',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
 OPENMRS_INTEGRATION = StaticToggle(
     'openmrs_integration',
     'Enable OpenMRS integration',
@@ -1834,31 +1825,12 @@ TWO_STAGE_USER_PROVISIONING = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Two-Stage+Mobile+Worker+Account+Creation',
 )
 
-# move to ICDS
-PERFORM_LOCATION_REASSIGNMENT = StaticToggle(
-    'location_reassignment',
-    'Ability to submit requests for location reassignment',
-    TAG_CUSTOM,
-    [NAMESPACE_USER],
-    relevant_environments={'icds', 'icds-staging'},
-)
-
 DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE = StaticToggle(
     'download_location_reassignment_template',
     'Allow domain users to download location reassignment template',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
     relevant_environments={'icds', 'icds-staging'},
-)
-
-
-ICDS_CUSTOM_SMS_REPORT = StaticToggle(
-    'icds_custom_sms_report',
-    'ICDS: Generate a custom SMS report with in the given time range. '
-    'The report that is generated will be emailed to the user who requested it',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    relevant_environments={"icds", "icds-staging"}
 )
 
 REFER_CASE_REPEATER = StaticToggle(
