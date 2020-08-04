@@ -110,8 +110,8 @@ def cases_in_last(domain, days, case_type=None):
 
     query = CaseES().domain(domain).modified_range(gte=then, lte=now).is_closed(False)
     if case_type:
-        query.case_type(case_type)
-    return query.run().total
+        query = query.case_type(case_type)
+    return query.count()
 
 
 def inactive_cases_in_last(domain, days):
@@ -121,7 +121,7 @@ def inactive_cases_in_last(domain, days):
     now = datetime.utcnow()
     then = json_format_datetime(now - timedelta(days=int(days)))
 
-    return CaseES().domain(domain).modified_range(lt=then).is_closed(False).run().total
+    return CaseES().domain(domain).modified_range(lt=then).is_closed(False).count()
 
 
 def forms(domain, *args):
