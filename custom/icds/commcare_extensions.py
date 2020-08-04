@@ -12,13 +12,18 @@ from corehq.apps.userreports.extension_points import (
     static_ucr_data_source_paths,
     static_ucr_report_paths,
 )
-from corehq.extensions.extension_points import (
-    domain_specific_urls,
-    uitab_dropdown_items, uitab_sidebar_items,
+from corehq.extensions.extension_points import domain_specific_urls
+from corehq.tabs.extension_points import (
+    uitab_dropdown_items,
+    uitab_sidebar_items,
 )
 from custom.icds.const import ICDS_APPS_ROOT
-from custom.icds_core.const import ManageHostedCCZ_urlname, LocationReassignmentDownloadOnlyView_urlname, \
-    SMSUsageReport_urlname, LocationReassignmentView_urlname
+from custom.icds_core.const import (
+    LocationReassignmentDownloadOnlyView_urlname,
+    LocationReassignmentView_urlname,
+    ManageHostedCCZ_urlname,
+    SMSUsageReport_urlname,
+)
 
 
 @uitab_dropdown_items.extend(domains=["icds-cas"])

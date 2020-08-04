@@ -5,8 +5,8 @@ from django.core.cache import cache
 from django.urls import reverse, resolve, Resolver404
 from django.utils.translation import get_language
 
-from corehq.extensions import extension_points
 from corehq.apps.domain.models import Domain
+from corehq.tabs import extension_points
 from corehq.tabs.exceptions import UrlPrefixFormatError, UrlPrefixFormatsSuggestion
 from corehq.tabs.utils import sidebar_to_dropdown, dropdown_dict
 from memoized import memoized
