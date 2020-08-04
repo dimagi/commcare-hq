@@ -32,7 +32,7 @@ class TestGroupResource(APIResourceTest):
         # note the capital E to test the question:
         # does this come first (case-sensitive) or last (case-insensitive)?
         group_e = self._add_group(Group({"name": "test_E", "domain": self.domain.name}), send_to_es=True)
-        groups_in_order = [group_a, group_b, group_c, group_d, group_e]
+        groups_in_order = [group_e, group_a, group_b, group_c, group_d]
 
         response = self._assert_auth_get_resource(self.list_endpoint)
         self.assertEqual(response.status_code, 200)
