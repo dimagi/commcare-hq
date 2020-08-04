@@ -545,38 +545,43 @@ def dropbox_upload(request, download_id):
     if download is None:
         logging.error("Download file request for expired/nonexistent file requested")
         raise Http404
-    else:
-        filename = download.get_filename()
-        # Hack to get target filename from content disposition
-        match = re.search('filename="([^"]*)"', download.content_disposition)
-        dest = match.group(1) if match else 'download.txt'
 
-        try:
-            uploader = DropboxUploadHelper.create(
-                request.session.get(DROPBOX_ACCESS_TOKEN),
-                src=filename,
-                dest=dest,
-                download_id=download_id,
-                user=request.user,
-            )
-        except DropboxInvalidToken:
-            return HttpResponseRedirect(reverse(DropboxAuthInitiate.slug))
-        except DropboxUploadAlreadyInProgress:
-            uploader = DropboxUploadHelper.objects.get(download_id=download_id)
-            messages.warning(
-                request,
-                'The file is in the process of being synced to dropbox! It is {0:.2f}% '
-                'complete.'.format(uploader.progress * 100)
-            )
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+    if download.owner_ids and request.couch_user.get_id not in download.owner_ids:
+        return no_permissions(request, message=_(
+            "You do not have access to this file. It can only be uploaded to dropbox by the user who created it"
+        ))
 
-        uploader.upload()
+    filename = download.get_filename()
+    # Hack to get target filename from content disposition
+    match = re.search('filename="([^"]*)"', download.content_disposition)
+    dest = match.group(1) if match else 'download.txt'
 
-        messages.success(
-            request,
-            _("Apps/{app}/{dest} is queued to sync to dropbox! You will receive an email when it"
-                " completes.".format(app=settings.DROPBOX_APP_NAME, dest=dest))
+    try:
+        uploader = DropboxUploadHelper.create(
+            request.session.get(DROPBOX_ACCESS_TOKEN),
+            src=filename,
+            dest=dest,
+            download_id=download_id,
+            user=request.user,
         )
+    except DropboxInvalidToken:
+        return HttpResponseRedirect(reverse(DropboxAuthInitiate.slug))
+    except DropboxUploadAlreadyInProgress:
+        uploader = DropboxUploadHelper.objects.get(download_id=download_id)
+        messages.warning(
+            request,
+            'The file is in the process of being synced to dropbox! It is {0:.2f}% '
+            'complete.'.format(uploader.progress * 100)
+        )
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
+    uploader.upload()
+
+    messages.success(
+        request,
+        _("Apps/{app}/{dest} is queued to sync to dropbox! You will receive an email when it"
+            " completes.".format(app=settings.DROPBOX_APP_NAME, dest=dest))
+    )
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
