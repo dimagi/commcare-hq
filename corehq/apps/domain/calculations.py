@@ -17,6 +17,7 @@ from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.data_analytics.esaccessors import get_mobile_users
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.cases import CaseES
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.sms import SMSES
 from corehq.apps.export.dbaccessors import (
@@ -41,7 +42,6 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
 )
 from corehq.apps.users.models import CouchUser, UserRole
 from corehq.apps.users.util import WEIRD_USER_IDS
-from corehq.elastic import es_query
 from corehq.messaging.scheduling.util import domain_has_reminders
 from corehq.motech.repeaters.models import Repeater
 from corehq.util.dates import iso_string_to_datetime
@@ -108,16 +108,10 @@ def cases_in_last(domain, days, case_type=None):
     then = json_format_datetime(now - timedelta(days=int(days)))
     now = json_format_datetime(now)
 
-    q = {"query": {
-        "range": {
-            "modified_on": {
-                "from": then,
-                "to": now}}}}
-    query_params = {"domain.exact": domain, 'closed': False}
+    query = CaseES().domain(domain).modified_range(gte=then, lte=now).is_closed(False)
     if case_type:
-        query_params["type.exact"] = case_type
-    data = es_query(params=query_params, q=q, es_index='cases', size=1)
-    return data['hits']['total'] if data.get('hits') else 0
+        query.case_type(case_type)
+    return query.run().total
 
 
 def inactive_cases_in_last(domain, days):
@@ -126,17 +120,8 @@ def inactive_cases_in_last(domain, days):
     """
     now = datetime.utcnow()
     then = json_format_datetime(now - timedelta(days=int(days)))
-    now = json_format_datetime(now)
 
-    q = {"query":
-             {"bool": {
-                 "must_not": {
-                     "range": {
-                         "modified_on": {
-                             "from": then,
-                             "to": now }}}}}}
-    data = es_query(params={"domain.exact": domain, 'closed': False}, q=q, es_index='cases', size=1)
-    return data['hits']['total'] if data.get('hits') else 0
+    return CaseES().domain(domain).modified_range(lt=then).is_closed(False).run().total
 
 
 def forms(domain, *args):

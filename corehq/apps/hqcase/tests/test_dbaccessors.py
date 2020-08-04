@@ -9,6 +9,7 @@ from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import create_real_cases_from_dummy_cases
 from couchforms.models import XFormInstance
+from corehq.apps.es.tests.utils import es_test
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.hqcase.analytics import (
@@ -165,6 +166,7 @@ TEST_ES_META = {
 }
 
 
+@es_test
 class ESAccessorsTest(TestCase):
     domain = 'hqadmin-es-accessor'
 
