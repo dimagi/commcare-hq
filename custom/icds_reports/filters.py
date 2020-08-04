@@ -39,8 +39,11 @@ def load_locs_json(domain, selected_loc_id=None, user=None, show_test=False):
 
     def user_locations():
         user_location = user.get_sql_location(domain)
-        all_related_ancestors = user_location.get_ancestors(include_self=True)
-        return [location.location_id for location in all_related_ancestors]
+        user_location_ancestors = []
+        if user_location:
+            all_related_ancestors = user_location.get_ancestors(include_self=True)
+            user_location_ancestors = [location.location_id for location in all_related_ancestors]
+        return user_location_ancestors
 
     project = Domain.get_by_name(domain)
 
@@ -48,8 +51,10 @@ def load_locs_json(domain, selected_loc_id=None, user=None, show_test=False):
     user_location_list = user_locations()
     if not show_test:
         locations = [
-            loc for loc in locations if loc.metadata.get('is_test_location', 'real') != 'test' and
-                                        loc.location_id in user_location_list
+            loc for loc in locations if loc.metadata.get('is_test_location', 'real') != 'test' and (
+                user.has_permission(domain, 'access_all_locations') or
+                loc.location_id in user_location_list
+            )
         ]
 
     loc_json = [loc_to_json(loc, project) for loc in locations]
