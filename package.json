@@ -106,7 +106,14 @@
         "yarn": ">= 1.0.0"
     },
     "resolutions": {
+        "debug": "^2.6.9",
         "dot-prop": "^5.1.1",
-        "js-yaml": "^3.13.1"
+        "growl": "^1.10.0",
+        "grunt": "^1.2.0",
+        "js-yaml": "^3.13.1",
+        "lodash": "^4.17.19",
+        "mem": "^4.0.0",
+        "minimatch": "^3.0.2",
+        "underscore.string": "^3.3.5"
     }
 }
