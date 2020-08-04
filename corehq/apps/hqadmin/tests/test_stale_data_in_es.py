@@ -9,6 +9,7 @@ from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 
 import mock
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.hqadmin.management.commands.stale_data_in_es import DataRow
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.elastic import get_es_new, send_to_elasticsearch
@@ -26,12 +27,14 @@ from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.util.elastic import reset_es_index
 from corehq.util.es import elasticsearch
+from corehq.util.es.interface import ElasticsearchInterface
 
 
 class ExitEarlyException(Exception):
     pass
 
 
+@es_test
 class TestStaleDataInESSQL(TestCase):
 
     use_sql_backend = True
@@ -260,10 +263,11 @@ class TestStaleDataInESSQL(TestCase):
 
     @classmethod
     def _delete_docs_from_es(cls, doc_ids, index_info):
+        es_interface = ElasticsearchInterface(cls.elasticsearch)
         refresh = False
         for doc_id in doc_ids:
             try:
-                cls.elasticsearch.delete(index_info.index, index_info.type, doc_id)
+                es_interface.delete_doc(index_info.index, index_info.type, doc_id)
             except elasticsearch.NotFoundError:
                 pass
             else:
@@ -286,6 +290,7 @@ class TestStaleDataInESSQL(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        delete_all_cases()
         cls.project = Domain.get_or_create_with_name(
             cls.project_name, is_active=True, use_sql_backend=cls.use_sql_backend)
         cls.project.save()
@@ -308,6 +313,7 @@ class TestStaleDataInESSQL(TestCase):
         self._delete_cases_from_es(self.cases_to_delete_from_es)
 
 
+@es_test
 class TestStaleDataInESCouch(TestStaleDataInESSQL):
 
     use_sql_backend = False
