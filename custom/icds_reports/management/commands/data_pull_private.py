@@ -1,5 +1,6 @@
 import csv
 import datetime
+from collections import defaultdict
 
 from dateutil import parser
 from dateutil.relativedelta import relativedelta
@@ -36,7 +37,8 @@ class Command(BaseCommand):
             SELECT "awc_location_months"."district_id", "child_health_monthly"."child_person_case_id" FROM "public"."child_health_monthly" "child_health_monthly"
             LEFT JOIN "public"."awc_location_months" "awc_location_months" ON (
                 ("awc_location_months"."month" = "child_health_monthly"."month") AND
-                ("awc_location_months"."awc_id" = "child_health_monthly"."awc_id")
+                ("awc_location_months"."awc_id" = "child_health_monthly"."awc_id") AND
+                ("awc_location_months"."supervisor_id" = "child_health_monthly"."supervisor_id")
             ) WHERE "child_health_monthly".month='{month}' AND "awc_location_months".state_id='{state_id}' AND "child_health_monthly".pse_eligible=1;
         """
 
@@ -45,17 +47,14 @@ class Command(BaseCommand):
         get_district_ids = self.get_district_ids_dict()
         for month in months:
             excel_data = [['district', 'count']]
-            person_case_ids = {}
-            for district_id in get_district_ids.keys():
-                person_case_ids[district_id] = []
+            person_case_ids = defaultdict(lambda: [])
 
             for item in _run_custom_sql_script(query.format(month=month, state_id=STATE_ID)):
-                if item[0] in get_district_ids.keys():
-                    person_case_ids[item[0]].append(item[1])
+                person_case_ids[item[0]].append(item[1])
 
             for key, val in person_case_ids:
                 count_private_school_going = 0
-                district = get_district_ids[key]
+                district = get_district_ids[key] if key in get_district_ids.keys() else ''
                 for case in case_accessor.get_cases(val):
                     date_last_private_admit = case.get_case_property('date_last_private_admit')
                     date_return_private = case.get_case_property('date_return_private')
