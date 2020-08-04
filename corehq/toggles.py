@@ -1469,6 +1469,16 @@ REGEX_FIELD_VALIDATION = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Regular+Expression+Validation+for+Custom+Data+Fields',
 )
 
+CUSTOM_DATA_FIELDS_PROFILES = StaticToggle(
+    "custom_data_fields_profiles",
+    "User field profiles",
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="This flag adds support for saving a set of user fields and their values, "
+                "and applying that profile to individual users instead of specifying every field.",
+    help_link="https://confluence.dimagi.com/display/ccinternal/User+field+profiles",
+)
+
 TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
     'two_factor_superuser_rollout',
     'Users in this list will be forced to have Two-Factor Auth enabled',
