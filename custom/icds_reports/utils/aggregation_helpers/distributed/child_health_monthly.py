@@ -3,7 +3,7 @@ import logging
 from dateutil.relativedelta import relativedelta
 
 from corehq.apps.userreports.util import get_table_name
-from corehq.toggles import ICDS_LOCATION_REASSIGNMENT_AGG
+from custom.icds.icds_toggles import ICDS_LOCATION_REASSIGNMENT_AGG
 from custom.icds_reports.const import (
     AGG_COMP_FEEDING_TABLE,
     AGG_CHILD_HEALTH_PNC_TABLE,
