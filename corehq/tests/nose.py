@@ -47,7 +47,7 @@ class HqTestFinderPlugin(Plugin):
         "submodules/dimagi-utils-src",
         "submodules/django-digest-src",
         "submodules/toggle",
-        "extensions/*",
+        "extensions/*/*",
         "custom",
     ]
 
