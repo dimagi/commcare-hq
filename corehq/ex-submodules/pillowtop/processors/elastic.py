@@ -97,11 +97,11 @@ class ElasticProcessor(PillowProcessor):
             )
 
     def _doc_exists(self, doc_id):
-        return self.elasticsearch.exists(self.index_info.alias, self.index_info.type, doc_id)
+        return self.es_interface.doc_exists(self.index_info.alias, doc_id, self.index_info.type)
 
     def _delete_doc_if_exists(self, doc_id):
         if self._doc_exists(doc_id):
-            self.elasticsearch.delete(self.index_info.alias, self.index_info.type, doc_id)
+            self.es_interface.delete_doc(self.index_info.alias, self.index_info.type, doc_id)
 
     def _datadog_timing(self, step):
         return metrics_histogram_timer(

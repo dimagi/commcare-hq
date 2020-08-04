@@ -5,6 +5,7 @@ from corehq.util.es.elasticsearch import ConnectionError
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.app_manager.models import Application
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.views import get_domain_languages
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
@@ -12,6 +13,7 @@ from corehq.util.elastic import delete_es_index
 from corehq.util.test_utils import trap_extra_setup
 
 
+@es_test
 class TestDomainLanguages(TestCase):
 
     @classmethod

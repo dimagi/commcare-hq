@@ -1,5 +1,6 @@
 import uuid
 
+from django.conf import settings
 from django.test import SimpleTestCase
 
 from corehq.util.es.elasticsearch import ConnectionError
@@ -28,6 +29,7 @@ from corehq.apps.export.tests.util import (
     new_case,
     new_form,
 )
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
@@ -37,20 +39,23 @@ from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
 
 
+@es_test
 class ExportFilterTest(SimpleTestCase):
 
     def test_or_filter(self):
+        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+            exepcted = {'bool': {'should': ({'term': {'owner_id': 'foo'}},
+                                            {'term': {'owner_id': 'bar'}})}}
+        else:
+            exepcted = {'or': ({'term': {'owner_id': 'foo'}},
+                               {'term': {'owner_id': 'bar'}})}
         self.assertEqual(
             OR(OwnerFilter("foo"), OwnerFilter("bar")).to_es_filter(),
-            {
-                'or': (
-                    {'term': {'owner_id': 'foo'}},
-                    {'term': {'owner_id': 'bar'}}
-                )
-            }
+            exepcted
         )
 
 
+@es_test
 class ExportFilterResultTest(SimpleTestCase):
 
     @classmethod

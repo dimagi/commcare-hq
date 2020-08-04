@@ -20,6 +20,7 @@ from corehq.apps.export.models import (
     FormExportInstance,
     CaseExportInstance,
     ExportColumn, TableConfiguration)
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.models import HQApiKey, WebUser
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
@@ -84,6 +85,7 @@ class OdataTestMixin(object):
         return reverse(self.view_urlname, kwargs={'domain': self.domain.name, 'config_id': self.instance._id})
 
 
+@es_test
 class CaseOdataTestMixin(OdataTestMixin):
 
     @classmethod
@@ -114,6 +116,7 @@ class CaseOdataTestMixin(OdataTestMixin):
         )
 
 
+@es_test
 class FormOdataTestMixin(OdataTestMixin):
 
     @classmethod

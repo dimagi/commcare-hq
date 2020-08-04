@@ -1,13 +1,16 @@
 import functools
 import uuid
 
+
 from django.conf import settings
 from django.test import SimpleTestCase
 from corehq.util.es.elasticsearch import ConnectionError
 
+from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
+from corehq.pillows.mappings.utils import transform_for_es7
 from pillowtop.es_utils import (
     assume_alias,
     initialize_index,
@@ -16,13 +19,14 @@ from pillowtop.es_utils import (
     set_index_normal_settings,
     set_index_reindex_settings,
 )
-from pillowtop.index_settings import INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS
+from pillowtop.index_settings import disallowed_settings_by_es_version, INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS
 from corehq.util.es.interface import ElasticsearchInterface
 from pillowtop.exceptions import PillowtopIndexingError
 from pillowtop.processors.elastic import send_to_elasticsearch
 from .utils import get_doc_count, get_index_mapping, TEST_INDEX_INFO
 
 
+@es_test
 class ElasticPillowTest(SimpleTestCase):
 
     def setUp(self):
@@ -55,8 +59,8 @@ class ElasticPillowTest(SimpleTestCase):
         mapping = get_index_mapping(self.es, self.index, TEST_INDEX_INFO.type)
         # we can't compare the whole dicts because ES adds a bunch of stuff to them
         self.assertEqual(
-            TEST_INDEX_INFO.mapping['properties']['doc_type']['index'],
-            mapping['properties']['doc_type']['index']
+            transform_for_es7(TEST_INDEX_INFO.mapping)['properties']['doc_type'],
+            mapping['properties']['doc_type']
         )
 
     def test_refresh_index(self):
@@ -102,12 +106,13 @@ class ElasticPillowTest(SimpleTestCase):
         self.addCleanup(functools.partial(ensure_index_deleted, new_index))
 
         # make sure it's there in the other index
-        aliases = self.es.indices.get_aliases()
+        aliases = self.es_interface.get_aliases()
         self.assertEqual([TEST_INDEX_INFO.alias], list(aliases[new_index]['aliases']))
 
         # assume alias and make sure it's removed (and added to the right index)
         assume_alias(self.es, self.index, TEST_INDEX_INFO.alias)
-        aliases = self.es.indices.get_aliases()
+        aliases = self.es_interface.get_aliases()
+
         self.assertEqual(0, len(aliases[new_index]['aliases']))
         self.assertEqual([TEST_INDEX_INFO.alias], list(aliases[self.index]['aliases']))
 
@@ -134,7 +139,7 @@ class ElasticPillowTest(SimpleTestCase):
 
     def _compare_es_dicts(self, expected, returned):
         sub_returned = returned['index']
-        should_not_exist = ElasticsearchInterface._disallowed_index_settings
+        should_not_exist = disallowed_settings_by_es_version[settings.ELASTICSEARCH_MAJOR_VERSION]
         for key, value in expected['index'].items():
             if key in should_not_exist:
                 continue
@@ -151,6 +156,7 @@ class ElasticPillowTest(SimpleTestCase):
                 .format(disallowed_setting))
 
 
+@es_test
 class TestSendToElasticsearch(SimpleTestCase):
 
     def setUp(self):

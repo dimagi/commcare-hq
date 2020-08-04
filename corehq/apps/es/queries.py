@@ -12,6 +12,8 @@ are available, and put 'em here if you end up using any of 'em.
 """
 import re
 
+from django.conf import settings
+
 from .filters import date_range, range_filter
 
 MUST = "must"
@@ -136,12 +138,20 @@ def filtered(query, filter_):
     """
     Filtered query for performing both filtering and querying at once
     """
-    return {
-        "filtered": {
-            "query": query,
-            "filter": filter_,
+    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+        return {
+            "bool": {
+                "filter": [filter_],
+                "must": query
+            }
         }
-    }
+    else:
+        return {
+            "filtered": {
+                "query": query,
+                "filter": filter_,
+            }
+        }
 
 
 def regexp(field, regex):
