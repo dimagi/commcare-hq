@@ -24,12 +24,7 @@ class TestGroupResource(APIResourceTest):
 
     def test_get_list(self):
 
-        group = Group({"name": "test", "domain": self.domain.name})
-        group.save()
-        send_to_elasticsearch('groups', group.to_json())
-        self.es.indices.refresh(GROUP_INDEX_INFO.index)
-        self.addCleanup(group.delete)
-        self.addCleanup(lambda: send_to_elasticsearch('groups', group.to_json(), delete=True))
+        group = self._add_group(Group({"name": "test", "domain": self.domain.name}), send_to_es=True)
         backend_id = group.get_id
 
         response = self._assert_auth_get_resource(self.list_endpoint)
@@ -50,10 +45,7 @@ class TestGroupResource(APIResourceTest):
         })
 
     def test_get_single(self):
-
-        group = Group({"name": "test", "domain": self.domain.name})
-        group.save()
-        self.addCleanup(group.delete)
+        group = self._add_group(Group({"name": "test", "domain": self.domain.name}))
         backend_id = group.get_id
 
         response = self._assert_auth_get_resource(self.single_endpoint(backend_id))
@@ -97,9 +89,7 @@ class TestGroupResource(APIResourceTest):
 
     def test_update(self):
 
-        group = Group({"name": "test", "domain": self.domain.name})
-        group.save()
-        self.addCleanup(group.delete)
+        group = self._add_group(Group({"name": "test", "domain": self.domain.name}))
 
         group_json = {
             "case_sharing": True,
@@ -125,11 +115,18 @@ class TestGroupResource(APIResourceTest):
 
     def test_delete_group(self):
 
-        group = Group({"name": "test", "domain": self.domain.name})
-        group.save()
-        self.addCleanup(group.delete)
+        group = self._add_group(Group({"name": "test", "domain": self.domain.name}))
 
         backend_id = group._id
         response = self._assert_auth_post_resource(self.single_endpoint(backend_id), '', method='DELETE')
         self.assertEqual(response.status_code, 204, response.content)
         self.assertEqual(0, len(Group.by_domain(self.domain.name)))
+
+    def _add_group(self, group, send_to_es=False):
+        group.save()
+        self.addCleanup(group.delete)
+        if send_to_es:
+            send_to_elasticsearch('groups', group.to_json())
+            self.addCleanup(lambda: send_to_elasticsearch('groups', group.to_json(), delete=True))
+            self.es.indices.refresh(GROUP_INDEX_INFO.index)
+        return group
