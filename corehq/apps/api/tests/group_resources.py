@@ -24,25 +24,30 @@ class TestGroupResource(APIResourceTest):
 
     def test_get_list(self):
 
-        group = self._add_group(Group({"name": "test", "domain": self.domain.name}), send_to_es=True)
-        backend_id = group.get_id
+        # create groups in jumbled (non-alphabetical) order
+        group_b = self._add_group(Group({"name": "test_b", "domain": self.domain.name}), send_to_es=True)
+        group_d = self._add_group(Group({"name": "test_d", "domain": self.domain.name}), send_to_es=True)
+        group_c = self._add_group(Group({"name": "test_c", "domain": self.domain.name}), send_to_es=True)
+        group_a = self._add_group(Group({"name": "test_a", "domain": self.domain.name}), send_to_es=True)
+        groups_in_order = [group_a, group_b, group_c, group_d]
 
         response = self._assert_auth_get_resource(self.list_endpoint)
         self.assertEqual(response.status_code, 200)
 
         api_groups = json.loads(response.content)['objects']
-        self.assertEqual(len(api_groups), 1)
-        self.assertEqual(api_groups[0]['id'], backend_id)
-        self.assertEqual(api_groups[0], {
-            'case_sharing': False,
-            'domain': 'qwerty',
-            'id': backend_id,
-            'metadata': {},
-            'name': 'test',
-            'reporting': True,
-            'resource_uri': '/a/qwerty/api/v0.5/group/{}/'.format(backend_id),
-            'users': [],
-        })
+        self.assertEqual(len(api_groups), 4)
+        for i, group in enumerate(groups_in_order):
+            self.assertEqual(api_groups[i]['id'], group.get_id, f"group_id for api_groups[{i}] is wrong")
+            self.assertEqual(api_groups[i], {
+                'case_sharing': False,
+                'domain': 'qwerty',
+                'id': group.get_id,
+                'metadata': {},
+                'name': group.name,
+                'reporting': True,
+                'resource_uri': '/a/qwerty/api/v0.5/group/{}/'.format(group.get_id),
+                'users': [],
+            })
 
     def test_get_single(self):
         group = self._add_group(Group({"name": "test", "domain": self.domain.name}))
