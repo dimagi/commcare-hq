@@ -14,6 +14,12 @@ from corehq.apps.commtrack.tests.util import bootstrap_domain
 from dimagi.utils.dates import DateSpan
 from pillowtop.es_utils import initialize_index_and_mapping
 
+from corehq.apps.custom_data_fields.models import (
+    CustomDataFieldsDefinition,
+    CustomDataFieldsProfile,
+    Field,
+    PROFILE_SLUG,
+)
 from corehq.apps.es import CaseES, UserES
 from corehq.apps.es.aggregations import MISSING_KEY
 from corehq.apps.groups.models import Group
@@ -44,6 +50,7 @@ from corehq.apps.reports.analytics.esaccessors import (
 )
 from corehq.apps.reports.standard.cases.utils import query_location_restricted_cases
 from corehq.apps.users.models import CommCareUser, DomainPermissionsMirror
+from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.blobs.mixin import BlobMetaRef
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -55,6 +62,7 @@ from corehq.pillows.mappings.case_mapping import CASE_INDEX, CASE_INDEX_INFO
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
+from corehq.pillows.user import transform_user_for_elasticsearch
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.util.elastic import ensure_index_deleted, reset_es_index
@@ -812,6 +820,22 @@ class TestFormESAccessors(BaseESAccessorsTest):
 
 
 class TestUserESAccessors(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.definition = CustomDataFieldsDefinition(domain='user-esaccessors-test',
+                                                    field_type=UserFieldsView.field_type)
+        cls.definition.save()
+        cls.definition.set_fields([
+            Field(slug='job', label='Job'),
+        ])
+        cls.definition.save()
+        cls.profile = CustomDataFieldsProfile(
+            name='daily_planet_staff',
+            fields={'job': 'reporter'},
+            definition=cls.definition,
+        )
+        cls.profile.save()
 
     def setUp(self):
         super(TestUserESAccessors, self).setUp()
@@ -826,6 +850,7 @@ class TestUserESAccessors(TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        cls.definition.delete()
         ensure_index_deleted(USER_INDEX)
         super(TestUserESAccessors, cls).tearDownClass()
 
@@ -837,24 +862,34 @@ class TestUserESAccessors(TestCase):
             is_active=is_active,
             first_name=self.first_name,
             last_name=self.last_name,
+            metadata={PROFILE_SLUG: self.profile.id, 'office': 'phone_booth'},
         )
-        send_to_elasticsearch('users', user.to_json())
+        send_to_elasticsearch('users', transform_user_for_elasticsearch(user.to_json()))
         self.es.indices.refresh(USER_INDEX)
         return user
 
     def test_active_user_query(self):
         self._send_user_to_es('123')
-        results = get_user_stubs(['123'])
+        results = get_user_stubs(['123'], ['user_data_es'])
 
         self.assertEqual(len(results), 1)
+        metadata = results[0].pop('user_data_es')
+        self.assertEquals({
+            'commcare_project': 'user-esaccessors-test',
+            PROFILE_SLUG: self.profile.id,
+            'job': 'reporter',
+            'office': 'phone_booth',
+        }, {item['key']: item['value'] for item in metadata})
+
         self.assertEqual(results[0], {
             '_id': '123',
+            '__group_ids': [],
             'username': self.username,
             'is_active': True,
             'first_name': self.first_name,
             'last_name': self.last_name,
             'doc_type': self.doc_type,
-            'location_id': None
+            'location_id': None,
         })
 
     def test_inactive_user_query(self):
