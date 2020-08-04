@@ -10,7 +10,9 @@ from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from custom.common.filters import RestrictedAsyncLocationFilter
 from memoized import memoized
-
+from corehq.apps.locations.permissions import (
+    user_can_access_location_id
+)
 
 def location_hierarchy_config(domain, location_types=None):
     location_types = location_types or ['state', 'district', 'block']
@@ -35,16 +37,22 @@ def load_locs_json(domain, selected_loc_id=None, user=None, show_test=False):
             'can_edit': True
         }
 
+    def user_locations():
+        user_location = user.get_sql_location(domain)
+        all_related_ancestors = user_location.get_ancestors(include_self=True)
+        return [location.location_id for location in all_related_ancestors]
+
     project = Domain.get_by_name(domain)
 
     locations = SQLLocation.root_locations(domain)
+    user_location_list = user_locations()
     if not show_test:
         locations = [
-            loc for loc in locations if loc.metadata.get('is_test_location', 'real') != 'test'
+            loc for loc in locations if loc.metadata.get('is_test_location', 'real') != 'test' and
+                                        loc.location_id in user_location_list
         ]
 
     loc_json = [loc_to_json(loc, project) for loc in locations]
-
     # if a location is selected, we need to pre-populate its location hierarchy
     # so that the data is available client-side to pre-populate the drop-downs
     if selected_loc_id:
@@ -66,7 +74,9 @@ def load_locs_json(domain, selected_loc_id=None, user=None, show_test=False):
                 # there are some instances in viewing archived locations where we don't actually
                 # support drilling all the way down.
                 break
-            this_loc['children'] = [loc_to_json(loc, project) for loc in children]
+            this_loc['children'] = [loc_to_json(loc, project) for loc in children if
+                                    user_can_access_location_id(domain, user, loc.location_id) or
+                                    loc.location_id in user_location_list]
             parent = this_loc
 
     return loc_json
