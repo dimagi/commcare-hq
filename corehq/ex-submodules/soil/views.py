@@ -1,18 +1,26 @@
-from datetime import datetime
 import json
 import logging
 import uuid
+from datetime import datetime
 
 from django.contrib.auth.decorators import login_required
-from django.urls import reverse
-from django.http import HttpResponseRedirect, Http404, HttpResponse, HttpResponseServerError
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseForbidden,
+    HttpResponseServerError,
+)
 from django.shortcuts import render
 from django.template.context import RequestContext
 from django.utils.translation import ugettext_lazy as _
 
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
-from soil.heartbeat import get_file_heartbeat, get_cache_heartbeat, last_heartbeat
+from soil.heartbeat import (
+    get_cache_heartbeat,
+    get_file_heartbeat,
+    last_heartbeat,
+)
 from soil.util import get_download_context
 
 
@@ -38,6 +46,11 @@ def ajax_job_poll(request, download_id, template="soil/partials/dl_status.html")
     except TaskFailedError as e:
         context = {'error': list(e.errors) if e.errors else [_("An error occurred during the download.")]}
         return HttpResponseServerError(render(request, template, context))
+
+    download = DownloadBase.get(download_id)
+    if download and download.owner_ids and request.couch_user.get_id not in download.owner_ids:
+        return HttpResponseForbidden(_("You do not have access to this file"))
+
     return render(request, template, context)
 
 
@@ -57,6 +70,11 @@ def retrieve_download(request, download_id, template="soil/file_download.html", 
         if download is None:
             logging.error("Download file request for expired/nonexistent file requested")
             raise Http404
+        if download.owner_ids and request.couch_user.get_id not in download.owner_ids:
+            return HttpResponseForbidden(_(
+                "You do not have access to this file. It can only be downloaded by the user who created it"
+            ))
+
         return download.toHttpResponse()
 
     return render(request, template, context=context.flatten())
