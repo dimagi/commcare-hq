@@ -29,13 +29,16 @@ class TestGroupResource(APIResourceTest):
         group_d = self._add_group(Group({"name": "test_d", "domain": self.domain.name}), send_to_es=True)
         group_c = self._add_group(Group({"name": "test_c", "domain": self.domain.name}), send_to_es=True)
         group_a = self._add_group(Group({"name": "test_a", "domain": self.domain.name}), send_to_es=True)
-        groups_in_order = [group_a, group_b, group_c, group_d]
+        # note the capital E to test the question:
+        # does this come first (case-sensitive) or last (case-insensitive)?
+        group_e = self._add_group(Group({"name": "test_E", "domain": self.domain.name}), send_to_es=True)
+        groups_in_order = [group_a, group_b, group_c, group_d, group_e]
 
         response = self._assert_auth_get_resource(self.list_endpoint)
         self.assertEqual(response.status_code, 200)
 
         api_groups = json.loads(response.content)['objects']
-        self.assertEqual(len(api_groups), 4)
+        self.assertEqual(len(api_groups), len(groups_in_order))
         for i, group in enumerate(groups_in_order):
             self.assertEqual(api_groups[i]['id'], group.get_id, f"group_id for api_groups[{i}] is wrong")
             self.assertEqual(api_groups[i], {
