@@ -1,5 +1,6 @@
 import json
 from nose.plugins.attrib import attr
+from nose.tools import nottest
 
 from corehq.elastic import get_es_new
 from corehq.util.elastic import ensure_index_deleted
@@ -46,6 +47,7 @@ class ElasticTestMixin(object):
             self.validate_query(raw_query)
 
 
+@nottest
 def es_test(test):
     """Decorator for tagging ElasticSearch tests
 
