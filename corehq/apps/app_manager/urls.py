@@ -79,6 +79,7 @@ from corehq.apps.app_manager.views import (
     undo_delete_module,
     update_build_comment,
     update_linked_whitelist,
+    upgrade_shadow_module,
     validate_form_for_build,
     validate_module_for_build,
     view_app,
@@ -239,6 +240,8 @@ urlpatterns = [
     url(r'^rearrange/(?P<app_id>[\w-]+)/(?P<key>[\w-]+)/$', rearrange, name='rearrange'),
     url(r'^move_child_modules_after_parents/(?P<app_id>[\w-]+)/$', move_child_modules_after_parents,
         name='move_child_modules_after_parents'),
+    url(r'^upgrade_shadow_module/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/$',
+        upgrade_shadow_module, name='upgrade_shadow_module'),
 
     url(r'^odk/(?P<app_id>[\w-]+)/qr_code/$', odk_qr_code, name='odk_qr_code'),
     url(r'^odk/(?P<app_id>[\w-]+)/media_qr_code/$', odk_media_qr_code, name='odk_media_qr_code'),
