@@ -324,6 +324,13 @@ class PredictablyRandomToggle(StaticToggle):
         return '{}:{}:{}'.format(self.namespaces, self.slug, item)
 
     def enabled(self, item, namespace=Ellipsis):
+        if self.relevant_environments and not (
+            settings.SERVER_ENVIRONMENT in self.relevant_environments
+            or settings.DEBUG
+        ):
+            # Don't even bother looking it up in the cache
+            return False
+
         if namespace == NAMESPACE_USER:
             namespace = None  # because:
             # StaticToggle.__init__(): self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
@@ -364,10 +371,12 @@ class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
         namespaces,
         default_randomness=0.0,
         help_link=None,
-        description=None
+        description=None,
+        relevant_environments=None
     ):
         super(PredictablyRandomToggle, self).__init__(slug, label, tag, list(namespaces),
-                                                      help_link=help_link, description=description)
+                                                      help_link=help_link, description=description,
+                                                      relevant_environments=relevant_environments)
         _ensure_valid_namespaces(namespaces)
         _ensure_valid_randomness(default_randomness)
         self.default_randomness = default_randomness
@@ -1023,7 +1032,8 @@ DASHBOARD_ICDS_REPORT = StaticToggle(
     'dashboard_icds_reports',
     'ICDS: Enable access to the dashboard reports for ICDS',
     TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    relevant_environments={"icds", "icds-staging"}
 )
 
 ICDS_DASHBOARD_REPORT_FEATURES = StaticToggle(
@@ -1038,6 +1048,7 @@ ICDS_DASHBOARD_SHOW_MOBILE_APK = DynamicallyPredictablyRandomToggle(
     'Show a "Mobile APK" download link on the ICDS Dashboard',
     TAG_CUSTOM,
     [NAMESPACE_USER],
+    relevant_environments={"icds", "icds-staging"}
 )
 
 ICDS_DASHBOARD_TEMPORARY_DOWNTIME = StaticToggle(
@@ -1053,7 +1064,8 @@ ICDS_CUSTOM_SMS_REPORT = StaticToggle(
     'ICDS: Generate a custom SMS report with in the given time range. '
     'The report that is generated will be emailed to the user who requested it',
     TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    relevant_environments={"icds", "icds-staging"}
 )
 
 OPENMRS_INTEGRATION = StaticToggle(
@@ -1187,7 +1199,7 @@ HIDE_MESSAGING_DASHBOARD_FROM_NON_SUPERUSERS = StaticToggle(
     'hide_messaging_dashboard',
     "Hide messaging dashboard from users who are not superusers.",
     TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
 )
 
 
@@ -1326,10 +1338,10 @@ EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
 
 ICDS = StaticToggle(
     'icds',
-    "ICDS: Enable ICDS features (necessary since features are on India and ICDS envs)",
+    "ICDS: Enable ICDS features (necessary since features are on multiple envs)",
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    relevant_environments={'icds', 'india', 'staging', 'icds-staging'},
+    relevant_environments={'icds', 'icds-staging'},
 )
 
 DATA_DICTIONARY = StaticToggle(
@@ -1523,6 +1535,7 @@ MULTI_MASTER_BYPASS_VERSION_CHECK = StaticToggle(
     "Bypass minimum CommCare version check for multi master usage. For use only by ICDS.",
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+    relevant_environments={"icds", "icds-staging"}
 )
 
 SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
@@ -1609,7 +1622,7 @@ ICDS_DISHA_API = StaticToggle(
     'ICDS: Access DISHA API',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
-    relevant_environments={'icds', 'india', 'icds-staging'},
+    relevant_environments={'icds', 'icds-staging'},
 )
 
 
@@ -1618,7 +1631,7 @@ ICDS_NIC_INDICATOR_API = StaticToggle(
     'ICDS: Dashboard Indicator API for NIC',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
-    relevant_environments={'icds', 'india', 'icds-staging'},
+    relevant_environments={'icds', 'icds-staging'},
 )
 
 AP_WEBSERVICE = StaticToggle(
@@ -1626,7 +1639,7 @@ AP_WEBSERVICE = StaticToggle(
     'ICDS: ENABLE AP webservice',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
-    relevant_environments={'icds', 'india', 'icds-staging'},
+    relevant_environments={'icds', 'icds-staging'},
 )
 
 ALLOW_BLANK_CASE_TAGS = StaticToggle(
@@ -1671,6 +1684,7 @@ RESTRICT_APP_RELEASE = StaticToggle(
     'ICDS: Show permission to manage app releases on user roles',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
+    relevant_environments={"icds", "icds-staging"}
 )
 
 
@@ -1732,7 +1746,8 @@ PARALLEL_MPR_ASR_REPORT = StaticToggle(
     'parallel_mpr_asr_report',
     'Release parallel loading of MPR and ASR report',
     TAG_CUSTOM,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+    relevant_environments={"icds", "icds-staging"}
 )
 
 
@@ -1740,7 +1755,8 @@ MANAGE_CCZ_HOSTING = StaticToggle(
     'manage_ccz_hosting',
     'Allow project to manage ccz hosting',
     TAG_CUSTOM,
-    [NAMESPACE_USER]
+    [NAMESPACE_USER],
+    relevant_environments={'icds', 'icds-staging'},
 )
 
 
@@ -1769,7 +1785,8 @@ MPR_ASR_CONDITIONAL_AGG = DynamicallyPredictablyRandomToggle(
     'mpr_asr_conditional_agg',
     'Improved MPR ASR by doing aggregation at selected level',
     TAG_CUSTOM,
-    [NAMESPACE_USER]
+    [NAMESPACE_USER],
+    relevant_environments={"icds", "icds-staging"}
 )
 
 SKIP_CREATING_DEFAULT_BUILD_FILES_ON_BUILD = StaticToggle(
@@ -1794,6 +1811,7 @@ PHI_CAS_INTEGRATION = StaticToggle(
     'Integrate with PHI Api to search and validate beneficiaries',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+    relevant_environments={"icds", "icds-staging"}
 )
 
 
@@ -1802,6 +1820,7 @@ DAILY_INDICATORS = StaticToggle(
     'Enable daily indicators api',
     TAG_CUSTOM,
     [NAMESPACE_USER],
+    relevant_environments={"icds", "icds-staging"}
 )
 
 mwcd_indicators = StaticToggle(
@@ -1809,6 +1828,7 @@ mwcd_indicators = StaticToggle(
     'Enable MWCD indicators API',
     TAG_CUSTOM,
     [NAMESPACE_USER],
+    relevant_environments={"icds", "icds-staging"}
 )
 
 ICDS_GOVERNANCE_DASHABOARD_API = StaticToggle(
@@ -1816,7 +1836,7 @@ ICDS_GOVERNANCE_DASHABOARD_API = StaticToggle(
     'ICDS: Dashboard Governance dashboard API',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
-    relevant_environments={'icds', 'india', 'icds-staging'},
+    relevant_environments={'icds', 'icds-staging'},
 )
 
 DO_NOT_RATE_LIMIT_SUBMISSIONS = StaticToggle(
@@ -1894,7 +1914,8 @@ RUN_CUSTOM_DATA_PULL_REQUESTS = StaticToggle(
     'run_custom_data_pull_requests',
     '[ICDS] Initiate custom data pull requests from UI',
     TAG_CUSTOM,
-    [NAMESPACE_USER]
+    [NAMESPACE_USER],
+    relevant_environments={"icds", "icds-staging"}
 )
 
 
@@ -1902,7 +1923,8 @@ RUN_DATA_MANAGEMENT_TASKS = StaticToggle(
     'run_data_management_tasks',
     '[ICDS] Run data management tasks',
     TAG_CUSTOM,
-    [NAMESPACE_USER]
+    [NAMESPACE_USER],
+    relevant_environments={"icds", "icds-staging"}
 )
 
 
@@ -1935,7 +1957,7 @@ PERFORM_LOCATION_REASSIGNMENT = StaticToggle(
     'Ability to submit requests for location reassignment',
     TAG_CUSTOM,
     [NAMESPACE_USER],
-    relevant_environments={'icds', 'india', 'staging', 'icds-staging'},
+    relevant_environments={'icds', 'icds-staging'},
 )
 
 DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE = StaticToggle(
@@ -1943,7 +1965,7 @@ DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE = StaticToggle(
     'Allow domain users to download location reassignment template',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
-    relevant_environments={'icds', 'india', 'staging', 'icds-staging'},
+    relevant_environments={'icds', 'icds-staging'},
 )
 
 ICDS_BIHAR_DEMOGRAPHICS_API = StaticToggle(
@@ -1951,7 +1973,7 @@ ICDS_BIHAR_DEMOGRAPHICS_API = StaticToggle(
     'ICDS: Bihar Demographics API',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
-    relevant_environments={'icds', 'india', 'icds-staging'},
+    relevant_environments={'icds', 'icds-staging'},
 
 )
 
@@ -1960,7 +1982,7 @@ ICDS_LOCATION_REASSIGNMENT_AGG = StaticToggle(
     'ICDS: Use aggregation modifications for location reassignment',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    relevant_environments={'icds', 'india', 'icds-staging'},
+    relevant_environments={'icds', 'icds-staging'},
 )
 
 REFER_CASE_REPEATER = StaticToggle(
@@ -2016,5 +2038,6 @@ ENABLE_ICDS_DASHBOARD_RELEASE_NOTES_UPDATE = StaticToggle(
     'enable_icds_dashboard_release_notes_update',
     'Enable updating ICDS dashboard release notes for specific users',
     TAG_CUSTOM,
-    [NAMESPACE_USER]
+    [NAMESPACE_USER],
+    relevant_environments={"icds", "icds-staging"}
 )
