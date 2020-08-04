@@ -48,7 +48,6 @@
         "datatables-scroller": "DataTables/Scroller#^1.5.1",
         "datetimepicker": "npm:jquery-datetimepicker#2.5.4",
         "detectrtc": "1.4.0",
-        "dot-prop": "^5.1.1",
         "eslint-plugin-eslint-dimagi": "1.0.2",
         "fast-levenshtein": "2.0.6",
         "font-awesome": "4.7.0",
@@ -105,5 +104,9 @@
     },
     "engines": {
         "yarn": ">= 1.0.0"
+    },
+    "resolutions": {
+        "dot-prop": "^5.1.1",
+        "js-yaml": "^3.13.1"
     }
 }
