@@ -213,7 +213,7 @@ hqDefine('cloudcare/js/util',['integration/js/hmac_callout'], function () {
     var injectMarkdownAnchorTransforms = function () {
         var initialPageData = hqImport("hqwebapp/js/initial_page_data");
         if (window.mdAnchorRender) {
-            renderers = [];
+            var renderers = [];
             if (initialPageData.get('dialer_enabled')) {
                 renderers.push(chainedRenderer(
                     function (href) { return href.startsWith("tel://"); },
@@ -230,7 +230,7 @@ hqDefine('cloudcare/js/util',['integration/js/hmac_callout'], function () {
                     function (href) { return href.startsWith(initialPageData.get('hmac_root_url')); },
                     function (href, hIndex, anchor) {
                         var aIndex = anchor.attrIndex('onclick');
-                        clickBody = "hqImport('integration/js/hmac_callout').performCallout(this);return false;";
+                        var clickBody = "hqImport('integration/js/hmac_callout').performCallout(this);return false;";
                         if (aIndex < 0) {
                             anchor.attrPush(['onclick', clickBody]);
                         } else {
@@ -241,11 +241,11 @@ hqDefine('cloudcare/js/util',['integration/js/hmac_callout'], function () {
                 ));
             }
             window.mdAnchorRender = function (tokens, idx, options, env, self) {
-                renderers.forEach(function(r) {
+                renderers.forEach(function (r) {
                     r(tokens, idx, options, env, self);
                 });
                 return self.renderToken(tokens, idx, options);
-            }
+            };
         }
     };
 
