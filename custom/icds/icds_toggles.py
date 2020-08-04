@@ -11,7 +11,6 @@ DASHBOARD_ICDS_REPORT = StaticToggle(
     'ICDS: Enable access to the dashboard reports for ICDS',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
-    relevant_environments={"icds", "icds-staging"}
 )
 
 ICDS_DASHBOARD_SHOW_MOBILE_APK = DynamicallyPredictablyRandomToggle(
@@ -19,7 +18,6 @@ ICDS_DASHBOARD_SHOW_MOBILE_APK = DynamicallyPredictablyRandomToggle(
     'Show a "Mobile APK" download link on the ICDS Dashboard',
     TAG_CUSTOM,
     [NAMESPACE_USER],
-    relevant_environments={"icds", "icds-staging"}
 )
 
 ICDS_DASHBOARD_TEMPORARY_DOWNTIME = StaticToggle(
@@ -35,7 +33,6 @@ ICDS_DISHA_API = StaticToggle(
     'ICDS: Access DISHA API',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
-    relevant_environments={'icds', 'icds-staging'},
 )
 
 ICDS_NIC_INDICATOR_API = StaticToggle(
@@ -43,7 +40,6 @@ ICDS_NIC_INDICATOR_API = StaticToggle(
     'ICDS: Dashboard Indicator API for NIC',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
-    relevant_environments={'icds', 'icds-staging'},
 )
 
 AP_WEBSERVICE = StaticToggle(
@@ -51,7 +47,6 @@ AP_WEBSERVICE = StaticToggle(
     'ICDS: ENABLE AP webservice',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
-    relevant_environments={'icds', 'icds-staging'},
 )
 
 PARALLEL_MPR_ASR_REPORT = StaticToggle(
@@ -59,7 +54,6 @@ PARALLEL_MPR_ASR_REPORT = StaticToggle(
     'Release parallel loading of MPR and ASR report',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    relevant_environments={"icds", "icds-staging"}
 )
 
 MANAGE_CCZ_HOSTING = StaticToggle(
@@ -67,7 +61,6 @@ MANAGE_CCZ_HOSTING = StaticToggle(
     'Allow project to manage ccz hosting',
     TAG_CUSTOM,
     [NAMESPACE_USER],
-    relevant_environments={'icds', 'icds-staging'},
 )
 
 MPR_ASR_CONDITIONAL_AGG = DynamicallyPredictablyRandomToggle(
@@ -75,7 +68,6 @@ MPR_ASR_CONDITIONAL_AGG = DynamicallyPredictablyRandomToggle(
     'Improved MPR ASR by doing aggregation at selected level',
     TAG_CUSTOM,
     [NAMESPACE_USER],
-    relevant_environments={"icds", "icds-staging"}
 )
 
 PHI_CAS_INTEGRATION = StaticToggle(
@@ -83,7 +75,6 @@ PHI_CAS_INTEGRATION = StaticToggle(
     'Integrate with PHI Api to search and validate beneficiaries',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
-    relevant_environments={"icds", "icds-staging"}
 )
 
 DAILY_INDICATORS = StaticToggle(
@@ -91,7 +82,6 @@ DAILY_INDICATORS = StaticToggle(
     'Enable daily indicators api',
     TAG_CUSTOM,
     [NAMESPACE_USER],
-    relevant_environments={"icds", "icds-staging"}
 )
 
 MWCD_INDICATORS = StaticToggle(
@@ -99,7 +89,6 @@ MWCD_INDICATORS = StaticToggle(
     'Enable MWCD indicators API',
     TAG_CUSTOM,
     [NAMESPACE_USER],
-    relevant_environments={"icds", "icds-staging"}
 )
 
 ICDS_GOVERNANCE_DASHABOARD_API = StaticToggle(
@@ -107,7 +96,6 @@ ICDS_GOVERNANCE_DASHABOARD_API = StaticToggle(
     'ICDS: Dashboard Governance dashboard API',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
-    relevant_environments={'icds', 'icds-staging'},
 )
 
 RUN_CUSTOM_DATA_PULL_REQUESTS = StaticToggle(
@@ -115,7 +103,6 @@ RUN_CUSTOM_DATA_PULL_REQUESTS = StaticToggle(
     '[ICDS] Initiate custom data pull requests from UI',
     TAG_CUSTOM,
     [NAMESPACE_USER],
-    relevant_environments={"icds", "icds-staging"}
 )
 
 RUN_DATA_MANAGEMENT_TASKS = StaticToggle(
@@ -123,7 +110,6 @@ RUN_DATA_MANAGEMENT_TASKS = StaticToggle(
     '[ICDS] Run data management tasks',
     TAG_CUSTOM,
     [NAMESPACE_USER],
-    relevant_environments={"icds", "icds-staging"}
 )
 
 ICDS_BIHAR_DEMOGRAPHICS_API = StaticToggle(
@@ -131,8 +117,6 @@ ICDS_BIHAR_DEMOGRAPHICS_API = StaticToggle(
     'ICDS: Bihar Demographics API',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER],
-    relevant_environments={'icds', 'icds-staging'},
-
 )
 
 ICDS_LOCATION_REASSIGNMENT_AGG = StaticToggle(
@@ -140,5 +124,4 @@ ICDS_LOCATION_REASSIGNMENT_AGG = StaticToggle(
     'ICDS: Use aggregation modifications for location reassignment',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    relevant_environments={'icds', 'icds-staging'},
 )
