@@ -117,11 +117,7 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
             self._fix_hit(hit)
 
 
-class ElasticsearchInterface1(AbstractElasticsearchInterface):
-    pass
-
-
-class ElasticsearchInterface2(AbstractElasticsearchInterface):
+class ElasticsearchInterfaceDefault(AbstractElasticsearchInterface):
     pass
 
 
@@ -169,7 +165,7 @@ class ElasticsearchInterface7(AbstractElasticsearchInterface):
 
 
 ElasticsearchInterface = {
-    1: ElasticsearchInterface1,
-    2: ElasticsearchInterface2,
+    1: ElasticsearchInterfaceDefault,
+    2: ElasticsearchInterfaceDefault,
     7: ElasticsearchInterface7,
 }[settings.ELASTICSEARCH_MAJOR_VERSION]
