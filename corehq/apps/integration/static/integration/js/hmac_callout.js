@@ -62,7 +62,7 @@ hqDefine("integration/js/hmac_callout", [], function () {
         form.action = dest;
         form.target = "hmac_callout";
 
-        for (const key in data) {
+        for (var key in data) {
             var element = document.createElement("input");
             element.name = key;
             element.value = data[key];

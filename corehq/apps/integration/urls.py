@@ -1,9 +1,9 @@
 from django.conf.urls import url
 
 from corehq.apps.integration.views import (
-    BiometricIntegrationView, 
-    dialer_view, 
-    DialerSettingsView, 
+    BiometricIntegrationView,
+    dialer_view,
+    DialerSettingsView,
     HmacCalloutSettingsView,
 )
 
