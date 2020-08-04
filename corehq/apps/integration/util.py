@@ -37,4 +37,4 @@ def integration_contexts(domain):
 
 
 def hash_secret(secret):
-    return hashlib.sha256(secret.encode()).hexdigest()
+    return hashlib.sha512(secret.encode()).hexdigest()
