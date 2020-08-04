@@ -14,19 +14,55 @@ from corehq.apps.userreports.extension_points import (
 )
 from corehq.extensions.extension_points import (
     domain_specific_urls,
-    uitab_dropdown_items,
+    uitab_dropdown_items, uitab_sidebar_items,
 )
 from custom.icds.const import ICDS_APPS_ROOT
-from custom.icds_core.const import ManageHostedCCZ_urlname
+from custom.icds_core.const import ManageHostedCCZ_urlname, LocationReassignmentDownloadOnlyView_urlname, \
+    SMSUsageReport_urlname, LocationReassignmentView_urlname
 
 
 @uitab_dropdown_items.extend(domains=["icds-cas"])
-def icds_uitab_dropdown_items(tab, domain, request):
-    if tab == 'ApplicationsTab' and toggles.MANAGE_CCZ_HOSTING.enabled_for_request(request):
+def icds_uitab_dropdown_items(tab_name, tab, domain, request):
+    if tab_name == 'ApplicationsTab' and toggles.MANAGE_CCZ_HOSTING.enabled_for_request(request):
         return [{
             "title": _("Manage CCZ Hosting"),
             "url": reverse(ManageHostedCCZ_urlname, args=[domain]),
         }]
+
+
+@uitab_sidebar_items.extend(domains=["icds-cas"])
+def icds_uitab_sidebar_items(tab_name, tab, domain, request):
+
+    if tab_name == "ProjectReportsTab" and toggles.PERFORM_LOCATION_REASSIGNMENT.enabled_for_request(request):
+        return [
+            (_("Tools"), [
+                {
+                    'title': _("Download Location Reassignment Template"),
+                    'url': reverse(LocationReassignmentDownloadOnlyView_urlname, args=[domain]),
+                    'icon': 'icon-tasks fa fa-download',
+                },
+            ]),
+        ]
+
+    if tab_name == "ProjectUsersTab" and toggles.PERFORM_LOCATION_REASSIGNMENT.enabled_for_request(request):
+        return [
+            (_('Organization'), [
+                {
+                    'title': _("Location Reassignment"),
+                    'url': reverse(LocationReassignmentView_urlname, args=[domain])
+                }
+            ])
+        ]
+
+    if tab_name == "MessagingTab" and toggles.ICDS_CUSTOM_SMS_REPORT.enabled_for_request(request):
+        return [
+            (_("Messages"), [
+                {
+                    'title': _('Get Custom SMS Usage Report'),
+                    'url': reverse(SMSUsageReport_urlname, args=[domain])
+                },
+            ]),
+        ]
 
 
 @domain_specific_urls.extend()

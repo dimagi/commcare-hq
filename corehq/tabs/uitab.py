@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from django.conf import settings
 from django.core.cache import cache
 from django.urls import reverse, resolve, Resolver404
@@ -96,7 +98,7 @@ class UITab(object):
         items.extend([
             dropdown_dict(**item)
             for item in extension_points.uitab_dropdown_items(
-                tab=tab_name, domain=self.domain, request=self._request
+                tab_name, self, domain=self.domain, request=self._request
             )
         ])
 
@@ -116,11 +118,26 @@ class UITab(object):
     @property
     @memoized
     def filtered_sidebar_items(self):
+        items = self.sidebar_items
+        tab_name = self.__class__.__name__
+        items.extend(extension_points.uitab_sidebar_items(
+            tab_name=tab_name, tab=self, domain=self.domain, request=self._request
+        ))
+        grouped = defaultdict(list)
+        headings_order = []
+        for heading, pages in items:
+            if heading not in headings_order:
+                headings_order.append(heading)
+            grouped[heading].extend(pages)
+        items = [
+            (heading, grouped[heading]) for heading in headings_order
+        ]
+
         if self.can_access_all_locations:
-            return self.sidebar_items
+            return items
 
         filtered = []
-        for heading, pages in self.sidebar_items:
+        for heading, pages in items:
             safe_pages = [p for p in pages if url_is_location_safe(p['url'])]
             if safe_pages:
                 filtered.append((heading, safe_pages))

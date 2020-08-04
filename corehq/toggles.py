@@ -216,10 +216,7 @@ class StaticToggle(object):
         def decorator(view_func):
             @wraps(view_func)
             def wrapped_view(request, *args, **kwargs):
-                if (
-                    (hasattr(request, 'user') and self.enabled(request.user.username, namespace=None))
-                    or (hasattr(request, 'domain') and self.enabled(request.domain, namespace=NAMESPACE_DOMAIN))
-                ):
+                if self.enabled_for_request(request):
                     return view_func(request, *args, **kwargs)
                 if request.user.is_superuser:
                     from corehq.apps.toggle_ui.views import ToggleEditView
@@ -1048,6 +1045,7 @@ ICDS_DASHBOARD_TEMPORARY_DOWNTIME = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+# move to ICDS
 ICDS_CUSTOM_SMS_REPORT = StaticToggle(
     'icds_custom_sms_report',
     'ICDS: Generate a custom SMS report with in the given time range. '
@@ -1930,6 +1928,7 @@ TWO_STAGE_USER_PROVISIONING = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Two-Stage+Mobile+Worker+Account+Creation',
 )
 
+# move to ICDS
 PERFORM_LOCATION_REASSIGNMENT = StaticToggle(
     'location_reassignment',
     'Ability to submit requests for location reassignment',

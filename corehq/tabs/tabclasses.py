@@ -97,13 +97,9 @@ from corehq.tabs.utils import (
     regroup_sidebar_items,
     sidebar_to_dropdown,
 )
-from corehq.toggles import PUBLISH_CUSTOM_REPORTS
 from custom.icds_core.const import (
-    LocationReassignmentDownloadOnlyView_urlname,
-    LocationReassignmentView_urlname,
     ManageHostedCCZ_urlname,
     ManageHostedCCZLink_urlname,
-    SMSUsageReport_urlname,
 )
 from custom.icds_core.view_utils import is_icds_cas_project
 
@@ -148,7 +144,7 @@ class ProjectReportsTab(UITab):
 
     def _get_tools_items(self):
         from corehq.apps.reports.views import MySavedReportsView
-        if isinstance(self.couch_user, AnonymousCouchUser) and PUBLISH_CUSTOM_REPORTS.enabled(self.domain):
+        if isinstance(self.couch_user, AnonymousCouchUser) and toggles.PUBLISH_CUSTOM_REPORTS.enabled(self.domain):
             return []
         tools = [{
             'title': _(MySavedReportsView.page_title),
@@ -165,12 +161,6 @@ class ProjectReportsTab(UITab):
                 'title': _(UserConfigReportsHomeView.section_name),
                 'url': reverse(UserConfigReportsHomeView.urlname, args=[self.domain]),
                 'icon': 'icon-tasks fa fa-wrench',
-            })
-        if toggles.PERFORM_LOCATION_REASSIGNMENT.enabled(self.couch_user.username):
-            tools.append({
-                'title': _("Download Location Reassignment Template"),
-                'url': reverse(LocationReassignmentDownloadOnlyView_urlname, args=[self.domain]),
-                'icon': 'icon-tasks fa fa-download',
             })
         return [(_("Tools"), tools)]
 
@@ -1058,13 +1048,6 @@ class MessagingTab(UITab):
                     'url': reverse('sms_compose_message', args=[self.domain])
                 },
             ])
-            if toggles.ICDS_CUSTOM_SMS_REPORT.enabled(self.domain):
-                messages_urls.extend([
-                    {
-                        'title': _('Get Custom SMS Usage Report'),
-                        'url': reverse(SMSUsageReport_urlname, args=[self.domain])
-                    },
-                ])
 
         if self.can_access_reminders:
             messages_urls.extend([
@@ -1525,12 +1508,6 @@ class ProjectUsersTab(UITab):
                 'title': _(LocationTypesView.page_title),
                 'url': reverse(LocationTypesView.urlname, args=[self.domain]),
                 'show_in_dropdown': True,
-            })
-
-        if toggles.PERFORM_LOCATION_REASSIGNMENT.enabled(self.couch_user.username):
-            menu.append({
-                'title': _("Location Reassignment"),
-                'url': reverse(LocationReassignmentView_urlname, args=[self.domain])
             })
 
         return menu
