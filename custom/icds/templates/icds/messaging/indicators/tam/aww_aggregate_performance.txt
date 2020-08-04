@@ -1,3 +1,5 @@
+{# NOTE: Django assumes templates are stored with UTF-8 encoding by default. Be sure to save this template with UTF-8 encoding. #}
+
 கடந்த 30 நாட்களில் உங்கள் அங்கன்வாடி மையத்தின் ஒட்டு மொத்த செயல்திறன் அறிக்கை
 
 1. மைய பாா்வைகள் எண்ணிக்கை / மேற்கொள்ளவேண்டிய மைய பாா்வைகள் எண்ணிக்கை: {{ visits }} / 65
