@@ -289,7 +289,7 @@ class TestFilters(ElasticTestMixin, SimpleTestCase):
         self.checkQuery(query, json_output)
 
 
-@attr(es_test=True)
+@es_test
 class TestSourceFiltering(ElasticTestMixin, SimpleTestCase):
 
     def test_source_include(self):
