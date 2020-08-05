@@ -38,15 +38,9 @@ class Command(BaseCommand):
             LEFT OUTER JOIN "public"."awc_location" "awc_location" ON (
                 ("awc_location"."doc_id" = "child_health_monthly"."awc_id") AND
                 ("awc_location"."supervisor_id" = "child_health_monthly"."supervisor_id")
-            ) LEFT OUTER JOIN "public"."icds_dashboard_migration_forms" "agg_migration" ON (
-                ("child_health_monthly"."child_person_case_id" = "agg_migration"."person_case_id") AND
-                ("agg_migration"."month" = '{month}') AND
-                ("child_health_monthly"."state_id" = "agg_migration"."state_id") AND
-                ("child_health_monthly"."supervisor_id" = "agg_migration"."supervisor_id")
             ) WHERE "child_health_monthly".month='{month}' AND "awc_location".state_id='{state_id}'
-            AND "child_health_monthly"."open_in_month"=1 AND "child_health_monthly"."alive_in_month"=1
-            AND "child_health_monthly"."age_tranche" IN ('48', '60', '72')
-            AND ("agg_migration"."is_migrated" IS DISTINCT FROM 1 OR "agg_migration"."migration_date"::date >= '{month}');
+            AND "child_health_monthly"."valid_all_registered_in_month"=1
+            AND "child_health_monthly"."age_tranche" IN ('48', '60', '72');
         """
 
         months = [datetime.date(2020, 7, 1), datetime.date(2020, 8, 1)]
