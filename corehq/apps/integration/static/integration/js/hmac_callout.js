@@ -1,13 +1,8 @@
 /* globals CryptoJS */
 
 hqDefine("integration/js/hmac_callout", ["hqwebapp/js/initial_page_data"], function (initialPageData) {
-    var randomString = function (length) {
-        var text = "";
-        var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        for (var i = 0; i < length; i++) {
-            text += possible.charAt(Math.floor(Math.random() * possible.length));
-        }
-        return text;
+    var randomString = function (nBytes) {
+        return CryptoJS.lib.WordArray.random(nBytes).toString();
     };
 
     var digest = function (key, nonce, timestamp) {
@@ -38,7 +33,7 @@ hqDefine("integration/js/hmac_callout", ["hqwebapp/js/initial_page_data"], funct
 
         var dest = anchor.href.split('?')[0];
 
-        var nonce = randomString(32);
+        var nonce = randomString(16);
         var timestamp = Date.now();
 
         var keyDigest = digest(initialPageData.get('hmac_api_key'), nonce, timestamp);
