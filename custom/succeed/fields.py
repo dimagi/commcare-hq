@@ -89,8 +89,8 @@ class PatientNameFilterMixin(object):
             else:
                 query = query.user(user._id.lower())
 
-        results = query.run().raw_hits
-        return [(case['_source']['_id'], case['_source']['full_name']['#value']) for case in results]
+        results = query.values("full_name.#value")
+        return [(case['_id'], case['full_name']['#value']) for case in results]
 
 
 class PatientName(PatientNameFilterMixin, BaseSingleOptionFilter):
