@@ -1712,7 +1712,7 @@ class ProjectSettingsTab(UITab):
             })
 
         items.append((_('Project Information'), project_info))
-        
+
         if user_is_admin and has_project_access:
             items.append((_('Project Administration'), _get_administration_section(self.domain)))
 
