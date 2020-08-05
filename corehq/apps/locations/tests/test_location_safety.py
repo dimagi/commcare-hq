@@ -26,8 +26,8 @@ class UnsafeClsView(View):
     pass
 
 
-class UnSafeChildOfSafeClsView(SafeClsView):
-    """This DOES NOT inherit its parent class's safety"""
+class ImplicitlySafeChildOfSafeClsView(SafeClsView):
+    """This inherits its parent class's safety"""
 
 
 @location_safe
@@ -45,7 +45,7 @@ def test_django_view_safety():
             (unsafe_fn_view, False),
             (SafeClsView.as_view(), True),
             (UnsafeClsView.as_view(), False),
-            (UnSafeChildOfSafeClsView.as_view(), False),
+            (ImplicitlySafeChildOfSafeClsView.as_view(), True),
             (SafeChildofUnsafeClsView.as_view(), True),
     ]:
         yield _assert, view, is_safe
@@ -65,7 +65,7 @@ class ConditionallySafeClsView(View):
     pass
 
 
-class UnsafeChildOfConditionallySafeClsView(ConditionallySafeClsView):
+class ImplicitlySafeChildOfConditionallySafeClsView(ConditionallySafeClsView):
     pass
 
 
@@ -80,14 +80,10 @@ def test_conditionally_safe_django_views():
     for view in [
             conditionally_safe_fn_view,
             ConditionallySafeClsView.as_view(),
+            ImplicitlySafeChildOfConditionallySafeClsView.as_view(),
     ]:
         yield _assert, view, safe_request, True
         yield _assert, view, unsafe_request, False
-
-    # conditionally safe views shouldn't inherit safety
-    view = UnsafeChildOfConditionallySafeClsView.as_view()
-    yield _assert, view, safe_request, False
-    yield _assert, view, unsafe_request, False
 
 
 class ExampleReportDispatcher(ReportDispatcher):
@@ -96,7 +92,7 @@ class ExampleReportDispatcher(ReportDispatcher):
         return [('All Reports', [
             SafeHQReport,
             UnsafeHQReport,
-            UnsafeChildOfSafeHQReport,
+            ImplicitlySafeChildOfSafeHQReport,
             SafeChildOfUnsafeHQReport,
             ConditionallySafeHQReport,
         ])]
@@ -115,9 +111,9 @@ class UnsafeHQReport(BaseReport):
     slug = 'unsafe_hq_report'
 
 
-class UnsafeChildOfSafeHQReport(SafeHQReport):
-    """This DOES NOT inherit safety from its parent"""
-    slug = 'unsafe_child_of_safe_hq_report'
+class ImplicitlySafeChildOfSafeHQReport(SafeHQReport):
+    """This inherits safety from its parent"""
+    slug = 'implicitly_safe_child_of_safe_hq_report'
 
 
 @location_safe
@@ -140,7 +136,7 @@ def test_hq_report_safety():
     for report, request, is_safe in [
             (SafeHQReport, MagicMock(), True),
             (UnsafeHQReport, MagicMock(), False),
-            (UnsafeChildOfSafeHQReport, MagicMock(), False),
+            (ImplicitlySafeChildOfSafeHQReport, MagicMock(), True),
             (SafeChildOfUnsafeHQReport, MagicMock(), True),
             (ConditionallySafeHQReport, MagicMock(this_is_safe=True), True),
             (ConditionallySafeHQReport, MagicMock(this_is_safe=False), False),

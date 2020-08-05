@@ -230,9 +230,9 @@ def location_restricted_exception(request):
 
 
 def _view_obj_is_safe(obj, request, *view_args, **view_kwargs):
-    if _get_own_property(obj, 'is_location_safe'):
+    if getattr(obj, 'is_location_safe', False):
         return True
-    conditional_fn = _get_own_property(obj, '_conditionally_location_safe_function')
+    conditional_fn = getattr(obj, '_conditionally_location_safe_function', None)
     if conditional_fn:
         return conditional_fn(obj, request, *view_args, **view_kwargs)
     return False
@@ -257,10 +257,6 @@ def is_location_safe(view_fn, request, view_args, view_kwargs):
         return _view_obj_is_safe(view_fn.view_class, request, *view_args, **view_kwargs)
 
     return _view_obj_is_safe(view_fn, request, *view_args, **view_kwargs)
-
-
-def _get_own_property(view_fn, prop_name):
-    return view_fn.__dict__.get(prop_name, None)
 
 
 def report_class_is_location_safe(report_class):
