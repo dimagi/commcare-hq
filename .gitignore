@@ -67,3 +67,4 @@ docker/data
 *.lock
 !yarn.lock
 fab/config.py
+extensions/

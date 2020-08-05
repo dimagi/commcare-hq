@@ -4,6 +4,7 @@ from django.utils.safestring import mark_safe
 
 from corehq.tabs.config import MENU_TABS
 from corehq.tabs.exceptions import TabClassError, TabClassErrorSummary
+from corehq.tabs.extension_points import uitab_classes
 from corehq.tabs.utils import path_starts_with_url
 
 
@@ -45,7 +46,9 @@ def get_all_tabs(request, domain, couch_user, project):
     """
     all_tabs = []
     instantiation_errors = []
-    for tab_class in MENU_TABS:
+    tab_classes = list(MENU_TABS)
+    tab_classes.extend(uitab_classes())
+    for tab_class in tab_classes:
         try:
             tab = tab_class(
                 request, domain=domain,

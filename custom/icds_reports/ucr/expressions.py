@@ -14,7 +14,8 @@ from corehq.apps.userreports.util import add_tabbed_text
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import mget_query
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from corehq.toggles import ICDS_UCR_ELASTICSEARCH_DOC_LOADING, NAMESPACE_OTHER
+from corehq.toggles import NAMESPACE_OTHER
+from custom.icds.icds_toggles import ICDS_UCR_ELASTICSEARCH_DOC_LOADING
 from dimagi.ext.jsonobject import JsonObject, ListProperty, StringProperty, DictProperty, BooleanProperty
 from corehq.apps.app_manager.dbaccessors import get_build_by_version
 from django.conf import settings

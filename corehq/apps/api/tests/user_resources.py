@@ -14,6 +14,7 @@ from corehq.apps.custom_data_fields.models import (
     Field,
     PROFILE_SLUG,
 )
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
 from corehq.apps.users.analytics import update_analytics_indexes
 from corehq.apps.users.models import (
@@ -31,6 +32,7 @@ from corehq.util.es.testing import sync_users_to_es
 from .utils import APIResourceTest
 
 
+@es_test
 class TestCommCareUserResource(APIResourceTest):
     """
     Basic sanity checking of v0_1.CommCareUserResource
