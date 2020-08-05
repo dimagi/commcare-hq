@@ -1,6 +1,6 @@
 /*global FormplayerFrontend */
 
-hqDefine('cloudcare/js/util',['integration/js/hmac_callout'], function () {
+hqDefine('cloudcare/js/util',['hqwebapp/js/initial_page_data', 'integration/js/hmac_callout'], function (initialPageData) {
     if (!String.prototype.startsWith) {
         String.prototype.startsWith = function (searchString, position) {
             position = position || 0;
@@ -159,7 +159,7 @@ hqDefine('cloudcare/js/util',['integration/js/hmac_callout'], function () {
 
     var reportFormplayerErrorToHQ = function (data) {
         try {
-            var reverse = hqImport("hqwebapp/js/initial_page_data").reverse;
+            var reverse = initialPageData.reverse;
             var cloudcareEnv = FormplayerFrontend.request('currentUser').environment;
             if (!data.cloudcareEnv) {
                 data.cloudcareEnv = cloudcareEnv || 'unknown';
@@ -211,7 +211,6 @@ hqDefine('cloudcare/js/util',['integration/js/hmac_callout'], function () {
     }
 
     var injectMarkdownAnchorTransforms = function () {
-        var initialPageData = hqImport("hqwebapp/js/initial_page_data");
         if (window.mdAnchorRender) {
             var renderers = [];
             if (initialPageData.get('dialer_enabled')) {

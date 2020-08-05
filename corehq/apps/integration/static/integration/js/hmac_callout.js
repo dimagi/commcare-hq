@@ -1,6 +1,6 @@
 /* globals CryptoJS */
 
-hqDefine("integration/js/hmac_callout", [], function () {
+hqDefine("integration/js/hmac_callout", ["hqwebapp/js/initial_page_data"], function (initialPageData) {
     var randomString = function (length) {
         var text = "";
         var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -27,7 +27,6 @@ hqDefine("integration/js/hmac_callout", [], function () {
     };
 
     var performCallout = function (anchor) {
-        var initialPageData = hqImport("hqwebapp/js/initial_page_data");
         var url = new URL(anchor.href);
 
         var path = url.pathname;
