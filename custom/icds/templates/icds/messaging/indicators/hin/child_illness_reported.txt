@@ -1,3 +1,0 @@
-{# NOTE: Django assumes templates are stored with UTF-8 encoding by default. Be sure to save this template with UTF-8 encoding. #}
-
-{{ awc }} आँगनवाड़ी ने {{ child }} की बीमारी सूचित की हैं | कृपया  सुनिश्चित करे की आँगनवाड़ी  सेविका आगे की कार्रवाई हेतु तुरंत माँ से संपर्क करे |
