@@ -220,10 +220,7 @@ class StaticToggle(object):
         def decorator(view_func):
             @wraps(view_func)
             def wrapped_view(request, *args, **kwargs):
-                if (
-                    (hasattr(request, 'user') and self.enabled(request.user.username, namespace=None))
-                    or (hasattr(request, 'domain') and self.enabled(request.domain, namespace=NAMESPACE_DOMAIN))
-                ):
+                if self.enabled_for_request(request):
                     return view_func(request, *args, **kwargs)
                 if request.user.is_superuser:
                     from corehq.apps.toggle_ui.views import ToggleEditView
@@ -1828,30 +1825,12 @@ TWO_STAGE_USER_PROVISIONING = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Two-Stage+Mobile+Worker+Account+Creation',
 )
 
-PERFORM_LOCATION_REASSIGNMENT = StaticToggle(
-    'location_reassignment',
-    'Ability to submit requests for location reassignment',
-    TAG_CUSTOM,
-    [NAMESPACE_USER],
-    relevant_environments={'icds', 'icds-staging'},
-)
-
 DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE = StaticToggle(
     'download_location_reassignment_template',
     'Allow domain users to download location reassignment template',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
     relevant_environments={'icds', 'icds-staging'},
-)
-
-
-ICDS_CUSTOM_SMS_REPORT = StaticToggle(
-    'icds_custom_sms_report',
-    'ICDS: Generate a custom SMS report with in the given time range. '
-    'The report that is generated will be emailed to the user who requested it',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    relevant_environments={"icds", "icds-staging"}
 )
 
 REFER_CASE_REPEATER = StaticToggle(
