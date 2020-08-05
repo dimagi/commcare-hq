@@ -268,6 +268,7 @@ function AddressEntry(question, options) {
     // geocoder function called when user presses 'x', broadcast a no answer to subscribers.
     self.geocoderOnClearCallback = function () {
         self.rawAnswer(Formplayer.Const.NO_ANSWER);
+        self.question.error(null);
         self.editing = true;
         self.broadcastTopics.forEach(function (broadcastTopic) {
             question.parentPubSub.notifySubscribers(Formplayer.Const.NO_ANSWER, broadcastTopic);
@@ -300,10 +301,11 @@ function AddressEntry(question, options) {
         inputEl.on('keydown', _.debounce(self._inputOnKeyDown, 200));
     };
 
-    self._inputOnKeyDown = function () {
+    self._inputOnKeyDown = function (event) {
         // On key down, switch to editing mode so we unregister an answer.
-        if (!self.editing) {
+        if (!self.editing && self.rawAnswer() !== event.target.value) {
             self.rawAnswer(Formplayer.Const.NO_ANSWER);
+            self.question.error('Please select an address from the options');
             self.editing = true;
         }
     };

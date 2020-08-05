@@ -2,7 +2,7 @@ import json
 
 from django.core.serializers.json import DjangoJSONEncoder
 
-from corehq import toggles
+from custom.icds import icds_toggles
 from corehq.apps.hqcase.utils import update_case
 from corehq.motech.repeaters.repeater_generators import (
     CaseRepeaterJsonPayloadGenerator,
@@ -12,7 +12,7 @@ from corehq.motech.repeaters.repeater_generators import (
 class BasePayloadGenerator(CaseRepeaterJsonPayloadGenerator):
     @staticmethod
     def enabled_for_domain(domain):
-        return toggles.PHI_CAS_INTEGRATION.enabled(domain)
+        return icds_toggles.PHI_CAS_INTEGRATION.enabled(domain)
 
 
 class SearchByParamsPayloadGenerator(BasePayloadGenerator):

@@ -447,7 +447,11 @@ class CustomContent(Content):
 
         # An empty list of messages returned from a custom content handler means
         # we shouldn't send anything, so we don't log an error for that.
-        for message in self.get_list_of_messages(recipient):
-            self.send_sms_message(logged_event.domain, recipient, phone_entry_or_number, message, logged_subevent)
-
+        try:
+            for message in self.get_list_of_messages(recipient):
+                self.send_sms_message(logged_event.domain, recipient, phone_entry_or_number, message,
+                                      logged_subevent)
+        except Exception as error:
+            logged_subevent.error(MessagingEvent.ERROR_CANNOT_RENDER_MESSAGE, additional_error_text=str(error))
+            raise
         logged_subevent.completed()
