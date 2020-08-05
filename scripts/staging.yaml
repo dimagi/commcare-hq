@@ -70,5 +70,4 @@ branches:
   - sk/remove-icdsI  # Simon Aug 5
   - sr/es7-ref1 # Sravan Aug 4
   - ce/lxml-restore
-  - sk/allow-late  # Simon Aug 5
 submodules: {}
