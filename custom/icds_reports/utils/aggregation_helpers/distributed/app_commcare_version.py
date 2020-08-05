@@ -71,7 +71,7 @@ class AppVersionAggregationDistributedHelper(BaseICDSAggregationDistributedHelpe
           awc_id, supervisor_id, month, app_version, commcare_version
         ) (
           SELECT
-            ucr.awc_id AS awc_id,
+            COALESCE(ucr.awc_id, prev_month.awc_id) AS awc_id,
             COALESCE(ucr.supervisor_id, prev_month.supervisor_id) AS supervisor_id,
             %(start_date)s::DATE AS month,
             COALESCE(ucr.app_version, prev_month.app_version) AS app_version,
@@ -93,7 +93,7 @@ class AppVersionAggregationDistributedHelper(BaseICDSAggregationDistributedHelpe
     def indexes(self):
         return [
             f"""CREATE INDEX IF NOT EXISTS versions_awc_supervisor_idx
-                ON "{self.tablename}" (month, awc_id, supervisor_id)
+                ON "{self.tablename}" (month, supervisor_id, awc_id)
             """
         ]
 
@@ -112,6 +112,7 @@ class AppVersionAggregationDistributedHelper(BaseICDSAggregationDistributedHelpe
         return [
             """DROP TABLE IF EXISTS "local_tmp_agg_app";"""
             """CREATE TABLE "local_tmp_agg_app" AS SELECT * FROM "{temporary_tablename}";""".format(temporary_tablename=self.temporary_tablename),
+            """DELETE FROM TABLE "{new_tablename}" WHERE MONTH = '{current_month}'""".format(new_tablename=self.tablename, current_month=self.month),
             """INSERT INTO "{new_tablename}" SELECT * from "local_tmp_agg_app";""".format(new_tablename=self.tablename),
             """DROP TABLE "local_tmp_agg_app";"""
         ]
