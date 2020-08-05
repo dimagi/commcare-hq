@@ -1,7 +1,16 @@
+import os
+
 from copy import deepcopy
 
 import settingshelper as helper
 from settings import *
+
+# to enable v7 ES tests
+if os.environ.get('ELASTICSEARCH_7_PORT'):
+    ELASTICSEARCH_PORT = int(os.environ.get('ELASTICSEARCH_7_PORT'))
+
+if os.environ.get('ELASTICSEARCH_MAJOR_VERSION'):
+    ELASTICSEARCH_MAJOR_VERSION = int(os.environ.get('ELASTICSEARCH_MAJOR_VERSION'))
 
 USING_CITUS = any(db.get('ROLE') == 'citus_master' for db in DATABASES.values())
 
@@ -141,7 +150,8 @@ METRICS_PROVIDERS = [
 # timeout faster in tests
 ES_SEARCH_TIMEOUT = 5
 
-if os.path.exists("custom/icds"):
+# icds version = ab702b37a1  (to force a build)
+if os.path.exists("extensions/icds/custom/icds"):
     icds_apps = [
         "custom.icds",
         "custom.icds.data_management",

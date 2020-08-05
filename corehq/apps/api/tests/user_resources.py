@@ -1,6 +1,5 @@
 import json
 from copy import deepcopy
-from mock import patch
 
 from django.urls import reverse
 from django.utils.http import urlencode
@@ -8,6 +7,12 @@ from django.utils.http import urlencode
 from flaky import flaky
 
 from corehq.apps.api.resources import v0_5
+from corehq.apps.custom_data_fields.models import (
+    CustomDataFieldsDefinition,
+    CustomDataFieldsProfile,
+    Field,
+    PROFILE_SLUG,
+)
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
 from corehq.apps.users.analytics import update_analytics_indexes
@@ -17,6 +22,7 @@ from corehq.apps.users.models import (
     UserRole,
     WebUser,
 )
+from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.elastic import send_to_elasticsearch
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.elastic import reset_es_index
@@ -37,6 +43,28 @@ class TestCommCareUserResource(APIResourceTest):
     def setUpClass(cls):
         reset_es_index(USER_INDEX_INFO)
         super().setUpClass()
+        cls.definition = CustomDataFieldsDefinition(domain=cls.domain.name,
+                                                    field_type=UserFieldsView.field_type)
+        cls.definition.save()
+        cls.definition.set_fields([
+            Field(
+                slug='imaginary',
+                label='Imaginary Person',
+                choices=['yes', 'no'],
+            ),
+        ])
+        cls.definition.save()
+        cls.profile = CustomDataFieldsProfile(
+            name='character',
+            fields={'imaginary': 'yes'},
+            definition=cls.definition,
+        )
+        cls.profile.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.definition.delete()
+        super().tearDownClass()
 
     @sync_users_to_es()
     def test_get_list(self):
@@ -158,6 +186,7 @@ class TestCommCareUserResource(APIResourceTest):
                 group._id
             ],
             "user_data": {
+                PROFILE_SLUG: self.profile.id,
                 "chw_id": "13/43/DFA"
             }
         }
@@ -177,7 +206,37 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(modified.language, "pol")
         self.assertEqual(modified.get_group_ids()[0], group._id)
         self.assertEqual(modified.user_data["chw_id"], "13/43/DFA")
+        self.assertEqual(modified.user_data[PROFILE_SLUG], self.profile.id)
+        self.assertEqual(modified.user_data["imaginary"], "yes")
         self.assertEqual(modified.default_phone_number, "50253311399")
+
+    def test_update_profile_conflict(self):
+
+        user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
+                                   created_by=None, created_via=None)
+        self.addCleanup(user.delete, deleted_by=None)
+
+        user_json = {
+            "first_name": "florence",
+            "last_name": "ballard",
+            "email": "fballard@example.org",
+            "language": "en",
+            "user_data": {
+                PROFILE_SLUG: self.profile.id,
+                "imaginary": "no",
+            }
+        }
+
+        backend_id = user._id
+        response = self._assert_auth_post_resource(self.single_endpoint(backend_id),
+                                                   json.dumps(user_json),
+                                                   content_type='application/json',
+                                                   method='PUT')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.content.decode('utf-8'),
+            '{"error": "metadata properties conflict with profile: imaginary"}'
+        )
 
 
 class TestWebUserResource(APIResourceTest):
