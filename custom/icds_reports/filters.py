@@ -10,9 +10,7 @@ from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from custom.common.filters import RestrictedAsyncLocationFilter
 from memoized import memoized
-from corehq.apps.locations.permissions import (
-    user_can_access_location_id
-)
+
 
 def location_hierarchy_config(domain, location_types=None):
     location_types = location_types or ['state', 'district', 'block']
@@ -50,14 +48,12 @@ def load_locs_json(domain, selected_loc_id=None, user=None, show_test=False):
         all_user_locations = user_location_list + user_location_ancestors
 
     if not show_test:
-        locations = [
-            loc for loc in locations if loc.metadata.get('is_test_location', 'real') != 'test' and (
-                user.has_permission(domain, 'access_all_locations') or
-                loc.location_id in all_user_locations
-            )
-        ]
+        locations = [loc for loc in locations if loc.metadata.get('is_test_location', 'real') != 'test']
 
-    loc_json = [loc_to_json(loc, project) for loc in locations]
+    loc_json = [
+        loc_to_json(loc, project) for loc in locations
+        if user.has_permission(domain, 'access_all_locations') or loc.location_id in all_user_locations
+    ]
 
     # if a location is selected, we need to pre-populate its location hierarchy
     # so that the data is available client-side to pre-populate the drop-downs
@@ -80,9 +76,10 @@ def load_locs_json(domain, selected_loc_id=None, user=None, show_test=False):
                 # there are some instances in viewing archived locations where we don't actually
                 # support drilling all the way down.
                 break
-            this_loc['children'] = [loc_to_json(loc, project) for loc in children if
-                                    user.has_permission(domain, 'access_all_locations') or
-                                    loc.location_id in all_user_locations]
+            this_loc['children'] = [
+                loc_to_json(loc, project) for loc in children
+                if user.has_permission(domain, 'access_all_locations') or loc.location_id in all_user_locations
+            ]
             parent = this_loc
     return loc_json
 
