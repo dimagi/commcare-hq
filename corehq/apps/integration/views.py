@@ -108,14 +108,11 @@ class DialerSettingsView(BaseProjectSettingsView):
         return self.get(request, *args, **kwargs)
 
 
+@method_decorator(toggles.HMAC_CALLOUT.required_decorator(), name='dispatch')
 class HmacCalloutSettingsView(BaseProjectSettingsView):
     urlname = 'hmac_callout_settings_view'
     page_title = ugettext_lazy('Signed Callout Settings')
     template_name = 'integration/hmac_callout_settings.html'
-
-    @method_decorator(toggles.HMAC_CALLOUT.required_decorator())
-    def dispatch(self, request, *args, **kwargs):
-        return super(HmacCalloutSettingsView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized

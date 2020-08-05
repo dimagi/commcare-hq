@@ -11,12 +11,12 @@ def domain_uses_dialer(domain):
         return False
 
 
-def domain_uses_hmac_callout(domain):
+def get_hmac_callout_settings(domain):
     try:
         settings = HmacCalloutSettings.objects.get(domain=domain)
-        return settings.is_enabled
+        return settings if settings.is_enabled else None
     except HmacCalloutSettings.DoesNotExist:
-        return False
+        pass
 
 
 def get_dialer_settings(domain):
@@ -25,12 +25,12 @@ def get_dialer_settings(domain):
 
 def integration_contexts(domain):
     context = {'dialer_enabled': domain_uses_dialer(domain)}
-    if domain_uses_hmac_callout(domain):
-        settings = HmacCalloutSettings.objects.get(domain=domain)
+    hmac_settings = HmacCalloutSettings.objects.get(domain=domain)
+    if hmac_settings:
         context.update({
-            'hmac_root_url': settings.destination_url,
-            'hmac_api_key': settings.api_key,
-            'hmac_hashed_secret': hash_secret(settings.api_secret),
+            'hmac_root_url': hmac_settings.destination_url,
+            'hmac_api_key': hmac_settings.api_key,
+            'hmac_hashed_secret': hash_secret(hmac_settings.api_secret),
         })
 
     return context
