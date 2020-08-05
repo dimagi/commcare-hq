@@ -35,10 +35,18 @@ class Command(BaseCommand):
     def handle(self, **options):
         query = """
             SELECT "awc_location"."district_id", "child_health_monthly"."child_person_case_id" FROM "public"."child_health_monthly" "child_health_monthly"
-            LEFT JOIN "public"."awc_location" "awc_location" ON (
+            LEFT OUTER JOIN "public"."awc_location" "awc_location" ON (
                 ("awc_location"."doc_id" = "child_health_monthly"."awc_id") AND
                 ("awc_location"."supervisor_id" = "child_health_monthly"."supervisor_id")
-            ) WHERE "child_health_monthly".month='{month}' AND "awc_location_months".state_id='{state_id}' AND "child_health_monthly".pse_eligible=1;
+            ) LEFT OUTER JOIN "public"."icds_dashboard_migration_forms" "agg_migration" ON (
+                ("child_health_monthly"."child_person_case_id" = "agg_migration"."person_case_id") AND
+                ("agg_migration"."month" = '{month}') AND
+                ("child_health"."state_id" = "agg_migration"."state_id") AND
+                ("child_health"."supervisor_id" = "agg_migration"."supervisor_id")
+            ) WHERE "child_health_monthly".month='{month}' AND "awc_location".state_id='{state_id}'
+            AND "child_health_monthly"."open_in_month"=1 AND "child_health_monthly"."alive_in_month"=1
+            AND "child_health_monthly"."age_tranche" IN ('48', '60', '72')
+            AND ("agg_migration"."is_migrated" IS DISTINCT FROM 1 OR "agg_migration"."migration_date"::date >= '{month}');
         """
 
         months = [datetime.date(2020, 7, 1), datetime.date(2020, 8, 1)]
@@ -58,9 +66,12 @@ class Command(BaseCommand):
                     date_last_private_admit = case.get_case_property('date_last_private_admit')
                     date_return_private = case.get_case_property('date_return_private')
                     next_month = month + relativedelta(months=1)
-                    if date_last_private_admit is not None and parser.parse(date_last_private_admit).date() < next_month:
-                        if (not date_return_private) or parser.parse(date_return_private).date() >= next_month:
-                            count_private_school_going += 1
+                    try:
+                        if date_last_private_admit is not None and parser.parse(date_last_private_admit).date() < datetime.datetime(next_month.year, next_month.month, next_month.day):
+                            if (not date_return_private) or parser.parse(date_return_private).date() >= datetime.datetime(next_month.year, next_month.month, next_month.day):
+                                count_private_school_going += 1
+                    except Exception as e:
+                        print(e)
                 excel_data.append([district, count_private_school_going])
             fout = open(f'/home/cchq/private_students_{month}.csv', 'w')
             writer = csv.writer(fout)
