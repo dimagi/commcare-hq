@@ -21,6 +21,9 @@ USERS_TO_TRACK_FOR_REPLAY_ATTACK = [
     'block.audit@icds-dashboard-qa.commcarehq.org',
     'district.audit@icds-dashboard-qa.commcarehq.org',
     'audit.block@icds-dashboard-qa.commcarehq.org',
+    'audit.block2@icds-dashboard-qa.commcarehq.org',
     'audit.state@icds-dashboard-qa.commcarehq.org',
+    'audit.state2@icds-dashboard-qa.commcarehq.org',
     'audit.district@icds-dashboard-qa.commcarehq.org',
+    'audit.district2@icds-dashboard-qa.commcarehq.org',
 ]
