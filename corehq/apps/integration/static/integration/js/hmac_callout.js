@@ -29,7 +29,7 @@ hqDefine("integration/js/hmac_callout", ["hqwebapp/js/initial_page_data"], funct
 
         var variables = url.searchParams.toString();
 
-        var hashedBody = hash(variables);
+        var hashedBody = hash("variables=" + variables);
 
         var dest = anchor.href.split('?')[0];
 
