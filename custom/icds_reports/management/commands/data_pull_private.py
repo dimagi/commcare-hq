@@ -41,8 +41,8 @@ class Command(BaseCommand):
             ) LEFT OUTER JOIN "public"."icds_dashboard_migration_forms" "agg_migration" ON (
                 ("child_health_monthly"."child_person_case_id" = "agg_migration"."person_case_id") AND
                 ("agg_migration"."month" = '{month}') AND
-                ("child_health"."state_id" = "agg_migration"."state_id") AND
-                ("child_health"."supervisor_id" = "agg_migration"."supervisor_id")
+                ("child_health_monthly"."state_id" = "agg_migration"."state_id") AND
+                ("child_health_monthly"."supervisor_id" = "agg_migration"."supervisor_id")
             ) WHERE "child_health_monthly".month='{month}' AND "awc_location".state_id='{state_id}'
             AND "child_health_monthly"."open_in_month"=1 AND "child_health_monthly"."alive_in_month"=1
             AND "child_health_monthly"."age_tranche" IN ('48', '60', '72')
