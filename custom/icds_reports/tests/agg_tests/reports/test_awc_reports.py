@@ -2197,7 +2197,7 @@ class TestAWCReport(TestCase):
                 reversed_order=False,
                 awc_id='a49'
             )
-            for item in data:
+            for item in data['data']:
                 if item['case_id'] == 'e4c3c2ae-6732-4f6e-a7b0-9e674a177edb':
                     self.assertEqual(
                         item['breastfed_at_birth'], 'Yes'
