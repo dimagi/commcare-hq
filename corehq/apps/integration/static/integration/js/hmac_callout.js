@@ -1,4 +1,4 @@
-/* globals CryptoJS, HMACCallout */
+/* globals CryptoJS */
 
 hqDefine("integration/js/hmac_callout", ["hqwebapp/js/initial_page_data"], function (initialPageData) {
     var randomString = function (length) {
