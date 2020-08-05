@@ -14,7 +14,7 @@ class DialerSettings(models.Model):
 
 
 class HmacCalloutSettings(models.Model):
-    domain = models.CharField(max_length=128, unique=True)
+    domain = models.CharField(max_length=128)
     destination_url = models.CharField(max_length=255)
     is_enabled = models.BooleanField(default=False)
     api_key = models.CharField(max_length=255)

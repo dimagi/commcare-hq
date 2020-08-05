@@ -25,7 +25,7 @@ def get_dialer_settings(domain):
 
 def integration_contexts(domain):
     context = {'dialer_enabled': domain_uses_dialer(domain)}
-    hmac_settings = HmacCalloutSettings.objects.get(domain=domain)
+    hmac_settings = get_hmac_callout_settings(domain)
     if hmac_settings:
         context.update({
             'hmac_root_url': hmac_settings.destination_url,
