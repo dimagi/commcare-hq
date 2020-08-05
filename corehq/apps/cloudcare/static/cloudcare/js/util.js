@@ -229,7 +229,7 @@ hqDefine('cloudcare/js/util',['hqwebapp/js/initial_page_data', 'integration/js/h
                     function (href) { return href.startsWith(initialPageData.get('hmac_root_url')); },
                     function (href, hIndex, anchor) {
                         var aIndex = anchor.attrIndex('onclick');
-                        var clickBody = "hqImport('integration/js/hmac_callout').performCallout(this);return false;";
+                        var clickBody = "HMACCallout(this);return false;";
                         if (aIndex < 0) {
                             anchor.attrPush(['onclick', clickBody]);
                         } else {

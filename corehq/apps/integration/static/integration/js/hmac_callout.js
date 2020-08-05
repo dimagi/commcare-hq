@@ -1,4 +1,4 @@
-/* globals CryptoJS */
+/* globals CryptoJS, HMACCallout */
 
 hqDefine("integration/js/hmac_callout", ["hqwebapp/js/initial_page_data"], function (initialPageData) {
     var randomString = function (length) {
@@ -77,6 +77,8 @@ hqDefine("integration/js/hmac_callout", ["hqwebapp/js/initial_page_data"], funct
 
         document.body.removeChild(form);
     };
+
+    window.HMACCallout = performCallout;
 
     return {
         performCallout: performCallout,
