@@ -123,7 +123,7 @@ class SubmissionTest(BaseSubmissionTest):
 
     @softer_assert()
     def test_submit_deprecated_form(self):
-        self._submit('simple_form.xml')
+        self._submit('simple_form.xml')  # submit a form to try again as duplicate
         response = self._submit('simple_form_edited.xml', url=reverse("receiver_secure_post", args=[self.domain]))
         xform_id = response['X-CommCareHQ-FormID']
         form = FormAccessors(self.domain.name).get_form(xform_id)
