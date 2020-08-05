@@ -126,11 +126,6 @@ class CommCareExtensions:
     def extension_point(self, func=None, *, result_format=None):
         """Decorator for creating an extension point."""
         def _decorator(func):
-            if self.locked:
-                raise ExtensionError(
-                    "Late extension point definition. Extension points must "
-                    "be defined before setup is complete"
-                )
             if not callable(func):
                 raise ExtensionError(f"Extension point must be callable: {func!r}")
 

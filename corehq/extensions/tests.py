@@ -100,16 +100,6 @@ def test_late_extension_definition():
             pass
 
 
-def test_late_extension_point_definition():
-    ext = CommCareExtensions()
-    ext.load_extensions([])
-
-    with testil.assert_raises(ExtensionError, msg=re.compile("Late extension point definition")):
-        @ext.extension_point
-        def ext_point_c():
-            """testing..."""
-
-
 def test_flatten_results():
     ext = CommCareExtensions()
 
