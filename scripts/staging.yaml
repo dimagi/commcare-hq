@@ -65,7 +65,9 @@ branches:
   - jls/view-apps-permission # Jenny July 31
   - ml/SAAS-11077-deleted-case-properties-position # Michelle July 31
   - ml/SAAS-10954-show-all-filter # Michelle July 31
+  - sk/remove-icdsI+jls/CustomDataFieldsProfile+sr/es7-ref1  # Simon Aug 5
   - jls/CustomDataFieldsProfile # Jenny July 24
+  - sk/remove-icdsI  # Simon Aug 5
   - sr/es7-ref1 # Sravan Aug 4
-#  - sk/remove-icds  # Simon Aug 3
+  - ce/lxml-restore
 submodules: {}

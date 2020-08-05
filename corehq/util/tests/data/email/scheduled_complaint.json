@@ -1,5 +1,5 @@
 {
-    "notificationType": "Complaint",
+    "eventType": "Complaint",
     "complaint": {
         "complaintSubType": null,
         "complainedRecipients": [

@@ -97,11 +97,12 @@ def get_relevant_aws_meta(message_info):
     """
     aws_info = []
     mail_info = message_info.get('mail', {})
-    if message_info['notificationType'] == NotificationType.BOUNCE:
+    notification_type = message_info.get('notificationType') or message_info.get('eventType')
+    if notification_type == NotificationType.BOUNCE:
         bounce_info = message_info['bounce']
         for recipient in bounce_info['bouncedRecipients']:
             aws_info.append(AwsMeta(
-                notification_type=message_info['notificationType'],
+                notification_type=notification_type,
                 main_type=bounce_info['bounceType'],
                 sub_type=bounce_info['bounceSubType'],
                 timestamp=parse_datetime(bounce_info['timestamp']),
@@ -110,11 +111,11 @@ def get_relevant_aws_meta(message_info):
                 headers=mail_info.get('commonHeaders', {}),
                 destination=mail_info.get('destination', []),
             ))
-    elif message_info['notificationType'] == NotificationType.COMPLAINT:
+    elif notification_type == NotificationType.COMPLAINT:
         complaint_info = message_info['complaint']
         for recipient in complaint_info['complainedRecipients']:
             aws_info.append(AwsMeta(
-                notification_type=message_info['notificationType'],
+                notification_type=notification_type,
                 main_type=message_info.get('complaintFeedbackType'),
                 sub_type=complaint_info.get('complaintSubType'),
                 timestamp=parse_datetime(complaint_info['timestamp']),
