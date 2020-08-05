@@ -31,7 +31,7 @@ hqDefine("integration/js/hmac_callout", ["hqwebapp/js/initial_page_data"], funct
 
         var hashedBody = hash("variables=" + variables);
 
-        var dest = anchor.href.split('?')[0];
+        var dest = url.origin + "/" + url.pathname
 
         var nonce = randomString(16);
         var timestamp = Date.now();
