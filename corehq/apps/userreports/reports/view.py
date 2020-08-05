@@ -139,6 +139,7 @@ def _ucr_view_is_safe(view_fn, *args, **kwargs):
                                       domain=kwargs.get('domain'))
 
 
+@conditionally_location_safe(_ucr_view_is_safe)
 class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     section_name = ugettext_noop("Reports")
     template_name = 'userreports/configurable_report.html'
@@ -162,7 +163,6 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @use_datatables
     @use_nvd3
     @track_domain_request(calculated_prop='cp_n_viewed_ucr_reports')
-    @conditionally_location_safe(_ucr_view_is_safe)
     def dispatch(self, request, *args, **kwargs):
         if self.should_redirect_to_paywall(request):
             from corehq.apps.userreports.views import paywall_home
@@ -614,6 +614,7 @@ class CustomConfigurableReportDispatcher(ReportDispatcher):
         return url(pattern, cls.as_view(), name=cls.slug)
 
 
+@conditionally_location_safe(_ucr_view_is_safe)
 class DownloadUCRStatusView(BaseDomainView):
     urlname = 'download_ucr_status'
     page_title = ugettext_noop('Download UCR Status')
@@ -641,10 +642,6 @@ class DownloadUCRStatusView(BaseDomainView):
             return render(request, 'hqwebapp/soil_status_full.html', context)
         else:
             raise Http403()
-
-    @conditionally_location_safe(_ucr_view_is_safe)
-    def dispatch(self, *args, **kwargs):
-        return super(DownloadUCRStatusView, self).dispatch(*args, **kwargs)
 
     def page_url(self):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
