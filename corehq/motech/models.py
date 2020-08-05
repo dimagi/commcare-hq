@@ -194,7 +194,7 @@ class ConnectionSettings(models.Model):
         from corehq.motech.dhis2.dbaccessors import get_dataset_maps
 
         kinds = set()
-        if self.incrementalexport_set.first():
+        if self.incrementalexport_set.exists():
             kinds.add(_('Incremental Exports'))
         if any(m.connection_settings_id == self.id
                for m in get_dataset_maps(self.domain)):
