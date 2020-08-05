@@ -130,6 +130,27 @@ class SubmissionTest(BaseSubmissionTest):
         self.assertEqual(1, len(form.history))
         self.assertEqual(self.couch_user.get_id, form.history[0].user)
 
+    def test_invalid_form_submission_file_extension(self):
+        response = self._submit('suspicious_form.abc', url=reverse("receiver_secure_post", args=[self.domain]))
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.content.decode('utf-8'),
+            'If you use multipart/form-data, please use xml file only for submitting form xml.\n'
+            'You may also do a normal (non-multipart) post '
+            'with the xml submission as the request body instead.\n'
+        )
+
+    def test_invalid_attachment_file_extension(self):
+        response = self._submit('simple_form.xml', attachments={
+            "image.xyz": BytesIO(b"fake image"),
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.content.decode('utf-8'),
+            "If you use multipart/form-data, please use the following supported file extensions for attachments:\n"
+            "jpg, jpeg, 3gpp, 3gp, 3ga, 3g2, mp3, wav, amr, mp4, 3gp2, mpg4, mpeg4, m4v, mpg, mpeg, qcp, ogg"
+        )
+
 
 @patch('corehq.apps.receiverwrapper.views.domain_requires_auth', return_value=True)
 class NoAuthSubmissionTest(BaseSubmissionTest):
@@ -257,8 +278,8 @@ class SubmissionTestSQL(SubmissionTest):
             )
 
         self._submit('simple_form.xml', attachments={
-            "image": BytesIO(b"fake image"),
-            "file": BytesIO(b"text file"),
+            "image.jpg": BytesIO(b"fake image"),
+            "audio_file.mp3": BytesIO(b"fake audio"),
         })
         response = self._submit(
             'simple_form_edited.xml',
