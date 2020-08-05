@@ -67,6 +67,6 @@ branches:
   - ml/SAAS-10954-show-all-filter # Michelle July 31
   - jls/CustomDataFieldsProfile # Jenny July 24
   - sr/es7-ref1 # Sravan Aug 4
-#  - sk/remove-icds  # Simon Aug 3
+  - sk/remove-icdsI  # Simon Aug 3
   - ce/lxml-restore
 submodules: {}
