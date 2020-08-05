@@ -229,6 +229,15 @@ def location_restricted_exception(request):
     return no_permissions_exception(request, message=LOCATION_ACCESS_DENIED)
 
 
+def _view_obj_is_safe(obj, request, *view_args, **view_kwargs):
+    if _get_own_property(obj, 'is_location_safe'):
+        return True
+    conditional_fn = _get_own_property(obj, '_conditionally_location_safe_function')
+    if conditional_fn:
+        return conditional_fn(obj, request, *view_args, **view_kwargs)
+    return False
+
+
 def is_location_safe(view_fn, request, view_args, view_kwargs):
     """
     Check if view_fn had the @location_safe decorator applied.
@@ -239,23 +248,15 @@ def is_location_safe(view_fn, request, view_args, view_kwargs):
     if 'resource_name' in view_kwargs:
         return view_kwargs['resource_name'] in LOCATION_SAFE_TASTYPIE_RESOURCES
 
-    # HQ report - get report class
-    if getattr(view_fn, 'is_hq_report', False):
+    if getattr(view_fn, 'is_hq_report', False):  # HQ report
         dispatcher = view_fn.view_class
         report_class = dispatcher.get_report(view_kwargs['domain'], view_kwargs['report_slug'])
-        view_fn = report_class
+        return _view_obj_is_safe(report_class, request, *view_args, **view_kwargs)
 
-    # Django view - get view class
-    if hasattr(view_fn, "view_class"):
-        view_fn = view_fn.view_class
+    if hasattr(view_fn, "view_class"):  # Django view
+        return _view_obj_is_safe(view_fn.view_class, request, *view_args, **view_kwargs)
 
-    if _get_own_property(view_fn, 'is_location_safe'):
-        return True
-    conditional_fn = _get_own_property(view_fn, '_conditionally_location_safe_function')
-    if conditional_fn:
-        return conditional_fn(view_fn, request, *view_args, **view_kwargs)
-
-    return False
+    return _view_obj_is_safe(view_fn, request, *view_args, **view_kwargs)
 
 
 def _get_own_property(view_fn, prop_name):
