@@ -34,5 +34,3 @@ class Migration(migrations.Migration):
             unique_together=set([('month', 'supervisor_id', 'awc_id')]),
         ),
     ]
-
-    operations.extend(get_view_migrations())
