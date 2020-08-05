@@ -37,27 +37,29 @@ def load_locs_json(domain, selected_loc_id=None, user=None, show_test=False):
 
     project = Domain.get_by_name(domain)
 
-    locations = SQLLocation.root_locations(domain)
-
     if user.has_permission(domain, 'access_all_locations'):
-        all_user_locations = []
+        accessible_root_locations = SQLLocation.root_locations(domain)
     else:
-        user_location_list = SQLLocation.objects.accessible_to_user(domain, user)
-        user_location_list = [loc.location_id for loc in user_location_list]
-        user_location_ancestors = [loc.location_id for loc in user.sql_location.get_ancestors(include_self=True)]
-        all_user_locations = user_location_list + user_location_ancestors
+        accessible_root_locations = [user.sql_location.get_ancestor_of_type(type_code='state')]
 
     if not show_test:
-        locations = [loc for loc in locations if loc.metadata.get('is_test_location', 'real') != 'test']
+        accessible_root_locations = [loc for loc in accessible_root_locations
+                                     if loc.metadata.get('is_test_location', 'real') != 'test']
 
-    loc_json = [
-        loc_to_json(loc, project) for loc in locations
-        if user.has_permission(domain, 'access_all_locations') or loc.location_id in all_user_locations
-    ]
+    loc_json = [loc_to_json(loc, project) for loc in accessible_root_locations]
 
     # if a location is selected, we need to pre-populate its location hierarchy
     # so that the data is available client-side to pre-populate the drop-downs
     if selected_loc_id:
+        if not user.has_permission(domain, 'access_all_locations'):
+            primary_location = user.sql_location
+            accessible_ancestor_ids = primary_location.get_ancestors().values_list('location_id', flat=True)
+            accessible_descendant_ids = primary_location.get_descendants().values_list('location_id', flat=True)
+            accessible_location_ids = set(
+                [primary_location.location_id] + list(accessible_ancestor_ids) + list(accessible_descendant_ids))
+        else:
+            accessible_location_ids = []
+
         selected = SQLLocation.objects.get(
             domain=domain,
             location_id=selected_loc_id
@@ -78,7 +80,7 @@ def load_locs_json(domain, selected_loc_id=None, user=None, show_test=False):
                 break
             this_loc['children'] = [
                 loc_to_json(loc, project) for loc in children
-                if user.has_permission(domain, 'access_all_locations') or loc.location_id in all_user_locations
+                if user.has_permission(domain, 'access_all_locations') or loc.location_id in accessible_location_ids
             ]
             parent = this_loc
     return loc_json
