@@ -1,5 +1,6 @@
 {% load i18n %}
 {% load hq_shared_tags %}
+<a href="{reverse(ManageReleasesByAppProfile.urlname, args=[domain])}" >{% trans 'Manage Releases By App Profile' %}</a>
 
 <div data-bind="saveButton: saveButton"></div>
 <div class="panel panel-appmanager">
