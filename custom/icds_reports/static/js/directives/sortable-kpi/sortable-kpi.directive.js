@@ -7,17 +7,13 @@ function SortableKpiController() {
 
 SortableKpiController.$inject = [];
 
-window.angular.module('icdsApp').directive("sortableKpi", ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        scope: {
-            data: '=',
-        },
-        bindToController: true,
-        templateUrl: function () {
-            return templateProviderService.getTemplate('sortable-kpi.directive');
-        },
-        controller: SortableKpiController,
-        controllerAs: "$ctrl",
-    };
-}]);
+window.angular.module('icdsApp').component("sortableKpi", {
+    bindings: {
+        data: '<',
+    },
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getTemplate('sortable-kpi.directive');
+    }],
+    controller: SortableKpiController,
+    controllerAs: "$ctrl",
+});

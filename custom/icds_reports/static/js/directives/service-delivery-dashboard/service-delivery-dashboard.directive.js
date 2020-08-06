@@ -680,6 +680,9 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
     vm.selectedLocations = [];
     vm.selectedLocationLevel = storageService.getKey('search')['selectedLocationLevel'] || 0;
 
+    $scope.$on('selected_locations_changed', function (event, data) {
+        vm.selectedLocations = data;
+    });
     vm.getDisableIndex = function () {
         var i = -1;
         if (!haveAccessToAllLocations) {
@@ -885,16 +888,12 @@ function ServiceDeliveryDashboardController($rootScope, $scope, $http, $location
 ServiceDeliveryDashboardController.$inject = ['$rootScope', '$scope', '$http', '$location', '$routeParams', '$log',
     'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'baseControllersService',
     'haveAccessToAllLocations', 'isAlertActive', 'sddMetadata', 'dateHelperService', 'navigationService', 'isMobile',
-    'haveAccessToFeatures',];
+    'haveAccessToFeatures'];
 
-window.angular.module('icdsApp').directive('serviceDeliveryDashboard', ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        templateUrl: function () {
-            return templateProviderService.getTemplate('service-delivery-dashboard');
-        },
-        bindToController: true,
-        controller: ServiceDeliveryDashboardController,
-        controllerAs: '$ctrl',
-    };
-}]);
+window.angular.module('icdsApp').component('serviceDeliveryDashboard', {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getTemplate('service-delivery-dashboard');
+    }],
+    controller: ServiceDeliveryDashboardController,
+    controllerAs: '$ctrl',
+});

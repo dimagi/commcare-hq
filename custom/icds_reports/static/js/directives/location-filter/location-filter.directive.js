@@ -1,6 +1,8 @@
 /* global _, LocationModalController, LocationFilterController */
 
-function LocationModalController($uibModalInstance, $location, locationsService, selectedLocationId, hierarchy, selectedLocations, locationsCache, maxLevel, userLocationId, showMessage, showSectorMessage, dateHelperService) {
+function LocationModalController($uibModalInstance, $location, locationsService, selectedLocationId, hierarchy,
+                                 selectedLocations, locationsCache, maxLevel, userLocationId, showMessage,
+                                 showSectorMessage, dateHelperService) {
     // LocationModalController shares a lot of the same logic / state as LocationFilterController.
     // But it controls all the logic once the modal is popped up (so tiered selection).
     var vm = this;
@@ -532,6 +534,16 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
     }, true);
 
     init();
+
+    $scope.$watch(function () {
+        return vm.selectedLocations;
+    }, function (newValue, oldValue) {
+        if (newValue === oldValue) {
+            return;
+        }
+        locationsService.updateSelectedLocations(vm.selectedLocations);
+        $rootScope.$broadcast('selected_locations_changed', vm.selectedLocations);
+    }, true);
 }
 
 LocationFilterController.$inject = [
@@ -540,21 +552,16 @@ LocationFilterController.$inject = [
 ];
 LocationModalController.$inject = ['$uibModalInstance', '$location', 'locationsService', 'selectedLocationId', 'hierarchy', 'selectedLocations', 'locationsCache', 'maxLevel', 'userLocationId', 'showMessage', 'showSectorMessage', 'dateHelperService'];
 
-window.angular.module('icdsApp').directive("locationFilter", ['templateProviderService', function (templateProviderService) {
-    var url = hqImport('hqwebapp/js/initial_page_data').reverse;
-    return {
-        restrict: 'E',
-        scope: {
-            selectedLocationId: '=',
-            selectedLocations: '=',
-            isOpenModal: '=?',
-            selectAwc: '=?',
-        },
-        bindToController: true,
-        templateUrl: function () {
-            return templateProviderService.getTemplate('location_filter');
-        },
-        controller: LocationFilterController,
-        controllerAs: "$ctrl",
-    };
-}]);
+window.angular.module('icdsApp').component("locationFilter", {
+    bindings: {
+        selectedLocationId: '<',
+        selectedLocations: '<',
+        isOpenModal: '<?',
+        selectAwc: '<?',
+    },
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getTemplate('location_filter');
+    }],
+    controller: LocationFilterController,
+    controllerAs: "$ctrl",
+});

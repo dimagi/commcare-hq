@@ -57,7 +57,7 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
 
     $scope.checkAccessToLocation = function () {
         var locationId = $location.search()['location_id'];
-        if (userLocationId !== void(0) && ['', 'undefinded', 'null', void(0)].indexOf(locationId) === -1) {
+        if (userLocationId !== void(0) && ['', 'undefined', 'null', void(0)].indexOf(locationId) === -1) {
             $http.get(url('have_access_to_location'), {
                 params: {location_id: locationId},
             }).then(function (response) {
@@ -191,5 +191,9 @@ window.angular.module('icdsApp', [
                 template: "<access-denied></access-denied>",
             });
         utils.addSharedRoutes($routeProvider, 'map');
-    }]);
+    }]).run(['$route', function() {}]);
+
+window.angular.module('icdsApp').config(['$locationProvider', function ($locationProvider) {
+    $locationProvider.hashPrefix('');
+}]);
 

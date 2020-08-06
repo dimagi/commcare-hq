@@ -11,13 +11,9 @@ function NavMenuOpenerController($scope) {
 
 NavMenuOpenerController.$inject = ['$scope'];
 
-window.angular.module('icdsApp').directive("navMenuOpener",  ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        bindToController: true,
-        templateUrl: function () {
-            return templateProviderService.getTemplate('nav-menu-opener.directive');
-        },
-        controller: NavMenuOpenerController,
-    };
-}]);
+window.angular.module('icdsApp').component("navMenuOpener", {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getTemplate('nav-menu-opener.directive');
+    }],
+    controller: NavMenuOpenerController,
+});

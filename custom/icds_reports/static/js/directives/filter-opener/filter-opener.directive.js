@@ -7,13 +7,9 @@ function FilterOpenerController($scope, $rootScope) {
 
 FilterOpenerController.$inject = ['$scope', '$rootScope'];
 
-window.angular.module('icdsApp').directive("filterOpener",  ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        bindToController: true,
-        templateUrl: function () {
-            return templateProviderService.getTemplate('filter-opener.directive');
-        },
-        controller: FilterOpenerController,
-    };
-}]);
+window.angular.module('icdsApp').component("filterOpener",  {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getTemplate('filter-opener.directive');
+    }],
+    controller: FilterOpenerController,
+});

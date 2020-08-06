@@ -9,6 +9,7 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
     };
     var NATIONAL_OPTION = {name: 'National', location_id: 'all'};
     var sector_level = 4;
+    var selectedLocations = [];
 
     function transformLocationTypeName(locationTypeName) {
         if (locationTypeName === 'awc') {
@@ -52,6 +53,12 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', '$locatio
     return {
         ALL_OPTION: ALL_OPTION,
         NATIONAL_OPTION: NATIONAL_OPTION,
+        updateSelectedLocations: function (locations) {
+            selectedLocations = locations;
+        },
+        getSelectedLocations: function () {
+            return selectedLocations;
+        },
         getRootLocations: function () {
             return this.getChildren(null);
         },

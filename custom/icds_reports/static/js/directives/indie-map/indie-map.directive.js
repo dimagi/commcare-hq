@@ -448,18 +448,16 @@ IndieMapController.$inject = [
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-window.angular.module('icdsApp').directive('indieMap', ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        scope: {
-            data: '=?',
-            legendTitle: '@?',
-            bubbles: '=?',
-            templatePopup: '&',
-        },
-        templateUrl: templateProviderService.getTemplate('indie-map.directive'),
-        bindToController: true,
-        controller: IndieMapController,
-        controllerAs: '$ctrl',
-    };
-}]);
+window.angular.module('icdsApp').component('indieMap', {
+    bindings: {
+        data: '<',
+        legendTitle: '@?',
+        bubbles: '<',
+        templatePopup: '&',
+    },
+    templateUrl: ['templateProviderService', function(templateProviderService) {
+        return templateProviderService.getTemplate('indie-map.directive');
+    }] ,
+    controller: IndieMapController,
+    controllerAs: '$ctrl',
+});

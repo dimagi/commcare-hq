@@ -1,6 +1,5 @@
 /* global moment */
 
-var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function LadySupervisorController($scope, $http, $log, $routeParams, $location, storageService, userLocationId, haveAccessToAllLocations, isAlertActive, dateHelperService) {
     var vm = this;
@@ -40,6 +39,9 @@ function LadySupervisorController($scope, $http, $log, $routeParams, $location, 
         );
     };
 
+    $scope.$on('selected_locations_changed', function (event, data) {
+        vm.selectedLocations = data;
+    });
     vm.getDisableIndex = function () {
         var i = -1;
         if (!haveAccessToAllLocations) {
@@ -80,12 +82,11 @@ function LadySupervisorController($scope, $http, $log, $routeParams, $location, 
 
 LadySupervisorController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'isAlertActive', 'dateHelperService'];
 
-window.angular.module('icdsApp').directive('ladySupervisor', function () {
-    return {
-        restrict: 'E',
-        templateUrl: url('icds-ng-template', 'lady-supervisor.directive'),
-        bindToController: true,
-        controller: LadySupervisorController,
-        controllerAs: '$ctrl',
-    };
+window.angular.module('icdsApp').component('ladySupervisor', {
+    templateUrl: function () {
+        var url = hqImport('hqwebapp/js/initial_page_data').reverse;
+        return url('icds-ng-template', 'lady-supervisor.directive');
+    },
+    controller: LadySupervisorController,
+    controllerAs: '$ctrl',
 });

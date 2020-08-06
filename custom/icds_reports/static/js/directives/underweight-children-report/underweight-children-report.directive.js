@@ -155,15 +155,13 @@ UnderweightChildrenReportController.$inject = [
 ];
 
 
-window.angular.module('icdsApp').directive('underweightChildrenReport', ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        templateUrl: templateProviderService.getMapChartTemplate,
-        bindToController: true,
-        scope: {
-            data: '=',
-        },
-        controller: UnderweightChildrenReportController,
-        controllerAs: '$ctrl',
-    };
-}]);
+window.angular.module('icdsApp').component('underweightChildrenReport', {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getMapChartTemplate();
+    }],
+    bindings: {
+        data: '<?',
+    },
+    controller: UnderweightChildrenReportController,
+    controllerAs: '$ctrl',
+});

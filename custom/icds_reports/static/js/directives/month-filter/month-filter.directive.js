@@ -245,20 +245,15 @@ function MonthFilterController($scope, $location, $uibModal, storageService, dat
 MonthFilterController.$inject = ['$scope', '$location', '$uibModal', 'storageService', 'dateHelperService', 'isMobile', 'quartersOfYear'];
 MonthModalController.$inject = ['$location', '$uibModalInstance', 'dateHelperService', 'quartersOfYear'];
 
-window.angular.module('icdsApp').directive("monthFilter",  ['templateProviderService', function (templateProviderService) {
-    var url = hqImport('hqwebapp/js/initial_page_data').reverse;
-    return {
-        restrict: 'E',
-        scope: {
-            isOpenModal: '=?',
-            selectSddDate: '=?',
-        },
-        bindToController: true,
-        require: 'ngModel',
-        templateUrl: function () {
-            return templateProviderService.getTemplate('month-filter');
-        },
-        controller: MonthFilterController,
-        controllerAs: "$ctrl",
-    };
-}]);
+window.angular.module('icdsApp').component("monthFilter", {
+    bindings: {
+        isOpenModal: '<?',
+        selectSddDate: '<?',
+    },
+    require: 'ngModel',
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getTemplate('month-filter');
+    }],
+    controller: MonthFilterController,
+    controllerAs: "$ctrl",
+});

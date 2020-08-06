@@ -29,7 +29,8 @@ describe('AWCs Covered Directive', function () {
         $httpBackend.expectGET('icds_locations').respond(200, {
             location_type: 'state',
         });
-        var element = window.angular.element("<awcs-covered data='test'></awcs-covered>");
+        $scope.test = {};
+        var element = window.angular.element("<awcs-covered></awcs-covered>");
         var compiled = $compile(element)($scope);
         var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");
         var mapOrSectorViewCompiled = $compile(mapOrSectorViewElement)($scope);

@@ -23,12 +23,9 @@ function HelpPopupController($scope) {
 
 HelpPopupController.$inject = ['$scope'];
 
-window.angular.module('icdsApp').directive("helpPopup",  ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        templateUrl: function () {
-            return templateProviderService.getTemplate('help-popup.directive');
-        },
-        controller: HelpPopupController,
-    };
-}]);
+window.angular.module('icdsApp').component("helpPopup", {
+    templateUrl:  ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getTemplate('help-popup.directive');
+    }],
+    controller: HelpPopupController,
+});

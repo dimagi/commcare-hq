@@ -30,7 +30,8 @@ describe('Adult Weight Scale Directive', function () {
         $httpBackend.expectGET('icds_locations').respond(200, {
             location_type: 'state',
         });
-        var element = window.angular.element("<adult-weight-scale data='test'></adult-weight-scale>");
+        $scope.test = {};
+        var element = window.angular.element("<adult-weight-scale></adult-weight-scale>");
         var compiled = $compile(element)($scope);
         var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");
         var mapOrSectorViewCompiled = $compile(mapOrSectorViewElement)($scope);

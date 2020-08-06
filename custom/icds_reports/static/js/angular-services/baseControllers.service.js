@@ -4,6 +4,10 @@ window.angular.module('icdsApp').factory('baseControllersService', ['$timeout', 
     var BaseFilterController = function ($scope, $routeParams, $location, dateHelperService, storageService,
         navigationService) {
         var vm = this;
+
+        $scope.$on('selected_locations_changed', function (event, data) {
+            vm.selectedLocations = data;
+        });
         vm.moveToLocation = function (loc, index) {
             if (loc === 'national') {
                 $location.search('location_id', '');
@@ -95,6 +99,10 @@ window.angular.module('icdsApp').factory('baseControllersService', ['$timeout', 
             // variables used for chart rendering. can be overridden by subclasses
             vm.usePercentage = true;
             vm.forceYAxisFromZero = false;
+
+            $scope.$on('selected_locations_changed', function (event, data) {
+                vm.selectedLocations = data;
+            });
 
             $scope.$watch(function () {
                 return vm.selectedLocations;

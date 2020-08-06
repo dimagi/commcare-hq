@@ -29,7 +29,8 @@ describe('Exclusive Breastfeeding Directive', function () {
         $httpBackend.expectGET('icds_locations').respond(200, {
             location_type: 'state',
         });
-        var element = window.angular.element("<exclusive-breastfeeding data='test'></exclusive-breastfeeding>");
+        $scope.test = {};
+        var element = window.angular.element("<exclusive-breastfeeding></exclusive-breastfeeding>");
         var compiled = $compile(element)($scope);
         var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");
         var mapOrSectorViewCompiled = $compile(mapOrSectorViewElement)($scope);

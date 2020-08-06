@@ -131,15 +131,13 @@ NewbornWithLowBirthController.$inject = [
     'isAlertActive', 'isMobile', 'haveAccessToFeatures',
 ];
 
-window.angular.module('icdsApp').directive('newbornLowWeight', ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        templateUrl: templateProviderService.getMapChartTemplate,
-        bindToController: true,
-        scope: {
-            data: '=',
-        },
-        controller: NewbornWithLowBirthController,
-        controllerAs: '$ctrl',
-    };
-}]);
+window.angular.module('icdsApp').component('newbornLowWeight', {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getMapChartTemplate();
+    }],
+    bindings: {
+        data: '<?',
+    },
+    controller: NewbornWithLowBirthController,
+    controllerAs: '$ctrl',
+});

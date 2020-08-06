@@ -14,8 +14,6 @@ describe('Additional Filter Controller', function () {
     pageData.registerUrl('icds_locations', 'icds_locations');
 
     beforeEach(module('icdsApp', function ($provide) {
-        $provide.constant("userLocationId", null);
-        $provide.constant("isAlertActive", false);
         utils.provideDefaultConstants($provide, {includeGenders: true, includeAges: true});
     }));
 

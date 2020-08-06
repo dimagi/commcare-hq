@@ -54,6 +54,9 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
     vm.chartOptions.chart.width = isMobile ? '' : 1100;
     vm.chartOptions.chart.color = d3.scale.category10().range();
 
+    $scope.$on('selected_locations_changed', function (event, data) {
+        vm.selectedLocations = data;
+    });
     vm.getDisableIndex = function () {
         var i = -1;
         if (!haveAccessToAllLocations) {
@@ -92,15 +95,13 @@ LactatingEnrolledWomenController.$inject = [
     'haveAccessToFeatures',
 ];
 
-window.angular.module('icdsApp').directive('lactatingEnrolledWomen', ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        templateUrl: templateProviderService.getMapChartTemplate,
-        bindToController: true,
-        scope: {
-            data: '=',
-        },
-        controller: LactatingEnrolledWomenController,
-        controllerAs: '$ctrl',
-    };
-}]);
+window.angular.module('icdsApp').component('lactatingEnrolledWomen', {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getMapChartTemplate();
+    }],
+    bindings: {
+        data: '<?',
+    },
+    controller: LactatingEnrolledWomenController,
+    controllerAs: '$ctrl',
+});

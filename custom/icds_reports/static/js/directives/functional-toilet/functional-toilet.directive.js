@@ -67,15 +67,13 @@ FunctionalToiletController.$inject = [
     'haveAccessToFeatures',
 ];
 
-window.angular.module('icdsApp').directive('functionalToilet', ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        templateUrl: templateProviderService.getMapChartTemplate,
-        bindToController: true,
-        scope: {
-            data: '=',
-        },
-        controller: FunctionalToiletController,
-        controllerAs: '$ctrl',
-    };
-}]);
+window.angular.module('icdsApp').component('functionalToilet', {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getMapChartTemplate();
+    }],
+    bindings: {
+        data: '<?',
+    },
+    controller: FunctionalToiletController,
+    controllerAs: '$ctrl',
+});

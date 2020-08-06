@@ -77,14 +77,10 @@ NavigationController.$inject = [
     'userFullName', 'userUsername', 'isMobile', 'navMenuItems', '$uibModal', 'reportAnIssueUrl', 'isWebUser',
 ];
 
-window.angular.module('icdsApp').directive('navigation', ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        scope: {},
-        controller: NavigationController,
-        controllerAs: '$ctrl',
-        templateUrl: function () {
-            return templateProviderService.getTemplate('navigation.directive');
-        },
-    };
-}]);
+window.angular.module('icdsApp').component('navigation', {
+    controller: NavigationController,
+    controllerAs: '$ctrl',
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getTemplate('navigation.directive');
+    }],
+});

@@ -220,21 +220,17 @@ MapOrSectorController.$inject = [
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-window.angular.module('icdsApp').directive('mapOrSectorView',  ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        scope: {
-            mode: '@',
-            data: '=',
-            templatePopup: '&',
-            location: '=',
-            label: '=',
-        },
-        templateUrl: function () {
-            return templateProviderService.getTemplate('map-or-sector-view.directive');
-        },
-        bindToController: true,
-        controller: MapOrSectorController,
-        controllerAs: '$ctrl',
-    };
-}]);
+window.angular.module('icdsApp').component('mapOrSectorView', {
+    bindings: {
+        mode: '@',
+        data: '<',
+        templatePopup: '&',
+        location: '<',
+        label: '<',
+    },
+    templateUrl: ['templateProviderService', function(templateProviderService) {
+        return templateProviderService.getTemplate('map-or-sector-view.directive');
+    }],
+    controller: MapOrSectorController,
+    controllerAs: '$ctrl',
+});

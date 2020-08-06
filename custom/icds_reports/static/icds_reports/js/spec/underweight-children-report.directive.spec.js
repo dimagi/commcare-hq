@@ -29,7 +29,8 @@ describe('Underweight Children Directive', function () {
         $httpBackend.expectGET('icds_locations').respond(200, {
             location_type: 'state',
         });
-        var element = window.angular.element("<underweight-children-report data='test'></underweight-children-report>");
+        $scope.test = {};
+        var element = window.angular.element("<underweight-children-report></underweight-children-report>");
         var compiled = $compile(element)($scope);
         var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");
         var mapOrSectorViewCompiled = $compile(mapOrSectorViewElement)($scope);

@@ -166,15 +166,13 @@ PrevalenceOfSevereReportController.$inject = [
     'userLocationId', 'storageService', 'genders', 'ages', 'haveAccessToAllLocations',
     'baseControllersService', 'haveAccessToFeatures', 'isAlertActive', 'isMobile'];
 
-window.angular.module('icdsApp').directive('prevalenceOfSevere', ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        templateUrl: templateProviderService.getMapChartTemplate,
-        bindToController: true,
-        scope: {
-            data: '=',
-        },
-        controller: PrevalenceOfSevereReportController,
-        controllerAs: '$ctrl',
-    };
-}]);
+window.angular.module('icdsApp').component('prevalenceOfSevere', {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getMapChartTemplate();
+    }],
+    bindings: {
+        data: '<?',
+    },
+    controller: PrevalenceOfSevereReportController,
+    controllerAs: '$ctrl',
+});

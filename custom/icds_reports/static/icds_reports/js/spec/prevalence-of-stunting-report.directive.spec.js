@@ -15,7 +15,6 @@ describe('Prevalence Of Stunting Directive feature flag disable', function () {
 
     beforeEach(module('icdsApp', function ($provide) {
         utils.provideDefaultConstants($provide, {includeGenders: true, includeAges: true});
-        $provide.constant("haveAccessToFeatures", false);
     }));
 
     beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {
@@ -30,7 +29,8 @@ describe('Prevalence Of Stunting Directive feature flag disable', function () {
         $httpBackend.expectGET('icds_locations').respond(200, {
             location_type: 'state',
         });
-        var element = window.angular.element("<prevalence-of-stunting data='test'></prevalence-of-stunting>");
+        $scope.test = {};
+        var element = window.angular.element("<prevalence-of-stunting></prevalence-of-stunting>");
         var compiled = $compile(element)($scope);
         var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");
         var mapOrSectorViewCompiled = $compile(mapOrSectorViewElement)($scope);
@@ -257,7 +257,8 @@ describe('Prevalence Of Stunting Directive  feature flag enable', function () {
         $httpBackend.expectGET('icds_locations').respond(200, {
             location_type: 'state',
         });
-        var element = window.angular.element("<prevalence-of-stunting data='test'></prevalence-of-stunting>");
+        $scope.test = {};
+        var element = window.angular.element("<prevalence-of-stunting></prevalence-of-stunting>");
         var compiled = $compile(element)($scope);
         var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");
         var mapOrSectorViewCompiled = $compile(mapOrSectorViewElement)($scope);

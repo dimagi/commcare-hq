@@ -15,7 +15,6 @@ describe('Adolescent Girls Directive', function () {
 
     beforeEach(module('icdsApp', function ($provide) {
         utils.provideDefaultConstants($provide, {});
-        $provide.constant("haveAccessToFeatures", false);
     }));
 
     beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {
@@ -29,9 +28,10 @@ describe('Adolescent Girls Directive', function () {
         $httpBackend.expectGET('icds_locations').respond(200, {
             location_type: 'state',
         });
-        var element = window.angular.element("<adolescent-girls data='test'></adolescent-girls>");
+        $scope.data = {};
+        var element = window.angular.element("<adolescent-girls></adolescent-girls>");
         var compiled = $compile(element)($scope);
-        var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");
+        var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='data'></map-or-sector-view>");
         var mapOrSectorViewCompiled = $compile(mapOrSectorViewElement)($scope);
         $httpBackend.flush();
         $scope.$digest();

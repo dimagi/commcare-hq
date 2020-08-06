@@ -126,22 +126,22 @@ function ProgramSummaryController($scope, $http, $log, $routeParams, $location, 
 
     vm.getDataForStep(vm.step);
     vm.currentStepMeta = vm.steps[vm.step];
+
+    $scope.$on('selected_locations_changed', function (event, data) {
+        vm.selectedLocations = data;
+    });
 }
 
 ProgramSummaryController.$inject = [
     '$scope', '$http', '$log', '$routeParams', '$location', 'storageService',
     'dateHelperService', 'navigationService', 'baseControllersService', 'userLocationId',
-    'haveAccessToAllLocations', 'isAlertActive', 'navMetadata', 'haveAccessToFeatures',
+    'haveAccessToAllLocations', 'isAlertActive', 'navMetadata', 'haveAccessToFeatures'
 ];
 
-window.angular.module('icdsApp').directive("programSummary", ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        templateUrl: function () {
-            return templateProviderService.getTemplate('program-summary.directive');
-        },
-        bindToController: true,
-        controller: ProgramSummaryController,
-        controllerAs: '$ctrl',
-    };
-}]);
+window.angular.module('icdsApp').component("programSummary", {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getTemplate('program-summary.directive');
+    }],
+    controller: ProgramSummaryController,
+    controllerAs: '$ctrl',
+});

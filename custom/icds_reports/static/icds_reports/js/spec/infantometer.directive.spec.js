@@ -30,7 +30,8 @@ describe('Infantometer Directive', function () {
         $httpBackend.expectGET('icds_locations').respond(200, {
             location_type: 'state',
         });
-        var element = window.angular.element("<infantometer data='test'></infantometer>");
+        $scope.test = {};
+        var element = window.angular.element("<infantometer></infantometer>");
         var compiled = $compile(element)($scope);
         var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");
         var mapOrSectorViewCompiled = $compile(mapOrSectorViewElement)($scope);

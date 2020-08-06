@@ -29,7 +29,8 @@ describe('Medicine Kit Directive', function () {
         $httpBackend.expectGET('icds_locations').respond(200, {
             location_type: 'state',
         });
-        var element = window.angular.element("<medicine_kit data='test'></medicine_kit>");
+        $scope.test = {};
+        var element = window.angular.element("<medicine_kit></medicine_kit>");
         var compiled = $compile(element)($scope);
         var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");
         var mapOrSectorViewCompiled = $compile(mapOrSectorViewElement)($scope);

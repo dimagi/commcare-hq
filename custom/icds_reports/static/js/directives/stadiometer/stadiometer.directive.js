@@ -72,15 +72,13 @@ StadiometerController.$inject = [
     'haveAccessToFeatures',
 ];
 
-window.angular.module('icdsApp').directive('stadiometer', ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        templateUrl: templateProviderService.getMapChartTemplate,
-        bindToController: true,
-        scope: {
-            data: '=',
-        },
-        controller: StadiometerController,
-        controllerAs: '$ctrl',
-    };
-}]);
+window.angular.module('icdsApp').component('stadiometer', {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getMapChartTemplate();
+    }],
+    bindings: {
+        data: '<?',
+    },
+    controller: StadiometerController,
+    controllerAs: '$ctrl',
+});

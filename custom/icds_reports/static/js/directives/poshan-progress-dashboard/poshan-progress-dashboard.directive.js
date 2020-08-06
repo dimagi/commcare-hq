@@ -1,6 +1,5 @@
 /* global moment */
 
-var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function PoshanProgressController($scope, $http, $log, $routeParams, $location, storageService, userLocationId,
                                   haveAccessToAllLocations, isAlertActive, dateHelperService) {
@@ -99,6 +98,9 @@ function PoshanProgressController($scope, $http, $log, $routeParams, $location, 
         );
     };
 
+    $scope.$on('selected_locations_changed', function (event, data) {
+        vm.selectedLocations = data;
+    });
     vm.getDisableIndex = function () {
         var i = -1;
         if (!haveAccessToAllLocations) {
@@ -140,12 +142,11 @@ function PoshanProgressController($scope, $http, $log, $routeParams, $location, 
 PoshanProgressController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService',
     'userLocationId', 'haveAccessToAllLocations', 'isAlertActive', 'dateHelperService'];
 
-window.angular.module('icdsApp').directive('poshanProgressDashboard', function () {
-    return {
-        restrict: 'E',
-        templateUrl: url('icds-ng-template', 'poshan-progress-dashboard.directive'),
-        bindToController: true,
-        controller: PoshanProgressController,
-        controllerAs: '$ctrl',
-    };
+window.angular.module('icdsApp').component('poshanProgressDashboard', {
+    templateUrl: function () {
+        var url = hqImport('hqwebapp/js/initial_page_data').reverse;
+        return url('icds-ng-template', 'poshan-progress-dashboard.directive');
+    },
+    controller: PoshanProgressController,
+    controllerAs: '$ctrl',
 });

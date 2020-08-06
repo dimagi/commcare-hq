@@ -29,7 +29,8 @@ describe('Lactating Enrolled Women Directive', function () {
         $httpBackend.expectGET('icds_locations').respond(200, {
             location_type: 'state',
         });
-        var element = window.angular.element("<lactating_enrolled_women data='test'></lactating_enrolled_women>");
+        $scope.test = {};
+        var element = window.angular.element("<lactating_enrolled_women></lactating_enrolled_women>");
         var compiled = $compile(element)($scope);
         var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");
         var mapOrSectorViewCompiled = $compile(mapOrSectorViewElement)($scope);

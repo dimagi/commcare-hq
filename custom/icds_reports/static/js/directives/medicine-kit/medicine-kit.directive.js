@@ -67,15 +67,13 @@ MedicineKitController.$inject = [
     'haveAccessToFeatures',
 ];
 
-window.angular.module('icdsApp').directive('medicineKit', ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        templateUrl: templateProviderService.getMapChartTemplate,
-        bindToController: true,
-        scope: {
-            data: '=',
-        },
-        controller: MedicineKitController,
-        controllerAs: '$ctrl',
-    };
-}]);
+window.angular.module('icdsApp').component('medicineKit', {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getMapChartTemplate();
+    }],
+    bindings: {
+        data: '<?',
+    },
+    controller: MedicineKitController,
+    controllerAs: '$ctrl',
+});

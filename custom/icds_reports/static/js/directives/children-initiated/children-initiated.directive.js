@@ -95,15 +95,13 @@ ChildrenInitiatedController.$inject = [
     'isAlertActive', 'isMobile', 'haveAccessToFeatures',
 ];
 
-window.angular.module('icdsApp').directive('childrenInitiated', ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        templateUrl: templateProviderService.getMapChartTemplate,
-        bindToController: true,
-        scope: {
-            data: '=',
-        },
-        controller: ChildrenInitiatedController,
-        controllerAs: '$ctrl',
-    };
-}]);
+window.angular.module('icdsApp').component('childrenInitiated', {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getMapChartTemplate();
+    }],
+    bindings: {
+        data: '<?',
+    },
+    controller: ChildrenInitiatedController,
+    controllerAs: '$ctrl',
+});

@@ -53,6 +53,9 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
     vm.chartOptions.chart.width = isMobile ? '' : 1100;
     vm.chartOptions.chart.color = d3.scale.category10().range();
 
+    $scope.$on('selected_locations_changed', function (event, data) {
+        vm.selectedLocations = data;
+    });
     vm.getDisableIndex = function () {
         var i = -1;
         if (!haveAccessToAllLocations) {
@@ -91,15 +94,13 @@ EnrolledWomenController.$inject = [
     'haveAccessToFeatures',
 ];
 
-window.angular.module('icdsApp').directive('enrolledWomen', ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        templateUrl: templateProviderService.getMapChartTemplate,
-        bindToController: true,
-        scope: {
-            data: '=',
-        },
-        controller: EnrolledWomenController,
-        controllerAs: '$ctrl',
-    };
-}]);
+window.angular.module('icdsApp').component('enrolledWomen', {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getMapChartTemplate();
+    }],
+    bindings: {
+        data: '<?',
+    },
+    controller: EnrolledWomenController,
+    controllerAs: '$ctrl',
+});

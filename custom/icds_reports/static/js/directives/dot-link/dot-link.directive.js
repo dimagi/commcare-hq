@@ -14,20 +14,16 @@ function DotLinkController($location) {
 
 DotLinkController.$inject = ['$location'];
 
-window.angular.module('icdsApp').directive('dotLink', ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        scope: {
-            id: '@',
-            route: '@',
-            label: '@',
-            image: '@',
-        },
-        templateUrl: function () {
-            return templateProviderService.getTemplate('dot-link.directive');
-        },
-        bindToController: true,
-        controller: DotLinkController,
-        controllerAs: '$ctrl',
-    };
-}]);
+window.angular.module('icdsApp').component('dotLink', {
+    bindings: {
+        id: '@',
+        route: '@',
+        label: '@',
+        image: '@',
+    },
+    templateUrl:  ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getTemplate('dot-link.directive');
+    }],
+    controller: DotLinkController,
+    controllerAs: '$ctrl',
+});

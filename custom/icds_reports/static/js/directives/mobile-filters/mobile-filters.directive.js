@@ -63,20 +63,16 @@ function MobileFiltersController($scope, $rootScope) {
 
 MobileFiltersController.$inject = ['$scope', '$rootScope'];
 
-window.angular.module('icdsApp').directive("mobileFilters", ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict:'E',
-        scope: {
-            selectedLocations: '=',
-            selectAwc: '=?',
-            filters: '=',
-            selectSddDate: '=?',
-        },
-        bindToController: true,
-        templateUrl: function () {
-            return templateProviderService.getTemplate('mobile-filters.directive');
-        },
-        controller: MobileFiltersController,
-        controllerAs: "$ctrl",
-    };
-}]);
+window.angular.module('icdsApp').component("mobileFilters", {
+    bindings: {
+        selectedLocations: '<',
+        selectAwc: '<?',
+        filters: '<',
+        selectSddDate: '<?',
+    },
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getTemplate('mobile-filters.directive');
+    }],
+    controller: MobileFiltersController,
+    controllerAs: "$ctrl",
+});

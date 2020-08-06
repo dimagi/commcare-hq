@@ -81,15 +81,13 @@ InstitutionalDeliveriesController.$inject = [
     'isMobile', 'haveAccessToFeatures',
 ];
 
-window.angular.module('icdsApp').directive('institutionalDeliveries', ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        templateUrl: templateProviderService.getMapChartTemplate,
-        bindToController: true,
-        scope: {
-            data: '=',
-        },
-        controller: InstitutionalDeliveriesController,
-        controllerAs: '$ctrl',
-    };
-}]);
+window.angular.module('icdsApp').component('institutionalDeliveries', {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getMapChartTemplate();
+    }],
+    bindings: {
+        data: '<?',
+    },
+    controller: InstitutionalDeliveriesController,
+    controllerAs: '$ctrl',
+});

@@ -32,7 +32,7 @@ describe('Location Filter Controller', function () {
         name: "Chhattisgarh",
         user_have_access: 1,
         user_have_access_to_parent: 0,
-    }, [], [], [],
+    }, null, null, null
     ];
 
     beforeEach(module('icdsApp', function ($provide) {
@@ -151,7 +151,7 @@ describe('Location Filter Controller', function () {
                 "user_have_access_to_parent": 1,
             },
             null,
-            null,
+            null
         ];
 
         controller.onSelect(item, 1);

@@ -2955,6 +2955,9 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         };
     }
 
+    $scope.$on('selected_locations_changed', function (event, data) {
+        vm.selectedLocations = data;
+    });
     vm.getDisableIndex = function () {
         var i = -1;
         if (!haveAccessToAllLocations) {
@@ -2992,14 +2995,10 @@ AwcReportsController.$inject = [
     'haveAccessToFeatures', 'isAlertActive', 'isMobile', 'mapboxAccessToken',
 ];
 
-window.angular.module('icdsApp').directive('awcReports', ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        templateUrl: function () {
-            return templateProviderService.getTemplate('awc-reports');
-        },
-        bindToController: true,
-        controller: AwcReportsController,
-        controllerAs: '$ctrl',
-    };
-}]);
+window.angular.module('icdsApp').component('awcReports', {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getTemplate('awc-reports');
+    }],
+    controller: AwcReportsController,
+    controllerAs: '$ctrl',
+});

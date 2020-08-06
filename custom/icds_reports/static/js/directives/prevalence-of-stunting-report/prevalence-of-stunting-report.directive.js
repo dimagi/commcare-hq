@@ -164,15 +164,13 @@ PrevalenceOfStuntingReportController.$inject = [
     'baseControllersService', 'haveAccessToFeatures', 'isAlertActive', 'isMobile',
 ];
 
-window.angular.module('icdsApp').directive('prevalenceOfStunting', ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        templateUrl: templateProviderService.getMapChartTemplate,
-        bindToController: true,
-        scope: {
-            data: '=',
-        },
-        controller: PrevalenceOfStuntingReportController,
-        controllerAs: '$ctrl',
-    };
-}]);
+window.angular.module('icdsApp').component('prevalenceOfStunting', {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getMapChartTemplate();
+    }],
+    bindings: {
+        data: '<?',
+    },
+    controller: PrevalenceOfStuntingReportController,
+    controllerAs: '$ctrl',
+});

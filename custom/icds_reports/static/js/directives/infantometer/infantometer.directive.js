@@ -72,15 +72,13 @@ InfantometerController.$inject = [
     'haveAccessToFeatures',
 ];
 
-window.angular.module('icdsApp').directive('infantometer', ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        templateUrl: templateProviderService.getMapChartTemplate,
-        bindToController: true,
-        scope: {
-            data: '=',
-        },
-        controller: InfantometerController,
-        controllerAs: '$ctrl',
-    };
-}]);
+window.angular.module('icdsApp').component('infantometer', {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getMapChartTemplate();
+    }],
+    bindings: {
+        data: '<?',
+    },
+    controller: InfantometerController,
+    controllerAs: '$ctrl',
+});

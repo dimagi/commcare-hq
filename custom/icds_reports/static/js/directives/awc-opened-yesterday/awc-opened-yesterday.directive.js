@@ -1,4 +1,3 @@
-var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 
 function AwcOpenedYesterdayController($routeParams, $location, storageService, systemUsageService, isAlertActive) {
@@ -31,12 +30,11 @@ function AwcOpenedYesterdayController($routeParams, $location, storageService, s
 AwcOpenedYesterdayController.$inject = ['$routeParams', '$location', 'storageService', 'systemUsageService',
     'isAlertActive'];
 
-window.angular.module('icdsApp').directive('awcOpenedYesterday', function () {
-    return {
-        restrict: 'E',
-        templateUrl: url('icds-ng-template', 'awc-opened-yesterday.directive'),
-        bindToController: true,
-        controller: AwcOpenedYesterdayController,
-        controllerAs: '$ctrl',
-    };
+window.angular.module('icdsApp').component('awcOpenedYesterday', {
+    templateUrl: function () {
+        var url = hqImport('hqwebapp/js/initial_page_data').reverse;
+        return url('icds-ng-template', 'awc-opened-yesterday.directive');
+    },
+    controller: AwcOpenedYesterdayController,
+    controllerAs: '$ctrl',
 });

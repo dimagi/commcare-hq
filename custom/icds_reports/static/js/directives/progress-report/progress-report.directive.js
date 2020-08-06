@@ -142,6 +142,9 @@ function ProgressReportController($scope, $location, progressReportService,
         }
     };
 
+    $scope.$on('selected_locations_changed', function (event, data) {
+        vm.selectedLocations = data;
+    });
     vm.getDisableIndex = function () {
         var i = -1;
         if (!haveAccessToAllLocations) {
@@ -194,14 +197,10 @@ ProgressReportController.$inject = [
     'navigationService', 'baseControllersService', 'factSheetSections', 'haveAccessToFeatures',
 ];
 
-window.angular.module('icdsApp').directive('progressReport', ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        templateUrl: function () {
-            return templateProviderService.getTemplate('progress-report.directive');
-        },
-        bindToController: true,
-        controller: ProgressReportController,
-        controllerAs: '$ctrl',
-    };
-}]);
+window.angular.module('icdsApp').component('progressReport', {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getTemplate('progress-report.directive');
+    }],
+    controller: ProgressReportController,
+    controllerAs: '$ctrl',
+});

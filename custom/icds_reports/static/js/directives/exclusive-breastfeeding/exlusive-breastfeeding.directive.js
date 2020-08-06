@@ -96,15 +96,13 @@ ExclusiveBreasfeedingController.$inject = [
     'isAlertActive', 'isMobile', 'haveAccessToFeatures',
 ];
 
-window.angular.module('icdsApp').directive('exclusiveBreastfeeding', ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        templateUrl: templateProviderService.getMapChartTemplate,
-        bindToController: true,
-        scope: {
-            data: '=',
-        },
-        controller: ExclusiveBreasfeedingController,
-        controllerAs: '$ctrl',
-    };
-}]);
+window.angular.module('icdsApp').component('exclusiveBreastfeeding', {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getMapChartTemplate();
+    }],
+    bindings: {
+        data: '<?',
+    },
+    controller: ExclusiveBreasfeedingController,
+    controllerAs: '$ctrl',
+});

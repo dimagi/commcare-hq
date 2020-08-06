@@ -72,15 +72,13 @@ CleanWaterController.$inject = [
     'haveAccessToFeatures',
 ];
 
-window.angular.module('icdsApp').directive('cleanWater', ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        templateUrl: templateProviderService.getMapChartTemplate,
-        bindToController: true,
-        scope: {
-            data: '=',
-        },
-        controller: CleanWaterController,
-        controllerAs: '$ctrl',
-    };
-}]);
+window.angular.module('icdsApp').component('cleanWater', {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getMapChartTemplate();
+    }],
+    bindings: {
+        data: '<?',
+    },
+    controller: CleanWaterController,
+    controllerAs: '$ctrl',
+});

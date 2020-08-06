@@ -30,7 +30,8 @@ describe('AWC Daily Status Directive', function () {
         $httpBackend.expectGET('icds_locations').respond(200, {
             location_type: 'state',
         });
-        var element = window.angular.element("<awc-daily-status data='test'></awc-daily-status>");
+        $scope.test = {};
+        var element = window.angular.element("<awc-daily-status></awc-daily-status>");
         var compiled = $compile(element)($scope);
         var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");
         var mapOrSectorViewCompiled = $compile(mapOrSectorViewElement)($scope);

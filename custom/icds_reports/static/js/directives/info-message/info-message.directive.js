@@ -1,7 +1,5 @@
 /* global moment */
 
-var url = hqImport('hqwebapp/js/initial_page_data').reverse;
-
 function InfoMessageController($location) {
     var vm = this;
     vm.twoMonthsBackMonth = null;
@@ -66,17 +64,16 @@ function InfoMessageController($location) {
 
 InfoMessageController.$inject = ['$location'];
 
-window.angular.module('icdsApp').directive("infoMessage", function () {
-    return {
-        restrict: 'E',
-        scope: {
-            type: '@',
-            start: '@',
-            end: '@',
-        },
-        bindToController: true,
-        templateUrl: url('icds-ng-template', 'info-message.directive'),
-        controller: InfoMessageController,
-        controllerAs: "$ctrl",
-    };
+window.angular.module('icdsApp').component("infoMessage", {
+    bindings: {
+        type: '@',
+        start: '@',
+        end: '@',
+    },
+    templateUrl: function () {
+        var url = hqImport('hqwebapp/js/initial_page_data').reverse;
+        return url('icds-ng-template', 'info-message.directive');
+    },
+    controller: InfoMessageController,
+    controllerAs: "$ctrl",
 });

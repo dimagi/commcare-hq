@@ -25,17 +25,13 @@ function KpiController($rootScope, $location, navigationService) {
 
 KpiController.$inject = ['$rootScope', '$location', 'navigationService'];
 
-window.angular.module('icdsApp').directive("kpi",  ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        scope: {
-            data: '=',
-        },
-        bindToController: true,
-        templateUrl: function () {
-            return templateProviderService.getTemplate('kpi.directive');
-        },
-        controller: KpiController,
-        controllerAs: "$ctrl",
-    };
-}]);
+window.angular.module('icdsApp').component("kpi", {
+    bindings: {
+        data: '<',
+    },
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getTemplate('kpi.directive');
+    }],
+    controller: KpiController,
+    controllerAs: "$ctrl",
+});

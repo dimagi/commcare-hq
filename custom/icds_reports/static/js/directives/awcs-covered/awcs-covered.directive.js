@@ -85,15 +85,13 @@ AWCSCoveredController.$inject = [
     'haveAccessToFeatures',
 ];
 
-window.angular.module('icdsApp').directive('awcsCovered', ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        templateUrl: templateProviderService.getMapChartTemplate,
-        bindToController: true,
-        scope: {
-            data: '=',
-        },
-        controller: AWCSCoveredController,
-        controllerAs: '$ctrl',
-    };
-}]);
+window.angular.module('icdsApp').component('awcsCovered', {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getMapChartTemplate();
+    }],
+    bindings: {
+        data: '<?',
+    },
+    controller: AWCSCoveredController,
+    controllerAs: '$ctrl',
+});

@@ -123,15 +123,13 @@ EnrolledChildrenController.$inject = [
     'isMobile', 'haveAccessToFeatures',
 ];
 
-window.angular.module('icdsApp').directive('enrolledChildren', ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        templateUrl: templateProviderService.getMapChartTemplate,
-        bindToController: true,
-        scope: {
-            data: '=',
-        },
-        controller: EnrolledChildrenController,
-        controllerAs: '$ctrl',
-    };
-}]);
+window.angular.module('icdsApp').component('enrolledChildren', {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getMapChartTemplate();
+    }],
+    bindings: {
+        data: '<?',
+    },
+    controller: EnrolledChildrenController,
+    controllerAs: '$ctrl',
+});

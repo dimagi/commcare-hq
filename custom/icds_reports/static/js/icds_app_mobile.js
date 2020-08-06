@@ -98,4 +98,8 @@ window.angular.module('icdsApp', [
                 template: "<program-summary></program-summary>",
             });
         hqImport("js/icds_dashboard_utils").addSharedRoutes($routeProvider, 'map');
-    }]);
+    }]).run(['$route', function() {}]);
+
+window.angular.module('icdsApp').config(['$locationProvider', function ($locationProvider) {
+    $locationProvider.hashPrefix('');
+}]);

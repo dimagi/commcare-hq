@@ -93,15 +93,13 @@ ImmunizationCoverageController.$inject = [
     'isAlertActive', 'isMobile', 'haveAccessToFeatures',
 ];
 
-window.angular.module('icdsApp').directive('immunizationCoverage', ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        templateUrl: templateProviderService.getMapChartTemplate,
-        bindToController: true,
-        scope: {
-            data: '=',
-        },
-        controller: ImmunizationCoverageController,
-        controllerAs: '$ctrl',
-    };
-}]);
+window.angular.module('icdsApp').component('immunizationCoverage', {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getMapChartTemplate();
+    }],
+    bindings: {
+        data: '<?',
+    },
+    controller: ImmunizationCoverageController,
+    controllerAs: '$ctrl',
+});

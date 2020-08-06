@@ -27,14 +27,10 @@ function PrintReportController() {
     };
 }
 
-window.angular.module('icdsApp').directive('printReport', function () {
-    return {
-        restrict: 'E',
-        template: '<i uib-popover-html="\'Print page\'" popover-placement="left" popover-trigger="\'mouseenter\'" class="fa fa-2x fa-print pointer light-grey" style="margin-top: 12px;" aria-hidden="true" ng-click="$ctrl.print()"></i>',
-        scope: {
-        },
-        bindToController: true,
-        controller: PrintReportController,
-        controllerAs: '$ctrl',
-    };
+window.angular.module('icdsApp').component('printReport', {
+    template: '<i uib-popover-html="\'Print page\'" popover-placement="left" popover-trigger="\'mouseenter\'" class="fa fa-2x fa-print pointer light-grey" style="margin-top: 12px;" aria-hidden="true" ng-click="$ctrl.print()"></i>',
+    bindings: {
+    },
+    controller: PrintReportController,
+    controllerAs: '$ctrl',
 });

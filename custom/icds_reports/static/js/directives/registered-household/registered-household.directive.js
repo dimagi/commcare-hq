@@ -72,15 +72,13 @@ RegisteredHouseholdController.$inject = [
     'haveAccessToFeatures',
 ];
 
-window.angular.module('icdsApp').directive('registeredHousehold', ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        templateUrl: templateProviderService.getMapChartTemplate,
-        bindToController: true,
-        scope: {
-            data: '=',
-        },
-        controller: RegisteredHouseholdController,
-        controllerAs: '$ctrl',
-    };
-}]);
+window.angular.module('icdsApp').component('registeredHousehold', {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getMapChartTemplate();
+    }],
+    bindings: {
+        data: '<?',
+    },
+    controller: RegisteredHouseholdController,
+    controllerAs: '$ctrl',
+});

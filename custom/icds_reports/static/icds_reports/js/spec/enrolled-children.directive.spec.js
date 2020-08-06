@@ -29,7 +29,8 @@ describe('Enrolled Children Directive', function () {
         $httpBackend.expectGET('icds_locations').respond(200, {
             location_type: 'state',
         });
-        var element = window.angular.element("<enrolled-children data='test'></enrolled-children>");
+        $scope.test = {};
+        var element = window.angular.element("<enrolled-children></enrolled-children>");
         var compiled = $compile(element)($scope);
         var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");
         var mapOrSectorViewCompiled = $compile(mapOrSectorViewElement)($scope);

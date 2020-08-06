@@ -97,15 +97,13 @@ EarlyInitiationBreastfeedingController.$inject = [
     'isAlertActive', 'isMobile', 'haveAccessToFeatures',
 ];
 
-window.angular.module('icdsApp').directive('earlyInitiationBreastfeeding', ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        templateUrl: templateProviderService.getMapChartTemplate,
-        bindToController: true,
-        scope: {
-            data: '=',
-        },
-        controller: EarlyInitiationBreastfeedingController,
-        controllerAs: '$ctrl',
-    };
-}]);
+window.angular.module('icdsApp').component('earlyInitiationBreastfeeding', {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getMapChartTemplate();
+    }],
+    bindings: {
+        data: '<?',
+    },
+    controller: EarlyInitiationBreastfeedingController,
+    controllerAs: '$ctrl',
+});

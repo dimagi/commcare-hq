@@ -73,6 +73,11 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
         return i;
     };
 
+
+    $scope.$on('selected_locations_changed', function (event, data) {
+        vm.selectedLocations = data;
+    });
+
     vm.tooltipContent = function (monthName, day) {
         var tooltipdata;
 
@@ -103,15 +108,13 @@ AdolescentWomenController.$inject = [
     'storageService', 'haveAccessToAllLocations', 'baseControllersService', 'isAlertActive', 'isMobile','haveAccessToFeatures',
 ];
 
-window.angular.module('icdsApp').directive('adolescentGirls', ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        templateUrl: templateProviderService.getMapChartTemplate,
-        bindToController: true,
-        scope: {
-            data: '=',
-        },
-        controller: AdolescentWomenController,
-        controllerAs: '$ctrl',
-    };
-}]);
+window.angular.module('icdsApp').component('adolescentGirls', {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getMapChartTemplate();
+    }],
+    bindings: {
+        data: '<?',
+    },
+    controller: AdolescentWomenController,
+    controllerAs: '$ctrl',
+});

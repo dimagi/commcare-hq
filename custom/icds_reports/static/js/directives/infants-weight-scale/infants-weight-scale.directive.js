@@ -67,15 +67,13 @@ InfantsWeightScaleController.$inject = [
     'haveAccessToFeatures',
 ];
 
-window.angular.module('icdsApp').directive('infantsWeightScale', ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        templateUrl: templateProviderService.getMapChartTemplate,
-        bindToController: true,
-        scope: {
-            data: '=',
-        },
-        controller: InfantsWeightScaleController,
-        controllerAs: '$ctrl',
-    };
-}]);
+window.angular.module('icdsApp').component('infantsWeightScale', {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getMapChartTemplate();
+    }],
+    bindings: {
+        data: '<?',
+    },
+    controller: InfantsWeightScaleController,
+    controllerAs: '$ctrl',
+});

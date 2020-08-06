@@ -1,9 +1,6 @@
-
-var url = hqImport('hqwebapp/js/initial_page_data').reverse;
-
-window.angular.module('icdsApp').directive('accessDenied', function () {
-    return {
-        restrict: 'E',
-        templateUrl: url('icds-ng-template', 'access-denied.directive'),
-    };
+window.angular.module('icdsApp').component('accessDenied', {
+    templateUrl: function () {
+        var url = hqImport('hqwebapp/js/initial_page_data').reverse;
+        return url('icds-ng-template', 'access-denied.directive');
+    }
 });

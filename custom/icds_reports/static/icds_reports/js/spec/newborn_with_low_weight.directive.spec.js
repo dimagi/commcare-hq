@@ -29,7 +29,8 @@ describe('Newborn Low Weight Directive', function () {
         $httpBackend.expectGET('icds_locations').respond(200, {
             location_type: 'state',
         });
-        var element = window.angular.element("<newborn-low-weight data='test'></newborn-low-weight>");
+        $scope.test = {};
+        var element = window.angular.element("<newborn-low-weight></newborn-low-weight>");
         var compiled = $compile(element)($scope);
         var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");
         var mapOrSectorViewCompiled = $compile(mapOrSectorViewElement)($scope);

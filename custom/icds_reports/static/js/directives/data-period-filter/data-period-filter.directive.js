@@ -1,4 +1,4 @@
-var url = hqImport('hqwebapp/js/initial_page_data').reverse;
+
 
 function DataPeriodModalController($location, $uibModalInstance, filters, dataPeriods, haveAccessToFeatures) {
     var vm = this;
@@ -79,16 +79,15 @@ function DataPeriodFilterController($scope, $location, $uibModal, storageService
 DataPeriodFilterController.$inject = ['$scope', '$location', '$uibModal', 'storageService', 'dataPeriods'];
 DataPeriodModalController.$inject = ['$location', '$uibModalInstance', 'filters', 'dataPeriods', 'haveAccessToFeatures'];
 
-window.angular.module('icdsApp').directive("dataperiodFilter", function () {
-    return {
-        restrict: 'E',
-        scope: {
-            filters: '=',
-        },
-        bindToController: true,
-        require: 'ngModel',
-        templateUrl: url('icds-ng-template', 'data-period-filter'),
-        controller: DataPeriodFilterController,
-        controllerAs: "$ctrl",
-    };
+window.angular.module('icdsApp').component("dataperiodFilter", {
+    bindings: {
+        filters: '<',
+    },
+    require: 'ngModel',
+    templateUrl: function () {
+        var url = hqImport('hqwebapp/js/initial_page_data').reverse;
+        return url('icds-ng-template', 'data-period-filter');
+    },
+    controller: DataPeriodFilterController,
+    controllerAs: "$ctrl",
 });

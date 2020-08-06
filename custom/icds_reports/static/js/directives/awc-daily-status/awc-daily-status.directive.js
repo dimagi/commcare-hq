@@ -83,15 +83,13 @@ AWCDailyStatusController.$inject = [
     'haveAccessToFeatures',
 ];
 
-window.angular.module('icdsApp').directive('awcDailyStatus', ['templateProviderService', function (templateProviderService) {
-    return {
-        restrict: 'E',
-        templateUrl: templateProviderService.getMapChartTemplate,
-        bindToController: true,
-        scope: {
-            data: '=',
-        },
-        controller: AWCDailyStatusController,
-        controllerAs: '$ctrl',
-    };
-}]);
+window.angular.module('icdsApp').component('awcDailyStatus', {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getMapChartTemplate();
+    }],
+    bindings: {
+        data: '<?',
+    },
+    controller: AWCDailyStatusController,
+    controllerAs: '$ctrl',
+});

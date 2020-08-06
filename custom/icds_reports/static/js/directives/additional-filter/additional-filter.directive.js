@@ -58,15 +58,17 @@ function AdditionalFilterController($scope, $location, $uibModal, storageService
     vm.selectedGender = $location.search()['gender'] !== void(0) ? $location.search()['gender'] : '';
     vm.selectedAge = $location.search()['age'] !== void(0) ? $location.search()['age'] : '';
     var filtersObjects = [];
-    // eg:vm.filters = ['gender', 'age']
-    // this array has filters that are not to be shown. so if 'gender' is not in array, it can be shown.
-    if (vm.filters && vm.filters.indexOf('gender') === -1) {
-        vm.showGenderFilter = true;
-        filtersObjects.push({ label: 'Gender', value: vm.selectedGender });
-    }
-    if (vm.filters && vm.filters.indexOf('age') === -1) {
-        vm.showAgeFilter = true;
-        filtersObjects.push({ label: 'Age', value: vm.selectedAge });
+    vm.$onInit = function () {
+        // eg:vm.filters = ['gender', 'age']
+        // this array has filters that are not to be shown. so if 'gender' is not in array, it can be shown.
+        if (vm.filters && vm.filters.indexOf('gender') === -1) {
+            vm.showGenderFilter = true;
+            filtersObjects.push({ label: 'Gender', value: vm.selectedGender });
+        }
+        if (vm.filters && vm.filters.indexOf('age') === -1) {
+            vm.showAgeFilter = true;
+            filtersObjects.push({ label: 'Age', value: vm.selectedAge });
+        }
     }
 
     vm.getPlaceholder = function () {
@@ -152,19 +154,14 @@ function AdditionalFilterController($scope, $location, $uibModal, storageService
 AdditionalFilterController.$inject = ['$scope', '$location', '$uibModal', 'storageService', 'genders', 'ages'];
 AdditionalModalController.$inject = ['$location', '$uibModalInstance', 'filters', 'genders', 'ages', 'agesServiceDeliveryDashboard', 'haveAccessToFeatures'];
 
-window.angular.module('icdsApp').directive("additionalFilter", ['templateProviderService', function (templateProviderService) {
-    var url = hqImport('hqwebapp/js/initial_page_data').reverse;
-    return {
-        restrict: 'E',
-        scope: {
-            filters: '=',
-        },
-        bindToController: true,
-        require: 'ngModel',
-        templateUrl: function () {
-            return templateProviderService.getTemplate('additional-filter');
-        },
-        controller: AdditionalFilterController,
-        controllerAs: "$ctrl",
-    };
-}]);
+window.angular.module('icdsApp').component("additionalFilter", {
+    bindings: {
+        filters: '<',
+    },
+    require: 'ngModel',
+    templateUrl:  ['templateProviderService', function (templateProviderService) {
+        return templateProviderService.getTemplate('additional-filter');
+    }],
+    controller: AdditionalFilterController,
+    controllerAs: "$ctrl",
+});

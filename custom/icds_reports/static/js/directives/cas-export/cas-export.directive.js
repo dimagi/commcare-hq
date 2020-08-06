@@ -1,5 +1,4 @@
 /* global moment */
-
 function CasExportController($window, $location, locationHierarchy, locationsService, downloadService, userLocationId, isAlertActive) {
     var vm = this;
     vm.isAlertActive = isAlertActive;
@@ -161,15 +160,11 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
 
 CasExportController.$inject = ['$window', '$location', 'locationHierarchy', 'locationsService', 'downloadService', 'userLocationId', 'isAlertActive'];
 
-window.angular.module('icdsApp').directive("casExport", function () {
-    var url = hqImport('hqwebapp/js/initial_page_data').reverse;
-    return {
-        restrict: 'E',
-        scope: {
-        },
-        bindToController: true,
-        templateUrl: url('icds-ng-template', 'cas-export.directive'),
-        controller: CasExportController,
-        controllerAs: "$ctrl",
-    };
+window.angular.module('icdsApp').component("casExport", {
+    templateUrl: function () {
+        var url = hqImport('hqwebapp/js/initial_page_data').reverse;
+        return url('icds-ng-template', 'cas-export.directive');
+    },
+    controller: CasExportController,
+    controllerAs: "$ctrl",
 });
