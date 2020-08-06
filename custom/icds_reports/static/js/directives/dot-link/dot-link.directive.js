@@ -21,7 +21,7 @@ window.angular.module('icdsApp').component('dotLink', {
         label: '@',
         image: '@',
     },
-    templateUrl:  ['templateProviderService', function (templateProviderService) {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
         return templateProviderService.getTemplate('dot-link.directive');
     }],
     controller: DotLinkController,

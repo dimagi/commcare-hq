@@ -1,4 +1,5 @@
 
+
 function HelpPopupController($scope) {
     // used by mobile dashboard only
     $scope.activeInfoHeading = '';
@@ -24,7 +25,7 @@ function HelpPopupController($scope) {
 HelpPopupController.$inject = ['$scope'];
 
 window.angular.module('icdsApp').component("helpPopup", {
-    templateUrl:  ['templateProviderService', function (templateProviderService) {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
         return templateProviderService.getTemplate('help-popup.directive');
     }],
     controller: HelpPopupController,

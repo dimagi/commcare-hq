@@ -455,7 +455,7 @@ window.angular.module('icdsApp').component('indieMap', {
         bubbles: '<',
         templatePopup: '&',
     },
-    templateUrl: ['templateProviderService', function(templateProviderService) {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
         return templateProviderService.getTemplate('indie-map.directive');
     }] ,
     controller: IndieMapController,

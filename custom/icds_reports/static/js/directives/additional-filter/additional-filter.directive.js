@@ -159,7 +159,7 @@ window.angular.module('icdsApp').component("additionalFilter", {
         filters: '<',
     },
     require: 'ngModel',
-    templateUrl:  ['templateProviderService', function (templateProviderService) {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
         return templateProviderService.getTemplate('additional-filter');
     }],
     controller: AdditionalFilterController,

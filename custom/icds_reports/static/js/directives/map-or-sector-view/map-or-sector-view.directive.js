@@ -228,7 +228,7 @@ window.angular.module('icdsApp').component('mapOrSectorView', {
         location: '<',
         label: '<',
     },
-    templateUrl: ['templateProviderService', function(templateProviderService) {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
         return templateProviderService.getTemplate('map-or-sector-view.directive');
     }],
     controller: MapOrSectorController,

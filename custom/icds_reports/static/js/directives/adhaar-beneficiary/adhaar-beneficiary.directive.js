@@ -67,7 +67,7 @@ AdhaarController.$inject = [
 ];
 
 window.angular.module('icdsApp').component('adhaarBeneficiary', {
-    templateUrl:  ['templateProviderService', function (templateProviderService) {
+    templateUrl: ['templateProviderService', function (templateProviderService) {
         return templateProviderService.getMapChartTemplate();
     }],
     bindings: {

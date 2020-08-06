@@ -191,7 +191,7 @@ window.angular.module('icdsApp', [
                 template: "<access-denied></access-denied>",
             });
         utils.addSharedRoutes($routeProvider, 'map');
-    }]).run(['$route', function() {}]);
+    }]).run(['$route', function () {}]);
 
 window.angular.module('icdsApp').config(['$locationProvider', function ($locationProvider) {
     $locationProvider.hashPrefix('');
