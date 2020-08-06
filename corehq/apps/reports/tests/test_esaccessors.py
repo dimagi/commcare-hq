@@ -1215,7 +1215,8 @@ class TestCaseESAccessorsSQL(TestCaseESAccessors):
             user_id=None,
             case_type=None,
             opened_on=None,
-            closed_on=None):
+            closed_on=None,
+            modified_on=None):
 
         case = CommCareCaseSQL(
             case_id=uuid.uuid4().hex,
@@ -1226,7 +1227,7 @@ class TestCaseESAccessorsSQL(TestCaseESAccessors):
             opened_on=opened_on or datetime.now(),
             opened_by=user_id or self.user_id,
             closed_on=closed_on,
-            modified_on=datetime.now(),
+            modified_on=modified_on or datetime.now(),
             closed_by=user_id or self.user_id,
             server_modified_on=datetime.utcnow(),
             closed=bool(closed_on)
