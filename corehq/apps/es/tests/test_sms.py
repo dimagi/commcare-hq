@@ -3,11 +3,11 @@ from django.test.testcases import SimpleTestCase
 from nose.plugins.attrib import attr
 
 from corehq.apps.es.sms import SMSES
-from corehq.apps.es.tests.utils import ElasticTestMixin
+from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.elastic import SIZE_LIMIT
 
 
-@attr(es_test=True)
+@es_test
 class TestSMSES(ElasticTestMixin, SimpleTestCase):
     def test_processed_or_incoming(self):
         if settings.ELASTICSEARCH_MAJOR_VERSION == 7:

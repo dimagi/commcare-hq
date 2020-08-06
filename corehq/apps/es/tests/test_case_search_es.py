@@ -5,11 +5,10 @@ from django.conf import settings
 from django.test.testcases import SimpleTestCase
 from django.test import TestCase
 from mock import MagicMock, patch
-from nose.plugins.attrib import attr
 
 from corehq.apps.case_search.const import RELEVANCE_SCORE
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
-from corehq.apps.es.tests.utils import ElasticTestMixin
+from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.apps.es.case_search import (
     case_property_missing,
     case_property_text_query
@@ -26,7 +25,7 @@ from corehq.util.test_utils import create_and_save_a_case
 from pillowtop.es_utils import initialize_index_and_mapping
 
 
-@attr(es_test=True)
+@es_test
 class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
 
     def setUp(self):
@@ -418,7 +417,7 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
         self.checkQuery(query, expected, validate_query=False)
 
 
-@attr(es_test=True)
+@es_test
 class TestCaseSearchLookups(TestCase):
 
     def setUp(self):

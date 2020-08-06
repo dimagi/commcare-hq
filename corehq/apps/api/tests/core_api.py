@@ -5,7 +5,6 @@ from django.conf import settings
 from django.test import SimpleTestCase, TestCase
 from django.test.client import RequestFactory
 from mock import patch
-from nose.plugins.attrib import attr
 
 from django.urls import reverse
 from django.utils.http import urlencode
@@ -29,7 +28,7 @@ from corehq.apps.api.fields import (
 from corehq.apps.api.resources import v0_4, v0_5
 from corehq.apps.api.util import get_obj
 from corehq.apps.domain.models import Domain
-from corehq.apps.es.tests.utils import ElasticTestMixin
+from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.apps.users.models import CommCareUser, HQApiKey, WebUser
 from corehq.util.test_utils import flag_disabled
 from no_exceptions.exceptions import Http400
@@ -505,7 +504,7 @@ class TestApiKey(APIResourceTest):
         self.assertEqual(response.status_code, 401)
 
 
-@attr(es_test=True)
+@es_test
 class TestParamstoESFilters(ElasticTestMixin, SimpleTestCase):
 
     def test_search_param(self):
