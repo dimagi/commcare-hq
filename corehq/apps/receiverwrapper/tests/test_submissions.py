@@ -277,13 +277,14 @@ class SubmissionTestSQL(SubmissionTest):
                 if att.name != "form.xml"
             )
 
+        # submit a form to try again as duplicate with one attachment modified
         self._submit('simple_form.xml', attachments={
             "image.jpg": BytesIO(b"fake image"),
             "audio_file.mp3": BytesIO(b"fake audio"),
         })
         response = self._submit(
             'simple_form_edited.xml',
-            attachments={"image": BytesIO(b"other fake image")},
+            attachments={"image.jpg": BytesIO(b"other fake image")},
             url=reverse("receiver_secure_post", args=[self.domain]),
         )
         acc = FormAccessors(self.domain.name)
@@ -292,9 +293,10 @@ class SubmissionTestSQL(SubmissionTest):
         self.assertIn(b"<bop>bang</bop>", old_form.get_xml())
         self.assertIn(b"<bop>bong</bop>", new_form.get_xml())
         self.assertEqual(list_attachments(old_form),
-            [("file", b"text file"), ("image", b"fake image")])
+            [("audio_file.mp3", b"fake audio"), ("image.jpg", b"fake image")])
+        # assert missing attachment retained from the old form and the one re-uploaded updated
         self.assertEqual(list_attachments(new_form),
-            [("file", b"text file"), ("image", b"other fake image")])
+            [("audio_file.mp3", b"fake audio"), ("image.jpg", b"other fake image")])
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
