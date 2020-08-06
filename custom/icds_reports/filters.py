@@ -40,7 +40,10 @@ def load_locs_json(domain, selected_loc_id=None, user=None, show_test=False):
     if user.has_permission(domain, 'access_all_locations'):
         accessible_root_locations = SQLLocation.root_locations(domain)
     else:
-        accessible_root_locations = [user.sql_location.get_ancestors(include_self=True).get(location_type__code='state')]
+        accessible_root_locations = [(user.sql_location
+                                      .get_ancestors(include_self=True)
+                                      .get(location_type__code='state'))
+                                     ]
 
     if not show_test:
         accessible_root_locations = [loc for loc in accessible_root_locations
@@ -65,8 +68,8 @@ def load_locs_json(domain, selected_loc_id=None, user=None, show_test=False):
             location_id=selected_loc_id
         )
 
-        json_at_level = loc_json # json at level at which we should find the ancestor
-        for ancestor in selected.get_ancestors(): # this would start with top level ancestor first
+        json_at_level = loc_json  # json at level at which we should find the ancestor
+        for ancestor in selected.get_ancestors():  # this would start with top level ancestor first
             ancestor_loc_dict_in_json = None
             for parent_location in json_at_level:
                 if parent_location['uuid'] == ancestor.location_id:
@@ -74,7 +77,7 @@ def load_locs_json(domain, selected_loc_id=None, user=None, show_test=False):
                     break
 
             # could not find the ancestor at the level,
-            # user should not have reached at tihs point to try access an ancestor not permitted access to
+            # user should not have reached at this point to try access an ancestor not permitted access to
             if ancestor_loc_dict_in_json is None:
                 break
 
