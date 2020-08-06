@@ -10,14 +10,25 @@
         <div class="col-sm-3">
           <img style="width: 100%" src="{% static 'icds/img/ICDS-CAS_banner.png' %}" alt="ICDS-CAS"/>
         </div>
-        <div class="col-sm-9">
-          <div>
-            <h2>Download the ICDS-CAS Mobile Dashboard Application</h2>
-            <a class="btn btn-primary" href="{% static 'media/cas-mobile-dashboard.apk' %}">
-            <i class="fa fa-download"></i> Get the App
-          </a>
+        {% if request.get_host == 'icds-cas.gov.in' %}
+          <div class="col-sm-9">
+            <div>
+              <h2>Download the ICDS-CAS Mobile Dashboard Application</h2>
+              <a class="btn btn-primary" href="{% static 'media/cas-mobile-dashboard.apk' %}">
+              <i class="fa fa-download"></i> Get the App
+            </a>
+            </div>
           </div>
-        </div>
+        {% else %}
+          <div class="col-sm-9">
+            <div>
+              <h2>Download the ICDS-CAS Staging Mobile Dashboard Application</h2>
+              <a class="btn btn-primary" href="{% static 'media/cas-staging-mobile-dashboard.apk' %}">
+              <i class="fa fa-download"></i> Get the App
+            </a>
+            </div>
+          </div>
+        {% endif %}
       </div>
       <div class="row">
           <div>
@@ -33,7 +44,13 @@
               </thead>
               <tbody>
               <tr>
-                <td><a href="{% static 'media/cas-mobile-dashboard.apk' %}">cas-mobile-dashboard.apk</a></td>
+                <td>
+                  {% if request.get_host == 'icds-cas.gov.in' %}
+                    <a href="{% static 'media/cas-mobile-dashboard.apk' %}">cas-mobile-dashboard.apk</a>
+                  {% else %}
+                    <a href="{% static 'media/cas-staging-mobile-dashboard.apk' %}">cas-staging-mobile-dashboard.apk</a>
+                  {% endif %}
+                </td>
                 <td>Setup file to install CAS Mobile Dashboard on your device</td>
                 <td>1.0</td>
                 <td>9th March 2020</td>

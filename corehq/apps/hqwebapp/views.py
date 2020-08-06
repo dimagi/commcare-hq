@@ -52,6 +52,8 @@ from sentry_sdk import last_event_id
 from two_factor.views import LoginView
 
 from corehq.apps.hqwebapp.decorators import waf_allow
+from corehq.apps.sms.event_handlers import handle_email_messaging_subevent
+from corehq.util.email_event_utils import handle_email_sns_event
 from corehq.util.metrics import create_metrics_event, metrics_counter, metrics_gauge
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
@@ -101,7 +103,6 @@ from corehq.apps.hqwebapp.utils import (
 )
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent
 from corehq.apps.users.landing_pages import (
     get_cloudcare_urlname,
     get_redirect_url,
@@ -1324,36 +1325,8 @@ def log_email_event(request, secret):
     for header in headers:
         if header["name"] == COMMCARE_MESSAGE_ID_HEADER:
             subevent_id = header["value"]
-            break
-    else:
-        return HttpResponse()
+            handle_email_messaging_subevent(message, subevent_id)
 
-    try:
-        subevent = MessagingSubEvent.objects.get(id=subevent_id)
-    except MessagingSubEvent.DoesNotExist:
-        return HttpResponse()
-
-    event_type = message.get('eventType')
-    if event_type == 'Bounce':
-        additional_error_text = ''
-
-        bounce_type = message.get('bounce', {}).get('bounceType')
-        if bounce_type:
-            additional_error_text = f"{bounce_type}."
-        bounced_recipients = message.get('bounce', {}).get('bouncedRecipients', [])
-        recipient_addresses = []
-        for bounced_recipient in bounced_recipients:
-            recipient_addresses.append(bounced_recipient.get('emailAddress'))
-        if recipient_addresses:
-            additional_error_text = f"{additional_error_text} - {', '.join(recipient_addresses)}"
-
-        subevent.error(MessagingEvent.ERROR_EMAIL_BOUNCED, additional_error_text=additional_error_text)
-    elif event_type == 'Send':
-        subevent.status = MessagingEvent.STATUS_EMAIL_SENT
-    elif event_type == 'Delivery':
-        subevent.status = MessagingEvent.STATUS_EMAIL_DELIVERED
-        subevent.additional_error_text = message.get('delivery', {}).get('timestamp')
-
-    subevent.save()
+    handle_email_sns_event(message)
 
     return HttpResponse()

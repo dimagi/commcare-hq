@@ -12,6 +12,7 @@ from celery.task import task, periodic_task
 from corehq.util.bounced_email_manager import BouncedEmailManager
 from corehq.util.metrics import metrics_gauge_task, metrics_track_errors
 from corehq.util.metrics.const import MPM_MAX
+from corehq.util.models import TransientBounceEmail
 from dimagi.utils.django.email import COMMCARE_MESSAGE_ID_HEADER, SES_CONFIGURATION_SET_HEADER
 from dimagi.utils.logging import notify_exception
 
@@ -67,6 +68,10 @@ def send_mail_async(self, subject, message, from_email, recipient_list, messagin
         return
 
     headers = {}
+
+    if settings.RETURN_PATH_EMAIL:
+        headers['Return-Path'] = settings.RETURN_PATH_EMAIL
+
     if messaging_event_id is not None:
         headers[COMMCARE_MESSAGE_ID_HEADER] = messaging_event_id
     if settings.SES_CONFIGURATION_SET is not None:
@@ -183,7 +188,6 @@ def process_bounced_emails():
             with BouncedEmailManager(
                 delete_processed_messages=True
             ) as bounced_manager, metrics_track_errors('process_bounced_emails_task'):
-                bounced_manager.process_aws_notifications()
                 bounced_manager.process_daemon_messages()
         except Exception as e:
             notify_exception(
@@ -193,6 +197,21 @@ def process_bounced_emails():
                     'error': e,
                 }
             )
+
+
+@periodic_task(run_every=crontab(minute=0, hour=3), queue='background_queue')
+def clean_expired_transient_emails():
+    try:
+        TransientBounceEmail.delete_expired_bounces()
+    except Exception as e:
+        notify_exception(
+            None,
+            message="Encountered error while deleting expired "
+                    "transient bounce emails",
+            details={
+                'error': e,
+            }
+        )
 
 
 def get_maintenance_alert_active():

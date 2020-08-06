@@ -1,4 +1,7 @@
 #!/bin/bash
-
+echo ""
+echo "This command will be deprecated soon. Instead use the tool in commcare-cloud:"
+echo "    $ python scripts/rebuild-deploy-branches icds-staging --commcare-hq-root=/path/to/commcare/repo/"
+echo ""
 rebuild_command="scripts/rebuildstaging-util icds-staging.yaml $*"
 $(echo $rebuild_command)

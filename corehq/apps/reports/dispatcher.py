@@ -8,6 +8,7 @@ from django.views.generic.base import View
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
 
+from corehq.apps.domain.utils import get_custom_domain_module
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.modules import to_function
 
@@ -87,7 +88,7 @@ class ReportDispatcher(View):
 
         corehq_reports = process(getattr(reports, attr_name, ()))
 
-        module_name = settings.DOMAIN_MODULE_MAP.get(domain)
+        module_name = get_custom_domain_module(domain)
         if module_name is None:
             custom_reports = ()
         else:

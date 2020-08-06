@@ -5,10 +5,7 @@ from django.utils.translation import ugettext as _
 
 from toggle.shortcuts import set_toggle
 
-from corehq.apps.case_search.models import (
-    CaseSearchConfig,
-    CaseSearchQueryAddition,
-)
+from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.custom_data_fields.models import (
     CustomDataFieldsDefinition,
     Field,
@@ -206,22 +203,13 @@ def update_case_search_config(domain_link):
         case_search_config = remote_properties['config']
         if not case_search_config:
             return
-        query_addition = remote_properties['addition']
     else:
         try:
             case_search_config = CaseSearchConfig.objects.get(domain=domain_link.master_domain).to_json()
         except CaseSearchConfig.DoesNotExist:
             return
 
-        try:
-            query_addition = CaseSearchQueryAddition.objects.get(domain=domain_link.master_domain).to_json()
-        except CaseSearchQueryAddition.DoesNotExist:
-            query_addition = None
-
     CaseSearchConfig.create_model_and_index_from_json(domain_link.linked_domain, case_search_config)
-
-    if query_addition:
-        CaseSearchQueryAddition.create_from_json(domain_link.linked_domain, query_addition)
 
 
 def _convert_reports_permissions(domain_link, master_results):

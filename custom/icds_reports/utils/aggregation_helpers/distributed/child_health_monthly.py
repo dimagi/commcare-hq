@@ -3,7 +3,7 @@ import logging
 from dateutil.relativedelta import relativedelta
 
 from corehq.apps.userreports.util import get_table_name
-from corehq.toggles import ICDS_LOCATION_REASSIGNMENT_AGG
+from custom.icds.icds_toggles import ICDS_LOCATION_REASSIGNMENT_AGG
 from custom.icds_reports.const import (
     AGG_COMP_FEEDING_TABLE,
     AGG_CHILD_HEALTH_PNC_TABLE,
@@ -199,7 +199,7 @@ class ChildHealthMonthlyAggregationDistributedHelper(BaseICDSAggregationDistribu
             ("pse_eligible", "CASE WHEN {} THEN 1 ELSE 0 END".format(pse_eligible)),
             ("pse_days_attended",
                 "CASE WHEN {} THEN COALESCE(df.sum_attended_child_ids, 0) ELSE NULL END".format(pse_eligible)),
-            ("lunch_count", "COALESCE(df.lunch_count, 0)"),
+            ("lunch_count", "CASE WHEN {} THEN COALESCE(df.lunch_count, 0) ELSE NULL END".format(pse_eligible)),
             # EBF Indicators
             ("ebf_eligible", "CASE WHEN {} THEN 1 ELSE 0 END".format(ebf_eligible)),
             ("ebf_in_month", "CASE WHEN {} THEN COALESCE(pnc.is_ebf, 0) ELSE 0 END".format(ebf_eligible)),

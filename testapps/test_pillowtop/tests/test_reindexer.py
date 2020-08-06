@@ -10,6 +10,7 @@ from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.tests.test_utils import delete_all_domains
 from corehq.apps.es import CaseES, CaseSearchES, DomainES, FormES, UserES, GroupES
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
 from corehq.apps.groups.tests.test_utils import delete_all_groups
 from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import reindex_and_clean
@@ -34,6 +35,7 @@ from testapps.test_pillowtop.utils import real_pillow_settings
 DOMAIN = 'reindex-test-domain'
 
 
+@es_test
 class PillowtopReindexerTest(TestCase):
     domain = DOMAIN
 
