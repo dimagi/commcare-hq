@@ -331,7 +331,7 @@ def scan(client, query=None, scroll='5m', **kwargs):
     return ScanResult(count, fetch_all(initial_resp))
 
 
-SIZE_LIMIT = 10000
+SIZE_LIMIT = 1000000
 SCROLL_PAGE_SIZE_LIMIT = 1000
 
 
