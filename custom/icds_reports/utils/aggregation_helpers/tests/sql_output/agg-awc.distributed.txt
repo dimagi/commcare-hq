@@ -75,6 +75,20 @@
 {"start_date": "2019-01-01T00:00:00"}
 
         UPDATE "tmp_agg_awc_2019-01-01_5" agg_awc SET
+            app_version = ut.app_version,
+            commcare_version = ut.commcare_version
+        FROM (
+            SELECT
+                app_version,
+                commcare_version
+            FROM "icds_dashboard_app_version"
+            WHERE month = %(start_date)s
+        ) ut
+        WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id and agg_awc.supervisor_id=ut.supervisor_id;
+        
+{"start_date": "2019-01-01T00:00:00"}
+
+        UPDATE "tmp_agg_awc_2019-01-01_5" agg_awc SET
            cases_household = ut.cases_household,
            is_launched = CASE WHEN ut.all_cases_household>0 THEN 'yes' ELSE 'no' END,
            num_launched_states = CASE WHEN ut.all_cases_household>0 THEN 1 ELSE 0 END,
