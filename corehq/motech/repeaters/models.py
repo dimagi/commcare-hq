@@ -287,10 +287,10 @@ class Repeater(QuickCachedDocumentMixin, Document):
             return True
         if self.last_success_at is None:
             # Never succeeded, but never failed either: Nothing sent yet.
-            return self.failure_streak == 0:
+            return self.failure_streak == 0
         else:
             # Has succeeded at least once in the last 3 months
-            return datetime.utcnow() - self.last_success_at < three_months:
+            return datetime.utcnow() - self.last_success_at < three_months
 
     def clear_caches(self):
         super(Repeater, self).clear_caches()
