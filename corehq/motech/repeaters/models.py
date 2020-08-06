@@ -118,8 +118,10 @@ from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
 
 from .const import (
+    AUTOPAUSE_THRESHOLD,
     MAX_RETRY_WAIT,
     MIN_RETRY_WAIT,
+    RATELIMIT_RETRIES_THRESHOLD,
     RECORD_CANCELLED_STATE,
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
@@ -279,8 +281,8 @@ class Repeater(QuickCachedDocumentMixin, Document):
         based on past success.
         """
         three_months = timedelta(days=90)
-        if self.failure_streak > 10_000:
-            # 10,000 misses without a single hit.
+        if self.failure_streak > AUTOPAUSE_THRESHOLD:
+            # Too many misses without a hit.
             return False
         if datetime.utcnow() - self.started_at < three_months:
             # Three months grace period to get it working
@@ -817,12 +819,16 @@ class RepeatRecord(Document):
         assert self.succeeded is False
         assert self.next_check is not None
         now = datetime.utcnow()
+        if self.repeater.failure_streak > RATELIMIT_RETRIES_THRESHOLD:
+            retry_interval = MAX_RETRY_WAIT
+        else:
+            retry_interval = _get_retry_interval(self.last_checked, now)
         return RepeatRecordAttempt(
             cancelled=False,
             datetime=now,
             failure_reason=failure_reason,
             success_response=None,
-            next_check=now + _get_retry_interval(self.last_checked, now),
+            next_check=now + retry_interval,
             succeeded=False,
         )
 
