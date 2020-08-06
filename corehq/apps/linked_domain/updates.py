@@ -1,13 +1,11 @@
+from copy import copy
 from functools import partial
 
 from django.utils.translation import ugettext as _
 
 from toggle.shortcuts import set_toggle
 
-from corehq.apps.case_search.models import (
-    CaseSearchConfig,
-    CaseSearchQueryAddition,
-)
+from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.custom_data_fields.models import (
     CustomDataFieldsDefinition,
     Field,
@@ -173,6 +171,8 @@ def update_user_roles(domain_link):
         reduce=False,
     )
     local_roles_by_name = {role.name: role for role in local_roles}
+
+    # Update downstream roles based on upstream roles
     for role_def in master_results:
         role = local_roles_by_name.get(role_def['name'])
         if role:
@@ -180,8 +180,21 @@ def update_user_roles(domain_link):
         else:
             role_json = {'domain': domain_link.linked_domain}
 
+        role_def = copy(role_def)
+        role_def.pop('_id')
         role_json.update(role_def)
+        local_roles_by_name[role_json['name']] = role_json
         UserRole.wrap(role_json).save()
+
+    # Update assignable_by ids - must be done after main update to guarantee all local roles have ids
+    master_roles_by_id = {role['_id']: role for role in master_results}
+    for role in local_roles_by_name.values():
+        if role['assignable_by']:
+            role['assignable_by'] = [
+                local_roles_by_name[master_roles_by_id[role_id]['name']]['_id']
+                for role_id in role['assignable_by']
+            ]
+            UserRole.wrap(role).save()
 
 
 def update_case_search_config(domain_link):
@@ -190,22 +203,13 @@ def update_case_search_config(domain_link):
         case_search_config = remote_properties['config']
         if not case_search_config:
             return
-        query_addition = remote_properties['addition']
     else:
         try:
             case_search_config = CaseSearchConfig.objects.get(domain=domain_link.master_domain).to_json()
         except CaseSearchConfig.DoesNotExist:
             return
 
-        try:
-            query_addition = CaseSearchQueryAddition.objects.get(domain=domain_link.master_domain).to_json()
-        except CaseSearchQueryAddition.DoesNotExist:
-            query_addition = None
-
     CaseSearchConfig.create_model_and_index_from_json(domain_link.linked_domain, case_search_config)
-
-    if query_addition:
-        CaseSearchQueryAddition.create_from_json(domain_link.linked_domain, query_addition)
 
 
 def _convert_reports_permissions(domain_link, master_results):

@@ -2,6 +2,7 @@ from django.test import override_settings, TestCase
 from corehq.util.es.elasticsearch import ConnectionError
 
 from corehq.apps.es import FormES
+from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
@@ -17,6 +18,7 @@ DOMAIN = 'report-xform-pillowtest-domain'
 
 
 @override_settings(ES_XFORM_FULL_INDEX_DOMAINS=[DOMAIN])
+@es_test
 class ReportXformPillowTest(TestCase):
 
     def setUp(self):

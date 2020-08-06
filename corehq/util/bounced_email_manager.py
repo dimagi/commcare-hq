@@ -3,19 +3,20 @@ import email
 import json
 import re
 
-from dateutil.parser import parse as parse_datetime
-
 from django.conf import settings
 
+from corehq.util.email_event_utils import (
+    record_permanent_bounce,
+    record_complaint,
+    record_transient_bounce,
+    get_relevant_aws_meta,
+)
 from corehq.util.metrics import metrics_counter
 from corehq.util.models import (
     BouncedEmail,
     BounceType,
     NotificationType,
-    PermanentBounceMeta,
-    ComplaintBounceMeta,
     TransientBounceEmail,
-    AwsMeta,
 )
 from corehq.util.soft_assert import soft_assert
 
@@ -110,34 +111,10 @@ class BouncedEmailManager(object):
         if not message_info:
             return aws_info
 
-        mail_info = message_info.get('mail', {})
-        if message_info['notificationType'] == NotificationType.BOUNCE:
-            bounce_info = message_info['bounce']
-            for recipient in bounce_info['bouncedRecipients']:
-                aws_info.append(AwsMeta(
-                    notification_type=message_info['notificationType'],
-                    main_type=bounce_info['bounceType'],
-                    sub_type=bounce_info['bounceSubType'],
-                    timestamp=parse_datetime(bounce_info['timestamp']),
-                    email=recipient['emailAddress'],
-                    reason=recipient.get('diagnosticCode'),
-                    headers=mail_info.get('commonHeaders', {}),
-                    destination=mail_info.get('destination', []),
-                ))
-        elif message_info['notificationType'] == NotificationType.COMPLAINT:
-            complaint_info = message_info['complaint']
-            for recipient in complaint_info['complainedRecipients']:
-                aws_info.append(AwsMeta(
-                    notification_type=message_info['notificationType'],
-                    main_type=message_info.get('complaintFeedbackType'),
-                    sub_type=complaint_info.get('complaintSubType'),
-                    timestamp=parse_datetime(complaint_info['timestamp']),
-                    email=recipient['emailAddress'],
-                    reason=None,
-                    headers=mail_info.get('commonHeaders', {}),
-                    destination=mail_info.get('destination', []),
-                ))
-        else:
+        if message_info['notificationType'] not in [
+            NotificationType.BOUNCE,
+            NotificationType.COMPLAINT,
+        ]:
             metrics_counter(
                 'commcare.bounced_email_manager.unknown_notification_type'
             )
@@ -150,6 +127,8 @@ class BouncedEmailManager(object):
                 f'[{settings.SERVER_ENVIRONMENT}] '
                 f'Unknown AWS Notification Type sent to Inbox. '
             )
+        else:
+            aws_info = get_relevant_aws_meta(message_info)
 
         return aws_info
 
@@ -164,38 +143,13 @@ class BouncedEmailManager(object):
         self.mail.expunge()
 
     def _record_permanent_bounce(self, aws_meta, uid):
-        bounced_email, _ = BouncedEmail.objects.update_or_create(
-            email=aws_meta.email,
-        )
-        exists = PermanentBounceMeta.objects.filter(
-            bounced_email=bounced_email,
-            timestamp=aws_meta.timestamp,
-            sub_type=aws_meta.sub_type,
-        ).exists()
-        if not exists:
-            PermanentBounceMeta.objects.create(
-                bounced_email=bounced_email,
-                timestamp=aws_meta.timestamp,
-                sub_type=aws_meta.sub_type,
-                headers=aws_meta.headers,
-                reason=aws_meta.reason,
-                destination=aws_meta.destination,
-            )
+        record_permanent_bounce(aws_meta)
         if self.delete_processed_messages:
             self._delete_message_with_uid(uid)
         metrics_counter('commcare.bounced_email_manager.permanent_bounce_recorded')
 
     def _record_transient_bounce(self, aws_meta, uid):
-        exists = TransientBounceEmail.objects.filter(
-            email=aws_meta.email,
-            timestamp=aws_meta.timestamp,
-        ).exists()
-        if not exists:
-            TransientBounceEmail.objects.create(
-                email=aws_meta.email,
-                timestamp=aws_meta.timestamp,
-                headers=aws_meta.headers,
-            )
+        record_transient_bounce(aws_meta)
         if self.delete_processed_messages:
             self._delete_message_with_uid(uid)
         metrics_counter('commcare.bounced_email_manager.transient_bounce_recorded')
@@ -209,22 +163,7 @@ class BouncedEmailManager(object):
         self._record_permanent_bounce(aws_meta, uid)
 
     def _record_complaint(self, aws_meta, uid):
-        bounced_email, _ = BouncedEmail.objects.update_or_create(
-            email=aws_meta.email,
-        )
-        exists = ComplaintBounceMeta.objects.filter(
-            bounced_email=bounced_email,
-            timestamp=aws_meta.timestamp,
-        ).exists()
-        if not exists:
-            ComplaintBounceMeta.objects.create(
-                bounced_email=bounced_email,
-                timestamp=aws_meta.timestamp,
-                headers=aws_meta.headers,
-                feedback_type=aws_meta.main_type,
-                sub_type=aws_meta.sub_type,
-                destination=aws_meta.destination,
-            )
+        record_complaint(aws_meta)
         if self.delete_processed_messages:
             self._delete_message_with_uid(uid)
         metrics_counter('commcare.bounced_email_manager.complaint_recorded')
@@ -265,11 +204,6 @@ class BouncedEmailManager(object):
                 self._label_problem_email(
                     uid,
                     extra_labels=["FormattingIssues"]
-                )
-                _bounced_email_soft_assert(
-                    False,
-                    f'[{settings.SERVER_ENVIRONMENT}] '
-                    f'Issue processing AWS Notification Message: {e}'
                 )
 
     @staticmethod

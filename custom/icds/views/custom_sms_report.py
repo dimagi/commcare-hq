@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
 
-from corehq import toggles
+from custom.icds import icds_toggles
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
 from corehq.apps.sms.views import BaseMessagingSectionView
 from custom.icds.forms import CustomSMSReportRequestForm
@@ -11,7 +11,7 @@ from custom.icds_core.const import SMSUsageReport_urlname
 from custom.icds.utils.custom_sms_report import CustomSMSReportTracker
 
 
-@method_decorator(toggles.ICDS_CUSTOM_SMS_REPORT.required_decorator(), name='dispatch')
+@method_decorator(icds_toggles.ICDS_CUSTOM_SMS_REPORT.required_decorator(), name='dispatch')
 class SMSUsageReport(BaseMessagingSectionView):
     template_name = 'icds/sms/custom_sms_report.html'
     urlname = SMSUsageReport_urlname

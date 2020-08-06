@@ -16,6 +16,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.es import CaseES, UserES
 from corehq.apps.es.aggregations import MISSING_KEY
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS, get_case_by_identifier
 from corehq.apps.locations.tests.util import setup_locations_and_types, restrict_user_by_location
@@ -61,6 +62,7 @@ from corehq.util.elastic import ensure_index_deleted, reset_es_index
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
 
 
+@es_test
 class BaseESAccessorsTest(TestCase):
     es_index_info = None
 
@@ -811,6 +813,7 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.assertEqual(user_ids, 'u2')
 
 
+@es_test
 class TestUserESAccessors(TestCase):
 
     def setUp(self):
@@ -887,6 +890,7 @@ class TestUserESAccessors(TestCase):
         mirror.delete()
 
 
+@es_test
 class TestGroupESAccessors(SimpleTestCase):
 
     def setUp(self):

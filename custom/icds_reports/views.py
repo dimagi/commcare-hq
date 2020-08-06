@@ -27,7 +27,7 @@ from couchexport.shortcuts import export_response
 from custom.icds_reports.utils.topojson_util.topojson_util import get_block_topojson_for_state, get_map_name
 from dimagi.utils.dates import add_months, force_to_date
 
-from corehq import toggles
+from custom.icds import icds_toggles
 from corehq.apps.domain.decorators import api_auth, login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
@@ -42,7 +42,6 @@ from corehq.apps.users.models import Permissions, UserRole
 from corehq.blobs.exceptions import NotFound
 from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.toggles import ICDS_DASHBOARD_TEMPORARY_DOWNTIME
 from corehq.util.files import safe_filename_header
 from corehq.util.view_utils import reverse
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
@@ -264,7 +263,7 @@ from .exceptions import InvalidLocationTypeException
 from custom.icds_reports.reports.poshan_progress_dashboard_data import get_poshan_progress_dashboard_data
 
 DASHBOARD_CHECKS = [
-    toggles.DASHBOARD_ICDS_REPORT.required_decorator(),
+    icds_toggles.DASHBOARD_ICDS_REPORT.required_decorator(),
     require_permission(Permissions.view_report, 'custom.icds_reports.reports.reports.DashboardReport',
                        login_decorator=None),
     login_and_domain_required,
@@ -334,7 +333,7 @@ class DashboardView(TemplateView):
     @property
     def show_downtime(self):
         return (
-            ICDS_DASHBOARD_TEMPORARY_DOWNTIME.enabled(self.domain)
+            icds_toggles.ICDS_DASHBOARD_TEMPORARY_DOWNTIME.enabled(self.domain)
             and not self.request.GET.get('bypass-downtime')
         )
 
@@ -432,7 +431,7 @@ class BaseCasAPIView(View):
 
 @location_safe
 @method_decorator([login_and_domain_required,
-                   toggles.ENABLE_ICDS_DASHBOARD_RELEASE_NOTES_UPDATE.required_decorator()], name='dispatch')
+                   icds_toggles.ENABLE_ICDS_DASHBOARD_RELEASE_NOTES_UPDATE.required_decorator()], name='dispatch')
 class ReleaseNotesUpdateView(TemplateView):
     page_title = 'Update Dashboard Release Notes'
     urlname = 'update_dashboard_release_notes'
@@ -2214,7 +2213,7 @@ class DishaAPIView(BaseCasAPIView):
         }
         return {"message": error_messages[message_name]}
 
-    @method_decorator([api_auth, toggles.ICDS_DISHA_API.required_decorator()])
+    @method_decorator([api_auth, icds_toggles.ICDS_DISHA_API.required_decorator()])
     def get(self, request, *args, **kwargs):
 
         valid_query_month, error_message = self.get_valid_query_month(request.GET.get('month'),
@@ -2244,7 +2243,7 @@ class DishaAPIView(BaseCasAPIView):
 
 
 @location_safe
-@method_decorator([api_auth, toggles.ICDS_NIC_INDICATOR_API.required_decorator()], name='dispatch')
+@method_decorator([api_auth, icds_toggles.ICDS_NIC_INDICATOR_API.required_decorator()], name='dispatch')
 class NICIndicatorAPIView(View):
 
     def message(self, message_name):
@@ -2281,13 +2280,13 @@ class NICIndicatorAPIView(View):
 
 
 @location_safe
-@method_decorator([api_auth, toggles.AP_WEBSERVICE.required_decorator()], name='dispatch')
+@method_decorator([api_auth, icds_toggles.AP_WEBSERVICE.required_decorator()], name='dispatch')
 class APWebservice(View):
     def get(self, request, *args, **kwargs):
         return JsonResponse({'message': 'Connection Successful'})
 
 
-@method_decorator([login_and_domain_required, toggles.DAILY_INDICATORS.required_decorator()], name='dispatch')
+@method_decorator([login_and_domain_required, icds_toggles.DAILY_INDICATORS.required_decorator()], name='dispatch')
 class DailyIndicators(View):
     def get(self, request, *args, **kwargs):
 
@@ -2450,7 +2449,7 @@ class CasDataExportAPIView(View):
 
 
 @location_safe
-@method_decorator([api_auth, toggles.mwcd_indicators.required_decorator()], name='dispatch')
+@method_decorator([api_auth, icds_toggles.MWCD_INDICATORS.required_decorator()], name='dispatch')
 class MWCDDataView(View):
 
     def get(self, request, *args, **kwargs):
@@ -2468,7 +2467,7 @@ class MWCDDataView(View):
 
 
 @location_safe
-@method_decorator([api_auth, toggles.ICDS_GOVERNANCE_DASHABOARD_API.required_decorator()], name='dispatch')
+@method_decorator([api_auth, icds_toggles.ICDS_GOVERNANCE_DASHABOARD_API.required_decorator()], name='dispatch')
 class GovernanceAPIBaseView(View):
 
     @staticmethod
@@ -2644,7 +2643,7 @@ class GovernanceCBEAPI(GovernanceAPIBaseView):
 
 
 @location_safe
-@method_decorator([api_auth, toggles.ICDS_BIHAR_DEMOGRAPHICS_API.required_decorator()], name='dispatch')
+@method_decorator([api_auth, icds_toggles.ICDS_BIHAR_DEMOGRAPHICS_API.required_decorator()], name='dispatch')
 class BiharDemographicsAPI(BaseCasAPIView):
     def message(self, message_name):
         error_messages = {
@@ -2686,7 +2685,7 @@ class BiharDemographicsAPI(BaseCasAPIView):
 
 
 @location_safe
-@method_decorator([api_auth, toggles.ICDS_BIHAR_DEMOGRAPHICS_API.required_decorator()], name='dispatch')
+@method_decorator([api_auth, icds_toggles.ICDS_BIHAR_DEMOGRAPHICS_API.required_decorator()], name='dispatch')
 class BiharVaccinesAPI(BaseCasAPIView):
     def message(self, message_name):
         error_messages = {
@@ -2727,7 +2726,7 @@ class BiharVaccinesAPI(BaseCasAPIView):
         return JsonResponse(data=response_json)
 
 @location_safe
-@method_decorator([api_auth, toggles.ICDS_BIHAR_DEMOGRAPHICS_API.required_decorator()], name='dispatch')
+@method_decorator([api_auth, icds_toggles.ICDS_BIHAR_DEMOGRAPHICS_API.required_decorator()], name='dispatch')
 class BiharSchoolAPI(BaseCasAPIView):
     def message(self, message_name):
         error_messages = {
@@ -2770,7 +2769,7 @@ class BiharSchoolAPI(BaseCasAPIView):
 
 
 @location_safe
-@method_decorator([api_auth, toggles.ICDS_BIHAR_DEMOGRAPHICS_API.required_decorator()], name='dispatch')
+@method_decorator([api_auth, icds_toggles.ICDS_BIHAR_DEMOGRAPHICS_API.required_decorator()], name='dispatch')
 class BiharMotherDetailsAPI(BaseCasAPIView):
     def message(self, message_name):
         error_messages = {

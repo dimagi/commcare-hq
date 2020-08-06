@@ -1,6 +1,7 @@
 {
   "domains": [
-    "up-nrhm"
+    "up-nrhm",
+    "nhm-af-up"
   ],
   "server_environment": ["production"],
   "config": {
