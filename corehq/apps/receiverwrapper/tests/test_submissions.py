@@ -292,11 +292,15 @@ class SubmissionTestSQL(SubmissionTest):
         old_form = acc.get_form(new_form.deprecated_form_id)
         self.assertIn(b"<bop>bang</bop>", old_form.get_xml())
         self.assertIn(b"<bop>bong</bop>", new_form.get_xml())
-        self.assertEqual(list_attachments(old_form),
-            [("audio_file.mp3", b"fake audio"), ("image.jpg", b"fake image")])
+        self.assertEqual(
+            list_attachments(old_form),
+            [("audio_file.mp3", b"fake audio"), ("image.jpg", b"fake image")]
+        )
         # assert missing attachment retained from the old form and the one re-uploaded updated
-        self.assertEqual(list_attachments(new_form),
-            [("audio_file.mp3", b"fake audio"), ("image.jpg", b"other fake image")])
+        self.assertEqual(
+            list_attachments(new_form),
+            [("audio_file.mp3", b"fake audio"), ("image.jpg", b"other fake image")]
+        )
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
