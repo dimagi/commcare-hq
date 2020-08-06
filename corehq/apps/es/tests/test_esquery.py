@@ -1,16 +1,15 @@
 from copy import deepcopy
 from django.conf import settings
 from django.test import SimpleTestCase
-from nose.plugins.attrib import attr
 from mock import patch
 
 from corehq.apps.es import filters, forms, users
 from corehq.apps.es.es_query import HQESQuery
-from corehq.apps.es.tests.utils import ElasticTestMixin
+from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.elastic import SIZE_LIMIT
 
 
-@attr(es_test=True)
+@es_test
 class TestESQuery(ElasticTestMixin, SimpleTestCase):
     maxDiff = 1000
 
