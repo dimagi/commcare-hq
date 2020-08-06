@@ -72,6 +72,7 @@ def icds_ucr_expressions():
         ('icds_get_last_case_property_update', 'custom.icds_reports.ucr.expressions.get_last_case_property_update'),
         ('icds_get_case_forms_in_date', 'custom.icds_reports.ucr.expressions.get_forms_in_date_expression'),
         ('icds_get_app_version', 'custom.icds_reports.ucr.expressions.get_app_version'),
+        ('icds_get_commcare_version', 'custom.icds_reports.ucr.expressions.get_commcare_version'),
         ('icds_datetime_now', 'custom.icds_reports.ucr.expressions.datetime_now'),
         ('icds_boolean', 'custom.icds_reports.ucr.expressions.boolean_question'),
         ('icds_user_location', 'custom.icds_reports.ucr.expressions.icds_user_location'),
