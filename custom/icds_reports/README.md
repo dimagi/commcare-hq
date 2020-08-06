@@ -15,6 +15,19 @@ This does not include populating any data.
 - Add an `'icds-ucr'` entry to `settings.REPORTING_DATABASES` pointing at the desired key from
   `settings.DATABASES` where you want the report data tables to live.
 - Update your `settings.SERVER_ENVIRONMENT` to `'icds'`
+- Add the following to localsettings:
+
+```
+LOCAL_APPS = (
+    "custom.icds",
+    "custom.icds.data_management",
+    "custom.icds_reports",
+)
+
+COMMCARE_EXTENSIONS = [
+    "custom.icds.commcare_extensions",
+]
+```
 
 ## Citus setup
 

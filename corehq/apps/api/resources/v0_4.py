@@ -14,7 +14,7 @@ from casexml.apps.case.xform import get_case_updates
 from corehq.apps.api.query_adapters import GroupQuerySetAdapter
 from couchforms.models import doc_types
 
-from corehq.apps.api.es import ElasticAPIQuerySet, XFormES, es_search
+from corehq.apps.api.es import ElasticAPIQuerySet, FormESView, es_query_from_get_params
 from corehq.apps.api.fields import (
     ToManyDictField,
     ToManyDocumentsField,
@@ -146,23 +146,15 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
         return self.xform_es(domain).get_document(instance_id)
 
     def xform_es(self, domain):
-        return MOCK_XFORM_ES or XFormES(domain)
+        return MOCK_XFORM_ES or FormESView(domain)
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        include_archived = 'include_archived' in bundle.request.GET
         try:
-            es_query = es_search(bundle.request, domain, ['include_archived'])
+            es_query = es_query_from_get_params(bundle.request.GET, domain, ['include_archived'])
         except Http400 as e:
             raise BadRequest(str(e))
-        if include_archived:
-            es_query['filter']['and'].append({'or': [
-                {'term': {'doc_type': 'xforminstance'}},
-                {'term': {'doc_type': 'xformarchived'}},
-            ]})
-        else:
-            es_query['filter']['and'].append({'term': {'doc_type': 'xforminstance'}})
 
-        # Note that XFormES is used only as an ES client, for `run_query` against the proper index
+        # Note that FormESView is used only as an ES client, for `run_query` against the proper index
         return ElasticAPIQuerySet(
             payload=es_query,
             model=ESXFormInstance,

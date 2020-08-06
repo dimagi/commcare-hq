@@ -22,7 +22,6 @@ from base64 import b64encode
 from io import BytesIO
 from dateutil.relativedelta import relativedelta
 from django.template.loader import render_to_string, get_template
-from django.conf import settings
 from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
@@ -49,6 +48,7 @@ from custom.icds_reports.const import (
     THR_REPORT_DAY_BENEFICIARY_TYPE,
     THR_21_DAYS_THRESHOLD_DATE
 )
+from custom.icds_reports.exceptions import InvalidLocationTypeException
 
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.queries import get_test_state_locations_id, get_test_district_locations_id
@@ -720,6 +720,8 @@ def create_excel_file(excel_data, data_type, file_format, blob_key=None, timeout
 
 
 def create_pdf_file(pdf_context):
+    from custom.icds.const import ICDS_APPS_ROOT
+
     pdf_hash = uuid.uuid4().hex
     template = get_template("icds_reports/icds_app/pdf/issnip_monthly_register.html")
     resultFile = BytesIO()
@@ -728,7 +730,7 @@ def create_pdf_file(pdf_context):
         pdf_page = template.render(pdf_context)
     except Exception as ex:
         pdf_page = str(ex)
-    base_url = os.path.join(settings.FILEPATH, 'custom', 'icds_reports', 'static')
+    base_url = os.path.join(ICDS_APPS_ROOT, 'icds_reports', 'static')
     resultFile.write(HTML(string=pdf_page, base_url=base_url).write_pdf(
         stylesheets=[CSS(os.path.join(base_url, 'css', 'issnip_monthly_print_style.css')), ])
     )
@@ -1475,12 +1477,19 @@ def create_service_delivery_report(excel_data, data_type, config):
                                                       'Growth Monitoring (Children 3-5 years)',
                                                       ]
 
-    secondary_headers = ['Not provided',
-                         'Provided for 1-7 days',
-                         'Provided for 8-14 days',
-                         'Provided for 15-20 days',
-                         'Provided for 21-24 days',
-                         'Provided for at least 25 days (>=25 days)']
+    secondary_headers_sn = ['Not provided',
+                            'Provided for 1-7 days',
+                            'Provided for 8-14 days',
+                            'Provided for 15-20 days',
+                            'Provided for 21-24 days',
+                            'Provided for at least 25 days (>=25 days)']
+
+    secondary_headers_pse = ['Not Attended',
+                             'Attended for 1-7 days',
+                             'Attended for 8-14 days',
+                             'Attended for 15-20 days',
+                             'Attended for 21-24 days',
+                             'Attended for at least 25 days (>=25 days)']
 
     workbook = Workbook()
     worksheet = workbook.active
@@ -1540,6 +1549,13 @@ def create_service_delivery_report(excel_data, data_type, config):
                                                    get_column_letter(current_column_location + 17)))
 
             current_column_location_sec_header = current_column_location
+
+            if primary_header in ['Supplementary Nutrition (Children 3-6 years)',
+                                  'Take Home Ration  (Pregnant women, lactating women and children 0-3 years)']:
+                secondary_headers = secondary_headers_sn
+            else:
+                secondary_headers = secondary_headers_pse
+
             for sec_header in secondary_headers:
                 cell_name = get_column_letter(current_column_location_sec_header)
                 cell = worksheet['{}2'.format(cell_name)]
@@ -2299,7 +2315,7 @@ def filter_cas_data_export(export_file, location):
                     index_of_location_type_name_column = i
                     break
             else:
-                raise InvalidLocationType(f'{location.location_type.name} is not a valid location option for cas data exports')
+                raise InvalidLocationTypeException(f'{location.location_type.name} is not a valid location option for cas data exports')
             writer.writerow(headers)
             for row in reader:
                 if row[index_of_location_type_name_column] == location.name:

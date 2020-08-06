@@ -10,7 +10,7 @@ fi
 function setup() {
     [ -n "$1" ] && TEST="$1"
 
-    rm *.log *.lock || true
+    rm *.log || true
 
     scripts/uninstall-requirements.sh
     pip install -r requirements/test-requirements.txt
@@ -32,7 +32,7 @@ function setup() {
     fi
 
     if [ "$TEST" = "javascript" -o "$JS_SETUP" = "yes" ]; then
-        yarn install --progress=false
+        yarn install --progress=false --frozen-lockfile
     fi
 
     /mnt/wait.sh

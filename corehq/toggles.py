@@ -109,9 +109,14 @@ TAG_SOLUTIONS_CONDITIONAL = Tag(
 TAG_SOLUTIONS_LIMITED = Tag(
     name='Solutions - Limited Use',
     css_class='info',
-    description="These features are only available for our services projects. This may affect support and "
-    "pricing when the project is transitioned to a subscription. Limited Use Solutions Feature Flags cannot be "
-    "enabled by GS before emailing solutions-tech@dimagi.com and requesting the feature."
+    description=mark_safe(
+        'These features are only available for our services projects. This '
+        'may affect support and pricing when the project is transitioned to a '
+        'subscription. Limited Use Solutions Feature Flags cannot be enabled '
+        'by GS before submitting a <a href="https://docs.google.com/forms/d/e/'
+        '1FAIpQLSfsX0K05nqflGdboeRgaa40HMfFb2DjGUbP4cKJL76ieS_TAA/viewform">'
+        'SolTech Feature Flag Request</a>.'
+    )
 )
 TAG_INTERNAL = Tag(
     name='Internal Engineering Tools',
@@ -1961,6 +1966,13 @@ ICDS_LOCATION_REASSIGNMENT_AGG = StaticToggle(
 REFER_CASE_REPEATER = StaticToggle(
     'refer_case_repeater',
     'COVID: Allow refer case repeaters to be setup',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+WIDGET_DIALER = StaticToggle(
+    'widget_dialer',
+    'COVID: Enable usage of AWS Connect Dialer',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
 )

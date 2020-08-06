@@ -4,7 +4,6 @@ from mock import patch
 
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
-    CaseSearchQueryAddition,
     FuzzyProperties,
     IgnorePatterns,
 )
@@ -55,22 +54,6 @@ class TestLinkedCaseClaim(BaseLinkedCaseClaimTest):
         self.assertEqual(['a', 'b', 'c'], search_config.fuzzy_properties.all()[0].properties)
 
         self.assertNotEqual(search_config.pk, self.search_config.pk)
-
-    def test_query_addition(self):
-        name = 'test query addition'
-        addition = {'test': 'addition'}
-        self.query_addition = CaseSearchQueryAddition(
-            domain=self.domain,
-            name=name,
-            query_addition=addition,
-        )
-        self.query_addition.save()
-
-        update_case_search_config(self.domain_link)
-        query_addition = CaseSearchQueryAddition.objects.get(domain=self.domain_link.linked_domain)
-        self.assertEqual(name, query_addition.name)
-        self.assertEqual(addition, query_addition.query_addition)
-        self.assertNotEqual(query_addition.pk, self.query_addition.pk)
 
 
 class TestRemoteLinkedCaseClaim(BaseLinkedCaseClaimTest):

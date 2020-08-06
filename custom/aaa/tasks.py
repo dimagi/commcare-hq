@@ -4,8 +4,6 @@ from celery.task import task
 from dateutil.relativedelta import relativedelta
 from django.db import connections
 
-
-from corehq.sql_db.connections import get_aaa_db_alias
 from custom.aaa.dbaccessors import EligibleCoupleQueryHelper, PregnantWomanQueryHelper, ChildQueryHelper
 from custom.aaa.models import (
     AggAwc,
@@ -19,6 +17,7 @@ from custom.aaa.models import (
     Woman,
 )
 from custom.aaa.utils import build_location_filters, create_excel_file
+from custom.aaa.const import get_aaa_db_alias
 from dimagi.utils.dates import force_to_date
 
 

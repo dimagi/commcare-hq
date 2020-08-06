@@ -845,3 +845,14 @@ class PartialFormSubmissionTestCase(TouchformsTestCase):
 
         self.assertFalse(session.session_is_open)
         self.assertEqual(session.submission_id, form.form_id)
+
+    def testMultimediaSubmission(self):
+        # Register the case
+        incoming("999123", "reg pid123 1", "TEST")
+
+        incoming("999123", "mod pid123", "TEST")
+        incoming("999123", "1", "TEST", media_urls=['path/to/test.jpg'])
+        incoming("999123", "33333333", "TEST")
+
+        form = self.get_last_form_submission()
+        self.assertEqual(list(form.attachments.keys())[0], 'test.jpg')

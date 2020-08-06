@@ -68,6 +68,9 @@ def can_edit_report(request, report):
     if not request.can_access_all_locations:
         return False
 
+    if not request.couch_user.can_edit_reports():
+        return False
+
     ucr_toggle = toggle_enabled(request, toggles.USER_CONFIGURABLE_REPORTS)
     report_builder_toggle = toggle_enabled(request, toggles.REPORT_BUILDER)
     report_builder_beta_toggle = toggle_enabled(request, toggles.REPORT_BUILDER_BETA_GROUP)

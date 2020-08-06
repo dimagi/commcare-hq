@@ -5,7 +5,7 @@ import json
 import logging
 import re
 
-from corehq.sql_db.connections import get_icds_ucr_citus_db_alias
+from custom.icds_reports.utils.connections import get_icds_ucr_citus_db_alias
 from corehq.util.download import get_download_response
 from corehq.util.files import TransientTempfile
 from corehq.util.sentry import is_pg_cancelled_query_exception

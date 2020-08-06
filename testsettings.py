@@ -140,3 +140,15 @@ METRICS_PROVIDERS = [
 
 # timeout faster in tests
 ES_SEARCH_TIMEOUT = 5
+
+if os.path.exists("custom/icds"):
+    icds_apps = [
+        "custom.icds",
+        "custom.icds.data_management",
+        "custom.icds_reports"
+    ]
+    for app in icds_apps:
+        if app not in INSTALLED_APPS:
+            INSTALLED_APPS = (app,) + tuple(INSTALLED_APPS)
+
+    COMMCARE_EXTENSIONS.append("custom.icds.commcare_extensions")

@@ -4,6 +4,7 @@ from django.contrib import admin
 from django.shortcuts import render
 from django.views.generic import RedirectView, TemplateView
 
+from corehq.extensions import extension_points
 from corehq.apps.accounting.urls import \
     domain_specific as accounting_domain_specific
 from corehq.apps.app_manager.views.formdesigner import ping
@@ -66,7 +67,6 @@ domain_specific = [
     url(r'^data_dictionary/', include('corehq.apps.data_dictionary.urls')),
     url(r'^', include(hqwebapp_domain_specific)),
     url(r'^case/', include('corehq.apps.hqcase.urls')),
-    url(r'^case/', include('corehq.apps.case_search.urls')),
     url(r'^case_migrations/', include('corehq.apps.case_migrations.urls')),
     url(r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
     url(r'^fixtures/', include('corehq.apps.fixtures.urls')),
@@ -75,9 +75,6 @@ domain_specific = [
     url(r'^', include('custom.m4change.urls')),
     url(r'^dashboard/', include('corehq.apps.dashboard.urls')),
     url(r'^configurable_reports/', include('corehq.apps.userreports.urls')),
-    url(r'^', include('custom.icds_reports.urls')),
-    url(r'^', include('custom.icds.urls')),
-    url(r'^', include('custom.icds.data_management.urls')),
     url(r'^', include('custom.aaa.urls')),
     url(r'^champ_cameroon/', include('custom.champ.urls')),
     url(r'^motech/', include('corehq.motech.urls')),
@@ -90,7 +87,12 @@ domain_specific = [
     url(r'^remote_link/', include('corehq.apps.linked_domain.urls')),
     url(r'^translations/', include('corehq.apps.translations.urls')),
     url(r'^submit_feedback/$', submit_feedback, name='submit_feedback'),
+    url(r'^integration/', include('corehq.apps.integration.urls')),
 ]
+
+for url_module in extension_points.domain_specific_urls():
+    domain_specific.append(url(r'^', include(url_module)))
+
 
 urlpatterns = [
     url(r'^favicon\.ico$', RedirectView.as_view(
@@ -101,6 +103,7 @@ urlpatterns = [
     url(r'^register/', include('corehq.apps.registration.urls')),
     url(r'^a/(?P<domain>%s)/' % legacy_domain_re, include(domain_specific)),
     url(r'^account/', include('corehq.apps.settings.urls')),
+    url(r'^oauth/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     url(r'', include('corehq.apps.hqwebapp.urls')),
     url(r'', include('corehq.apps.domain.urls')),
     url(r'^hq/accounting/', include('corehq.apps.accounting.urls')),

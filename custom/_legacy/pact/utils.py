@@ -1,8 +1,11 @@
-from corehq.apps.api.es import ReportCaseES
+from corehq.apps.api.es import ReportCaseESView
 from pact.enums import PACT_DOTS_DATA_PROPERTY, PACT_DOMAIN
 from io import BytesIO
 from django.test.client import RequestFactory
 from corehq.apps.receiverwrapper.views import post
+from corehq.apps.es import filters
+from corehq.apps.es.cases import CaseES
+from corehq.apps.es.forms import FormES
 
 
 def submit_xform(url_path, domain, submission_xml_string, extra_meta=None):
@@ -107,83 +110,69 @@ def get_patient_display_cache(case_ids):
     """
     if len(case_ids) == 0:
         return {}
-    case_es = ReportCaseES(PACT_DOMAIN)
-    query = {
-        "fields": [
-            "_id",
-            "name",
-        ],
-        "script_fields": {
-            "case_id": {
-                "script": "_source._id"
-            },
-            "pactid": get_report_script_field("pactid"),
-            "first_name": get_report_script_field("first_name"),
-            "last_name": get_report_script_field("last_name"),
+    case_es = ReportCaseESView(PACT_DOMAIN)
+    query = (
+        CaseES()
+        .remove_default_filters()
+        .domain(PACT_DOMAIN)
+        .source(["_id", "name"])
+        .size(len(case_ids))
+    )
+    query = query.add_query({"ids": {"values": case_ids}})
+    query["script_fields"] = {
+        "case_id": {
+            "script": "_source._id"
         },
-        "filter": {
-            "and": [
-                {
-                    "term": {
-                        "domain.exact": "pact"
-                    }
-                },
-                {
-                    "ids": {
-                        "values": case_ids,
-                    }
-                }
-            ]
-        },
-        "size": len(case_ids)
+        "pactid": get_report_script_field("pactid"),
+        "first_name": get_report_script_field("first_name"),
+        "last_name": get_report_script_field("last_name"),
     }
-    res = case_es.run_query(query)
+    res = case_es.run_query(query.raw_query)
 
     from pact.reports.patient import PactPatientInfoReport
 
     ret = {}
     for entry in res['hits']['hits']:
-        case_id = entry['fields']['case_id']
-        ret[case_id] = entry['fields']
+        case_id = entry['case_id']
+        ret[case_id] = entry
         ret[case_id]['url'] = PactPatientInfoReport.get_url(*['pact']) + "?patient_id=%s" % case_id
 
     return ret
 
 
-REPORT_XFORM_MISSING_DOTS_QUERY = {
-    "query": {
-        "filtered": {
-            "query": {
-                "match_all": {}
-            },
-            "filter": {
-                "and": [
-                    {
-                        "term": {
-                            "domain.exact": "pact"
-                        }
-                    },
-                    {
-                        "term": {
-                            "form.#type": "dots_form"
-                        }
-                    },
-                    {
-                        "missing": {
-                            "field": "%s.processed.#type" % PACT_DOTS_DATA_PROPERTY,
-                        }
-                    }
-                ]
-            }
-        },
-    },
-    "fields": [],
-    "sort": {
-        "received_on": "asc"
-    },
-    "size": 1
+DEFAULT_SIZE = 10
 
-}
+
+def get_base_form_es_query(start=0, size=DEFAULT_SIZE):
+    return (FormES()
+        .remove_default_filters()
+        .domain(PACT_DOMAIN)
+        .filter(filters.term('doc_type', 'XFormInstance'))
+        .start(start)
+        .size(size))
+
+
+def get_base_case_es_query(start=0, size=DEFAULT_SIZE):
+    return (CaseES()
+        .remove_default_filters()
+        .domain(PACT_DOMAIN)
+        .start(start)
+        .size(size))
+
+
+def get_by_case_id_form_es_query(start, size, case_id):
+    base_query = get_base_form_es_query(start, size)
+    return (base_query
+        .filter(
+            filters.nested(
+                'form.case',
+                filters.OR(
+                    filters.term('form.case.@case_id', case_id),
+                    filters.term('form.case.case_id', case_id)
+                )
+            )
+        )
+    )
 
 
 def get_report_script_field(field_path, is_known=False):

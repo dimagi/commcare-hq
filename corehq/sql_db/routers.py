@@ -1,5 +1,4 @@
 import os
-
 from contextlib import ContextDecorator
 from threading import local
 
@@ -7,13 +6,7 @@ from django.conf import settings
 from django.db import DEFAULT_DB_ALIAS
 
 from corehq.sql_db.config import plproxy_standby_config
-from corehq.sql_db.connections import (
-    AAA_DB_ENGINE_ID,
-    ICDS_UCR_CITUS_ENGINE_ID,
-    connection_manager,
-    get_aaa_db_alias,
-    get_icds_ucr_citus_db_alias,
-)
+from corehq.sql_db.connections import connection_manager, get_db_alias_or_none
 from corehq.sql_db.util import select_db_for_read, select_plproxy_db_for_read
 
 from .config import plproxy_config
@@ -31,10 +24,8 @@ PROXY_STANDBY_APP = 'sql_proxy_standby_accessors'
 FORM_PROCESSOR_APP = 'form_processor'
 BLOB_DB_APP = 'blobs'
 SQL_ACCESSORS_APP = 'sql_accessors'
-ICDS_REPORTS_APP = 'icds_reports'
 SCHEDULING_PARTITIONED_APP = 'scheduling_partitioned'
 SYNCLOGS_APP = 'phone'
-AAA_APP = 'aaa'
 
 
 class MultiDBRouter(object):
@@ -79,13 +70,14 @@ def allow_migrate(db, app_label, model_name=None):
     if db and not settings.DATABASES[db].get('MIGRATE', True):
         return False
 
-    if app_label == ICDS_REPORTS_APP:
-        db_alias = get_icds_ucr_citus_db_alias()
+    custom_routing = settings.CUSTOM_DB_ROUTING
+    if app_label in custom_routing:
+        db_alias = custom_routing[app_label]
+        if db_alias not in settings.DATABASES:
+            db_alias = get_db_alias_or_none(db_alias)
         return bool(db_alias and db_alias == db)
-    elif app_label == AAA_APP:
-        db_alias = get_aaa_db_alias()
-        return bool(db_alias and db_alias == db)
-    elif app_label == SYNCLOGS_APP:
+
+    if app_label == SYNCLOGS_APP:
         return db == settings.SYNCLOGS_SQL_DB_ALIAS
 
     if not settings.USE_PARTITIONED_DATABASE:
@@ -125,13 +117,12 @@ def db_for_read_write(model, write=True, hints=None):
 
     if app_label == SYNCLOGS_APP:
         return settings.SYNCLOGS_SQL_DB_ALIAS
-    elif app_label == ICDS_REPORTS_APP:
-        return connection_manager.get_django_db_alias(ICDS_UCR_CITUS_ENGINE_ID)
-    elif app_label == AAA_APP:
-        engine_id = AAA_DB_ENGINE_ID
-        if not write:
-            return connection_manager.get_load_balanced_read_db_alias(AAA_DB_ENGINE_ID)
-        return connection_manager.get_django_db_alias(engine_id)
+
+    if app_label in settings.CUSTOM_DB_ROUTING:
+        db_alias = settings.CUSTOM_DB_ROUTING[app_label]
+        if db_alias not in settings.DATABASES:
+            db_alias = connection_manager.get_django_db_alias(db_alias)
+        return db_alias
 
     if not settings.USE_PARTITIONED_DATABASE:
         return DEFAULT_DB_ALIAS
