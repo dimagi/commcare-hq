@@ -225,7 +225,7 @@ function DownloadController($scope, $rootScope, $location, locationHierarchy, lo
     };
 
     vm.userLocationIdIsNull = function () {
-        return ["null", "undefined"].indexOf(vm.userLocationId) !== -1;
+        return ["null", "undefined", null, undefined].indexOf(vm.userLocationId) !== -1;
     };
 
     vm.isUserLocationIn = function (locations) {

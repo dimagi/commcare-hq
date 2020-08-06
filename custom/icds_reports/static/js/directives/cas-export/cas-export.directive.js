@@ -140,7 +140,7 @@ function CasExportController($window, $location, locationHierarchy, locationsSer
     };
 
     vm.userLocationIdIsNull = function () {
-        return ["null", "undefined"].indexOf(vm.userLocationId) !== -1;
+        return ["null", "undefined", null, undefined].indexOf(vm.userLocationId) !== -1;
     };
 
     vm.preventShowingAllOption = function (locations) {
