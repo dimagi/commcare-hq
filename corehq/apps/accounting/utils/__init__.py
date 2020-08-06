@@ -415,6 +415,7 @@ def get_paused_plan_context(request, domain):
     previous_edition = (current_sub.previous_subscription.plan_version.plan.edition
                         if current_sub.previous_subscription else "")
     return {
+        'is_trial' : current_sub.previous_subscription.is_trial,
         'is_paused': True,
         'previous_edition': previous_edition,
         'paused_date': current_sub.date_start.strftime(USER_DATE_FORMAT),
