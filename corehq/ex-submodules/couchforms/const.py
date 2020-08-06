@@ -1,3 +1,7 @@
+from abc import ABC
+
+from django.http import HttpResponse, HttpResponseBadRequest
+
 
 TAG_TYPE = "#type"
 TAG_XML = "#xml"
@@ -25,10 +29,22 @@ SUPPORTED_MEDIA_FILE_EXTENSIONS = [
 PERMITTED_FORM_SUBMISSION_FILE_EXTENSIONS = ['xml']
 
 
-class BadRequest(object):
-
+class InvalidRequest(ABC):
     def __init__(self, message):
         self.message = message
+
+    def response(self):
+        raise NotImplementedError()
+
+
+class BadRequest(InvalidRequest):
+    def response(self):
+        return HttpResponseBadRequest(self.message)
+
+
+class UnprocessableRequest(InvalidRequest):
+    def response(self):
+        return HttpResponse(self.message, status=422)
 
 
 MULTIPART_FILENAME_ERROR = BadRequest((
@@ -36,12 +52,12 @@ MULTIPART_FILENAME_ERROR = BadRequest((
     'You may also do a normal (non-multipart) post '
     'with the xml submission as the request body instead.\n'
 ) % MAGIC_PROPERTY)
-MULTIPART_INVALID_SUBMISSION_FILE_EXTENSION_ERROR = BadRequest((
+MULTIPART_INVALID_SUBMISSION_FILE_EXTENSION_ERROR = UnprocessableRequest((
     'If you use multipart/form-data, please use xml file only for submitting form xml.\n'
     'You may also do a normal (non-multipart) post '
     'with the xml submission as the request body instead.\n'
 ))
-MULTIPART_INVALID_ATTACHMENT_FILE_EXTENSION_ERROR = BadRequest(
+MULTIPART_INVALID_ATTACHMENT_FILE_EXTENSION_ERROR = UnprocessableRequest(
     "If you use multipart/form-data, please use the following supported file extensions for attachments:\n"
     f"{', '.join(SUPPORTED_MEDIA_FILE_EXTENSIONS)}"
 )

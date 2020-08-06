@@ -132,7 +132,7 @@ class SubmissionTest(BaseSubmissionTest):
 
     def test_invalid_form_submission_file_extension(self):
         response = self._submit('suspicious_form.abc', url=reverse("receiver_secure_post", args=[self.domain]))
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 422)
         self.assertEqual(
             response.content.decode('utf-8'),
             'If you use multipart/form-data, please use xml file only for submitting form xml.\n'
@@ -144,7 +144,7 @@ class SubmissionTest(BaseSubmissionTest):
         response = self._submit('simple_form.xml', attachments={
             "image.xyz": BytesIO(b"fake image"),
         })
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 422)
         self.assertEqual(
             response.content.decode('utf-8'),
             "If you use multipart/form-data, please use the following supported file extensions for attachments:\n"
