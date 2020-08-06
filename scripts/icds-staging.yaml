@@ -54,5 +54,5 @@ name: icds-autostaging
 deploy_env: icds-staging
 branches:
   - ap/restrict-unauthorized-users
-  - sb/icds-1686-logout-fix #SB July 31
+  - rn_remove_ff_from_location_security_check
 submodules: {}

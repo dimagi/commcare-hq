@@ -12,22 +12,63 @@ from corehq.apps.userreports.extension_points import (
     static_ucr_data_source_paths,
     static_ucr_report_paths,
 )
-from corehq.extensions.extension_points import (
-    domain_specific_urls,
+from corehq.extensions.extension_points import domain_specific_urls
+from corehq.tabs.extension_points import (
     uitab_dropdown_items,
+    uitab_sidebar_items, uitab_classes,
 )
 from corehq.toggles import custom_toggle_modules
 from custom.icds.const import ICDS_APPS_ROOT
-from custom.icds_core.const import ManageHostedCCZ_urlname
+from custom.icds_core.const import (
+    LocationReassignmentDownloadOnlyView_urlname,
+    LocationReassignmentView_urlname,
+    ManageHostedCCZ_urlname,
+    SMSUsageReport_urlname,
+)
 
 
 @uitab_dropdown_items.extend(domains=["icds-cas"])
-def icds_uitab_dropdown_items(tab, domain, request):
-    if tab == 'ApplicationsTab' and icds_toggles.MANAGE_CCZ_HOSTING.enabled_for_request(request):
+def icds_uitab_dropdown_items(tab_name, tab, domain, request):
+    if tab_name == 'ApplicationsTab' and icds_toggles.MANAGE_CCZ_HOSTING.enabled_for_request(request):
         return [{
             "title": _("Manage CCZ Hosting"),
             "url": reverse(ManageHostedCCZ_urlname, args=[domain]),
         }]
+
+
+@uitab_sidebar_items.extend(domains=["icds-cas"])
+def icds_uitab_sidebar_items(tab_name, tab, domain, request):
+
+    if tab_name == "ProjectReportsTab" and icds_toggles.PERFORM_LOCATION_REASSIGNMENT.enabled_for_request(request):
+        return [
+            (_("Tools"), [
+                {
+                    'title': _("Download Location Reassignment Template"),
+                    'url': reverse(LocationReassignmentDownloadOnlyView_urlname, args=[domain]),
+                    'icon': 'icon-tasks fa fa-download',
+                },
+            ]),
+        ]
+
+    if tab_name == "ProjectUsersTab" and icds_toggles.PERFORM_LOCATION_REASSIGNMENT.enabled_for_request(request):
+        return [
+            (_('Organization'), [
+                {
+                    'title': _("Location Reassignment"),
+                    'url': reverse(LocationReassignmentView_urlname, args=[domain])
+                }
+            ])
+        ]
+
+    if tab_name == "MessagingTab" and icds_toggles.ICDS_CUSTOM_SMS_REPORT.enabled_for_request(request):
+        return [
+            (_("Messages"), [
+                {
+                    'title': _('Get Custom SMS Usage Report'),
+                    'url': reverse(SMSUsageReport_urlname, args=[domain])
+                },
+            ]),
+        ]
 
 
 @domain_specific_urls.extend()
@@ -108,4 +149,12 @@ def icds_custom_domain_module(domain):
 def icds_toggle_modules():
     return [
         "custom.icds.icds_toggles",
+    ]
+
+
+@uitab_classes.extend()
+def icds_tabs():
+    from custom.icds.uitab import HostedCCZTab
+    return [
+        HostedCCZTab,
     ]
