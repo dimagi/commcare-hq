@@ -14,7 +14,7 @@ from corehq.apps.api.resources import v0_4
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.apps.es.tests.utils import ElasticTestMixin
+from corehq.apps.es.tests.utils import ElasticTestMixin, convert_to_es2
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.reportxform import transform_xform_for_report_forms_index
@@ -205,7 +205,11 @@ class TestXFormInstanceResourceQueries(APIResourceTest, ElasticTestMixin):
 
         # A bit of a hack since none of Python's mocking libraries seem to do basic spies easily...
         def mock_run_query(es_query):
-            self.checkQuery(es_query['query']['filtered']['filter']['and'], expected_query, is_raw_query=True)
+            if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+                actual = es_query['query']['bool']['filter']
+            else:
+                actual = es_query['query']['filtered']['filter']['and']
+            self.checkQuery(actual, expected_query, is_raw_query=True)
             return prior_run_query(es_query)
 
         fake_xform_es.run_query = mock_run_query
@@ -284,12 +288,14 @@ class TestXFormInstanceResourceQueries(APIResourceTest, ElasticTestMixin):
     def test_get_list_archived(self):
         expected = [
             {'term': {'domain.exact': 'qwerty'}},
-            {'or': (
+            {'bool': {'should': [
                 {'term': {'doc_type': 'xforminstance'}},
                 {'term': {'doc_type': 'xformarchived'}}
-            )},
+            ]}},
             {'match_all': {}}
         ]
+        if settings.ELASTICSEARCH_MAJOR_VERSION != 7:
+            expected = convert_to_es2(expected)
         self._test_es_query({'include_archived': 'true'}, expected)
 
 
@@ -325,4 +331,5 @@ class TestReportPillow(TestCase):
             cleaned = fn(bad_appVersion)
             self.assertFalse(isinstance(cleaned['form']['meta']['appVersion'], dict))
             self.assertTrue(isinstance(cleaned['form']['meta']['appVersion'], str))
-            self.assertTrue(cleaned['form']['meta']['appVersion'], "CCODK:\"2.5.1\"(11126). v236 CC2.5b[11126] on April-15-2013")
+            self.assertTrue(cleaned['form']['meta']['appVersion'],
+                "CCODK:\"2.5.1\"(11126). v236 CC2.5b[11126] on April-15-2013")

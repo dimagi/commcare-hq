@@ -57,8 +57,9 @@ class Queries:
             es2_query = getattr(self, name)()
             self.select = "es7"
             es7_query = getattr(self, name)()
-            assert isinstance(es2_query, dict), f"{name} {es2_query}"
-            assert isinstance(es7_query, dict), f"{name} {es7_query}"
+            assert isinstance(es2_query, (dict, list)), f"{name} {es2_query}"
+            assert isinstance(es7_query, (dict, list)), f"{name} {es7_query}"
+            assert type(es7_query) == type(es2_query), f"{name} {es7_query} {es2_query}"
             assert es2_query != es7_query, name
             yield name, es2_query, es7_query, convert
 
@@ -1279,6 +1280,44 @@ class Queries:
                 "size": SIZE_LIMIT
             }
         return json_output
+
+
+    @check_query("corehq/apps/api/tests/form_resources.py")
+    def test_get_list_archived(self):
+        def convert(expected):
+            expected = convert_to_es2(expected)
+            return expected
+        if self.select == "convert":
+            return convert
+        if self.is_es7():
+            expected = [
+                {
+                    "term": {
+                        "domain.exact": "qwerty"
+                    }
+                },
+                {
+                    "bool": {
+                        "should": [
+                            {"term": {"doc_type": "xforminstance"}},
+                            {"term": {"doc_type": "xformarchived"}}
+                        ]
+                    }
+                },
+                {
+                    "match_all": {}
+                }
+            ]
+        else:
+            expected = [
+                {'term': {'domain.exact': 'qwerty'}},
+                {'or': (
+                    {'term': {'doc_type': 'xforminstance'}},
+                    {'term': {'doc_type': 'xformarchived'}}
+                )},
+                {'match_all': {}}
+            ]
+        return expected
 
 
 if __name__ == "__main__":
