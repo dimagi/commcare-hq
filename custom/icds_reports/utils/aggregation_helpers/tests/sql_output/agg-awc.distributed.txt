@@ -79,6 +79,9 @@
             commcare_version = ut.commcare_version
         FROM (
             SELECT
+                awc_id,
+                supervisor_id,
+                month,
                 app_version,
                 commcare_version
             FROM "icds_dashboard_app_version"
