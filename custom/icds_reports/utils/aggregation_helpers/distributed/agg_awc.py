@@ -197,6 +197,9 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
             commcare_version = ut.commcare_version
         FROM (
             SELECT
+                awc_id,
+                supervisor_id,
+                month,
                 app_version,
                 commcare_version
             FROM "{app_version}"
