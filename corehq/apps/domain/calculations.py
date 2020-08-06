@@ -121,7 +121,7 @@ def inactive_cases_in_last(domain, days):
     now = datetime.utcnow()
     then = json_format_datetime(now - timedelta(days=int(days)))
 
-    return CaseES().domain(domain).modified_range(lt=then).is_closed(False).count()
+    return CaseES().domain(domain).modified_range(gte=then).is_closed(False).count()
 
 
 def forms(domain, *args):
