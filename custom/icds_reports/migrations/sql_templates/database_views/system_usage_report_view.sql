@@ -33,7 +33,9 @@ CREATE VIEW system_usage_report_view AS
         "agg_awc_monthly"."num_launched_supervisors" AS "num_launched_supervisors",
         "agg_awc_monthly"."block_map_location_name" AS "block_map_location_name",
         "agg_awc_monthly"."district_map_location_name" AS "district_map_location_name",
-        "agg_awc_monthly"."state_map_location_name" AS "state_map_location_name"
+        "agg_awc_monthly"."state_map_location_name" AS "state_map_location_name",
+        "agg_awc_monthly"."app_version" AS "app_version",
+        "agg_awc_monthly"."commcare_version" AS "commcare_version"
     FROM "agg_awc_monthly"
     LEFT JOIN agg_ls ON (
         ("agg_awc_monthly"."month" = "agg_ls"."month") AND

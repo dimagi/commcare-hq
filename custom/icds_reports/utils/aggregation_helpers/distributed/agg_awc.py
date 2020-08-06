@@ -7,7 +7,8 @@ from corehq.apps.userreports.util import get_table_name
 from corehq.toggles import ICDS_LOCATION_REASSIGNMENT_AGG
 
 from custom.icds_reports.utils.aggregation_helpers import get_child_health_temp_tablename, transform_day_to_month, get_agg_child_temp_tablename, get_prev_agg_tablename, is_current_month
-from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE, AGG_THR_V2_TABLE, AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE
+from custom.icds_reports.const import AGG_CCS_RECORD_CF_TABLE, AGG_THR_V2_TABLE, \
+    AGG_ADOLESCENT_GIRLS_REGISTRATION_TABLE, AGG_APP_VERSION_TABLE
 from custom.icds_reports.const import (
     AGG_CCS_RECORD_CF_TABLE,
     AGG_THR_V2_TABLE,
@@ -186,6 +187,25 @@ class AggAwcDistributedHelper(BaseICDSAggregationDistributedHelper):
         """.format(
             tablename=self.temporary_tablename,
             daily_attendance='daily_attendance',
+        ), {
+            'start_date': self.month_start
+        }
+
+        yield """
+        UPDATE "{tablename}" agg_awc SET
+            app_version = ut.app_version,
+            commcare_version = ut.commcare_version
+        FROM (
+            SELECT
+                app_version,
+                commcare_version
+            FROM "{app_version}"
+            WHERE month = %(start_date)s
+        ) ut
+        WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id and agg_awc.supervisor_id=ut.supervisor_id;
+        """.format(
+            tablename=self.temporary_tablename,
+            app_version=AGG_APP_VERSION_TABLE,
         ), {
             'start_date': self.month_start
         }
