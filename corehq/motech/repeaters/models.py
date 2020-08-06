@@ -286,14 +286,11 @@ class Repeater(QuickCachedDocumentMixin, Document):
             # Three months grace period to get it working
             return True
         if self.last_success_at is None:
-            if self.failure_streak == 0:
-                # Never succeeded, but never failed either: Nothing sent yet.
-                return True
+            # Never succeeded, but never failed either: Nothing sent yet.
+            return self.failure_streak == 0:
         else:
-            if datetime.utcnow() - self.last_success_at < three_months:
-                # Has succeeded at least once in the last 3 months
-                return True
-        return False
+            # Has succeeded at least once in the last 3 months
+            return datetime.utcnow() - self.last_success_at < three_months:
 
     def clear_caches(self):
         super(Repeater, self).clear_caches()
