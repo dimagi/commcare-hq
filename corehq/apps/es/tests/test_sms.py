@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.test.testcases import SimpleTestCase
-from nose.plugins.attrib import attr
 
 from corehq.apps.es.sms import SMSES
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
