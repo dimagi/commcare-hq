@@ -205,7 +205,8 @@ class TestXFormInstanceResourceQueries(APIResourceTest, ElasticTestMixin):
 
         # A bit of a hack since none of Python's mocking libraries seem to do basic spies easily...
         def mock_run_query(es_query):
-            self.checkQuery(es_query['query']['filtered']['filter']['and'], expected_query, is_raw_query=True)
+            actual = es_query['query']['bool']['filter']
+            self.checkQuery(actual, expected_query, is_raw_query=True)
             return prior_run_query(es_query)
 
         fake_xform_es.run_query = mock_run_query
@@ -284,10 +285,10 @@ class TestXFormInstanceResourceQueries(APIResourceTest, ElasticTestMixin):
     def test_get_list_archived(self):
         expected = [
             {'term': {'domain.exact': 'qwerty'}},
-            {'or': (
+            {'bool': {'should': [
                 {'term': {'doc_type': 'xforminstance'}},
                 {'term': {'doc_type': 'xformarchived'}}
-            )},
+            ]}},
             {'match_all': {}}
         ]
         self._test_es_query({'include_archived': 'true'}, expected)
@@ -325,4 +326,5 @@ class TestReportPillow(TestCase):
             cleaned = fn(bad_appVersion)
             self.assertFalse(isinstance(cleaned['form']['meta']['appVersion'], dict))
             self.assertTrue(isinstance(cleaned['form']['meta']['appVersion'], str))
-            self.assertTrue(cleaned['form']['meta']['appVersion'], "CCODK:\"2.5.1\"(11126). v236 CC2.5b[11126] on April-15-2013")
+            self.assertTrue(cleaned['form']['meta']['appVersion'],
+                "CCODK:\"2.5.1\"(11126). v236 CC2.5b[11126] on April-15-2013")
