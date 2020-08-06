@@ -37,7 +37,7 @@ class CustomSMSReportTracker(object):
 
     def remove_report(self, start_date: str, end_date: str):
         reports = self.active_reports
-        report_id = start_date + '--' + end_date
+        report_id = _get_report_id(start_date, end_date)
         updated_reports = [report for report in reports
                     if report != report_id]
         if len(updated_reports) == 0:
@@ -47,3 +47,7 @@ class CustomSMSReportTracker(object):
 
     def clear_all_reports(self):
         self.client.delete(self.report_key)
+
+
+def _get_report_id(start_date: str, end_date: str):
+    return start_date + '--' + end_date

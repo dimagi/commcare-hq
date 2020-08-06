@@ -8,7 +8,9 @@ from corehq.apps.sms.views import BaseMessagingSectionView
 from custom.icds.forms import CustomSMSReportRequestForm
 from custom.icds.tasks.sms import send_custom_sms_report
 from custom.icds_core.const import SMSUsageReport_urlname
-from custom.icds.utils.custom_sms_report import CustomSMSReportTracker
+from custom.icds.utils.custom_sms_report import CustomSMSReportTracker, _get_report_id
+
+from memoized import memoized
 
 
 @method_decorator(icds_toggles.ICDS_CUSTOM_SMS_REPORT.required_decorator(), name='dispatch')
@@ -19,26 +21,38 @@ class SMSUsageReport(BaseMessagingSectionView):
 
     @use_daterangepicker
     def dispatch(self, *args, **kwargs):
-        messages.info(self.request, _('Please note that this report takes a few hours to process.'))
         return super().dispatch(*args, **kwargs)
 
     @property
     def page_context(self):
-        report_tracker = CustomSMSReportTracker(self.request.domain)
-        reports_in_progress = report_tracker.active_reports
-        report_count = len(reports_in_progress)
+        report_count = len(self._get_active_reports())
         disable_submit = report_count >= 3
         if disable_submit:
             messages.error(self.request, 'Only 3 concurrent reports are allowed at a time.\
                 Please wait for them to finish.')
         if report_count > 0:
-            display_message = _prepare_display_message(reports_in_progress, report_count)
+            display_message = self._prepare_display_message()
             messages.info(self.request, display_message)
         self.request_form = CustomSMSReportRequestForm(disable_submit=disable_submit)
         return {
             'request_form': self.request_form,
             'disable_submit': disable_submit,
         }
+
+    @memoized
+    def _get_active_reports(self):
+        report_tracker = CustomSMSReportTracker(self.request.domain)
+        return report_tracker.active_reports
+
+    def _prepare_display_message(self):
+        reports_in_progress = self._get_active_reports()
+        report_count = len(reports_in_progress)
+        message = _('Reports in progress: ')
+        for index, report in enumerate(reports_in_progress):
+            message += '"{report_id}"'.format(report_id=report)
+            if index != report_count - 1:
+                message += ', '
+        return message
 
     def post(self, request, *args, **kwargs):
         report_tracker = CustomSMSReportTracker(request.domain)
@@ -85,15 +99,6 @@ class SMSUsageReport(BaseMessagingSectionView):
         return has_errors
 
 
-def _prepare_display_message(reports_in_progress, report_count):
-    message = _('Reports in progress: ')
-    for index, report in enumerate(reports_in_progress):
-        message += '"{report_id}"'.format(report_id=report)
-        if index != report_count - 1:
-            message += ', '
-    return message
-
-
 def _report_already_in_progress(reports, start_date: str, end_date: str):
-    report_id = start_date + '--' + end_date
+    report_id = _get_report_id(start_date, end_date)
     return any(report == report_id for report in reports)

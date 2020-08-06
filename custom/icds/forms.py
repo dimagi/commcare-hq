@@ -188,7 +188,8 @@ class CustomSMSReportRequestForm(forms.Form):
         widget=forms.TextInput(
             attrs={'class': 'form-control', 'id': 'date_range_selector'}
         ),
-        required=True
+        required=True,
+        help_text='Please note that this report takes a few hours to process.'
     )
 
     start_date = forms.CharField(widget=forms.HiddenInput(
@@ -199,8 +200,7 @@ class CustomSMSReportRequestForm(forms.Form):
     ), required=True)
 
     def __init__(self, *args, **kwargs):
-        disable_submit = kwargs.pop('disable_submit') if 'disable_submit' in kwargs else False
-        print(disable_submit)
+        disable_submit = kwargs.pop('disable_submit', False)
         super(CustomSMSReportRequestForm, self).__init__(*args, **kwargs)
         self.helper = HQFormHelper()
         self.helper.form_method = 'post'
