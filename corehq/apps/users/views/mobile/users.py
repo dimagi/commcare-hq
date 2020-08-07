@@ -50,7 +50,10 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
-from corehq.apps.custom_data_fields.models import CUSTOM_DATA_FIELD_PREFIX
+from corehq.apps.custom_data_fields.models import (
+    CUSTOM_DATA_FIELD_PREFIX,
+    PROFILE_SLUG,
+)
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.es import FormES
@@ -120,6 +123,7 @@ from corehq.const import (
     USER_DATE_FORMAT,
 )
 from corehq.toggles import (
+    CUSTOM_DATA_FIELDS_PROFILES,
     FILTERED_BULK_USER_DOWNLOAD,
     TWO_STAGE_USER_PROVISIONING,
 )
@@ -178,7 +182,11 @@ class EditCommCareUserView(BaseEditUserView):
     @property
     def main_context(self):
         context = super(EditCommCareUserView, self).main_context
+        profiles = [profile.to_json() for profile in self.form_user_update.custom_data.model.get_profiles()]
         context.update({
+            'custom_fields_slugs': [f.slug for f in self.form_user_update.custom_data.fields],
+            'custom_fields_profiles': sorted(profiles, key=lambda x: x['name'].lower()),
+            'custom_fields_profile_slug': PROFILE_SLUG,
             'edit_user_form_title': self.edit_user_form_title,
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
@@ -665,10 +673,13 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             bulk_download_url = reverse(FilteredUserDownload.urlname, args=[self.domain])
         else:
             bulk_download_url = reverse("download_commcare_users", args=[self.domain])
+        profiles = [profile.to_json() for profile in self.custom_data.model.get_profiles()]
         return {
             'new_mobile_worker_form': self.new_mobile_worker_form,
             'custom_fields_form': self.custom_data.form,
             'custom_fields_slugs': [f.slug for f in self.custom_data.fields],
+            'custom_fields_profiles': profiles,
+            'custom_fields_profile_slug': PROFILE_SLUG,
             'can_bulk_edit_users': self.can_bulk_edit_users,
             'can_add_extra_users': self.can_add_extra_users,
             'can_access_all_locations': self.can_access_all_locations,
@@ -775,7 +786,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             device_id="Generated from HQ",
             first_name=first_name,
             last_name=last_name,
-            user_data=self.custom_data.get_data_to_save(),
+            metadata=self.custom_data.get_data_to_save(),
             is_account_confirmed=is_account_confirmed,
             location=SQLLocation.objects.get(location_id=location_id) if location_id else None,
         )
@@ -929,6 +940,14 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
         return super(CreateCommCareUserModal, self).dispatch(request, *args, **kwargs)
 
     def render_form(self, status):
+        if CUSTOM_DATA_FIELDS_PROFILES.enabled(self.domain):
+            return self.render_json_response({
+                "status": "failure",
+                "form_html": "<div class='alert alert-danger'>{}</div>".format(_("""
+                    Cannot add new worker due to usage of user field profiles.
+                    Please add your new worker from the mobile workers page.
+                """)),
+            })
         return self.render_json_response({
             "status": status,
             "form_html": render_to_string(self.template_name, {
@@ -974,7 +993,7 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
                 created_via=USER_CHANGE_VIA_WEB,
                 phone_number=phone_number,
                 device_id="Generated from HQ",
-                user_data=self.custom_data.get_data_to_save(),
+                metadata=self.custom_data.get_data_to_save(),
             )
 
             if 'location_id' in request.GET:
@@ -1456,7 +1475,7 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
                 email=email,
                 phone_number=self.invitation.phone_number,
                 device_id='Generated from HQ',
-                user_data=self.invitation.custom_user_data,
+                metadata=self.invitation.custom_user_data,
             )
             # Since the user is being created by following the link and token
             # we sent to their phone by SMS, we can verify their phone number
