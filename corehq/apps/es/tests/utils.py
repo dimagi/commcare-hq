@@ -95,11 +95,6 @@ def _es2_item(key, value):
         if isinstance(value, list):
             return key, {"and": convert_to_es2(value)}
     if key == "bool":
-        if _haspath(value, "should:1[*].bool:1.filter:1"):
-            return "or", tuple(
-                {"and": term["bool"]["filter"]}
-                for term in value["should"]
-            )
         if _haspath(value, "filter:1[0]:1.nested:1"):
             return "nested", convert_to_es2(value["filter"][0]["nested"])
         if _haspath(value, "filter:1[*]"):
@@ -107,11 +102,13 @@ def _es2_item(key, value):
         if _haspath(value, "should:1[*]"):
             return "or", tuple(convert_to_es2(value["should"]))
         if _haspath(value, "must_not:1.bool:1.should:1[*]"):
+            # NOT (x OR y) -> NOT x AND NOT y
             return "and", tuple(
                 convert_to_es2({"bool": {"must_not": expr}})
                 for expr in value["must_not"]["bool"]["should"]
             )
         if _haspath(value, "must_not:1.bool:1.filter:1[*]"):
+            # NOT (x AND y) -> NOT x OR NOT y
             return "or", tuple(
                 convert_to_es2({"bool": {"must_not": expr}})
                 for expr in value["must_not"]["bool"]["filter"]
