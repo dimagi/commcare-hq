@@ -3,6 +3,7 @@ import re
 from typing import Callable, Optional
 
 from django.db import models
+from django.utils.functional import cached_property
 from django.utils.translation import gettext as _
 
 import jsonfield
@@ -184,7 +185,7 @@ class ConnectionSettings(models.Model):
             f'{self.name!r} connection.'
         ))
 
-    @property
+    @cached_property
     def used_by(self):
         """
         Returns the names of kinds of things that are currently using
@@ -195,7 +196,7 @@ class ConnectionSettings(models.Model):
         from corehq.motech.repeaters.models import Repeater
 
         kinds = set()
-        if self.incrementalexport_set.first():
+        if self.incrementalexport_set.exists():
             kinds.add(_('Incremental Exports'))
         if any(m.connection_settings_id == self.id
                for m in get_dataset_maps(self.domain)):
