@@ -2308,6 +2308,26 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
     def add_insert_form(self, from_module, form, index=None, with_source=False):
         raise IncompatibleFormTypeException()
 
+    def user_deletable(self):
+        """If the user can delete this module from the navmenu
+
+        You cannot delete a shadow child menu whose parent is a shadow
+        """
+        source_module_id = getattr(self, 'source_module_id', False)
+        if not source_module_id:
+            return True
+
+        root_module_id = getattr(self, 'root_module_id', False)
+        if not root_module_id:
+            return True
+
+        app = self.get_app()
+        parent_module = app.get_module_by_unique_id(root_module_id)
+
+        if parent_module.module_type == 'shadow':
+            return False
+
+        return True
 
 class ModuleDetailsMixin(object):
 
