@@ -37,16 +37,6 @@ class CaseSearchES(CaseES):
     def builtin_filters(self):
         return [case_property_filter, blacklist_owner_id] + super(CaseSearchES, self).builtin_filters
 
-    @property
-    def _case_property_queries(self):
-        """
-        Returns all current case_property queries
-        """
-        try:
-            return self.es_query['query']['filtered']['query']['bool']['must']
-        except (KeyError, TypeError):
-            return []
-
     def case_property_query(self, case_property_name, value, clause=queries.MUST, fuzzy=False):
         """
         Search for all cases where case property with name `case_property_name`` has text value `value`
@@ -202,7 +192,7 @@ def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lt
             case_property_name,
             queries.range_query("{}.{}.numeric".format(CASE_PROPERTIES_PATH, VALUE), **kwargs)
         )
-    except ValueError:
+    except (ValueError, TypeError):
         pass
 
     # if its a date, use it
@@ -248,7 +238,7 @@ def reverse_index_case_query(case_ids, identifier=None):
 
 
 def case_property_missing(case_property_name):
-    """case_property_name isn't set or is the empty string
+    """case_property_name is the empty string
 
     """
     return filters.OR(
@@ -266,13 +256,17 @@ def case_property_missing(case_property_name):
 
 
 def _base_property_query(case_property_name, query):
-    return queries.nested(
+    return filters.AND(queries.nested(
         CASE_PROPERTIES_PATH,
-        queries.filtered(
-            query,
-            filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
-        )
-    )
+        {
+            "bool": {
+                "filter": [
+                    filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
+                ],
+                "must": query
+            },
+        }
+    ))
 
 
 def blacklist_owner_id(owner_id):
