@@ -221,7 +221,7 @@ class PreFilterValue(FilterValue):
 
     def _is_empty(self):
         """
-        Returns true if operand should be treated like an empty string.
+        Returns true if operand has no value.
         """
         return self.value['operand'] == '' or self._is_null()
 
