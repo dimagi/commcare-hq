@@ -60,12 +60,10 @@ branches:
   - fr/authenticated-soil-downloads # Farid July 31
   - jls/linked-domains-parallel-release # Jenny July 31
   - jls/view-apps-permission # Jenny July 31
-  - ml/SAAS-10954-show-all-filter # Michelle July 31
   - sk/remove-icdsI+jls/CustomDataFieldsProfile+sr/es7-ref1  # Simon Aug 5
   - jls/CustomDataFieldsProfile # Jenny July 24
   - sk/remove-icdsI  # Simon Aug 5
   - sr/es7-ref1 # Sravan Aug 4
-  - ce/lxml-restore
   - solleks:cdg/data_dictionary_erm  # Charlie August 6
   - nh/repeaters  # Norman Aug 7
 submodules: {}
