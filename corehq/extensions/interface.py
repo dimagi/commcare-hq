@@ -1,11 +1,38 @@
 import importlib
 import inspect
+import itertools
+import logging
+from enum import Enum
 
 from dimagi.utils.logging import notify_exception
+
+logger = logging.getLogger("commcare.extensions")
 
 
 class ExtensionError(Exception):
     pass
+
+
+class ResultFormat(Enum):
+    FLATTEN = 'flatten'
+    FIRST = 'first'
+
+
+def flatten_results(point, results):
+    return list(itertools.chain.from_iterable(results))
+
+
+def first_result(point, results):
+    try:
+        return next(results)
+    except StopIteration:
+        pass
+
+
+RESULT_FORMATTERS = {
+    ResultFormat.FIRST: first_result,
+    ResultFormat.FLATTEN: flatten_results
+}
 
 
 class Extension:
@@ -31,12 +58,13 @@ class Extension:
 
 
 class ExtensionPoint:
-    def __init__(self, manager, name, definition_function):
+    def __init__(self, manager, name, definition_function, result_formatter=None):
         self.manager = manager
         self.name = name
         self.definition_function = definition_function
         self.providing_args = inspect.getfullargspec(definition_function).args
         self.extensions = []
+        self.result_formatter = result_formatter
         self.__doc__ = inspect.getdoc(definition_function)
 
     def extend(self, impl=None, *, domains=None):
@@ -60,16 +88,23 @@ class ExtensionPoint:
         return _extend if impl is None else _extend(impl)
 
     def __call__(self, *args, **kwargs):
-        results = []
         callargs = inspect.getcallargs(self.definition_function, *args, **kwargs)
         domain = callargs.get('domain')
-        for extension in self.extensions:
-            if domain and not extension.should_call_for_domain(domain):
-                continue
+        extensions = [
+            extension for extension in self.extensions
+            if not domain or extension.should_call_for_domain(domain)
+        ]
+        results = self._get_results(extensions, *args, **kwargs)
+        if self.result_formatter:
+            return self.result_formatter(self, results)
+        return list(results)
+
+    def _get_results(self, extensions, *args, **kwargs):
+        for extension in extensions:
             try:
                 result = extension(*args, **kwargs)
                 if result is not None:
-                    results.append(result)
+                    yield result
             except Exception:  # noqa
                 notify_exception(
                     None,
@@ -80,25 +115,27 @@ class ExtensionPoint:
                         "kwargs": kwargs
                     },
                 )
-        return results
 
 
 class CommCareExtensions:
+
     def __init__(self):
         self.registry = {}
         self.locked = False
 
-    def extension_point(self, func):
+    def extension_point(self, func=None, *, result_format=None):
         """Decorator for creating an extension point."""
-        if self.locked:
-            raise ExtensionError(
-                "Late extension point definition. Extension points must "
-                "be defined before setup is complete"
-            )
-        name = func.__name__
-        point = ExtensionPoint(self, name, func)
-        self.registry[name] = point
-        return point
+        def _decorator(func):
+            if not callable(func):
+                raise ExtensionError(f"Extension point must be callable: {func!r}")
+
+            name = func.__name__
+            formatter = RESULT_FORMATTERS[result_format] if result_format else None
+            point = ExtensionPoint(self, name, func, result_formatter=formatter)
+            self.registry[name] = point
+            return point
+
+        return _decorator if func is None else _decorator(func)
 
     def load_extensions(self, implementations):
         for module_name in implementations:

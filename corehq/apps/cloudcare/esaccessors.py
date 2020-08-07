@@ -9,8 +9,7 @@ def login_as_user_query(
         couch_user,
         search_string,
         limit,
-        offset,
-        user_data_fields=None):
+        offset):
     '''
     Takes in various parameters to determine which users to populate the login as screen.
 
@@ -20,33 +19,10 @@ def login_as_user_query(
         `search_fields` as well as any fields defined in `user_data_fields`.
     :param limit: The max amount of users returned.
     :param offset: From where to start the query.
-    :param user_data_fields: A list of custom user data fields that should also be searched
-        by the `search_string`
 
     :returns: An EsQuery instance.
     '''
     search_fields = ["base_username", "last_name", "first_name", "phone_numbers"]
-
-    should_criteria_query = [
-        queries.search_string_query(search_string, search_fields),
-    ]
-
-    if user_data_fields:
-        or_criteria = []
-        for field in user_data_fields:
-            or_criteria.append(
-                filters.AND(
-                    filters.term('user_data_es.key', field),
-                    filters.term('user_data_es.value', search_string),
-                ),
-            )
-
-        should_criteria_query.append(
-            queries.nested_filter(
-                'user_data_es',
-                filters.OR(*or_criteria)
-            )
-        )
 
     user_es = (
         UserES()
@@ -54,18 +30,7 @@ def login_as_user_query(
         .start(offset)
         .size(limit)
         .sort('username.exact')
-        .set_query(
-            queries.BOOL_CLAUSE(
-                queries.SHOULD_CLAUSE(
-                    should_criteria_query,
-                    # It should either match on the search fields like username or it
-                    # should match on the custom user data fields. If this were 2, then
-                    # it would require the search string to match both on the search fields and
-                    # the custom user data fields.
-                    minimum_should_match=1,
-                ),
-            )
-        )
+        .search_string_query(search_string, search_fields)
     )
 
     if not couch_user.has_permission(domain, 'access_all_locations'):
@@ -89,7 +54,7 @@ def login_as_user_query(
                 )
             )
         user_es = user_es.filter(
-            filters.nested(
+            queries.nested(
                 'user_data_es',
                 filters.OR(
                     *user_filters

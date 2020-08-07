@@ -1,10 +1,12 @@
 import functools
 import uuid
 
+
 from django.conf import settings
 from django.test import SimpleTestCase
 from corehq.util.es.elasticsearch import ConnectionError
 
+from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
@@ -16,13 +18,14 @@ from pillowtop.es_utils import (
     set_index_normal_settings,
     set_index_reindex_settings,
 )
-from pillowtop.index_settings import INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS
+from pillowtop.index_settings import disallowed_settings_by_es_version, INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS
 from corehq.util.es.interface import ElasticsearchInterface
 from pillowtop.exceptions import PillowtopIndexingError
 from pillowtop.processors.elastic import send_to_elasticsearch
 from .utils import get_doc_count, get_index_mapping, TEST_INDEX_INFO
 
 
+@es_test
 class ElasticPillowTest(SimpleTestCase):
 
     def setUp(self):
@@ -134,7 +137,7 @@ class ElasticPillowTest(SimpleTestCase):
 
     def _compare_es_dicts(self, expected, returned):
         sub_returned = returned['index']
-        should_not_exist = ElasticsearchInterface._disallowed_index_settings
+        should_not_exist = disallowed_settings_by_es_version[settings.ELASTICSEARCH_MAJOR_VERSION]
         for key, value in expected['index'].items():
             if key in should_not_exist:
                 continue
@@ -151,6 +154,7 @@ class ElasticPillowTest(SimpleTestCase):
                 .format(disallowed_setting))
 
 
+@es_test
 class TestSendToElasticsearch(SimpleTestCase):
 
     def setUp(self):

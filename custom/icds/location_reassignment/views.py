@@ -8,7 +8,7 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_GET
 
-from corehq import toggles
+from custom.icds import icds_toggles
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.locations.permissions import (
@@ -56,7 +56,7 @@ from custom.icds_core.const import (
 
 
 @location_safe
-@method_decorator([toggles.PERFORM_LOCATION_REASSIGNMENT.required_decorator()], name='dispatch')
+@method_decorator([icds_toggles.PERFORM_LOCATION_REASSIGNMENT.required_decorator()], name='dispatch')
 class LocationReassignmentDownloadOnlyView(BaseProjectReportSectionView):
     section_name = ugettext_lazy("Download Location Reassignment Template")
     urlname = LocationReassignmentDownloadOnlyView_urlname
@@ -78,17 +78,15 @@ class LocationReassignmentDownloadOnlyView(BaseProjectReportSectionView):
         return context
 
 
-@method_decorator(require_can_edit_locations, name='dispatch')
+@method_decorator([
+    require_can_edit_locations,
+    icds_toggles.PERFORM_LOCATION_REASSIGNMENT.required_decorator()
+], name='dispatch')
 class LocationReassignmentView(BaseLocationView):
     section_name = ugettext_lazy("Locations")
     page_title = ugettext_lazy('Location Reassignment')
     urlname = LocationReassignmentView_urlname
     template_name = 'icds/location_reassignment.html'
-
-    def dispatch(self, *args, **kwargs):
-        if not toggles.PERFORM_LOCATION_REASSIGNMENT.enabled(self.request.couch_user.username):
-            raise Http404()
-        return super().dispatch(*args, **kwargs)
 
     def section_url(self):
         return reverse(LocationsListView.urlname, args=[self.domain])
@@ -254,7 +252,7 @@ class LocationReassignmentView(BaseLocationView):
             "Your request has been submitted. We will notify you via email once completed."))
 
 
-@toggles.PERFORM_LOCATION_REASSIGNMENT.required_decorator()
+@icds_toggles.PERFORM_LOCATION_REASSIGNMENT.required_decorator()
 @require_GET
 @location_safe
 def download_location_reassignment_template(request, domain):

@@ -35,6 +35,8 @@ import hashlib
 import inspect
 import math
 from functools import wraps
+from importlib import import_module
+from typing import List
 
 from django.conf import settings
 from django.contrib import messages
@@ -44,7 +46,9 @@ from django.utils.safestring import mark_safe
 
 from attr import attrib, attrs
 from couchdbkit import ResourceNotFound
+from memoized import memoized
 
+from corehq.extensions import extension_point, ResultFormat
 from toggle.models import Toggle
 from toggle.shortcuts import set_toggle, toggle_enabled
 
@@ -216,10 +220,7 @@ class StaticToggle(object):
         def decorator(view_func):
             @wraps(view_func)
             def wrapped_view(request, *args, **kwargs):
-                if (
-                    (hasattr(request, 'user') and self.enabled(request.user.username, namespace=None))
-                    or (hasattr(request, 'domain') and self.enabled(request.domain, namespace=NAMESPACE_DOMAIN))
-                ):
+                if self.enabled_for_request(request):
                     return view_func(request, *args, **kwargs)
                 if request.user.is_superuser:
                     from corehq.apps.toggle_ui.views import ToggleEditView
@@ -324,6 +325,13 @@ class PredictablyRandomToggle(StaticToggle):
         return '{}:{}:{}'.format(self.namespaces, self.slug, item)
 
     def enabled(self, item, namespace=Ellipsis):
+        if self.relevant_environments and not (
+            settings.SERVER_ENVIRONMENT in self.relevant_environments
+            or settings.DEBUG
+        ):
+            # Don't even bother looking it up in the cache
+            return False
+
         if namespace == NAMESPACE_USER:
             namespace = None  # because:
             # StaticToggle.__init__(): self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
@@ -364,10 +372,12 @@ class DynamicallyPredictablyRandomToggle(PredictablyRandomToggle):
         namespaces,
         default_randomness=0.0,
         help_link=None,
-        description=None
+        description=None,
+        relevant_environments=None
     ):
         super(PredictablyRandomToggle, self).__init__(slug, label, tag, list(namespaces),
-                                                      help_link=help_link, description=description)
+                                                      help_link=help_link, description=description,
+                                                      relevant_environments=relevant_environments)
         _ensure_valid_namespaces(namespaces)
         _ensure_valid_randomness(default_randomness)
         self.default_randomness = default_randomness
@@ -416,18 +426,34 @@ def any_toggle_enabled(*toggles):
     return decorator
 
 
-@quickcache([])
+@extension_point(result_format=ResultFormat.FLATTEN)
+def custom_toggle_modules() -> List[str]:
+    """Extension point to add toggles from custom code
+
+    Parameters:
+        None
+
+    Returns:
+        List of python module strings for custom toggle modules.
+    """
+
+
 def all_toggles():
     """
     Loads all toggles
     """
-    return list(all_toggles_by_name_in_scope(globals()).values())
+    return list(all_toggles_by_name().values())
 
 
+@memoized
 def all_toggles_by_name():
     # trick for listing the attributes of the current module.
     # http://stackoverflow.com/a/990450/8207
-    return all_toggles_by_name_in_scope(globals())
+    core_toggles = all_toggles_by_name_in_scope(globals())
+    for module_name in custom_toggle_modules():
+        module = import_module(module_name)
+        core_toggles.update(all_toggles_by_name_in_scope(module.__dict__))
+    return core_toggles
 
 
 def all_toggles_by_name_in_scope(scope_dict, toggle_class=StaticToggle):
@@ -1019,41 +1045,12 @@ OPENCLINICA = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-DASHBOARD_ICDS_REPORT = StaticToggle(
-    'dashboard_icds_reports',
-    'ICDS: Enable access to the dashboard reports for ICDS',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
 ICDS_DASHBOARD_REPORT_FEATURES = StaticToggle(
     'features_in_dashboard_icds_reports',
     'ICDS: Enable access to pre-release features in the ICDS Dashboard reports',
     TAG_CUSTOM,
-    [NAMESPACE_USER]
-)
-
-ICDS_DASHBOARD_SHOW_MOBILE_APK = DynamicallyPredictablyRandomToggle(
-    'icds_dashboard_show_mobile_apk',
-    'Show a "Mobile APK" download link on the ICDS Dashboard',
-    TAG_CUSTOM,
     [NAMESPACE_USER],
-)
-
-ICDS_DASHBOARD_TEMPORARY_DOWNTIME = StaticToggle(
-    'icds_dashboard_temporary_downtime',
-    'ICDS: Temporarily disable the ICDS dashboard by showing a downtime page. '
-    'This can be cicurmvented by adding "?bypass-downtime=True" to the end of the url.',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
-ICDS_CUSTOM_SMS_REPORT = StaticToggle(
-    'icds_custom_sms_report',
-    'ICDS: Generate a custom SMS report with in the given time range. '
-    'The report that is generated will be emailed to the user who requested it',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
+    relevant_environments={"icds", "icds-staging"}
 )
 
 OPENMRS_INTEGRATION = StaticToggle(
@@ -1187,7 +1184,7 @@ HIDE_MESSAGING_DASHBOARD_FROM_NON_SUPERUSERS = StaticToggle(
     'hide_messaging_dashboard',
     "Hide messaging dashboard from users who are not superusers.",
     TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
 )
 
 
@@ -1326,10 +1323,10 @@ EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
 
 ICDS = StaticToggle(
     'icds',
-    "ICDS: Enable ICDS features (necessary since features are on India and ICDS envs)",
+    "ICDS: Enable ICDS features (necessary since features are on multiple envs)",
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
-    relevant_environments={'icds', 'india', 'staging', 'icds-staging'},
+    relevant_environments={'icds', 'icds-staging'},
 )
 
 DATA_DICTIONARY = StaticToggle(
@@ -1476,13 +1473,6 @@ CUSTOM_ICON_BADGES = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-ICDS_UCR_ELASTICSEARCH_DOC_LOADING = DynamicallyPredictablyRandomToggle(
-    'icds_ucr_elasticsearch_doc_loading',
-    'ICDS: Load related form docs from ElasticSearch instead of Riak',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_OTHER],
-)
-
 COMPARE_UCR_REPORTS = DynamicallyPredictablyRandomToggle(
     'compare_ucr_reports',
     'Compare UCR reports against other reports or against other databases. '
@@ -1523,6 +1513,7 @@ MULTI_MASTER_BYPASS_VERSION_CHECK = StaticToggle(
     "Bypass minimum CommCare version check for multi master usage. For use only by ICDS.",
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+    relevant_environments={"icds", "icds-staging"}
 )
 
 SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
@@ -1604,31 +1595,6 @@ RELATED_LOCATIONS = StaticToggle(
     help_link='https://confluence.dimagi.com/display/RD/Related+Locations',
 )
 
-ICDS_DISHA_API = StaticToggle(
-    'icds_disha_access',
-    'ICDS: Access DISHA API',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_USER],
-    relevant_environments={'icds', 'india', 'icds-staging'},
-)
-
-
-ICDS_NIC_INDICATOR_API = StaticToggle(
-    'icds_nic_indicator_acess',
-    'ICDS: Dashboard Indicator API for NIC',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_USER],
-    relevant_environments={'icds', 'india', 'icds-staging'},
-)
-
-AP_WEBSERVICE = StaticToggle(
-    'ap_webservice',
-    'ICDS: ENABLE AP webservice',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_USER],
-    relevant_environments={'icds', 'india', 'icds-staging'},
-)
-
 ALLOW_BLANK_CASE_TAGS = StaticToggle(
     'allow_blank_case_tags',
     'eCHIS/ICDS: Allow blank case tags',
@@ -1671,6 +1637,7 @@ RESTRICT_APP_RELEASE = StaticToggle(
     'ICDS: Show permission to manage app releases on user roles',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
+    relevant_environments={"icds", "icds-staging"}
 )
 
 
@@ -1727,23 +1694,6 @@ PARTIAL_UI_TRANSLATIONS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-
-PARALLEL_MPR_ASR_REPORT = StaticToggle(
-    'parallel_mpr_asr_report',
-    'Release parallel loading of MPR and ASR report',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
-
-MANAGE_CCZ_HOSTING = StaticToggle(
-    'manage_ccz_hosting',
-    'Allow project to manage ccz hosting',
-    TAG_CUSTOM,
-    [NAMESPACE_USER]
-)
-
-
 SKIP_ORM_FIXTURE_UPLOAD = StaticToggle(
     'skip_orm_fixture_upload',
     'Exposes an option in fixture api upload to skip saving through couchdbkit',
@@ -1765,13 +1715,6 @@ LOCATION_COLUMNS_APP_STATUS_REPORT = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-MPR_ASR_CONDITIONAL_AGG = DynamicallyPredictablyRandomToggle(
-    'mpr_asr_conditional_agg',
-    'Improved MPR ASR by doing aggregation at selected level',
-    TAG_CUSTOM,
-    [NAMESPACE_USER]
-)
-
 SKIP_CREATING_DEFAULT_BUILD_FILES_ON_BUILD = StaticToggle(
     'skip_creating_default_build_files_on_build',
     'Skips creating the build files for default profile each time a build is made'
@@ -1786,37 +1729,6 @@ DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK = StaticToggle(
     'while investigating database performance issues.',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
-)
-
-
-PHI_CAS_INTEGRATION = StaticToggle(
-    'phi_cas_integration',
-    'Integrate with PHI Api to search and validate beneficiaries',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-)
-
-
-DAILY_INDICATORS = StaticToggle(
-    'daily_indicators',
-    'Enable daily indicators api',
-    TAG_CUSTOM,
-    [NAMESPACE_USER],
-)
-
-mwcd_indicators = StaticToggle(
-    'mwcd_indicators',
-    'Enable MWCD indicators API',
-    TAG_CUSTOM,
-    [NAMESPACE_USER],
-)
-
-ICDS_GOVERNANCE_DASHABOARD_API = StaticToggle(
-    'governance_apis',
-    'ICDS: Dashboard Governance dashboard API',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_USER],
-    relevant_environments={'icds', 'india', 'icds-staging'},
 )
 
 DO_NOT_RATE_LIMIT_SUBMISSIONS = StaticToggle(
@@ -1889,23 +1801,6 @@ LIVEQUERY_READ_FROM_STANDBYS = DynamicallyPredictablyRandomToggle(
     """
 )
 
-
-RUN_CUSTOM_DATA_PULL_REQUESTS = StaticToggle(
-    'run_custom_data_pull_requests',
-    '[ICDS] Initiate custom data pull requests from UI',
-    TAG_CUSTOM,
-    [NAMESPACE_USER]
-)
-
-
-RUN_DATA_MANAGEMENT_TASKS = StaticToggle(
-    'run_data_management_tasks',
-    '[ICDS] Run data management tasks',
-    TAG_CUSTOM,
-    [NAMESPACE_USER]
-)
-
-
 ACCOUNTING_TESTING_TOOLS = StaticToggle(
     'accounting_testing_tools',
     'Enable Accounting Testing Tools',
@@ -1930,37 +1825,12 @@ TWO_STAGE_USER_PROVISIONING = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Two-Stage+Mobile+Worker+Account+Creation',
 )
 
-PERFORM_LOCATION_REASSIGNMENT = StaticToggle(
-    'location_reassignment',
-    'Ability to submit requests for location reassignment',
-    TAG_CUSTOM,
-    [NAMESPACE_USER],
-    relevant_environments={'icds', 'india', 'staging', 'icds-staging'},
-)
-
 DOWNLOAD_LOCATION_REASSIGNMENT_REQUEST_TEMPLATE = StaticToggle(
     'download_location_reassignment_template',
     'Allow domain users to download location reassignment template',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
-    relevant_environments={'icds', 'india', 'staging', 'icds-staging'},
-)
-
-ICDS_BIHAR_DEMOGRAPHICS_API = StaticToggle(
-    'bihar_demographics_api',
-    'ICDS: Bihar Demographics API',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_USER],
-    relevant_environments={'icds', 'india', 'icds-staging'},
-
-)
-
-ICDS_LOCATION_REASSIGNMENT_AGG = StaticToggle(
-    'location_reassignment_agg',
-    'ICDS: Use aggregation modifications for location reassignment',
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN],
-    relevant_environments={'icds', 'india', 'icds-staging'},
+    relevant_environments={'icds', 'icds-staging'},
 )
 
 REFER_CASE_REPEATER = StaticToggle(
@@ -1973,6 +1843,13 @@ REFER_CASE_REPEATER = StaticToggle(
 WIDGET_DIALER = StaticToggle(
     'widget_dialer',
     'COVID: Enable usage of AWS Connect Dialer',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+HMAC_CALLOUT = StaticToggle(
+    'hmac_callout',
+    'COVID: Enable signed messaging url callouts in cloudcare',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
 )
@@ -2010,11 +1887,4 @@ ONE_PHONE_NUMBER_MULTIPLE_CONTACTS = StaticToggle(
     Only use this feature if every form behind an SMS survey begins by identifying the contact.
     Otherwise the recipient has no way to know who they're supposed to be enter information about.
     """
-)
-
-ENABLE_ICDS_DASHBOARD_RELEASE_NOTES_UPDATE = StaticToggle(
-    'enable_icds_dashboard_release_notes_update',
-    'Enable updating ICDS dashboard release notes for specific users',
-    TAG_CUSTOM,
-    [NAMESPACE_USER]
 )
