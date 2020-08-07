@@ -6,7 +6,7 @@ hqDefine("integration/js/hmac_callout", ["hqwebapp/js/initial_page_data"], funct
     };
 
     var digest = function (key, nonce, timestamp) {
-        return CryptoJS.SHA512([nonce, key, timestamp].join(""));
+        return CryptoJS.SHA512([key, nonce, timestamp].join(""));
     };
 
     var encode64 = function (message) {
