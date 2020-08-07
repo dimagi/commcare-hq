@@ -3,7 +3,7 @@
 import custom.icds_reports.models.aggregate
 from django.db import migrations, models
 
-from custom.icds_reports.utils.migrations import get_view_migrations
+from custom.icds_reports.utils.migrations import get_view_migrations, get_composite_primary_key_migrations
 
 
 class Migration(migrations.Migration):
@@ -24,10 +24,18 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'icds_dashboard_app_version',
-                'unique_together': {('month', 'supervisor_id', 'awc_id')},
             },
             bases=(models.Model, custom.icds_reports.models.aggregate.AggregateMixin),
         ),
+        migrations.AlterUniqueTogether(
+            name='aggregateappversion',
+            unique_together=set([('month', 'supervisor_id', 'awc_id')]),
+        ),
+    ]
+
+    operations.extend(get_composite_primary_key_migrations(['aggregateappversion']))
+
+    operations += [
         migrations.RunSQL('ALTER TABLE agg_awc ADD COLUMN app_version INTEGER'),
         migrations.RunSQL('ALTER TABLE agg_awc ADD COLUMN commcare_version TEXT'),
     ]
