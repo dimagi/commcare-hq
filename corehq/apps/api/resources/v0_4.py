@@ -277,6 +277,7 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
     server_date_modified = fields.CharField(attribute='server_modified_on', default="1900-01-01")
     server_date_opened = fields.CharField(attribute='server_opened_on', default="1900-01-01")
     opened_by = fields.CharField(attribute='opened_by', null=True)
+    closed_by = fields.CharField(attribute='closed_by', null=True)
 
     def obj_get(self, bundle, **kwargs):
         case_id = kwargs['pk']

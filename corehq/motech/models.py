@@ -3,7 +3,8 @@ import re
 from typing import Callable, Optional
 
 from django.db import models
-from django.utils.translation import gettext_lazy as _
+from django.utils.functional import cached_property
+from django.utils.translation import gettext as _
 
 import jsonfield
 
@@ -183,6 +184,26 @@ class ConnectionSettings(models.Model):
             'Please select the applicable API auth settings for the '
             f'{self.name!r} connection.'
         ))
+
+    @cached_property
+    def used_by(self):
+        """
+        Returns the names of kinds of things that are currently using
+        this instance. Used for informing users, and determining whether
+        the instance can be deleted.
+        """
+        from corehq.motech.dhis2.dbaccessors import get_dataset_maps
+
+        kinds = set()
+        if self.incrementalexport_set.exists():
+            kinds.add(_('Incremental Exports'))
+        if any(m.connection_settings_id == self.id
+               for m in get_dataset_maps(self.domain)):
+            kinds.add(_('DHIS2 DataSet Maps'))
+        # TODO: Check Repeaters (when Repeaters use ConnectionSettings)
+        # TODO: Check OpenmrsImporters (ditto)
+
+        return kinds
 
 
 class RequestLog(models.Model):

@@ -340,7 +340,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     @classmethod
     def user_es_query(cls, domain, mobile_user_and_group_slugs, request_user):
         # The queryset returned by this method is location-safe
-        q = user_es.UserES().domain(domain)
+        q = user_es.UserES().domain(domain, allow_mirroring=True)
         if ExpandedMobileWorkerFilter.no_filters_selected(mobile_user_and_group_slugs):
             return q.show_inactive()
 

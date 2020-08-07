@@ -22,7 +22,7 @@ cffi==1.13.2              # via cairocffi, csiphash, weasyprint
 chardet==3.0.4            # via ghdiff, requests
 click==7.0                # via pip-tools
 cloudant==2.12.0          # via jsonobject-couchdbkit
-commcaretranslationchecker==0.9.3.5  # via -r requirements/requirements.in
+commcaretranslationchecker==0.9.7  # via -r requirements/requirements.in
 concurrent-log-handler==0.9.12  # via -r requirements/requirements.in
 contextlib2==0.5.5        # via schema
 coverage==4.5.1           # via -r requirements/test-requirements.in
@@ -76,7 +76,6 @@ fakecouch==0.0.15         # via -r requirements/test-requirements.in
 faker==0.8.15             # via -r requirements/requirements.in
 flaky==3.6.0              # via -r requirements/test-requirements.in
 freezegun==0.3.12         # via -r requirements/test-requirements.in
-funcsigs==1.0.2           # via -r requirements/requirements.in
 gevent==1.4.0             # via -r requirements/requirements.in, django-websocket-redis, gipc
 ghdiff==0.4               # via -r requirements/requirements.in
 gipc==1.0.1               # via -r requirements/requirements.in

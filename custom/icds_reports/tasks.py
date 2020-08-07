@@ -1270,7 +1270,7 @@ def _update_ucr_table_mapping():
 
 def _get_value(data, field):
     default = 'N/A'
-    if field == 'days_inactive':
+    if field == 'days_inactive' or field == 'days_since_start':
         default = 0
     return getattr(data, field) or default
 
@@ -1305,6 +1305,10 @@ def collect_inactive_awws():
         'days_since_start',
         'days_inactive'
     ]
+    # removing extra columns which are not required in the report
+    extra_columns = ['no_of_days_since_start', 'no_of_days_inactive']
+    for col in extra_columns:
+        columns.remove(col)
     rows = [columns]
     for data in excel_data:
         rows.append(
@@ -1313,7 +1317,7 @@ def collect_inactive_awws():
 
     celery_task_logger.info("Creating csv file")
     export_file = BytesIO()
-    export_from_tables([['inactive AWWSs', rows]], export_file, 'csv')
+    export_from_tables([[f"inactive AWWSs {date.today().strftime('%Y-%m-%d')}", rows]], export_file, 'csv')
 
     celery_task_logger.info("Saving csv file in blobdb")
     sync = IcdsFile(blob_id=filename, data_type='inactive_awws')

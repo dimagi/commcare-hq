@@ -237,13 +237,6 @@ class SMSSurveyContent(Content):
             logged_subevent.error(MessagingEvent.ERROR_NO_TWO_WAY_PHONE_NUMBER)
             return
 
-        # The SMS framework already checks if the number has opted out before sending to
-        # it. But for this use case we check for it here because we don't want to start
-        # the survey session if they've opted out.
-        if self.phone_has_opted_out(phone_entry_or_number):
-            logged_subevent.error(MessagingEvent.ERROR_PHONE_OPTED_OUT)
-            return
-
         with self.get_critical_section(recipient):
             # Get the case to submit the form against, if any
             case_id = None
@@ -454,7 +447,11 @@ class CustomContent(Content):
 
         # An empty list of messages returned from a custom content handler means
         # we shouldn't send anything, so we don't log an error for that.
-        for message in self.get_list_of_messages(recipient):
-            self.send_sms_message(logged_event.domain, recipient, phone_entry_or_number, message, logged_subevent)
-
+        try:
+            for message in self.get_list_of_messages(recipient):
+                self.send_sms_message(logged_event.domain, recipient, phone_entry_or_number, message,
+                                      logged_subevent)
+        except Exception as error:
+            logged_subevent.error(MessagingEvent.ERROR_CANNOT_RENDER_MESSAGE, additional_error_text=str(error))
+            raise
         logged_subevent.completed()

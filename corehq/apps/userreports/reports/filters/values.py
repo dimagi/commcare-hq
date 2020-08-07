@@ -219,6 +219,12 @@ class PreFilterValue(FilterValue):
         """
         return isinstance(self.value['operand'], list)
 
+    def _is_empty(self):
+        """
+        Returns true if operand should be treated like an empty string.
+        """
+        return self.value['operand'] == ''
+
     @property
     def _null_filter(self):
         operator = self.value.get('operator') or 'is'
@@ -249,6 +255,11 @@ class PreFilterValue(FilterValue):
                 self.filter['field'],
                 get_INFilter_bindparams(self.filter['slug'], ['start_date', 'end_date'])
             )
+        elif self._is_empty():
+            return ORFilter([
+                EQFilter(self.filter['field'], self.filter['slug']),
+                ISNULLFilter(self.filter['field']),
+            ])
         elif self._is_null():
             return self._null_filter(self.filter['field'])
         elif self._is_list():
@@ -265,6 +276,10 @@ class PreFilterValue(FilterValue):
             return {
                 get_INFilter_element_bindparam(self.filter['slug'], i): str(v)
                 for i, v in enumerate([start_date, end_date])
+            }
+        elif self._is_empty():
+            return {
+                self.filter['slug']: '',
             }
         elif self._is_null():
             return {}

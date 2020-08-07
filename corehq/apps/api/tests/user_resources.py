@@ -8,6 +8,7 @@ from django.utils.http import urlencode
 from flaky import flaky
 
 from corehq.apps.api.resources import v0_5
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
 from corehq.apps.users.analytics import update_analytics_indexes
 from corehq.apps.users.models import (
@@ -24,6 +25,7 @@ from corehq.util.es.testing import sync_users_to_es
 from .utils import APIResourceTest
 
 
+@es_test
 class TestCommCareUserResource(APIResourceTest):
     """
     Basic sanity checking of v0_1.CommCareUserResource
@@ -205,6 +207,7 @@ class TestWebUserResource(APIResourceTest):
             "edit_web_users": True,
             "view_web_users": True,
             "view_roles": True,
+            "edit_reports": True,
             "view_reports": True
         },
         "phone_numbers": [
@@ -231,6 +234,7 @@ class TestWebUserResource(APIResourceTest):
             'edit_users_in_locations',
             'edit_data',
             'edit_apps',
+            'edit_reports',
             'view_reports',
         ]:
             self.assertEqual(getattr(role.permissions, perm), json_user['permissions'][perm])

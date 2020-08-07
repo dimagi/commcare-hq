@@ -13,7 +13,6 @@ from django.utils.translation import ugettext_lazy as _
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.heartbeat import get_file_heartbeat, get_cache_heartbeat, last_heartbeat
-from soil.tasks import demo_sleep
 from soil.util import get_download_context
 
 
@@ -22,14 +21,6 @@ def _parse_date(string):
         return datetime.strptime(string, "%Y-%m-%d").date()
     else:
         return string
-
-
-@login_required
-def demo(request):
-    download_id = uuid.uuid4().hex
-    howlong = int(request.GET.get('secs', 5))
-    demo_sleep.delay(download_id, howlong)
-    return HttpResponseRedirect(reverse('retrieve_download', kwargs={'download_id': download_id}))
 
 
 @login_required

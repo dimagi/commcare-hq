@@ -54,7 +54,6 @@ sh==1.09
 gevent==1.4.0
 greenlet==0.4.15
 gipc~=1.0.1  # for gevent+multiprocessing, used by Couch to SQL migration
-funcsigs>=1.0.2  # can be removed after Python 3 upgrade
 openpyxl~=2.6
 six~=1.11
 socketpool==0.5.3
@@ -111,7 +110,7 @@ django-user-agents==0.3.2
 Faker==0.8.15
 polib==1.1.0
 werkzeug==0.11.15
-CommcareTranslationChecker==0.9.3.5
+CommcareTranslationChecker==0.9.7
 WeasyPrint==0.42.3
 architect==0.5.6
 prometheus-client==0.7.1
