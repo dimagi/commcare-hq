@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 
 from django.test import SimpleTestCase, TestCase
 
+from corehq.motech.repeaters.const import AUTOPAUSE_THRESHOLD
 from corehq.motech.repeaters.models import (
     FormRepeater,
     RepeatRecord,
@@ -38,7 +39,7 @@ class IsConnectionWorkingTests(SimpleTestCase):
             domain=DOMAIN,
             url='https://server.example.com/api/',
             started_at=datetime.utcnow() - two_months,
-            failure_streak=10_000,
+            failure_streak=AUTOPAUSE_THRESHOLD,
         )
         self.assertTrue(rep.is_connection_working())
 
@@ -48,7 +49,7 @@ class IsConnectionWorkingTests(SimpleTestCase):
             domain=DOMAIN,
             url='https://server.example.com/api/',
             started_at=datetime.utcnow() - two_months,
-            failure_streak=10_001,
+            failure_streak=AUTOPAUSE_THRESHOLD + 1,
         )
         self.assertFalse(rep.is_connection_working())
 
@@ -78,7 +79,7 @@ class IsConnectionWorkingTests(SimpleTestCase):
             domain=DOMAIN,
             url='https://server.example.com/api/',
             started_at=datetime.utcnow() - four_months,
-            failure_streak=10_000,
+            failure_streak=AUTOPAUSE_THRESHOLD,
             last_success_at=datetime.utcnow() - two_months,
         )
         self.assertTrue(rep.is_connection_working())
