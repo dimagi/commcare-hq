@@ -11,6 +11,7 @@ from mock import Mock, patch
 from casexml.apps.case.mock import CaseBlock, CaseFactory
 from casexml.apps.case.xform import get_case_ids_from_form
 from couchforms.const import DEVICE_LOG_XMLNS
+from dimagi.ext.couchdbkit import Document
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.accounting.models import SoftwarePlanEdition
@@ -237,7 +238,11 @@ class RepeaterTest(BaseRepeaterTest):
     @run_with_all_backends
     def test_update_failure_next_check(self):
         now = datetime.utcnow()
-        record = RepeatRecord(domain=self.domain, next_check=now)
+        record = RepeatRecord(
+            domain=self.domain,
+            repeater_id=self.case_repeater.get_id,
+            next_check=now,
+        )
         self.assertIsNone(record.last_checked)
 
         attempt = record.make_set_next_try_attempt(None)
@@ -470,28 +475,22 @@ class ShortFormRepeaterTest(BaseRepeaterTest, TestXmlMixin):
 class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
     domain = "case-rep"
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.connx = ConnectionSettings.objects.create(
-            domain=cls.domain,
+    def setUp(self):
+        super().setUp()
+        self.connx = ConnectionSettings.objects.create(
+            domain=self.domain,
             url="case-repeater-url",
         )
-        cls.repeater = CaseRepeater(
-            domain=cls.domain,
-            connection_settings_id=cls.connx.id,
+        self.repeater = CaseRepeater.objects.create(
+            domain=self.domain,
+            connection_settings_id=self.connx.id,
         )
-        cls.repeater.save()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.repeater.delete()
-        cls.connx.delete()
-        super().tearDownClass()
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases(self.domain)
         delete_all_repeat_records()
+        self.repeater.delete()
+        self.connx.delete()
         super().tearDown()
 
     @run_with_all_backends
@@ -977,6 +976,7 @@ class TestRepeaterPause(BaseRepeaterTest):
         )
         self.repeater.save()
         self.post_xml(self.xform_xml, self.domain)
+        self.repeater = reloaded(self.repeater)
 
     def tearDown(self):
         self.repeater.delete()
@@ -1029,6 +1029,7 @@ class TestRepeaterDeleted(BaseRepeaterTest):
         )
         self.repeater.save()
         self.post_xml(self.xform_xml, self.domain)
+        self.repeater = reloaded(self.repeater)
 
     def tearDown(self):
         self.repeater.delete()
@@ -1057,6 +1058,14 @@ class TestRepeaterDeleted(BaseRepeaterTest):
             process_repeat_record(self.repeat_record)
             self.assertEqual(mock_fire.call_count, 0)
             self.assertEqual(self.repeat_record.doc_type, "RepeatRecord-Deleted")
+
+
+def reloaded(couch_doc: Document) -> Document:
+    """
+    Returns a reloaded Couch document to avoid a ResourceConflict error.
+    """
+    class_ = type(couch_doc)
+    return class_.get(couch_doc.get_id)
 
 
 @attr.s
