@@ -42,6 +42,7 @@ from corehq.apps.app_manager.decorators import (
     require_deploy_apps,
 )
 from corehq.apps.app_manager.models import (
+    Application,
     AdvancedModule,
     CaseListForm,
     CaseSearch,
@@ -697,6 +698,8 @@ def _new_training_module(request, domain, app, name, lang):
 @require_can_edit_apps
 def delete_module(request, domain, app_id, module_unique_id):
     "Deletes a module from an app"
+    deletion_records = []
+
     app = get_app(domain, app_id)
     try:
         module = app.get_module_by_unique_id(module_unique_id)
@@ -706,7 +709,7 @@ def delete_module(request, domain, app_id, module_unique_id):
         if module.module_type == 'shadow':
             # When deleting a shadow module, delete all the shadow-children
             for child_module in module.get_child_modules():
-                app.delete_module(child_module.unique_id)
+                deletion_records.append(app.delete_module(child_module.unique_id))
         else:
             messages.error(request, _('"{}" has sub-menus. You must remove these before '
                                       'you can delete it.').format(module.default_name()))
@@ -716,22 +719,22 @@ def delete_module(request, domain, app_id, module_unique_id):
         m.unique_id for m in app.get_modules()
         if m.module_type == 'shadow' and m.source_module_id == module_unique_id and m.root_module_id is not None
     ]
-    deletion_records = []
     for shadow_child in shadow_children:
         # We don't allow directly deleting or editing the source of a shadow
         # child, so we delete it when its source is deleted
         deletion_records.append(app.delete_module(shadow_child))
 
     deletion_records.append(app.delete_module(module_unique_id))
-    for record in deletion_records:
-        messages.success(
-            request,
-            _('You have deleted "{name}". <a href="{url}" class="post-link">Undo</a>').format(
-                name=record.module.default_name(app=app),
-                url=reverse('undo_delete_module', args=[domain, record.get_id])
-            ),
-            extra_tags='html'
-        )
+    restore_url = "{}?{}".format(
+        reverse('undo_delete_module', args=[domain]),
+        "&".join("record_id={}".format(record.get_id) for record in deletion_records)
+    )
+    deleted_names = ", ".join(record.module.default_name(app=app) for record in deletion_records)
+    messages.success(
+        request,
+        _(f'You have deleted "{deleted_names}". <a href="{restore_url}" class="post-link">Undo</a>'),
+        extra_tags='html'
+    )
     app.save()
     clear_xmlns_app_id_cache(domain)
     return back_to_main(request, domain, app_id=app_id)
@@ -739,10 +742,15 @@ def delete_module(request, domain, app_id, module_unique_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def undo_delete_module(request, domain, record_id):
-    record = DeleteModuleRecord.get(record_id)
-    record.undo()
-    messages.success(request, 'Module successfully restored.')
+def undo_delete_module(request, domain):
+    module_names = []
+    app = None
+    for record_id in request.GET.getlist('record_id'):
+        record = DeleteModuleRecord.get(record_id)
+        record.undo()
+        app = app or Application.get(record.app_id)
+        module_names.append(record.module.default_name(app=app))
+    messages.success(request, f'Module {", ".join(module_names)} successfully restored.')
     return back_to_main(request, domain, app_id=record.app_id, module_id=record.module_id)
 
 

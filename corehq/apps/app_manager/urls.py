@@ -188,7 +188,7 @@ urlpatterns = [
 
     url(r'^undo_delete_app/(?P<record_id>[\w-]+)/$', undo_delete_app,
         name='undo_delete_app'),
-    url(r'^undo_delete_module/(?P<record_id>[\w-]+)/$', undo_delete_module,
+    url(r'^undo_delete_module/$', undo_delete_module,
         name='undo_delete_module'),
     url(r'^undo_delete_form/(?P<record_id>[\w-]+)/$', undo_delete_form,
         name='undo_delete_form'),
