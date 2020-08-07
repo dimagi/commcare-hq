@@ -1,6 +1,5 @@
 import json
 from copy import deepcopy
-from mock import patch
 
 from django.urls import reverse
 from django.utils.http import urlencode
@@ -14,8 +13,8 @@ from corehq.apps.custom_data_fields.models import (
     Field,
     PROFILE_SLUG,
 )
-from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.analytics import update_analytics_indexes
 from corehq.apps.users.models import (
     CommCareUser,
