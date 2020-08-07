@@ -54,5 +54,5 @@ name: icds-autostaging
 deploy_env: icds-staging
 branches:
   - ap/restrict-unauthorized-users
-  - rn_remove_ff_from_location_security_check
+  - rn_Location_restrictions_on_MPR_report
 submodules: {}

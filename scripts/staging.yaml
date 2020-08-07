@@ -68,4 +68,5 @@ branches:
   - sk/remove-icdsI  # Simon Aug 5
   - sr/es7-ref1 # Sravan Aug 4
   - ce/lxml-restore
+  - solleks:cdg/data_dictionary_erm  # Charlie August 6
 submodules: {}

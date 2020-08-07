@@ -1,7 +1,8 @@
 from django.utils.translation import ugettext_noop
 from corehq.apps.reports.dont_use.fields import ReportSelectField
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
-from corehq.apps.es import CaseES
+from corehq.apps.es import CaseES, filters
+from corehq.apps.es.cases import owner, user as user_filter
 from custom.succeed.utils import (
     CONFIG
 )
@@ -80,11 +81,16 @@ class PatientNameFilterMixin(object):
         if user.is_web_user():
             owner_ids = [o.lower() for o in user.get_group_ids() if o]
             if owner_ids:
-                query.owner(owner_ids)
-            query.user(user._id.lower())
+                query = query.filter(
+                    filters.OR(
+                        owner(owner_ids), user_filter(user._id.lower())
+                    )
+                )
+            else:
+                query = query.user(user._id.lower())
 
-        results = query.run().raw_hits
-        return [(case['_source']['_id'], case['_source']['full_name']['#value']) for case in results]
+        results = query.values("full_name.#value")
+        return [(case['_id'], case['full_name']['#value']) for case in results]
 
 
 class PatientName(PatientNameFilterMixin, BaseSingleOptionFilter):
