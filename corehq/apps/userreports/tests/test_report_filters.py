@@ -394,6 +394,22 @@ class PreFilterTestCase(SimpleTestCase):
         filter_value = PreFilterValue(filter_, {'operand': pre_value})
         self.assertEqual(filter_value.to_sql_values(), {'at_risk_slug': 'yes'})
 
+    def test_pre_filter_value_empty(self):
+        pre_value = ''
+        filter_ = {
+            'type': 'pre',
+            'field': 'empty_field',
+            'slug': 'empty_field_slug',
+            'datatype': 'string',
+            'pre_value': pre_value,
+        }
+        filter_value = PreFilterValue(filter_, {'operand': pre_value})
+        self.assertEqual(filter_value.to_sql_values(), {'empty_field_slug': ''})
+        self.assertEqual(
+            str(filter_value.to_sql_filter().build_expression()),
+            'empty_field = :empty_field_slug OR empty_field IS NULL'
+        )
+
     def test_pre_filter_value_null(self):
         pre_value = None
         filter_ = {
