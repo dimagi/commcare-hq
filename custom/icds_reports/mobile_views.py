@@ -30,6 +30,7 @@ def login(request, domain):
     )
 
 
+@location_safe
 @xframe_options_exempt
 @two_factor_exempt
 def logout(req, domain):

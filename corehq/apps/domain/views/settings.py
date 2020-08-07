@@ -317,6 +317,7 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
             "secure_sessions": self.domain_object.secure_sessions,
             "two_factor_auth": self.domain_object.two_factor_auth,
             "strong_mobile_passwords": self.domain_object.strong_mobile_passwords,
+            "ga_opt_out": self.domain_object.ga_opt_out,
         }
         if self.request.method == 'POST':
             return PrivacySecurityForm(self.request.POST, initial=initial,
@@ -390,11 +391,11 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
         else:
             disable_case_search(self.domain)
 
-        CaseSearchConfig.objects.update_or_create(domain=self.domain, defaults={
+        config, _ = CaseSearchConfig.objects.update_or_create(domain=self.domain, defaults={
             'enabled': request_json.get('enable'),
-            'fuzzy_properties': updated_fuzzies,
-            'ignore_patterns': updated_ignore_patterns,
         })
+        config.ignore_patterns.set(updated_ignore_patterns)
+        config.fuzzy_properties.set(updated_fuzzies)
         return json_response(self.page_context)
 
     @property

@@ -9,7 +9,7 @@ class FakeTwilioMessage(object):
         return self
 
 
-class FakeTwilioMessageFactory(object):
+class FakeMessageFactory(object):
     backend_message_id_to_num_segments = {}
     backend_message_id_to_price = {}
 
@@ -30,8 +30,20 @@ class FakeTwilioMessageFactory(object):
         return cls.backend_message_id_to_num_segments.get(backend_message_id) or 1
 
     @classmethod
-    def get_message(cls, backend_message_id):
+    def get_twilio_message(cls, backend_message_id):
         return FakeTwilioMessage(
             cls.get_price_for_message(backend_message_id) * -1,
             num_segments=cls.get_num_segments_for_message(backend_message_id),
         )
+
+    @classmethod
+    def get_infobip_message(cls, backend_message_id):
+        return {
+            'messageCount': cls.get_num_segments_for_message(backend_message_id),
+            'status': {
+                'name': 'sent'
+            },
+            'price': {
+                'pricePerMessage': cls.get_price_for_message(backend_message_id)
+            }
+        }

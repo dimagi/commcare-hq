@@ -9,7 +9,7 @@ from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.xform import get_case_updates
 from dimagi.utils.couch.undo import DELETED_SUFFIX
-from pillowtop.es_utils import initialize_index
+from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.callcenter.const import CALLCENTER_USER
@@ -450,7 +450,7 @@ class CallCenterDomainTest(SimpleTestCase):
         self.index_info = DOMAIN_INDEX_INFO
         self.elasticsearch = get_es_new()
         ensure_index_deleted(self.index_info.index)
-        initialize_index(self.elasticsearch, self.index_info)
+        initialize_index_and_mapping(self.elasticsearch, self.index_info)
         import time
         time.sleep(1)  # without this we get a 503 response about 30% of the time
 

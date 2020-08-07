@@ -2,7 +2,7 @@ from dateutil.relativedelta import relativedelta
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
-from corehq.toggles import ICDS_LOCATION_REASSIGNMENT_AGG
+from custom.icds.icds_toggles import ICDS_LOCATION_REASSIGNMENT_AGG
 from custom.icds_reports.const import (
     AGG_CCS_RECORD_BP_TABLE,
     AGG_CCS_RECORD_PNC_TABLE,

@@ -691,18 +691,18 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
 
             attach_excel = getattr(self, 'attach_excel', False)
             try:
-                content, excel_files = get_scheduled_report_response(
+                report_text, excel_files = get_scheduled_report_response(
                     self.owner, self.domain, self._id, attach_excel=attach_excel,
                     send_only_active=True
                 )
 
-                # Will be False if ALL the ReportConfigs in the ReportNotification
+                # Both are empty if ALL the ReportConfigs in the ReportNotification
                 # have a start_date in the future.
-                if content is False:
+                if not report_text and not excel_files:
                     return
 
                 for email in emails:
-                    body = render_full_report_notification(None, content, email, self).content
+                    body = render_full_report_notification(None, report_text, email, self).content
                     send_html_email_async(
                         title, email, body,
                         email_from=settings.DEFAULT_FROM_EMAIL,

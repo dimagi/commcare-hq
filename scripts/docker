@@ -133,7 +133,7 @@ function usage() {
 
 CMD="$1"
 shift
-if [ "$CMD" == "test" -o "$CMD" == "hqtest" -o "$CMD" == "py3test" ]; then
+if [ "$CMD" == "test" -o "$CMD" == "hqtest" ]; then
     if [ "$CMD" == "hqtest" ]; then
         CMD="$1"
         shift

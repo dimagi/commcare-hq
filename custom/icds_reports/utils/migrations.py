@@ -5,6 +5,8 @@ from django.db import migrations, router
 from corehq.sql_db.connections import is_citus_db
 from corehq.sql_db.operations import RawSQLMigration
 
+from custom.icds_reports.const import SQL_TEMPLATES_ROOT
+
 
 def get_view_migrations():
     sql_views = [
@@ -33,7 +35,7 @@ def get_view_migrations():
         'bihar_vaccine.sql',
         'poshan_progress_report_view.sql'
     ]
-    migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates', 'database_views'))
+    migrator = RawSQLMigration((SQL_TEMPLATES_ROOT, 'database_views'))
     operations = []
     for view in sql_views:
         operations.append(migrator.get_migration(view))

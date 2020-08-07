@@ -18,9 +18,9 @@ from corehq.apps.users.models import HQApiKey, WebUser
 from corehq.util.test_utils import PatchMeta, flag_enabled
 
 
-class FakeXFormES(object):
+class FakeFormESView(object):
     """
-    A mock of XFormES that will return the docs that have been
+    A mock of FormESView that will return the docs that have been
     added regardless of the query.
     """
 

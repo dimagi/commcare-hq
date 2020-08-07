@@ -14,10 +14,12 @@ from corehq.apps.commtrack.tests.util import bootstrap_domain
 from dimagi.utils.dates import DateSpan
 from pillowtop.es_utils import initialize_index_and_mapping
 
-from corehq.apps.es import CaseES
+from corehq.apps.domain.calculations import cases_in_last, inactive_cases_in_last
+from corehq.apps.es import CaseES, UserES
 from corehq.apps.es.aggregations import MISSING_KEY
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
-from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS
+from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS, get_case_by_identifier
 from corehq.apps.locations.tests.util import setup_locations_and_types, restrict_user_by_location
 from corehq.apps.reports.analytics.esaccessors import (
     get_active_case_counts_by_owner,
@@ -43,9 +45,10 @@ from corehq.apps.reports.analytics.esaccessors import (
     scroll_case_names,
 )
 from corehq.apps.reports.standard.cases.utils import query_location_restricted_cases
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, DomainPermissionsMirror
 from corehq.blobs.mixin import BlobMetaRef
 from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CaseTransaction, CommCareCaseSQL
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils import TestFormMetadata
@@ -60,6 +63,7 @@ from corehq.util.elastic import ensure_index_deleted, reset_es_index
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
 
 
+@es_test
 class BaseESAccessorsTest(TestCase):
     es_index_info = None
 
@@ -810,7 +814,8 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.assertEqual(user_ids, 'u2')
 
 
-class TestUserESAccessors(SimpleTestCase):
+@es_test
+class TestUserESAccessors(TestCase):
 
     def setUp(self):
         super(TestUserESAccessors, self).setUp()
@@ -871,7 +876,22 @@ class TestUserESAccessors(SimpleTestCase):
             'location_id': None
         })
 
+    def test_domain_allow_mirroring(self):
+        source_domain = self.domain + "-source"
+        mirror = DomainPermissionsMirror(source=source_domain, mirror=self.domain)
+        mirror.save()
+        self._send_user_to_es('123')
 
+        self.assertEqual(['superman'], UserES().domain(self.domain).values_list('username', flat=True))
+        self.assertEqual([], UserES().domain(source_domain).values_list('username', flat=True))
+        self.assertEqual(
+            ['superman'],
+            UserES().domain(self.domain, allow_mirroring=True).values_list('username', flat=True)
+        )
+        mirror.delete()
+
+
+@es_test
 class TestGroupESAccessors(SimpleTestCase):
 
     def setUp(self):
@@ -923,7 +943,8 @@ class TestCaseESAccessors(BaseESAccessorsTest):
             user_id=None,
             case_type=None,
             opened_on=None,
-            closed_on=None):
+            closed_on=None,
+            modified_on=None):
 
         actions = [CommCareCaseAction(
             action_type=CASE_ACTION_CREATE,
@@ -938,6 +959,7 @@ class TestCaseESAccessors(BaseESAccessorsTest):
             type=case_type or self.case_type,
             opened_on=opened_on or datetime.now(),
             opened_by=user_id or self.user_id,
+            modified_on=modified_on or datetime.now(),
             closed_on=closed_on,
             closed_by=user_id or self.user_id,
             actions=actions,
@@ -1075,6 +1097,27 @@ class TestCaseESAccessors(BaseESAccessorsTest):
         results = get_case_counts_opened_by_user(self.domain, datespan, case_types=['not-here'])
         self.assertEqual(results, {})
 
+    def test_get_case_counts_in_last(self):
+        self._send_case_to_es(modified_on=datetime.now() - timedelta(days=2))
+        self._send_case_to_es(modified_on=datetime.now() - timedelta(days=2), case_type='new')
+        self._send_case_to_es(modified_on=datetime.now() - timedelta(days=5), case_type='new')
+        self.assertEqual(
+            cases_in_last(self.domain, 3),
+            2
+        )
+        self.assertEqual(
+            cases_in_last(self.domain, 3, self.case_type),
+            1
+        )
+        self.assertEqual(
+            inactive_cases_in_last(self.domain, 6),
+            0
+        )
+        self.assertEqual(
+            inactive_cases_in_last(self.domain, 1),
+            3
+        )
+
     def test_get_case_types(self):
         self._send_case_to_es(case_type='t1')
         self._send_case_to_es(case_type='t2')
@@ -1106,6 +1149,30 @@ class TestCaseESAccessors(BaseESAccessorsTest):
         case_post_save.send(self, case=CommCareCase(domain=self.domain, type='t2'))
 
         self.assertEqual({'t1', 't2'}, get_case_types_for_domain_es(self.domain))
+
+    def test_case_by_identifier(self):
+        self._send_case_to_es(case_type='ccuser')
+        case = self._send_case_to_es()
+        case.external_id = '123'
+        case.save()
+        case = CaseAccessors(self.domain).get_case(case.case_id)
+        case_json = case.to_json()
+        case_json['contact_phone_number'] = '234'
+        es_case = transform_case_for_elasticsearch(case_json)
+        send_to_elasticsearch('cases', es_case)
+        self.es.indices.refresh(CASE_INDEX)
+        self.assertEqual(
+            get_case_by_identifier(self.domain, case.case_id).case_id,
+            case.case_id
+        )
+        self.assertEqual(
+            get_case_by_identifier(self.domain, '234').case_id,
+            case.case_id
+        )
+        self.assertEqual(
+            get_case_by_identifier(self.domain, '123').case_id,
+            case.case_id
+        )
 
     def test_location_restricted_cases(self):
         domain_obj = bootstrap_domain(self.domain)
@@ -1152,7 +1219,8 @@ class TestCaseESAccessorsSQL(TestCaseESAccessors):
             user_id=None,
             case_type=None,
             opened_on=None,
-            closed_on=None):
+            closed_on=None,
+            modified_on=None):
 
         case = CommCareCaseSQL(
             case_id=uuid.uuid4().hex,
@@ -1163,6 +1231,7 @@ class TestCaseESAccessorsSQL(TestCaseESAccessors):
             opened_on=opened_on or datetime.now(),
             opened_by=user_id or self.user_id,
             closed_on=closed_on,
+            modified_on=modified_on or datetime.now(),
             closed_by=user_id or self.user_id,
             server_modified_on=datetime.utcnow(),
             closed=bool(closed_on)

@@ -1,0 +1,170 @@
+{% extends "integration/base_cloudcare_template.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load static %}
+{% load compress %}
+{% requirejs_main "integration/js/dialer/domain_dialer_main" %}
+
+{% block stylesheets %}
+  {{ block.super }}
+    <link type="text/css" rel="stylesheet" href="{% static 'integration/css/dialerstyle.css' %}">
+{% endblock %}
+
+
+{% block title %}{%trans 'Dialer'%}{% endblock %}
+
+{% block widget_content %}
+        {% initial_page_data 'callout_number' callout_number %}
+        {% initial_page_data 'aws_instance_id' dialer_settings.aws_instance_id %}
+
+        <div id="divBanner" class="banner">
+            <div id="divLogo" class="bannerLogoContainer">
+                {% if CUSTOM_LOGO_URL %}
+                <img src="{{ CUSTOM_LOGO_URL }}" class="bannerLogo"></img>
+                {% else %}
+                <img src="{% static 'hqstyle/images/commcare-flower-lg.png' %}" class="bannerLogo"></img>
+                {% endif %}
+            </div>
+            <div id="divHeader" class="bannerHeader">
+                {{dialer_settings.dialer_page_header}}
+            </div>
+            <div id="divSubHeader" class="bannerSubHeader">
+                {{dialer_settings.dialer_page_subheader}}
+            </div>
+            <div class="bannerUser">
+                <div id="divUserIcon" class="bannerUserIcon">
+                    <img src="{% static 'integration/images/user-icon.png' %}"></img>
+                </div>
+
+                <div id="divUserName" class="bannerUserName">
+                    {% trans 'NOT LOGGED IN'%}
+                </div>
+                <div id="divLogin" class="bannerLogin">
+                    <a id="ConnectLogin" href="#" target="_blank">{% trans 'Login'%}</a>
+                </div>
+            </div>
+        </div>
+        <div id="divMainBody" class="mainBody">
+            <div id="divLeftPanel" class="leftPanel">
+                <div class="panelHeading">{% trans 'Telephone'%}</div>
+
+                <div class="panelBody">
+                    <div class="panelLabel">{% trans 'Phone Number:'%}</div>
+                    <div id="phoneNo"class="panelContent">{% trans 'NOT AVAILABLE'%}</div>
+
+                    <div class="panelLabel">{% trans 'Call Status:'%}</div>
+                    <div id="contactStatus" class="panelContent">{% trans 'Not Dialed'%}</div>
+
+                    <div class="panelLabel">{% trans 'Contact ID:'%}</div>
+                    <div id="contactId" class="panelContentDouble"></div>
+
+                    <div class="panelLabel">{% trans 'Queue Name:'%}</div>
+                    <div id="queueName" class="panelContent"></div>
+
+                    <div class="buttonContainer">
+                        <button class="button" id="button-dial">{% trans 'Dial Now'%}</button>
+                    </div>
+                </div>
+                <div class="pad"></div>
+                <div class="panelHeading">{% trans 'Preferences'%}</div>
+                <div class="panelBody">
+                    <div class="checkBox">
+                        <input type="checkbox" name="chkAutoDial" id="checkbox-autodial" value="">
+                        <label for="chkAutoDial">{% trans 'Auto dial on load'%}</label>
+                    </div>
+                    <div class="pad90"></div>
+                    <div class="buttonContainer">
+                    </div>
+                </div>
+            </div>
+
+            <div id="divCenterPanel" class="centerPanel">
+                <div id="divCCP" class="ccp"></div>
+            </div>
+
+            <div id="divRightPanel" class="rightPanel">
+                <div id="divEventPanel" class="eventPanel">
+                    <div id="divEventWindow" class="eventWindow">
+                        <!-- Log is built here -->
+                    </div>
+                    <div class="buttonContainerLeft">
+                        <button id="button-clipboard" class="button">{% trans 'Copy To Clipboard'%}</button>
+                    </div>
+                </div>
+
+                <div class="checkPanel">
+                    <div class="checkColumn">
+                        <div class="panelHeading">{% trans 'Media Devices'%}</div>
+
+                        <div class="panelBody">
+
+                            <div class="mediaEntry">
+                                <div class="mediaLabel">{% trans 'Speakers'%}</div>
+                                <div class="mediaResult">
+                                    <img id="imgSpeakers" src="{% static 'integration/images/blackLED.png' %}"></img>
+                                </div>
+                            </div>
+
+                            <div class="mediaEntry">
+                                <div class="mediaLabel">{% trans 'Microphone'%}</div>
+                                <div class="mediaResult">
+                                    <img id="imgMicrophone" src="{% static 'integration/images/blackLED.png' %}"></img>
+                                </div>
+                            </div>
+
+                            <div class="mediaEntry">
+                                <div class="mediaLabel">{% trans 'Mic. Permission'%}</div>
+                                <div class="mediaResult">
+                                    <img id="imgMicrophonePermission" src="{% static 'integration/images/blackLED.png' %}"></img>
+                                </div>
+                            </div>
+
+                            <div class="mediaEntry">
+                                <div class="mediaLabel">{% trans 'Web Cam'%}</div>
+                                <div class="mediaResult">
+                                    <img id="imgWebCam" src="{% static 'integration/images/blackLED.png' %}"></img>
+                                </div>
+                            </div>
+
+                            <div class="mediaEntry">
+                                <div class="mediaLabel">{% trans 'WebRTC'%}</div>
+                                <div class="mediaResult">
+                                    <img id="imgWebRTC" src="{% static 'integration/images/blackLED.png' %}"></img>
+                                </div>
+                            </div>
+
+                            <div class="buttonContainer">
+                                <button class="button" id="button-check-media">{% trans 'Check Media'%}</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="checkColumn">
+                        <div class="panelHeading">{% trans 'Network'%}</div>
+
+                        <div class="panelBody">
+                            <div class="mediaEntry">
+                                <div class="mediaLabel">US East 1</div>
+                                <div class="mediaResult">
+                                    <img id="imgUDPUSE1" src="{% static 'integration/images/blackLED.png' %}"></img>
+                                </div>
+                            </div>
+                            <div class="mediaEntry">
+                                <div class="mediaLabel">US West 2</div>
+                                <div class="mediaResult">
+                                    <img id="imgUDPUSW2" src="{% static 'integration/images/blackLED.png' %}"></img>
+                                </div>
+                            </div>
+                            <div class="buttonContainer">
+                                <button class="button" id="button-check-network">{% trans 'Check Network'%}</button>
+                            </div>
+                        </div>
+
+                        <div class="pad"></div>
+                        <a href="#" target="_blank" class="links">{% trans 'Agent Training Center'%}</a><br>
+                        <a href="#" target="_blank" class="links">{% trans 'Agent Support Center'%}</a><br>
+                        <a href="https://s3.amazonaws.com/connectivitytest/checkConnectivity.html" target="_blank" class="links">AWS Connectivity Tool</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+{% endblock %}

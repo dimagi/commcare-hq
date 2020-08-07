@@ -119,7 +119,7 @@ def js_api_keys(request):
         'ANALYTICS_CONFIG': settings.ANALYTICS_CONFIG,
         'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
     }
-    if getattr(request, 'project', None) and request.project.hipaa_compliant and api_keys['ANALYTICS_IDS'].get('GOOGLE_ANALYTICS_API_ID'):
+    if getattr(request, 'project', None) and request.project.ga_opt_out and api_keys['ANALYTICS_IDS'].get('GOOGLE_ANALYTICS_API_ID'):
         del api_keys['ANALYTICS_IDS']['GOOGLE_ANALYTICS_API_ID']
     return api_keys
 

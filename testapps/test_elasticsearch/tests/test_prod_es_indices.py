@@ -55,7 +55,8 @@ class ProdIndexManagementTest(SimpleTestCase):
 
 EXPECTED_PROD_INDICES = [
     {
-        "alias": "case_search",
+        "alias": "test_case_search",
+        "hq_index_name": "case_search",
         "index": "test_case_search_2018-05-29",
         "type": "case",
         "meta": {
@@ -69,13 +70,6 @@ EXPECTED_PROD_INDICES = [
                             ],
                             "type": "custom",
                             "tokenizer": "whitespace"
-                        },
-                        "sortable_exact": {
-                            "filter": [
-                                "lowercase"
-                            ],
-                            "type": "custom",
-                            "tokenizer": "keyword"
                         }
                     }
                 }
@@ -83,7 +77,8 @@ EXPECTED_PROD_INDICES = [
         }
     },
     {
-        "alias": "hqapps",
+        "alias": "test_hqapps",
+        "hq_index_name": "hqapps",
         "index": "test_hqapps_2020-02-26",
         "type": "app",
         "meta": {
@@ -102,7 +97,8 @@ EXPECTED_PROD_INDICES = [
         }
     },
     {
-        "alias": "hqcases",
+        "alias": "test_hqcases",
+        "hq_index_name": "hqcases",
         "index": "test_hqcases_2016-03-04",
         "type": "case",
         "meta": {
@@ -116,13 +112,6 @@ EXPECTED_PROD_INDICES = [
                             ],
                             "type": "custom",
                             "tokenizer": "whitespace"
-                        },
-                        "sortable_exact": {
-                            "filter": [
-                                "lowercase"
-                            ],
-                            "type": "custom",
-                            "tokenizer": "keyword"
                         }
                     }
                 }
@@ -130,7 +119,8 @@ EXPECTED_PROD_INDICES = [
         }
     },
     {
-        "alias": "hqdomains",
+        "alias": "test_hqdomains",
+        "hq_index_name": "hqdomains",
         "index": "test_hqdomains_2020-02-10",
         "type": "hqdomain",
         "meta": {
@@ -153,7 +143,8 @@ EXPECTED_PROD_INDICES = [
         }
     },
     {
-        "alias": "hqgroups",
+        "alias": "test_hqgroups",
+        "hq_index_name": "hqgroups",
         "index": "test_hqgroups_2017-05-29",
         "type": "group",
         "meta": {
@@ -167,13 +158,6 @@ EXPECTED_PROD_INDICES = [
                             ],
                             "type": "custom",
                             "tokenizer": "whitespace"
-                        },
-                        "sortable_exact": {
-                            "filter": [
-                                "lowercase"
-                            ],
-                            "type": "custom",
-                            "tokenizer": "keyword"
                         }
                     }
                 }
@@ -181,7 +165,8 @@ EXPECTED_PROD_INDICES = [
         }
     },
     {
-        "alias": "hqusers",
+        "alias": "test_hqusers",
+        "hq_index_name": "hqusers",
         "index": "test_hqusers_2017-09-07",
         "type": "user",
         "meta": {
@@ -201,7 +186,8 @@ EXPECTED_PROD_INDICES = [
         }
     },
     {
-        "alias": "report_cases",
+        "alias": "test_report_cases",
+        "hq_index_name": "report_cases",
         "index": "test_report_cases_czei39du507m9mmpqk3y01x72a3ux4p0",
         "type": "report_case",
         "meta": {
@@ -215,13 +201,6 @@ EXPECTED_PROD_INDICES = [
                             ],
                             "type": "custom",
                             "tokenizer": "whitespace"
-                        },
-                        "sortable_exact": {
-                            "filter": [
-                                "lowercase"
-                            ],
-                            "type": "custom",
-                            "tokenizer": "keyword"
                         }
                     }
                 }
@@ -229,7 +208,8 @@ EXPECTED_PROD_INDICES = [
         }
     },
     {
-        "alias": "report_xforms",
+        "alias": "test_report_xforms",
+        "hq_index_name": "report_xforms",
         "index": "test_report_xforms_20160824_1708",
         "type": "report_xform",
         "meta": {
@@ -243,13 +223,6 @@ EXPECTED_PROD_INDICES = [
                             ],
                             "type": "custom",
                             "tokenizer": "whitespace"
-                        },
-                        "sortable_exact": {
-                            "filter": [
-                                "lowercase"
-                            ],
-                            "type": "custom",
-                            "tokenizer": "keyword"
                         }
                     }
                 }
@@ -257,7 +230,8 @@ EXPECTED_PROD_INDICES = [
         }
     },
     {
-        "alias": "smslogs",
+        "alias": "test_smslogs",
+        "hq_index_name": "smslogs",
         "index": "test_smslogs_2020-01-28",
         "type": "sms",
         "meta": {
@@ -271,13 +245,6 @@ EXPECTED_PROD_INDICES = [
                             ],
                             "type": "custom",
                             "tokenizer": "whitespace"
-                        },
-                        "sortable_exact": {
-                            "filter": [
-                                "lowercase"
-                            ],
-                            "type": "custom",
-                            "tokenizer": "keyword"
                         }
                     }
                 }
@@ -285,7 +252,8 @@ EXPECTED_PROD_INDICES = [
         }
     },
     {
-        "alias": "xforms",
+        "alias": "test_xforms",
+        "hq_index_name": "xforms",
         "index": "test_xforms_2016-07-07",
         "type": "xform",
         "meta": {
@@ -299,13 +267,6 @@ EXPECTED_PROD_INDICES = [
                             ],
                             "type": "custom",
                             "tokenizer": "whitespace"
-                        },
-                        "sortable_exact": {
-                            "filter": [
-                                "lowercase"
-                            ],
-                            "type": "custom",
-                            "tokenizer": "keyword"
                         }
                     }
                 }

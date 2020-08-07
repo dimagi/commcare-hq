@@ -14,6 +14,7 @@ from pillowtop.processors.elastic import BulkElasticProcessor
 from pillowtop.tests.utils import TEST_INDEX_INFO
 from pillowtop.utils import bulk_fetch_changes_docs, get_errors_with_ids
 
+from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new
 from corehq.form_processor.document_stores import CaseDocumentStore
 from corehq.form_processor.signals import sql_case_post_save
@@ -53,6 +54,7 @@ class BulkTest(SimpleTestCase):
 
 
 @use_sql_backend
+@es_test
 class TestBulkDocOperations(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -68,6 +70,7 @@ class TestBulkDocOperations(TestCase):
         cls.es = get_es_new()
         cls.es_interface = ElasticsearchInterface(cls.es)
         cls.index = TEST_INDEX_INFO.index
+        cls.es_alias = TEST_INDEX_INFO.alias
 
         with trap_extra_setup(ConnectionError):
             ensure_index_deleted(cls.index)
@@ -115,7 +118,7 @@ class TestBulkDocOperations(TestCase):
         self.assertEqual([], errors)
 
         es_docs = self.es_interface.get_bulk_docs(
-            index=self.index, doc_type=TEST_INDEX_INFO.type, doc_ids=self.case_ids)
+            self.es_alias, doc_type=TEST_INDEX_INFO.type, doc_ids=self.case_ids)
         ids_in_es = {
             doc['_id'] for doc in es_docs
         }

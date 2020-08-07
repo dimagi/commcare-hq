@@ -31,6 +31,9 @@ AUDIT_URLS = frozenset(
 # after split we get ['', 'a', 'domain', 'icds-dashboard-view-name', 'sub-view']
 def is_path_in_audit_urls(request):
     path = getattr(request, 'path', '').split('/')
+    # special case if a path contains logout it's ignored
+    if 'logout' in path:
+        return False
     return len(path) > 3 and (path[3] in AUDIT_URLS or (len(path) > 4 and path[4] in AUDIT_URLS))
 
 

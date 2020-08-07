@@ -48,7 +48,6 @@ from corehq.apps.domain.views.pro_bono import (
     ProBonoStaticView,
     ProBonoView,
 )
-from corehq.apps.domain.views.repeaters import generate_repeater_payloads
 from corehq.apps.domain.views.settings import (
     BaseAdminProjectSettingsView,
     BaseEditProjectInfoView,

@@ -19,7 +19,7 @@ TODO
 
 In order to run the javascript tests you'll need to install the required npm packages:
 
-    $ yarn install
+    $ yarn install --frozen-lockfile
 
 It's recommended to install grunt globally in order to use grunt from the command line:
 

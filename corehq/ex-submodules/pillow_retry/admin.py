@@ -21,6 +21,9 @@ class PillowErrorAdmin(admin.ModelAdmin):
         'delete_selected',
         'reset_attempts',
     ]
+    search_fields = [
+        'doc_id',
+    ]
 
     def reset_attempts(self, request, queryset):
         queryset.update(current_attempt=0, date_next_attempt=datetime.utcnow())
