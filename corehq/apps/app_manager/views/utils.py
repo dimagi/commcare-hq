@@ -460,6 +460,7 @@ def handle_shadow_child_modules(app, shadow_parent):
     source_module_children = [
         m for m in app.modules
         if m.root_module_id == shadow_parent.source_module_id
+        and m.module_type != 'shadow'
     ]
 
     shadow_parent_children = [
