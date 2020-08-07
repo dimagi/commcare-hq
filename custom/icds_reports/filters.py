@@ -105,6 +105,10 @@ class IcdsRestrictedLocationFilter(AsyncLocationFilter):
     def location_hierarchy_config(self):
         return location_hierarchy_config(self.domain)
 
+    def load_locations_json(self, loc_id):
+        show_test = self.request.GET.get('include_test', False)
+        return load_locs_json(self.domain, loc_id, user=self.request.couch_user, show_test=show_test)
+
 
 class TableauLocationFilter(ICDSTableauFilterMixin, RestrictedAsyncLocationFilter):
 
