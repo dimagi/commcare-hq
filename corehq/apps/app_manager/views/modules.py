@@ -575,7 +575,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         module["report_context_tile"] = request.POST.get("report_context_tile") == "true"
     if should_edit("display_style"):
         module["display_style"] = request.POST.get("display_style")
-    if should_edit("source_module_id"):
+    if should_edit("source_module_id") and module["source_module_id"] != request.POST.get("source_module_id"):
         module["source_module_id"] = request.POST.get("source_module_id")
         if handle_shadow_child_modules(app, module):
             # Reload the page to show new shadow child modules
