@@ -157,14 +157,14 @@ USER_API_LIST = (
 )
 
 
-def api_url_patterns():
+def global_api_url_patterns():
     api = CommCareHqApi(api_name='global')
     for resource in ADMIN_API_LIST + USER_API_LIST:
         api.register(resource())
         yield url(r'^', include(api.urls))
 
 
-admin_urlpatterns = list(api_url_patterns())
+admin_urlpatterns = list(global_api_url_patterns())
 
 
 waf_allow('XSS_BODY', hard_code_pattern=r'^/a/([\w\.:-]+)/api/v([\d\.]+)/form/$')
