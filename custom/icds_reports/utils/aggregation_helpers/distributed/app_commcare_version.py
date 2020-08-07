@@ -112,7 +112,7 @@ class AppVersionAggregationDistributedHelper(BaseICDSAggregationDistributedHelpe
         return [
             """DROP TABLE IF EXISTS "local_tmp_agg_app";"""
             """CREATE TABLE "local_tmp_agg_app" AS SELECT * FROM "{temporary_tablename}";""".format(temporary_tablename=self.temporary_tablename),
-            """DELETE FROM TABLE "{new_tablename}" WHERE MONTH = '{current_month}'""".format(new_tablename=self.tablename, current_month=self.month),
+            """DELETE FROM "{new_tablename}" WHERE MONTH = '{current_month}'""".format(new_tablename=self.tablename, current_month=self.month),
             """INSERT INTO "{new_tablename}" SELECT * from "local_tmp_agg_app";""".format(new_tablename=self.tablename),
             """DROP TABLE "local_tmp_agg_app";"""
         ]

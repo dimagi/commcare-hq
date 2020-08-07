@@ -366,6 +366,10 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
 
             res_inactive_aww.get(disable_sync_subtasks=False)
 
+            res_app_version_agg = chain(icds_aggregation_task.si(date=calculation_date, func_name='_agg_app_version_table'),).apply_async()
+
+            res_app_version_agg.get(disable_sync_subtasks=False)
+
             res_awc = chain(icds_aggregation_task.si(date=calculation_date, func_name='_agg_awc_table'),
                             *res_ls_tasks
                             ).apply_async()
