@@ -8,7 +8,7 @@ from corehq.util.django_migrations import skip_on_fresh_install
 def back_populate(apps, schema_editor):
     HqDeploy = apps.get_model('hqadmin', 'hqdeploy')
     for deploy in HqDeploy.objects.all():
-        if not deploy.commit:
+        if deploy.diff_url and not deploy.commit:
             deploy.commit = _get_commit_from_url(deploy.diff_url)
             deploy.save()
 
