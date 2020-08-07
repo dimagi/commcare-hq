@@ -14,25 +14,25 @@ class HandleShadowChildModulesTest(TestCase):
         super().setUp()
         self.domain = "test-domain"
 
-        factory = AppFactory(domain=self.domain)
+        self.factory = AppFactory(domain=self.domain)
 
         # m0
-        basic_module, self.form0 = factory.new_basic_module("basic_module", "parrot")
-        form1 = factory.new_form(basic_module)
+        self.basic_module, self.form0 = self.factory.new_basic_module("basic_module", "parrot")
+        form1 = self.factory.new_form(self.basic_module)
 
         # m1
-        self.child_module, form2 = factory.new_basic_module(
-            "child_module", "parrot", parent_module=basic_module
+        self.child_module, form2 = self.factory.new_basic_module(
+            "child_module", "parrot", parent_module=self.basic_module
         )
         self.child_module.put_in_root = True
-        self.form3 = factory.new_form(self.child_module)
+        self.form3 = self.factory.new_form(self.child_module)
 
         # m2
-        self.shadow_module = factory.new_shadow_module("shadow_module", basic_module, with_form=False)
+        self.shadow_module = self.factory.new_shadow_module("shadow_module", self.basic_module, with_form=False)
         self.shadow_module.excluded_form_ids = [self.form0.unique_id, self.form3.unique_id]
-        factory.app.save()
+        self.factory.app.save()
 
-        self.app = factory.app
+        self.app = self.factory.app
 
     def tearDown(self):
         delete_all_apps()
@@ -90,3 +90,24 @@ class HandleShadowChildModulesTest(TestCase):
         # Child shadow module should be removed
         handle_shadow_child_modules(app, app.get_module_by_unique_id(self.shadow_module.unique_id))
         self.assertEqual(len(app.modules), 4)
+
+    def test_shadow_source_is_child(self):
+        # If the source is a child, the parent of the shadow should be the same as the source
+        shadow_child = self.factory.new_shadow_module("shadow_child_module", self.child_module, with_form=False)
+        self.factory.app.save()
+
+        handle_shadow_child_modules(self.app, self.app.get_module_by_unique_id(shadow_child.unique_id))
+
+        app = Application.get(self.app.get_id)
+        shadow_child = app.get_module_by_unique_id(shadow_child.unique_id)
+        self.assertEqual(shadow_child.root_module_id, self.child_module.root_module_id)
+
+        # change the source
+        shadow_child.source_module_id = self.basic_module.unique_id
+        app.save()
+
+        handle_shadow_child_modules(app, app.get_module_by_unique_id(shadow_child.unique_id))
+
+        app = Application.get(self.app.get_id)
+        shadow_child = app.get_module_by_unique_id(shadow_child.unique_id)
+        self.assertIsNone(shadow_child.root_module_id)

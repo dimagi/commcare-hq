@@ -442,12 +442,20 @@ def handle_shadow_child_modules(app, shadow_parent):
 
     Used primarily when changing the "source module id" of a shadow module
     """
+    changes = False
+
     if shadow_parent.shadow_module_version == 1:
         # For old-style shadow modules, we don't create any child-shadows
         return False
 
     if not shadow_parent.source_module_id:
         return False
+
+    # if the source module is a child, but not a shadow, then the shadow should have the same parent
+    source = app.get_module_by_unique_id(shadow_parent.source_module_id)
+    if source.root_module_id != shadow_parent.root_module_id:
+        shadow_parent.root_module_id = source.root_module_id
+        changes = True
 
     source_module_children = [
         m for m in app.modules
@@ -458,7 +466,6 @@ def handle_shadow_child_modules(app, shadow_parent):
         m for m in app.modules
         if m.root_module_id == shadow_parent.unique_id
     ]
-    changes = False
 
     # Delete unneeded modules
     for child in shadow_parent_children:
@@ -469,7 +476,7 @@ def handle_shadow_child_modules(app, shadow_parent):
     # Add new modules
     for source_child in source_module_children:
         changes = True
-        new_shadow = ShadowModule.new_module(source_child.default_name(), app.default_language)
+        new_shadow = ShadowModule.new_module(source_child.default_name(app=app), app.default_language)
         new_shadow.source_module_id = source_child.unique_id
 
         # ModuleBase properties

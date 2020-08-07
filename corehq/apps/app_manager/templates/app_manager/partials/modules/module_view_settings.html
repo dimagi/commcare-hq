@@ -71,7 +71,8 @@
                       </option>
                     </select>
                   {% else %}
-                    <select type="text" name="root_module_id" class="form-control">
+                    <select type="text" name="root_module_id" class="form-control"
+                            {% if module.module_type == 'shadow' %} disabled {% endif %}>
                       <option value="">{% trans "No Parent" %}</option>
                       {% for mod in valid_parents_for_child_module %}
                         <option value="{{mod.unique_id}}"{% if mod.unique_id == module.root_module_id %} selected{% endif %}>
@@ -91,8 +92,9 @@
                     {% trans "Source Menu" %}
                   </label>
                   <div class="{% css_field_class %}">
+                    {# If this is a child-shadow whose parent is also a shadow, you cannot edit the source #}
                     <select name="source_module_id" class="form-control"
-                            {% if shadow_parent %} disabled {% endif %}
+                            {% if shadow_parent.module_type == 'shadow' %} disabled {% endif %}
                             data-bind="options: modules,
                                              optionsText: 'name',
                                              optionsValue: 'uniqueId',
