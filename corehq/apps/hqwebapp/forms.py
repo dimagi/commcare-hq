@@ -1,6 +1,7 @@
 import json
 
 from django import forms
+from django.conf import settings
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.signals import user_login_failed
 from django.core.exceptions import ValidationError
@@ -10,6 +11,7 @@ from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
+from captcha.fields import CaptchaField
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import InlineField, StrictButton
 from crispy_forms.helper import FormHelper
@@ -21,10 +23,13 @@ from corehq.apps.users.models import CouchUser
 
 LOCKOUT_MESSAGE = mark_safe(_('Sorry - you have attempted to login with an incorrect password too many times. Please <a href="/accounts/password_reset_email/">click here</a> to reset your password or contact the domain administrator.'))
 
+
 class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
     username = forms.EmailField(label=_("E-mail"), max_length=75,
                                 widget=forms.TextInput(attrs={'class': 'form-control'}))
     password = forms.CharField(label=_("Password"), widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+    if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
+        captcha = CaptchaField(label=_("Type the letters in the box"))
 
     def clean_username(self):
         username = self.cleaned_data.get('username', '').lower()
