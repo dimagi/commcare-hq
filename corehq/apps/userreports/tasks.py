@@ -370,8 +370,13 @@ def build_indicators_with_agg_queue(indicator_doc_ids):
     build_async_indicators(indicator_doc_ids)
 
 
+@task(queue=settings.CELERY_LOCATION_REASSIGNMENT_QUEUE, ignore_result=True, acks_late=True)
+def build_indicators_with_location_reassignment_queue(indicator_doc_ids):
+    build_async_indicators(indicator_doc_ids, use_shard_col=False)
+
+
 @task(serializer='pickle', queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
-def build_async_indicators(indicator_doc_ids):
+def build_async_indicators(indicator_doc_ids, use_shard_col=True):
     # written to be used with _queue_indicators, indicator_doc_ids must
     #   be a chunk of 100
     memoizers = {'configs': {}, 'adapters': {}}
@@ -500,7 +505,7 @@ def build_async_indicators(indicator_doc_ids):
                     indicators = [indicator_by_doc_id[doc_id] for doc_id in doc_ids]
                     try:
                         with _metrics_timer('update', adapter.config._id):
-                            adapter.save_rows(rows, use_shard_col=True)
+                            adapter.save_rows(rows, use_shard_col=use_shard_col)
                     except Exception as e:
                         failed_indicators.union(indicators)
                         message = str(e)
@@ -515,7 +520,7 @@ def build_async_indicators(indicator_doc_ids):
             with _metrics_timer('single_batch_delete'):
                 for adapter, docs in docs_to_delete_by_adapter.items():
                     with _metrics_timer('delete', adapter.config._id):
-                        adapter.bulk_delete(docs)
+                        adapter.bulk_delete(docs, use_shard_col=use_shard_col)
 
         # delete fully processed indicators
         processed_indicators = set(all_indicators) - failed_indicators

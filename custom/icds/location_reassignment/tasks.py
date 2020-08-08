@@ -6,7 +6,11 @@ from corehq.apps.userreports.data_source_providers import (
     DynamicDataSourceProvider,
     StaticDataSourceProvider,
 )
+from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.userreports.specs import EvaluationContext
+from corehq.apps.userreports.tasks import (
+    build_indicators_with_location_reassignment_queue,
+)
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from custom.icds.location_reassignment.download import Households, OtherCases
@@ -165,6 +169,7 @@ def process_other_cases_reassignment(domain, reassignments, uploaded_filename, u
 @task(queue=settings.CELERY_LOCATION_REASSIGNMENT_QUEUE)
 def process_ucr_changes(domain, case_ids):
     cases = CaseAccessorSQL.get_cases(case_ids)
+    cases_by_id = {case.case_id: case for case in cases}
     docs = [case.to_json() for case in cases]
     data_source_providers = [DynamicDataSourceProvider(), StaticDataSourceProvider()]
 
@@ -179,12 +184,17 @@ def process_ucr_changes(domain, case_ids):
         for config in all_configs
     ]
 
+    async_configs_by_doc_id = {}
     for doc in docs:
         eval_context = EvaluationContext(doc)
         for adapter in adapters:
             if adapter.config.filter(doc, eval_context):
-                rows_to_save = adapter.get_all_values(doc, eval_context)
-                if rows_to_save:
-                    adapter.save_rows(rows_to_save, use_shard_col=False)
-                else:
-                    adapter.delete(doc, use_shard_col=False)
+                async_configs_by_doc_id[doc['_id']].append(adapter.config._id)
+
+    doc_ids = list(async_configs_by_doc_id.keys())
+    doc_type_by_id = {
+        _id: cases_by_id[_id].metadata.document_type
+        for _id in doc_ids
+    }
+    AsyncIndicator.bulk_update_records(async_configs_by_doc_id, domain, doc_type_by_id)
+    build_indicators_with_location_reassignment_queue(doc_ids)
