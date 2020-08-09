@@ -472,7 +472,7 @@ class SubmissionErrorLog(XFormError):
         """
         log = SubmissionErrorLog(
             received_on=datetime.datetime.utcnow(),
-            md5=hashlib.md5(instance).hexdigest(),
+            md5=hashlib.md5(instance.encode('utf-8')).hexdigest(),
             problem=message,
         )
         log.deferred_put_attachment(instance, ATTACHMENT_NAME, content_type="text/xml")
