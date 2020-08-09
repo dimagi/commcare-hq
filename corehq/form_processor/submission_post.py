@@ -221,7 +221,7 @@ class SubmissionPost(object):
         if failure_response:
             return FormProcessingResult(failure_response, None, [], [], 'known_failures')
 
-        self.instance = self.instance.decode()
+        self.instance = self.instance.decode() if isinstance(self.instance, bytes) else self.instance
         result = process_xform_xml(self.domain, self.instance, self.attachments, self.auth_context.to_json())
         submitted_form = result.submitted_form
 
