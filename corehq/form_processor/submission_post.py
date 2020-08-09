@@ -221,6 +221,7 @@ class SubmissionPost(object):
         if failure_response:
             return FormProcessingResult(failure_response, None, [], [], 'known_failures')
 
+        self.instance = self.instance.decode()
         result = process_xform_xml(self.domain, self.instance, self.attachments, self.auth_context.to_json())
         submitted_form = result.submitted_form
 
@@ -231,15 +232,10 @@ class SubmissionPost(object):
             self.formdb.save_new_form(submitted_form)
 
             response = None
-            try:
-                xml = self.instance.decode()
-            except UnicodeDecodeError:
-                pass
-            else:
-                if 'log_subreport' in xml:
-                    response = self.get_exception_response_and_log(
-                        'Badly formed device log', submitted_form, self.path
-                    )
+            if 'log_subreport' in self.instance:
+                response = self.get_exception_response_and_log(
+                    'Badly formed device log', submitted_form, self.path
+                )
 
             if not response:
                 response = self.get_exception_response_and_log(
