@@ -1843,7 +1843,7 @@ def reconcile_data_not_in_ucr(reconciliation_status_pk):
             log = {
                 "doc_id": doc_id,
                 "modified_on": sql_modified_on.isoformat(),
-                "inserted_at": inserted_at.isoformat(),
+                "inserted_at": inserted_at.isoformat() if inserted_at else None,
                 "in_es": found_in_es,
                 "subtype": doc_subtype,
             }
