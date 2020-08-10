@@ -50,6 +50,13 @@ hqDefine("scheduling/js/conditional_alert_main", [
             );
             // compare changes with initialFormContent to check if only 'message' has changed
             // to convey to HQ to reprocess or not
+            var formContentChanges = []
+            Object.keys(finalFormContent).forEach(key => {
+                finalFormContent[key] !== initialFormContent[key] ? formContentChanges.push(key) : null;
+            });
+            if (_.isEqual(['message'], formContentChanges)) {
+                // make the tweak
+            }
         }
     });
 });
