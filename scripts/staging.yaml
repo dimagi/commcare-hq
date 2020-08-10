@@ -67,4 +67,5 @@ branches:
   - solleks:cdg/data_dictionary_erm  # Charlie August 6
   - nh/repeaters  # Norman Aug 7
   - fr/link-remote-domains      # Farid August 10
+  - bmb/SAAS-11163  # Biyeun Aug 10
 submodules: {}
