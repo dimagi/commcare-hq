@@ -1,9 +1,0 @@
-{# NOTE: Django assumes templates are stored with UTF-8 encoding by default. Be sure to save this template with UTF-8 encoding. #}
-
-{% if location_names and timeframe == 'week' %}
-பின்வரும் ஏ.டீ.ஈ.சி ஐ.சி.எஸ்.எஸ்.எஸ்.எஸ். சி.எஸ்.எஸ் பயன்பாட்டில் எந்தவொரு நடவடிக்கையும் செய்யவில்லை: {{ location_names }}
-{% endif %}
-
-{% if location_names and timeframe == 'month' %}
-பின்வரும் AWC ICDS CAS பயன்பாட்டில் எந்தவொரு மாதத்திலும் எந்த நடவடிக்கையும் செய்யவில்லை: {{ location_names }} உதவி வழங்குவதற்கு தயவுசெய்து அவர்களுடன் தொடரவும்.
-{% endif %}
