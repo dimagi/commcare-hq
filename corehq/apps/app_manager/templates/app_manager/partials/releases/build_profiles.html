@@ -1,6 +1,8 @@
 {% load i18n %}
 {% load hq_shared_tags %}
+{% if can_manage_releases %}
 <a href="{% url 'manage_releases_by_app_profile' domain %}">Manage Releases By App Profile</a>
+{% endif %}
 
 <div data-bind="saveButton: saveButton"></div>
 <div class="panel panel-appmanager">
