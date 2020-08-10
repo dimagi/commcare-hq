@@ -48,10 +48,6 @@ class CustomSMSReportTracker(object):
     def clear_all_reports(self):
         self.client.delete(self.report_key)
 
-    @property
-    def max_report_count(self):
-        return 3
-
 
 def _get_report_id(start_date: str, end_date: str):
     return start_date + '--' + end_date

@@ -8,6 +8,7 @@ from corehq.apps.sms.views import BaseMessagingSectionView
 from custom.icds.forms import CustomSMSReportRequestForm
 from custom.icds.tasks.sms import send_custom_sms_report
 from custom.icds_core.const import SMSUsageReport_urlname
+from custom.icds.const import MAX_CONCURRENT_SMS_REPORTS_ALLOWED
 from custom.icds.utils.custom_sms_report import CustomSMSReportTracker, _get_report_id
 
 from memoized import memoized
@@ -25,30 +26,29 @@ class SMSUsageReport(BaseMessagingSectionView):
 
     @property
     def page_context(self):
-        report_count = len(self._get_active_report_ids())
-        disable_submit = report_count >= 3
+        report_ids = self._get_active_report_ids()
+        report_count = len(report_ids)
+        context = {}
+        disable_submit = report_count >= MAX_CONCURRENT_SMS_REPORTS_ALLOWED
         if disable_submit:
-            messages.error(self.request, 'Only 3 concurrent reports are allowed at a time.\
-                Please wait for them to finish.')
+            messages.error(self.request, _('Only {max_report_count} concurrent reports are allowed at a time.\
+                Please wait for them to finish.').format(
+                max_report_count=MAX_CONCURRENT_SMS_REPORTS_ALLOWED
+            ))
         if report_count > 0:
-            display_message = self._prepare_display_message()
-            messages.info(self.request, display_message)
+            context.update({
+                'reports_in_progress': ',  '.join(report_ids)
+            })
         self.request_form = CustomSMSReportRequestForm(disable_submit=disable_submit)
-        return {
-            'request_form': self.request_form,
-            'disable_submit': disable_submit,
-        }
+        context.update({
+            'request_form': self.request_form
+        })
+        return context
 
     @memoized
     def _get_active_report_ids(self):
         report_tracker = CustomSMSReportTracker(self.request.domain)
         return report_tracker.active_reports
-
-    def _prepare_display_message(self):
-        reports_ids = self._get_active_report_ids()
-        message = _('Reports in progress: ')
-        message += ', '.join(reports_ids)
-        return message
 
     def post(self, request, *args, **kwargs):
         report_tracker = CustomSMSReportTracker(request.domain)
@@ -57,7 +57,7 @@ class SMSUsageReport(BaseMessagingSectionView):
 
         self.request_form = CustomSMSReportRequestForm(request.POST)
 
-        if self.request_form.is_valid() and report_count < report_tracker.max_report_count:
+        if self.request_form.is_valid() and report_count < MAX_CONCURRENT_SMS_REPORTS_ALLOWED:
             user_email = self.request.user.email
             data = self.request_form.cleaned_data
             start_date = data['start_date']
