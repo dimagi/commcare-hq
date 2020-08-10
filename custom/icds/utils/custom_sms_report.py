@@ -1,5 +1,8 @@
 import json
+
 from dimagi.utils.couch.cache.cache_core import get_redis_client
+
+from custom.icds.const import MAX_CONCURRENT_SMS_REPORTS_ALLOWED
 
 
 class CustomSMSReportTracker(object):
@@ -51,3 +54,7 @@ class CustomSMSReportTracker(object):
 
 def _get_report_id(start_date: str, end_date: str):
     return start_date + '--' + end_date
+
+
+def _can_add_new_report(report_count):
+    return report_count < MAX_CONCURRENT_SMS_REPORTS_ALLOWED

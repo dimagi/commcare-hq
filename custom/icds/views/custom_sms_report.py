@@ -2,16 +2,20 @@ from django.contrib import messages
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
 
-from custom.icds import icds_toggles
+from memoized import memoized
+
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
 from corehq.apps.sms.views import BaseMessagingSectionView
+from custom.icds import icds_toggles
+from custom.icds.const import MAX_CONCURRENT_SMS_REPORTS_ALLOWED
 from custom.icds.forms import CustomSMSReportRequestForm
 from custom.icds.tasks.sms import send_custom_sms_report
+from custom.icds.utils.custom_sms_report import (
+    CustomSMSReportTracker,
+    _get_report_id,
+    _can_add_new_report,
+)
 from custom.icds_core.const import SMSUsageReport_urlname
-from custom.icds.const import MAX_CONCURRENT_SMS_REPORTS_ALLOWED
-from custom.icds.utils.custom_sms_report import CustomSMSReportTracker, _get_report_id
-
-from memoized import memoized
 
 
 @method_decorator(icds_toggles.ICDS_CUSTOM_SMS_REPORT.required_decorator(), name='dispatch')
@@ -29,20 +33,17 @@ class SMSUsageReport(BaseMessagingSectionView):
         report_ids = self._get_active_report_ids()
         report_count = len(report_ids)
         context = {}
-        disable_submit = report_count >= MAX_CONCURRENT_SMS_REPORTS_ALLOWED
+        disable_submit = not _can_add_new_report(report_count)
         if disable_submit:
             messages.error(self.request, _('Only {max_report_count} concurrent reports are allowed at a time.\
                 Please wait for them to finish.').format(
                 max_report_count=MAX_CONCURRENT_SMS_REPORTS_ALLOWED
             ))
         if report_count > 0:
-            context.update({
-                'reports_in_progress': ',  '.join(report_ids)
-            })
+            context['reports_in_progress'] = ',  '.join(report_ids)
+
         self.request_form = CustomSMSReportRequestForm(disable_submit=disable_submit)
-        context.update({
-            'request_form': self.request_form
-        })
+        context['request_form'] = self.request_form
         return context
 
     @memoized
@@ -57,7 +58,7 @@ class SMSUsageReport(BaseMessagingSectionView):
 
         self.request_form = CustomSMSReportRequestForm(request.POST)
 
-        if self.request_form.is_valid() and report_count < MAX_CONCURRENT_SMS_REPORTS_ALLOWED:
+        if self.request_form.is_valid() and _can_add_new_report(report_count):
             user_email = self.request.user.email
             data = self.request_form.cleaned_data
             start_date = data['start_date']
