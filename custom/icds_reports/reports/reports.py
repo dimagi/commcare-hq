@@ -1,6 +1,6 @@
 from django.urls import reverse
 
-from corehq import toggles
+from custom.icds import icds_toggles
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.filters.select import YearFilter
 from corehq.apps.reports.standard import CustomProjectReport
@@ -12,7 +12,6 @@ from custom.icds_reports.mpr_sqldata import MPRIdentification, MPRSectors, MPRPo
     MPRGrowthMonitoring, MPRImmunizationCoverage, MPRVhnd, MPRReferralServices, MPRMonitoring
 from custom.icds_reports.mpr_sqldata import MPROperationalization
 from custom.icds_reports.reports import IcdsBaseReport
-from memoized import memoized
 
 
 @location_safe
@@ -79,4 +78,4 @@ class DashboardReport(CustomProjectReport):
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return toggles.DASHBOARD_ICDS_REPORT.enabled(domain)
+        return icds_toggles.DASHBOARD_ICDS_REPORT.enabled(domain)

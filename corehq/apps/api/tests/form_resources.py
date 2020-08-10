@@ -12,6 +12,7 @@ from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.api.resources import v0_4
 from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.apps.es.tests.utils import ElasticTestMixin
 from corehq.form_processor.tests.utils import run_with_all_backends
@@ -24,6 +25,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 from .utils import APIResourceTest, FakeFormESView
 
 
+@es_test
 class TestXFormInstanceResource(APIResourceTest):
     """
     Tests the XFormInstanceResource, currently only v0_4
@@ -188,6 +190,7 @@ class TestXFormInstanceResource(APIResourceTest):
         self.assertEqual(len(api_forms), 2)
 
 
+@es_test
 class TestXFormInstanceResourceQueries(APIResourceTest, ElasticTestMixin):
     """
     Tests that urlparameters get converted to expected ES queries.

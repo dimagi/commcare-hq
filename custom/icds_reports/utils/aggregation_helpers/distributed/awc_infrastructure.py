@@ -1,6 +1,6 @@
 from dateutil.relativedelta import relativedelta
 
-from corehq.toggles import ICDS_LOCATION_REASSIGNMENT_AGG
+from custom.icds.icds_toggles import ICDS_LOCATION_REASSIGNMENT_AGG
 
 from custom.icds_reports.const import AGG_INFRASTRUCTURE_TABLE
 from custom.icds_reports.utils.aggregation_helpers import month_formatter, get_prev_agg_tablename

@@ -14,29 +14,11 @@ from corehq.apps.userreports.util import add_tabbed_text
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import mget_query
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from corehq.toggles import ICDS_UCR_ELASTICSEARCH_DOC_LOADING, NAMESPACE_OTHER
+from corehq.toggles import NAMESPACE_OTHER
+from custom.icds.icds_toggles import ICDS_UCR_ELASTICSEARCH_DOC_LOADING
 from dimagi.ext.jsonobject import JsonObject, ListProperty, StringProperty, DictProperty, BooleanProperty
 from corehq.apps.app_manager.dbaccessors import get_build_by_version
 from django.conf import settings
-
-
-CUSTOM_UCR_EXPRESSIONS = [
-    ('icds_parent_id', 'custom.icds_reports.ucr.expressions.parent_id'),
-    ('icds_parent_parent_id', 'custom.icds_reports.ucr.expressions.parent_parent_id'),
-    ('icds_get_case_forms_by_date', 'custom.icds_reports.ucr.expressions.get_case_forms_by_date'),
-    ('icds_get_all_forms_repeats', 'custom.icds_reports.ucr.expressions.get_all_forms_repeats'),
-    ('icds_get_last_form_repeat', 'custom.icds_reports.ucr.expressions.get_last_form_repeat'),
-    ('icds_get_case_history', 'custom.icds_reports.ucr.expressions.get_case_history'),
-    ('icds_get_case_history_by_date', 'custom.icds_reports.ucr.expressions.get_case_history_by_date'),
-    ('icds_get_last_case_property_update', 'custom.icds_reports.ucr.expressions.get_last_case_property_update'),
-    ('icds_get_case_forms_in_date', 'custom.icds_reports.ucr.expressions.get_forms_in_date_expression'),
-    ('icds_get_app_version', 'custom.icds_reports.ucr.expressions.get_app_version'),
-    ('icds_datetime_now', 'custom.icds_reports.ucr.expressions.datetime_now'),
-    ('icds_boolean', 'custom.icds_reports.ucr.expressions.boolean_question'),
-    ('icds_user_location', 'custom.icds_reports.ucr.expressions.icds_user_location'),
-    ('icds_awc_owner_id', 'custom.icds_reports.ucr.expressions.awc_owner_id'),
-    ('icds_village_owner_id', 'custom.icds_reports.ucr.expressions.village_owner_id'),
-]
 
 
 class GetCaseFormsByDateSpec(JsonObject):

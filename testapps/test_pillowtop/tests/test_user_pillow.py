@@ -7,6 +7,7 @@ from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed.topics import get_topic_offset, get_multi_topic_offset
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import UserES
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new
@@ -28,6 +29,7 @@ from .base import BasePillowTestCase
 TEST_DOMAIN = 'user-pillow-test'
 
 
+@es_test
 class UserPillowTestBase(BasePillowTestCase):
     def setUp(self):
         super(UserPillowTestBase, self).setUp()
@@ -47,6 +49,7 @@ class UserPillowTestBase(BasePillowTestCase):
         super(UserPillowTestBase, self).tearDown()
 
 
+@es_test
 class UserPillowTest(UserPillowTestBase):
 
     def test_kafka_user_pillow(self):

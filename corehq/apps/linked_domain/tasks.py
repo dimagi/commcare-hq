@@ -92,6 +92,7 @@ class ReleaseManager():
 
     def get_email_message(self, models, linked_domains, html=True):
         error_domain_count = self.get_error_domain_count()
+        separator = "<br>" if html else "\n"
         message = _("""
 Release complete. {} project(s) succeeded. {}
 
@@ -102,15 +103,15 @@ The following linked project spaces received content:
         """).format(
             self.get_success_domain_count(),
             _("{} project(s) encountered errors.").format(error_domain_count) if error_domain_count else "",
-            "\n".join(["- {}".format(m['name']) for m in models])
+            separator.join(["- {}".format(m['name']) for m in models])
         )
         for linked_domain in sorted(linked_domains):
             if not self._get_errors(linked_domain, html):
-                message += _("\n- {} updated successfully").format(linked_domain)
+                message += _("{}- {} updated successfully").format(separator, linked_domain)
             else:
-                message += _("\n- {} encountered errors:").format(linked_domain)
+                message += _("{}- {} encountered errors:").format(separator, linked_domain)
                 for msg in self._get_errors(linked_domain, html) + self._get_successes(linked_domain, html):
-                    message += "\n   - " + msg
+                    message += separator + "   - " + msg
         return message
 
     def _release_app(self, domain_link, model, user, build_and_release=False):

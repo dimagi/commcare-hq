@@ -2,7 +2,7 @@ import re
 
 import testil
 
-from corehq.extensions.interface import CommCareExtensions, ExtensionError
+from corehq.extensions.interface import CommCareExtensions, ExtensionError, ResultFormat
 from corehq.util.test_utils import generate_cases
 
 extensions = CommCareExtensions()
@@ -100,11 +100,47 @@ def test_late_extension_definition():
             pass
 
 
-def test_late_extension_point_definition():
+def test_flatten_results():
     ext = CommCareExtensions()
-    ext.load_extensions([])
 
-    with testil.assert_raises(ExtensionError, msg=re.compile("Late extension point definition")):
-        @ext.extension_point
-        def ext_point_c():
-            """testing..."""
+    @ext.extension_point(result_format=ResultFormat.FLATTEN)
+    def ext_point_d():
+        """test"""
+
+    @ext_point_d.extend
+    def extend_1():
+        return [1, 2]
+
+    @ext_point_d.extend
+    def extend_2():
+        return [3, 4]
+
+    testil.eq(ext_point_d(), [1, 2, 3, 4])
+
+
+def test_single_value():
+    ext = CommCareExtensions()
+
+    @ext.extension_point(result_format=ResultFormat.FIRST)
+    def ext_point_d():
+        """test"""
+
+    @ext_point_d.extend
+    def extend_1():
+        return None
+
+    @ext_point_d.extend
+    def extend_2():
+        return 1
+
+    testil.eq(ext_point_d(), 1)
+
+
+def test_single_value_none():
+    ext = CommCareExtensions()
+
+    @ext.extension_point(result_format=ResultFormat.FIRST)
+    def ext_point():
+        pass
+
+    testil.eq(ext_point(), None)

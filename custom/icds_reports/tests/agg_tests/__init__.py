@@ -1,5 +1,6 @@
 import csv
 import os
+import sys
 from datetime import datetime
 
 import mock
@@ -27,8 +28,20 @@ from .agg_setup import setup_location_hierarchy, setup_tables_and_fixtures, aggr
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
 
 
+def _skip_if_nose_attr():
+    # When nose `attr` option is passed in tests
+    #   the setUpModule and tearDownModule are called even if it's
+    #   not necessary. This fails and further tests don't get run
+    # Since there is no icds tests with es_test attr, we can skip this
+    #   setUpModule and tearDownModule
+    return '--attr=es_test' in sys.argv
+
+
 @timelimit(480)
 def setUpModule():
+    if _skip_if_nose_attr():
+        return
+
     if settings.USE_PARTITIONED_DATABASE:
         print('============= WARNING: not running test setup because settings.USE_PARTITIONED_DATABASE is True.')
         return
@@ -57,6 +70,9 @@ def setUpModule():
 
 
 def tearDownModule():
+    if _skip_if_nose_attr():
+        return
+
     if settings.USE_PARTITIONED_DATABASE:
         return
 

@@ -47,7 +47,16 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                                 response.exception || FormplayerFrontend.Constants.GENERIC_ERROR,
                                 response.type === 'html'
                             );
-                            FormplayerFrontend.trigger('navigation:back');
+
+                            var currentUrl = FormplayerFrontend.getCurrentRoute();
+                            if (FormplayerFrontend.lastError === currentUrl) {
+                                FormplayerFrontend.lastError = null;
+                                FormplayerFrontend.trigger('navigateHome');
+                            } else {
+                                FormplayerFrontend.lastError = currentUrl;
+                                FormplayerFrontend.trigger('navigation:back');
+                            }
+
                         } else {
                             FormplayerFrontend.trigger('clearProgress');
                             defer.resolve(parsedMenus);
