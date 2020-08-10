@@ -69,7 +69,7 @@ def send_monthly_sms_report():
 
 
 @task
-def send_custom_sms_report(start_date: str, end_date: str, email, domain):
+def send_custom_sms_report(start_date: str, end_date: str, email: str, domain: str):
     subject = _('Monthly SMS report')
     recipients = [email]
 

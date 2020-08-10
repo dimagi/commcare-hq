@@ -1,6 +1,5 @@
 hqDefine("icds/js/custom_sms_report",[
     'jquery',
-    'hqwebapp/js/initial_page_data',
     'hqwebapp/js/daterangepicker.config', //createBootstrap3DefaultDateRangePicker
 ], function (
     $

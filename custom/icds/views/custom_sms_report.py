@@ -25,7 +25,7 @@ class SMSUsageReport(BaseMessagingSectionView):
 
     @property
     def page_context(self):
-        report_count = len(self._get_active_reports())
+        report_count = len(self._get_active_report_ids())
         disable_submit = report_count >= 3
         if disable_submit:
             messages.error(self.request, 'Only 3 concurrent reports are allowed at a time.\
@@ -40,18 +40,14 @@ class SMSUsageReport(BaseMessagingSectionView):
         }
 
     @memoized
-    def _get_active_reports(self):
+    def _get_active_report_ids(self):
         report_tracker = CustomSMSReportTracker(self.request.domain)
         return report_tracker.active_reports
 
     def _prepare_display_message(self):
-        reports_in_progress = self._get_active_reports()
-        report_count = len(reports_in_progress)
+        reports_ids = self._get_active_report_ids()
         message = _('Reports in progress: ')
-        for index, report in enumerate(reports_in_progress):
-            message += '"{report_id}"'.format(report_id=report)
-            if index != report_count - 1:
-                message += ', '
+        message += ', '.join(reports_ids)
         return message
 
     def post(self, request, *args, **kwargs):
@@ -61,7 +57,7 @@ class SMSUsageReport(BaseMessagingSectionView):
 
         self.request_form = CustomSMSReportRequestForm(request.POST)
 
-        if self.request_form.is_valid() and report_count < 3:
+        if self.request_form.is_valid() and report_count < report_tracker.max_report_count:
             user_email = self.request.user.email
             data = self.request_form.cleaned_data
             start_date = data['start_date']
