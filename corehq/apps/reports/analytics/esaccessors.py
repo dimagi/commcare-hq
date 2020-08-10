@@ -340,10 +340,12 @@ def get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=None,
     USER_FILTER_CHUNK_SIZE = getattr(settings, 'USER_FILTER_CHUNK_SIZE', 10000)
     to_ret = defaultdict(lambda: 0)
     if not user_ids:
-        to_ret.update(_chunked_get_form_counts_by_user_xmlns(domain, startdate, enddate, None, xmlnss, by_submission_time, export))
+        to_ret.update(_chunked_get_form_counts_by_user_xmlns(
+            domain, startdate, enddate, None, xmlnss, by_submission_time, export))
     else:
         for chunk in chunked(user_ids, USER_FILTER_CHUNK_SIZE):
-            to_ret.update(_chunked_get_form_counts_by_user_xmlns(domain, startdate, enddate, chunk, xmlnss, by_submission_time, export))
+            to_ret.update(_chunked_get_form_counts_by_user_xmlns(
+                domain, startdate, enddate, chunk, xmlnss, by_submission_time, export))
     return to_ret
 
 
