@@ -2,7 +2,7 @@ hqDefine('icds/js/custom_data_pull', [
     'jquery',
     'locations/js/search',
     'hqwebapp/js/widgets', // using select2/dist/js/select2.full.min for ko-select2 on location select
-    'jquery-ui/ui/datepicker',
+    'jquery-ui/ui/widgets/datepicker',
 ], function (
     $
 ) {

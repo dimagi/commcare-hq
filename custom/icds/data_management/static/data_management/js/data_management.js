@@ -6,7 +6,7 @@ hqDefine('data_management/js/data_management', [
     'hqwebapp/js/assert_properties',
     'hqwebapp/js/components.ko',    // pagination widget
     'hqwebapp/js/knockout_bindings.ko', // for modals
-    'jquery-ui/ui/datepicker',
+    'jquery-ui/ui/widgets/datepicker',
 ], function ($, ko, _, initialPageData, assertProperties) {
     'use strict';
     var errorStatusCode = initialPageData.get('error_status_code');
