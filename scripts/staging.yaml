@@ -68,4 +68,5 @@ branches:
   - nh/repeaters  # Norman Aug 7
   - fr/link-remote-domains      # Farid August 10
   - bmb/SAAS-11163  # Biyeun Aug 10
+  - jls/line-breaks # Jenny Aug 10
 submodules: {}
