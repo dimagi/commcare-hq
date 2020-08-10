@@ -21,6 +21,6 @@ def can_access_location_data(view_fn):
         if not loc_id and not request.couch_user.has_permission(domain, 'access_all_locations'):
             return return_no_location_access_response()
         if loc_id and not user_can_access_location_id(domain, request.couch_user, loc_id):
-                return return_no_location_access_response()
+            return return_no_location_access_response()
         return call_view()
     return _inner
