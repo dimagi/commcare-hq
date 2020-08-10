@@ -34,5 +34,22 @@ hqDefine("scheduling/js/conditional_alert_main", [
         // setup tab
         basicInformation.setRuleTabVisibility();
         $("#conditional-alert-basic-info-panel").koApplyBindings(basicInformation);
+
+
+        var initialFormContent = {};
+        _.each(
+            $('.main-form').serializeArray(),
+            function(obj, index) {initialFormContent[obj.name] = obj.value}
+        );
+
+        $('.main-form').on( "submit", function( event ) {
+            var finalFormContent = {};
+            _.each(
+                $('.main-form').serializeArray(),
+                function(obj, index) {finalFormContent[obj.name] = obj.value}
+            );
+            // compare changes with initialFormContent to check if only 'message' has changed
+            // to convey to HQ to reprocess or not
+        }
     });
 });
