@@ -1,41 +1,14 @@
-import json
 import logging
-import uuid
-from datetime import datetime
 
 from django.contrib.auth.decorators import login_required
-from django.http import (
-    Http404,
-    HttpResponse,
-    HttpResponseForbidden,
-    HttpResponseServerError,
-)
+from django.http import Http404, HttpResponseForbidden, HttpResponseServerError
 from django.shortcuts import render
 from django.template.context import RequestContext
 from django.utils.translation import ugettext_lazy as _
 
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
-from soil.heartbeat import (
-    get_cache_heartbeat,
-    get_file_heartbeat,
-    last_heartbeat,
-)
 from soil.util import get_download_context
-
-
-def _parse_date(string):
-    if isinstance(string, str):
-        return datetime.strptime(string, "%Y-%m-%d").date()
-    else:
-        return string
-
-
-@login_required
-def heartbeat_status(request):
-    return HttpResponse(json.dumps({"last_timestamp": str(last_heartbeat()),
-                                    "last_from_file": get_file_heartbeat(),
-                                    "last_from_cache": get_cache_heartbeat()}))
 
 
 @login_required

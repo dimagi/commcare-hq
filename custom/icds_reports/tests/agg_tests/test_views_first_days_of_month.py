@@ -6,7 +6,7 @@ import json
 import mock
 import datetime
 
-from corehq.toggles import DASHBOARD_ICDS_REPORT
+from custom.icds.icds_toggles import DASHBOARD_ICDS_REPORT
 from custom.icds_reports.views import PrevalenceOfUndernutritionView, AwcReportsView, \
     PrevalenceOfSevereView, PrevalenceOfStuntingView, NewbornsWithLowBirthWeightView, \
     EarlyInitiationBreastfeeding, ExclusiveBreastfeedingView, ChildrenInitiatedView, InstitutionalDeliveriesView, \

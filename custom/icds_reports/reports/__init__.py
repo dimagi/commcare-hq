@@ -3,7 +3,7 @@ import json
 from dateutil.relativedelta import relativedelta
 from memoized import memoized
 
-from corehq import toggles
+from custom.icds import icds_toggles
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, \
     MonthYearMixin
@@ -28,7 +28,7 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
 
     @property
     def allow_conditional_agg(self):
-        return toggles.MPR_ASR_CONDITIONAL_AGG.enabled_for_request(self.request)
+        return icds_toggles.MPR_ASR_CONDITIONAL_AGG.enabled_for_request(self.request)
 
     @property
     @memoized
@@ -55,7 +55,7 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
     @property
     def parallel_render(self):
         return (not self.is_rendered_as_email and not self.is_rendered_as_export
-            and toggles.PARALLEL_MPR_ASR_REPORT.enabled_for_request(self.request))
+            and icds_toggles.PARALLEL_MPR_ASR_REPORT.enabled_for_request(self.request))
 
     @property
     def report_config(self):

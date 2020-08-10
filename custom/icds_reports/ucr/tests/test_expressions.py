@@ -13,7 +13,8 @@ from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.xform import transform_xform_for_elasticsearch
-from corehq.toggles import ICDS_UCR_ELASTICSEARCH_DOC_LOADING, DynamicallyPredictablyRandomToggle, NAMESPACE_OTHER
+from corehq.toggles import DynamicallyPredictablyRandomToggle, NAMESPACE_OTHER
+from custom.icds.icds_toggles import ICDS_UCR_ELASTICSEARCH_DOC_LOADING
 from corehq.util.test_utils import generate_cases
 from corehq.util.elastic import ensure_index_deleted
 from pillowtop.es_utils import initialize_index_and_mapping
