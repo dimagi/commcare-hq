@@ -12,10 +12,18 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         # by default execute child cases
         person_config = _get_config_by_id('static-icds-cas-static-person_cases_v3')
-        query_june = "SELECT child_person_case_id FROM child_health_monthly WHERE month='2020-06-01' AND dob IS NULL;"
-        query_july = "SELECT child_person_case_id FROM child_health_monthly WHERE month='2020-07-01' AND dob IS NULL;"
+        query = """
+            SELECT chm.child_person_case_id FROM child_health_monthly chm
+            LEFT JOIN "ucr_icds-cas_static-person_cases_v3_2ae0879a" person_case ON (
+                chm.child_person_case_id = person_case.doc_id AND
+                chm.state_id = person_case.state_id AND
+                chm.supervisor_id = person_case.supervisor_id
+            ) WHERE chm.month='{date}' AND person_case.doc_id IS NULL;
+        """
         ids = set()
-        for query in [query_june, query_july]:
+
+        for date in ['2020-07-01', '2020-08-01']:
+            query = query.format(date=date)
             with connections['icds-ucr-citus'].cursor() as cursor:
                 cursor.execute(query)
                 doc_ids = cursor.fetchall()
