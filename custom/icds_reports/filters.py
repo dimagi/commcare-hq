@@ -47,7 +47,7 @@ def load_locs_json(domain, selected_loc_id=None, user=None, show_test=False):
                 return parent_location
         return None
 
-    user_location = user.sql_location
+    user_location = user.get_sql_location(domain)
     user_has_all_location_access = user.has_permission(domain, 'access_all_locations')
 
     if user_has_all_location_access:
@@ -85,7 +85,7 @@ def load_locs_json(domain, selected_loc_id=None, user=None, show_test=False):
             if ancestor_loc_dict_in_json is None:
                 break
 
-            child_locations = ancestor.child_locations(include_archive_ancestors=True)
+            child_locations = ancestor.child_locations()
             ancestor_loc_dict_in_json['children'] = [
                 loc_to_json(loc) for loc in child_locations
                 if loc.metadata.get('is_test_location', 'real') != 'test'
