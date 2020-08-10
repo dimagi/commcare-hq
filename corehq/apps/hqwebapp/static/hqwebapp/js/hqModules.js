@@ -67,7 +67,7 @@ function hqDefine(path, dependencies, moduleAccessor) {
                 thirdPartyPlugins = [
                     'jquery-form/dist/jquery.form.min',
                     'jquery.rmi/jquery.rmi',
-                    'jquery-ui/ui/sortable',
+                    'jquery-ui/ui/widgets/sortable',
                     'select2-3.5.2-legacy/select2',
                     'select2/dist/js/select2.full.min',
                 ];

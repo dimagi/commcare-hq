@@ -236,21 +236,21 @@ def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=
             return doc['doc_type'].endswith(DELETED_SUFFIX)
 
     for change in changes:
+        action = {
+            "_index": index_info.alias,
+            "_id": change.id
+        }
+        if settings.ELASTICSEARCH_MAJOR_VERSION != 7:
+            action.update({"_type": index_info.type})
+
         if _is_deleted(change):
-            payload.append({
-                "_op_type": "delete",
-                "_index": index_info.alias,
-                "_type": index_info.type,
-                "_id": change.id
-            })
+            action.update({"_op_type": "delete"})
         elif not change.deleted:
             try:
                 doc = change.get_document()
                 doc = doc_transform(doc)
-                payload.append({
+                action.update({
                     "_op_type": "index",
-                    "_index": index_info.alias,
-                    "_type": index_info.type,
                     "_id": doc['_id'],
                     "_source": doc
                 })
@@ -258,6 +258,9 @@ def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=
                 if not error_collector:
                     raise
                 error_collector.add_error(ChangeError(change, e))
+                continue
+        payload.append(action)
+
     return payload
 
 
