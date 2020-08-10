@@ -1,6 +1,10 @@
-/* globals CryptoJS */
-
-hqDefine("integration/js/hmac_callout", ["hqwebapp/js/initial_page_data"], function (initialPageData) {
+hqDefine("integration/js/hmac_callout", [
+    "hqwebapp/js/initial_page_data",
+    "crypto-js/crypto-js"
+], function (
+    initialPageData,
+    CryptoJS
+) {
     var randomString = function (nBytes) {
         return CryptoJS.lib.WordArray.random(nBytes).toString();
     };

@@ -63,6 +63,7 @@ function hqDefine(path, dependencies, moduleAccessor) {
                     'ace-builds/src-min-noconflict/ace': 'ace',
                     'DOMPurify/dist/purify.min': 'DOMPurify',
                     'moment/moment': 'moment',
+                    'crypto-js/crypto-js': 'CryptoJS',
                 },
                 thirdPartyPlugins = [
                     'jquery-form/dist/jquery.form.min',
