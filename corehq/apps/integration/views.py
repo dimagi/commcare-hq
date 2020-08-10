@@ -11,8 +11,8 @@ from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseAdminProjectSettingsView
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
-from corehq.apps.integration.forms import DialerSettingsForm, SimprintsIntegrationForm
-from corehq.apps.integration.models import DialerSettings
+from corehq.apps.integration.forms import DialerSettingsForm, SimprintsIntegrationForm, HmacCalloutSettingsForm
+from corehq.apps.integration.models import DialerSettings, HmacCalloutSettings
 from corehq.apps.integration.util import get_dialer_settings
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
@@ -104,5 +104,44 @@ class DialerSettingsView(BaseProjectSettingsView):
         else:
             messages.error(
                 request, ugettext_lazy("Could not update Dialer Settings")
+            )
+        return self.get(request, *args, **kwargs)
+
+
+@method_decorator(toggles.HMAC_CALLOUT.required_decorator(), name='dispatch')
+class HmacCalloutSettingsView(BaseProjectSettingsView):
+    urlname = 'hmac_callout_settings_view'
+    page_title = ugettext_lazy('Signed Callout Settings')
+    template_name = 'integration/hmac_callout_settings.html'
+
+    @property
+    @memoized
+    def hmac_callout_settings_form(self):
+        data = self.request.POST if self.request.method == 'POST' else None
+        return HmacCalloutSettingsForm(
+            data, domain=self.domain
+        )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['domain'] = self.domain
+        kwargs['initial'] = HmacCalloutSettings.objects.get_or_create(domain=self.domain)
+        return kwargs
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.hmac_callout_settings_form
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.hmac_callout_settings_form.is_valid():
+            self.hmac_callout_settings_form.save()
+            messages.success(
+                request, ugettext_lazy("Callout Settings Updated")
+            )
+        else:
+            messages.error(
+                request, ugettext_lazy("Could not update Callout Settings")
             )
         return self.get(request, *args, **kwargs)
