@@ -60,7 +60,7 @@ branches:
   - fr/authenticated-soil-downloads # Farid July 31
   - jls/linked-domains-parallel-release # Jenny July 31
   - jls/view-apps-permission # Jenny July 31
-  - sk/remove-icdsI+jls/CustomDataFieldsProfile+sr/es7-ref1-1  # Farid Aug 7
+  - sk/remove-icdsI+jls/CustomDataFieldsProfile+sr/es7-ref1-1+bmb/SAAS-11163  # Biyeun Aug 10
   - jls/CustomDataFieldsProfile # Jenny July 24
   - sk/remove-icdsI  # Simon Aug 5
   - sr/es7-ref1 # Sravan Aug 4
