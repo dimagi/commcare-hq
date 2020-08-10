@@ -85,7 +85,8 @@ def load_locs_json(domain, selected_loc_id=None, user=None, show_test=False):
             if ancestor_loc_dict_in_json is None:
                 break
 
-            child_locations = ancestor.child_locations()
+            child_locations = ancestor.get_children()
+
             ancestor_loc_dict_in_json['children'] = [
                 loc_to_json(loc) for loc in child_locations
                 if loc.metadata.get('is_test_location', 'real') != 'test'
