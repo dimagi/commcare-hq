@@ -108,7 +108,7 @@ class ReleaseManager():
 
     def send_email(self):
         subject = _("Linked project release complete.")
-        if self.errors_by_domain['html']:
+        if self._get_error_domain_count():
             subject += _(" Errors occurred.")
         email = self.user.email or self.user.username
         send_html_email_async.delay(
