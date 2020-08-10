@@ -60,7 +60,11 @@ def create_linked_app(master_domain, master_id, target_domain, target_name, remo
 
 
 def link_app(linked_app, master_domain, master_id, remote_details=None):
-    DomainLink.link_domains(linked_app.domain, master_domain, remote_details)
+    linked_app_domain = linked_app.domain
+    if remote_details:
+        linked_app_domain = f"{linked_app_domain}/"
+
+    DomainLink.link_domains(linked_app_domain, master_domain, remote_details)
 
     linked_app.family_id = master_id
     linked_app.doc_type = 'LinkedApplication'
