@@ -26,7 +26,7 @@ def location_hierarchy_config(domain, location_types=None):
 # added possibility to exclude test locations, test flag is custom added to the metadata in location object
 def load_locs_json(domain, selected_loc_id=None, user=None, show_test=False):
 
-    def loc_to_json(loc, project):
+    def loc_to_json(loc):
         return {
             'name': loc.name,
             'location_type': loc.location_type.name,  # todo: remove when types aren't optional
@@ -35,31 +35,39 @@ def load_locs_json(domain, selected_loc_id=None, user=None, show_test=False):
             'can_edit': True
         }
 
-    project = Domain.get_by_name(domain)
+    def _get_accessible_location_ids(primary_location):
+        accessible_location_ids = set([primary_location.location_id])
+        accessible_location_ids.update(primary_location.get_ancestors().values_list('location_id', flat=True))
+        accessible_location_ids.update(primary_location.get_descendants().values_list('location_id', flat=True))
+        return accessible_location_ids
 
-    if user.has_permission(domain, 'access_all_locations'):
+    def _get_ancestor_loc_dict(location_list, location):
+        for parent_location in location_list:
+            if parent_location['uuid'] == location.location_id:
+                return parent_location
+        return None
+
+    user_location = user.sql_location
+    user_has_all_location_access = user.has_permission(domain, 'access_all_locations')
+
+    if user_has_all_location_access:
         accessible_root_locations = SQLLocation.root_locations(domain)
     else:
-        accessible_root_locations = [(user.sql_location
-                                      .get_ancestors(include_self=True)
-                                      .get(location_type__code='state'))
-                                     ]
+        accessible_root_locations = (user_location
+                                     .get_ancestors(include_self=True)
+                                     .filter(parent_id__isnull=True))
 
     if not show_test:
         accessible_root_locations = [loc for loc in accessible_root_locations
                                      if loc.metadata.get('is_test_location', 'real') != 'test']
 
-    loc_json = [loc_to_json(loc, project) for loc in accessible_root_locations]
+    loc_json = [loc_to_json(loc) for loc in accessible_root_locations]
 
     # if a location is selected, we need to pre-populate its location hierarchy
     # so that the data is available client-side to pre-populate the drop-downs
     if selected_loc_id:
-        if not user.has_permission(domain, 'access_all_locations'):
-            primary_location = user.sql_location
-            accessible_ancestor_ids = primary_location.get_ancestors().values_list('location_id', flat=True)
-            accessible_descendant_ids = primary_location.get_descendants().values_list('location_id', flat=True)
-            accessible_location_ids = set(
-                [primary_location.location_id] + list(accessible_ancestor_ids) + list(accessible_descendant_ids))
+        if not user_has_all_location_access:
+            accessible_location_ids = _get_accessible_location_ids(user_location)
         else:
             accessible_location_ids = []
 
@@ -68,31 +76,23 @@ def load_locs_json(domain, selected_loc_id=None, user=None, show_test=False):
             location_id=selected_loc_id
         )
 
-        json_at_level = loc_json  # json at level at which we should find the ancestor
+        json_at_level = loc_json  # json in which we should find the ancestor in iteration
         for ancestor in selected.get_ancestors():  # this would start with top level ancestor first
-            ancestor_loc_dict_in_json = None
-            for parent_location in json_at_level:
-                if parent_location['uuid'] == ancestor.location_id:
-                    ancestor_loc_dict_in_json = parent_location
-                    break
+            ancestor_loc_dict_in_json = _get_ancestor_loc_dict(json_at_level, ancestor)
 
             # could not find the ancestor at the level,
-            # user should not have reached at this point to try access an ancestor not permitted access to
+            # user should not have reached at this point to try and access an ancestor that is not permitted
             if ancestor_loc_dict_in_json is None:
                 break
 
-            children = ancestor.child_locations()
-            if user.has_permission(domain, 'access_all_locations'):
-                ancestor_loc_dict_in_json['children'] = [
-                    loc_to_json(loc, project) for loc in children
-                ]
-            else:
-                ancestor_loc_dict_in_json['children'] = [
-                    loc_to_json(loc, project) for loc in children
-                    if loc.location_id in accessible_location_ids
-                ]
+            child_locations = ancestor.child_locations(include_archive_ancestors=True)
+            ancestor_loc_dict_in_json['children'] = [
+                loc_to_json(loc) for loc in child_locations
+                if loc.metadata.get('is_test_location', 'real') != 'test'
+                and (user_has_all_location_access or loc.location_id in accessible_location_ids)
+            ]
 
-            # reset level to one level down to find next ancestor
+            # reset level to one level down to find ancestor in next iteration
             json_at_level = ancestor_loc_dict_in_json['children']
     return loc_json
 
