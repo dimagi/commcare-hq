@@ -228,7 +228,6 @@ hqDefine('registration/js/new_user.ko', [
         });
 
         var _getDataForSubmission = function () {
-            'use strict';
             var password = self.password();
             if (initialPageData.get("implement_password_obfuscation")) {
                 password = (nicEncoder()).encode(self.password());

@@ -511,7 +511,6 @@ hqDefine("users/js/mobile_workers",[
     };
 
     $(function () {
-        'use strict';
         var rmiInvoker = RMI(initialPageData.reverse('mobile_workers'), $("#csrfTokenContainer").val());
         rmi = function (remoteMethod, data) {
             return rmiInvoker("", data, {headers: {"DjNg-Remote-Method": remoteMethod}});
