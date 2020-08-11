@@ -1,3 +1,0 @@
-{# NOTE: Django assumes templates are stored with UTF-8 encoding by default. Be sure to save this template with UTF-8 encoding. #}
-
-క్రిందటి నెలలో {{ child_name }} బరువు తగ్గలేదు. దయచేసి వెంటనే అంగన్ వాడీ కార్యకర్తని సంప్రదించండి.
