@@ -420,10 +420,10 @@ class PreFilterTestCase(SimpleTestCase):
             'pre_value': pre_value
         }
         filter_value = PreFilterValue(filter_, {'operand': pre_value})
-        self.assertEqual(filter_value.to_sql_values(), {})
+        self.assertEqual(filter_value.to_sql_values(), {'at_risk_slug': ''})
         self.assertEqual(
             str(filter_value.to_sql_filter().build_expression()),
-            'at_risk_field IS NULL'
+            'at_risk_field = :at_risk_slug OR at_risk_field IS NULL'
         )
 
     def test_pre_filter_value_array(self):
