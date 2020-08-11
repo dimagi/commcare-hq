@@ -33,7 +33,7 @@
       "items_expression": {
         "type": "property_path",
         "property_path": ["form", "child_health_cases", "item"]
-      },
+      }
     },
     "configured_filter": {
       "type": "boolean_expression",
@@ -210,7 +210,7 @@
           "true_values": ["yes"],
           "false_values": ["no"]
         }
-      },
+      }
     ],
     "named_expressions": {
       "child_health_case_id": {
