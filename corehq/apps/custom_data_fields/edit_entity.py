@@ -1,3 +1,5 @@
+import json
+
 from collections import OrderedDict
 
 from django import forms
@@ -95,13 +97,14 @@ class CustomDataEditor(object):
             return forms.CharField(label=field.label, required=field.is_required,
                                    validators=[validator])
         elif field.choices:
+            # select2 must be controlled via knockout if form uses knockout
+            attrs = {'class': 'hqwebapp-select2'} if not self.ko_model else {}
             return forms.ChoiceField(
                 label=field.label,
                 required=field.is_required,
                 choices=[('', _('Select one'))] + [(c, c) for c in field.choices],
-                widget=forms.Select(attrs={'class': 'hqwebapp-select2'}),
+                widget=forms.Select(attrs=attrs)
             )
-            return choice_field
         else:
             return forms.CharField(label=field.label, required=field.is_required)
 
@@ -131,16 +134,20 @@ class CustomDataEditor(object):
             fields[field.slug] = self._make_field(field)
 
         if self.ko_model:
-            field_names = [
-                Field(
+            field_names = []
+            for field_name, field in fields.items():
+                data_binds = [
+                    f"value: {self.ko_model}.{field_name}.value",
+                    f"disable: {self.ko_model}.{field_name}.disable",
+                ]
+                if hasattr(field, 'choices'):
+                    data_binds.append("select2: " + json.dumps([
+                        {"id": id, "text": text} for id, text in field.choices
+                    ]))
+                field_names.append(Field(
                     field_name,
-                    data_bind=f"""
-                        value: {self.ko_model}.{field_name}.value,
-                        disable: {self.ko_model}.{field_name}.disable,
-                    """
-                )
-                for field_name, field in fields.items()
-            ]
+                    data_bind=", ".join(data_binds)
+                ))
         else:
             field_names = list(fields)
 
