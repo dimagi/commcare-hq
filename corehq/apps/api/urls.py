@@ -156,9 +156,17 @@ ADMIN_API_LIST = (
 )
 
 
-USER_API_LIST = (
+# these APIs are duplicated to /hq/admin/global for backwards compatibility
+GLOBAL_USER_API_LIST = (
     UserDomainsResource,
 )
+
+NON_GLOBAL_USER_API_LIST = (
+    v0_5.IdentityResource,
+)
+
+
+USER_API_LIST = GLOBAL_USER_API_LIST + NON_GLOBAL_USER_API_LIST
 
 
 def get_global_api_url_patterns(resources):
@@ -169,7 +177,7 @@ def get_global_api_url_patterns(resources):
 
 
 admin_urlpatterns = list(get_global_api_url_patterns(ADMIN_API_LIST)) + \
-                    list(get_global_api_url_patterns(USER_API_LIST))
+                    list(get_global_api_url_patterns(GLOBAL_USER_API_LIST))
 
 
 VERSIONED_USER_API_LIST = (

@@ -851,6 +851,23 @@ class UserDomainsResource(CorsResourceMixin, Resource):
         return results
 
 
+class IdentityResource(CorsResourceMixin, Resource):
+    id = fields.CharField(attribute='get_id', readonly=True)
+    username = fields.CharField(attribute='username', readonly=True)
+    email = fields.CharField(attribute='email', readonly=True)
+
+    def obj_get_list(self, bundle, **kwargs):
+        return [bundle.request.couch_user]
+
+    class Meta(object):
+        resource_name = 'identity'
+        authentication = LoginAuthentication()
+        detail_allowed_methods = []
+        list_allowed_methods = ['get']
+        object_class = CouchUser
+        include_resource_uri = False
+
+
 Form = namedtuple('Form', 'form_xmlns form_name')
 Form.__new__.__defaults__ = ('', '')
 
