@@ -479,3 +479,30 @@ class TestBulkUserAPI(APIResourceTest):
     def test_basic(self):
         response = self.query()
         self.assertEqual(response.status_code, 200)
+
+
+@es_test
+class TestIdentityResource(APIResourceTest):
+
+    resource = v0_5.IdentityResource
+    api_name = 'v0.5'
+
+    @classmethod
+    def setUpClass(cls):
+        reset_es_index(USER_INDEX_INFO)
+        super().setUpClass()
+
+    @classmethod
+    def _get_list_endpoint(cls):
+        return reverse('api_dispatch_list',
+                kwargs=dict(api_name=cls.api_name,
+                            resource_name=cls.resource._meta.resource_name))
+
+    @sync_users_to_es()
+    def test_get_list(self):
+        response = self._assert_auth_get_resource(self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertEqual(data['id'], self.user.get_id)
+        self.assertEqual(data['username'], self.username)
+        self.assertEqual(data['email'], self.username)
