@@ -8,7 +8,7 @@ hqDefine('registration/js/new_user.ko', [
     'hqwebapp/js/initial_page_data',
     'nic_compliance/js/encoder',
     'jquery-ui/ui/effect',
-    'jquery-ui/ui/effect-slide',
+    'jquery-ui/ui/effects/effect-slide',
     'intl-tel-input/build/js/intlTelInput.min',
     'hqwebapp/js/password_validators.ko',
 ], function (

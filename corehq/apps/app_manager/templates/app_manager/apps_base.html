@@ -33,15 +33,33 @@
       actually used in app manager (no tooltip).
   -->
   {% compress js %}
-    <script src="{% static 'jquery-ui/ui/minified/core.min.js' %}"></script>
-    <script src="{% static 'jquery-ui/ui/minified/widget.min.js' %}"></script>
-    <script src="{% static 'jquery-ui/ui/minified/mouse.min.js' %}"></script>
-    <script src="{% static 'jquery-ui/ui/minified/position.min.js' %}"></script>
-    <script src="{% static 'jquery-ui/ui/minified/autocomplete.min.js' %}"></script>
-    <script src="{% static 'jquery-ui/ui/minified/draggable.min.js' %}"></script>
-    <script src="{% static 'jquery-ui/ui/minified/droppable.min.js' %}"></script>
-    <script src="{% static 'jquery-ui/ui/minified/menu.min.js' %}"></script>
-    <script src="{% static 'jquery-ui/ui/minified/sortable.min.js' %}"></script>
+    <!-- this defines jquery ui ($.ui) so this MUST come first -->
+    <script src="{% static 'jquery-ui/ui/version.js' %}"></script>
+
+    <!-- all files originally in core.js, as that file now requires use of an AMD and it will be deprecated in 1.13 -->
+    <script src="{% static 'jquery-ui/ui/data.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/disable-selection.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/focusable.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/form.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/ie.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/keycode.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/labels.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/plugin.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/safe-active-element.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/safe-blur.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/scroll-parent.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/tabbable.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/unique-id.js' %}"></script>
+
+    <script src="{% static 'jquery-ui/ui/position.js' %}"></script>
+
+    <script src="{% static 'jquery-ui/ui/widget.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/widgets/mouse.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/widgets/autocomplete.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/widgets/draggable.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/widgets/droppable.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/widgets/menu.js' %}"></script>
+    <script src="{% static 'jquery-ui/ui/widgets/sortable.js' %}"></script>
   {% endcompress %}
 
   {% include 'hqwebapp/includes/atwho.html' %}
