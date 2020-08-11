@@ -171,4 +171,13 @@ def get_global_api_url_patterns(resources):
 admin_urlpatterns = list(get_global_api_url_patterns(ADMIN_API_LIST)) + \
                     list(get_global_api_url_patterns(USER_API_LIST))
 
+
+
+VERSIONED_USER_API_LIST = (
+    ((0, 5), USER_API_LIST),
+)
+
+
+user_urlpatterns = list(versioned_apis(VERSIONED_USER_API_LIST))
+
 waf_allow('XSS_BODY', hard_code_pattern=r'^/a/([\w\.:-]+)/api/v([\d\.]+)/form/$')
