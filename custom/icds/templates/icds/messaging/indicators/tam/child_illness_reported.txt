@@ -1,3 +1,3 @@
 {# NOTE: Django assumes templates are stored with UTF-8 encoding by default. Be sure to save this template with UTF-8 encoding. #}
 
- AWC {{ awc }} குழந்தைக்கு {{ child }} நோயைப் பற்றி புகார் அளித்துள்ளது. AWW உடனடியாக தாயுடன் தொடர்கிறது என்பதை உறுதிப்படுத்தவும்.
+{{ awc }} அங்கன்வாடி மையத்தில் {{ child }} குழந்தை நோய்வாய்ப்பட்டுள்ளதாக தொிவிக்கப்பட்டுள்ளது. உடனடியாக, அங்கன்வாடி பணியாளா் குழந்தையின் தாய்க்கு அறிவுறுத்துவதை உறுதிசெய்யவும்

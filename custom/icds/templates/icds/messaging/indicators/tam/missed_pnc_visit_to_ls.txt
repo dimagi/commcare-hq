@@ -1,3 +1,3 @@
 {# NOTE: Django assumes templates are stored with UTF-8 encoding by default. Be sure to save this template with UTF-8 encoding. #}
 
-AWC {{ awc }} ஆனது PNC வின் ஒரு வாரத்திற்குள் {{ beneficiary }}
+{{ awc }} அங்கன்வாடி மையத்தில் {{ beneficiary }} பிரசவித்த தாயை, ஒரு வாரத்திற்குள் பாா்வையிட்ட விபரம் இல்லை
