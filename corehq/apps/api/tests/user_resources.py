@@ -28,7 +28,7 @@ from .utils import APIResourceTest
 @es_test
 class TestCommCareUserResource(APIResourceTest):
     """
-    Basic sanity checking of v0_1.CommCareUserResource
+    Basic sanity checking of v0_5.CommCareUserResource
     """
     resource = v0_5.CommCareUserResource
     api_name = 'v0.5'
