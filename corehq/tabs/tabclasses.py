@@ -1786,12 +1786,6 @@ def _get_administration_section(domain):
             'url': reverse(ManageReleasesByLocation.urlname, args=[domain])
         })
 
-    if toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
-        administration.append({
-            'title': _(ManageReleasesByAppProfile.page_title),
-            'url': reverse(ManageReleasesByAppProfile.urlname, args=[domain])
-        })
-
     return administration
 
 
