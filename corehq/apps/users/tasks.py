@@ -39,13 +39,13 @@ logger = get_task_logger(__name__)
 
 
 @task(serializer='pickle')
-def bulk_download_usernames_async(domain, download_id, user_filters):
+def bulk_download_usernames_async(domain, download_id, user_filters, owner_id):
     from corehq.apps.users.bulk_download import dump_usernames
-    dump_usernames(domain, download_id, user_filters, bulk_download_usernames_async)
+    dump_usernames(domain, download_id, user_filters, bulk_download_usernames_async, owner_id)
 
 
 @task(serializer='pickle')
-def bulk_download_users_async(domain, download_id, user_filters):
+def bulk_download_users_async(domain, download_id, user_filters, owner_id):
     from corehq.apps.users.bulk_download import dump_users_and_groups, GroupNameError
     errors = []
     try:
@@ -54,6 +54,7 @@ def bulk_download_users_async(domain, download_id, user_filters):
             download_id,
             user_filters,
             bulk_download_users_async,
+            owner_id,
         )
     except GroupNameError as e:
         group_urls = [
