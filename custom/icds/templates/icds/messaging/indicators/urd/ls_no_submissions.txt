@@ -1,9 +1,0 @@
-{# NOTE: Django assumes templates are stored with UTF-8 encoding by default. Be sure to save this template with UTF-8 encoding. #}
-
-{% if location_names and timeframe == 'week' %}
-درج ذیل آنگن واڑی مرکز نے ایک ہفتہ سے زیادہ میں آئی سی ڈی ایس CAS درخواست میں کوئی سرگرمی نہیں کی ہے: {{ location_names }}. برائے مہربانی مدد فراہم کرنے کے لئے ان کے ساتھ پیروی کریں.
-{% endif %}
-
-{% if location_names and timeframe == 'month' %}
-درج ذیل آنگن واڑی مرکز نے ایک مہینے سے زیادہ میں آئی سی ڈی ایس CAS درخواست میں کوئی سرگرمی نہیں کی ہے: {{ location_names }}. برائے مہربانی مدد فراہم کرنے کے لئے ان کے ساتھ پیروی کریں۔
-{% endif %}
