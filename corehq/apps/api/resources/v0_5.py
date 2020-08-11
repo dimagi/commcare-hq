@@ -4,7 +4,7 @@ from itertools import chain
 from django.conf.urls import url
 from django.contrib.auth.models import User
 from django.forms import ValidationError
-from django.http import Http404, HttpResponse, HttpResponseNotFound
+from django.http import Http404, HttpResponse, HttpResponseNotFound, request
 from django.urls import reverse
 from django.utils.translation import ugettext_noop
 
@@ -18,6 +18,7 @@ from tastypie.resources import ModelResource, Resource, convert_post_to_patch
 from tastypie.utils import dict_strip_unicode_keys
 
 from casexml.apps.stock.models import StockTransaction
+from corehq.apps.api.resources.serializers import ListToSingleObjectSerializer
 from phonelog.models import DeviceReportEntry
 
 from corehq import privileges
@@ -862,6 +863,7 @@ class IdentityResource(CorsResourceMixin, Resource):
     class Meta(object):
         resource_name = 'identity'
         authentication = LoginAuthentication()
+        serializer = ListToSingleObjectSerializer()
         detail_allowed_methods = []
         list_allowed_methods = ['get']
         object_class = CouchUser
