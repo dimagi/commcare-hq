@@ -172,7 +172,6 @@ admin_urlpatterns = list(get_global_api_url_patterns(ADMIN_API_LIST)) + \
                     list(get_global_api_url_patterns(USER_API_LIST))
 
 
-
 VERSIONED_USER_API_LIST = (
     ((0, 5), USER_API_LIST),
 )
