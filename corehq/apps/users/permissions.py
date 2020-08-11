@@ -94,3 +94,11 @@ def _can_manage_releases_for_all_apps(couch_user, domain):
         domain, get_permission_name(Permissions.manage_releases),
         restrict_global_admin=True
     )
+
+
+def can_manage_releases_by_build_profile(couch_user, domain):
+    from corehq.apps.users.decorators import get_permission_name
+    from corehq.apps.users.models import Permissions
+    is_toggle_enabled = toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain)
+    can_edit_app = couch_user.has_permission(domain, get_permission_name(Permissions.edit_apps))
+    return is_toggle_enabled and can_edit_app

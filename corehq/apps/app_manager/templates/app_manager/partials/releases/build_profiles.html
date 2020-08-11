@@ -7,6 +7,9 @@
     <h4 class="panel-title-nolink">
       {% trans "Current Profiles" %}
     </h4>
+    {% if can_manage_releases_by_build_profile %}
+      <a class="text-right" href="{% url 'manage_releases_by_app_profile' domain %}">Manage Releases By App Profile</a>
+    {% endif %}
   </div>
   <div class="panel-body">
     {% if app.is_remote_app %}
