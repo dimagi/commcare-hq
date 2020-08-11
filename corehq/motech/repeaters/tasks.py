@@ -6,12 +6,12 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 
-from corehq.util.metrics import metrics_gauge_task, metrics_counter, metrics_histogram_timer
-from corehq.util.metrics.const import MPM_MAX
 from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
+from corehq.apps.accounting.models import Subscription
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.motech.models import RequestLog
 from corehq.motech.repeaters.const import (
     CHECK_REPEATERS_INTERVAL,
@@ -24,7 +24,13 @@ from corehq.motech.repeaters.dbaccessors import (
     iterate_repeat_records,
 )
 from corehq.privileges import DATA_FORWARDING, ZAPIER_INTEGRATION
-from corehq.util.metrics import make_buckets_from_timedeltas
+from corehq.util.metrics import (
+    make_buckets_from_timedeltas,
+    metrics_counter,
+    metrics_gauge_task,
+    metrics_histogram_timer,
+)
+from corehq.util.metrics.const import MPM_MAX
 from corehq.util.soft_assert import soft_assert
 
 _check_repeaters_buckets = make_buckets_from_timedeltas(
@@ -35,7 +41,8 @@ _check_repeaters_buckets = make_buckets_from_timedeltas(
     timedelta(hours=5),
     timedelta(hours=10),
 )
-_soft_assert = soft_assert(to='@'.join(('nhooper', 'dimagi.com')))
+MOTECH_DEV = '@'.join(('nhooper', 'dimagi.com'))
+_soft_assert = soft_assert(to=MOTECH_DEV)
 logging = get_task_logger(__name__)
 
 
@@ -59,13 +66,13 @@ def clean_logs():
 )
 def check_repeaters():
     start = datetime.utcnow()
-    twelve_hours_sec = 12 * 60 * 60
-    twelve_hours_later = start + timedelta(seconds=twelve_hours_sec)
+    twentythree_hours_sec = 23 * 60 * 60
+    twentythree_hours_later = start + timedelta(hours=23)
 
     # Long timeout to allow all waiting repeat records to be iterated
     check_repeater_lock = get_redis_lock(
         CHECK_REPEATERS_KEY,
-        timeout=twelve_hours_sec,
+        timeout=twentythree_hours_sec,
         name=CHECK_REPEATERS_KEY,
     )
     if not check_repeater_lock.acquire(blocking=False):
@@ -79,12 +86,18 @@ def check_repeaters():
         ):
             for record in iterate_repeat_records(start):
                 if not _soft_assert(
-                    datetime.utcnow() < twelve_hours_later,
-                    "I've been iterating repeat records for 12 hours. I quit!"
+                    datetime.utcnow() < twentythree_hours_later,
+                    "I've been iterating repeat records for 23 hours. I quit!"
                 ):
                     break
                 metrics_counter("commcare.repeaters.check.attempt_forward")
                 record.attempt_forward_now()
+            else:
+                iterating_time = datetime.utcnow() - start
+                _soft_assert(
+                    iterating_time < timedelta(hours=6),
+                    f"It took {iterating_time} to iterate repeat records."
+                )
     finally:
         check_repeater_lock.release()
 
@@ -118,6 +131,9 @@ def process_repeat_record(repeat_record):
         repeat_record.cancel()
         repeat_record.save()
         return
+    if not repeater.is_connection_working():
+        repeater.pause()
+        notify_repeater_admins(repeater)
 
     try:
         if repeater.paused:
@@ -141,3 +157,23 @@ repeaters_overdue = metrics_gauge_task(
     run_every=crontab(),  # every minute
     multiprocess_mode=MPM_MAX
 )
+
+
+def notify_repeater_admins(repeater):
+    msg = (f'Forwarding data to {repeater} has consistently failed, '
+           'and has been paused.')
+    send_mail_async.delay(
+        f'Repeater threshold exceeded on domain {repeater.domain}', msg,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[MOTECH_DEV],
+    )
+    if repeater.notify_addresses:
+        recipient_list = repeater.notify_addresses
+    else:
+        subs = Subscription.get_active_subscription_by_domain(repeater.domain)
+        recipient_list = subs.account.billingcontactinfo.email_list
+    send_mail_async.delay(
+        'Data forwarding paused', msg,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=recipient_list,
+    )

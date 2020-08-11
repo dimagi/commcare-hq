@@ -219,13 +219,11 @@ class PreFilterValue(FilterValue):
         """
         return isinstance(self.value['operand'], list)
 
-    @property
-    def _null_filter(self):
-        operator = self.value.get('operator') or 'is'
-        try:
-            return self.null_operator_filters[operator]
-        except KeyError:
-            raise TypeError('Null value does not support "{}" operator'.format(operator))
+    def _is_empty(self):
+        """
+        Returns true if operand has no value.
+        """
+        return self.value['operand'] == '' or self._is_null()
 
     @property
     def _array_filter(self):
@@ -249,8 +247,11 @@ class PreFilterValue(FilterValue):
                 self.filter['field'],
                 get_INFilter_bindparams(self.filter['slug'], ['start_date', 'end_date'])
             )
-        elif self._is_null():
-            return self._null_filter(self.filter['field'])
+        elif self._is_empty():
+            return ORFilter([
+                EQFilter(self.filter['field'], self.filter['slug']),
+                ISNULLFilter(self.filter['field']),
+            ])
         elif self._is_list():
             return self._array_filter(
                 self.filter['field'],
@@ -266,8 +267,10 @@ class PreFilterValue(FilterValue):
                 get_INFilter_element_bindparam(self.filter['slug'], i): str(v)
                 for i, v in enumerate([start_date, end_date])
             }
-        elif self._is_null():
-            return {}
+        elif self._is_empty():
+            return {
+                self.filter['slug']: '',
+            }
         elif self._is_list():
             # Array params work like IN bind params
             return {
