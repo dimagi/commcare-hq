@@ -1,7 +1,10 @@
+import textwrap
+
 from celery.task import task
 from collections import defaultdict
 
 from django.conf import settings
+from django.template.defaultfilters import linebreaksbr
 from django.utils.translation import ugettext as _
 from django.urls import reverse
 
@@ -121,15 +124,15 @@ class ReleaseManager():
 
     def get_email_message(self, html=True):
         error_domain_count = self._get_error_domain_count()
-        separator = "<br>" if html else "\n"
-        message = _("""
+        separator = "\n"
+        message = _(textwrap.dedent("""
 Release complete. {} project(s) succeeded. {}
 
 The following content was released:
 {}
 
 The following linked project spaces received content:
-        """).format(
+        """)).format(
             self._get_success_domain_count(),
             _("{} project(s) encountered errors.").format(error_domain_count) if error_domain_count else "",
             separator.join(["- " + m['name'] for m in self.models])
@@ -141,7 +144,7 @@ The following linked project spaces received content:
                 message += _("{}- {} encountered errors:").format(separator, linked_domain)
                 for msg in self._get_errors(linked_domain, html) + self._get_successes(linked_domain, html):
                     message += separator + "   - " + msg
-        return message
+        return linebreaksbr(message) if html else message
 
     def _release_app(self, domain_link, model, user, build_and_release=False):
         if toggles.MULTI_MASTER_LINKED_DOMAINS.enabled(domain_link.linked_domain):
