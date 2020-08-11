@@ -1730,7 +1730,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def _get_user_data_profile(self, data):
         from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
         from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, PROFILE_SLUG
-        if PROFILE_SLUG not in data:
+        if not data.get(PROFILE_SLUG):
             return None
 
         try:
