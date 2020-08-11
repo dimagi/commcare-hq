@@ -4,7 +4,7 @@ from itertools import chain
 from django.conf.urls import url
 from django.contrib.auth.models import User
 from django.forms import ValidationError
-from django.http import Http404, HttpResponse, HttpResponseNotFound, request
+from django.http import Http404, HttpResponse, HttpResponseNotFound
 from django.urls import reverse
 from django.utils.translation import ugettext_noop
 
