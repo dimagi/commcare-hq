@@ -24,10 +24,10 @@
     "icds-staging"
   ],
   "config": {
-    "table_id": "dashboard_counselling_and_guidance_forms",
+    "table_id": "static_dashboard_counselling_and_guidance_forms",
     "display_name": "Forms - Counselling and Guidance for Dashboard",
     "referenced_doc_type": "XFormInstance",
-    "description": "Daily feeding form (child_health) data for the dashboard",
+    "description": "Counselling and guidance form data for the dashboard",
     "base_item_expression": {
       "type": "filter_items",
       "items_expression": {
