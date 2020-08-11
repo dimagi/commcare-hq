@@ -1711,7 +1711,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def metadata(self, value):
         profile = self._get_user_data_profile(value)
         if profile:
-            overlap = [k for k, v in profile.fields.items() if k in value and value[k] or v != v]
+            overlap = [k for k, v in profile.fields.items() if k in value and value[k] and v != value[k]]
             if overlap:
                 raise ValueError("metadata properties conflict with profile: {}".format(", ".join(overlap)))
             for key in profile.fields.keys():
