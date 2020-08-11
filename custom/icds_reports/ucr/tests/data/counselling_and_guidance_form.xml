@@ -1,0 +1,61 @@
+<?xml version="1.0" ?>
+<data name="Counselling and Guidance" uiVersion="1" version="32479"
+      xmlns="http://openrosa.org/formdesigner/A2604F2C-F52D-4B67-889F-C2F9B44698DD"
+      xmlns:jrm="http://dev.commcarehq.org/jr/xforms">
+    <owner_id>4ea8eb58fa3a4b5f82fcaa8048fcb72f</owner_id>
+    <gps_location/>
+    <date_ag_session_last_conducted/>
+    <date_today>2020-03-02</date_today>
+    <already_completed>no</already_completed>
+    <ag_care_cases count="1" current_index="1" ids="6c0b16f3-ebae-4b03-ba3a-f38682ad5993">
+        <item id="6c0b16f3-ebae-4b03-ba3a-f38682ad5993" index="0">
+            <name>low mother</name>
+            <is_eligible>yes</is_eligible>
+        </item>
+    </ag_care_cases>
+    <num_ag_eligible>1</num_ag_eligible>
+    <counselling_session_conducted>yes</counselling_session_conducted>
+    <session_topic/>
+    <ag_attendance_ql>
+        <ag_attendance>6c0b16f3-ebae-4b03-ba3a-f38682ad5993</ag_attendance>
+    </ag_attendance_ql>
+    <attended_ag_ids_joined>6c0b16f3-ebae-4b03-ba3a-f38682ad5993</attended_ag_ids_joined>
+    <num_attended_ag>1</num_attended_ag>
+    <update_attended_ag_care_cases>
+        <ag_care_case_id>6c0b16f3-ebae-4b03-ba3a-f38682ad5993</ag_care_case_id>
+        <update_ag_care_case>
+            <ag_care_case>
+                <n0:case case_id="6c0b16f3-ebae-4b03-ba3a-f38682ad5993" date_modified="2020-03-02T10:46:29.873+05:30"
+                         user_id="41f5de913bc74a60a83bcc0a5ff467cd"
+                         xmlns:n0="http://commcarehq.org/case/transaction/v2">
+                    <n0:update>
+                        <n0:last_counselling_session_attended>2020-03-02</n0:last_counselling_session_attended>
+                    </n0:update>
+                </n0:case>
+            </ag_care_case>
+        </update_ag_care_case>
+    </update_attended_ag_care_cases>
+    <date_ag_session_conducted_new>2020-03-02</date_ag_session_conducted_new>
+    <success>OK</success>
+    <commcare_usercase>
+        <n1:case case_id="acd9dab950d54dbc9f244aea02c75685" date_modified="2020-03-02T10:46:29.873+05:30"
+                 user_id="41f5de913bc74a60a83bcc0a5ff467cd" xmlns:n1="http://commcarehq.org/case/transaction/v2">
+            <n1:update>
+                <n1:date_ag_session_last_conducted>2020-03-02</n1:date_ag_session_last_conducted>
+            </n1:update>
+        </n1:case>
+    </commcare_usercase>
+    <n2:meta xmlns:n2="http://openrosa.org/jr/xforms">
+        <n2:deviceID>42df359f6fe9f9ac</n2:deviceID>
+        <n2:timeStart>2020-03-02T10:46:23.361+05:30</n2:timeStart>
+        <n2:timeEnd>2020-03-02T10:46:29.873+05:30</n2:timeEnd>
+        <n2:username>stqc_awc</n2:username>
+        <n2:userID>41f5de913bc74a60a83bcc0a5ff467cd</n2:userID>
+        <n2:instanceID>c6698aa9-0962-4add-962a-3b0f8d7aeb86</n2:instanceID>
+        <n3:appVersion xmlns:n3="http://commcarehq.org/xforms">CommCare Android, version &quot;2.47.5&quot;(459165). App
+            v32479. CommCare Version 2.47. Build 459165, built on: 2020-01-30
+        </n3:appVersion>
+        <n2:drift>0</n2:drift>
+        <n4:location xmlns:n4="http://commcarehq.org/xforms"/>
+    </n2:meta>
+</data>

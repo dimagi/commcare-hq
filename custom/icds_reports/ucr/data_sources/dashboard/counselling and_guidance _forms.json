@@ -1,0 +1,246 @@
+{
+  "domains": [
+    "icds-dashboard-qa",
+    "sankalp_cas",
+    "zohaib-sandbox",
+    "akshita-sandbox",
+    "sunaina-sandbox",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test",
+    "icds-cas",
+    "cas-lab"
+  ],
+  "server_environment": [
+    "india",
+    "icds",
+    "icds-staging"
+  ],
+  "config": {
+    "table_id": "dashboard_counselling_and_guidance_forms",
+    "display_name": "Forms - Counselling and Guidance for Dashboard",
+    "referenced_doc_type": "XFormInstance",
+    "description": "Daily feeding form (child_health) data for the dashboard",
+    "base_item_expression": {
+      "type": "filter_items",
+      "items_expression": {
+        "type": "property_path",
+        "property_path": ["form", "child_health_cases", "item"]
+      },
+    },
+    "configured_filter": {
+      "type": "boolean_expression",
+      "operator": "eq",
+      "expression": {
+        "type": "property_name",
+        "property_name": "xmlns"
+      },
+      "property_value": "http://openrosa.org/formdesigner/A2604F2C-F52D-4B67-889F-C2F9B44698DD"
+    },
+    "validations": [
+      {
+        "name": "submitted_by_aww",
+        "error_message": "Form not submitted by AWW",
+        "expression": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "location_id_expression": {
+              "type": "named",
+              "name": "user_location_id"
+            },
+            "type": "location_type_name"
+          },
+          "property_value": "awc"
+        }
+      }
+    ],
+    "configured_indicators": [
+      {
+        "column_id": "timeend",
+        "display_name": null,
+        "datatype": "datetime",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "datatype": "date",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "meta",
+              "timeEnd"
+            ]
+          }
+        }
+      },
+      {
+        "display_name": "AWC ID",
+        "transform": {},
+        "datatype": "string",
+        "expression": {
+          "type": "named",
+          "name": "user_location_id"
+        },
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "awc_id",
+        "type": "expression"
+      },
+      {
+        "display_name": "Supervisor ID",
+        "transform": {},
+        "datatype": "string",
+        "expression": {
+          "location_id": {
+            "type": "named",
+            "name": "user_location_id"
+          },
+          "location_type": "supervisor",
+          "location_property": "_id",
+          "type": "ancestor_location"
+        },
+        "is_primary_key": true,
+        "is_nullable": false,
+        "column_id": "supervisor_id",
+        "type": "expression"
+      },
+      {
+        "display_name": "Block ID",
+        "transform": {},
+        "datatype": "string",
+        "expression": {
+          "location_id": {
+            "type": "named",
+            "name": "user_location_id"
+          },
+          "location_type": "block",
+          "location_property": "_id",
+          "type": "ancestor_location"
+        },
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "block_id",
+        "type": "expression"
+      },
+      {
+        "display_name": "District ID",
+        "transform": {},
+        "datatype": "string",
+        "expression": {
+          "location_id": {
+            "type": "named",
+            "name": "user_location_id"
+          },
+          "location_type": "district",
+          "location_property": "_id",
+          "type": "ancestor_location"
+        },
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "district_id",
+        "type": "expression"
+      },
+      {
+        "display_name": "State ID",
+        "transform": {},
+        "datatype": "string",
+        "expression": {
+          "location_id": {
+            "type": "named",
+            "name": "user_location_id"
+          },
+          "location_type": "state",
+          "location_property": "_id",
+          "type": "ancestor_location"
+        },
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "state_id",
+        "type": "expression"
+      },
+      {
+        "column_id": "received_on",
+        "datatype": "datetime",
+        "type": "expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_name",
+            "datatype": "datetime",
+            "property_name": "received_on"
+          }
+        }
+      },
+      {
+        "column_id": "child_health_case_id",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "named",
+          "name": "child_health_case_id"
+        }
+      },
+      {
+        "column_id": "ag_attendance",
+        "datatype": "string",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "ag_attendance_ql", "ag_attendance"]
+        }
+      },
+      {
+        "column_id": "counselling_session_conducted",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "property_name",
+            "property_name": "counselling_session_conducted"
+          },
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
+      },
+    ],
+    "named_expressions": {
+      "child_health_case_id": {
+        "type": "property_name",
+        "property_name": "@id"
+      },
+      "user_location_id": {
+        "type": "icds_user_location",
+        "user_id_expression": {
+          "type": "root_doc",
+          "expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "meta",
+              "userID"
+            ]
+          }
+        }
+      }
+    },
+    "named_filters": {},
+    "engine_id": "icds-ucr-citus",
+    "sql_settings": {
+      "citus_config": {
+        "distribution_type": "hash",
+        "distribution_column": "supervisor_id"
+      },
+      "primary_key": ["supervisor_id","doc_id","repeat_iteration"]
+    },
+    "disable_destructive_rebuild": true
+  }
+}
