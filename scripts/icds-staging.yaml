@@ -55,4 +55,6 @@ deploy_env: icds-staging
 branches:
   - ap/restrict-unauthorized-users
   - rn_Location_restrictions_on_MPR_report
+  - rn_restricted_locations_ASR
+  - revert-28331-revert-28323-mk/add-captcha # MK 10-Aug-2020
 submodules: {}
