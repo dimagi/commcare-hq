@@ -244,6 +244,11 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                             return False
                     bundle.obj.set_password(bundle.data.get("password"))
                     should_save = True
+                elif key == 'user_data':
+                    try:
+                        bundle.obj.metadata = value
+                    except ValueError as e:
+                        raise BadRequest(str(e))
                 else:
                     setattr(bundle.obj, key, value)
                     should_save = True

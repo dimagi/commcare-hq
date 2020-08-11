@@ -123,7 +123,7 @@ def doc_exists_in_es(index_info, doc_id_or_dict):
     else:
         assert isinstance(doc_id_or_dict, dict)
         doc_id = doc_id_or_dict['_id']
-    return get_es_new().exists(index_info.alias, index_info.type, doc_id)
+    return ElasticsearchInterface(get_es_new()).doc_exists(index_info.alias, doc_id, index_info.type)
 
 
 def send_to_elasticsearch(index_name, doc, delete=False, es_merge_update=False):
@@ -293,6 +293,49 @@ def scan(client, query=None, scroll='5m', **kwargs):
         )
 
     """
+    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+        return scan_es7(client, query=query, scroll=scroll, **kwargs)
+    else:
+        return scan_es2(client, query=query, scroll=scroll, **kwargs)
+
+
+def scan_es7(client, query=None, scroll='5m', **kwargs):
+
+    # doc-type is not a valid kwarg for ES7
+    kwargs.pop('doc_type', None)
+
+    query = query.copy() if query else {}
+    query["sort"] = "_doc"
+
+    # initial search
+    es_interface = ElasticsearchInterface(client)
+    initial_resp = es_interface.search(
+        body=query, scroll=scroll, size=SCROLL_PAGE_SIZE_LIMIT, **kwargs)
+
+    def fetch_all(initial_response):
+        resp = initial_response
+        scroll_id = resp.get('_scroll_id')
+
+        while scroll_id and resp["hits"]["hits"]:
+            for hit in resp["hits"]["hits"]:
+                yield hit
+
+            # check if we have any errors
+            if resp["_shards"]["failed"]:
+                logging.getLogger('elasticsearch.helpers').warning(
+                    'Scroll request has failed on %d shards out of %d.',
+                    resp['_shards']['failed'], resp['_shards']['total']
+                )
+            resp = client.scroll(
+                body={"scroll_id": scroll_id, "scroll": scroll}
+            )
+            scroll_id = resp.get("_scroll_id")
+
+    count = initial_resp.get("hits", {}).get("total", {}).get('value', None)
+    return ScanResult(count, fetch_all(initial_resp))
+
+
+def scan_es2(client, query=None, scroll='5m', **kwargs):
     kwargs['search_type'] = 'scan'
     # initial search
     es_interface = ElasticsearchInterface(client)
