@@ -93,6 +93,14 @@ class CommCareHqApi(Api):
         return HttpResponseNotFound()
 
 
+def versioned_apis(api_list):
+    for version, resources in api_list:
+        api = CommCareHqApi(api_name='v%d.%d' % version)
+        for R in resources:
+            api.register(R())
+        yield url(r'^', include(api.urls))
+
+
 def api_url_patterns():
     # todo: these have to come first to short-circuit tastypie's matching
     yield url(r'v0.5/odata/cases/(?P<config_id>[\w\-:]+)/(?P<table_id>[\d]+)/$',
@@ -112,11 +120,7 @@ def api_url_patterns():
               ODataFormMetadataView.as_view(), name=ODataFormMetadataView.table_urlname)
     yield url(r'v0.5/odata/forms/(?P<config_id>[\w\-:]+)/\$metadata$',
               ODataFormMetadataView.as_view(), name=ODataFormMetadataView.urlname)
-    for version, resources in API_LIST:
-        api = CommCareHqApi(api_name='v%d.%d' % version)
-        for R in resources:
-            api.register(R())
-        yield url(r'^', include(api.urls))
+    yield from versioned_apis(API_LIST)
     yield url(r'^case/attachment/(?P<case_id>[\w\-:]+)/(?P<attachment_id>.*)$', CaseAttachmentAPI.as_view(), name="api_case_attachment")
     yield url(r'^form/attachment/(?P<form_id>[\w\-:]+)/(?P<attachment_id>.*)$', FormAttachmentAPI.as_view(), name="api_form_attachment")
 
