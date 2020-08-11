@@ -15,7 +15,7 @@ def remove_unused_custom_fields_from_users(domain):
         keys_to_delete = _get_invalid_user_data_fields(user, configured_field_keys)
         if keys_to_delete:
             for key in keys_to_delete:
-                del user.user_data[key]
+                user.pop_metadata(key)
             user.save()
 
 
