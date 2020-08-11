@@ -58,14 +58,13 @@ branches:
   - fr/shadow-module-child-versioned # Farid July 22
 #  - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
   - fr/authenticated-soil-downloads # Farid July 31
-  - jls/linked-domains-parallel-release # Jenny July 31
+#  - jls/linked-domains-parallel-release # Jenny July 31
   - jls/view-apps-permission # Jenny July 31
-  - sk/remove-icdsI+jls/CustomDataFieldsProfile+sr/es7-ref1-1+bmb/SAAS-11163  # Biyeun Aug 10
   - jls/CustomDataFieldsProfile # Jenny July 24
-  - sk/remove-icdsI  # Simon Aug 5
   - sr/es7-ref1 # Sravan Aug 4
   - solleks:cdg/data_dictionary_erm  # Charlie August 6
   - nh/repeaters  # Norman Aug 7
   - fr/link-remote-domains      # Farid August 10
   - bmb/SAAS-11163  # Biyeun Aug 10
+  - jls/line-breaks # Jenny Aug 10
 submodules: {}
