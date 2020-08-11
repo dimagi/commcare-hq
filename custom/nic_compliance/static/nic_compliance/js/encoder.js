@@ -41,7 +41,8 @@ hqDefine('nic_compliance/js/encoder', [
     }
 
     $(function(){
-        if (initialPageData.get("implement_password_obfuscation", true)) {
+        'use strict';
+        if (initialPageData.get("implement_password_obfuscation")) {
             var ids = _.filter([
                 'id_auth-password',
                 'id_password',

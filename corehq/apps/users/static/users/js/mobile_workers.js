@@ -511,6 +511,7 @@ hqDefine("users/js/mobile_workers",[
     };
 
     $(function () {
+        'use strict';
         var rmiInvoker = RMI(initialPageData.reverse('mobile_workers'), $("#csrfTokenContainer").val());
         rmi = function (remoteMethod, data) {
             return rmiInvoker("", data, {headers: {"DjNg-Remote-Method": remoteMethod}});
@@ -520,7 +521,7 @@ hqDefine("users/js/mobile_workers",[
         var newUserCreation = newUserCreationModel({
             custom_fields_slugs: initialPageData.get('custom_fields_slugs'),
             draconian_security: initialPageData.get('draconian_security'),
-            implement_password_obfuscation: initialPageData.get('implement_password_obfuscation', true),
+            implement_password_obfuscation: initialPageData.get('implement_password_obfuscation'),
             location_url: initialPageData.reverse('location_search'),
             require_location_id: !initialPageData.get('can_access_all_locations'),
             strong_mobile_passwords: initialPageData.get('strong_mobile_passwords'),
