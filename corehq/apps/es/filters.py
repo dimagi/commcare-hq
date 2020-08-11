@@ -56,6 +56,9 @@ def AND(*filters):
 
 def NOT(filter_):
     """Exclude docs matching the filter passed in"""
+    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+        return {"bool": {"must_not": filter_}}
+
     if 'or' in filter_:
         # ES 2.4 appears not to accept {"not": {"or": [A, B]}} e.g. not (A or B)
         # but accepts the same logic
@@ -70,10 +73,7 @@ def NOT(filter_):
         # but prevents {'not': {'not': A}}, in favor of just A
         return filter_['not']
     else:
-        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-            return {"bool": {"must_not": filter_}}
-        else:
-            return {"not": filter_}
+        return {"not": filter_}
 
 
 def not_term(field, value):
