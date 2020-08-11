@@ -123,6 +123,8 @@ class CustomDataEditor(object):
                         for p in profiles
                     ], attrs={
                         'class': 'hqwebapp-select2',
+                        'data-placeholder': _('Select a profile'),
+                        'data-allow-clear': 'true',
                     })
                 )
         for field in self.fields:
