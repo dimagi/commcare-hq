@@ -221,17 +221,9 @@ class PreFilterValue(FilterValue):
 
     def _is_empty(self):
         """
-        Returns true if operand should be treated like an empty string.
+        Returns true if operand has no value.
         """
-        return self.value['operand'] == ''
-
-    @property
-    def _null_filter(self):
-        operator = self.value.get('operator') or 'is'
-        try:
-            return self.null_operator_filters[operator]
-        except KeyError:
-            raise TypeError('Null value does not support "{}" operator'.format(operator))
+        return self.value['operand'] == '' or self._is_null()
 
     @property
     def _array_filter(self):
@@ -260,8 +252,6 @@ class PreFilterValue(FilterValue):
                 EQFilter(self.filter['field'], self.filter['slug']),
                 ISNULLFilter(self.filter['field']),
             ])
-        elif self._is_null():
-            return self._null_filter(self.filter['field'])
         elif self._is_list():
             return self._array_filter(
                 self.filter['field'],
@@ -281,8 +271,6 @@ class PreFilterValue(FilterValue):
             return {
                 self.filter['slug']: '',
             }
-        elif self._is_null():
-            return {}
         elif self._is_list():
             # Array params work like IN bind params
             return {

@@ -48,5 +48,4 @@ RUN npm -g install \
     mocha-headless-chrome \
  && cd /vendor \
  && npm shrinkwrap \
- && yarn global add phantomjs-prebuilt \
- && npm -g install
+ && yarn global add phantomjs-prebuilt
