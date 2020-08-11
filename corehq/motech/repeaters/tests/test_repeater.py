@@ -481,10 +481,11 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             domain=self.domain,
             url="case-repeater-url",
         )
-        self.repeater = CaseRepeater.objects.create(
+        self.repeater = CaseRepeater(
             domain=self.domain,
             connection_settings_id=self.connx.id,
         )
+        self.repeater.save()
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases(self.domain)
