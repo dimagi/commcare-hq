@@ -7,6 +7,7 @@ hqDefine("icds/js/custom_sms_report",[
     var $el = $('#date_range_selector');
     var $startDate = $('#report_start_date');
     var $endDate = $('#report_end_date');
+
     $el.createBootstrap3DefaultDateRangePicker();
     $el.on('apply change', function () {
         var separator = $().getDateRangeSeparator();

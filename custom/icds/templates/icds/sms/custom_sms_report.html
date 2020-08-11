@@ -5,5 +5,13 @@
 {% load crispy_forms_tags %}
 {% requirejs_main "icds/js/custom_sms_report" %}
 {% block page_content %}
+  {% if reports_in_progress %}
+    <div class="alert alert-info" role="alert">
+      <strong>
+        {% trans "Reports in Progress - " %}
+      </strong>
+      {{reports_in_progress}}
+    </div>
+  {% endif %}
   {% crispy request_form %}
 {% endblock %}
