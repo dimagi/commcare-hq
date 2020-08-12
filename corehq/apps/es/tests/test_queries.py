@@ -7,7 +7,7 @@ from corehq.apps.es.es_query import HQESQuery
 class TestQueries(TestCase):
 
     def assertHasQuery(self, es_query, desired_query):
-        generated = es_query.raw_query['query']['filtered']['query']
+        generated = es_query._query
         msg = "Expected to find query\n{}\nInstead found\n{}".format(
             json.dumps(desired_query, indent=4),
             json.dumps(generated, indent=4),
