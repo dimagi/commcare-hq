@@ -469,11 +469,34 @@
                   </label>
                 </div>
               </div>
+
               <div class="col-sm-2 controls">
-                <div class="form-check-placeholder">
-                  <label></label>
+                {# PLACEHOLDER checkbox when edit_apps is true #}
+                <div class="form-check" data-bind="visible: permissions.edit_apps()">
+                  <input type="checkbox" checked="checked" disabled="disabled" />
+                  <label>
+                    <span class="sr-only">
+                      {% trans "View-Only Applications" %}
+                    </span>
+                  </label>
                 </div>
+                {# end PLACEHOLDER #}
+
+                {# REAL checkbox that controls view_apps permission #}
+                <div class="form-check" data-bind="visible: !permissions.edit_apps()">
+                  <input type="checkbox"
+                         id="view-apps-checkbox"
+                         data-bind="checked: permissions.view_apps,
+                                    disable: !$root.allowEdit" />
+                  <label for="view-apps-checkbox">
+                    <span class="sr-only">
+                      {% trans "View-Only Applications" %}
+                    </span>
+                  </label>
+                </div>
+                {# END REAL checkbox #}
               </div>
+
               <div class="col-sm-8 control-label">
                 {% blocktrans %}
                   <strong>Applications</strong> &mdash; modify or view the structure
