@@ -24,7 +24,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         cls.domain = Domain.get_or_create_with_name(name=cls.domain_name)
         cls.other_domain = Domain.get_or_create_with_name(name='other-domain')
 
-        permissions = Permissions(edit_apps=True, view_reports=True)
+        permissions = Permissions(edit_apps=True, view_apps=True, view_reports=True)
         cls.role = UserRole.get_or_create_with_permissions(cls.domain.name, permissions, 'edit-apps')
         cls.patcher = patch('corehq.apps.user_importer.tasks.UserUploadRecord')
         cls.patcher.start()
