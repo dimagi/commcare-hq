@@ -229,6 +229,12 @@ class PreFilterValue(FilterValue):
         operator = self.value.get('operator') or '='
         return self._has_empty_value() and operator == '='
 
+    def _is_exists(self):
+        """
+        Returns true if the value should be treated a filter to show non-empty data
+        """
+        return self._has_empty_value() and self.value.get('operator') == '!='
+
     @property
     def _array_filter(self):
         operator = self.value.get('operator') or 'in'
@@ -256,6 +262,8 @@ class PreFilterValue(FilterValue):
                 EQFilter(self.filter['field'], self.filter['slug']),
                 ISNULLFilter(self.filter['field']),
             ])
+        elif self._is_exists():
+            return NOTEQFilter(self.filter['field'], self.filter['slug'])
         elif self._is_list():
             return self._array_filter(
                 self.filter['field'],
@@ -271,7 +279,7 @@ class PreFilterValue(FilterValue):
                 get_INFilter_element_bindparam(self.filter['slug'], i): str(v)
                 for i, v in enumerate([start_date, end_date])
             }
-        elif self._is_empty():
+        elif self._is_empty() or self._is_exists():
             return {
                 self.filter['slug']: '',
             }
