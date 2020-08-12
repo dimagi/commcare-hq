@@ -45,10 +45,10 @@ class ExportFilterTest(SimpleTestCase):
         self.assertEqual(
             OR(OwnerFilter("foo"), OwnerFilter("bar")).to_es_filter(),
             {
-                'or': (
+                'bool': {'should': (
                     {'term': {'owner_id': 'foo'}},
                     {'term': {'owner_id': 'bar'}}
-                )
+                )}
             }
         )
 
