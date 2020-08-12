@@ -296,6 +296,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         )
 
     def process_rows(self, users, fmt_for_export=False):
+        from corehq.apps.users.models import CommCareUser
+
         rows = []
         users = list(users)
 
@@ -307,6 +309,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         for user in users:
             last_build = last_seen = last_sub = last_sync = last_sync_date = app_name = commcare_version = None
             last_build_profile_name = device = device_app_meta = num_unsent_forms = None
+            is_commcare_user = isinstance(user, CommCareUser)
             build_version = _("Unknown")
             devices = user.get('devices', None)
             if devices:
@@ -324,21 +327,20 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 last_builds = reporting_metadata.get('last_builds')
                 if last_builds:
                     last_build = self.get_data_for_app(last_builds, self.selected_app_id)
-                if device:
-                    device_app_metas = device.get('app_meta')
-                    if device_app_metas:
-                        device_app_meta = self.get_data_for_app(device_app_metas, self.selected_app_id)
+                if device and is_commcare_user:
+                    device_app_meta = self.get_data_for_app(device.get('app_meta'), self.selected_app_id)
             else:
                 last_sub = reporting_metadata.get('last_submission_for_user', {})
                 last_sync = reporting_metadata.get('last_sync_for_user', {})
                 last_build = reporting_metadata.get('last_build_for_user', {})
-                app_id = None
-                if last_build:
-                    app_id = last_build.get('app_id')
-                if device is not None and app_id is not None:
-                    device_app_metas = device.get('app_meta')
-                    if device_app_metas:
-                        device_app_meta = self.get_data_for_app(device_app_metas, app_id)
+                if is_commcare_user:
+                    app_id = None
+                    if last_build:
+                        app_id = last_build.get('app_id', None)
+                    if device is not None and app_id is not None:
+                        device_app_metas = device.get('app_meta')
+                        if device_app_metas:
+                            device_app_meta = self.get_data_for_app(device_app_metas, app_id)
 
             if last_sub and last_sub.get('commcare_version'):
                 commcare_version = _get_commcare_version(last_sub.get('commcare_version'))
