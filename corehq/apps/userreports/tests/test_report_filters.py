@@ -430,7 +430,7 @@ class PreFilterTestCase(SimpleTestCase):
             self.assertEqual(filter_value.to_sql_values(), {'exists_field_slug': ''})
             self.assertEqual(
                 str(filter_value.to_sql_filter().build_expression()),
-                'exists_field != :exists_field_slug OR exists_field IS NOT NULL'
+                'exists_field != :exists_field_slug'
             )
 
     def test_pre_filter_value_array(self):
