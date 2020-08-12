@@ -54,7 +54,7 @@ class Command(BaseCommand):
     def hide_domain_link_history(linked_domain, linked_app_id, master_domain):
         domain_link = DomainLink.all_objects.get(linked_domain=linked_domain, master_domain=master_domain)
         for history in DomainLinkHistory.objects.filter(link=domain_link):
-            if history.model_detail['app_id'] == linked_app_id:
+            if history.model_detail is not None and history.model_detail['app_id'] == linked_app_id:
                 history.hidden = True
                 history.save()
         if not DomainLinkHistory.objects.filter(link=domain_link).exists():
