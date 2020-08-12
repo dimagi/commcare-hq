@@ -239,7 +239,7 @@ def patch_testcase_databases():
 
     def is_icds(cls):
         # TODO remove when custom.icds packages have been moved to new repo
-        return cls.__module__.startswith("icds")
+        return cls.__module__.startswith("custom.icds")
 
     @classproperty
     def databases(cls):

@@ -1,0 +1,148 @@
+{
+  "domains": [
+    "icds-dashboard-qa",
+    "sankalp_cas",
+    "zohaib-sandbox",
+    "akshita-sandbox",
+    "sunaina-sandbox",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test",
+    "icds-test",
+    "icds-sql",
+    "icds-cas",
+    "cas-lab",
+    "icds-cas-sandbox"
+  ],
+  "server_environment": [
+    "india",
+    "icds",
+    "icds-staging"
+  ],
+  "report_id": "ls_v2_ag",
+  "data_source_table": "static-ag_care_cases",
+  "config": {
+    "title": "UCR V2 - LS - Adolescent Girls",
+    "description": "",
+    "visible": false,
+    "aggregation_columns": [
+      "awc_id",
+      "month"
+    ],
+    "filters": [
+      {
+        "compare_as_string": false,
+        "datatype": "string",
+        "required": false,
+        "slug": "opened_on",
+        "field": "opened_on",
+        "type": "date",
+        "display": "Opened On"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "awc_id",
+        "field": "awc_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "ancestor_expression": {
+          "field": "supervisor_id",
+          "location_type": "supervisor"
+        },
+        "display": "Filter by AWW"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "supervisor_id",
+        "field": "supervisor_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "display": "Filter by Supervisor",
+        "ancestor_expression": {}
+      },
+      {
+        "required": false,
+        "type": "numeric",
+        "slug": "is_migrated",
+        "field": "is_migrated",
+        "display": "Whether Migrated",
+        "datatype": "string"
+      },
+      {
+        "required": false,
+        "type": "numeric",
+        "slug": "is_availing",
+        "field": "is_availing",
+        "display": "Whether Availing Services",
+        "datatype": "string"
+      }
+    ],
+    "columns": [
+      {
+        "display": "Month",
+        "column_id": "month",
+        "type": "aggregate_date",
+        "field": "opened_on",
+        "format": "%Y-%m"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        },
+        "column_id": "owner_id",
+        "field": "awc_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": "owner_id",
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "open_count",
+        "field": "open_count",
+        "transform": {},
+        "calculate_total": true,
+        "type": "field",
+        "display": "ag_open_count"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "out_of_school",
+        "field": "out_of_school",
+        "transform": {},
+        "calculate_total": true,
+        "type": "field",
+        "display": "ag_out_of_school"
+      }
+    ],
+    "sort_expression": [ ],
+    "configured_charts": [ ]
+  }
+}

@@ -1,0 +1,119 @@
+{
+  "domains": [
+    "icds-dashboard-qa",
+    "sankalp_cas",
+    "zohaib-sandbox",
+    "akshita-sandbox",
+    "sunaina-sandbox",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test",
+    "icds-test",
+    "icds-sql",
+    "icds-cas",
+    "cas-lab",
+    "icds-cas-sandbox"
+  ],
+  "server_environment": [
+    "india",
+    "icds",
+    "icds-staging"
+  ],
+  "report_id": "ls_v2_awc_days_open",
+  "data_source_table": "static-daily_feeding_forms",
+  "config": {
+    "title": "UCR V2 - LS - % days AWC Open",
+    "description": "",
+    "visible": false,
+    "aggregation_columns": [
+      "owner_id",
+      "month"
+    ],
+    "filters": [
+      {
+        "compare_as_string": true,
+        "datatype": "date",
+        "required": false,
+        "display": "Submission Date",
+        "field": "submitted_on",
+        "type": "date",
+        "slug": "submitted_on"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "choice_provider": {
+          "type": "location"
+        },
+        "required": false,
+        "display": "Filter by Supervisor",
+        "field": "supervisor_id",
+        "type": "dynamic_choice_list",
+        "slug": "supervisor_id"
+      }
+    ],
+    "columns": [
+      {
+        "display": "Month",
+        "column_id": "month",
+        "type": "aggregate_date",
+        "field": "submitted_on",
+        "format": "%Y-%m"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        },
+        "column_id": "owner_id",
+        "field": "awc_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": "owner_id",
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "awc_opened_count",
+        "field": "awc_open_count",
+        "transform": {},
+        "calculate_total": true,
+        "type": "field",
+        "display": "awc_opened_count"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "count",
+        "field": "count",
+        "transform": {},
+        "calculate_total": true,
+        "type": "field",
+        "display": "count"
+      }
+    ],
+    "sort_expression": [
+      {
+        "field": "month",
+        "order": "DESC"
+      }
+    ],
+    "configured_charts": [ ]
+  }
+}

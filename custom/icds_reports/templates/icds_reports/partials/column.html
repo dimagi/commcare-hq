@@ -1,0 +1,19 @@
+<th{% if col.rowspan %} rowspan="{{ col.rowspan }}"{% endif %}{% if col.css %} style="width: 200px !important;"{% endif %}>
+    <div {% if col.help_text %}
+        class="header-popover"
+        style="cursor:pointer;"
+        data-title="{{ col.title }}"
+        data-content="{{ col.help_text }}"
+        {% endif %}>
+    {% if col.sort %}<i class="icon-white fa dt-sort-icon"></i>{% endif %}
+    {% if col.rotate %}<div class="sideways">{% endif %}
+        {{ col.title }}
+    {% if col.rotate %}</div>{% endif %}
+    {% if col.expected %}
+        <div class="expected header-popover" data-title="Expected Value for {{ col.title }}" data-content="The expected value for this column is '{{ col.expected }}'">{{ col.expected }}</div>
+    {% endif %}
+    {% if col.help_text %}
+        <i class="icon-question-sign fa fa-question-circle"></i>
+    {% endif %}
+    </div>
+</th>

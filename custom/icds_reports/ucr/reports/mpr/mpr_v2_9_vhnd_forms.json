@@ -1,0 +1,336 @@
+{
+  "domains": [
+    "icds-dashboard-qa",
+    "sankalp_cas",
+    "zohaib-sandbox",
+    "akshita-sandbox",
+    "sunaina-sandbox",
+    "laurence-project-1",
+    "jessica-icds-cas",
+    "marissa-test",
+    "derek-icds-sandbox",
+    "priyanka-app",
+    "shrena-dev",
+    "aparatest",
+    "reach-sandbox",
+    "reach-dashboard-qa",
+    "reach-test",
+    "icds-test",
+    "icds-sql",
+    "icds-cas",
+    "cas-lab",
+    "icds-cas-sandbox"
+  ],
+  "server_environment": [
+    "india",
+    "icds",
+    "icds-staging"
+  ],
+  "report_id": "static-mpr_v2_9_vhnd_forms",
+  "data_source_table": "static-vhnd_form",
+  "config": {
+    "title": "UCR V2 - MPR - 9 - VHND Forms (Static)",
+    "description": "",
+    "visible": false,
+    "aggregation_columns": [
+      "owner_id",
+      "month"
+    ],
+    "filters": [
+      {
+        "compare_as_string": false,
+        "datatype": "date",
+        "required": false,
+        "display": "Date Submitted",
+        "field": "submitted_on",
+        "type": "date",
+        "slug": "submitted_on"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "awc_id",
+        "field": "awc_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "ancestor_expression": {
+          "field": "supervisor_id",
+          "location_type": "supervisor"
+        },
+        "display": "Filter by AWW"
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "supervisor_id",
+        "field": "supervisor_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "display": "Filter by Supervisor",
+        "ancestor_expression": {}
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "block_id",
+        "field": "block_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "display": "Filter by Block",
+        "ancestor_expression": {}
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "district_id",
+        "field": "district_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "display": "Filter by District",
+        "ancestor_expression": {}
+      },
+      {
+        "compare_as_string": false,
+        "show_all": true,
+        "datatype": "string",
+        "type": "dynamic_choice_list",
+        "required": false,
+        "slug": "state_id",
+        "field": "state_id",
+        "choice_provider": {
+          "type": "location"
+        },
+        "display": "Filter by State",
+        "ancestor_expression": {}
+      }
+    ],
+    "columns": [
+      {
+        "display": "Month",
+        "column_id": "month",
+        "type": "aggregate_date",
+        "field": "submitted_on",
+        "format": "%Y-%m",
+        "transform": {},
+        "calculate_total": false,
+        "description": null,
+        "visible": true
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        },
+        "column_id": "owner_id",
+        "field": "awc_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "en": "Owner",
+          "hin": "Owner"
+        },
+        "aggregation": "simple",
+        "width": null,
+        "css_class": null,
+        "visible": true
+      },
+      {
+        "type": "array_agg_last_value",
+        "column_id": "vhsnd_date_past_month",
+        "field": "vhsnd_date_past_month",
+        "display": "vhsnd_date_past_month",
+        "order_by_col": "inserted_at",
+        "transform": {},
+        "calculate_total": false,
+        "description": null,
+        "visible": true
+      },
+      {
+        "type": "array_agg_last_value",
+        "column_id": "done_when_planned",
+        "field": "done_when_planned",
+        "display": "done_when_planned",
+        "order_by_col": "inserted_at",
+        "transform": {},
+        "calculate_total": false,
+        "description": null,
+        "visible": true
+      },
+      {
+        "type": "array_agg_last_value",
+        "column_id": "aww_present",
+        "field": "aww_present",
+        "display": "aww_present",
+        "order_by_col": "inserted_at",
+        "transform": {},
+        "calculate_total": false,
+        "description": null,
+        "visible": true
+      },
+      {
+        "type": "array_agg_last_value",
+        "column_id": "icds_sup",
+        "field": "icds_sup",
+        "display": "icds_sup",
+        "order_by_col": "inserted_at",
+        "transform": {},
+        "calculate_total": false,
+        "description": null,
+        "visible": true
+      },
+      {
+        "type": "array_agg_last_value",
+        "column_id": "asha_present",
+        "field": "asha_present",
+        "display": "asha_present",
+        "order_by_col": "inserted_at",
+        "transform": {},
+        "calculate_total": false,
+        "description": null,
+        "visible": true
+      },
+      {
+        "type": "array_agg_last_value",
+        "column_id": "anm_mpw",
+        "field": "anm_mpw",
+        "display": "anm_mpw",
+        "order_by_col": "inserted_at",
+        "transform": {},
+        "calculate_total": false,
+        "description": null,
+        "visible": true
+      },
+      {
+        "type": "array_agg_last_value",
+        "column_id": "health_edu_org",
+        "field": "health_edu_org",
+        "display": "health_edu_org",
+        "order_by_col": "inserted_at",
+        "transform": {},
+        "calculate_total": false,
+        "description": null,
+        "visible": true
+      },
+      {
+        "type": "array_agg_last_value",
+        "column_id": "display_tools",
+        "field": "display_tools",
+        "display": "display_tools",
+        "order_by_col": "inserted_at",
+        "transform": {},
+        "calculate_total": false,
+        "description": null,
+        "visible": true
+      },
+      {
+        "type": "array_agg_last_value",
+        "column_id": "thr_distr",
+        "field": "thr_distr",
+        "display": "thr_distr",
+        "order_by_col": "inserted_at",
+        "transform": {},
+        "calculate_total": false,
+        "description": null,
+        "visible": true
+      },
+      {
+        "type": "array_agg_last_value",
+        "column_id": "child_immu",
+        "field": "child_immu",
+        "display": "child_immu",
+        "order_by_col": "inserted_at",
+        "transform": {},
+        "calculate_total": false,
+        "description": null,
+        "visible": true
+      },
+      {
+        "type": "array_agg_last_value",
+        "column_id": "vit_a_given",
+        "field": "vit_a_given",
+        "display": "vit_a_given",
+        "order_by_col": "inserted_at",
+        "transform": {},
+        "calculate_total": false,
+        "description": null,
+        "visible": true
+      },
+      {
+        "type": "array_agg_last_value",
+        "column_id": "anc_today",
+        "field": "anc_today",
+        "display": "anc_today",
+        "order_by_col": "inserted_at",
+        "transform": {},
+        "calculate_total": false,
+        "description": null,
+        "visible": true
+      },
+      {
+        "type": "array_agg_last_value",
+        "column_id": "local_leader",
+        "field": "local_leader",
+        "display": "local_leader",
+        "order_by_col": "inserted_at",
+        "transform": {},
+        "calculate_total": false,
+        "description": null,
+        "visible": true
+      },
+      {
+        "type": "array_agg_last_value",
+        "column_id": "due_list_prep_immunization",
+        "field": "due_list_prep_immunization",
+        "display": "due_list_prep_immunization",
+        "order_by_col": "inserted_at",
+        "transform": {},
+        "calculate_total": false,
+        "description": null,
+        "visible": true
+      },
+      {
+        "type": "array_agg_last_value",
+        "column_id": "due_list_prep_vit_a",
+        "field": "due_list_prep_vit_a",
+        "display": "due_list_prep_vit_a",
+        "order_by_col": "inserted_at",
+        "transform": {},
+        "calculate_total": false,
+        "description": null,
+        "visible": true
+      },
+      {
+        "type": "array_agg_last_value",
+        "column_id": "due_list_prep_antenatal_checkup",
+        "field": "due_list_prep_antenatal_checkup",
+        "display": "due_list_prep_antenatal_checkup",
+        "order_by_col": "inserted_at",
+        "transform": {},
+        "calculate_total": false,
+        "description": null,
+        "visible": true
+      }
+    ],
+    "sort_expression": [],
+    "configured_charts": []
+  }
+}

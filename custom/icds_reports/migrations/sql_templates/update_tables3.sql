@@ -1,0 +1,1 @@
+ALTER TABLE daily_attendance ADD COLUMN image_name text;

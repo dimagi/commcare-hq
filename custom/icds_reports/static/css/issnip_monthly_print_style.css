@@ -1,0 +1,164 @@
+.white, .fa, .fa-info-circle:before, .number, .second_number {
+    color: white !important;
+}
+
+table {
+    page-break-after: avoid;
+    width: 100% !important;
+}
+
+body {
+    font-size: 10px;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+@page {
+    margin: 1cm 1cm;
+    size: A4;
+    border: 1px solid white;
+}
+
+h1 {
+    text-align: center;
+    font-size: 14px;
+}
+
+h2 {
+    font-size: 12px;
+}
+
+th, td {
+    padding: 5px;
+    vertical-align: middle;
+}
+
+table.table {
+    border-collapse: collapse;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+table.table td {
+    border: 1px solid black;
+}
+table.table th {
+    border: 1px solid black;
+    text-align: center;
+}
+@font-face {
+  font-family: 'Hind Guntur';
+  src: url(../fonts/HindGuntur-Regular.ttf) format('truetype');
+}
+.aww_name {
+    line-height: 1.5;
+    font-family: 'Hind Guntur', sans-serif;
+}
+.row:after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+.break {
+    page-break-after: always;
+}
+
+.report-content {
+    width: 1152px !important;
+}
+
+.red.fa.fa-arrow-down:before {
+    color: #c61400 !important;
+}
+
+.green.fa.fa-arrow-down:before {
+    color: #07c600 !important;
+}
+
+.red.fa.fa-arrow-up:before {
+    color: #c61400 !important;
+}
+
+.green.fa.fa-arrow-up:before {
+    color: #07c600 !important;
+}
+
+.black {
+    color: #0a0a0a !important;
+}
+
+.red {
+    color: #d60000 !important;
+}
+
+.green {
+    color: #009811 !important;
+}
+
+.report-cell {
+    height: 200px;
+}
+
+.dataTables_scrollHeadInner {
+    width: 100% !important;
+}
+
+.dataTable td {
+    white-space: normal !important;
+}
+
+.row {
+    width: 100%;
+}
+
+.col-md-1, .col-md-2, .col-md-3, .col-md-4, .col-md-5, .col-md-6,
+  .col-md-7, .col-md-8, .col-md-9, .col-md-10, .col-md-11, .col-md-12 {
+       float: left;
+  }
+
+.col-md-12 {
+   width: 100%;
+}
+
+.col-md-11 {
+   width: 91.66666666666666%;
+}
+
+.col-md-10 {
+   width: 83.33333333333334%;
+}
+
+.col-md-9 {
+    width: 75%;
+}
+
+.col-md-8 {
+    width: 66.66666666666666%;
+}
+
+.col-md-7 {
+    width: 58.333333333333336%;
+}
+
+.col-md-6 {
+    width: 50%;
+}
+
+.col-md-5 {
+    width: 41.66666666666667%;
+}
+
+.col-md-4 {
+    width: 33.33333333333333%;
+}
+
+.col-md-3 {
+    width: 25%;
+}
+
+.col-md-2 {
+      width: 16.666666666666664%;
+}
+
+.col-md-1 {
+      width: 8.333333333333332%;
+}

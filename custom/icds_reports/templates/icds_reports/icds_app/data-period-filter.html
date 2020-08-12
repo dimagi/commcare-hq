@@ -1,0 +1,30 @@
+{% load i18n %}
+{% load static %}
+
+<script type="text/ng-template" id="dataPeriodModalContent.html">
+    <div class="modal-header">
+        <h3 class="modal-title" id="modal-title">Select Data Period<i style="float: right;" ng-click="$ctrl.close()" class="fa fa-close pointer"></i></h3>
+    </div>
+    <div class="modal-body" id="modal-body">
+        <div class="form-group" style="margin: 20px 50px;" ng-show="$ctrl.filters.indexOf('data_period') === -1">
+            <label>Data Period:</label>
+            <ui-select ng-model="$ctrl.selectedDataPeriod" theme="bootstrap" on-select="$ctrl.onSelect($item, $index)">
+                <ui-select-match placeholder="Data Period"><span ng-bind="$select.selected.name"></span></ui-select-match>
+                  <ui-select-choices repeat="dataPeriod.id as dataPeriod in $ctrl.dataPeriods | propsFilter: {name: $select.search}">
+                    <div ng-bind-html="dataPeriod.name | highlight: $select.search"></div>
+                  </ui-select-choices>
+            </ui-select>
+        </div>
+    </div>
+    <div class="modal-footer">
+       <button ng-click="$ctrl.reset()" class="btn btn-primary">Reset</button>
+       <button ng-click="$ctrl.apply()" class="btn btn-primary">Apply</button>
+    </div>
+</script>
+
+<div class="row text-center">
+    <button style="width: 95%;" type="button" class="btn btn-default less-padding" ng-click="$ctrl.open()">
+      <img src="{% static "img/dataperiod.png" %}" alt="dataperiod" style="width: 15px;"> {$ $ctrl.getPlaceholder() $}
+    </button>
+</div>
+

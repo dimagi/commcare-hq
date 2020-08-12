@@ -1,0 +1,10 @@
+Nang·ni AWC-na  re·anggipa sal 30-ni gisepo  kam ka∙e onnani  chu·gimik report 
+
+1. Badita chang visit ka∙aha/ Badita chang visit ka∙na nangnikkuenga : {{ visits }} / 65
+2. Badita chang somoi gita visit ka∙aha / Badita chang visit ka∙aha: {{ on_time_visits }} / {{ visits }}
+
+THR On·a: {{ thr_distribution }}
+
+Badita sak bi·sarangni jrimaniko ra·aha: {{ children_weighed }}
+
+Badita sal AWC-ko kuliaha / Miksongani: {{ days_open }} / 25
