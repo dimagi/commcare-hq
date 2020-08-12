@@ -350,17 +350,25 @@ class CustomDataModelMixin(object):
         if self.form.is_valid():
             self.save_custom_fields()
             errors = self.save_profiles()
-            if self.show_purge_existing and self.form.cleaned_data['purge_existing']:
-                self.update_existing_models()
-            msg = _("{} fields saved successfully").format(
-                str(self.entity_string)
-            )
             for error in errors:
                 messages.error(request, error)
+
+            if self.show_purge_existing and self.form.cleaned_data['purge_existing']:
+                self.update_existing_models()
+            if self.show_profiles:
+                msg = _("{} fields and profiles saved successfully.").format(self.entity_string.lower())
+            else:
+                msg = _("{} fields saved successfully.").format(self.entity_string.lower())
             messages.success(request, msg)
-            return redirect(self.urlname, self.domain)
         else:
-            return self.get(request, *args, **kwargs)
+            if self.show_profiles:
+                msg = _("Unable to save {} fields or profiles, see errors below.").format(
+                    self.entity_string.lower()
+                )
+            else:
+                msg = _("Unable to save {} fields, see errors below.").format(self.entity_string.lower())
+            messages.error(request, msg)
+        return self.get(request, *args, **kwargs)
 
     def update_existing_models(self):
         """
