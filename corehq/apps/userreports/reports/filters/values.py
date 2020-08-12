@@ -223,7 +223,8 @@ class PreFilterValue(FilterValue):
         """
         Returns true if operand has no value.
         """
-        return self.value['operand'] == '' or self._is_null()
+        operator = self.value.get('operator') or '='
+        return (self.value['operand'] == '' or self._is_null()) and operator == '='
 
     @property
     def _array_filter(self):
