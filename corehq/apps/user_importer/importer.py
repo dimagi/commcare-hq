@@ -319,6 +319,7 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
             domain_user_specs,
             allowed_group_names,
             list(roles_by_name),
+            list(profiles_by_name),
             upload_domain
         )
 
