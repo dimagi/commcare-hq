@@ -124,6 +124,7 @@ def _set_role_for_bundle(kwargs, bundle):
         if permission_preset_name:
             bundle.obj.set_role(kwargs['domain'], permission_preset_name)
 
+
 class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
     """
     A read-only user data resource based on elasticsearch.
@@ -389,6 +390,7 @@ class WebUserResource(v0_1.WebUserResource):
     def _admin_assigned_another_role(self, details):
         # default value Admin since that will be assigned later anyway since is_admin is True
         return details.get('role', 'Admin') != 'Admin'
+
 
 class AdminWebUserResource(v0_1.UserResource):
     domains = fields.ListField(attribute='domains')
@@ -855,6 +857,8 @@ class UserDomainsResource(CorsResourceMixin, Resource):
 class IdentityResource(CorsResourceMixin, Resource):
     id = fields.CharField(attribute='get_id', readonly=True)
     username = fields.CharField(attribute='username', readonly=True)
+    first_name = fields.CharField(attribute='first_name', readonly=True)
+    last_name = fields.CharField(attribute='last_name', readonly=True)
     email = fields.CharField(attribute='email', readonly=True)
 
     def obj_get_list(self, bundle, **kwargs):

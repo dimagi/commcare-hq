@@ -505,4 +505,6 @@ class TestIdentityResource(APIResourceTest):
         data = json.loads(response.content)
         self.assertEqual(data['id'], self.user.get_id)
         self.assertEqual(data['username'], self.username)
-        self.assertEqual(data['email'], self.username)
+        self.assertEqual(data['first_name'], self.user.first_name)
+        self.assertEqual(data['last_name'], self.user.last_name)
+        self.assertEqual(data['email'], self.user.email)
