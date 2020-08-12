@@ -1,5 +1,6 @@
 from collections import defaultdict, namedtuple
 from datetime import datetime, timedelta
+from django.conf import settings
 
 from django.conf import settings
 
@@ -306,12 +307,12 @@ def get_group_stubs(group_ids):
         .values('_id', 'name', 'case_sharing', 'reporting'))
 
 
-def get_user_stubs(user_ids):
+def get_user_stubs(user_ids, extra_fields=None):
     from corehq.apps.reports.util import SimplifiedUserInfo
     return (UserES()
         .user_ids(user_ids)
         .show_inactive()
-        .values(*SimplifiedUserInfo.ES_FIELDS))
+        .values(*SimplifiedUserInfo.ES_FIELDS, *(extra_fields or [])))
 
 
 def get_forms(domain, startdate, enddate, user_ids=None, app_ids=None, xmlnss=None, by_submission_time=True):
@@ -361,7 +362,7 @@ def _chunked_get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=
              .aggregation(
                  TermsAggregation('user_id', 'form.meta.userID').aggregation(
                      TermsAggregation('app_id', 'app_id').aggregation(
-                         TermsAggregation('xmlns', 'xmlns')
+                         TermsAggregation('xmlns', 'xmlns.exact')
                      )
                  )
              )
@@ -377,7 +378,7 @@ def _chunked_get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=
             query = query.aggregation(
                 MissingAggregation('missing_user_id', 'form.meta.userID').aggregation(
                     TermsAggregation('app_id', 'app_id').aggregation(
-                        TermsAggregation('xmlns', 'xmlns')
+                        TermsAggregation('xmlns', 'xmlns.exact')
                     )
                 )
             )
@@ -400,6 +401,13 @@ def _chunked_get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=
                 counts[key] = xmlns_bucket.doc_count
 
     return counts
+
+
+def _duration_script():
+    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+        return "doc['form.meta.timeEnd'].value.millis - doc['form.meta.timeStart'].value.millis"
+    else:
+        return "doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value"
 
 
 def get_form_duration_stats_by_user(
@@ -427,7 +435,7 @@ def get_form_duration_stats_by_user(
                 ExtendedStatsAggregation(
                     'duration_stats',
                     'form.meta.timeStart',
-                    script="doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value",
+                    script=_duration_script(),
                 )
             )
         )
@@ -443,7 +451,7 @@ def get_form_duration_stats_by_user(
                 ExtendedStatsAggregation(
                     'duration_stats',
                     'form.meta.timeStart',
-                    script="doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value",
+                    script=_duration_script(),
                 )
             )
         )
@@ -482,7 +490,7 @@ def get_form_duration_stats_for_users(
             ExtendedStatsAggregation(
                 'duration_stats',
                 'form.meta.timeStart',
-                script="doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value",
+                script=_duration_script(),
             )
         )
         .size(0)
