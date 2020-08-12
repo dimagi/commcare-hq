@@ -16,6 +16,7 @@ services:
       - couch
       - redis
       - elasticsearch
+      - elasticsearch2
       - kafka
       - zookeeper
       - minio
@@ -61,6 +62,11 @@ services:
     extends:
       file: hq-compose-services.yml
       service: elasticsearch
+
+  elasticsearch2:
+    extends:
+      file: hq-compose-services.yml
+      service: elasticsearch2
 
   zookeeper:
     extends:
