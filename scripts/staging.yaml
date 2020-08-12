@@ -59,8 +59,8 @@ branches:
 #  - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
   - fr/authenticated-soil-downloads # Farid July 31
   - jls/view-apps-permission # Jenny July 31
-  # - sr/es7-ref1+jls/CustomDataFieldsProfile
-  # - jls/CustomDataFieldsProfile # Jenny July 24
+  - sr/es7-ref1+jls/CustomDataFieldsProfile
+  - jls/CustomDataFieldsProfile # Jenny July 24
   - sr/es7-ref1 # Sravan Aug 4
   - solleks:cdg/data_dictionary_erm  # Charlie August 6
   - bmb/SAAS-11163  # Biyeun Aug 10
