@@ -223,6 +223,9 @@ class PreFilterValue(FilterValue):
         return self.value['operand'] == '' or self.value['operand'] is None
 
     def _is_empty(self):
+        """
+        Returns true if the value should be treated a filter to show only empty data
+        """
         operator = self.value.get('operator') or '='
         return self._has_empty_value() and operator == '='
 
