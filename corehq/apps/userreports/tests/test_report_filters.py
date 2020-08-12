@@ -405,9 +405,9 @@ class PreFilterTestCase(SimpleTestCase):
                     'slug': 'empty_field_slug',
                     'datatype': 'string',
                     'pre_value': pre_value,
-                    'operator': operator
+                    'pre_operator': operator
                 }
-                filter_value = PreFilterValue(filter_, {'operand': pre_value})
+                filter_value = PreFilterValue(filter_, {'operand': pre_value, 'operator': operator})
                 self.assertEqual(filter_value.to_sql_values(), {'empty_field_slug': ''})
                 self.assertEqual(
                     str(filter_value.to_sql_filter().build_expression()),
@@ -416,6 +416,7 @@ class PreFilterTestCase(SimpleTestCase):
 
     def test_pre_filter_value_exists(self):
         pre_values = ['', None]
+        operator = '!='
         for pre_value in pre_values:
             filter_ = {
                 'type': 'pre',
@@ -423,9 +424,9 @@ class PreFilterTestCase(SimpleTestCase):
                 'slug': 'exists_field_slug',
                 'datatype': 'string',
                 'pre_value': pre_value,
-                'operator': '!='
+                'pre_operator': operator
             }
-            filter_value = PreFilterValue(filter_, {'operand': pre_value})
+            filter_value = PreFilterValue(filter_, {'operand': pre_value, 'operator': operator})
             self.assertEqual(filter_value.to_sql_values(), {'exists_field_slug': ''})
             self.assertEqual(
                 str(filter_value.to_sql_filter().build_expression()),
