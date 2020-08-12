@@ -219,12 +219,15 @@ class PreFilterValue(FilterValue):
         """
         return isinstance(self.value['operand'], list)
 
+    def _has_empty_value(self):
+        return self.value['operand'] == '' or self._is_null()
+
     def _is_empty(self):
         """
         Returns true if operand has no value.
         """
         operator = self.value.get('operator') or '='
-        return (self.value['operand'] == '' or self._is_null()) and operator == '='
+        return self._has_empty_value() and operator == '='
 
     @property
     def _array_filter(self):
