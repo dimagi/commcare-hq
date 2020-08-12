@@ -414,6 +414,24 @@ class PreFilterTestCase(SimpleTestCase):
                     'empty_field = :empty_field_slug OR empty_field IS NULL'
                 )
 
+    def test_pre_filter_value_exists(self):
+        pre_values = ['', None]
+        for pre_value in pre_values:
+            filter_ = {
+                'type': 'pre',
+                'field': 'exists_field',
+                'slug': 'exists_field_slug',
+                'datatype': 'string',
+                'pre_value': pre_value,
+                'operator': '!='
+            }
+            filter_value = PreFilterValue(filter_, {'operand': pre_value})
+            self.assertEqual(filter_value.to_sql_values(), {'exists_field_slug': ''})
+            self.assertEqual(
+                str(filter_value.to_sql_filter().build_expression()),
+                'exists_field != :exists_field_slug OR exists_field IS NOT NULL'
+            )
+
     def test_pre_filter_value_array(self):
         pre_value = ['yes', 'maybe']
         filter_ = {
