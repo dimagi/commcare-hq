@@ -209,9 +209,6 @@ class PreFilterValue(FilterValue):
     def _is_dyn_date(self):
         return self.value.get('operator') in self.dyn_date_operators
 
-    def _is_null(self):
-        return self.value['operand'] is None
-
     def _is_list(self):
         """
         Returns true if operand should be treated like an array when building
@@ -220,7 +217,7 @@ class PreFilterValue(FilterValue):
         return isinstance(self.value['operand'], list)
 
     def _has_empty_value(self):
-        return self.value['operand'] == '' or self._is_null()
+        return self.value['operand'] == '' or self.value['operand'] is None
 
     def _is_empty(self):
         """
