@@ -41,7 +41,7 @@ class ScheduleInstance(PartitionedModel):
     recipient_id = models.CharField(max_length=126, null=True)
     current_event_num = models.IntegerField()
     schedule_iteration_num = models.IntegerField()
-    next_event_due = models.DateTimeField()
+    next_event_due = models.DateTimeField(db_index=True)
     active = models.BooleanField()
 
     RECIPIENT_TYPE_CASE = 'CommCareCase'
@@ -632,7 +632,7 @@ class CaseTimedScheduleInstance(CaseScheduleInstanceMixin, AbstractTimedSchedule
     case_id = models.CharField(max_length=255)
 
     # Points to the AutomaticUpdateRule that spawned this schedule instance
-    rule_id = models.IntegerField()
+    rule_id = models.IntegerField(db_index=True)
 
     # See corehq.apps.data_interfaces.models.CreateScheduleInstanceActionDefinition.reset_case_property_name
     last_reset_case_property_value = models.TextField(null=True)
