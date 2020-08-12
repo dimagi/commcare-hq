@@ -312,6 +312,7 @@ class CustomDataModelMixin(object):
         context = {
             "custom_fields": json.loads(self.form.data['data_fields']),
             "custom_fields_form": self.form,
+            "disable_save": self.request.method == "GET" or self.form.is_valid(),
             "show_purge_existing": self.show_purge_existing,
         }
         if self.show_profiles:
