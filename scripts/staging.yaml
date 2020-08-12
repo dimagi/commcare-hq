@@ -63,7 +63,6 @@ branches:
   # - jls/CustomDataFieldsProfile # Jenny July 24
   - sr/es7-ref1 # Sravan Aug 4
   - solleks:cdg/data_dictionary_erm  # Charlie August 6
-  - nh/repeaters  # Norman Aug 7
   - bmb/SAAS-11163  # Biyeun Aug 10
   - fr/remote-links-updatesg    # Farid August 12
 submodules: {}
