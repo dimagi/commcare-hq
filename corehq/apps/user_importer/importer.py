@@ -376,7 +376,7 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
             # ignore empty
             location_codes = [code for code in location_codes if code]
             role = row.get('role', None)
-            profile = row.get('profile', None)
+            profile = row.get('user_field_profile', None)
             web_user = row.get('web_user')
 
             try:
