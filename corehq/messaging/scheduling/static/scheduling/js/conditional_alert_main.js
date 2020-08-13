@@ -51,19 +51,26 @@ hqDefine(
 
             var initialFormContent = getFormContents();
 
-            $(".main-form").on("submit", function (event) {
+            $(".main-form").on("submit", function () {
                 var finalFormContent = getFormContents();
                 // compare changes with initialFormContent to check if only 'message' has changed
-                // to convey to HQ to reprocess or not
                 var formContentChanges = [];
                 Object.keys(finalFormContent).forEach(function (key) {
                     finalFormContent[key] !== initialFormContent[key]
                         ? formContentChanges.push(key)
                         : null;
                 });
-                if (_.isEqual(["message"], formContentChanges)) {
-                    // make the tweak
-                }
+                var runMessagingRule = !_.isEqual(
+                    ["message"],
+                    formContentChanges
+                );
+                // to convey to HQ to reprocess or not
+                var input = $("<input />")
+                    .attr("type", "hidden")
+                    .attr("name", "runMessagingRule")
+                    .attr("value", runMessagingRule.toString());
+                $(this).append(input);
+                return true;
             });
         });
     }
