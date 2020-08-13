@@ -49,6 +49,9 @@ def get_meta_appversion_text(form_metadata):
     except KeyError:
         return None
 
+    if isinstance(text, dict) and '#text' in text:
+        text = text["#text"]
+
     # just make sure this is a longish string and not something like '2.0'
     if isinstance(text, (str, str)) and len(text) > 5:
         return text
@@ -262,7 +265,7 @@ def should_ignore_submission(request):
 def _notify_submission_if_applicable(request, form_meta):
     # notify the submission if form would have gotten processed due to missing param
     if not request.GET.get('submit_mode') == DEMO_SUBMIT_MODE:
-        app_version_text = form_meta.get('appVersion')
+        app_version_text = get_meta_appversion_text(form_meta)
         if app_version_text:
             commcare_version = get_commcare_version_from_appversion_text(app_version_text)
             if commcare_version and commcare_version >= '2.44.0':
