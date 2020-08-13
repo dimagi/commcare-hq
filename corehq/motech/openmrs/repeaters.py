@@ -202,7 +202,7 @@ class OpenmrsRepeater(CaseRepeater):
             extra_fields=[conf["case_property"] for conf in value_source_configs if "case_property" in conf],
             form_question_values=get_form_question_values(payload),
         )
-        requests = self.connection_settings.get_requests(self, repeat_record.payload_id)
+        requests = self.connection_settings.get_requests(repeat_record.payload_id)
         try:
             response = send_openmrs_data(
                 requests,
