@@ -3,6 +3,7 @@ hqDefine(
     [
         "jquery",
         "knockout",
+        "underscore",
         "hqwebapp/js/initial_page_data",
         "hqwebapp/js/widgets",
         "data_interfaces/js/case_rule_criteria",
