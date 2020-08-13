@@ -1,6 +1,5 @@
 from copy import deepcopy
 
-from django.conf import settings
 from django.test.testcases import SimpleTestCase
 
 from corehq.apps.es import filters
