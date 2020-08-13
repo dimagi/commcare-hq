@@ -349,8 +349,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 last_seen = string_to_utc_datetime(last_sub['submission_date'])
             if last_sync and last_sync.get('sync_date'):
                 last_sync_date = string_to_utc_datetime(last_sync['sync_date'])
-            if device_app_meta and device_app_meta.get('num_unsent_forms') is not None:
-                num_unsent_forms = device_app_meta['num_unsent_forms']
+            if device_app_meta:
+                num_unsent_forms = device_app_meta.get('num_unsent_forms')
             if last_build:
                 build_version = last_build.get('build_version') or build_version
                 if last_build.get('app_id'):
