@@ -139,11 +139,6 @@ def process_repeat_record(repeat_record):
             repeat_record.postpone_by(timedelta(days=1))
             return
 
-        if not repeater.is_connection_working():
-            repeater.pause()
-            notify_repeater_admins(repeater)
-            return
-
         if repeater.doc_type.endswith(DELETED_SUFFIX):
             if not repeat_record.doc_type.endswith(DELETED_SUFFIX):
                 repeat_record.doc_type += DELETED_SUFFIX
