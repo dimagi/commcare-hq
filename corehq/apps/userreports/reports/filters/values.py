@@ -224,14 +224,14 @@ class PreFilterValue(FilterValue):
 
     def _is_empty(self):
         """
-        Returns true if the value should be treated a filter to show only empty data
+        Returns true if the value should be treated as a filter to show only empty data
         """
         operator = self.value.get('operator') or '='
         return self._has_empty_value() and operator == '='
 
     def _is_exists(self):
         """
-        Returns true if the value should be treated a filter to show non-empty data
+        Returns true if the value should be treated as a filter to show non-empty data
         """
         return self._has_empty_value() and self.value.get('operator') == '!='
 
