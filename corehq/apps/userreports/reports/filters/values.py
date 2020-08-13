@@ -263,6 +263,7 @@ class PreFilterValue(FilterValue):
                 ISNULLFilter(self.filter['field']),
             ])
         elif self._is_exists():
+            # this resolves to != '', which also filters out null data in postgres
             return NOTEQFilter(self.filter['field'], self.filter['slug'])
         elif self._is_list():
             return self._array_filter(
