@@ -42,6 +42,52 @@
               </div>
             </div>
 
+
+            {# BEGIN web_users permissions #}
+            <div class="form-group" data-bind="visible: permissions.access_all_locations">
+              <div class="col-sm-2 controls">
+                <div class="form-check">
+                  <input type="checkbox"
+                         id="edit-web-users-checkbox"
+                         data-bind="checked: uiInfo.editPermission, disable: !$root.allowEdit" />
+                  <label for="edit-web-users-checkbox">
+                    <span class="sr-only" data-bind="text: uiInfo.srEditAndViewText">
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="col-sm-2 controls">
+                {# PLACEHOLDER checkbox when edit_web_users is true #}
+                <div class="form-check" data-bind="visible: uiInfo.editPermission()">
+                  <input type="checkbox" checked="checked" disabled="disabled" />
+                  <label>
+                    <span class="sr-only" data-bind="text: uiInfo.srViewOnlyText">
+                    </span>
+                  </label>
+                </div>
+                {# end PLACEHOLDER #}
+
+                {# REAL checkbox that controls view_web_users permission #}
+                <div class="form-check" data-bind="visible: !uiInfo.editPermission()">
+                  <input type="checkbox"
+                         id="view-web-users-checkbox"
+                         data-bind="checked: uiInfo.viewPermission,
+                                    disable: !$root.allowEdit" />
+                  <label for="view-web-users-checkbox">
+                    <span class="sr-only" data-bind="text: uiInfo.srViewOnlyText">
+                    </span>
+                  </label>
+                </div>
+                {# END REAL checkbox #}
+              </div>
+
+              <div class="col-sm-8 control-label" data-bind="html: uiInfo.text">
+              </div>
+            </div>
+            {# END web_users permissions #}
+
+ {% comment %}
             {# BEGIN web_users permissions #}
             <div class="form-group" data-bind="visible: permissions.access_all_locations">
               <div class="col-sm-2 controls">
@@ -510,6 +556,9 @@
               </div>
             </div>
             {# END Roles & Permissions permissions #}
+
+
+ {% endcomment %}
 
             <legend>
               {% trans "Reports" %}

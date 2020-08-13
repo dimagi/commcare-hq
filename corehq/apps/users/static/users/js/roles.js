@@ -72,6 +72,15 @@ hqDefine('users/js/roles',[
                 if (self.hasUnpermittedLocationRestriction) {
                     self.permissions.access_all_locations(true);
                 }
+                self.uiInfo = {
+                    editPermission: self.permissions.edit_commcare_users,
+                    viewPermission: self.permissions.view_commcare_users,
+                    text:  "<strong>Web Users</strong> &mdash; invite new web users, manage account settings, remove membership",
+                    showEditCheckbox: true,
+                    showViewCheckbox: true,
+                    srEditAndViewText: "Edit & View Web Users",
+                    srViewOnlyText: "View-Only Web Users",
+                };
                 return self;
             },
             unwrap: function (self) {
@@ -161,6 +170,8 @@ hqDefine('users/js/roles',[
             var title = role === self.defaultRole ? gettext("New Role") : actionType + role.name();
             var roleCopy = UserRole.wrap(UserRole.unwrap(role));
             roleCopy.modalTitle = title;
+            console.log(roleCopy);
+            console.log(roleCopy.uiInfo);
             self.roleBeingEdited(roleCopy);
         };
         self.unsetRoleBeingEdited = function () {
