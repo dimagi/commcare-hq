@@ -885,7 +885,10 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
                 self.criteria_form.save_criteria(rule)
                 self.schedule_form.save_rule_action_and_schedule(rule)
 
-            initiate_messaging_rule_run(rule)
+            should_run_rule = request.POST.get("runMessagingRule", "true") == "true"
+
+            if should_run_rule:
+                initiate_messaging_rule_run(rule)
             return HttpResponseRedirect(reverse(ConditionalAlertListView.urlname, args=[self.domain]))
 
         return self.get(request, *args, **kwargs)
