@@ -17,18 +17,26 @@ from corehq import toggles
 from .models import (
     CUSTOM_DATA_FIELD_PREFIX,
     CustomDataFieldsDefinition,
+    CustomDataFieldsProfile,
     PROFILE_SLUG,
     is_system_key,
 )
 
 
-def add_prefix(field_dict, prefix):
+def with_prefix(string, prefix):
     """
-    Prefix all keys in the dict with the defined
+    Prefix single string with the defined
     custom data prefix (such as data-field-whatevs).
     """
+    return "{}-{}".format(prefix, string)
+
+
+def add_prefix(field_dict, prefix):
+    """
+    Prefix all keys in the dict.
+    """
     return {
-        "{}-{}".format(prefix, k): v
+        with_prefix(k, prefix): v
         for k, v in field_dict.items()
     }
 
@@ -174,11 +182,22 @@ class CustomDataEditor(object):
         CustomDataForm._has_uncategorized = bool(self.uncategorized_form) and post_dict is None
 
         if post_dict:
-            fields = post_dict
+            fields = post_dict.copy()   # make mutable
         elif self.existing_custom_data is not None:
             fields = add_prefix(self.existing_custom_data, self.prefix)
         else:
-            fields = None
+            fields = {}
+
+        # Add profile fields so that form validation passes
+        try:
+            profile_fields = CustomDataFieldsProfile.objects.get(
+                id=int(fields.get(with_prefix(PROFILE_SLUG, self.prefix))),
+                definition__field_type=self.field_view.field_type,
+                definition__domain=self.domain,
+            ).fields
+        except (ValueError, TypeError, CustomDataFieldsProfile.DoesNotExist):
+            profile_fields = {}
+        fields.update(add_prefix(profile_fields, self.prefix))
 
         self.form = CustomDataForm(fields, prefix=self.prefix)
         return self.form
