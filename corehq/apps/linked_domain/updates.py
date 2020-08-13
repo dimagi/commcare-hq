@@ -170,28 +170,34 @@ def update_user_roles(domain_link):
         include_docs=True,
         reduce=False,
     )
-    local_roles_by_name = {role.name: role for role in local_roles}
+    local_roles_by_name = {}
+    local_roles_by_upstream_id = {}
+    for role in local_roles:
+        local_roles_by_name[role.name] = role
+        if role.upstream_id:
+            local_roles_by_upstream_id[role.upstream_id] = role
 
     # Update downstream roles based on upstream roles
     for role_def in master_results:
-        role = local_roles_by_name.get(role_def['name'])
+        role = local_roles_by_upstream_id.get(role_def['_id']) or local_roles_by_name.get(role_def['name'])
         if role:
             role_json = role.to_json()
         else:
             role_json = {'domain': domain_link.linked_domain}
+        role_json['upstream_id'] = role_def['_id']
 
-        role_def = copy(role_def)
-        role_def.pop('_id')
-        role_json.update(role_def)
-        local_roles_by_name[role_json['name']] = role_json
+        upstream_role = copy(role_def)
+        upstream_role.pop('_id')
+        upstream_role.pop('upstream_id')
+        role_json.update(upstream_role)
+        local_roles_by_upstream_id[role_json['upstream_id']] = role_json
         UserRole.wrap(role_json).save()
 
     # Update assignable_by ids - must be done after main update to guarantee all local roles have ids
-    master_roles_by_id = {role['_id']: role for role in master_results}
-    for role in local_roles_by_name.values():
+    for role in local_roles_by_upstream_id.values():
         if role['assignable_by']:
             role['assignable_by'] = [
-                local_roles_by_name[master_roles_by_id[role_id]['name']]['_id']
+                local_roles_by_upstream_id[role_id]['_id']
                 for role_id in role['assignable_by']
             ]
             UserRole.wrap(role).save()
