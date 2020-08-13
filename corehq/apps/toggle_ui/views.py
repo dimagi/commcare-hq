@@ -16,7 +16,6 @@ from couchforms.analytics import get_last_form_submission_received
 from toggle.models import Toggle
 from toggle.shortcuts import parse_toggle
 
-from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.decorators import require_superuser_or_contractor
 from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.apps.hqwebapp.views import BasePageView
