@@ -296,8 +296,6 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         )
 
     def process_rows(self, users, fmt_for_export=False):
-        from corehq.apps.users.models import CommCareUser
-
         rows = []
         users = list(users)
 
@@ -309,7 +307,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         for user in users:
             last_build = last_seen = last_sub = last_sync = last_sync_date = app_name = commcare_version = None
             last_build_profile_name = device = device_app_meta = num_unsent_forms = None
-            is_commcare_user = isinstance(user, CommCareUser)
+            is_commcare_user = user.get('doc_type') == 'CommCareUser'
             build_version = _("Unknown")
             devices = user.get('devices', None)
             if devices:
@@ -336,11 +334,11 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 if is_commcare_user:
                     app_id = None
                     if last_build:
-                        app_id = last_build.get('app_id', None)
-                    if device is not None and app_id is not None:
-                        device_app_metas = device.get('app_meta')
-                        if device_app_metas:
-                            device_app_meta = self.get_data_for_app(device_app_metas, app_id)
+                        app_id = last_build.get('app_id')
+                    if device and app_id:
+                        device_app_meta = device.get('app_meta')
+                        if device_app_meta:
+                            device_app_meta = self.get_data_for_app(device_app_meta, app_id)
 
             if last_sub and last_sub.get('commcare_version'):
                 commcare_version = _get_commcare_version(last_sub.get('commcare_version'))
@@ -352,7 +350,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             if last_sync and last_sync.get('sync_date'):
                 last_sync_date = string_to_utc_datetime(last_sync['sync_date'])
             if device_app_meta and device_app_meta.get('num_unsent_forms') is not None:
-                num_unsent_forms = str(device_app_meta['num_unsent_forms'])
+                num_unsent_forms = device_app_meta['num_unsent_forms']
             if last_build:
                 build_version = last_build.get('build_version') or build_version
                 if last_build.get('app_id'):
@@ -371,7 +369,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                                     user.get('last_name', '')),
                 _fmt_date(last_seen, fmt_for_export), _fmt_date(last_sync_date, fmt_for_export),
                 app_name or "---", build_version, commcare_version or '---',
-                num_unsent_forms or "---",
+                num_unsent_forms if num_unsent_forms is not None else "---",
             ]
             if self.show_build_profile:
                 row_data.append(last_build_profile_name)
