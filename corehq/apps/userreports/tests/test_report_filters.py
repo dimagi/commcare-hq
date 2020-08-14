@@ -428,6 +428,7 @@ class PreFilterTestCase(SimpleTestCase):
             }
             filter_value = PreFilterValue(filter_, {'operand': pre_value, 'operator': operator})
             self.assertEqual(filter_value.to_sql_values(), {'exists_field_slug': ''})
+            # != '' filters out null data in postgres which is why the expression doesn't need to check nulls
             self.assertEqual(
                 str(filter_value.to_sql_filter().build_expression()),
                 'exists_field != :exists_field_slug'
