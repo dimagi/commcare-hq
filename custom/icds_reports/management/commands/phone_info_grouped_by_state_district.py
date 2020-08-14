@@ -28,7 +28,7 @@ SUM(
     END) "phone_not_available"
  """
 
-COMMON_QUERY_END = """ and person_cases.migration_status=0 and person_cases.closed_on is null and person_cases.registered_status=1
+COMMON_QUERY_END = """ and person_cases.migration_status=0 and person_cases.doc_id is not null and person_cases.closed_on is null and person_cases.registered_status=1
 group by
 person_cases.state_id, person_cases.district_id"""
 
@@ -65,17 +65,25 @@ CSV_FILENAME = "phone_number_info_grouped_by_districts_{datetime}.csv".format(
     datetime=datetime.utcnow()
 )
 
+STATE_CODE=170
+DISTRICT_CODE=171
 
 class Command(BaseCommand):
     def prepare_query(self, condition):
         return COMMON_QUERY_START + condition + COMMON_QUERY_END
 
     def get_loc_name(self, loc):
-        if self.location_to_name.get(loc):
-            return self.location_to_name[loc]
-        location = SQLLocation.by_location_id(loc)
-        self.location_to_name[loc] = location.name
-        return location.name
+        return self.location_map.get(loc, "Unknown Location")
+        
+    def prepare_location_map(self):
+        all_locations = SQLLocation.objects.filter(
+            domain='icds-cas',
+            location_type__in=[STATE_CODE, DISTRICT_CODE]
+        )
+        self.location_map={}
+        for location in all_locations:
+            self.location_map[location.location_id] = location.name
+        return self.location_map
 
     def get_variable_headers(self):
         return ['Count', 'Valid Phone Numbers', 'Invalid Phone Numbers', 'No Phone Numbers']
@@ -100,11 +108,8 @@ class Command(BaseCommand):
         if not self.result_map.get(key):
             self.result_map[key] = (state, district)
         present_entries = len(self.result_map[key])
-        if present_entries < expected_entries:
-            # This is to fill the colums with 0's if data was not present for a particular category
-            # For previous query
-            placeholders = self.get_placeholders_for_empty_rows(expected_entries - present_entries)
-            self.result_map[key] += placeholders
+        self.result_map[key] += (0,) * (expected_entries -present_entries)
+        present_entries = len(self.result_map[key])
         self.result_map[key] += row[2:]
 
     def get_all_headers(self):
@@ -132,7 +137,7 @@ class Command(BaseCommand):
                 writer.writerow(row)
 
     def handle(self, *args, **options):
-        self.location_to_name = {}
+        self.prepare_location_map()
         self.result_map = {}
         query_condtions = self.beneficiary_query_conditions()
         db_alias = get_icds_ucr_citus_db_alias()
