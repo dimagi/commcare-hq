@@ -53,6 +53,7 @@ from two_factor.views import LoginView
 
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.sms.event_handlers import handle_email_messaging_subevent
+from corehq.apps.users.event_handlers import handle_email_invite_message
 from corehq.util.email_event_utils import handle_email_sns_event
 from corehq.util.metrics import create_metrics_event, metrics_counter, metrics_gauge
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
@@ -107,7 +108,7 @@ from corehq.apps.users.landing_pages import (
     get_cloudcare_urlname,
     get_redirect_url,
 )
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, Invitation
 from corehq.apps.users.util import format_username
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
@@ -1329,8 +1330,12 @@ def log_email_event(request, secret):
 
     for header in headers:
         if header["name"] == COMMCARE_MESSAGE_ID_HEADER:
-            subevent_id = header["value"]
-            handle_email_messaging_subevent(message, subevent_id)
+            if Invitation.EMAIL_ID_PREFIX in header["value"]:
+                handle_email_invite_message(message, header["value"].split(Invitation.EMAIL_ID_PREFIX)[1])
+            else:
+                subevent_id = header["value"]
+                handle_email_messaging_subevent(message, subevent_id)
+            break
 
     handle_email_sns_event(message)
 
