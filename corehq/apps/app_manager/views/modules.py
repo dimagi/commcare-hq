@@ -732,7 +732,8 @@ def delete_module(request, domain, app_id, module_unique_id):
     deleted_names = ", ".join(record.module.default_name(app=app) for record in deletion_records)
     messages.success(
         request,
-        _(f'You have deleted "{deleted_names}". <a href="{restore_url}" class="post-link">Undo</a>'),
+        _('You have deleted "{deleted_names}". <a href="{restore_url}" class="post-link">Undo</a>').format(
+            deleted_names=deleted_names, restore_url=restore_url),
         extra_tags='html'
     )
     app.save()
