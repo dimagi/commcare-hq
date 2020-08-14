@@ -1,9 +1,14 @@
 from django.test import TestCase
 
-from corehq.apps.app_manager.models import Application, Module
+import jsonobject
+
+from corehq.apps.app_manager.models import Application, Module, ShadowModule
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import delete_all_apps
-from corehq.apps.app_manager.views.utils import handle_shadow_child_modules
+from corehq.apps.app_manager.views.utils import (
+    SHADOW_MODULE_PROPERTIES_TO_COPY,
+    handle_shadow_child_modules,
+)
 
 
 class HandleShadowChildModulesTest(TestCase):
@@ -111,3 +116,29 @@ class HandleShadowChildModulesTest(TestCase):
         app = Application.get(self.app.get_id)
         shadow_child = app.get_module_by_unique_id(shadow_child.unique_id)
         self.assertIsNone(shadow_child.root_module_id)
+
+    def test_all_shadow_module_properties_set(self):
+        ignored_properties = [
+            "module_type",
+            "source_module_id",
+            "doc_type",
+            "_root_module_id",
+            "forms",
+            "excluded_form_ids",
+            "shadow_module_version",
+        ]
+        required_properties = {
+            prop
+            for prop in vars(ShadowModule)
+            if isinstance(vars(ShadowModule)[prop], jsonobject.base_properties.JsonProperty)
+            and prop not in ignored_properties
+        }
+        copied_properties = {prop for prop, _ in SHADOW_MODULE_PROPERTIES_TO_COPY}
+
+        self.assertItemsEqual(
+            required_properties - copied_properties,
+            [],
+            (f"Please handle the new property you just added '{required_properties - copied_properties}' "
+             "to ShadowModule in app_manager.views.utils.handle_child_shadow_modules, or add it "
+             "to the ignored_propertieslist in this test."),
+        )

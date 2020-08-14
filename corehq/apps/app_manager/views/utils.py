@@ -437,6 +437,17 @@ def get_multimedia_sizes_for_build(domain, build_id, build_profile_id=None):
     return total_size
 
 
+SHADOW_MODULE_PROPERTIES_TO_COPY = [
+    ('case_details', True),
+    ('ref_details', True),
+    ('case_list', True),
+    ('referral_list', True),
+    ('task_list', True),
+    ('parent_select', False),
+    ('search_config', False),
+]
+
+
 def handle_shadow_child_modules(app, shadow_parent):
     """Creates or deletes shadow child modules if the parent module requires
 
@@ -490,13 +501,9 @@ def handle_shadow_child_modules(app, shadow_parent):
         new_shadow.is_training_module = source_child.is_training_module
 
         # ShadowModule properties
-        new_shadow.case_details = deepcopy(source_child.case_details)
-        new_shadow.ref_details = deepcopy(source_child.ref_details)
-        new_shadow.case_list = deepcopy(source_child.case_list)
-        new_shadow.referral_list = deepcopy(source_child.referral_list)
-        new_shadow.task_list = deepcopy(source_child.task_list)
-        new_shadow.parent_select = source_child.parent_select
-        new_shadow.search_config = source_child.search_config
+        for prop, to_deepcopy in SHADOW_MODULE_PROPERTIES_TO_COPY:
+            new_value = getattr(source_child, prop)
+            setattr(new_shadow, prop, deepcopy(new_value) if to_deepcopy else new_value)
 
         # move excluded form ids
         source_child_form_ids = set(
