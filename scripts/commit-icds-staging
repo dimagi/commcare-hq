@@ -1,8 +1,0 @@
-#!/bin/bash
-
-echo ""
-echo "This command will be deprecated soon. Instead use the tool in commcare-cloud:"
-echo "    $ ./scripts/commit-deploy-branches icds-staging --push"
-echo ""
-commit_command="scripts/commit-staging-util icds-staging.yaml $*"
-$(echo $commit_command)

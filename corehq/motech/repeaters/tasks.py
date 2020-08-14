@@ -66,13 +66,13 @@ def clean_logs():
 )
 def check_repeaters():
     start = datetime.utcnow()
-    twelve_hours_sec = 12 * 60 * 60
-    twelve_hours_later = start + timedelta(seconds=twelve_hours_sec)
+    twentythree_hours_sec = 23 * 60 * 60
+    twentythree_hours_later = start + timedelta(hours=23)
 
     # Long timeout to allow all waiting repeat records to be iterated
     check_repeater_lock = get_redis_lock(
         CHECK_REPEATERS_KEY,
-        timeout=twelve_hours_sec,
+        timeout=twentythree_hours_sec,
         name=CHECK_REPEATERS_KEY,
     )
     if not check_repeater_lock.acquire(blocking=False):
@@ -86,12 +86,18 @@ def check_repeaters():
         ):
             for record in iterate_repeat_records(start):
                 if not _soft_assert(
-                    datetime.utcnow() < twelve_hours_later,
-                    "I've been iterating repeat records for 12 hours. I quit!"
+                    datetime.utcnow() < twentythree_hours_later,
+                    "I've been iterating repeat records for 23 hours. I quit!"
                 ):
                     break
                 metrics_counter("commcare.repeaters.check.attempt_forward")
                 record.attempt_forward_now()
+            else:
+                iterating_time = datetime.utcnow() - start
+                _soft_assert(
+                    iterating_time < timedelta(hours=6),
+                    f"It took {iterating_time} to iterate repeat records."
+                )
     finally:
         check_repeater_lock.release()
 
@@ -125,9 +131,6 @@ def process_repeat_record(repeat_record):
         repeat_record.cancel()
         repeat_record.save()
         return
-    if not repeater.is_connection_working():
-        repeater.pause()
-        notify_repeater_admins(repeater)
 
     try:
         if repeater.paused:
@@ -135,6 +138,12 @@ def process_repeat_record(repeat_record):
             # thus clogging the queue with repeat records with paused repeater
             repeat_record.postpone_by(timedelta(days=1))
             return
+
+        if not repeater.is_connection_working():
+            repeater.pause()
+            notify_repeater_admins(repeater)
+            return
+
         if repeater.doc_type.endswith(DELETED_SUFFIX):
             if not repeat_record.doc_type.endswith(DELETED_SUFFIX):
                 repeat_record.doc_type += DELETED_SUFFIX

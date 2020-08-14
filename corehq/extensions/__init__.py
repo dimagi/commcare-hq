@@ -20,18 +20,8 @@ custom repository into the `extensions` folder in the root of the CommCare sourc
       ...
       /extensions
         /custom_repo
-          /custom
-            /app1/models.py
-            /app2/models.py
-
-The code in the custom repository must be contained within the `custom` namespace package (without an
-`__init__.py` file). Using this structure the custom code will be available to CommCare with the same package
-structure as it is in the custom repository. In the example above the following import statement will work
-in CommCare as well as in the custom code:
-
-::
-
-    from custom.app1 models import *
+          /custom_app1/models.py
+          /custom_app2/models.py
 
 Extensions Points
 -----------------
