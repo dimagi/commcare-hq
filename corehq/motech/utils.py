@@ -157,14 +157,8 @@ def get_endpoint_url(
     >>> get_endpoint_url('https://example.com', 'foo')
     'https://example.com/foo'
 
-    >>> get_endpoint_url(None, 'https://example.com/foo')
-    'https://example.com/foo'
-
     >>> get_endpoint_url('https://example.com/foo', None)
     'https://example.com/foo'
-
-    >>> get_endpoint_url('https://example.com/foo', '')  # NOTE: Trailing "/"
-    'https://example.com/foo/'
 
     """
     if base_url is None and endpoint is None:
