@@ -111,6 +111,7 @@ from corehq.motech.requests import simple_post
 from corehq.motech.utils import b64_aes_decrypt
 from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
+from corehq.util.soft_assert import soft_assert
 
 from .const import (
     AUTOPAUSE_THRESHOLD,
@@ -141,6 +142,8 @@ from .repeater_generators import (
     UserPayloadGenerator,
 )
 from .utils import get_all_repeater_types
+
+_soft_assert = soft_assert('@'.join(('nhooper', 'dimagi.com')))
 
 
 def log_repeater_timeout_in_datadog(domain):
@@ -280,7 +283,14 @@ class Repeater(QuickCachedDocumentMixin, Document):
             self.failure_streak = 0
         else:
             self.failure_streak += 1
-        self.save()
+        try:
+            self.save()
+        except ResourceConflict as err:
+            _soft_assert(
+                False,
+                f'Unable to update failure_streak on {self!r}, {self.domain}, '
+                f'for attempt {attempt}: {err}'
+            )
 
     def is_connection_working(self):
         """

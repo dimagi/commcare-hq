@@ -48,7 +48,7 @@ class ConnectionSettingsForm(forms.ModelForm):
         label=_('Addresses to send notifications'),
         help_text=_('A comma-separated list of email addresses to send error '
                     'notifications'),
-        required=False,
+        required=True,
     )
 
     class Meta:
@@ -98,6 +98,7 @@ class ConnectionSettingsForm(forms.ModelForm):
             crispy.Fieldset(
                 _('Remote API Connection'),
                 crispy.Field('name'),
+                crispy.Field('notify_addresses_str'),
                 crispy.Field('url'),
                 crispy.Field('auth_type'),
                 crispy.Field('api_auth_settings'),
@@ -106,7 +107,6 @@ class ConnectionSettingsForm(forms.ModelForm):
                 crispy.Field('client_id'),
                 crispy.Field('plaintext_client_secret'),
                 twbscrispy.PrependedText('skip_cert_verify', ''),
-                crispy.Field('notify_addresses_str'),
                 self.test_connection_button,
             ),
             hqcrispy.FormActions(

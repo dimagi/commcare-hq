@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-08-03 16:25+0000\n"
+"POT-Creation-Date: 2020-08-12 20:34+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Language-Team: Swahili (https://www.transifex.com/dimagi/teams/9388/sw/)\n"
 "Language: sw\n"
@@ -504,7 +504,7 @@ msgid "Open a Case"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js:71
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:511
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:525
 msgid "Property updated by two questions"
 msgstr ""
 
@@ -514,7 +514,7 @@ msgid "Reserved word: "
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/advanced/case_properties.js:75
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:515
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:529
 msgid "Inside the wrong repeat!"
 msgstr ""
 
@@ -535,7 +535,7 @@ msgstr ""
 msgid "You have unchanged user properties settings"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:520
+#: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui.js:534
 msgid "Property uses unrecognized prefix <strong>"
 msgstr ""
 
@@ -1229,7 +1229,7 @@ msgid "Phone Number or Numeric ID"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:202
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:207
 msgid "Password"
 msgstr ""
 
@@ -1494,7 +1494,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:20
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:772
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:800
 #: corehq/apps/export/static/export/js/models.js:357
 #: corehq/apps/export/static/export/js/models.js:359
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:281
@@ -2547,41 +2547,41 @@ msgstr ""
 msgid "Error evaluating expression."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:206
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:211
 msgid "Barcode"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:208
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:213
 msgid "Free response"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:327
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:349
 msgid "Not a valid whole number"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:329
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:389
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:351
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:411
 msgid "Number is too large"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:387
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:409
 msgid "Not a valid number"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:544
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:566
 msgid "Type to filter answers"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:557
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:671
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:579
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:693
 msgid "Not a valid choice"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:860
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:888
 msgid "Map layer not configured."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:867
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:895
 msgid "Could not load map. Please try again later."
 msgstr ""
 
@@ -2672,7 +2672,7 @@ msgstr ""
 msgid "Permission Denied"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:75
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:84
 msgid ""
 "Unable to connect to form playing service. Please report an issue if you "
 "continue to see this message."
@@ -3904,18 +3904,6 @@ msgstr ""
 msgid "Failed to schedule task to import from OpenMRS."
 msgstr ""
 
-#: corehq/motech/repeaters/static/repeaters/js/add_form_repeater.js:32
-msgid "Success! Response is: "
-msgstr ""
-
-#: corehq/motech/repeaters/static/repeaters/js/add_form_repeater.js:35
-msgid "Failed! Response is: "
-msgstr ""
-
-#: corehq/motech/repeaters/static/repeaters/js/add_form_repeater.js:47
-msgid "HQ was unable to make the request: "
-msgstr ""
-
 #: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:49
 msgid "Failed to fetch payload"
 msgstr ""
@@ -3928,16 +3916,14 @@ msgstr ""
 msgid "Failed to cancel"
 msgstr ""
 
-#: custom/icds/data_management/static/data_management/js/data_management.js:21
-msgid "<%= initiatedBy %> On <%= createdAt %>"
+#: corehq/motech/static/motech/js/connection_settings_detail.js:81
+msgid "Success! Response is: "
 msgstr ""
 
-#: custom/icds/data_management/static/data_management/js/data_management.js:55
-msgid "This project has no data management requests."
+#: corehq/motech/static/motech/js/connection_settings_detail.js:84
+msgid "Failed! Response is: "
 msgstr ""
 
-#: custom/icds/data_management/static/data_management/js/data_management.js:82
-msgid ""
-"Could not load requests. Please try again later or report an issue if this "
-"problem persists."
+#: corehq/motech/static/motech/js/connection_settings_detail.js:94
+msgid "CommCare HQ was unable to make the request: "
 msgstr ""
