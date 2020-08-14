@@ -20,7 +20,7 @@ from corehq.apps.fixtures.models import (
 from corehq.apps.fixtures.upload import DELETE_HEADER
 
 
-def prepare_fixture_download(table_ids, domain, task, download_id):
+def prepare_fixture_download(table_ids, domain, task, download_id, owner_id):
     """Prepare fixture data for Excel download
     """
     data_types_book, excel_sheets = _prepare_fixture(table_ids, domain, task=task)
@@ -41,6 +41,7 @@ def prepare_fixture_download(table_ids, domain, task, download_id):
         mimetype=Format.from_format(format).mimetype,
         content_disposition='attachment; filename="%s_lookup-tables.xlsx"' % domain,
         download_id=download_id,
+        owner_ids=[owner_id],
     )
 
 
