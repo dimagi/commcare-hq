@@ -111,13 +111,10 @@ from corehq.motech.requests import simple_post
 from corehq.motech.utils import b64_aes_decrypt
 from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
-from corehq.util.soft_assert import soft_assert
 
 from .const import (
-    AUTOPAUSE_THRESHOLD,
     MAX_RETRY_WAIT,
     MIN_RETRY_WAIT,
-    RATELIMIT_RETRIES_THRESHOLD,
     RECORD_CANCELLED_STATE,
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
@@ -142,8 +139,6 @@ from .repeater_generators import (
     UserPayloadGenerator,
 )
 from .utils import get_all_repeater_types
-
-_soft_assert = soft_assert('@'.join(('nhooper', 'dimagi.com')))
 
 
 def log_repeater_timeout_in_datadog(domain):
@@ -187,6 +182,8 @@ class Repeater(QuickCachedDocumentMixin, Document):
     format = StringProperty()
     friendly_name = _("Data")
     paused = BooleanProperty(default=False)
+
+    # TODO: Use to collect stats to determine whether remote endpoint is valid
     started_at = DateTimeProperty(default=datetime.utcnow)
     last_success_at = DateTimeProperty(required=False, default=None)
     failure_streak = IntegerProperty(default=0)
@@ -277,40 +274,6 @@ class Repeater(QuickCachedDocumentMixin, Document):
         """
         return True
 
-    def update_failure_streak(self, attempt):
-        if attempt.succeeded:
-            self.last_success_at = attempt.datetime
-            self.failure_streak = 0
-        else:
-            self.failure_streak += 1
-        try:
-            self.save()
-        except ResourceConflict as err:
-            _soft_assert(
-                False,
-                f'Unable to update failure_streak on {self!r}, {self.domain}, '
-                f'for attempt {attempt}: {err}'
-            )
-
-    def is_connection_working(self):
-        """
-        Tries to determine whether the remote API is accepting payloads
-        based on past success.
-        """
-        three_months = timedelta(days=90)
-        if self.failure_streak > AUTOPAUSE_THRESHOLD:
-            # Too many misses without a hit.
-            return False
-        if datetime.utcnow() - self.started_at < three_months:
-            # Three months grace period to get it working
-            return True
-        if self.last_success_at is None:
-            # Never succeeded, but never failed either: Nothing sent yet.
-            return self.failure_streak == 0
-        else:
-            # Has succeeded at least once in the last 3 months
-            return datetime.utcnow() - self.last_success_at < three_months
-
     def clear_caches(self):
         super(Repeater, self).clear_caches()
         # Also expire for cases repeater is fetched using Repeater class.
@@ -389,8 +352,6 @@ class Repeater(QuickCachedDocumentMixin, Document):
 
     def resume(self):
         self.paused = False
-        self.started_at = datetime.utcnow()
-        self.failure_streak = 0
         self.save()
 
     def get_url(self, repeat_record):
@@ -804,7 +765,6 @@ class RepeatRecord(Document):
         self.succeeded = attempt.succeeded
         self.cancelled = attempt.cancelled
         self.failure_reason = attempt.failure_reason
-        self.repeater.update_failure_streak(attempt)
 
     def get_numbered_attempts(self):
         for i, attempt in enumerate(self.attempts):
@@ -819,10 +779,7 @@ class RepeatRecord(Document):
         assert self.succeeded is False
         assert self.next_check is not None
         now = datetime.utcnow()
-        if self.repeater.failure_streak > RATELIMIT_RETRIES_THRESHOLD:
-            retry_interval = MAX_RETRY_WAIT
-        else:
-            retry_interval = _get_retry_interval(self.last_checked, now)
+        retry_interval = _get_retry_interval(self.last_checked, now)
         return RepeatRecordAttempt(
             cancelled=False,
             datetime=now,

@@ -139,11 +139,6 @@ def process_repeat_record(repeat_record):
             repeat_record.postpone_by(timedelta(days=1))
             return
 
-        if not repeater.is_connection_working():
-            repeater.pause()
-            notify_repeater_admins(repeater)
-            return
-
         if repeater.doc_type.endswith(DELETED_SUFFIX):
             if not repeat_record.doc_type.endswith(DELETED_SUFFIX):
                 repeat_record.doc_type += DELETED_SUFFIX
@@ -160,23 +155,3 @@ repeaters_overdue = metrics_gauge_task(
     run_every=crontab(),  # every minute
     multiprocess_mode=MPM_MAX
 )
-
-
-def notify_repeater_admins(repeater):
-    msg = (f'Forwarding data to {repeater} has consistently failed, '
-           'and has been paused.')
-    send_mail_async.delay(
-        f'Repeater threshold exceeded on domain {repeater.domain}', msg,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[MOTECH_DEV],
-    )
-    if repeater.notify_addresses:
-        recipient_list = repeater.notify_addresses
-    else:
-        subs = Subscription.get_active_subscription_by_domain(repeater.domain)
-        recipient_list = subs.account.billingcontactinfo.email_list
-    send_mail_async.delay(
-        'Data forwarding paused', msg,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=recipient_list,
-    )
