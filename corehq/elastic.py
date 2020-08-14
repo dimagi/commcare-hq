@@ -336,8 +336,9 @@ def _scan_es7(client, query=None, scroll='5m', **kwargs):
                 body={"scroll_id": scroll_id, "scroll": scroll}
             )
             scroll_id = resp.get("_scroll_id")
-
-    count = initial_resp.get("hits", {}).get("total", {}).get('value', None)
+    count = initial_resp.get("hits", {}).get("total", None)
+    if isinstance(count, dict):
+        count = count.get('value', None)
     return ScanResult(count, fetch_all(initial_resp))
 
 
@@ -399,11 +400,11 @@ def es_query(params=None, facets=None, terms=None, q=None, es_index=None, start_
     q["from"] = start_at or 0
 
     def get_or_init_anded_filter_from_query_dict(qdict):
-        and_filter = qdict.get("filter", {}).pop("and", [])
+        and_filter = qdict.get("filter", {}).pop("bool", {}).pop("filter", [])
         filter = qdict.pop("filter", None)
         if filter:
             and_filter.append(filter)
-        return {"and": and_filter}
+        return {"bool": {"filter": and_filter}}
 
     filter = get_or_init_anded_filter_from_query_dict(q)
 
@@ -418,7 +419,7 @@ def es_query(params=None, facets=None, terms=None, q=None, es_index=None, start_
     for attr in params:
         if attr not in terms:
             attr_val = [convert(params[attr])] if not isinstance(params[attr], list) else [convert(p) for p in params[attr]]
-            filter["and"].append({"terms": {attr: attr_val}})
+            filter["bool"]["filter"].append({"terms": {attr: attr_val}})
 
     if facets:
         q["facets"] = q.get("facets", {})
@@ -428,14 +429,14 @@ def es_query(params=None, facets=None, terms=None, q=None, es_index=None, start_
         elif isinstance(facets, dict):
             q["facets"].update(facets)
 
-    if filter["and"]:
+    if filter["bool"]["filter"]:
         query = q.pop("query", {})
         q["query"] = {
-            "filtered": {
+            "bool": {
                 "filter": filter,
             }
         }
-        q["query"]["filtered"]["query"] = query if query else {"match_all": {}}
+        q["query"]["bool"]["query"] = query if query else {"match_all": {}}
 
     if fields is not None:
         q["fields"] = q.get("fields", [])

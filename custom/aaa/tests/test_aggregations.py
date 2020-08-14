@@ -3,6 +3,7 @@ import re
 from datetime import date, time
 from decimal import Decimal
 
+from django.test import TestCase
 from django.test.utils import override_settings
 
 import mock
@@ -15,7 +16,24 @@ from corehq.sql_db.connections import connection_manager
 from corehq.util.test_utils import timelimit
 from custom.aaa.models import AggAwc, AggVillage, CcsRecord, Child, Woman
 from custom.aaa.tasks import run_aggregation
-from custom.icds_reports.tests.agg_tests import CSVTestCase
+try:
+    from custom.icds_reports.tests.agg_tests import CSVTestCase
+except ImportError:
+    import csv
+
+    class CSVTestCase(TestCase):
+
+        def _load_csv(self, path):
+            with open(path, encoding='utf-8') as f:
+                csv_data = list(csv.reader(f))
+                headers = csv_data[0]
+                for row_count, row in enumerate(csv_data):
+                    csv_data[row_count] = dict(zip(headers, row))
+            return csv_data[1:]
+
+        def _fasterAssertListEqual(self, list1, list2):
+            self.assertListEqual(list1, list2)
+
 
 FILE_NAME_TO_TABLE_MAPPING = {
     'ccs_record': get_table_name('reach-test', 'reach-ccs_record_cases'),
