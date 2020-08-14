@@ -126,17 +126,19 @@ class CustomDataEditor(object):
         if toggles.CUSTOM_DATA_FIELDS_PROFILES.enabled(self.domain):
             profiles = self.model.get_profiles()
             if profiles:
+                attrs = {
+                    'data-placeholder': _('Select a profile'),
+                    'data-allow-clear': 'true',
+                }
+                if not self.ko_model:
+                    attrs.update({'class': 'hqwebapp-select2'})
                 fields[PROFILE_SLUG] = forms.IntegerField(
                     label=_('Profile'),
                     required=False,
                     widget=Select(choices=[('', _('Select a profile'))] + [
                         (p.id, p.name)
                         for p in profiles
-                    ], attrs={
-                        'class': 'hqwebapp-select2',
-                        'data-placeholder': _('Select a profile'),
-                        'data-allow-clear': 'true',
-                    })
+                    ], attrs=attrs)
                 )
         for field in self.fields:
             fields[field.slug] = self._make_field(field)
@@ -148,9 +150,9 @@ class CustomDataEditor(object):
                     f"value: {self.ko_model}.{field_name}.value",
                     f"disable: {self.ko_model}.{field_name}.disable",
                 ]
-                if hasattr(field, 'choices'):
+                if hasattr(field, 'choices') or field_name == PROFILE_SLUG:
                     data_binds.append("select2: " + json.dumps([
-                        {"id": id, "text": text} for id, text in field.choices
+                        {"id": id, "text": text} for id, text in field.widget.choices
                     ]))
                 field_names.append(Field(
                     field_name,
