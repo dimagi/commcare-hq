@@ -82,7 +82,8 @@ class Command(BaseCommand):
         )
         self.location_map={}
         for location in all_locations:
-            self.location_map[location.location_id] = location.name
+            if location.metadata.get('is_test_location') != 'test':
+                self.location_map[location.location_id] = location.name
         return self.location_map
 
     def get_variable_headers(self):
