@@ -45,6 +45,7 @@ Linked domains share configuration data. Supported data types are defined in
 - Custom data fields for users, products, and locations
 - Feature flags and privileges
 - Case search settings
+- Data dictionary
 
 Of these, apps and reports need to be linked individually, from the app settings and edit report UIs, and are
 overwritten individually. The rest of the data types are overwritten as entire blocks: for example, you can't
