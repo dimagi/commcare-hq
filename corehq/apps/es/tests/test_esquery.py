@@ -311,7 +311,7 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
                     }
                 }
             },
-            "_source": False
+            "_source": False,
             "size": SIZE_LIMIT,
         }
         query = HQESQuery('forms').domain('test-exclude').exclude_source()
