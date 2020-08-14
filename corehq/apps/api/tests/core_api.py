@@ -27,7 +27,7 @@ from corehq.apps.api.fields import (
 from corehq.apps.api.resources import v0_4, v0_5
 from corehq.apps.api.util import get_obj
 from corehq.apps.domain.models import Domain
-from corehq.apps.es.tests.utils import ElasticTestMixin
+from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.apps.users.models import CommCareUser, HQApiKey, WebUser
 from corehq.util.test_utils import flag_disabled
 from no_exceptions.exceptions import Http400
@@ -84,6 +84,14 @@ class TestElasticAPIQuerySet(TestCase):
 
         list(queryset.order_by('one', '-two', 'three'))
         self.assertEqual(es.queries[3]['sort'], [{'one': asc_}, {'two': desc_}, {'three': asc_}])
+
+    def test_count(self):
+        es = FakeFormESView()
+        for i in range(0, 1300):
+            es.add_doc(i, {'i': i})
+
+        queryset = ElasticAPIQuerySet(es_client=es, payload={})
+        self.assertEqual(queryset.count(), 1300)
 
 
 class ToManySourceModel(object):
@@ -495,7 +503,8 @@ class TestApiKey(APIResourceTest):
         self.assertEqual(response.status_code, 401)
 
 
-class TestParamstoESFilters(SimpleTestCase, ElasticTestMixin):
+@es_test
+class TestParamstoESFilters(ElasticTestMixin, SimpleTestCase):
 
     def test_search_param(self):
         # GET param _search can accept a custom query from Data export tool
@@ -541,26 +550,79 @@ class TestParamstoESFilters(SimpleTestCase, ElasticTestMixin):
         )
         expected = {
             "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {
-                                "term": {
-                                    "domain.exact": "test_domain"
-                                }
-                            },
-                            {
-                                "term": {
-                                    "doc_type": "xforminstance"
-                                }
-                            },
-                            query['filter'],
-                            {
-                                "match_all": {}
+                "bool": {
+                    "filter": [
+                        {
+                            "term": {
+                                "domain.exact": "test_domain"
                             }
-                        ]
-                    },
-                    "query": {
+                        },
+                        {
+                            "term": {
+                                "doc_type": "xforminstance"
+                            }
+                        },
+                        {
+                            "bool": {
+                                "should": [
+                                    {
+                                        "bool": {
+                                            "filter": [
+                                                {
+                                                    "bool": {
+                                                        "must_not": {
+                                                            "bool": {
+                                                                "must_not": {
+                                                                    "exists": {
+                                                                        "field": "server_modified_on"
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                {
+                                                    "range": {
+                                                        "server_modified_on": {
+                                                            "gte": "2019-01-01T00:00:00",
+                                                            "lte": "2019-01-02T00:00:00"
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "bool": {
+                                            "filter": [
+                                                {
+                                                    "bool": {
+                                                        "must_not": {
+                                                            "exists": {
+                                                                "field": "server_modified_on"
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                {
+                                                    "range": {
+                                                        "received_on": {
+                                                            "gte": "2019-01-01T00:00:00",
+                                                            "lte": "2019-01-02T00:00:00"
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "match_all": {}
+                        }
+                    ],
+                    "must": {
                         "match_all": {}
                     }
                 }
@@ -586,40 +648,29 @@ class TestParamstoESFilters(SimpleTestCase, ElasticTestMixin):
             "/a/test_domain/api/v0.5/form/",
             data={'_search': json.dumps(query)}
         )
-        expected = {
-            "filter": {
-                "and": [
-                    {
-                        "term": {
-                            "domain.exact": "test_domain"
-                        }
-                    },
-                    query['filter']
-                ]
-            }
+        _filter = {
+            "and": [
+                {
+                    "term": {
+                        "domain.exact": "test_domain"
+                    }
+                },
+                {
+                    "term": {
+                        "doc_type": "xforminstance"
+                    }
+                },
+                query['filter'],
+                {
+                    "match_all": {}
+                }
+            ]
         }
         expected = {
             "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {
-                                "term": {
-                                    "domain.exact": "test_domain"
-                                }
-                            },
-                            {
-                                "term": {
-                                    "doc_type": "xforminstance"
-                                }
-                            },
-                            query['filter'],
-                            {
-                                "match_all": {}
-                            }
-                        ]
-                    },
-                    "query": {
+                "bool": {
+                    "filter": _filter["and"],
+                    "must": {
                         "match_all": {}
                     }
                 }
