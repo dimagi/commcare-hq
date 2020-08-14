@@ -135,7 +135,8 @@ class Command(BaseCommand):
             writer = csv.writer(output)
             writer.writerow(self.get_all_headers())
             for _, row in self.result_map.items():
-                writer.writerow(row)
+                if row[0] != 'Unknown Location' and row[1] != 'Unknown Location':
+                    writer.writerow(row)
 
     def handle(self, *args, **options):
         self.prepare_location_map()
