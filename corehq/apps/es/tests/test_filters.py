@@ -14,24 +14,32 @@ class TestFilters(ElasticTestMixin, SimpleTestCase):
     def test_nested_filter(self):
         json_output = {
             "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {"nested": {
+                "bool": {
+                    "filter": [
+                        {
+                            "nested": {
                                 "path": "actions",
-                                "filter": {
-                                    "range": {
-                                        "actions.date": {
-                                            "gte": "2015-01-01",
-                                            "lt": "2015-02-01"
+                                "query": {
+                                    "bool": {
+                                        "filter": {
+                                            "range": {
+                                                "actions.date": {
+                                                    "gte": "2015-01-01",
+                                                    "lt": "2015-02-01"
+                                                }
+                                            }
                                         }
                                     }
                                 }
-                            }},
-                            {"match_all": {}}
-                        ]
-                    },
-                    "query": {"match_all": {}}
+                            }
+                        },
+                        {
+                            "match_all": {}
+                        }
+                    ],
+                    "must": {
+                        "match_all": {}
+                    }
                 }
             },
             "size": SIZE_LIMIT
@@ -42,25 +50,29 @@ class TestFilters(ElasticTestMixin, SimpleTestCase):
                  .nested("actions",
                          filters.date_range("actions.date", gte=start, lt=end)))
 
-        self.checkQuery(query, json_output)
+        self.checkQuery(query, json_output, validate_query=False)
 
     def test_not_term_filter(self):
         json_output = {
             "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {
-                                "not": {
+                "bool": {
+                    "filter": [
+                        {
+                            "bool": {
+                                "must_not": {
                                     "term": {
                                         "type": "badcasetype"
                                     }
                                 }
-                            },
-                            {"match_all": {}}
-                        ]
-                    },
-                    "query": {"match_all": {}}
+                            }
+                        },
+                        {
+                            "match_all": {}
+                        }
+                    ],
+                    "must": {
+                        "match_all": {}
+                    }
                 }
             },
             "size": SIZE_LIMIT
@@ -73,31 +85,35 @@ class TestFilters(ElasticTestMixin, SimpleTestCase):
     def test_not_or_rewrite(self):
         json_output = {
             "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {
-                                'and': (
-                                    {
-                                        "not": {
-                                            "term": {
-                                                "type": "A"
+                "bool": {
+                    "filter": [
+                        {
+                            "bool": {
+                                "must_not": {
+                                    "bool": {
+                                        "should": [
+                                            {
+                                                "term": {
+                                                    "type": "A"
+                                                }
+                                            },
+                                            {
+                                                "term": {
+                                                    "type": "B"
+                                                }
                                             }
-                                        }
-                                    },
-                                    {
-                                        "not": {
-                                            "term": {
-                                                "type": "B"
-                                            }
-                                        }
-                                    },
-                                )
-                            },
-                            {"match_all": {}}
-                        ]
-                    },
-                    "query": {"match_all": {}}
+                                        ]
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "match_all": {}
+                        }
+                    ],
+                    "must": {
+                        "match_all": {}
+                    }
                 }
             },
             "size": SIZE_LIMIT
@@ -113,31 +129,35 @@ class TestFilters(ElasticTestMixin, SimpleTestCase):
     def test_not_and_rewrite(self):
         json_output = {
             "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {
-                                'or': (
-                                    {
-                                        "not": {
-                                            "term": {
-                                                "type": "A"
+                "bool": {
+                    "filter": [
+                        {
+                            "bool": {
+                                "must_not": {
+                                    "bool": {
+                                        "filter": [
+                                            {
+                                                "term": {
+                                                    "type": "A"
+                                                }
+                                            },
+                                            {
+                                                "term": {
+                                                    "type": "B"
+                                                }
                                             }
-                                        }
-                                    },
-                                    {
-                                        "not": {
-                                            "term": {
-                                                "type": "B"
-                                            }
-                                        }
-                                    },
-                                )
-                            },
-                            {"match_all": {}}
-                        ]
-                    },
-                    "query": {"match_all": {}}
+                                        ]
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "match_all": {}
+                        }
+                    ],
+                    "must": {
+                        "match_all": {}
+                    }
                 }
             },
             "size": SIZE_LIMIT
@@ -151,18 +171,21 @@ class TestFilters(ElasticTestMixin, SimpleTestCase):
         self.checkQuery(query, json_output)
 
 
+@es_test
 class TestSourceFiltering(ElasticTestMixin, SimpleTestCase):
 
     def test_source_include(self):
         json_output = {
             "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {"match_all": {}}
-                        ]
-                    },
-                    "query": {"match_all": {}}
+                "bool": {
+                    "filter": [
+                        {
+                            "match_all": {}
+                        }
+                    ],
+                    "must": {
+                        "match_all": {}
+                    }
                 }
             },
             "size": SIZE_LIMIT,
