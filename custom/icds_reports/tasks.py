@@ -205,7 +205,8 @@ UCR_TABLE_NAME_MAPPING = [
     {'type': 'ls_home_visits', 'name': 'static-ls_home_visit_forms_filled'},
     {'type': 'ls_awc_mgt', 'name': 'static-awc_mgt_forms'},
     {'type': 'cbe_form', 'name': 'static-cbe_form'},
-    {'type': 'thr_form_v2', 'name': 'static-thr_forms_v2'}
+    {'type': 'thr_form_v2', 'name': 'static-thr_forms_v2'},
+    {'type': 'counselling_and_guidance_forms', 'name': 'static_dashboard_counselling_and_guidance_forms'}
 ]
 
 SQL_FUNCTION_PATHS = [
