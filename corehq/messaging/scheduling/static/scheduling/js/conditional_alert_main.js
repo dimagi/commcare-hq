@@ -10,7 +10,7 @@ hqDefine(
         "scheduling/js/create_schedule.ko",
         "data_interfaces/js/make_read_only",
     ],
-    function ($, ko, initialPageData) {
+    function ($, ko, _, initialPageData) {
         function basicInformationTab(name) {
             var self = {};
             self.name = ko.observable(name);
@@ -68,7 +68,7 @@ hqDefine(
                 var input = $("<input />")
                     .attr("type", "hidden")
                     .attr("name", "runMessagingRule")
-                    .attr("value", runMessagingRule.toString());
+                    .attr("value", runMessagingRule);
                 $(this).append(input);
                 return true;
             });
