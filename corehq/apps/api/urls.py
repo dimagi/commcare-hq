@@ -93,6 +93,14 @@ class CommCareHqApi(Api):
         return HttpResponseNotFound()
 
 
+def versioned_apis(api_list):
+    for version, resources in api_list:
+        api = CommCareHqApi(api_name='v%d.%d' % version)
+        for R in resources:
+            api.register(R())
+        yield url(r'^', include(api.urls))
+
+
 def api_url_patterns():
     # todo: these have to come first to short-circuit tastypie's matching
     yield url(r'v0.5/odata/cases/(?P<config_id>[\w\-:]+)/(?P<table_id>[\d]+)/$',
@@ -112,11 +120,7 @@ def api_url_patterns():
               ODataFormMetadataView.as_view(), name=ODataFormMetadataView.table_urlname)
     yield url(r'v0.5/odata/forms/(?P<config_id>[\w\-:]+)/\$metadata$',
               ODataFormMetadataView.as_view(), name=ODataFormMetadataView.urlname)
-    for version, resources in API_LIST:
-        api = CommCareHqApi(api_name='v%d.%d' % version)
-        for R in resources:
-            api.register(R())
-        yield url(r'^', include(api.urls))
+    yield from versioned_apis(API_LIST)
     yield url(r'^case/attachment/(?P<case_id>[\w\-:]+)/(?P<attachment_id>.*)$', CaseAttachmentAPI.as_view(), name="api_case_attachment")
     yield url(r'^form/attachment/(?P<form_id>[\w\-:]+)/(?P<attachment_id>.*)$', FormAttachmentAPI.as_view(), name="api_form_attachment")
 
@@ -152,19 +156,35 @@ ADMIN_API_LIST = (
 )
 
 
-USER_API_LIST = (
+# these APIs are duplicated to /hq/admin/global for backwards compatibility
+GLOBAL_USER_API_LIST = (
     UserDomainsResource,
 )
 
+NON_GLOBAL_USER_API_LIST = (
+    v0_5.IdentityResource,
+)
 
-def api_url_patterns():
+
+USER_API_LIST = GLOBAL_USER_API_LIST + NON_GLOBAL_USER_API_LIST
+
+
+def get_global_api_url_patterns(resources):
     api = CommCareHqApi(api_name='global')
-    for resource in ADMIN_API_LIST + USER_API_LIST:
+    for resource in resources:
         api.register(resource())
         yield url(r'^', include(api.urls))
 
 
-admin_urlpatterns = list(api_url_patterns())
+admin_urlpatterns = list(get_global_api_url_patterns(ADMIN_API_LIST)) + \
+                    list(get_global_api_url_patterns(GLOBAL_USER_API_LIST))
 
+
+VERSIONED_USER_API_LIST = (
+    ((0, 5), USER_API_LIST),
+)
+
+
+user_urlpatterns = list(versioned_apis(VERSIONED_USER_API_LIST))
 
 waf_allow('XSS_BODY', hard_code_pattern=r'^/a/([\w\.:-]+)/api/v([\d\.]+)/form/$')

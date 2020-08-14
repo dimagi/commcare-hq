@@ -14,6 +14,12 @@ class Command(BaseCommand):
             default=False,
             help='Move processed messages to trash.',
         )
+        parser.add_argument(
+            '--process-aws',
+            action='store_true',
+            default=False,
+            help='Process only AWS notifications.',
+        )
 
     def _print_processed_emails(self, emails):
         for email in emails:
@@ -35,17 +41,19 @@ class Command(BaseCommand):
 
         try:
             delete_messages = options['delete_messages']
+            process_aws = options['process_aws']
             self.stdout.write(
                 '\n\nLogging into account for {}\n'.format(settings.RETURN_PATH_EMAIL)
             )
             with BouncedEmailManager(
                 delete_processed_messages=delete_messages
             ) as bounced_manager:
-                self.stdout.write('\n\nProcessing AWS Notifications\n')
-                bounced_manager.process_aws_notifications()
-
-                self.stdout.write('\n\nProcessing Mailer Daemon Emails\n')
-                bounced_manager.process_daemon_messages()
+                if process_aws:
+                    self.stdout.write('\n\nProcessing AWS Notifications\n')
+                    bounced_manager.process_aws_notifications()
+                else:
+                    self.stdout.write('\n\nProcessing Mailer Daemon Emails\n')
+                    bounced_manager.process_daemon_messages()
 
             self.stdout.write('\nDone\n\n')
         except OSError:

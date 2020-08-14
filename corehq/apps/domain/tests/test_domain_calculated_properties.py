@@ -4,6 +4,7 @@ import json
 from django.test import TestCase
 
 from corehq.apps.es.sms import SMSES
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.sms.models import INCOMING, OUTGOING
 from dimagi.utils.parsing import json_format_datetime
 from pillowtop.es_utils import initialize_index_and_mapping
@@ -19,6 +20,7 @@ from corehq.util.elastic import ensure_index_deleted
 from pillowtop.processors.elastic import send_to_elasticsearch
 
 
+@es_test
 class DomainCalculatedPropertiesTest(TestCase):
 
     @classmethod

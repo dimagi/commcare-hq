@@ -88,7 +88,6 @@ from corehq.util.dates import get_timestamp
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 
-COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
 MAX_LOGIN_ATTEMPTS = 5
 
@@ -2629,9 +2628,18 @@ class DomainRequest(models.Model):
                                     email_from=settings.DEFAULT_FROM_EMAIL)
 
 
+class InvitationStatus(object):
+    BOUNCED = "Bounced"
+    SENT = "Sent"
+    DELIVERED = "Delivered"
+
+
 class Invitation(models.Model):
+    EMAIL_ID_PREFIX = "Invitation:"
+
     uuid = models.UUIDField(primary_key=True, db_index=True, default=uuid4)
     email = models.CharField(max_length=255, db_index=True)
+    email_status = models.CharField(max_length=126, null=True)
     invited_by = models.CharField(max_length=126)           # couch id of a WebUser
     invited_on = models.DateTimeField()
     is_accepted = models.BooleanField(default=False)
@@ -2681,7 +2689,8 @@ class Invitation(models.Model):
         send_html_email_async.delay(subject, self.email, html_content,
                                     text_content=text_content,
                                     cc=[inviter.get_email()],
-                                    email_from=settings.DEFAULT_FROM_EMAIL)
+                                    email_from=settings.DEFAULT_FROM_EMAIL,
+                                    messaging_event_id=f"{self.EMAIL_ID_PREFIX}{self.uuid}")
 
 
 class DomainRemovalRecord(DeleteRecord):

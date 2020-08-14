@@ -22,12 +22,6 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
 
     def update_index_settings(self, index, settings_dict):
         assert set(settings_dict.keys()) == {'index'}, settings_dict.keys()
-        settings_dict = {
-            "index": {
-                key: value for key, value in settings_dict['index'].items()
-                if key not in self._disallowed_index_settings
-            }
-        }
         return self.es.indices.put_settings(settings_dict, index=index)
 
     def get_doc(self, index_alias, doc_type, doc_id):
@@ -106,21 +100,11 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
             self._fix_hit(hit)
 
 
-class ElasticsearchInterface1(AbstractElasticsearchInterface):
-    _disallowed_index_settings = (
-        'max_result_window',
-    )
-
-
-class ElasticsearchInterface2(AbstractElasticsearchInterface):
-    _disallowed_index_settings = (
-        'merge.policy.merge_factor',
-        'store.throttle.max_bytes_per_sec',
-        'store.throttle.type',
-    )
+class ElasticsearchInterfaceDefault(AbstractElasticsearchInterface):
+    pass
 
 
 ElasticsearchInterface = {
-    1: ElasticsearchInterface1,
-    2: ElasticsearchInterface2,
+    1: ElasticsearchInterfaceDefault,
+    2: ElasticsearchInterfaceDefault,
 }[settings.ELASTICSEARCH_MAJOR_VERSION]

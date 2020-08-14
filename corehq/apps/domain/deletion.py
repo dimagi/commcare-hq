@@ -203,7 +203,6 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('app_manager', 'GlobalAppConfig', 'domain'),
     ModelDeletion('case_importer', 'CaseUploadRecord', 'domain'),
     ModelDeletion('case_search', 'CaseSearchConfig', 'domain'),
-    ModelDeletion('case_search', 'CaseSearchQueryAddition', 'domain'),
     ModelDeletion('case_search', 'FuzzyProperties', 'domain'),
     ModelDeletion('case_search', 'IgnorePatterns', 'domain'),
     ModelDeletion('cloudcare', 'ApplicationAccess', 'domain'),

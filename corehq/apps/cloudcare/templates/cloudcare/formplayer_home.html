@@ -78,7 +78,10 @@
   {% initial_page_data 'single_app_mode' single_app_mode %}
   {% initial_page_data 'username' username %}
   {% initial_page_data 'use_live_query' use_live_query %}
-  {% initial_page_data 'dialer_enabled' dialer_enabled %}
+  {% initial_page_data 'dialer_enabled' integrations.dialer_enabled %}
+  {% initial_page_data 'hmac_root_url' integrations.hmac_root_url %}
+  {% initial_page_data 'hmac_api_key' integrations.hmac_api_key %}
+  {% initial_page_data 'hmac_hashed_secret' integrations.hmac_hashed_secret %}
   {% registerurl 'list_case_exports' request.domain %}
   {% registerurl 'list_form_exports' request.domain %}
   {% registerurl 'case_data' request.domain '---' %}

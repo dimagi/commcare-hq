@@ -518,6 +518,7 @@ class ListWebUsersView(BaseRoleAccessView):
                 "email_marked_as_bounced": bool(invitation.email_marked_as_bounced),
                 "invited_on": invitation.invited_on,
                 "role_label": self.role_labels.get(invitation.role, ""),
+                "email_status": invitation.email_status,
             }
             for invitation in Invitation.by_domain(self.domain)
         ]

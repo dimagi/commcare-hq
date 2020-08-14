@@ -18,6 +18,7 @@ from tastypie.resources import ModelResource, Resource, convert_post_to_patch
 from tastypie.utils import dict_strip_unicode_keys
 
 from casexml.apps.stock.models import StockTransaction
+from corehq.apps.api.resources.serializers import ListToSingleObjectSerializer
 from phonelog.models import DeviceReportEntry
 
 from corehq import privileges
@@ -35,7 +36,7 @@ from corehq.apps.api.resources.auth import (
     AdminAuthentication,
     ODataAuthentication,
     RequirePermissionAuthentication,
-)
+    LoginAuthentication)
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import get_obj
 from corehq.apps.app_manager.models import Application
@@ -94,7 +95,7 @@ from . import (
     HqBaseResource,
     v0_1,
     v0_4,
-)
+    CorsResourceMixin)
 from .pagination import DoesNothingPaginator, NoCountingPaginator
 
 MOCK_BULK_USER_ES = None
@@ -122,6 +123,7 @@ def _set_role_for_bundle(kwargs, bundle):
         permission_preset_name = UserRole.get_preset_permission_by_name(bundle.data.get('role'))
         if permission_preset_name:
             bundle.obj.set_role(kwargs['domain'], permission_preset_name)
+
 
 class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
     """
@@ -388,6 +390,7 @@ class WebUserResource(v0_1.WebUserResource):
     def _admin_assigned_another_role(self, details):
         # default value Admin since that will be assigned later anyway since is_admin is True
         return details.get('role', 'Admin') != 'Admin'
+
 
 class AdminWebUserResource(v0_1.UserResource):
     domains = fields.ListField(attribute='domains')
@@ -811,13 +814,13 @@ UserDomain = namedtuple('UserDomain', 'domain_name project_name')
 UserDomain.__new__.__defaults__ = ('', '')
 
 
-class UserDomainsResource(Resource):
+class UserDomainsResource(CorsResourceMixin, Resource):
     domain_name = fields.CharField(attribute='domain_name')
     project_name = fields.CharField(attribute='project_name')
 
     class Meta(object):
         resource_name = 'user_domains'
-        authentication = HQApiKeyAuthentication()
+        authentication = LoginAuthentication()
         object_class = UserDomain
         include_resource_uri = False
 
@@ -849,6 +852,26 @@ class UserDomainsResource(Resource):
                 project_name=domain_object.hr_name or domain_object.name
             ))
         return results
+
+
+class IdentityResource(CorsResourceMixin, Resource):
+    id = fields.CharField(attribute='get_id', readonly=True)
+    username = fields.CharField(attribute='username', readonly=True)
+    first_name = fields.CharField(attribute='first_name', readonly=True)
+    last_name = fields.CharField(attribute='last_name', readonly=True)
+    email = fields.CharField(attribute='email', readonly=True)
+
+    def obj_get_list(self, bundle, **kwargs):
+        return [bundle.request.couch_user]
+
+    class Meta(object):
+        resource_name = 'identity'
+        authentication = LoginAuthentication()
+        serializer = ListToSingleObjectSerializer()
+        detail_allowed_methods = []
+        list_allowed_methods = ['get']
+        object_class = CouchUser
+        include_resource_uri = False
 
 
 Form = namedtuple('Form', 'form_xmlns form_name')
