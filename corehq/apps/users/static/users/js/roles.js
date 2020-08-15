@@ -72,7 +72,8 @@ hqDefine('users/js/roles',[
                 if (self.hasUnpermittedLocationRestriction) {
                     self.permissions.access_all_locations(true);
                 }
-                self.accessAreas = [{
+                self.accessAreas = [
+                {
                     editPermission: self.permissions.edit_web_users,
                     viewPermission: self.permissions.view_web_users,
                     text:  "<strong>Web Users</strong> &mdash; invite new web users, manage account settings, remove membership",
@@ -207,6 +208,23 @@ hqDefine('users/js/roles',[
                     allowCheckboxId: null,
                     allowCheckboxPermission: null,
                 }];
+
+                self.reports = [
+                {
+                    visibilityRestraint: self.permissions.access_all_locations,
+                    text: "Create and Edit Reports",
+                    checkboxLabel: "create-and-edit-reports-checkbox",
+                    checkboxPermission: self.permissions.edit_reports,
+                    checkboxText: "Allow role to create and edit reports in report builder.",
+                },
+                {
+                    visibilityRestraint: true,
+                    text: "Access All Reports",
+                    checkboxLabel: "access-all-reports-checkbox",
+                    checkboxPermission: self.reportPermissions.all,
+                    checkboxText: "Allow role to access all reports.",
+                },
+                ]
 
                 return self;
             },
