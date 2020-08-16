@@ -360,9 +360,9 @@ class CustomDataModelMixin(object):
             if self.show_purge_existing and self.form.cleaned_data['purge_existing']:
                 self.update_existing_models()
             if self.show_profiles:
-                msg = _("{} fields and profiles saved successfully.").format(self.entity_string.lower())
+                msg = _("{} fields and profiles saved successfully.").format(self.entity_string)
             else:
-                msg = _("{} fields saved successfully.").format(self.entity_string.lower())
+                msg = _("{} fields saved successfully.").format(self.entity_string)
             messages.success(request, msg)
         else:
             if self.show_profiles:
