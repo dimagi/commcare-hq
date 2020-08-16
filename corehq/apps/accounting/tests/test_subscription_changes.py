@@ -80,6 +80,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
             self.domain.name,
             Permissions(
                 edit_apps=True,
+                view_apps=True,
                 edit_web_users=True,
                 view_web_users=True,
                 view_roles=True,
@@ -178,6 +179,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
                 edit_locations=True,
                 view_locations=True,
                 edit_apps=True,
+                view_apps=True,
                 edit_data=True,
                 edit_reports=True
             )
