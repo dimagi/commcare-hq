@@ -22,6 +22,7 @@ from .models import (
     PROFILE_SLUG,
     validate_reserved_words,
 )
+from .tasks import refresh_es_for_profile_users
 
 
 class CustomDataFieldsForm(forms.Form):
@@ -276,6 +277,8 @@ class CustomDataModelMixin(object):
                     "fields": json.loads(profile['fields']),
                 }
             )
+            if not created and obj.has_users_assigned:
+                refresh_es_for_profile_users.delay(self.domain, obj.id)
             seen.add(obj.id)
 
         errors = []
