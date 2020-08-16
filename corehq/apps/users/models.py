@@ -2,7 +2,7 @@ import hmac
 import json
 import logging
 import re
-from copy import copy
+from copy import deepcopy
 from datetime import datetime
 from hashlib import sha1
 from uuid import uuid4
@@ -1704,7 +1704,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     @property
     def metadata(self):
-        data = copy(self.user_data)
+        data = deepcopy(self.user_data)
         profile = self._get_user_data_profile(data)
         if profile:
             data.update(profile.fields)
