@@ -102,7 +102,7 @@ The following content was released:
 
 The following linked project spaces received content:
         """).format(
-            self._get_success_domain_count(),
+            self.get_success_domain_count(),
             _("{} project(s) encountered errors.").format(error_domain_count) if error_domain_count else "",
             separator.join(["- {}".format(m['name']) for m in models])
         ).strip()

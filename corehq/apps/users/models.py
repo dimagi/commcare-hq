@@ -308,6 +308,7 @@ class UserRole(QuickCachedDocumentMixin, Document):
     # role assignable by specific non-admins
     assignable_by = StringListProperty(default=[])
     is_archived = BooleanProperty(default=False)
+    upstream_id = StringProperty()
 
     def get_qualified_id(self):
         return 'user-role:%s' % self.get_id
