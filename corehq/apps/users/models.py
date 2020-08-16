@@ -2,7 +2,7 @@ import hmac
 import json
 import logging
 import re
-from copy import deepcopy
+from copy import copy
 from datetime import datetime
 from hashlib import sha1
 from uuid import uuid4
@@ -1090,7 +1090,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     @property
     def metadata(self):
-        return self.user_data
+        return copy(self.user_data)
 
     @metadata.setter
     def metadata(self, value):
@@ -1701,7 +1701,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     @property
     def metadata(self):
-        data = deepcopy(self.user_data)
+        data = copy(self.user_data)
         profile = self._get_user_data_profile(data)
         if profile:
             data.update(profile.fields)
