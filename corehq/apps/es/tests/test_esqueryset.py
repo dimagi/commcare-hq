@@ -1,9 +1,13 @@
 from unittest import TestCase
+from unittest2 import skipIf
 
+from django.conf import settings
 from corehq.apps.es.es_query import ESQuerySet, HQESQuery
+from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import ESError
 
 
+@es_test
 class TestESQuerySet(TestCase):
     example_response = {
         '_shards': {'failed': 0, 'successful': 5, 'total': 5},
@@ -33,7 +37,7 @@ class TestESQuerySet(TestCase):
                 }
             ],
             'max_score': 1.0,
-            'total': 5247
+            'total': 5247 if settings.ELASTICSEARCH_MAJOR_VERSION !=7 else {'value': 5247}
             },
         'timed_out': False,
         'took': 4
@@ -68,6 +72,7 @@ class TestESQuerySet(TestCase):
         with self.assertRaises(ESError):
             ESQuerySet(self.example_error, HQESQuery('forms'))
 
+    @skipIf(settings.ELASTICSEARCH_MAJOR_VERSION == 7, 'Only applicable for older versions')
     def test_flatten_field_dicts(self):
         example_response = {
             'hits': {'hits': [{
