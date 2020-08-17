@@ -44,7 +44,7 @@
           "type": "boolean_expression",
           "property_value": {
             "location_id": {
-              "type": "icds_awc_owner_id",
+              "type": "aaa_awc_owner_id",
               "case_id_expression": {
                 "type": "property_name",
                 "property_name": "_id"
@@ -63,7 +63,7 @@
         "datatype": "string",
         "type": "expression",
         "expression": {
-          "type": "icds_awc_owner_id",
+          "type": "aaa_awc_owner_id",
           "case_id_expression": {
             "type": "property_name",
             "property_name": "case_id"
