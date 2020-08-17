@@ -209,9 +209,6 @@ class PreFilterValue(FilterValue):
     def _is_dyn_date(self):
         return self.value.get('operator') in self.dyn_date_operators
 
-    def _is_null(self):
-        return self.value['operand'] is None
-
     def _is_list(self):
         """
         Returns true if operand should be treated like an array when building
@@ -219,11 +216,24 @@ class PreFilterValue(FilterValue):
         """
         return isinstance(self.value['operand'], list)
 
-    def _is_empty(self):
+    def _has_empty_value(self):
         """
         Returns true if operand has no value.
         """
-        return self.value['operand'] == '' or self._is_null()
+        return self.value['operand'] == '' or self.value['operand'] is None
+
+    def _is_empty(self):
+        """
+        Returns true if the value should be treated as a filter to show only empty data
+        """
+        operator = self.value.get('operator') or '='
+        return self._has_empty_value() and operator == '='
+
+    def _is_exists(self):
+        """
+        Returns true if the value should be treated as a filter to show non-empty data
+        """
+        return self._has_empty_value() and self.value.get('operator') == '!='
 
     @property
     def _array_filter(self):
@@ -252,6 +262,9 @@ class PreFilterValue(FilterValue):
                 EQFilter(self.filter['field'], self.filter['slug']),
                 ISNULLFilter(self.filter['field']),
             ])
+        elif self._is_exists():
+            # this resolves to != '', which also filters out null data in postgres
+            return NOTEQFilter(self.filter['field'], self.filter['slug'])
         elif self._is_list():
             return self._array_filter(
                 self.filter['field'],
@@ -267,7 +280,7 @@ class PreFilterValue(FilterValue):
                 get_INFilter_element_bindparam(self.filter['slug'], i): str(v)
                 for i, v in enumerate([start_date, end_date])
             }
-        elif self._is_empty():
+        elif self._is_empty() or self._is_exists():
             return {
                 self.filter['slug']: '',
             }
