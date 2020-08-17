@@ -42,14 +42,13 @@ class UniqueHeaderGenerator(object):
     def _next_unique(self, string):
         counter = 1
         if len(string) > self.max_column_size:
-            # truncate from the beginning since the end has more specific information
-            string = string[-self.max_column_size:]
+            # truncate the middle
+            string = "{}...{}".format(string[:14], string[-14:])
         orig_string = string
         while string.lower() in self.used:
             string = "%s%s" % (orig_string, counter)
             if len(string) > self.max_column_size:
-                counterlen = len(str(counter))
-                string = "%s%s" % (orig_string[-(self.max_column_size - counterlen):], counter)
+                string = "{}...{}".format(string[:14], string[-14:])
             counter += 1
 
         return string
