@@ -13,7 +13,7 @@ FormplayerFrontend.module("Users", function (Users, FormplayerFrontend, Backbone
                 query: query,
             });
 
-            FormplayerFrontend.regions.main.show(restoreAsView);
+            FormplayerFrontend.regions.getRegion('main').show(restoreAsView);
         },
     };
 });

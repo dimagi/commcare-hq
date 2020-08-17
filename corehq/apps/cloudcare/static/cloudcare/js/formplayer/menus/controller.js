@@ -76,18 +76,18 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             var menuListView = Menus.Util.getMenuView(menuResponse);
 
             if (menuListView) {
-                FormplayerFrontend.regions.main.show(menuListView.render());
+                FormplayerFrontend.regions.getRegion('main').show(menuListView.render());
             }
             if (menuResponse.persistentCaseTile && !FormplayerFrontend.currentUser.displayOptions.singleAppMode) {
                 Menus.Controller.showPersistentCaseTile(menuResponse.persistentCaseTile);
             } else {
-                FormplayerFrontend.regions.persistentCaseTile.empty();
+                FormplayerFrontend.regions.getRegion('persistentCaseTile').empty();
             }
 
             if (menuResponse.breadcrumbs) {
                 Menus.Util.showBreadcrumbs(menuResponse.breadcrumbs);
             } else {
-                FormplayerFrontend.regions.breadcrumb.empty();
+                FormplayerFrontend.regions.getRegion('breadcrumb').empty();
             }
             if (menuResponse.appVersion) {
                 FormplayerFrontend.trigger('setVersionInfo', menuResponse.appVersion);
@@ -96,7 +96,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
 
         showPersistentCaseTile: function (persistentCaseTile) {
             var detailView = Menus.Controller.getCaseTile(persistentCaseTile);
-            FormplayerFrontend.regions.persistentCaseTile.show(detailView.render());
+            FormplayerFrontend.regions.getRegion('persistentCaseTile').show(detailView.render());
         },
 
         showDetail: function (model, detailTabIndex, caseId) {
@@ -211,13 +211,13 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
     Menus.Util = {
         handleLocationRequest: function (optionsFromLastRequest) {
             var success = function (position) {
-                FormplayerFrontend.regions.loadingProgress.empty();
+                FormplayerFrontend.regions.getRegion('loadingProgress').empty();
                 Menus.Util.recordPosition(position);
                 Menus.Controller.selectMenu(optionsFromLastRequest);
             };
 
             var error = function (err) {
-                FormplayerFrontend.regions.loadingProgress.empty();
+                FormplayerFrontend.regions.getRegion('loadingProgress').empty();
                 FormplayerFrontend.trigger('showError',
                     getErrorMessage(err) +
                     "Without access to your location, computations that rely on the here() function will show up blank.");
@@ -239,7 +239,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 var progressView = new FormplayerFrontend.Layout.Views.ProgressView({
                     progressMessage: "Fetching your location...",
                 });
-                FormplayerFrontend.regions.loadingProgress.show(progressView.render());
+                FormplayerFrontend.regions.getRegion('loadingProgress').show(progressView.render());
                 navigator.geolocation.getCurrentPosition(success, error, {timeout: 10000});
             }
         },
@@ -278,7 +278,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             var breadcrumbView = new Menus.Views.BreadcrumbListView({
                 collection: detailCollection,
             });
-            FormplayerFrontend.regions.breadcrumb.show(breadcrumbView.render());
+            FormplayerFrontend.regions.getRegion('breadcrumb').show(breadcrumbView.render());
         },
 
         getMenuView: function (menuResponse) {

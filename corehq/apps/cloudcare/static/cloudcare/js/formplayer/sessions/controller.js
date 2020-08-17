@@ -11,7 +11,7 @@ FormplayerFrontend.module("SessionNavigate.SessionList", function (SessionList, 
                     collection: sessions,
                 });
 
-                FormplayerFrontend.regions.main.show(sessionListView);
+                FormplayerFrontend.regions.getRegion('main').show(sessionListView);
             });
         },
     };

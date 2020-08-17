@@ -20,12 +20,12 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
 
     var API = {
         listApps: function () {
-            FormplayerFrontend.regions.breadcrumb.empty();
+            FormplayerFrontend.regions.getRegion('breadcrumb').empty();
             FormplayerFrontend.Apps.Controller.listApps();
         },
         singleApp: function (appId) {
             var user = FormplayerFrontend.request('currentUser');
-            FormplayerFrontend.regions.breadcrumb.empty();
+            FormplayerFrontend.regions.getRegion('breadcrumb').empty();
             user.previewAppId = appId;
             FormplayerFrontend.Apps.Controller.singleApp(appId);
         },

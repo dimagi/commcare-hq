@@ -7,7 +7,7 @@ FormplayerFrontend.module("Apps", function (Apps, FormplayerFrontend, Backbone, 
                 var appGridView = new Apps.Views.GridView({
                     collection: apps,
                 });
-                FormplayerFrontend.regions.main.show(appGridView);
+                FormplayerFrontend.regions.getRegion('main').show(appGridView);
             });
         },
         /**
@@ -20,7 +20,7 @@ FormplayerFrontend.module("Apps", function (Apps, FormplayerFrontend, Backbone, 
                 var singleAppView = new Apps.Views.SingleAppView({
                     appId: appId,
                 });
-                FormplayerFrontend.regions.main.show(singleAppView);
+                FormplayerFrontend.regions.getRegion('main').show(singleAppView);
             });
         },
         landingPageApp: function (appId) {
@@ -28,7 +28,7 @@ FormplayerFrontend.module("Apps", function (Apps, FormplayerFrontend, Backbone, 
                 var landingPageAppView = new Apps.Views.LandingPageAppView({
                     appId: appId,
                 });
-                FormplayerFrontend.regions.main.show(landingPageAppView);
+                FormplayerFrontend.regions.getRegion('main').show(landingPageAppView);
             });
         },
         listSettings: function () {
@@ -54,7 +54,7 @@ FormplayerFrontend.module("Apps", function (Apps, FormplayerFrontend, Backbone, 
                 collection: collection,
             });
 
-            FormplayerFrontend.regions.main.show(settingsView);
+            FormplayerFrontend.regions.getRegion('main').show(settingsView);
         },
     };
 });

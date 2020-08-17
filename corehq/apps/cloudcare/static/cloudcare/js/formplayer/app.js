@@ -286,7 +286,7 @@ FormplayerFrontend.on("start", function (options) {
         var apps = appCollection.toJSON();
         if (Backbone.history) {
             Backbone.history.start();
-            FormplayerFrontend.regions.restoreAsBanner.show(
+            FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
                 new FormplayerFrontend.Users.Views.RestoreAsBanner({
                     model: user,
                 })
@@ -427,7 +427,7 @@ FormplayerFrontend.on('clearRestoreAsUser', function () {
         user.username
     );
     user.restoreAs = null;
-    FormplayerFrontend.regions.restoreAsBanner.show(
+    FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
         new FormplayerFrontend.Users.Views.RestoreAsBanner({
             model: user,
         })
@@ -482,7 +482,7 @@ FormplayerFrontend.on("sync", function () {
  */
 FormplayerFrontend.on("retry", function (response, retryFn, progressMessage) {
 
-    var progressView = FormplayerFrontend.regions.loadingProgress.currentView,
+    var progressView = FormplayerFrontend.regions.getRegion('loadingProgress').currentView,
         retryTimeout = response.retryAfter * 1000;
     progressMessage = progressMessage || gettext('Please wait...');
 
@@ -490,7 +490,7 @@ FormplayerFrontend.on("retry", function (response, retryFn, progressMessage) {
         progressView = new FormplayerFrontend.Layout.Views.ProgressView({
             progressMessage: progressMessage,
         });
-        FormplayerFrontend.regions.loadingProgress.show(progressView);
+        FormplayerFrontend.regions.getRegion('loadingProgress').show(progressView);
     }
 
     progressView.setProgress(response.done, response.total, retryTimeout);
@@ -512,16 +512,16 @@ FormplayerFrontend.on('view:phone', function () {
  * to complete progress.
  */
 FormplayerFrontend.on('clearProgress', function () {
-    var progressView = FormplayerFrontend.regions.loadingProgress.currentView,
+    var progressView = FormplayerFrontend.regions.getRegion('loadingProgress').currentView,
         progressFinishTimeout = 200;
 
     if (progressView) {
         progressView.setProgress(1, progressFinishTimeout);
         setTimeout(function () {
-            FormplayerFrontend.regions.loadingProgress.empty();
+            FormplayerFrontend.regions.getRegion('loadingProgress').empty();
         }, progressFinishTimeout);
     } else {
-        FormplayerFrontend.regions.loadingProgress.empty();
+        FormplayerFrontend.regions.getRegion('loadingProgress').empty();
     }
 });
 
@@ -642,7 +642,7 @@ FormplayerFrontend.on('navigateHome', function () {
         appId,
         currentUser = FormplayerFrontend.request('currentUser');
     urlObject.clearExceptApp();
-    FormplayerFrontend.regions.breadcrumb.empty();
+    FormplayerFrontend.regions.getRegion('breadcrumb').empty();
     if (currentUser.displayOptions.singleAppMode) {
         appId = FormplayerFrontend.request('getCurrentAppId');
         FormplayerFrontend.trigger("app:singleApp", appId);

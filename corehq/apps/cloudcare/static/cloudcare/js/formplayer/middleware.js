@@ -36,10 +36,10 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             restoreAsBannerHeight = 0;
 
         if (user.restoreAs) {
-            restoreAsBannerHeight = FormplayerFrontend.regions.restoreAsBanner.$el.height();
+            restoreAsBannerHeight = FormplayerFrontend.regions.getRegion('restoreAsBanner').$el.height();
         }
         maxHeight = ($(window).height() -
-            FormplayerFrontend.regions.breadcrumb.$el.height() -
+            FormplayerFrontend.regions.getRegion('breadcrumb').$el.height() -
             restoreAsBannerHeight);
 
         $('.scrollable-container').css('max-height', maxHeight + 'px');

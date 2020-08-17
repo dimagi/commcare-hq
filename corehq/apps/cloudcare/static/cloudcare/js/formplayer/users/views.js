@@ -49,7 +49,7 @@ FormplayerFrontend.module("Users.Views", function (Views, FormplayerFrontend, Ba
                 onConfirm: function () {
                     FormplayerFrontend.Utils.Users.logInAsUser(this.model.get('username'));
                     FormplayerFrontend.trigger('navigateHome');
-                    FormplayerFrontend.regions.restoreAsBanner.show(
+                    FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
                         new FormplayerFrontend.Users.Views.RestoreAsBanner({
                             model: FormplayerFrontend.request('currentUser'),
                         })

@@ -100,7 +100,7 @@ describe('Render a case list', function () {
             );
 
             // We should show loading bar
-            assert.isTrue(FormplayerFrontend.regions.loadingProgress.show.called);
+            assert.isTrue(FormplayerFrontend.regions.getRegion('loadingProgress').show.called);
 
             // Fast forward the retry interval of 30 seconds
             clock.tick(30 * 1000);
@@ -126,7 +126,7 @@ describe('Render a case list', function () {
             clock.tick(1); // click 1 forward to ensure that we've fired off the empty progress
 
             // We should have emptied the progress bar
-            assert.isTrue(FormplayerFrontend.regions.loadingProgress.empty.called);
+            assert.isTrue(FormplayerFrontend.regions.getRegion('loadingProgress').empty.called);
         });
 
         it('Should execute an async restore', function () {
@@ -147,7 +147,7 @@ describe('Render a case list', function () {
             );
 
             // We should show loading bar
-            assert.isTrue(FormplayerFrontend.regions.loadingProgress.show.called);
+            assert.isTrue(FormplayerFrontend.regions.getRegion('loadingProgress').show.called);
             assert.equal(promise.state(), 'pending');
 
             // Fast forward the retry interval of 30 seconds
@@ -164,7 +164,7 @@ describe('Render a case list', function () {
             clock.tick(1); // click 1 forward to ensure that we've fired off the empty progress
 
             // We should have emptied the progress bar
-            assert.isTrue(FormplayerFrontend.regions.loadingProgress.empty.called);
+            assert.isTrue(FormplayerFrontend.regions.getRegion('loadingProgress').empty.called);
             assert.equal(promise.state(), 'resolved');  // We have now completed the restore
         });
     });
