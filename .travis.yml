@@ -26,7 +26,7 @@ before_install:
   - sudo mv -v docker-compose /usr/local/bin/
 install:
   - mkdir -p $TRAVIS_BUILD_DIR/docker-volumes
-  - .travis/setup_icds.sh
+#  - .travis/setup_icds.sh
 before_script:
   - docker version
   - docker-compose version
