@@ -2,6 +2,8 @@ from collections import defaultdict, namedtuple
 from datetime import datetime, timedelta
 from django.conf import settings
 
+from django.conf import settings
+
 from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_datetime
 
@@ -336,7 +338,20 @@ def get_forms(domain, startdate, enddate, user_ids=None, app_ids=None, xmlnss=No
 
 def get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=None,
                                   xmlnss=None, by_submission_time=True, export=False):
+    USER_FILTER_CHUNK_SIZE = getattr(settings, 'USER_FILTER_CHUNK_SIZE', 10000)
+    to_ret = defaultdict(lambda: 0)
+    if not user_ids:
+        to_ret.update(_chunked_get_form_counts_by_user_xmlns(
+            domain, startdate, enddate, None, xmlnss, by_submission_time, export))
+    else:
+        for chunk in chunked(user_ids, USER_FILTER_CHUNK_SIZE):
+            to_ret.update(_chunked_get_form_counts_by_user_xmlns(
+                domain, startdate, enddate, chunk, xmlnss, by_submission_time, export))
+    return to_ret
 
+
+def _chunked_get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=None,
+                                  xmlnss=None, by_submission_time=True, export=False):
     missing_users = False
 
     date_filter_fn = submitted_filter if by_submission_time else completed_filter

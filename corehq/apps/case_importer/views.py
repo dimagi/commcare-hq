@@ -84,7 +84,9 @@ def excel_config(request, domain):
 
     uploaded_file_handle = request.FILES['file']
     try:
-        case_upload, context = _process_file_and_get_upload(uploaded_file_handle, request, domain)
+        case_upload, context = _process_file_and_get_upload(
+            uploaded_file_handle, request, domain, max_columns=MAX_CASE_IMPORTER_COLUMNS
+        )
     except ImporterError as e:
         return render_error(request, domain, get_importer_error_message(e))
     except SpreadsheetFileExtError:
@@ -94,7 +96,7 @@ def excel_config(request, domain):
     return render(request, "case_importer/excel_config.html", context)
 
 
-def _process_file_and_get_upload(uploaded_file_handle, request, domain):
+def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_columns=None):
     extension = os.path.splitext(uploaded_file_handle.name)[1][1:].strip().lower()
 
     # NOTE: We may not always be able to reference files from subsequent
@@ -133,7 +135,7 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain):
     if row_count == 0:
         raise ImporterError('Your spreadsheet is empty. Please try again with a different spreadsheet.')
 
-    if len(columns) > MAX_CASE_IMPORTER_COLUMNS:
+    if max_columns is not None and len(columns) > max_columns:
         raise ImporterError(
             'Your spreadsheet has too many columns. '
             'A maximum of %(max_columns)s is supported.'
