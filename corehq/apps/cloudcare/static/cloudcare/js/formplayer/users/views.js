@@ -7,7 +7,7 @@ FormplayerFrontend.module("Users.Views", function (Views, FormplayerFrontend, Ba
      * This View represents the banner that indicates what user your are
      * currently logged in (or restoring) as.
      */
-    Views.RestoreAsBanner = Marionette.ItemView.extend({
+    Views.RestoreAsBanner = Marionette.LayoutView.extend({
         template: '#restore-as-banner-template',
         className: 'restore-as-banner-container',
         ui: {
@@ -32,7 +32,7 @@ FormplayerFrontend.module("Users.Views", function (Views, FormplayerFrontend, Ba
      *
      * Represents a single row in the Log In As User list
      */
-    Views.UserRowView = Marionette.ItemView.extend({
+    Views.UserRowView = Marionette.LayoutView.extend({
         template: '#user-row-view-template',
         className: 'formplayer-request js-user',
         tagName: 'tr',

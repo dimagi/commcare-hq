@@ -1,7 +1,7 @@
 /*global FormplayerFrontend, moment, Util */
 
 FormplayerFrontend.module("SessionNavigate.SessionList", function (SessionList, FormplayerFrontend, Backbone, Marionette) {
-    SessionList.SessionView = Marionette.ItemView.extend({
+    SessionList.SessionView = Marionette.LayoutView.extend({
         tagName: "tr",
         className: "formplayer-request",
         events: {
