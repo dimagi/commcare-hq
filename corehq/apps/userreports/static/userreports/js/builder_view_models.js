@@ -141,7 +141,7 @@ hqDefine('userreports/js/builder_view_models', function () {
         });
 
         self.hasFilterValueWarning = ko.computed(function () {
-            return !(self.filterValue() || self.filterOperator());
+            return self.acceptsFormatValue() && !(self.filterValue() || self.filterOperator());
         });
 
         /**
