@@ -19,6 +19,7 @@ from soil.util import expose_blob_download
 from corehq.apps.domain.calculations import all_domain_stats, calced_props
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import filters
+from corehq.apps.es import AppES
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
 from corehq.apps.export.const import MAX_MULTIMEDIA_EXPORT_SIZE
@@ -29,8 +30,7 @@ from corehq.const import ONE_DAY
 from corehq.elastic import (
     ES_META,
     get_es_new,
-    send_to_elasticsearch,
-    stream_es_query,
+    send_to_elasticsearch
 )
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.pillows.mappings.app_mapping import APP_INDEX
@@ -165,12 +165,11 @@ def is_app_active(app_id, domain):
 
 @periodic_task(run_every=crontab(hour="2", minute="0", day_of_week="*"), queue='background_queue')
 def apps_update_calculated_properties():
-    q = {"filter": {"and": [{"missing": {"field": "copy_of"}}]}}
-    results = stream_es_query(q=q, es_index='apps', size=999999, chunksize=500)
+    results = AppES().is_build(False).source(['_id', 'domain']).scroll()
     for r in results:
         doc = {
             "_id": r["_id"],
-            "cp_is_active": is_app_active(r["_id"], r["_source"]["domain"])
+            "cp_is_active": is_app_active(r["_id"], r["domain"])
         }
         send_to_elasticsearch('apps', doc, es_merge_update=True)
 
