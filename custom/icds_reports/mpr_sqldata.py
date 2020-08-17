@@ -10,8 +10,9 @@ from custom.icds_reports.sqldata.base_operationalization import BaseOperationali
 from custom.icds_reports.sqldata.base_populations import BasePopulation
 from custom.icds_reports.utils import ICDSMixin, MPRData, ICDSDataTableColumn, get_location_filter
 from custom.icds_reports.models.aggregate import AggChildHealth, AggCcsRecord
-from django.db.models.aggregates import Sum, Avg
+from django.db.models.aggregates import Sum
 from django.db.models import  Case, When
+
 
 class MPRIdentification(BaseIdentification):
 
@@ -284,6 +285,7 @@ class MPRAWCDetails(ICDSMixin, MPRData):
             ),
         )
 
+
 class MPRAWCDetailsBeta(ICDSMixin, MPRData):
 
     title = '3. Details of new registrations at AWC during the month'
@@ -309,7 +311,7 @@ class MPRAWCDetailsBeta(ICDSMixin, MPRData):
     def rows(self):
         if self.config['location_id']:
             filters = get_location_filter(self.config['location_id'], self.config['domain'])
-
+            filters['month'] = date(self.config['year'], self.config['month'], 1)
             if filters['aggregation_level'] > 1:
                 filters['aggregation_level'] -= 1
 
@@ -319,11 +321,12 @@ class MPRAWCDetailsBeta(ICDSMixin, MPRData):
             ).order_by('month').first()
 
             child_data = AggChildHealth.objects.filter(**filters).values('awc_id').annotate(
-                live_birth_F_permanent_resident=Case(When(gender='F',then=Sum('live_birth_permanent_resident'))),
-                live_birth_M_permanent_resident=Case(When(gender='M',then=Sum('live_birth_permanent_resident'))),
-                live_birth_F_temp_resident=Case(When(gender='F',then=Sum('live_birth_temp_resident'))),
-                live_birth_M_temp_resident=Case(When(gender='M',then=Sum('live_birth_temp_resident'))),
-                child_0_3_F_permanent_resident=Case(When(gender='F', age_tranche__lte=36,then=Sum('permanent_resident'))),
+                live_birth_F_permanent_resident=Case(When(gender='F', then=Sum('live_birth_permanent_resident'))),
+                live_birth_M_permanent_resident=Case(When(gender='M', then=Sum('live_birth_permanent_resident'))),
+                live_birth_F_temp_resident=Case(When(gender='F', then=Sum('live_birth_temp_resident'))),
+                live_birth_M_temp_resident=Case(When(gender='M', then=Sum('live_birth_temp_resident'))),
+                child_0_3_F_permanent_resident=Case(When(gender='F',
+                                                         age_tranche__lte=36, then=Sum('permanent_resident'))),
                 child_0_3_M_permanent_resident=Case(
                     When(gender='M', age_tranche__lte=36, then=Sum('permanent_resident'))),
                 child_0_3_F_temp_resident=Case(
@@ -341,9 +344,7 @@ class MPRAWCDetailsBeta(ICDSMixin, MPRData):
                     When(gender='M', age_tranche__gt=36, then=Sum('temp_resident'))),
             ).order_by('month').first()
 
-            print(data)
             data.update(child_data)
-            print(data)
             rows = []
             for row in self.row_config:
                 row_data = []
