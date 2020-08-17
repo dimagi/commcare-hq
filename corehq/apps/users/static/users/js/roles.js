@@ -81,8 +81,8 @@ hqDefine('users/js/roles',[
                     editCheckboxLabel: "edit-web-users-checkbox",
                     showViewCheckbox: true,
                     viewCheckboxLabel: "view-web-users-checkbox",
-                    srEditAndViewText: "Edit & View Mobile Workers",
-                    srViewOnlyText: "View-Only Mobile Workers",
+                    srEditAndViewText: gettext("Edit & View Mobile Workers"),
+                    srViewOnlyText: gettext("View-Only Mobile Workers"),
                     showAllowCheckbox: false,
                     allowCheckboxText: null,
                     allowCheckboxId: null,
@@ -96,8 +96,8 @@ hqDefine('users/js/roles',[
                     editCheckboxLabel: "edit-commcare-users-checkbox",
                     showViewCheckbox: true,
                     viewCheckboxLabel: "view-commcare-users-checkbox",
-                    srEditAndViewText: "Edit & View Web Users",
-                    srViewOnlyText: "View-Only Web Users",
+                    srEditAndViewText: gettext("Edit & View Web Users"),
+                    srViewOnlyText: gettext("View-Only Web Users"),
                     showAllowCheckbox: false,
                     allowCheckboxText: null,
                     allowCheckboxId: null,
@@ -111,10 +111,10 @@ hqDefine('users/js/roles',[
                     editCheckboxLabel: "edit-groups-checkbox",
                     showViewCheckbox: true,
                     viewCheckboxLabel: "view-groups-checkbox",
-                    srEditAndViewText: "Edit & View Groups",
-                    srViewOnlyText: "View-Only Web Groups",
+                    srEditAndViewText: gettext("Edit & View Groups"),
+                    srViewOnlyText: gettext("View-Only Web Groups"),
                     showAllowCheckbox: true,
-                    allowCheckboxText: "Allow changing group membership (requires edit groups).",
+                    allowCheckboxText: gettext("Allow changing group membership (requires edit groups)."),
                     allowCheckboxId: "edit-users-groups-checkbox",
                     allowCheckboxPermission: self.permissions.edit_users_in_groups,
                 },
@@ -126,10 +126,10 @@ hqDefine('users/js/roles',[
                     editCheckboxLabel: "edit-locations-checkbox",
                     showViewCheckbox: true,
                     viewCheckboxLabel: "view-locations-checkbox",
-                    srEditAndViewText: "Edit & View Locations",
-                    srViewOnlyText: "View-Only Web Locations",
+                    srEditAndViewText: gettext("Edit & View Locations"),
+                    srViewOnlyText: gettext("View-Only Web Locations"),
                     showAllowCheckbox: true,
-                    allowCheckboxText: "Allow changing workers at a location.",
+                    allowCheckboxText: gettext("Allow changing workers at a location."),
                     allowCheckboxId: "edit-users-locations-checkbox",
                     allowCheckboxPermission: self.permissions.edit_users_in_locations,
                 },
@@ -141,7 +141,7 @@ hqDefine('users/js/roles',[
                     editCheckboxLabel: "edit-data-checkbox",
                     showViewCheckbox: false,
                     viewCheckboxLabel: "view-data-checkbox",
-                    srEditAndViewText: "Edit & View Data",
+                    srEditAndViewText: gettext("Edit & View Data"),
                     srViewOnlyText: null,
                     showAllowCheckbox: false,
                     allowCheckboxText: null,
@@ -156,7 +156,7 @@ hqDefine('users/js/roles',[
                     editCheckboxLabel: "edit-web-apps-checkbox",
                     showViewCheckbox: false,
                     viewCheckboxLabel: "view-web-apps-checkbox",
-                    srEditAndViewText: "Access Web Apps",
+                    srEditAndViewText: gettext("Access Web Apps"),
                     srViewOnlyText: null,
                     showAllowCheckbox: false,
                     allowCheckboxText: null,
@@ -171,7 +171,7 @@ hqDefine('users/js/roles',[
                     editCheckboxLabel: "edit-apis-checkbox",
                     showViewCheckbox: false,
                     viewCheckboxLabel: "view-apis-checkbox",
-                    srEditAndViewText: "Access APIs",
+                    srEditAndViewText: gettext("Access APIs"),
                     srViewOnlyText: null,
                     showAllowCheckbox: false,
                     allowCheckboxText: null,
@@ -186,7 +186,7 @@ hqDefine('users/js/roles',[
                     editCheckboxLabel: "edit-apps-checkbox",
                     showViewCheckbox: false,
                     viewCheckboxLabel: "view-apps-checkbox",
-                    srEditAndViewText: "Edit & View Apps",
+                    srEditAndViewText: gettext("Edit & View Apps"),
                     srViewOnlyText: null,
                     showAllowCheckbox: false,
                     allowCheckboxText: null,
@@ -202,7 +202,7 @@ hqDefine('users/js/roles',[
                     showViewCheckbox: true,
                     viewCheckboxLabel: "view-roles-checkbox",
                     srEditAndViewText: null,
-                    srViewOnlyText: "View Roles and Permssions",
+                    srViewOnlyText: gettext("View Roles and Permissions"),
                     showAllowCheckbox: false,
                     allowCheckboxText: null,
                     allowCheckboxId: null,
@@ -212,19 +212,18 @@ hqDefine('users/js/roles',[
                 self.reports = [
                 {
                     visibilityRestraint: self.permissions.access_all_locations,
-                    text: "Create and Edit Reports",
+                    text: gettext("Create and Edit Reports"),
                     checkboxLabel: "create-and-edit-reports-checkbox",
                     checkboxPermission: self.permissions.edit_reports,
-                    checkboxText: "Allow role to create and edit reports in report builder.",
+                    checkboxText: gettext("Allow role to create and edit reports in report builder."),
                 },
                 {
                     visibilityRestraint: true,
-                    text: "Access All Reports",
+                    text: gettext("Access All Reports"),
                     checkboxLabel: "access-all-reports-checkbox",
                     checkboxPermission: self.reportPermissions.all,
-                    checkboxText: "Allow role to access all reports.",
-                },
-                ]
+                    checkboxText: gettext("Allow role to access all reports."),
+                }];
 
                 return self;
             },
@@ -315,8 +314,6 @@ hqDefine('users/js/roles',[
             var title = role === self.defaultRole ? gettext("New Role") : actionType + role.name();
             var roleCopy = UserRole.wrap(UserRole.unwrap(role));
             roleCopy.modalTitle = title;
-            console.log(roleCopy);
-            console.log(roleCopy.uiInfo);
             self.roleBeingEdited(roleCopy);
         };
         self.unsetRoleBeingEdited = function () {
