@@ -38,7 +38,8 @@ describe('Render a case list', function () {
         var server,
             clock,
             user,
-            requests;
+            requests,
+            currentView;
 
         before(function () {
             hqImport("hqwebapp/js/initial_page_data").register("apps", [{
@@ -50,10 +51,15 @@ describe('Render a case list', function () {
             window.gettext = sinon.spy();
 
             FormplayerFrontend.regions = {
-                loadingProgress: {
-                    currentView: null,
-                    empty: sinon.spy(),
-                    show: sinon.spy(),
+                getRegion: function (name) {
+                    return {
+                        show: function () {
+                            currentView = name;
+                        },
+                        empty: function () {
+                            currentView = undefined;
+                        },
+                    };
                 },
             };
 
@@ -100,7 +106,7 @@ describe('Render a case list', function () {
             );
 
             // We should show loading bar
-            assert.isTrue(FormplayerFrontend.regions.loadingProgress.show.called);
+            assert.isTrue(currentView === "loadingProgress");
 
             // Fast forward the retry interval of 30 seconds
             clock.tick(30 * 1000);
@@ -126,7 +132,7 @@ describe('Render a case list', function () {
             clock.tick(1); // click 1 forward to ensure that we've fired off the empty progress
 
             // We should have emptied the progress bar
-            assert.isTrue(FormplayerFrontend.regions.loadingProgress.empty.called);
+            assert.isTrue(currentView === undefined);
         });
 
         it('Should execute an async restore', function () {
@@ -147,7 +153,7 @@ describe('Render a case list', function () {
             );
 
             // We should show loading bar
-            assert.isTrue(FormplayerFrontend.regions.loadingProgress.show.called);
+            assert.isTrue(currentView === "loadingProgress");
             assert.equal(promise.state(), 'pending');
 
             // Fast forward the retry interval of 30 seconds
@@ -164,7 +170,7 @@ describe('Render a case list', function () {
             clock.tick(1); // click 1 forward to ensure that we've fired off the empty progress
 
             // We should have emptied the progress bar
-            assert.isTrue(FormplayerFrontend.regions.loadingProgress.empty.called);
+            assert.isTrue(currentView === undefined);
             assert.equal(promise.state(), 'resolved');  // We have now completed the restore
         });
     });
