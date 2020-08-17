@@ -7,6 +7,7 @@ from corehq.apps.reports.datatables import DataTablesHeader
 from custom.icds_reports.models.aggregate import AggAwc
 from custom.icds_reports.utils import get_location_filter
 
+
 class BaseOperationalization(ICDSMixin):
 
     title = 'c. Status of operationalization of AWCs'
@@ -41,19 +42,7 @@ class BaseOperationalization(ICDSMixin):
             ]
 
 
-class BaseOperationalizationBeta(ICDSMixin):
-
-    title = 'c. Status of operationalization of AWCs'
-    slug = 'operationalization'
-
-    @property
-    def headers(self):
-        return DataTablesHeader(
-            DataTablesColumn('', sortable=False),
-            DataTablesColumn('Sanctioned', sortable=False),
-            DataTablesColumn('Functioning', sortable=False),
-            DataTablesColumn('Reporting', sortable=False)
-        )
+class BaseOperationalizationBeta(BaseOperationalization):
 
     @property
     def rows(self):

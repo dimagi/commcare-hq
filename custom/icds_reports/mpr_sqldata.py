@@ -32,6 +32,7 @@ class MPRIdentification(BaseIdentification):
 class MPROperationalization(BaseOperationalization, MPRData):
     pass
 
+
 class MPROperationalizationBeta(BaseOperationalizationBeta, MPRData):
     pass
 
