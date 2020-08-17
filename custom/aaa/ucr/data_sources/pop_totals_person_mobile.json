@@ -52,7 +52,7 @@
                         "type": "named"
                     },
                     "index_identifier": "owner_village",
-                    "type": "icds_village_owner_id"
+                    "type": "aaa_village_owner_id"
                 },
                 "is_nullable": true,
                 "is_primary_key": false,

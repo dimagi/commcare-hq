@@ -23,4 +23,5 @@ def aaa_ucr_reports():
 def aaa_ucr_expressions():
     return [
         ('aaa_awc_owner_id', 'custom.aaa.ucr.expressions.awc_owner_id'),
+        ('aaa_village_owner_id', 'custom.aaa.ucr.expressions.village_owner_id'),
     ]

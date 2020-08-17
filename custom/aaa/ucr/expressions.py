@@ -93,8 +93,42 @@ class AWCOwnerId(JsonObject):
         return "owner_id"
 
 
+class VillageOwnerId(AWCOwnerId):
+    type = TypeProperty('aaa_village_owner_id')
+    index_identifier = 'owner_village'
+
+    def __str__(self):
+        return "village owner_id"
+
+    def __call__(self, item, context=None):
+        case_id = self._case_id_expression(item, context)
+
+        if not case_id:
+            return None
+
+        # a village will only be on the case as the owner if
+        # its the assignment case so we should verify that
+        if item['owner_id'] != UNOWNED_EXTENSION_OWNER_ID:
+            accessor = CaseAccessors(context.root_doc['domain'])
+            case = accessor.get_case(case_id)
+            if case.type == 'assignment':
+                # should verify it is a village case (not AWC)
+                # via some property to be determined later
+                return item['owner_id']
+
+        return self._owner_from_extension(item, context, case_id)
+
+
 def awc_owner_id(spec, context):
     wrapped = AWCOwnerId.wrap(spec)
+    wrapped.configure(
+        case_id_expression=ExpressionFactory.from_spec(wrapped.case_id_expression, context)
+    )
+    return wrapped
+
+
+def village_owner_id(spec, context):
+    wrapped = VillageOwnerId.wrap(spec)
     wrapped.configure(
         case_id_expression=ExpressionFactory.from_spec(wrapped.case_id_expression, context)
     )
