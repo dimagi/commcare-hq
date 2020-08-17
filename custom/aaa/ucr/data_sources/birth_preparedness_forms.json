@@ -159,8 +159,8 @@
         "datatype": "small_integer",
         "type": "expression",
         "expression": {
-          "type": "icds_boolean",
-          "boolean_property": {
+          "type": "switch",
+          "switch_on": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -171,8 +171,16 @@
               "property_name": "anc_abdominal_exam"
             }
           },
-          "true_values": ["yes"],
-          "false_values": ["no"]
+          "cases": {
+            "yes": {
+              "type": "constant",
+              "constant": 1
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": 0
+          }
         }
       },
       {
@@ -180,8 +188,8 @@
         "datatype": "small_integer",
         "type": "expression",
         "expression": {
-          "type": "icds_boolean",
-          "boolean_property": {
+          "type": "switch",
+          "switch_on": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -192,8 +200,16 @@
               "property_name": "anc_abnormalities"
             }
           },
-          "true_values": ["yes"],
-          "false_values": ["no"]
+          "cases": {
+            "yes": {
+              "type": "constant",
+              "constant": 1
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": 0
+          }
         }
       },
       {
