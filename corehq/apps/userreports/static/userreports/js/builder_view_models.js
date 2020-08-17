@@ -140,6 +140,10 @@ hqDefine('userreports/js/builder_view_models', function () {
             return Boolean(self.property() && self.existsInCurrentVersion() && self.displayTextIsValid());
         });
 
+        self.hasFilterValueWarning = ko.computed(function () {
+            return !(self.filterValue() || self.filterOperator());
+        });
+
         /**
          * Return a "plain" javascript object representing this view model
          * suitable for sending to the server.
