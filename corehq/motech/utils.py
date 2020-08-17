@@ -101,6 +101,8 @@ def unpad(bytestring):
 
     .. _iso7816: https://en.wikipedia.org/wiki/Padding_(cryptography)#ISO/IEC_7816-4
     """
+    if bytestring == b'':
+        return bytestring
     if bord(bytestring[-1]) in (0, 128):
         return crypto_unpad(bytestring, AES_BLOCK_SIZE, style='iso7816')
     return bytestring.rstrip(PAD_CHAR)

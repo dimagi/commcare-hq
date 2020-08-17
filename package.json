@@ -49,7 +49,6 @@
         "datatables-scroller": "DataTables/Scroller#^1.5.1",
         "datetimepicker": "npm:jquery-datetimepicker#2.5.4",
         "detectrtc": "1.4.0",
-        "eslint-plugin-eslint-dimagi": "1.0.2",
         "fast-levenshtein": "2.0.6",
         "font-awesome": "4.7.0",
         "intl-tel-input": "9.0.7",
