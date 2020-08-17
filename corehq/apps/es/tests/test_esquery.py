@@ -1,5 +1,4 @@
 from copy import deepcopy
-from django.conf import settings
 from django.test import SimpleTestCase
 from mock import patch
 
@@ -13,137 +12,76 @@ from corehq.elastic import SIZE_LIMIT
 class TestESQuery(ElasticTestMixin, SimpleTestCase):
     maxDiff = 1000
 
-    @property
-    def is_es7(self):
-        return settings.ELASTICSEARCH_MAJOR_VERSION == 7
-
     def _check_user_location_query(self, query, with_ids):
-        if self.is_es7:
-            json_output = {
-                "query": {
-                    "bool": {
-                        "filter": [
-                            {
-                                "bool": {
-                                    "should": (
-                                        {
-                                            "bool": {
-                                                "filter": (
-                                                    {"term": {"doc_type": "CommCareUser"}},
-                                                    {"terms": {"assigned_location_ids": with_ids}})}
-                                        },
-                                        {
-                                            "bool": {
-                                                "filter": (
-                                                    {"term": {"doc_type": "WebUser"}},
-                                                    {"terms": {"domain_memberships.assigned_location_ids": with_ids}})}
-                                        }
-                                    )
-                                }
-                            },
-                            {'term': {'base_doc': 'couchuser'}},
-                            {'term': {'is_active': True}}
-                        ],
-                        "must": {
-                            "match_all": {}
-                        }
-                    }
-                },
-                "size": SIZE_LIMIT
-            }
-        else:
-            json_output = {
-                'query': {
-                    'filtered': {
-                        'filter': {
-                            'and': [
-                                {'or': (
-                                    {'and': (
-                                        {'term': {'doc_type': 'CommCareUser'}},
-                                        {'terms': {'assigned_location_ids': with_ids}}
-                                    )
+        json_output = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {
+                            "bool": {
+                                "should": (
+                                    {
+                                        "bool": {
+                                            "filter": (
+                                                {"term": {"doc_type": "CommCareUser"}},
+                                                {"terms": {"assigned_location_ids": with_ids}})}
                                     },
-                                    {'and': (
-                                        {'term': {'doc_type': 'WebUser'}},
-                                        {'terms': {'domain_memberships.assigned_location_ids': with_ids}}
-                                    )
+                                    {
+                                        "bool": {
+                                            "filter": (
+                                                {"term": {"doc_type": "WebUser"}},
+                                                {"terms": {"domain_memberships.assigned_location_ids": with_ids}})}
                                     }
-                                )},
-                                {'term': {'base_doc': 'couchuser'}},
-                                {'term': {'is_active': True}}
-                            ]
+                                )
+                            }
                         },
-                        'query': {'match_all': {}}}},
-                'size': SIZE_LIMIT
-            }
-        
+                        {'term': {'base_doc': 'couchuser'}},
+                        {'term': {'is_active': True}}
+                    ],
+                    "must": {
+                        "match_all": {}
+                    }
+                }
+            },
+            "size": SIZE_LIMIT
+        }
         raw_query = query.raw_query
         self.checkQuery(raw_query, json_output, is_raw_query=True)
 
     def test_basic_query(self):
-        if self.is_es7:
-            json_output = {
-                "query": {
-                    "bool": {
-                        "filter": [
-                            {
-                                "match_all": {}
-                            }
-                        ],
-                        "must": {
+        json_output = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {
                             "match_all": {}
                         }
+                    ],
+                    "must": {
+                        "match_all": {}
                     }
-                },
-                "size": SIZE_LIMIT
-            }
-        else:
-            json_output = {
-                "query": {
-                    "filtered": {
-                        "filter": {
-                            "and": [
-                                {"match_all": {}}
-                            ]
-                        },
-                        "query": {"match_all": {}}
-                    }
-                },
-                "size": SIZE_LIMIT
-            }
+                }
+            },
+            "size": SIZE_LIMIT
+        }
         self.checkQuery(HQESQuery('forms'), json_output)
 
     def test_query_size(self):
-        if self.is_es7:
-            json_output = {
-                "query": {
-                    "bool": {
-                        "filter": [
-                            {
-                                "match_all": {}
-                            }
-                        ],
-                        "must": {
+        json_output = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {
                             "match_all": {}
                         }
+                    ],
+                    "must": {
+                        "match_all": {}
                     }
-                },
-                "size": 0
-            }
-        else:
-            json_output = {
-                "query": {
-                    "filtered": {
-                        "filter": {
-                            "and": [
-                                {"match_all": {}}
-                            ]
-                        },
-                        "query": {"match_all": {}}
-                    }
-                },
-                "size": 0
-            }
+                }
+            },
+            "size": 0
+        }
 
         # use `is not None`; 0 or 1000000 == 1000000
         self.checkQuery(HQESQuery('forms').size(0), json_output)
@@ -151,126 +89,72 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
         self.checkQuery(HQESQuery('forms').size(123), json_output)
 
     def test_form_query(self):
-        if self.is_es7:
-            json_output = {
-                "query": {
-                    "bool": {
-                        "filter": [
-                            {"term": {"doc_type": "xforminstance"}},
-                            {"exists": {"field": "xmlns"}},
-                            {"exists": {"field": "form.meta.userID"}},
-                            {"exists": {"field": "domain"}},
-                        ],
-                        "must": {
-                            "match_all": {}
-                        }
+        json_output = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {"term": {"doc_type": "xforminstance"}},
+                        {"exists": {"field": "xmlns"}},
+                        {"exists": {"field": "form.meta.userID"}},
+                        {"exists": {"field": "domain"}},
+                    ],
+                    "must": {
+                        "match_all": {}
                     }
-                },
-                "size": 1000000
-            }
-        else:
-            json_output = {
-                "query": {
-                    "filtered": {
-                        "filter": {
-                            "and": [
-                                {"term": {"doc_type": "xforminstance"}},
-                                {"not": {"missing": {"field": "xmlns"}}},
-                                {"not": {"missing": {"field": "form.meta.userID"}}},
-                                {"not": {"missing": {"field": "domain"}}},
-                            ]
-                        },
-                        "query": {"match_all": {}}
-                    }
-                },
-                "size": SIZE_LIMIT
-            }
+                }
+            },
+            "size": SIZE_LIMIT
+        }
         query = forms.FormES()
         raw_query = query.raw_query
         self.checkQuery(raw_query, json_output, is_raw_query=True)
 
     def test_user_query(self):
-        if self.is_es7:
-            json_output = {
-                "query": {
-                    "bool": {
-                        "filter": [
-                            {
-                                "term": {
-                                    "base_doc": "couchuser"
-                                }
-                            },
-                            {
-                                "term": {
-                                    "is_active": True
-                                }
+        json_output = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {
+                            "term": {
+                                "base_doc": "couchuser"
                             }
-                        ],
-                        "must": {
-                            "match_all": {}
-                        }
-                    }
-                },
-                "size": SIZE_LIMIT
-            }
-        else:
-            json_output = {
-                "query": {
-                    "filtered": {
-                        "filter": {
-                            "and": [
-                                {"term": {"base_doc": "couchuser"}},
-                                {"term": {"is_active": True}}
-                            ]
                         },
-                        "query": {"match_all": {}}
+                        {
+                            "term": {
+                                "is_active": True
+                            }
+                        }
+                    ],
+                    "must": {
+                        "match_all": {}
                     }
-                },
-                "size": SIZE_LIMIT
-            }
+                }
+            },
+            "size": SIZE_LIMIT
+        }
         query = users.UserES()
         raw_query = query.raw_query
         self.checkQuery(raw_query, json_output, is_raw_query=True)
 
     def test_filtered_forms(self):
-        if self.is_es7:
-            json_output = {
-                "query": {
-                    "bool": {
-                        "filter": [
-                            {"term": {"domain.exact": "zombocom"}},
-                            {"term": {"xmlns.exact": "banana"}},
-                            {"term": {"doc_type": "xforminstance"}},
-                            {"exists": {"field": "xmlns"}},
-                            {"exists": {"field": "form.meta.userID"}},
-                            {"exists": {"field": "domain"}},
-                        ],
-                        "must": {
-                            "match_all": {}
-                        }
+        json_output = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {"term": {"domain.exact": "zombocom"}},
+                        {"term": {"xmlns.exact": "banana"}},
+                        {"term": {"doc_type": "xforminstance"}},
+                        {"exists": {"field": "xmlns"}},
+                        {"exists": {"field": "form.meta.userID"}},
+                        {"exists": {"field": "domain"}},
+                    ],
+                    "must": {
+                        "match_all": {}
                     }
-                },
-                "size": SIZE_LIMIT
-            }
-        else:
-            json_output = {
-                "query": {
-                    "filtered": {
-                        "filter": {
-                            "and": [
-                                {"term": {"domain.exact": "zombocom"}},
-                                {"term": {"xmlns.exact": "banana"}},
-                                {"term": {"doc_type": "xforminstance"}},
-                                {"not": {"missing": {"field": "xmlns"}}},
-                                {"not": {"missing": {"field": "form.meta.userID"}}},
-                                {"not": {"missing": {"field": "domain"}}},
-                            ]
-                        },
-                        "query": {"match_all": {}}
-                    }
-                },
-                "size": SIZE_LIMIT
-            }
+                }
+            },
+            "size": SIZE_LIMIT
+        }
         query = forms.FormES()\
                 .filter(filters.domain("zombocom"))\
                 .xmlns('banana')
@@ -287,10 +171,7 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
         query = (users.UserES()
                  .remove_default_filter('not_deleted')
                  .remove_default_filter('active'))
-        if self.is_es7:
-            filters = query.raw_query['query']['bool']['filter']
-        else:
-            filters = query.raw_query['query']['filtered']['filter']['and']
+        filters = query.raw_query['query']['bool']['filter']
         self.assertTrue(len(filters) > 0)
 
     def test_values_list(self):
@@ -343,48 +224,28 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
             self.assertEqual(['mikesproject', 'jacksproject'], response)
 
     def test_sort(self):
-        if self.is_es7:
-            json_output = {
-                "query": {
-                    "bool": {
-                        "filter": [
-                            {
-                                "match_all": {}
-                            }
-                        ],
-                        "must": {
+        json_output = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {
                             "match_all": {}
                         }
+                    ],
+                    "must": {
+                        "match_all": {}
                     }
-                },
-                "sort": [
-                    {
-                        "timeEnd": {
-                            "order": "asc"
-                        }
-                    }
-                ],
-                "size": SIZE_LIMIT
-            }
-        else:
-            json_output = {
-                "query": {
-                    "filtered": {
-                        "filter": {
-                            "and": [
-                                {"match_all": {}}
-                            ]
-                        },
-                        "query": {"match_all": {}}
-                    }
-                },
-                "size": SIZE_LIMIT,
-                "sort": [{
+                }
+            },
+            "sort": [
+                {
                     "timeEnd": {
                         "order": "asc"
                     }
-                }],
-            }
+                }
+            ],
+            "size": SIZE_LIMIT
+        }
         query = (
             HQESQuery('forms')
             .sort('timeEnd')
@@ -401,54 +262,30 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
         self.checkQuery(query.sort('timeStart', reset_sort=False), json_output)
 
     def test_cleanup_before_run(self):
-        if self.is_es7:
-            json_output = {
-                "query": {
-                    "bool": {
-                        "filter": [
-                            {
-                                "match_all": {}
-                            }
-                        ],
-                        "must": {
+        json_output = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {
                             "match_all": {}
                         }
+                    ],
+                    "must": {
+                        "match_all": {}
                     }
-                },
-                "size": SIZE_LIMIT,
-                "aggs": {
-                    "by_day": {
-                        "date_histogram": {
-                            "field": "date",
-                            "interval": "day",
-                            "time_zone": "-01:00"
-                        }
+                }
+            },
+            "size": SIZE_LIMIT,
+            "aggs": {
+                "by_day": {
+                    "date_histogram": {
+                        "field": "date",
+                        "interval": "day",
+                        "time_zone": "-01:00"
                     }
                 }
             }
-        else:
-            json_output = {
-                "query": {
-                    "filtered": {
-                        "filter": {
-                            "and": [
-                                {"match_all": {}}
-                            ]
-                        },
-                        "query": {"match_all": {}}
-                    }
-                },
-                "aggs": {
-                    "by_day": {
-                        "date_histogram": {
-                            "field": "date",
-                            "interval": "day",
-                            "time_zone": "-01:00"
-                        }
-                    }
-                },
-                "size": SIZE_LIMIT
-            }
+        }
         expected_output = deepcopy(json_output)
         expected_output['size'] = 0
         query = HQESQuery('forms').date_histogram('by_day', 'date', 'day', '-01:00')
@@ -456,51 +293,26 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
         self.checkQuery(query._clean_before_run(), expected_output)
 
     def test_exclude_source(self):
-        if self.is_es7:
-            json_output = {
-                "query": {
-                    "bool": {
-                        "filter": [
-                            {
-                                "term": {
-                                    "domain.exact": "test-exclude"
-                                }
-                            },
-                            {
-                                "match_all": {}
+        json_output = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {
+                            "term": {
+                                "domain.exact": "test-exclude"
                             }
-                        ],
-                        "must": {
-                            "match_all": {}
-                        }
-                    }
-                },
-                "size": SIZE_LIMIT,
-                "_source": False
-            }
-        else:
-            json_output = {
-                "query": {
-                    "filtered": {
-                        "filter": {
-                            "and": [
-                                {
-                                    "term": {
-                                        "domain.exact": "test-exclude"
-                                    }
-                                },
-                                {
-                                    "match_all": {}
-                                }
-                            ]
                         },
-                        "query": {
+                        {
                             "match_all": {}
                         }
+                    ],
+                    "must": {
+                        "match_all": {}
                     }
-                },
-                "_source": False,
-                "size": SIZE_LIMIT,
-            }
+                }
+            },
+            "_source": False,
+            "size": SIZE_LIMIT,
+        }
         query = HQESQuery('forms').domain('test-exclude').exclude_source()
         self.checkQuery(query, json_output)
