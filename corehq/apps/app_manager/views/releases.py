@@ -82,7 +82,7 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.users.models import CommCareUser, CouchUser
-from corehq.apps.users.permissions import can_manage_releases, can_manage_releases_by_build_profile
+from corehq.apps.users.permissions import can_manage_releases
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse
 
@@ -203,7 +203,7 @@ def get_releases_context(request, domain, app_id):
         'prompt_settings_form': prompt_settings_form,
         'full_name': request.couch_user.full_name,
         'can_manage_releases': can_manage_releases(request.couch_user, request.domain, app_id),
-        'can_manage_releases_by_build_profile': can_manage_releases_by_build_profile(request.couch_user, domain),
+        'can_edit_apps': request.couch_user.can_edit_apps(),
     }
     if not app.is_remote_app():
         context.update({

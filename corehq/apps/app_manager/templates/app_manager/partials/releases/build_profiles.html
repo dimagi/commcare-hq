@@ -23,8 +23,8 @@
         and options on different phones. Application profiles will appear in <em>new</em> versions
         of the application.
       {% endblocktrans %}
-      {% if can_manage_releases_by_build_profile %}
-        <a class="text-right" href="{% url 'manage_releases_by_app_profile' domain %}">{% trans "Manage application profiles here."%}</a>
+      {% if can_edit_apps and request|toggle_enabled:"RELEASE_BUILDS_PER_PROFILE" %}
+        <a href="{% url 'manage_releases_by_app_profile' domain %}">{% trans "Manage application profiles here."%}</a>
       {% endif %}
       {% blocktrans %}
         Learn more about Application Profiles on our <a href='https://confluence.dimagi.com/display/commcarepublic/Application+Profiles'>Help Site</a>
