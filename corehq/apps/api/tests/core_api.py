@@ -1,7 +1,6 @@
 import json
 
 from datetime import datetime
-from django.conf import settings
 from django.test import SimpleTestCase, TestCase
 from django.test.client import RequestFactory
 from mock import patch
@@ -549,117 +548,87 @@ class TestParamstoESFilters(ElasticTestMixin, SimpleTestCase):
             "/a/test_domain/api/v0.5/form/",
             data={'_search': json.dumps(query)}
         )
-        if settings.ELASTICSEARCH_MAJOR_VERSION == 2:
-            expected = {
-                "query": {
-                    "filtered": {
-                        "filter": {
-                            "and": [
-                                {
-                                    "term": {
-                                        "domain.exact": "test_domain"
-                                    }
-                                },
-                                {
-                                    "term": {
-                                        "doc_type": "xforminstance"
-                                    }
-                                },
-                                query['filter'],
-                                {
-                                    "match_all": {}
-                                }
-                            ]
+        expected = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {
+                            "term": {
+                                "domain.exact": "test_domain"
+                            }
                         },
-                        "query": {
-                            "match_all": {}
-                        }
-                    }
-                },
-                "size": 1000000
-            }
-        else:
-            expected = {
-                "query": {
-                    "bool": {
-                        "filter": [
-                            {
-                                "term": {
-                                    "domain.exact": "test_domain"
-                                }
-                            },
-                            {
-                                "term": {
-                                    "doc_type": "xforminstance"
-                                }
-                            },
-                            {
-                                "bool": {
-                                    "should": [
-                                        {
-                                            "bool": {
-                                                "filter": [
-                                                    {
-                                                        "bool": {
-                                                            "must_not": {
-                                                                "bool": {
-                                                                    "must_not": {
-                                                                        "exists": {
-                                                                            "field": "server_modified_on"
-                                                                        }
+                        {
+                            "term": {
+                                "doc_type": "xforminstance"
+                            }
+                        },
+                        {
+                            "bool": {
+                                "should": [
+                                    {
+                                        "bool": {
+                                            "filter": [
+                                                {
+                                                    "bool": {
+                                                        "must_not": {
+                                                            "bool": {
+                                                                "must_not": {
+                                                                    "exists": {
+                                                                        "field": "server_modified_on"
                                                                     }
                                                                 }
                                                             }
                                                         }
-                                                    },
-                                                    {
-                                                        "range": {
-                                                            "server_modified_on": {
-                                                                "gte": "2019-01-01T00:00:00",
-                                                                "lte": "2019-01-02T00:00:00"
-                                                            }
+                                                    }
+                                                },
+                                                {
+                                                    "range": {
+                                                        "server_modified_on": {
+                                                            "gte": "2019-01-01T00:00:00",
+                                                            "lte": "2019-01-02T00:00:00"
                                                         }
                                                     }
-                                                ]
-                                            }
-                                        },
-                                        {
-                                            "bool": {
-                                                "filter": [
-                                                    {
-                                                        "bool": {
-                                                            "must_not": {
-                                                                "exists": {
-                                                                    "field": "server_modified_on"
-                                                                }
-                                                            }
-                                                        }
-                                                    },
-                                                    {
-                                                        "range": {
-                                                            "received_on": {
-                                                                "gte": "2019-01-01T00:00:00",
-                                                                "lte": "2019-01-02T00:00:00"
-                                                            }
-                                                        }
-                                                    }
-                                                ]
-                                            }
+                                                }
+                                            ]
                                         }
-                                    ]
-                                }
-                            },
-                            {
-                                "match_all": {}
+                                    },
+                                    {
+                                        "bool": {
+                                            "filter": [
+                                                {
+                                                    "bool": {
+                                                        "must_not": {
+                                                            "exists": {
+                                                                "field": "server_modified_on"
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                {
+                                                    "range": {
+                                                        "received_on": {
+                                                            "gte": "2019-01-01T00:00:00",
+                                                            "lte": "2019-01-02T00:00:00"
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
                             }
-                        ],
-                        "must": {
+                        },
+                        {
                             "match_all": {}
                         }
+                    ],
+                    "must": {
+                        "match_all": {}
                     }
-                },
-                "size": 1000000
-            }
+                }
+            },
+            "size": 1000000
+        }
         self.checkQuery(
             es_query_from_get_params(request.GET, 'test_domain'),
             expected,
@@ -697,30 +666,17 @@ class TestParamstoESFilters(ElasticTestMixin, SimpleTestCase):
                 }
             ]
         }
-        if settings.ELASTICSEARCH_MAJOR_VERSION == 2:
-            expected = {
-                "query": {
-                    "filtered": {
-                        "filter": _filter,
-                        "query": {
-                            "match_all": {}
-                        }
+        expected = {
+            "query": {
+                "bool": {
+                    "filter": _filter["and"],
+                    "must": {
+                        "match_all": {}
                     }
-                },
-                "size": 1000000
-            }
-        else:
-            expected = {
-                "query": {
-                    "bool": {
-                        "filter": _filter["and"],
-                        "must": {
-                            "match_all": {}
-                        }
-                    }
-                },
-                "size": 1000000
-            }
+                }
+            },
+            "size": 1000000
+        }
         self.checkQuery(
             es_query_from_get_params(request.GET, 'test_domain'),
             expected,
