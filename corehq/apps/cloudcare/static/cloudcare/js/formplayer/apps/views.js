@@ -1,7 +1,7 @@
 /*global FormplayerFrontend */
 
 FormplayerFrontend.module("Apps.Views", function (Views, FormplayerFrontend, Backbone, Marionette) {
-    Views.GridItem = Marionette.ItemView.extend({
+    Views.GridItem = Marionette.LayoutView.extend({
         template: "#row-template",
         tagName: "div",
         className: "grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request",
@@ -67,7 +67,7 @@ FormplayerFrontend.module("Apps.Views", function (Views, FormplayerFrontend, Bac
      * The user doesn't need to select the application because we already have
      * that information. Used for phone previewing in the app manager
      */
-    Views.SingleAppView = Marionette.ItemView.extend({
+    Views.SingleAppView = Marionette.LayoutView.extend({
         template: "#single-app-template",
         className: 'single-app-view',
 
@@ -102,7 +102,7 @@ FormplayerFrontend.module("Apps.Views", function (Views, FormplayerFrontend, Bac
         },
     });
 
-    Views.LandingPageAppView = Marionette.ItemView.extend({
+    Views.LandingPageAppView = Marionette.LayoutView.extend({
         template: "#landing-page-app-template",
         className: 'landing-page-app-view',
 

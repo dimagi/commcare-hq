@@ -1,7 +1,7 @@
 /*global FormplayerFrontend */
 
 FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Backbone, Marionette) {
-    Views.QueryView = Marionette.ItemView.extend({
+    Views.QueryView = Marionette.LayoutView.extend({
         tagName: "tr",
         className: "formplayer-request",
         template: "#query-view-item-template",

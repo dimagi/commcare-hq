@@ -7,7 +7,7 @@ FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, B
      * allow a user to click buttons such as back and are omnipresent throughout
      * the session.
      */
-    Views.PhoneNavigation = Marionette.ItemView.extend({
+    Views.PhoneNavigation = Marionette.LayoutView.extend({
         className: 'formplayer-phone-navigation',
         template: '#formplayer-phone-navigation-template',
         initialize: function (options) {

@@ -1,7 +1,7 @@
 /*global FormplayerFrontend, Util */
 
 FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Backbone, Marionette, $) {
-    Views.MenuView = Marionette.ItemView.extend({
+    Views.MenuView = Marionette.LayoutView.extend({
         tagName: function () {
             if (this.model.collection.layoutStyle === 'grid') {
                 return 'div';
@@ -206,7 +206,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         return view;
     };
 
-    Views.CaseView = Marionette.ItemView.extend({
+    Views.CaseView = Marionette.LayoutView.extend({
         tagName: "tr",
         template: "#case-view-item-template",
 
@@ -417,7 +417,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         childView: Views.CaseViewUnclickable,
     });
 
-    Views.BreadcrumbView = Marionette.ItemView.extend({
+    Views.BreadcrumbView = Marionette.LayoutView.extend({
         tagName: "li",
         template: "#breadcrumb-item-template",
         className: "breadcrumb-text",
@@ -445,7 +445,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         },
     });
 
-    Views.DetailView = Marionette.ItemView.extend({
+    Views.DetailView = Marionette.LayoutView.extend({
         tagName: "tr",
         className: "",
         template: "#detail-view-item-template",
@@ -467,7 +467,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         childViewContainer: "tbody",
     });
 
-    Views.DetailTabView = Marionette.ItemView.extend({
+    Views.DetailTabView = Marionette.LayoutView.extend({
         tagName: "li",
         className: function () {
             return this.options.model.get('active') ? 'active' : '';

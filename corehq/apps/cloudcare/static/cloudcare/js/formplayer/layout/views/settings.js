@@ -4,7 +4,7 @@ FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, B
     /**
      * Sets the application language. Should only be used for App Preview.
      */
-    var LangSettingView = Marionette.ItemView.extend({
+    var LangSettingView = Marionette.LayoutView.extend({
         template: '#lang-setting-template',
         tagName: 'tr',
         initialize: function () {
@@ -34,7 +34,7 @@ FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, B
      * Sets whether or not the application should use One Question Per Screen or not.
      * Should only be used for App Preview.
      */
-    var DisplaySettingView = Marionette.ItemView.extend({
+    var DisplaySettingView = Marionette.LayoutView.extend({
         template: '#display-setting-template',
         tagName: 'tr',
         initialize: function () {
@@ -62,7 +62,7 @@ FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, B
      * Force clear user data.
      * Available for both Web Apps and App Preview
      */
-    var ClearUserDataView = Marionette.ItemView.extend({
+    var ClearUserDataView = Marionette.LayoutView.extend({
         template: '#clear-user-data-setting-template',
         tagName: 'tr',
         ui: {
@@ -84,7 +84,7 @@ FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, B
      * Break exising locks
      * Available only for Web Apps
      */
-    var BreakLocksView = Marionette.ItemView.extend({
+    var BreakLocksView = Marionette.LayoutView.extend({
         template: '#break-locks-setting-template',
         tagName: 'tr',
         ui: {
