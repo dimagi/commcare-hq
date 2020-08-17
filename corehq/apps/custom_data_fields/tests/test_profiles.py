@@ -92,7 +92,7 @@ class TestCustomDataFieldsProfile(TestCase):
             },
         }])
 
-    def test_has_users_assigned(self):
+    def test_users_assigned(self):
         self.es = get_es_new()
         ensure_index_deleted(USER_INDEX)
         initialize_index_and_mapping(self.es, USER_INDEX_INFO)
@@ -105,6 +105,8 @@ class TestCustomDataFieldsProfile(TestCase):
         self.es.indices.refresh(USER_INDEX)
 
         self.assertFalse(self.profile3.has_users_assigned)
+        self.assertEqual([], self.profile3.user_ids_assigned())
         self.assertTrue(self.profile5.has_users_assigned)
+        self.assertEqual([user._id], self.profile5.user_ids_assigned())
 
         ensure_index_deleted(USER_INDEX)

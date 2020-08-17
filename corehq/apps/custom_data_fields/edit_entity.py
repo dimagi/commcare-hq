@@ -1,3 +1,5 @@
+import json
+
 from collections import OrderedDict
 
 from django import forms
@@ -15,18 +17,26 @@ from corehq import toggles
 from .models import (
     CUSTOM_DATA_FIELD_PREFIX,
     CustomDataFieldsDefinition,
+    CustomDataFieldsProfile,
     PROFILE_SLUG,
     is_system_key,
 )
 
 
-def add_prefix(field_dict, prefix):
+def with_prefix(string, prefix):
     """
-    Prefix all keys in the dict with the defined
+    Prefix single string with the defined
     custom data prefix (such as data-field-whatevs).
     """
+    return "{}-{}".format(prefix, string)
+
+
+def add_prefix(field_dict, prefix):
+    """
+    Prefix all keys in the dict.
+    """
     return {
-        "{}-{}".format(prefix, k): v
+        with_prefix(k, prefix): v
         for k, v in field_dict.items()
     }
 
@@ -95,13 +105,14 @@ class CustomDataEditor(object):
             return forms.CharField(label=field.label, required=field.is_required,
                                    validators=[validator])
         elif field.choices:
+            # select2 must be controlled via knockout if form uses knockout
+            attrs = {'class': 'hqwebapp-select2'} if not self.ko_model else {}
             return forms.ChoiceField(
                 label=field.label,
                 required=field.is_required,
                 choices=[('', _('Select one'))] + [(c, c) for c in field.choices],
-                widget=forms.Select(attrs={'class': 'hqwebapp-select2'}),
+                widget=forms.Select(attrs=attrs)
             )
-            return choice_field
         else:
             return forms.CharField(label=field.label, required=field.is_required)
 
@@ -115,32 +126,38 @@ class CustomDataEditor(object):
         if toggles.CUSTOM_DATA_FIELDS_PROFILES.enabled(self.domain):
             profiles = self.model.get_profiles()
             if profiles:
+                attrs = {
+                    'data-placeholder': _('Select a profile'),
+                    'data-allow-clear': 'true',
+                }
+                if not self.ko_model:
+                    attrs.update({'class': 'hqwebapp-select2'})
                 fields[PROFILE_SLUG] = forms.IntegerField(
                     label=_('Profile'),
                     required=False,
                     widget=Select(choices=[('', _('Select a profile'))] + [
                         (p.id, p.name)
                         for p in profiles
-                    ], attrs={
-                        'class': 'hqwebapp-select2',
-                        'data-placeholder': _('Select a profile'),
-                        'data-allow-clear': 'true',
-                    })
+                    ], attrs=attrs)
                 )
         for field in self.fields:
             fields[field.slug] = self._make_field(field)
 
         if self.ko_model:
-            field_names = [
-                Field(
+            field_names = []
+            for field_name, field in fields.items():
+                data_binds = [
+                    f"value: {self.ko_model}.{field_name}.value",
+                    f"disable: {self.ko_model}.{field_name}.disable",
+                ]
+                if hasattr(field, 'choices') or field_name == PROFILE_SLUG:
+                    data_binds.append("select2: " + json.dumps([
+                        {"id": id, "text": text} for id, text in field.widget.choices
+                    ]))
+                field_names.append(Field(
                     field_name,
-                    data_bind=f"""
-                        value: {self.ko_model}.{field_name}.value,
-                        disable: {self.ko_model}.{field_name}.disable,
-                    """
-                )
-                for field_name, field in fields.items()
-            ]
+                    data_bind=", ".join(data_binds)
+                ))
         else:
             field_names = list(fields)
 
@@ -167,11 +184,22 @@ class CustomDataEditor(object):
         CustomDataForm._has_uncategorized = bool(self.uncategorized_form) and post_dict is None
 
         if post_dict:
-            fields = post_dict
+            fields = post_dict.copy()   # make mutable
         elif self.existing_custom_data is not None:
             fields = add_prefix(self.existing_custom_data, self.prefix)
         else:
-            fields = None
+            fields = {}
+
+        # Add profile fields so that form validation passes
+        try:
+            profile_fields = CustomDataFieldsProfile.objects.get(
+                id=int(fields.get(with_prefix(PROFILE_SLUG, self.prefix))),
+                definition__field_type=self.field_view.field_type,
+                definition__domain=self.domain,
+            ).fields
+        except (ValueError, TypeError, CustomDataFieldsProfile.DoesNotExist):
+            profile_fields = {}
+        fields.update(add_prefix(profile_fields, self.prefix))
 
         self.form = CustomDataForm(fields, prefix=self.prefix)
         return self.form
