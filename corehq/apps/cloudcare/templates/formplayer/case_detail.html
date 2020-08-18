@@ -19,11 +19,6 @@
   <% } %>
 </script>
 
-<script type="text/template" id="detail-view-tab-list-template">
-  <ul class="nav nav-tabs" role="tablist">
-  </ul>
-</script>
-
 <script type="text/template" id="detail-view-tab-item-template">
   <a href="#" role="tab" data-keyboard="true" data-toggle="tab"><%- title %></a>
 </script>
@@ -37,7 +32,7 @@
       </div>
       <div class="modal-body">
         <div class="js-detail-tabs module-casedetail-tabs"></div>
-        <div class="js-detail-content"></div>
+        <table class="js-detail-content table module-table module-table-casedetail"></table>
       </div>
       <div class="modal-footer">
         <button type="button"
