@@ -111,7 +111,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
 
     var SettingsContainerView = Marionette.CollectionView.extend({
         tagName: 'tbody',
-        getChildView: function (item) {
+        childView: function (item) {
             if (item.get('slug') === slugs.SET_LANG) {
                 return LangSettingView;
             } else if (item.get('slug') === slugs.SET_DISPLAY) {
