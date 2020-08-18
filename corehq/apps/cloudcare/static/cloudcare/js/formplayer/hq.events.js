@@ -5,7 +5,8 @@
  *
  * This is framework for allowing messages from HQ
  */
-FormplayerFrontend.module("HQ.Events", function (Events, FormplayerFrontend) {
+hqDefine("cloudcare/js/formplayer/hq.events", function () {
+    var Events = {};
 
     Events.Receiver = function (allowedHost) {
         this.allowedHost = allowedHost;
@@ -55,4 +56,6 @@ FormplayerFrontend.module("HQ.Events", function (Events, FormplayerFrontend) {
         PHONE_VIEW: 'phone-view',
         TABLET_VIEW: 'tablet-view',
     };
+
+    return Events;
 });
