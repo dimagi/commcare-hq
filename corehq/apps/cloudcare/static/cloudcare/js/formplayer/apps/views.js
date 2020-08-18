@@ -61,7 +61,7 @@ hqDefine("cloudcare/js/formplayer/apps/views", function() {
                 el: '.js-application-container',
             },
         },
-        onShow: function () {
+        onRender: function () {
             this.getRegion('body').show(new GridContainerView({
                 collection: this.collection,
             }));

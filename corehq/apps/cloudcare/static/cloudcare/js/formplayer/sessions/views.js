@@ -50,9 +50,8 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
                 el: 'table',
             },
         },
-        // TODO: in 3, replace onShow with onRender and show with showChildView (see CollectionView docs on rendering tables)
-        onShow: function () {
-            this.getRegion('body').show(new SessionTableView({
+        onRender: function () {
+            this.showChildView('body', new SessionTableView({
                 collection: this.collection,
             }));
         },

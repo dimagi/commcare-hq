@@ -130,9 +130,8 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
                 el: 'table',
             },
         },
-        // TODO: in 3, replace onShow with onRender and show with showChildView (see CollectionView docs on rendering tables)
-        onShow: function () {
-            this.getRegion('body').show(new SettingsContainerView({
+        onRender: function () {
+            this.showChildView('body', new SettingsContainerView({
                 collection: this.collection,
             }));
         },

@@ -133,7 +133,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function() {
                 },
             })
                 .done(function () {
-                    self.getRegion('body').show(new UserTableView({   // TODO: in 3, replace with showChildView (see CollectionView docs on rendering tables)
+                    self.showChildView('body', new UserTableView({
                         collection: self.collection,
                     }));
                 })
