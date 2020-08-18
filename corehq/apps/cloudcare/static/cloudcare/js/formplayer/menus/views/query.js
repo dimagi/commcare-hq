@@ -31,7 +31,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 el: 'table',
             },
         },
-        onShow: function () {
+        onRender: function () {
             this.getRegion('body').show(new QueryTableView({
                 collection: this.collection,
             }));

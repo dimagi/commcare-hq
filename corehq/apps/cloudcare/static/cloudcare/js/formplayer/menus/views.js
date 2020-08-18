@@ -92,7 +92,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 el: "table",
             },
         },
-        onShow: function () {
+        onRender: function () {
             this.getRegion('body').show(new MenuTableView({
                 collection: this.collection,
             }));
@@ -290,7 +290,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 el: ".js-case-container",
             },
         },
-        onShow: function () {
+        onRender: function () {
             this.getRegion('body').show(new CaseListContainerView({
                 collection: this.collection,
                 styles: this.styles,
@@ -473,10 +473,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 el: '.not-home',
             },
         },
-        // TODO: in 3, replace onShow with onRender and show with showChildView (see CollectionView docs on
-        // rendering tables)
-        onShow: function () {
-            this.getRegion('body').show(new BreadcrumbContainerView({
+        onRender: function () {
+            this.showChildView('body', new BreadcrumbContainerView({
                 collection: this.collection,
             }));
         },
