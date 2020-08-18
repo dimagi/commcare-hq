@@ -102,11 +102,8 @@ FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, B
         },
     });
 
-    Views.SettingsView = Marionette.CompositeView.extend({
-        ui: {
-            done: '.js-done',
-        },
-        childViewContainer: 'tbody',
+    var SettingsContainerView = Marionette.CollectionView.extend({
+        tagName: 'tbody',
         getChildView: function (item) {
             if (item.get('slug') === Views.SettingSlugs.SET_LANG) {
                 return LangSettingView;
@@ -117,6 +114,23 @@ FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, B
             } else if (item.get('slug') === Views.SettingSlugs.BREAK_LOCKS) {
                 return BreakLocksView;
             }
+        },
+    });
+
+    Views.SettingsView = Marionette.LayoutView.extend({
+        regions: {
+            body: {
+                el: 'table',
+            },
+        },
+        // TODO: in 3, replace onShow with onRender and show with showChildView (see CollectionView docs on rendering tables)
+        onShow: function () {
+            this.getRegion('body').show(new SettingsContainerView({
+                collection: this.collection,
+            }));
+        },
+        ui: {
+            done: '.js-done',
         },
         events: {
             'click @ui.done': 'onClickDone',
