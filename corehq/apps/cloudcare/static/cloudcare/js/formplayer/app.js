@@ -316,7 +316,7 @@ FormplayerFrontend.on("start", function (options) {
     if (options.allowedHost) {
         window.addEventListener(
             "message",
-            new FormplayerFrontend.HQ.Events.Receiver(options.allowedHost),
+            hqImport("cloudcare/js/formplayer/hq.events").Receiver(options.allowedHost),
             false
         );
     }
