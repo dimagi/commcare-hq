@@ -502,12 +502,9 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         },
     });
 
-    Views.DetailListView = Marionette.CompositeView.extend({
-        tagName: "table",
-        className: "table module-table module-table-casedetail",
-        template: "#detail-view-list-template",
+    Views.DetailListView = Marionette.CollectionView.extend({
         childView: Views.DetailView,
-        childViewContainer: "tbody",
+        tagName: "tbody",
     });
 
     Views.DetailTabView = Marionette.LayoutView.extend({
@@ -530,15 +527,17 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         },
     });
 
-    Views.DetailTabListView = Marionette.CompositeView.extend({
-        tagName: "div",
-        template: "#detail-view-tab-list-template",
+    Views.DetailTabListView = Marionette.CollectionView.extend({
+        tagName: "ul",
+        className: "nav nav-tabs",
         childView: Views.DetailTabView,
-        childViewContainer: "ul",
         childViewOptions: function () {
             return {
                 showDetail: this.options.showDetail,
             };
+        },
+        onRender: function () {
+            this.$el.attr("role", "tablist");
         },
     });
 })
