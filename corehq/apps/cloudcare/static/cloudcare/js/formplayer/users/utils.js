@@ -1,6 +1,7 @@
 /*global FormplayerFrontend */
 
-FormplayerFrontend.module("Utils", function (Utils, FormplayerFrontend, Backbone, Marionette) {
+hqDefine("cloudcare/js/formplayer/users/utils", function () {
+    var Utils = {};
     Utils.Users = {
         /**
          * logInAsUser
@@ -48,4 +49,5 @@ FormplayerFrontend.module("Utils", function (Utils, FormplayerFrontend, Backbone
             return $.removeCookie(Utils.Users.restoreAsKey(domain, username));
         },
     };
+    return Utils;
 });

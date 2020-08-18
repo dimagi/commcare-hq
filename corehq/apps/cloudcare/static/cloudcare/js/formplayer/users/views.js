@@ -47,7 +47,7 @@ FormplayerFrontend.module("Users.Views", function (Views, FormplayerFrontend, Ba
                 ),
                 confirmText: gettext('Yes, log in as this user'),
                 onConfirm: function () {
-                    FormplayerFrontend.Utils.Users.logInAsUser(this.model.get('username'));
+                    hqImport("cloudcare/js/formplayer/users/utils").Users.logInAsUser(this.model.get('username'));
                     FormplayerFrontend.trigger('navigateHome');
                     FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
                         new FormplayerFrontend.Users.Views.RestoreAsBanner({
