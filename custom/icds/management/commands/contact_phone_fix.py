@@ -26,7 +26,6 @@ from casexml.apps.case.mock import CaseBlock
 DOMAIN = "icds-cas"
 CASE_TYPE = "person"
 
-DATE_OF_REGISTRATION_PROPERTY = "date_of_registration"
 PHONE_NUMBER_PROPERTY = "contact_phone_number"
 HAS_MOBILE_PROPERTY = "has_mobile"
 HAS_MOBILE_PROPERTY_VALUE = "yes"
@@ -42,13 +41,15 @@ for loc in SQLLocation.active_objects.filter(location_type__code='state', domain
     if loc.metadata.get('is_test_location') == 'test':
         TEST_STATES.append(loc.name)
 
+
 class Command(BaseCommand):
     help = """
     Find the person cases which are
         - not deleted
         - not belonging to test locations,
         - with has_mobile case_property set to "yes",
-            - if the contact_phone_number_is_verified is 1, update the contact_phone_number property by appending 91 with phone_number,
+            - if the contact_phone_number_is_verified is 1, 
+            update the contact_phone_number property by appending 91 with phone_number,
     """
 
     def __init__(self, *args, **kwargs):
@@ -77,18 +78,16 @@ class Command(BaseCommand):
         if case.get_case_property(HAS_MOBILE_PROPERTY) == HAS_MOBILE_PROPERTY_VALUE:
             phone_number = case.get_case_property(PHONE_NUMBER_PROPERTY)
             phone_number_verified = case.get_case_property(CONTACT_PHONE_NUMBER_IS_VERIFIED)
-            if len(phone_number)==10 and phone_number_verified == CONTACT_PHONE_NUMBER_IS_VERIFIED_VALUE:
+            if len(phone_number) == 10 and phone_number_verified == CONTACT_PHONE_NUMBER_IS_VERIFIED_VALUE:
                 return True
         return False
 
     def _find_case_ids_with_to_be_updated_phone_number(self):
         case_ids_with_to_be_updated_phone_number = []
 
-        start_date = date.today() - timedelta(days=100)
         reindex_accessor = CaseReindexAccessor(
             domain=DOMAIN,
             case_type='person', limit_db_aliases=[self.db_alias],
-            start_date=start_date
         )
 
         filename = 'to_be_updated_phone_numbers_%s_%s.csv' % (self.db_alias, datetime.utcnow())
@@ -113,8 +112,9 @@ class Command(BaseCommand):
         update_cases = self.case_accessor.get_cases(list(chunk))
         case_ids_list = []
         for update_case in update_cases:
-            if (update_case.get_case_property(HAS_MOBILE_PROPERTY) == HAS_MOBILE_PROPERTY_VALUE and
-                    len(update_case.get_case_property(PHONE_NUMBER_PROPERTY)) == 10 and update_case.get_case_property(CONTACT_PHONE_NUMBER_IS_VERIFIED) == CONTACT_PHONE_NUMBER_IS_VERIFIED_VALUE):
+            if (update_case.get_case_property(HAS_MOBILE_PROPERTY) == HAS_MOBILE_PROPERTY_VALUE and 
+                len(update_case.get_case_property(PHONE_NUMBER_PROPERTY)) == 10 and 
+                update_case.get_case_property(CONTACT_PHONE_NUMBER_IS_VERIFIED) == CONTACT_PHONE_NUMBER_IS_VERIFIED_VALUE):
                 case_ids_list.append(update_case.case_id)
         return case_ids_list
 
@@ -162,7 +162,7 @@ class Command(BaseCommand):
 def create_case_blocks(case_ids):
     case_blocks = []
     for case_id in case_ids:
-        updated_phone_number  = '91' + case_id.get_case_property(PHONE_NUMBER_PROPERTY)
+        updated_phone_number = '91' + case_id.get_case_property(PHONE_NUMBER_PROPERTY)
         case_block = CaseBlock.deprecated_init(case_id,
                                update={PHONE_NUMBER_PROPERTY: updated_phone_number},
                                user_id=SYSTEM_USER_ID)
