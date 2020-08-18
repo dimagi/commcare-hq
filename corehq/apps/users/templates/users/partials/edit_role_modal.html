@@ -1,6 +1,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
+
 <div data-bind="modal: roleBeingEdited" tabindex="-1" role="dialog" class="modal fade">
   <div data-bind="with: roleBeingEdited" class="modal-dialog">
     <form data-bind="submit: $root.submitNewRole">
@@ -34,7 +35,6 @@
             <legend>
               {% trans "Area Access" %}
             </legend>
-
             <div class="form-group">
               <div class="col-sm-2">
                 {% trans "Can Edit" %}
@@ -44,9 +44,8 @@
               </div>
             </div>
             <div data-bind="foreach: accessAreas">
-              {# BEGIN web_users permissions #}
-              <div class="form-group" data-bind="visible: $parent.permissions.access_all_locations">
-                <div class="col-sm-2 controls">
+              <div class="form-group" data-bind="visible: showOption">
+                <div class="col-sm-2 controls" data-bind="visible: showEditCheckbox">
                   <div class="form-check">
                     <input type="checkbox"
                            data-bind="attr: {id: editCheckboxLabel}, checked: editPermission, disable: !$root.allowEdit" />
@@ -56,8 +55,13 @@
                     </label>
                   </div>
                 </div>
+                <div class="col-sm-2 controls" data-bind="visible: !showEditCheckbox">
+                  <div class="form-check-placeholder">
+                    <label></label>
+                  </div>
+                </div>
                 <div class="col-sm-2 controls" data-bind="visible: showViewCheckbox">
-                  {# PLACEHOLDER checkbox when edit_web_users is true #}
+                  {# PLACEHOLDER checkbox when editPermission() is true #}
                   <div class="form-check" data-bind="visible: editPermission()">
                     <input type="checkbox" checked="checked" disabled="disabled" />
                     <label>
@@ -66,7 +70,7 @@
                     </label>
                   </div>
                   {# end PLACEHOLDER #}
-                  {# REAL checkbox that controls view_web_users permission #}
+                  {# REAL checkbox that controls viewPermission when editPermission() is false #}
                   <div class="form-check" data-bind="visible: !editPermission()">
                     <input type="checkbox"
                            data-bind="attr: {id: viewCheckboxLabel}, checked: viewPermission,
@@ -85,20 +89,20 @@
                   </div>
                 <div class="col-sm-8 control-label">
                   <div data-bind="html: text"></div>
-                  {# PLACEHOLDER checkbox when edit_commcare_users and edit_groups is true #}
+                  {# PLACEHOLDER checkbox when edit_commcare_users and editPermission() is true #}
                   <div class="form-check" data-bind="visible: $parent.permissions.edit_commcare_users() && editPermission() && showAllowCheckbox">
                     <input type="checkbox" checked="checked" disabled="disabled"/>
                     <label data-bind="text: allowCheckboxText"></label>
                   </div>
                   {# end PLACEHOLDER #}
-                  {# REAL checkbox for edit_users_in_groups #}
+                  {# REAL checkbox for allowCheckboxPermission #}
                   <div class="form-check" data-bind="visible: !$parent.permissions.edit_commcare_users() && editPermission() && showAllowCheckbox">
                     <input type="checkbox"
                            data-bind="attr: {id: allowCheckboxId}, checked: allowCheckboxPermission, disable: !$root.allowEdit" />
                     <label data-bind="attr:{for: allowCheckboxId}, text: allowCheckboxText"></label>
                   </div>
                   {# end REAL #}
-                  {# PLACEHOLDER checkbox when edit_groups is false #}
+                  {# PLACEHOLDER checkbox when showAllowCheckbox is false #}
                   <div class="form-check" data-bind="visible: !editPermission() && showAllowCheckbox">
                     <input type="checkbox" disabled="disabled"/>
                     <label data-bind="text: allowCheckboxText"></label>
@@ -106,7 +110,6 @@
                   {# end PLACEHOLDER #}
               </div>
               </div>
-              {# END web_users permissions #}
             </div>
 
             <legend>
@@ -121,7 +124,6 @@
                     <input type="checkbox"
                            data-bind="attr:{id: checkboxLabel}, checked: checkboxPermission, disable: !$root.allowEdit" />
                     <label data-bind="attr:{for: checkboxLabel}, text: checkboxText">
-                      {% trans "Allow role to create and edit reports in report builder." %}
                     </label>
                   </div>
                 </div>
