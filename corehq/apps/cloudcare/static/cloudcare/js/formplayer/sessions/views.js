@@ -38,8 +38,24 @@ FormplayerFrontend.module("SessionNavigate.SessionList", function (SessionList, 
         },
     });
 
-    SessionList.SessionListView = Marionette.CompositeView.extend({
+    var SessionTableView = Marionette.CollectionView.extend({
+        childView: SessionList.SessionView,
+        tagName: "tbody",
+    });
+
+    SessionList.SessionListView = Marionette.LayoutView.extend({
         tagName: "div",
+        regions: {
+            body: {
+                el: 'table',
+            },
+        },
+        // TODO: in 3, replace onShow with onRender and show with showChildView (see CollectionView docs on rendering tables)
+        onShow: function () {
+            this.getRegion('body').show(new SessionTableView({
+                collection: this.collection,
+            }));
+        },
         getTemplate: function () {
             var user = FormplayerFrontend.request('currentUser');
             if (user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
@@ -47,7 +63,5 @@ FormplayerFrontend.module("SessionNavigate.SessionList", function (SessionList, 
             }
             return "#session-view-list-web-apps-template";
         },
-        childView: SessionList.SessionView,
-        childViewContainer: "tbody",
     });
 });
