@@ -406,7 +406,7 @@ FormplayerFrontend.reqres.setHandler('getAppDisplayProperties', function () {
 });
 
 FormplayerFrontend.reqres.setHandler('restoreAsUser', function (domain, username) {
-    return FormplayerFrontend.Utils.Users.getRestoreAsUser(
+    return hqImport("cloudcare/js/formplayer/users/utils").Users.getRestoreAsUser(
         domain,
         username
     );
@@ -422,7 +422,7 @@ FormplayerFrontend.reqres.setHandler('restoreAsUser', function (domain, username
 FormplayerFrontend.on('clearRestoreAsUser', function () {
     var user = FormplayerFrontend.request('currentUser'),
         appId;
-    FormplayerFrontend.Utils.Users.clearRestoreAsUser(
+    hqImport("cloudcare/js/formplayer/users/utils").Users.clearRestoreAsUser(
         user.domain,
         user.username
     );

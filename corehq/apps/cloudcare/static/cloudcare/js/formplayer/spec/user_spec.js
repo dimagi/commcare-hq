@@ -33,7 +33,7 @@ describe('User', function () {
     });
 
     describe('Utils', function () {
-        var Utils = FormplayerFrontend.Utils.Users,
+        var Utils = hqImport("cloudcare/js/formplayer/users/utils").Users,
             username = 'clark@kent.com',
             restoreAsUsername = 'worker@kent.com',
             domain = 'preview-domain',
