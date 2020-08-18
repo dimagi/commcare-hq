@@ -14,7 +14,7 @@ hqDefine("cloudcare/js/formplayer/apps/views", function() {
             FormplayerFrontend.trigger("app:select", this.model.get('_id'));
         },
 
-        templateHelpers: function () {
+        templateContext: function () {
             var imageUri = this.options.model.get('imageUri');
             var appId = this.options.model.get('_id');
             return {
@@ -96,7 +96,7 @@ hqDefine("cloudcare/js/formplayer/apps/views", function() {
         initialize: function (options) {
             this.appId = options.appId;
         },
-        templateHelpers: function () {
+        templateContext: function () {
             var currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", this.appId),
                 appName;
             appName = currentApp.get('name');
@@ -131,7 +131,7 @@ hqDefine("cloudcare/js/formplayer/apps/views", function() {
         initialize: function (options) {
             this.appId = options.appId;
         },
-        templateHelpers: function () {
+        templateContext: function () {
             var currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", this.appId),
                 appName = currentApp.get('name'),
                 imageUri = currentApp.get('imageUri');

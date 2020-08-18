@@ -16,8 +16,8 @@ describe('Render a case list', function () {
         var getMenuView = hqImport("cloudcare/js/formplayer/menus/util").getMenuView;
         it('Should parse a case list response to a CaseListView', function () {
             var view = getMenuView(fixtures.caseList);
-            assert.isFalse(view.templateHelpers().useTiles);
-            assert.isFalse(view.templateHelpers().useGrid);
+            assert.isFalse(view.templateContext().useTiles);
+            assert.isFalse(view.templateContext().useGrid);
         });
 
         it('Should parse a menu list response to a MenuListView', function () {
@@ -27,14 +27,14 @@ describe('Render a case list', function () {
 
         it('Should parse a case list response with tiles to a CaseTileListView', function () {
             var view = getMenuView(fixtures.caseTileList);
-            assert.isTrue(view.templateHelpers().useTiles);
-            assert.isFalse(view.templateHelpers().useGrid);
+            assert.isTrue(view.templateContext().useTiles);
+            assert.isFalse(view.templateContext().useGrid);
         });
 
         it('Should parse a case grid response with tiles to a GridCaseTileListView', function () {
             var view = getMenuView(fixtures.caseGridList);
-            assert.isTrue(view.templateHelpers().useTiles);
-            assert.isTrue(view.templateHelpers().useGrid);
+            assert.isTrue(view.templateContext().useTiles);
+            assert.isTrue(view.templateContext().useGrid);
         });
     });
 

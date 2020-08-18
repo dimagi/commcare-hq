@@ -27,7 +27,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
             this.currentUser.displayOptions.language = $(e.currentTarget).val();
             Util.saveDisplayOptions(this.currentUser.displayOptions);
         },
-        templateHelpers: function () {
+        templateContext: function () {
             var appId = FormplayerFrontend.getChannel().request('getCurrentAppId');
             var currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", appId);
             return {
