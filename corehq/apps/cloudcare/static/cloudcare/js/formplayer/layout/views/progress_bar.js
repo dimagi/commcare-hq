@@ -1,7 +1,7 @@
 /*global FormplayerFrontend, Marionette */
 
 hqDefine("cloudcare/js/formplayer/layout/views/progress_bar", function () {
-    var ProgressView = Marionette.LayoutView.extend({
+    var ProgressView = Marionette.View.extend({
         template: "#progress-view-template",
 
         initialize: function (options) {

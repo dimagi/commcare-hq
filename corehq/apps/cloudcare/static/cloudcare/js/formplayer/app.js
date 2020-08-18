@@ -18,7 +18,7 @@ var breakLocksComplete = hqImport('cloudcare/js/util').breakLocksComplete;
 var appcues = hqImport('analytix/js/appcues');
 
 FormplayerFrontend.on("before:start", function () {
-    var RegionContainer = Marionette.LayoutView.extend({
+    var RegionContainer = Marionette.View.extend({
         el: "#menu-container",
 
         regions: {
