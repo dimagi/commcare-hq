@@ -11,7 +11,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
     /**
      * Sets the application language. Should only be used for App Preview.
      */
-    var LangSettingView = Marionette.LayoutView.extend({
+    var LangSettingView = Marionette.View.extend({
         template: '#lang-setting-template',
         tagName: 'tr',
         initialize: function () {
@@ -41,7 +41,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
      * Sets whether or not the application should use One Question Per Screen or not.
      * Should only be used for App Preview.
      */
-    var DisplaySettingView = Marionette.LayoutView.extend({
+    var DisplaySettingView = Marionette.View.extend({
         template: '#display-setting-template',
         tagName: 'tr',
         initialize: function () {
@@ -69,7 +69,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
      * Force clear user data.
      * Available for both Web Apps and App Preview
      */
-    var ClearUserDataView = Marionette.LayoutView.extend({
+    var ClearUserDataView = Marionette.View.extend({
         template: '#clear-user-data-setting-template',
         tagName: 'tr',
         ui: {
@@ -91,7 +91,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
      * Break exising locks
      * Available only for Web Apps
      */
-    var BreakLocksView = Marionette.LayoutView.extend({
+    var BreakLocksView = Marionette.View.extend({
         template: '#break-locks-setting-template',
         tagName: 'tr',
         ui: {
@@ -124,7 +124,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
         },
     });
 
-    var SettingsView = Marionette.LayoutView.extend({
+    var SettingsView = Marionette.View.extend({
         regions: {
             body: {
                 el: 'table',

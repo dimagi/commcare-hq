@@ -7,7 +7,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function() {
      * This View represents the banner that indicates what user your are
      * currently logged in (or restoring) as.
      */
-     var RestoreAsBanner = Marionette.LayoutView.extend({
+     var RestoreAsBanner = Marionette.View.extend({
         template: '#restore-as-banner-template',
         className: 'restore-as-banner-container',
         ui: {
@@ -32,7 +32,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function() {
      *
      * Represents a single row in the Log In As User list
      */
-    var UserRowView = Marionette.LayoutView.extend({
+    var UserRowView = Marionette.View.extend({
         template: '#user-row-view-template',
         className: 'formplayer-request js-user',
         tagName: 'tr',
@@ -70,7 +70,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function() {
      * Renders all possible users to log in as. Equipped with pagination
      * and custom querying.
      */
-    var RestoreAsView = Marionette.LayoutView.extend({
+    var RestoreAsView = Marionette.View.extend({
         template: '#restore-as-view-template',
         limit: 10,
         maxPagesShown: 10,

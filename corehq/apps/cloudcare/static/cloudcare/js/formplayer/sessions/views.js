@@ -1,7 +1,7 @@
 /*global FormplayerFrontend, moment, Util */
 
 hqDefine("cloudcare/js/formplayer/sessions/views", function () {
-    var SessionView = Marionette.LayoutView.extend({
+    var SessionView = Marionette.View.extend({
         tagName: "tr",
         className: "formplayer-request",
         events: {
@@ -43,7 +43,7 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
         tagName: "tbody",
     });
 
-    var SessionListView = Marionette.LayoutView.extend({
+    var SessionListView = Marionette.View.extend({
         tagName: "div",
         regions: {
             body: {

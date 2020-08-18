@@ -1,7 +1,7 @@
 /*global FormplayerFrontend, Marionette */
 
 hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
-    var QueryView = Marionette.LayoutView.extend({
+    var QueryView = Marionette.View.extend({
         tagName: "tr",
         className: "formplayer-request",
         template: "#query-view-item-template",
@@ -22,7 +22,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         tagName: "tbody",
     });
 
-    var QueryListView = Marionette.LayoutView.extend({
+    var QueryListView = Marionette.View.extend({
         tagName: "div",
         template: "#query-view-list-template",
 

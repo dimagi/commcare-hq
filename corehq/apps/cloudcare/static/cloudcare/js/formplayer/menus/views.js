@@ -1,7 +1,7 @@
 /*global FormplayerFrontend, Util, Marionette */
 
 hqDefine("cloudcare/js/formplayer/menus/views", function () {
-    var MenuView = Marionette.LayoutView.extend({
+    var MenuView = Marionette.View.extend({
         tagName: function () {
             if (this.model.collection.layoutStyle === 'grid') {
                 return 'div';
@@ -85,7 +85,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         tagName: "tbody",
     });
 
-    var MenuListView = Marionette.LayoutView.extend({
+    var MenuListView = Marionette.View.extend({
         tagName: "div",
         regions: {
             body: {
@@ -219,7 +219,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         return view;
     };
 
-    var CaseView = Marionette.LayoutView.extend({
+    var CaseView = Marionette.View.extend({
         tagName: "tr",
         template: "#case-view-item-template",
 
@@ -281,7 +281,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
     });
 
-    var CaseListView = Marionette.LayoutView.extend({
+    var CaseListView = Marionette.View.extend({
         tagName: "div",
         template: "#case-view-list-template",
 
@@ -445,7 +445,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childView: CaseViewUnclickable,
     });
 
-    var BreadcrumbView = Marionette.LayoutView.extend({
+    var BreadcrumbView = Marionette.View.extend({
         tagName: "li",
         template: "#breadcrumb-item-template",
         className: "breadcrumb-text",
@@ -465,7 +465,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         tagName: "ol",
     });
 
-    var BreadcrumbListView = Marionette.LayoutView.extend({
+    var BreadcrumbListView = Marionette.View.extend({
         tagName: "div",
         template: "#breadcrumb-list-template",
         regions: {
@@ -488,7 +488,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
     });
 
-    var DetailView = Marionette.LayoutView.extend({
+    var DetailView = Marionette.View.extend({
         tagName: "tr",
         className: "",
         template: "#detail-view-item-template",
@@ -507,7 +507,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         tagName: "tbody",
     });
 
-    var DetailTabView = Marionette.LayoutView.extend({
+    var DetailTabView = Marionette.View.extend({
         tagName: "li",
         className: function () {
             return this.options.model.get('active') ? 'active' : '';

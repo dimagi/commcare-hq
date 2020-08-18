@@ -1,7 +1,7 @@
 /*global FormplayerFrontend, Marionette */
 
 hqDefine("cloudcare/js/formplayer/apps/views", function() {
-    GridItem = Marionette.LayoutView.extend({
+    GridItem = Marionette.View.extend({
         template: "#row-template",
         tagName: "div",
         className: "grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request",
@@ -53,7 +53,7 @@ hqDefine("cloudcare/js/formplayer/apps/views", function() {
         childViewContainer: ".js-application-container",
     });
 
-    GridView = Marionette.LayoutView.extend({
+    GridView = Marionette.View.extend({
         template: "#grid-template",
 
         regions: {
@@ -81,7 +81,7 @@ hqDefine("cloudcare/js/formplayer/apps/views", function() {
      * The user doesn't need to select the application because we already have
      * that information. Used for phone previewing in the app manager
      */
-    SingleAppView = Marionette.LayoutView.extend({
+    SingleAppView = Marionette.View.extend({
         template: "#single-app-template",
         className: 'single-app-view',
 
@@ -116,7 +116,7 @@ hqDefine("cloudcare/js/formplayer/apps/views", function() {
         },
     });
 
-    LandingPageAppView = Marionette.LayoutView.extend({
+    LandingPageAppView = Marionette.View.extend({
         template: "#landing-page-app-template",
         className: 'landing-page-app-view',
 
