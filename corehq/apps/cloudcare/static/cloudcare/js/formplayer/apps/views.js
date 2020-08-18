@@ -48,10 +48,24 @@ FormplayerFrontend.module("Apps.Views", function (Views, FormplayerFrontend, Bac
         },
     };
 
-    Views.GridView = Marionette.CompositeView.extend({
-        template: "#grid-template",
+    GridContainerView = Marionette.CollectionView.extend({
         childView: Views.GridItem,
         childViewContainer: ".js-application-container",
+    });
+
+    Views.GridView = Marionette.LayoutView.extend({
+        template: "#grid-template",
+
+        regions: {
+            body: {
+                el: '.js-application-container',
+            },
+        },
+        onShow: function () {
+            this.getRegion('body').show(new GridContainerView({
+                collection: this.collection,
+            }));
+        },
 
         events: _.extend(Views.BaseAppView.events),
         incompleteSessionsClick: _.extend(Views.BaseAppView.incompleteSessionsClick),
