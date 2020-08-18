@@ -3,11 +3,7 @@ import six
 import sys
 import time
 
-from datetime import (
-    datetime,
-    date,
-    timedelta,
-)
+from datetime import datetime
 from xml.etree import cElementTree as ElementTree
 
 from django.core.management.base import BaseCommand
