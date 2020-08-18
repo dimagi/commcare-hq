@@ -10,6 +10,7 @@ import json
 import bz2
 from collections import OrderedDict
 import openpyxl
+import math
 
 from django.template.loader import render_to_string, get_template
 from django.utils.functional import Promise
@@ -41,14 +42,15 @@ class UniqueHeaderGenerator(object):
 
     def _next_unique(self, string):
         counter = 1
+        split = (self.max_column_size - 3) / 2
         if len(string) > self.max_column_size:
             # truncate the middle
-            string = "{}...{}".format(string[:14], string[-14:])
+            string = "{}...{}".format(string[:math.ceil(split)], string[-math.floor(split):])
         orig_string = string
         while string.lower() in self.used:
             string = "%s%s" % (orig_string, counter)
             if len(string) > self.max_column_size:
-                string = "{}...{}".format(string[:14], string[-14:])
+                string = "{}...{}".format(string[:math.ceil(split)], string[-math.floor(split):])
             counter += 1
 
         return string
