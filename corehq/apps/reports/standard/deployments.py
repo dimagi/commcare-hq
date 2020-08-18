@@ -93,7 +93,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                              alt_prop_name='reporting_metadata.last_submission_for_user.commcare_version',
                              sql_col='last_form_app_commcare_version'),
             DataTablesColumn(_("Number of unsent forms in user's phone"),
-                             help_text=_("""The number of unsent forms corresponding to app in users' phones"""),
+                             help_text=_("""The number of unsent forms in users' phones for selected app version
+                                            (or last built app if app version not selected)"""),
                              sortable=False),
         ]
 
@@ -331,14 +332,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 last_sub = reporting_metadata.get('last_submission_for_user', {})
                 last_sync = reporting_metadata.get('last_sync_for_user', {})
                 last_build = reporting_metadata.get('last_build_for_user', {})
-                if is_commcare_user:
-                    app_id = None
-                    if last_build:
-                        app_id = last_build.get('app_id')
-                    if device and app_id:
-                        device_app_meta = device.get('app_meta')
-                        if device_app_meta:
-                            device_app_meta = self.get_data_for_app(device_app_meta, app_id)
+                if is_commcare_user and last_build.get('app_id') and device and device.get('app_meta'):
+                    device_app_meta = self.get_data_for_app(device.get('app_meta'), last_build.get('app_id'))
 
             if last_sub and last_sub.get('commcare_version'):
                 commcare_version = _get_commcare_version(last_sub.get('commcare_version'))
