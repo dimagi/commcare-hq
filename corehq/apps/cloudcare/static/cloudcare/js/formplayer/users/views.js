@@ -59,15 +59,18 @@ FormplayerFrontend.module("Users.Views", function (Views, FormplayerFrontend, Ba
         },
     });
 
+    var UserTableView = Marionette.CollectionView.extend({
+        tagName: 'tbody',
+        childView: Views.UserRowView,
+    });
+
     /**
      * RestoreAsView
      *
      * Renders all possible users to log in as. Equipped with pagination
      * and custom querying.
      */
-    Views.RestoreAsView = Marionette.CompositeView.extend({
-        childView: Views.UserRowView,
-        childViewContainer: 'tbody',
+    Views.RestoreAsView = Marionette.LayoutView.extend({
         template: '#restore-as-view-template',
         limit: 10,
         maxPagesShown: 10,
@@ -76,11 +79,17 @@ FormplayerFrontend.module("Users.Views", function (Views, FormplayerFrontend, Ba
                 page: options.page || 1,
                 query: options.query || '',
             });
+            this.collection = options.collection;
             this.model.on('change', function () {
                 this.fetchUsers();
                 this.navigate();
             }.bind(this));
             this.fetchUsers();
+        },
+        regions: {
+            body: {
+                el: 'table',
+            },
         },
         ui: {
             next: '.js-user-next',
@@ -114,6 +123,7 @@ FormplayerFrontend.module("Users.Views", function (Views, FormplayerFrontend, Ba
             return Math.ceil(this.collection.total / this.limit);
         },
         fetchUsers: function () {
+            var self = this;
             this.collection.fetch({
                 reset: true,
                 data: {
@@ -122,7 +132,11 @@ FormplayerFrontend.module("Users.Views", function (Views, FormplayerFrontend, Ba
                     page: this.model.get('page'),
                 },
             })
-                .done(this.render.bind(this))
+                .done(function () {
+                    self.getRegion('body').show(new UserTableView({   // TODO: in 3, replace with showChildView (see CollectionView docs on rendering tables)
+                        collection: self.collection,
+                    }));
+                })
                 .fail(function (xhr) {
                     FormplayerFrontend.trigger('showError', xhr.responseText);
                 });
