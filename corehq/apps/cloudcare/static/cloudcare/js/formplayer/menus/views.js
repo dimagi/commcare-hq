@@ -66,7 +66,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             $pauseBtn.addClass('hide');
             $pauseBtn.parent().find('.js-module-audio').get(0).pause();
         },
-        templateHelpers: function () {
+        templateContext: function () {
             var imageUri = this.options.model.get('imageUri');
             var audioUri = this.options.model.get('audioUri');
             var navState = this.options.model.get('navigationState');
@@ -104,7 +104,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 return "#menu-view-list-template";
             }
         },
-        templateHelpers: function () {
+        templateContext: function () {
             return {
                 title: this.options.title,
                 environment: FormplayerFrontend.getChannel().request('currentUser').environment,
@@ -234,7 +234,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             FormplayerFrontend.trigger("menu:show:detail", this.model.get('id'), 0, false);
         },
 
-        templateHelpers: function () {
+        templateContext: function () {
             var appId = Util.currentUrlToObject().appId;
             return {
                 data: this.options.model.get('data'),
@@ -254,8 +254,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
     var CaseTileView = CaseView.extend({
         template: "#case-tile-view-item-template",
-        templateHelpers: function () {
-            var dict = CaseTileView.__super__.templateHelpers.apply(this, arguments);
+        templateContext: function () {
+            var dict = CaseTileView.__super__.templateContext.apply(this, arguments);
             dict['prefix'] = this.options.prefix;
             return dict;
         },
@@ -344,7 +344,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             FormplayerFrontend.trigger("menu:sort", columnSelection);
         },
 
-        templateHelpers: function () {
+        templateContext: function () {
             return {
                 title: this.options.title,
                 headers: this.options.headers,
@@ -421,8 +421,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             return dict;
         },
 
-        templateHelpers: function () {
-            var dict = CaseTileListView.__super__.templateHelpers.apply(this, arguments);
+        templateContext: function () {
+            var dict = CaseTileListView.__super__.templateContext.apply(this, arguments);
             dict.useTiles = true;
             return dict;
         },
@@ -492,7 +492,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         tagName: "tr",
         className: "",
         template: "#detail-view-item-template",
-        templateHelpers: function () {
+        templateContext: function () {
             var appId = Util.currentUrlToObject().appId;
             return {
                 resolveUri: function (uri) {

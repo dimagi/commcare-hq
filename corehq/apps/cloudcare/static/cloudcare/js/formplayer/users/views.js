@@ -16,7 +16,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function() {
         events: {
             'click @ui.clear': 'onClickClearUser',
         },
-        templateHelpers: function () {
+        templateContext: function () {
             return {
                 restoreAs: this.model.restoreAs,
                 username: this.model.getDisplayUsername(),
@@ -104,7 +104,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function() {
             'click @ui.page': 'onClickPage',
             'submit @ui.search': 'onSubmitUserSearch',
         },
-        templateHelpers: function () {
+        templateContext: function () {
             return {
                 total: this.collection.total,
                 totalPages: this.totalPages(),

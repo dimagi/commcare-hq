@@ -6,7 +6,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         className: "formplayer-request",
         template: "#query-view-item-template",
 
-        templateHelpers: function () {
+        templateContext: function () {
             var imageUri = this.options.model.get('imageUri');
             var audioUri = this.options.model.get('audioUri');
             var appId = this.model.collection.appId;
@@ -41,7 +41,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.parentModel = options.collection.models;
         },
 
-        templateHelpers: function () {
+        templateContext: function () {
             return {
                 title: this.options.title,
             };

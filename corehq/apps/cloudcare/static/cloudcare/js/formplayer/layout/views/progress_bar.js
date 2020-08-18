@@ -8,7 +8,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/progress_bar", function () {
             this.progressMessage = options.progressMessage;
         },
 
-        templateHelpers: function () {
+        templateContext: function () {
             return {
                 progressMessage: this.progressMessage,
             };

@@ -17,7 +17,7 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
             FormplayerFrontend.trigger("getSession", model.get('sessionId'));
         },
 
-        templateHelpers: function (e) {
+        templateContext: function (e) {
             return {
                 humanDateOpened: moment(this.model.get('dateOpened')).fromNow(),
             };
