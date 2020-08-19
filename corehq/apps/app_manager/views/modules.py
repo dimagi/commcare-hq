@@ -102,7 +102,7 @@ from corehq.apps.hqmedia.models import (
 )
 from corehq.apps.hqmedia.views import ProcessDetailPrintTemplateUploadView
 from corehq.apps.reports.analytics.esaccessors import (
-    get_case_types_for_domain,
+    get_case_types_for_domain_es,
 )
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.userreports.models import (
@@ -1239,7 +1239,7 @@ class ExistingCaseTypesView(LoginAndDomainMixin, View):
 
     def get(self, request, domain):
         return JsonResponse({
-            'existing_case_types': list(get_case_types_for_domain(domain))
+            'existing_case_types': list(get_case_types_for_domain_es(domain))
         })
 
 

@@ -158,7 +158,7 @@ class BaseCCTests(TestCase):
             self.fail('Additional indicators:\n{}'.format('\t\n'.join(list(user_data))))
 
 
-@patch('corehq.apps.callcenter.indicator_sets.get_case_types_for_domain',
+@patch('corehq.apps.callcenter.indicator_sets.get_case_types_for_domain_es',
        return_value={'person', 'dog', CASE_TYPE})
 class CallCenterTests(BaseCCTests):
     domain_name = 'callcentertest'
@@ -477,7 +477,7 @@ class CallCenterSupervisorGroupTest(BaseCCTests):
         super(CallCenterSupervisorGroupTest, self).tearDown()
 
     @run_with_all_backends
-    @patch('corehq.apps.callcenter.indicator_sets.get_case_types_for_domain',
+    @patch('corehq.apps.callcenter.indicator_sets.get_case_types_for_domain_es',
            return_value={'person', 'dog', CASE_TYPE})
     def test_users_assigned_via_group(self, mock):
         # Ensure that users who are assigned to the supervisor via a group are also included
@@ -534,7 +534,7 @@ class CallCenterCaseSharingTest(BaseCCTests):
         self.domain.delete()
 
     @run_with_all_backends
-    @patch('corehq.apps.callcenter.indicator_sets.get_case_types_for_domain',
+    @patch('corehq.apps.callcenter.indicator_sets.get_case_types_for_domain_es',
            return_value={'person', 'dog', CASE_TYPE})
     def test_cases_owned_by_group(self, mock):
         # Ensure that indicators include cases owned by a case sharing group the user is part of.
@@ -578,7 +578,7 @@ class CallCenterTestOpenedClosed(BaseCCTests):
         self.domain.delete()
 
     @run_with_all_backends
-    @patch('corehq.apps.callcenter.indicator_sets.get_case_types_for_domain',
+    @patch('corehq.apps.callcenter.indicator_sets.get_case_types_for_domain_es',
            return_value={'person', 'dog', CASE_TYPE})
     def test_opened_closed(self, mock):
         """
@@ -625,7 +625,7 @@ class TestSavingToUCRDatabase(BaseCCTests):
         connection_manager.dispose_engine('ucr')
         self.db_context.__exit__(None, None, None)
 
-    @patch('corehq.apps.callcenter.indicator_sets.get_case_types_for_domain',
+    @patch('corehq.apps.callcenter.indicator_sets.get_case_types_for_domain_es',
            return_value={'person', 'dog', CASE_TYPE})
     def test_standard_indicators(self, mock):
         with override_engine('ucr', self.ucr_db_url):
