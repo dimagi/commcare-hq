@@ -76,7 +76,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             var menuListView = Menus.Util.getMenuView(menuResponse);
 
             if (menuListView) {
-                FormplayerFrontend.regions.getRegion('main').show(menuListView.render());
+                FormplayerFrontend.regions.getRegion('main').show(menuListView);
             }
             if (menuResponse.persistentCaseTile && !FormplayerFrontend.currentUser.displayOptions.singleAppMode) {
                 Menus.Controller.showPersistentCaseTile(menuResponse.persistentCaseTile);

@@ -17,11 +17,25 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         },
     });
 
-    Views.QueryListView = Marionette.CompositeView.extend({
+    Views.QueryTableView = Marionette.CollectionView.extend({
+        childView: Views.QueryView,
+        tagName: "tbody",
+    });
+
+    Views.QueryListView = Marionette.LayoutView.extend({
         tagName: "div",
         template: "#query-view-list-template",
-        childView: Views.QueryView,
-        childViewContainer: "tbody",
+
+        regions: {
+            body: {
+                el: 'table',
+            },
+        },
+        onShow: function () {
+            this.getRegion('body').show(new Views.QueryTableView({
+                collection: this.collection,
+            }));
+        },
 
         initialize: function (options) {
             this.parentModel = options.collection.models;
