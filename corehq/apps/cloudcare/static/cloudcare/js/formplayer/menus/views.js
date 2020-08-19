@@ -270,21 +270,36 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         },
     });
 
-    Views.CaseListView = Marionette.CompositeView.extend({
-        tagName: "div",
-        template: "#case-view-list-template",
-        childViewContainer: ".js-case-container",
+    Views.CaseListContainerView = Marionette.CollectionView.extend({
         childView: Views.CaseView,
-
-        initialize: function (options) {
-            this.styles = options.styles;
-            this.hasNoItems = options.collection.length === 0;
-        },
+        tagName: "tbody",
 
         childViewOptions: function () {
             return {
                 styles: this.options.styles,
             };
+        },
+    });
+
+    Views.CaseListView = Marionette.LayoutView.extend({
+        tagName: "div",
+        template: "#case-view-list-template",
+
+        regions: {
+            body: {
+                el: ".js-case-container",
+            },
+        },
+        onShow: function () {
+            this.getRegion('body').show(new Views.CaseListContainerView({
+                collection: this.collection,
+                styles: this.styles,
+            }));
+        },
+
+        initialize: function (options) {
+            this.styles = options.styles;
+            this.hasNoItems = options.collection.length === 0;
         },
 
         ui: {
