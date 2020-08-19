@@ -533,6 +533,7 @@ V1_SHADOW_MODULES = StaticToggle(
     'Allow creation and management of deprecated Shadow Module behaviour',
     TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN],
+    help_link='https://github.com/dimagi/commcare-hq/blob/master/docs/advanced_app_features.rst#shadow-modules',
 )
 
 CASE_LIST_CUSTOM_XML = StaticToggle(
