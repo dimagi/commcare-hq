@@ -445,11 +445,26 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         },
     });
 
-    Views.BreadcrumbListView = Marionette.CompositeView.extend({
+    Views.BreadcrumbContainerView = Marionette.CollectionView.extend({
+        childView: Views.BreadcrumbView,
+        tagName: "ol",
+    });
+
+    Views.BreadcrumbListView = Marionette.LayoutView.extend({
         tagName: "div",
         template: "#breadcrumb-list-template",
-        childView: Views.BreadcrumbView,
-        childViewContainer: "ol",
+        regions: {
+            body: {
+                el: '.not-home',
+            },
+        },
+        // TODO: in 3, replace onShow with onRender and show with showChildView (see CollectionView docs on
+        // rendering tables)
+        onShow: function () {
+            this.getRegion('body').show(new Views.BreadcrumbContainerView({
+                collection: this.collection,
+            }));
+        },
         events: {
             'click .js-home': 'onClickHome',
         },

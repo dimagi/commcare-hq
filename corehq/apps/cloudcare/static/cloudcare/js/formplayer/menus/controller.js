@@ -279,7 +279,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             var breadcrumbView = new Menus.Views.BreadcrumbListView({
                 collection: detailCollection,
             });
-            FormplayerFrontend.regions.getRegion('breadcrumb').show(breadcrumbView.render());
+            FormplayerFrontend.regions.getRegion('breadcrumb').show(breadcrumbView);
         },
 
         getMenuView: function (menuResponse) {
