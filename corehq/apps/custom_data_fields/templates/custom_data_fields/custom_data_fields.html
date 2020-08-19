@@ -62,7 +62,9 @@
 
     <div class="form-actions">
       <div class="col-sm-12">
-        <button id="save-custom-fields" class="btn btn-primary disable-on-submit" type="submit" disabled>{% trans "Save" %}</button>
+        <button id="save-custom-fields" class="btn btn-primary disable-on-submit" type="submit"{% if disable_save %} disabled{% endif %}>
+            {% trans "Save" %}
+        </button>
       </div>
     </div>
 
