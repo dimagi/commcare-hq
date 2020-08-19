@@ -6,11 +6,10 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, HQApiKey
 
 
-class LoginAuthenticationTest(TestCase):
-
+class AuthenticationTestBase(TestCase):
     @classmethod
     def setUpClass(cls):
-        super(LoginAuthenticationTest, cls).setUpClass()
+        super().setUpClass()
         cls.factory = RequestFactory()
         cls.domain = Domain.get_or_create_with_name('api-test', is_active=True)
         cls.username = 'alice@example.com'
@@ -36,6 +35,9 @@ class LoginAuthenticationTest(TestCase):
 
     def assertAuthenticationFail(self, auth_instance, request):
         self.assertFalse(auth_instance.is_authenticated(request))
+
+
+class LoginAuthenticationTest(AuthenticationTestBase):
 
     def test_login_no_auth(self):
         self.assertAuthenticationFail(LoginAuthentication(), self._get_request())
