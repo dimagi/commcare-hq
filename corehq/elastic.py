@@ -412,19 +412,6 @@ def es_query(params=None, facets=None, terms=None, q=None, es_index=None, start_
     return result
 
 
-def stream_es_query(chunksize=100, **kwargs):
-    size = kwargs.pop("size", None)
-    kwargs.pop("start_at", None)
-    kwargs["size"] = chunksize
-    for i in range(0, size or SIZE_LIMIT, chunksize):
-        kwargs["start_at"] = i
-        res = es_query(**kwargs)
-        if not res["hits"]["hits"]:
-            return
-        for hit in res["hits"]["hits"]:
-            yield hit
-
-
 def parse_args_for_es(request, prefix=None):
     """
     Parses a request's query string for url parameters. It specifically parses the facet url parameter so that each term
