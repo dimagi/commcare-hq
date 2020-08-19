@@ -62,6 +62,5 @@ branches:
   - bmb/SAAS-11163  # Biyeun Aug 10
   - fr/bounced-invitations      # Farid August 14
   - jls/remove-old-backbone # Jenny August 17
-  - jls/requirejs-cloudcare-config # Jenny August 17
   - bmb/celery-4.4.2  # Biyeun August 19
 submodules: {}
