@@ -614,6 +614,11 @@ def scroll_case_names(domain, case_ids):
 
 @quickcache(['domain', 'use_case_search'], timeout=24 * 3600)
 def get_case_types_for_domain_es(domain, use_case_search=False):
+    """
+    Returns case types for which there is at least one existing case.
+
+    get_case_types_for_domain is preferred for most uses
+    """
     index_class = CaseSearchES if use_case_search else CaseES
     query = (
         index_class().domain(domain).size(0)
@@ -627,6 +632,11 @@ def get_case_search_types_for_domain_es(domain):
 
 
 def get_case_types_for_domain(domain):
+    """
+    Returns case types for which there is at least one existing case and any
+    defined in the data dictionary, which includes those referenced in an app
+    and those added manually.
+    """
     es_types = get_case_types_for_domain_es(domain)
     data_dict_types = get_data_dict_case_types(domain)
     return es_types | data_dict_types
