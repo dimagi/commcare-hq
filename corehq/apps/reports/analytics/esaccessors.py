@@ -6,6 +6,7 @@ from django.conf import settings
 from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_datetime
 
+from corehq.apps.data_dictionary.util import get_data_dict_case_types
 from corehq.apps.es import (
     CaseES,
     CaseSearchES,
@@ -623,3 +624,9 @@ def get_case_types_for_domain_es(domain, use_case_search=False):
 
 def get_case_search_types_for_domain_es(domain):
     return get_case_types_for_domain_es(domain, True)
+
+
+def get_case_types_for_domain(domain):
+    es_types = get_case_types_for_domain_es(domain)
+    data_dict_types = get_data_dict_case_types(domain)
+    return es_types | data_dict_types
