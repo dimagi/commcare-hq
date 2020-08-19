@@ -16,8 +16,8 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
              */
             $.when(fetchingNextMenu).done(function (menuResponse) {
                 //set title of tab to application name
-                document.title = menuResponse.title;
-                
+                document.title = menuResponse.breadcrumbs[0];
+
                 // show any notifications from Formplayer
                 if (menuResponse.notification && !_.isNull(menuResponse.notification.message)) {
                     FormplayerFrontend.request("handleNotification", menuResponse.notification);

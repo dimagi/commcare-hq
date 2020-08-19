@@ -163,6 +163,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     });
 
     FormplayerFrontend.on("menu:search", function (search) {
+        debugger;
         var urlObject = Util.currentUrlToObject();
         urlObject.setSearch(search);
         Util.setUrlToObject(urlObject);

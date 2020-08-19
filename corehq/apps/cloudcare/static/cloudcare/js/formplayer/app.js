@@ -635,6 +635,9 @@ FormplayerFrontend.reqres.setHandler('clearUserData', function () {
 });
 
 FormplayerFrontend.on('navigateHome', function () {
+    // switches tab back from the application name
+    document.title = "Web Apps - CommCare HQ";
+
     var urlObject = Util.currentUrlToObject(),
         appId,
         currentUser = FormplayerFrontend.request('currentUser');
