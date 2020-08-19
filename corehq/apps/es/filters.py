@@ -39,41 +39,17 @@ def term(field, value):
 
 def OR(*filters):
     """Filter docs to match any of the filters passed in"""
-    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-        return {"bool": {"should": filters}}
-    else:
-        return {"or": filters}
+    return {"bool": {"should": filters}}
 
 
 def AND(*filters):
     """Filter docs to match all of the filters passed in"""
-    # return {"and": filters}
-    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-        return {"bool": {"filter": filters}}
-    else:
-        return {"and": filters}
+    return {"bool": {"filter": filters}}
 
 
 def NOT(filter_):
     """Exclude docs matching the filter passed in"""
-    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-        return {"bool": {"must_not": filter_}}
-
-    if 'or' in filter_:
-        # ES 2.4 appears not to accept {"not": {"or": [A, B]}} e.g. not (A or B)
-        # but accepts the same logic
-        # formulated as {"and": [{"not": A}, {"not": B}]} (e.g. not A and not B)
-        return AND(*(NOT(condition) for condition in filter_['or']))
-    elif 'and' in filter_:
-        # Same ES 2.4 issue as above.
-        # Rewrite "not (A and B)" as "not A or not B"
-        return OR(*(NOT(condition) for condition in filter_['and']))
-    elif 'not' in filter_:
-        # This may not be strictly necessary
-        # but prevents {'not': {'not': A}}, in favor of just A
-        return filter_['not']
-    else:
-        return {"not": filter_}
+    return {"bool": {"must_not": filter_}}
 
 
 def not_term(field, value):
@@ -116,26 +92,13 @@ def doc_id(doc_id):
 
 def missing(field, exist=True, null=True):
     """Only return docs missing a value for ``field``"""
-    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-        # null and empty values are considered to be missing
-        return {
-            "bool": {"must_not": exists(field)}
-        }
-    else:
-        return {
-            "missing": {
-                "field": field,
-                "existence": exist,
-                "null_value": null
-            }
-        }
+    return {
+        "bool": {"must_not": exists(field)}
+    }
 
 
 def field_exists(field):
-    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-        return exists(field)
-    else:
-        return {"not": {"missing": {"field": field}}}
+    return exists(field)
 
 
 def exists(field):
@@ -156,24 +119,16 @@ def non_null(field):
 
 def nested(path, filter_):
     """Query nested documents which normally can't be queried directly"""
-    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-        return {
-            "nested": {
-                "path": path,
-                "query": {
-                    "bool": {
-                        "filter": filter_
-                    }
+    return {
+        "nested": {
+            "path": path,
+            "query": {
+                "bool": {
+                    "filter": filter_
                 }
             }
         }
-    else:
-        return {
-            "nested": {
-                "path": path,
-                "filter": filter_
-            }
-        }
+    }
 
 
 def regexp(field, regex):
