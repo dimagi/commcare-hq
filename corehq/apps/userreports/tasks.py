@@ -392,7 +392,7 @@ def build_async_indicators(indicator_doc_ids):
             if adapter:
                 adapter.handle_exception(doc, exception)
         if metric:
-            metrics_counter(metric, tags={'config_id': config_id, 'doc_id': doc['_id']})
+            metrics_counter(metric, tags={'config_id': config_id})
 
     def doc_ids_from_rows(rows):
         formatted_rows = [
