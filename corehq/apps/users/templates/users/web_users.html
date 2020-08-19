@@ -220,6 +220,7 @@
               <th>{% trans "E-mail" %}</th>
               <th>{% trans "Role" %}</th>
               <th>{% trans "Date" %} (UTC)</th>
+              <th>{% trans "Email Status" %}</th>
               <th>{% trans "Actions" %}</th>
             </tr>
           </thead>
@@ -234,6 +235,9 @@
                 <!-- ko text: invitedOnText --><!-- /ko -->
                 <span class="label label-default" data-bind="visible: !isExpired(), text: daysRemainingText()"></span>
                 <span class="label label-danger" data-bind="visible: isExpired()">{% trans "Expired" %}</span>
+              </td>
+              <td>
+                <!-- ko text: email_status --><!-- /ko -->
               </td>
               <td>
                 <div data-bind="visible: !actionMessage()">
