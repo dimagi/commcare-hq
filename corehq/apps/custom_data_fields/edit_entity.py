@@ -135,7 +135,7 @@ class CustomDataEditor(object):
                 fields[PROFILE_SLUG] = forms.IntegerField(
                     label=_('Profile'),
                     required=False,
-                    widget=Select(choices=[('', _('Select a profile'))] + [
+                    widget=Select(choices=[
                         (p.id, p.name)
                         for p in profiles
                     ], attrs=attrs)
