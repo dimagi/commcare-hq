@@ -25,7 +25,6 @@ class TestInviteMessages(TestSnsEmailBase):
         Invitation.objects.all().delete()
         super().tearDown()
 
-
     def test_bounced_event(self):
         message = self._get_message("test_bounced_event")
         for header in message['mail']['headers']:

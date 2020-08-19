@@ -1,5 +1,6 @@
 from corehq.apps.users.models import Invitation, InvitationStatus
 
+
 def handle_email_invite_message(message, invite_id):
     try:
         invite = Invitation.objects.get(uuid=invite_id)
