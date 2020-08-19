@@ -118,7 +118,7 @@
               <span data-bind="css: ('label-' + tagCssClass),
                                                     text: tag"
                     class="label"></span>
-              <!--ko text: tagDescription --><!--/ko-->
+              <span data-bind="html: tagDescription"></span>
 
               <div class="text-right">
                 <small><a class="text-uppercase" data-bind="attr: {href: editLink}, text: slug"></a></small>

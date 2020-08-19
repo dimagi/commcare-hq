@@ -161,7 +161,7 @@ TODO:
     <!--/ko-->
 
     <!--ko if: $parent.hasFilterValueCol -->
-    <td class="form-group" data-bind="css:{'has-error': $parent.showWarnings() && !(filterValue() || filterOperator())}">
+    <td class="form-group" data-bind="css:{'has-error': $parent.showWarnings() && hasFilterValueWarning()}">
       <!--ko if: $data.format() === 'Date'-->
       <select class="form-control input-sm" data-bind="
                 options: $root.dateRangeOptions,
@@ -181,7 +181,7 @@ TODO:
             "/>
       <!--/ko-->
 
-      <label class="help-block" data-bind="if: $parent.showWarnings() && !(filterValue() || filterOperator())">
+      <label class="help-block" data-bind="if: $parent.showWarnings() && hasFilterValueWarning()">
         {% trans "Filter Value should not be blank." %}</label>
     </td>
     <!--/ko-->

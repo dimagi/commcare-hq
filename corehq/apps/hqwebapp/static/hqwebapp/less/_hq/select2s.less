@@ -17,10 +17,6 @@
 .case-config-select2s(@width) {
     .select2-container {
         width: @width;
-
-        // Fix firefox bug in select 2 v3.5.2
-        // https://github.com/select2/select2/issues/2078
-        display: inline-block !important;
     }
 
     // This needs a static width so that text-overflow: ellipsis will work in Firefox.

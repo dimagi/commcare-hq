@@ -15,6 +15,7 @@ from corehq.motech.utils import (
     b64_aes_encrypt,
     pformat_json,
     simple_pad,
+    unpad,
 )
 
 
@@ -34,6 +35,21 @@ class SimplePadTests(SimpleTestCase):
         """
         padded = simple_pad(b'xy\xc5\xba\xc5\xbay', 8, b'*')
         self.assertEqual(padded, b'xy\xc5\xba\xc5\xbay*')
+
+
+class UnpadTests(SimpleTestCase):
+
+    def test_unpad_simple(self):
+        unpadded = unpad(b'xyzzy   ')
+        self.assertEqual(unpadded, b'xyzzy')
+
+    def test_unpad_crypto(self):
+        unpadded = unpad(b'xyzzy\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+        self.assertEqual(unpadded, b'xyzzy')
+
+    def test_unpad_empty(self):
+        unpadded = unpad(b'')
+        self.assertEqual(unpadded, b'')
 
 
 @override_settings(SECRET_KEY='xyzzy')

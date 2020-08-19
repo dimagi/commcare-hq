@@ -138,17 +138,8 @@ class BaseRepeaterView(BaseAdminProjectSettingsView):
 
     def set_repeater_attr(self, repeater, cleaned_data):
         repeater.domain = self.domain
-        repeater.url = cleaned_data['url']
-        repeater.auth_type = cleaned_data['auth_type'] or None
-        repeater.username = cleaned_data['username']
-        if cleaned_data['password'] != PASSWORD_PLACEHOLDER:
-            repeater.password = '${algo}${ciphertext}'.format(
-                algo=ALGO_AES,
-                ciphertext=b64_aes_encrypt(cleaned_data['password'])
-            )
+        repeater.connection_settings_id = int(cleaned_data['connection_settings_id'])
         repeater.format = cleaned_data['format']
-        repeater.notify_addresses_str = cleaned_data['notify_addresses_str']
-        repeater.skip_cert_verify = cleaned_data['skip_cert_verify']
         return repeater
 
     def post_save(self, request, repeater):
@@ -397,7 +388,7 @@ def test_repeater(request, domain):
             resp = simple_post(
                 domain, url, fake_post,
                 headers=headers,
-                auth_manager=repeater.get_auth_manager(),
+                auth_manager=repeater.connection_settings.get_auth_manager(),
                 verify=verify,
             )
             if 200 <= resp.status_code < 300:

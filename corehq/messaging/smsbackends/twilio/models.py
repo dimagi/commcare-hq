@@ -50,7 +50,7 @@ class SQLTwilioBackend(SQLSMSBackend, PhoneLoadBalancingMixin):
 
     @classmethod
     def get_opt_in_keywords(cls):
-        return ['START']
+        return ['START', 'UNSTOP']
 
     @classmethod
     def get_pass_through_opt_in_keywords(cls):
