@@ -80,8 +80,23 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         },
     });
 
-    Views.MenuListView = Marionette.CompositeView.extend({
+    Views.MenuTableView = Marionette.CollectionView.extend({
+        childView: Views.MenuView,
+        tagName: "tbody",
+    });
+
+    Views.MenuListView = Marionette.LayoutView.extend({
         tagName: "div",
+        regions: {
+            body: {
+                el: "table",
+            },
+        },
+        onShow: function () {
+            this.getRegion('body').show(new Views.MenuTableView({
+                collection: this.collection,
+            }));
+        },
         getTemplate: function () {
             if (this.collection.layoutStyle === FormplayerFrontend.Constants.LayoutStyles.GRID) {
                 return "#menu-view-grid-template";
@@ -89,8 +104,6 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
                 return "#menu-view-list-template";
             }
         },
-        childView: Views.MenuView,
-        childViewContainer: ".menus-container",
         templateHelpers: function () {
             return {
                 title: this.options.title,
