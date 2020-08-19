@@ -179,7 +179,6 @@ hqDefine("users/js/web_users",[
             return self.totalItems() > self.itemsPerPage();
         });
         self.goToPage = function (page) {
-            console.log('hello');
             page = page || 1;
             var skip = (page - 1) * self.itemsPerPage();
             var results = _.filter(self.allInvitations(), function (i) {
