@@ -170,6 +170,7 @@ class CustomDataFieldsProfile(models.Model):
         return (
             UserES().domain(self.definition.domain)
                     .mobile_users()
+                    .show_inactive()
                     .filter(
                         filters.nested('user_data_es',
                         filters.AND(
