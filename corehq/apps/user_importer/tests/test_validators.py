@@ -10,6 +10,7 @@ from corehq.apps.user_importer.validation import (
     GroupValidator,
     UsernameLengthValidator,
     NewUserPasswordValidator,
+    ProfileValidator,
     RoleValidator,
     UsernameTypeValidator,
     RequiredFieldsValidator,
@@ -107,6 +108,15 @@ TEST_CASES = [
         ],
         RoleValidator('domain', {'r1', 'r2'}),
         {0: RoleValidator.error_message.format('r3')}
+    ),
+    (
+        [
+            {'user_field_profile': 'p1'},
+            {'user_field_profile': 'r1'},
+            {},
+        ],
+        ProfileValidator('domain', {'p1', 'p2'}),
+        {1: ProfileValidator.error_message.format('r1')}
     ),
     (
         [
