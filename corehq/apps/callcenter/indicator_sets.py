@@ -22,7 +22,7 @@ from corehq.apps.callcenter.queries import (
 from corehq.apps.callcenter.utils import get_call_center_cases
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.analytics.esaccessors import (
-    get_case_types_for_domain_es,
+    get_case_types_for_domain,
 )
 
 logger = logging.getLogger('callcenter')
@@ -178,7 +178,7 @@ class CallCenterIndicators(object):
         """
         :return: Set of all case types for the domain excluding the CallCenter case type.
         """
-        case_types = get_case_types_for_domain_es(self.domain)
+        case_types = get_case_types_for_domain(self.domain)
         case_types = case_types - {self.cc_case_type}
         return case_types
 

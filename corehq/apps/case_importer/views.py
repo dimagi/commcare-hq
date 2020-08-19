@@ -27,7 +27,7 @@ from corehq.apps.case_importer.util import get_importer_error_message
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.reports.analytics.esaccessors import (
-    get_case_types_for_domain_es,
+    get_case_types_for_domain,
 )
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
@@ -142,7 +142,7 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_colu
             % {'max_columns': MAX_CASE_IMPORTER_COLUMNS})
 
     case_types_from_apps = sorted(get_case_types_from_apps(domain))
-    unrecognized_case_types = sorted([t for t in get_case_types_for_domain_es(domain)
+    unrecognized_case_types = sorted([t for t in get_case_types_for_domain(domain)
                                       if t not in case_types_from_apps])
 
     if len(case_types_from_apps) == 0 and len(unrecognized_case_types) == 0:

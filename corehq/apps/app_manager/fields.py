@@ -16,7 +16,7 @@ from corehq.apps.app_manager.analytics import get_exports_by_application
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
 from corehq.apps.reports.analytics.esaccessors import (
-    get_case_types_for_domain_es,
+    get_case_types_for_domain,
 )
 from corehq.apps.userreports.app_manager.data_source_meta import (
     DATA_SOURCE_TYPE_CASE,
@@ -537,7 +537,7 @@ class ApplicationDataRMIHelper(object):
                             case_types = [c._asdict() for c in case_types]
                     case_types_by_app[app_choice.id] = case_types
 
-        all_case_types = get_case_types_for_domain_es(self.domain)
+        all_case_types = get_case_types_for_domain(self.domain)
         unknown_case_types = all_case_types.difference(used_case_types)
         unknown_case_types = [RMIDataChoice(
             id=c,

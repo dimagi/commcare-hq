@@ -52,7 +52,7 @@ from corehq.apps.export.models import CaseExportInstance, FormExportInstance
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import (
-    get_case_types_for_domain_es,
+    get_case_types_for_domain,
 )
 from corehq.apps.reports.standard.cases.utils import (
     query_location_restricted_cases,
@@ -937,7 +937,7 @@ class DomainCases(Resource):
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
-        case_types = get_case_types_for_domain_es(domain)
+        case_types = get_case_types_for_domain(domain)
         results = [CaseType(case_type=case_type) for case_type in case_types]
         return results
 
