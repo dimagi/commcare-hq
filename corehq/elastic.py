@@ -1,7 +1,6 @@
 import json
 import logging
 import time
-from urllib.parse import unquote
 
 from django.conf import settings
 
@@ -330,65 +329,6 @@ def scan(client, query=None, scroll='5m', **kwargs):
 
 SIZE_LIMIT = 1000000
 SCROLL_PAGE_SIZE_LIMIT = 1000
-
-
-def parse_args_for_es(request, prefix=None):
-    """
-    Parses a request's query string for url parameters. It specifically parses the facet url parameter so that each term
-    is counted as a separate facet. e.g. 'facets=region author category' -> facets = ['region', 'author', 'category']
-    """
-    def strip_array(str):
-        return str[:-2] if str.endswith('[]') else str
-
-    params, facets = {}, []
-    for attr in request.GET.lists():
-        param, vals = attr[0], attr[1]
-        if param == 'facets':
-            facets = vals[0].split()
-            continue
-        if prefix:
-            if param.startswith(prefix):
-                params[strip_array(param[len(prefix):])] = [unquote(a) for a in vals]
-        else:
-            params[strip_array(param)] = [unquote(a) for a in vals]
-
-    return params, facets
-
-
-def generate_sortables_from_facets(results, params=None):
-    """
-    Sortable is a list of tuples containing the field name (e.g. Category) and a list of dictionaries for each facet
-    under that field (e.g. HIV and MCH are under Category). Each facet's dict contains the query string, display name,
-    count and active-status for each facet.
-    """
-
-    def generate_facet_dict(f_name, ft):
-        # hack to get around unicode encoding issues. However it breaks this specific facet
-        if isinstance(ft['term'], str):
-            ft['term'] = ft['term'].encode('ascii', 'replace')
-
-        return {'name': ft["term"],
-                'count': ft["count"],
-                'active': str(ft["term"]) in params.get(f_name, "")}
-
-    sortable = []
-    res_facets = results.get("facets", [])
-    for facet in res_facets:
-        if "terms" in res_facets[facet]:
-            sortable.append((facet, [generate_facet_dict(facet, ft) for ft in res_facets[facet]["terms"] if ft["term"]]))
-
-    return sortable
-
-
-def fill_mapping_with_facets(facet_mapping, results, params=None):
-    sortables = dict(generate_sortables_from_facets(results, params))
-    for _, _, facets in facet_mapping:
-        for facet_dict in facets:
-            facet_dict["choices"] = sortables.get(facet_dict["facet"], [])
-            if facet_dict.get('mapping'):
-                for choice in facet_dict["choices"]:
-                    choice["display"] = facet_dict.get('mapping').get(choice["name"], choice["name"])
-    return facet_mapping
 
 
 def report_and_fail_on_shard_failures(search_result):
