@@ -78,7 +78,7 @@ hqDefine("users/js/web_users",[
 
     /* Invitations panel */
     var Invitation = function (options) {
-        assertProperties.assertRequired(options, ["uuid", "email", "email_marked_as_bounced", "invited_on", "role_label"]);
+        assertProperties.assertRequired(options, ["uuid", "email", "email_marked_as_bounced", "invited_on", "role_label", "email_status"]);
         var self = _.extend({}, options);
         self.invited_on = ko.observable(new Date(self.invited_on));
         self.invitedOnText = ko.computed(function () {
@@ -169,16 +169,27 @@ hqDefine("users/js/web_users",[
         });
 
         self.query = ko.observable('');
+        self.statusFilter = ko.observable('');
+        self.allStatuses = _.uniq(_.map(self.allInvitations(), function (i) {
+            return i.email_status;
+        }));
         self.itemsPerPage = ko.observable();
         self.totalItems = ko.observable(self.allInvitations().length);
         self.showPagination = ko.computed(function () {
             return self.totalItems() > self.itemsPerPage();
         });
         self.goToPage = function (page) {
+            console.log('hello');
             page = page || 1;
             var skip = (page - 1) * self.itemsPerPage();
             var results = _.filter(self.allInvitations(), function (i) {
-                return i.email.toLowerCase().indexOf(self.query().toLowerCase()) !== -1;
+                var emailFilter = i.email.toLowerCase().indexOf(self.query().toLowerCase()) !== -1;
+                var statusFilter = true;
+                if (self.statusFilter()) {
+                    statusFilter = i.email_status === self.statusFilter();
+                }
+
+                return emailFilter && statusFilter;
             });
 
             self.currentPageInvitations(results.slice(skip, skip + self.itemsPerPage()));
