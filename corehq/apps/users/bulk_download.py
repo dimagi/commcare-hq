@@ -108,7 +108,7 @@ def parse_users(group_memoizer, domain, user_filters, task=None, total_count=Non
             'User IMEIs (read only)': _get_devices(user),
             'location_code': location_codes,
             'role': role.name if role else '',
-            'user_field_profile': profile.name if profile else '',
+            'user_profile': profile.name if profile else '',
             'registered_on (read only)': _format_date(user.created_on),
             'last_submission (read only)': _format_date(activity.last_submission_for_user.submission_date),
             'last_sync (read only)': activity.last_sync_for_user.sync_date,
@@ -135,7 +135,7 @@ def parse_users(group_memoizer, domain, user_filters, task=None, total_count=Non
     ]
 
     if toggles.CUSTOM_DATA_FIELDS_PROFILES.enabled(domain):
-        user_headers += ['user_field_profile']
+        user_headers += ['user_profile']
     user_data_fields = [f.slug for f in fields_definition.get_fields(include_system=False)]
     user_headers.extend(build_data_headers(user_data_fields))
     user_headers.extend(build_data_headers(

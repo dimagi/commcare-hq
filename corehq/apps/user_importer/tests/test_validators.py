@@ -111,8 +111,8 @@ TEST_CASES = [
     ),
     (
         [
-            {'user_field_profile': 'p1'},
-            {'user_field_profile': 'r1'},
+            {'user_profile': 'p1'},
+            {'user_profile': 'r1'},
             {},
         ],
         ProfileValidator('domain', {'p1', 'p2'}),

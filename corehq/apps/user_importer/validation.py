@@ -249,7 +249,7 @@ class ProfileValidator(ImportValidator):
         self.allowed_profiles = allowed_profiles
 
     def validate_spec(self, spec):
-        profile = spec.get('user_field_profile')
+        profile = spec.get('user_profile')
         if profile and profile not in self.allowed_profiles:
             return self.error_message.format(profile)
 
