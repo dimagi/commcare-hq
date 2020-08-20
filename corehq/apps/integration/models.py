@@ -12,6 +12,7 @@ class DialerSettings(models.Model):
     dialer_page_header = models.CharField(max_length=255)
     dialer_page_subheader = models.CharField(max_length=255)
 
+
 class GaenOtpServerSettings(models.Model):
     domain = models.CharField(max_length=128, unique=True)
     is_enabled = models.BooleanField(default=False)
@@ -35,6 +36,7 @@ class HmacCalloutSettings(models.Model):
             # https://stackoverflow.com/a/50926644/10840
             ("domain",),
         ]
+
 
 class SimprintsIntegration(models.Model):
     domain = models.CharField(max_length=128, unique=True)

@@ -22,6 +22,7 @@ def get_hmac_callout_settings(domain):
     except HmacCalloutSettings.DoesNotExist:
         pass
 
+
 def get_gaen_otp_server_settings(domain):
     try:
         settings = GaenOtpServerSettings.objects.get(domain=domain)

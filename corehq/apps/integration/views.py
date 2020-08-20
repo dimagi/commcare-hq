@@ -3,7 +3,6 @@ from requests.exceptions import RequestException
 
 from django.contrib import messages
 from django.http.response import Http404
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
@@ -17,7 +16,6 @@ from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseAdminProjectSettingsView
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
-from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.integration.forms import (
     DialerSettingsForm,
     HmacCalloutSettingsForm,
@@ -89,17 +87,17 @@ def gaen_otp_view(request, domain):
         post_data = get_post_data_for_otp(request, domain)
 
         if (request.POST.get('dummy_code')):
-            otp_data = {"code" : request.POST['dummy_code']}
+            otp_data = {"code": request.POST['dummy_code']}
         else:
             otp_data = get_otp_response(post_data, get_gaen_otp_server_settings(domain))
-        styled_otp_code = " ".join(otp_data['code'][i:i+2] for i in range(0, len(otp_data['code']), 2))
+        styled_otp_code = " ".join(otp_data['code'][i:i + 2] for i in range(0, len(otp_data['code']), 2))
 
         return render(request, "integration/web_app_gaen_otp.html", {"otp_data": otp_data,
                                                                      "styled_otp_code": styled_otp_code,
-                                                                    })
-    except CaseNotFound as cnf:
+                                                                     })
+    except CaseNotFound:
         raise Http404(_("No matching patient record found"))
-    except RequestException as re:
+    except RequestException:
         request_error_msg = _("""We are having problems communicating with the Exposure Nofication server
                                  please try again later""")
     except InvalidOtpRequestException as e:
@@ -117,6 +115,7 @@ def get_otp_response(post_data, gaen_otp_settings):
         return otp_response.json()['value']
     except Exception:
         raise RequestException(None, None, "Invalid OTP Response from Notification Server")
+
 
 class InvalidOtpRequestException(Exception):
     def __init__(self, message):
