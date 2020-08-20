@@ -203,7 +203,7 @@ hqDefine('users/js/roles',[
                     },
                     {
                         showOption: self.permissions.access_all_locations,
-                        editPermission: function () {return false},
+                        editPermission: function () {return false;},
                         viewPermission: self.permissions.view_roles,
                         text: gettext("<strong>Roles &amp; Permissions</strong> &mdash; view web user and mobile worker roles &amp; permissions (only Admins can edit roles)"),
                         showEditCheckbox: false,
@@ -218,7 +218,7 @@ hqDefine('users/js/roles',[
                         allowCheckboxPermission: null,
                     },
                     {
-                        showOption: self.toggledDataFileDownload,
+                        showOption: self.DataFileDownloadEnabled,
                         editPermission: self.permissions.edit_file_dropzone,
                         viewPermission: self.permissions.view_file_dropzone,
                         text: gettext("<strong>Dropzone</strong> &mdash; Upload and download files from the file Dropzone"),
@@ -234,7 +234,7 @@ hqDefine('users/js/roles',[
                         allowCheckboxPermission: null,
                     },
                     {
-                        showOption: self.toggledExportOwnership,
+                        showOption: self.ExportOwnershipEnabled,
                         editPermission: self.permissions.edit_shared_exports,
                         viewPermission: null,
                         text: gettext("<strong>Shared Exports</strong> &mdash; access and edit the content and structure of shared exports"),
@@ -304,8 +304,8 @@ hqDefine('users/js/roles',[
             },
         };
 
-        self.toggledDataFileDownload = o.toggledDataFileDownload;
-        self.toggledExportOwnership = o.toggledExportOwnership;
+        self.DataFileDownloadEnabled = o.DataFileDownloadEnabled;
+        self.ExportOwnershipEnabled = o.ExportOwnershipEnabled;
         self.allowEdit = o.allowEdit;
         self.reportOptions = o.reportOptions;
         self.webAppsList = o.webAppsList;

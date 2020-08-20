@@ -15,6 +15,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
              a list of entities (cases) and their details
              */
             $.when(fetchingNextMenu).done(function (menuResponse) {
+
                 // show any notifications from Formplayer
                 if (menuResponse.notification && !_.isNull(menuResponse.notification.message)) {
                     FormplayerFrontend.request("handleNotification", menuResponse.notification);
@@ -27,6 +28,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 }
 
                 var urlObject = Util.currentUrlToObject();
+
                 // If we don't have an appId in the URL (usually due to form preview)
                 // then parse the appId from the response.
                 if (urlObject.appId === undefined || urlObject.appId === null) {
@@ -41,7 +43,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 }
 
                 Menus.Controller.showMenu(menuResponse);
-
+                debugger;
                 if (menuResponse.shouldRequestLocation) {
                     Menus.Util.handleLocationRequest(options);
                 }
@@ -67,24 +69,31 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
 
         showMenu: function (menuResponse) {
             var menuListView = Menus.Util.getMenuView(menuResponse);
+            console.log(menuResponse);
 
             if (menuListView) {
+                debugger;
+                console.log(menuListView);
                 FormplayerFrontend.regions.main.show(menuListView.render());
+                debugger;
             }
+            debugger;
             if (menuResponse.persistentCaseTile && !FormplayerFrontend.currentUser.displayOptions.singleAppMode) {
                 Menus.Controller.showPersistentCaseTile(menuResponse.persistentCaseTile);
             } else {
                 FormplayerFrontend.regions.persistentCaseTile.empty();
             }
-
+            debugger;
             if (menuResponse.breadcrumbs) {
                 Menus.Util.showBreadcrumbs(menuResponse.breadcrumbs);
             } else {
                 FormplayerFrontend.regions.breadcrumb.empty();
             }
+            debugger;
             if (menuResponse.appVersion) {
                 FormplayerFrontend.trigger('setVersionInfo', menuResponse.appVersion);
             }
+            debugger;
         },
 
         showPersistentCaseTile: function (persistentCaseTile) {

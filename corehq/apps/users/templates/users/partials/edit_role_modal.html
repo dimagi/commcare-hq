@@ -50,7 +50,7 @@
                     <input type="checkbox"
                            data-bind="attr: {id: editCheckboxLabel}, checked: editPermission, disable: !$root.allowEdit" />
                     <label data-bind="attr: {for: editCheckboxLabel}">
-                      <span class="sr-only" data-bind="text: srEditAndViewText">
+                      <span class="sr-only" data-bind="text: screenReaderEditAndViewText">
                       </span>
                     </label>
                   </div>
@@ -65,7 +65,7 @@
                   <div class="form-check" data-bind="visible: editPermission()">
                     <input type="checkbox" checked="checked" disabled="disabled" />
                     <label>
-                      <span class="sr-only" data-bind="text: srViewOnlyText">
+                      <span class="sr-only" data-bind="text: screenReaderViewOnlyText">
                       </span>
                     </label>
                   </div>
@@ -76,7 +76,7 @@
                            data-bind="attr: {id: viewCheckboxLabel}, checked: viewPermission,
                                       disable: !$root.allowEdit" />
                     <label data-bind="attr: {for: viewCheckboxLabel}">
-                      <span class="sr-only" data-bind="text: srViewOnlyText">
+                      <span class="sr-only" data-bind="text: screenReaderViewOnlyText">
                       </span>
                     </label>
                   </div>

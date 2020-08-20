@@ -174,6 +174,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         urlObject.setQuery(queryDict);
         Util.setUrlToObject(urlObject);
         API.listMenus();
+        debugger;
     });
 
     FormplayerFrontend.on('restore_as:list', function () {

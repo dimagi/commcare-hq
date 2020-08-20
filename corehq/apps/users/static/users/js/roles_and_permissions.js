@@ -67,8 +67,8 @@ hqDefine("users/js/roles_and_permissions",[
             canRestrictAccessByLocation: initialPageData.get("can_restrict_access_by_location"),
             landingPageChoices: initialPageData.get("landing_page_choices"),
             webAppsPrivilege: initialPageData.get("web_apps_privilege"),
-            toggledDataFileDownload: initialPageData.get("toggled_data_file_download"),
-            toggledExportOwnership: initialPageData.get("toggled_export_ownership"),
+            DataFileDownloadEnabled: initialPageData.get("data_file_download_enabled"),
+            ExportOwnershipEnabled: initialPageData.get("export_ownership_enabled"),
         });
     });
 });
