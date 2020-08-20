@@ -12,6 +12,12 @@ class DialerSettings(models.Model):
     dialer_page_header = models.CharField(max_length=255)
     dialer_page_subheader = models.CharField(max_length=255)
 
+class GaenOtpServerSettings(models.Model):
+    domain = models.CharField(max_length=128, unique=True)
+    is_enabled = models.BooleanField(default=False)
+    server_url = models.CharField(max_length=255)
+    auth_token = models.CharField(max_length=255)
+
 
 class HmacCalloutSettings(models.Model):
     domain = models.CharField(max_length=128)

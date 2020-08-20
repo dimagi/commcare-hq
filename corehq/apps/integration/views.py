@@ -1,4 +1,8 @@
+import requests
+from requests.exceptions import RequestException
+
 from django.contrib import messages
+from django.http.response import Http404
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_GET
@@ -11,11 +15,18 @@ from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseAdminProjectSettingsView
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
-from corehq.apps.integration.forms import DialerSettingsForm, SimprintsIntegrationForm, HmacCalloutSettingsForm
-from corehq.apps.integration.models import DialerSettings, HmacCalloutSettings
-from corehq.apps.integration.util import get_dialer_settings
+from corehq.apps.integration.forms import (
+    DialerSettingsForm,
+    HmacCalloutSettingsForm,
+    GaenOtpServerSettingsForm,
+    SimprintsIntegrationForm,
+)
+from corehq.apps.integration.models import DialerSettings, GaenOtpServerSettings, HmacCalloutSettings
+from corehq.apps.integration.util import get_dialer_settings, get_gaen_otp_server_settings
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 
 class BiometricIntegrationView(BaseAdminProjectSettingsView):
@@ -66,6 +77,65 @@ def dialer_view(request, domain):
                                                                })
 
 
+@toggles.GAEN_OTP_SERVER.required_decorator()
+@login_and_domain_required
+@require_GET
+def gaen_otp_view(request, domain):
+    request_error_msg = None
+    try:
+        otp_data = get_otp_response(get_post_data_for_otp(request, domain),
+                                    get_gaen_otp_server_settings(domain))
+        styled_otp_code = " ".join(otp_data['otp_code'][i:i+2] for i in range(0, len(otp_data['otp_code']), 2))
+
+        return render(request, "integration/web_app_gaen_otp.html", {"otp_data": otp_data,
+                                                                     "styled_otp_code": styled_otp_code,
+                                                                    })
+    except CaseNotFound as cnf:
+        raise Http404(_("No matching patient record found"))
+    except RequestException as re:
+        request_error_msg = _("""We are having problems communicating with the Exposure Nofication server
+                                 please try again later""")
+
+    return render(request, "integration/web_app_integration_err.html", {"error_msg": request_error_msg})
+
+
+def get_otp_response(post_data, gaen_otp_settings):
+    return {"otp_code": "993847", "expires": ""}
+
+    headers = {"Authorization": "Bearer %s" % gaen_otp_settings.auth_token}
+    otp_response = requests.post(gaen_otp_settings.server_url,
+                                 data=post_data,
+                                 headers=headers)
+    try:
+        return otp_response.json()['value']
+    except Exception:
+        raise RequestException(None, None, "Invalid OTP Response from Notification Server")
+
+
+def get_post_data_for_otp(request, domain):
+    case_id = request.GET.get("case_id")
+    test_date_property = request.GET.get("test_date_property", None)
+    onset_date_property = request.GET.get("onset_date_property", None)
+
+    case = CaseAccessors(domain).get_case(case_id)
+    properties = case.dynamic_case_properties()
+
+    post_params = {}
+
+    #Note - NearForm currently claims this is mandatory, look into it
+    if 'contact_phone_number' in properties:
+        post_params['mobile'] = properties['contact_phone_number']
+
+    #Note - could code this better, but not sure if these will require a transform
+    if test_date_property in properties:
+        post_params['testDate'] = properties[test_date_property]
+
+    if onset_date_property in properties:
+        post_params['onsetDate'] = properties[onset_date_property]
+
+    return post_params
+
+
 class DialerSettingsView(BaseProjectSettingsView):
     urlname = 'dialer_settings_view'
     page_title = ugettext_lazy('Dialer Settings')
@@ -104,6 +174,45 @@ class DialerSettingsView(BaseProjectSettingsView):
         else:
             messages.error(
                 request, ugettext_lazy("Could not update Dialer Settings")
+            )
+        return self.get(request, *args, **kwargs)
+
+
+@method_decorator(toggles.GAEN_OTP_SERVER.required_decorator(), name='dispatch')
+class GaenOtpServerSettingsView(BaseProjectSettingsView):
+    urlname = 'gaen_otp_server_settings_view'
+    page_title = ugettext_lazy('GAEN OTP Server Config')
+    template_name = 'integration/gaen_otp_server_settings.html'
+
+    @property
+    @memoized
+    def gaen_otp_server_settings_form(self):
+        data = self.request.POST if self.request.method == 'POST' else None
+        return GaenOtpServerSettingsForm(
+            data, domain=self.domain
+        )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['domain'] = self.domain
+        kwargs['initial'] = GaenOtpServerSettings.objects.get_or_create(domain=self.domain)
+        return kwargs
+
+    @property
+    def page_context(self):
+        return {
+            'form': self.gaen_otp_server_settings_form
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.gaen_otp_server_settings_form.is_valid():
+            self.gaen_otp_server_settings_form.save()
+            messages.success(
+                request, ugettext_lazy("GAEN OTP Server Settings Updated")
+            )
+        else:
+            messages.error(
+                request, ugettext_lazy("Could not update GAEN OTP Server Settings")
             )
         return self.get(request, *args, **kwargs)
 
