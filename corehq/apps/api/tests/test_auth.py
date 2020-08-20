@@ -12,19 +12,20 @@ class AuthenticationTestBase(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.factory = RequestFactory()
-        cls.domain = Domain.get_or_create_with_name('api-test', is_active=True)
+        cls.domain = 'api-test'
+        cls.project = Domain.get_or_create_with_name(cls.domain, is_active=True)
         cls.username = 'alice@example.com'
         cls.password = '***'
-        cls.user = WebUser.create(cls.domain.name, cls.username, cls.password, None, None)
+        cls.user = WebUser.create(cls.domain, cls.username, cls.password, None, None)
         cls.api_key, _ = HQApiKey.objects.get_or_create(user=WebUser.get_django_user(cls.user))
 
     @classmethod
     def tearDownClass(cls):
-        cls.domain.delete()
+        cls.project.delete()
         super().tearDownClass()
 
-    def _get_request_with_api_key(self):
-        return self._get_request(HTTP_AUTHORIZATION=f'ApiKey {self.username}:{self.api_key.key}')
+    def _get_request_with_api_key(self, domain=None):
+        return self._get_request(domain, HTTP_AUTHORIZATION=f'ApiKey {self.username}:{self.api_key.key}')
 
     def _get_request(self, domain=None, **extras):
         path = self._get_domain_path() if domain else ''
@@ -34,7 +35,7 @@ class AuthenticationTestBase(TestCase):
         return request
 
     def _get_domain_path(self):
-        return f'/a/{self.domain.name}/'
+        return f'/a/{self.domain}/'
 
     def assertAuthenticationSuccess(self, auth_instance, request):
         # we can't use assertTrue, because auth failures can return "truthy" HttpResponse objects
