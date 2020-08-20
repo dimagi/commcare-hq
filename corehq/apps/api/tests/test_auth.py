@@ -37,7 +37,8 @@ class AuthenticationTestBase(TestCase):
         return f'/a/{self.domain.name}/'
 
     def assertAuthenticationSuccess(self, auth_instance, request):
-        self.assertTrue(auth_instance.is_authenticated(request))
+        # we can't use assertTrue, because auth failures can return "truthy" HttpResponse objects
+        self.assertEqual(True, auth_instance.is_authenticated(request))
 
     def assertAuthenticationFail(self, auth_instance, request):
         result = auth_instance.is_authenticated(request)
