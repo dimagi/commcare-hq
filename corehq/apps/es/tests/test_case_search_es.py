@@ -139,63 +139,51 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
                             ],
                             "should": [
                                 {
-                                    "bool": {
-                                        "filter": [
-                                            {
-                                                "nested": {
-                                                    "path": "case_properties",
-                                                    "query": {
-                                                        "bool": {
-                                                            "filter": [
-                                                                {
-                                                                    "term": {
-                                                                        "case_properties.key.exact": "parrot_name"
-                                                                    }
-                                                                }
-                                                            ],
-                                                            "must": {
-                                                                "match": {
-                                                                    "case_properties.value": {
-                                                                        "query": "polly",
-                                                                        "fuzziness": "AUTO"
-                                                                    }
-                                                                }
-                                                            }
+                                    "nested": {
+                                        "path": "case_properties",
+                                        "query": {
+                                            "bool": {
+                                                "filter": [
+                                                    {
+                                                        "term": {
+                                                            "case_properties.key.exact": "parrot_name"
+                                                        }
+                                                    }
+                                                ],
+                                                "must": {
+                                                    "match": {
+                                                        "case_properties.value": {
+                                                            "query": "polly",
+                                                            "fuzziness": "AUTO"
                                                         }
                                                     }
                                                 }
                                             }
-                                        ]
+                                        }
                                     }
                                 },
                                 {
-                                    "bool": {
-                                        "filter": [
-                                            {
-                                                "nested": {
-                                                    "path": "case_properties",
-                                                    "query": {
-                                                        "bool": {
-                                                            "filter": [
-                                                                {
-                                                                    "term": {
-                                                                        "case_properties.key.exact": "parrot_name"
-                                                                    }
-                                                                }
-                                                            ],
-                                                            "must": {
-                                                                "match": {
-                                                                    "case_properties.value": {
-                                                                        "query": "polly",
-                                                                        "fuzziness": "0"
-                                                                    }
-                                                                }
-                                                            }
+                                    "nested": {
+                                        "path": "case_properties",
+                                        "query": {
+                                            "bool": {
+                                                "filter": [
+                                                    {
+                                                        "term": {
+                                                            "case_properties.key.exact": "parrot_name"
+                                                        }
+                                                    }
+                                                ],
+                                                "must": {
+                                                    "match": {
+                                                        "case_properties.value": {
+                                                            "query": "polly",
+                                                            "fuzziness": "0"
                                                         }
                                                     }
                                                 }
                                             }
-                                        ]
+                                        }
                                     }
                                 }
                             ]

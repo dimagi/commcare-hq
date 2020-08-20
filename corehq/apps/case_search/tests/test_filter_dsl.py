@@ -63,32 +63,26 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
     def test_date_comparison(self):
         parsed = parse_xpath("dob >= '2017-02-12'")
         expected_filter = {
-            "bool": {
-                "filter": [
-                    {
-                        "nested": {
-                            "path": "case_properties",
-                            "query": {
-                                "bool": {
-                                    "filter": [
-                                        {
-                                            "term": {
-                                                "case_properties.key.exact": "dob"
-                                            }
-                                        }
-                                    ],
-                                    "must": {
-                                        "range": {
-                                            "case_properties.value.date": {
-                                                "gte": "2017-02-12"
-                                            }
-                                        }
-                                    }
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "term": {
+                                    "case_properties.key.exact": "dob"
+                                }
+                            }
+                        ],
+                        "must": {
+                            "range": {
+                                "case_properties.value.date": {
+                                    "gte": "2017-02-12"
                                 }
                             }
                         }
                     }
-                ]
+                }
             }
         }
         self.checkQuery(expected_filter, build_filter_from_ast("domain", parsed), is_raw_query=True)
@@ -96,32 +90,26 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
     def test_numeric_comparison(self):
         parsed = parse_xpath("number <= '100.32'")
         expected_filter = {
-            "bool": {
-                "filter": [
-                    {
-                        "nested": {
-                            "path": "case_properties",
-                            "query": {
-                                "bool": {
-                                    "filter": [
-                                        {
-                                            "term": {
-                                                "case_properties.key.exact": "number"
-                                            }
-                                        }
-                                    ],
-                                    "must": {
-                                        "range": {
-                                            "case_properties.value.numeric": {
-                                                "lte": 100.32
-                                            }
-                                        }
-                                    }
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "term": {
+                                    "case_properties.key.exact": "number"
+                                }
+                            }
+                        ],
+                        "must": {
+                            "range": {
+                                "case_properties.value.numeric": {
+                                    "lte": 100.32
                                 }
                             }
                         }
                     }
-                ]
+                }
             }
         }
         self.checkQuery(expected_filter, build_filter_from_ast("domain", parsed), is_raw_query=True)
@@ -129,32 +117,26 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
     def test_numeric_comparison_negative(self):
         parsed = parse_xpath("number <= -100.32")
         expected_filter = {
-            "bool": {
-                "filter": [
-                    {
-                        "nested": {
-                            "path": "case_properties",
-                            "query": {
-                                "bool": {
-                                    "filter": [
-                                        {
-                                            "term": {
-                                                "case_properties.key.exact": "number"
-                                            }
-                                        }
-                                    ],
-                                    "must": {
-                                        "range": {
-                                            "case_properties.value.numeric": {
-                                                "lte": -100.32
-                                            }
-                                        }
-                                    }
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "term": {
+                                    "case_properties.key.exact": "number"
+                                }
+                            }
+                        ],
+                        "must": {
+                            "range": {
+                                "case_properties.value.numeric": {
+                                    "lte": -100.32
                                 }
                             }
                         }
                     }
-                ]
+                }
             }
         }
         self.checkQuery(expected_filter, build_filter_from_ast("domain", parsed), is_raw_query=True)
@@ -334,32 +316,26 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
                         }
                     },
                     {
-                        "bool": {
-                            "filter": [
-                                {
-                                    "nested": {
-                                        "path": "case_properties",
-                                        "query": {
-                                            "bool": {
-                                                "filter": [
-                                                    {
-                                                        "term": {
-                                                            "case_properties.key.exact": "dob"
-                                                        }
-                                                    }
-                                                ],
-                                                "must": {
-                                                    "range": {
-                                                        "case_properties.value.date": {
-                                                            "lte": "2017-02-11"
-                                                        }
-                                                    }
-                                                }
+                        "nested": {
+                            "path": "case_properties",
+                            "query": {
+                                "bool": {
+                                    "filter": [
+                                        {
+                                            "term": {
+                                                "case_properties.key.exact": "dob"
+                                            }
+                                        }
+                                    ],
+                                    "must": {
+                                        "range": {
+                                            "case_properties.value.date": {
+                                                "lte": "2017-02-11"
                                             }
                                         }
                                     }
                                 }
-                            ]
+                            }
                         }
                     }
                 ]
