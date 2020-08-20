@@ -238,7 +238,7 @@ def reverse_index_case_query(case_ids, identifier=None):
 
 
 def case_property_missing(case_property_name):
-    """case_property_name is the empty string
+    """case_property_name isn't set or is the empty string
 
     """
     return filters.OR(

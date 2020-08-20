@@ -290,23 +290,23 @@ class TestCaseSearchLookups(TestCase):
         self._assert_query_runs_correctly(
             self.domain,
             [
-                {'_id': 'c1', 'name': 'redbeard'},
-                {'_id': 'c2', 'name': 'blackbeard'},
+                {'_id': 'c1', 'foo': 'redbeard'},
+                {'_id': 'c2', 'foo': 'blackbeard'},
             ],
-            CaseSearchES().domain(self.domain).case_property_query("name", "redbeard"),
+            CaseSearchES().domain(self.domain).case_property_query("foo", "redbeard"),
             ['c1']
         )
 
     def test_multiple_case_search_queries(self):
         query = (CaseSearchES().domain(self.domain)
-                 .case_property_query("name", "redbeard")
+                 .case_property_query("foo", "redbeard")
                  .case_property_query("parrot_name", "polly"))
         self._assert_query_runs_correctly(
             self.domain,
             [
-                {'_id': 'c1', 'name': 'redbeard', 'parrot_name': 'polly'},
-                {'_id': 'c2', 'name': 'blackbeard', 'parrot_name': 'polly'},
-                {'_id': 'c3', 'name': 'redbeard', 'parrot_name': 'molly'}
+                {'_id': 'c1', 'foo': 'redbeard', 'parrot_name': 'polly'},
+                {'_id': 'c2', 'foo': 'blackbeard', 'parrot_name': 'polly'},
+                {'_id': 'c3', 'foo': 'redbeard', 'parrot_name': 'molly'}
             ],
             query,
             ['c1']
@@ -314,14 +314,14 @@ class TestCaseSearchLookups(TestCase):
 
     def test_multiple_case_search_queries_should_clause(self):
         query = (CaseSearchES().domain(self.domain)
-                 .case_property_query("name", "redbeard")
+                 .case_property_query("foo", "redbeard")
                  .case_property_query("parrot_name", "polly", clause="should"))
         self._assert_query_runs_correctly(
             self.domain,
             [
-                {'_id': 'c1', 'name': 'redbeard', 'parrot_name': 'polly'},
-                {'_id': 'c2', 'name': 'blackbeard', 'parrot_name': 'polly'},
-                {'_id': 'c3', 'name': 'redbeard', 'parrot_name': 'molly'}
+                {'_id': 'c1', 'foo': 'redbeard', 'parrot_name': 'polly'},
+                {'_id': 'c2', 'foo': 'blackbeard', 'parrot_name': 'polly'},
+                {'_id': 'c3', 'foo': 'redbeard', 'parrot_name': 'molly'}
             ],
             query,
             ['c1', 'c3']
@@ -342,12 +342,12 @@ class TestCaseSearchLookups(TestCase):
         self._assert_query_runs_correctly(
             self.domain,
             [
-                {'_id': 'c2', 'name': 'blackbeard'},
-                {'_id': 'c3', 'name': ''},
+                {'_id': 'c2', 'foo': 'blackbeard'},
+                {'_id': 'c3', 'foo': ''},
                 {'_id': 'c4'},
             ],
-            CaseSearchES().domain(self.domain).filter(case_property_missing('name')),
-            ['c3']
+            CaseSearchES().domain(self.domain).filter(case_property_missing('foo')),
+            ['c3', 'c4']
         )
 
     def test_full_text_query(self):
