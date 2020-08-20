@@ -648,28 +648,25 @@ class TestParamstoESFilters(ElasticTestMixin, SimpleTestCase):
             "/a/test_domain/api/v0.5/form/",
             data={'_search': json.dumps(query)}
         )
-        _filter = {
-            "and": [
-                {
-                    "term": {
-                        "domain.exact": "test_domain"
-                    }
-                },
-                {
-                    "term": {
-                        "doc_type": "xforminstance"
-                    }
-                },
-                query['filter'],
-                {
-                    "match_all": {}
-                }
-            ]
-        }
         expected = {
             "query": {
                 "bool": {
-                    "filter": _filter["and"],
+                    "filter": [
+                        {
+                            "term": {
+                                "domain.exact": "test_domain"
+                            }
+                        },
+                        {
+                            "term": {
+                                "doc_type": "xforminstance"
+                            }
+                        },
+                        query['filter'],
+                        {
+                            "match_all": {}
+                        }
+                    ],
                     "must": {
                         "match_all": {}
                     }
