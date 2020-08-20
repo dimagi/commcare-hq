@@ -65,7 +65,7 @@ hqDefine("integration/js/hmac_callout", [
 
         url.searchParams.forEach(function (value,key) {args[key] = value});
         postForm(args, dest, target);
-    }
+    };
 
     var postForm = function (data, dest, target) {
         var form = document.createElement("form");
