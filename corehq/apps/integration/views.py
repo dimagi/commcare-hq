@@ -3,6 +3,8 @@ from requests.exceptions import RequestException
 
 from django.contrib import messages
 from django.http.response import Http404
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_GET
@@ -15,6 +17,7 @@ from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseAdminProjectSettingsView
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
+from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.integration.forms import (
     DialerSettingsForm,
     HmacCalloutSettingsForm,
@@ -79,13 +82,13 @@ def dialer_view(request, domain):
 
 @toggles.GAEN_OTP_SERVER.required_decorator()
 @login_and_domain_required
-@require_GET
+@require_POST
 def gaen_otp_view(request, domain):
     request_error_msg = None
     try:
         otp_data = get_otp_response(get_post_data_for_otp(request, domain),
                                     get_gaen_otp_server_settings(domain))
-        styled_otp_code = " ".join(otp_data['otp_code'][i:i+2] for i in range(0, len(otp_data['otp_code']), 2))
+        styled_otp_code = " ".join(otp_data['code'][i:i+2] for i in range(0, len(otp_data['code']), 2))
 
         return render(request, "integration/web_app_gaen_otp.html", {"otp_data": otp_data,
                                                                      "styled_otp_code": styled_otp_code,
@@ -100,7 +103,7 @@ def gaen_otp_view(request, domain):
 
 
 def get_otp_response(post_data, gaen_otp_settings):
-    return {"otp_code": "993847", "expires": ""}
+    return {"code": "993847"}
 
     headers = {"Authorization": "Bearer %s" % gaen_otp_settings.auth_token}
     otp_response = requests.post(gaen_otp_settings.server_url,
@@ -113,9 +116,10 @@ def get_otp_response(post_data, gaen_otp_settings):
 
 
 def get_post_data_for_otp(request, domain):
-    case_id = request.GET.get("case_id")
-    test_date_property = request.GET.get("test_date_property", None)
-    onset_date_property = request.GET.get("onset_date_property", None)
+    request_args = request.POST
+    case_id = request_args.get("case_id")
+    test_date_property = request_args.get("test_date_property", None)
+    onset_date_property = request_args.get("onset_date_property", None)
 
     case = CaseAccessors(domain).get_case(case_id)
     properties = case.dynamic_case_properties()

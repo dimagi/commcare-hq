@@ -37,6 +37,13 @@ def get_dialer_settings(domain):
 
 def integration_contexts(domain):
     context = {'dialer_enabled': domain_uses_dialer(domain)}
+
+    gaen_otp_server_settings = get_gaen_otp_server_settings(domain)
+    if gaen_otp_server_settings:
+        context.update({
+            'gaen_otp_enabled': True
+        })
+
     hmac_settings = get_hmac_callout_settings(domain)
     if hmac_settings:
         context.update({
