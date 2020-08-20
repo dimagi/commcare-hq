@@ -47,7 +47,7 @@ class AuthenticationTestBase(TestCase):
         # this should likely be changed to always return False
         # more discussion here: https://github.com/dimagi/commcare-hq/pull/28201#discussion_r461082885
         if isinstance(result, HttpResponse):
-            self.assertTrue(result.status_code in (401, 403))
+            self.assertIn(result.status_code, (401, 403))
         else:
             self.assertFalse(result)
 
