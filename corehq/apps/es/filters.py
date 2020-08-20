@@ -91,13 +91,7 @@ def doc_id(doc_id):
 
 def missing(field):
     """Only return docs missing a value for ``field``"""
-    return {
-        "bool": {"must_not": exists(field)}
-    }
-
-
-def field_exists(field):
-    return exists(field)
+    return NOT(exists(field))
 
 
 def exists(field):
