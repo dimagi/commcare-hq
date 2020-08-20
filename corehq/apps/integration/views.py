@@ -86,8 +86,12 @@ def dialer_view(request, domain):
 def gaen_otp_view(request, domain):
     request_error_msg = None
     try:
-        otp_data = get_otp_response(get_post_data_for_otp(request, domain),
-                                    get_gaen_otp_server_settings(domain))
+        post_data = get_post_data_for_otp(request, domain)
+
+        if (request.POST.get('dummy_code')):
+            otp_data = {"code" : request.POST['dummy_code']}
+        else:
+            otp_data = get_otp_response(post_data, get_gaen_otp_server_settings(domain))
         styled_otp_code = " ".join(otp_data['code'][i:i+2] for i in range(0, len(otp_data['code']), 2))
 
         return render(request, "integration/web_app_gaen_otp.html", {"otp_data": otp_data,
@@ -98,13 +102,13 @@ def gaen_otp_view(request, domain):
     except RequestException as re:
         request_error_msg = _("""We are having problems communicating with the Exposure Nofication server
                                  please try again later""")
+    except InvalidOtpRequestException as e:
+        request_error_msg = e.message
 
     return render(request, "integration/web_app_integration_err.html", {"error_msg": request_error_msg})
 
 
 def get_otp_response(post_data, gaen_otp_settings):
-    return {"code": "993847"}
-
     headers = {"Authorization": "Bearer %s" % gaen_otp_settings.auth_token}
     otp_response = requests.post(gaen_otp_settings.server_url,
                                  data=post_data,
@@ -114,28 +118,27 @@ def get_otp_response(post_data, gaen_otp_settings):
     except Exception:
         raise RequestException(None, None, "Invalid OTP Response from Notification Server")
 
+class InvalidOtpRequestException(Exception):
+    def __init__(self, message):
+        self.message = message
+
 
 def get_post_data_for_otp(request, domain):
-    request_args = request.POST
-    case_id = request_args.get("case_id")
-    test_date_property = request_args.get("test_date_property", None)
-    onset_date_property = request_args.get("onset_date_property", None)
+    try:
+        case_id = request.POST['case_id']
+        post_params = {
+            'mobile': request.POST.get("phone_number", None),
+            'testDate': request.POST['test_date'],
+            'onsetDate': request.POST['onset_date'],
+        }
+    except KeyError as ke:
+        raise InvalidOtpRequestException(_("OTP Request missing a required argument %s") % ke.args[0])
 
     case = CaseAccessors(domain).get_case(case_id)
     properties = case.dynamic_case_properties()
 
-    post_params = {}
-
-    #Note - NearForm currently claims this is mandatory, look into it
     if 'contact_phone_number' in properties:
         post_params['mobile'] = properties['contact_phone_number']
-
-    #Note - could code this better, but not sure if these will require a transform
-    if test_date_property in properties:
-        post_params['testDate'] = properties[test_date_property]
-
-    if onset_date_property in properties:
-        post_params['onsetDate'] = properties[onset_date_property]
 
     return post_params
 
