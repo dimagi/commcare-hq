@@ -63,7 +63,7 @@ hqDefine("integration/js/hmac_callout", [
             args['csrfmiddlewaretoken'] = $("#csrfTokenContainer").val();
         }
 
-        url.searchParams.forEach(function (value,key) {args[key] = value});
+        url.searchParams.forEach(function (value,key) {args[key] = value;});
         postForm(args, dest, target);
     };
 
