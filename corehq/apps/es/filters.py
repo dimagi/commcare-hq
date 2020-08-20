@@ -89,7 +89,7 @@ def doc_id(doc_id):
     return term("_id", doc_id)
 
 
-def missing(field, exist=True, null=True):
+def missing(field):
     """Only return docs missing a value for ``field``"""
     return {
         "bool": {"must_not": exists(field)}
@@ -107,8 +107,7 @@ def exists(field):
 
 def empty(field):
     """Only return docs with a missing or null value for ``field``"""
-    return OR(missing(field, exist=True, null=True),
-              term(field, ''))
+    return OR(missing(field), term(field, ''))
 
 
 def non_null(field):
