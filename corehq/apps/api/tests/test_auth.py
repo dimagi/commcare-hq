@@ -63,10 +63,18 @@ class LoginAuthenticationTest(AuthenticationTestBase):
 
 class LoginAndDomainAuthenticationTest(AuthenticationTestBase):
 
+    def test_login_no_auth_no_domain(self):
+        self.assertAuthenticationFail(LoginAndDomainAuthentication(), self._get_request())
+
+    def test_login_no_auth_with_domain(self):
+        self.assertAuthenticationFail(LoginAndDomainAuthentication(), self._get_request(domain=self.domain))
+
     def test_login_with_domain(self):
-        self.assertAuthenticationSuccess(LoginAndDomainAuthentication(), self._get_request(domain=self.domain))
+        self.assertAuthenticationSuccess(LoginAndDomainAuthentication(),
+                                         self._get_request_with_api_key(domain=self.domain))
 
     def test_login_with_wrong_domain(self):
-        domain = Domain.get_or_create_with_name('api-test-fail', is_active=True)
-        self.addCleanup(domain.delete)
-        self.assertAuthenticationFail(LoginAndDomainAuthentication(), self._get_request(domain=domain))
+        project = Domain.get_or_create_with_name('api-test-fail', is_active=True)
+        self.addCleanup(project.delete)
+        self.assertAuthenticationFail(LoginAndDomainAuthentication(),
+                                      self._get_request_with_api_key(domain=project.name))
