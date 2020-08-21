@@ -56,6 +56,16 @@ class CustomDataFieldsForm(forms.Form):
         return errors
 
     @classmethod
+    def verify_no_duplicate_profiles(cls, profiles):
+        errors = set()
+        names = [profile.get('name') for profile in profiles]
+        for name in names:
+            if names.count(name) > 1:
+                errors.add(_("Profile name '{}' appears more than once. Profile names must be "
+                             "unique.").format(name))
+        return errors
+
+    @classmethod
     def verify_no_profiles_missing_fields(cls, data_fields, profiles):
         errors = set()
         slugs = {field['slug']
@@ -134,6 +144,7 @@ class CustomDataFieldsForm(forms.Form):
         profiles = self.cleaned_data.get('profiles', [])
 
         errors = set()
+        errors.update(self.verify_no_duplicate_profiles(profiles))
         errors.update(self.verify_no_profiles_missing_fields(data_fields, profiles))
         errors.update(self.verify_profiles_validate(data_fields, profiles))
 
