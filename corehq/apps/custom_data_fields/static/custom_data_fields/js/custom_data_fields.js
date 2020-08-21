@@ -204,6 +204,12 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
                 .attr('name', 'purge_existing')
                 .attr('value', self.purge_existing())
                 .appendTo(customDataFieldsForm);
+
+            $('<input type="hidden">')
+                .attr('name', 'profiles_active')
+                .attr('value', $('#custom-fields-form .nav-tabs li:last').hasClass('active'))
+                .appendTo(customDataFieldsForm);
+
             customDataFieldsForm.appendTo("body");
             customDataFieldsForm.submit();
         };
