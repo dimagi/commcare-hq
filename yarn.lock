@@ -3023,9 +3023,15 @@ jquery-treetable@3.2.0:
   resolved "https://registry.yarnpkg.com/jquery-treetable/-/jquery-treetable-3.2.0.tgz#01095e945cf2f8218bbe9a35aeb7bf1ad86f1f9c"
   integrity sha1-AQlelFzy+CGLvpo1rre/GthvH5w=
 
-jquery-ui@components/jqueryui#1.11.4:
-  version "1.11.4"
-  resolved "https://codeload.github.com/components/jqueryui/tar.gz/c34f8dbf3ba57b3784b93f26119f436c0e8288e1"
+jquery-ui-built-themes@1.12.1:
+  version "1.12.1"
+  resolved "https://registry.yarnpkg.com/jquery-ui-built-themes/-/jquery-ui-built-themes-1.12.1.tgz#fb21015159e6a7e9400bb514dc17b00f0078a457"
+  integrity sha512-yoTQms/8MJqccVfz7OGCos18IrtOaxSjxwfzyErY4yKn0lWB2JHSaDRIDSOxURnrDhrp0VSypNkvkFLud2Wcww==
+
+jquery-ui@1.12.1:
+  version "1.12.1"
+  resolved "https://registry.yarnpkg.com/jquery-ui/-/jquery-ui-1.12.1.tgz#bcb4045c8dd0539c134bc1488cdd3e768a7a9e51"
+  integrity sha1-vLQEXI3QU5wTS8FIjN0+dop6nlE=
 
 jquery.cookie@dimagi/jquery-cookie#1.4.1:
   version "1.4.1"
@@ -3836,12 +3842,7 @@ mocha@^5.2.0:
     mkdirp "0.5.1"
     supports-color "5.4.0"
 
-moment@2.12.0:
-  version "2.12.0"
-  resolved "https://registry.yarnpkg.com/moment/-/moment-2.12.0.tgz#dc2560d19838d6c0731b1a6afa04675264d360d6"
-  integrity sha1-3CVg0Zg41sBzGxpq+gRnUmTTYNY=
-
-moment@^2.9.0:
+moment@2.27.0, moment@^2.9.0:
   version "2.27.0"
   resolved "https://registry.yarnpkg.com/moment/-/moment-2.27.0.tgz#8bff4e3e26a236220dfe3e36de756b6ebaa0105d"
   integrity sha512-al0MUK7cpIcglMv3YF13qSgdAIqxHTO7brRtaz3DlSULbqfazqkc5kEjNrLDOM7fsjshoFIihnU8snrP7zUvhQ==
