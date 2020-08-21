@@ -332,14 +332,15 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(rows[0]['flag'], "metadata properties conflict with profile: mode")
 
     def test_metadata_profile_unknown(self):
+        bad_id = self.profile.id + 100
         rows = import_users_and_groups(
             self.domain.name,
-            [self._get_spec(data={PROFILE_SLUG: self.profile.id + 100})],
+            [self._get_spec(data={PROFILE_SLUG: bad_id})],
             [],
             None,
             mock.MagicMock()
         )['messages']['rows']
-        self.assertEqual(rows[0]['flag'], "Could not find profile")
+        self.assertEqual(rows[0]['flag'], "Could not find profile with id {}".format(bad_id))
 
     def test_upper_case_email(self):
         """

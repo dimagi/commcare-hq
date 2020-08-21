@@ -1733,14 +1733,15 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if not data.get(PROFILE_SLUG):
             return None
 
+        profile_id = data.get(PROFILE_SLUG)
         try:
-            profile = CustomDataFieldsProfile.objects.get(id=data.get(PROFILE_SLUG))
+            profile = CustomDataFieldsProfile.objects.get(id=profile_id)
         except CustomDataFieldsProfile.DoesNotExist:
-            raise ValueError("Could not find profile")
+            raise ValueError("Could not find profile with id {}".format(profile_id))
         if profile.definition.domain != self.domain:
-            raise ValueError("Could not find profile")
+            raise ValueError("Could not find profile with id {}".format(profile_id))
         if profile.definition.field_type != UserFieldsView.field_type:
-            raise ValueError("Could not find profile")
+            raise ValueError("Could not find profile with id {}".format(profile_id))
         return profile
 
     def _is_demo_user_cached_value_is_stale(self):
