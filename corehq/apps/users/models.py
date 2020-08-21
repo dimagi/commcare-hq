@@ -496,15 +496,14 @@ class DomainPermissionsMirror(models.Model):
 
 
 class Membership(DocumentSchema):
-#   If we find a need for making UserRoles more general and decoupling it from domain then most of the role stuff from
-#   Domain membership can be put in here
+    # If we find a need for making UserRoles more general and decoupling it from a domain
+    # then most of the role stuff from Domain membership can be put in here
     is_admin = BooleanProperty(default=False)
 
 
 class DomainMembership(Membership):
     """
-    Each user can have multiple accounts on the
-    web domain. This is primarily for Dimagi staff.
+    Each user can have multiple accounts on individual domains
     """
 
     domain = StringProperty()
