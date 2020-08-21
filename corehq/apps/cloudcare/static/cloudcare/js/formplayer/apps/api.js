@@ -4,7 +4,7 @@
  * Backbone model and functions for listing and selecting CommCare apps
  */
 
-FormplayerFrontend.module("Apps", function (Apps, FormplayerFrontend, Backbone) {
+hqDefine("cloudcare/js/formplayer/apps/api", function () {
     var appsPromiseByRestoreAs = {};
     var appsByRestoreAs = {};
     var predefinedAppsPromise;
@@ -26,7 +26,7 @@ FormplayerFrontend.module("Apps", function (Apps, FormplayerFrontend, Backbone) 
         return predefinedAppsPromise;
     }
 
-    Apps.API = {
+    var API = {
         primeApps: function (restoreAs, apps) {
             appsPromiseByRestoreAs[restoreAs] = predefinedAppsPromise = $.Deferred().resolve(apps);
         },
@@ -58,10 +58,12 @@ FormplayerFrontend.module("Apps", function (Apps, FormplayerFrontend, Backbone) 
     };
 
     FormplayerFrontend.reqres.setHandler("appselect:apps", function () {
-        return Apps.API.getAppEntities();
+        return API.getAppEntities();
     });
 
     FormplayerFrontend.reqres.setHandler("appselect:getApp", function (app_id) {
-        return Apps.API.getAppEntity(app_id);
+        return API.getAppEntity(app_id);
     });
+
+    return API;
 });

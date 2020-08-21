@@ -70,7 +70,7 @@ describe('Render a case list', function () {
             user.restoreAs = '';
             user.displayOptions = {};
 
-            FormplayerFrontend.Apps.API.primeApps(user.restoreAs, new Backbone.Collection());
+            hqImport("cloudcare/js/formplayer/apps/api").primeApps(user.restoreAs, new Backbone.Collection());
         });
 
         afterEach(function () {
