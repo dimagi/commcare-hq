@@ -903,6 +903,7 @@ class TestUserESAccessors(TestCase):
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0], {
             '_id': '123',
+            '__group_ids': [],
             'username': self.username,
             'is_active': False,
             'first_name': self.first_name,

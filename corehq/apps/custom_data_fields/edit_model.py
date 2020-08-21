@@ -22,6 +22,7 @@ from .models import (
     PROFILE_SLUG,
     validate_reserved_words,
 )
+from .tasks import refresh_es_for_profile_users
 
 
 class CustomDataFieldsForm(forms.Form):
@@ -52,6 +53,16 @@ class CustomDataFieldsForm(forms.Form):
         for slug in slugs:
             if slug in case_reserved_words:
                 errors.add(_("Key '{}' is a reserved word in Commcare.").format(slug))
+        return errors
+
+    @classmethod
+    def verify_no_duplicate_profiles(cls, profiles):
+        errors = set()
+        names = [profile.get('name') for profile in profiles]
+        for name in names:
+            if names.count(name) > 1:
+                errors.add(_("Profile name '{}' appears more than once. Profile names must be "
+                             "unique.").format(name))
         return errors
 
     @classmethod
@@ -133,6 +144,7 @@ class CustomDataFieldsForm(forms.Form):
         profiles = self.cleaned_data.get('profiles', [])
 
         errors = set()
+        errors.update(self.verify_no_duplicate_profiles(profiles))
         errors.update(self.verify_no_profiles_missing_fields(data_fields, profiles))
         errors.update(self.verify_profiles_validate(data_fields, profiles))
 
@@ -276,6 +288,8 @@ class CustomDataModelMixin(object):
                     "fields": json.loads(profile['fields']),
                 }
             )
+            if not created and obj.has_users_assigned:
+                refresh_es_for_profile_users.delay(self.domain, obj.id)
             seen.add(obj.id)
 
         errors = []
@@ -312,6 +326,7 @@ class CustomDataModelMixin(object):
         context = {
             "custom_fields": json.loads(self.form.data['data_fields']),
             "custom_fields_form": self.form,
+            "disable_save": self.request.method == "GET" or self.form.is_valid(),
             "show_purge_existing": self.show_purge_existing,
         }
         if self.show_profiles:
@@ -350,17 +365,25 @@ class CustomDataModelMixin(object):
         if self.form.is_valid():
             self.save_custom_fields()
             errors = self.save_profiles()
-            if self.show_purge_existing and self.form.cleaned_data['purge_existing']:
-                self.update_existing_models()
-            msg = _("{} fields saved successfully").format(
-                str(self.entity_string)
-            )
             for error in errors:
                 messages.error(request, error)
+
+            if self.show_purge_existing and self.form.cleaned_data['purge_existing']:
+                self.update_existing_models()
+            if self.show_profiles:
+                msg = _("{} fields and profiles saved successfully.").format(self.entity_string)
+            else:
+                msg = _("{} fields saved successfully.").format(self.entity_string)
             messages.success(request, msg)
-            return redirect(self.urlname, self.domain)
         else:
-            return self.get(request, *args, **kwargs)
+            if self.show_profiles:
+                msg = _("Unable to save {} fields or profiles, see errors below.").format(
+                    self.entity_string.lower()
+                )
+            else:
+                msg = _("Unable to save {} fields, see errors below.").format(self.entity_string.lower())
+            messages.error(request, msg)
+        return self.get(request, *args, **kwargs)
 
     def update_existing_models(self):
         """

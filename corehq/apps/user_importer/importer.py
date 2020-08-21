@@ -45,7 +45,7 @@ required_headers = set(['username'])
 allowed_headers = set([
     'data', 'email', 'group', 'language', 'name', 'password', 'phone-number',
     'uncategorized_data', 'user_id', 'is_active', 'is_account_confirmed', 'send_confirmation_email',
-    'location_code', 'role', 'user_field_profile',
+    'location_code', 'role', 'user_profile',
     'User IMEIs (read only)', 'registered_on (read only)', 'last_submission (read only)',
     'last_sync (read only)', 'web_user', 'remove_web_user', 'domain'
 ]) | required_headers
@@ -319,6 +319,7 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
             domain_user_specs,
             allowed_group_names,
             list(roles_by_name),
+            list(profiles_by_name),
             upload_domain
         )
 
@@ -376,7 +377,7 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
             # ignore empty
             location_codes = [code for code in location_codes if code]
             role = row.get('role', None)
-            profile = row.get('profile', None)
+            profile = row.get('user_profile', None)
             web_user = row.get('web_user')
 
             try:
