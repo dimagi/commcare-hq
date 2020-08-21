@@ -1,15 +1,17 @@
 from django.db import transaction
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import ugettext_noop
 
 from memoized import memoized
 
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.hqwebapp.decorators import use_multiselect
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
+from corehq.apps.linked_domain.dbaccessors import get_linked_domains
 from corehq.apps.reminders.forms import NO_RESPONSE, KeywordForm
 from corehq.apps.reminders.util import get_combined_id, split_combined_id
 from corehq.apps.sms.models import Keyword, KeywordAction
@@ -245,6 +247,7 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
     empty_notification = ugettext_noop("You have no keywords. Please add one!")
     loading_message = ugettext_noop("Loading keywords...")
 
+    @use_multiselect
     @method_decorator(requires_privilege_with_fallback(privileges.INBOUND_SMS))
     def dispatch(self, *args, **kwargs):
         return super(KeywordsListView, self).dispatch(*args, **kwargs)
@@ -268,15 +271,21 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
 
     @property
     def page_context(self):
-        return self.pagination_context
+        context = self.pagination_context
+        context['linked_domains'] = [
+            domain_link.linked_domain
+            for domain_link in get_linked_domains(self.domain)
+        ]
+        context['all_keywords'] = self._all_keywords()
+        return context
+
+    @memoized
+    def _all_keywords(self):
+        return Keyword.get_by_domain(self.domain)
 
     @property
     def paginated_list(self):
-        for keyword in Keyword.get_by_domain(
-            self.domain,
-            limit=self.limit,
-            skip=self.skip,
-        ):
+        for keyword in self._all_keywords()[self.skip:self.skip + self.limit]:
             yield {
                 'itemData': self._fmt_keyword_data(keyword),
                 'template': 'keyword-row-template',
