@@ -1,9 +1,12 @@
-/*global FormplayerFrontend */
+/*global Backbone, FormplayerFrontend */
 
-FormplayerFrontend.module("Apps.Collections", function (Collections, FormplayerFrontend, Backbone) {
-    Collections.App = Backbone.Collection.extend({
+hqDefine("cloudcare/js/formplayer/apps/collections", function() {
+    var self = Backbone.Collection.extend({
         url: "appSelects",
         model: FormplayerFrontend.Apps.Models.App,
     });
-});
 
+    return function (apps) {
+        return new self(apps);
+    };
+});
