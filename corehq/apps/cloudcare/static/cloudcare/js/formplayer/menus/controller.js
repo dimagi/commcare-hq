@@ -43,7 +43,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 }
 
                 Menus.Controller.showMenu(menuResponse);
-                debugger;
+
                 if (menuResponse.shouldRequestLocation) {
                     Menus.Util.handleLocationRequest(options);
                 }
@@ -69,31 +69,23 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
 
         showMenu: function (menuResponse) {
             var menuListView = Menus.Util.getMenuView(menuResponse);
-            console.log(menuResponse);
 
             if (menuListView) {
-                debugger;
-                console.log(menuListView);
                 FormplayerFrontend.regions.main.show(menuListView.render());
-                debugger;
             }
-            debugger;
             if (menuResponse.persistentCaseTile && !FormplayerFrontend.currentUser.displayOptions.singleAppMode) {
                 Menus.Controller.showPersistentCaseTile(menuResponse.persistentCaseTile);
             } else {
                 FormplayerFrontend.regions.persistentCaseTile.empty();
             }
-            debugger;
             if (menuResponse.breadcrumbs) {
                 Menus.Util.showBreadcrumbs(menuResponse.breadcrumbs);
             } else {
                 FormplayerFrontend.regions.breadcrumb.empty();
             }
-            debugger;
             if (menuResponse.appVersion) {
                 FormplayerFrontend.trigger('setVersionInfo', menuResponse.appVersion);
             }
-            debugger;
         },
 
         showPersistentCaseTile: function (persistentCaseTile) {
