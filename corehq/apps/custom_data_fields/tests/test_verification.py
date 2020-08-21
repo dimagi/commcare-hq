@@ -39,7 +39,7 @@ class TestCustomDataFieldsVerification(SimpleTestCase):
         self.assertEqual(set(), CustomDataFieldsForm.verify_no_duplicate_profiles([self.profile]))
         self.assertEqual(
             {"Profile name 'grimlock' appears more than once. Profile names must be unique."},
-            CustomDataFieldsForm.verify_no_duplicate_profiles(self.profile + [{
+            CustomDataFieldsForm.verify_no_duplicate_profiles([self.profile, {
                 "name": "grimlock",
                 "fields": '{"_type": "autobot", "color": "grey"}',
             }])
