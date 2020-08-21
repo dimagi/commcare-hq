@@ -1,9 +1,9 @@
-/*global Backbone, FormplayerFrontend */
+/*global Backbone */
 
 hqDefine("cloudcare/js/formplayer/apps/collections", function() {
     var self = Backbone.Collection.extend({
         url: "appSelects",
-        model: FormplayerFrontend.Apps.Models.App,
+        model: hqImport("cloudcare/js/formplayer/apps/models"),
     });
 
     return function (apps) {
