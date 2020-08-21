@@ -1,10 +1,11 @@
 /*global FormplayerFrontend */
 
 FormplayerFrontend.module("Apps", function (Apps, FormplayerFrontend, Backbone, Marionette, $) {
+    var views = hqImport("cloudcare/js/formplayer/apps/views");
     Apps.Controller = {
         listApps: function () {
             $.when(FormplayerFrontend.request("appselect:apps")).done(function (apps) {
-                var appGridView = new Apps.Views.GridView({
+                var appGridView = views.GridView({
                     collection: apps,
                 });
                 FormplayerFrontend.regions.getRegion('main').show(appGridView);
@@ -17,7 +18,7 @@ FormplayerFrontend.module("Apps", function (Apps, FormplayerFrontend, Backbone, 
          */
         singleApp: function (appId) {
             $.when(FormplayerFrontend.request("appselect:apps")).done(function (apps) {
-                var singleAppView = new Apps.Views.SingleAppView({
+                var singleAppView = views.SingleAppView({
                     appId: appId,
                 });
                 FormplayerFrontend.regions.getRegion('main').show(singleAppView);
@@ -25,7 +26,7 @@ FormplayerFrontend.module("Apps", function (Apps, FormplayerFrontend, Backbone, 
         },
         landingPageApp: function (appId) {
             $.when(FormplayerFrontend.request("appselect:apps")).done(function (apps) {
-                var landingPageAppView = new Apps.Views.LandingPageAppView({
+                var landingPageAppView = views.LandingPageAppView({
                     appId: appId,
                 });
                 FormplayerFrontend.regions.getRegion('main').show(landingPageAppView);
