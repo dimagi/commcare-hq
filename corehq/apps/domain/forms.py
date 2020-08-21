@@ -110,7 +110,7 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.hqwebapp.fields import MultiCharField
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2Ajax
+from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2Ajax, GeoCoderInput
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.users.models import CouchUser, WebUser
 from corehq.apps.users.permissions import can_manage_releases
@@ -315,6 +315,13 @@ class DomainGlobalSettingsForm(forms.Form):
         )
     )
     default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
+
+    default_geocoder_location = Field(
+        widget=GeoCoderInput(attrs={'placeholder': ugettext_lazy('Select a location')}),
+        label=ugettext_noop("Default geocoder location"),
+        required=False,
+        help_text=ugettext_lazy("Set a proximity for address entry question.")
+    )
 
     logo = ImageField(
         label=ugettext_lazy("Custom Logo"),
