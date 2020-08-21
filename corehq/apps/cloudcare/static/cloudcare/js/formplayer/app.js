@@ -266,7 +266,7 @@ FormplayerFrontend.on("start", function (options) {
     user.useLiveQuery = options.useLiveQuery;
     user.restoreAs = FormplayerFrontend.request('restoreAsUser', user.domain, user.username);
 
-    FormplayerFrontend.Apps.API.primeApps(user.restoreAs, options.apps);
+    hqImport("cloudcare/js/formplayer/apps/api").primeApps(user.restoreAs, options.apps);
 
     savedDisplayOptions = _.pick(
         Util.getSavedDisplayOptions(),
