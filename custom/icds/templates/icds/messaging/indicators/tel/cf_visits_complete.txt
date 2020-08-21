@@ -1,3 +1,0 @@
-{# NOTE: Django assumes templates are stored with UTF-8 encoding by default. Be sure to save this template with UTF-8 encoding. #}
-
-{{ beneficiary }} కు అనుబంధ పోషకాహారం మొదలు పెట్టించడానికి అవసరమైన గృహ సందర్శనలు చేసినందుకు అభినందనలు

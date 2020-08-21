@@ -1,20 +1,14 @@
-import copy
 import json
 import logging
 import time
-from collections import namedtuple
-from urllib.parse import unquote
 
 from django.conf import settings
 
 from memoized import memoized
 
-from corehq.util.es.interface import ElasticsearchInterface
-from corehq.util.metrics import metrics_counter
 from dimagi.utils.chunked import chunked
 from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
 
-from corehq.apps.es.utils import flatten_field_dict
 from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
@@ -30,8 +24,10 @@ from corehq.util.es.elasticsearch import (
     ElasticsearchException,
     SerializationError,
 )
+from corehq.util.es.interface import ElasticsearchInterface
 from corehq.util.files import TransientTempfile
 from corehq.util.json import CommCareJSONEncoder
+from corehq.util.metrics import metrics_counter
 
 
 class ESJSONSerializer(object):
@@ -333,155 +329,6 @@ def scan(client, query=None, scroll='5m', **kwargs):
 
 SIZE_LIMIT = 1000000
 SCROLL_PAGE_SIZE_LIMIT = 1000
-
-
-def es_query(params=None, facets=None, terms=None, q=None, es_index=None, start_at=None, size=None, dict_only=False,
-             fields=None, facet_size=None):
-    if terms is None:
-        terms = []
-    if q is None:
-        q = {}
-    else:
-        q = copy.deepcopy(q)
-    if params is None:
-        params = {}
-
-    q["size"] = size if size is not None else q.get("size", SIZE_LIMIT)
-    q["from"] = start_at or 0
-
-    def get_or_init_anded_filter_from_query_dict(qdict):
-        and_filter = qdict.get("filter", {}).pop("and", [])
-        filter = qdict.pop("filter", None)
-        if filter:
-            and_filter.append(filter)
-        return {"and": and_filter}
-
-    filter = get_or_init_anded_filter_from_query_dict(q)
-
-    def convert(param):
-        #todo: find a better way to handle bools, something that won't break fields that may be 'T' or 'F' but not bool
-        if param == 'T' or param is True:
-            return 1
-        elif param == 'F' or param is False:
-            return 0
-        return param
-
-    for attr in params:
-        if attr not in terms:
-            attr_val = [convert(params[attr])] if not isinstance(params[attr], list) else [convert(p) for p in params[attr]]
-            filter["and"].append({"terms": {attr: attr_val}})
-
-    if facets:
-        q["facets"] = q.get("facets", {})
-        if isinstance(facets, list):
-            for facet in facets:
-                q["facets"][facet] = {"terms": {"field": facet, "size": facet_size or SIZE_LIMIT}}
-        elif isinstance(facets, dict):
-            q["facets"].update(facets)
-
-    if filter["and"]:
-        query = q.pop("query", {})
-        q["query"] = {
-            "filtered": {
-                "filter": filter,
-            }
-        }
-        q["query"]["filtered"]["query"] = query if query else {"match_all": {}}
-
-    if fields is not None:
-        q["fields"] = q.get("fields", [])
-        q["fields"].extend(fields)
-
-    if dict_only:
-        return q
-
-    es_index = es_index or 'domains'
-    es_interface = ElasticsearchInterface(get_es_new())
-    meta = ES_META[es_index]
-
-    try:
-        result = es_interface.search(meta.index, meta.type, body=q)
-        report_and_fail_on_shard_failures(result)
-    except ElasticsearchException as e:
-        raise ESError(e)
-
-    if fields is not None:
-        for res in result['hits']['hits']:
-            flatten_field_dict(res)
-
-    return result
-
-
-def stream_es_query(chunksize=100, **kwargs):
-    size = kwargs.pop("size", None)
-    kwargs.pop("start_at", None)
-    kwargs["size"] = chunksize
-    for i in range(0, size or SIZE_LIMIT, chunksize):
-        kwargs["start_at"] = i
-        res = es_query(**kwargs)
-        if not res["hits"]["hits"]:
-            return
-        for hit in res["hits"]["hits"]:
-            yield hit
-
-
-def parse_args_for_es(request, prefix=None):
-    """
-    Parses a request's query string for url parameters. It specifically parses the facet url parameter so that each term
-    is counted as a separate facet. e.g. 'facets=region author category' -> facets = ['region', 'author', 'category']
-    """
-    def strip_array(str):
-        return str[:-2] if str.endswith('[]') else str
-
-    params, facets = {}, []
-    for attr in request.GET.lists():
-        param, vals = attr[0], attr[1]
-        if param == 'facets':
-            facets = vals[0].split()
-            continue
-        if prefix:
-            if param.startswith(prefix):
-                params[strip_array(param[len(prefix):])] = [unquote(a) for a in vals]
-        else:
-            params[strip_array(param)] = [unquote(a) for a in vals]
-
-    return params, facets
-
-
-def generate_sortables_from_facets(results, params=None):
-    """
-    Sortable is a list of tuples containing the field name (e.g. Category) and a list of dictionaries for each facet
-    under that field (e.g. HIV and MCH are under Category). Each facet's dict contains the query string, display name,
-    count and active-status for each facet.
-    """
-
-    def generate_facet_dict(f_name, ft):
-        # hack to get around unicode encoding issues. However it breaks this specific facet
-        if isinstance(ft['term'], str):
-            ft['term'] = ft['term'].encode('ascii', 'replace')
-
-        return {'name': ft["term"],
-                'count': ft["count"],
-                'active': str(ft["term"]) in params.get(f_name, "")}
-
-    sortable = []
-    res_facets = results.get("facets", [])
-    for facet in res_facets:
-        if "terms" in res_facets[facet]:
-            sortable.append((facet, [generate_facet_dict(facet, ft) for ft in res_facets[facet]["terms"] if ft["term"]]))
-
-    return sortable
-
-
-def fill_mapping_with_facets(facet_mapping, results, params=None):
-    sortables = dict(generate_sortables_from_facets(results, params))
-    for _, _, facets in facet_mapping:
-        for facet_dict in facets:
-            facet_dict["choices"] = sortables.get(facet_dict["facet"], [])
-            if facet_dict.get('mapping'):
-                for choice in facet_dict["choices"]:
-                    choice["display"] = facet_dict.get('mapping').get(choice["name"], choice["name"])
-    return facet_mapping
 
 
 def report_and_fail_on_shard_failures(search_result):

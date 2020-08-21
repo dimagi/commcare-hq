@@ -34,14 +34,18 @@ from corehq.apps.domain.views.releases import (
 )
 from corehq.apps.export.views.incremental import IncrementalExportView
 from corehq.apps.hqadmin.reports import (
+    DeployHistoryReport,
     DeviceLogSoftAssertReport,
     UserAuditReport,
     UserListReport,
-    DeployHistoryReport,
 )
 from corehq.apps.hqadmin.views.system import GlobalThresholds
 from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
+from corehq.apps.integration.views import (
+    DialerSettingsView,
+    HmacCalloutSettingsView,
+)
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.receiverwrapper.rate_limiter import (
     SHOULD_RATE_LIMIT_SUBMISSIONS,
@@ -70,7 +74,6 @@ from corehq.apps.users.permissions import (
     can_download_data_files,
     can_view_sms_exports,
 )
-from corehq.apps.integration.views import DialerSettingsView
 from corehq.feature_previews import (
     EXPLORE_CASE_DATA_PREVIEW,
     is_eligible_for_ecd_preview,
@@ -89,7 +92,7 @@ from corehq.messaging.scheduling.views import (
 from corehq.messaging.util import show_messaging_dashboard
 from corehq.motech.dhis2.views import DataSetMapView
 from corehq.motech.openmrs.views import OpenmrsImporterView
-from corehq.motech.views import ConnectionSettingsView, MotechLogListView
+from corehq.motech.views import ConnectionSettingsListView, MotechLogListView
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import (
@@ -937,7 +940,7 @@ class ApplicationsTab(UITab):
     def _is_viewable(self):
         couch_user = self.couch_user
         return (self.domain and couch_user
-                and (couch_user.is_web_user() or couch_user.can_edit_apps())
+                and couch_user.can_view_apps()
                 and (couch_user.is_member_of(self.domain, allow_mirroring=True) or couch_user.is_superuser)
                 and has_privilege(self._request, privileges.PROJECT_ACCESS))
 
@@ -1786,12 +1789,6 @@ def _get_administration_section(domain):
             'url': reverse(ManageReleasesByLocation.urlname, args=[domain])
         })
 
-    if toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
-        administration.append({
-            'title': _(ManageReleasesByAppProfile.page_title),
-            'url': reverse(ManageReleasesByAppProfile.urlname, args=[domain])
-        })
-
     return administration
 
 
@@ -1806,6 +1803,15 @@ def _get_integration_section(domain):
             return _("Forward Cases")
 
     integration = []
+
+    if (
+        toggles.INCREMENTAL_EXPORTS.enabled(domain)
+        or domain_has_privilege(domain, privileges.DATA_FORWARDING)
+    ):
+        integration.append({
+            'title': _(ConnectionSettingsListView.page_title),
+            'url': reverse(ConnectionSettingsListView.urlname, args=[domain])
+        })
 
     if domain_has_privilege(domain, privileges.DATA_FORWARDING):
         integration.extend([
@@ -1840,12 +1846,6 @@ def _get_integration_section(domain):
             'url': reverse(BiometricIntegrationView.urlname, args=[domain])
         })
 
-    if toggles.INCREMENTAL_EXPORTS.enabled(domain) or toggles.DHIS2_INTEGRATION.enabled(domain):
-        integration.append({
-            'title': _(ConnectionSettingsView.page_title),
-            'url': reverse(ConnectionSettingsView.urlname, args=[domain])
-        })
-
     if toggles.DHIS2_INTEGRATION.enabled(domain):
         integration.append({
             'title': _(DataSetMapView.page_title),
@@ -1869,6 +1869,12 @@ def _get_integration_section(domain):
         integration.append({
             'title': _(DialerSettingsView.page_title),
             'url': reverse(DialerSettingsView.urlname, args=[domain])
+        })
+
+    if toggles.HMAC_CALLOUT.enabled(domain):
+        integration.append({
+            'title': _(HmacCalloutSettingsView.page_title),
+            'url': reverse(HmacCalloutSettingsView.urlname, args=[domain])
         })
 
     return integration

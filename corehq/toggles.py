@@ -528,6 +528,14 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules+and+Forms',
 )
 
+V1_SHADOW_MODULES = StaticToggle(
+    'v1-shadows',
+    'Allow creation and management of deprecated Shadow Module behaviour',
+    TAG_SOLUTIONS_CONDITIONAL,
+    [NAMESPACE_DOMAIN],
+    help_link='https://github.com/dimagi/commcare-hq/blob/master/docs/advanced_app_features.rst#shadow-modules',
+)
+
 CASE_LIST_CUSTOM_XML = StaticToggle(
     'case_list_custom_xml',
     'Allow custom XML to define case lists (ex. for case tiles)',
@@ -1843,6 +1851,13 @@ REFER_CASE_REPEATER = StaticToggle(
 WIDGET_DIALER = StaticToggle(
     'widget_dialer',
     'COVID: Enable usage of AWS Connect Dialer',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+HMAC_CALLOUT = StaticToggle(
+    'hmac_callout',
+    'COVID: Enable signed messaging url callouts in cloudcare',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
 )
