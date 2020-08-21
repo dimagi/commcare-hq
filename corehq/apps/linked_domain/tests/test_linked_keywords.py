@@ -1,4 +1,4 @@
-from corehq.apps.linked_domain.keywords import create_linked_keyword
+from corehq.apps.linked_domain.keywords import create_linked_keyword, update_keyword
 from corehq.apps.app_manager.models import Module
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
 from corehq.apps.reminders.models import METHOD_SMS
@@ -32,11 +32,26 @@ class TestLinkedKeywords(BaseLinkedAppsTest):
 
 
     def test_create_keyword_link(self):
-        create_linked_keyword(self.domain_link, self.keyword.id)
-        new_keyword = Keyword.objects.get(domain=self.domain_link.linked_domain)
+        new_keyword_id = create_linked_keyword(self.domain_link, self.keyword.id)
+        new_keyword = Keyword.objects.get(id=new_keyword_id)
         self.assertEqual(new_keyword.keyword, self.keyword.keyword)
 
         new_keyword_action = new_keyword.keywordaction_set.first()
         self.assertEqual(new_keyword_action.message_content, self.keyword.keywordaction_set.first().message_content)
 
         self.assertEqual(new_keyword_action.app_id, self.linked_app.get_id)
+
+    def test_update_keyword_link(self):
+        new_keyword_id = create_linked_keyword(self.domain_link, self.keyword.id)
+
+        self.keyword.keyword = "foo"
+        self.keyword.save()
+        keyword_action = self.keyword.keywordaction_set.first()
+        keyword_action.message_content = "bar"
+        keyword_action.save()
+
+        update_keyword(self.domain_link, new_keyword_id)
+
+        linked_keyword = Keyword.objects.get(id=new_keyword_id)
+        self.assertEqual(linked_keyword.keyword, "foo")
+        self.assertEqual(linked_keyword.keywordaction_set.first().message_content, "bar")

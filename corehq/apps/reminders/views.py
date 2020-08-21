@@ -1,3 +1,4 @@
+from django.contrib import messages
 from django.db import transaction
 from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
@@ -7,11 +8,16 @@ from django.utils.translation import ugettext_noop
 
 from memoized import memoized
 
+from dimagi.utils.logging import notify_exception
+
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.hqwebapp.decorators import use_multiselect
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.linked_domain.dbaccessors import get_linked_domains
+from corehq.apps.linked_domain.keywords import create_linked_keyword
+from corehq.apps.linked_domain.models import DomainLink, KeywordLinkDetail
 from corehq.apps.reminders.forms import NO_RESPONSE, KeywordForm
 from corehq.apps.reminders.util import get_combined_id, split_combined_id
 from corehq.apps.sms.models import Keyword, KeywordAction
@@ -330,3 +336,37 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
 
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
+
+
+@domain_admin_required
+def link_keywords(request, domain):
+    from_domain = domain
+    to_domains = request.POST.getlist("to_domains")
+    keyword_ids = request.POST.getlist("keyword_ids")
+    successes = []
+    failures = []
+    for to_domain in to_domains:
+        domain_link = DomainLink.objects.get(master_domain=from_domain, linked_domain=to_domain)
+        for keyword_id in keyword_ids:
+            try:
+                linked_keyword_id = create_linked_keyword(domain_link, keyword_id)
+                domain_link.update_last_pull(
+                    'keyword',
+                    request.couch_user._id,
+                    model_detail=KeywordLinkDetail(keyword_id=str(linked_keyword_id)).to_json(),
+                )
+                successes.append(to_domain)
+            except Exception as err:
+                failures.append(to_domain)
+                notify_exception(request, message=str(err))
+
+    if successes:
+        messages.success(
+            request,
+            _(f"Successfully linked and copied to {', '.join(successes)}. "))
+    if failures:
+        messages.error(request, _(f"Due to errors, the report was not copied to {', '.join(failures)}"))
+
+    return HttpResponseRedirect(
+        reverse(KeywordsListView.urlname, args=[from_domain])
+    )

@@ -11,6 +11,8 @@
 <div class="modal fade" id="link-keywords">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
+      <form class="form form-horizontal" method="post" action="{% url "link_keywords" domain %}">
+        {% csrf_token %}
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
           <h3>
@@ -20,9 +22,9 @@
         <div class="modal-body">
           <div class="row">
             <div class="controls col-xs-10">
-              <select name="to_domains" class="form-control" required="" id="keyword-selector" multiple>
+              <select name="keyword_ids" class="form-control" required="" id="keyword-selector" multiple>
                 {% for keyword in all_keywords %}
-                  <option value="{{ keyword.couch_id }}">
+                  <option value="{{ keyword.id }}">
                     {{ keyword.keyword }}
                   </option>
                 {% endfor %}
@@ -51,6 +53,7 @@
             {% trans "Link" %}
           </button>
         </div>
+      </form>
     </div>
   </div>
 </div>
