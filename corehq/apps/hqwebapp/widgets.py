@@ -158,3 +158,31 @@ class SelectToggle(forms.Select):
                    id=html_attr(attrs.get('id', '')),
                    value=html_attr(self.params['value'] or '"{}"'.format(html_attr(value))),
                    options=html_attr(json.dumps([{'id': c[0], 'text': c[1]} for c in self.choices])))
+
+
+class GeoCoderInput(Input):
+
+    def __init__(self, attrs=None):
+        super(GeoCoderInput, self).__init__(attrs=attrs)
+
+    def render(self, name=None, value=None, attrs=None, renderer=None):
+        # startdate = ''
+        # enddate = ''
+        # if isinstance(self.default_datespan, DateSpan):
+        #     if self.default_datespan.startdate is not None:
+        #         startdate = self.default_datespan.startdate.strftime('%m/%d/%Y')
+        #     if self.default_datespan.enddate is not None:
+        #         enddate = self.default_datespan.enddate.strftime('%m/%d/%Y')
+
+        # attrs.update({
+        #     'data-separator': self.separator,
+        #     'data-labels': json.dumps(self.range_labels),
+        #     'data-start-date': startdate,
+        #     'data-end-date': enddate,
+        # })
+        # final_attrs = self.build_attrs(attrs)
+
+        # output = super(GeoCoderInput, self).render(name, value, attrs, renderer)
+        return mark_safe("""
+            <div id="geocoder-proximity"></div>
+        """)

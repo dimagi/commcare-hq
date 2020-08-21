@@ -2,8 +2,11 @@
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 
+
 {% requirejs_main 'domain/js/info_basic' %}
 
 {% block page_content %}
+  <link rel="stylesheet"
+    href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.5.1/mapbox-gl-geocoder.css" type="text/css" /><script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.5.1/mapbox-gl-geocoder.min.js"></script>
   {% crispy basic_info_form %}
 {% endblock %}
