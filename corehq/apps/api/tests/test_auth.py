@@ -25,7 +25,11 @@ class AuthenticationTestBase(TestCase):
         super().tearDownClass()
 
     def _get_request_with_api_key(self, domain=None):
-        return self._get_request(domain, HTTP_AUTHORIZATION=f'ApiKey {self.username}:{self.api_key.key}')
+        return self._get_request(domain,
+                                 HTTP_AUTHORIZATION=self._contruct_api_auth_header(self.username, self.api_key))
+
+    def _contruct_api_auth_header(self, username, api_key):
+        return f'ApiKey {username}:{api_key.key}'
 
     def _get_request(self, domain=None, **extras):
         path = self._get_domain_path() if domain else ''
