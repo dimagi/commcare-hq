@@ -1,7 +1,7 @@
-/*global FormplayerFrontend */
+/*global FormplayerFrontend, Marionette */
 
-FormplayerFrontend.module("Apps.Views", function (Views, FormplayerFrontend, Backbone, Marionette) {
-    Views.GridItem = Marionette.LayoutView.extend({
+hqDefine("cloudcare/js/formplayer/apps/views", function() {
+    GridItem = Marionette.LayoutView.extend({
         template: "#row-template",
         tagName: "div",
         className: "grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request",
@@ -23,7 +23,7 @@ FormplayerFrontend.module("Apps.Views", function (Views, FormplayerFrontend, Bac
         },
     });
 
-    Views.BaseAppView = {
+    BaseAppView = {
         events: {
             'click .js-incomplete-sessions-item': 'incompleteSessionsClick',
             'click .js-sync-item': 'syncClick',
@@ -49,11 +49,11 @@ FormplayerFrontend.module("Apps.Views", function (Views, FormplayerFrontend, Bac
     };
 
     GridContainerView = Marionette.CollectionView.extend({
-        childView: Views.GridItem,
+        childView: GridItem,
         childViewContainer: ".js-application-container",
     });
 
-    Views.GridView = Marionette.LayoutView.extend({
+    GridView = Marionette.LayoutView.extend({
         template: "#grid-template",
 
         regions: {
@@ -67,11 +67,11 @@ FormplayerFrontend.module("Apps.Views", function (Views, FormplayerFrontend, Bac
             }));
         },
 
-        events: _.extend(Views.BaseAppView.events),
-        incompleteSessionsClick: _.extend(Views.BaseAppView.incompleteSessionsClick),
-        syncClick: _.extend(Views.BaseAppView.syncClick),
-        onClickRestoreAs: _.extend(Views.BaseAppView.onClickRestoreAs),
-        onClickSettings: _.extend(Views.BaseAppView.onClickSettings),
+        events: _.extend(BaseAppView.events),
+        incompleteSessionsClick: _.extend(BaseAppView.incompleteSessionsClick),
+        syncClick: _.extend(BaseAppView.syncClick),
+        onClickRestoreAs: _.extend(BaseAppView.onClickRestoreAs),
+        onClickSettings: _.extend(BaseAppView.onClickSettings),
     });
 
     /**
@@ -81,17 +81,17 @@ FormplayerFrontend.module("Apps.Views", function (Views, FormplayerFrontend, Bac
      * The user doesn't need to select the application because we already have
      * that information. Used for phone previewing in the app manager
      */
-    Views.SingleAppView = Marionette.LayoutView.extend({
+    SingleAppView = Marionette.LayoutView.extend({
         template: "#single-app-template",
         className: 'single-app-view',
 
         events: _.extend({
             'click .js-start-app': 'startApp',
-        }, Views.BaseAppView.events),
-        incompleteSessionsClick: _.extend(Views.BaseAppView.incompleteSessionsClick),
-        syncClick: _.extend(Views.BaseAppView.syncClick),
-        onClickRestoreAs: _.extend(Views.BaseAppView.onClickRestoreAs),
-        onClickSettings: _.extend(Views.BaseAppView.onClickSettings),
+        }, BaseAppView.events),
+        incompleteSessionsClick: _.extend(BaseAppView.incompleteSessionsClick),
+        syncClick: _.extend(BaseAppView.syncClick),
+        onClickRestoreAs: _.extend(BaseAppView.onClickRestoreAs),
+        onClickSettings: _.extend(BaseAppView.onClickSettings),
 
         initialize: function (options) {
             this.appId = options.appId;
@@ -116,17 +116,17 @@ FormplayerFrontend.module("Apps.Views", function (Views, FormplayerFrontend, Bac
         },
     });
 
-    Views.LandingPageAppView = Marionette.LayoutView.extend({
+    LandingPageAppView = Marionette.LayoutView.extend({
         template: "#landing-page-app-template",
         className: 'landing-page-app-view',
 
         events: _.extend({
             'click .js-start-app': 'startApp',
-        }, Views.BaseAppView.events),
-        incompleteSessionsClick: _.extend(Views.BaseAppView.incompleteSessionsClick),
-        syncClick: _.extend(Views.BaseAppView.syncClick),
-        onClickRestoreAs: _.extend(Views.BaseAppView.onClickRestoreAs),
-        onClickSettings: _.extend(Views.BaseAppView.onClickSettings),
+        }, BaseAppView.events),
+        incompleteSessionsClick: _.extend(BaseAppView.incompleteSessionsClick),
+        syncClick: _.extend(BaseAppView.syncClick),
+        onClickRestoreAs: _.extend(BaseAppView.onClickRestoreAs),
+        onClickSettings: _.extend(BaseAppView.onClickSettings),
 
         initialize: function (options) {
             this.appId = options.appId;
@@ -145,5 +145,15 @@ FormplayerFrontend.module("Apps.Views", function (Views, FormplayerFrontend, Bac
         },
     });
 
-})
-;
+    return {
+        GridView: function(options) {
+            return new GridView(options);
+        },
+        SingleAppView: function (options) {
+            return new SingleAppView(options);
+        },
+        LandingPageAppView: function (options) {
+            return new LandingPageAppView(options);
+        },
+    };
+});
