@@ -130,6 +130,7 @@ class Permissions(DocumentSchema):
     edit_motech = BooleanProperty(default=False)
     edit_data = BooleanProperty(default=False)
     edit_apps = BooleanProperty(default=False)
+    view_apps = BooleanProperty(default=False)
     edit_shared_exports = BooleanProperty(default=False)
     access_all_locations = BooleanProperty(default=True)
     access_api = BooleanProperty(default=True)
@@ -242,6 +243,7 @@ class Permissions(DocumentSchema):
             edit_motech=True,
             edit_data=True,
             edit_apps=True,
+            view_apps=True,
             edit_reports=True,
             view_reports=True,
             edit_billing=True,
@@ -284,7 +286,7 @@ class UserRolePresets(object):
                                                        view_locations=True,
                                                        edit_shared_exports=True,
                                                        view_reports=True),
-            cls.APP_EDITOR: lambda: Permissions(edit_apps=True, view_reports=True),
+            cls.APP_EDITOR: lambda: Permissions(edit_apps=True, view_apps=True, view_reports=True),
             cls.BILLING_ADMIN: lambda: Permissions(edit_billing=True)
         }
 
@@ -308,6 +310,7 @@ class UserRole(QuickCachedDocumentMixin, Document):
     # role assignable by specific non-admins
     assignable_by = StringListProperty(default=[])
     is_archived = BooleanProperty(default=False)
+    upstream_id = StringProperty()
 
     def get_qualified_id(self):
         return 'user-role:%s' % self.get_id
@@ -427,6 +430,7 @@ PERMISSIONS_PRESETS = {
         'name': 'App Editor',
         'permissions': Permissions(
             edit_apps=True,
+            view_apps=True,
             view_reports=True,
         ),
     },
@@ -492,15 +496,14 @@ class DomainPermissionsMirror(models.Model):
 
 
 class Membership(DocumentSchema):
-#   If we find a need for making UserRoles more general and decoupling it from domain then most of the role stuff from
-#   Domain membership can be put in here
+    # If we find a need for making UserRoles more general and decoupling it from a domain
+    # then most of the role stuff from Domain membership can be put in here
     is_admin = BooleanProperty(default=False)
 
 
 class DomainMembership(Membership):
     """
-    Each user can have multiple accounts on the
-    web domain. This is primarily for Dimagi staff.
+    Each user can have multiple accounts on individual domains
     """
 
     domain = StringProperty()
@@ -2748,6 +2751,9 @@ class AnonymousCouchUser(object):
         return False
 
     def can_edit_apps(self):
+        return False
+
+    def can_view_apps(self):
         return False
 
     def can_edit_reports(self):

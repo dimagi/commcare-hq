@@ -152,7 +152,9 @@ Limitations
 
 A shadow module can neither **be** a parent module nor **have** a parent module
 
-A shadow module's source can be a parent module (the shadow will include a copy of the children), or have a parent module (the shadow will appear as a child of that same parent)
+A shadow module's source can **be** a parent module. The shadow will automatically create a shadow version of any child modules as required.
+
+A shadow module's source can **have** a parent module. The shadow will appear as a child of that same parent.
 
 Shadow modules are designed to be used with case modules. They may behave unpredictably if given an advanced module or reporting module as a source.
 
@@ -231,3 +233,15 @@ Menus get more complex when shadow modules are mixed with parent/child modules. 
             <locale id="modules.m2"/>
         </text>                                                                                                                     <command id="m2-f0"/>
     </menu>
+
+
+Legacy Child Shadow Behaviour
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Prior to August 2020 shadow modules whose source was a parent had inconsistent behaviour.
+
+The child-shadows were not treated in the same manner as other shadows - they inherited everything from their source, which meant they could never have their own case list filter, and were not shown in the UI. This was confusing. A side-effect of this was that display-only forms were not correctly interpreted by the phone.
+
+Legacy (V1) style shadow modules that have children can be updated to the new behaviour by clicking "Upgrade" on the settings page. This will create any shadow-children, as required. You can undo this action by reverting to a previous build.
+
+If the old behaviour is desired for any reason, there is a feature flag "V1 Shadow Modules" that allows you to make old-style modules.
