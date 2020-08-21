@@ -138,20 +138,12 @@ def filtered(query, filter_):
     """
     Filtered query for performing both filtering and querying at once
     """
-    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-        return {
-            "bool": {
-                "filter": [filter_],
-                "must": query
-            }
+    return {
+        "bool": {
+            "filter": [filter_],
+            "must": query
         }
-    else:
-        return {
-            "filtered": {
-                "query": query,
-                "filter": filter_,
-            }
-        }
+    }
 
 
 def regexp(field, regex):

@@ -126,7 +126,6 @@ BOOL = "bool"
 class ESQuery(object):
     """
     This query builder only outputs the following query structure::
-    # Note that this output depends on ES version being used
         {
             "query": {
                 "bool": {
@@ -165,19 +164,14 @@ class ESQuery(object):
         self._default_filters = deepcopy(self.default_filters)
         self._aggregations = []
         self.es_instance_alias = es_instance_alias
-        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-            self._filter_phrase = BOOL
-            self._query_phrase = 'must'
-        else:
-            self._filter_phrase = FILTERED
-            self._query_phrase = 'query'
-
-        self.es_query = {"query": {
-            self._filter_phrase: {
-                "filter": [] if settings.ELASTICSEARCH_MAJOR_VERSION == 7 else {"and": []},
-                self._query_phrase: queries.match_all()
+        self.es_query = {
+            "query": {
+                "bool": {
+                    "filter": [],
+                    "must": queries.match_all()
+                }
             }
-        }}
+        }
 
     @property
     def builtin_filters(self):
@@ -259,11 +253,7 @@ class ESQuery(object):
 
     @property
     def _filters(self):
-        _filter = self.es_query['query'][self._filter_phrase]['filter']
-        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-            return _filter
-        else:
-            return _filter['and']
+        return self.es_query['query']['bool']['filter']
 
     def exclude_source(self):
         """
@@ -316,7 +306,7 @@ class ESQuery(object):
 
     @property
     def _query(self):
-        return self.es_query['query'][self._filter_phrase][self._query_phrase]
+        return self.es_query['query']['bool']['must']
 
     def set_query(self, query):
         """
@@ -324,7 +314,7 @@ class ESQuery(object):
         if you actually want Levenshtein distance or prefix querying...
         """
         es = deepcopy(self)
-        es.es_query['query'][self._filter_phrase][self._query_phrase] = query
+        es.es_query['query']['bool']['must'] = query
         return es
 
     def add_query(self, new_query, clause):
@@ -347,7 +337,7 @@ class ESQuery(object):
         return self
 
     def get_query(self):
-        return self.es_query['query'][self._filter_phrase][self._query_phrase]
+        return self.es_query['query']['bool']['must']
 
     def search_string_query(self, search_string, default_fields=None):
         """Accepts a user-defined search string"""

@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.test import SimpleTestCase, TestCase
 
 from corehq.util.es.elasticsearch import ConnectionError
@@ -25,330 +24,259 @@ from corehq.util.test_utils import generate_cases, trap_extra_setup
 @es_test
 class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
 
-    def is_es7(self):
-        return settings.ELASTICSEARCH_MAJOR_VERSION == 7
-
     def test_simple_filter(self):
         parsed = parse_xpath("name = 'farid'")
 
-        if self.is_es7():
-            expected_filter = {
-                "nested": {
-                    "path": "case_properties",
-                    "query": {
-                        "bool": {
-                            "filter": [
-                                {
-                                    "bool": {
-                                        "filter": (
-                                            {
-                                                "term": {
-                                                    "case_properties.key.exact": "name"
-                                                }
-                                            },
-                                            {
-                                                "term": {
-                                                    "case_properties.value.exact": "farid"
-                                                }
+        expected_filter = {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "bool": {
+                                    "filter": (
+                                        {
+                                            "term": {
+                                                "case_properties.key.exact": "name"
                                             }
-                                        )
-                                    }
+                                        },
+                                        {
+                                            "term": {
+                                                "case_properties.value.exact": "farid"
+                                            }
+                                        }
+                                    )
                                 }
-                            ],
-                            "must": {
-                                "match_all": {}
                             }
+                        ],
+                        "must": {
+                            "match_all": {}
                         }
                     }
                 }
             }
-        else:
-            expected_filter = {
-                "nested": {
-                    "path": "case_properties",
-                    "query": {
-                        "filtered": {
-                            "query": {
-                                "match_all": {}
-                            },
-                            "filter": {
-                                "and": (
-                                    {
-                                        "term": {
-                                            "case_properties.key.exact": "name"
-                                        }
-                                    },
-                                    {
-                                        "term": {
-                                            "case_properties.value.exact": "farid"
-                                        }
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+        }
         built_filter = build_filter_from_ast("domain", parsed)
         self.checkQuery(expected_filter, built_filter, is_raw_query=True)
 
     def test_date_comparison(self):
         parsed = parse_xpath("dob >= '2017-02-12'")
-        if self.is_es7():
-            expected_filter = {
-                "bool": {
-                    "filter": [
-                        {
-                            "nested": {
-                                "path": "case_properties",
-                                "query": {
-                                    "bool": {
-                                        "filter": [
-                                            {
-                                                "term": {
-                                                    "case_properties.key.exact": "dob"
-                                                }
-                                            }
-                                        ],
-                                        "must": {
-                                            "range": {
-                                                "case_properties.value.date": {
-                                                    "gte": "2017-02-12"
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    ]
-                }
-            }
-        else:
-            expected_filter = {
-                "nested": {
-                    "path": "case_properties",
-                    "query": {
-                        "filtered": {
-                            "filter": {
+        expected_filter = {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
                                 "term": {
                                     "case_properties.key.exact": "dob"
                                 }
-                            },
-                            "query": {
-                                "range": {
-                                    "case_properties.value.date": {
-                                        "gte": "2017-02-12",
-                                    }
+                            }
+                        ],
+                        "must": {
+                            "range": {
+                                "case_properties.value.date": {
+                                    "gte": "2017-02-12"
                                 }
                             }
                         }
                     }
                 }
             }
+        }
         self.checkQuery(expected_filter, build_filter_from_ast("domain", parsed), is_raw_query=True)
 
     def test_numeric_comparison(self):
         parsed = parse_xpath("number <= '100.32'")
-        if self.is_es7():
-            expected_filter = {
-                "bool": {
-                    "filter": [
-                        {
-                            "nested": {
-                                "path": "case_properties",
-                                "query": {
-                                    "bool": {
-                                        "filter": [
-                                            {
-                                                "term": {
-                                                    "case_properties.key.exact": "number"
-                                                }
-                                            }
-                                        ],
-                                        "must": {
-                                            "range": {
-                                                "case_properties.value.numeric": {
-                                                    "lte": 100.32
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    ]
-                }
-            }
-        else:
-            expected_filter = {
-                "nested": {
-                    "path": "case_properties",
-                    "query": {
-                        "filtered": {
-                            "filter": {
+        expected_filter = {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
                                 "term": {
                                     "case_properties.key.exact": "number"
                                 }
-                            },
-                            "query": {
-                                "range": {
-                                    "case_properties.value.numeric": {
-                                        "lte": 100.32,
-                                    }
+                            }
+                        ],
+                        "must": {
+                            "range": {
+                                "case_properties.value.numeric": {
+                                    "lte": 100.32
                                 }
                             }
                         }
                     }
                 }
             }
+        }
         self.checkQuery(expected_filter, build_filter_from_ast("domain", parsed), is_raw_query=True)
 
     def test_numeric_comparison_negative(self):
         parsed = parse_xpath("number <= -100.32")
-        if self.is_es7():
-            expected_filter = {
-                "bool": {
-                    "filter": [
-                        {
-                            "nested": {
-                                "path": "case_properties",
-                                "query": {
-                                    "bool": {
-                                        "filter": [
-                                            {
-                                                "term": {
-                                                    "case_properties.key.exact": "number"
-                                                }
-                                            }
-                                        ],
-                                        "must": {
-                                            "range": {
-                                                "case_properties.value.numeric": {
-                                                    "lte": -100.32
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    ]
-                }
-            }
-        else:
-            expected_filter = {
-                "nested": {
-                    "path": "case_properties",
-                    "query": {
-                        "filtered": {
-                            "filter": {
+        expected_filter = {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
                                 "term": {
                                     "case_properties.key.exact": "number"
                                 }
-                            },
-                            "query": {
-                                "range": {
-                                    "case_properties.value.numeric": {
-                                        "lte": -100.32,
-                                    }
+                            }
+                        ],
+                        "must": {
+                            "range": {
+                                "case_properties.value.numeric": {
+                                    "lte": -100.32
                                 }
                             }
                         }
                     }
                 }
             }
+        }
         self.checkQuery(expected_filter, build_filter_from_ast("domain", parsed), is_raw_query=True)
 
     def test_numeric_equality_negative(self):
         parsed = parse_xpath("number = -100.32")
-        if self.is_es7():
-            expected_filter = {
-                "nested": {
-                    "path": "case_properties",
-                    "query": {
-                        "bool": {
-                            "filter": [
-                                {
-                                    "bool": {
-                                        "filter": (
-                                            {
-                                                "term": {
-                                                    "case_properties.key.exact": "number"
-                                                }
-                                            },
-                                            {
-                                                "term": {
-                                                    "case_properties.value.exact": -100.32
-                                                }
+        expected_filter = {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "bool": {
+                                    "filter": (
+                                        {
+                                            "term": {
+                                                "case_properties.key.exact": "number"
                                             }
-                                        )
-                                    }
+                                        },
+                                        {
+                                            "term": {
+                                                "case_properties.value.exact": -100.32
+                                            }
+                                        }
+                                    )
                                 }
-                            ],
-                            "must": {
-                                "match_all": {}
                             }
+                        ],
+                        "must": {
+                            "match_all": {}
                         }
                     }
                 }
             }
-        else:
-            expected_filter = {
-                "nested": {
-                    "path": "case_properties",
-                    "query": {
-                        "filtered": {
-                            "query": {
-                                "match_all": {}
-                            },
-                            "filter": {
-                                "and": (
-                                    {
-                                        "term": {
-                                            "case_properties.key.exact": "number"
-                                        }
-                                    },
-                                    {
-                                        "term": {
-                                            "case_properties.value.exact": -100.32,
-                                        }
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+        }
         built_filter = build_filter_from_ast("domain", parsed)
         self.checkQuery(expected_filter, built_filter, is_raw_query=True)
 
     def test_case_property_existence(self):
         parsed = parse_xpath("property != ''")
-        if self.is_es7():
-            expected_filter = {
-                "bool": {
-                    "must_not": {
-                        "bool": {
-                            "should": [
-                                {
-                                    "bool": {
-                                        "must_not": {
-                                            "nested": {
-                                                "path": "case_properties",
-                                                "query": {
+        expected_filter = {
+            "bool": {
+                "must_not": {
+                    "bool": {
+                        "should": [
+                            {
+                                "bool": {
+                                    "must_not": {
+                                        "nested": {
+                                            "path": "case_properties",
+                                            "query": {
+                                                "bool": {
+                                                    "filter": [
+                                                        {
+                                                            "term": {
+                                                                "case_properties.key.exact": "property"
+                                                            }
+                                                        }
+                                                    ],
+                                                    "must": {
+                                                        "match_all": {}
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "nested": {
+                                    "path": "case_properties",
+                                    "query": {
+                                        "bool": {
+                                            "filter": [
+                                                {
                                                     "bool": {
                                                         "filter": [
                                                             {
                                                                 "term": {
                                                                     "case_properties.key.exact": "property"
                                                                 }
+                                                            },
+                                                            {
+                                                                "term": {
+                                                                    "case_properties.value.exact": ""
+                                                                }
                                                             }
-                                                        ],
-                                                        "must": {
-                                                            "match_all": {}
+                                                        ]
+                                                    }
+                                                }
+                                            ],
+                                            "must": {
+                                                "match_all": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+
+        self.checkQuery(expected_filter, build_filter_from_ast("domain", parsed), is_raw_query=True)
+
+    def test_nested_filter(self):
+        parsed = parse_xpath("(name = 'farid' or name = 'leila') and dob <= '2017-02-11'")
+        expected_filter = {
+            "bool": {
+                "filter": [
+                    {
+                        "bool": {
+                            "should": [
+                                {
+                                    "nested": {
+                                        "path": "case_properties",
+                                        "query": {
+                                            "bool": {
+                                                "filter": [
+                                                    {
+                                                        "bool": {
+                                                            "filter": [
+                                                                {
+                                                                    "term": {
+                                                                        "case_properties.key.exact": "name"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "term": {
+                                                                        "case_properties.value.exact": "farid"
+                                                                    }
+                                                                }
+                                                            ]
                                                         }
                                                     }
+                                                ],
+                                                "must": {
+                                                    "match_all": {}
                                                 }
                                             }
                                         }
@@ -365,12 +293,12 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
                                                             "filter": [
                                                                 {
                                                                     "term": {
-                                                                        "case_properties.key.exact": "property"
+                                                                        "case_properties.key.exact": "name"
                                                                     }
                                                                 },
                                                                 {
                                                                     "term": {
-                                                                        "case_properties.value.exact": ""
+                                                                        "case_properties.value.exact": "leila"
                                                                     }
                                                                 }
                                                             ]
@@ -386,240 +314,20 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
                                 }
                             ]
                         }
-                    }
-                }
-            }
-        else:
-            expected_filter = {
-                "and": (
-                    {
-                        "nested": {
-                            "path": "case_properties",
-                            "query": {
-                                "filtered": {
-                                    "query": {
-                                        "match_all": {
-                                        }
-                                    },
-                                    "filter": {
-                                        "term": {
-                                            "case_properties.key.exact": "property"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    {
-                        "not": {
-                            "nested": {
-                                "path": "case_properties",
-                                "query": {
-                                    "filtered": {
-                                        "query": {
-                                            "match_all": {
-                                            }
-                                        },
-                                        "filter": {
-                                            "and": (
-                                                {
-                                                    "term": {
-                                                        "case_properties.key.exact": "property"
-                                                    }
-                                                },
-                                                {
-                                                    "term": {
-                                                        "case_properties.value.exact": ""
-                                                    }
-                                                }
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                )
-            }
-
-        self.checkQuery(expected_filter, build_filter_from_ast("domain", parsed), is_raw_query=True)
-
-    def test_nested_filter(self):
-        parsed = parse_xpath("(name = 'farid' or name = 'leila') and dob <= '2017-02-11'")
-        if self.is_es7():
-            expected_filter = {
-                "bool": {
-                    "filter": [
-                        {
-                            "bool": {
-                                "should": [
-                                    {
-                                        "nested": {
-                                            "path": "case_properties",
-                                            "query": {
-                                                "bool": {
-                                                    "filter": [
-                                                        {
-                                                            "bool": {
-                                                                "filter": [
-                                                                    {
-                                                                        "term": {
-                                                                            "case_properties.key.exact": "name"
-                                                                        }
-                                                                    },
-                                                                    {
-                                                                        "term": {
-                                                                            "case_properties.value.exact": "farid"
-                                                                        }
-                                                                    }
-                                                                ]
-                                                            }
-                                                        }
-                                                    ],
-                                                    "must": {
-                                                        "match_all": {}
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    },
-                                    {
-                                        "nested": {
-                                            "path": "case_properties",
-                                            "query": {
-                                                "bool": {
-                                                    "filter": [
-                                                        {
-                                                            "bool": {
-                                                                "filter": [
-                                                                    {
-                                                                        "term": {
-                                                                            "case_properties.key.exact": "name"
-                                                                        }
-                                                                    },
-                                                                    {
-                                                                        "term": {
-                                                                            "case_properties.value.exact": "leila"
-                                                                        }
-                                                                    }
-                                                                ]
-                                                            }
-                                                        }
-                                                    ],
-                                                    "must": {
-                                                        "match_all": {}
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                ]
-                            }
-                        },
-                        {
-                            "bool": {
-                                "filter": [
-                                    {
-                                        "nested": {
-                                            "path": "case_properties",
-                                            "query": {
-                                                "bool": {
-                                                    "filter": [
-                                                        {
-                                                            "term": {
-                                                                "case_properties.key.exact": "dob"
-                                                            }
-                                                        }
-                                                    ],
-                                                    "must": {
-                                                        "range": {
-                                                            "case_properties.value.date": {
-                                                                "lte": "2017-02-11"
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                ]
-                            }
-                        }
-                    ]
-                }
-            }
-        else:
-            expected_filter = {
-                "and": (
-                    {
-                        "or": (
-                            {
-                                "nested": {
-                                    "path": "case_properties",
-                                    "query": {
-                                        "filtered": {
-                                            "query": {
-                                                "match_all": {
-                                                }
-                                            },
-                                            "filter": {
-                                                "and": (
-                                                    {
-                                                        "term": {
-                                                            "case_properties.key.exact": "name"
-                                                        }
-                                                    },
-                                                    {
-                                                        "term": {
-                                                            "case_properties.value.exact": "farid"
-                                                        }
-                                                    }
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            },
-                            {
-                                "nested": {
-                                    "path": "case_properties",
-                                    "query": {
-                                        "filtered": {
-                                            "query": {
-                                                "match_all": {
-                                                }
-                                            },
-                                            "filter": {
-                                                "and": (
-                                                    {
-                                                        "term": {
-                                                            "case_properties.key.exact": "name"
-                                                        }
-                                                    },
-                                                    {
-                                                        "term": {
-                                                            "case_properties.value.exact": "leila"
-                                                        }
-                                                    }
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        )
                     },
                     {
                         "nested": {
                             "path": "case_properties",
                             "query": {
-                                "filtered": {
-                                    "filter": {
-                                        "term": {
-                                            "case_properties.key.exact": "dob"
+                                "bool": {
+                                    "filter": [
+                                        {
+                                            "term": {
+                                                "case_properties.key.exact": "dob"
+                                            }
                                         }
-                                    },
-                                    "query": {
+                                    ],
+                                    "must": {
                                         "range": {
                                             "case_properties.value.date": {
                                                 "lte": "2017-02-11"
@@ -630,8 +338,9 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
                             }
                         }
                     }
-                )
+                ]
             }
+        }
 
         built_filter = build_filter_from_ast("domain", parsed)
         self.checkQuery(expected_filter, built_filter, is_raw_query=True)
@@ -650,9 +359,6 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
 @es_test
 class TestFilterDslLookups(ElasticTestMixin, TestCase):
     maxDiff = None
-
-    def is_es7(self):
-        return settings.ELASTICSEARCH_MAJOR_VERSION == 7
 
     @classmethod
     def setUpClass(cls):
@@ -724,65 +430,36 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
         parsed = parse_xpath("father/name = 'Mace'")
         # return all the cases who's parent (relationship named 'father') has case property 'name' = 'Mace'
 
-        if self.is_es7():
-            expected_filter = {
-                "nested": {
-                    "path": "indices",
-                    "query": {
-                        "bool": {
-                            "filter": [
-                                {
-                                    "bool": {
-                                        "filter": (
-                                            {
-                                                "terms": {
-                                                    "indices.referenced_id": [self.parent_case_id]
-                                                }
-                                            },
-                                            {
-                                                "term": {
-                                                    "indices.identifier": "father"
-                                                }
+        expected_filter = {
+            "nested": {
+                "path": "indices",
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "bool": {
+                                    "filter": (
+                                        {
+                                            "terms": {
+                                                "indices.referenced_id": [self.parent_case_id]
                                             }
-                                        )
-                                    }
+                                        },
+                                        {
+                                            "term": {
+                                                "indices.identifier": "father"
+                                            }
+                                        }
+                                    )
                                 }
-                            ],
-                            "must": {
-                                "match_all": {}
                             }
+                        ],
+                        "must": {
+                            "match_all": {}
                         }
                     }
                 }
             }
-        else:
-            expected_filter = {
-                "nested": {
-                    "path": "indices",
-                    "query": {
-                        "filtered": {
-                            "query": {
-                                "match_all": {
-                                },
-                            },
-                            "filter": {
-                                "and": (
-                                    {
-                                        "terms": {
-                                            "indices.referenced_id": [self.parent_case_id],
-                                        }
-                                    },
-                                    {
-                                        "term": {
-                                            "indices.identifier": "father"
-                                        }
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+        }
         built_filter = build_filter_from_ast(self.domain, parsed)
         self.checkQuery(expected_filter, built_filter, is_raw_query=True)
         self.assertEqual([self.child_case_id], CaseSearchES().filter(built_filter).values_list('_id', flat=True))
@@ -790,65 +467,36 @@ class TestFilterDslLookups(ElasticTestMixin, TestCase):
     def test_nested_parent_lookups(self):
         parsed = parse_xpath("father/mother/house = 'Tyrell'")
 
-        if self.is_es7():
-            expected_filter = {
-                "nested": {
-                    "path": "indices",
-                    "query": {
-                        "bool": {
-                            "filter": [
-                                {
-                                    "bool": {
-                                        "filter": (
-                                            {
-                                                "terms": {
-                                                    "indices.referenced_id": [self.parent_case_id]
-                                                }
-                                            },
-                                            {
-                                                "term": {
-                                                    "indices.identifier": "father"
-                                                }
+        expected_filter = {
+            "nested": {
+                "path": "indices",
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "bool": {
+                                    "filter": (
+                                        {
+                                            "terms": {
+                                                "indices.referenced_id": [self.parent_case_id]
                                             }
-                                        )
-                                    }
+                                        },
+                                        {
+                                            "term": {
+                                                "indices.identifier": "father"
+                                            }
+                                        }
+                                    )
                                 }
-                            ],
-                            "must": {
-                                "match_all": {}
                             }
+                        ],
+                        "must": {
+                            "match_all": {}
                         }
                     }
                 }
             }
-        else:
-            expected_filter = {
-                "nested": {
-                    "path": "indices",
-                    "query": {
-                        "filtered": {
-                            "query": {
-                                "match_all": {
-                                },
-                            },
-                            "filter": {
-                                "and": (
-                                    {
-                                        "terms": {
-                                            "indices.referenced_id": [self.parent_case_id],
-                                        }
-                                    },
-                                    {
-                                        "term": {
-                                            "indices.identifier": "father"
-                                        }
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+        }
         built_filter = build_filter_from_ast(self.domain, parsed)
         self.checkQuery(expected_filter, built_filter, is_raw_query=True)
         self.assertEqual([self.child_case_id], CaseSearchES().filter(built_filter).values_list('_id', flat=True))
