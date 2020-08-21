@@ -145,10 +145,10 @@ class RequirePermissionAuthenticationTest(AuthenticationTestBase):
         )
         self.addCleanup(lambda: user_with_permission.delete(None))
         self.assertAuthenticationFail(self.require_edit_data,
-                                         self._get_request(
-                                             domain=self.domain,
-                                             HTTP_AUTHORIZATION=self._contruct_api_auth_header(
-                                                 user_with_permission.username,
-                                                 api_key_with_permissions
-                                             )
-                                         ))
+                                      self._get_request(
+                                          domain=self.domain,
+                                          HTTP_AUTHORIZATION=self._contruct_api_auth_header(
+                                              user_with_permission.username,
+                                              api_key_with_permissions
+                                          )
+                                      ))
