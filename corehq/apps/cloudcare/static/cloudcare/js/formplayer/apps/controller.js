@@ -1,8 +1,8 @@
-/*global FormplayerFrontend */
+/*global FormplayerFrontend, Backbone */
 
-FormplayerFrontend.module("Apps", function (Apps, FormplayerFrontend, Backbone, Marionette, $) {
+hqDefine("cloudcare/js/formplayer/apps/controller", function () {
     var views = hqImport("cloudcare/js/formplayer/apps/views");
-    Apps.Controller = {
+    return {
         listApps: function () {
             $.when(FormplayerFrontend.request("appselect:apps")).done(function (apps) {
                 var appGridView = views.GridView({
