@@ -41,8 +41,8 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 }
 
                 Menus.Controller.showMenu(menuResponse);
-                // If menuResponse is an entities type, make set search bar continues to show search
-                if (menuResponse.type == "entities") {
+                // If a search exists in urlObject, make set search bar continues to show search
+                if (urlObject.search !== null) {
                     $('#searchText').val(urlObject.search);
                 }
 
