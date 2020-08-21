@@ -106,11 +106,16 @@ class CustomDataEditor(object):
                                    validators=[validator])
         elif field.choices:
             # select2 must be controlled via knockout if form uses knockout
-            attrs = {'class': 'hqwebapp-select2'} if not self.ko_model else {}
+            attrs = {
+                'data-placeholder': _('Select one'),
+                'data-allow-clear': 'true',
+            }
+            if not self.ko_model:
+                attrs.update({'class': 'hqwebapp-select2'})
             return forms.ChoiceField(
                 label=field.label,
                 required=field.is_required,
-                choices=[('', _('Select one'))] + [(c, c) for c in field.choices],
+                choices=[(c, c) for c in field.choices],
                 widget=forms.Select(attrs=attrs)
             )
         else:
