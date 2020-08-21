@@ -18,19 +18,20 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     });
 
 
+    var controller = hqImport("cloudcare/js/formplayer/apps/controller");
     var API = {
         listApps: function () {
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
-            FormplayerFrontend.Apps.Controller.listApps();
+            controller.listApps();
         },
         singleApp: function (appId) {
             var user = FormplayerFrontend.request('currentUser');
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
             user.previewAppId = appId;
-            FormplayerFrontend.Apps.Controller.singleApp(appId);
+            controller.singleApp(appId);
         },
         landingPageApp: function (appId) {
-            FormplayerFrontend.Apps.Controller.landingPageApp(appId);
+            controller.landingPageApp(appId);
         },
         selectApp: function (appId, isInitial) {
             FormplayerFrontend.Menus.Controller.selectMenu({
@@ -58,7 +59,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             FormplayerFrontend.Users.Controller.listUsers(page, query);
         },
         listSettings: function () {
-            FormplayerFrontend.Apps.Controller.listSettings();
+            controller.listSettings();
         },
         showDetail: function (caseId, detailTabIndex, isPersistent) {
             FormplayerFrontend.Menus.Controller.selectDetail(caseId, detailTabIndex, isPersistent);
