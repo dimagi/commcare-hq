@@ -205,22 +205,15 @@
             <h3 class="panel-title" style="padding-top: 7px;">{% trans 'Pending Invitations' %}</h3>
           </div>
           <div class="col-sm-2">
-            <label class="control-label">
-              {% trans "Status" %}
-            </label>
-
             <select class="form-control" data-bind="
                            options: allStatuses,
                            value: statusFilter,
                            event: { change: function () { goToPage(1) } },
-                           optionsCaption: '{% trans "All" %}'
+                           optionsCaption: '{% trans "All statuses" %}'
                            ">
             </select>
           </div>
           <div class="col-sm-6">
-            <label class="control-label">
-              {% trans "Search by email address" %}
-            </label>
             <search-box data-apply-bindings="false"
                         params="value: query,
                                 action: function() { goToPage(1); },
