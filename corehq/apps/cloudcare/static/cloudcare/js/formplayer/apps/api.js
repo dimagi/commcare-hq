@@ -41,7 +41,7 @@ FormplayerFrontend.module("Apps", function (Apps, FormplayerFrontend, Backbone) 
             }
             return appsPromise.pipe(function (apps) {
                 appsByRestoreAs[restoreAs] = apps;
-                return new FormplayerFrontend.Apps.Collections.App(apps);
+                return hqImport("cloudcare/js/formplayer/apps/collections")(apps);
             });
         },
         getAppEntity: function (app_id) {
@@ -52,7 +52,7 @@ FormplayerFrontend.module("Apps", function (Apps, FormplayerFrontend, Backbone) 
                              "it may have been called before getAppEntities populated it asynchronously.");
                 return null;
             }
-            var appCollection = new FormplayerFrontend.Apps.Collections.App(apps);
+            var appCollection = hqImport("cloudcare/js/formplayer/apps/collections")(apps);
             return appCollection.get(app_id);
         },
     };
