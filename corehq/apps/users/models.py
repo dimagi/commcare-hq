@@ -1094,7 +1094,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     @property
     def metadata(self):
-        return self.user_data
+        return copy(self.user_data)
 
     @metadata.setter
     def metadata(self, value):

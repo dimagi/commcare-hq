@@ -301,6 +301,11 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             'mode': 'minor',
             PROFILE_SLUG: self.profile.id,
         })
+        # Profile fields shouldn't actually be added to user_data
+        self.assertEqual(self.user.user_data, {
+            'commcare_project': 'mydomain',
+            PROFILE_SLUG: self.profile.id,
+        })
 
     def test_metadata_profile_blank(self):
         import_users_and_groups(
