@@ -12,7 +12,7 @@ hqDefine("cloudcare/js/formplayer/menus/util", function () {
         var success = function (position) {
             FormplayerFrontend.regions.getRegion('loadingProgress').empty();
             recordPosition(position);
-            Menus.Controller.selectMenu(optionsFromLastRequest);
+            hqImport("cloudcare/js/formplayer/menus/controller").selectMenu(optionsFromLastRequest);
         };
 
         var error = function (err) {
