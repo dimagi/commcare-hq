@@ -1,6 +1,13 @@
-/*global FormplayerFrontend, Util */
+/*global FormplayerFrontend, Util, Marionette */
 
-FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, Backbone, Marionette) {
+hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
+    var slugs = {
+        SET_LANG: 'lang',
+        SET_DISPLAY: 'display',
+        CLEAR_USER_DATA: 'clear-user-data',
+        BREAK_LOCKS: 'break-locks',
+    };
+
     /**
      * Sets the application language. Should only be used for App Preview.
      */
@@ -105,19 +112,19 @@ FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, B
     var SettingsContainerView = Marionette.CollectionView.extend({
         tagName: 'tbody',
         getChildView: function (item) {
-            if (item.get('slug') === Views.SettingSlugs.SET_LANG) {
+            if (item.get('slug') === slugs.SET_LANG) {
                 return LangSettingView;
-            } else if (item.get('slug') === Views.SettingSlugs.SET_DISPLAY) {
+            } else if (item.get('slug') === slugs.SET_DISPLAY) {
                 return DisplaySettingView;
-            } else if (item.get('slug') === Views.SettingSlugs.CLEAR_USER_DATA) {
+            } else if (item.get('slug') === slugs.CLEAR_USER_DATA) {
                 return ClearUserDataView;
-            } else if (item.get('slug') === Views.SettingSlugs.BREAK_LOCKS) {
+            } else if (item.get('slug') === slugs.BREAK_LOCKS) {
                 return BreakLocksView;
             }
         },
     });
 
-    Views.SettingsView = Marionette.LayoutView.extend({
+    var SettingsView = Marionette.LayoutView.extend({
         regions: {
             body: {
                 el: 'table',
@@ -141,11 +148,10 @@ FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, B
         },
     });
 
-    Views.SettingSlugs = {
-        SET_LANG: 'lang',
-        SET_DISPLAY: 'display',
-        CLEAR_USER_DATA: 'clear-user-data',
-        BREAK_LOCKS: 'break-locks',
+    return {
+        slugs: slugs,
+        SettingsView: function (options) {
+            return new SettingsView(options);
+        },
     };
-
 });

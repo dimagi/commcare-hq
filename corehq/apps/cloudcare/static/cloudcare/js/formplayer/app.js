@@ -487,7 +487,7 @@ FormplayerFrontend.on("retry", function (response, retryFn, progressMessage) {
     progressMessage = progressMessage || gettext('Please wait...');
 
     if (!progressView) {
-        progressView = new FormplayerFrontend.Layout.Views.ProgressView({
+        progressView = hqImport("cloudcare/js/formplayer/layout/views/progress_bar")({
             progressMessage: progressMessage,
         });
         FormplayerFrontend.regions.getRegion('loadingProgress').show(progressView);
