@@ -1,7 +1,7 @@
 /*global FormplayerFrontend */
 
-FormplayerFrontend.module("Users", function (Users, FormplayerFrontend, Backbone, Marionette) {
-    Users.Controller = {
+hqDefine("cloudcare/js/formplayer/users/controller", function () {
+    return {
         listUsers: function (page, query) {
             var currentUser = FormplayerFrontend.request('currentUser'),
                 users;
