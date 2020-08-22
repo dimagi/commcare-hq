@@ -34,24 +34,25 @@ hqDefine("cloudcare/js/formplayer/apps/controller", function () {
         },
         listSettings: function () {
             var currentUser = FormplayerFrontend.request('currentUser'),
+                slugs = hqImport("cloudcare/js/formplayer/layout/views/settings").slugs,
                 settings = [],
                 collection,
                 settingsView;
             if (currentUser.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
                 settings = settings.concat([
-                    new Backbone.Model({ slug: FormplayerFrontend.Layout.Views.SettingSlugs.SET_LANG }),
-                    new Backbone.Model({ slug: FormplayerFrontend.Layout.Views.SettingSlugs.SET_DISPLAY }),
+                    new Backbone.Model({ slug: slugs.SET_LANG }),
+                    new Backbone.Model({ slug: slugs.SET_DISPLAY }),
                 ]);
             } else {
                 settings.push(
-                    new Backbone.Model({ slug: FormplayerFrontend.Layout.Views.SettingSlugs.BREAK_LOCKS })
+                    new Backbone.Model({ slug: slugs.BREAK_LOCKS })
                 );
             }
             settings.push(
-                new Backbone.Model({ slug: FormplayerFrontend.Layout.Views.SettingSlugs.CLEAR_USER_DATA })
+                new Backbone.Model({ slug: slugs.CLEAR_USER_DATA })
             );
             collection = new Backbone.Collection(settings);
-            settingsView = new FormplayerFrontend.Layout.Views.SettingsView({
+            settingsView = hqImport("cloudcare/js/formplayer/layout/views/settings").SettingsView({
                 collection: collection,
             });
 

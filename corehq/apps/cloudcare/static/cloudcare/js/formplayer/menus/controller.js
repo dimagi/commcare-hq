@@ -237,7 +237,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             };
 
             if (navigator.geolocation) {
-                var progressView = new FormplayerFrontend.Layout.Views.ProgressView({
+                var progressView = hqImport("cloudcare/js/formplayer/layout/views/progress_bar")({
                     progressMessage: "Fetching your location...",
                 });
                 FormplayerFrontend.regions.getRegion('loadingProgress').show(progressView.render());
