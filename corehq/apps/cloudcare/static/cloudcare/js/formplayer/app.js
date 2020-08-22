@@ -43,13 +43,17 @@ FormplayerFrontend.getCurrentRoute = function () {
     return Backbone.history.fragment;
 };
 
+FormplayerFrontend.getChannel = function () {
+    return Backbone.Radio.channel('formplayer');
+};
+
 /**
  * This function maps a jr:// media path to its HTML path IE
  * jr://images/icon/mother.png -> https://commcarehq.org/hq/multimedia/file/CommCareImage/[app_id]/mother.png
  * The actual mapping is contained in the app Couch document
  */
-FormplayerFrontend.reqres.setHandler('resourceMap', function (resource_path, app_id) {
-    var currentApp = FormplayerFrontend.request("appselect:getApp", app_id);
+FormplayerFrontend.getChannel().reply('resourceMap', function (resource_path, app_id) {
+    var currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", app_id);
     if (!currentApp) {
         console.warn('App is undefined for app_id: ' + app_id);
         console.warn('Not processing resource: ' + resource_path);
@@ -70,7 +74,7 @@ FormplayerFrontend.reqres.setHandler('resourceMap', function (resource_path, app
     }
 });
 
-FormplayerFrontend.reqres.setHandler('gridPolyfillPath', function (path) {
+FormplayerFrontend.getChannel().reply('gridPolyfillPath', function (path) {
     if (path) {
         FormplayerFrontend.gridPolyfillPath = path;
     } else {
@@ -78,14 +82,14 @@ FormplayerFrontend.reqres.setHandler('gridPolyfillPath', function (path) {
     }
 });
 
-FormplayerFrontend.reqres.setHandler('currentUser', function () {
+FormplayerFrontend.getChannel().reply('currentUser', function () {
     if (!FormplayerFrontend.currentUser) {
         FormplayerFrontend.currentUser = hqImport("cloudcare/js/formplayer/users/models").CurrentUser();
     }
     return FormplayerFrontend.currentUser;
 });
 
-FormplayerFrontend.reqres.setHandler('lastRecordedLocation', function () {
+FormplayerFrontend.getChannel().reply('lastRecordedLocation', function () {
     if (!sessionStorage.locationLat) {
         return null;
     } else {
@@ -107,7 +111,7 @@ FormplayerFrontend.on('clearForm', function () {
     $('#case-detail-modal').modal('hide');
 });
 
-FormplayerFrontend.reqres.setHandler('clearMenu', function () {
+FormplayerFrontend.getChannel().reply('clearMenu', function () {
     $('#menu-region').html("");
 });
 
@@ -131,18 +135,18 @@ FormplayerFrontend.on('showWarning', function (message) {
     showWarning(message, $("#cloudcare-notifications"));
 });
 
-FormplayerFrontend.reqres.setHandler('showSuccess', function (successMessage) {
+FormplayerFrontend.getChannel().reply('showSuccess', function (successMessage) {
     showSuccess(successMessage, $("#cloudcare-notifications"), 10000);
 });
 
-FormplayerFrontend.reqres.setHandler('handleNotification', function (notification) {
+FormplayerFrontend.getChannel().reply('handleNotification', function (notification) {
     var type = notification.type;
     if (!type) {
         type = notification.error ? "error" : "success";
     }
 
     if (type === "success") {
-        FormplayerFrontend.request('showSuccess', notification.message);
+        FormplayerFrontend.getChannel().request('showSuccess', notification.message);
     } else if (type === "warning") {
         FormplayerFrontend.trigger('showWarning', notification.message);
     } else {
@@ -151,12 +155,12 @@ FormplayerFrontend.reqres.setHandler('handleNotification', function (notificatio
 });
 
 FormplayerFrontend.on('startForm', function (data) {
-    FormplayerFrontend.request("clearMenu");
+    FormplayerFrontend.getChannel().request("clearMenu");
     hqImport("cloudcare/js/formplayer/menus/util").showBreadcrumbs(data.breadcrumbs);
 
     data.onLoading = formplayerLoading;
     data.onLoadingComplete = formplayerLoadingComplete;
-    var user = FormplayerFrontend.request('currentUser');
+    var user = FormplayerFrontend.getChannel().request('currentUser');
     data.xform_url = user.formplayer_url;
     data.domain = user.domain;
     data.username = user.username;
@@ -247,7 +251,7 @@ FormplayerFrontend.on('startForm', function (data) {
     data.resourceMap = function (resource_path) {
         var urlObject = Util.currentUrlToObject();
         var appId = urlObject.appId;
-        return FormplayerFrontend.request('resourceMap', resource_path, appId);
+        return FormplayerFrontend.getChannel().request('resourceMap', resource_path, appId);
     };
     var sess = new WebFormSession(data);
     sess.renderFormXml(data, $('#webforms'));
@@ -255,7 +259,7 @@ FormplayerFrontend.on('startForm', function (data) {
 });
 
 FormplayerFrontend.on("start", function (options) {
-    var user = FormplayerFrontend.request('currentUser'),
+    var user = FormplayerFrontend.getChannel().request('currentUser'),
         savedDisplayOptions,
         self = this;
     user.username = options.username;
@@ -264,7 +268,7 @@ FormplayerFrontend.on("start", function (options) {
     user.debuggerEnabled = options.debuggerEnabled;
     user.environment = options.environment;
     user.useLiveQuery = options.useLiveQuery;
-    user.restoreAs = FormplayerFrontend.request('restoreAsUser', user.domain, user.username);
+    user.restoreAs = FormplayerFrontend.getChannel().request('restoreAsUser', user.domain, user.username);
 
     hqImport("cloudcare/js/formplayer/apps/api").primeApps(user.restoreAs, options.apps);
 
@@ -280,8 +284,8 @@ FormplayerFrontend.on("start", function (options) {
         language: options.language,
     });
 
-    FormplayerFrontend.request('gridPolyfillPath', options.gridPolyfillPath);
-    $.when(FormplayerFrontend.request("appselect:apps")).done(function (appCollection) {
+    FormplayerFrontend.getChannel().request('gridPolyfillPath', options.gridPolyfillPath);
+    $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function (appCollection) {
         var appId;
         var apps = appCollection.toJSON();
         if (Backbone.history) {
@@ -341,7 +345,7 @@ FormplayerFrontend.on("start", function (options) {
 FormplayerFrontend.on('configureDebugger', function () {
     var CloudCareDebugger = hqImport('cloudcare/js/debugger/debugger').CloudCareDebuggerMenu,
         TabIDs = hqImport('cloudcare/js/debugger/debugger').TabIDs,
-        user = FormplayerFrontend.request('currentUser'),
+        user = FormplayerFrontend.getChannel().request('currentUser'),
         cloudCareDebugger,
         $debug = $('#cloudcare-debugger');
 
@@ -368,10 +372,10 @@ FormplayerFrontend.on('configureDebugger', function () {
     $debug.koApplyBindings(cloudCareDebugger);
 });
 
-FormplayerFrontend.reqres.setHandler('getCurrentAppId', function () {
+FormplayerFrontend.getChannel().reply('getCurrentAppId', function () {
     // First attempt to grab app id from URL
     var urlObject = Util.currentUrlToObject(),
-        user = FormplayerFrontend.request('currentUser'),
+        user = FormplayerFrontend.getChannel().request('currentUser'),
         appId;
 
     appId = urlObject.appId;
@@ -401,11 +405,11 @@ FormplayerFrontend.on('setAppDisplayProperties', function (app) {
     }
 });
 
-FormplayerFrontend.reqres.setHandler('getAppDisplayProperties', function () {
+FormplayerFrontend.getChannel().reply('getAppDisplayProperties', function () {
     return FormplayerFrontend.DisplayProperties || {};
 });
 
-FormplayerFrontend.reqres.setHandler('restoreAsUser', function (domain, username) {
+FormplayerFrontend.getChannel().reply('restoreAsUser', function (domain, username) {
     return hqImport("cloudcare/js/formplayer/users/utils").Users.getRestoreAsUser(
         domain,
         username
@@ -420,7 +424,7 @@ FormplayerFrontend.reqres.setHandler('restoreAsUser', function (domain, username
  * navigates you to the main page.
  */
 FormplayerFrontend.on('clearRestoreAsUser', function () {
-    var user = FormplayerFrontend.request('currentUser'),
+    var user = FormplayerFrontend.getChannel().request('currentUser'),
         appId;
     hqImport("cloudcare/js/formplayer/users/utils").Users.clearRestoreAsUser(
         user.domain,
@@ -437,7 +441,7 @@ FormplayerFrontend.on('clearRestoreAsUser', function () {
 });
 
 FormplayerFrontend.on("sync", function () {
-    var user = FormplayerFrontend.request('currentUser'),
+    var user = FormplayerFrontend.getChannel().request('currentUser'),
         username = user.username,
         domain = user.domain,
         formplayer_url = user.formplayer_url,
@@ -527,7 +531,7 @@ FormplayerFrontend.on('clearProgress', function () {
 
 
 FormplayerFrontend.on('setVersionInfo', function (versionInfo) {
-    var user = FormplayerFrontend.request('currentUser');
+    var user = FormplayerFrontend.getChannel().request('currentUser');
     $("#version-info").text(versionInfo || '');
     if (versionInfo) {
         user.set('versionInfo',  versionInfo);
@@ -547,7 +551,7 @@ FormplayerFrontend.on('refreshApplication', function (appId) {
     if (!appId) {
         throw new Error('Attempt to refresh application for null appId');
     }
-    var user = FormplayerFrontend.request('currentUser'),
+    var user = FormplayerFrontend.getChannel().request('currentUser'),
         formplayer_url = user.formplayer_url,
         resp,
         options = {
@@ -582,8 +586,8 @@ FormplayerFrontend.on('refreshApplication', function (appId) {
  * Sends a request to formplayer to wipe out all application and user db for the
  * current user. Returns the ajax promise.
  */
-FormplayerFrontend.reqres.setHandler('breakLocks', function () {
-    var user = FormplayerFrontend.request('currentUser'),
+FormplayerFrontend.getChannel().reply('breakLocks', function () {
+    var user = FormplayerFrontend.getChannel().request('currentUser'),
         formplayer_url = user.formplayer_url,
         resp,
         options = {
@@ -611,8 +615,8 @@ FormplayerFrontend.reqres.setHandler('breakLocks', function () {
  * Sends a request to formplayer to wipe out all application and user db for the
  * current user. Returns the ajax promise.
  */
-FormplayerFrontend.reqres.setHandler('clearUserData', function () {
-    var user = FormplayerFrontend.request('currentUser'),
+FormplayerFrontend.getChannel().reply('clearUserData', function () {
+    var user = FormplayerFrontend.getChannel().request('currentUser'),
         formplayer_url = user.formplayer_url,
         resp,
         options = {
@@ -640,11 +644,11 @@ FormplayerFrontend.on('navigateHome', function () {
 
     var urlObject = Util.currentUrlToObject(),
         appId,
-        currentUser = FormplayerFrontend.request('currentUser');
+        currentUser = FormplayerFrontend.getChannel().request('currentUser');
     urlObject.clearExceptApp();
     FormplayerFrontend.regions.getRegion('breadcrumb').empty();
     if (currentUser.displayOptions.singleAppMode) {
-        appId = FormplayerFrontend.request('getCurrentAppId');
+        appId = FormplayerFrontend.getChannel().request('getCurrentAppId');
         FormplayerFrontend.trigger("app:singleApp", appId);
     } else {
         FormplayerFrontend.trigger("apps:list");

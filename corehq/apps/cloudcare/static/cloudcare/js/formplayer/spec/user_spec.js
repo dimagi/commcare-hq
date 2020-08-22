@@ -36,19 +36,21 @@ describe('User', function () {
             username = 'clark@kent.com',
             restoreAsUsername = 'worker@kent.com',
             domain = 'preview-domain',
+            dummyChannel,
             dummyUser;
         beforeEach(function () {
             dummyUser = {
                 domain: domain,
                 username: username,
             };
+            dummyChannel = FormplayerFrontend.getChannel();
             window.localStorage.clear();
-            sinon.stub(FormplayerFrontend, 'request').callsFake(function () { return dummyUser; });
+            sinon.stub(dummyChannel, 'request').callsFake(function () { return dummyUser; });
         });
 
         afterEach(function () {
             window.localStorage.clear();
-            FormplayerFrontend.request.restore();
+            dummyChannel.request.restore();
         });
 
         it('should store and clear a restore as user', function () {

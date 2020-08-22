@@ -160,7 +160,7 @@ hqDefine('cloudcare/js/util',['hqwebapp/js/initial_page_data', 'integration/js/h
     var reportFormplayerErrorToHQ = function (data) {
         try {
             var reverse = initialPageData.reverse;
-            var cloudcareEnv = FormplayerFrontend.request('currentUser').environment;
+            var cloudcareEnv = FormplayerFrontend.getChannel().request('currentUser').environment;
             if (!data.cloudcareEnv) {
                 data.cloudcareEnv = cloudcareEnv || 'unknown';
             }

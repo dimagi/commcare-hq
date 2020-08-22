@@ -507,6 +507,11 @@ backbone.marionette@2.4.5:
     backbone.wreqr "^1.0.0"
     underscore "1.4.4 - 1.8.3"
 
+backbone.radio@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/backbone.radio/-/backbone.radio-2.0.0.tgz#bbe8672b373e313f99f36d2fbcf583fe77d04f42"
+  integrity sha1-u+hnKzc+MT+Z820vvPWD/nfQT0I=
+
 backbone.wreqr@^1.0.0:
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/backbone.wreqr/-/backbone.wreqr-1.4.0.tgz#7682030c9aaf090ecd873b21dbf48501693b2696"

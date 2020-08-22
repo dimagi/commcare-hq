@@ -28,7 +28,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             appsController.listApps();
         },
         singleApp: function (appId) {
-            var user = FormplayerFrontend.request('currentUser');
+            var user = FormplayerFrontend.getChannel().request('currentUser');
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
             user.previewAppId = appId;
             appsController.singleApp(appId);
@@ -71,7 +71,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             sessionsController.listSessions();
         },
         getSession: function (sessionId) {
-            FormplayerFrontend.request("getSession", sessionId);
+            FormplayerFrontend.getChannel().request("getSession", sessionId);
         },
         localInstall: function (path) {
             FormplayerFrontend.trigger("localInstall", path);

@@ -67,7 +67,7 @@ describe('Render a case list', function () {
             server.onCreate = function (xhr) {
                 requests.push(xhr);
             };
-            user = FormplayerFrontend.request('currentUser');
+            user = FormplayerFrontend.getChannel().request('currentUser');
             user.domain = 'test-domain';
             user.username = 'test-username';
             user.formplayer_url = 'url';
@@ -134,7 +134,7 @@ describe('Render a case list', function () {
         });
 
         it('Should execute an async restore', function () {
-            var promise = FormplayerFrontend.request('app:select:menus', {
+            var promise = FormplayerFrontend.getChannel().request('app:select:menus', {
                 appId: 'my-app-id',
                 // Bypass permissions check by using preview mode
                 preview: true,

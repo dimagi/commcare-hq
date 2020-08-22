@@ -23,7 +23,7 @@ describe('FormplayerFrontend Integration', function () {
         it('should start the formplayer frontend app', function () {
             FormplayerFrontend.start(options);
 
-            var user = FormplayerFrontend.request('currentUser');
+            var user = FormplayerFrontend.getChannel().request('currentUser');
             assert.equal(user.username, options.username);
             assert.equal(user.domain, options.domain);
         });
@@ -37,12 +37,12 @@ describe('FormplayerFrontend Integration', function () {
 
             FormplayerFrontend.start(newOptions);
 
-            user = FormplayerFrontend.request('currentUser');
+            user = FormplayerFrontend.getChannel().request('currentUser');
             Util.saveDisplayOptions(user.displayOptions);
 
             // New session, but old options
             FormplayerFrontend.start(options);
-            user = FormplayerFrontend.request('currentUser');
+            user = FormplayerFrontend.getChannel().request('currentUser');
 
             assert.deepEqual(user.displayOptions, {
                 phoneMode: undefined, // we don't store this option

@@ -646,7 +646,7 @@ Formplayer.Utils.touchformsError = function (message) {
 };
 
 Formplayer.Utils.reloginErrorHtml = function () {
-    var isWebApps = FormplayerFrontend.request('currentUser').environment === FormplayerFrontend.Constants.WEB_APPS_ENVIRONMENT;
+    var isWebApps = FormplayerFrontend.getChannel().request('currentUser').environment === FormplayerFrontend.Constants.WEB_APPS_ENVIRONMENT;
     if (isWebApps) {
         var url = hqImport("hqwebapp/js/initial_page_data").reverse('login_new_window');
         return _.template(gettext("Looks like you got logged out because of inactivity, but your work is safe. " +

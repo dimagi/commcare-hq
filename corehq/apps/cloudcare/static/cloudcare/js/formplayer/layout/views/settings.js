@@ -15,7 +15,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
         template: '#lang-setting-template',
         tagName: 'tr',
         initialize: function () {
-            this.currentUser = FormplayerFrontend.request('currentUser');
+            this.currentUser = FormplayerFrontend.getChannel().request('currentUser');
         },
         ui: {
             language: '.js-lang',
@@ -28,8 +28,8 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
             Util.saveDisplayOptions(this.currentUser.displayOptions);
         },
         templateHelpers: function () {
-            var appId = FormplayerFrontend.request('getCurrentAppId');
-            var currentApp = FormplayerFrontend.request("appselect:getApp", appId);
+            var appId = FormplayerFrontend.getChannel().request('getCurrentAppId');
+            var currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", appId);
             return {
                 langs: currentApp.get('langs'),
                 currentLang: this.currentUser.displayOptions.language,
@@ -45,7 +45,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
         template: '#display-setting-template',
         tagName: 'tr',
         initialize: function () {
-            this.currentUser = FormplayerFrontend.request('currentUser');
+            this.currentUser = FormplayerFrontend.getChannel().request('currentUser');
         },
         ui: {
             oneQuestionPerScreen: '.js-one-question-per-screen',
@@ -79,7 +79,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
             'click @ui.clearUserData': 'onClickClearUserData',
         },
         onClickClearUserData: function (e) {
-            var promise = FormplayerFrontend.request('clearUserData');
+            var promise = FormplayerFrontend.getChannel().request('clearUserData');
             $(e.currentTarget).prop('disabled', true);
             promise.done(function () {
                 $(e.currentTarget).prop('disabled', false);
@@ -101,7 +101,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
             'click @ui.breakLocks': 'onClickBreakLocks',
         },
         onClickBreakLocks: function (e) {
-            var promise = FormplayerFrontend.request('breakLocks');
+            var promise = FormplayerFrontend.getChannel().request('breakLocks');
             $(e.currentTarget).prop('disabled', true);
             promise.done(function () {
                 $(e.currentTarget).prop('disabled', false);

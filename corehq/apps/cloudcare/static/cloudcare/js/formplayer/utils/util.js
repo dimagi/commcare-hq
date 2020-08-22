@@ -91,7 +91,7 @@ Util.getSavedDisplayOptions = function () {
 };
 
 Util.getDisplayOptionsKey = function () {
-    var user = FormplayerFrontend.request('currentUser');
+    var user = FormplayerFrontend.getChannel().request('currentUser');
     return [
         user.environment,
         user.domain,

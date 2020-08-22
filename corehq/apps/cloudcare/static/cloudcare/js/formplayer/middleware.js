@@ -18,7 +18,7 @@ hqDefine("cloudcare/js/formplayer/middleware", function () {
     };
     var setScrollableMaxHeight = function () {
         var maxHeight,
-            user = FormplayerFrontend.request('currentUser'),
+            user = FormplayerFrontend.getChannel().request('currentUser'),
             restoreAsBannerHeight = 0;
 
         if (user.restoreAs) {

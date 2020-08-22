@@ -32,8 +32,8 @@ hqDefine("cloudcare/js/formplayer/apps/api", function () {
         },
         getAppEntities: function () {
             var appsPromise,
-                restoreAs = FormplayerFrontend.request('currentUser').restoreAs,
-                singleAppMode = FormplayerFrontend.request('currentUser').displayOptions.singleAppMode;
+                restoreAs = FormplayerFrontend.getChannel().request('currentUser').restoreAs,
+                singleAppMode = FormplayerFrontend.getChannel().request('currentUser').displayOptions.singleAppMode;
             if (singleAppMode) {
                 appsPromise = fetchPredefinedApps();
             } else {
@@ -45,7 +45,7 @@ hqDefine("cloudcare/js/formplayer/apps/api", function () {
             });
         },
         getAppEntity: function (app_id) {
-            var restoreAs = FormplayerFrontend.request('currentUser').restoreAs;
+            var restoreAs = FormplayerFrontend.getChannel().request('currentUser').restoreAs;
             var apps = appsByRestoreAs[restoreAs];
             if (!apps) {
                 console.warn("getAppEntity is returning null. If the app_id is correct, " +
@@ -57,11 +57,11 @@ hqDefine("cloudcare/js/formplayer/apps/api", function () {
         },
     };
 
-    FormplayerFrontend.reqres.setHandler("appselect:apps", function () {
+    FormplayerFrontend.getChannel().reply("appselect:apps", function () {
         return API.getAppEntities();
     });
 
-    FormplayerFrontend.reqres.setHandler("appselect:getApp", function (app_id) {
+    FormplayerFrontend.getChannel().reply("appselect:getApp", function (app_id) {
         return API.getAppEntity(app_id);
     });
 

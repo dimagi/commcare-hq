@@ -44,7 +44,7 @@ hqDefine("cloudcare/js/formplayer/hq.events", function () {
                 FormplayerFrontend.trigger('navigation:back');
                 break;
             case Events.Actions.REFRESH:
-                appId = FormplayerFrontend.request('getCurrentAppId');
+                appId = FormplayerFrontend.getChannel().request('getCurrentAppId');
                 FormplayerFrontend.trigger('refreshApplication', appId);
                 break;
         }
