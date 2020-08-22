@@ -287,7 +287,7 @@ FormplayerFrontend.on("start", function (options) {
         if (Backbone.history) {
             Backbone.history.start();
             FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
-                new FormplayerFrontend.Users.Views.RestoreAsBanner({
+                hqImport("cloudcare/js/formplayer/users/views").RestoreAsBanner({
                     model: user,
                 })
             );
@@ -428,7 +428,7 @@ FormplayerFrontend.on('clearRestoreAsUser', function () {
     );
     user.restoreAs = null;
     FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
-        new FormplayerFrontend.Users.Views.RestoreAsBanner({
+        hqImport("cloudcare/js/formplayer/users/views").RestoreAsBanner({
             model: user,
         })
     );
