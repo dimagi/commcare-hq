@@ -56,7 +56,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             if (_.isNaN(page)) {
                 page = 1;
             }
-            FormplayerFrontend.Users.Controller.listUsers(page, query);
+            hqImport("cloudcare/js/formplayer/users/controller").listUsers(page, query);
         },
         listSettings: function () {
             controller.listSettings();
