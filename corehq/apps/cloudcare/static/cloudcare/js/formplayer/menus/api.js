@@ -110,7 +110,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 });
                 options.url = formplayerUrl + '/' + route;
 
-                menus = new FormplayerFrontend.Menus.Collections.MenuSelect();
+                menus = hqImport("cloudcare/js/formplayer/menus/collections")();
 
                 if (Object.freeze) {
                     Object.freeze(options);

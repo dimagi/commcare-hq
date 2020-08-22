@@ -46,7 +46,7 @@ hqDefine("cloudcare/js/formplayer/sessions/api", function () {
 
             var user = FormplayerFrontend.request('currentUser');
             var formplayerUrl = user.formplayer_url;
-            var menus = new FormplayerFrontend.Menus.Collections.MenuSelect();
+            var menus = hqImport("cloudcare/js/formplayer/menus/collections")();
             var defer = $.Deferred();
 
             menus.fetch({

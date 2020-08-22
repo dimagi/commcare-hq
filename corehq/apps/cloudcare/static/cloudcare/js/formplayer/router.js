@@ -94,7 +94,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
 
             // When the response gets parsed, it will automatically trigger form
             // entry if it is a form response.
-            menuCollection = new FormplayerFrontend.Menus.Collections.MenuSelect(
+            menuCollection = hqImport("cloudcare/js/formplayer/menus/collections")(
                 response,
                 { parse: true }
             );
