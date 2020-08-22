@@ -3,9 +3,6 @@
 FormplayerFrontend.module("Menus.Collections", function (Collections, FormplayerFrontend, Backbone, Marionette, $) {
 
     Collections.MenuSelect = Backbone.Collection.extend({
-
-        model: FormplayerFrontend.Menus.Models.MenuSelect,
-
         commonProperties: [
             'title',
             'type',
