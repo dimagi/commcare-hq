@@ -52,9 +52,9 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 }
 
                 if (menuResponse.shouldRequestLocation) {
-                    Menus.Util.handleLocationRequest(options);
+                    hqImport("cloudcare/js/formplayer/menus/util").handleLocationRequest(options);
                 }
-                Menus.Util.startOrStopLocationWatching(menuResponse.shouldWatchLocation);
+                hqImport("cloudcare/js/formplayer/menus/util").startOrStopLocationWatching(menuResponse.shouldWatchLocation);
             }).fail(function () {
                 // if it didn't go through, then it displayed an error message.
                 // the right thing to do is then to just stay in the same place.
@@ -75,7 +75,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
         },
 
         showMenu: function (menuResponse) {
-            var menuListView = Menus.Util.getMenuView(menuResponse);
+            var menuListView = hqImport("cloudcare/js/formplayer/menus/util").getMenuView(menuResponse);
 
             if (menuListView) {
                 FormplayerFrontend.regions.getRegion('main').show(menuListView);
@@ -86,7 +86,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 FormplayerFrontend.regions.getRegion('persistentCaseTile').empty();
             }
             if (menuResponse.breadcrumbs) {
-                Menus.Util.showBreadcrumbs(menuResponse.breadcrumbs);
+                hqImport("cloudcare/js/formplayer/menus/util").showBreadcrumbs(menuResponse.breadcrumbs);
             } else {
                 FormplayerFrontend.regions.getRegion('breadcrumb').empty();
             }

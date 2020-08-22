@@ -152,7 +152,7 @@ FormplayerFrontend.reqres.setHandler('handleNotification', function (notificatio
 
 FormplayerFrontend.on('startForm', function (data) {
     FormplayerFrontend.request("clearMenu");
-    FormplayerFrontend.Menus.Util.showBreadcrumbs(data.breadcrumbs);
+    hqImport("cloudcare/js/formplayer/menus/util").showBreadcrumbs(data.breadcrumbs);
 
     data.onLoading = formplayerLoading;
     data.onLoadingComplete = formplayerLoadingComplete;
