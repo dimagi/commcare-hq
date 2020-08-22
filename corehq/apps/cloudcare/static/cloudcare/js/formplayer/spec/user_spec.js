@@ -2,15 +2,14 @@
 /* eslint-env mocha */
 describe('User', function () {
     describe('Collection', function () {
-        var UserCollection = FormplayerFrontend.Users.Collections.User;
         it('should instantiate a user collection', function () {
-            var collection = new UserCollection([], { domain: 'mydomain' });
+            var collection = hqImport("cloudcare/js/formplayer/users/collections")([], { domain: 'mydomain' });
             assert.equal(collection.domain, 'mydomain');
         });
 
         it('should error on fetch a user collection', function () {
             var instantiate = function () {
-                var collection = new UserCollection();
+                var collection = hqImport("cloudcare/js/formplayer/users/collections")();
                 collection.fetch();
             };
             assert.throws(instantiate, /without domain/);
