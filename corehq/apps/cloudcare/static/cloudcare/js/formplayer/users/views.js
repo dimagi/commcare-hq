@@ -51,7 +51,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function() {
                     FormplayerFrontend.trigger('navigateHome');
                     FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
                         new RestoreAsBanner({
-                            model: FormplayerFrontend.request('currentUser'),
+                            model: FormplayerFrontend.getChannel().request('currentUser'),
                         })
                     );
                 }.bind(this),

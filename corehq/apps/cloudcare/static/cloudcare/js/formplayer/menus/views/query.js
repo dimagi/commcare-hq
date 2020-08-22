@@ -11,8 +11,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var audioUri = this.options.model.get('audioUri');
             var appId = this.model.collection.appId;
             return {
-                imageUrl: imageUri ? FormplayerFrontend.request('resourceMap', imageUri, appId) : "",
-                audioUrl: audioUri ? FormplayerFrontend.request('resourceMap', audioUri, appId) : "",
+                imageUrl: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
+                audioUrl: audioUri ? FormplayerFrontend.getChannel().request('resourceMap', audioUri, appId) : "",
             };
         },
     });

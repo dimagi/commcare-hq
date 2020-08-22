@@ -3,7 +3,7 @@
 hqDefine("cloudcare/js/formplayer/users/controller", function () {
     return {
         listUsers: function (page, query) {
-            var currentUser = FormplayerFrontend.request('currentUser'),
+            var currentUser = FormplayerFrontend.getChannel().request('currentUser'),
                 users;
 
             users = hqImport("cloudcare/js/formplayer/users/collections")([], { domain: currentUser.domain });

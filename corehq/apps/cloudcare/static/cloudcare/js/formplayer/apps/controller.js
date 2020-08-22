@@ -4,7 +4,7 @@ hqDefine("cloudcare/js/formplayer/apps/controller", function () {
     var views = hqImport("cloudcare/js/formplayer/apps/views");
     return {
         listApps: function () {
-            $.when(FormplayerFrontend.request("appselect:apps")).done(function (apps) {
+            $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function (apps) {
                 var appGridView = views.GridView({
                     collection: apps,
                 });
@@ -17,7 +17,7 @@ hqDefine("cloudcare/js/formplayer/apps/controller", function () {
          * Renders a SingleAppView.
          */
         singleApp: function (appId) {
-            $.when(FormplayerFrontend.request("appselect:apps")).done(function (apps) {
+            $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function (apps) {
                 var singleAppView = views.SingleAppView({
                     appId: appId,
                 });
@@ -25,7 +25,7 @@ hqDefine("cloudcare/js/formplayer/apps/controller", function () {
             });
         },
         landingPageApp: function (appId) {
-            $.when(FormplayerFrontend.request("appselect:apps")).done(function (apps) {
+            $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function (apps) {
                 var landingPageAppView = views.LandingPageAppView({
                     appId: appId,
                 });
@@ -33,7 +33,7 @@ hqDefine("cloudcare/js/formplayer/apps/controller", function () {
             });
         },
         listSettings: function () {
-            var currentUser = FormplayerFrontend.request('currentUser'),
+            var currentUser = FormplayerFrontend.getChannel().request('currentUser'),
                 slugs = hqImport("cloudcare/js/formplayer/layout/views/settings").slugs,
                 settings = [],
                 collection,

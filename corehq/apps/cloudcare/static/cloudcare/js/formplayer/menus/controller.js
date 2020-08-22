@@ -5,7 +5,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
         options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
 
-        var fetchingNextMenu = FormplayerFrontend.request("app:select:menus", options);
+        var fetchingNextMenu = FormplayerFrontend.getChannel().request("app:select:menus", options);
 
         /*
          Determine the next screen to display.  Could be
@@ -19,7 +19,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
             // show any notifications from Formplayer
             if (menuResponse.notification && !_.isNull(menuResponse.notification.message)) {
-                FormplayerFrontend.request("handleNotification", menuResponse.notification);
+                FormplayerFrontend.getChannel().request("handleNotification", menuResponse.notification);
             }
 
             // If redirect was set, clear and go home.
@@ -64,7 +64,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         if (!isPersistent) {
             urlObject.addStep(caseId);
         }
-        var fetchingDetails = FormplayerFrontend.request("entity:get:details", urlObject, isPersistent);
+        var fetchingDetails = FormplayerFrontend.getChannel().request("entity:get:details", urlObject, isPersistent);
         $.when(fetchingDetails).done(function (detailResponse) {
             showDetail(detailResponse, detailIndex, caseId);
         }).fail(function () {

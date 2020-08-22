@@ -32,7 +32,7 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
                 confirmText: gettext('Yes'),
                 cancelText: gettext('No'),
                 onConfirm: function () {
-                    FormplayerFrontend.request("deleteSession", self.model);
+                    FormplayerFrontend.getChannel().request("deleteSession", self.model);
                 },
             });
         },
@@ -57,7 +57,7 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
             }));
         },
         getTemplate: function () {
-            var user = FormplayerFrontend.request('currentUser');
+            var user = FormplayerFrontend.getChannel().request('currentUser');
             if (user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
                 return "#session-view-list-preview-template";
             }

@@ -10,7 +10,7 @@ hqDefine("cloudcare/js/formplayer/sessions/api", function () {
 
         getSessions: function () {
 
-            var user = FormplayerFrontend.request('currentUser');
+            var user = FormplayerFrontend.getChannel().request('currentUser');
             var domain = user.domain;
             var formplayerUrl = user.formplayer_url;
             var options = {
@@ -44,7 +44,7 @@ hqDefine("cloudcare/js/formplayer/sessions/api", function () {
 
         getSession: function (sessionId) {
 
-            var user = FormplayerFrontend.request('currentUser');
+            var user = FormplayerFrontend.getChannel().request('currentUser');
             var formplayerUrl = user.formplayer_url;
             var menus = hqImport("cloudcare/js/formplayer/menus/collections")();
             var defer = $.Deferred();
@@ -66,7 +66,7 @@ hqDefine("cloudcare/js/formplayer/sessions/api", function () {
         },
 
         deleteSession: function (session) {
-            var user = FormplayerFrontend.request('currentUser');
+            var user = FormplayerFrontend.getChannel().request('currentUser');
             var options = {
                 data: JSON.stringify({
                     "sessionId": session.get('sessionId'),
@@ -91,15 +91,15 @@ hqDefine("cloudcare/js/formplayer/sessions/api", function () {
         },
     };
 
-    FormplayerFrontend.reqres.setHandler("getSession", function (session) {
+    FormplayerFrontend.getChannel().reply("getSession", function (session) {
         return API.getSession(session);
     });
 
-    FormplayerFrontend.reqres.setHandler("deleteSession", function (sessionId) {
+    FormplayerFrontend.getChannel().reply("deleteSession", function (sessionId) {
         return API.deleteSession(sessionId);
     });
 
-    FormplayerFrontend.reqres.setHandler("sessions", function () {
+    FormplayerFrontend.getChannel().reply("sessions", function () {
         return API.getSessions();
     });
 

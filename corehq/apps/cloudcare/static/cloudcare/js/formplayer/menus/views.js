@@ -73,8 +73,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             var appId = Util.currentUrlToObject().appId;
             return {
                 navState: navState,
-                imageUrl: imageUri ? FormplayerFrontend.request('resourceMap', imageUri, appId) : "",
-                audioUrl: audioUri ? FormplayerFrontend.request('resourceMap', audioUri, appId) : "",
+                imageUrl: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
+                audioUrl: audioUri ? FormplayerFrontend.getChannel().request('resourceMap', audioUri, appId) : "",
                 menuIndex: this.menuIndex,
             };
         },
@@ -107,7 +107,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         templateHelpers: function () {
             return {
                 title: this.options.title,
-                environment: FormplayerFrontend.request('currentUser').environment,
+                environment: FormplayerFrontend.getChannel().request('currentUser').environment,
             };
         },
         childViewOptions: function (model, index) {
@@ -240,7 +240,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
                 resolveUri: function (uri) {
-                    return FormplayerFrontend.request('resourceMap', uri, appId);
+                    return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
                 },
             };
         },
@@ -403,7 +403,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             var caseTileStyles = buildCaseTileStyles(options.tiles, numRows, numColumns,
                 numEntitiesPerRow, useUniformUnits, 'list');
 
-            var gridPolyfillPath = FormplayerFrontend.request('gridPolyfillPath');
+            var gridPolyfillPath = FormplayerFrontend.getChannel().request('gridPolyfillPath');
 
             $("#list-cell-layout-style").html(caseTileStyles[0]).data("css-polyfilled", false);
             $("#list-cell-grid-style").html(caseTileStyles[1]).data("css-polyfilled", false);
@@ -496,7 +496,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             var appId = Util.currentUrlToObject().appId;
             return {
                 resolveUri: function (uri) {
-                    return FormplayerFrontend.request('resourceMap', uri, appId);
+                    return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
                 },
             };
         },

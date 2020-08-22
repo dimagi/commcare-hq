@@ -3,7 +3,7 @@
 hqDefine("cloudcare/js/formplayer/sessions/controller", function () {
     return {
         listSessions: function () {
-            var fetchingSessions = FormplayerFrontend.request("sessions");
+            var fetchingSessions = FormplayerFrontend.getChannel().request("sessions");
 
             $.when(fetchingSessions).done(function (sessions) {
 

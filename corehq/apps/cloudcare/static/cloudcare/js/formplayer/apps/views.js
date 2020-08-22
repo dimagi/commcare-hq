@@ -18,7 +18,7 @@ hqDefine("cloudcare/js/formplayer/apps/views", function() {
             var imageUri = this.options.model.get('imageUri');
             var appId = this.options.model.get('_id');
             return {
-                imageUrl: imageUri && appId ? FormplayerFrontend.request('resourceMap', imageUri, appId) : "",
+                imageUrl: imageUri && appId ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
             };
         },
     });
@@ -97,12 +97,12 @@ hqDefine("cloudcare/js/formplayer/apps/views", function() {
             this.appId = options.appId;
         },
         templateHelpers: function () {
-            var currentApp = FormplayerFrontend.request("appselect:getApp", this.appId),
+            var currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", this.appId),
                 appName;
             appName = currentApp.get('name');
             return {
                 showIncompleteForms: function () {
-                    return FormplayerFrontend
+                    return FormplayerFrontend.getChannel()
                         .request('getAppDisplayProperties')['cc-show-incomplete'] === 'yes';
                 },
                 appName: appName,
@@ -132,12 +132,12 @@ hqDefine("cloudcare/js/formplayer/apps/views", function() {
             this.appId = options.appId;
         },
         templateHelpers: function () {
-            var currentApp = FormplayerFrontend.request("appselect:getApp", this.appId),
+            var currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", this.appId),
                 appName = currentApp.get('name'),
                 imageUri = currentApp.get('imageUri');
             return {
                 appName: appName,
-                imageUrl: imageUri && this.appId ? FormplayerFrontend.request('resourceMap', imageUri, this.appId) : "",
+                imageUrl: imageUri && this.appId ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, this.appId) : "",
             };
         },
         startApp: function () {

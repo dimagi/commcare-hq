@@ -11,7 +11,7 @@ hqDefine("cloudcare/js/formplayer/users/utils", function () {
          * setting it in a cookie
          */
         logInAsUser: function (restoreAsUsername) {
-            var currentUser = FormplayerFrontend.request('currentUser');
+            var currentUser = FormplayerFrontend.getChannel().request('currentUser');
             currentUser.restoreAs = restoreAsUsername;
 
             $.cookie(
