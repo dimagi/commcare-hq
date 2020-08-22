@@ -1,7 +1,7 @@
-/*global FormplayerFrontend, Util */
+/*global FormplayerFrontend, Util, Marionette */
 
-FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Backbone, Marionette, $) {
-    Views.MenuView = Marionette.LayoutView.extend({
+hqDefine("cloudcare/js/formplayer/menus/views", function () {
+    var MenuView = Marionette.LayoutView.extend({
         tagName: function () {
             if (this.model.collection.layoutStyle === 'grid') {
                 return 'div';
@@ -80,12 +80,12 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         },
     });
 
-    Views.MenuTableView = Marionette.CollectionView.extend({
-        childView: Views.MenuView,
+    var MenuTableView = Marionette.CollectionView.extend({
+        childView: MenuView,
         tagName: "tbody",
     });
 
-    Views.MenuListView = Marionette.LayoutView.extend({
+    var MenuListView = Marionette.LayoutView.extend({
         tagName: "div",
         regions: {
             body: {
@@ -93,7 +93,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
             },
         },
         onShow: function () {
-            this.getRegion('body').show(new Views.MenuTableView({
+            this.getRegion('body').show(new MenuTableView({
                 collection: this.collection,
             }));
         },
@@ -219,7 +219,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         return view;
     };
 
-    Views.CaseView = Marionette.LayoutView.extend({
+    var CaseView = Marionette.LayoutView.extend({
         tagName: "tr",
         template: "#case-view-item-template",
 
@@ -246,22 +246,22 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         },
     });
 
-    Views.CaseViewUnclickable = Views.CaseView.extend({
+    var CaseViewUnclickable = CaseView.extend({
         events: {},
         className: "",
         rowClick: function () {},
     });
 
-    Views.CaseTileView = Views.CaseView.extend({
+    var CaseTileView = CaseView.extend({
         template: "#case-tile-view-item-template",
         templateHelpers: function () {
-            var dict = Views.CaseTileView.__super__.templateHelpers.apply(this, arguments);
+            var dict = CaseTileView.__super__.templateHelpers.apply(this, arguments);
             dict['prefix'] = this.options.prefix;
             return dict;
         },
     });
 
-    Views.PersistentCaseTileView = Views.CaseTileView.extend({
+    var PersistentCaseTileView = CaseTileView.extend({
         rowClick: function (e) {
             e.preventDefault();
             if (this.options.hasInlineTile) {
@@ -270,8 +270,8 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         },
     });
 
-    Views.CaseListContainerView = Marionette.CollectionView.extend({
-        childView: Views.CaseView,
+    var CaseListContainerView = Marionette.CollectionView.extend({
+        childView: CaseView,
         tagName: "tbody",
 
         childViewOptions: function () {
@@ -281,7 +281,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         },
     });
 
-    Views.CaseListView = Marionette.LayoutView.extend({
+    var CaseListView = Marionette.LayoutView.extend({
         tagName: "div",
         template: "#case-view-list-template",
 
@@ -291,7 +291,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
             },
         },
         onShow: function () {
-            this.getRegion('body').show(new Views.CaseListContainerView({
+            this.getRegion('body').show(new CaseListContainerView({
                 collection: this.collection,
                 styles: this.styles,
             }));
@@ -375,7 +375,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
     // styles[1] - the layout of the grid itself, IE how many rows/columns each tile should have and their size
     // styles[2] (optional) - If showing multiple cases per line, sets the style of how to layout the case tiles in the
     //                        outer grid
-    Views.buildCaseTileStyles = function (tiles, numRows, numColumns, numEntitiesPerRow, useUniformUnits, prefix) {
+    var buildCaseTileStyles = function (tiles, numRows, numColumns, numEntitiesPerRow, useUniformUnits, prefix) {
         var cellLayoutStyle = buildCellLayout(tiles, prefix);
         var cellGridStyle = buildCellGridStyle(numRows,
             numColumns,
@@ -390,17 +390,17 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         }
     };
 
-    Views.CaseTileListView = Views.CaseListView.extend({
-        childView: Views.CaseTileView,
+    var CaseTileListView = CaseListView.extend({
+        childView: CaseTileView,
         initialize: function (options) {
-            Views.CaseTileListView.__super__.initialize.apply(this, arguments);
+            CaseTileListView.__super__.initialize.apply(this, arguments);
 
             var numEntitiesPerRow = options.numEntitiesPerRow || 1;
             var numRows = options.maxHeight;
             var numColumns = options.maxWidth;
             var useUniformUnits = options.useUniformUnits;
 
-            var caseTileStyles = Views.buildCaseTileStyles(options.tiles, numRows, numColumns,
+            var caseTileStyles = buildCaseTileStyles(options.tiles, numRows, numColumns,
                 numEntitiesPerRow, useUniformUnits, 'list');
 
             var gridPolyfillPath = FormplayerFrontend.request('gridPolyfillPath');
@@ -416,36 +416,36 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         },
 
         childViewOptions: function () {
-            var dict = Views.CaseTileListView.__super__.childViewOptions.apply(this, arguments);
+            var dict = CaseTileListView.__super__.childViewOptions.apply(this, arguments);
             dict.prefix = 'list';
             return dict;
         },
 
         templateHelpers: function () {
-            var dict = Views.CaseTileListView.__super__.templateHelpers.apply(this, arguments);
+            var dict = CaseTileListView.__super__.templateHelpers.apply(this, arguments);
             dict.useTiles = true;
             return dict;
         },
     });
 
-    Views.GridCaseTileViewItem = Views.CaseTileView.extend({
+    var GridCaseTileViewItem = CaseTileView.extend({
         tagName: "div",
         className: "formplayer-request list-cell-container-style",
     });
 
-    Views.GridCaseTileListView = Views.CaseTileListView.extend({
+    var GridCaseTileListView = CaseTileListView.extend({
         initialize: function () {
-            Views.GridCaseTileListView.__super__.initialize.apply(this, arguments);
+            GridCaseTileListView.__super__.initialize.apply(this, arguments);
         },
-        childView: Views.GridCaseTileViewItem,
+        childView: GridCaseTileViewItem,
     });
 
-    Views.CaseListDetailView = Views.CaseListView.extend({
+    var CaseListDetailView = CaseListView.extend({
         template: "#case-view-list-detail-template",
-        childView: Views.CaseViewUnclickable,
+        childView: CaseViewUnclickable,
     });
 
-    Views.BreadcrumbView = Marionette.LayoutView.extend({
+    var BreadcrumbView = Marionette.LayoutView.extend({
         tagName: "li",
         template: "#breadcrumb-item-template",
         className: "breadcrumb-text",
@@ -460,12 +460,12 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         },
     });
 
-    Views.BreadcrumbContainerView = Marionette.CollectionView.extend({
-        childView: Views.BreadcrumbView,
+    var BreadcrumbContainerView = Marionette.CollectionView.extend({
+        childView: BreadcrumbView,
         tagName: "ol",
     });
 
-    Views.BreadcrumbListView = Marionette.LayoutView.extend({
+    var BreadcrumbListView = Marionette.LayoutView.extend({
         tagName: "div",
         template: "#breadcrumb-list-template",
         regions: {
@@ -476,7 +476,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         // TODO: in 3, replace onShow with onRender and show with showChildView (see CollectionView docs on
         // rendering tables)
         onShow: function () {
-            this.getRegion('body').show(new Views.BreadcrumbContainerView({
+            this.getRegion('body').show(new BreadcrumbContainerView({
                 collection: this.collection,
             }));
         },
@@ -488,7 +488,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         },
     });
 
-    Views.DetailView = Marionette.LayoutView.extend({
+    var DetailView = Marionette.LayoutView.extend({
         tagName: "tr",
         className: "",
         template: "#detail-view-item-template",
@@ -502,12 +502,12 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         },
     });
 
-    Views.DetailListView = Marionette.CollectionView.extend({
-        childView: Views.DetailView,
+    var DetailListView = Marionette.CollectionView.extend({
+        childView: DetailView,
         tagName: "tbody",
     });
 
-    Views.DetailTabView = Marionette.LayoutView.extend({
+    var DetailTabView = Marionette.LayoutView.extend({
         tagName: "li",
         className: function () {
             return this.options.model.get('active') ? 'active' : '';
@@ -527,10 +527,10 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         },
     });
 
-    Views.DetailTabListView = Marionette.CollectionView.extend({
+    var DetailTabListView = Marionette.CollectionView.extend({
         tagName: "ul",
         className: "nav nav-tabs",
-        childView: Views.DetailTabView,
+        childView: DetailTabView,
         childViewOptions: function () {
             return {
                 showDetail: this.options.showDetail,
@@ -540,5 +540,36 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
             this.$el.attr("role", "tablist");
         },
     });
+
+    return {
+        buildCaseTileStyles: buildCaseTileStyles,
+        BreadcrumbListView: function (options) {
+            return new BreadcrumbListView(options);
+        },
+        CaseListDetailView: function (options) {
+            return new CaseListDetailView(options);
+        },
+        CaseListView: function (options) {
+            return new CaseListView(options);
+        },
+        CaseTileListView: function (options) {
+            return new CaseTileListView(options);
+        },
+        DetailListView: function (options) {
+            return new DetailListView(options);
+        },
+        DetailTabListView: function (options) {
+            return new DetailTabListView(options);
+        },
+        GridCaseTileListView: function (options) {
+            return new GridCaseTileListView(options);
+        },
+        MenuListView: function (options) {
+            return new MenuListView(options);
+        },
+        PersistentCaseTileView: function (options) {
+            return new PersistentCaseTileView(options);
+        },
+    };
 })
 ;

@@ -116,7 +116,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             var tabCollection = new Backbone.Collection();
             tabCollection.reset(tabModels);
 
-            var tabListView = new Menus.Views.DetailTabListView({
+            var tabListView = hqImport("cloudcare/js/formplayer/menus/views").DetailTabListView({
                 collection: tabCollection,
                 showDetail: function (detailTabIndex) {
                     self.showDetail(model, detailTabIndex, caseId);
@@ -157,7 +157,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                     styles: detailObject.get('styles'),
                     title: detailObject.get('title'),
                 };
-                return new Menus.Views.CaseListDetailView(menuData);
+                return hqImport("cloudcare/js/formplayer/menus/views").CaseListDetailView(menuData);
             }
 
             var headers = detailObject.get('headers');
@@ -175,7 +175,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             }
             var detailCollection = new Backbone.Collection();
             detailCollection.reset(detailModel);
-            return new Menus.Views.DetailListView({
+            return hqImport("cloudcare/js/formplayer/menus/views").DetailListView({
                 collection: detailCollection,
             });
         },
@@ -190,13 +190,13 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             var numRows = detailObject.maxHeight;
             var numColumns = detailObject.maxWidth;
             var useUniformUnits = detailObject.useUniformUnits || false;
-            var caseTileStyles = Menus.Views.buildCaseTileStyles(detailObject.tiles, numRows, numColumns,
+            var caseTileStyles = hqImport("cloudcare/js/formplayer/menus/views").buildCaseTileStyles(detailObject.tiles, numRows, numColumns,
                 numEntitiesPerRow, useUniformUnits, 'persistent');
             // Style the positioning of the elements within a tile (IE element 1 at grid position 1 / 2 / 4 / 3
             $("#persistent-cell-layout-style").html(caseTileStyles[0]).data("css-polyfilled", false);
             // Style the grid (IE each tile has 6 rows, 12 columns)
             $("#persistent-cell-grid-style").html(caseTileStyles[1]).data("css-polyfilled", false);
-            return new Menus.Views.PersistentCaseTileView({
+            return hqImport("cloudcare/js/formplayer/menus/views").PersistentCaseTileView({
                 model: detailModel,
                 styles: detailObject.styles,
                 tiles: detailObject.tiles,
@@ -275,7 +275,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             });
 
             detailCollection = new Backbone.Collection(breadcrumbModels);
-            var breadcrumbView = new Menus.Views.BreadcrumbListView({
+            var breadcrumbView = hqImport("cloudcare/js/formplayer/menus/views").BreadcrumbListView({
                 collection: detailCollection,
             });
             FormplayerFrontend.regions.getRegion('breadcrumb').show(breadcrumbView);
@@ -302,18 +302,18 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 sortIndices: menuResponse.sortIndices,
             };
             if (menuResponse.type === "commands") {
-                return new Menus.Views.MenuListView(menuData);
+                return hqImport("cloudcare/js/formplayer/menus/views").MenuListView(menuData);
             } else if (menuResponse.type === "query") {
                 return hqImport("cloudcare/js/formplayer/menus/views/query")(menuData);
             }
             else if (menuResponse.type === "entities") {
                 if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
-                    return new Menus.Views.CaseListView(menuData);
+                    return hqImport("cloudcare/js/formplayer/menus/views").CaseListView(menuData);
                 } else {
                     if (menuResponse.numEntitiesPerRow > 1) {
-                        return new Menus.Views.GridCaseTileListView(menuData);
+                        return hqImport("cloudcare/js/formplayer/menus/views").GridCaseTileListView(menuData);
                     } else {
-                        return new Menus.Views.CaseTileListView(menuData);
+                        return hqImport("cloudcare/js/formplayer/menus/views").CaseTileListView(menuData);
                     }
                 }
             }
