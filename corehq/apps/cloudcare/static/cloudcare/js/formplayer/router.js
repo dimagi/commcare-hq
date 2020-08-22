@@ -1,7 +1,7 @@
 /*global FormplayerFrontend, Util */
 
-FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, FormplayerFrontend, Backbone, Marionette) {
-    SessionNavigate.Router = Marionette.AppRouter.extend({
+hqDefine("cloudcare/js/formplayer/router", function () {
+    var Router = Marionette.AppRouter.extend({
         appRoutes: {
             "apps": "listApps", // list all apps available to this user
             "single_app/:id": "singleApp", // Show app in phone mode (SingleAppView)
@@ -107,7 +107,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             FormplayerFrontend.Menus.Controller.showMenu(menuCollection);
         },
     };
-    API = SessionNavigate.Middleware.apply(API);
+    API = hqImport("cloudcare/js/formplayer/middleware").apply(API);
 
     FormplayerFrontend.on("apps:currentApp", function () {
         var urlObject = Util.currentUrlToObject();
@@ -205,12 +205,6 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         API.renderResponse(menuResponse);
     });
 
-    SessionNavigate.start = function () {
-        return new SessionNavigate.Router({
-            controller: API,
-        });
-    };
-
     FormplayerFrontend.on("breadcrumbSelect", function (index) {
         FormplayerFrontend.trigger("clearForm");
         var urlObject = Util.currentUrlToObject();
@@ -223,7 +217,6 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         FormplayerFrontend.Menus.Controller.selectMenu(options);
     });
 
-
     FormplayerFrontend.on("localInstall", function (path) {
         var urlObject = new Util.CloudcareUrl({
             'installReference': path,
@@ -231,4 +224,12 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         Util.setUrlToObject(urlObject);
         FormplayerFrontend.Menus.Controller.selectMenu(urlObject);
     });
+
+    return {
+        start: function () {
+            return new Router({
+                controller: API,
+            });
+        },
+    };
 });
