@@ -1,13 +1,13 @@
 /*global FormplayerFrontend */
 
-FormplayerFrontend.module("SessionNavigate.SessionList", function (SessionList, FormplayerFrontend, Backbone, Marionette, $) {
-    SessionList.Controller = {
+hqDefine("cloudcare/js/formplayer/sessions/controller", function () {
+    return {
         listSessions: function () {
             var fetchingSessions = FormplayerFrontend.request("sessions");
 
             $.when(fetchingSessions).done(function (sessions) {
 
-                var sessionListView = new SessionList.SessionListView({
+                var sessionListView = hqImport("cloudcare/js/formplayer/sessions/views")({
                     collection: sessions,
                 });
 

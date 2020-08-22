@@ -1,7 +1,7 @@
 /*global FormplayerFrontend, moment, Util */
 
-FormplayerFrontend.module("SessionNavigate.SessionList", function (SessionList, FormplayerFrontend, Backbone, Marionette) {
-    SessionList.SessionView = Marionette.LayoutView.extend({
+hqDefine("cloudcare/js/formplayer/sessions/views", function () {
+    var SessionView = Marionette.LayoutView.extend({
         tagName: "tr",
         className: "formplayer-request",
         events: {
@@ -39,11 +39,11 @@ FormplayerFrontend.module("SessionNavigate.SessionList", function (SessionList, 
     });
 
     var SessionTableView = Marionette.CollectionView.extend({
-        childView: SessionList.SessionView,
+        childView: SessionView,
         tagName: "tbody",
     });
 
-    SessionList.SessionListView = Marionette.LayoutView.extend({
+    var SessionListView = Marionette.LayoutView.extend({
         tagName: "div",
         regions: {
             body: {
@@ -64,4 +64,8 @@ FormplayerFrontend.module("SessionNavigate.SessionList", function (SessionList, 
             return "#session-view-list-web-apps-template";
         },
     });
+
+    return function (options) {
+        return new SessionListView(options);
+    };
 });
