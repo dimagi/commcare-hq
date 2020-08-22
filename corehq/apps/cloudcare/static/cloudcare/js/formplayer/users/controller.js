@@ -7,7 +7,7 @@ FormplayerFrontend.module("Users", function (Users, FormplayerFrontend, Backbone
                 users;
 
             users = hqImport("cloudcare/js/formplayer/users/collections")([], { domain: currentUser.domain });
-            var restoreAsView = new Users.Views.RestoreAsView({
+            var restoreAsView = hqImport("cloudcare/js/formplayer/users/views").RestoreAsView({
                 collection: users,
                 page: page,
                 query: query,

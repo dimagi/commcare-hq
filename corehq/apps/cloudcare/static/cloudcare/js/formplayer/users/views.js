@@ -1,13 +1,13 @@
-/*global FormplayerFrontend, Util */
+/*global FormplayerFrontend, Util, Backbone, Marionette */
 
-FormplayerFrontend.module("Users.Views", function (Views, FormplayerFrontend, Backbone, Marionette, $) {
+hqDefine("cloudcare/js/formplayer/users/views", function() {
     /**
      * RestoreAsBanner
      *
      * This View represents the banner that indicates what user your are
      * currently logged in (or restoring) as.
      */
-    Views.RestoreAsBanner = Marionette.LayoutView.extend({
+     var RestoreAsBanner = Marionette.LayoutView.extend({
         template: '#restore-as-banner-template',
         className: 'restore-as-banner-container',
         ui: {
@@ -32,7 +32,7 @@ FormplayerFrontend.module("Users.Views", function (Views, FormplayerFrontend, Ba
      *
      * Represents a single row in the Log In As User list
      */
-    Views.UserRowView = Marionette.LayoutView.extend({
+    var UserRowView = Marionette.LayoutView.extend({
         template: '#user-row-view-template',
         className: 'formplayer-request js-user',
         tagName: 'tr',
@@ -50,7 +50,7 @@ FormplayerFrontend.module("Users.Views", function (Views, FormplayerFrontend, Ba
                     hqImport("cloudcare/js/formplayer/users/utils").Users.logInAsUser(this.model.get('username'));
                     FormplayerFrontend.trigger('navigateHome');
                     FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
-                        new FormplayerFrontend.Users.Views.RestoreAsBanner({
+                        new RestoreAsBanner({
                             model: FormplayerFrontend.request('currentUser'),
                         })
                     );
@@ -61,7 +61,7 @@ FormplayerFrontend.module("Users.Views", function (Views, FormplayerFrontend, Ba
 
     var UserTableView = Marionette.CollectionView.extend({
         tagName: 'tbody',
-        childView: Views.UserRowView,
+        childView: UserRowView,
     });
 
     /**
@@ -70,7 +70,7 @@ FormplayerFrontend.module("Users.Views", function (Views, FormplayerFrontend, Ba
      * Renders all possible users to log in as. Equipped with pagination
      * and custom querying.
      */
-    Views.RestoreAsView = Marionette.LayoutView.extend({
+    var RestoreAsView = Marionette.LayoutView.extend({
         template: '#restore-as-view-template',
         limit: 10,
         maxPagesShown: 10,
@@ -170,5 +170,14 @@ FormplayerFrontend.module("Users.Views", function (Views, FormplayerFrontend, Ba
             });
         },
     });
+
+    return {
+        RestoreAsBanner: function (options) {
+            return new RestoreAsBanner(options);
+        },
+        RestoreAsView: function (options) {
+            return new RestoreAsView(options);
+        },
+    };
 });
 
