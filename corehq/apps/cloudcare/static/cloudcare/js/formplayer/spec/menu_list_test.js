@@ -13,25 +13,28 @@ describe('Render a case list', function () {
             server.restore();
         });
 
-        // TODO: Fix these
+        var getMenuView = hqImport("cloudcare/js/formplayer/menus/util").getMenuView;
         it('Should parse a case list response to a CaseListView', function () {
-            var caseListView = Menus.Util.getMenuView(fixtures.caseList);
-            assert.isTrue(caseListView instanceof hqImport("cloudcare/js/formplayer/menus/views").CaseListView);
+            var view = getMenuView(fixtures.caseList);
+            assert.isFalse(view.templateContext().useTiles);
+            assert.isFalse(view.templateContext().useGrid);
         });
 
         it('Should parse a menu list response to a MenuListView', function () {
-            var menuListView = Menus.Util.getMenuView(fixtures.menuList);
-            assert.isTrue(menuListView instanceof hqImport("cloudcare/js/formplayer/menus/views").MenuListView);
+            var view = getMenuView(fixtures.menuList);
+            assert.isTrue(view.childViewContainer === ".menus-container")
         });
 
         it('Should parse a case list response with tiles to a CaseTileListView', function () {
-            var caseTileListView = Menus.Util.getMenuView(fixtures.caseTileList);
-            assert.isTrue(caseTileListView instanceof hqImport("cloudcare/js/formplayer/menus/views").CaseTileListView);
+            var view = getMenuView(fixtures.caseTileList);
+            assert.isTrue(view.templateContext().useTiles);
+            assert.isFalse(view.templateContext().useGrid);
         });
 
         it('Should parse a case grid response with tiles to a GridCaseTileListView', function () {
-            var caseTileGridView = Menus.Util.getMenuView(fixtures.caseGridList);
-            assert.isTrue(caseTileGridView instanceof hqImport("cloudcare/js/formplayer/menus/views").CaseTileGridView);
+            var view = getMenuView(fixtures.caseGridList);
+            assert.isTrue(view.templateContext().useTiles);
+            assert.isTrue(view.templateContext().useGrid);
         });
     });
 
