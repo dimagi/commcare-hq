@@ -25,6 +25,8 @@
   <script src="{% static 'reports/js/readable_form.js' %}"></script>
   <script src="{% static 'url-polyfill/url-polyfill.js' %}"></script>
 
+  <!-- The ordering of the cloudcare/js/* files matters, as many of them depend on each other. -->
+
   <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/app.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/constants.js' %}"></script>
@@ -51,6 +53,7 @@
   <script src="{% static 'cloudcare/js/formplayer/menus/api.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/menus/views.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/menus/views/query.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/menus/util.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/menus/controller.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/menus/collections.js' %}"></script>
 
