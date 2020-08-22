@@ -4,9 +4,9 @@
  * Backbone model for listing and selecting FormEntrySessions
  */
 
-FormplayerFrontend.module("Sessions", function (Sessions, FormplayerFrontend, Backbone, Marionette, $) {
+hqDefine("cloudcare/js/formplayer/sessions/api", function () {
 
-    Sessions.API = {
+    var API = {
 
         getSessions: function () {
 
@@ -35,7 +35,7 @@ FormplayerFrontend.module("Sessions", function (Sessions, FormplayerFrontend, Ba
                 },
             };
 
-            var menus = new Sessions.Collections.FormEntrySession(options);
+            var menus = hqImport("cloudcare/js/formplayer/sessions/collections")(options);
 
             var defer = $.Deferred();
             menus.fetch(options);
@@ -92,15 +92,17 @@ FormplayerFrontend.module("Sessions", function (Sessions, FormplayerFrontend, Ba
     };
 
     FormplayerFrontend.reqres.setHandler("getSession", function (session) {
-        return Sessions.API.getSession(session);
+        return API.getSession(session);
     });
 
     FormplayerFrontend.reqres.setHandler("deleteSession", function (sessionId) {
-        return Sessions.API.deleteSession(sessionId);
+        return API.deleteSession(sessionId);
     });
 
     FormplayerFrontend.reqres.setHandler("sessions", function () {
-        return Sessions.API.getSessions();
+        return API.getSessions();
     });
+
+    return API;
 });
 
