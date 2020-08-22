@@ -80,7 +80,7 @@ FormplayerFrontend.reqres.setHandler('gridPolyfillPath', function (path) {
 
 FormplayerFrontend.reqres.setHandler('currentUser', function () {
     if (!FormplayerFrontend.currentUser) {
-        FormplayerFrontend.currentUser = new FormplayerFrontend.Users.Models.CurrentUser();
+        FormplayerFrontend.currentUser = hqImport("cloudcare/js/formplayer/users/models").CurrentUser();
     }
     return FormplayerFrontend.currentUser;
 });

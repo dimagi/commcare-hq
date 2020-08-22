@@ -11,7 +11,7 @@ hqDefine("cloudcare/js/formplayer/users/collections", function () {
             }
             return '/a/' + this.domain + '/cloudcare/api/login_as/users/';
         },
-        model: FormplayerFrontend.Users.Models.User,
+        model: hqImport("cloudcare/js/formplayer/users/models").User,
 
         initialize: function (models, options) {
             options = options || {};

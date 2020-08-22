@@ -18,13 +18,13 @@ describe('User', function () {
 
     describe('CurrentUser Model', function () {
         it('should get the display name of a mobile worker', function () {
-            var model = new FormplayerFrontend.Users.Models.CurrentUser();
+            var model = hqImport("cloudcare/js/formplayer/users/models").CurrentUser();
             model.username = 'worker@domain.commcarehq.org';
             assert.equal(model.getDisplayUsername(), 'worker');
         });
 
         it('should get the display name of a web user', function () {
-            var model = new FormplayerFrontend.Users.Models.CurrentUser();
+            var model = hqImport("cloudcare/js/formplayer/users/models").CurrentUser();
             model.username = 'web@gmail.com';
             assert.equal(model.getDisplayUsername(), 'web@gmail.com');
         });
