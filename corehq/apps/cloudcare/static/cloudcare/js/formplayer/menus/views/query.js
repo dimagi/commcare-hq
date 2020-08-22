@@ -1,7 +1,7 @@
-/*global FormplayerFrontend */
+/*global FormplayerFrontend, Marionette */
 
-FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Backbone, Marionette) {
-    Views.QueryView = Marionette.LayoutView.extend({
+hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
+    var QueryView = Marionette.LayoutView.extend({
         tagName: "tr",
         className: "formplayer-request",
         template: "#query-view-item-template",
@@ -17,12 +17,12 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         },
     });
 
-    Views.QueryTableView = Marionette.CollectionView.extend({
-        childView: Views.QueryView,
+    var QueryTableView = Marionette.CollectionView.extend({
+        childView: QueryView,
         tagName: "tbody",
     });
 
-    Views.QueryListView = Marionette.LayoutView.extend({
+    var QueryListView = Marionette.LayoutView.extend({
         tagName: "div",
         template: "#query-view-list-template",
 
@@ -32,7 +32,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
             },
         },
         onShow: function () {
-            this.getRegion('body').show(new Views.QueryTableView({
+            this.getRegion('body').show(new QueryTableView({
                 collection: this.collection,
             }));
         },
@@ -68,4 +68,8 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
             FormplayerFrontend.trigger("menu:query", payload);
         },
     });
+
+    return function (data) {
+        return new QueryListView(data);
+    };
 });
