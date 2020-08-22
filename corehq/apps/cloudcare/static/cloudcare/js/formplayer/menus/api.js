@@ -4,10 +4,8 @@
  * Backbone model for listing and selecting CommCare menus (modules, forms, and cases)
  */
 
-FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone, Marionette, $) {
-
-    Menus.API = {
-
+hqDefine("cloudcare/js/formplayer/menus/api", function () {
+    var API = {
         queryFormplayer: function (params, route) {
             var user = FormplayerFrontend.request('currentUser'),
                 lastRecordedLocation = FormplayerFrontend.request('lastRecordedLocation'),
@@ -124,13 +122,15 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
 
     FormplayerFrontend.reqres.setHandler("app:select:menus", function (options) {
         var isInitial = options.isInitial;
-        return Menus.API.queryFormplayer(options, isInitial ? 'navigate_menu_start' : 'navigate_menu');
+        return API.queryFormplayer(options, isInitial ? 'navigate_menu_start' : 'navigate_menu');
     });
 
     FormplayerFrontend.reqres.setHandler("entity:get:details", function (options, isPersistent) {
         options.isPersistent = isPersistent;
         options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
-        return Menus.API.queryFormplayer(options, 'get_details');
+        return API.queryFormplayer(options, 'get_details');
     });
+
+    return 1;
 });
 
