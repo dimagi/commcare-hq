@@ -304,7 +304,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             if (menuResponse.type === "commands") {
                 return new Menus.Views.MenuListView(menuData);
             } else if (menuResponse.type === "query") {
-                return new Menus.Views.QueryListView(menuData);
+                return hqImport("cloudcare/js/formplayer/menus/views/query")(menuData);
             }
             else if (menuResponse.type === "entities") {
                 if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
