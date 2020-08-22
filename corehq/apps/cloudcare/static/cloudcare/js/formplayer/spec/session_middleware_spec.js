@@ -2,7 +2,7 @@
 /* eslint-env mocha */
 
 describe('SessionMiddle', function () {
-    var Middleware = FormplayerFrontend.SessionNavigate.Middleware;
+    var Middleware = hqImport("cloudcare/js/formplayer/middleware");
 
     it('Should call middleware and apis with same arguments', function () {
         var middlewareSpy = sinon.spy(),

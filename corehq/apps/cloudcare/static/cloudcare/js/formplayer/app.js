@@ -31,7 +31,7 @@ FormplayerFrontend.on("before:start", function () {
     });
 
     FormplayerFrontend.regions = new RegionContainer();
-    FormplayerFrontend.router = new FormplayerFrontend.SessionNavigate.start();
+    FormplayerFrontend.router = hqImport("cloudcare/js/formplayer/router").start();
 });
 
 FormplayerFrontend.navigate = function (route, options) {
