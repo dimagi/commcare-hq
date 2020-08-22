@@ -65,7 +65,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             FormplayerFrontend.Menus.Controller.selectDetail(caseId, detailTabIndex, isPersistent);
         },
         listSessions: function () {
-            SessionNavigate.SessionList.Controller.listSessions();
+            hqImport("cloudcare/js/formplayer/sessions/controller").listSessions();
         },
         getSession: function (sessionId) {
             FormplayerFrontend.request("getSession", sessionId);
