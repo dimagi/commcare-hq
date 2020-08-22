@@ -18,23 +18,26 @@ hqDefine("cloudcare/js/formplayer/router", function () {
     });
 
 
-    var controller = hqImport("cloudcare/js/formplayer/apps/controller");
+    var appsController = hqImport("cloudcare/js/formplayer/apps/controller"),
+        menusController = hqImport("cloudcare/js/formplayer/menus/controller"),
+        sessionsController = hqImport("cloudcare/js/formplayer/sessions/controller"),
+        usersController = hqImport("cloudcare/js/formplayer/users/controller");
     var API = {
         listApps: function () {
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
-            controller.listApps();
+            appsController.listApps();
         },
         singleApp: function (appId) {
             var user = FormplayerFrontend.request('currentUser');
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
             user.previewAppId = appId;
-            controller.singleApp(appId);
+            appsController.singleApp(appId);
         },
         landingPageApp: function (appId) {
-            controller.landingPageApp(appId);
+            appsController.landingPageApp(appId);
         },
         selectApp: function (appId, isInitial) {
-            FormplayerFrontend.Menus.Controller.selectMenu({
+            menusController.selectMenu({
                 'appId': appId,
                 'isInitial': isInitial,
             });
@@ -47,7 +50,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
                 // We can't do any menu navigation without an appId
                 FormplayerFrontend.trigger("apps:list");
             } else {
-                FormplayerFrontend.Menus.Controller.selectMenu(urlObject);
+                menusController.selectMenu(urlObject);
             }
         },
         listUsers: function (page, query) {
@@ -56,16 +59,16 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             if (_.isNaN(page)) {
                 page = 1;
             }
-            hqImport("cloudcare/js/formplayer/users/controller").listUsers(page, query);
+            usersController.listUsers(page, query);
         },
         listSettings: function () {
-            controller.listSettings();
+            appsController.listSettings();
         },
         showDetail: function (caseId, detailTabIndex, isPersistent) {
-            FormplayerFrontend.Menus.Controller.selectDetail(caseId, detailTabIndex, isPersistent);
+            menusController.selectDetail(caseId, detailTabIndex, isPersistent);
         },
         listSessions: function () {
-            hqImport("cloudcare/js/formplayer/sessions/controller").listSessions();
+            sessionsController.listSessions();
         },
         getSession: function (sessionId) {
             FormplayerFrontend.request("getSession", sessionId);
@@ -104,7 +107,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             encodedUrl = Util.objectToEncodedUrl(urlObject.toJson());
             FormplayerFrontend.navigate(encodedUrl);
 
-            FormplayerFrontend.Menus.Controller.showMenu(menuCollection);
+            menusController.showMenu(menuCollection);
         },
     };
     API = hqImport("cloudcare/js/formplayer/middleware").apply(API);
@@ -214,7 +217,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             'appId': urlObject.appId,
             'steps': urlObject.steps,
         };
-        FormplayerFrontend.Menus.Controller.selectMenu(options);
+        hqImport("cloudcare/js/formplayer/menus/controller").selectMenu(options);
     });
 
     FormplayerFrontend.on("localInstall", function (path) {
@@ -222,7 +225,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             'installReference': path,
         });
         Util.setUrlToObject(urlObject);
-        FormplayerFrontend.Menus.Controller.selectMenu(urlObject);
+        hqImport("cloudcare/js/formplayer/menus/controller").selectMenu(urlObject);
     });
 
     return {
