@@ -232,7 +232,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
         self._test_case_processing_error(OPENROSA_VERSION_3)
 
     def test_no_form_lock_on_submit_device_log(self):
-        from corehq.form_processor.submission_post import FormProcessingResult as FPR
+        from corehq.form_processor.submission_post import FormProcessingResponse as FPR
         from corehq.form_processor.parsers.form import FormProcessingResult
 
         class FakeResponse(dict):
