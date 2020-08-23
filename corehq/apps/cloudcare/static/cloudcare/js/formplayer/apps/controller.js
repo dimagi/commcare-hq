@@ -38,7 +38,7 @@ hqDefine("cloudcare/js/formplayer/apps/controller", function () {
                 settings = [],
                 collection,
                 settingsView;
-            if (currentUser.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
+            if (currentUser.environment === hqImport("cloudcare/js/formplayer/constants").PREVIEW_APP_ENVIRONMENT) {
                 settings = settings.concat([
                     new Backbone.Model({ slug: slugs.SET_LANG }),
                     new Backbone.Model({ slug: slugs.SET_DISPLAY }),
