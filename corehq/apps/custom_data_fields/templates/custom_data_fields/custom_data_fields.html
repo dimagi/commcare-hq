@@ -42,27 +42,29 @@
 
     {% if show_profiles %}
       <ul class="nav nav-tabs">
-        <li class="active"><a data-toggle="tab" href="#tabs-fields">{% trans "Fields" %}</a></li>
-        <li><a data-toggle="tab" href="#tabs-profiles">{% trans "Profiles" %}</a></li>
+        <li {% if not profiles_active %}class="active"{% endif %}><a data-toggle="tab" href="#tabs-fields">{% trans "Fields" %}</a></li>
+        <li {% if profiles_active %}class="active"{% endif %}><a data-toggle="tab" href="#tabs-profiles">{% trans "Profiles" %}</a></li>
       </ul>
       <div class="spacer"></div>
     {% endif %}
 
     <div class="tab-content">
-      <div class="tab-pane fade in active" id="tabs-fields">
+      <div class="tab-pane fade{% if not show_profiles or not profiles_active %} in active{% endif %}" id="tabs-fields">
         {% include 'custom_data_fields/partials/fields_tab.html' %}
         {% if show_purge_existing %}
           {% include 'custom_data_fields/partials/purge_existing_fields.html' %}
         {% endif %}
       </div>
-      <div class="tab-pane fade" id="tabs-profiles">
+      <div class="tab-pane fade{% if show_profiles and profiles_active %} in active{% endif %}" id="tabs-profiles">
         {% include 'custom_data_fields/partials/profiles_tab.html' %}
       </div>
     </div>
 
     <div class="form-actions">
       <div class="col-sm-12">
-        <button id="save-custom-fields" class="btn btn-primary disable-on-submit" type="submit" disabled>{% trans "Save" %}</button>
+        <button id="save-custom-fields" class="btn btn-primary disable-on-submit" type="submit"{% if disable_save %} disabled{% endif %}>
+            {% trans "Save" %}
+        </button>
       </div>
     </div>
 
