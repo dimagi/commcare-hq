@@ -69,7 +69,7 @@ def bootstrap_user(setup, username=TEST_USER, domain=TEST_DOMAIN,
         created_by=None,
         created_via=None,
         phone_numbers=[TEST_NUMBER],
-        user_data=user_data,
+        metadata=user_data,
         first_name=first_name,
         last_name=last_name
     )
