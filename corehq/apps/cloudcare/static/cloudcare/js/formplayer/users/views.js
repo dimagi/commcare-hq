@@ -1,4 +1,4 @@
-/*global FormplayerFrontend, Util, Backbone, Marionette */
+/*global _, FormplayerFrontend, Util, Backbone, Marionette */
 
 hqDefine("cloudcare/js/formplayer/users/views", function() {
     /**
@@ -8,7 +8,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function() {
      * currently logged in (or restoring) as.
      */
      var RestoreAsBanner = Marionette.View.extend({
-        template: '#restore-as-banner-template',
+        template: _.template($("#restore-as-banner-template").html() || ""),
         className: 'restore-as-banner-container',
         ui: {
             clear: '.js-clear-user',
@@ -33,7 +33,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function() {
      * Represents a single row in the Log In As User list
      */
     var UserRowView = Marionette.View.extend({
-        template: '#user-row-view-template',
+        template: _.template($("#user-row-view-template").html() || ""),
         className: 'formplayer-request js-user',
         tagName: 'tr',
         events: {
@@ -71,7 +71,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function() {
      * and custom querying.
      */
     var RestoreAsView = Marionette.View.extend({
-        template: '#restore-as-view-template',
+        template: _.template($("#restore-as-view-template").html() || ""),
         limit: 10,
         maxPagesShown: 10,
         initialize: function (options) {

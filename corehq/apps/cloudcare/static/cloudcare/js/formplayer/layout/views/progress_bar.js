@@ -1,8 +1,8 @@
-/*global FormplayerFrontend, Marionette */
+/*global _, FormplayerFrontend, Marionette */
 
 hqDefine("cloudcare/js/formplayer/layout/views/progress_bar", function () {
     var ProgressView = Marionette.View.extend({
-        template: "#progress-view-template",
+        template: _.template($("#progress-view-template").html() || ""),
 
         initialize: function (options) {
             this.progressMessage = options.progressMessage;
