@@ -232,7 +232,7 @@ def _notify_ignored_form_submission(request, form_meta):
     })
 
 
-def should_ignore_submission(request):
+def should_ignore_submission(instance, request):
     """
     If IGNORE_ALL_DEMO_USER_SUBMISSIONS is True then ignore submission if from demo user.
     Else
@@ -241,7 +241,6 @@ def should_ignore_submission(request):
     """
     form_json = None
     if IGNORE_ALL_DEMO_USER_SUBMISSIONS:
-        instance, _ = couchforms.get_instance_and_attachment(request)
         try:
             form_json = convert_xform_to_json(instance)
         except couchforms.XMLSyntaxError:
@@ -257,7 +256,6 @@ def should_ignore_submission(request):
         return False
 
     if form_json is None:
-        instance, _ = couchforms.get_instance_and_attachment(request)
         form_json = convert_xform_to_json(instance)
     return False if from_demo_user(form_json) else True
 
