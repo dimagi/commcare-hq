@@ -5,7 +5,7 @@ from itertools import chain
 
 import redis
 from contextlib import ExitStack
-from django.db import transaction, DatabaseError
+from django.db import transaction, DatabaseError, router
 from lxml import etree
 
 from casexml.apps.case import const
@@ -16,6 +16,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 )
 from corehq.form_processor.change_publishers import (
     publish_form_saved, publish_case_saved, publish_ledger_v2_saved)
+from corehq.form_processor.const import XFORM_TRACKED_MODELS
 from corehq.form_processor.exceptions import CaseNotFound, KafkaPublishingError
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
 from corehq.form_processor.models import (
@@ -104,6 +105,13 @@ class FormProcessorSQL(object):
             db_names |= {
                 ledger_value.db for ledger_value in stock_result.models_to_save
             }
+
+        if processed_forms.submitted:
+            tracked_objects = get_tracked_objects_to_create(processed_forms.submitted)
+            db_names.update(
+                router.db_for_write(type(tracked_object))
+                for tracked_object in tracked_objects
+            )
 
         all_models = filter(None, chain(
             processed_forms,
@@ -347,3 +355,14 @@ class FormProcessorSQL(object):
     @staticmethod
     def case_exists(case_id):
         return CaseAccessorSQL.case_exists(case_id)
+
+
+def get_tracked_objects_to_create(form):
+    # get tracked model objects added other than by core HQ, likely through form pre-processors
+    domain = form.domain
+    tracked_models = XFORM_TRACKED_MODELS.get(domain)
+    objects = []
+    if tracked_models:
+        for model_class in tracked_models:
+            objects.extend(form.get_tracked_models_to_create(model_class))
+    return objects

@@ -5,6 +5,7 @@ import operator
 import struct
 from abc import ABCMeta, abstractmethod, abstractproperty
 from collections import namedtuple
+from contextlib import ExitStack
 from datetime import datetime
 from io import BytesIO
 from itertools import groupby
@@ -615,6 +616,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         """
         Save a previously unsaved form
         """
+        from corehq.form_processor.backends.sql.processor import get_tracked_objects_to_create
         if form.is_saved():
             raise XFormSaveError('form already saved')
         logging.debug('Saving new form: %s', form)
@@ -628,13 +630,24 @@ class FormAccessorSQL(AbstractFormAccessor):
             operation.form_id = form.form_id
 
         try:
+            db_names = [form.db]
+            tracked_objects = get_tracked_objects_to_create(form)
+            db_names.extend(set(
+                router.db_for_write(type(tracked_object))
+                for tracked_object in tracked_objects
+            ))
             with form.attachment_writer() as attachment_writer, \
-                    transaction.atomic(using=form.db, savepoint=False):
+                ExitStack() as stack:
+                for db_name in db_names:
+                    stack.enter_context(
+                        transaction.atomic(db_name, savepoint=False))
                 transaction.on_commit(attachment_writer.commit, using=form.db)
                 form.save()
                 attachment_writer.write()
                 for operation in operations:
                     operation.save()
+                for tracked_object in tracked_objects:
+                    tracked_object.save(xform=form)
         except InternalError as e:
             raise XFormSaveError(e)
 

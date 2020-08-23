@@ -68,6 +68,7 @@ class SubmissionPost(object):
     class SubmissionFormContext(object):
         def __init__(self, instance_xml):
             self.instance_xml = instance_xml
+            self.supplementary_models = []
 
     def __init__(self, instance=None, attachments=None, auth_context=None,
                  domain=None, app_id=None, build_id=None, path=None,
@@ -149,7 +150,8 @@ class SubmissionPost(object):
         if isinstance(self.instance, BadRequest):
             return HttpResponseBadRequest(self.instance.message)
 
-    def _post_process_form(self, xform):
+    def _post_process_form(self, xform, objects_to_track):
+        [xform.track_create(model_obj) for model_obj in objects_to_track]
         self._set_submission_properties(xform)
         found_old = scrub_meta(xform)
         legacy_notification_assert(not found_old, 'Form with old metadata submitted', xform.form_id)
@@ -230,12 +232,13 @@ class SubmissionPost(object):
         if failure_response:
             return FormProcessingResponse(failure_response, None, [], [], 'known_failures')
 
+        objects_to_track = []
         if self.pre_processing_steps:
-            self.instance = self._pre_process_xform_xml()
+            self.instance, objects_to_track = self._pre_process_xform_xml()
         result = process_xform_xml(self.domain, self.instance, self.attachments, self.auth_context.to_json())
         submitted_form = result.submitted_form
 
-        self._post_process_form(submitted_form)
+        self._post_process_form(submitted_form, objects_to_track)
         self._invalidate_caches(submitted_form)
 
         if submitted_form.is_submission_error_log:
@@ -345,14 +348,14 @@ class SubmissionPost(object):
             xml = xml2json.get_xml_from_string(self.instance)
         except xml2json.XMLSyntaxError:
             # let this fail later via usual process
-            return self.instance
+            return self.instance, []
         else:
             context = self.SubmissionFormContext(instance_xml=xml)
             for step in self.pre_processing_steps:
                 result = step(context)
                 if result:
                     return result
-            return lxml.etree.tostring(xml)
+            return lxml.etree.tostring(context.instance_xml), context.supplementary_models
 
     def _conditionally_send_device_logs_to_sumologic(self, instance):
         url = getattr(settings, 'SUMOLOGIC_URL', None)

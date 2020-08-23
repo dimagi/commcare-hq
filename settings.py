@@ -2076,3 +2076,5 @@ PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requ
 # for each domain provide a list of pre-processors that would be instantiated
 # and passed the form xml for processing
 XFORM_PRE_PROCESSORS = {}
+
+XFORM_TRACKED_MODELS = {}
