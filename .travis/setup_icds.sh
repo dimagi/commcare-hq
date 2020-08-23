@@ -13,7 +13,7 @@ ssh-add $TRAVIS_BUILD_DIR/.travis/deploy_key.pem
 mkdir -p $TRAVIS_BUILD_DIR/extensions/icds/
 git clone git@github.com:dimagi/commcare-icds.git $TRAVIS_BUILD_DIR/extensions/icds/ --depth=1
 cd $TRAVIS_BUILD_DIR/extensions/icds/ \
-    && git fetch origin $TRAVIS_PULL_REQUEST_BRANCH \
-    && git checkout $TRAVIS_PULL_REQUEST_BRANCH \
-    || echo "Branch $TRAVIS_PULL_REQUEST_BRANCH not found in ICDS repo. Defaulting to 'master'"
+    && git fetch origin mk/extract-sensitive-vault-data \
+    && git checkout mk/extract-sensitive-vault-data \
+    || echo "Branch mk/extract-sensitive-vault-data not found in ICDS repo. Defaulting to 'master'"
 cd $TRAVIS_BUILD_DIR
