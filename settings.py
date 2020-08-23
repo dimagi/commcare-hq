@@ -2071,3 +2071,8 @@ if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
     ]
 
 PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requirements.txt')
+
+# provides extensions with ability to customize form processing per domain
+# for each domain provide a list of pre-processors that would be instantiated
+# and passed the form xml for processing
+XFORM_PRE_PROCESSORS = {}

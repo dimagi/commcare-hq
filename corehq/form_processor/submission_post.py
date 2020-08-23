@@ -1,4 +1,6 @@
 import logging
+import lxml.etree
+import xml2json
 from collections import namedtuple
 
 from ddtrace import tracer
@@ -21,6 +23,7 @@ from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, Use
     CaseValueError
 from corehq.apps.receiverwrapper.rate_limiter import report_submission_usage
 from corehq.const import OPENROSA_VERSION_3
+from corehq.form_processor.const import XFORM_PRE_PROCESSORS
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.toggles import ASYNC_RESTORE, SUMOLOGIC_LOGS, NAMESPACE_OTHER
 from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
@@ -62,6 +65,9 @@ class FormProcessingResponse(namedtuple('FormProcessingResult', 'response xform 
 
 
 class SubmissionPost(object):
+    class SubmissionFormContext(object):
+        def __init__(self, instance_xml):
+            self.instance_xml = instance_xml
 
     def __init__(self, instance=None, attachments=None, auth_context=None,
                  domain=None, app_id=None, build_id=None, path=None,
@@ -97,6 +103,9 @@ class SubmissionPost(object):
 
         self.is_openrosa_version3 = self.openrosa_headers.get(OPENROSA_VERSION_HEADER, '') == OPENROSA_VERSION_3
         self.track_load = form_load_counter("form_submission", domain)
+        self.pre_processing_steps = list(map(
+            lambda x: x(), XFORM_PRE_PROCESSORS.get(self.domain, [])
+        ))
 
     def _set_submission_properties(self, xform):
         # attaches shared properties of the request to the document.
@@ -221,6 +230,8 @@ class SubmissionPost(object):
         if failure_response:
             return FormProcessingResponse(failure_response, None, [], [], 'known_failures')
 
+        if self.pre_processing_steps:
+            self.instance = self._pre_process_xform_xml()
         result = process_xform_xml(self.domain, self.instance, self.attachments, self.auth_context.to_json())
         submitted_form = result.submitted_form
 
@@ -328,6 +339,20 @@ class SubmissionPost(object):
 
             response = self._get_open_rosa_response(instance, **openrosa_kwargs)
             return FormProcessingResponse(response, instance, cases, ledgers, submission_type)
+
+    def _pre_process_xform_xml(self):
+        try:
+            xml = xml2json.get_xml_from_string(self.instance)
+        except xml2json.XMLSyntaxError:
+            # let this fail later via usual process
+            return self.instance
+        else:
+            context = self.SubmissionFormContext(instance_xml=xml)
+            for step in self.pre_processing_steps:
+                result = step(context)
+                if result:
+                    return result
+            return lxml.etree.tostring(xml)
 
     def _conditionally_send_device_logs_to_sumologic(self, instance):
         url = getattr(settings, 'SUMOLOGIC_URL', None)
