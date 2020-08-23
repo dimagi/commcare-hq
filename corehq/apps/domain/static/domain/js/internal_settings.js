@@ -4,7 +4,7 @@ hqDefine("domain/js/internal_settings", [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/multiselect_utils',
-    'jquery-ui/ui/datepicker',
+    'jquery-ui/ui/widgets/datepicker',
 ], function (
     $,
     ko,
