@@ -58,7 +58,7 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
         getTemplate: function () {
             var user = FormplayerFrontend.getChannel().request('currentUser');
             var id = "#session-view-list-web-apps-template";
-            if (user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
+            if (user.environment === hqImport("cloudcare/js/formplayer/constants").PREVIEW_APP_ENVIRONMENT) {
                 id = "#session-view-list-preview-template";
             }
             return _.template($(id).html() || "");

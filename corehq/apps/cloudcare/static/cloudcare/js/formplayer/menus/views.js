@@ -22,7 +22,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         getTemplate: function () {
             var id = "#menu-view-row-template";
-            if (this.model.collection.layoutStyle === FormplayerFrontend.Constants.LayoutStyles.GRID) {
+            if (this.model.collection.layoutStyle === hqImport("cloudcare/js/formplayer/constants").LayoutStyles.GRID) {
                 id = "#menu-view-grid-item-template";
             } else if (this.model.get('audioUri')) {
                 id = "#menu-view-row-audio-template";
@@ -97,7 +97,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         getTemplate: function () {
             var id = "#menu-view-list-template";
-            if (this.collection.layoutStyle === FormplayerFrontend.Constants.LayoutStyles.GRID) {
+            if (this.collection.layoutStyle === hqImport("cloudcare/js/formplayer/constants").LayoutStyles.GRID) {
                 id = "#menu-view-grid-template";
             }
             return _.template($(id).html() || "");

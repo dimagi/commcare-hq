@@ -178,7 +178,7 @@ FormplayerFrontend.on('startForm', function (data) {
     data.onsubmit = function (resp) {
         if (resp.status === "success") {
             var $alert,
-                isAppPreview = user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT;
+                isAppPreview = user.environment === hqImport("cloudcare/js/formplayer/constants").PREVIEW_APP_ENVIRONMENT;
             if (resp.submitResponseMessage) {
                 var markdowner = window.markdownit(),
                     reverse = hqImport("hqwebapp/js/initial_page_data").reverse,
@@ -218,11 +218,11 @@ FormplayerFrontend.on('startForm', function (data) {
                 });
             }
 
-            if (user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
+            if (user.environment === hqImport("cloudcare/js/formplayer/constants").PREVIEW_APP_ENVIRONMENT) {
                 hqImport('analytix/js/kissmetrix').track.event("[app-preview] User submitted a form");
                 hqImport('analytix/js/google').track.event("App Preview", "User submitted a form");
                 appcues.trackEvent(appcues.EVENT_TYPES.FORM_SUBMIT, { success: true });
-            } else if (user.environment === FormplayerFrontend.Constants.WEB_APPS_ENVIRONMENT) {
+            } else if (user.environment === hqImport("cloudcare/js/formplayer/constants").WEB_APPS_ENVIRONMENT) {
                 hqImport('analytix/js/kissmetrix').track.event("[web apps] User submitted a form");
                 hqImport('analytix/js/google').track.event("Web Apps", "User submitted a form");
                 appcues.trackEvent(appcues.EVENT_TYPES.FORM_SUBMIT, { success: true });
@@ -241,7 +241,7 @@ FormplayerFrontend.on('startForm', function (data) {
                 FormplayerFrontend.navigate('/apps', { trigger: true });
             }
         } else {
-            if (user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
+            if (user.environment === hqImport("cloudcare/js/formplayer/constants").PREVIEW_APP_ENVIRONMENT) {
                 appcues.trackEvent(appcues.EVENT_TYPES.FORM_SUBMIT, { success: false });
             }
             showError(resp.output, $("#cloudcare-notifications"));
@@ -274,7 +274,7 @@ FormplayerFrontend.on("start", function (model, options) {
 
     savedDisplayOptions = _.pick(
         Util.getSavedDisplayOptions(),
-        FormplayerFrontend.Constants.ALLOWED_SAVED_OPTIONS
+        hqImport("cloudcare/js/formplayer/constants").ALLOWED_SAVED_OPTIONS
     );
     user.displayOptions = _.defaults(savedDisplayOptions, {
         singleAppMode: options.singleAppMode,
