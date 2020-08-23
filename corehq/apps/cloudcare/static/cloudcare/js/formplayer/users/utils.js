@@ -1,6 +1,6 @@
-/*global FormplayerFrontend */
-
 hqDefine("cloudcare/js/formplayer/users/utils", function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+
     var Utils = {};
     Utils.Users = {
         /**

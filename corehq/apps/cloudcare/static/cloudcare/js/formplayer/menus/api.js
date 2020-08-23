@@ -1,10 +1,12 @@
-/*global FormplayerFrontend, Formplayer */
+/*global Formplayer */
 
 /**
  * Backbone model for listing and selecting CommCare menus (modules, forms, and cases)
  */
 
 hqDefine("cloudcare/js/formplayer/menus/api", function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+
     var API = {
         queryFormplayer: function (params, route) {
             var user = FormplayerFrontend.getChannel().request('currentUser'),

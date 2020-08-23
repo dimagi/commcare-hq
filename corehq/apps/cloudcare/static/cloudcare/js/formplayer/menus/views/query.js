@@ -1,6 +1,8 @@
-/*global _, FormplayerFrontend, Marionette */
+/*global _, Marionette */
 
 hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+
     var QueryView = Marionette.View.extend({
         tagName: "tr",
         className: "formplayer-request",

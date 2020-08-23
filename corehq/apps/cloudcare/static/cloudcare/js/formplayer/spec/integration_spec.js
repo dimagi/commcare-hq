@@ -1,7 +1,9 @@
-/* global FormplayerFrontend, Util, Backbone */
+/* global Util, Backbone */
 /* eslint-env mocha */
 
 describe('FormplayerFrontend Integration', function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+
     describe('Start up', function () {
         var options,
             server;

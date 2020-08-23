@@ -1,6 +1,5 @@
-/*global FormplayerFrontend */
-
 hqDefine("cloudcare/js/formplayer/sessions/controller", function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
     return {
         listSessions: function () {
             var fetchingSessions = FormplayerFrontend.getChannel().request("sessions");

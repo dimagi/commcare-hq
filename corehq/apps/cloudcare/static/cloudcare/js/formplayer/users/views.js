@@ -1,6 +1,8 @@
-/*global _, FormplayerFrontend, Util, Backbone, Marionette */
+/*global _, Util, Backbone, Marionette */
 
 hqDefine("cloudcare/js/formplayer/users/views", function() {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+
     /**
      * RestoreAsBanner
      *

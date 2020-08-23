@@ -1,10 +1,11 @@
-/*global FormplayerFrontend, Util */
+/*global Util */
 
 /**
  * Backbone model for listing and selecting FormEntrySessions
  */
 
 hqDefine("cloudcare/js/formplayer/sessions/api", function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
 
     var API = {
 

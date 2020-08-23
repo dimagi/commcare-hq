@@ -1,7 +1,6 @@
-/* global FormplayerFrontend, Backbone */
+/* global Backbone */
 /* eslint-env mocha */
 describe('Render a case list', function () {
-    var Menus = FormplayerFrontend.Menus;
     var fixtures = hqImport("cloudcare/js/formplayer/spec/fixtures");
     describe('#getMenuView', function () {
         var server;
@@ -39,7 +38,8 @@ describe('Render a case list', function () {
     });
 
     describe('#getMenus', function () {
-        var server,
+        var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+            server,
             clock,
             user,
             requests;

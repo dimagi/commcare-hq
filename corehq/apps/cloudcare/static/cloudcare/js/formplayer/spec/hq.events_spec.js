@@ -1,6 +1,7 @@
-/* global FormplayerFrontend */
 /* eslint-env mocha */
 describe('HQ.Events', function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+
     describe('Receiver', function () {
         var Receiver = hqImport("cloudcare/js/formplayer/hq.events").Receiver,
             Actions = hqImport("cloudcare/js/formplayer/hq.events").Actions,

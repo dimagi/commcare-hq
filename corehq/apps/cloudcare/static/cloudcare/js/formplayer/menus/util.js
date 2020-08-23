@@ -1,6 +1,8 @@
-/*global FormplayerFrontend, Util, Backbone */
+/*global Util, Backbone */
 
 hqDefine("cloudcare/js/formplayer/menus/util", function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+
     var recordPosition = function (position) {
         sessionStorage.locationLat = position.coords.latitude;
         sessionStorage.locationLon = position.coords.longitude;

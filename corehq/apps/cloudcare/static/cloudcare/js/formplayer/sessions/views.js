@@ -1,6 +1,8 @@
-/*global _, FormplayerFrontend, moment, Util */
+/*global _, moment, Util */
 
 hqDefine("cloudcare/js/formplayer/sessions/views", function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+
     var SessionView = Marionette.View.extend({
         tagName: "tr",
         className: "formplayer-request",

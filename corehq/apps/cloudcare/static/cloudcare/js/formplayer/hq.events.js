@@ -1,11 +1,10 @@
-/*global FormplayerFrontend */
-
 /**
  * hq.events.js
  *
  * This is framework for allowing messages from HQ
  */
 hqDefine("cloudcare/js/formplayer/hq.events", function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
     var Events = {};
 
     Events.Receiver = function (allowedHost) {
