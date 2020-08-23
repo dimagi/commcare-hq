@@ -1,10 +1,10 @@
-/*global FormplayerFrontend, Marionette */
+/*global _, FormplayerFrontend, Marionette */
 
 hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
     var QueryView = Marionette.View.extend({
         tagName: "tr",
         className: "formplayer-request",
-        template: "#query-view-item-template",
+        template: _.template($("#query-view-item-template").html() || ""),
 
         templateContext: function () {
             var imageUri = this.options.model.get('imageUri');
@@ -24,7 +24,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
     var QueryListView = Marionette.View.extend({
         tagName: "div",
-        template: "#query-view-list-template",
+        template: _.template($("#query-view-list-template").html() || ""),
 
         regions: {
             body: {

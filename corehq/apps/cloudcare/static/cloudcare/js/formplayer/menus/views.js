@@ -1,4 +1,4 @@
-/*global FormplayerFrontend, Util, Marionette */
+/*global _, FormplayerFrontend, Util, Marionette */
 
 hqDefine("cloudcare/js/formplayer/menus/views", function () {
     var MenuView = Marionette.View.extend({
@@ -21,15 +21,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         getTemplate: function () {
+            var id = "#menu-view-row-template";
             if (this.model.collection.layoutStyle === FormplayerFrontend.Constants.LayoutStyles.GRID) {
-                return "#menu-view-grid-item-template";
-            } else {
-                if (this.model.get('audioUri')) {
-                    return "#menu-view-row-audio-template";
-                } else {
-                    return "#menu-view-row-template";
-                }
+                id = "#menu-view-grid-item-template";
+            } else if (this.model.get('audioUri')) {
+                id = "#menu-view-row-audio-template";
             }
+            return _.template($(id).html() || "");
         },
 
         rowClick: function (e) {
@@ -98,11 +96,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }));
         },
         getTemplate: function () {
+            var id = "#menu-view-list-template";
             if (this.collection.layoutStyle === FormplayerFrontend.Constants.LayoutStyles.GRID) {
-                return "#menu-view-grid-template";
-            } else {
-                return "#menu-view-list-template";
+                id = "#menu-view-grid-template";
             }
+            return _.template($(id).html() || "");
         },
         templateContext: function () {
             return {
@@ -221,7 +219,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
     var CaseView = Marionette.View.extend({
         tagName: "tr",
-        template: "#case-view-item-template",
+        template: _.template($("#case-view-item-template").html() || ""),
 
         events: {
             "click": "rowClick",
@@ -253,7 +251,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     });
 
     var CaseTileView = CaseView.extend({
-        template: "#case-tile-view-item-template",
+        template: _.template($("#case-tile-view-item-template").html() || ""),
         templateContext: function () {
             var dict = CaseTileView.__super__.templateContext.apply(this, arguments);
             dict['prefix'] = this.options.prefix;
@@ -283,7 +281,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
     var CaseListView = Marionette.View.extend({
         tagName: "div",
-        template: "#case-view-list-template",
+        template: _.template($("#case-view-list-template").html() || ""),
 
         regions: {
             body: {
@@ -441,13 +439,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     });
 
     var CaseListDetailView = CaseListView.extend({
-        template: "#case-view-list-detail-template",
+        template: _.template($("#case-view-list-detail-template").html() || ""),
         childView: CaseViewUnclickable,
     });
 
     var BreadcrumbView = Marionette.View.extend({
         tagName: "li",
-        template: "#breadcrumb-item-template",
+        template: _.template($("#breadcrumb-item-template").html() || ""),
         className: "breadcrumb-text",
         events: {
             "click": "crumbClick",
@@ -467,7 +465,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
     var BreadcrumbListView = Marionette.View.extend({
         tagName: "div",
-        template: "#breadcrumb-list-template",
+        template: _.template($("#breadcrumb-list-template").html() || ""),
         regions: {
             body: {
                 el: '.not-home',
@@ -489,7 +487,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     var DetailView = Marionette.View.extend({
         tagName: "tr",
         className: "",
-        template: "#detail-view-item-template",
+        template: _.template($("#detail-view-item-template").html() || ""),
         templateContext: function () {
             var appId = Util.currentUrlToObject().appId;
             return {
@@ -510,7 +508,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         className: function () {
             return this.options.model.get('active') ? 'active' : '';
         },
-        template: "#detail-view-tab-item-template",
+        template: _.template($("#detail-view-tab-item-template").html() || ""),
         events: {
             "click": "tabClick",
         },

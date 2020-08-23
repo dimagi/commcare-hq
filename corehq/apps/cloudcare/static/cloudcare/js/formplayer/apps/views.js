@@ -1,8 +1,8 @@
-/*global FormplayerFrontend, Marionette */
+/*global _, FormplayerFrontend, Marionette */
 
 hqDefine("cloudcare/js/formplayer/apps/views", function() {
     GridItem = Marionette.View.extend({
-        template: "#row-template",
+        template: _.template($("#row-template").html() || ""),
         tagName: "div",
         className: "grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request",
         events: {
@@ -54,7 +54,7 @@ hqDefine("cloudcare/js/formplayer/apps/views", function() {
     });
 
     GridView = Marionette.View.extend({
-        template: "#grid-template",
+        template: _.template($("#grid-template").html() || ""),
 
         regions: {
             body: {
@@ -82,7 +82,7 @@ hqDefine("cloudcare/js/formplayer/apps/views", function() {
      * that information. Used for phone previewing in the app manager
      */
     SingleAppView = Marionette.View.extend({
-        template: "#single-app-template",
+        template: _.template($("#single-app-template").html() || ""),
         className: 'single-app-view',
 
         events: _.extend({
@@ -117,7 +117,7 @@ hqDefine("cloudcare/js/formplayer/apps/views", function() {
     });
 
     LandingPageAppView = Marionette.View.extend({
-        template: "#landing-page-app-template",
+        template: _.template($("#landing-page-app-template").html() || ""),
         className: 'landing-page-app-view',
 
         events: _.extend({

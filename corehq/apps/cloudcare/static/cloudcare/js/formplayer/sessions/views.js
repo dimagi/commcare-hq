@@ -1,4 +1,4 @@
-/*global FormplayerFrontend, moment, Util */
+/*global _, FormplayerFrontend, moment, Util */
 
 hqDefine("cloudcare/js/formplayer/sessions/views", function () {
     var SessionView = Marionette.View.extend({
@@ -9,7 +9,7 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
             "click .module-delete-control": "onDeleteSession",
         },
 
-        template: "#session-view-item-template",
+        template: _.template($("#session-view-item-template").html() || ""),
 
         rowClick: function (e) {
             e.preventDefault();
@@ -57,10 +57,11 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
         },
         getTemplate: function () {
             var user = FormplayerFrontend.getChannel().request('currentUser');
+            var id = "#session-view-list-web-apps-template";
             if (user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
-                return "#session-view-list-preview-template";
+                id = "#session-view-list-preview-template";
             }
-            return "#session-view-list-web-apps-template";
+            return _.template($(id).html() || "");
         },
     });
 

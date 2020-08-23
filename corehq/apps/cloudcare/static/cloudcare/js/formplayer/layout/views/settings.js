@@ -1,4 +1,4 @@
-/*global FormplayerFrontend, Util, Marionette */
+/*global _, FormplayerFrontend, Util, Marionette */
 
 hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
     var slugs = {
@@ -12,7 +12,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
      * Sets the application language. Should only be used for App Preview.
      */
     var LangSettingView = Marionette.View.extend({
-        template: '#lang-setting-template',
+        template: _.template($("#lang-setting-template").html() || ""),
         tagName: 'tr',
         initialize: function () {
             this.currentUser = FormplayerFrontend.getChannel().request('currentUser');
@@ -42,7 +42,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
      * Should only be used for App Preview.
      */
     var DisplaySettingView = Marionette.View.extend({
-        template: '#display-setting-template',
+        template: _.template($("#display-setting-template").html() || ""),
         tagName: 'tr',
         initialize: function () {
             this.currentUser = FormplayerFrontend.getChannel().request('currentUser');
@@ -70,7 +70,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
      * Available for both Web Apps and App Preview
      */
     var ClearUserDataView = Marionette.View.extend({
-        template: '#clear-user-data-setting-template',
+        template: _.template($("#clear-user-data-setting-template").html() || ""),
         tagName: 'tr',
         ui: {
             clearUserData: '.js-clear-user-data',
@@ -92,7 +92,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
      * Available only for Web Apps
      */
     var BreakLocksView = Marionette.View.extend({
-        template: '#break-locks-setting-template',
+        template: _.template($("#break-locks-setting-template").html() || ""),
         tagName: 'tr',
         ui: {
             breakLocks: '.js-break-locks',
@@ -141,7 +141,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
         events: {
             'click @ui.done': 'onClickDone',
         },
-        template: '#settings-template',
+        template: _.template($("#settings-template").html() || ""),
         onClickDone: function () {
             FormplayerFrontend.trigger('navigateHome');
         },

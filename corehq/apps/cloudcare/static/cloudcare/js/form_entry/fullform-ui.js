@@ -1,4 +1,4 @@
-/* global FormplayerFrontend, mdAnchorRender */
+/* global _, FormplayerFrontend, mdAnchorRender */
 var Formplayer = {
     Utils: {},
     Const: {},
