@@ -305,12 +305,15 @@ function AddressEntry(question, options) {
             });
         }
 
+        var default_geocoder_location = JSON.parse(window.DEFAULT_GEOCODER_LOCATION || '{}');
+
         var geocoder = new MapboxGeocoder({
             accessToken: window.MAPBOX_ACCESS_TOKEN,
             types: 'address',
             enableEventLogging: false,
+            proximity: {longitude: default_geocoder_location.coordinates[0], latitude: default_geocoder_location.coordinates[1]},
             // proximity set to NYC
-            proximity: { longitude: -74.006058, latitude: 40.712772},
+            // proximity: { longitude: -74.006058, latitude: 40.712772},
             getItemValue: self.geocoderItemCallback,
         });
         geocoder.on('clear', self.geocoderOnClearCallback);

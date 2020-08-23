@@ -499,6 +499,7 @@ class DomainGlobalSettingsForm(forms.Form):
         domain.hr_name = self.cleaned_data['hr_name']
         domain.project_description = self.cleaned_data['project_description']
         domain.default_mobile_ucr_sync_interval = self.cleaned_data.get('mobile_ucr_sync_interval', None)
+        domain.default_geocoder_location = self.cleaned_data.get('default_geocoder_location')
         try:
             self._save_logo_configuration(domain)
         except IOError as err:

@@ -34,6 +34,8 @@ from corehq.apps.accounting.decorators import (
     requires_privilege_with_fallback,
 )
 from corehq.apps.accounting.utils import domain_is_on_trial
+from corehq.apps.domain.models import Domain
+
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_app_ids_in_domain,
@@ -187,6 +189,9 @@ class FormplayerMain(View):
         apps = self.get_web_apps_available_to_user(domain, restore_as)
         return JsonResponse(apps, safe=False)
 
+    def _get_domain_obj(self, domain):
+        return Domain.get_by_name(domain)
+
     def get_main(self, request, domain):
         restore_as, set_cookie = self.get_restore_as_user(request, domain)
         apps = self.get_web_apps_available_to_user(domain, restore_as)
@@ -201,8 +206,11 @@ class FormplayerMain(View):
         # first app's default, followed by english
         language = request.couch_user.language or _default_lang()
 
+        domain_obj = self._get_domain_obj(domain)
+
         context = {
             "domain": domain,
+            "default_geocoder_location": domain_obj.default_geocoder_location,
             "language": language,
             "apps": apps,
             "domain_is_on_trial": domain_is_on_trial(domain),
@@ -245,6 +253,9 @@ class FormplayerPreviewSingleApp(View):
     def dispatch(self, request, *args, **kwargs):
         return super(FormplayerPreviewSingleApp, self).dispatch(request, *args, **kwargs)
 
+    def _get_domain_obj(self, domain):
+        return Domain.get_by_name(domain)
+
     def get(self, request, domain, app_id, **kwargs):
         app_access = get_application_access_for_domain(domain)
 
@@ -266,9 +277,11 @@ class FormplayerPreviewSingleApp(View):
         # default language to user's preference, followed by
         # first app's default, followed by english
         language = request.couch_user.language or _default_lang()
+        domainobj = self._get_domain_obj(domain)
 
         context = {
             "domain": domain,
+            "default_geocoder_location": domainobj.default_geocoder_location,
             "language": language,
             "apps": [_format_app(app)],
             "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,

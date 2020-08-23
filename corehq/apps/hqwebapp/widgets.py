@@ -165,24 +165,9 @@ class GeoCoderInput(Input):
     def __init__(self, attrs=None):
         super(GeoCoderInput, self).__init__(attrs=attrs)
 
-    def render(self, name=None, value=None, attrs=None, renderer=None):
-        # startdate = ''
-        # enddate = ''
-        # if isinstance(self.default_datespan, DateSpan):
-        #     if self.default_datespan.startdate is not None:
-        #         startdate = self.default_datespan.startdate.strftime('%m/%d/%Y')
-        #     if self.default_datespan.enddate is not None:
-        #         enddate = self.default_datespan.enddate.strftime('%m/%d/%Y')
-
-        # attrs.update({
-        #     'data-separator': self.separator,
-        #     'data-labels': json.dumps(self.range_labels),
-        #     'data-start-date': startdate,
-        #     'data-end-date': enddate,
-        # })
-        # final_attrs = self.build_attrs(attrs)
-
-        # output = super(GeoCoderInput, self).render(name, value, attrs, renderer)
+    def render(self, name, value, attrs=None, renderer=None):
+        self.input_type = 'hidden'
+        output = super(GeoCoderInput, self).render(name, value, attrs, renderer)
         return mark_safe("""
-            <div id="geocoder-proximity"></div>
-        """)
+            <div id="geocoder-proximity">{}</div>
+        """.format(output))

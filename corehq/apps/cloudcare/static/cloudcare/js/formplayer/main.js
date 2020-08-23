@@ -3,6 +3,7 @@ hqDefine("cloudcare/js/formplayer/main", function () {
     $(function () {
         var initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
         window.MAPBOX_ACCESS_TOKEN = initialPageData('mapbox_access_token'); // maps api is loaded on-demand
+        window.DEFAULT_GEOCODER_LOCATION = initialPageData('default_geocoder_location');
         var options = {
             apps: initialPageData('apps'),
             language: initialPageData('language'),

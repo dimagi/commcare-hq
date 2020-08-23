@@ -10,27 +10,45 @@ hqDefine(
     ],
     function ($, _, MapboxGeocoder) {
         $(function () {
+            // var initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
+            // var MAPBOX_ACCESS_TOKEN = initialPageData("mapbox_access_token");
+            // console.log(MAPBOX_ACCESS_TOKEN);
             $("#id_default_timezone").select2({
                 placeholder: gettext("Select a Timezone..."),
             });
 
             function getGeocoderItem(item) {
                 console.log(item);
-                var inputEl = $("input.mapboxgl-ctrl-geocoder--input");
-                inputEl.addClass("form-control");
-                inputEl.attr("name", "default_geocoder_location").attr("value", item.geometry.coordinates);
+                var inputEl = $("#id_default_geocoder_location");
+                var geoObj = {};
+                geoObj.place_name = item.place_name;
+                geoObj.coordinates = item.geometry.coordinates;
+                console.log(geoObj);
+                inputEl.attr("value", JSON.stringify(geoObj));
                 console.log(inputEl);
                 return item.place_name;
             }
 
+            function getGeocoderValue() {
+                var geocoderValue = $("#id_default_geocoder_location").val();
+                if (geocoderValue) {
+                    geocoderValue = JSON.parse(geocoderValue);
+                    return geocoderValue.place_name;
+                }
+                return null;
+            }
+
             var geocoder = new MapboxGeocoder({
-                accessToken:
-                    "pk.eyJ1Ijoic2VhcmNoLW1hY2hpbmUtdXNlci0xIiwiYSI6ImNrN2Y1Nmp4YjB3aG4zZ253YnJoY21kbzkifQ.JM5ZeqwEEm-Tonrk5wOOMw",
+                accessToken: "pk.eyJ1Ijoic2VhcmNoLW1hY2hpbmUtdXNlci0xIiwiYSI6ImNrN2Y1Nmp4YjB3aG4zZ253YnJoY21kbzkifQ.JM5ZeqwEEm-Tonrk5wOOMw",
                 types: "country,region,place,postcode,locality,neighborhood",
-                getItemValue: getGeocoderItem,
+                getItemValue: getGeocoderItem
             });
 
             geocoder.addTo("#geocoder-proximity");
+            var geocoderValue = getGeocoderValue();
+            if (geocoderValue) {
+                geocoder.setInput(getGeocoderValue());
+            }
 
             $("#id_call_center_enabled").change(function () {
                 var type = $("#id_call_center_type").closest(".control-group");
