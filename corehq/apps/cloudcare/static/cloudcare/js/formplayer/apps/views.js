@@ -48,24 +48,10 @@ hqDefine("cloudcare/js/formplayer/apps/views", function() {
         },
     };
 
-    GridContainerView = Marionette.CollectionView.extend({
+    GridView = Marionette.CollectionView.extend({
+        template: _.template($("#grid-template").html() || ""),
         childView: GridItem,
         childViewContainer: ".js-application-container",
-    });
-
-    GridView = Marionette.View.extend({
-        template: _.template($("#grid-template").html() || ""),
-
-        regions: {
-            body: {
-                el: '.js-application-container',
-            },
-        },
-        onRender: function () {
-            this.getRegion('body').show(new GridContainerView({
-                collection: this.collection,
-            }));
-        },
 
         events: _.extend(BaseAppView.events),
         incompleteSessionsClick: _.extend(BaseAppView.incompleteSessionsClick),
