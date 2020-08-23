@@ -1,6 +1,8 @@
-/*global _, FormplayerFrontend, Util, Marionette */
+/*global _, Util, Marionette */
 
 hqDefine("cloudcare/js/formplayer/menus/views", function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+
     var MenuView = Marionette.View.extend({
         tagName: function () {
             if (this.model.collection.layoutStyle === 'grid') {

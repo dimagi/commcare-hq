@@ -1,4 +1,4 @@
-/* global _, FormplayerFrontend, mdAnchorRender */
+/* global _, mdAnchorRender */
 var Formplayer = {
     Utils: {},
     Const: {},
@@ -646,6 +646,7 @@ Formplayer.Utils.touchformsError = function (message) {
 };
 
 Formplayer.Utils.reloginErrorHtml = function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
     var isWebApps = FormplayerFrontend.getChannel().request('currentUser').environment === hqImport("cloudcare/js/formplayer/constants").WEB_APPS_ENVIRONMENT;
     if (isWebApps) {
         var url = hqImport("hqwebapp/js/initial_page_data").reverse('login_new_window');

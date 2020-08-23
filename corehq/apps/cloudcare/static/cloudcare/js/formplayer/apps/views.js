@@ -1,6 +1,8 @@
-/*global _, FormplayerFrontend, Marionette */
+/*global _, Marionette */
 
 hqDefine("cloudcare/js/formplayer/apps/views", function() {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+
     GridItem = Marionette.View.extend({
         template: _.template($("#row-template").html() || ""),
         tagName: "div",

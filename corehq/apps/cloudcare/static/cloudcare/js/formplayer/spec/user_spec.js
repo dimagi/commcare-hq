@@ -1,4 +1,3 @@
-/* global FormplayerFrontend */
 /* eslint-env mocha */
 describe('User', function () {
     describe('Collection', function () {
@@ -33,6 +32,7 @@ describe('User', function () {
 
     describe('Utils', function () {
         var Utils = hqImport("cloudcare/js/formplayer/users/utils").Users,
+            FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
             username = 'clark@kent.com',
             restoreAsUsername = 'worker@kent.com',
             domain = 'preview-domain',

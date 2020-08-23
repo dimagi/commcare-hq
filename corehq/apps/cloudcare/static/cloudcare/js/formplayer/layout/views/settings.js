@@ -1,6 +1,7 @@
-/*global _, FormplayerFrontend, Util, Marionette */
+/*global _, Util, Marionette */
 
 hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
     var slugs = {
         SET_LANG: 'lang',
         SET_DISPLAY: 'display',

@@ -1,4 +1,4 @@
-/*global Backbone, FormplayerFrontend */
+/*global Backbone */
 
 hqDefine("cloudcare/js/formplayer/users/collections", function () {
     /**

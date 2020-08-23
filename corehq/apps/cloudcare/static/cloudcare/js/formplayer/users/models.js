@@ -1,4 +1,4 @@
-/*global FormplayerFrontend, Backbone */
+/*global Backbone */
 
 hqDefine("cloudcare/js/formplayer/users/models", function () {
     var User = Backbone.Model.extend();

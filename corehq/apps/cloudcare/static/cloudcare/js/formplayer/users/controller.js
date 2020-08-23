@@ -1,6 +1,5 @@
-/*global FormplayerFrontend */
-
 hqDefine("cloudcare/js/formplayer/users/controller", function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
     return {
         listUsers: function (page, query) {
             var currentUser = FormplayerFrontend.getChannel().request('currentUser'),

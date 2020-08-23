@@ -1,12 +1,12 @@
-/*global FormplayerFrontend */
-
 hqDefine('cloudcare/js/util', [
-    'hqwebapp/js/initial_page_data',
     'jquery',
+    'cloudcare/js/formplayer/app',
+    'hqwebapp/js/initial_page_data',
     'integration/js/hmac_callout',
 ], function (
-    initialPageData,
     $,
+    FormplayerFrontend,
+    initialPageData,
     HMACCallout
 ) {
     if (!String.prototype.startsWith) {

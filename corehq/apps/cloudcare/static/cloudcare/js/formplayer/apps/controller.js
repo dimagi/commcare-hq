@@ -1,7 +1,8 @@
-/*global FormplayerFrontend, Backbone */
+/*global Backbone */
 
 hqDefine("cloudcare/js/formplayer/apps/controller", function () {
-    var views = hqImport("cloudcare/js/formplayer/apps/views");
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        views = hqImport("cloudcare/js/formplayer/apps/views");
     return {
         listApps: function () {
             $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function (apps) {

@@ -1,4 +1,4 @@
-/*global FormplayerFrontend, Util */
+/*global Util */
 
 hqDefine("cloudcare/js/formplayer/router", function () {
     var Router = Marionette.AppRouter.extend({
@@ -18,7 +18,8 @@ hqDefine("cloudcare/js/formplayer/router", function () {
     });
 
 
-    var appsController = hqImport("cloudcare/js/formplayer/apps/controller"),
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        appsController = hqImport("cloudcare/js/formplayer/apps/controller"),
         menusController = hqImport("cloudcare/js/formplayer/menus/controller"),
         sessionsController = hqImport("cloudcare/js/formplayer/sessions/controller"),
         usersController = hqImport("cloudcare/js/formplayer/users/controller");

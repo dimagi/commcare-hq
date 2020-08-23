@@ -1,6 +1,7 @@
-/*global FormplayerFrontend, Util, Backbone */
+/*global Util, Backbone */
 
 hqDefine("cloudcare/js/formplayer/menus/controller", function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
     var selectMenu = function (options) {
 
         options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;

@@ -1,4 +1,3 @@
-/* global FormplayerFrontend */
 /* eslint-env mocha */
 
 describe('SessionMiddle', function () {
