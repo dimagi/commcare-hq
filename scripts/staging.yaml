@@ -65,4 +65,5 @@ branches:
   - bmb/celery-4.4.2  # Biyeun August 19
   - jls/requirejs-group-members-2 # Jenny Aug 23
   - jls/requirejs-soil-status # Jenny Aug 23
+  - jls/hqdefine-reports-async # Jenny Aug 23
 submodules: {}
