@@ -11,11 +11,7 @@
   </style>
 {% endblock %}
 
-{% block js %}{{ block.super }}
-  {% include 'hqwebapp/includes/ui_element_js.html' %}
-  <script src="{% static 'hqwebapp/js/select_2_ajax_widget.js' %}"></script>
-  <script src="{% static 'groups/js/group_members.js' %}"></script>
-{% endblock %}
+{% requirejs_main "groups/js/group_members" %}
 
 {% block page_title %}
   {% if request.is_view_only %}
