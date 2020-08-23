@@ -258,7 +258,7 @@ FormplayerFrontend.on('startForm', function (data) {
     $('.menu-scrollable-container').addClass('hide');
 });
 
-FormplayerFrontend.on("start", function (options) {
+FormplayerFrontend.on("start", function (model, options) {
     var user = FormplayerFrontend.getChannel().request('currentUser'),
         savedDisplayOptions,
         self = this;
