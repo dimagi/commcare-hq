@@ -13,6 +13,18 @@ describe('FormplayerFrontend Integration', function () {
                 apps: [],
             };
             sinon.stub(Backbone.history, 'start').callsFake(sinon.spy());
+
+            // Prevent showing views, which doesn't work properly in tests
+            FormplayerFrontend.off("before:start");
+            FormplayerFrontend.regions = {
+                getRegion: function () {
+                    return {
+                        show: function () {
+                            return;
+                        },
+                    };
+                },
+            }
         });
 
         afterEach(function () {

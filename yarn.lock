@@ -489,10 +489,10 @@ aws4@^1.8.0:
   resolved "https://registry.yarnpkg.com/aws4/-/aws4-1.10.0.tgz#a17b3a8ea811060e74d47d306122400ad4497ae2"
   integrity sha512-3YDiu347mtVtjpyV3u5kVqQLP242c06zwDOgpeRnybmXlYYsLbtTrUBUm8i8srONt+FWobl5aibnU1030PeeuA==
 
-backbone.marionette@3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/backbone.marionette/-/backbone.marionette-3.0.0.tgz#f0c47728efbb1b035b7d41771109ea82adf26ba9"
-  integrity sha1-8MR3KO+7GwNbfUF3EQnqgq3ya6k=
+backbone.marionette@3.5.1:
+  version "3.5.1"
+  resolved "https://registry.yarnpkg.com/backbone.marionette/-/backbone.marionette-3.5.1.tgz#cb22ca68cf986cbcda9fdb544fb785dd66f8f248"
+  integrity sha1-yyLKaM+YbLzan9tUT7eF3Wb48kg=
   dependencies:
     backbone.radio "^2.0.0"
 
