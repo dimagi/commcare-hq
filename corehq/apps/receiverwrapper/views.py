@@ -81,38 +81,16 @@ def _process_form(request, domain, app_id, user_id, authenticated,
 
     with TimingContext() as timer:
         app_id, build_id = get_app_and_build_ids(domain, app_id)
-        submission_post = SubmissionPost(
-            instance=instance,
-            attachments=attachments,
-            domain=domain,
-            app_id=app_id,
-            build_id=build_id,
-            auth_context=auth_cls(
-                domain=domain,
-                user_id=user_id,
-                authenticated=authenticated,
-            ),
-            location=couchforms.get_location(request),
-            received_on=couchforms.get_received_on(request),
-            date_header=couchforms.get_date_header(request),
-            path=couchforms.get_path(request),
-            submit_ip=couchforms.get_submit_ip(request),
-            last_sync_token=couchforms.get_last_sync_token(request),
-            openrosa_headers=couchforms.get_openrosa_headers(request),
-            force_logs=request.GET.get('force_logs', 'false') == 'true',
-        )
+        submission_post = _submission_post_object(
+            instance, attachments, domain, app_id, build_id, auth_cls, user_id,
+            authenticated, request)
 
         try:
             result = submission_post.run()
         except XFormLockError as err:
-            metrics_counter('commcare.xformlocked.count', tags={
-                'domain': domain, 'authenticated': authenticated
-            })
-            return _submission_error(
-                request, "XFormLockError: %s" % err,
-                metric_tags, domain, app_id, user_id, authenticated, status=423,
-                notify=False,
-            )
+            return _xform_lock_error_response(
+                domain, authenticated, request, err, metric_tags, app_id,
+                user_id)
 
     response = result.response
     _record_metrics(metric_tags, result.submission_type, result.response, timer, result.xform)
@@ -173,6 +151,42 @@ def _blacklisted_domain_response(metric_tags):
     response = openrosa_response.BLACKLISTED_RESPONSE
     _record_metrics(metric_tags, 'blacklisted', response)
     return response
+
+
+def _submission_post_object(instance, attachments, domain, app_id, build_id,
+                            auth_cls, user_id, authenticated, request):
+    return SubmissionPost(
+            instance=instance,
+            attachments=attachments,
+            domain=domain,
+            app_id=app_id,
+            build_id=build_id,
+            auth_context=auth_cls(
+                domain=domain,
+                user_id=user_id,
+                authenticated=authenticated,
+            ),
+            location=couchforms.get_location(request),
+            received_on=couchforms.get_received_on(request),
+            date_header=couchforms.get_date_header(request),
+            path=couchforms.get_path(request),
+            submit_ip=couchforms.get_submit_ip(request),
+            last_sync_token=couchforms.get_last_sync_token(request),
+            openrosa_headers=couchforms.get_openrosa_headers(request),
+            force_logs=request.GET.get('force_logs', 'false') == 'true',
+        )
+
+
+def _xform_lock_error_response(domain, authenticated, request, err,
+                               metric_tags, app_id, user_id):
+    metrics_counter('commcare.xformlocked.count', tags={
+        'domain': domain, 'authenticated': authenticated
+    })
+    return _submission_error(
+        request, "XFormLockError: %s" % err,
+        metric_tags, domain, app_id, user_id, authenticated, status=423,
+        notify=False,
+    )
 
 
 def _submission_error(request, message, metric_tags,
