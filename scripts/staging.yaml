@@ -61,9 +61,5 @@ branches:
   - sr/es7-ref1 # Sravan Aug 4
   - bmb/SAAS-11163  # Biyeun Aug 10
   - fr/bounced-invitations      # Farid August 14
-  - jls/remove-old-backbone # Jenny August 17
   - bmb/celery-4.4.2  # Biyeun August 19
-  - jls/requirejs-group-members-2 # Jenny Aug 23
-  - jls/requirejs-soil-status # Jenny Aug 23
-  - jls/hqdefine-reports-async # Jenny Aug 23
 submodules: {}
