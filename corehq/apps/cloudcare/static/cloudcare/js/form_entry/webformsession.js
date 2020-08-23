@@ -255,8 +255,8 @@ WebFormSession.prototype.handleFailure = function (resp, action, textStatus, fai
     } else if (!window.navigator.onLine) {
         errorMessage = Formplayer.Errors.NO_INTERNET_ERROR;
         if (action === Formplayer.Const.SUBMIT) {
-            $('.submit').removeAttr('disabled');
-            $('.form-control').removeAttr('disabled');
+            $('.submit').prop('disabled', false);
+            $('.form-control').prop('disabled', false);
         }
     } else if (resp.hasOwnProperty('responseJSON') && resp.responseJSON !== undefined) {
         errorMessage = Formplayer.Utils.touchformsError(resp.responseJSON.message);
