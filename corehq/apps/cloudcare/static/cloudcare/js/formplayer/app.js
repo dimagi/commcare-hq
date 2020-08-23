@@ -336,8 +336,8 @@ FormplayerFrontend.on("start", function (model, options) {
     window.addEventListener(
         'online', function () {
             showSuccess(gettext("You are are back online."), $("#cloudcare-notifications"));
-            $('.submit').removeAttr('disabled');
-            $('.form-control').removeAttr('disabled');
+            $('.submit').prop('disabled', false);
+            $('.form-control').prop('disabled', false);
         }
     );
 });
