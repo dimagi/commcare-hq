@@ -132,7 +132,7 @@ def _get_instance_and_attachments(request, domain, authenticated,
         if isinstance(instance, BadRequest):
             response = _bad_request_response(instance.message, metric_tags)
         # silently ignore submission if it meets ignore-criteria
-        elif should_ignore_submission(request):
+        elif should_ignore_submission(instance, request):
             response = _ignored_submission_response(metric_tags)
         elif toggles.FORM_SUBMISSION_BLACKLIST.enabled(domain):
             response = _blacklisted_domain_response(metric_tags)
