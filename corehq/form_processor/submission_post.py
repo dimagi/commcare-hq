@@ -216,7 +216,7 @@ class SubmissionPost(object):
 
         context = form_submission_context_class()(self)
         with context:
-            self.instance = context.get_instance() or self.instance
+            self.instance = context.get_instance()
             result = process_xform_xml(self.domain, self.instance, self.attachments, self.auth_context.to_json())
             context.post_process_form(result.submitted_form)
 
