@@ -361,7 +361,6 @@ def get_tracked_objects_db_names(form, raise_error_if_saved=False):
                 raise XFormSaveError(
                     '{} {} has already been saved'.format(type(model), model.pk)
                 )
-            model.form_id = form.form_id
             if isinstance(model, PartitionedModel):
                 db_names.add(model.db)
             else:
