@@ -97,6 +97,12 @@ class RequirePermissionAuthenticationTest(AuthenticationTestBase):
         cls.role_without_permission = UserRole.get_or_create_with_permissions(
             cls.domain, Permissions(edit_data=False), 'no-edit-data'
         )
+        cls.domain_admin = WebUser.create(cls.domain, 'domain_admin', '***', None, None, is_admin=True)
+        cls.user_with_permission = WebUser.create(cls.domain, 'permission', '***', None, None,
+                                                  role_id=cls.role_with_permission.get_id)
+        cls.user_without_permission = WebUser.create(cls.domain, 'no-permission', '***', None, None,
+                                                     role_id=cls.role_without_permission.get_id)
+
 
     def test_login_no_auth_no_domain(self):
         self.assertAuthenticationFail(self.require_edit_data, self._get_request())
@@ -115,48 +121,40 @@ class RequirePermissionAuthenticationTest(AuthenticationTestBase):
                                       self._get_request_with_api_key(domain=self.domain))
 
     def test_login_with_domain_admin(self):
-        user_with_permission = WebUser.create(self.domain, 'domain_admin', '***', None, None, is_admin=True)
-        api_key_with_permissions, _ = HQApiKey.objects.get_or_create(
-            user=WebUser.get_django_user(user_with_permission)
+        api_key_with_default_permissions, _ = HQApiKey.objects.get_or_create(
+            user=WebUser.get_django_user(self.domain_admin)
         )
-        self.addCleanup(lambda: user_with_permission.delete(None))
         self.assertAuthenticationSuccess(self.require_edit_data,
                                          self._get_request(
                                              domain=self.domain,
                                              HTTP_AUTHORIZATION=self._contruct_api_auth_header(
-                                                 user_with_permission.username,
-                                                 api_key_with_permissions
+                                                 self.domain_admin.username,
+                                                 api_key_with_default_permissions
                                              )
                                          ))
 
     def test_login_with_explicit_permission(self):
-        user_with_permission = WebUser.create(self.domain, 'permission', '***', None, None,
-                                              role_id=self.role_with_permission.get_id)
         api_key_with_permissions, _ = HQApiKey.objects.get_or_create(
-            user=WebUser.get_django_user(user_with_permission)
+            user=WebUser.get_django_user(self.user_with_permission)
         )
-        self.addCleanup(lambda: user_with_permission.delete(None))
         self.assertAuthenticationSuccess(self.require_edit_data,
                                          self._get_request(
                                              domain=self.domain,
                                              HTTP_AUTHORIZATION=self._contruct_api_auth_header(
-                                                 user_with_permission.username,
+                                                 self.user_with_permission.username,
                                                  api_key_with_permissions
                                              )
                                          ))
 
     def test_login_with_wrong_permission(self):
-        user_without_permission = WebUser.create(self.domain, 'permission', '***', None, None,
-                                                 role_id=self.role_without_permission.get_id)
         api_key_without_permissions, _ = HQApiKey.objects.get_or_create(
-            user=WebUser.get_django_user(user_without_permission)
+            user=WebUser.get_django_user(self.user_without_permission)
         )
-        self.addCleanup(lambda: user_without_permission.delete(None))
         self.assertAuthenticationFail(self.require_edit_data,
                                       self._get_request(
                                           domain=self.domain,
                                           HTTP_AUTHORIZATION=self._contruct_api_auth_header(
-                                              user_without_permission.username,
+                                              self.user_without_permission.username,
                                               api_key_without_permissions
                                           )
                                       ))
