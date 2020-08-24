@@ -460,24 +460,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
     });
 
-    var BreadcrumbContainerView = Marionette.CollectionView.extend({
-        childView: BreadcrumbView,
-        tagName: "ol",
-    });
-
-    var BreadcrumbListView = Marionette.View.extend({
+    var BreadcrumbListView = Marionette.CollectionView.extend({
         tagName: "div",
         template: _.template($("#breadcrumb-list-template").html() || ""),
-        regions: {
-            body: {
-                el: '.not-home',
-            },
-        },
-        onRender: function () {
-            this.showChildView('body', new BreadcrumbContainerView({
-                collection: this.collection,
-            }));
-        },
+        childView: BreadcrumbView,
+        childViewContainer: "ol",
         events: {
             'click .js-home': 'onClickHome',
         },
