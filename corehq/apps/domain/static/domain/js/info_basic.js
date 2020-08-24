@@ -5,14 +5,15 @@ hqDefine(
         "jquery",
         "underscore",
         "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.min",
+        "hqwebapp/js/initial_page_data",
         "hqwebapp/js/select_2_ajax_widget", // for call center case owner
         "select2/dist/js/select2.full.min",
     ],
-    function ($, _, MapboxGeocoder) {
+    function ($, _, MapboxGeocoder,initialPageData) {
         $(function () {
             // var initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
-            // var MAPBOX_ACCESS_TOKEN = initialPageData("mapbox_access_token");
-            // console.log(MAPBOX_ACCESS_TOKEN);
+            var MAPBOX_ACCESS_TOKEN = initialPageData.get("mapbox_access_token");
+            console.log(MAPBOX_ACCESS_TOKEN);
             $("#id_default_timezone").select2({
                 placeholder: gettext("Select a Timezone..."),
             });
@@ -22,7 +23,7 @@ hqDefine(
                 var inputEl = $("#id_default_geocoder_location");
                 var geoObj = {};
                 geoObj.place_name = item.place_name;
-                geoObj.coordinates = {longitude: item.geometry.coordinates[0], latitude: item.geometry.coordinates[1]};
+                geoObj.coordinates = item.geometry.coordinates;
                 console.log(geoObj);
                 inputEl.attr("value", JSON.stringify(geoObj));
                 console.log(inputEl);
@@ -39,7 +40,7 @@ hqDefine(
             }
 
             var geocoder = new MapboxGeocoder({
-                accessToken: "pk.eyJ1Ijoic2VhcmNoLW1hY2hpbmUtdXNlci0xIiwiYSI6ImNrN2Y1Nmp4YjB3aG4zZ253YnJoY21kbzkifQ.JM5ZeqwEEm-Tonrk5wOOMw",
+                accessToken: MAPBOX_ACCESS_TOKEN,
                 types: "country,region,place,postcode,locality,neighborhood",
                 getItemValue: getGeocoderItem
             });
