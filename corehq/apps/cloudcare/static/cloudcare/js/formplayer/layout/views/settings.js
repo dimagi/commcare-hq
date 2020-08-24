@@ -110,8 +110,8 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
         },
     });
 
-    var SettingsContainerView = Marionette.CollectionView.extend({
-        tagName: 'tbody',
+    var SettingsView = Marionette.CollectionView.extend({
+        childViewContainer: 'tbody',
         childView: function (item) {
             if (item.get('slug') === slugs.SET_LANG) {
                 return LangSettingView;
@@ -122,19 +122,6 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
             } else if (item.get('slug') === slugs.BREAK_LOCKS) {
                 return BreakLocksView;
             }
-        },
-    });
-
-    var SettingsView = Marionette.View.extend({
-        regions: {
-            body: {
-                el: 'table',
-            },
-        },
-        onRender: function () {
-            this.showChildView('body', new SettingsContainerView({
-                collection: this.collection,
-            }));
         },
         ui: {
             done: '.js-done',
