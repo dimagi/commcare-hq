@@ -205,10 +205,7 @@ class TestXFormInstanceResourceQueries(APIResourceTest, ElasticTestMixin):
 
         # A bit of a hack since none of Python's mocking libraries seem to do basic spies easily...
         def mock_run_query(es_query):
-            if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-                actual = es_query['query']['bool']['filter']
-            else:
-                actual = es_query['query']['filtered']['filter']['and']
+            actual = es_query['query']['bool']['filter']
             self.checkQuery(actual, expected_query, is_raw_query=True)
             return prior_run_query(es_query)
 
@@ -286,34 +283,24 @@ class TestXFormInstanceResourceQueries(APIResourceTest, ElasticTestMixin):
         self.assertEqual(queries[2]['sort'], [{'received_on': {'missing': '_last', 'order': 'desc'}}])
 
     def test_get_list_archived(self):
-        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-            expected = [
-                {
-                    "term": {
-                        "domain.exact": "qwerty"
-                    }
-                },
-                {
-                    "bool": {
-                        "should": [
-                            {"term": {"doc_type": "xforminstance"}},
-                            {"term": {"doc_type": "xformarchived"}}
-                        ]
-                    }
-                },
-                {
-                    "match_all": {}
+        expected = [
+            {
+                "term": {
+                    "domain.exact": "qwerty"
                 }
-            ]
-        else:
-            expected = [
-                {'term': {'domain.exact': 'qwerty'}},
-                {'or': (
-                    {'term': {'doc_type': 'xforminstance'}},
-                    {'term': {'doc_type': 'xformarchived'}}
-                )},
-                {'match_all': {}}
-            ]
+            },
+            {
+                "bool": {
+                    "should": [
+                        {"term": {"doc_type": "xforminstance"}},
+                        {"term": {"doc_type": "xformarchived"}}
+                    ]
+                }
+            },
+            {
+                "match_all": {}
+            }
+        ]
         self._test_es_query({'include_archived': 'true'}, expected)
 
 

@@ -193,7 +193,7 @@ def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lt
             case_property_name,
             queries.range_query("{}.{}.numeric".format(CASE_PROPERTIES_PATH, VALUE), **kwargs)
         )
-    except (ValueError, TypeError):
+    except ValueError:
         pass
 
     # if its a date, use it
@@ -239,7 +239,7 @@ def reverse_index_case_query(case_ids, identifier=None):
 
 
 def case_property_missing(case_property_name):
-    """case_property_name is the empty string
+    """case_property_name isn't set or is the empty string
 
     """
     return filters.OR(
@@ -257,26 +257,13 @@ def case_property_missing(case_property_name):
 
 
 def _base_property_query(case_property_name, query):
-    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-        return filters.AND(queries.nested(
-            CASE_PROPERTIES_PATH,
-            {
-                "bool": {
-                    "filter": [
-                        filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
-                    ],
-                    "must": query
-                },
-            }
-        ))
-    else:
-        return queries.nested(
-            CASE_PROPERTIES_PATH,
-            queries.filtered(
-                query,
-                filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
-            )
+    return queries.nested(
+        CASE_PROPERTIES_PATH,
+        queries.filtered(
+            query,
+            filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name)
         )
+    )
 
 
 def blacklist_owner_id(owner_id):

@@ -1,79 +1,57 @@
 from datetime import date
 
-from django.conf import settings
 from django.test import SimpleTestCase
 
 from corehq.apps.es import filters
 from corehq.apps.es.es_query import HQESQuery
+from corehq.apps.es.forms import FormES
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.elastic import SIZE_LIMIT
+from corehq.elastic import get_es_new
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
+from corehq.util.elastic import ensure_index_deleted
+from corehq.util.es.interface import ElasticsearchInterface
+from pillowtop.es_utils import initialize_index_and_mapping
+from pillowtop.processors.elastic import send_to_elasticsearch
+from pillowtop.tests.utils import TEST_INDEX_INFO
 
 
 @es_test
 class TestFilters(ElasticTestMixin, SimpleTestCase):
 
-    def is_es7(self):
-        return settings.ELASTICSEARCH_MAJOR_VERSION == 7
-
     def test_nested_filter(self):
-        if self.is_es7():
-            json_output = {
-                "query": {
-                    "bool": {
-                        "filter": [
-                            {
-                                "nested": {
-                                    "path": "actions",
-                                    "query": {
-                                        "bool": {
-                                            "filter": {
-                                                "range": {
-                                                    "actions.date": {
-                                                        "gte": "2015-01-01",
-                                                        "lt": "2015-02-01"
-                                                    }
+        json_output = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {
+                            "nested": {
+                                "path": "actions",
+                                "query": {
+                                    "bool": {
+                                        "filter": {
+                                            "range": {
+                                                "actions.date": {
+                                                    "gte": "2015-01-01",
+                                                    "lt": "2015-02-01"
                                                 }
                                             }
                                         }
                                     }
                                 }
-                            },
-                            {
-                                "match_all": {}
                             }
-                        ],
-                        "must": {
+                        },
+                        {
                             "match_all": {}
                         }
+                    ],
+                    "must": {
+                        "match_all": {}
                     }
-                },
-                "size": SIZE_LIMIT
-            }
-        else:
-            json_output = {
-                "query": {
-                    "filtered": {
-                        "filter": {
-                            "and": [
-                                {"nested": {
-                                    "path": "actions",
-                                    "filter": {
-                                        "range": {
-                                            "actions.date": {
-                                                "gte": "2015-01-01",
-                                                "lt": "2015-02-01"
-                                            }
-                                        }
-                                    }
-                                }},
-                                {"match_all": {}}
-                            ]
-                        },
-                        "query": {"match_all": {}}
-                    }
-                },
-                "size": SIZE_LIMIT
-            }
+                }
+            },
+            "size": SIZE_LIMIT
+        }
 
         start, end = date(2015, 1, 1), date(2015, 2, 1)
         query = (HQESQuery('cases')
@@ -83,126 +61,71 @@ class TestFilters(ElasticTestMixin, SimpleTestCase):
         self.checkQuery(query, json_output, validate_query=False)
 
     def test_not_term_filter(self):
-        if self.is_es7():
-            json_output = {
-                "query": {
-                    "bool": {
-                        "filter": [
-                            {
-                                "bool": {
-                                    "must_not": {
-                                        "term": {
-                                            "type": "badcasetype"
-                                        }
+        json_output = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {
+                            "bool": {
+                                "must_not": {
+                                    "term": {
+                                        "type": "badcasetype"
                                     }
                                 }
-                            },
-                            {
-                                "match_all": {}
                             }
-                        ],
-                        "must": {
+                        },
+                        {
                             "match_all": {}
                         }
+                    ],
+                    "must": {
+                        "match_all": {}
                     }
-                },
-                "size": SIZE_LIMIT
-            }
-        else:
-            json_output = {
-                "query": {
-                    "filtered": {
-                        "filter": {
-                            "and": [
-                                {
-                                    "not": {
-                                        "term": {
-                                            "type": "badcasetype"
-                                        }
-                                    }
-                                },
-                                {"match_all": {}}
-                            ]
-                        },
-                        "query": {"match_all": {}}
-                    }
-                },
-                "size": SIZE_LIMIT
-            }
+                }
+            },
+            "size": SIZE_LIMIT
+        }
 
         query = HQESQuery('cases').filter(filters.not_term('type', 'badcasetype'))
 
         self.checkQuery(query, json_output)
 
     def test_not_or_rewrite(self):
-        if self.is_es7():
-            json_output = {
-                "query": {
-                    "bool": {
-                        "filter": [
-                            {
-                                "bool": {
-                                    "must_not": {
-                                        "bool": {
-                                            "should": [
-                                                {
-                                                    "term": {
-                                                        "type": "A"
-                                                    }
-                                                },
-                                                {
-                                                    "term": {
-                                                        "type": "B"
-                                                    }
-                                                }
-                                            ]
-                                        }
-                                    }
-                                }
-                            },
-                            {
-                                "match_all": {}
-                            }
-                        ],
-                        "must": {
-                            "match_all": {}
-                        }
-                    }
-                },
-                "size": SIZE_LIMIT
-            }
-        else:
-            json_output = {
-                "query": {
-                    "filtered": {
-                        "filter": {
-                            "and": [
-                                {
-                                    'and': (
-                                        {
-                                            "not": {
+        json_output = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {
+                            "bool": {
+                                "must_not": {
+                                    "bool": {
+                                        "should": [
+                                            {
                                                 "term": {
                                                     "type": "A"
                                                 }
-                                            }
-                                        },
-                                        {
-                                            "not": {
+                                            },
+                                            {
                                                 "term": {
                                                     "type": "B"
                                                 }
                                             }
-                                        },
-                                    )
-                                },
-                                {"match_all": {}}
-                            ]
+                                        ]
+                                    }
+                                }
+                            }
                         },
-                        "query": {"match_all": {}}
+                        {
+                            "match_all": {}
+                        }
+                    ],
+                    "must": {
+                        "match_all": {}
                     }
-                },
-                "size": SIZE_LIMIT
-            }
+                }
+            },
+            "size": SIZE_LIMIT
+        }
         query = HQESQuery('cases').filter(
             filters.NOT(
                 filters.OR(filters.term('type', 'A'), filters.term('type', 'B'))
@@ -212,74 +135,41 @@ class TestFilters(ElasticTestMixin, SimpleTestCase):
         self.checkQuery(query, json_output)
 
     def test_not_and_rewrite(self):
-        if self.is_es7():
-            json_output = {
-                "query": {
-                    "bool": {
-                        "filter": [
-                            {
-                                "bool": {
-                                    "must_not": {
-                                        "bool": {
-                                            "filter": [
-                                                {
-                                                    "term": {
-                                                        "type": "A"
-                                                    }
-                                                },
-                                                {
-                                                    "term": {
-                                                        "type": "B"
-                                                    }
-                                                }
-                                            ]
-                                        }
-                                    }
-                                }
-                            },
-                            {
-                                "match_all": {}
-                            }
-                        ],
-                        "must": {
-                            "match_all": {}
-                        }
-                    }
-                },
-                "size": SIZE_LIMIT
-            }
-        else:
-            json_output = {
-                "query": {
-                    "filtered": {
-                        "filter": {
-                            "and": [
-                                {
-                                    'or': (
-                                        {
-                                            "not": {
+        json_output = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {
+                            "bool": {
+                                "must_not": {
+                                    "bool": {
+                                        "filter": [
+                                            {
                                                 "term": {
                                                     "type": "A"
                                                 }
-                                            }
-                                        },
-                                        {
-                                            "not": {
+                                            },
+                                            {
                                                 "term": {
                                                     "type": "B"
                                                 }
                                             }
-                                        },
-                                    )
-                                },
-                                {"match_all": {}}
-                            ]
+                                        ]
+                                    }
+                                }
+                            }
                         },
-                        "query": {"match_all": {}}
+                        {
+                            "match_all": {}
+                        }
+                    ],
+                    "must": {
+                        "match_all": {}
                     }
-                },
-                "size": SIZE_LIMIT
-            }
+                }
+            },
+            "size": SIZE_LIMIT
+        }
         query = HQESQuery('cases').filter(
             filters.NOT(
                 filters.AND(filters.term('type', 'A'), filters.term('type', 'B'))
@@ -293,37 +183,46 @@ class TestFilters(ElasticTestMixin, SimpleTestCase):
 class TestSourceFiltering(ElasticTestMixin, SimpleTestCase):
 
     def test_source_include(self):
-        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-            json_output = {
-                "query": {
-                    "bool": {
-                        "filter": [
-                            {
-                                "match_all": {}
-                            }
-                        ],
-                        "must": {
+        json_output = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {
                             "match_all": {}
                         }
+                    ],
+                    "must": {
+                        "match_all": {}
                     }
-                },
-                "size": SIZE_LIMIT,
-                "_source": "source_obj"
-            }
-        else:
-            json_output = {
-                "query": {
-                    "filtered": {
-                        "filter": {
-                            "and": [
-                                {"match_all": {}}
-                            ]
-                        },
-                        "query": {"match_all": {}}
-                    }
-                },
-                "size": SIZE_LIMIT,
-                "_source": "source_obj"
-            }
+                }
+            },
+            "size": SIZE_LIMIT,
+            "_source": "source_obj"
+        }
         q = HQESQuery('forms').source('source_obj')
         self.checkQuery(q, json_output)
+
+
+class TestNotEdgeCase(SimpleTestCase):
+    def setUp(self):
+        self.es = get_es_new()
+        self.index = XFORM_INDEX_INFO.index
+
+    def tearDown(self):
+        ensure_index_deleted(self.index)
+
+    def test_assume_alias(self):
+        initialize_index_and_mapping(self.es, XFORM_INDEX_INFO)
+        doc1 = {'_id': 'doc1', 'domain': 'd', 'app_id': 'a'}
+        doc2 = {'_id': 'doc2', 'domain': 'd', 'app_id': 'not_a'}
+        doc3 = {'_id': 'doc3', 'domain': 'not_d', 'app_id': 'not_a'}
+        for doc in [doc1, doc2, doc3]:
+            send_to_elasticsearch(self.index, XFORM_INDEX_INFO.type, doc['_id'], get_es_new, 'test', doc)
+        self.es.indices.refresh(self.index)
+        query = FormES().remove_default_filters().filter(
+            filters.NOT(filters.OR(
+                filters.term('domain', 'd'),
+                filters.term('app_id', 'a')
+            ))
+        )
+        self.assertEqual(query.run().doc_ids, ['doc3'])
