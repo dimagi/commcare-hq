@@ -19,25 +19,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
     });
 
-    var QueryTableView = Marionette.CollectionView.extend({
-        childView: QueryView,
-        tagName: "tbody",
-    });
-
-    var QueryListView = Marionette.View.extend({
+    var QueryListView = Marionette.CollectionView.extend({
         tagName: "div",
         template: _.template($("#query-view-list-template").html() || ""),
-
-        regions: {
-            body: {
-                el: 'table',
-            },
-        },
-        onRender: function () {
-            this.getRegion('body').show(new QueryTableView({
-                collection: this.collection,
-            }));
-        },
+        childView: QueryView,
+        childViewContainer: "tbody",
 
         initialize: function (options) {
             this.parentModel = options.collection.models;
