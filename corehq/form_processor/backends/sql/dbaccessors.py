@@ -616,38 +616,27 @@ class FormAccessorSQL(AbstractFormAccessor):
         """
         Save a previously unsaved form
         """
-        from corehq.form_processor.backends.sql.processor import get_tracked_objects_to_create
+        from corehq.form_processor.backends.sql.processor import get_tracked_objects_db_names
         if form.is_saved():
             raise XFormSaveError('form already saved')
         logging.debug('Saving new form: %s', form)
 
-        operations = form.get_tracked_models_to_create(XFormOperationSQL)
-        for operation in operations:
-            if operation.is_saved():
-                raise XFormSaveError(
-                    'XFormOperationSQL {} has already been saved'.format(operation.id)
-                )
-            operation.form_id = form.form_id
-
+        db_names = {form.db}
+        db_names.update(get_tracked_objects_db_names(form, raise_error_if_saved=True))
         try:
-            db_names = [form.db]
-            tracked_objects = get_tracked_objects_to_create(form)
-            db_names.extend(set(
-                router.db_for_write(type(tracked_object))
-                for tracked_object in tracked_objects
-            ))
             with form.attachment_writer() as attachment_writer, \
-                ExitStack() as stack:
+                    ExitStack() as stack:
                 for db_name in db_names:
                     stack.enter_context(
                         transaction.atomic(db_name, savepoint=False))
                 transaction.on_commit(attachment_writer.commit, using=form.db)
                 form.save()
                 attachment_writer.write()
-                for operation in operations:
-                    operation.save()
-                for tracked_object in tracked_objects:
-                    tracked_object.save(xform=form)
+                for model_class, model_objects in form.create_models.items():
+                    for model_object in model_objects:
+                        if hasattr(model_object, 'form_id'):
+                            model_object.form_id = form.form_id
+                        model_object.save()
         except InternalError as e:
             raise XFormSaveError(e)
 

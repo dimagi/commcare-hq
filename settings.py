@@ -1061,11 +1061,6 @@ COMMCARE_EXTENSIONS = []
 # and are passed the form xml for processing
 XFORM_PRE_PROCESSORS = {}
 
-# Provides extensions with ability to add models to be saved along with forms on form processing.
-# For each domain provide a list of model classes to be checked for objects added for creation via
-# TrackRelatedChanges
-XFORM_TRACKED_MODELS = {}
-
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)

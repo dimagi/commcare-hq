@@ -16,13 +16,13 @@ from corehq.form_processor.backends.sql.dbaccessors import (
 )
 from corehq.form_processor.change_publishers import (
     publish_form_saved, publish_case_saved, publish_ledger_v2_saved)
-from corehq.form_processor.const import XFORM_TRACKED_MODELS
-from corehq.form_processor.exceptions import CaseNotFound, KafkaPublishingError
+from corehq.form_processor.exceptions import CaseNotFound, KafkaPublishingError, XFormSaveError
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
 from corehq.form_processor.models import (
     XFormInstanceSQL, CaseTransaction,
     CommCareCaseSQL, FormEditRebuild, Attachment, XFormOperationSQL)
 from corehq.form_processor.utils import convert_xform_to_json, extract_meta_instance_id, extract_meta_user_id
+from corehq.sql_db.models import PartitionedModel
 from corehq.util.metrics.load_counters import case_load_counter
 from corehq import toggles
 from couchforms.const import ATTACHMENT_NAME
@@ -107,11 +107,7 @@ class FormProcessorSQL(object):
             }
 
         if processed_forms.submitted:
-            tracked_objects = get_tracked_objects_to_create(processed_forms.submitted)
-            db_names.update(
-                router.db_for_write(type(tracked_object))
-                for tracked_object in tracked_objects
-            )
+            db_names.update(get_tracked_objects_db_names(processed_forms.submitted))
 
         all_models = filter(None, chain(
             processed_forms,
@@ -357,12 +353,17 @@ class FormProcessorSQL(object):
         return CaseAccessorSQL.case_exists(case_id)
 
 
-def get_tracked_objects_to_create(form):
-    # get tracked model objects added other than by core HQ, likely through form pre-processors
-    domain = form.domain
-    tracked_models = XFORM_TRACKED_MODELS.get(domain)
-    objects = []
-    if tracked_models:
-        for model_class in tracked_models:
-            objects.extend(form.get_tracked_models_to_create(model_class))
-    return objects
+def get_tracked_objects_db_names(form, raise_error_if_saved=False):
+    db_names = set()
+    for model_class, model_objects in form.create_models.items():
+        for model in model_objects:
+            if raise_error_if_saved and hasattr(model, 'is_saved') and model.is_saved():
+                raise XFormSaveError(
+                    '{} {} has already been saved'.format(type(model), model.pk)
+                )
+            model.form_id = form.form_id
+            if isinstance(model, PartitionedModel):
+                db_names.add(model.db)
+            else:
+                db_names.add(router.db_for_write(type(model)))
+    return db_names
