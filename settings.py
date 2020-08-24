@@ -1056,6 +1056,16 @@ DEFAULT_COMMCARE_EXTENSIONS = [
 ]
 COMMCARE_EXTENSIONS = []
 
+# Provides extensions with ability to customize form processing per domain.
+# For each domain provide a list of pre-processors that would be instantiated
+# and are passed the form xml for processing
+XFORM_PRE_PROCESSORS = {}
+
+# Provides extensions with ability to add models to be saved along with forms on form processing.
+# For each domain provide a list of model classes to be checked for objects added for creation via
+# TrackRelatedChanges
+XFORM_TRACKED_MODELS = {}
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
@@ -2071,10 +2081,3 @@ if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
     ]
 
 PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requirements.txt')
-
-# provides extensions with ability to customize form processing per domain
-# for each domain provide a list of pre-processors that would be instantiated
-# and passed the form xml for processing
-XFORM_PRE_PROCESSORS = {}
-
-XFORM_TRACKED_MODELS = {}
