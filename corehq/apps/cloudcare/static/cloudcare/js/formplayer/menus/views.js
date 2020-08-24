@@ -80,23 +80,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
     });
 
-    var MenuTableView = Marionette.CollectionView.extend({
-        childView: MenuView,
-        tagName: "tbody",
-    });
-
-    var MenuListView = Marionette.View.extend({
+    var MenuListView = Marionette.CollectionView.extend({
         tagName: "div",
-        regions: {
-            body: {
-                el: "table",
-            },
-        },
-        onRender: function () {
-            this.getRegion('body').show(new MenuTableView({
-                collection: this.collection,
-            }));
-        },
+        childView: MenuView,
+        childViewContainer: ".menus-container",
         getTemplate: function () {
             var id = "#menu-view-list-template";
             if (this.collection.layoutStyle === hqImport("cloudcare/js/formplayer/constants").LayoutStyles.GRID) {
