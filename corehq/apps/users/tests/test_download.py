@@ -81,7 +81,7 @@ class TestDownloadMobileWorkers(TestCase):
 
     def test_download(self):
         (headers, rows) = parse_users(self.group_memoizer, self.domain_obj.name, {})
-        self.assertNotIn('user_field_profile', headers)
+        self.assertNotIn('user_profile', headers)
 
         rows = list(rows)
         self.assertEqual(2, len(rows))
@@ -98,7 +98,7 @@ class TestDownloadMobileWorkers(TestCase):
     @flag_enabled('CUSTOM_DATA_FIELDS_PROFILES')
     def test_download_with_profile(self):
         (headers, rows) = parse_users(self.group_memoizer, self.domain_obj.name, {})
-        self.assertIn('user_field_profile', headers)
+        self.assertIn('user_profile', headers)
         self.assertIn('data: _type', headers)
 
         rows = list(rows)
@@ -106,12 +106,12 @@ class TestDownloadMobileWorkers(TestCase):
 
         spec = dict(zip(headers, rows[0]))
         self.assertEqual('edith', spec['username'])
-        self.assertEquals('', spec['user_field_profile'])
+        self.assertEquals('', spec['user_profile'])
         self.assertEqual('', spec['data: _type'])
         self.assertEqual(1862, spec['data: born'])
 
         spec = dict(zip(headers, rows[1]))
         self.assertEqual('george', spec['username'])
-        self.assertEqual('Novelist', spec['user_field_profile'])
+        self.assertEqual('Novelist', spec['user_profile'])
         self.assertEqual('fiction', spec['data: _type'])
         self.assertEqual(1849, spec['data: born'])

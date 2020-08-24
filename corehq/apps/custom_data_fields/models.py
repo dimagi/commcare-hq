@@ -161,15 +161,22 @@ class CustomDataFieldsProfile(models.Model):
 
     @property
     def has_users_assigned(self):
-        return bool(
+        return bool(self._user_query().count())
+
+    def user_ids_assigned(self):
+        return self._user_query().values_list('_id', flat=True)
+
+    def _user_query(self):
+        return (
             UserES().domain(self.definition.domain)
                     .mobile_users()
+                    .show_inactive()
                     .filter(
                         filters.nested('user_data_es',
                         filters.AND(
                             filters.term('user_data_es.key', PROFILE_SLUG),
                             filters.term('user_data_es.value', self.id)
-                        ))).count()
+                        )))
         )
 
     def to_json(self):
