@@ -79,6 +79,7 @@
   {% initial_page_data 'username' username %}
   {% initial_page_data 'use_live_query' use_live_query %}
   {% initial_page_data 'dialer_enabled' integrations.dialer_enabled %}
+  {% initial_page_data 'gaen_otp_enabled' integrations.gaen_otp_enabled %}
   {% initial_page_data 'hmac_root_url' integrations.hmac_root_url %}
   {% initial_page_data 'hmac_api_key' integrations.hmac_api_key %}
   {% initial_page_data 'hmac_hashed_secret' integrations.hmac_hashed_secret %}
@@ -88,6 +89,9 @@
   {% registerurl 'render_form_data' request.domain '---' %}
   {% registerurl 'report_formplayer_error' request.domain %}
   {% registerurl 'dialer_view' request.domain %}
+  {% if integrations.gaen_otp_enabled %}
+    {% registerurl 'gaen_otp_view' request.domain %}
+  {% endif %}
 
   <!-- For now we won't touch this since the form entry code is coupled with it  -->
 

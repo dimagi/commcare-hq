@@ -1862,6 +1862,13 @@ HMAC_CALLOUT = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
+GAEN_OTP_SERVER = StaticToggle(
+    'gaen_otp_server',
+    'COVID: Enable retrieving OTPs from a GAEN Server',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
 RESTRICT_LOGIN_AS = StaticToggle(
     'restrict_login_as',
     'COVID: Limit allowed users for login as',
