@@ -137,18 +137,18 @@ class RequirePermissionAuthenticationTest(AuthenticationTestBase):
                                          ))
 
     def test_login_with_wrong_permission(self):
-        role = UserRole.get_or_create_with_permissions(self.domain, Permissions(edit_data=False), 'edit-data')
+        role = UserRole.get_or_create_with_permissions(self.domain, Permissions(edit_data=False), 'no-edit-data')
         self.addCleanup(role.delete)
-        user_with_permission = WebUser.create(self.domain, 'permission', '***', None, None, role_id=role.get_id)
-        api_key_with_permissions, _ = HQApiKey.objects.get_or_create(
-            user=WebUser.get_django_user(user_with_permission)
+        user_without_permission = WebUser.create(self.domain, 'permission', '***', None, None, role_id=role.get_id)
+        api_key_without_permissions, _ = HQApiKey.objects.get_or_create(
+            user=WebUser.get_django_user(user_without_permission)
         )
-        self.addCleanup(lambda: user_with_permission.delete(None))
+        self.addCleanup(lambda: user_without_permission.delete(None))
         self.assertAuthenticationFail(self.require_edit_data,
                                       self._get_request(
                                           domain=self.domain,
                                           HTTP_AUTHORIZATION=self._contruct_api_auth_header(
-                                              user_with_permission.username,
-                                              api_key_with_permissions
+                                              user_without_permission.username,
+                                              api_key_without_permissions
                                           )
                                       ))
