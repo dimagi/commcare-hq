@@ -1,20 +1,25 @@
 /* globals FormplayerFrontend */
-hqDefine("cloudcare/js/formplayer/main", function () {
+hqDefine("cloudcare/js/formplayer/main", [
+    "hqwebapp/js/initial_page_data",
+],
+function (initial_page_data) {
     $(function () {
-        var initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
-        window.MAPBOX_ACCESS_TOKEN = initialPageData('mapbox_access_token'); // maps api is loaded on-demand
-        window.DEFAULT_GEOCODER_LOCATION = initialPageData('default_geocoder_location');
+        // window.MAPBOX_ACCESS_TOKEN = initialPageData('mapbox_access_token'); // maps api is loaded on-demand
+        var MAPBOX_ACCESS_TOKEN = initial_page_data.get("mapbox_access_token");
+        console.log('main.js file MAPBOX_ACCESS_TOKEN',MAPBOX_ACCESS_TOKEN);
+        // var initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
+        
         var options = {
-            apps: initialPageData('apps'),
-            language: initialPageData('language'),
-            username: initialPageData('username'),
-            domain: initialPageData('domain'),
-            formplayer_url: initialPageData('formplayer_url'),
-            gridPolyfillPath: initialPageData('grid_polyfill_path'),
-            debuggerEnabled: initialPageData('debugger_enabled'),
-            singleAppMode: initialPageData('single_app_mode'),
-            environment: initialPageData('environment'),
-            useLiveQuery: initialPageData('use_live_query'),
+            apps: initial_page_data.get('apps'),
+            language: initial_page_data.get('language'),
+            username: initial_page_data.get('username'),
+            domain: initial_page_data.get('domain'),
+            formplayer_url: initial_page_data.get('formplayer_url'),
+            gridPolyfillPath: initial_page_data.get('grid_polyfill_path'),
+            debuggerEnabled: initial_page_data.get('debugger_enabled'),
+            singleAppMode: initial_page_data.get('single_app_mode'),
+            environment: initial_page_data.get('environment'),
+            useLiveQuery: initial_page_data.get('use_live_query'),
         };
         FormplayerFrontend.start(options);
 
@@ -39,7 +44,7 @@ hqDefine("cloudcare/js/formplayer/main", function () {
 
         // Show the top HQ nav for new users, so they know how to get back to HQ,
         // but hide it for more mature users so it's out of the way
-        if (initialPageData("domain_is_on_trial")) {
+        if (initial_page_data.get("domain_is_on_trial")) {
             showMenu();
         } else {
             hideMenu();
