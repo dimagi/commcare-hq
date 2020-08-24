@@ -155,9 +155,9 @@ def get_post_data_for_otp(request, domain):
         'onset_date': 'onsetDate',
         'test_type': 'testType',
     }
-    for request_param in property_map:
+    for request_param, post_param in property_map.items():
         if request_param in request.POST:
-            post_params[property_map[request_param]] = request.POST[request_param]
+            post_params[post_param] = request.POST[request_param]
 
     return post_params
 
