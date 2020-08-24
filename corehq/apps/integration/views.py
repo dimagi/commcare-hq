@@ -97,8 +97,6 @@ def gaen_otp_view(request, domain):
         return render(request, "integration/web_app_gaen_otp.html", {"otp_data": otp_data,
                                                                      "styled_otp_code": styled_otp_code,
                                                                      })
-    except CaseNotFound:
-        raise Http404(_("No matching patient record found"))
     except RequestException:
         request_error_msg = _("""We are having problems communicating with the Exposure Nofication server
                                  please try again later""")
@@ -141,6 +139,8 @@ def get_post_data_for_otp(request, domain):
         }
     except KeyError as ke:
         raise InvalidOtpRequestException(_("OTP Request missing a required argument %s") % ke.args[0])
+    except CaseNotFound:
+        raise Http404(_("No matching patient record found"))
 
     case = CaseAccessors(domain).get_case(case_id)
 
