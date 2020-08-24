@@ -320,7 +320,7 @@ class DomainGlobalSettingsForm(forms.Form):
         widget=GeoCoderInput(attrs={'placeholder': ugettext_lazy('Select a location')}),
         label=ugettext_noop("Default geocoder location"),
         required=False,
-        help_text=ugettext_lazy("Set a proximity for address entry question.")
+        help_text=ugettext_lazy("Please select the default location for the geocoder used in your project space.")
     )
 
     logo = ImageField(
