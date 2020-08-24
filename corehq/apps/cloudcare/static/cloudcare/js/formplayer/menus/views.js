@@ -257,31 +257,16 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
     });
 
-    var CaseListContainerView = Marionette.CollectionView.extend({
-        childView: CaseView,
-        tagName: "tbody",
+    var CaseListView = Marionette.CollectionView.extend({
+        tagName: "div",
+        template: _.template($("#case-view-list-template").html() || ""),
 
+        childViewContainer: ".js-case-container",
+        childView: CaseView,
         childViewOptions: function () {
             return {
                 styles: this.options.styles,
             };
-        },
-    });
-
-    var CaseListView = Marionette.View.extend({
-        tagName: "div",
-        template: _.template($("#case-view-list-template").html() || ""),
-
-        regions: {
-            body: {
-                el: ".js-case-container",
-            },
-        },
-        onRender: function () {
-            this.getRegion('body').show(new CaseListContainerView({
-                collection: this.collection,
-                styles: this.styles,
-            }));
         },
 
         initialize: function (options) {
