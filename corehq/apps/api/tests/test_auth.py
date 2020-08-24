@@ -88,6 +88,16 @@ class LoginAndDomainAuthenticationTest(AuthenticationTestBase):
 class RequirePermissionAuthenticationTest(AuthenticationTestBase):
     require_edit_data = RequirePermissionAuthentication(Permissions.edit_data)
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.role_with_permission = UserRole.get_or_create_with_permissions(
+            cls.domain, Permissions(edit_data=True), 'edit-data'
+        )
+        cls.role_without_permission = UserRole.get_or_create_with_permissions(
+            cls.domain, Permissions(edit_data=False), 'no-edit-data'
+        )
+
     def test_login_no_auth_no_domain(self):
         self.assertAuthenticationFail(self.require_edit_data, self._get_request())
 
@@ -120,9 +130,8 @@ class RequirePermissionAuthenticationTest(AuthenticationTestBase):
                                          ))
 
     def test_login_with_explicit_permission(self):
-        role = UserRole.get_or_create_with_permissions(self.domain, Permissions(edit_data=True), 'edit-data')
-        self.addCleanup(role.delete)
-        user_with_permission = WebUser.create(self.domain, 'permission', '***', None, None, role_id=role.get_id)
+        user_with_permission = WebUser.create(self.domain, 'permission', '***', None, None,
+                                              role_id=self.role_with_permission.get_id)
         api_key_with_permissions, _ = HQApiKey.objects.get_or_create(
             user=WebUser.get_django_user(user_with_permission)
         )
@@ -137,9 +146,8 @@ class RequirePermissionAuthenticationTest(AuthenticationTestBase):
                                          ))
 
     def test_login_with_wrong_permission(self):
-        role = UserRole.get_or_create_with_permissions(self.domain, Permissions(edit_data=False), 'no-edit-data')
-        self.addCleanup(role.delete)
-        user_without_permission = WebUser.create(self.domain, 'permission', '***', None, None, role_id=role.get_id)
+        user_without_permission = WebUser.create(self.domain, 'permission', '***', None, None,
+                                                 role_id=self.role_without_permission.get_id)
         api_key_without_permissions, _ = HQApiKey.objects.get_or_create(
             user=WebUser.get_django_user(user_without_permission)
         )
