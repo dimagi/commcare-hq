@@ -234,7 +234,9 @@ class SubmissionPost(object):
 
         objects_to_track = []
         if self.pre_processing_steps:
-            self.instance, objects_to_track = self._pre_process_xform_xml()
+            self.instance, objects_to_track, step_failure_response = self._pre_process_xform_xml()
+            if step_failure_response:
+                return step_failure_response
         result = process_xform_xml(self.domain, self.instance, self.attachments, self.auth_context.to_json())
         submitted_form = result.submitted_form
 
@@ -344,18 +346,26 @@ class SubmissionPost(object):
             return FormProcessingResponse(response, instance, cases, ledgers, submission_type)
 
     def _pre_process_xform_xml(self):
+        """
+        handles xform pre-processing
+        breaks at any step that returns a failure response and returns
+        :returns: a tuple (processed form xml, objects to track, any failure response from any step
+        """
+        def _convert_form_to_bytes(form_xml):
+            return lxml.etree.tostring(form_xml)
+
         try:
             xml = xml2json.get_xml_from_string(self.instance)
         except xml2json.XMLSyntaxError:
             # let this fail later via usual process
-            return self.instance, []
+            return self.instance, [], None
         else:
             context = self.SubmissionFormContext(instance_xml=xml)
             for step in self.pre_processing_steps:
-                result = step(context)
-                if result:
-                    return result
-            return lxml.etree.tostring(context.instance_xml), context.supplementary_models
+                response = step(context)
+                if response:
+                    return _convert_form_to_bytes(context.instance_xml), [], response
+            return _convert_form_to_bytes(context.instance_xml), context.supplementary_models, None
 
     def _conditionally_send_device_logs_to_sumologic(self, instance):
         url = getattr(settings, 'SUMOLOGIC_URL', None)
