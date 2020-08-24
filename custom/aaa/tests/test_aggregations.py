@@ -15,7 +15,7 @@ from corehq.sql_db.connections import connection_manager
 from corehq.util.test_utils import timelimit
 from custom.aaa.models import AggAwc, AggVillage, CcsRecord, Child, Woman
 from custom.aaa.tasks import run_aggregation
-from custom.icds_reports.tests.agg_tests import CSVTestCase
+from custom.aaa.tests import CSVTestCase
 
 FILE_NAME_TO_TABLE_MAPPING = {
     'ccs_record': get_table_name('reach-test', 'reach-ccs_record_cases'),

@@ -940,7 +940,7 @@ class ApplicationsTab(UITab):
     def _is_viewable(self):
         couch_user = self.couch_user
         return (self.domain and couch_user
-                and (couch_user.is_web_user() or couch_user.can_edit_apps())
+                and couch_user.can_view_apps()
                 and (couch_user.is_member_of(self.domain, allow_mirroring=True) or couch_user.is_superuser)
                 and has_privilege(self._request, privileges.PROJECT_ACCESS))
 
@@ -1787,12 +1787,6 @@ def _get_administration_section(domain):
         administration.append({
             'title': _(ManageReleasesByLocation.page_title),
             'url': reverse(ManageReleasesByLocation.urlname, args=[domain])
-        })
-
-    if toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
-        administration.append({
-            'title': _(ManageReleasesByAppProfile.page_title),
-            'url': reverse(ManageReleasesByAppProfile.urlname, args=[domain])
         })
 
     return administration
