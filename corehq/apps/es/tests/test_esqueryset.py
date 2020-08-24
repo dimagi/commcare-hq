@@ -1,9 +1,11 @@
 from unittest import TestCase
 
 from corehq.apps.es.es_query import ESQuerySet, HQESQuery
+from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import ESError
 
 
+@es_test
 class TestESQuerySet(TestCase):
     example_response = {
         '_shards': {'failed': 0, 'successful': 5, 'total': 5},

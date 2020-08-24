@@ -205,7 +205,8 @@ class TestXFormInstanceResourceQueries(APIResourceTest, ElasticTestMixin):
 
         # A bit of a hack since none of Python's mocking libraries seem to do basic spies easily...
         def mock_run_query(es_query):
-            self.checkQuery(es_query['query']['filtered']['filter']['and'], expected_query, is_raw_query=True)
+            actual = es_query['query']['bool']['filter']
+            self.checkQuery(actual, expected_query, is_raw_query=True)
             return prior_run_query(es_query)
 
         fake_xform_es.run_query = mock_run_query
@@ -283,12 +284,22 @@ class TestXFormInstanceResourceQueries(APIResourceTest, ElasticTestMixin):
 
     def test_get_list_archived(self):
         expected = [
-            {'term': {'domain.exact': 'qwerty'}},
-            {'or': (
-                {'term': {'doc_type': 'xforminstance'}},
-                {'term': {'doc_type': 'xformarchived'}}
-            )},
-            {'match_all': {}}
+            {
+                "term": {
+                    "domain.exact": "qwerty"
+                }
+            },
+            {
+                "bool": {
+                    "should": [
+                        {"term": {"doc_type": "xforminstance"}},
+                        {"term": {"doc_type": "xformarchived"}}
+                    ]
+                }
+            },
+            {
+                "match_all": {}
+            }
         ]
         self._test_es_query({'include_archived': 'true'}, expected)
 
