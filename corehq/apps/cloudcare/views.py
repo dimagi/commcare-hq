@@ -18,6 +18,8 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 from django.views.generic.base import TemplateView
+from django.views.decorators.clickjacking import xframe_options_sameorigin
+
 
 import six.moves.urllib.error
 import six.moves.urllib.parse
@@ -289,6 +291,7 @@ class PreviewAppView(TemplateView):
     template_name = 'preview_app/base.html'
     urlname = 'preview_app'
 
+    @xframe_options_sameorigin
     def get(self, request, *args, **kwargs):
         app = get_app(request.domain, kwargs.pop('app_id'))
         return self.render_to_response({
