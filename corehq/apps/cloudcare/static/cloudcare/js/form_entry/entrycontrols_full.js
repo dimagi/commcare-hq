@@ -311,7 +311,7 @@ function AddressEntry(question, options) {
             accessToken: window.MAPBOX_ACCESS_TOKEN,
             types: 'address',
             enableEventLogging: false,
-            proximity: {longitude: default_geocoder_location.coordinates[0], latitude: default_geocoder_location.coordinates[1]},
+            proximity: default_geocoder_location.coordinates,
             // proximity set to NYC
             // proximity: { longitude: -74.006058, latitude: 40.712772},
             getItemValue: self.geocoderItemCallback,
