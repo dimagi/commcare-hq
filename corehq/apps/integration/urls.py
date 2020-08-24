@@ -14,7 +14,7 @@ settings_patterns = [
         name=BiometricIntegrationView.urlname),
     url(r'^dialer/$', DialerSettingsView.as_view(), name=DialerSettingsView.urlname),
     url(r'^signed_callout/$', HmacCalloutSettingsView.as_view(), name=HmacCalloutSettingsView.urlname),
-    url(r'^gaen_top_server/$', GaenOtpServerSettingsView.as_view(), name=GaenOtpServerSettingsView.urlname),
+    url(r'^gaen_otp_server/$', GaenOtpServerSettingsView.as_view(), name=GaenOtpServerSettingsView.urlname),
 ]
 
 urlpatterns = [

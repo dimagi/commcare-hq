@@ -1,5 +1,6 @@
 import requests
 from requests.exceptions import RequestException
+from uuid import uuid4
 
 from django.contrib import messages
 from django.http.response import Http404
@@ -86,10 +87,11 @@ def gaen_otp_view(request, domain):
     try:
         post_data = get_post_data_for_otp(request, domain)
 
-        if (request.POST.get('dummy_code')):
+        if request.POST.get('dummy_code'):
             otp_data = {"code": request.POST['dummy_code']}
         else:
             otp_data = get_otp_response(post_data, get_gaen_otp_server_settings(domain))
+
         styled_otp_code = " ".join(otp_data['code'][i:i + 2] for i in range(0, len(otp_data['code']), 2))
 
         return render(request, "integration/web_app_gaen_otp.html", {"otp_data": otp_data,
@@ -111,8 +113,17 @@ def get_otp_response(post_data, gaen_otp_settings):
     otp_response = requests.post(gaen_otp_settings.server_url,
                                  data=post_data,
                                  headers=headers)
+
+    if otp_response.status_code == 400:
+        raise InvalidOtpRequestException(otp_response.text)
+
+    if otp_response.status_code == 500:
+        raise RequestException(None, None, "Error on OTP Server")
+
     try:
-        return otp_response.json()['value']
+        return {
+                 'code': otp_response.json()['code']
+               }
     except Exception:
         raise RequestException(None, None, "Invalid OTP Response from Notification Server")
 
@@ -126,18 +137,22 @@ def get_post_data_for_otp(request, domain):
     try:
         case_id = request.POST['case_id']
         post_params = {
-            'mobile': request.POST.get("phone_number", None),
-            'testDate': request.POST['test_date'],
-            'onsetDate': request.POST['onset_date'],
+            'jobId': str(uuid4()),
         }
     except KeyError as ke:
         raise InvalidOtpRequestException(_("OTP Request missing a required argument %s") % ke.args[0])
 
     case = CaseAccessors(domain).get_case(case_id)
-    properties = case.dynamic_case_properties()
 
-    if 'contact_phone_number' in properties:
-        post_params['mobile'] = properties['contact_phone_number']
+    property_map = {
+                    'phone_number': 'mobile',
+                    'test_date': 'testDate',
+                    'onset_date': 'onsetDate',
+                    'test_type': 'testType',
+                   }
+    for request_param in property_map:
+        if request_param in request.POST:
+            post_params[property_map[request_param]] = request.POST[request_param]
 
     return post_params
 
