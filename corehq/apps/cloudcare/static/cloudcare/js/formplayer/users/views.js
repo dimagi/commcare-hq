@@ -61,18 +61,15 @@ hqDefine("cloudcare/js/formplayer/users/views", function() {
         },
     });
 
-    var UserTableView = Marionette.CollectionView.extend({
-        tagName: 'tbody',
-        childView: UserRowView,
-    });
-
     /**
      * RestoreAsView
      *
      * Renders all possible users to log in as. Equipped with pagination
      * and custom querying.
      */
-    var RestoreAsView = Marionette.View.extend({
+    var RestoreAsView = Marionette.CollectionView.extend({
+        childView: UserRowView,
+        childViewContainer: 'tbody',
         template: _.template($("#restore-as-view-template").html() || ""),
         limit: 10,
         maxPagesShown: 10,
@@ -81,17 +78,11 @@ hqDefine("cloudcare/js/formplayer/users/views", function() {
                 page: options.page || 1,
                 query: options.query || '',
             });
-            this.collection = options.collection;
             this.model.on('change', function () {
                 this.fetchUsers();
                 this.navigate();
             }.bind(this));
             this.fetchUsers();
-        },
-        regions: {
-            body: {
-                el: 'table',
-            },
         },
         ui: {
             next: '.js-user-next',
@@ -125,7 +116,6 @@ hqDefine("cloudcare/js/formplayer/users/views", function() {
             return Math.ceil(this.collection.total / this.limit);
         },
         fetchUsers: function () {
-            var self = this;
             this.collection.fetch({
                 reset: true,
                 data: {
@@ -134,11 +124,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function() {
                     page: this.model.get('page'),
                 },
             })
-                .done(function () {
-                    self.showChildView('body', new UserTableView({
-                        collection: self.collection,
-                    }));
-                })
+                .done(this.render.bind(this))
                 .fail(function (xhr) {
                     FormplayerFrontend.trigger('showError', xhr.responseText);
                 });
