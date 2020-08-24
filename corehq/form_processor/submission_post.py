@@ -1,6 +1,4 @@
 import logging
-import lxml.etree
-import xml2json
 from collections import namedtuple
 
 from ddtrace import tracer
@@ -23,7 +21,7 @@ from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, Use
     CaseValueError
 from corehq.apps.receiverwrapper.rate_limiter import report_submission_usage
 from corehq.const import OPENROSA_VERSION_3
-from corehq.form_processor.const import XFORM_PRE_PROCESSORS
+from corehq.form_processor.submission_context import form_submission_context_class
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.toggles import ASYNC_RESTORE, SUMOLOGIC_LOGS, NAMESPACE_OTHER
 from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
@@ -36,7 +34,6 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.system_action import SYSTEM_ACTION_XMLNS, handle_system_action
-from corehq.form_processor.utils.metadata import scrub_meta
 from corehq.form_processor.submission_process_tracker import unfinished_submission
 from corehq.util.metrics.load_counters import form_load_counter
 from corehq.util.global_request import get_request
@@ -44,7 +41,6 @@ from couchforms import openrosa_response
 from couchforms.const import BadRequest, DEVICE_LOG_XMLNS
 from couchforms.models import DefaultAuthContext, UnfinishedSubmissionStub
 from couchforms.signals import successful_form_received
-from couchforms.util import legacy_notification_assert
 from couchforms.openrosa_response import OpenRosaResponse, ResponseNature
 from dimagi.utils.logging import notify_exception, log_signal_errors
 from phonelog.utils import process_device_log, SumoLogicLog
@@ -65,11 +61,6 @@ class FormProcessingResponse(namedtuple('FormProcessingResult', 'response xform 
 
 
 class SubmissionPost(object):
-    class SubmissionFormContext(object):
-        def __init__(self, instance_xml):
-            self.instance_xml = instance_xml
-            self.supplementary_models = []
-
     def __init__(self, instance=None, attachments=None, auth_context=None,
                  domain=None, app_id=None, build_id=None, path=None,
                  location=None, submit_ip=None, openrosa_headers=None,
@@ -104,11 +95,8 @@ class SubmissionPost(object):
 
         self.is_openrosa_version3 = self.openrosa_headers.get(OPENROSA_VERSION_HEADER, '') == OPENROSA_VERSION_3
         self.track_load = form_load_counter("form_submission", domain)
-        self.pre_processing_steps = list(map(
-            lambda x: x(), XFORM_PRE_PROCESSORS.get(self.domain, [])
-        ))
 
-    def _set_submission_properties(self, xform):
+    def set_submission_properties(self, xform):
         # attaches shared properties of the request to the document.
         # used on forms and errors
         xform.submit_ip = self.submit_ip
@@ -149,12 +137,6 @@ class SubmissionPost(object):
 
         if isinstance(self.instance, BadRequest):
             return HttpResponseBadRequest(self.instance.message)
-
-    def _post_process_form(self, xform, objects_to_track):
-        [xform.track_create(model_obj) for model_obj in objects_to_track]
-        self._set_submission_properties(xform)
-        found_old = scrub_meta(xform)
-        legacy_notification_assert(not found_old, 'Form with old metadata submitted', xform.form_id)
 
     def _get_success_message(self, instance, cases=None):
         '''
@@ -232,17 +214,13 @@ class SubmissionPost(object):
         if failure_response:
             return FormProcessingResponse(failure_response, None, [], [], 'known_failures')
 
-        objects_to_track = []
-        if self.pre_processing_steps:
-            self.instance, objects_to_track, step_failure_response = self._pre_process_xform_xml()
-            if step_failure_response:
-                return step_failure_response
-        result = process_xform_xml(self.domain, self.instance, self.attachments, self.auth_context.to_json())
+        context = form_submission_context_class()(self)
+        with context:
+            self.instance = context.get_instance() or self.instance
+            result = process_xform_xml(self.domain, self.instance, self.attachments, self.auth_context.to_json())
+            context.post_process_form(result.submitted_form)
+
         submitted_form = result.submitted_form
-
-        self._post_process_form(submitted_form, objects_to_track)
-        self._invalidate_caches(submitted_form)
-
         if submitted_form.is_submission_error_log:
             self.formdb.save_new_form(submitted_form)
 
@@ -345,34 +323,12 @@ class SubmissionPost(object):
             response = self._get_open_rosa_response(instance, **openrosa_kwargs)
             return FormProcessingResponse(response, instance, cases, ledgers, submission_type)
 
-    def _pre_process_xform_xml(self):
-        """
-        handles xform pre-processing
-        breaks at any step that returns a failure response and returns
-        :returns: a tuple (processed form xml, objects to track, any failure response from any step
-        """
-        def _convert_form_to_bytes(form_xml):
-            return lxml.etree.tostring(form_xml)
-
-        try:
-            xml = xml2json.get_xml_from_string(self.instance)
-        except xml2json.XMLSyntaxError:
-            # let this fail later via usual process
-            return self.instance, [], None
-        else:
-            context = self.SubmissionFormContext(instance_xml=xml)
-            for step in self.pre_processing_steps:
-                response = step(context)
-                if response:
-                    return _convert_form_to_bytes(context.instance_xml), [], response
-            return _convert_form_to_bytes(context.instance_xml), context.supplementary_models, None
-
     def _conditionally_send_device_logs_to_sumologic(self, instance):
         url = getattr(settings, 'SUMOLOGIC_URL', None)
         if url and SUMOLOGIC_LOGS.enabled(instance.form_data.get('device_id'), NAMESPACE_OTHER):
             SumoLogicLog(self.domain, instance).send_data(url)
 
-    def _invalidate_caches(self, xform):
+    def invalidate_caches(self, xform):
         for device_id in {None, xform.metadata.deviceID if xform.metadata else None}:
             self._invalidate_restore_payload_path_cache(xform, device_id)
             if ASYNC_RESTORE.enabled(self.domain):

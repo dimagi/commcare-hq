@@ -1056,11 +1056,6 @@ DEFAULT_COMMCARE_EXTENSIONS = [
 ]
 COMMCARE_EXTENSIONS = []
 
-# Provides extensions with ability to customize form processing per domain.
-# For each domain provide a list of pre-processors that would be instantiated
-# and are passed the form xml for processing
-XFORM_PRE_PROCESSORS = {}
-
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
