@@ -38,7 +38,7 @@ def paginate_options(data_sources, query, start, size):
 
 
 @quickcache(['domain'], timeout=7 * 24 * 60 * 60)
-def find_test_locations(domain):
+def find_test_location_ids(domain):
     test_locations = set()
     TEST_STATES = []
     for loc in SQLLocation.active_objects.filter(location_type__code='state', domain=domain):
@@ -135,10 +135,10 @@ class EmwfOptionsController(object):
             users = users.location(accessible_location_ids)
         if IS_ICDS_ENVIRONMENT and self.request.couch_user.get_role(self.domain).name == CPMU_ROLE_NAME:
             # filtering out users who are in test locations for CPMU
-            test_locations = find_test_locations(self.domain)
+            test_location_ids = find_test_location_ids(self.domain)
             users = users.filter(
                 filters.NOT(
-                    location_filter(test_locations)
+                    location_filter(test_location_ids)
                 )
             )
         return [self.utils.user_tuple(u) for u in users.run().hits]
