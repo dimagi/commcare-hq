@@ -123,12 +123,33 @@ class SubmissionTest(BaseSubmissionTest):
 
     @softer_assert()
     def test_submit_deprecated_form(self):
-        self._submit('simple_form.xml')
+        self._submit('simple_form.xml')  # submit a form to try again as duplicate
         response = self._submit('simple_form_edited.xml', url=reverse("receiver_secure_post", args=[self.domain]))
         xform_id = response['X-CommCareHQ-FormID']
         form = FormAccessors(self.domain.name).get_form(xform_id)
         self.assertEqual(1, len(form.history))
         self.assertEqual(self.couch_user.get_id, form.history[0].user)
+
+    def test_invalid_form_submission_file_extension(self):
+        response = self._submit('suspicious_form.abc', url=reverse("receiver_secure_post", args=[self.domain]))
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(
+            response.content.decode('utf-8'),
+            'If you use multipart/form-data, please use xml file only for submitting form xml.\n'
+            'You may also do a normal (non-multipart) post '
+            'with the xml submission as the request body instead.\n'
+        )
+
+    def test_invalid_attachment_file_extension(self):
+        response = self._submit('simple_form.xml', attachments={
+            "image.xyz": BytesIO(b"fake image"),
+        })
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(
+            response.content.decode('utf-8'),
+            "If you use multipart/form-data, please use the following supported file extensions for attachments:\n"
+            "jpg, jpeg, 3gpp, 3gp, 3ga, 3g2, mp3, wav, amr, mp4, 3gp2, mpg4, mpeg4, m4v, mpg, mpeg, qcp, ogg"
+        )
 
 
 @patch('corehq.apps.receiverwrapper.views.domain_requires_auth', return_value=True)
@@ -256,13 +277,14 @@ class SubmissionTestSQL(SubmissionTest):
                 if att.name != "form.xml"
             )
 
+        # submit a form to try again as duplicate with one attachment modified
         self._submit('simple_form.xml', attachments={
-            "image": BytesIO(b"fake image"),
-            "file": BytesIO(b"text file"),
+            "image.jpg": BytesIO(b"fake image"),
+            "audio_file.mp3": BytesIO(b"fake audio"),
         })
         response = self._submit(
             'simple_form_edited.xml',
-            attachments={"image": BytesIO(b"other fake image")},
+            attachments={"image.jpg": BytesIO(b"other fake image")},
             url=reverse("receiver_secure_post", args=[self.domain]),
         )
         acc = FormAccessors(self.domain.name)
@@ -270,10 +292,15 @@ class SubmissionTestSQL(SubmissionTest):
         old_form = acc.get_form(new_form.deprecated_form_id)
         self.assertIn(b"<bop>bang</bop>", old_form.get_xml())
         self.assertIn(b"<bop>bong</bop>", new_form.get_xml())
-        self.assertEqual(list_attachments(old_form),
-            [("file", b"text file"), ("image", b"fake image")])
-        self.assertEqual(list_attachments(new_form),
-            [("file", b"text file"), ("image", b"other fake image")])
+        self.assertEqual(
+            list_attachments(old_form),
+            [("audio_file.mp3", b"fake audio"), ("image.jpg", b"fake image")]
+        )
+        # assert missing attachment retained from the old form and the one re-uploaded updated
+        self.assertEqual(
+            list_attachments(new_form),
+            [("audio_file.mp3", b"fake audio"), ("image.jpg", b"other fake image")]
+        )
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
