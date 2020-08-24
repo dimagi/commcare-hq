@@ -87,6 +87,18 @@ def gaen_otp_view(request, domain):
     try:
         post_data = get_post_data_for_otp(request, domain)
 
+        try:
+            case_id = request.POST['case_id']
+
+            case = CaseAccessors(domain).get_case(case_id)
+
+            case_name = case.name
+
+        except KeyError:
+            raise InvalidOtpRequestException(_("OTP Request missing a required argument 'case_id'"))
+        except CaseNotFound:
+            raise Http404(_("No matching patient record found"))
+
         if request.POST.get('dummy_code'):
             otp_data = {"code": request.POST['dummy_code']}
         else:
@@ -96,6 +108,7 @@ def gaen_otp_view(request, domain):
 
         return render(request, "integration/web_app_gaen_otp.html", {"otp_data": otp_data,
                                                                      "styled_otp_code": styled_otp_code,
+                                                                     "case_name": case_name,
                                                                      })
     except RequestException:
         request_error_msg = _("""We are having problems communicating with the Exposure Nofication server
@@ -120,8 +133,8 @@ def get_otp_response(post_data, gaen_otp_settings):
 
     try:
         return {
-                 'code': otp_response.json()['code']
-               }
+            'code': otp_response.json()['code']
+        }
     except Exception:
         raise RequestException(None, None, "Invalid OTP Response from Notification Server")
 
@@ -132,24 +145,16 @@ class InvalidOtpRequestException(Exception):
 
 
 def get_post_data_for_otp(request, domain):
-    try:
-        case_id = request.POST['case_id']
-        post_params = {
-            'jobId': str(uuid4()),
-        }
-    except KeyError as ke:
-        raise InvalidOtpRequestException(_("OTP Request missing a required argument %s") % ke.args[0])
-    except CaseNotFound:
-        raise Http404(_("No matching patient record found"))
-
-    case = CaseAccessors(domain).get_case(case_id)
+    post_params = {
+        'jobId': str(uuid4()),
+    }
 
     property_map = {
-                    'phone_number': 'mobile',
-                    'test_date': 'testDate',
-                    'onset_date': 'onsetDate',
-                    'test_type': 'testType',
-                   }
+        'phone_number': 'mobile',
+        'test_date': 'testDate',
+        'onset_date': 'onsetDate',
+        'test_type': 'testType',
+        }
     for request_param in property_map:
         if request_param in request.POST:
             post_params[property_map[request_param]] = request.POST[request_param]
