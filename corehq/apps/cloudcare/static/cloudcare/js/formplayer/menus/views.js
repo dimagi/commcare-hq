@@ -460,8 +460,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     });
 
     var DetailListView = Marionette.CollectionView.extend({
+        tagName: "table",
+        className: "table module-table module-table-casedetail",
+        template: _.template($("#detail-view-list-template").html() || ""),
         childView: DetailView,
-        tagName: "tbody",
     });
 
     var DetailTabView = Marionette.View.extend({
@@ -485,16 +487,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     });
 
     var DetailTabListView = Marionette.CollectionView.extend({
-        tagName: "ul",
-        className: "nav nav-tabs",
+        tagName: "div",
+        template: _.template($("#detail-view-tab-list-template").html() || ""),
         childView: DetailTabView,
+        childViewContainer: "ul",
         childViewOptions: function () {
             return {
                 showDetail: this.options.showDetail,
             };
-        },
-        onRender: function () {
-            this.$el.attr("role", "tablist");
         },
     });
 
