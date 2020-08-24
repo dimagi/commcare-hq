@@ -5,6 +5,7 @@ from django.core.management import BaseCommand
 from django.db import connection
 from django.db.models import F
 
+from corehq.sql_db.util import handle_connection_failure
 from couchforms.models import UnfinishedSubmissionStub
 from dimagi.utils.logging import notify_exception
 
@@ -34,6 +35,7 @@ class SubmissionReprocessingEnqueuingOperation(BaseCommand):
             sleep_time = 10 if num_processed < BATCH_SIZE else 0
             sleep(sleep_time)
 
+    @handle_connection_failure()
     def create_tasks(self):
         stub_ids = self.get_items_to_be_processed()
         for stub_id in stub_ids:

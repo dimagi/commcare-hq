@@ -22,7 +22,7 @@ from corehq.apps.users.models import CouchUser
 LOCKOUT_MESSAGE = mark_safe(_('Sorry - you have attempted to login with an incorrect password too many times. Please <a href="/accounts/password_reset_email/">click here</a> to reset your password or contact the domain administrator.'))
 
 class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
-    username = forms.EmailField(label=_("E-mail"), max_length=75,
+    username = forms.EmailField(label=_("Email Address"), max_length=75,
                                 widget=forms.TextInput(attrs={'class': 'form-control'}))
     password = forms.CharField(label=_("Password"), widget=forms.PasswordInput(attrs={'class': 'form-control'}))
 
