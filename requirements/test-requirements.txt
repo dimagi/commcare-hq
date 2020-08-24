@@ -16,7 +16,7 @@ boto3==1.10.14            # via -r requirements/requirements.in
 botocore==1.13.14         # via boto3, s3transfer
 cairocffi==1.1.0          # via cairosvg, weasyprint
 cairosvg==2.4.2           # via weasyprint
-celery==4.4.2             # via -r requirements/requirements.in, django-celery-results
+celery==4.4.7             # via -r requirements/requirements.in, django-celery-results
 certifi==2019.9.11        # via requests, sentry-sdk
 cffi==1.13.2              # via cairocffi, csiphash, weasyprint
 chardet==3.0.4            # via ghdiff, requests
