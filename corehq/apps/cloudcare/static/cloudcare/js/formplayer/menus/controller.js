@@ -15,6 +15,9 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
              a list of entities (cases) and their details
              */
             $.when(fetchingNextMenu).done(function (menuResponse) {
+                //set title of tab to application name
+                document.title = menuResponse.breadcrumbs[0];
+
                 // show any notifications from Formplayer
                 if (menuResponse.notification && !_.isNull(menuResponse.notification.message)) {
                     FormplayerFrontend.request("handleNotification", menuResponse.notification);
@@ -41,6 +44,10 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 }
 
                 Menus.Controller.showMenu(menuResponse);
+                // If a search exists in urlObject, make set search bar continues to show search
+                if (urlObject.search !== null) {
+                    $('#searchText').val(urlObject.search);
+                }
 
                 if (menuResponse.shouldRequestLocation) {
                     Menus.Util.handleLocationRequest(options);

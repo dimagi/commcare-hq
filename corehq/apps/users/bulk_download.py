@@ -194,7 +194,7 @@ def count_users_and_groups(domain, user_filters, group_memoizer):
     return users_count + groups_count
 
 
-def dump_usernames(domain, download_id, user_filters, task):
+def dump_usernames(domain, download_id, user_filters, task, owner_id):
     users_count = get_commcare_users_by_filters(domain, user_filters, count_only=True)
     DownloadBase.set_progress(task, 0, users_count)
 
@@ -209,10 +209,10 @@ def dump_usernames(domain, download_id, user_filters, task):
         location_name = location.name if location else ""
     filename_prefix = "_".join([a for a in [domain, location_name] if bool(a)])
     filename = "{}_users.xlsx".format(filename_prefix)
-    _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, users_count)
+    _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, users_count, owner_id)
 
 
-def _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, total_count):
+def _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, total_count, owner_id):
     writer = Excel2007ExportWriter(format_as_text=True)
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
     file_path = get_download_file_path(use_transfer, filename)
@@ -223,11 +223,11 @@ def _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, t
     writer.write(rows)
     writer.close()
 
-    expose_download(use_transfer, file_path, filename, download_id, 'xlsx')
+    expose_download(use_transfer, file_path, filename, download_id, 'xlsx', owner_ids=[owner_id])
     DownloadBase.set_progress(task, total_count, total_count)
 
 
-def dump_users_and_groups(domain, download_id, user_filters, task):
+def dump_users_and_groups(domain, download_id, user_filters, task, owner_id):
     def _load_memoizer(domain):
         group_memoizer = GroupMemoizer(domain=domain)
         # load groups manually instead of calling group_memoizer.load_all()
@@ -267,7 +267,7 @@ def dump_users_and_groups(domain, download_id, user_filters, task):
     ]
 
     filename = "{}_users_{}.xlsx".format(domain, uuid.uuid4().hex)
-    _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, users_groups_count)
+    _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, users_groups_count, owner_id)
 
 
 class GroupNameError(Exception):

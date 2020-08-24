@@ -53,6 +53,7 @@ from two_factor.views import LoginView
 
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.sms.event_handlers import handle_email_messaging_subevent
+from corehq.apps.users.event_handlers import handle_email_invite_message
 from corehq.util.email_event_utils import handle_email_sns_event
 from corehq.util.metrics import create_metrics_event, metrics_counter, metrics_gauge
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
@@ -107,7 +108,7 @@ from corehq.apps.users.landing_pages import (
     get_cloudcare_urlname,
     get_redirect_url,
 )
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, Invitation
 from corehq.apps.users.util import format_username
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL,
@@ -546,38 +547,43 @@ def dropbox_upload(request, download_id):
     if download is None:
         logging.error("Download file request for expired/nonexistent file requested")
         raise Http404
-    else:
-        filename = download.get_filename()
-        # Hack to get target filename from content disposition
-        match = re.search('filename="([^"]*)"', download.content_disposition)
-        dest = match.group(1) if match else 'download.txt'
 
-        try:
-            uploader = DropboxUploadHelper.create(
-                request.session.get(DROPBOX_ACCESS_TOKEN),
-                src=filename,
-                dest=dest,
-                download_id=download_id,
-                user=request.user,
-            )
-        except DropboxInvalidToken:
-            return HttpResponseRedirect(reverse(DropboxAuthInitiate.slug))
-        except DropboxUploadAlreadyInProgress:
-            uploader = DropboxUploadHelper.objects.get(download_id=download_id)
-            messages.warning(
-                request,
-                'The file is in the process of being synced to dropbox! It is {0:.2f}% '
-                'complete.'.format(uploader.progress * 100)
-            )
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+    if download.owner_ids and request.couch_user.get_id not in download.owner_ids:
+        return no_permissions(request, message=_(
+            "You do not have access to this file. It can only be uploaded to dropbox by the user who created it"
+        ))
 
-        uploader.upload()
+    filename = download.get_filename()
+    # Hack to get target filename from content disposition
+    match = re.search('filename="([^"]*)"', download.content_disposition)
+    dest = match.group(1) if match else 'download.txt'
 
-        messages.success(
-            request,
-            _("Apps/{app}/{dest} is queued to sync to dropbox! You will receive an email when it"
-                " completes.".format(app=settings.DROPBOX_APP_NAME, dest=dest))
+    try:
+        uploader = DropboxUploadHelper.create(
+            request.session.get(DROPBOX_ACCESS_TOKEN),
+            src=filename,
+            dest=dest,
+            download_id=download_id,
+            user=request.user,
         )
+    except DropboxInvalidToken:
+        return HttpResponseRedirect(reverse(DropboxAuthInitiate.slug))
+    except DropboxUploadAlreadyInProgress:
+        uploader = DropboxUploadHelper.objects.get(download_id=download_id)
+        messages.warning(
+            request,
+            'The file is in the process of being synced to dropbox! It is {0:.2f}% '
+            'complete.'.format(uploader.progress * 100)
+        )
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
+    uploader.upload()
+
+    messages.success(
+        request,
+        _("Apps/{app}/{dest} is queued to sync to dropbox! You will receive an email when it"
+            " completes.".format(app=settings.DROPBOX_APP_NAME, dest=dest))
+    )
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
@@ -1324,8 +1330,12 @@ def log_email_event(request, secret):
 
     for header in headers:
         if header["name"] == COMMCARE_MESSAGE_ID_HEADER:
-            subevent_id = header["value"]
-            handle_email_messaging_subevent(message, subevent_id)
+            if Invitation.EMAIL_ID_PREFIX in header["value"]:
+                handle_email_invite_message(message, header["value"].split(Invitation.EMAIL_ID_PREFIX)[1])
+            else:
+                subevent_id = header["value"]
+                handle_email_messaging_subevent(message, subevent_id)
+            break
 
     handle_email_sns_event(message)
 

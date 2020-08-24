@@ -519,7 +519,7 @@ hqDefine("users/js/mobile_workers",[
         var newUserCreation = newUserCreationModel({
             custom_fields_slugs: initialPageData.get('custom_fields_slugs'),
             draconian_security: initialPageData.get('draconian_security'),
-            implement_password_obfuscation: initialPageData.get('implement_password_obfuscation'),
+            implement_password_obfuscation: initialPageData.get('implement_password_obfuscation', true),
             location_url: initialPageData.reverse('location_search'),
             require_location_id: !initialPageData.get('can_access_all_locations'),
             strong_mobile_passwords: initialPageData.get('strong_mobile_passwords'),
