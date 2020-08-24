@@ -40,23 +40,10 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
         },
     });
 
-    var SessionTableView = Marionette.CollectionView.extend({
-        childView: SessionView,
-        tagName: "tbody",
-    });
-
-    var SessionListView = Marionette.View.extend({
+    var SessionListView = Marionette.CollectionView.extend({
         tagName: "div",
-        regions: {
-            body: {
-                el: 'table',
-            },
-        },
-        onRender: function () {
-            this.showChildView('body', new SessionTableView({
-                collection: this.collection,
-            }));
-        },
+        childView: SessionView,
+        childViewContainer: "tbody",
         getTemplate: function () {
             var user = FormplayerFrontend.getChannel().request('currentUser');
             var id = "#session-view-list-web-apps-template";
