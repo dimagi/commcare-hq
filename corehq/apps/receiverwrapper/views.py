@@ -10,7 +10,7 @@ from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from couchforms import openrosa_response
-from couchforms.const import MAGIC_PROPERTY, BadRequest
+from couchforms.const import MAGIC_PROPERTY, InvalidRequest
 from couchforms.getters import MultimediaBug
 from dimagi.utils.decorators.profile import profile_dump
 from dimagi.utils.logging import notify_exception
@@ -91,8 +91,8 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             domain, app_id, user_id, authenticated, meta,
         )
 
-    if isinstance(instance, BadRequest):
-        response = HttpResponseBadRequest(instance.message)
+    if isinstance(instance, InvalidRequest):
+        response = instance.response()
         _record_metrics(metric_tags, 'known_failures', response)
         return response
 
