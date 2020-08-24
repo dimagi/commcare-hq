@@ -1,6 +1,5 @@
 import json
 from copy import deepcopy
-from mock import patch
 
 from django.urls import reverse
 from django.utils.http import urlencode

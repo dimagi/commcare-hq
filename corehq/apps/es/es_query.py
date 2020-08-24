@@ -20,7 +20,7 @@ SQLAlchemy. Here's an example usage:
          .xmlns(self.xmlns)
          .submitted(gte=self.datespan.startdate_param,
                     lt=self.datespan.enddateparam)
-         .fields(['xmlns', 'domain', 'app_id'])
+         .source(['xmlns', 'domain', 'app_id'])
          .sort('received_on', desc=False)
          .size(self.pagination.count)
          .start(self.pagination.start)
@@ -121,10 +121,9 @@ from .utils import flatten_field_dict, values_list
 class ESQuery(object):
     """
     This query builder only outputs the following query structure::
-
         {
             "query": {
-                "filtered": {
+                "bool": {
                     "filter": {
                         "and": [
                             <filters>
@@ -160,12 +159,14 @@ class ESQuery(object):
         self._default_filters = deepcopy(self.default_filters)
         self._aggregations = []
         self.es_instance_alias = es_instance_alias
-        self.es_query = {"query": {
-            "filtered": {
-                "filter": {"and": []},
-                "query": queries.match_all()
+        self.es_query = {
+            "query": {
+                "bool": {
+                    "filter": [],
+                    "must": queries.match_all()
+                }
             }
-        }}
+        }
 
     @property
     def builtin_filters(self):
@@ -243,7 +244,7 @@ class ESQuery(object):
 
     @property
     def _filters(self):
-        return self.es_query['query']['filtered']['filter']['and']
+        return self.es_query['query']['bool']['filter']
 
     def exclude_source(self):
         """
@@ -296,7 +297,7 @@ class ESQuery(object):
 
     @property
     def _query(self):
-        return self.es_query['query']['filtered']['query']
+        return self.es_query['query']['bool']['must']
 
     def set_query(self, query):
         """
@@ -304,7 +305,7 @@ class ESQuery(object):
         if you actually want Levenshtein distance or prefix querying...
         """
         es = deepcopy(self)
-        es.es_query['query']['filtered']['query'] = query
+        es.es_query['query']['bool']['must'] = query
         return es
 
     def add_query(self, new_query, clause):
@@ -327,7 +328,7 @@ class ESQuery(object):
         return self
 
     def get_query(self):
-        return self.es_query['query']['filtered']['query']
+        return self.es_query['query']['bool']['must']
 
     def search_string_query(self, search_string, default_fields=None):
         """Accepts a user-defined search string"""
