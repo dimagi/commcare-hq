@@ -1,17 +1,9 @@
 # Code Organization
 
 TL;DR
-- put code in .js files, not in html
-- use `hqDefine` and `hqImport` as your module system
-- you'll see various versions of modules based on manually
-  restricting the global footprint of a file.
-  This has been done using varying degrees of discipline,
-  and you should always feel comfortable converting these to `hqDefine`
-- avoid global variables like the plague
-- when creating class-like objects, use a functional inheritance pattern
-
-For those of you looking for a little more from this page,
-please keep reading.
+- All JavaScript code should be in a .js file and encapsulated as a module using `hqDefine`.
+- Dependencies should be imported in the `hqDefine` call for modules that support RequireJS (most of HQ), and using `hqImport` for modules that do not yet support non-RequireJS (web apps, app manager, reports).
+- When creating class-like objects, use a functional inheritance pattern.
 
 ## Static Files Organization
 
@@ -188,7 +180,7 @@ you'd write your file like this:
 
 ```javascript
 // file commcare-hq/corehq/apps/myapp/static/myapp/js/myModule.js
-hqDefine('myapp/js/myModule.js', function () {
+hqDefine('myapp/js/myModule', function () {
     // things inside here are private
     var myPrivateGreeting = "Hello";
     // unless you put them in the return object
@@ -207,7 +199,7 @@ and when you need it in another file
 ```javascript
 // some other file
 function () {
-    var sayHi = hqImport('myapp/js/myModule.js').sayHi;
+    var sayHi = hqImport('myapp/js/myModule').sayHi;
     // ... use sayHi ...
 }
 ```
@@ -216,32 +208,22 @@ If you compare it to the above example, you'll notice that the
 closure function itself is exactly the same. It's just being passed
 to `hqDefine` instead of being called directly.
 
-If you're working on a page that doesn't inherit
-from the main template, you'll have to include
-```html
-<script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
-```
-to use `hqDefine` and `hqImport`.
+`hqDefine` is an intermediate step on the way to full support for AMD modules, which in HQ is implemented using RequireJS.
+`hqDefine` checks whether or not it is on a page that uses AMD modules and then behaves in one of two ways:
+* If the page has been migrated, so it uses AMD modules, `hqDefine` just delegates to `define`.
+* If the page has not been migrated, `hqDefine` acts as a thin wrapper around the Crockford module pattern. `hqDefine` takes a function, calls it immediately, and puts it in a namespaced global; `hqImport` then looks up the module in that global.
 
-A note about using modules on an html page.
-Whereas any other module system is also a module *loader*,
-`hqImport` is just a module *dereferencer*; what I mean by that is that
-in order to use a module, it still needs to be included
+In the first case, by handing control over to RequireJS, `hqDefine`/`hqImport` also act as a module *loader*.
+But in the second case, they work only as a module *dereferencer*, so in order to use a module, it still needs to be included
 as a `<script>` on your html page:
 
 ```html
 <script src="{% static 'myapp/js/myModule.js' %}"></script>
 ```
 
-In fact, `hqImport` and `hqDefine`
-are really a very thin wrapper aroudn the Crockford module pattern.
-In the end `hqDefine` does just take a function, call it immediately,
-and put the value in a namespaced but globally retrievable place;
-and `hqImport` just looks it up from that place.
-But what it gives us is extreme consistency by the most correct thing
-also the easiest.
+Note that in the example above, the module name matches the end of the filename, the same name used to identify the file when using the `static` tag, but without the `js` extension. This is necessary for RequireJS to work properly. For consistency, all modules, regardless of whether or not they are yet compatible with RequireJS, should be named to match their filename.
 
-For a summary, please scroll back up and see the TL;DR section.
+`hqDefine` and `hqImport` provide a consistent interface for both migrated and unmigrated pages, and that interface is also consistent with RequireJS, making it easy to eventually "flip the switch" and remove them altogether once all code is compatible with RequireJS.
 
 ## Inheritance
 

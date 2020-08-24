@@ -5,6 +5,8 @@ from corehq.util.models import (
     PermanentBounceMeta,
     ComplaintBounceMeta,
     TransientBounceEmail,
+    BOUNCE_EVENT_THRESHOLD,
+    HOURS_UNTIL_TRANSIENT_BOUNCES_EXPIRE,
 )
 
 
@@ -39,9 +41,71 @@ class Command(BaseCommand):
         else:
             bounced_emails = bounced_email.split(',')
 
+        for email in bounced_emails:
+            self.check_bounced_email(email, show_details=options['show_details'])
+            self.stdout.write('*' * 230)
+
+    def check_bounced_email(self, email_string, show_details):
+        is_actively_blocked = (
+            len(BouncedEmail.get_hard_bounced_emails([email_string])) > 0
+        )
+        if not is_actively_blocked:
+            self.stdout.write(f'{email_string} is NOT blocked. '
+                              f'All clear!')
+            return
+        else:
+            self.stdout.write(
+                f'{email_string} is blocked! \n'
+                f'Please note that we block emails due to the following reasons:\n'
+                f'\t- a permanent suppressed bounce is present\n'
+                f'\t- more than {BOUNCE_EVENT_THRESHOLD} general '
+                f'and/or transient bounces have been received\n'
+                f'\nnote that transient bounce information expires '
+                f'after {HOURS_UNTIL_TRANSIENT_BOUNCES_EXPIRE} hours\n\n'
+            )
+
+        bounce_query = BouncedEmail.objects.filter(email=email_string)
+        if bounce_query.exists():
+            bounced_email = bounce_query.first()
+            permanent_bounces_query = PermanentBounceMeta.objects.filter(
+                bounced_email=bounced_email
+            ).order_by('-created')
+            complaints_query = ComplaintBounceMeta.objects.filter(
+                bounced_email=bounced_email
+            ).order_by('-created')
+
+            total_permanent = permanent_bounces_query.count()
+            total_complaints = complaints_query.count()
+
+            latest_permanent = (
+                permanent_bounces_query.first().created.isoformat()
+                if permanent_bounces_query.first() else "\t\t\t"
+            )
+            latest_complaint = (
+                complaints_query.first().created.isoformat()
+                if complaints_query.first() else "\t\t\t"
+            )
+        else:
+            bounced_email = None
+            total_permanent = 0
+            total_complaints = 0
+            permanent_bounces_query = None
+            complaints_query = None
+            latest_permanent = None
+            latest_complaint = None
+
+        transient_query = TransientBounceEmail.objects.filter(
+            email=email_string
+        ).order_by('-created')
+        total_transient = transient_query.count()
+
+        latest_transient = (
+            transient_query.first().created.isoformat()
+            if transient_query.first() else "\t\t\t"
+        )
+
         self.stdout.write(
             f'\nEmail\t\t'
-            f'\t\tActively Blocked?'
             f'\tNumber Permanent'
             f'\tLast Recorded on'
             f'\t\tNumber Complaints'
@@ -49,60 +113,13 @@ class Command(BaseCommand):
             f'\t\tNumber Transient'
             f'\tLast Recorded on'
         )
-        self.stdout.write('*' * 230)
-
-        for email in bounced_emails:
-            self.check_bounced_email(email, show_details=options['show_details'])
-
-    def check_bounced_email(self, email_string, show_details):
-        bounce_query = BouncedEmail.objects.filter(email=email_string)
-
-        if not bounce_query.exists():
-            self.stdout.write(f'{email_string} is NOT bouncing. '
-                              f'All clear!')
-            return
-
-        bounced_email = BouncedEmail.objects.filter(email=email_string).first()
-
-        is_actively_blocked = (
-            len(BouncedEmail.get_hard_bounced_emails([bounced_email.email])) > 0
-        )
-        block_status = "YES" if is_actively_blocked else "NO"
-
-        permanent_bounces_query = PermanentBounceMeta.objects.filter(
-            bounced_email=bounced_email
-        ).order_by('-created')
-        complaints_query = ComplaintBounceMeta.objects.filter(
-            bounced_email=bounced_email
-        ).order_by('-created')
-        transient_query = TransientBounceEmail.objects.filter(
-            email=bounced_email.email
-        ).order_by('-created')
-
-        total_permanent = permanent_bounces_query.count()
-        total_complaints = complaints_query.count()
-        total_transient = transient_query.count()
-
-        latest_permanent = (
-            permanent_bounces_query.first().created.isoformat()
-            if permanent_bounces_query.first() else "\t\t\t"
-        )
-        latest_complaint = (
-            complaints_query.first().created.isoformat()
-            if complaints_query.first() else "\t\t\t"
-        )
-        latest_transient = (
-            transient_query.first().created.isoformat()
-            if transient_query.first() else "\t\t\t"
-        )
 
         self.stdout.write(
-            f'{bounced_email.email}'
+            f'{email_string}'
         )
 
         self.stdout.write(
             f'\t\t\t'
-            f'\t{block_status}\t\t'
             f'\t{total_permanent}\t\t'
             f'\t{latest_permanent}'
             f'\t{total_complaints}\t\t'
@@ -116,7 +133,7 @@ class Command(BaseCommand):
 
         self.stdout.write('\n\tDETAILS:\n\n')
 
-        if not is_actively_blocked:
+        if not is_actively_blocked and bounced_email:
             self.stdout.write(
                 '\n\tThis email has a bounce record, but it is NOT being '
                 'prevented getting HQ emails.'
@@ -148,7 +165,7 @@ class Command(BaseCommand):
                                       f'{key}:\t{val}')
             self.stdout.write('\n\nt')
 
-        if permanent_bounces_query.exists():
+        if permanent_bounces_query and permanent_bounces_query.exists():
             self.stdout.write(
                 '\tPermanent Bounce Records:\n\n'
             )
@@ -174,7 +191,7 @@ class Command(BaseCommand):
                                   f'destination:\t{record.destination}')
             self.stdout.write('\n\n')
 
-        if complaints_query.exists():
+        if complaints_query and complaints_query.exists():
             self.stdout.write(
                 '\tComplaint Records:'
             )

@@ -37,6 +37,11 @@ class CaseType(models.Model):
                 case_type_obj = CaseType.objects.create(domain=domain, name=case_type)
             return case_type_obj
 
+    def save(self, *args, **kwargs):
+        from .util import get_data_dict_case_types
+        get_data_dict_case_types.clear(self.domain)
+        return super(CaseType, self).save(*args, **kwargs)
+
 
 class CaseProperty(models.Model):
     case_type = models.ForeignKey(

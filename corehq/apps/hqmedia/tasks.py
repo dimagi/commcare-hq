@@ -219,7 +219,7 @@ def create_files_for_ccz(build, build_profile_id, include_multimedia_files=True,
                                                      filename, download_targeted_version)
         file_cache = _zip_files_for_ccz(fpath, files, current_progress, file_progress, file_count, compression,
                                         task)
-        if toggles.LOCALE_ID_INTEGRITY.enabled(build.domain):
+        if include_index_files and toggles.LOCALE_ID_INTEGRITY.enabled(build.domain):
             locale_errors = find_missing_locale_ids_in_ccz(file_cache)
             if locale_errors:
                 errors.extend(locale_errors)

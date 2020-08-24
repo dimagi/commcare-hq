@@ -173,8 +173,7 @@ def metrics_gauge(name: str, value: float, tags: Dict[str, str] = None, document
             to PrometheusMetrics since it is one of PrometheusMetrics.accepted_gauge_params
     """
     provider = _get_metrics_provider()
-    provider.gauge(name, value, tags=tags, documentation=documentation,
-        multiprocess_mode=MPM_ALL)
+    provider.gauge(name, value, tags=tags, documentation=documentation, multiprocess_mode=multiprocess_mode)
 
 
 def metrics_histogram(
@@ -211,8 +210,7 @@ def metrics_gauge_task(name, fn, run_every, multiprocess_mode=MPM_ALL):
     @wraps(fn)
     def inner(*args, **kwargs):
         from corehq.util.metrics import metrics_gauge
-        # TODO: make this use prometheus push gateway
-        metrics_gauge(name, fn(*args, **kwargs))
+        metrics_gauge(name, fn(*args, **kwargs), multiprocess_mode=multiprocess_mode)
 
     return inner
 
