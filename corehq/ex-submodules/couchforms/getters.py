@@ -1,10 +1,13 @@
 from django.utils.datastructures import MultiValueDictKeyError
-from corehq.util.global_request import get_request_domain
 from couchforms.const import (
     EMPTY_PAYLOAD_ERROR,
     MAGIC_PROPERTY,
     MULTIPART_EMPTY_PAYLOAD_ERROR,
+    MULTIPART_INVALID_ATTACHMENT_FILE_EXTENSION_ERROR,
+    MULTIPART_INVALID_SUBMISSION_FILE_EXTENSION_ERROR,
     MULTIPART_FILENAME_ERROR,
+    PERMITTED_FORM_SUBMISSION_FILE_EXTENSIONS,
+    SUPPORTED_MEDIA_FILE_EXTENSIONS,
 )
 import logging
 from datetime import datetime
@@ -40,13 +43,21 @@ def get_instance_and_attachment(request):
             raise MultimediaBug("Received a submission with POST.keys()")
 
         try:
-            instance = request.FILES[MAGIC_PROPERTY].read()
+            instance_file = request.FILES[MAGIC_PROPERTY]
         except MultiValueDictKeyError:
             instance = MULTIPART_FILENAME_ERROR
         else:
-            for key, item in request.FILES.items():
-                if key != MAGIC_PROPERTY:
-                    attachments[key] = item
+            if not _valid_form_xml_file(instance_file):
+                instance = MULTIPART_INVALID_SUBMISSION_FILE_EXTENSION_ERROR
+            else:
+                instance = instance_file.read()
+                for key, item in request.FILES.items():
+                    if key != MAGIC_PROPERTY:
+                        if not _valid_attachment_file(item):
+                            instance = MULTIPART_INVALID_ATTACHMENT_FILE_EXTENSION_ERROR
+                            attachments.clear()
+                            break
+                        attachments[key] = item
         if not instance:
             instance = MULTIPART_EMPTY_PAYLOAD_ERROR
     else:
@@ -57,6 +68,23 @@ def get_instance_and_attachment(request):
             instance = EMPTY_PAYLOAD_ERROR
     request._instance_and_attachment = (instance, attachments)
     return instance, attachments
+
+
+def _valid_form_xml_file(file):
+    return _valid_file_extension(file, PERMITTED_FORM_SUBMISSION_FILE_EXTENSIONS)
+
+
+def _valid_file_extension(file, permitted_extensions):
+    # validate that file has only one extension and that is a permitted one
+    try:
+        file_extension = file.name.split('.', 1)[1]
+    except IndexError:
+        return False
+    return file_extension in permitted_extensions
+
+
+def _valid_attachment_file(file):
+    return _valid_file_extension(file, SUPPORTED_MEDIA_FILE_EXTENSIONS)
 
 
 def get_location(request=None):
