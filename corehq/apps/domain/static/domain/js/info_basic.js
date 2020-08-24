@@ -19,14 +19,11 @@ hqDefine(
             });
 
             function getGeocoderItem(item) {
-                console.log(item);
                 var inputEl = $("#id_default_geocoder_location");
                 var geoObj = {};
                 geoObj.place_name = item.place_name;
                 geoObj.coordinates = {'longitude': item.geometry.coordinates[0], 'latitude': item.geometry.coordinates[1]};
-                console.log(geoObj);
                 inputEl.attr("value", JSON.stringify(geoObj));
-                console.log(inputEl);
                 return item.place_name;
             }
 
@@ -42,7 +39,7 @@ hqDefine(
             var geocoder = new MapboxGeocoder({
                 accessToken: MAPBOX_ACCESS_TOKEN,
                 types: "country,region,place,postcode,locality,neighborhood",
-                getItemValue: getGeocoderItem
+                getItemValue: getGeocoderItem,
             });
 
             geocoder.addTo("#geocoder-proximity");
