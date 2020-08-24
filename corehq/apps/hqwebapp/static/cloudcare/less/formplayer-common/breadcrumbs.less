@@ -12,19 +12,15 @@
   .box-shadow(0 0 5px 2px rgba(0,0,0,.3));
   border: none;
 
-  .not-home, ol, li {
-    display: inline-block;
-  }
-
-  ol {
-    padding: 0;
-    margin: 0;
-  }
-
-  .not-home .breadcrumb-text {
+  .breadcrumb-text {
     &:before {
       content: '\f054';
       font-family: 'FontAwesome';
+    }
+  }
+  .breadcrumb-text:first-child {
+    &:before {
+      display: none;
     }
   }
 }
