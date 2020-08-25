@@ -244,3 +244,38 @@ class RequirePermissionAuthenticationTest(AuthenticationTestBase):
                                               api_key_without_explicit_permissions
                                           )
                                       ))
+
+    def test_explicit_role_wrong_domain(self):
+        project = Domain.get_or_create_with_name('api-test-fail-2', is_active=True)
+        self.addCleanup(project.delete)
+        user = WebUser.create(self.domain, 'multi_domain_admin', '***', None, None, is_admin=True)
+        user.add_domain_membership(project.name, is_admin=True)
+        user.save()
+        self.addCleanup(lambda: user.delete(None))
+        unscoped_api_key, _ = HQApiKey.objects.get_or_create(
+            user=WebUser.get_django_user(user),
+            name='unscoped',
+        )
+        # this key should only be able to access default project, not new one
+        scoped_api_key, _ = HQApiKey.objects.get_or_create(
+            user=WebUser.get_django_user(user),
+            name='explicit_with_permission_wrong_domain',
+            role_id=self.role_with_permission.get_id,
+        )
+        unscoped_auth_header = self._contruct_api_auth_header(user.username, unscoped_api_key)
+        scoped_auth_header = self._contruct_api_auth_header(user.username, scoped_api_key)
+        for domain in [self.domain, project.name]:
+            self.assertAuthenticationSuccess(self.require_edit_data,
+                                             self._get_request(
+                                                 domain=domain,
+                                                 HTTP_AUTHORIZATION=unscoped_auth_header))
+        self.assertAuthenticationSuccess(self.require_edit_data,
+                                         self._get_request(
+                                             domain=self.domain,
+                                             HTTP_AUTHORIZATION=scoped_auth_header
+                                         ))
+        self.assertAuthenticationFail(self.require_edit_data,
+                                      self._get_request(
+                                          domain=project.name,
+                                          HTTP_AUTHORIZATION=scoped_auth_header
+                                      ))
