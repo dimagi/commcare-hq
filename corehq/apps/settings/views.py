@@ -497,7 +497,7 @@ class EnableMobilePrivilegesView(BaseMyAccountView):
         qrcode = get_qrcode(qrcode_data)
 
         context = self.get_context_data(**kwargs)
-        context['qrcode_64'] = b64encode(qrcode)
+        context['qrcode_64'] = b64encode(qrcode).decode('utf8')
         return self.render_to_response(context)
 
 
