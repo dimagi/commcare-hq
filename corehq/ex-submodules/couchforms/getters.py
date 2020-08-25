@@ -70,7 +70,7 @@ def get_instance_and_attachment(request):
     return instance, attachments
 
 
-def _valid_form_xml_file(file):
+def _valid_xml_extension(file):
     return _valid_file_extension(file, PERMITTED_FORM_SUBMISSION_FILE_EXTENSIONS)
 
 
