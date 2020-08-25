@@ -21,6 +21,11 @@ from corehq.form_processor.tests.utils import (
 from corehq.util.json import CommCareJSONEncoder
 from corehq.util.test_utils import TestFileMixin, softer_assert
 
+from couchforms.const import (
+    MULTIPART_INVALID_ATTACHMENT_FILE_EXTENSION_ERROR,
+    MULTIPART_INVALID_SUBMISSION_FILE_EXTENSION_ERROR
+)
+
 
 class BaseSubmissionTest(TestCase):
     def setUp(self):
@@ -135,9 +140,7 @@ class SubmissionTest(BaseSubmissionTest):
         self.assertEqual(response.status_code, 422)
         self.assertEqual(
             response.content.decode('utf-8'),
-            'If you use multipart/form-data, please use xml file only for submitting form xml.\n'
-            'You may also do a normal (non-multipart) post '
-            'with the xml submission as the request body instead.\n'
+            MULTIPART_INVALID_SUBMISSION_FILE_EXTENSION_ERROR.message
         )
 
     def test_invalid_attachment_file_extension(self):
@@ -147,8 +150,7 @@ class SubmissionTest(BaseSubmissionTest):
         self.assertEqual(response.status_code, 422)
         self.assertEqual(
             response.content.decode('utf-8'),
-            "If you use multipart/form-data, please use the following supported file extensions for attachments:\n"
-            "jpg, jpeg, 3gpp, 3gp, 3ga, 3g2, mp3, wav, amr, mp4, 3gp2, mpg4, mpeg4, m4v, mpg, mpeg, qcp, ogg"
+            MULTIPART_INVALID_ATTACHMENT_FILE_EXTENSION_ERROR.message
         )
 
 
