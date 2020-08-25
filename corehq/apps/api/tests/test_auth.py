@@ -30,18 +30,18 @@ class AuthenticationTestBase(TestCase):
 
     def _get_request_with_api_key(self, domain=None):
         return self._get_request(domain,
-                                 HTTP_AUTHORIZATION=self._contruct_api_auth_header(self.username, self.api_key))
+                                 HTTP_AUTHORIZATION=self._construct_api_auth_header(self.username, self.api_key))
 
     def _get_request_with_basic_auth(self, domain=None):
         return self._get_request(
             domain,
-            HTTP_AUTHORIZATION=self._contruct_basic_auth_header(self.username, self.password)
+            HTTP_AUTHORIZATION=self._construct_basic_auth_header(self.username, self.password)
         )
 
-    def _contruct_api_auth_header(self, username, api_key):
+    def _construct_api_auth_header(self, username, api_key):
         return f'ApiKey {username}:{api_key.key}'
 
-    def _contruct_basic_auth_header(self, username, password):
+    def _construct_basic_auth_header(self, username, password):
         # https://stackoverflow.com/q/5495452/8207
         encoded_auth = base64.b64encode(bytes(f'{username}:{password}', 'utf8')).decode('utf8')
         return f'Basic {encoded_auth}'
@@ -153,7 +153,7 @@ class RequirePermissionAuthenticationTest(AuthenticationTestBase):
         self.assertAuthenticationSuccess(self.require_edit_data,
                                          self._get_request(
                                              domain=self.domain,
-                                             HTTP_AUTHORIZATION=self._contruct_api_auth_header(
+                                             HTTP_AUTHORIZATION=self._construct_api_auth_header(
                                                  self.domain_admin.username,
                                                  api_key_with_default_permissions
                                              )
@@ -173,7 +173,7 @@ class RequirePermissionAuthenticationTest(AuthenticationTestBase):
         self.assertAuthenticationSuccess(self.require_edit_data,
                                          self._get_request(
                                              domain=self.domain,
-                                             HTTP_AUTHORIZATION=self._contruct_api_auth_header(
+                                             HTTP_AUTHORIZATION=self._construct_api_auth_header(
                                                  self.domain_admin.username,
                                                  api_key_with_explicit_permissions
                                              )
@@ -181,7 +181,7 @@ class RequirePermissionAuthenticationTest(AuthenticationTestBase):
         self.assertAuthenticationFail(self.require_edit_data,
                                       self._get_request(
                                           domain=self.domain,
-                                          HTTP_AUTHORIZATION=self._contruct_api_auth_header(
+                                          HTTP_AUTHORIZATION=self._construct_api_auth_header(
                                               self.domain_admin.username,
                                               api_key_without_explicit_permissions
                                           )
@@ -194,7 +194,7 @@ class RequirePermissionAuthenticationTest(AuthenticationTestBase):
         self.assertAuthenticationSuccess(self.require_edit_data,
                                          self._get_request(
                                              domain=self.domain,
-                                             HTTP_AUTHORIZATION=self._contruct_api_auth_header(
+                                             HTTP_AUTHORIZATION=self._construct_api_auth_header(
                                                  self.user_with_permission.username,
                                                  api_key_with_permissions
                                              )
@@ -214,7 +214,7 @@ class RequirePermissionAuthenticationTest(AuthenticationTestBase):
         self.assertAuthenticationSuccess(self.require_edit_data,
                                          self._get_request(
                                              domain=self.domain,
-                                             HTTP_AUTHORIZATION=self._contruct_api_auth_header(
+                                             HTTP_AUTHORIZATION=self._construct_api_auth_header(
                                                  self.user_with_permission.username,
                                                  api_key_with_explicit_permissions
                                              )
@@ -222,7 +222,7 @@ class RequirePermissionAuthenticationTest(AuthenticationTestBase):
         self.assertAuthenticationFail(self.require_edit_data,
                                       self._get_request(
                                           domain=self.domain,
-                                          HTTP_AUTHORIZATION=self._contruct_api_auth_header(
+                                          HTTP_AUTHORIZATION=self._construct_api_auth_header(
                                               self.user_with_permission.username,
                                               api_key_without_explicit_permissions
                                           )
@@ -235,7 +235,7 @@ class RequirePermissionAuthenticationTest(AuthenticationTestBase):
         self.assertAuthenticationFail(self.require_edit_data,
                                       self._get_request(
                                           domain=self.domain,
-                                          HTTP_AUTHORIZATION=self._contruct_api_auth_header(
+                                          HTTP_AUTHORIZATION=self._construct_api_auth_header(
                                               self.user_without_permission.username,
                                               api_key_without_permissions
                                           )
@@ -257,7 +257,7 @@ class RequirePermissionAuthenticationTest(AuthenticationTestBase):
         self.assertAuthenticationFail(self.require_edit_data,
                                       self._get_request(
                                           domain=self.domain,
-                                          HTTP_AUTHORIZATION=self._contruct_api_auth_header(
+                                          HTTP_AUTHORIZATION=self._construct_api_auth_header(
                                               self.user_without_permission.username,
                                               api_key_with_explicit_permissions
                                           )
@@ -265,7 +265,7 @@ class RequirePermissionAuthenticationTest(AuthenticationTestBase):
         self.assertAuthenticationFail(self.require_edit_data,
                                       self._get_request(
                                           domain=self.domain,
-                                          HTTP_AUTHORIZATION=self._contruct_api_auth_header(
+                                          HTTP_AUTHORIZATION=self._construct_api_auth_header(
                                               self.user_without_permission.username,
                                               api_key_without_explicit_permissions
                                           )
@@ -288,8 +288,8 @@ class RequirePermissionAuthenticationTest(AuthenticationTestBase):
             name='explicit_with_permission_wrong_domain',
             role_id=self.role_with_permission.get_id,
         )
-        unscoped_auth_header = self._contruct_api_auth_header(user.username, unscoped_api_key)
-        scoped_auth_header = self._contruct_api_auth_header(user.username, scoped_api_key)
+        unscoped_auth_header = self._construct_api_auth_header(user.username, unscoped_api_key)
+        scoped_auth_header = self._construct_api_auth_header(user.username, scoped_api_key)
         for domain in [self.domain, project.name]:
             self.assertAuthenticationSuccess(self.require_edit_data,
                                              self._get_request(
@@ -311,6 +311,6 @@ class RequirePermissionAuthenticationTest(AuthenticationTestBase):
             self.require_edit_data,
             self._get_request(
                 domain=self.domain,
-                HTTP_AUTHORIZATION=self._contruct_basic_auth_header(self.domain_admin.username, self.password)
+                HTTP_AUTHORIZATION=self._construct_basic_auth_header(self.domain_admin.username, self.password)
             )
         )
