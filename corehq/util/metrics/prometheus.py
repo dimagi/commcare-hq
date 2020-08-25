@@ -2,7 +2,7 @@ from typing import Dict, List
 
 from django.conf import settings
 
-from prometheus_client import CollectorRegistry
+from prometheus_client import CollectorRegistry, REGISTRY
 from prometheus_client import Counter as PCounter
 from prometheus_client import Gauge as PGauge
 from prometheus_client import Histogram as PHistogram
@@ -28,7 +28,8 @@ class PrometheusMetrics(HqMetrics):
         self._push_gateway_host = getattr(settings, 'PROMETHEUS_PUSHGATEWAY_HOST', None)
         if self._push_gateway_host:
             self._registry = CollectorRegistry()
-            self._additional_kwargs['registry'] = self._registry
+        else:
+            self._registry = REGISTRY
 
     @property
     def accepted_gauge_params(self):
@@ -101,8 +102,9 @@ class PrometheusMetrics(HqMetrics):
         metric = self._metrics.get(name)
         if not metric:
             tags = tags or {}
-            kwargs = {**kwargs, **self._additional_kwargs}
-            metric = metric_type(name, documentation, labelnames=tags.keys(), **kwargs)
+            metric = metric_type(
+                name, documentation, labelnames=tags.keys(), registry=self._registry, **kwargs
+            )
             self._metrics[name] = metric
         else:
             assert metric.__class__ == metric_type
@@ -119,10 +121,11 @@ class PrometheusMetrics(HqMetrics):
 
     def push_metrics(self):
         if self._push_gateway_host:
+            registry = self._registry
+            self._metrics.clear()
+            self._registry = CollectorRegistry()
+
             try:
-                pushadd_to_gateway(self._push_gateway_host, job='celery', registry=self._registry)
+                pushadd_to_gateway(self._push_gateway_host, job='celery', registry=registry)
             except Exception:
                 prometheus_soft_assert(False, 'Prometheus metric error while pushing to gateway')
-            finally:
-                # force re-creating metrics to prevent accumulating values
-                self._metrics.clear()
