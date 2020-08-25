@@ -48,9 +48,10 @@ def update_keyword(domain_link, keyword_id):
         for prop in ['action', 'recipient', 'message_content']:
             setattr(linked_keywordaction, prop, getattr(master_keywordaction, prop))
 
-        app_id = get_master_app_to_linked_app(domain_link.linked_domain)[master_keywordaction.app_id]
-        if linked_keywordaction.app_id != app_id:
-            linked_keywordaction.app_id = app_id
+        if master_keywordaction.app_id:
+            app_id = get_master_app_to_linked_app(domain_link.linked_domain)[master_keywordaction.app_id]
+            if linked_keywordaction.app_id != app_id:
+                    linked_keywordaction.app_id = app_id
 
         linked_keywordaction.save()
 

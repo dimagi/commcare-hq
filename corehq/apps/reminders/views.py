@@ -365,7 +365,7 @@ def link_keywords(request, domain):
             request,
             _(f"Successfully linked and copied to {', '.join(successes)}. "))
     if failures:
-        messages.error(request, _(f"Due to errors, the report was not copied to {', '.join(failures)}"))
+        messages.error(request, _(f"Due to errors, some keywords were not copied to {', '.join(failures)}"))
 
     return HttpResponseRedirect(
         reverse(KeywordsListView.urlname, args=[from_domain])
