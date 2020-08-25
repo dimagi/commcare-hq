@@ -8,6 +8,7 @@ from corehq.apps.api.resources.auth import LoginAuthentication, LoginAndDomainAu
     RequirePermissionAuthentication
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, HQApiKey, Permissions, UserRole
+from corehq.util.test_utils import softer_assert
 
 
 class AuthenticationTestBase(TestCase):
@@ -30,6 +31,12 @@ class AuthenticationTestBase(TestCase):
     def _get_request_with_api_key(self, domain=None):
         return self._get_request(domain,
                                  HTTP_AUTHORIZATION=self._contruct_api_auth_header(self.username, self.api_key))
+
+    def _get_request_with_basic_auth(self, domain=None):
+        return self._get_request(
+            domain,
+            HTTP_AUTHORIZATION=self._contruct_basic_auth_header(self.username, self.password)
+        )
 
     def _contruct_api_auth_header(self, username, api_key):
         return f'ApiKey {username}:{api_key.key}'
@@ -72,6 +79,9 @@ class LoginAuthenticationTest(AuthenticationTestBase):
     def test_login_with_auth(self):
         self.assertAuthenticationSuccess(LoginAuthentication(), self._get_request_with_api_key())
 
+    def test_auth_type_basic(self):
+        self.assertAuthenticationSuccess(LoginAuthentication(), self._get_request_with_basic_auth())
+
 
 class LoginAndDomainAuthenticationTest(AuthenticationTestBase):
 
@@ -90,6 +100,15 @@ class LoginAndDomainAuthenticationTest(AuthenticationTestBase):
         self.addCleanup(project.delete)
         self.assertAuthenticationFail(LoginAndDomainAuthentication(),
                                       self._get_request_with_api_key(domain=project.name))
+
+    @softer_assert()  # prevent "None is invalid domain" asserts
+    def test_auth_type_basic_no_domain(self):
+        self.assertAuthenticationFail(LoginAndDomainAuthentication(),
+                                      self._get_request_with_basic_auth())
+
+    def test_auth_type_basic_with_domain(self):
+        self.assertAuthenticationSuccess(LoginAndDomainAuthentication(),
+                                         self._get_request_with_basic_auth(domain=self.domain))
 
 
 class RequirePermissionAuthenticationTest(AuthenticationTestBase):
