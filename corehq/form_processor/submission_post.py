@@ -215,10 +215,10 @@ class SubmissionPost(object):
             return FormProcessingResponse(failure_response, None, [], [], 'known_failures')
 
         context = form_submission_context_class()(self)
-        with context:
-            self.instance = context.get_instance()
-            result = process_xform_xml(self.domain, self.instance, self.attachments, self.auth_context.to_json())
-            context.post_process_form(result.submitted_form)
+        context.pre_process_form()
+        self.instance = context.get_instance()
+        result = process_xform_xml(self.domain, self.instance, self.attachments, self.auth_context.to_json())
+        context.post_process_form(result.submitted_form)
 
         submitted_form = result.submitted_form
         if submitted_form.is_submission_error_log:

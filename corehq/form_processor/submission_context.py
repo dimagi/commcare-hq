@@ -13,12 +13,6 @@ class SubmissionFormContext(object):
         self.submission_post = submission_post
         self._instance = submission_post.instance
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *exc_info):
-        pass
-
     def get_instance_xml(self):
         try:
             return xml2json.get_xml_from_string(self._instance)
@@ -30,6 +24,10 @@ class SubmissionFormContext(object):
 
     def update_instance(self, xml):
         self._instance = lxml.etree.tostring(xml)
+
+    def pre_process_form(self):
+        # over write this method to add pre processing to form
+        pass
 
     def post_process_form(self, xform):
         self.submission_post.set_submission_properties(xform)
