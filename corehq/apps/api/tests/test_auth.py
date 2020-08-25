@@ -161,7 +161,7 @@ class RequirePermissionAuthenticationTest(AuthenticationTestBase):
                                           )
                                       ))
 
-    def test_login_with_explicit_permission(self):
+    def test_login_with_explicit_permission_default(self):
         api_key_with_permissions, _ = HQApiKey.objects.get_or_create(
             user=WebUser.get_django_user(self.user_with_permission)
         )
@@ -174,6 +174,34 @@ class RequirePermissionAuthenticationTest(AuthenticationTestBase):
                                              )
                                          ))
 
+    def test_login_with_explicit_permission_and_roles(self):
+        api_key_with_explicit_permissions, _ = HQApiKey.objects.get_or_create(
+            user=WebUser.get_django_user(self.user_with_permission),
+            name='explicit_with_permission',
+            role_id=self.role_with_permission.get_id,
+        )
+        api_key_without_explicit_permissions, _ = HQApiKey.objects.get_or_create(
+            user=WebUser.get_django_user(self.user_with_permission),
+            name='explicit_without_permission',
+            role_id=self.role_without_permission.get_id,
+        )
+        self.assertAuthenticationSuccess(self.require_edit_data,
+                                         self._get_request(
+                                             domain=self.domain,
+                                             HTTP_AUTHORIZATION=self._contruct_api_auth_header(
+                                                 self.user_with_permission.username,
+                                                 api_key_with_explicit_permissions
+                                             )
+                                         ))
+        self.assertAuthenticationFail(self.require_edit_data,
+                                      self._get_request(
+                                          domain=self.domain,
+                                          HTTP_AUTHORIZATION=self._contruct_api_auth_header(
+                                              self.user_with_permission.username,
+                                              api_key_without_explicit_permissions
+                                          )
+                                      ))
+
     def test_login_with_wrong_permission(self):
         api_key_without_permissions, _ = HQApiKey.objects.get_or_create(
             user=WebUser.get_django_user(self.user_without_permission)
@@ -184,5 +212,35 @@ class RequirePermissionAuthenticationTest(AuthenticationTestBase):
                                           HTTP_AUTHORIZATION=self._contruct_api_auth_header(
                                               self.user_without_permission.username,
                                               api_key_without_permissions
+                                          )
+                                      ))
+
+    def test_login_with_wrong_permission_explicit_roles(self):
+        api_key_with_explicit_permissions, _ = HQApiKey.objects.get_or_create(
+            user=WebUser.get_django_user(self.user_without_permission),
+            name='explicit_with_permission',
+            role_id=self.role_with_permission.get_id,
+        )
+        api_key_without_explicit_permissions, _ = HQApiKey.objects.get_or_create(
+            user=WebUser.get_django_user(self.user_without_permission),
+            name='explicit_without_permission',
+            role_id=self.role_without_permission.get_id,
+        )
+        # both of these should fail since the user shouldn't be allowed API access
+        # to a role they don't have
+        self.assertAuthenticationFail(self.require_edit_data,
+                                      self._get_request(
+                                          domain=self.domain,
+                                          HTTP_AUTHORIZATION=self._contruct_api_auth_header(
+                                              self.user_without_permission.username,
+                                              api_key_with_explicit_permissions
+                                          )
+                                      ))
+        self.assertAuthenticationFail(self.require_edit_data,
+                                      self._get_request(
+                                          domain=self.domain,
+                                          HTTP_AUTHORIZATION=self._contruct_api_auth_header(
+                                              self.user_without_permission.username,
+                                              api_key_without_explicit_permissions
                                           )
                                       ))

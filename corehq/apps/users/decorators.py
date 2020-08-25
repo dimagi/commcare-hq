@@ -76,7 +76,11 @@ def require_api_permission(permission, data=None, login_decorator=login_and_doma
     def permission_check(request, domain):
         if getattr(request, 'api_key') and request.api_key.role:
             role = request.api_key.role
-            return role.domain == domain and role.permissions.has(permission, data)
+            return (
+                role.domain == domain
+                and request.couch_user.has_permission(domain, permission, data=data)
+                and role.permissions.has(permission, data)
+            )
         else:
             return request.couch_user.has_permission(domain, permission, data=data)
 
