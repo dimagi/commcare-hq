@@ -1,5 +1,6 @@
 import logging
 import lxml.etree
+from memoized import memoized
 import xml2json
 from collections import namedtuple
 
@@ -23,6 +24,7 @@ from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, Use
     CaseValueError
 from corehq.apps.receiverwrapper.rate_limiter import report_submission_usage
 from corehq.const import OPENROSA_VERSION_3
+from corehq.form_processor.extension_points import get_submission_post_form_processor_class
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.toggles import ASYNC_RESTORE, SUMOLOGIC_LOGS, NAMESPACE_OTHER
 from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
@@ -91,7 +93,7 @@ class SubmissionPost(object):
 
         self.is_openrosa_version3 = openrosa_headers.get(OPENROSA_VERSION_HEADER, '') == OPENROSA_VERSION_3
         self.track_load = form_load_counter("form_submission", domain)
-        self.form_processor = SubmissionPostFormProcessor(
+        self.form_processor = form_submission_context_class()(
             domain=domain, instance=instance, attachments=attachments, auth_context=auth_context,
             submit_ip=submit_ip, path=path, openrosa_headers=openrosa_headers, last_sync_token=last_sync_token,
             received_on=received_on, date_header=date_header, app_id=app_id, build_id=build_id,
@@ -609,3 +611,8 @@ class SubmissionPostFormProcessor(object):
 
     def update_instance(self, xml):
         self._instance = lxml.etree.tostring(xml)
+
+
+@memoized
+def form_submission_context_class():
+    return get_submission_post_form_processor_class() or SubmissionPostFormProcessor
