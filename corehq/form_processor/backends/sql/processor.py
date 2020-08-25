@@ -5,6 +5,7 @@ from itertools import chain
 
 import redis
 from contextlib import ExitStack
+from django.conf import settings
 from django.db import transaction, DatabaseError, router
 from lxml import etree
 
@@ -361,7 +362,7 @@ def get_tracked_objects_db_names(form, raise_error_if_saved=False):
                 raise XFormSaveError(
                     '{} {} has already been saved'.format(type(model), model.pk)
                 )
-            if isinstance(model, PartitionedModel):
+            if settings.USE_PARTITIONED_DATABASE and isinstance(model, PartitionedModel):
                 db_names.add(model.db)
             else:
                 db_names.add(router.db_for_write(type(model)))
