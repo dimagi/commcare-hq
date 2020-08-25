@@ -1,3 +1,5 @@
+/* globals process */
+
 module.exports = function(grunt) {
     var headless = require('mocha-headless-chrome'),
         _ = require('lodash'),
@@ -38,9 +40,11 @@ module.exports = function(grunt) {
     ];
 
     var custom = [
-        'icds_reports',
         'champ',
     ];
+
+    var extensions = _.split(process.env.JS_TEST_EXTENSIONS || '', ','),
+    testPaths = _.filter(_.concat(apps, custom, extensions), function (path) { return path !== ''; });
 
     var runTest = function (queuedTests, taskPromise, finishedTests, failures) {
         if (finishedTests === undefined) {
@@ -113,7 +117,7 @@ module.exports = function(grunt) {
         'test',
         'Runs Javascript Tests. Pass in an argument to run a specific test',
         function (arg) {
-            var paths = _.concat(apps, custom);
+            var paths = testPaths;
             if (arg) {
                 paths = [arg];
             }
@@ -124,6 +128,6 @@ module.exports = function(grunt) {
     );
 
     grunt.registerTask('list', 'Lists all available apps to test', function() {
-        apps.forEach(function(app) { console.log(app); });
+        testPaths.forEach(function (app) { console.log('"' + app + '"'); });
     });
 };
