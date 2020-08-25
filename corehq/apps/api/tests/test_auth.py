@@ -1,3 +1,5 @@
+import base64
+
 from django.contrib.auth.models import AnonymousUser
 from django.http import HttpResponse
 from django.test import TestCase, RequestFactory
@@ -31,6 +33,11 @@ class AuthenticationTestBase(TestCase):
 
     def _contruct_api_auth_header(self, username, api_key):
         return f'ApiKey {username}:{api_key.key}'
+
+    def _contruct_basic_auth_header(self, username, password):
+        # https://stackoverflow.com/q/5495452/8207
+        encoded_auth = base64.b64encode(bytes(f'{username}:{password}', 'utf8')).decode('utf8')
+        return f'Basic {encoded_auth}'
 
     def _get_request(self, domain=None, **extras):
         path = self._get_domain_path() if domain else ''
@@ -279,3 +286,12 @@ class RequirePermissionAuthenticationTest(AuthenticationTestBase):
                                           domain=project.name,
                                           HTTP_AUTHORIZATION=scoped_auth_header
                                       ))
+
+    def test_auth_type_basic(self):
+        self.assertAuthenticationSuccess(
+            self.require_edit_data,
+            self._get_request(
+                domain=self.domain,
+                HTTP_AUTHORIZATION=self._contruct_basic_auth_header(self.domain_admin.username, self.password)
+            )
+        )
