@@ -1,3 +1,4 @@
+from threading import Lock
 from typing import Dict, List
 
 from django.conf import settings
@@ -19,6 +20,14 @@ prometheus_soft_assert = soft_assert(to=[
 ])
 
 
+class NullLock:
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+
 class PrometheusMetrics(HqMetrics):
     """Prometheus Metrics Provider"""
 
@@ -27,8 +36,10 @@ class PrometheusMetrics(HqMetrics):
         self._additional_kwargs = {}
         self._push_gateway_host = getattr(settings, 'PROMETHEUS_PUSHGATEWAY_HOST', None)
         if self._push_gateway_host:
+            self._lock = Lock()
             self._registry = CollectorRegistry()
         else:
+            self._lock = NullLock()
             self._registry = REGISTRY
 
     @property
@@ -99,15 +110,16 @@ class PrometheusMetrics(HqMetrics):
         if isinstance(metric_type, PCounter) and name.endswith('_total'):
             # this suffix get's added to counter metrics by the Prometheus client
             name = name[:-6]
-        metric = self._metrics.get(name)
-        if not metric:
-            tags = tags or {}
-            metric = metric_type(
-                name, documentation, labelnames=tags.keys(), registry=self._registry, **kwargs
-            )
-            self._metrics[name] = metric
-        else:
-            assert metric.__class__ == metric_type
+        with self._lock:
+            metric = self._metrics.get(name)
+            if not metric:
+                tags = tags or {}
+                metric = metric_type(
+                    name, documentation, labelnames=tags.keys(), registry=self._registry, **kwargs
+                )
+                self._metrics[name] = metric
+            else:
+                assert metric.__class__ == metric_type
         try:
             return metric.labels(**tags) if tags else metric
         except ValueError as e:
@@ -121,9 +133,10 @@ class PrometheusMetrics(HqMetrics):
 
     def push_metrics(self):
         if self._push_gateway_host:
-            registry = self._registry
-            self._metrics.clear()
-            self._registry = CollectorRegistry()
+            with self._lock:
+                registry = self._registry
+                self._metrics.clear()
+                self._registry = CollectorRegistry()
 
             try:
                 pushadd_to_gateway(self._push_gateway_host, job='celery', registry=registry)
