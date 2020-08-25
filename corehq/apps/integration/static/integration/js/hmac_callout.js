@@ -94,7 +94,5 @@ hqDefine("integration/js/hmac_callout", [
         unsignedCallout: unsignedCallout,
     };
 
-    window.HMACCallout = moduleMap;
-
     return moduleMap;
 });

@@ -210,9 +210,20 @@ hqDefine('cloudcare/js/util',['hqwebapp/js/initial_page_data', 'integration/js/h
         };
     }
 
+    var addDelegatedClickDispatch = function (linkTarget, linkDestination) {
+        document.addEventListener('click', function (event) {
+            if (event.target.target == linkTarget) {
+                linkDestination(event.target);
+                event.preventDefault();
+            }
+        }, true);
+    };
+
     var injectMarkdownAnchorTransforms = function () {
         if (window.mdAnchorRender) {
+            var HMACCallout = hqImport('integration/js/hmac_callout');
             var renderers = [];
+
             if (initialPageData.get('dialer_enabled')) {
                 renderers.push(chainedRenderer(
                     function (href) { return href.startsWith("tel://"); },
@@ -224,42 +235,35 @@ hqDefine('cloudcare/js/util',['hqwebapp/js/initial_page_data', 'integration/js/h
                     "dialer"
                 ));
             }
+
             if (initialPageData.get('gaen_otp_enabled')) {
                 renderers.push(chainedRenderer(
                     function (href) { return href.startsWith("cchq://passthrough/gaen_otp/"); },
                     function (href, hIndex, anchor) {
                         var params = href.substring("cchq://passthrough/gaen_otp/".length);
                         var url = initialPageData.reverse("gaen_otp_view");
-
                         anchor.attrs[hIndex][1] = url + params
-
-                        var aIndex = anchor.attrIndex('onclick');
-                        var clickBody = "HMACCallout.unsignedCallout(this,'otp_view',true);return false;";
-
-                        if (aIndex < 0) {
-                            anchor.attrPush(['onclick', clickBody]);
-                        } else {
-                            anchor[aIndex][1] = clickBody;
-                        }
                     },
                     "gaen_otp"
                 ));
+                addDelegatedClickDispatch('gaen_otp',
+                    function(element) {
+                        HMACCallout.unsignedCallout(element, 'otp_view', true);
+                    });
             }
+
             if (initialPageData.get('hmac_root_url')) {
                 renderers.push(chainedRenderer(
                     function (href) { return href.startsWith(initialPageData.get('hmac_root_url')); },
-                    function (href, hIndex, anchor) {
-                        var aIndex = anchor.attrIndex('onclick');
-                        var clickBody = "HMACCallout.signedCallout(this);return false;";
-                        if (aIndex < 0) {
-                            anchor.attrPush(['onclick', clickBody]);
-                        } else {
-                            anchor[aIndex][1] = clickBody;
-                        }
-                    },
+                    function (href, hIndex, anchor) {},
                     "hmac_callout"
                 ));
+                addDelegatedClickDispatch('hmac_callout',
+                    function(element) {
+                        HMACCallout.signedCallout(element);
+                    });
             }
+
             window.mdAnchorRender = function (tokens, idx, options, env, self) {
                 renderers.forEach(function (r) {
                     r(tokens, idx, options, env, self);
