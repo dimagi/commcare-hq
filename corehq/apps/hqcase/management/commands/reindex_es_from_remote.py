@@ -61,26 +61,26 @@ class Command(BaseCommand):
         )
 
     def handle(self, index_name, es2_remote_host, **options):
-        assert index_name in ES_META
+        assert index_name in ES_META, "Index name should be one of " + str(ES_META.keys())
         self.index_info = ES_META[index_name]
         self.index = self.index_info.index
         self.es2_remote_host = es2_remote_host
         # Cancelled/failed reindex queries are tracked to be retried
         self.cancelled_queries = []
+        self.es = get_es_export()
         if index_name not in ["forms", "cases"] and (options.get('start_date') or options.get('end_date')):
             raise CommandError("start and end dates are supported only for form/case indices")
-
-        self.es = get_es_export()
-
-        if index_name in ["forms", "cases"]:
-            start_date = options.get('start_date') or '2000-01-01'
-            end_date = options.get('end_date') or datetime.today().strftime('%Y-%m-%d')
+        elif index_name in ["forms", "cases"]:
+            start_date = options.get('start_date')
+            end_date = options.get('end_date')
+            assert bool(start_date) == bool(end_date), ("Please provide both start date and end date"
+                "to reindex a given range or niether to reindex all of data")
         else:
             start_date, end_date = None, None
         local_count = self.get_es7_count(start_date, end_date)
         remote_count = self.get_es2_count(start_date, end_date)
         print("Number of docs in remote ES2 index", remote_count)
-        print("Number of docs in local ES7 index", local_count)
+        print("Number of docs in local ES7 index", local_count, "\n")
 
         if options.get("print_index_size"):
             return
@@ -128,39 +128,38 @@ class Command(BaseCommand):
         # Initialize reindex and poll the reindex status using the tasks API
         # Cancels the queries if the reindex is stuck for any reason and tracks it
         # under self.cancelled_queries to be prompted for retry
-        print("query is ", reindex_query)
+        print("Running reindex query ", reindex_query)
         result = self.es.reindex(reindex_query, wait_for_completion=False, request_timeout=300)
-        print("Result task is ", result)
+        print("Reindex is in progress, task id is ", result, "Progress is displayed every 5 seconds")
         task_id = result["task"]
         node_id = task_id.split(":")[0]
-        task_finished = False
+        prev_running_time = False
+        curr_running_time = True
         no_progress_loops = 0
         last_updated_count = 0
         last_create_count = 0
-        while not task_finished:
-            try:
-                task = self.es.tasks.list(task_id=task_id, params={"detailed": True})["nodes"][node_id]["tasks"][task_id]
-                status = task["status"]
-                print("Updated/Created/Total: ", status["updated"], status["created"], status["total"])
-                if last_updated_count != status["updated"] or last_create_count != status["created"]:
-                    last_updated_count = status["updated"]
-                    last_create_count = status["created"]
-                    # reset progress
-                    no_progress_loops = 0
-                else:
-                    no_progress_loops += 1
-                if no_progress_loops == 10:
-                    self.es.tasks.cancel(task_id=task_id)
-                    self.cancelled_queries.append(query)
-                    raise Exception("Cancelling task that didn't progress in last 1.6mins {}".format(str(query)))
-                running_time_in_mins = (task["running_time_in_nanos"] / 60000000000)
-                print("Running time total in mins ", running_time_in_mins)
-            except Exception as e:
-                task_finished = True
-                print(e)
-                print("This could mean task finished succesfully")
-                return
-            time.sleep(20)
+        while curr_running_time != prev_running_time:
+            prev_running_time = curr_running_time
+            task = self.es.tasks.get(task_id=task_id)["task"]
+            status = task["status"]
+            import pdb; pdb.set_trace()
+            print("Updated/Created/Total: ", status["updated"], status["created"], status["total"])
+            if last_updated_count != status["updated"] or last_create_count != status["created"]:
+                last_updated_count = status["updated"]
+                last_create_count = status["created"]
+                # reset progress
+                no_progress_loops = 0
+            else:
+                no_progress_loops += 1
+            if no_progress_loops == 10:
+                self.es.tasks.cancel(task_id=task_id)
+                self.cancelled_queries.append(query)
+                print("Cancelling task that didn't progress in last 1.6mins {}".format(str(query)))
+            curr_running_time = task["running_time_in_nanos"]
+            running_time_in_mins = (curr_running_time / 60000000000)
+            print("Running time total in mins so far", running_time_in_mins, "\n")            
+            time.sleep(5)
+        print("Current reindex task is finished")
 
     def _range_query(self, start_date, end_date):
         def format_date(date):
