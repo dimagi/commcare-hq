@@ -1,7 +1,7 @@
 hqDefine("sms/js/compose",[
     "jquery",
     "hqwebapp/js/initial_page_data",
-    'jquery-ui/ui/sortable',
+    'jquery-ui/ui/widgets/sortable',
     "hqwebapp/js/bootstrap-multi-typeahead",
 ], function ($, intialPageData) {
     $(function () {
