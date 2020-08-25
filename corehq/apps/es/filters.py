@@ -15,7 +15,6 @@ Contributing:
 Additions to this file should be added to the ``builtin_filters`` method on
 either ESQuery or HQESQuery, as appropriate (is it an HQ thing?).
 """
-from django.conf import settings
 
 
 def match_all():

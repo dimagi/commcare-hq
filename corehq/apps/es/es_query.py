@@ -476,11 +476,7 @@ class ESQuery(object):
 
     def count(self):
         """Performs a minimal query to get the count of matching documents"""
-        total = self.size(0).run().total
-        if settings.ELASTICSEARCH_MAJOR_VERSION == 7 and isinstance(total, dict):
-            return total.get('value', 0)
-        else:
-            return total
+        return self.size(0).run().total
 
     def get_ids(self):
         """Performs a minimal query to get the ids of the matching documents
