@@ -47,13 +47,13 @@ def get_instance_and_attachment(request):
         except MultiValueDictKeyError:
             instance = MULTIPART_FILENAME_ERROR
         else:
-            if not _valid_form_xml_file(instance_file):
+            if not _valid_xml_extension(instance_file):
                 instance = MULTIPART_INVALID_SUBMISSION_FILE_EXTENSION_ERROR
             else:
                 instance = instance_file.read()
                 for key, item in request.FILES.items():
                     if key != MAGIC_PROPERTY:
-                        if not _valid_attachment_file(item):
+                        if not _valid_attachment_extension(item):
                             instance = MULTIPART_INVALID_ATTACHMENT_FILE_EXTENSION_ERROR
                             attachments.clear()
                             break
