@@ -2683,6 +2683,9 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     START_OFFSET_NEGATIVE = 'NEGATIVE'
     START_OFFSET_POSITIVE = 'POSITIVE'
 
+    MIN_SMS_STALE_INTERVAL = 0
+    MAX_SMS_STALE_INTERVAL = 30
+
     use_case = 'conditional_alert'
 
     # start_date is defined on the superclass but cleaning it in this subclass
@@ -2814,6 +2817,13 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     stop_date_case_property_name = TrimmedCharField(
         label='',
         required=False,
+    )
+
+    sms_stale_after = IntegerField(
+        label='Make SMS stale after (days)',
+        required=False,
+        min_value=MIN_SMS_STALE_INTERVAL,
+        max_value=MAX_SMS_STALE_INTERVAL,
     )
 
     allow_custom_immediate_schedule = True
@@ -2951,7 +2961,13 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             len(self.initial_schedule.custom_metadata) > 0
         ):
             result['capture_custom_metadata_item'] = self.YES
-            for name, value in self.initial_schedule.custom_metadata.items():
+            custom_metadata = self.initial_schedule.custom_metadata
+
+            default_stale_interval_in_days = int(settings.SMS_QUEUE_STALE_MESSAGE_DURATION / 24)
+            sms_stale_after = custom_metadata.pop('sms_stale_after', default_stale_interval_in_days)
+            result['sms_stale_after'] = sms_stale_after
+
+            for name, value in custom_metadata.items():
                 result['custom_metadata_item_name'] = name
                 result['custom_metadata_item_value'] = value
                 # We only capture one item right now, but the framework allows
@@ -3152,10 +3168,15 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 ),
             ),
         ])
+        result.extend([
+            crispy.Div(
+                twbscrispy.Field('sms_stale_after')
+            )
+        ])
 
         if (
-            self.is_system_admin or
-            self.initial.get('capture_custom_metadata_item') == self.YES
+            self.is_system_admin
+            or self.initial.get('capture_custom_metadata_item') == self.YES
         ):
             result.extend([
                 hqcrispy.B3MultiField(
@@ -3404,6 +3425,17 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
         return value
 
+    def clean_sms_stale_after(self):
+        value = self.cleaned_data.get('sms_stale_after')
+        if not value:
+            return None
+        if value < self.MIN_SMS_STALE_INTERVAL or value > self.MAX_SMS_STALE_INTERVAL:
+            raise ValidationError(_("Minimum value can be {min} days and maximum value can be 30 days").format(
+                min=self.MIN_SMS_STALE_INTERVAL,
+                max=self.MAX_SMS_STALE_INTERVAL
+            ))
+        return value
+
     def distill_start_offset(self):
         send_frequency = self.cleaned_data.get('send_frequency')
         start_offset_type = self.cleaned_data.get('start_offset_type')
@@ -3494,6 +3526,11 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             }
         else:
             extra_options['custom_metadata'] = {}
+
+        sms_stale_after = self.cleaned_data.get('sms_stale_after', None)
+        default_stale_interval_in_days = int(settings.SMS_QUEUE_STALE_MESSAGE_DURATION / 24)
+        if sms_stale_after and sms_stale_after != default_stale_interval_in_days:
+            extra_options['custom_metadata']['sms_stale_after'] = sms_stale_after
 
         extra_options['stop_date_case_property_name'] = self.cleaned_data['stop_date_case_property_name']
 
