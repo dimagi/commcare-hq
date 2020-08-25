@@ -83,7 +83,7 @@ def _valid_file_extension(file, permitted_extensions):
     return file_extension in permitted_extensions
 
 
-def _valid_attachment_file(file):
+def _valid_attachment_extension(file):
     return _valid_file_extension(file, SUPPORTED_MEDIA_FILE_EXTENSIONS)
 
 
