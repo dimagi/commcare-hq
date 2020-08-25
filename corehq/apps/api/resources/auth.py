@@ -26,7 +26,7 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.users.decorators import (
     require_permission,
     require_permission_raw,
-)
+    require_api_permission)
 from corehq.toggles import API_THROTTLE_WHITELIST, IS_CONTRACTOR
 
 
@@ -157,7 +157,7 @@ class RequirePermissionAuthentication(LoginAndDomainAuthentication):
 
     def is_authenticated(self, request, **kwargs):
         wrappers = [
-            require_permission(self.permission, login_decorator=self._get_auth_decorator(request)),
+            require_api_permission(self.permission, login_decorator=self._get_auth_decorator(request)),
             wrap_4xx_errors_for_apis,
         ]
         return self._auth_test(request, wrappers=wrappers, **kwargs)
