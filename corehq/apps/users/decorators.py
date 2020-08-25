@@ -16,17 +16,30 @@ from corehq.apps.users.models import CommCareUser, CouchUser
 
 def require_permission_raw(permission_check,
                            login_decorator=login_and_domain_required,
-                           view_only_permission_check=None):
+                           view_only_permission_check=None,
+                           permission_check_v2=None):
     """
     A way to do more fine-grained permissions via decorator. The permission_check should be
     a function that takes in a couch_user and a domain and returns True if that user can access
     the page, otherwise false.
+
+    If `permission_check_v2` is specified it will be used instead of permission_check.
+    This is to allow for changing the permission-checking API without having to update every
+    call at the same time.
+
+    permission_check_v2 takes in a *request* instead of a *user* so it can do more explicit
+    checking (e.g. check the exact API key that was used).
     """
     def decorator(view_func):
         @wraps(view_func)
         def _inner(request, domain, *args, **kwargs):
             if not hasattr(request, "couch_user"):
                 return redirect_for_login_or_domain(request)
+            elif permission_check_v2 is not None:
+                if permission_check_v2(request, domain):
+                    return view_func(request, domain, *args, **kwargs)
+                else:
+                    raise PermissionDenied()
             elif request.user.is_superuser or permission_check(request.couch_user, domain):
                 request.is_view_only = False
                 return view_func(request, domain, *args, **kwargs)
@@ -55,6 +68,23 @@ def get_permission_name(permission):
             return permission.__name__
         except AttributeError:
             return None
+
+
+def require_api_permission(permission, data=None, login_decorator=login_and_domain_required):
+    permission = get_permission_name(permission) or permission
+
+    def permission_check(request, domain):
+        if getattr(request, 'api_key') and request.api_key.role:
+            role = request.api_key.role
+            return role.domain == domain and role.permissions.has(permission, data)
+        else:
+            return request.couch_user.has_permission(domain, permission, data=data)
+
+    return require_permission_raw(
+        None, login_decorator,
+        view_only_permission_check=None,
+        permission_check_v2=permission_check,
+    )
 
 
 def require_permission(permission,
