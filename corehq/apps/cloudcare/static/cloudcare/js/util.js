@@ -212,7 +212,7 @@ hqDefine('cloudcare/js/util',['hqwebapp/js/initial_page_data', 'integration/js/h
 
     var addDelegatedClickDispatch = function (linkTarget, linkDestination) {
         document.addEventListener('click', function (event) {
-            if (event.target.target == linkTarget) {
+            if (event.target.target === linkTarget) {
                 linkDestination(event.target);
                 event.preventDefault();
             }
@@ -247,7 +247,7 @@ hqDefine('cloudcare/js/util',['hqwebapp/js/initial_page_data', 'integration/js/h
                     "gaen_otp"
                 ));
                 addDelegatedClickDispatch('gaen_otp',
-                    function(element) {
+                    function (element) {
                         HMACCallout.unsignedCallout(element, 'otp_view', true);
                     });
             }
@@ -255,11 +255,11 @@ hqDefine('cloudcare/js/util',['hqwebapp/js/initial_page_data', 'integration/js/h
             if (initialPageData.get('hmac_root_url')) {
                 renderers.push(chainedRenderer(
                     function (href) { return href.startsWith(initialPageData.get('hmac_root_url')); },
-                    function (href, hIndex, anchor) {},
+                    function () {},
                     "hmac_callout"
                 ));
                 addDelegatedClickDispatch('hmac_callout',
-                    function(element) {
+                    function (element) {
                         HMACCallout.signedCallout(element);
                     });
             }
