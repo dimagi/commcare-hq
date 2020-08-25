@@ -15,7 +15,6 @@ from django.utils.translation import ugettext as _
 import sys
 
 from casexml.apps.case.xform import close_extension_cases
-from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
 import couchforms
 from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, UsesReferrals, InvalidCaseIndex, \
     CaseValueError
@@ -23,7 +22,7 @@ from corehq.apps.receiverwrapper.rate_limiter import report_submission_usage
 from corehq.const import OPENROSA_VERSION_3
 from corehq.form_processor.submission_context import form_submission_context_class
 from corehq.middleware import OPENROSA_VERSION_HEADER
-from corehq.toggles import ASYNC_RESTORE, SUMOLOGIC_LOGS, NAMESPACE_OTHER
+from corehq.toggles import SUMOLOGIC_LOGS, NAMESPACE_OTHER
 from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
@@ -45,7 +44,6 @@ from couchforms.openrosa_response import OpenRosaResponse, ResponseNature
 from dimagi.utils.logging import notify_exception, log_signal_errors
 from phonelog.utils import process_device_log, SumoLogicLog
 
-from celery.task.control import revoke as revoke_celery_task
 
 CaseStockProcessingResult = namedtuple(
     'CaseStockProcessingResult',
@@ -69,23 +67,18 @@ class SubmissionPost(object):
         assert domain, "'domain' is required"
         assert instance, instance
         assert not isinstance(instance, HttpRequest), instance
+
+        openrosa_headers = openrosa_headers or {}
+
         self.domain = domain
-        self.app_id = app_id
-        self.build_id = build_id
         # get_location has good default
         self.location = location or couchforms.get_location()
-        self.received_on = received_on
-        self.date_header = date_header
-        self.submit_ip = submit_ip
-        self.last_sync_token = last_sync_token
-        self.openrosa_headers = openrosa_headers or {}
         self.instance = instance
         self.attachments = attachments or {}
         self.auth_context = auth_context or DefaultAuthContext()
         self.path = path
         self.interface = FormProcessorInterface(domain)
         self.formdb = FormAccessors(domain)
-        self.partial_submission = partial_submission
         # always None except in the case where a system form is being processed as part of another submission
         # e.g. for closing extension cases
         self.case_db = case_db
@@ -93,29 +86,12 @@ class SubmissionPost(object):
             assert case_db.domain == domain
         self.force_logs = force_logs
 
-        self.is_openrosa_version3 = self.openrosa_headers.get(OPENROSA_VERSION_HEADER, '') == OPENROSA_VERSION_3
+        self.is_openrosa_version3 = openrosa_headers.get(OPENROSA_VERSION_HEADER, '') == OPENROSA_VERSION_3
         self.track_load = form_load_counter("form_submission", domain)
-
-    def set_submission_properties(self, xform):
-        # attaches shared properties of the request to the document.
-        # used on forms and errors
-        xform.submit_ip = self.submit_ip
-        xform.path = self.path
-
-        xform.openrosa_headers = self.openrosa_headers
-        xform.last_sync_token = self.last_sync_token
-
-        if self.received_on:
-            xform.received_on = self.received_on
-
-        if self.date_header:
-            xform.date_header = self.date_header
-
-        xform.app_id = self.app_id
-        xform.build_id = self.build_id
-        xform.export_tag = ["domain", "xmlns"]
-        xform.partial_submission = self.partial_submission
-        return xform
+        self.submission_context = form_submission_context_class()(
+            domain, instance, submit_ip, path, openrosa_headers, last_sync_token, received_on,
+            date_header, app_id, build_id, partial_submission
+        )
 
     def _handle_known_error(self, error, instance, xforms):
         # errors we know about related to the content of the form
@@ -214,11 +190,10 @@ class SubmissionPost(object):
         if failure_response:
             return FormProcessingResponse(failure_response, None, [], [], 'known_failures')
 
-        context = form_submission_context_class()(self)
-        context.pre_process_form()
-        self.instance = context.get_instance()
+        self.submission_context.pre_process_form()
+        self.instance = self.submission_context.get_instance()
         result = process_xform_xml(self.domain, self.instance, self.attachments, self.auth_context.to_json())
-        context.post_process_form(result.submitted_form)
+        self.submission_context.post_process_form(result.submitted_form)
 
         submitted_form = result.submitted_form
         if submitted_form.is_submission_error_log:
@@ -327,36 +302,6 @@ class SubmissionPost(object):
         url = getattr(settings, 'SUMOLOGIC_URL', None)
         if url and SUMOLOGIC_LOGS.enabled(instance.form_data.get('device_id'), NAMESPACE_OTHER):
             SumoLogicLog(self.domain, instance).send_data(url)
-
-    def invalidate_caches(self, xform):
-        for device_id in {None, xform.metadata.deviceID if xform.metadata else None}:
-            self._invalidate_restore_payload_path_cache(xform, device_id)
-            if ASYNC_RESTORE.enabled(self.domain):
-                self._invalidate_async_restore_task_id_cache(xform, device_id)
-
-    def _invalidate_restore_payload_path_cache(self, xform, device_id):
-        """invalidate cached initial restores"""
-        restore_payload_path_cache = RestorePayloadPathCache(
-            domain=self.domain,
-            user_id=xform.user_id,
-            sync_log_id=xform.last_sync_token,
-            device_id=device_id,
-        )
-        restore_payload_path_cache.invalidate()
-
-    def _invalidate_async_restore_task_id_cache(self, xform, device_id):
-        async_restore_task_id_cache = AsyncRestoreTaskIdCache(
-            domain=self.domain,
-            user_id=xform.user_id,
-            sync_log_id=self.last_sync_token,
-            device_id=device_id,
-        )
-
-        task_id = async_restore_task_id_cache.get_value()
-
-        if task_id is not None:
-            revoke_celery_task(task_id)
-            async_restore_task_id_cache.invalidate()
 
     @tracer.wrap(name='submission.save_models')
     def save_processed_models(self, case_db, xforms, case_stock_result):
