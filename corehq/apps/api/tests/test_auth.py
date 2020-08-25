@@ -97,10 +97,10 @@ class RequirePermissionAuthenticationTest(AuthenticationTestBase):
         cls.role_without_permission = UserRole.get_or_create_with_permissions(
             cls.domain, Permissions(edit_data=False), 'no-edit-data'
         )
-        cls.domain_admin = WebUser.create(cls.domain, 'domain_admin', '***', None, None, is_admin=True)
-        cls.user_with_permission = WebUser.create(cls.domain, 'permission', '***', None, None,
+        cls.domain_admin = WebUser.create(cls.domain, 'domain_admin', cls.password, None, None, is_admin=True)
+        cls.user_with_permission = WebUser.create(cls.domain, 'permission', cls.password, None, None,
                                                   role_id=cls.role_with_permission.get_id)
-        cls.user_without_permission = WebUser.create(cls.domain, 'no-permission', '***', None, None,
+        cls.user_without_permission = WebUser.create(cls.domain, 'no-permission', cls.password, None, None,
                                                      role_id=cls.role_without_permission.get_id)
 
     def test_login_no_auth_no_domain(self):
