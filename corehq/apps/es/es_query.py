@@ -119,10 +119,6 @@ from . import aggregations, filters, queries
 from .utils import flatten_field_dict, values_list
 
 
-FILTERED = "filtered"
-BOOL = "bool"
-
-
 class ESQuery(object):
     """
     This query builder only outputs the following query structure::
@@ -481,11 +477,8 @@ class ESQuery(object):
     def count(self):
         """Performs a minimal query to get the count of matching documents"""
         total = self.size(0).run().total
-        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-            if type(total):
-                return total
-            else:
-                return total.get('value', 0)
+        if settings.ELASTICSEARCH_MAJOR_VERSION == 7 and isinstance(total, dict):
+            return total.get('value', 0)
         else:
             return total
 
@@ -527,8 +520,9 @@ class ESQuerySet(object):
         if query._legacy_fields and not settings.ELASTICSEARCH_MAJOR_VERSION == 7:
             return flatten_field_dict(result, fields_property='_source')
         else:
-            # ES7 scroll for some reason don't include _id in the source even if it's specified
-            if settings.ELASTICSEARCH_MAJOR_VERSION == 7 and getattr(query, '_source', None) and "_id" in query._source:
+            # ES7 scroll for some reason doesn't include _id in the source even if it's specified
+            if (settings.ELASTICSEARCH_MAJOR_VERSION == 7
+                    and getattr(query, '_source', None) and "_id" in query._source):
                 result['_source']['_id'] = result.get('_id', None)
             return result['_source']
 
@@ -554,11 +548,10 @@ class ESQuerySet(object):
     def total(self):
         """Return the total number of docs matching the query."""
         total = self.raw['hits']['total']
-        if type(total) == int:
-            return total
-        else:
-            # some queries in ES7 return a dict
+        if isinstance(total, dict):
             return total.get('value', 0)
+        else:
+            return total
 
     def aggregation(self, name):
         return self.raw['aggregations'][name]
