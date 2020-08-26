@@ -11,6 +11,7 @@ from django.views.decorators.http import require_http_methods, require_POST
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
+from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
@@ -28,8 +29,8 @@ from corehq.motech.models import ConnectionSettings
 
 @method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
 @method_decorator(toggles.DHIS2_INTEGRATION.required_decorator(), name='dispatch')
-class DataSetMapView(BaseProjectSettingsView):
-    urlname = 'dataset_map_view'
+class DataSetMapListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
+    urlname = 'dataset_map_list_view'
     page_title = ugettext_lazy("DHIS2 DataSet Maps")
     template_name = 'dhis2/dataset_map.html'
 
