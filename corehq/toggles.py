@@ -661,6 +661,15 @@ VISIT_SCHEDULER = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+
+MONTIOR_2FA_CHANGES = StaticToggle(
+    'monitor_2fa_changes',
+    'Monitor 2FA activity for SAAS-11210 ticket',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+
 USER_CONFIGURABLE_REPORTS = StaticToggle(
     'user_reports',
     'User configurable reports UI',
