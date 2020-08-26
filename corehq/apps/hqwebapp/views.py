@@ -51,6 +51,7 @@ from memoized import memoized
 from sentry_sdk import last_event_id
 from two_factor.views import LoginView
 
+from corehq.toggles import MONTIOR_2FA_CHANGES
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.sms.event_handlers import handle_email_messaging_subevent
 from corehq.apps.users.event_handlers import handle_email_invite_message
@@ -205,6 +206,11 @@ def redirect_to_default(req, domain=None):
         else:
             url = reverse('login')
     elif domain and _two_factor_needed(domain, req):
+        if MONTIOR_2FA_CHANGES.enabled(domain):
+            from corehq.apps.hqwebapp.utils import monitor_2fa_soft_assert
+            monitor_2fa_soft_assert(False, f'2FA required page shown to user '
+                                           f'{req.user.username} on {domain} after '
+                                           f'login')
         return TemplateResponse(
             request=req,
             template='two_factor/core/otp_required.html',
