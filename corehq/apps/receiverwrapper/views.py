@@ -73,38 +73,10 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         'domain': domain
     }
 
-    try:
-        instance, attachments = couchforms.get_instance_and_attachment(request)
-    except MultimediaBug:
-        try:
-            instance = request.FILES[MAGIC_PROPERTY].read()
-            xform = convert_xform_to_json(instance)
-            meta = xform.get("meta", {})
-        except:
-            meta = {}
+    instance, attachments, response = _get_instance_and_attachments(
+        request, domain, authenticated, metric_tags, app_id, user_id)
 
-        metrics_counter('commcare.corrupt_multimedia_submissions', tags={
-            'domain': domain, 'authenticated': authenticated
-        })
-        return _submission_error(
-            request, "Received a submission with POST.keys()", metric_tags,
-            domain, app_id, user_id, authenticated, meta,
-        )
-
-    if isinstance(instance, BadRequest):
-        response = HttpResponseBadRequest(instance.message)
-        _record_metrics(metric_tags, 'known_failures', response)
-        return response
-
-    if should_ignore_submission(request):
-        # silently ignore submission if it meets ignore-criteria
-        response = openrosa_response.SUBMISSION_IGNORED_RESPONSE
-        _record_metrics(metric_tags, 'ignored', response)
-        return response
-
-    if toggles.FORM_SUBMISSION_BLACKLIST.enabled(domain):
-        response = openrosa_response.BLACKLISTED_RESPONSE
-        _record_metrics(metric_tags, 'blacklisted', response)
+    if response:
         return response
 
     with TimingContext() as timer:
@@ -145,6 +117,61 @@ def _process_form(request, domain, app_id, user_id, authenticated,
     response = result.response
     _record_metrics(metric_tags, result.submission_type, result.response, timer, result.xform)
 
+    return response
+
+
+def _get_instance_and_attachments(request, domain, authenticated,
+                                  metric_tags, app_id, user_id):
+    response, instance, attachments = None, None, None
+    try:
+        instance, attachments = couchforms.get_instance_and_attachment(request)
+    except MultimediaBug:
+        response = _multimedia_bug_response(request, domain, authenticated,
+                                            metric_tags, app_id, user_id)
+    else:
+        if isinstance(instance, BadRequest):
+            response = _bad_request_response(instance.message, metric_tags)
+        # silently ignore submission if it meets ignore-criteria
+        elif should_ignore_submission(instance, request):
+            response = _ignored_submission_response(metric_tags)
+        elif toggles.FORM_SUBMISSION_BLACKLIST.enabled(domain):
+            response = _blacklisted_domain_response(metric_tags)
+    return instance, attachments, response
+
+
+def _multimedia_bug_response(request, domain, authenticated, metric_tags,
+                             app_id, user_id):
+    try:
+        instance = request.FILES[MAGIC_PROPERTY].read()
+        xform = convert_xform_to_json(instance)
+        meta = xform.get("meta", {})
+    except:
+        meta = {}
+
+    metrics_counter('commcare.corrupt_multimedia_submissions', tags={
+        'domain': domain, 'authenticated': authenticated
+    })
+    return _submission_error(
+        request, "Received a submission with POST.keys()", metric_tags,
+        domain, app_id, user_id, authenticated, meta,
+    )
+
+
+def _bad_request_response(message, metric_tags):
+    response = HttpResponseBadRequest(message)
+    _record_metrics(metric_tags, 'known_failures', response)
+    return response
+
+
+def _ignored_submission_response(metric_tags):
+    response = openrosa_response.SUBMISSION_IGNORED_RESPONSE
+    _record_metrics(metric_tags, 'ignored', response)
+    return response
+
+
+def _blacklisted_domain_response(metric_tags):
+    response = openrosa_response.BLACKLISTED_RESPONSE
+    _record_metrics(metric_tags, 'blacklisted', response)
     return response
 
 
