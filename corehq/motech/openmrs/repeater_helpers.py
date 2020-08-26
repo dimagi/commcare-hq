@@ -266,11 +266,12 @@ def authenticate_session(requests):
         'redirect': '',
         'refererURL': '',
     }
-    response = requests.post('/ms/legacyui/loginServlet', login_data, headers={'Accept': 'text/html'})
+    response = requests.post('/ms/legacyui/loginServlet', login_data,
+                             headers={'Accept': 'text/html'})
     if not 200 <= response.status_code < 300:
-        raise OpenmrsHtmlUiChanged('Domain "{}": Unexpected OpenMRS login page at "{}".'.format(
-            requests.domain_name, response.url
-        ))
+        raise OpenmrsHtmlUiChanged(
+            f'Unexpected OpenMRS login page at {response.url!r}.'
+        )
 
 
 @quickcache(['requests.domain_name', 'requests.base_url', 'identifier_type'])
