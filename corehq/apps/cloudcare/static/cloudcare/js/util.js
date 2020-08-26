@@ -1,6 +1,7 @@
 /*global FormplayerFrontend */
 
-hqDefine('cloudcare/js/util',['hqwebapp/js/initial_page_data', 'integration/js/hmac_callout'], function (initialPageData) {
+hqDefine('cloudcare/js/util',['hqwebapp/js/initial_page_data', 'jquery', 'integration/js/hmac_callout'],
+function (initialPageData, $, HMACCallout) {
     if (!String.prototype.startsWith) {
         String.prototype.startsWith = function (searchString, position) {
             position = position || 0;
