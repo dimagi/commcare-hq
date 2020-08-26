@@ -20,12 +20,12 @@ class UnexpectedDeletedXForm(Exception):
     pass
 
 
-class BadRequest(Exception):
+class BadSubmissionRequest(Exception):
     def __init__(self, message):
         self.message = message
 
 
-class MultipartFilenameError(BadRequest):
+class MultipartFilenameError(BadSubmissionRequest):
     def __init__(self):
         super().__init__(
             'If you use multipart/form-data, please name your file %s.\n'
@@ -34,7 +34,7 @@ class MultipartFilenameError(BadRequest):
         )
 
 
-class MultipartEmptyPayload(BadRequest):
+class MultipartEmptyPayload(BadSubmissionRequest):
     def __init__(self):
         super().__init__(
             'If you use multipart/form-data, the file %s'
@@ -42,6 +42,6 @@ class MultipartEmptyPayload(BadRequest):
         )
 
 
-class EmptyPayload(BadRequest):
+class EmptyPayload(BadSubmissionRequest):
     def __init__(self):
         super().__init__('Post may not have an empty body\n')

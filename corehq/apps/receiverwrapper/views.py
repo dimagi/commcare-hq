@@ -11,7 +11,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from couchforms import openrosa_response
 from couchforms.const import MAGIC_PROPERTY
-from couchforms.exceptions import BadRequest
+from couchforms.exceptions import BadSubmissionRequest
 from couchforms.getters import MultimediaBug
 from dimagi.utils.decorators.profile import profile_dump
 from dimagi.utils.logging import notify_exception
@@ -91,7 +91,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             request, "Received a submission with POST.keys()", metric_tags,
             domain, app_id, user_id, authenticated, meta,
         )
-    except BadRequest as e:
+    except BadSubmissionRequest as e:
         response = HttpResponseBadRequest(e.message)
         _record_metrics(metric_tags, 'known_failures', response)
         return response
@@ -232,7 +232,7 @@ def _noauth_post(request, domain, app_id=None):
     """
     try:
         instance, _ = couchforms.get_instance_and_attachment(request)
-    except BadRequest as e:
+    except BadSubmissionRequest as e:
         return HttpResponseBadRequest(e.message)
 
     form_json = convert_xform_to_json(instance)
