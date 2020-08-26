@@ -58,7 +58,8 @@ elif settings.ELASTICSEARCH_MAJOR_VERSION == 7:
     )
     from elasticsearch7.helpers import bulk
 else:
-    raise ValueError("ELASTICSEARCH_MAJOR_VERSION must currently be 1 or 2, given {}".format(settings.ELASTICSEARCH_MAJOR_VERSION))
+    raise ValueError("ELASTICSEARCH_MAJOR_VERSION must currently be 1 or 2, given {}".format(
+        settings.ELASTICSEARCH_MAJOR_VERSION))
 
 
 __all__ = [
