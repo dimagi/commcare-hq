@@ -1,7 +1,5 @@
 import logging
-import lxml.etree
 from memoized import memoized
-import xml2json
 from collections import namedtuple
 
 from ddtrace import tracer
@@ -520,7 +518,7 @@ class SubmissionPostFormProcessor(object):
     def __init__(self, *, domain, instance, attachments, auth_context, submit_ip, path, openrosa_headers,
                  last_sync_token, received_on, date_header, app_id, build_id, partial_submission):
         self.domain = domain
-        self._instance = instance
+        self.instance = instance
         self.attachments = attachments or {}
         self.auth_context = auth_context or DefaultAuthContext()
         self.submit_ip = submit_ip
@@ -534,14 +532,14 @@ class SubmissionPostFormProcessor(object):
         self.partial_submission = partial_submission
 
     def process_form(self):
-        self.pre_process_form()
-        result = process_xform_xml(self.domain, self.get_instance(), self.attachments, self.auth_context.to_json())
+        instance = self.pre_process_form()
+        result = process_xform_xml(self.domain, instance, self.attachments, self.auth_context.to_json())
         self.post_process_form(result.submitted_form)
         return result
 
     def pre_process_form(self):
-        # over write this method to add pre processing to form
-        pass
+        # method to be overwritten to customize form pre-processing and return the processed instance
+        return self.instance
 
     def post_process_form(self, xform):
         self._set_submission_properties(xform)
@@ -598,18 +596,6 @@ class SubmissionPostFormProcessor(object):
         if task_id is not None:
             revoke_celery_task(task_id)
             async_restore_task_id_cache.invalidate()
-
-    def get_instance_xml(self):
-        try:
-            return xml2json.get_xml_from_string(self._instance)
-        except xml2json.XMLSyntaxError:
-            return None
-
-    def get_instance(self):
-        return self._instance
-
-    def update_instance(self, xml):
-        self._instance = lxml.etree.tostring(xml)
 
 
 @memoized
