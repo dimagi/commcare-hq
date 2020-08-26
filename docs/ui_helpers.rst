@@ -10,7 +10,7 @@ be aware of. Save time and create consistency.
 Paginated CRUD View
 -------------------
 
-Use `corehq.apps.hqwebapp.views.CRUDPaginatedViewMixin` the with a `TemplateView` subclass (ideally
+Use the `corehq.apps.hqwebapp.views.CRUDPaginatedViewMixin` with a `TemplateView` subclass (ideally
 one that also subclasses `corehq.apps.hqwebapp.views.BasePageView` or `BaseSectionPageView`) to have
 a paginated list of objects which you can create, update, or delete.
 
