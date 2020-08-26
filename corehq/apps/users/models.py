@@ -2998,6 +2998,7 @@ class HQApiKey(models.Model):
     name = models.CharField(max_length=255, blank=True, default='')
     created = models.DateTimeField(default=timezone.now)
     ip_allowlist = ArrayField(models.GenericIPAddressField(), default=list)
+    role_id = models.CharField(max_length=40, blank=True, default='')
 
     class Meta(object):
         unique_together = ('user', 'name')
@@ -3012,3 +3013,13 @@ class HQApiKey(models.Model):
         # From tastypie
         new_uuid = uuid4()
         return hmac.new(new_uuid.bytes, digestmod=sha1).hexdigest()
+
+    @property
+    @memoized
+    def role(self):
+        if self.role_id:
+            try:
+                return UserRole.get(self.role_id)
+            except ResourceNotFound:
+                logging.exception('no role with id %s found in domain %s' % (self.role_id, self.domain))
+        return None
