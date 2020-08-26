@@ -1,12 +1,7 @@
 import json
 import re
-from corehq.apps.data_interfaces.forms import CaseRuleCriteriaForm, validate_case_property_name
-from corehq.apps.data_interfaces.models import CreateScheduleInstanceActionDefinition
-from corehq.apps.groups.models import Group
-from crispy_forms import layout as crispy
-from crispy_forms import bootstrap as twbscrispy
 from datetime import datetime, timedelta
-from dateutil import parser
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -14,55 +9,88 @@ from django.forms.fields import (
     BooleanField,
     CharField,
     ChoiceField,
-    MultipleChoiceField,
     IntegerField,
+    MultipleChoiceField,
 )
 from django.forms.forms import Form
 from django.forms.formsets import BaseFormSet, formset_factory
-from django.forms.widgets import CheckboxSelectMultiple, HiddenInput, Select, SelectMultiple
+from django.forms.widgets import (
+    CheckboxSelectMultiple,
+    HiddenInput,
+    Select,
+    SelectMultiple,
+)
 from django.utils.functional import cached_property
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
+
+from couchdbkit import ResourceNotFound
+from crispy_forms import bootstrap as twbscrispy
+from crispy_forms import layout as crispy
+from dateutil import parser
 from memoized import memoized
 
-from corehq.apps.hqwebapp.crispy import HQFormHelper
 from dimagi.utils.django.fields import TrimmedCharField
-from django.utils.translation import ugettext as _, ugettext_lazy
-from corehq.apps.app_manager.dbaccessors import get_app, get_latest_released_app
+
+from corehq.apps.app_manager.dbaccessors import (
+    get_app,
+    get_latest_released_app,
+)
 from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.models import AdvancedForm
 from corehq.apps.casegroups.models import CommCareCaseGroup
+from corehq.apps.data_interfaces.forms import (
+    CaseRuleCriteriaForm,
+    validate_case_property_name,
+)
+from corehq.apps.data_interfaces.models import (
+    CreateScheduleInstanceActionDefinition,
+)
+from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.locations.models import SQLLocation, LocationType
-from corehq.apps.reminders.util import get_form_list, get_combined_id, split_combined_id
-from corehq.apps.sms.util import get_or_create_sms_translations
+from corehq.apps.hqwebapp.crispy import HQFormHelper
+from corehq.apps.locations.models import LocationType, SQLLocation
+from corehq.apps.reminders.util import (
+    get_combined_id,
+    get_form_list,
+    split_combined_id,
+)
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
+from corehq.apps.sms.util import get_or_create_sms_translations
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.messaging.scheduling.const import (
-    VISIT_WINDOW_START,
-    VISIT_WINDOW_END,
     VISIT_WINDOW_DUE_DATE,
+    VISIT_WINDOW_END,
+    VISIT_WINDOW_START,
 )
-from corehq.messaging.scheduling.exceptions import ImmediateMessageEditAttempt, UnsupportedScheduleError
+from corehq.messaging.scheduling.exceptions import (
+    ImmediateMessageEditAttempt,
+    UnsupportedScheduleError,
+)
 from corehq.messaging.scheduling.models import (
-    Schedule,
-    AlertSchedule,
     AlertEvent,
-    TimedSchedule,
-    TimedEvent,
-    RandomTimedEvent,
+    AlertSchedule,
     CasePropertyTimedEvent,
-    ImmediateBroadcast,
-    ScheduledBroadcast,
-    SMSContent,
-    EmailContent,
-    SMSSurveyContent,
     CustomContent,
+    EmailContent,
+    ImmediateBroadcast,
     IVRSurveyContent,
+    RandomTimedEvent,
+    Schedule,
+    ScheduledBroadcast,
     SMSCallbackContent,
+    SMSContent,
+    SMSSurveyContent,
+    TimedEvent,
+    TimedSchedule,
 )
-from corehq.messaging.scheduling.scheduling_partitioned.models import ScheduleInstance, CaseScheduleInstanceMixin
-from couchdbkit import ResourceNotFound
+from corehq.messaging.scheduling.scheduling_partitioned.models import (
+    CaseScheduleInstanceMixin,
+    ScheduleInstance,
+)
+from custom.icds import icds_toggles
 from langcodes import get_name as get_language_name
 
 
@@ -3168,11 +3196,12 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 ),
             ),
         ])
-        result.extend([
-            crispy.Div(
-                twbscrispy.Field('sms_stale_after')
-            )
-        ])
+        if icds_toggles.ICDS_CONFIGURABLE_STALE_SMS_VALUE.enabled(self.domain):
+            result.extend([
+                crispy.Div(
+                    twbscrispy.Field('sms_stale_after')
+                )
+            ])
 
         if (
             self.is_system_admin

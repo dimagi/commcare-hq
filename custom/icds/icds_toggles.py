@@ -155,3 +155,10 @@ ICDS_CUSTOM_SMS_REPORT = StaticToggle(
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
 )
+
+ICDS_CONFIGURABLE_STALE_SMS_VALUE = StaticToggle(
+    'icds_configurable_stale_sms_value',
+    'ICDS: Have an option to configure the time after which SMS will be marked as stale for each condtional alert',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
