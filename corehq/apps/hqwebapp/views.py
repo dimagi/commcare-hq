@@ -388,6 +388,8 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
         with mutable_querydict(req.POST):
             req.POST['auth-username'] = format_username(req.POST['auth-username'], domain_name)
 
+    context = {}
+
     if 'auth-username' in req.POST:
         couch_user = CouchUser.get_by_username(req.POST['auth-username'].lower())
         if couch_user:
@@ -395,9 +397,13 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
             old_lang = req.session.get(LANGUAGE_SESSION_KEY)
             update_session_language(req, old_lang, new_lang)
 
+            # context needed for MONTIOR_2FA_CHANGES toggle in HQLoginView
+            context.update({
+                'is_commcare_user': couch_user.is_commcare_user(),
+            })
+
     req.base_template = settings.BASE_TEMPLATE
 
-    context = {}
     template_name = custom_login_page if custom_login_page else 'login_and_password/login.html'
     if not custom_login_page and domain_name:
         domain_obj = Domain.get_by_name(domain_name)
@@ -481,6 +487,19 @@ class HQLoginView(LoginView):
         context = super(HQLoginView, self).get_context_data(**kwargs)
         context.update(self.extra_context)
         context['implement_password_obfuscation'] = settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE
+
+        steps = context.get('wizard', {}).get('steps')
+        domain = context.get('domain')
+        is_commcare_user = context.get('is_commcare_user', False)
+        if (steps and steps.current == 'token'
+                and is_commcare_user and MONTIOR_2FA_CHANGES.enabled(domain)):
+            username = self.request.POST['auth-username'].lower()
+            from corehq.apps.hqwebapp.utils import monitor_2fa_soft_assert
+            monitor_2fa_soft_assert(
+                False,
+                f'2FA TOKEN required upon login for mobile worker {username} from {domain}'
+            )
+
         return context
 
 
