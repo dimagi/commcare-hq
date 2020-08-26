@@ -34,8 +34,8 @@ def create_linked_keyword(domain_link, keyword_id):
     return keyword.id
 
 
-def update_keyword(domain_link, keyword_id):
-    linked_keyword = Keyword.objects.get(id=keyword_id)
+def update_keyword(domain_link, linked_keyword_id):
+    linked_keyword = Keyword.objects.get(id=linked_keyword_id)
     master_keyword = Keyword.objects.get(id=linked_keyword.master_id)
 
     for prop in ['keyword', 'description', 'delimiter', 'override_open_sessions']:
