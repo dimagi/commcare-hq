@@ -3,7 +3,7 @@
 hqDefine('cloudcare/js/util', [
     'hqwebapp/js/initial_page_data',
     'jquery',
-    'integration/js/hmac_callout'
+    'integration/js/hmac_callout',
 ], function (
     initialPageData,
     $,
