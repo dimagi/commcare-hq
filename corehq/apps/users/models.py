@@ -2,7 +2,6 @@ import hmac
 import json
 import logging
 import re
-from copy import copy
 from datetime import datetime
 from hashlib import sha1
 from uuid import uuid4
@@ -1092,7 +1091,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     @property
     def metadata(self):
-        return copy(self.user_data)
+        return self.user_data
 
     @metadata.setter
     def metadata(self, value):
@@ -1703,7 +1702,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     @property
     def metadata(self):
-        data = copy(self.user_data)
+        data = self.to_json().get('user_data', {})
         profile = self._get_user_data_profile(data)
         if profile:
             data.update(profile.fields)
@@ -1831,7 +1830,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         commcare_user.is_account_confirmed = is_account_confirmed
         commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
         # metadata can't be set until domain is present
-        commcare_user.update_metadata(metadata)
+        commcare_user.update_metadata(metadata or {})
 
         if location:
             commcare_user.set_location(location, commit=False)
