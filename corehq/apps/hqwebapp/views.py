@@ -51,7 +51,7 @@ from memoized import memoized
 from sentry_sdk import last_event_id
 from two_factor.views import LoginView
 
-from corehq.toggles import MONTIOR_2FA_CHANGES
+from corehq.toggles import MONITOR_2FA_CHANGES
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.sms.event_handlers import handle_email_messaging_subevent
 from corehq.apps.users.event_handlers import handle_email_invite_message
@@ -206,7 +206,7 @@ def redirect_to_default(req, domain=None):
         else:
             url = reverse('login')
     elif domain and _two_factor_needed(domain, req):
-        if MONTIOR_2FA_CHANGES.enabled(domain):
+        if MONITOR_2FA_CHANGES.enabled(domain):
             from corehq.apps.hqwebapp.utils import monitor_2fa_soft_assert
             monitor_2fa_soft_assert(False, f'2FA required page shown to user '
                                            f'{req.user.username} on {domain} after '
@@ -397,7 +397,7 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
             old_lang = req.session.get(LANGUAGE_SESSION_KEY)
             update_session_language(req, old_lang, new_lang)
 
-            # context needed for MONTIOR_2FA_CHANGES toggle in HQLoginView
+            # context needed for MONITOR_2FA_CHANGES toggle in HQLoginView
             context.update({
                 'is_commcare_user': couch_user.is_commcare_user(),
             })
@@ -492,7 +492,7 @@ class HQLoginView(LoginView):
         domain = context.get('domain')
         is_commcare_user = context.get('is_commcare_user', False)
         if (steps and steps.current == 'token'
-                and is_commcare_user and MONTIOR_2FA_CHANGES.enabled(domain)):
+                and is_commcare_user and MONITOR_2FA_CHANGES.enabled(domain)):
             username = self.request.POST['auth-username'].lower()
             from corehq.apps.hqwebapp.utils import monitor_2fa_soft_assert
             monitor_2fa_soft_assert(

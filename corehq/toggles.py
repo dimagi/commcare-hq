@@ -662,7 +662,7 @@ VISIT_SCHEDULER = StaticToggle(
 )
 
 
-MONTIOR_2FA_CHANGES = StaticToggle(
+MONITOR_2FA_CHANGES = StaticToggle(
     'monitor_2fa_changes',
     'Monitor 2FA activity for SAAS-11210 ticket',
     TAG_CUSTOM,

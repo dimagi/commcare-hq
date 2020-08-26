@@ -27,7 +27,7 @@ from two_factor.views import (
     SetupView,
 )
 
-from corehq.toggles import MONTIOR_2FA_CHANGES
+from corehq.toggles import MONITOR_2FA_CHANGES
 from dimagi.utils.web import json_response
 
 import langcodes
@@ -339,7 +339,7 @@ class TwoFactorSetupCompleteView(BaseMyAccountView, SetupCompleteView):
     def dispatch(self, request, *args, **kwargs):
         # todo this bit of code should be replaced with a better event logging system
         if (request.couch_user.is_commcare_user()
-                and MONTIOR_2FA_CHANGES.enabled(request.couch_user.domain)):
+                and MONITOR_2FA_CHANGES.enabled(request.couch_user.domain)):
             from corehq.apps.hqwebapp.utils import monitor_2fa_soft_assert
             monitor_2fa_soft_assert(
                 False,

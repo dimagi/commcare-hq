@@ -115,7 +115,7 @@ from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.users.models import CouchUser, WebUser
 from corehq.apps.users.permissions import can_manage_releases
 from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR, \
-    SECURE_SESSION_TIMEOUT, MONTIOR_2FA_CHANGES
+    SECURE_SESSION_TIMEOUT, MONITOR_2FA_CHANGES
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
@@ -657,7 +657,7 @@ class PrivacySecurityForm(forms.Form):
         domain.secure_sessions_timeout = self.cleaned_data.get('secure_sessions_timeout', None)
 
         new_two_factor_auth_setting = self.cleaned_data.get('two_factor_auth', False)
-        if domain.two_factor_auth != new_two_factor_auth_setting and MONTIOR_2FA_CHANGES.enabled(domain.name):
+        if domain.two_factor_auth != new_two_factor_auth_setting and MONITOR_2FA_CHANGES.enabled(domain.name):
             from corehq.apps.hqwebapp.utils import monitor_2fa_soft_assert
             status = "ON" if new_two_factor_auth_setting else "OFF"
             monitor_2fa_soft_assert(False, f'{domain.name} turned 2FA {status}')
