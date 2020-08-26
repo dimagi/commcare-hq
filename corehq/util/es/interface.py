@@ -5,7 +5,7 @@ import traceback
 from django.conf import settings
 
 from corehq.pillows.mappings.utils import transform_for_es7
-from corehq.util.es.elasticsearch import bulk
+from corehq.util.es.elasticsearch import bulk, scan
 
 
 class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
@@ -103,6 +103,9 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         self._fix_hits_in_results(results)
         return results
 
+    def scan(self, index_alias, query, doc_type):
+        return scan(self.es, query=query, index=index_alias, doc_type=doc_type, search_type='scan')
+
     @staticmethod
     def _fix_hit(hit):
         if '_source' in hit:
@@ -162,6 +165,10 @@ class ElasticsearchInterface7(AbstractElasticsearchInterface):
 
     def delete_doc(self, index_alias, doc_type, doc_id):
         self.es.delete(index_alias, doc_id)
+
+    def scan(self, index_alias, query, doc_type):
+        query["sort"] = "_doc"
+        return scan(self.es, query=query, index=index_alias)
 
 
 ElasticsearchInterface = {
