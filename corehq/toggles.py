@@ -90,6 +90,13 @@ TAG_PREVIEW = Tag(
     css_class='default',
     description='',
 )
+TAG_SAAS_CONDITIONAL = Tag(
+    name='SaaS - Conditional Use',
+    css_class='primary',
+    description="When enabled, “SaaS - Conditional Use” feature flags will be fully supported by the SaaS team. "
+    "Please confirm with the SaaS Product team before enabling “SaaS - Conditional Use” flags for an external "
+    "customer."
+)
 TAG_SOLUTIONS = Tag(
     name='Solutions',
     css_class='info',
@@ -129,7 +136,12 @@ TAG_INTERNAL = Tag(
 )
 # Order roughly corresponds to how much we want you to use it
 ALL_TAG_GROUPS = [TAG_SOLUTIONS, TAG_PRODUCT, TAG_CUSTOM, TAG_INTERNAL, TAG_DEPRECATED]
-ALL_TAGS = [TAG_SOLUTIONS_OPEN, TAG_SOLUTIONS_CONDITIONAL, TAG_SOLUTIONS_LIMITED] + ALL_TAG_GROUPS
+ALL_TAGS = [
+    TAG_SOLUTIONS_OPEN, 
+    TAG_SOLUTIONS_CONDITIONAL, 
+    TAG_SOLUTIONS_LIMITED, 
+    TAG_SAAS_CONDITIONAL,
+] + ALL_TAG_GROUPS
 
 
 class StaticToggle(object):
@@ -147,7 +159,7 @@ class StaticToggle(object):
         # updated.  This is only applicable to domain toggles.  It must accept
         # two parameters, `domain_name` and `toggle_is_enabled`
         self.save_fn = save_fn
-        # Toggles can be delcared in localsettings statically
+        # Toggles can be declared in localsettings statically
         #   to avoid cache lookups
         self.always_enabled = set(
             settings.STATIC_TOGGLE_STATES.get(self.slug, {}).get('always_enabled', []))
@@ -878,7 +890,7 @@ SECURE_SESSION_TIMEOUT = StaticToggle(
 VELLUM_SAVE_TO_CASE = StaticToggle(
     'save_to_case',
     "Adds save to case as a question to the form builder",
-    TAG_SOLUTIONS_LIMITED,
+    TAG_SAAS_CONDITIONAL,
     [NAMESPACE_DOMAIN],
     description='This flag allows case management inside repeat groups',
     help_link='https://confluence.dimagi.com/display/ccinternal/Save+to+Case+Feature+Flag',
@@ -1510,7 +1522,7 @@ MOBILE_LOGIN_LOCKOUT = StaticToggle(
 LINKED_DOMAINS = StaticToggle(
     'linked_domains',
     'Allow linking project spaces (successor to linked apps)',
-    TAG_SOLUTIONS_CONDITIONAL,
+    TAG_SAAS_CONDITIONAL,
     [NAMESPACE_DOMAIN],
     description=(
         "Link project spaces to allow syncing apps, lookup tables, organizations etc."
