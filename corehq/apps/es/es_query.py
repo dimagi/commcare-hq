@@ -242,10 +242,12 @@ class ESQuery(object):
         if query._size is None:
             query._size = SCROLL_PAGE_SIZE_LIMIT
         result = scroll_query(query.index, query.raw_query, es_instance_alias=self.es_instance_alias)
-        return ScanResult(
-            result.count,
-            (ESQuerySet.normalize_result(query, r) for r in result)
-        )
+        # scroll doesn't include _id in the source even if it's specified, so include it
+        include_id = getattr(query, '_source', None) and "_id" in query._source
+        for r in result:
+            if include_id:
+                r['_source']['_id'] = r.get('_id', None)
+            yield ESQuerySet.normalize_result(query, r)
 
     @property
     def _filters(self):
@@ -516,10 +518,6 @@ class ESQuerySet(object):
         if query._legacy_fields and not settings.ELASTICSEARCH_MAJOR_VERSION == 7:
             return flatten_field_dict(result, fields_property='_source')
         else:
-            # ES7 scroll for some reason doesn't include _id in the source even if it's specified
-            if (settings.ELASTICSEARCH_MAJOR_VERSION == 7
-                    and getattr(query, '_source', None) and "_id" in query._source):
-                result['_source']['_id'] = result.get('_id', None)
             return result['_source']
 
     @property
