@@ -21,7 +21,11 @@
       <i class="fa fa-plus"></i>
       {% trans 'Add Structured Keyword' %}
     </a>
-    {% include "reminders/link_keywords_modal.html" %}
+    {% if request|toggle_enabled:"LINKED_DOMAINS" %}
+      {% if linked_domains %}
+        {% include "reminders/link_keywords_modal.html" %}
+      {% endif %}
+    {% endif %}
 
   </div>
 {% endblock %}
