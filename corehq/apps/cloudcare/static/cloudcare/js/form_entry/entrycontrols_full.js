@@ -314,13 +314,14 @@ function AddressEntry(question, options) {
         }
 
         var defaultGeocoderLocation = initialPageData('default_geocoder_location') || {};
-
         var geocoder = new MapboxGeocoder({
             accessToken: MAPBOX_ACCESS_TOKEN,
             types: "address",
             enableEventLogging: false,
-            proximity: defaultGeocoderLocation.coordinates,
         });
+        if (defaultGeocoderLocation.coordinates) {
+            geocoder.setProximity(defaultGeocoderLocation.coordinates);
+        }
         geocoder.on('clear', self.geocoderOnClearCallback);
         geocoder.addTo('#' + self.entryId);
         // Must add the form-control class to the input created by mapbox in order to edit.

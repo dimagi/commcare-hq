@@ -9,11 +9,9 @@ hqDefine(
         "hqwebapp/js/select_2_ajax_widget", // for call center case owner
         "select2/dist/js/select2.full.min",
     ],
-    function ($, _, MapboxGeocoder,initialPageData) {
+    function ($, _, MapboxGeocoder, initialPageData) {
         $(function () {
-            // var initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
             var MAPBOX_ACCESS_TOKEN = initialPageData.get("mapbox_access_token");
-            console.log(MAPBOX_ACCESS_TOKEN);
             $("#id_default_timezone").select2({
                 placeholder: gettext("Select a Timezone..."),
             });
