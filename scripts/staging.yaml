@@ -59,7 +59,6 @@ branches:
   - sr/es7-ref1+jls/CustomDataFieldsProfile
   - jls/CustomDataFieldsProfile # Jenny July 24
   - sr/es7-ref1 # Sravan Aug 4
-  - bmb/SAAS-11163  # Biyeun Aug 10
   - bmb/celery-4.4.2  # Biyeun August 19
   - fr/linked-domain-keywords   # Farid August 26
 submodules: {}
