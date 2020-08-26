@@ -75,8 +75,6 @@ class Command(BaseCommand):
         elif index_name in ["forms", "cases"]:
             start_date = options.get('start_date')
             end_date = options.get('end_date')
-            assert bool(start_date) == bool(end_date), ("Both start date and end date"
-                " must be provided to reindex a given range or niether to reindex all of data")
         else:
             start_date, end_date = None, None
         local_count = self.get_es7_count(start_date, end_date)
@@ -93,10 +91,8 @@ class Command(BaseCommand):
             self.reindex(start_date, end_date)
 
     def reindex(self, start_date=None, end_date=None):
-        if start_date and end_date:
-            start_date = datetime.strptime(start_date, '%Y-%m-%d')
-            end_date = datetime.strptime(end_date, '%Y-%m-%d')
-            assert end_date >= start_date
+        start_date = datetime.strptime(start_date, '%Y-%m-%d') if start_date else None
+        end_date = datetime.strptime(end_date, '%Y-%m-%d') if end_date else None
 
         reindex_query = {
             "source": {
@@ -124,6 +120,8 @@ class Command(BaseCommand):
                 print("Reindexing for date {d}".format(d=start))
                 self.reindex_and_poll_progress(reindex_query)
         else:
+            if start_date or end_date:
+                reindex_query["source"].update(self._range_query(start_date, end_date))
             print("Starting reindex for index {i}".format(i=self.index))
             self.reindex_and_poll_progress(reindex_query)
         if self.cancelled_queries:
@@ -186,21 +184,23 @@ class Command(BaseCommand):
             else:
                 return date.strftime('%Y-%m-%d')
 
+        range_kwargs = {"format": 'yyyy-MM-dd'}
+        if start_date:
+            range_kwargs["gte"] = format_date(start_date)
+        if end_date:
+            range_kwargs["lte"] = format_date(end_date)
+
         return {
             "query": {
                 "range": {
-                    "inserted_at": {
-                        "gte": format_date(start_date),
-                        "lte": format_date(end_date),
-                        "format": 'yyyy-MM-dd'
-                    }
+                    "inserted_at": range_kwargs
                 }
             },
         }
 
     def get_es7_count(self, start_date=None, end_date=None):
         self.es.indices.refresh(self.index)
-        query = self._range_query(start_date, end_date) if start_date and end_date else None
+        query = self._range_query(start_date, end_date) if start_date or end_date else None
         ret = self.es.count(index=self.index, body=query)
         return ret["count"]
 
@@ -210,7 +210,7 @@ class Command(BaseCommand):
             index=self.index,
             type=self.index_info.type
         )
-        if start_date and end_date:
+        if start_date or end_date:
             q = json.dumps(self._range_query(start_date, end_date))
             response = requests.get(url, data=q, headers={'content-type':'application/json'})
         else:
