@@ -100,6 +100,7 @@ Language
 import json
 from collections import namedtuple
 from copy import deepcopy
+from django.conf import settings
 
 from memoized import memoized
 
@@ -116,6 +117,10 @@ from corehq.elastic import (
 
 from . import aggregations, filters, queries
 from .utils import flatten_field_dict, values_list
+
+
+FILTERED = "filtered"
+BOOL = "bool"
 
 
 class ESQuery(object):
@@ -210,6 +215,10 @@ class ESQuery(object):
             start = sliced_or_int.start or 0
             size = sliced_or_int.stop - start
         return self.start(start).size(size).run().hits
+
+    @property
+    def is_es7(self):
+        return settings.ELASTICSEARCH_MAJOR_VERSION == 7
 
     def run(self, include_hits=False):
         """Actually run the query.  Returns an ESQuerySet object."""
@@ -471,7 +480,14 @@ class ESQuery(object):
 
     def count(self):
         """Performs a minimal query to get the count of matching documents"""
-        return self.size(0).run().total
+        total = self.size(0).run().total
+        if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+            if type(total):
+                return total
+            else:
+                return total.get('value', 0)
+        else:
+            return total
 
     def get_ids(self):
         """Performs a minimal query to get the ids of the matching documents
@@ -508,9 +524,12 @@ class ESQuerySet(object):
         """Return the doc from an item in the query response."""
         if query._exclude_source:
             return result['_id']
-        if query._legacy_fields:
+        if query._legacy_fields and not settings.ELASTICSEARCH_MAJOR_VERSION == 7:
             return flatten_field_dict(result, fields_property='_source')
         else:
+            # ES7 scroll for some reason don't include _id in the source even if it's specified
+            if settings.ELASTICSEARCH_MAJOR_VERSION == 7 and getattr(query, '_source', None) and "_id" in query._source:
+                result['_source']['_id'] = result.get('_id', None)
             return result['_source']
 
     @property
@@ -534,7 +553,12 @@ class ESQuerySet(object):
     @property
     def total(self):
         """Return the total number of docs matching the query."""
-        return self.raw['hits']['total']
+        total = self.raw['hits']['total']
+        if type(total) == int:
+            return total
+        else:
+            # some queries in ES7 return a dict
+            return total.get('value', 0)
 
     def aggregation(self, name):
         return self.raw['aggregations'][name]
