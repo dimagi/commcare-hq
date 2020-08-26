@@ -11,13 +11,13 @@ from elasticsearch.helpers import reindex
 from corehq.util.es.elasticsearch import ConnectionTimeout
 
 USAGE = """Reindex data into local Elasticsearch v7 cluster from remote
-Elasticsearch v2 cluster using Elasticsearch reindex API
-https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-reindex.html#reindex-from-remote
+    Elasticsearch v2 cluster using Elasticsearch reindex API
+    https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-reindex.html#reindex-from-remote.
 
-The localsettings from where this command is run must point to Elasticsearch7 host,
-which is considered as local host.
-
-The index to be reindexed and the remote host are required
+    To use this command to reindex data, make sure that
+    - The localsettings from where this command points to Elasticsearch7 host and port
+    - The Elasticsearch 7 cluster has the remote host whitelisted by having the
+      elasticsearch setting `reindex.remote.whitelist` set to remote es2 host in elasticsearch.yml
 """
 
 
@@ -31,27 +31,27 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             "es2_remote_host",
-            help="Remote ES2 host in http://otherhost:9200 format"
+            help="Remote ES2 host in http://otherhost:port format"
         )
         parser.add_argument(
             "--start_date",
             default=None,
             help="start date (inclusive) to reindex docs based on inserted_at field."
-                 "This is supported only for Form and Case indices."
-                 "Default is 2000-01-01. In yyyy-MM-dd format"
+                 "This is supported only for Form and Case indices. "
+                 "In yyyy-MM-dd format. Providing the date range makes reindex run day by day"
         )
         parser.add_argument(
             "--end_date",
             default=None,
             help="end date (inclusive) to reindex docs based on inserted_at field."
-                 "This is supported only for Form and Case indices."
-                 "Default is today. In yyyy-MM-dd format"
+                 "This is supported only for Form and Case indices. "
+                 "In yyyy-MM-dd format. Providing the date range makes reindex run day by day"
         )
         parser.add_argument(
-            "--chunk_size",
-            default=100,
+            "--batch_size",
+            default=1000,
             type=int,
-            help=""
+            help="Batch size used by Elasticsearch reindex (default"
         )
         parser.add_argument(
             "--print_index_size",
@@ -62,6 +62,7 @@ class Command(BaseCommand):
 
     def handle(self, index_name, es2_remote_host, **options):
         assert index_name in ES_META, "Index name should be one of " + str(ES_META.keys())
+        self.options = options
         self.index_info = ES_META[index_name]
         self.index = self.index_info.index
         self.es2_remote_host = es2_remote_host
@@ -73,8 +74,8 @@ class Command(BaseCommand):
         elif index_name in ["forms", "cases"]:
             start_date = options.get('start_date')
             end_date = options.get('end_date')
-            assert bool(start_date) == bool(end_date), ("Please provide both start date and end date"
-                "to reindex a given range or niether to reindex all of data")
+            assert bool(start_date) == bool(end_date), ("Both start date and end date"
+                " must be provided to reindex a given range or niether to reindex all of data")
         else:
             start_date, end_date = None, None
         local_count = self.get_es7_count(start_date, end_date)
@@ -102,6 +103,7 @@ class Command(BaseCommand):
                     "host": self.es2_remote_host
                 },
                 "index": self.index,
+                "size": self.options.get('batch_size', 1000),
                 "_source": {"exclude": ["_id"]}
             },
             "dest": {"index": self.index},
@@ -123,6 +125,22 @@ class Command(BaseCommand):
         else:
             print("Starting reindex for index {i}".format(i=self.index))
             self.reindex_and_poll_progress(reindex_query)
+        if self.cancelled_queries:
+            confirm = input(
+                """
+                There were {} reindex tasks that didn't finish, would you like 
+                to retry these (y/N)?
+                """.format(len(self.cancelled_queries))
+            )
+            if confirm == "y":
+                for query in self.cancelled_queries:
+                    self.reindex_and_poll_progress(query)
+        print("""
+            Reindex finished, exiting!
+            If you would like to check, you may run this 
+            command again with --print_index_size to make sure 
+            doc counts match across both indices.
+        """)
 
     def reindex_and_poll_progress(self, reindex_query):
         # Initialize reindex and poll the reindex status using the tasks API
@@ -142,7 +160,6 @@ class Command(BaseCommand):
             prev_running_time = curr_running_time
             task = self.es.tasks.get(task_id=task_id)["task"]
             status = task["status"]
-            import pdb; pdb.set_trace()
             print("Updated/Created/Total: ", status["updated"], status["created"], status["total"])
             if last_updated_count != status["updated"] or last_create_count != status["created"]:
                 last_updated_count = status["updated"]
@@ -154,7 +171,7 @@ class Command(BaseCommand):
             if no_progress_loops == 10:
                 self.es.tasks.cancel(task_id=task_id)
                 self.cancelled_queries.append(query)
-                print("Cancelling task that didn't progress in last 1.6mins {}".format(str(query)))
+                print("Cancelling task that didn't progress in last 10 polls {}".format(str(query)))
             curr_running_time = task["running_time_in_nanos"]
             running_time_in_mins = (curr_running_time / 60000000000)
             print("Running time total in mins so far", running_time_in_mins, "\n")            
