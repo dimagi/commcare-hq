@@ -10,7 +10,8 @@ from corehq.util.quickcache import quickcache
 
 
 def create_linked_keyword(domain_link, keyword_id):
-    # if domain_link.is_remote...
+    if domain_link.is_remote:
+        raise DomainLinkError(_("Linking keywords to a remote link is not currently supported"))
 
     try:
         keyword = Keyword.objects.get(id=keyword_id, domain=domain_link.master_domain)
