@@ -514,7 +514,7 @@ def notify_submission_error(instance, message, exec_info=None):
         logging.error(message, exc_info=sys.exc_info(), extra={'details': details})
 
 
-class SubmissionPostFormProcessor(object):
+class FormXmlProcessor(object):
     def __init__(self, *, domain, instance, attachments, auth_context, submit_ip, path, openrosa_headers,
                  last_sync_token, received_on, date_header, app_id, build_id, partial_submission):
         self.domain = domain
@@ -600,4 +600,4 @@ class SubmissionPostFormProcessor(object):
 
 @memoized
 def form_submission_context_class():
-    return get_submission_post_form_processor_class() or SubmissionPostFormProcessor
+    return get_submission_post_form_processor_class() or FormXmlProcessor
