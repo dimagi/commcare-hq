@@ -568,7 +568,6 @@ class SubmissionPostFormProcessor(object):
         xform.build_id = self.build_id
         xform.export_tag = ["domain", "xmlns"]
         xform.partial_submission = self.partial_submission
-        return xform
 
     def _invalidate_caches(self, xform):
         for device_id in {None, xform.metadata.deviceID if xform.metadata else None}:
