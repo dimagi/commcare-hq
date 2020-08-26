@@ -1,8 +1,10 @@
 import uuid
 
 from django.conf import settings
+from django.utils.translation import ugettext as _
 
 from corehq.apps.app_manager.dbaccessors import get_brief_app_docs_in_domain
+from corehq.apps.linked_domain.exceptions import DomainLinkError
 from corehq.apps.sms.models import Keyword, KeywordAction
 from corehq.util.quickcache import quickcache
 
@@ -28,7 +30,10 @@ def create_linked_keyword(domain_link, keyword_id):
         keyword_action.id = None
         keyword_action.keyword = keyword
         if keyword_action.app_id is not None:
-            keyword_action.app_id = get_master_app_to_linked_app(domain_link.linked_domain)[keyword_action.app_id]
+            try:
+                keyword_action.app_id = get_master_app_to_linked_app(domain_link.linked_domain)[keyword_action.app_id]
+            except KeyError:
+                raise DomainLinkError(_("Keyword references application that has not been linked"))
         keyword_action.save()
 
     return keyword.id
@@ -49,7 +54,10 @@ def update_keyword(domain_link, linked_keyword_id):
             setattr(linked_keywordaction, prop, getattr(master_keywordaction, prop))
 
         if master_keywordaction.app_id:
-            app_id = get_master_app_to_linked_app(domain_link.linked_domain)[master_keywordaction.app_id]
+            try:
+                app_id = get_master_app_to_linked_app(domain_link.linked_domain)[master_keywordaction.app_id]
+            except KeyError:
+                raise DomainLinkError(_("Keyword references application that has not been linked"))
             if linked_keywordaction.app_id != app_id:
                     linked_keywordaction.app_id = app_id
 

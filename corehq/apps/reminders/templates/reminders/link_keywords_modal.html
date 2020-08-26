@@ -23,9 +23,9 @@
           <div class="row">
             <div class="controls col-xs-10">
               <select name="keyword_ids" class="form-control" required="" id="keyword-selector" multiple>
-                {% for keyword in all_keywords %}
-                  <option value="{{ keyword.id }}">
-                    {{ keyword.keyword }}
+                {% for keyword, linkable in linkable_keywords %}
+                  <option value="{{ keyword.id }}" {% if not linkable %} disabled {% endif %}>
+                    {{ keyword.keyword }} {% if not linkable %}({% trans 'unlinkable'%}){% endif %}
                   </option>
                 {% endfor %}
               </select>

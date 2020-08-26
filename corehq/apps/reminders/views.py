@@ -1,3 +1,5 @@
+from collections import namedtuple
+
 from django.contrib import messages
 from django.db import transaction
 from django.http import Http404, HttpResponseRedirect
@@ -16,7 +18,8 @@ from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.hqwebapp.decorators import use_multiselect
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.linked_domain.dbaccessors import get_linked_domains
-from corehq.apps.linked_domain.keywords import create_linked_keyword
+from corehq.apps.linked_domain.exceptions import DomainLinkError
+from corehq.apps.linked_domain.keywords import create_linked_keyword, get_master_app_to_linked_app
 from corehq.apps.linked_domain.models import DomainLink, KeywordLinkDetail
 from corehq.apps.reminders.forms import NO_RESPONSE, KeywordForm
 from corehq.apps.reminders.util import get_combined_id, split_combined_id
@@ -282,8 +285,21 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
             domain_link.linked_domain
             for domain_link in get_linked_domains(self.domain)
         ]
-        context['all_keywords'] = self._all_keywords()
+        context['linkable_keywords'] = self._linkable_keywords()
         return context
+
+    def _linkable_keywords(self):
+        LinkableKeyword = namedtuple('LinkableKeyword', 'keyword can_be_linked')
+        linkable_keywords = []
+        for keyword in self._all_keywords():
+            sends_to_usergroup = keyword.keywordaction_set.filter(
+                recipient=KeywordAction.RECIPIENT_USER_GROUP
+            ).count()
+            if sends_to_usergroup:
+                linkable_keywords.append((keyword, False))
+            else:
+                linkable_keywords.append((keyword, True))
+        return linkable_keywords
 
     @memoized
     def _all_keywords(self):
@@ -356,6 +372,9 @@ def link_keywords(request, domain):
                     model_detail=KeywordLinkDetail(keyword_id=str(linked_keyword_id)).to_json(),
                 )
                 successes.append(to_domain)
+            except DomainLinkError as err:
+                failures.append(f"{to_domain}: {err}")
+                notify_exception(request, message=str(err))
             except Exception as err:
                 failures.append(to_domain)
                 notify_exception(request, message=str(err))
@@ -365,7 +384,7 @@ def link_keywords(request, domain):
             request,
             _(f"Successfully linked and copied to {', '.join(successes)}. "))
     if failures:
-        messages.error(request, _(f"Due to errors, some keywords were not copied to {', '.join(failures)}"))
+        messages.error(request, _(f"Errors occurred. {', '.join(failures)}"))
 
     return HttpResponseRedirect(
         reverse(KeywordsListView.urlname, args=[from_domain])
