@@ -1,8 +1,6 @@
 hqDefine("reports/js/edit_submission", function () {
     $(function () {
         var initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
-        window.MAPBOX_ACCESS_TOKEN = initialPageData('mapbox_access_token'); // maps api is a global variable depended on by touchforms
-        window.DEFAULT_GEOCODER_LOCATION = initialPageData('default_geocoder_location');
         var editContext = initialPageData("edit_context");
         var username = initialPageData("username");
         var restoreAs = editContext.sessionData.username;
