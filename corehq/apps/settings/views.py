@@ -27,6 +27,7 @@ from two_factor.views import (
     SetupView,
 )
 
+from corehq.toggles import MONITOR_2FA_CHANGES
 from dimagi.utils.web import json_response
 
 import langcodes
@@ -336,7 +337,15 @@ class TwoFactorSetupCompleteView(BaseMyAccountView, SetupCompleteView):
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        # this is only here to add the login_required decorator
+        # todo this bit of code should be replaced with a better event logging system
+        if (request.couch_user.is_commcare_user()
+                and MONITOR_2FA_CHANGES.enabled(request.couch_user.domain)):
+            from corehq.apps.hqwebapp.utils import monitor_2fa_soft_assert
+            monitor_2fa_soft_assert(
+                False,
+                f'2FA was ENABLED for mobile worker {request.couch_user.username} '
+                f'from {request.couch_user.domain}'
+            )
         return super(TwoFactorSetupCompleteView, self).dispatch(request, *args, **kwargs)
 
     @property
