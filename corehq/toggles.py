@@ -1800,6 +1800,14 @@ RESTRICT_MOBILE_ACCESS = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+DOMAIN_PERMISSIONS_MIRROR = StaticToggle(
+    'domain_permissions_mirror',
+    "COVID: Enterprise Permissions: mirror a project space's permissions in other project spaces",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Enterprise+Permissions',
+)
+
 SHOW_BUILD_PROFILE_IN_APPLICATION_STATUS = StaticToggle(
     'show_build_profile_in_app_status',
     'Show build profile installed on phone tracked via heartbeat request in App Status Report',

@@ -1426,7 +1426,8 @@ class ProjectUsersTab(UITab):
 
         if self.couch_user.is_superuser:
             from corehq.apps.users.models import DomainPermissionsMirror
-            if DomainPermissionsMirror.mirror_domains(self.domain):
+            if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled_for_request(self._request) \
+                    or DomainPermissionsMirror.mirror_domains(self.domain):
                 from corehq.apps.users.views import DomainPermissionsMirrorView
                 menu.append({
                     'title': _(DomainPermissionsMirrorView.page_title),
