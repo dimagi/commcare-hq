@@ -20,6 +20,7 @@ from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, Use
     CaseValueError
 from corehq.apps.receiverwrapper.rate_limiter import report_submission_usage
 from corehq.const import OPENROSA_VERSION_3
+from corehq.form_processor.extension_points import get_form_pre_processor
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.toggles import ASYNC_RESTORE, SUMOLOGIC_LOGS, NAMESPACE_OTHER
 from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
@@ -217,6 +218,7 @@ class SubmissionPost(object):
         if failure_response:
             return FormProcessingResult(failure_response, None, [], [], 'known_failures')
 
+        self.instance = pre_process_form(self.instance)
         result = process_xform_xml(self.domain, self.instance, self.attachments, self.auth_context.to_json())
         submitted_form = result.submitted_form
 
@@ -529,6 +531,13 @@ class SubmissionPost(object):
 
         response = self._get_open_rosa_response(device_log_form)
         return FormProcessingResult(response, device_log_form, [], [], 'device-log')
+
+
+def pre_process_form(instance):
+    processor = get_form_pre_processor()
+    if processor:
+        instance = processor(instance)
+    return instance
 
 
 def _transform_instance_to_error(interface, exception, instance):
