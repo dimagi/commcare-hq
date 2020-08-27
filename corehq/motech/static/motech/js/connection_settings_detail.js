@@ -98,6 +98,7 @@ hqDefine("motech/js/connection_settings_detail", [
         $testConnectionButton.click(function () {
             var data = {
                 name: $('#id_name').val(),
+                notify_addresses_str: $('#id_notify_addresses_str').val(),
                 url: $('#id_url').val(),
                 auth_type: $('#id_auth_type').val(),
                 api_auth_settings: $('#id_api_auth_settings').val(),

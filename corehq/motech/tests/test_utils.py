@@ -13,6 +13,7 @@ from corehq.motech.utils import (
     AES_KEY_MAX_LEN,
     b64_aes_decrypt,
     b64_aes_encrypt,
+    get_endpoint_url,
     pformat_json,
     simple_pad,
     unpad,
@@ -206,6 +207,21 @@ class EncryptionTests(SimpleTestCase):
     def test_encrypt_decrypt_utf8(self):
         message = 'आपके आसपास एक जंगल है'
         self.assert_message_equals_plaintext(message)
+
+
+class GetEndpointUrlTests(SimpleTestCase):
+
+    def test_base_url_none(self):
+        url = get_endpoint_url(None, 'https://example.com/foo')
+        self.assertEqual(url, 'https://example.com/foo')
+
+    def test_trailing_slash(self):
+        url = get_endpoint_url('https://example.com/foo', '')
+        self.assertEqual(url, 'https://example.com/foo/')
+
+    def test_no_urls_given(self):
+        with self.assertRaises(ValueError):
+            get_endpoint_url(None, None)
 
 
 class DocTests(SimpleTestCase):

@@ -25,7 +25,7 @@ hqDefine("integration/js/hmac_callout", [
         return CryptoJS.HmacSHA512(message, secret);
     };
 
-    var performCallout = function (anchor) {
+    var signedCallout = function (anchor) {
         var url = new URL(anchor.href);
 
         var path = url.pathname;
@@ -52,15 +52,27 @@ hqDefine("integration/js/hmac_callout", [
             'variables': variables,
             'signature': encodedSignature};
 
-        postForm(args, dest);
+        postForm(args, dest, "hmac_callout");
     };
 
-    var postForm = function (data, dest) {
+    var unsignedCallout = function (anchor, target, isInternal) {
+        var url = new URL(anchor.href);
+        var dest = url.origin + url.pathname;
+        var args = {};
+        if (isInternal) {
+            args['csrfmiddlewaretoken'] = $("#csrfTokenContainer").val();
+        }
+
+        url.searchParams.forEach(function (value,key) {args[key] = value;});
+        postForm(args, dest, target);
+    };
+
+    var postForm = function (data, dest, target) {
         var form = document.createElement("form");
 
         form.method = "POST";
         form.action = dest;
-        form.target = "hmac_callout";
+        form.target = target;
 
         for (var key in data) {
             var element = document.createElement("input");
@@ -77,9 +89,12 @@ hqDefine("integration/js/hmac_callout", [
         document.body.removeChild(form);
     };
 
-    window.HMACCallout = performCallout;
-
-    return {
-        performCallout: performCallout,
+    var moduleMap = {
+        signedCallout: signedCallout,
+        unsignedCallout: unsignedCallout,
     };
+
+    window.HMACCallout = moduleMap;
+
+    return moduleMap;
 });

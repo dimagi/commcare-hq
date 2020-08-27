@@ -344,14 +344,6 @@ WebFormSession.prototype.loadForm = function ($form, initLang) {
 
     args[this.formSpec.type] = this.formSpec.val;
 
-    // handle preloaders (deprecated) for backwards compatibilty
-    if (args['session-data'] && args['session-data'].preloaders) {
-        if (args['session-data'] === null) {
-            args['session-data'] = {};
-        }
-        args['session-data'].preloaders = init_preloaders(args['session-data'].preloaders);
-    }
-
     this.initForm(args, $form);
 };
 

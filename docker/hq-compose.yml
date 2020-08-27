@@ -16,6 +16,7 @@ services:
       TRAVIS_BUILD_ID: "${TRAVIS_BUILD_ID}"
       TRAVIS_BUILD_NUMBER: "${TRAVIS_BUILD_NUMBER}"
       TRAVIS_JOB_NUMBER: "${TRAVIS_JOB_NUMBER}"
+      JS_TEST_EXTENSIONS: "${JS_TEST_EXTENSIONS}"
     privileged: true  # allows mount inside container
     links:
       - postgres
