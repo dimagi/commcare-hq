@@ -214,7 +214,9 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         (master_keywords, linked_keywords) = self._get_keywords()
 
         # Models belonging to this domain's master domain, for the purpose of pulling
-        model_status = self._get_model_status(master_link, linked_apps, linked_fixtures, linked_reports, linked_keywords)
+        model_status = self._get_model_status(
+            master_link, linked_apps, linked_fixtures, linked_reports, linked_keywords
+        )
 
         # Models belonging to this domain, for the purpose of pushing to linked domains
         master_model_status = self._get_master_model_status(master_apps, master_fixtures, master_reports, master_keywords)
@@ -425,7 +427,10 @@ class DomainLinkView(BaseAdminProjectSettingsView):
             model_status.append(update)
 
         # Add in models and apps that have never been synced
-        model_status.extend(self._get_master_model_status(apps, fixtures, reports, keywords, ignore_models=models_seen))
+        model_status.extend(
+            self._get_master_model_status(
+                apps, fixtures, reports, keywords, ignore_models=models_seen)
+        )
 
         return model_status
 

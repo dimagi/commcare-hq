@@ -19,7 +19,7 @@ from corehq.apps.hqwebapp.decorators import use_multiselect
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.linked_domain.dbaccessors import get_linked_domains
 from corehq.apps.linked_domain.exceptions import DomainLinkError
-from corehq.apps.linked_domain.keywords import create_linked_keyword, get_master_app_to_linked_app
+from corehq.apps.linked_domain.keywords import create_linked_keyword
 from corehq.apps.linked_domain.models import DomainLink, KeywordLinkDetail
 from corehq.apps.reminders.forms import NO_RESPONSE, KeywordForm
 from corehq.apps.reminders.util import get_combined_id, split_combined_id
@@ -296,9 +296,9 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
                 recipient=KeywordAction.RECIPIENT_USER_GROUP
             ).count()
             if sends_to_usergroup:
-                linkable_keywords.append((keyword, False))
+                linkable_keywords.append(LinkableKeyword(keyword, False))
             else:
-                linkable_keywords.append((keyword, True))
+                linkable_keywords.append(LinkableKeyword(keyword, True))
         return linkable_keywords
 
     @memoized

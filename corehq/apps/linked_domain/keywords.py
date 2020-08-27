@@ -40,7 +40,9 @@ def create_linked_keyword(domain_link, keyword_id):
         keyword_action.keyword = keyword
         if keyword_action.app_id is not None:
             try:
-                keyword_action.app_id = get_master_app_to_linked_app(domain_link.linked_domain)[keyword_action.app_id]
+                keyword_action.app_id = get_master_app_to_linked_app(domain_link.linked_domain)[
+                    keyword_action.app_id
+                ]
             except KeyError:
                 raise DomainLinkError(_("Keyword references application that has not been linked"))
         keyword_action.save()
@@ -74,11 +76,13 @@ def update_keyword(domain_link, linked_keyword_id):
 
         if master_keywordaction.app_id:
             try:
-                app_id = get_master_app_to_linked_app(domain_link.linked_domain)[master_keywordaction.app_id]
+                app_id = get_master_app_to_linked_app(domain_link.linked_domain)[
+                    master_keywordaction.app_id
+                ]
             except KeyError:
                 raise DomainLinkError(_("Keyword references application that has not been linked"))
             if linked_keywordaction.app_id != app_id:
-                    linked_keywordaction.app_id = app_id
+                linked_keywordaction.app_id = app_id
 
         linked_keywordaction.save()
 

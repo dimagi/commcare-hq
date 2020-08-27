@@ -172,18 +172,23 @@ The following linked project spaces received content:
     def _release_keyword(self, domain_link, model):
         master_id = model['detail']['keyword_id']
         try:
-            linked_keyword_id = Keyword.objects.values_list('id', flat=True).get(domain=domain_link.linked_domain, master_id=master_id)
+            linked_keyword_id = (Keyword.objects.values_list('id', flat=True)
+                                 .get(domain=domain_link.linked_domain, master_id=master_id))
         except Keyword.DoesNotExist:
             return self._error_tuple(
-                _('Could not find linked keyword in {domain}. Please check that the keyword has been linked from the <a href="{keyword_url}">Keyword Page</a>.').format(
+                _('Could not find linked keyword in {domain}. '
+                  'Please check that the keyword has been linked from the '
+                  '<a href="{keyword_url}">Keyword Page</a>.').format(
                     domain=domain_link.linked_domain,
-                    keyword_url=get_url_base() + reverse(KeywordsListView.urlname, args=[domain_link.master_domain])
+                    keyword_url=(
+                        get_url_base() + reverse(
+                            KeywordsListView.urlname, args=[domain_link.master_domain]
+                        ))
                 ),
                 _('Could not find linked keyword. Please check the keyword has been linked.'),
             )
 
         update_keyword(domain_link, linked_keyword_id)
-
 
     def _release_model(self, domain_link, model, user):
         update_model_type(domain_link, model['type'], model_detail=model['detail'])
