@@ -585,9 +585,7 @@ class ListRolesView(BaseRoleAccessView):
                 toggles.DHIS2_INTEGRATION.enabled(self.domain)
             ),
             'web_apps_privilege': self.web_apps_privilege,
-            'has_report_builder_access': has_report_builder_access(self.request),
-            'data_file_download_enabled': toggles.DATA_FILE_DOWNLOAD.enabled(self.domain),
-            'export_ownership_enabled': toggles.EXPORT_OWNERSHIP.enabled(self.domain)
+            'has_report_builder_access': has_report_builder_access(self.request)
         }
 
 

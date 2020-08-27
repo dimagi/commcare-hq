@@ -1,7 +1,6 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-
 <div data-bind="modal: roleBeingEdited" tabindex="-1" role="dialog" class="modal fade">
   <div data-bind="with: roleBeingEdited" class="modal-dialog">
     <form data-bind="submit: $root.submitNewRole">
@@ -30,7 +29,6 @@
                        title='{% trans_html_attr "The name must start with a valid character." %}'
                        required />
               </div>
-
             </div>
             <legend>
               {% trans "Area Access" %}
@@ -43,89 +41,533 @@
                 {% trans "Can View" %}
               </div>
             </div>
-            <div data-bind="foreach: accessAreas">
-              <div class="form-group" data-bind="visible: showOption">
-                <div class="col-sm-2 controls" data-bind="visible: showEditCheckbox">
+
+            {# BEGIN web_users permissions #}
+            <div class="form-group" data-bind="visible: permissions.access_all_locations">
+              <div class="col-sm-2 controls">
+                <div class="form-check">
+                  <input type="checkbox"
+                         id="edit-web-users-checkbox"
+                         data-bind="checked: permissions.edit_web_users, disable: !$root.allowEdit" />
+                  <label for="edit-web-users-checkbox">
+                    <span class="sr-only">
+                      {% trans "Edit & View Web Users" %}
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="col-sm-2 controls">
+                {# PLACEHOLDER checkbox when edit_web_users is true #}
+                <div class="form-check" data-bind="visible: permissions.edit_web_users()">
+                  <input type="checkbox" checked="checked" disabled="disabled" />
+                  <label>
+                    <span class="sr-only">
+                      {% trans "View-Only Web Users" %}
+                    </span>
+                  </label>
+                </div>
+                {# end PLACEHOLDER #}
+
+                {# REAL checkbox that controls view_web_users permission #}
+                <div class="form-check" data-bind="visible: !permissions.edit_web_users()">
+                  <input type="checkbox"
+                         id="view-web-users-checkbox"
+                         data-bind="checked: permissions.view_web_users,
+                                    disable: !$root.allowEdit" />
+                  <label for="view-web-users-checkbox">
+                    <span class="sr-only">
+                      {% trans "View-Only Web Users" %}
+                    </span>
+                  </label>
+                </div>
+                {# END REAL checkbox #}
+              </div>
+
+              <div class="col-sm-8 control-label">
+                {% blocktrans %}
+                  <strong>Web Users</strong> &mdash; invite new web users, manage account settings, remove membership
+                {% endblocktrans %}
+              </div>
+            </div>
+            {# END web_users permissions #}
+
+            {#  BEGIN commcare_users permissions #}
+            <div class="form-group">
+              <div class="col-sm-2 controls">
+                <div class="form-check">
+                  <input type="checkbox"
+                         id="edit-commcare-users-checkbox"
+                         data-bind="checked: permissions.edit_commcare_users, disable: !$root.allowEdit" />
+                  <label for="edit-commcare-users-checkbox">
+                    <span class="sr-only">
+                      {% trans "Edit & View Mobile Workers" %}
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="col-sm-2 controls">
+                {# PLACEHOLDER checkbox when edit_commcare_users is true #}
+                <div class="form-check" data-bind="visible: permissions.edit_commcare_users()">
+                  <input type="checkbox" checked="checked" disabled="disabled" />
+                  <label>
+                    <span class="sr-only">
+                      {% trans "View-Only Mobile Workers" %}
+                    </span>
+                  </label>
+                </div>
+                {# end PLACEHOLDER #}
+
+                {# REAL checkbox that controls view_commcare_users permission #}
+                <div class="form-check" data-bind="visible: !permissions.edit_commcare_users()">
+                  <input type="checkbox"
+                         id="view-commcare-users-checkbox"
+                         data-bind="checked: permissions.view_commcare_users,
+                                    disable: (permissions.edit_commcare_users() && $root.allowEdit) || !$root.allowEdit" />
+                  <label for="view-commcare-users-checkbox">
+                    <span class="sr-only">
+                      {% trans "View-Only Mobile Workers" %}
+                    </span>
+                  </label>
+                </div>
+                {# END REAL checkbox #}
+
+              </div>
+              <div class="col-sm-8 control-label">
+                {% blocktrans %}
+                  <strong>Mobile Workers</strong> &mdash; create new accounts, manage account settings,deactivate or delete mobile workers. This permission also allows users to login as any mobile worker in Web Apps.
+                {% endblocktrans %}
+              </div>
+            </div>
+            {# END commcare_users permissions #}
+
+            {#  BEGIN groups permissions #}
+            <div class="form-group" data-bind="visible: permissions.access_all_locations">
+              <div class="col-sm-2 controls">
+                <div class="form-check">
+                  <input type="checkbox"
+                         id="edit-groups-checkbox"
+                         data-bind="checked: permissions.edit_groups, disable: !$root.allowEdit" />
+                  <label for="edit-groups-checkbox">
+                    <span class="sr-only">
+                      {% trans "Edit & View Groups" %}
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="col-sm-2 controls">
+                {# PLACEHOLDER checkbox when edit_groups is true #}
+                <div class="form-check" data-bind="visible: permissions.edit_groups()">
+                  <input type="checkbox" checked="checked" disabled="disabled" />
+                  <label><span class="sr-only">{% trans "View-Only Groups" %}</span></label>
+                </div>
+                {# end PLACEHOLDER #}
+
+                {# REAL checkbox that controls view_groups permission #}
+                <div class="form-check" data-bind="visible: !permissions.edit_groups()">
+                  <input type="checkbox"
+                         id="view-groups-checkbox"
+                         data-bind="checked: permissions.view_groups,
+                                    disable: (permissions.edit_groups() && $root.allowEdit) || !$root.allowEdit" />
+                  <label for="view-groups-checkbox">
+                    <span class="sr-only">
+                      {% trans "View-Only Groups" %}
+                    </span>
+                  </label>
+                </div>
+                {# END REAL checkbox #}
+              </div>
+
+              <div class="col-sm-8 control-label">
+                {% blocktrans %}
+                  <strong>Groups</strong> &mdash; manage groups of mobile workers
+                {% endblocktrans %}
+                <br />
+
+                {# PLACEHOLDER checkbox when edit_commcare_users and edit_groups is true #}
+                <div class="form-check" data-bind="visible: permissions.edit_commcare_users() && permissions.edit_groups()">
+                  <input type="checkbox" checked="checked" disabled="disabled"/>
+                  <label>
+                    {% trans "Allow changing group membership." %}
+                  </label>
+                </div>
+                {# end PLACEHOLDER #}
+
+                {# REAL checkbox for edit_users_in_groups #}
+                <div class="form-check" data-bind="visible: !permissions.edit_commcare_users() && permissions.edit_groups()">
+                  <input type="checkbox"
+                         id="edit-users-groups-checkbox"
+                         data-bind="checked: permissions.edit_users_in_groups, disable: !$root.allowEdit" />
+                  <label for="edit-users-groups-checkbox">
+                    {% trans "Allow changing group membership." %}
+                  </label>
+                </div>
+                {# end REAL #}
+
+                {# PLACEHOLDER checkbox when edit_groups is false #}
+                <div class="form-check" data-bind="visible: !permissions.edit_groups()">
+                  <input type="checkbox" disabled="disabled"/>
+                  <label>
+                    {% trans "Allow changing group membership (requires edit groups)." %}
+                  </label>
+                </div>
+                {# end PLACEHOLDER #}
+              </div>
+            </div>
+            {#  END groups permissions #}
+
+            {# BEGIN locations permissions #}
+            <div class="form-group">
+              <div class="col-sm-2 controls">
+                <div class="form-check">
+                  <input type="checkbox"
+                         id="edit-locations-checkbox"
+                         data-bind="checked: permissions.edit_locations, disable: !$root.allowEdit" />
+                  <label for="edit-locations-checkbox">
+                    <span class="sr-only">
+                      {% trans "Edit & View Locations" %}
+                    </span>
+                  </label>
+                </div>
+              </div>
+              <div class="col-sm-2 controls">
+                {# PLACEHOLDER checkbox when edit_locations is true #}
+                <div class="form-check" data-bind="visible: permissions.edit_locations()">
+                  <input type="checkbox" checked="checked" disabled="disabled" />
+                  <label>
+                    <span class="sr-only">
+                      {% trans "View-Only Locations" %}
+                    </span>
+                  </label>
+                </div>
+                {# end PLACEHOLDER #}
+
+                {# REAL checkbox that controls view_locations permission #}
+                <div class="form-check" data-bind="visible: !permissions.edit_locations()">
+                  <input type="checkbox"
+                         id="view-locations-checkbox"
+                         data-bind="checked: permissions.view_locations,
+                                    disable: (permissions.edit_locations() && $root.allowEdit) || !$root.allowEdit" />
+                  <label for="view-locations-checkbox">
+                    <span class="sr-only">
+                      {% trans "View-Only Locations" %}
+                    </span>
+                  </label>
+                </div>
+                {# end REAL checkbox #}
+
+              </div>
+              <div class="col-sm-8 control-label">
+                {% blocktrans %}
+                  <strong>Locations</strong> &mdash; manage locations in the Organization's Hierarchy
+                {% endblocktrans %}
+                <br />
+
+                {# PLACEHOLDER checkbox when edit_commcare_users and edit_locations is true #}
+                <div class="form-check" data-bind="visible: permissions.edit_commcare_users() && permissions.edit_locations()">
+                  <input type="checkbox" checked="checked" disabled="disabled"/>
+                  <label>
+                    {% trans "Allow changing workers at a location." %}
+                  </label>
+                </div>
+                {# end PLACEHOLDER #}
+
+                {# REAL checkbox for edit_users_in_groups #}
+                <div class="form-check" data-bind="visible: !permissions.edit_commcare_users() && permissions.edit_locations()">
+                  <input type="checkbox"
+                         id="edit-users-locations-checkbox"
+                         data-bind="checked: permissions.edit_users_in_locations, disable: !$root.allowEdit" />
+                  <label for="edit-users-locations-checkbox">
+                    {% trans "Allow changing workers at a location." %}
+                  </label>
+                </div>
+                {# end REAL #}
+
+                {# PLACEHOLDER checkbox when edit_locations is false #}
+                <div class="form-check" data-bind="visible: !permissions.edit_locations()">
+                  <input type="checkbox" disabled="disabled"/>
+                  <label>
+                    {% trans "Allow changing workers at a location (requires edit locations)." %}
+                  </label>
+                </div>{# end PLACEHOLDER #}
+
+              </div>
+            </div>
+            {# END locations permissions #}
+
+            {# BEGIN data permissions #}
+            <div class="form-group">
+              <div class="col-sm-2 controls">
+                <div class="form-check">
+                  <input type="checkbox"
+                         id="edit-data-checkbox"
+                         data-bind="checked: permissions.edit_data, disable: !$root.allowEdit" />
+                  <label for="edit-data-checkbox">
+                    <span class="sr-only">
+                      {% trans "Edit & View Data" %}
+                    </span>
+                  </label>
+                </div>
+              </div>
+              <div class="col-sm-2 controls">
+                <div class="form-check-placeholder">
+                  <label></label>
+                </div>
+              </div>
+              <div class="col-sm-8 control-label">
+                {% blocktrans %}
+                  <strong>Data</strong> &mdash; view, export, and edit form and
+                  case data, reassign cases
+                {% endblocktrans %}
+              </div>
+            </div>{# END data permissions #}
+            
+            {# BEGIN web apps permissions #}
+            <div class="form-group" data-bind="visible: $root.webAppsPrivilege">
+              <div class="col-sm-2 controls">
+                <div class="form-check">
+                  <input type="checkbox"
+                         id="access-web-apps-checkbox"
+                         data-bind="checked: permissions.access_web_apps,
+                                    disable: !$root.allowEdit" />
+                  <label for="access-web-apps-checkbox"><span class="sr-only">{% trans "Access Web Apps" %}</span></label>
+                </div>
+              </div>
+              <div class="col-sm-2 controls">
+                <div class="form-check-placeholder">
+                  <label></label>
+                </div>
+              </div>
+              <div class="col-sm-8 control-label">
+                {% blocktrans %}
+                  <strong>Web Apps</strong> &mdash; use Web Apps for online data entry
+                {% endblocktrans %}
+              </div>
+            </div>{# END web apps permissions #}
+
+            {# BEGIN dropzone permissions #}
+            {% if request|toggle_enabled:"DATA_FILE_DOWNLOAD" %}
+            <div class="form-group">
+              <div class="col-sm-2 controls">
+                <div class="form-check">
+                  <input type="checkbox"
+                         id="edit-dropzone-checkbox"
+                         data-bind="checked: permissions.edit_file_dropzone, disable: !$root.allowEdit" />
+                  <label for="edit-dropzone-checkbox">
+                    <span class="sr-only">
+                      {% trans "Edit & Download files from the Dropzone " %}
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="col-sm-2 controls">
+                {# PLACEHOLDER checkbox when edit_file_dropzone is true #}
+                <div class="form-check" data-bind="visible: permissions.edit_file_dropzone()">
+                  <input type="checkbox" checked="checked" disabled="disabled" />
+                  <label>
+                    <span class="sr-only">
+                      {% trans "View-Only Dropzone" %}
+                    </span>
+                  </label>
+                </div>
+                {# end PLACEHOLDER #}
+
+                {# REAL checkbox that controls view_file_dropzone permission #}
+                <div class="form-check" data-bind="visible: !permissions.edit_file_dropzone()">
+                  <input type="checkbox"
+                         id="view-dropzone-checkbox"
+                         data-bind="checked: permissions.view_file_dropzone, disable: !$root.allowEdit" />
+                  <label for="view-dropzone-checkbox">
+                    <span class="sr-only">
+                      {% trans "Download-Only files from the Dropzone" %}
+                    </span>
+                  </label>
+                </div>
+                {# END REAL checkbox #}
+
+              </div>
+              <div class="col-sm-8 control-label">
+                {% blocktrans %}
+                  <strong>Dropzone</strong> &mdash; Upload and download files from the file Dropzone
+                {% endblocktrans %}
+              </div>
+            </div>
+            {# END dropzone permissions #}
+            {% endif %}
+
+            {# BEGIN API permission #}
+            <div class="form-group">
+              <div class="col-sm-2 controls">
+                <div class="form-check">
+                  <input type="checkbox"
+                         id="edit-api-checkbox"
+                         data-bind="checked: permissions.access_api, disable: !$root.allowEdit" />
+                  <label for="edit-api-checkbox">
+                    <span class="sr-only">
+                      {% trans "Access APIs" %}
+                    </span>
+                  </label>
+                </div>
+              </div>
+              <div class="col-sm-2 controls">
+                <div class="form-check-placeholder">
+                  <label></label>
+                </div>
+              </div>
+              <div class="col-sm-8 control-label">
+                {% blocktrans %}
+                  <strong>Access APIs</strong> &mdash; use CommCare HQ APIs to read and update data.
+                  Specific APIs may require additional permissions.
+                {% endblocktrans %}
+              </div>
+            </div>
+            {# END API permission #}
+
+            {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
+              {# BEGIN Shared Export permissions #}
+              <div class="form-group">
+                <div class="col-sm-2 controls">
                   <div class="form-check">
                     <input type="checkbox"
-                           data-bind="attr: {id: editCheckboxLabel}, checked: editPermission, disable: !$root.allowEdit" />
-                    <label data-bind="attr: {for: editCheckboxLabel}">
-                      <span class="sr-only" data-bind="text: screenReaderEditAndViewText">
+                           id="edit-shared-exports-checkbox"
+                           data-bind="checked: permissions.edit_shared_exports, disable: !$root.allowEdit" />
+                    <label for="edit-shared-exports-checkbox">
+                      <span class="sr-only">
+                        {% trans "Edit & View Shared Exports" %}
                       </span>
                     </label>
                   </div>
                 </div>
-                <div class="col-sm-2 controls" data-bind="visible: !showEditCheckbox">
+                <div class="col-sm-2 controls">
                   <div class="form-check-placeholder">
                     <label></label>
                   </div>
                 </div>
-                <div class="col-sm-2 controls" data-bind="visible: showViewCheckbox">
-                  {# PLACEHOLDER checkbox when editPermission() is true #}
-                  <div class="form-check" data-bind="visible: editPermission()">
-                    <input type="checkbox" checked="checked" disabled="disabled" />
-                    <label>
-                      <span class="sr-only" data-bind="text: screenReaderViewOnlyText">
-                      </span>
-                    </label>
-                  </div>
-                  {# end PLACEHOLDER #}
-                  {# REAL checkbox that controls viewPermission when editPermission() is false #}
-                  <div class="form-check" data-bind="visible: !editPermission()">
-                    <input type="checkbox"
-                           data-bind="attr: {id: viewCheckboxLabel}, checked: viewPermission,
-                                      disable: !$root.allowEdit" />
-                    <label data-bind="attr: {for: viewCheckboxLabel}">
-                      <span class="sr-only" data-bind="text: screenReaderViewOnlyText">
-                      </span>
-                    </label>
-                  </div>
-                  {# END REAL checkbox #}
-                </div>
-                  <div class="col-sm-2 controls " data-bind="visible: !showViewCheckbox">
-                    <div class="form-check-placeholder">
-                      <label></label>
-                    </div>
-                  </div>
                 <div class="col-sm-8 control-label">
-                  <div data-bind="html: text"></div>
-                  {# PLACEHOLDER checkbox when edit_commcare_users and editPermission() is true #}
-                  <div class="form-check" data-bind="visible: $parent.permissions.edit_commcare_users() && editPermission() && showAllowCheckbox">
-                    <input type="checkbox" checked="checked" disabled="disabled"/>
-                    <label data-bind="text: allowCheckboxText"></label>
-                  </div>
-                  {# end PLACEHOLDER #}
-                  {# REAL checkbox for allowCheckboxPermission #}
-                  <div class="form-check" data-bind="visible: !$parent.permissions.edit_commcare_users() && editPermission() && showAllowCheckbox">
-                    <input type="checkbox"
-                           data-bind="attr: {id: allowCheckboxId}, checked: allowCheckboxPermission, disable: !$root.allowEdit" />
-                    <label data-bind="attr:{for: allowCheckboxId}, text: allowCheckboxText"></label>
-                  </div>
-                  {# end REAL #}
-                  {# PLACEHOLDER checkbox when showAllowCheckbox is false #}
-                  <div class="form-check" data-bind="visible: !editPermission() && showAllowCheckbox">
-                    <input type="checkbox" disabled="disabled"/>
-                    <label data-bind="text: allowCheckboxText"></label>
-                  </div>
-                  {# end PLACEHOLDER #}
+                  {% blocktrans %}
+                    <strong>Shared Exports</strong> &mdash; access and edit the content and structure of shared exports
+                  {% endblocktrans %}
+                </div>
               </div>
+            {# END Shared Export permissions #}
+            {% endif %}
+
+            {# BEGIN Applications permissions #}
+            <div class="form-group" data-bind="visible: permissions.access_all_locations">
+              <div class="col-sm-2 controls">
+                <div class="form-check">
+                  <input type="checkbox"
+                         id="edit-apps-checkbox"
+                         data-bind="checked: permissions.edit_apps, disable: !$root.allowEdit" />
+                  <label for="edit-apps-checkbox">
+                    <span class="sr-only">
+                      {% trans "Edit & View Apps" %}
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="col-sm-2 controls">
+                {# PLACEHOLDER checkbox when edit_apps is true #}
+                <div class="form-check" data-bind="visible: permissions.edit_apps()">
+                  <input type="checkbox" checked="checked" disabled="disabled" />
+                  <label>
+                    <span class="sr-only">
+                      {% trans "View-Only Applications" %}
+                    </span>
+                  </label>
+                </div>
+                {# end PLACEHOLDER #}
+
+                {# REAL checkbox that controls view_apps permission #}
+                <div class="form-check" data-bind="visible: !permissions.edit_apps()">
+                  <input type="checkbox"
+                         id="view-apps-checkbox"
+                         data-bind="checked: permissions.view_apps,
+                                    disable: !$root.allowEdit" />
+                  <label for="view-apps-checkbox">
+                    <span class="sr-only">
+                      {% trans "View-Only Applications" %}
+                    </span>
+                  </label>
+                </div>
+                {# END REAL checkbox #}
+              </div>
+
+              <div class="col-sm-8 control-label">
+                {% blocktrans %}
+                  <strong>Applications</strong> &mdash; modify or view the structure
+                  and configuration of all applications.
+                {% endblocktrans %}
               </div>
             </div>
+            {# END Applications permissions #}
+
+            {# BEGIN Roles & Permissions permissions #}
+            <div class="form-group" data-bind="visible: permissions.access_all_locations">
+              <div class="col-sm-2 controls">
+                <div class="form-check-placeholder">
+                  <label></label>
+                </div>
+              </div>
+              <div class="col-sm-2 controls">
+                <div class="form-check">
+                  <input type="checkbox"
+                         id="view-roles-checkbox"
+                         data-bind="checked: permissions.view_roles, disable: !$root.allowEdit" />
+                  <label for="view-roles-checkbox">
+                    <span class="sr-only">
+                      {% trans "View Roles and Permssions" %}
+                    </span>
+                  </label>
+                </div>
+              </div>
+              <div class="col-sm-8 control-label">
+                {% blocktrans %}
+                  <strong>Roles &amp; Permissions</strong> &mdash; view web user and mobile worker
+                  roles &amp; permissions (only Admins can edit roles)
+                {% endblocktrans %}
+              </div>
+            </div>
+            {# END Roles & Permissions permissions #}
 
             <legend>
               {% trans "Reports" %}
             </legend>
 
-            <div data-bind="foreach: reports">
-              <div class="form-group" data-bind="visible: visibilityRestraint">
-                <label class="col-sm-4 control-label" data-bind="text: text"></label>
+            {% if has_report_builder_access %}
+              <div class="form-group" data-bind="visible: permissions.access_all_locations">
+                <label class="col-sm-4 control-label">
+                  {% trans "Create and Edit Reports" %}
+                </label>
                 <div class="col-sm-8 controls">
                   <div class="form-check">
                     <input type="checkbox"
-                           data-bind="attr:{id: checkboxLabel}, checked: checkboxPermission, disable: !$root.allowEdit" />
-                    <label data-bind="attr:{for: checkboxLabel}, text: checkboxText">
+                           id="create-and-edit-reports-checkbox"
+                           data-bind="checked: permissions.edit_reports, disable: !$root.allowEdit" />
+                    <label for="create-and-edit-reports-checkbox">
+                      {% trans "Allow role to create and edit reports in report builder." %}
                     </label>
                   </div>
+                </div>
+              </div>
+            {% endif %}
+
+            <div class="form-group">
+              <label class="col-sm-4 control-label">
+                {% trans "Access All Reports" %}
+              </label>
+              <div class="col-sm-8 controls">
+                <div class="form-check">
+                  <input type="checkbox"
+                         id="access-all-reports-checkbox"
+                         data-bind="checked: reportPermissions.all, disable: !$root.allowEdit" />
+                  <label for="access-all-reports-checkbox">
+                    {% trans "Allow role to access all reports." %}
+                  </label>
                 </div>
               </div>
             </div>
@@ -174,6 +616,7 @@
                 </div>
               </div>
             {% endif %}
+
             <div class="form-group" data-bind="visible: permissions.access_all_locations">
               <label class="col-sm-4 control-label">
                 {% trans "Manage Subscription Info" %}
@@ -189,6 +632,7 @@
                 </div>
               </div>
             </div>
+
             <div class="form-group"
                  data-bind="css: { 'has-error': hasUnpermittedLocationRestriction },
                             visible: $root.canRestrictAccessByLocation || hasUnpermittedLocationRestriction">
@@ -437,7 +881,6 @@
             </div>
           </div>
         </div>
-
         <div class="modal-footer">
           {% if can_edit_roles %}
             <button type="button"
