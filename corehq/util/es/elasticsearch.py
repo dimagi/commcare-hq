@@ -18,7 +18,7 @@ if settings.ELASTICSEARCH_MAJOR_VERSION == 1:
         IndicesClient,
         SnapshotClient,
     )
-    from elasticsearch.helpers import bulk
+    from elasticsearch.helpers import bulk, scan
 elif settings.ELASTICSEARCH_MAJOR_VERSION == 2:
     import elasticsearch2 as elasticsearch
     from elasticsearch2.exceptions import AuthorizationException
@@ -37,7 +37,7 @@ elif settings.ELASTICSEARCH_MAJOR_VERSION == 2:
         IndicesClient,
         SnapshotClient,
     )
-    from elasticsearch2.helpers import bulk
+    from elasticsearch2.helpers import bulk, scan
 elif settings.ELASTICSEARCH_MAJOR_VERSION == 7:
     import elasticsearch7 as elasticsearch
     from elasticsearch7.exceptions import AuthorizationException
@@ -56,9 +56,10 @@ elif settings.ELASTICSEARCH_MAJOR_VERSION == 7:
         IndicesClient,
         SnapshotClient,
     )
-    from elasticsearch7.helpers import bulk
+    from elasticsearch7.helpers import bulk, scan
 else:
-    raise ValueError("ELASTICSEARCH_MAJOR_VERSION must currently be 1 or 2, given {}".format(settings.ELASTICSEARCH_MAJOR_VERSION))
+    raise ValueError("ELASTICSEARCH_MAJOR_VERSION must currently be 1 or 2 or 7, given {}".format(
+        settings.ELASTICSEARCH_MAJOR_VERSION))
 
 
 __all__ = [
