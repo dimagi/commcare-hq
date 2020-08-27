@@ -40,7 +40,7 @@ hqDefine(
                 getItemValue: getGeocoderItem,
             });
 
-            geocoder.addTo(".geocoder-proximity");
+            geocoder.addTo("#geocoder-proximity");
             var geocoderValue = getGeocoderValue();
             if (geocoderValue) {
                 geocoder.setInput(getGeocoderValue());
