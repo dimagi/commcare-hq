@@ -2848,7 +2848,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     )
 
     sms_stale_after = IntegerField(
-        label='Make SMS stale after (days)',
+        label=ugettext_lazy("Make SMS stale after (days)"),
         required=False,
         min_value=MIN_SMS_STALE_INTERVAL,
         max_value=MAX_SMS_STALE_INTERVAL,
