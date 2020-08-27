@@ -1,13 +1,12 @@
 from memoized import memoized
 
-from corehq.apps.es import GroupES, UserES, filters, groups
+from corehq.apps.es import GroupES, UserES, groups
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.const import DEFAULT_PAGE_LIMIT
+from corehq.apps.reports.extension_points import customize_emwf_options_user_query
 from corehq.apps.reports.filters.case_list import CaseListFilterUtils
 from corehq.apps.reports.filters.users import EmwfUtils, UsersUtils
-from corehq.apps.es.users import location as location_filter
-from corehq.apps.reports.util import SimplifiedUserInfo, find_test_location_ids
-from custom.icds_core.const import CPMU_ROLE_NAME, IS_ICDS_ENVIRONMENT
+from corehq.apps.reports.util import SimplifiedUserInfo
 
 
 def paginate_options(data_sources, query, start, size):
@@ -120,14 +119,7 @@ class EmwfOptionsController(object):
             accessible_location_ids = SQLLocation.active_objects.accessible_location_ids(
                 self.request.domain, self.request.couch_user)
             users = users.location(accessible_location_ids)
-        if IS_ICDS_ENVIRONMENT and self.request.couch_user.get_role(self.domain).name == CPMU_ROLE_NAME:
-            # filtering out users who are in test locations for CPMU
-            test_location_ids = find_test_location_ids(self.domain)
-            users = users.filter(
-                filters.NOT(
-                    location_filter(test_location_ids)
-                )
-            )
+        users = customize_emwf_options_user_query(self.request, self.domain, users)
         return [self.utils.user_tuple(u) for u in users.run().hits]
 
     def active_user_es_query(self, query):

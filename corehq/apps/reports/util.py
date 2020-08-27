@@ -14,11 +14,9 @@ import pytz
 from memoized import memoized
 
 from dimagi.utils.dates import DateSpan
-from dimagi.utils.web import json_request
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
-from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.const import USER_QUERY_LIMIT
 from corehq.apps.reports.exceptions import EditFormValidationError
 from corehq.apps.users.models import CommCareUser
@@ -497,15 +495,3 @@ class DatatablesParams(object):
         search = query.get("sSearch", "")
 
         return DatatablesParams(count, start, desc, echo, search)
-
-
-@quickcache(['domain'], timeout=7 * 24 * 60 * 60)
-def find_test_location_ids(domain):
-    test_location_ids = set()
-    TEST_STATES = []
-    for loc in SQLLocation.active_objects.filter(location_type__code='state', domain=domain):
-        if loc.metadata.get('is_test_location') == 'test':
-            TEST_STATES.append(loc.name)
-    for location in SQLLocation.active_objects.filter(name__in=TEST_STATES, domain=domain):
-        test_location_ids.update(location.get_descendants(include_self=True).values_list('location_id', flat=True))
-    return test_location_ids
