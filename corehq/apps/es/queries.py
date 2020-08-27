@@ -12,8 +12,6 @@ are available, and put 'em here if you end up using any of 'em.
 """
 import re
 
-from django.conf import settings
-
 from .filters import date_range, range_filter
 
 MUST = "must"
