@@ -309,7 +309,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     is_active = BooleanProperty()
     date_created = DateTimeProperty()
     default_timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
-    default_geocoder_location = StringProperty()
+    default_geocoder_location = DictProperty()
     case_sharing = BooleanProperty(default=False)
     secure_submissions = BooleanProperty(default=False)
     cloudcare_releases = StringProperty(choices=['stars', 'nostars', 'default'], default='default')
