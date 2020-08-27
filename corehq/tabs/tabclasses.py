@@ -44,6 +44,7 @@ from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.integration.views import (
     DialerSettingsView,
+    GaenOtpServerSettingsView,
     HmacCalloutSettingsView,
 )
 from corehq.apps.locations.analytics import users_have_locations
@@ -1875,6 +1876,12 @@ def _get_integration_section(domain):
         integration.append({
             'title': _(HmacCalloutSettingsView.page_title),
             'url': reverse(HmacCalloutSettingsView.urlname, args=[domain])
+        })
+
+    if toggles.GAEN_OTP_SERVER.enabled(domain):
+        integration.append({
+            'title': _(GaenOtpServerSettingsView.page_title),
+            'url': reverse(GaenOtpServerSettingsView.urlname, args=[domain])
         })
 
     return integration

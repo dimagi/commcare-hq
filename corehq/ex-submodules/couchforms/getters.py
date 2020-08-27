@@ -1,15 +1,10 @@
 from django.utils.datastructures import MultiValueDictKeyError
-from corehq.util.global_request import get_request_domain
-from couchforms.const import (
-    EMPTY_PAYLOAD_ERROR,
-    MAGIC_PROPERTY,
-    MULTIPART_EMPTY_PAYLOAD_ERROR,
-    MULTIPART_FILENAME_ERROR,
-)
+from couchforms.const import MAGIC_PROPERTY
 import logging
 from datetime import datetime
 from django.conf import settings
 
+from couchforms.exceptions import MultipartFilenameError, MultipartEmptyPayload, EmptyPayload
 from dimagi.utils.parsing import string_to_utc_datetime
 from dimagi.utils.web import get_ip, get_site_domain
 
@@ -42,19 +37,19 @@ def get_instance_and_attachment(request):
         try:
             instance = request.FILES[MAGIC_PROPERTY].read()
         except MultiValueDictKeyError:
-            instance = MULTIPART_FILENAME_ERROR
+            raise MultipartFilenameError()
         else:
             for key, item in request.FILES.items():
                 if key != MAGIC_PROPERTY:
                     attachments[key] = item
         if not instance:
-            instance = MULTIPART_EMPTY_PAYLOAD_ERROR
+            raise MultipartEmptyPayload()
     else:
         # j2me and touchforms; of the form
         # $ curl --data '@form.xml' $URL
         instance = request.body
         if not instance:
-            instance = EMPTY_PAYLOAD_ERROR
+            raise EmptyPayload()
     request._instance_and_attachment = (instance, attachments)
     return instance, attachments
 

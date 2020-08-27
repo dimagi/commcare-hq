@@ -143,9 +143,13 @@ def unpack_request_args(request_method, args, kwargs):
     return params, data, headers
 
 
-def get_endpoint_url(base_url: Optional[str], endpoint: str) -> str:
+def get_endpoint_url(
+    base_url: Optional[str],
+    endpoint: Optional[str],
+) -> str:
     """
-    Joins ``endpoint`` to ``base_url`` if ``base_url`` is not None.
+    Joins ``endpoint`` to ``base_url``. If either are None, returns the
+    other. If both are None, raises ValueError.
 
     >>> get_endpoint_url('https://example.com/', '/foo')
     'https://example.com/foo'
@@ -153,10 +157,14 @@ def get_endpoint_url(base_url: Optional[str], endpoint: str) -> str:
     >>> get_endpoint_url('https://example.com', 'foo')
     'https://example.com/foo'
 
-    >>> get_endpoint_url(None, 'https://example.com/foo')
+    >>> get_endpoint_url('https://example.com/foo', None)
     'https://example.com/foo'
 
     """
+    if base_url is None and endpoint is None:
+        raise ValueError('No URLs given')
     if base_url is None:
         return endpoint
+    if endpoint is None:
+        return base_url
     return '/'.join((base_url.rstrip('/'), endpoint.lstrip('/')))
