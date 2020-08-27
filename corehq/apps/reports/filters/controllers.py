@@ -1,13 +1,12 @@
 from memoized import memoized
 
 from corehq.apps.es import GroupES, UserES, filters, groups
-from corehq.apps.es.users import location as location_filter
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.const import DEFAULT_PAGE_LIMIT
 from corehq.apps.reports.filters.case_list import CaseListFilterUtils
 from corehq.apps.reports.filters.users import EmwfUtils, UsersUtils
-from corehq.apps.reports.util import SimplifiedUserInfo
-from corehq.util.quickcache import quickcache
+from corehq.apps.es.users import location as location_filter
+from corehq.apps.reports.util import SimplifiedUserInfo, find_test_locations
 from custom.icds_core.const import CPMU_ROLE_NAME, IS_ICDS_ENVIRONMENT
 
 
@@ -35,18 +34,6 @@ def paginate_options(data_sources, query, start, size):
         size -= len(objects)  # how many more do we need for this page?
         options.extend(objects)
     return total, options
-
-
-@quickcache(['domain'], timeout=7 * 24 * 60 * 60)
-def find_test_locations(domain):
-    test_locations = set()
-    TEST_STATES = []
-    for loc in SQLLocation.active_objects.filter(location_type__code='state', domain=domain):
-        if loc.metadata.get('is_test_location') == 'test':
-            TEST_STATES.append(loc.name)
-    for location in SQLLocation.active_objects.filter(name__in=TEST_STATES, domain=domain):
-        test_locations.update(location.get_descendants(include_self=True).values_list('location_id', flat=True))
-    return test_locations
 
 
 class EmwfOptionsController(object):
