@@ -318,6 +318,7 @@ function AddressEntry(question, options) {
             accessToken: MAPBOX_ACCESS_TOKEN,
             types: "address",
             enableEventLogging: false,
+            getItemValue: self.geocoderItemCallback,
         });
         if (defaultGeocoderLocation.coordinates) {
             geocoder.setProximity(defaultGeocoderLocation.coordinates);
