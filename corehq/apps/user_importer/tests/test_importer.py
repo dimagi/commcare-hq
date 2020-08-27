@@ -12,7 +12,9 @@ from corehq.apps.user_importer.importer import (
 )
 from corehq.apps.user_importer.tasks import import_users_and_groups
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.apps.users.models import CommCareUser, DomainPermissionsMirror, Permissions, UserRole, WebUser
+from corehq.apps.users.models import (
+    CommCareUser, DomainPermissionsMirror, Permissions, UserRole, WebUser, Invitation
+)
 
 
 class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
@@ -26,6 +28,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
         permissions = Permissions(edit_apps=True, view_apps=True, view_reports=True)
         cls.role = UserRole.get_or_create_with_permissions(cls.domain.name, permissions, 'edit-apps')
+        cls.other_role = UserRole.get_or_create_with_permissions(cls.domain.name, permissions, 'admin')
         cls.patcher = patch('corehq.apps.user_importer.tasks.UserUploadRecord')
         cls.patcher.start()
 
@@ -37,6 +40,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         super().tearDownClass()
 
     def tearDown(self):
+        Invitation.objects.all().delete()
         delete_all_users()
 
     @property
@@ -410,6 +414,49 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertIsNotNone(
             CommCareUser.get_by_username('{}@{}.commcarehq.org'.format('123', self.other_domain.name))
         )
+
+    @mock.patch('corehq.apps.user_importer.importer.Invitation.send_activation_email')
+    def test_update_pending_user_role(self, mock_send_activation_email):
+        upload_user = mock.MagicMock()
+        upload_user.user_id = "31415926"
+        import_users_and_groups(
+            self.domain.name,
+            [
+                self._get_spec(
+                    web_user='a@a.com',
+                    is_account_confirmed='False',
+                    send_confirmation_email='True',
+                    role=self.role.name
+                )
+            ],
+            [],
+            upload_user,
+            mock.MagicMock()
+        )
+        self.assertEqual(mock_send_activation_email.call_count, 1)
+        self.assertEqual(self.user.get_role(self.domain_name).name, self.role.name)
+        self.assertEqual(Invitation.by_email('a@a.com')[0].role.split(":")[1], self.role._id)
+
+        added_user_id = self.user._id
+        import_users_and_groups(
+            self.domain.name,
+            [
+                self._get_spec(
+                    web_user='a@a.com',
+                    user_id=added_user_id,
+                    is_account_confirmed='False',
+                    send_confirmation_email='True',
+                    role=self.other_role.name
+                )
+            ],
+            [],
+            upload_user,
+            mock.MagicMock()
+        )
+        self.assertEqual(mock_send_activation_email.call_count, 1)  # invite only sent once
+        self.assertEqual(len(Invitation.by_email('a@a.com')), 1)  # only one invite associated with user
+        self.assertEqual(self.user.get_role(self.domain.name).name, self.other_role.name)
+        self.assertEqual(Invitation.by_email('a@a.com')[0].role, self.other_role.get_qualified_id())
 
 
 class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):

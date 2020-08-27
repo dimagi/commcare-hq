@@ -446,7 +446,6 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                     user.user_data.update({'login_as_user': web_user})
 
                 user.save()
-
                 if web_user:
                     if not upload_user.can_edit_web_users():
                         raise UserUploadError(_(
@@ -473,18 +472,23 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                         if current_user and not current_user.is_member_of(domain) and is_account_confirmed:
                             current_user.add_as_web_user(domain, role=role_qualified_id, location_id=user.location_id)
                         elif not current_user or not current_user.is_member_of(domain):
-                            invite_data = {
-                                'email': web_user,
-                                'invited_by': upload_user.user_id,
-                                'invited_on': datetime.utcnow(),
-                                'domain': domain,
-                                'role': role_qualified_id,
-                                'supply_point': user.location_id
-                            }
-                            invite = Invitation(**invite_data)
-                            invite.save()
-                            if send_account_confirmation_email:
-                                invite.send_activation_email()
+                            if len(Invitation.by_email(web_user)) >= 1:  # an invitation already exists
+                                invite = Invitation.by_email(web_user)[0]
+                                invite.role = role_qualified_id
+                                invite.save()
+                            else:
+                                invite_data = {
+                                    'email': web_user,
+                                    'invited_by': upload_user.user_id,
+                                    'invited_on': datetime.utcnow(),
+                                    'domain': domain,
+                                    'role': role_qualified_id,
+                                    'supply_point': user.location_id
+                                }
+                                invite = Invitation(**invite_data)
+                                invite.save()
+                                if send_account_confirmation_email:
+                                    invite.send_activation_email()
 
                         elif current_user.is_member_of(domain):
                             # edit existing user in the domain
