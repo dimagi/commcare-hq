@@ -1,13 +1,16 @@
 from datetime import datetime
 
+from django.contrib.admin.models import LogEntry
 from django.test import SimpleTestCase, TestCase
 
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
     Invitation,
     WebUser,
 )
+from corehq.util.model_log import ModelAction
 
 
 class CouchUserTest(SimpleTestCase):
@@ -60,3 +63,25 @@ class InvitationTest(TestCase):
         for inv in cls.invitations:
             inv.delete()
         super(InvitationTest, cls).tearDownClass()
+
+
+class TestWebUserLogging(TestCase):
+    def setUp(self):
+        self.admin_user = WebUser.create(None, 'admin', 'password', None, None)
+
+    def tearDown(self):
+        LogEntry.objects.all().delete()
+        delete_all_users()
+
+    def assertLoggedAction(self, action_flag):
+        self.assertTrue(LogEntry.objects
+                        .filter(user_id=self.admin_user.get_django_user().pk,
+                                action_flag=action_flag.value)
+                        .exists())
+
+    def test(self):
+        user = WebUser.create(None, 'username', 'password', created_by=self.admin_user, created_via=__name__)
+        self.assertLoggedAction(ModelAction.CREATE)
+
+        user.delete(deleted_by=self.admin_user, deleted_via=__name__)
+        self.assertLoggedAction(ModelAction.DELETE)
