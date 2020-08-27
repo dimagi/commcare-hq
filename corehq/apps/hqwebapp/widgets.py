@@ -169,5 +169,5 @@ class GeoCoderInput(Input):
         self.input_type = 'hidden'
         output = super(GeoCoderInput, self).render(name, value, attrs, renderer)
         return mark_safe("""
-            <div id="geocoder-proximity">{}</div>
+            <div class="geocoder-proximity">{}</div>
         """.format(output))
