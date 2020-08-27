@@ -29,6 +29,7 @@
 /corehq/apps/callcenter/ @snopoke
 /corehq/apps/case_search/ @proteusvacuum
 /corehq/apps/change_feed/ @dannyroberts
+/corehq/apps/cloudcare/ @orangejenny
 /corehq/apps/commtrack/ @esoergel
 /corehq/apps/commtrack/static/ @esoergel @orangejenny
 /corehq/apps/commtrack/templates/ @esoergel @orangejenny
