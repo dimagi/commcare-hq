@@ -229,7 +229,6 @@ hqDefine('cloudcare/js/util', [
 
     var injectMarkdownAnchorTransforms = function () {
         if (window.mdAnchorRender) {
-            var HMACCallout = hqImport('integration/js/hmac_callout');
             var renderers = [];
 
             if (initialPageData.get('dialer_enabled')) {
