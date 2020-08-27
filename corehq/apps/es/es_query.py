@@ -515,7 +515,7 @@ class ESQuerySet(object):
         """Return the doc from an item in the query response."""
         if query._exclude_source:
             return result['_id']
-        if query._legacy_fields and not settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+        if query._legacy_fields:
             return flatten_field_dict(result, fields_property='_source')
         else:
             return result['_source']
