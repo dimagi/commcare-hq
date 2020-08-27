@@ -1,17 +1,9 @@
 # Code Organization
 
 TL;DR
-- put code in .js files, not in html
-- use `hqDefine` and `hqImport` as your module system
-- you'll see various versions of modules based on manually
-  restricting the global footprint of a file.
-  This has been done using varying degrees of discipline,
-  and you should always feel comfortable converting these to `hqDefine`
-- avoid global variables like the plague
-- when creating class-like objects, use a functional inheritance pattern
-
-For those of you looking for a little more from this page,
-please keep reading.
+- All JavaScript code should be in a .js file and encapsulated as a module using `hqDefine`.
+- Dependencies should be imported in the `hqDefine` call for modules that support RequireJS (most of HQ), and using `hqImport` for modules that do not yet support non-RequireJS (web apps, app manager, reports).
+- When creating class-like objects, use a functional inheritance pattern.
 
 ## Static Files Organization
 
