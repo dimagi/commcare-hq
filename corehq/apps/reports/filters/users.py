@@ -12,7 +12,7 @@ from corehq.apps.es import filters
 from corehq.apps.es import users as user_es
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.permissions import user_can_access_other_user
-from corehq.apps.reports.util import find_test_locations
+from corehq.apps.reports.util import find_test_location_ids
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.toggles import FILTER_ON_GROUPS_AND_LOCATIONS
@@ -345,10 +345,10 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         q = user_es.UserES().domain(domain, allow_mirroring=True)
         if IS_ICDS_ENVIRONMENT and request_user.get_role(domain).name == CPMU_ROLE_NAME:
             # filtering out users who are in test locations for CPMU
-            test_locations = find_test_locations(domain)
+            test_locations_ids = find_test_location_ids(domain)
             q = q.filter(
                 filters.NOT(
-                    user_es.location(test_locations)
+                    user_es.location(test_locations_ids)
                 )
             )
         if ExpandedMobileWorkerFilter.no_filters_selected(mobile_user_and_group_slugs):

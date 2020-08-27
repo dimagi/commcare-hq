@@ -500,12 +500,12 @@ class DatatablesParams(object):
 
 
 @quickcache(['domain'], timeout=7 * 24 * 60 * 60)
-def find_test_locations(domain):
-    test_locations = set()
+def find_test_location_ids(domain):
+    test_location_ids = set()
     TEST_STATES = []
     for loc in SQLLocation.active_objects.filter(location_type__code='state', domain=domain):
         if loc.metadata.get('is_test_location') == 'test':
             TEST_STATES.append(loc.name)
     for location in SQLLocation.active_objects.filter(name__in=TEST_STATES, domain=domain):
-        test_locations.update(location.get_descendants(include_self=True).values_list('location_id', flat=True))
-    return test_locations
+        test_location_ids.update(location.get_descendants(include_self=True).values_list('location_id', flat=True))
+    return test_location_ids

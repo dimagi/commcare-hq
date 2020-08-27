@@ -6,7 +6,7 @@ from corehq.apps.reports.const import DEFAULT_PAGE_LIMIT
 from corehq.apps.reports.filters.case_list import CaseListFilterUtils
 from corehq.apps.reports.filters.users import EmwfUtils, UsersUtils
 from corehq.apps.es.users import location as location_filter
-from corehq.apps.reports.util import SimplifiedUserInfo, find_test_locations
+from corehq.apps.reports.util import SimplifiedUserInfo, find_test_location_ids
 from custom.icds_core.const import CPMU_ROLE_NAME, IS_ICDS_ENVIRONMENT
 
 
@@ -122,10 +122,10 @@ class EmwfOptionsController(object):
             users = users.location(accessible_location_ids)
         if IS_ICDS_ENVIRONMENT and self.request.couch_user.get_role(self.domain).name == CPMU_ROLE_NAME:
             # filtering out users who are in test locations for CPMU
-            test_locations = find_test_locations(self.domain)
+            test_location_ids = find_test_location_ids(self.domain)
             users = users.filter(
                 filters.NOT(
-                    location_filter(test_locations)
+                    location_filter(test_location_ids)
                 )
             )
         return [self.utils.user_tuple(u) for u in users.run().hits]
