@@ -385,7 +385,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                 else:
                     update['can_update'] = False
                 update['name'] = '{} ({})'.format(name, app_name)
-            model_status.append(update)
+
             if action.model == 'fixture':
                 tag_name = ugettext('Unknown Table')
                 can_update = False
@@ -412,11 +412,17 @@ class DomainLinkView(BaseAdminProjectSettingsView):
             if action.model == 'keyword':
                 keyword_id = action.wrapped_detail.keyword_id
                 try:
-                    keyword = keywords.get(keyword_id)
+                    keyword = keywords.get(keyword_id).keyword
                     del keywords[keyword_id]
                 except KeyError:
-                    keyword = Keyword.objects.get(id=keyword_id)
-                update['name'] = f'{name} ({keyword.keyword})'
+                    try:
+                        keyword = Keyword.objects.get(id=keyword_id).keyword
+                    except Keyword.DoesNotExist:
+                        keyword = ugettext_lazy("Deleted Keyword")
+                        update['can_update'] = False
+                update['name'] = f'{name} ({keyword})'
+
+            model_status.append(update)
 
         # Add in models and apps that have never been synced
         model_status.extend(self._get_master_model_status(apps, fixtures, reports, keywords, ignore_models=models_seen))

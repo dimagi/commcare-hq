@@ -16,7 +16,15 @@ def create_linked_keyword(domain_link, keyword_id):
     try:
         keyword = Keyword.objects.get(id=keyword_id, domain=domain_link.master_domain)
     except Keyword.DoesNotExist:
-        return None
+        raise DomainLinkError(
+            _("Keyword does not exist in the upstream domain")
+        )
+
+    if Keyword.objects.filter(keyword=keyword.keyword, domain=domain_link.linked_domain).exists():
+        raise DomainLinkError(
+            _("Keyword {keyword} already exists in downstream domain {domain}").format(
+                keyword=keyword.keyword, domain=domain_link.linked_domain)
+        )
 
     keyword_actions = keyword.keywordaction_set.all()
 
@@ -41,8 +49,18 @@ def create_linked_keyword(domain_link, keyword_id):
 
 
 def update_keyword(domain_link, linked_keyword_id):
-    linked_keyword = Keyword.objects.get(id=linked_keyword_id)
-    master_keyword = Keyword.objects.get(id=linked_keyword.master_id)
+    try:
+        linked_keyword = Keyword.objects.get(id=linked_keyword_id)
+    except Keyword.DoesNotExist:
+        raise DomainLinkError(
+            _("Linked keyword could not be found")
+        )
+    try:
+        master_keyword = Keyword.objects.get(id=linked_keyword.master_id)
+    except Keyword.DoesNotExist:
+        raise DomainLinkError(
+            _("Upstream keyword could not be found. Maybe it has been deleted?")
+        )
 
     for prop in ['keyword', 'description', 'delimiter', 'override_open_sessions']:
         setattr(linked_keyword, prop, getattr(master_keyword, prop))
