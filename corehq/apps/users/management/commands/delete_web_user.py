@@ -8,7 +8,7 @@ from corehq.apps.users.models import WebUser
 
 
 class Command(BaseCommand):
-    help = "Deletes the given user"
+    help = "Deletes the given web user"
 
     def add_arguments(self, parser):
         parser.add_argument('username')
