@@ -222,6 +222,21 @@ hqDefine("reports/js/maps_utils", function () {
         },
     });
 
+    // a wordmark for mapbox
+    MapBoxWordMark = L.Control.extend({
+        options: {
+            position: 'bottomleft',
+        },
+
+        onAdd: function (map) {
+            var div = L.DomUtil.create('div', 'map');
+            div.innerHTML = '<a href="http://mapbox.com/about/maps" class="mapbox-wordmark" target="_blank">Mapbox</a>'
+            return div
+        },
+    });
+
+
+
     function load(context, iconPath) {
         L.Icon.Default.imagePath = iconPath;
         var map = mapsInit(context);
@@ -1754,6 +1769,7 @@ hqDefine("reports/js/maps_utils", function () {
         load: load,
         setMapHeight: setMapHeight,
         ZoomToFitControl: ZoomToFitControl,
+        MapBoxWordMark: MapBoxWordMark,
         zoomToAll: zoomToAll,
     };
 });
