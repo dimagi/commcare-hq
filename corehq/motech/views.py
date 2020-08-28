@@ -252,7 +252,7 @@ def test_connection_settings(request, domain):
         try:
             # Send a GET request to the base URL. That should be enough
             # to test the URL and authentication.
-            response = requests.get('')
+            response = requests.get(endpoint=None)
             if 200 <= response.status_code < 300:
                 return JsonResponse({
                     "success": True,

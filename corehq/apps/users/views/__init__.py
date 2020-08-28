@@ -733,6 +733,9 @@ def post_user_role(request, domain):
     if role.permissions.edit_locations:
         role.permissions.view_locations = True
 
+    if role.permissions.edit_apps:
+        role.permissions.view_apps = True
+
     if not role.permissions.edit_groups:
         role.permissions.edit_users_in_groups = False
 

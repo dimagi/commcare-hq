@@ -15,7 +15,7 @@ from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.const import LookupErrors
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.motech.auth import AuthManager
+from corehq.motech.auth import BasicAuthManager
 from corehq.motech.openmrs.const import (
     ADDRESS_PROPERTIES,
     LOCATION_OPENMRS_UUID,
@@ -254,20 +254,24 @@ def create_patient(requests, info, case_config):
 
 
 def authenticate_session(requests):
+    if not isinstance(requests.auth_manager, BasicAuthManager):
+        raise OpenmrsConfigurationError(
+            f'OpenMRS server at {requests.base_url!r} needs to be configured '
+            'for basic authentication.'
+        )
     login_data = {
-        # `requests.auth_manager` has `username` and `password`
-        # attributes because we use BasicAuthManager for OpenMRS.
         'uname': requests.auth_manager.username,
         'pw': requests.auth_manager.password,
         'submit': 'Log In',
         'redirect': '',
         'refererURL': '',
     }
-    response = requests.post('/ms/legacyui/loginServlet', login_data, headers={'Accept': 'text/html'})
+    response = requests.post('/ms/legacyui/loginServlet', login_data,
+                             headers={'Accept': 'text/html'})
     if not 200 <= response.status_code < 300:
-        raise OpenmrsHtmlUiChanged('Domain "{}": Unexpected OpenMRS login page at "{}".'.format(
-            requests.domain_name, response.url
-        ))
+        raise OpenmrsHtmlUiChanged(
+            f'Unexpected OpenMRS login page at {response.url!r}.'
+        )
 
 
 @quickcache(['requests.domain_name', 'requests.base_url', 'identifier_type'])
