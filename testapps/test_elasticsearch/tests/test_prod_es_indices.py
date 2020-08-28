@@ -85,7 +85,6 @@ EXPECTED_PROD_INDICES = [
         "meta": {
             "settings": {
                 "number_of_replicas": 1,
-                "number_of_shards": 5,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -129,7 +128,6 @@ EXPECTED_PROD_INDICES = [
         "meta": {
             "settings": {
                 "number_of_replicas": 1,
-                "number_of_shards": 5,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -178,7 +176,6 @@ EXPECTED_PROD_INDICES = [
             "settings": {
                 "number_of_shards": 2,
                 "number_of_replicas": 1,
-                "number_of_shards": 5,
                 "analysis": {
                     "analyzer": {
                         "default": {
