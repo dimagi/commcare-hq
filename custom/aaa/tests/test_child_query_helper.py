@@ -11,6 +11,7 @@ from custom.aaa.models import Child, ChildHistory
 
 
 @override_settings(SERVER_ENVIRONMENT='icds')
+@patch('corehq.apps.callcenter.data_source.get_call_center_domains', lambda: [])
 class TestChildBeneficiarySections(TestCase):
     domain = 'reach-test'
 
