@@ -1,4 +1,4 @@
-/* globals Formplayer, TaskQueue, WebFormSession */
+/* globals Formplayer, WebFormSession */
 /* eslint-env mocha */
 
 describe('WebForm', function () {
@@ -8,7 +8,7 @@ describe('WebForm', function () {
             taskOne,
             taskTwo;
         beforeEach(function () {
-            tq = new TaskQueue();
+            tq = hqImport("cloudcare/js/form_entry/task_queue").TaskQueue();
             taskOne = sinon.spy();
             taskTwo = sinon.spy();
             tq.addTask('one', taskOne, [1,2,3]);
