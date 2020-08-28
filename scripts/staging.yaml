@@ -59,4 +59,5 @@ branches:
   - sr/es7-ref1 # Sravan Aug 4
   - bmb/celery-4.4.2  # Biyeun August 19
   - fr/linked-domain-keywords   # Farid August 26
+  - jls/marionette-3 # Jenny Aug 27
 submodules: {}
