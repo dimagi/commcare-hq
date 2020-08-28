@@ -246,6 +246,13 @@ def scroll_query(index_name, q, es_instance_alias=ES_DEFAULT_INSTANCE):
     return es_interface.scan(es_meta.alias, q, es_meta.type)
 
 
+def count_query(index_name, q):
+    es_meta = ES_META[index_name]
+    es_interface = ElasticsearchInterface(get_es_new())
+    # size is not required and is not supported in ES count API
+    q.pop('size', None)
+    return es_interface.count(es_meta.alias, es_meta.type, q).get('count')
+
 class ScanResult(object):
 
     def __init__(self, count, iterator):

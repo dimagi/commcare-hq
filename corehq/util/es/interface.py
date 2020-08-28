@@ -75,6 +75,9 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         self.es.update(index_alias, doc_type, doc_id, body={"doc": self._without_id_field(fields)},
                        params=params or {})
 
+    def count(self, index_alias, doc_type, query):
+        return self.es.count(index=index_alias, doc_type=doc_type, body=query)
+
     @staticmethod
     def _without_id_field(doc):
         # Field [_id] is a metadata field and cannot be added inside a document.
@@ -165,6 +168,9 @@ class ElasticsearchInterface7(AbstractElasticsearchInterface):
 
     def delete_doc(self, index_alias, doc_type, doc_id):
         self.es.delete(index_alias, doc_id)
+
+    def count(self, index_alias, doc_type, query):
+        return self.es.count(index=index_alias, body=query)
 
     def scan(self, index_alias, query, doc_type):
         query["sort"] = "_doc"
