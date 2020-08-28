@@ -57,7 +57,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'CommCareHQ'
-copyright = '2014, Dimagi'
+copyright = '2020, Dimagi'
 
 version = '1.0'
 release = '1.0'
