@@ -16,7 +16,6 @@ from corehq.apps.receiverwrapper.views import secure_post
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.tests.utils import use_sql_backend
 
 

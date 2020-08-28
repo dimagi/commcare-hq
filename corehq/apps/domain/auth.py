@@ -273,7 +273,7 @@ class HQApiKeyAuthentication(ApiKeyAuthentication):
             return self._unauthorized()
 
         request.user = user
-
+        request.api_key = key
         return True
 
     def get_identifier(self, request):

@@ -1,6 +1,10 @@
 import hashlib
 
-from corehq.apps.integration.models import DialerSettings, HmacCalloutSettings
+from corehq.apps.integration.models import (
+    DialerSettings,
+    GaenOtpServerSettings,
+    HmacCalloutSettings,
+)
 
 
 def domain_uses_dialer(domain):
@@ -19,12 +23,28 @@ def get_hmac_callout_settings(domain):
         pass
 
 
+def get_gaen_otp_server_settings(domain):
+    try:
+        settings = GaenOtpServerSettings.objects.get(domain=domain)
+        return settings if settings.is_enabled else None
+    except GaenOtpServerSettings.DoesNotExist:
+        pass
+
+
+
 def get_dialer_settings(domain):
     return DialerSettings.objects.get(domain=domain)
 
 
 def integration_contexts(domain):
     context = {'dialer_enabled': domain_uses_dialer(domain)}
+
+    gaen_otp_server_settings = get_gaen_otp_server_settings(domain)
+    if gaen_otp_server_settings:
+        context.update({
+            'gaen_otp_enabled': True
+        })
+
     hmac_settings = get_hmac_callout_settings(domain)
     if hmac_settings:
         context.update({

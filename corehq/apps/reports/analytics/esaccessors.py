@@ -6,6 +6,7 @@ from django.conf import settings
 from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_datetime
 
+from corehq.apps.data_dictionary.util import get_data_dict_case_types
 from corehq.apps.es import (
     CaseES,
     CaseSearchES,
@@ -306,12 +307,12 @@ def get_group_stubs(group_ids):
         .values('_id', 'name', 'case_sharing', 'reporting'))
 
 
-def get_user_stubs(user_ids):
+def get_user_stubs(user_ids, extra_fields=None):
     from corehq.apps.reports.util import SimplifiedUserInfo
     return (UserES()
         .user_ids(user_ids)
         .show_inactive()
-        .values(*SimplifiedUserInfo.ES_FIELDS))
+        .values(*SimplifiedUserInfo.ES_FIELDS, *(extra_fields or [])))
 
 
 def get_forms(domain, startdate, enddate, user_ids=None, app_ids=None, xmlnss=None, by_submission_time=True):
@@ -613,6 +614,11 @@ def scroll_case_names(domain, case_ids):
 
 @quickcache(['domain', 'use_case_search'], timeout=24 * 3600)
 def get_case_types_for_domain_es(domain, use_case_search=False):
+    """
+    Returns case types for which there is at least one existing case.
+
+    get_case_types_for_domain is preferred for most uses
+    """
     index_class = CaseSearchES if use_case_search else CaseES
     query = (
         index_class().domain(domain).size(0)
@@ -623,3 +629,14 @@ def get_case_types_for_domain_es(domain, use_case_search=False):
 
 def get_case_search_types_for_domain_es(domain):
     return get_case_types_for_domain_es(domain, True)
+
+
+def get_case_types_for_domain(domain):
+    """
+    Returns case types for which there is at least one existing case and any
+    defined in the data dictionary, which includes those referenced in an app
+    and those added manually.
+    """
+    es_types = get_case_types_for_domain_es(domain)
+    data_dict_types = get_data_dict_case_types(domain)
+    return es_types | data_dict_types

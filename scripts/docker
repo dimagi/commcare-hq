@@ -224,6 +224,7 @@ export TRAVIS_HQ_USERNAME="$TRAVIS_HQ_USERNAME"
 export TRAVIS_HQ_PASSWORD="$TRAVIS_HQ_PASSWORD"
 export DATADOG_API_KEY="$DATADOG_API_KEY"
 export UCR_CITUS_DB="${UCR_CITUS_DB:-commcare_ucr_citus}"
+export JS_TEST_EXTENSIONS="$JS_TEST_EXTENSIONS"
 
 if [ "$TRAVIS" == "true" -o "$DOCKER_HQ_OVERLAY" == "none" ]; then
     # don't mount /mnt/commcare-hq-ro volume read-only on travis

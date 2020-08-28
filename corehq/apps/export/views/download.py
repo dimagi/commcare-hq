@@ -333,6 +333,7 @@ def prepare_custom_export(request, domain):
         view_helper.model,
         request.couch_user.username,
         filters=export_filters,
+        owner_id=request.couch_user.get_id,
         filename=filename,
     )
 
@@ -452,7 +453,8 @@ def prepare_form_multimedia(request, domain):
         export_id=export.get_id,
         datespan=datespan,
         user_types=user_types,
-        download_id=download.download_id
+        download_id=download.download_id,
+        owner_id=request.couch_user.get_id,
     ))
 
     return json_response({

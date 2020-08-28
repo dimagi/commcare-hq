@@ -90,6 +90,13 @@ TAG_PREVIEW = Tag(
     css_class='default',
     description='',
 )
+TAG_SAAS_CONDITIONAL = Tag(
+    name='SaaS - Conditional Use',
+    css_class='primary',
+    description="When enabled, “SaaS - Conditional Use” feature flags will be fully supported by the SaaS team. "
+    "Please confirm with the SaaS Product team before enabling “SaaS - Conditional Use” flags for an external "
+    "customer."
+)
 TAG_SOLUTIONS = Tag(
     name='Solutions',
     css_class='info',
@@ -129,7 +136,12 @@ TAG_INTERNAL = Tag(
 )
 # Order roughly corresponds to how much we want you to use it
 ALL_TAG_GROUPS = [TAG_SOLUTIONS, TAG_PRODUCT, TAG_CUSTOM, TAG_INTERNAL, TAG_DEPRECATED]
-ALL_TAGS = [TAG_SOLUTIONS_OPEN, TAG_SOLUTIONS_CONDITIONAL, TAG_SOLUTIONS_LIMITED] + ALL_TAG_GROUPS
+ALL_TAGS = [
+    TAG_SOLUTIONS_OPEN,
+    TAG_SOLUTIONS_CONDITIONAL,
+    TAG_SOLUTIONS_LIMITED,
+    TAG_SAAS_CONDITIONAL,
+] + ALL_TAG_GROUPS
 
 
 class StaticToggle(object):
@@ -147,7 +159,7 @@ class StaticToggle(object):
         # updated.  This is only applicable to domain toggles.  It must accept
         # two parameters, `domain_name` and `toggle_is_enabled`
         self.save_fn = save_fn
-        # Toggles can be delcared in localsettings statically
+        # Toggles can be declared in localsettings statically
         #   to avoid cache lookups
         self.always_enabled = set(
             settings.STATIC_TOGGLE_STATES.get(self.slug, {}).get('always_enabled', []))
@@ -528,6 +540,14 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules+and+Forms',
 )
 
+V1_SHADOW_MODULES = StaticToggle(
+    'v1-shadows',
+    'Allow creation and management of deprecated Shadow Module behaviour',
+    TAG_SOLUTIONS_CONDITIONAL,
+    [NAMESPACE_DOMAIN],
+    help_link='https://github.com/dimagi/commcare-hq/blob/master/docs/advanced_app_features.rst#shadow-modules',
+)
+
 CASE_LIST_CUSTOM_XML = StaticToggle(
     'case_list_custom_xml',
     'Allow custom XML to define case lists (ex. for case tiles)',
@@ -652,6 +672,15 @@ VISIT_SCHEDULER = StaticToggle(
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
+
+
+MONITOR_2FA_CHANGES = StaticToggle(
+    'monitor_2fa_changes',
+    'Monitor 2FA activity for SAAS-11210 ticket',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
 
 USER_CONFIGURABLE_REPORTS = StaticToggle(
     'user_reports',
@@ -870,7 +899,7 @@ SECURE_SESSION_TIMEOUT = StaticToggle(
 VELLUM_SAVE_TO_CASE = StaticToggle(
     'save_to_case',
     "Adds save to case as a question to the form builder",
-    TAG_SOLUTIONS_LIMITED,
+    TAG_SAAS_CONDITIONAL,
     [NAMESPACE_DOMAIN],
     description='This flag allows case management inside repeat groups',
     help_link='https://confluence.dimagi.com/display/ccinternal/Save+to+Case+Feature+Flag',
@@ -1459,6 +1488,16 @@ REGEX_FIELD_VALIDATION = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Regular+Expression+Validation+for+Custom+Data+Fields',
 )
 
+CUSTOM_DATA_FIELDS_PROFILES = StaticToggle(
+    "custom_data_fields_profiles",
+    "User field profiles",
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="This flag adds support for saving a set of user fields and their values, "
+                "and applying that profile to individual users instead of specifying every field.",
+    help_link="https://confluence.dimagi.com/display/ccinternal/User+field+profiles",
+)
+
 TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
     'two_factor_superuser_rollout',
     'Users in this list will be forced to have Two-Factor Auth enabled',
@@ -1492,7 +1531,7 @@ MOBILE_LOGIN_LOCKOUT = StaticToggle(
 LINKED_DOMAINS = StaticToggle(
     'linked_domains',
     'Allow linking project spaces (successor to linked apps)',
-    TAG_SOLUTIONS_CONDITIONAL,
+    TAG_SAAS_CONDITIONAL,
     [NAMESPACE_DOMAIN],
     description=(
         "Link project spaces to allow syncing apps, lookup tables, organizations etc."
@@ -1782,6 +1821,14 @@ RESTRICT_MOBILE_ACCESS = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+DOMAIN_PERMISSIONS_MIRROR = StaticToggle(
+    'domain_permissions_mirror',
+    "COVID: Enterprise Permissions: mirror a project space's permissions in other project spaces",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Enterprise+Permissions',
+)
+
 SHOW_BUILD_PROFILE_IN_APPLICATION_STATUS = StaticToggle(
     'show_build_profile_in_app_status',
     'Show build profile installed on phone tracked via heartbeat request in App Status Report',
@@ -1850,6 +1897,13 @@ WIDGET_DIALER = StaticToggle(
 HMAC_CALLOUT = StaticToggle(
     'hmac_callout',
     'COVID: Enable signed messaging url callouts in cloudcare',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+GAEN_OTP_SERVER = StaticToggle(
+    'gaen_otp_server',
+    'COVID: Enable retrieving OTPs from a GAEN Server',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
 )

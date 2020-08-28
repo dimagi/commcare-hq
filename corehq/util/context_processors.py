@@ -45,8 +45,9 @@ def get_per_domain_context(project, request=None):
 
     def allow_report_issue(user, domain):
         if toggles.ICDS.enabled(domain) and user.is_commcare_user():
-            role = user.get_domain_membership(domain, allow_mirroring=True).role
-            if not role:
+            domain_membership = user.get_domain_membership(
+                domain, allow_mirroring=True)
+            if domain_membership and not domain_membership.role:
                 return False
         return user.has_permission(domain, 'report_an_issue')
 
