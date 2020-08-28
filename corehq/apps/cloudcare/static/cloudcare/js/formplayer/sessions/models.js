@@ -1,8 +1,7 @@
-/*global FormplayerFrontend, Util */
+/*global Util, Backbone */
 
-FormplayerFrontend.module("Sessions.Models", function (Models, FormplayerFrontend, Backbone, Marionette, $) {
-
-    Models.FormEntrySession = Backbone.Model.extend({
+hqDefine("cloudcare/js/formplayer/sessions/models", function () {
+    return Backbone.Model.extend({
         isNew: function () {
             return !this.get('sessionId');
         },

@@ -1,14 +1,22 @@
-/*global FormplayerFrontend, Util */
+/*global _, Util, Marionette */
 
-FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, Backbone, Marionette) {
+hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+    var slugs = {
+        SET_LANG: 'lang',
+        SET_DISPLAY: 'display',
+        CLEAR_USER_DATA: 'clear-user-data',
+        BREAK_LOCKS: 'break-locks',
+    };
+
     /**
      * Sets the application language. Should only be used for App Preview.
      */
-    var LangSettingView = Marionette.ItemView.extend({
-        template: '#lang-setting-template',
+    var LangSettingView = Marionette.View.extend({
+        template: _.template($("#lang-setting-template").html() || ""),
         tagName: 'tr',
         initialize: function () {
-            this.currentUser = FormplayerFrontend.request('currentUser');
+            this.currentUser = FormplayerFrontend.getChannel().request('currentUser');
         },
         ui: {
             language: '.js-lang',
@@ -20,9 +28,9 @@ FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, B
             this.currentUser.displayOptions.language = $(e.currentTarget).val();
             Util.saveDisplayOptions(this.currentUser.displayOptions);
         },
-        templateHelpers: function () {
-            var appId = FormplayerFrontend.request('getCurrentAppId');
-            var currentApp = FormplayerFrontend.request("appselect:getApp", appId);
+        templateContext: function () {
+            var appId = FormplayerFrontend.getChannel().request('getCurrentAppId');
+            var currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", appId);
             return {
                 langs: currentApp.get('langs'),
                 currentLang: this.currentUser.displayOptions.language,
@@ -34,11 +42,11 @@ FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, B
      * Sets whether or not the application should use One Question Per Screen or not.
      * Should only be used for App Preview.
      */
-    var DisplaySettingView = Marionette.ItemView.extend({
-        template: '#display-setting-template',
+    var DisplaySettingView = Marionette.View.extend({
+        template: _.template($("#display-setting-template").html() || ""),
         tagName: 'tr',
         initialize: function () {
-            this.currentUser = FormplayerFrontend.request('currentUser');
+            this.currentUser = FormplayerFrontend.getChannel().request('currentUser');
         },
         ui: {
             oneQuestionPerScreen: '.js-one-question-per-screen',
@@ -62,8 +70,8 @@ FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, B
      * Force clear user data.
      * Available for both Web Apps and App Preview
      */
-    var ClearUserDataView = Marionette.ItemView.extend({
-        template: '#clear-user-data-setting-template',
+    var ClearUserDataView = Marionette.View.extend({
+        template: _.template($("#clear-user-data-setting-template").html() || ""),
         tagName: 'tr',
         ui: {
             clearUserData: '.js-clear-user-data',
@@ -72,7 +80,7 @@ FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, B
             'click @ui.clearUserData': 'onClickClearUserData',
         },
         onClickClearUserData: function (e) {
-            var promise = FormplayerFrontend.request('clearUserData');
+            var promise = FormplayerFrontend.getChannel().request('clearUserData');
             $(e.currentTarget).prop('disabled', true);
             promise.done(function () {
                 $(e.currentTarget).prop('disabled', false);
@@ -84,8 +92,8 @@ FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, B
      * Break exising locks
      * Available only for Web Apps
      */
-    var BreakLocksView = Marionette.ItemView.extend({
-        template: '#break-locks-setting-template',
+    var BreakLocksView = Marionette.View.extend({
+        template: _.template($("#break-locks-setting-template").html() || ""),
         tagName: 'tr',
         ui: {
             breakLocks: '.js-break-locks',
@@ -94,7 +102,7 @@ FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, B
             'click @ui.breakLocks': 'onClickBreakLocks',
         },
         onClickBreakLocks: function (e) {
-            var promise = FormplayerFrontend.request('breakLocks');
+            var promise = FormplayerFrontend.getChannel().request('breakLocks');
             $(e.currentTarget).prop('disabled', true);
             promise.done(function () {
                 $(e.currentTarget).prop('disabled', false);
@@ -102,36 +110,35 @@ FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, B
         },
     });
 
-    Views.SettingsView = Marionette.CompositeView.extend({
-        ui: {
-            done: '.js-done',
-        },
+    var SettingsView = Marionette.CollectionView.extend({
         childViewContainer: 'tbody',
-        getChildView: function (item) {
-            if (item.get('slug') === Views.SettingSlugs.SET_LANG) {
+        childView: function (item) {
+            if (item.get('slug') === slugs.SET_LANG) {
                 return LangSettingView;
-            } else if (item.get('slug') === Views.SettingSlugs.SET_DISPLAY) {
+            } else if (item.get('slug') === slugs.SET_DISPLAY) {
                 return DisplaySettingView;
-            } else if (item.get('slug') === Views.SettingSlugs.CLEAR_USER_DATA) {
+            } else if (item.get('slug') === slugs.CLEAR_USER_DATA) {
                 return ClearUserDataView;
-            } else if (item.get('slug') === Views.SettingSlugs.BREAK_LOCKS) {
+            } else if (item.get('slug') === slugs.BREAK_LOCKS) {
                 return BreakLocksView;
             }
+        },
+        ui: {
+            done: '.js-done',
         },
         events: {
             'click @ui.done': 'onClickDone',
         },
-        template: '#settings-template',
+        template: _.template($("#settings-template").html() || ""),
         onClickDone: function () {
             FormplayerFrontend.trigger('navigateHome');
         },
     });
 
-    Views.SettingSlugs = {
-        SET_LANG: 'lang',
-        SET_DISPLAY: 'display',
-        CLEAR_USER_DATA: 'clear-user-data',
-        BREAK_LOCKS: 'break-locks',
+    return {
+        slugs: slugs,
+        SettingsView: function (options) {
+            return new SettingsView(options);
+        },
     };
-
 });

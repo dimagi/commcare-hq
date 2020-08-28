@@ -1,14 +1,16 @@
-/*global FormplayerFrontend, Util */
+/*global _, Util, Backbone, Marionette */
 
-FormplayerFrontend.module("Users.Views", function (Views, FormplayerFrontend, Backbone, Marionette, $) {
+hqDefine("cloudcare/js/formplayer/users/views", function() {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+
     /**
      * RestoreAsBanner
      *
      * This View represents the banner that indicates what user your are
      * currently logged in (or restoring) as.
      */
-    Views.RestoreAsBanner = Marionette.ItemView.extend({
-        template: '#restore-as-banner-template',
+     var RestoreAsBanner = Marionette.View.extend({
+        template: _.template($("#restore-as-banner-template").html() || ""),
         className: 'restore-as-banner-container',
         ui: {
             clear: '.js-clear-user',
@@ -16,7 +18,7 @@ FormplayerFrontend.module("Users.Views", function (Views, FormplayerFrontend, Ba
         events: {
             'click @ui.clear': 'onClickClearUser',
         },
-        templateHelpers: function () {
+        templateContext: function () {
             return {
                 restoreAs: this.model.restoreAs,
                 username: this.model.getDisplayUsername(),
@@ -32,8 +34,8 @@ FormplayerFrontend.module("Users.Views", function (Views, FormplayerFrontend, Ba
      *
      * Represents a single row in the Log In As User list
      */
-    Views.UserRowView = Marionette.ItemView.extend({
-        template: '#user-row-view-template',
+    var UserRowView = Marionette.View.extend({
+        template: _.template($("#user-row-view-template").html() || ""),
         className: 'formplayer-request js-user',
         tagName: 'tr',
         events: {
@@ -47,11 +49,11 @@ FormplayerFrontend.module("Users.Views", function (Views, FormplayerFrontend, Ba
                 ),
                 confirmText: gettext('Yes, log in as this user'),
                 onConfirm: function () {
-                    FormplayerFrontend.Utils.Users.logInAsUser(this.model.get('username'));
+                    hqImport("cloudcare/js/formplayer/users/utils").Users.logInAsUser(this.model.get('username'));
                     FormplayerFrontend.trigger('navigateHome');
-                    FormplayerFrontend.regions.restoreAsBanner.show(
-                        new FormplayerFrontend.Users.Views.RestoreAsBanner({
-                            model: FormplayerFrontend.request('currentUser'),
+                    FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
+                        new RestoreAsBanner({
+                            model: FormplayerFrontend.getChannel().request('currentUser'),
                         })
                     );
                 }.bind(this),
@@ -65,10 +67,10 @@ FormplayerFrontend.module("Users.Views", function (Views, FormplayerFrontend, Ba
      * Renders all possible users to log in as. Equipped with pagination
      * and custom querying.
      */
-    Views.RestoreAsView = Marionette.CompositeView.extend({
-        childView: Views.UserRowView,
+    var RestoreAsView = Marionette.CollectionView.extend({
+        childView: UserRowView,
         childViewContainer: 'tbody',
-        template: '#restore-as-view-template',
+        template: _.template($("#restore-as-view-template").html() || ""),
         limit: 10,
         maxPagesShown: 10,
         initialize: function (options) {
@@ -95,7 +97,7 @@ FormplayerFrontend.module("Users.Views", function (Views, FormplayerFrontend, Ba
             'click @ui.page': 'onClickPage',
             'submit @ui.search': 'onSubmitUserSearch',
         },
-        templateHelpers: function () {
+        templateContext: function () {
             return {
                 total: this.collection.total,
                 totalPages: this.totalPages(),
@@ -156,5 +158,14 @@ FormplayerFrontend.module("Users.Views", function (Views, FormplayerFrontend, Ba
             });
         },
     });
+
+    return {
+        RestoreAsBanner: function (options) {
+            return new RestoreAsBanner(options);
+        },
+        RestoreAsView: function (options) {
+            return new RestoreAsView(options);
+        },
+    };
 });
 
