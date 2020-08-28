@@ -3,7 +3,7 @@ from memoized import memoized
 from corehq.apps.es import GroupES, UserES, groups
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.const import DEFAULT_PAGE_LIMIT
-from corehq.apps.reports.extension_points import customize_emwf_options_user_query
+from corehq.apps.reports.extension_points import customize_user_query
 from corehq.apps.reports.filters.case_list import CaseListFilterUtils
 from corehq.apps.reports.filters.users import EmwfUtils, UsersUtils
 from corehq.apps.reports.util import SimplifiedUserInfo
@@ -119,7 +119,7 @@ class EmwfOptionsController(object):
             accessible_location_ids = SQLLocation.active_objects.accessible_location_ids(
                 self.request.domain, self.request.couch_user)
             users = users.location(accessible_location_ids)
-        users = customize_emwf_options_user_query(self.request, self.domain, users)
+        users = customize_user_query(self.request.couch_user, self.domain, users)
         return [self.utils.user_tuple(u) for u in users.run().hits]
 
     def active_user_es_query(self, query):
