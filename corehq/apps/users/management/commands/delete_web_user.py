@@ -19,7 +19,7 @@ class Command(BaseCommand):
         user_password = getpass()
         user = authenticate(username=user_username, password=user_password)
         if user is None or not user.is_active:
-            print(f"Invalid username or password")
+            print("Invalid username or password")
             sys.exit(1)
 
         web_user = WebUser.get_by_username(username)
