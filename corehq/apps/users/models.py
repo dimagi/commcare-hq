@@ -1212,7 +1212,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             user = self.get_django_user()
             user.delete()
             if deleted_by:
-                log_model_change(user, deleted_by, message=f"deleted_via: {deleted_via}",
+                log_model_change(deleted_by, user, message=f"deleted_via: {deleted_via}",
                                  action=ModelAction.DELETE)
         except User.DoesNotExist:
             pass
