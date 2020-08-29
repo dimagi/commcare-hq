@@ -213,7 +213,7 @@ describe('WebForm', function () {
 
             assert.isTrue(sess.onerror.calledOnce);
             assert.isTrue(sess.onerror.calledWith({
-                human_readable_message: Formplayer.Errors.TIMEOUT_ERROR,
+                human_readable_message: hqImport("cloudcare/js/formplayer/errors").TIMEOUT_ERROR,
                 is_html: false,
             }));
         });

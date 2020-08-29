@@ -70,7 +70,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                         if (response.status === 423) {
                             FormplayerFrontend.trigger(
                                 'showError',
-                                Formplayer.Errors.LOCK_TIMEOUT_ERROR
+                                hqImport("cloudcare/js/formplayer/errors").LOCK_TIMEOUT_ERROR
                             );
                         } else if (response.status === 401) {
                             FormplayerFrontend.trigger(

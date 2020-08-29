@@ -176,18 +176,19 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
         };
 
         self.handleFailure = function (resp, action, textStatus, failureCallback) {
-            var self = this;
-            var errorMessage = null;
-            var isHTML = false;
+            var self = this,
+                errorMessage = null,
+                isHTML = false,
+                Errors = hqImport("cloudcare/js/formplayer/errors");
             if (resp.status === 423) {
-                errorMessage = Formplayer.Errors.LOCK_TIMEOUT_ERROR;
+                errorMessage = Errors.LOCK_TIMEOUT_ERROR;
             } else if (resp.status === 401) {
                 errorMessage = Formplayer.Utils.reloginErrorHtml();
                 isHTML = true;
             } else if (textStatus === 'timeout') {
-                errorMessage = Formplayer.Errors.TIMEOUT_ERROR;
+                errorMessage = Errors.TIMEOUT_ERROR;
             } else if (!window.navigator.onLine) {
-                errorMessage = Formplayer.Errors.NO_INTERNET_ERROR;
+                errorMessage = Errors.NO_INTERNET_ERROR;
                 if (action === Formplayer.Const.SUBMIT) {
                     $('.submit').prop('disabled', false);
                     $('.form-control').prop('disabled', false);
