@@ -1,8 +1,9 @@
 /* eslint-env mocha */
-/* globals Question, DropdownEntry, ComboboxEntry */
+/* globals Question */
 
 describe('Entries', function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
+        Controls = hqImport("cloudcare/js/form_entry/entrycontrols_full"),
         questionJSON,
         spy;
 
@@ -37,7 +38,7 @@ describe('Entries', function () {
 
     it('Should return the IntEntry', function () {
         entry = (new Question(questionJSON)).entry;
-        assert.isTrue(entry instanceof IntEntry);
+        assert.isTrue(entry instanceof Controls.IntEntry);
         assert.equal(entry.templateType, 'str');
 
         entry.rawAnswer('1234');
@@ -59,7 +60,7 @@ describe('Entries', function () {
         questionJSON.choices = ['a', 'b'];
 
         entry = (new Question(questionJSON)).entry;
-        assert.isTrue(entry instanceof DropdownEntry);
+        assert.isTrue(entry instanceof Controls.DropdownEntry);
         assert.equal(entry.templateType, 'dropdown');
         assert.deepEqual(entry.options(), [{
             text: 'a',
@@ -82,7 +83,7 @@ describe('Entries', function () {
     it('Should return FloatEntry', function () {
         questionJSON.datatype = Const.FLOAT;
         entry = (new Question(questionJSON)).entry;
-        assert.isTrue(entry instanceof FloatEntry);
+        assert.isTrue(entry instanceof Controls.FloatEntry);
         assert.equal(entry.templateType, 'str');
 
         entry.rawAnswer('2.3');
@@ -108,7 +109,7 @@ describe('Entries', function () {
         questionJSON.answer = 2;
 
         entry = (new Question(questionJSON)).entry;
-        assert.isTrue(entry instanceof ComboboxEntry);
+        assert.isTrue(entry instanceof Controls.ComboboxEntry);
         assert.equal(entry.rawAnswer(), 'b');
 
         entry.rawAnswer('a');
@@ -130,7 +131,7 @@ describe('Entries', function () {
         question = new Question(questionJSON);
 
         entry = question.entry;
-        assert.isTrue(entry instanceof ComboboxEntry);
+        assert.isTrue(entry instanceof Controls.ComboboxEntry);
 
         entry.rawAnswer('a');
         assert.equal(entry.answer(), 1);
@@ -142,39 +143,39 @@ describe('Entries', function () {
 
     it('Should properly filter combobox', function () {
         // Standard filter
-        assert.isTrue(ComboboxEntry.filter('o', { name: 'one two', id: 1 }, null));
-        assert.isFalse(ComboboxEntry.filter('t', { name: 'one two', id: 1 }, null));
+        assert.isTrue(Controls.ComboboxEntry.filter('o', { name: 'one two', id: 1 }, null));
+        assert.isFalse(Controls.ComboboxEntry.filter('t', { name: 'one two', id: 1 }, null));
 
         // Multiword filter
         assert.isTrue(
-            ComboboxEntry.filter('one three', { name: 'one two three', id: 1 }, Const.COMBOBOX_MULTIWORD)
+            Controls.ComboboxEntry.filter('one three', { name: 'one two three', id: 1 }, Const.COMBOBOX_MULTIWORD)
         );
         assert.isFalse(
-            ComboboxEntry.filter('two three', { name: 'one two', id: 1 }, Const.COMBOBOX_MULTIWORD)
+            Controls.ComboboxEntry.filter('two three', { name: 'one two', id: 1 }, Const.COMBOBOX_MULTIWORD)
         );
 
         // Fuzzy filter
         assert.isTrue(
-            ComboboxEntry.filter('onet', { name: 'onetwo', id: 1 }, Const.COMBOBOX_FUZZY)
+            Controls.ComboboxEntry.filter('onet', { name: 'onetwo', id: 1 }, Const.COMBOBOX_FUZZY)
         );
         assert.isTrue(
-            ComboboxEntry.filter('OneT', { name: 'onetwo', id: 1 }, Const.COMBOBOX_FUZZY)
+            Controls.ComboboxEntry.filter('OneT', { name: 'onetwo', id: 1 }, Const.COMBOBOX_FUZZY)
         );
         assert.isFalse(
-            ComboboxEntry.filter('one tt', { name: 'one', id: 1 }, Const.COMBOBOX_FUZZY)
+            Controls.ComboboxEntry.filter('one tt', { name: 'one', id: 1 }, Const.COMBOBOX_FUZZY)
         );
         assert.isTrue(
-            ComboboxEntry.filter('o', { name: 'one', id: 1 }, Const.COMBOBOX_FUZZY)
+            Controls.ComboboxEntry.filter('o', { name: 'one', id: 1 }, Const.COMBOBOX_FUZZY)
         );
         assert.isTrue(
-            ComboboxEntry.filter('on', { name: 'on', id: 1 }, Const.COMBOBOX_FUZZY)
+            Controls.ComboboxEntry.filter('on', { name: 'on', id: 1 }, Const.COMBOBOX_FUZZY)
         );
     });
 
     it('Should return FreeTextEntry', function () {
         questionJSON.datatype = Const.STRING;
         entry = (new Question(questionJSON)).entry;
-        assert.isTrue(entry instanceof FreeTextEntry);
+        assert.isTrue(entry instanceof Controls.FreeTextEntry);
         assert.equal(entry.templateType, 'text');
 
         entry.answer('harry');
@@ -191,7 +192,7 @@ describe('Entries', function () {
         questionJSON.answer = [1]; // answer is based on a 1 indexed index of the choices
 
         entry = (new Question(questionJSON)).entry;
-        assert.isTrue(entry instanceof MultiSelectEntry);
+        assert.isTrue(entry instanceof Controls.MultiSelectEntry);
         assert.equal(entry.templateType, 'select');
         assert.sameMembers(entry.answer(), [1]);
         assert.sameMembers(entry.rawAnswer(), [1]);
@@ -213,7 +214,7 @@ describe('Entries', function () {
         questionJSON.answer = 1;
 
         entry = (new Question(questionJSON)).entry;
-        assert.isTrue(entry instanceof SingleSelectEntry);
+        assert.isTrue(entry instanceof Controls.SingleSelectEntry);
         assert.equal(entry.templateType, 'select');
         assert.equal(entry.rawAnswer(), 1);
 
@@ -228,7 +229,7 @@ describe('Entries', function () {
         questionJSON.answer = '1990-09-26';
 
         entry = (new Question(questionJSON)).entry;
-        assert.isTrue(entry instanceof DateEntry);
+        assert.isTrue(entry instanceof Controls.DateEntry);
         assert.equal(entry.templateType, 'date');
 
         entry.answer('1987-11-19');
@@ -241,7 +242,7 @@ describe('Entries', function () {
         questionJSON.answer = '12:30';
 
         entry = (new Question(questionJSON)).entry;
-        assert.isTrue(entry instanceof TimeEntry);
+        assert.isTrue(entry instanceof Controls.TimeEntry);
         assert.equal(entry.templateType, 'time');
 
         entry.rawAnswer('12:45');
@@ -253,7 +254,7 @@ describe('Entries', function () {
         questionJSON.datatype = Const.INFO;
         entry = (new Question(questionJSON)).entry;
 
-        assert.isTrue(entry instanceof InfoEntry);
+        assert.isTrue(entry instanceof Controls.InfoEntry);
     });
 
     it('Should return a GeoPointEntry', function () {
@@ -277,7 +278,7 @@ describe('Entries', function () {
         questionJSON.style = { raw: 'numeric' };
 
         entry = (new Question(questionJSON)).entry;
-        assert.isTrue(entry instanceof PhoneEntry);
+        assert.isTrue(entry instanceof Controls.PhoneEntry);
         assert.equal(entry.answer(), null);
         assert.equal(entry.templateType, 'str');
 
@@ -299,7 +300,7 @@ describe('Entries', function () {
         questionJSON.style = { raw: Const.ADDRESS };
 
         entry = (new Question(questionJSON)).entry;
-        assert.isTrue(entry instanceof AddressEntry);
+        assert.isTrue(entry instanceof Controls.AddressEntry);
     });
 
     it('Should allow decimals in a PhoneEntry', function () {
