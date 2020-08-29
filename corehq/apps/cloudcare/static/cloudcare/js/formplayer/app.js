@@ -1,4 +1,4 @@
-/*global Marionette, Backbone, Util */
+/*global Marionette, Backbone */
 
 /**
  * The primary Marionette application managing menu navigation and launching form entry
@@ -15,6 +15,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
     var formplayerSyncComplete = hqImport('cloudcare/js/util').formplayerSyncComplete;
     var clearUserDataComplete = hqImport('cloudcare/js/util').clearUserDataComplete;
     var breakLocksComplete = hqImport('cloudcare/js/util').breakLocksComplete;
+    var Util = hqImport("cloudcare/js/formplayer/utils/util");
     var WebFormSession = hqImport('cloudcare/js/form_entry/webformsession').WebFormSession;
     var appcues = hqImport('analytix/js/appcues');
 
