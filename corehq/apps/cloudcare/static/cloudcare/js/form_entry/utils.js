@@ -41,7 +41,7 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
      * @param {Object} $div - The jquery element that the form will be rendered in.
      */
     module.initialRender = function (formJSON, resourceMap, $div) {
-        var form = new Form(formJSON),
+        var form = new hqImport("cloudcare/js/form_entry/models").Form(formJSON),
             $debug = $('#cloudcare-debugger'),
             CloudCareDebugger = hqImport('cloudcare/js/debugger/debugger').CloudCareDebuggerFormEntry,
             cloudCareDebugger;

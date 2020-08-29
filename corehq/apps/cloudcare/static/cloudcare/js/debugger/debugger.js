@@ -1,5 +1,8 @@
 /* globals ace, Clipboard */
 hqDefine('cloudcare/js/debugger/debugger', function () {
+    RegExp.escape = function (s) {
+        return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    };
 
     /**
      * These define tabs that are availabe in the debugger.

@@ -2,6 +2,7 @@
 
 hqDefine("cloudcare/js/form_entry/webformsession", function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
+        Models = hqImport("cloudcare/js/form_entry/models"),
         Utils = hqImport("cloudcare/js/form_entry/utils");
     function WebFormSession(params) {
         var self = {};
@@ -294,7 +295,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
 
         self.answerQuestion = function (q) {
             var self = this;
-            var ix = getIx(q);
+            var ix = Models.getIx(q);
             var answer = q.answer();
             var oneQuestionPerScreen = self.isOneQuestionPerScreen();
 
@@ -379,7 +380,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
             this.serverRequest(
                 {
                     'action': Const.NEW_REPEAT,
-                    'ix': getIx(repeat),
+                    'ix': Models.getIx(repeat),
                 },
                 function (resp) {
                     $.publish('session.reconcile', [resp, repeat]);
@@ -388,7 +389,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
         };
 
         self.deleteRepeat = function (repetition) {
-            var juncture = getIx(repetition.parent);
+            var juncture = Models.getIx(repetition.parent);
             var rep_ix = +(repetition.rel_ix().replace(/_/g, ':').split(":").slice(-1)[0]);
             this.serverRequest(
                 {
@@ -432,7 +433,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
                     } else {
                         if (o.isValid()) {
                             if (ko.utils.unwrapObservable(o.datatype) !== "info") {
-                                _answers[getIx(o)] = ko.utils.unwrapObservable(o.answer);
+                                _answers[Models.getIx(o)] = ko.utils.unwrapObservable(o.answer);
                             }
                         } else {
                             prevalidated = false;
@@ -466,7 +467,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
                                 self.onsubmit(resp);
                             } else {
                                 $.each(resp.errors, function (ix, error) {
-                                    self.serverError(getForIx(form, ix), error);
+                                    self.serverError(Models.getForIx(form, ix), error);
                                 });
                                 // todo: mark all these messages for translation
                                 if (resp.status === 'too-many-requests') {
@@ -474,12 +475,13 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
                                         "Please keep this window open and try again in a minute, " +
                                         "or come back to this form in Incomplete Forms later.");
                                 } else if (resp.notification) {
-                                    alert("Form submission failed with error: \n\n" +
-                                        resp.notification.message + ". \n\n " +
-                                        "This must be corrected before the form can be submitted.");
+                                    alert(_.template(gettext("Form submission failed with error: \n\n" +
+                                          "<%= error %>\n\nThis must be corrected before the form can be submitted."))({
+                                        error: resp.notification.message,
+                                    }));
                                 } else {
-                                    alert("There are errors in this form's answers. " +
-                                        "These must be corrected before the form can be submitted.");
+                                    alert(gettext("There are errors in this form's answers. " +
+                                          "These must be corrected before the form can be submitted."));
                                 }
                             }
                         },
@@ -495,9 +497,9 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
 
         self.serverError = function (q, resp) {
             if (resp.type === "required") {
-                q.serverError("An answer is required");
+                q.serverError(gettext("An answer is required"));
             } else if (resp.type === "constraint") {
-                q.serverError(resp.reason || 'This answer is outside the allowed range.');
+                q.serverError(resp.reason || gettext('This answer is outside the allowed range.'));
             }
         };
 

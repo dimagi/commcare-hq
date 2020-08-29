@@ -57,6 +57,7 @@ describe('WebForm', function () {
     describe('WebFormSession', function () {
         var server,
             params,
+            Models = hqImport("cloudcare/js/form_entry/models"),
             Utils = hqImport("cloudcare/js/form_entry/utils"),
             WebFormSession = hqImport("cloudcare/js/form_entry/webformsession").WebFormSession;
 
@@ -102,7 +103,7 @@ describe('WebForm', function () {
             // Setup stubs
             $.cookie = sinon.stub();
             sinon.stub(Utils, 'initialRender');
-            sinon.stub(window, 'getIx').callsFake(function () { return 3; });
+            sinon.stub(Models, 'getIx').callsFake(function () { return 3; });
         });
 
         afterEach(function () {
@@ -115,7 +116,7 @@ describe('WebForm', function () {
                 // the browser.
             }
             Utils.initialRender.restore();
-            getIx.restore();
+            Models.getIx.restore();
             $.unsubscribe();
         });
 

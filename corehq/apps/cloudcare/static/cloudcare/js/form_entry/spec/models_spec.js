@@ -1,8 +1,8 @@
 /* eslint-env mocha */
-/* globals Form */
 
-describe('Fullform UI', function () {
+describe('Form Models', function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
+        Models = hqImport("cloudcare/js/form_entry/models"),
         questionJSON,
         answerSpy,
         formSpec,
@@ -165,7 +165,7 @@ describe('Fullform UI', function () {
     });
 
     it('Should render a basic form and reconcile', function () {
-        var form = new Form(formJSON),
+        var form = new Models.Form(formJSON),
             newJson = [questionJSON];
 
         assert.equal(form.children().length, 2);
@@ -176,7 +176,7 @@ describe('Fullform UI', function () {
 
     it('Should render a repeater question', function () {
         formJSON.tree = [repeatJSON];
-        var form = new Form(formJSON);
+        var form = new Models.Form(formJSON);
         assert.equal(form.children().length, 1);
         assert.equal(form.children()[0].children().length, 0);
 
@@ -193,7 +193,7 @@ describe('Fullform UI', function () {
 
     it('Should reconcile question choices', function () {
         formJSON.tree = [questionJSON];
-        var form = new Form(formJSON),
+        var form = new Models.Form(formJSON),
             question = form.children()[0];
         assert.equal(form.children().length, 1);
         assert.equal(question.choices().length, 2);
@@ -209,7 +209,7 @@ describe('Fullform UI', function () {
         questionJSON.datatype = Const.GEO;
         questionJSON.answer = null;
         formJSON.tree = [questionJSON];
-        var form = new Form(_.clone(formJSON)),
+        var form = new Models.Form(_.clone(formJSON)),
             question = form.children()[0];
         assert.equal(question.answer(), null);
 
@@ -219,7 +219,7 @@ describe('Fullform UI', function () {
         assert.sameMembers(question.answer(), [1,2]);
 
         questionJSON.answer = [3,3];
-        form = new Form(_.clone(formJSON)),
+        form = new Models.Form(_.clone(formJSON)),
         question = form.children()[0];
         $.publish('session.reconcile', [_.clone(formJSON), question]);
         assert.sameMembers(question.answer(), [3,3]);
@@ -231,15 +231,15 @@ describe('Fullform UI', function () {
          */
         var formJSON2 = {};
         $.extend(formJSON2, formJSON);
-        var form = new Form(formJSON),
-            form2 = new Form(formJSON2),
+        var form = new Models.Form(formJSON),
+            form2 = new Models.Form(formJSON2),
             spy = sinon.spy(),
             spy2 = sinon.spy();
 
         sinon.stub(form, 'fromJS').callsFake(spy);
         sinon.stub(form2, 'fromJS').callsFake(spy2);
 
-        $.publish('session.reconcile', [{}, new Question(questionJSON, form)]);
+        $.publish('session.reconcile', [{}, new Models.Question(questionJSON, form)]);
         assert.isFalse(spy.calledOnce);
         assert.isTrue(spy2.calledOnce);
     });
@@ -247,7 +247,7 @@ describe('Fullform UI', function () {
 
     it('Should throttle answers', function () {
         questionJSON.datatype = Const.STRING;
-        var question = new Question(questionJSON);
+        var question = new Models.Question(questionJSON);
         question.answer('abc');
         this.clock.tick(question.throttle);
         assert.equal(spy.callCount, 1);
@@ -261,7 +261,7 @@ describe('Fullform UI', function () {
 
     it('Should not be valid if question has serverError', function () {
         questionJSON.datatype = Const.STRING;
-        var question = new Question(questionJSON);
+        var question = new Models.Question(questionJSON);
 
         question.serverError('Answer required');
         assert.isFalse(question.isValid());
@@ -272,8 +272,8 @@ describe('Fullform UI', function () {
     });
 
     it('Should handle a constraint error', function () {
-        var form = new Form(formJSON);
-        var question = new Question(questionJSON, form);
+        var form = new Models.Form(formJSON);
+        var question = new Models.Question(questionJSON, form);
 
         assert.equal(question.serverError(), null);
         $.publish('session.reconcile', [{
@@ -287,7 +287,7 @@ describe('Fullform UI', function () {
     });
 
     it('Should find nested questions', function () {
-        var form = new Form(nestedGroupJSON);
+        var form = new Models.Form(nestedGroupJSON);
         assert.isTrue(form.children()[0].hasAnyNestedQuestions());
         assert.isFalse(form.children()[1].hasAnyNestedQuestions());
     });
