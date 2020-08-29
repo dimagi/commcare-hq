@@ -1,5 +1,6 @@
 /* globals Formplayer, EntrySingleAnswer, moment */
-var Const = hqImport("cloudcare/js/form_entry/const");
+var Const = hqImport("cloudcare/js/form_entry/const"),
+    Utils = hqImport("cloudcare/js/form_entry/utils");
 
 /**
  * The base Object for all entries. Each entry takes a question object and options
@@ -59,7 +60,7 @@ EntryArrayAnswer = function (question, options) {
 EntryArrayAnswer.prototype = Object.create(Entry.prototype);
 EntryArrayAnswer.prototype.constructor = Entry;
 EntryArrayAnswer.prototype.onAnswerChange = function (newValue) {
-    if (Formplayer.Utils.answersEqual(this.answer(), this.previousAnswer)) {
+    if (Utils.answersEqual(this.answer(), this.previousAnswer)) {
         return;
     }
     this.question.onchange();
@@ -74,7 +75,7 @@ EntryArrayAnswer.prototype.onPreProcess = function (newValue) {
             processed = Const.NO_ANSWER;
         }
 
-        if (!Formplayer.Utils.answersEqual(processed, this.answer())) {
+        if (!Utils.answersEqual(processed, this.answer())) {
             this.previousAnswer = this.answer();
             this.answer(processed);
         }

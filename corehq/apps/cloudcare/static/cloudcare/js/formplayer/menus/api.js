@@ -75,7 +75,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                         } else if (response.status === 401) {
                             FormplayerFrontend.trigger(
                                 'showError',
-                                Formplayer.Utils.reloginErrorHtml(),
+                                hqImport("cloudcare/js/form_entry/utils").reloginErrorHtml(),
                                 true
                             );
                         } else {

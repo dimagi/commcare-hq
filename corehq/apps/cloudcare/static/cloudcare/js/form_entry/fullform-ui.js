@@ -1,8 +1,6 @@
 /* global _, mdAnchorRender */
-var Formplayer = {
-    Utils: {},
-};
-var Const = hqImport("cloudcare/js/form_entry/const");
+var Const = hqImport("cloudcare/js/form_entry/const"),
+    Utils = hqImport("cloudcare/js/form_entry/utils");
 var md = window.markdownit();
 
 //Overriden by downstream contexts, check before changing
@@ -174,7 +172,7 @@ Container.prototype.fromJS = function (json) {
                 if (options.target.pendingAnswer &&
                         options.target.pendingAnswer() !== Const.NO_PENDING_ANSWER) {
                     // There is a request in progress
-                    if (Formplayer.Utils.answersEqual(options.data.answer, options.target.pendingAnswer())) {
+                    if (Utils.answersEqual(options.data.answer, options.target.pendingAnswer())) {
                         // We can now mark it as not dirty
                         options.data.answer = _.clone(options.target.pendingAnswer());
                         options.target.pendingAnswer(Const.NO_PENDING_ANSWER);
@@ -485,8 +483,8 @@ function Question(json, parent) {
     self.onchange = self.triggerAnswer;
 
     self.mediaSrc = function (resourceType) {
-        if (!resourceType || !_.isFunction(Formplayer.resourceMap)) { return ''; }
-        return Formplayer.resourceMap(resourceType);
+        if (!resourceType || !_.isFunction(Utils.resourceMap)) { return ''; }
+        return Utils.resourceMap(resourceType);
     };
 }
 
@@ -542,69 +540,6 @@ Question.prototype.stylesContaining = function (pattern) {
 Question.prototype.stylesContains = function (pattern) {
     return this.stylesContaining(pattern).length > 0;
 };
-
-
-Formplayer.Utils.touchformsError = function (message) {
-    return hqImport("cloudcare/js/formplayer/errors").GENERIC_ERROR + message;
-};
-
-Formplayer.Utils.reloginErrorHtml = function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
-    var isWebApps = FormplayerFrontend.getChannel().request('currentUser').environment === hqImport("cloudcare/js/formplayer/constants").WEB_APPS_ENVIRONMENT;
-    if (isWebApps) {
-        var url = hqImport("hqwebapp/js/initial_page_data").reverse('login_new_window');
-        return _.template(gettext("Looks like you got logged out because of inactivity, but your work is safe. " +
-                                  "<a href='<%= url %>' target='_blank'>Click here to log back in.</a>"))({url: url});
-    } else {
-        // target=_blank doesn't work properly within an iframe
-        return gettext("You have been logged out because of inactivity.");
-    }
-};
-
-/**
- * Compares the equality of two answer sets.
- * @param {(string|string[])} answer1 - A string of answers or a single answer
- * @param {(string|string[])} answer2 - A string of answers or a single answer
- */
-Formplayer.Utils.answersEqual = function (answer1, answer2) {
-    if (answer1 instanceof Array && answer2 instanceof Array) {
-        return _.isEqual(answer1, answer2);
-    } else if (answer1 === answer2) {
-        return true;
-    }
-    return false;
-};
-
-/**
- * Initializes a new form to be used by the formplayer.
- * @param {Object} formJSON - The json representation of the form
- * @param {Object} resourceMap - Function for resolving multimedia paths
- * @param {Object} $div - The jquery element that the form will be rendered in.
- */
-Formplayer.Utils.initialRender = function (formJSON, resourceMap, $div) {
-    var form = new Form(formJSON),
-        $debug = $('#cloudcare-debugger'),
-        CloudCareDebugger = hqImport('cloudcare/js/debugger/debugger').CloudCareDebuggerFormEntry,
-        cloudCareDebugger;
-    Formplayer.resourceMap = resourceMap;
-    ko.cleanNode($div[0]);
-    $div.koApplyBindings(form);
-
-    if ($debug.length) {
-        cloudCareDebugger = new CloudCareDebugger({
-            baseUrl: formJSON.xform_url,
-            formSessionId: formJSON.session_id,
-            username: formJSON.username,
-            restoreAs: formJSON.restoreAs,
-            domain: formJSON.domain,
-        });
-        ko.cleanNode($debug[0]);
-        $debug.koApplyBindings(cloudCareDebugger);
-    }
-
-    return form;
-};
-
 
 RegExp.escape = function (s) {
     return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');

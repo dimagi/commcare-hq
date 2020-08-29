@@ -1,4 +1,3 @@
-/* globals Formplayer */
 /* eslint-env mocha */
 
 describe('WebForm', function () {
@@ -58,6 +57,7 @@ describe('WebForm', function () {
     describe('WebFormSession', function () {
         var server,
             params,
+            Utils = hqImport("cloudcare/js/form_entry/utils"),
             WebFormSession = hqImport("cloudcare/js/form_entry/webformsession").WebFormSession;
 
         beforeEach(function () {
@@ -101,7 +101,7 @@ describe('WebForm', function () {
 
             // Setup stubs
             $.cookie = sinon.stub();
-            sinon.stub(Formplayer.Utils, 'initialRender');
+            sinon.stub(Utils, 'initialRender');
             sinon.stub(window, 'getIx').callsFake(function () { return 3; });
         });
 
@@ -114,7 +114,7 @@ describe('WebForm', function () {
                 // running mocha tests with grunt-mocha. this passes fine in
                 // the browser.
             }
-            Formplayer.Utils.initialRender.restore();
+            Utils.initialRender.restore();
             getIx.restore();
             $.unsubscribe();
         });

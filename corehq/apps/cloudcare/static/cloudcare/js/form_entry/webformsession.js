@@ -1,7 +1,8 @@
 /*global Formplayer */
 
 hqDefine("cloudcare/js/form_entry/webformsession", function () {
-    var Const = hqImport("cloudcare/js/form_entry/const");
+    var Const = hqImport("cloudcare/js/form_entry/const"),
+        Utils = hqImport("cloudcare/js/form_entry/utils");
     function WebFormSession(params) {
         var self = {};
 
@@ -159,7 +160,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
                 } catch (err) {
                     console.error(err);
                     self.onerror({
-                        message: Formplayer.Utils.touchformsError(err),
+                        message: Utils.touchformsError(err),
                     });
                 }
             }
@@ -184,7 +185,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
             if (resp.status === 423) {
                 errorMessage = Errors.LOCK_TIMEOUT_ERROR;
             } else if (resp.status === 401) {
-                errorMessage = Formplayer.Utils.reloginErrorHtml();
+                errorMessage = Utils.reloginErrorHtml();
                 isHTML = true;
             } else if (textStatus === 'timeout') {
                 errorMessage = Errors.TIMEOUT_ERROR;
@@ -195,7 +196,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
                     $('.form-control').prop('disabled', false);
                 }
             } else if (resp.hasOwnProperty('responseJSON') && resp.responseJSON !== undefined) {
-                errorMessage = Formplayer.Utils.touchformsError(resp.responseJSON.message);
+                errorMessage = Utils.touchformsError(resp.responseJSON.message);
             }
 
             hqImport('cloudcare/js/util').reportFormplayerErrorToHQ({
@@ -511,7 +512,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
         self.renderFormXml = function (resp, $form) {
             var self = this;
             self.session_id = self.session_id || resp.session_id;
-            self.form = Formplayer.Utils.initialRender(resp, self.resourceMap, $form);
+            self.form = Utils.initialRender(resp, self.resourceMap, $form);
         };
 
         // Initialize
