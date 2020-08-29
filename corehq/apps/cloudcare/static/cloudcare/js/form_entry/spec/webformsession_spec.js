@@ -2,6 +2,7 @@
 /* eslint-env mocha */
 
 describe('WebForm', function () {
+    var Const = hqImport("cloudcare/js/form_entry/const");
 
     describe('TaskQueue', function () {
         var tq,
@@ -140,7 +141,7 @@ describe('WebForm', function () {
             sinon.stub(sess, 'newRepeat').callsFake(spy);
             sinon.stub(sess2, 'newRepeat').callsFake(spy2);
 
-            $.publish('formplayer.' + Formplayer.Const.NEW_REPEAT, {});
+            $.publish('formplayer.' + Const.NEW_REPEAT, {});
             assert.isFalse(spy.calledOnce);
             assert.isTrue(spy2.calledOnce);
         });
@@ -149,16 +150,16 @@ describe('WebForm', function () {
             var sess = WebFormSession(params);
 
             // First blocking request
-            $.publish('formplayer.' + Formplayer.Const.NEW_REPEAT, {});
+            $.publish('formplayer.' + Const.NEW_REPEAT, {});
 
-            assert.equal(sess.blockingStatus, Formplayer.Const.BLOCK_ALL);
+            assert.equal(sess.blockingStatus, Const.BLOCK_ALL);
 
             // Attempt another request
-            $.publish('formplayer.' + Formplayer.Const.NEW_REPEAT, {});
+            $.publish('formplayer.' + Const.NEW_REPEAT, {});
 
             server.respond();
 
-            assert.equal(sess.blockingStatus, Formplayer.Const.BLOCK_NONE);
+            assert.equal(sess.blockingStatus, Const.BLOCK_NONE);
             // One call to new-repeat
             assert.equal(server.requests.length, 1);
         });
@@ -167,16 +168,16 @@ describe('WebForm', function () {
             var sess = WebFormSession(params);
 
             // First blocking request
-            $.publish('formplayer.' + Formplayer.Const.ANSWER, { answer: sinon.spy() });
+            $.publish('formplayer.' + Const.ANSWER, { answer: sinon.spy() });
 
-            assert.equal(sess.blockingStatus, Formplayer.Const.BLOCK_SUBMIT);
+            assert.equal(sess.blockingStatus, Const.BLOCK_SUBMIT);
 
             // Attempt another request
-            $.publish('formplayer.' + Formplayer.Const.ANSWER, { answer: sinon.spy() });
+            $.publish('formplayer.' + Const.ANSWER, { answer: sinon.spy() });
 
             server.respond();
 
-            assert.equal(sess.blockingStatus, Formplayer.Const.BLOCK_NONE);
+            assert.equal(sess.blockingStatus, Const.BLOCK_NONE);
             // two calls to answer
             assert.equal(server.requests.length, 2);
 
