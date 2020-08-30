@@ -1,7 +1,8 @@
-/*global Util, Backbone */
+/*global Backbone */
 
 hqDefine("cloudcare/js/formplayer/menus/collections", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        Util = hqImport("cloudcare/js/formplayer/utils/util");
 
     var MenuSelect = Backbone.Collection.extend({
         commonProperties: [

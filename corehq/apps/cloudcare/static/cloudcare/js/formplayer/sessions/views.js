@@ -1,4 +1,4 @@
-/*global _, moment, Util */
+/*global _, moment */
 
 hqDefine("cloudcare/js/formplayer/sessions/views", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
@@ -28,7 +28,7 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
             var self = this;
             e.preventDefault();
             e.stopPropagation();
-            Util.confirmationModal({
+            hqImport("cloudcare/js/formplayer/utils/util").confirmationModal({
                 title: gettext('Delete incomplete form?'),
                 message: gettext("Are you sure you want to delete '" + self.model.get('title') + "'"),
                 confirmText: gettext('Yes'),

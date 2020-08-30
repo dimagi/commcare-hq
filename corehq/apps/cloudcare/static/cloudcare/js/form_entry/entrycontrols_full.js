@@ -1,4 +1,6 @@
 /* globals Formplayer, EntrySingleAnswer, moment */
+var Const = hqImport("cloudcare/js/form_entry/const"),
+    Utils = hqImport("cloudcare/js/form_entry/utils");
 
 /**
  * The base Object for all entries. Each entry takes a question object and options
@@ -23,7 +25,7 @@ function Entry(question, options) {
     };
 
     self.clear = function () {
-        self.answer(Formplayer.Const.NO_ANSWER);
+        self.answer(Const.NO_ANSWER);
     };
     self.afterRender = function () {
         // Override with any logic that comes after rendering the Entry
@@ -58,7 +60,7 @@ EntryArrayAnswer = function (question, options) {
 EntryArrayAnswer.prototype = Object.create(Entry.prototype);
 EntryArrayAnswer.prototype.constructor = Entry;
 EntryArrayAnswer.prototype.onAnswerChange = function (newValue) {
-    if (Formplayer.Utils.answersEqual(this.answer(), this.previousAnswer)) {
+    if (Utils.answersEqual(this.answer(), this.previousAnswer)) {
         return;
     }
     this.question.onchange();
@@ -70,10 +72,10 @@ EntryArrayAnswer.prototype.onPreProcess = function (newValue) {
         if (newValue.length) {
             processed = _.map(newValue, function (d) { return +d; });
         } else {
-            processed = Formplayer.Const.NO_ANSWER;
+            processed = Const.NO_ANSWER;
         }
 
-        if (!Formplayer.Utils.answersEqual(processed, this.answer())) {
+        if (!Utils.answersEqual(processed, this.answer())) {
             this.previousAnswer = this.answer();
             this.answer(processed);
         }
@@ -91,7 +93,7 @@ EntrySingleAnswer = function (question, options) {
     var getRawAnswer = function (answer) {
         // Zero is a perfectly valid answer
         if (answer !== 0 && !answer) {
-            return Formplayer.Const.NO_ANSWER;
+            return Const.NO_ANSWER;
         }
         return answer;
     };
@@ -107,7 +109,7 @@ EntrySingleAnswer = function (question, options) {
         self.valueUpdate = 'keyup';
         self.answer.extend({
             rateLimit: {
-                timeout: Formplayer.Const.KO_ENTRY_TIMEOUT,
+                timeout: Const.KO_ENTRY_TIMEOUT,
                 method: "notifyWhenChangesStop",
             },
         });
@@ -127,8 +129,8 @@ EntrySingleAnswer.prototype.enableReceiver = function (question, options) {
             var receiveTopic = match[1];
             var receiveTopicField = match[2];
             question.parentPubSub.subscribe(function (message) {
-                if (message === Formplayer.Const.NO_ANSWER) {
-                    self.rawAnswer(Formplayer.Const.NO_ANSWER);
+                if (message === Const.NO_ANSWER) {
+                    self.rawAnswer(Const.NO_ANSWER);
                 } else if (message) {
                     self.receiveMessage(message, receiveTopicField);
                 }
@@ -142,7 +144,7 @@ EntrySingleAnswer.prototype.receiveMessage = function (message, field) {
     if (message[field]) {
         self.rawAnswer(message[field]);
     } else {
-        self.rawAnswer(Formplayer.Const.NO_ANSWER);
+        self.rawAnswer(Const.NO_ANSWER);
     }
 };
 
@@ -179,7 +181,7 @@ UnsupportedEntry.prototype.constructor = Entry;
 function FreeTextEntry(question, options) {
     var self = this;
     EntrySingleAnswer.call(self, question, options);
-    var isPassword = ko.utils.unwrapObservable(question.control) === Formplayer.Const.CONTROL_SECRET;
+    var isPassword = ko.utils.unwrapObservable(question.control) === Const.CONTROL_SECRET;
     if (isPassword) {
         self.templateType = 'password';
     } else {
@@ -207,7 +209,7 @@ function FreeTextEntry(question, options) {
             return gettext('Password');
         }
         switch (self.datatype) {
-            case Formplayer.Const.BARCODE:
+            case Const.BARCODE:
                 return gettext('Barcode');
             default:
                 return gettext('Free response');
@@ -219,7 +221,7 @@ FreeTextEntry.prototype = Object.create(EntrySingleAnswer.prototype);
 FreeTextEntry.prototype.constructor = EntrySingleAnswer;
 FreeTextEntry.prototype.onPreProcess = function (newValue) {
     if (this.isValid(newValue)) {
-        this.answer(newValue === '' ? Formplayer.Const.NO_ANSWER : newValue);
+        this.answer(newValue === '' ? Const.NO_ANSWER : newValue);
     }
     this.question.error(this.getErrorMessage(newValue));
 };
@@ -287,11 +289,11 @@ function AddressEntry(question, options) {
 
     // geocoder function called when user presses 'x', broadcast a no answer to subscribers.
     self.geocoderOnClearCallback = function () {
-        self.rawAnswer(Formplayer.Const.NO_ANSWER);
+        self.rawAnswer(Const.NO_ANSWER);
         self.question.error(null);
         self.editing = true;
         self.broadcastTopics.forEach(function (broadcastTopic) {
-            question.parentPubSub.notifySubscribers(Formplayer.Const.NO_ANSWER, broadcastTopic);
+            question.parentPubSub.notifySubscribers(Const.NO_ANSWER, broadcastTopic);
         });
     };
 
@@ -324,7 +326,7 @@ function AddressEntry(question, options) {
     self._inputOnKeyDown = function (event) {
         // On key down, switch to editing mode so we unregister an answer.
         if (!self.editing && self.rawAnswer() !== event.target.value) {
-            self.rawAnswer(Formplayer.Const.NO_ANSWER);
+            self.rawAnswer(Const.NO_ANSWER);
             self.question.error('Please select an address from the options');
             self.editing = true;
         }
@@ -341,8 +343,8 @@ function IntEntry(question, options) {
     var self = this;
     FreeTextEntry.call(self, question, options);
     self.templateType = 'str';
-    self.lengthLimit = options.lengthLimit || Formplayer.Const.INT_LENGTH_LIMIT;
-    var valueLimit = options.valueLimit || Formplayer.Const.INT_VALUE_LIMIT;
+    self.lengthLimit = options.lengthLimit || Const.INT_LENGTH_LIMIT;
+    var valueLimit = options.valueLimit || Const.INT_VALUE_LIMIT;
 
     self.getErrorMessage = function (rawAnswer) {
         if (isNaN(+rawAnswer) || +rawAnswer !== Math.floor(+rawAnswer))
@@ -364,7 +366,7 @@ IntEntry.prototype.constructor = FreeTextEntry;
 IntEntry.prototype.onPreProcess = function (newValue) {
     if (this.isValid(newValue)) {
         if (newValue === '') {
-            this.answer(Formplayer.Const.NO_ANSWER);
+            this.answer(Const.NO_ANSWER);
         } else {
             this.answer(+newValue);
         }
@@ -401,8 +403,8 @@ PhoneEntry.prototype.constructor = FreeTextEntry;
 function FloatEntry(question, options) {
     IntEntry.call(this, question, options);
     this.templateType = 'str';
-    this.lengthLimit = options.lengthLimit || Formplayer.Const.FLOAT_LENGTH_LIMIT;
-    var valueLimit = options.valueLimit || Formplayer.Const.FLOAT_VALUE_LIMIT;
+    this.lengthLimit = options.lengthLimit || Const.FLOAT_LENGTH_LIMIT;
+    var valueLimit = options.valueLimit || Const.FLOAT_VALUE_LIMIT;
 
     this.getErrorMessage = function (rawAnswer) {
         if (isNaN(+rawAnswer))
@@ -452,7 +454,7 @@ function SingleSelectEntry(question, options) {
     self.templateType = 'select';
     self.isMulti = false;
     self.onClear = function () {
-        self.rawAnswer(Formplayer.Const.NO_ANSWER);
+        self.rawAnswer(Const.NO_ANSWER);
     };
     self.isValid = function () {
         return true;
@@ -464,7 +466,7 @@ SingleSelectEntry.prototype = Object.create(EntrySingleAnswer.prototype);
 SingleSelectEntry.prototype.constructor = EntrySingleAnswer;
 SingleSelectEntry.prototype.onPreProcess = function (newValue) {
     if (this.isValid(newValue)) {
-        if (newValue === Formplayer.Const.NO_ANSWER) {
+        if (newValue === Const.NO_ANSWER) {
             this.answer(newValue);
         } else {
             this.answer(+newValue);
@@ -484,7 +486,7 @@ SingleSelectEntry.prototype.receiveMessage = function (message, field) {
         }
     }
     // either field is not in message or message[field] is not an option.
-    self.rawAnswer(Formplayer.Const.NO_ANSWER);
+    self.rawAnswer(Const.NO_ANSWER);
 };
 
 /**
@@ -504,7 +506,7 @@ function ChoiceLabelEntry(question, options) {
     });
 
     self.onClear = function () {
-        self.rawAnswer(Formplayer.Const.NO_ANSWER);
+        self.rawAnswer(Const.NO_ANSWER);
     };
     self.isValid = function () {
         return true;
@@ -514,7 +516,7 @@ ChoiceLabelEntry.prototype = Object.create(EntrySingleAnswer.prototype);
 ChoiceLabelEntry.prototype.constructor = EntrySingleAnswer;
 ChoiceLabelEntry.prototype.onPreProcess = function (newValue) {
     if (this.isValid(newValue)) {
-        if (newValue === Formplayer.Const.NO_ANSWER) {
+        if (newValue === Const.NO_ANSWER) {
             this.answer(newValue);
         } else {
             this.answer(+newValue);
@@ -540,8 +542,8 @@ DropdownEntry.prototype = Object.create(EntrySingleAnswer.prototype);
 DropdownEntry.prototype.constructor = EntrySingleAnswer;
 DropdownEntry.prototype.onPreProcess = function (newValue) {
     // When newValue is undefined it means we've unset the select question.
-    if (newValue === Formplayer.Const.NO_ANSWER || newValue === undefined) {
-        this.answer(Formplayer.Const.NO_ANSWER);
+    if (newValue === Const.NO_ANSWER || newValue === undefined) {
+        this.answer(Const.NO_ANSWER);
     } else {
         this.answer(+newValue);
     }
@@ -587,7 +589,7 @@ function ComboboxEntry(question, options) {
     if (question.answer()) {
         initialOption = self.options()[self.answer() - 1];
         self.rawAnswer(
-            initialOption ? initialOption.name : Formplayer.Const.NO_ANSWER
+            initialOption ? initialOption.name : Const.NO_ANSWER
         );
     }
 
@@ -645,7 +647,7 @@ function ComboboxEntry(question, options) {
 
 ComboboxEntry.filter = function (query, d, matchType) {
     var match;
-    if (matchType === Formplayer.Const.COMBOBOX_MULTIWORD) {
+    if (matchType === Const.COMBOBOX_MULTIWORD) {
         // Multiword filter, matches any choice that contains all of the words in the query
         //
         // Assumption is both query and choice will not be very long. Runtime is O(nm)
@@ -656,7 +658,7 @@ ComboboxEntry.filter = function (query, d, matchType) {
         match = _.all(wordsInQuery, function (word) {
             return _.include(wordsInChoice, word);
         });
-    } else if (matchType === Formplayer.Const.COMBOBOX_FUZZY) {
+    } else if (matchType === Const.COMBOBOX_FUZZY) {
         // Fuzzy filter, matches if query is "close" to answer
         match = (
             (window.Levenshtein.get(d.name.toLowerCase(), query.toLowerCase()) <= 2 && query.length > 3) ||
@@ -677,8 +679,8 @@ ComboboxEntry.prototype = Object.create(EntrySingleAnswer.prototype);
 ComboboxEntry.prototype.constructor = EntrySingleAnswer;
 ComboboxEntry.prototype.onPreProcess = function (newValue) {
     var value;
-    if (newValue === Formplayer.Const.NO_ANSWER || newValue === '') {
-        this.answer(Formplayer.Const.NO_ANSWER);
+    if (newValue === Const.NO_ANSWER || newValue === '') {
+        this.answer(Const.NO_ANSWER);
         this.question.error(null);
         return;
     }
@@ -712,7 +714,7 @@ ComboboxEntry.prototype.receiveMessage = function (message, field) {
         }
     }
     // no options match message[field]
-    self.rawAnswer(Formplayer.Const.NO_ANSWER);
+    self.rawAnswer(Const.NO_ANSWER);
 };
 
 $.datetimepicker.setDateFormatter({
@@ -764,7 +766,7 @@ function DateTimeEntryBase(question, options) {
             scrollInput: false,
             onChangeDateTime: function (newDate) {
                 if (!newDate) {
-                    self.answer(Formplayer.Const.NO_ANSWER);
+                    self.answer(Const.NO_ANSWER);
                     return;
                 }
                 self.answer(moment(newDate).format(self.serverFormat));
@@ -857,6 +859,7 @@ function GeoPointEntry(question, options) {
     EntryArrayAnswer.call(self, question, options);
     self.templateType = 'geo';
     self.map = null;
+    self.control_width = Const.CONTROL_WIDTH;
 
     self.DEFAULT = {
         lat: 30,
@@ -958,9 +961,9 @@ function getEntry(question) {
     var receiveStyle = (question.stylesContains(/receive-*/)) ? question.stylesContaining(/receive-*/)[0] : null;
 
     switch (question.datatype()) {
-        case Formplayer.Const.STRING:
+        case Const.STRING:
             // Barcode uses text box for CloudCare so it's possible to still enter a barcode field
-        case Formplayer.Const.BARCODE:
+        case Const.BARCODE:
             // If it's a receiver, it cannot autoupdate because updates will come quickly which messes with the
             // autoupdate rate limiting.
             if (receiveStyle) {
@@ -968,41 +971,41 @@ function getEntry(question) {
             } else {
                 options.enableAutoUpdate = isPhoneMode;
             }
-            if (question.stylesContains(Formplayer.Const.ADDRESS)) {
+            if (question.stylesContains(Const.ADDRESS)) {
                 entry = new AddressEntry(question, {
                     broadcastStyles: question.stylesContaining(/broadcast-*/),
                 });
-            } else if (question.stylesContains(Formplayer.Const.NUMERIC)) {
+            } else if (question.stylesContains(Const.NUMERIC)) {
                 entry = new PhoneEntry(question, options);
             } else {
                 entry = new FreeTextEntry(question, options);
             }
             break;
-        case Formplayer.Const.INT:
+        case Const.INT:
             entry = new IntEntry(question, {
                 enableAutoUpdate: isPhoneMode,
             });
             break;
-        case Formplayer.Const.LONGINT:
+        case Const.LONGINT:
             entry = new IntEntry(question, {
-                lengthLimit: Formplayer.Const.LONGINT_LENGTH_LIMIT,
-                valueLimit: Formplayer.Const.LONGINT_VALUE_LIMIT,
+                lengthLimit: Const.LONGINT_LENGTH_LIMIT,
+                valueLimit: Const.LONGINT_VALUE_LIMIT,
                 enableAutoUpdate: isPhoneMode,
             });
             break;
-        case Formplayer.Const.FLOAT:
+        case Const.FLOAT:
             entry = new FloatEntry(question, {
                 enableAutoUpdate: isPhoneMode,
             });
             break;
-        case Formplayer.Const.SELECT:
-            isMinimal = style === Formplayer.Const.MINIMAL;
+        case Const.SELECT:
+            isMinimal = style === Const.MINIMAL;
             if (style) {
-                isCombobox = question.stylesContains(Formplayer.Const.COMBOBOX);
+                isCombobox = question.stylesContains(Const.COMBOBOX);
             }
             if (style) {
-                isLabel = style === Formplayer.Const.LABEL || style === Formplayer.Const.LIST_NOLABEL;
-                hideLabel = style === Formplayer.Const.LIST_NOLABEL;
+                isLabel = style === Const.LABEL || style === Const.LIST_NOLABEL;
+                hideLabel = style === Const.LIST_NOLABEL;
             }
 
             if (isMinimal) {
@@ -1031,19 +1034,19 @@ function getEntry(question) {
                 });
             }
             break;
-        case Formplayer.Const.MULTI_SELECT:
+        case Const.MULTI_SELECT:
             entry = new MultiSelectEntry(question, {});
             break;
-        case Formplayer.Const.DATE:
+        case Const.DATE:
             entry = new DateEntry(question, {});
             break;
-        case Formplayer.Const.TIME:
+        case Const.TIME:
             entry = new TimeEntry(question, {});
             break;
-        case Formplayer.Const.GEO:
+        case Const.GEO:
             entry = new GeoPointEntry(question, {});
             break;
-        case Formplayer.Const.INFO:
+        case Const.INFO:
             entry = new InfoEntry(question, {});
             break;
         default:

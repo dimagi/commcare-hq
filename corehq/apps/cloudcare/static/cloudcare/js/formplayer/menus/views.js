@@ -1,7 +1,8 @@
-/*global _, Util, Marionette */
+/*global _, Marionette */
 
 hqDefine("cloudcare/js/formplayer/menus/views", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        Util = hqImport("cloudcare/js/formplayer/utils/util");
 
     var MenuView = Marionette.View.extend({
         tagName: function () {
