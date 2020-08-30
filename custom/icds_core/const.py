@@ -7,4 +7,3 @@ LocationReassignmentDownloadOnlyView_urlname = 'location_reassignment_download_o
 LocationReassignmentView_urlname = 'location_reassignment'
 ICDS_DOMAIN = 'icds-cas'
 IS_ICDS_ENVIRONMENT = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
-CPMU_ROLE_NAME = "CPMU"
