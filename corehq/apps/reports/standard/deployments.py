@@ -332,7 +332,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 last_sub = reporting_metadata.get('last_submission_for_user', {})
                 last_sync = reporting_metadata.get('last_sync_for_user', {})
                 last_build = reporting_metadata.get('last_build_for_user', {})
-                if is_commcare_user and last_build.get('app_id') and device and device.get('app_meta'):
+                if last_build.get('app_id') and device and device.get('app_meta'):
                     device_app_meta = self.get_data_for_app(device.get('app_meta'), last_build.get('app_id'))
 
             if last_sub and last_sub.get('commcare_version'):
