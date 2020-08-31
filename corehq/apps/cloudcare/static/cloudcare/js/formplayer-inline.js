@@ -1,5 +1,4 @@
-/*global $:false, window:false */
-(function () {
+hqDefine("cloudcare/js/formplayer-inline", function () {
     var alertHtml = function (message, alert_class) {
         return (
             "<div class='alert " + (alert_class || 'alert-info') + "'>" +
@@ -103,4 +102,4 @@
 
         return false;
     });
-}());
+});
