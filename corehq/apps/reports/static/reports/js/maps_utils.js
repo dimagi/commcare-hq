@@ -230,8 +230,8 @@ hqDefine("reports/js/maps_utils", function () {
 
         onAdd: function (map) {
             var div = L.DomUtil.create('div', 'map');
-            div.innerHTML = '<a href="http://mapbox.com/about/maps" class="mapbox-wordmark" target="_blank">Mapbox</a>'
-            return div
+            div.innerHTML = '<a href="http://mapbox.com/about/maps" class="mapbox-wordmark" target="_blank">Mapbox</a>';
+            return div;
         },
     });
 
