@@ -1,4 +1,4 @@
-/*global Backbone, FormplayerFrontend, DOMPurify */
+/*global Backbone, DOMPurify */
 
 function Util() {
 }
@@ -58,7 +58,7 @@ Util.currentUrlToObject = function () {
 Util.setUrlToObject = function (urlObject, replace) {
     replace = replace || false;
     var encodedUrl = Util.objectToEncodedUrl(urlObject.toJson());
-    FormplayerFrontend.navigate(encodedUrl, { replace: replace });
+    hqImport("cloudcare/js/formplayer/app").navigate(encodedUrl, { replace: replace });
 };
 
 Util.doUrlAction = function (actionCallback) {
@@ -91,7 +91,7 @@ Util.getSavedDisplayOptions = function () {
 };
 
 Util.getDisplayOptionsKey = function () {
-    var user = FormplayerFrontend.request('currentUser');
+    var user = hqImport("cloudcare/js/formplayer/app").getChannel().request('currentUser');
     return [
         user.environment,
         user.domain,

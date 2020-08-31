@@ -1,11 +1,9 @@
-/*global FormplayerFrontend, Util */
+/*global Util, Backbone */
 
-FormplayerFrontend.module("Menus.Collections", function (Collections, FormplayerFrontend, Backbone, Marionette, $) {
+hqDefine("cloudcare/js/formplayer/menus/collections", function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
 
-    Collections.MenuSelect = Backbone.Collection.extend({
-
-        model: FormplayerFrontend.Menus.Models.MenuSelect,
-
+    var MenuSelect = Backbone.Collection.extend({
         commonProperties: [
             'title',
             'type',
@@ -76,5 +74,9 @@ FormplayerFrontend.module("Menus.Collections", function (Collections, Formplayer
             return Backbone.Collection.prototype.sync.call(this, 'create', model, options);
         },
     });
+
+    return function (response, options) {
+        return new MenuSelect(response, options);
+    };
 });
 

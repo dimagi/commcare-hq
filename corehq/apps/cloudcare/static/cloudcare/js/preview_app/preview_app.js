@@ -1,5 +1,3 @@
-/* globals FormplayerFrontend */
-
 hqDefine('cloudcare/js/preview_app/preview_app', function () {
 
     var start = function (options) {
@@ -9,7 +7,7 @@ hqDefine('cloudcare/js/preview_app/preview_app', function () {
             $(this).attr('target', '_parent');
         });
 
-        FormplayerFrontend.start(options);
+        hqImport("cloudcare/js/formplayer/app").start(options);
     };
 
     return {
