@@ -1020,6 +1020,8 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
 
     @method_decorator(requires_privilege_with_fallback(privileges.BULK_USER_MANAGEMENT))
     def dispatch(self, request, *args, **kwargs):
+        from no_exceptions.exceptions import Http403
+        raise Http403()
         return super(UploadCommCareUsers, self).dispatch(request, *args, **kwargs)
 
     @property
