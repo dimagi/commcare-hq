@@ -52,7 +52,7 @@
                 data.domain = options.domain;
                 data.username = options.username;
                 data.restoreAs = options.restoreAs;
-                var sess = new WebFormSession(data);
+                var sess = hqImport('cloudcare/js/form_entry/webformsession').WebFormSession(data);
                 sess.load($target, options.lang);
             },
         });
