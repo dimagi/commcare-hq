@@ -1,4 +1,4 @@
-/* global FormplayerFrontend, mdAnchorRender */
+/* global _, mdAnchorRender */
 var Formplayer = {
     Utils: {},
     Const: {},
@@ -628,12 +628,12 @@ Formplayer.Const = {
 };
 
 Formplayer.Errors = {
-    GENERIC_ERROR: "Something unexpected went wrong on that request. " +
+    GENERIC_ERROR: gettext("Something unexpected went wrong on that request. " +
         "If you have problems filling in the rest of your form please submit an issue. " +
-        "Technical Details: ",
-    TIMEOUT_ERROR: "CommCareHQ has detected a possible network connectivity problem. " +
+        "Technical Details: "),
+    TIMEOUT_ERROR: gettext("CommCareHQ has detected a possible network connectivity problem. " +
         "Please make sure you are connected to the " +
-        "Internet in order to submit your form.",
+        "Internet in order to submit your form."),
     LOCK_TIMEOUT_ERROR: gettext('Another process prevented us from servicing your request. ' +
         'Please try again later.'),
     NO_INTERNET_ERROR: gettext("We have detected an issue with your network. " +
@@ -646,7 +646,8 @@ Formplayer.Utils.touchformsError = function (message) {
 };
 
 Formplayer.Utils.reloginErrorHtml = function () {
-    var isWebApps = FormplayerFrontend.request('currentUser').environment === FormplayerFrontend.Constants.WEB_APPS_ENVIRONMENT;
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+    var isWebApps = FormplayerFrontend.getChannel().request('currentUser').environment === hqImport("cloudcare/js/formplayer/constants").WEB_APPS_ENVIRONMENT;
     if (isWebApps) {
         var url = hqImport("hqwebapp/js/initial_page_data").reverse('login_new_window');
         return _.template(gettext("Looks like you got logged out because of inactivity, but your work is safe. " +

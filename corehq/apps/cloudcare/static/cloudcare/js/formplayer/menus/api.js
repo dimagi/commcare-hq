@@ -1,16 +1,16 @@
-/*global FormplayerFrontend, Formplayer */
+/*global Formplayer */
 
 /**
  * Backbone model for listing and selecting CommCare menus (modules, forms, and cases)
  */
 
-FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone, Marionette, $) {
+hqDefine("cloudcare/js/formplayer/menus/api", function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
 
-    Menus.API = {
-
+    var API = {
         queryFormplayer: function (params, route) {
-            var user = FormplayerFrontend.request('currentUser'),
-                lastRecordedLocation = FormplayerFrontend.request('lastRecordedLocation'),
+            var user = FormplayerFrontend.getChannel().request('currentUser'),
+                lastRecordedLocation = FormplayerFrontend.getChannel().request('lastRecordedLocation'),
                 timezoneOffsetMillis = (new Date()).getTimezoneOffset() * 60 * 1000 * -1,
                 formplayerUrl = user.formplayer_url,
                 displayOptions = user.displayOptions || {},
@@ -18,7 +18,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 options,
                 menus;
 
-            $.when(FormplayerFrontend.request("appselect:apps")).done(function (appCollection) {
+            $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function (appCollection) {
                 if (!params.preview) {
                     // Make sure the user has access to the app
                     if (!appCollection.find(function (app) {
@@ -44,7 +44,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                             FormplayerFrontend.trigger('clearProgress');
                             FormplayerFrontend.trigger(
                                 'showError',
-                                response.exception || FormplayerFrontend.Constants.GENERIC_ERROR,
+                                response.exception || hqImport("cloudcare/js/formplayer/constants").GENERIC_ERROR,
                                 response.type === 'html'
                             );
 
@@ -110,7 +110,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 });
                 options.url = formplayerUrl + '/' + route;
 
-                menus = new FormplayerFrontend.Menus.Collections.MenuSelect();
+                menus = hqImport("cloudcare/js/formplayer/menus/collections")();
 
                 if (Object.freeze) {
                     Object.freeze(options);
@@ -122,15 +122,17 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
         },
     };
 
-    FormplayerFrontend.reqres.setHandler("app:select:menus", function (options) {
+    FormplayerFrontend.getChannel().reply("app:select:menus", function (options) {
         var isInitial = options.isInitial;
-        return Menus.API.queryFormplayer(options, isInitial ? 'navigate_menu_start' : 'navigate_menu');
+        return API.queryFormplayer(options, isInitial ? 'navigate_menu_start' : 'navigate_menu');
     });
 
-    FormplayerFrontend.reqres.setHandler("entity:get:details", function (options, isPersistent) {
+    FormplayerFrontend.getChannel().reply("entity:get:details", function (options, isPersistent) {
         options.isPersistent = isPersistent;
         options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
-        return Menus.API.queryFormplayer(options, 'get_details');
+        return API.queryFormplayer(options, 'get_details');
     });
+
+    return 1;
 });
 

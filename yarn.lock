@@ -489,45 +489,17 @@ aws4@^1.8.0:
   resolved "https://registry.yarnpkg.com/aws4/-/aws4-1.10.0.tgz#a17b3a8ea811060e74d47d306122400ad4497ae2"
   integrity sha512-3YDiu347mtVtjpyV3u5kVqQLP242c06zwDOgpeRnybmXlYYsLbtTrUBUm8i8srONt+FWobl5aibnU1030PeeuA==
 
-backbone.babysitter@^0.1.0:
-  version "0.1.12"
-  resolved "https://registry.yarnpkg.com/backbone.babysitter/-/backbone.babysitter-0.1.12.tgz#7ca946434eeefbde1a553605c74b7049b6dfafc1"
-  integrity sha1-fKlGQ07u+94aVTYFx0twSbbfr8E=
+backbone.marionette@4.1.2:
+  version "4.1.2"
+  resolved "https://registry.yarnpkg.com/backbone.marionette/-/backbone.marionette-4.1.2.tgz#55de74363219f6d5c343dab5bff6aeb20fc44419"
+  integrity sha512-T8wWxZZnuYjylONTnWZsGsgXtdx2ZrE38pZWJI9LmPqzYK5j0T8uduapFO7OEpsW5rtdbBgwof30xhzAkbb5eQ==
   dependencies:
-    backbone ">=0.9.9 <=1.3.x"
-    underscore ">=1.4.0 <=1.8.3"
+    backbone.radio "^2.0.0"
 
-backbone.marionette@2.4.5:
-  version "2.4.5"
-  resolved "https://registry.yarnpkg.com/backbone.marionette/-/backbone.marionette-2.4.5.tgz#4da9b89e77dcea740969e3acb846f23ead4bf070"
-  integrity sha1-Tam4nnfc6nQJaeOsuEbyPq1L8HA=
-  dependencies:
-    backbone "1.0.0 - 1.3.2"
-    backbone.babysitter "^0.1.0"
-    backbone.wreqr "^1.0.0"
-    underscore "1.4.4 - 1.8.3"
-
-backbone.wreqr@^1.0.0:
-  version "1.4.0"
-  resolved "https://registry.yarnpkg.com/backbone.wreqr/-/backbone.wreqr-1.4.0.tgz#7682030c9aaf090ecd873b21dbf48501693b2696"
-  integrity sha1-doIDDJqvCQ7Nhzsh2/SFAWk7JpY=
-  dependencies:
-    backbone ">=0.9.9 <=1.3.x"
-    underscore ">=1.3.3 <=1.8.3"
-
-"backbone@1.0.0 - 1.3.2":
-  version "1.3.2"
-  resolved "https://registry.yarnpkg.com/backbone/-/backbone-1.3.2.tgz#43cdf6b25af3f54a7deb314129e1397ff42d6b83"
-  integrity sha1-Q832slrz9Up96zFBKeE5f/Qta4M=
-  dependencies:
-    underscore ">=1.8.3"
-
-"backbone@>=0.9.9 <=1.3.x":
-  version "1.3.3"
-  resolved "https://registry.yarnpkg.com/backbone/-/backbone-1.3.3.tgz#4cc80ea7cb1631ac474889ce40f2f8bc683b2999"
-  integrity sha1-TMgOp8sWMaxHSInOQPL4vGg7KZk=
-  dependencies:
-    underscore ">=1.8.3"
+backbone.radio@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/backbone.radio/-/backbone.radio-2.0.0.tgz#bbe8672b373e313f99f36d2fbcf583fe77d04f42"
+  integrity sha1-u+hnKzc+MT+Z820vvPWD/nfQT0I=
 
 "backbone@npm:backbone#~1.3.2":
   version "1.4.0"
@@ -2967,11 +2939,6 @@ jasmine-fixture@2.0.0:
   resolved "https://registry.yarnpkg.com/jasmine-fixture/-/jasmine-fixture-2.0.0.tgz#b6d0c5a3bb4834d23dd137464ef96f04f93bbd60"
   integrity sha1-ttDFo7tINNI90TdGTvlvBPk7vWA=
 
-"jquery-2.2.4@npm:jquery#2.2.4", jquery@3.5.1, "jquery@>= 1.7.1", "jquery@>= 1.7.2", jquery@>=1.10, jquery@>=1.11.0, jquery@>=1.7, jquery@>=1.7.2, jquery@>=1.8, jquery@>=1.9.0:
-  version "3.5.1"
-  resolved "https://registry.yarnpkg.com/jquery/-/jquery-3.5.1.tgz#d7b4d08e1bfdb86ad2f1a3d039ea17304717abb5"
-  integrity sha512-XwIBPqcMn57FxfT+Go5pzySnm4KWkT1Tv7gjrpT1srtf8Weynl6R273VJ5GjkRb51IzMp5nbaPjJXMWeju2MKg==
-
 jquery-color@2.2.0:
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/jquery-color/-/jquery-color-2.2.0.tgz#2596bb782b69d9368b7840e6b3fe1e70fdd821c3"
@@ -3033,6 +3000,11 @@ jquery.cookie@dimagi/jquery-cookie#1.4.1:
 jquery.rmi@dimagi/jquery.rmi#8c34f32817:
   version "1.0.0"
   resolved "https://codeload.github.com/dimagi/jquery.rmi/tar.gz/8c34f328172bff19e8df6ac024de3613b75711e7"
+
+jquery@3.5.1, "jquery@>= 1.7.1", "jquery@>= 1.7.2", jquery@>=1.10, jquery@>=1.11.0, jquery@>=1.7, jquery@>=1.7.2, jquery@>=1.8, jquery@>=1.9.0:
+  version "3.5.1"
+  resolved "https://registry.yarnpkg.com/jquery/-/jquery-3.5.1.tgz#d7b4d08e1bfdb86ad2f1a3d039ea17304717abb5"
+  integrity sha512-XwIBPqcMn57FxfT+Go5pzySnm4KWkT1Tv7gjrpT1srtf8Weynl6R273VJ5GjkRb51IzMp5nbaPjJXMWeju2MKg==
 
 js-tokens@^4.0.0:
   version "4.0.0"
@@ -3588,6 +3560,11 @@ map-visit@^1.0.0:
   integrity sha1-7Nyo8TFE5mDxtb1B8S80edmN+48=
   dependencies:
     object-visit "^1.0.0"
+
+marionette.approuter@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/marionette.approuter/-/marionette.approuter-1.0.2.tgz#bd45b801762fea4ec5caa9505640413596cc432c"
+  integrity sha512-XjcKb1Y6KROCmdZxO/rtOdRhd3Hfrs+7zWjtfiuCFS3VZa2IQjNgKUuIGmaKDZte2AmKRRMaPvXMh22nKYFh8A==
 
 markdown-it@7.0.1:
   version "7.0.1"
@@ -6058,7 +6035,7 @@ underscore.string@^3.3.5, underscore.string@~3.3.4:
     sprintf-js "^1.0.3"
     util-deprecate "^1.0.2"
 
-"underscore@1.4.4 - 1.8.3", underscore@1.8.3, "underscore@>=1.3.3 <=1.8.3", "underscore@>=1.4.0 <=1.8.3":
+underscore@1.8.3:
   version "1.8.3"
   resolved "https://registry.yarnpkg.com/underscore/-/underscore-1.8.3.tgz#4f3fb53b106e6097fcf9cb4109f2a5e9bdfa5022"
   integrity sha1-Tz+1OxBuYJf8+ctBCfKl6b36UCI=
