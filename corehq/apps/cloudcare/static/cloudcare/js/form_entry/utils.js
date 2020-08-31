@@ -1,3 +1,4 @@
+/* global Form */
 hqDefine("cloudcare/js/form_entry/utils", function () {
     var module = {
         resourceMap: undefined,

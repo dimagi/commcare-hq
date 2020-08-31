@@ -1,6 +1,5 @@
 describe('Integration', function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
-        questionJSON,
         formJSON,
         repeatJSON,
         repeatNestJSON;

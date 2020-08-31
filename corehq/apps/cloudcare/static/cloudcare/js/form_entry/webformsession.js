@@ -1,4 +1,4 @@
-/*global Formplayer */
+/*global Formplayer, getIx, getForIx */
 
 hqDefine("cloudcare/js/form_entry/webformsession", function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
@@ -69,7 +69,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
 
         self.load = function ($form, initLang) {
             if (this.session_id) {
-                this.resumeForm($form, this.session_id);
+                this.resumeForm($form);
             } else {
                 this.loadForm($form, initLang);
             }
@@ -195,7 +195,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
                     $('.submit').prop('disabled', false);
                     $('.form-control').prop('disabled', false);
                 }
-            } else if (resp.hasOwnProperty('responseJSON') && resp.responseJSON !== undefined) {
+            } else if (_.has(resp, 'responseJSON') && resp.responseJSON !== undefined) {
                 errorMessage = Utils.touchformsError(resp.responseJSON.message);
             }
 
@@ -284,7 +284,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
             this.initForm(args, $form);
         };
 
-        self.resumeForm = function ($form, session_id) {
+        self.resumeForm = function ($form) {
             var args = {
                 "action": Const.CURRENT,
             };
@@ -389,11 +389,11 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
 
         self.deleteRepeat = function (repetition) {
             var juncture = getIx(repetition.parent);
-            var rep_ix = +(repetition.rel_ix().replace(/_/g, ':').split(":").slice(-1)[0]);
+            var repIx = +(repetition.rel_ix().replace(/_/g, ':').split(":").slice(-1)[0]);
             this.serverRequest(
                 {
                     'action': Const.DELETE_REPEAT,
-                    'ix': rep_ix,
+                    'ix': repIx,
                     'form_ix': juncture,
                 },
                 function (resp) {
@@ -415,18 +415,18 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
 
         self.submitForm = function (form) {
             var self = this,
-                accumulate_answers,
+                accumulateAnswers,
                 prevalidated = true;
 
-            accumulate_answers = function (o) {
+            accumulateAnswers = function (o) {
                 var _answers = {},
-                    _accumulate_answers;
+                    _accumulateAnswers;
 
-                _accumulate_answers = function (o) {
+                _accumulateAnswers = function (o) {
                     if (ko.utils.unwrapObservable(o.type) !== 'question') {
-                        if (o.hasOwnProperty("children")) {
+                        if (_.has(o, "children")) {
                             $.each(o.children(), function (i, val) {
-                                _accumulate_answers(val);
+                                _accumulateAnswers(val);
                             });
                         }
                     } else {
@@ -439,7 +439,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
                         }
                     }
                 };
-                _accumulate_answers(o);
+                _accumulateAnswers(o);
                 return _answers;
             };
 
@@ -453,7 +453,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
                     }
                     clearInterval(timer);
 
-                    answers = accumulate_answers(form);
+                    answers = accumulateAnswers(form);
                     self.serverRequest(
                         {
                             'action': Const.SUBMIT,

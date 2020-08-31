@@ -220,8 +220,7 @@ describe('WebForm', function () {
         });
 
         it('Should ensure session id is set', function () {
-            var sess = WebFormSession(params),
-                spy = sinon.spy(sess, 'renderFormXml');
+            var sess = WebFormSession(params);
             sess.loadForm($('div'), 'en');
             assert.equal(sess.session_id, null);
 

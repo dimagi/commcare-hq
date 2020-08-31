@@ -1,4 +1,4 @@
-/*global _, moment */
+/*global moment */
 
 hqDefine("cloudcare/js/formplayer/sessions/views", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");

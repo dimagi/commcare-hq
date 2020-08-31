@@ -1,4 +1,4 @@
-/*global _, Marionette */
+/*global Marionette */
 
 hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),

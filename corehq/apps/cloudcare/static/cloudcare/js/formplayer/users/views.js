@@ -1,4 +1,4 @@
-/*global _, Backbone, Marionette */
+/*global Backbone, Marionette */
 
 hqDefine("cloudcare/js/formplayer/users/views", function() {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
