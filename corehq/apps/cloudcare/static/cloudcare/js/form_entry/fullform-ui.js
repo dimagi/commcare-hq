@@ -1,10 +1,6 @@
 /* global _, mdAnchorRender */
-var Formplayer = {
-    Utils: {},
-    Const: {},
-    ViewModels: {},
-    Errors: {},
-};
+var Const = hqImport("cloudcare/js/form_entry/const"),
+    Utils = hqImport("cloudcare/js/form_entry/utils");
 var md = window.markdownit();
 
 //Overriden by downstream contexts, check before changing
@@ -162,11 +158,11 @@ Container.prototype.fromJS = function (json) {
         },
         children: {
             create: function (options) {
-                if (options.data.type === Formplayer.Const.QUESTION_TYPE) {
+                if (options.data.type === Const.QUESTION_TYPE) {
                     return new Question(options.data, self);
-                } else if (options.data.type === Formplayer.Const.GROUP_TYPE) {
+                } else if (options.data.type === Const.GROUP_TYPE) {
                     return new Group(options.data, self);
-                } else if (options.data.type === Formplayer.Const.REPEAT_TYPE) {
+                } else if (options.data.type === Const.REPEAT_TYPE) {
                     return new Repeat(options.data, self);
                 } else {
                     console.error('Could not find question type of ' + options.data.type);
@@ -174,12 +170,12 @@ Container.prototype.fromJS = function (json) {
             },
             update: function (options) {
                 if (options.target.pendingAnswer &&
-                        options.target.pendingAnswer() !== Formplayer.Const.NO_PENDING_ANSWER) {
+                        options.target.pendingAnswer() !== Const.NO_PENDING_ANSWER) {
                     // There is a request in progress
-                    if (Formplayer.Utils.answersEqual(options.data.answer, options.target.pendingAnswer())) {
+                    if (Utils.answersEqual(options.data.answer, options.target.pendingAnswer())) {
                         // We can now mark it as not dirty
                         options.data.answer = _.clone(options.target.pendingAnswer());
-                        options.target.pendingAnswer(Formplayer.Const.NO_PENDING_ANSWER);
+                        options.target.pendingAnswer(Const.NO_PENDING_ANSWER);
                     } else {
                         // still dirty, keep answer the same as the pending one
                         options.data.answer = _.clone(options.target.pendingAnswer());
@@ -218,6 +214,7 @@ function Form(json) {
     Container.call(self, json);
     self.blockSubmit = ko.observable(false);
     self.isSubmitting = ko.observable(false);
+    self.submitClass = Const.LABEL_OFFSET + ' ' + Const.CONTROL_WIDTH;
 
     self.currentIndex = ko.observable("0");
     self.atLastIndex = ko.observable(false);
@@ -238,7 +235,7 @@ function Form(json) {
         if (!self.showInFormNavigation()) return true;
 
         return _.every(self.children(), function (q) {
-            return (q.answer() === Formplayer.Const.NO_ANSWER && !q.required())
+            return (q.answer() === Const.NO_ANSWER && !q.required())
                 || q.answer() !== null;
         });
     });
@@ -300,18 +297,18 @@ function Form(json) {
     });
 
     self.submitForm = function (form) {
-        $.publish('formplayer.' + Formplayer.Const.SUBMIT, self);
+        $.publish('formplayer.' + Const.SUBMIT, self);
     };
 
     self.nextQuestion = function () {
-        $.publish('formplayer.' + Formplayer.Const.NEXT_QUESTION, {
+        $.publish('formplayer.' + Const.NEXT_QUESTION, {
             callback: _updateIndexCallback,
             title: self.title(),
         });
     };
 
     self.prevQuestion = function () {
-        $.publish('formplayer.' + Formplayer.Const.PREV_QUESTION, {
+        $.publish('formplayer.' + Const.PREV_QUESTION, {
             callback: _updateIndexCallback,
             title: self.title(),
         });
@@ -334,11 +331,11 @@ function Form(json) {
         // TODO where does response status parsing belong?
         if (response.status === 'validation-error') {
             if (response.type === 'required') {
-                element.serverError('An answer is required');
+                element.serverError(gettext('An answer is required'));
             } else if (response.type === 'constraint') {
-                element.serverError(response.reason || 'This answer is outside the allowed range.');
+                element.serverError(response.reason || gettext('This answer is outside the allowed range.'));
             }
-            element.pendingAnswer(Formplayer.Const.NO_PENDING_ANSWER);
+            element.pendingAnswer(Const.NO_PENDING_ANSWER);
         } else {
             response.children = response.tree;
             delete response.tree;
@@ -348,8 +345,8 @@ function Form(json) {
     });
 
     $.subscribe('session.block', function (e, block) {
-        $('#webforms input, #webforms textarea').prop('disabled', block === Formplayer.Const.BLOCK_ALL);
-        self.blockSubmit(block === Formplayer.Const.BLOCK_ALL || block === Formplayer.Const.BLOCK_SUBMIT);
+        $('#webforms input, #webforms textarea').prop('disabled', block === Const.BLOCK_ALL);
+        self.blockSubmit(block === Const.BLOCK_ALL || block === Const.BLOCK_SUBMIT);
     });
 }
 Form.prototype = Object.create(Container.prototype);
@@ -380,7 +377,7 @@ function Group(json, parent) {
     }
 
     self.deleteRepeat = function () {
-        $.publish('formplayer.' + Formplayer.Const.DELETE_REPEAT, self);
+        $.publish('formplayer.' + Const.DELETE_REPEAT, self);
         $.publish('formplayer.dirty');
     };
 
@@ -416,7 +413,7 @@ function Repeat(json, parent) {
     self.templateType = 'repeat';
 
     self.newRepeat = function () {
-        $.publish('formplayer.' + Formplayer.Const.NEW_REPEAT, self);
+        $.publish('formplayer.' + Const.NEW_REPEAT, self);
         $.publish('formplayer.dirty');
     };
 
@@ -444,16 +441,18 @@ function Question(json, parent) {
         self.domain_meta = parse_meta(json.datatype, val);
     }
     self.throttle = 200;
+    self.controlWidth = Const.CONTROL_WIDTH;
+    self.labelWidth = Const.LABEL_WIDTH;
 
     // If the question has ever been answered, set this to true.
     self.hasAnswered = false;
 
     // pendingAnswer is a copy of an answer being submitted, so that we know not to reconcile a new answer
     // until the question has received a response from the server.
-    self.pendingAnswer = ko.observable(Formplayer.Const.NO_PENDING_ANSWER);
+    self.pendingAnswer = ko.observable(Const.NO_PENDING_ANSWER);
     self.pendingAnswer.subscribe(function () { self.hasAnswered = true; });
     self.dirty = ko.computed(function () {
-        return self.pendingAnswer() !== Formplayer.Const.NO_PENDING_ANSWER;
+        return self.pendingAnswer() !== Const.NO_PENDING_ANSWER;
     });
     self.clean = ko.computed(function () {
         return !self.dirty() && !self.error() && !self.serverError() && self.hasAnswered;
@@ -467,7 +466,7 @@ function Question(json, parent) {
     };
 
     self.is_select = (self.datatype() === 'select' || self.datatype() === 'multiselect');
-    self.entry = getEntry(self);
+    self.entry = hqImport("cloudcare/js/form_entry/entrycontrols_full").getEntry(self);
     self.entryTemplate = function () {
         return self.entry.templateType + '-entry-ko-template';
     };
@@ -479,13 +478,13 @@ function Question(json, parent) {
     };
     var publishAnswerEvent = _.throttle(function () {
         $.publish('formplayer.dirty');
-        $.publish('formplayer.' + Formplayer.Const.ANSWER, self);
+        $.publish('formplayer.' + Const.ANSWER, self);
     }, self.throttle);
     self.onchange = self.triggerAnswer;
 
     self.mediaSrc = function (resourceType) {
-        if (!resourceType || !_.isFunction(Formplayer.resourceMap)) { return ''; }
-        return Formplayer.resourceMap(resourceType);
+        if (!resourceType || !_.isFunction(Utils.resourceMap)) { return ''; }
+        return Utils.resourceMap(resourceType);
     };
 }
 
@@ -541,167 +540,6 @@ Question.prototype.stylesContaining = function (pattern) {
 Question.prototype.stylesContains = function (pattern) {
     return this.stylesContaining(pattern).length > 0;
 };
-
-
-Formplayer.Const = {
-    GROUP_TYPE: 'sub-group',
-    REPEAT_TYPE: 'repeat-juncture',
-    QUESTION_TYPE: 'question',
-
-    // Entry types
-    STRING: 'str',
-    INT: 'int',
-    LONG_INT: 'longint',
-    FLOAT: 'float',
-    SELECT: 'select',
-    MULTI_SELECT: 'multiselect',
-    DATE: 'date',
-    TIME: 'time',
-    DATETIME: 'datetime',
-    GEO: 'geo',
-    INFO: 'info',
-    BARCODE: 'barcode',
-
-    // Appearance attributes
-    NUMERIC: 'numeric',
-    ADDRESS: 'address',
-    MINIMAL: 'minimal',
-    LABEL: 'label',
-    LIST_NOLABEL: 'list-nolabel',
-    COMBOBOX: 'combobox',
-    COMBOBOX_MULTIWORD: 'multiword',
-    COMBOBOX_FUZZY: 'fuzzy',
-
-    // Note it's important to differentiate these two
-    NO_PENDING_ANSWER: undefined,
-    NO_ANSWER: null,
-
-    // UI
-    LABEL_WIDTH: 'col-sm-4',
-    LABEL_OFFSET: 'col-sm-offset-4',
-    CONTROL_WIDTH: 'col-sm-8',
-    BLOCK_NONE: 'block-none',
-    BLOCK_SUBMIT: 'block-submit',
-    BLOCK_ALL: 'block-all',
-
-    // XForm Navigation
-    QUESTIONS_FOR_INDEX: 'questions_for_index',
-    NEXT_QUESTION: 'next_index',
-    PREV_QUESTION: 'prev_index',
-
-    // XForm Actions
-    NEW_FORM: 'new-form',
-    ANSWER: 'answer',
-    CURRENT: 'current',
-    EVALUATE_XPATH: 'evaluate-xpath',
-    NEW_REPEAT: 'new-repeat',
-    DELETE_REPEAT: 'delete-repeat',
-    SET_LANG: 'set-lang',
-    SUBMIT: 'submit-all',
-    FORMATTED_QUESTIONS: 'formatted_questions',
-
-    // Control values. See commcare/javarosa/src/main/java/org/javarosa/core/model/Constants.java
-    CONTROL_UNTYPED: -1,
-    CONTROL_INPUT: 1,
-    CONTROL_SELECT_ONE: 2,
-    CONTROL_SELECT_MULTI: 3,
-    CONTROL_TEXTAREA: 4,
-    CONTROL_SECRET: 5,
-    CONTROL_RANGE: 6,
-    CONTROL_UPLOAD: 7,
-    CONTROL_SUBMIT: 8,
-    CONTROL_TRIGGER: 9,
-    CONTROL_IMAGE_CHOOSE: 10,
-    CONTROL_LABEL: 11,
-    CONTROL_AUDIO_CAPTURE: 12,
-    CONTROL_VIDEO_CAPTURE: 13,
-
-    //knockout timeouts
-    KO_ENTRY_TIMEOUT: 500,
-
-    INT_LENGTH_LIMIT: 10,
-    INT_VALUE_LIMIT: Math.pow(2, 31) - 1,
-    LONGINT_LENGTH_LIMIT: 15,
-    LONGINT_VALUE_LIMIT: Math.pow(2, 63) - 1,
-    FLOAT_LENGTH_LIMIT: 15,
-    FLOAT_VALUE_LIMIT: +("9".repeat(14)),
-};
-
-Formplayer.Errors = {
-    GENERIC_ERROR: gettext("Something unexpected went wrong on that request. " +
-        "If you have problems filling in the rest of your form please submit an issue. " +
-        "Technical Details: "),
-    TIMEOUT_ERROR: gettext("CommCareHQ has detected a possible network connectivity problem. " +
-        "Please make sure you are connected to the " +
-        "Internet in order to submit your form."),
-    LOCK_TIMEOUT_ERROR: gettext('Another process prevented us from servicing your request. ' +
-        'Please try again later.'),
-    NO_INTERNET_ERROR: gettext("We have detected an issue with your network. " +
-        "Please check your Internet connection and retry when connectivity " +
-        "improves."),
-};
-
-Formplayer.Utils.touchformsError = function (message) {
-    return Formplayer.Errors.GENERIC_ERROR + message;
-};
-
-Formplayer.Utils.reloginErrorHtml = function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
-    var isWebApps = FormplayerFrontend.getChannel().request('currentUser').environment === hqImport("cloudcare/js/formplayer/constants").WEB_APPS_ENVIRONMENT;
-    if (isWebApps) {
-        var url = hqImport("hqwebapp/js/initial_page_data").reverse('login_new_window');
-        return _.template(gettext("Looks like you got logged out because of inactivity, but your work is safe. " +
-                                  "<a href='<%= url %>' target='_blank'>Click here to log back in.</a>"))({url: url});
-    } else {
-        // target=_blank doesn't work properly within an iframe
-        return gettext("You have been logged out because of inactivity.");
-    }
-};
-
-/**
- * Compares the equality of two answer sets.
- * @param {(string|string[])} answer1 - A string of answers or a single answer
- * @param {(string|string[])} answer2 - A string of answers or a single answer
- */
-Formplayer.Utils.answersEqual = function (answer1, answer2) {
-    if (answer1 instanceof Array && answer2 instanceof Array) {
-        return _.isEqual(answer1, answer2);
-    } else if (answer1 === answer2) {
-        return true;
-    }
-    return false;
-};
-
-/**
- * Initializes a new form to be used by the formplayer.
- * @param {Object} formJSON - The json representation of the form
- * @param {Object} resourceMap - Function for resolving multimedia paths
- * @param {Object} $div - The jquery element that the form will be rendered in.
- */
-Formplayer.Utils.initialRender = function (formJSON, resourceMap, $div) {
-    var form = new Form(formJSON),
-        $debug = $('#cloudcare-debugger'),
-        CloudCareDebugger = hqImport('cloudcare/js/debugger/debugger').CloudCareDebuggerFormEntry,
-        cloudCareDebugger;
-    Formplayer.resourceMap = resourceMap;
-    ko.cleanNode($div[0]);
-    $div.koApplyBindings(form);
-
-    if ($debug.length) {
-        cloudCareDebugger = new CloudCareDebugger({
-            baseUrl: formJSON.xform_url,
-            formSessionId: formJSON.session_id,
-            username: formJSON.username,
-            restoreAs: formJSON.restoreAs,
-            domain: formJSON.domain,
-        });
-        ko.cleanNode($debug[0]);
-        $debug.koApplyBindings(cloudCareDebugger);
-    }
-
-    return form;
-};
-
 
 RegExp.escape = function (s) {
     return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
