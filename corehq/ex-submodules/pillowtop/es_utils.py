@@ -52,6 +52,7 @@ ES_INDEX_SETTINGS = {
     'default': {
         "settings": {
             "number_of_replicas": 0,
+            "number_of_shards": 5,
             "analysis": _get_analysis('default'),
         },
     },
