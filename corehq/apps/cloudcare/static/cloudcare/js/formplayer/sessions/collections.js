@@ -1,4 +1,4 @@
-/*global Util, Backbone */
+/*global Backbone */
 
 hqDefine("cloudcare/js/formplayer/sessions/collections", function () {
 
@@ -10,7 +10,7 @@ hqDefine("cloudcare/js/formplayer/sessions/collections", function () {
         },
 
         fetch: function (options) {
-            Util.setCrossDomainAjaxOptions(options);
+            hqImport("cloudcare/js/formplayer/utils/util").setCrossDomainAjaxOptions(options);
             return Backbone.Collection.prototype.fetch.call(this, options);
         },
     });

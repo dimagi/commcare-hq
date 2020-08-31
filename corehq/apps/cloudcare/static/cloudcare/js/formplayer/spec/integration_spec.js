@@ -1,4 +1,4 @@
-/* global Util, Backbone */
+/* global Backbone */
 /* eslint-env mocha */
 
 describe('FormplayerFrontend Integration', function () {
@@ -52,7 +52,7 @@ describe('FormplayerFrontend Integration', function () {
             FormplayerFrontend.start(newOptions);
 
             user = FormplayerFrontend.getChannel().request('currentUser');
-            Util.saveDisplayOptions(user.displayOptions);
+            hqImport("cloudcare/js/formplayer/utils/util").saveDisplayOptions(user.displayOptions);
 
             // New session, but old options
             FormplayerFrontend.start(options);
