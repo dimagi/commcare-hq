@@ -59,7 +59,7 @@
 
           {% if not request.is_view_only %}
             {% if can_bulk_edit_users and can_access_all_locations %}
-              <a id="bulk_upload" class="btn btn-default" href="{% url "upload_commcare_users" domain %}">
+              <a id="bulk_upload" class="btn btn-default" href="{% url "upload_commcare_users" domain %}" disabled>
                 <i class="fa fa-cloud-upload"></i> {% trans "Bulk Upload" %}
               </a>
             {% endif %}
