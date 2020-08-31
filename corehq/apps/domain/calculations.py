@@ -133,7 +133,7 @@ def forms_in_last(domain, days):
     Returns the number of forms submitted in the last given number of days
     """
     then = datetime.utcnow() - timedelta(days=int(days))
-    return FormES().domain(domain).submitted(gte=then).size(0).run().total
+    return FormES().domain(domain).submitted(gte=then).count()
 
 
 def j2me_forms_in_last(domain, days):
@@ -141,7 +141,7 @@ def j2me_forms_in_last(domain, days):
     Returns the number of forms submitted by j2me in the last given number of days
     """
     then = datetime.utcnow() - timedelta(days=int(days))
-    return FormES().domain(domain).j2me_submissions(gte=then).size(0).run().total
+    return FormES().domain(domain).j2me_submissions(gte=then).count()
 
 
 def j2me_forms_in_last_bool(domain, days):

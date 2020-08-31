@@ -119,7 +119,7 @@ def doc_exists_in_es(index_info, doc_id_or_dict):
     else:
         assert isinstance(doc_id_or_dict, dict)
         doc_id = doc_id_or_dict['_id']
-    return get_es_new().exists(index_info.alias, index_info.type, doc_id)
+    return ElasticsearchInterface(get_es_new()).doc_exists(index_info.alias, doc_id, index_info.type)
 
 
 def send_to_elasticsearch(index_name, doc, delete=False, es_merge_update=False):
@@ -237,21 +237,21 @@ def iter_es_docs_from_query(query):
                 for doc in iter_es_docs(query.index, doc_ids):
                     yield doc
 
-    return ScanResult(scroll_result.count, iter_export_docs())
+    return ScanResult(query.count(), iter_export_docs())
 
 
 def scroll_query(index_name, q, es_instance_alias=ES_DEFAULT_INSTANCE):
     es_meta = ES_META[index_name]
-    try:
-        return scan(
-            get_es_instance(es_instance_alias),
-            index_alias=es_meta.alias,
-            doc_type=es_meta.type,
-            query=q,
-        )
-    except ElasticsearchException as e:
-        raise ESError(e)
+    es_interface = ElasticsearchInterface(get_es_instance(es_instance_alias))
+    return es_interface.scan(es_meta.alias, q, es_meta.type)
 
+
+def count_query(index_name, q):
+    es_meta = ES_META[index_name]
+    es_interface = ElasticsearchInterface(get_es_new())
+    # size is not required and is not supported in ES count API
+    q.pop('size', None)
+    return es_interface.count(es_meta.alias, es_meta.type, q).get('count')
 
 class ScanResult(object):
 
@@ -262,69 +262,6 @@ class ScanResult(object):
     def __iter__(self):
         for x in self._iterator:
             yield x
-
-
-def scan(client, query=None, scroll='5m', **kwargs):
-    """
-    This is a copy of elasticsearch.helpers.scan, except this function returns
-    a ScanResult (which includes the total number of documents), and removes
-    some options from scan that we aren't using.
-
-    Simple abstraction on top of the
-    :meth:`~elasticsearch.Elasticsearch.scroll` api - a simple iterator that
-    yields all hits as returned by underlining scroll requests.
-
-    :arg client: instance of :class:`~elasticsearch.Elasticsearch` to use
-    :arg query: body for the :meth:`~elasticsearch.Elasticsearch.search` api
-    :arg scroll: Specify how long a consistent view of the index should be
-        maintained for scrolled search
-
-    Any additional keyword arguments will be passed to the initial
-    :meth:`~elasticsearch.Elasticsearch.search` call::
-
-        scan(es,
-            query={"match": {"title": "python"}},
-            index="orders-*",
-            doc_type="books"
-        )
-
-    """
-    kwargs['search_type'] = 'scan'
-    # initial search
-    es_interface = ElasticsearchInterface(client)
-    initial_resp = es_interface.search(body=query, scroll=scroll, **kwargs)
-
-    def fetch_all(initial_response):
-
-        resp = initial_response
-        scroll_id = resp.get('_scroll_id')
-        if scroll_id is None:
-            return
-        iteration = 0
-
-        while True:
-
-            start = int(time.time() * 1000)
-            resp = es_interface.scroll(scroll_id, scroll=scroll)
-            for hit in resp['hits']['hits']:
-                yield hit
-
-            # check if we have any errrors
-            if resp["_shards"]["failed"]:
-                logging.getLogger('elasticsearch.helpers').warning(
-                    'Scroll request has failed on %d shards out of %d.',
-                    resp['_shards']['failed'], resp['_shards']['total']
-                )
-
-            scroll_id = resp.get('_scroll_id')
-            # end of scroll
-            if scroll_id is None or not resp['hits']['hits']:
-                break
-
-            iteration += 1
-
-    count = initial_resp.get("hits", {}).get("total", None)
-    return ScanResult(count, fetch_all(initial_resp))
 
 
 SIZE_LIMIT = 1000000
