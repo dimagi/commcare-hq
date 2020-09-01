@@ -1203,6 +1203,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             '{}_first_name'.format(SYSTEM_PREFIX): self.first_name,
             '{}_last_name'.format(SYSTEM_PREFIX): self.last_name,
             '{}_phone_number'.format(SYSTEM_PREFIX): self.phone_number,
+            '{}_location_id'.format(SYSTEM_PREFIX): self.location_id,
+            '{}_location_ids'.format(SYSTEM_PREFIX): user_location_data(self.assigned_location_ids),
+            '{}_primary_case_sharing_id'.format(SYSTEM_PREFIX): self.location_id,
         })
         return session_data
 
