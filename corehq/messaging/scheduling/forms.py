@@ -2711,8 +2711,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     START_OFFSET_NEGATIVE = 'NEGATIVE'
     START_OFFSET_POSITIVE = 'POSITIVE'
 
-    MIN_SMS_STALE_INTERVAL = 0
-    MAX_SMS_STALE_INTERVAL = 30
+    MIN_SMS_STALE_INTERVAL = 0  # hours
+    MAX_SMS_STALE_INTERVAL = 720  # hours
 
     use_case = 'conditional_alert'
 
@@ -2848,10 +2848,15 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     )
 
     sms_stale_after = IntegerField(
-        label='Make SMS stale after (days)',
+        label='Make SMS stale after (hours)',
         required=False,
         min_value=MIN_SMS_STALE_INTERVAL,
         max_value=MAX_SMS_STALE_INTERVAL,
+        help_text=_("SMS is marked as stale in 7*24 hours by default.\
+            You can set minimum value to {min} hours and maximum value to {max} hours").format(
+            min=MIN_SMS_STALE_INTERVAL,
+            max=MAX_SMS_STALE_INTERVAL
+        )
     )
 
     allow_custom_immediate_schedule = True
@@ -2991,8 +2996,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             result['capture_custom_metadata_item'] = self.YES
             custom_metadata = self.initial_schedule.custom_metadata
 
-            default_stale_interval_in_days = int(settings.SMS_QUEUE_STALE_MESSAGE_DURATION / 24)
-            sms_stale_after = custom_metadata.pop('sms_stale_after', default_stale_interval_in_days)
+            sms_stale_after = custom_metadata.pop('sms_stale_after', '')
             result['sms_stale_after'] = sms_stale_after
 
             for name, value in custom_metadata.items():
@@ -3456,10 +3460,10 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
     def clean_sms_stale_after(self):
         value = self.cleaned_data.get('sms_stale_after')
-        if not value:
+        if value == '' or value is None:
             return None
         if value < self.MIN_SMS_STALE_INTERVAL or value > self.MAX_SMS_STALE_INTERVAL:
-            raise ValidationError(_("Minimum value can be {min} days and maximum value can be 30 days").format(
+            raise ValidationError(_("""Min value can be {min} hours and max value can be {max} hours""").format(
                 min=self.MIN_SMS_STALE_INTERVAL,
                 max=self.MAX_SMS_STALE_INTERVAL
             ))
@@ -3557,8 +3561,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             extra_options['custom_metadata'] = {}
 
         sms_stale_after = self.cleaned_data.get('sms_stale_after', None)
-        default_stale_interval_in_days = int(settings.SMS_QUEUE_STALE_MESSAGE_DURATION / 24)
-        if sms_stale_after and sms_stale_after != default_stale_interval_in_days:
+        if sms_stale_after is not None:
             extra_options['custom_metadata']['sms_stale_after'] = sms_stale_after
 
         extra_options['stop_date_case_property_name'] = self.cleaned_data['stop_date_case_property_name']

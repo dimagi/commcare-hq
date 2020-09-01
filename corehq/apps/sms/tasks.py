@@ -163,9 +163,9 @@ def handle_domain_specific_delays(msg, domain_object, utcnow):
 
 def message_is_stale(msg, utcnow):
     sms_stale_duration = msg.custom_metadata.get('sms_stale_after', None)
-    sms_stale_duration_hours = sms_stale_duration * 24\
-        if sms_stale_duration else settings.SMS_QUEUE_STALE_MESSAGE_DURATION
-    oldest_allowable_datetime = utcnow - timedelta(hours=sms_stale_duration_hours)
+    sms_stale_duration = sms_stale_duration \
+        if sms_stale_duration is not None else settings.SMS_QUEUE_STALE_MESSAGE_DURATION
+    oldest_allowable_datetime = utcnow - timedelta(hours=sms_stale_duration)
     if isinstance(msg.date, datetime):
         return msg.date < oldest_allowable_datetime
     else:
