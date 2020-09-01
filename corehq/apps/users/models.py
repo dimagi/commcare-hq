@@ -1049,6 +1049,18 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         if "organizations" in data:
             del data["organizations"]
             should_save = True
+        if "commcare_location_id" in data.get("user_data", {}):
+            del data["user_data"]["commcare_location_id"]
+            should_save = True
+
+        if "commcare_location_ids" in data.get("user_data", {}):
+            del data["user_data"]["commcare_location_ids"]
+            should_save = True
+
+        if "commcare_primary_case_sharing_id" in data.get("user_data", {}):
+            del data["user_data"]["commcare_primary_case_sharing_id"]
+            should_save = True
+
 
         data = cls.migrate_eula(data)
 
