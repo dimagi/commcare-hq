@@ -53,9 +53,7 @@
       <link rel="apple-touch-icon" sizes="180x180" href="{% static 'hqstyle/images/commcare-icon-180x180.png' %}"/>
     {% endif %}
 
-    {% block stylesheets %}
-      <link rel="stylesheet" href="{% static '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css' %}" type="text/css" />
-    {% endblock stylesheets %}
+    {% block stylesheets %}{% endblock stylesheets %}
     
     {% block csrf_token_block %}
       <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
