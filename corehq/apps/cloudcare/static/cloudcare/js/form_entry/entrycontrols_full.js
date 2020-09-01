@@ -316,7 +316,7 @@ function AddressEntry(question, options) {
         var defaultGeocoderLocation = initialPageData('default_geocoder_location') || {};
         var geocoder = new MapboxGeocoder({
             accessToken: MAPBOX_ACCESS_TOKEN,
-            types: "address",
+            types: 'address',
             enableEventLogging: false,
             getItemValue: self.geocoderItemCallback,
         });
