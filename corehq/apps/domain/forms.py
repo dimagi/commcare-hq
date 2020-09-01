@@ -428,7 +428,7 @@ class DomainGlobalSettingsForm(forms.Form):
         timezone_field = TimeZoneField()
         timezone_field.run_validators(data)
         return smart_str(data)
-    
+
     def clean_default_geocoder_location(self):
         data = self.cleaned_data.get('default_geocoder_location', '{}')
         if isinstance(data, dict):
