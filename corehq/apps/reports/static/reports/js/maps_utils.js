@@ -223,12 +223,12 @@ hqDefine("reports/js/maps_utils", function () {
     });
 
     // a wordmark for mapbox
-    MapBoxWordMark = L.Control.extend({
+    var MapBoxWordMark = L.Control.extend({
         options: {
             position: 'bottomleft',
         },
 
-        onAdd: function (map) {
+        onAdd: function () {
             var div = L.DomUtil.create('div', 'map');
             div.innerHTML = '<a href="http://mapbox.com/about/maps" class="mapbox-wordmark" target="_blank">Mapbox</a>';
             return div;
