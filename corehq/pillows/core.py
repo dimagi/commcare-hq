@@ -21,6 +21,8 @@ if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
         "yyyy-MM-dd'T'HH:mm:ss.SSSx",
         # e.g. 2013-11-05T17:39:01+00:00Z
         "yyyy-MM-dd'T'HH:mm:ssXXX'Z'",
+        # e.g. 2013-11-05T17:39:01+00:00
+        "yyyy-MM-dd'T'HH:mm:ssXXX",
         # e.g. 2014-01-19T12:01:59.596+05:30
         "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
     ]
