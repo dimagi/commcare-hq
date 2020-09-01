@@ -1,4 +1,4 @@
-hqDefine('hqwebapp/js/widgets',[
+hqDefine("hqwebapp/js/widgets",[
         'jquery',
         '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.min',
         'hqwebapp/js/initial_page_data',
