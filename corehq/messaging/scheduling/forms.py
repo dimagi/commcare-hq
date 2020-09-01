@@ -1,3 +1,4 @@
+from corehq import toggles
 import json
 import re
 from datetime import datetime, timedelta
@@ -90,7 +91,6 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseScheduleInstanceMixin,
     ScheduleInstance,
 )
-from custom.icds import icds_toggles
 from langcodes import get_name as get_language_name
 
 
@@ -3196,7 +3196,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 ),
             ),
         ])
-        if icds_toggles.ICDS_CONFIGURABLE_STALE_SMS_VALUE.enabled(self.domain):
+        if toggles.CONFIGURABLE_STALE_SMS_VALUE.enabled(self.domain):
             result.extend([
                 crispy.Div(
                     twbscrispy.Field('sms_stale_after')

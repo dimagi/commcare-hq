@@ -1932,3 +1932,11 @@ ONE_PHONE_NUMBER_MULTIPLE_CONTACTS = StaticToggle(
     Otherwise the recipient has no way to know who they're supposed to be enter information about.
     """
 )
+
+CONFIGURABLE_STALE_SMS_VALUE = StaticToggle(
+    'configurable_stale_sms_value',
+    """Custom: Have an option to configure the time after which SMS will be marked as stale
+    for each condtional alert""",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
