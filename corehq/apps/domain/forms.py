@@ -320,7 +320,7 @@ class DomainGlobalSettingsForm(forms.Form):
         widget=GeoCoderInput(attrs={'placeholder': ugettext_lazy('Select a location')}),
         label=ugettext_noop("Default geocoder location"),
         required=False,
-        help_text=ugettext_lazy("Please select the default location for the geocoder used in your project space.")
+        help_text=ugettext_lazy("Please select your project's default location.")
     )
 
     logo = ImageField(
@@ -428,6 +428,12 @@ class DomainGlobalSettingsForm(forms.Form):
         timezone_field = TimeZoneField()
         timezone_field.run_validators(data)
         return smart_str(data)
+    
+    def clean_default_geocoder_location(self):
+        data = self.cleaned_data.get('default_geocoder_location', '{}')
+        if isinstance(data, dict):
+            return data
+        return json.loads(data)
 
     def clean(self):
         cleaned_data = super(DomainGlobalSettingsForm, self).clean()
@@ -499,7 +505,7 @@ class DomainGlobalSettingsForm(forms.Form):
         domain.hr_name = self.cleaned_data['hr_name']
         domain.project_description = self.cleaned_data['project_description']
         domain.default_mobile_ucr_sync_interval = self.cleaned_data.get('mobile_ucr_sync_interval', None)
-        domain.default_geocoder_location = json.loads(self.cleaned_data.get('default_geocoder_location','{}'))
+        domain.default_geocoder_location = self.clean_default_geocoder_location()
         try:
             self._save_logo_configuration(domain)
         except IOError as err:
