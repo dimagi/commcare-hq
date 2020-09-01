@@ -105,17 +105,23 @@ class CustomDataEditor(object):
             return forms.CharField(label=field.label, required=field.is_required,
                                    validators=[validator])
         elif field.choices:
-            # select2 must be controlled via knockout if form uses knockout
+            # If form uses knockout, knockout must have control over the select2.
+            # Otherwise, use .hqwebapp-select2 and hqwebapp/js/widgets to make the select2.
             attrs = {
                 'data-placeholder': _('Select one'),
                 'data-allow-clear': 'true',
             }
-            if not self.ko_model:
+            if self.ko_model:
+                placeholder_choices = []
+            else:
                 attrs.update({'class': 'hqwebapp-select2'})
+                # When options are provided only in HTML, placeholder must also have an HTML element
+                placeholder_choices = [('', _('Select one'))]
+
             return forms.ChoiceField(
                 label=field.label,
                 required=field.is_required,
-                choices=[(c, c) for c in field.choices],
+                choices=placeholder_choices + [(c, c) for c in field.choices],
                 widget=forms.Select(attrs=attrs)
             )
         else:
