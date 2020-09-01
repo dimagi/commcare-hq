@@ -1221,7 +1221,7 @@ class CommCareUserFormSet(object):
                 and all([self.user_form.is_valid(), self.custom_data.is_valid()]))
 
     def update_user(self):
-        self.user_form.existing_user.metadata = self.custom_data.get_data_to_save()
+        self.user_form.existing_user.update_metadata(self.custom_data.get_data_to_save())
         return self.user_form.update_user()
 
 

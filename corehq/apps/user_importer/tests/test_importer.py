@@ -44,8 +44,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
                 slug='key',
                 is_required=False,
                 label='Key',
-                regex='^[A-F]',
-                regex_msg='Starts with A-F',
+                regex='^[A-G]',
+                regex_msg='Starts with A-G',
             ),
             Field(
                 slug='mode',
@@ -272,6 +272,39 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             mock.MagicMock()
         )
         self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain', 'key': 'F#'})
+
+    @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
+    def test_metadata_ignore_system_fields(self):
+        self.setup_locations()
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(data={'key': 'F#'}, location_code=self.loc1.site_code)],
+            [],
+            None,
+            mock.MagicMock()
+        )
+        self.assertEqual(self.user.metadata, {
+            'commcare_project': 'mydomain',
+            'commcare_location_id': self.loc1.location_id,
+            'commcare_location_ids': self.loc1.location_id,
+            'commcare_primary_case_sharing_id': self.loc1.group_id,
+            'key': 'F#',
+        })
+
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(user_id=self.user.user_id, data={'key': 'G#'})],
+            [],
+            None,
+            mock.MagicMock()
+        )
+        self.assertEqual(self.user.metadata, {
+            'commcare_project': 'mydomain',
+            'key': 'G#',
+            'commcare_location_id': self.loc1.location_id,
+            'commcare_location_ids': self.loc1.location_id,
+            'commcare_primary_case_sharing_id': self.loc1.group_id,
+        })
 
     def test_metadata_profile(self):
         import_users_and_groups(

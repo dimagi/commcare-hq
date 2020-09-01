@@ -79,7 +79,7 @@ class UserModelTest(TestCase):
             'cruise': 'control',
             'this': 'road',
         })
-        self.user.metadata = metadata
+        self.user.update_metadata(metadata)
         self.assertEqual(self.user.metadata, {
             'commcare_project': 'my-domain',
             'cruise': 'control',
@@ -107,6 +107,7 @@ class UserModelTest(TestCase):
             definition=definition,
         )
         profile.save()
+        conflict_message = "metadata properties conflict with profile: start"
 
         # Custom user data profiles get their data added to metadata automatically for mobile users
         self.user.update_metadata({PROFILE_SLUG: profile.id})
@@ -115,6 +116,36 @@ class UserModelTest(TestCase):
             PROFILE_SLUG: profile.id,
             'start': 'sometimes',
         })
+
+        # Remove profile should remove it and related fields
+        self.user.pop_metadata(PROFILE_SLUG)
+        self.assertEqual(self.user.metadata, {
+            'commcare_project': 'my-domain',
+        })
+
+        # Can't add profile that conflicts with existing data
+        self.user.update_metadata({
+            'start': 'never',
+            'end': 'yesterday',
+        })
+        with self.assertRaisesMessage(ValueError, conflict_message):
+            self.user.update_metadata({
+                PROFILE_SLUG: profile.id,
+            })
+
+        # Can't add data that conflicts with existing profile
+        self.user.pop_metadata('start')
+        self.user.update_metadata({PROFILE_SLUG: profile.id})
+        with self.assertRaisesMessage(ValueError, conflict_message):
+            self.user.update_metadata({'start': 'never'})
+
+        # Can't add both a profile and conflicting data
+        self.user.pop_metadata(PROFILE_SLUG)
+        with self.assertRaisesMessage(ValueError, conflict_message):
+            self.user.update_metadata({
+                PROFILE_SLUG: profile.id,
+                'start': 'never',
+            })
 
         # Custom user data profiles don't get populated for web users
         web_user = WebUser.create(None, "imogen", "*****", None, None)

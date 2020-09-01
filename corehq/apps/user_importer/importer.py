@@ -424,14 +424,16 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                     user.add_phone_number(_fmt_phone(phone_number), default=True)
                 if name:
                     user.set_full_name(str(name))
-                data = data or {}
+                data = user.metadata
                 if profile:
-                    data[PROFILE_SLUG] = domain_info.profiles_by_name[profile].id
-                if data:
-                    try:
-                        user.metadata = data
-                    except ValueError as e:
-                        raise UserUploadError(str(e))
+                    profile_obj = domain_info.profiles_by_name[profile]
+                    data[PROFILE_SLUG] = profile_obj.id
+                    for key in profile_obj.fields.keys():
+                        user.pop_metadata(key)
+                try:
+                    user.update_metadata(data)
+                except ValueError as e:
+                    raise UserUploadError(str(e))
                 if uncategorized_data:
                     user.update_metadata(uncategorized_data)
                 if language:

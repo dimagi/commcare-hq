@@ -1093,10 +1093,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     def metadata(self):
         return self.user_data
 
-    @metadata.setter
-    def metadata(self, value):
-        self.user_data = value
-
     def update_metadata(self, data):
         self.user_data.update(data)
 
@@ -1510,7 +1506,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
         metadata = metadata or {}
         metadata.update({'commcare_project': domain})
-        couch_user.metadata = metadata
+        couch_user.update_metadata(metadata)
         couch_user.sync_from_django_user(django_user)
         return couch_user
 
@@ -1702,39 +1698,38 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     @property
     def metadata(self):
+        from corehq.apps.custom_data_fields.models import PROFILE_SLUG
         data = self.to_json().get('user_data', {})
-        profile = self._get_user_data_profile(data)
+        profile_id = data.get(PROFILE_SLUG)
+        profile = self._get_user_data_profile(profile_id)
         if profile:
             data.update(profile.fields)
         return data
 
-    @metadata.setter
-    def metadata(self, value):
-        profile = self._get_user_data_profile(value)
+    def update_metadata(self, data):
+        from corehq.apps.custom_data_fields.models import PROFILE_SLUG
+
+        new_data = {**self.user_data, **data}
+
+        profile = self._get_user_data_profile(new_data.get(PROFILE_SLUG))
         if profile:
-            overlap = [k for k, v in profile.fields.items() if k in value and value[k] and v != value[k]]
+            overlap = {k for k, v in profile.fields.items() if new_data.get(k) and v != new_data[k]}
             if overlap:
                 raise ValueError("metadata properties conflict with profile: {}".format(", ".join(overlap)))
             for key in profile.fields.keys():
-                value.pop(key, None)
+                new_data.pop(key, None)
 
-        self.user_data = value
-
-    def update_metadata(self, data):
-        update = self.metadata
-        update.update(data)
-        self.metadata = update
+        self.user_data = new_data
 
     def pop_metadata(self, key, default=None):
         return self.user_data.pop(key, default)
 
-    def _get_user_data_profile(self, data):
+    def _get_user_data_profile(self, profile_id):
         from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-        from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile, PROFILE_SLUG
-        if not data.get(PROFILE_SLUG):
+        from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile
+        if not profile_id:
             return None
 
-        profile_id = data.get(PROFILE_SLUG)
         try:
             profile = CustomDataFieldsProfile.objects.get(id=profile_id)
         except CustomDataFieldsProfile.DoesNotExist:

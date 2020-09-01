@@ -141,7 +141,7 @@ class CallCenterUtilsTests(TestCase):
         )
         profile.save()
 
-        self.user.metadata = {
+        self.user.update_metadata({
             '': 'blank_key',
             'blank_val': '',
             'ok': 'good',
@@ -150,7 +150,7 @@ class CallCenterUtilsTests(TestCase):
             'xml_starts_with_xml': '0',
             '._starts_with_punctuation': '0',
             PROFILE_SLUG: profile.id,
-        }
+        })
         sync_call_center_user_case(self.user)
         case = self._get_user_case()
         self.assertIsNotNone(case)
@@ -251,9 +251,9 @@ class CallCenterUtilsUserCaseTests(TestCase):
         """
         Custom user data should be synced when the user is created
         """
-        self.user.metadata = {
+        self.user.update_metadata({
             'completed_training': 'yes',
-        }
+        })
         self.user.save()
         case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
         self.assertIsNotNone(case)
@@ -263,13 +263,13 @@ class CallCenterUtilsUserCaseTests(TestCase):
         """
         Custom user data should be synced when the user is updated
         """
-        self.user.metadata = {
+        self.user.update_metadata({
             'completed_training': 'no',
-        }
+        })
         self.user.save()
-        self.user.metadata = {
+        self.user.update_metadata({
             'completed_training': 'yes',
-        }
+        })
         sync_usercase(self.user)
         case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
         self.assertEqual(case.dynamic_case_properties()['completed_training'], 'yes')
@@ -279,10 +279,10 @@ class CallCenterUtilsUserCaseTests(TestCase):
         """
         Test that setting custom user data for owner_id and case_type don't change the case
         """
-        self.user.metadata = {
+        self.user.update_metadata({
             'owner_id': 'someone else',
             'case_type': 'bob',
-        }
+        })
         self.user.save()
         case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
         self.assertEqual(case.owner_id, self.user.get_id)
@@ -323,7 +323,7 @@ class CallCenterUtilsUserCaseTests(TestCase):
         user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
         self.assertTrue(user_case.closed)
 
-        self.user.metadata = {'foo': 'bar'}
+        self.user.update_metadata({'foo': 'bar'})
         self.user.save()
         user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
         self.assertTrue(user_case.closed)
@@ -345,7 +345,7 @@ class CallCenterUtilsUserCaseTests(TestCase):
         user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
         self.assertTrue(user_case.closed)
 
-        self.user.metadata = {'foo': 'bar'}
+        self.user.update_metadata({'foo': 'bar'})
         self.user.is_active = True
         self.user.save()
         user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
@@ -353,9 +353,9 @@ class CallCenterUtilsUserCaseTests(TestCase):
         self.assertEqual(user_case.dynamic_case_properties()['foo'], 'bar')
 
     def test_update_no_change(self):
-        self.user.metadata = {
+        self.user.update_metadata({
             'numeric': 123,
-        }
+        })
         self.user.save()
         user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
         self.assertIsNotNone(user_case)

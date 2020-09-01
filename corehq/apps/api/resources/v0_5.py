@@ -248,7 +248,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
                     should_save = True
                 elif key == 'user_data':
                     try:
-                        bundle.obj.metadata = value
+                        bundle.obj.update_metadata(value)
                     except ValueError as e:
                         raise BadRequest(str(e))
                 else:
