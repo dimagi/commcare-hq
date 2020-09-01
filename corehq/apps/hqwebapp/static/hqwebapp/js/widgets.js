@@ -1,12 +1,9 @@
-hqDefine(
-    "hqwebapp/js/widgets",
-    [
-        "jquery",
-        "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.min",
-        "hqwebapp/js/initial_page_data",
-        "select2/dist/js/select2.full.min",
-    ],
-    function ($, MapboxGeocoder, initialPageData) {
+hqDefine('hqwebapp/js/widgets',[
+        'jquery',
+        '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.min',
+        'hqwebapp/js/initial_page_data',
+        'select2/dist/js/select2.full.min',
+    ], function ($, MapboxGeocoder, initialPageData) {
         var init = function () {
             var MAPBOX_ACCESS_TOKEN = initialPageData.get(
                 "mapbox_access_token"
@@ -14,7 +11,7 @@ hqDefine(
             // .hqwebapp-select2 is a basic select2-based dropdown or multiselect
             _.each($(".hqwebapp-select2"), function (element) {
                 $(element).select2({
-                    width: "100%",
+                    width: '100%',
                 });
             });
 
@@ -24,7 +21,7 @@ hqDefine(
                 $input.select2({
                     multiple: true,
                     tags: true,
-                    width: "100%",
+                    width: '100%',
                 });
             });
 
@@ -32,9 +29,9 @@ hqDefine(
                 var $input = $(input);
                 $input.select2({
                     multiple: true,
-                    placeholder: " ",
+                    placeholder: ' ',
                     tags: true,
-                    width: "100%",
+                    width: '100%',
                     createTag: function (params) {
                         // Support pasting in comma-separated values
                         var terms = parseEmails(params.term);
@@ -45,7 +42,7 @@ hqDefine(
                             };
                         }
 
-                        $input.select2("close");
+                        $input.select2('close');
                         var values = $input.val() || [];
                         if (!_.isArray(values)) {
                             values = [values];
