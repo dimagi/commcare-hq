@@ -167,7 +167,9 @@ class GeoCoderInput(Input):
 
     def render(self, name, value, attrs=None, renderer=None):
         self.input_type = 'hidden'
-        output = super(GeoCoderInput, self).render(name, json.dumps(value), attrs, renderer)
+        if isinstance(value, dict):
+            value = json.dumps(value)
+        output = super(GeoCoderInput, self).render(name, value, attrs, renderer)
         return mark_safe("""
-            <div id="geocoder-proximity">{}</div>
+            <div class="geocoder-proximity">{}</div>
         """.format(output))
