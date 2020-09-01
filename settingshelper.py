@@ -1,4 +1,6 @@
 import logging
+import random
+import string
 import subprocess
 from collections import namedtuple
 import os
@@ -282,3 +284,10 @@ def get_git_commit(base_dir):
         return out.strip().decode('ascii')
     except OSError:
         pass
+
+
+# Reference: https://django-simple-captcha.readthedocs.io/en/latest/advanced.html#roll-your-own
+def random_alphanumeric_challenge():
+    ret = u''
+    ret += ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+    return ret, ret

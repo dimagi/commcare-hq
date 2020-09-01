@@ -219,6 +219,8 @@ DEFAULT_APPS = (
 )
 
 CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'
+CAPTCHA_LENGTH = 6
+CAPTCHA_CHALLENGE_FUNCT = helper.random_alphanumeric_challenge
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 CRISPY_ALLOWED_TEMPLATE_PACKS = (
     'bootstrap',
