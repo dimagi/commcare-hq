@@ -389,7 +389,7 @@ def calced_props(domain_obj, id, all_stats):
         "cp_n_j2me_30_d": int(CALC_FNS["j2me_forms_in_last"](dom, 30)),
         "cp_n_j2me_60_d": int(CALC_FNS["j2me_forms_in_last"](dom, 60)),
         "cp_n_j2me_90_d": int(CALC_FNS["j2me_forms_in_last"](dom, 90)),
-        "cp_j2me_90_d_bool": int(CALC_FNS["j2me_forms_in_last_bool"](dom, 90)),
+        "cp_j2me_90_d_bool": CALC_FNS["j2me_forms_in_last_bool"](dom, 90),
         "cp_300th_form": CALC_FNS["300th_form_submission"](dom),
         "cp_n_30_day_user_cases": cases_in_last(dom, 30, case_type="commcare-user"),
         "cp_n_trivet_backends": num_telerivet_backends(dom),
