@@ -6,11 +6,11 @@ from corehq.elastic import send_to_elasticsearch
 
 
 def fix_domain_es_docs():
-	bool_props = ['cp_sms_ever', 'cp_sms_30_d', 'cp_j2me_90_d_bool']
-	for doc in DomainES().source(bool_props).run().hits:
-		for prop in bool_props:
-			doc[prop] = bool(doc.get(prop, False))
-		send_to_elasticsearch('domains', doc, delete=False, es_merge_update=True)
+    bool_props = ['cp_sms_ever', 'cp_sms_30_d', 'cp_j2me_90_d_bool']
+    for doc in DomainES().source(bool_props).run().hits:
+        for prop in bool_props:
+            doc[prop] = bool(doc.get(prop, False))
+        send_to_elasticsearch('domains', doc, delete=False, es_merge_update=True)
 
 
 class Migration(migrations.Migration):
