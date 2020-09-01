@@ -131,7 +131,7 @@ hqDefine("reports/js/maps_utils", function () {
         this.load(data);
     }
 
-    LegendControl = L.Control.extend({
+    var LegendControl = L.Control.extend({
         options: {
             position: 'bottomright',
         },
@@ -154,7 +154,7 @@ hqDefine("reports/js/maps_utils", function () {
         },
     });
 
-    HeadsUpControl = L.Control.extend({
+    var HeadsUpControl = L.Control.extend({
         options: {
             position: 'bottomright',
         },
@@ -192,7 +192,7 @@ hqDefine("reports/js/maps_utils", function () {
     });
 
     // a control button that will fit the map viewport to the currently displayed data
-    ZoomToFitControl = L.Control.extend({
+    var ZoomToFitControl = L.Control.extend({
         options: {
             position: 'topright',
         },
@@ -207,7 +207,7 @@ hqDefine("reports/js/maps_utils", function () {
     });
 
     // a control button to scroll table into view
-    ToggleTableControl = L.Control.extend({
+    var ToggleTableControl = L.Control.extend({
         options: {
             position: 'topright',
         },
