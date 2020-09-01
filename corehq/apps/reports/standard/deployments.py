@@ -67,6 +67,9 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
     @property
     def _columns(self):
+        selected_app_info = "selected app version {app_id}".format(
+            app_id=self.selected_app_id
+        ) if self.selected_app_id else "for last built app"
         return [
             DataTablesColumn(_("Username"),
                              prop_name='username.exact',
@@ -93,8 +96,9 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                              alt_prop_name='reporting_metadata.last_submission_for_user.commcare_version',
                              sql_col='last_form_app_commcare_version'),
             DataTablesColumn(_("Number of unsent forms in user's phone"),
-                             help_text=_("""The number of unsent forms in users' phones for selected app version
-                                            (or last built app if app version not selected)"""),
+                             help_text=_("The number of unsent forms in users' phones for {app_info}".format(
+                                 app_info=selected_app_info
+                             )),
                              sortable=False),
         ]
 
