@@ -1040,6 +1040,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     login_attempts = IntegerProperty(default=0)
     attempt_date = DateProperty()
 
+    commtrack_supply_point = StringProperty()
+
     reporting_metadata = SchemaProperty(ReportingMetadata)
 
     _user = None
@@ -1061,6 +1063,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             del data["user_data"]["commcare_primary_case_sharing_id"]
             should_save = True
 
+        if "commtrack-supply-point" in data.get("user_data", {}):
+            data['commtrack_supply_point'] = data["user_data"]["commtrack-supply-point"]
+            del data["user_data"]["commtrack-supply-point"]
+            should_save = True
 
         data = cls.migrate_eula(data)
 
@@ -1218,6 +1224,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             '{}_location_id'.format(SYSTEM_PREFIX): self.location_id,
             '{}_location_ids'.format(SYSTEM_PREFIX): user_location_data(self.assigned_location_ids),
             '{}_primary_case_sharing_id'.format(SYSTEM_PREFIX): self.location_id,
+            'commtrack-supply-point': self.commtrack_supply_point,
         })
         return session_data
 
@@ -2035,10 +2042,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             # just need to trigger a get or create to make sure
             # this exists, otherwise things blow up
             sp = SupplyInterface(self.domain).get_or_create_by_location(location)
-
-            self.user_data.update({
-                'commtrack-supply-point': sp.case_id
-            })
+            self.commtrack_supply_point = sp.case_id
 
         self.create_location_delegates([location])
 
