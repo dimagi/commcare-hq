@@ -1,12 +1,16 @@
-/* globals CryptoJS */
-
-hqDefine("integration/js/hmac_callout", ["hqwebapp/js/initial_page_data"], function (initialPageData) {
+hqDefine("integration/js/hmac_callout", [
+    "hqwebapp/js/initial_page_data",
+    "crypto-js/crypto-js",
+], function (
+    initialPageData,
+    CryptoJS
+) {
     var randomString = function (nBytes) {
         return CryptoJS.lib.WordArray.random(nBytes).toString();
     };
 
     var digest = function (key, nonce, timestamp) {
-        return CryptoJS.SHA512([nonce, key, timestamp].join(""));
+        return CryptoJS.SHA512([key, nonce, timestamp].join(""));
     };
 
     var encode64 = function (message) {
@@ -21,7 +25,7 @@ hqDefine("integration/js/hmac_callout", ["hqwebapp/js/initial_page_data"], funct
         return CryptoJS.HmacSHA512(message, secret);
     };
 
-    var performCallout = function (anchor) {
+    var signedCallout = function (anchor) {
         var url = new URL(anchor.href);
 
         var path = url.pathname;
@@ -29,7 +33,7 @@ hqDefine("integration/js/hmac_callout", ["hqwebapp/js/initial_page_data"], funct
 
         var variables = url.searchParams.toString();
 
-        var hashedBody = hash("variables=" + variables);
+        var hashedBody = encode64(hash(variables));
 
         var dest = url.origin + url.pathname;
 
@@ -48,15 +52,27 @@ hqDefine("integration/js/hmac_callout", ["hqwebapp/js/initial_page_data"], funct
             'variables': variables,
             'signature': encodedSignature};
 
-        postForm(args, dest);
+        postForm(args, dest, "hmac_callout");
     };
 
-    var postForm = function (data, dest) {
+    var unsignedCallout = function (anchor, target, isInternal) {
+        var url = new URL(anchor.href);
+        var dest = url.origin + url.pathname;
+        var args = {};
+        if (isInternal) {
+            args['csrfmiddlewaretoken'] = $("#csrfTokenContainer").val();
+        }
+
+        url.searchParams.forEach(function (value,key) {args[key] = value;});
+        postForm(args, dest, target);
+    };
+
+    var postForm = function (data, dest, target) {
         var form = document.createElement("form");
 
         form.method = "POST";
         form.action = dest;
-        form.target = "hmac_callout";
+        form.target = target;
 
         for (var key in data) {
             var element = document.createElement("input");
@@ -73,9 +89,8 @@ hqDefine("integration/js/hmac_callout", ["hqwebapp/js/initial_page_data"], funct
         document.body.removeChild(form);
     };
 
-    window.HMACCallout = performCallout;
-
     return {
-        performCallout: performCallout,
+        signedCallout: signedCallout,
+        unsignedCallout: unsignedCallout,
     };
 });

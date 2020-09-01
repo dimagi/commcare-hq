@@ -14,6 +14,7 @@ from corehq.apps.commtrack.tests.util import bootstrap_domain
 from dimagi.utils.dates import DateSpan
 from pillowtop.es_utils import initialize_index_and_mapping
 
+from corehq.apps.domain.calculations import cases_in_last, inactive_cases_in_last
 from corehq.apps.es import CaseES, UserES
 from corehq.apps.es.aggregations import MISSING_KEY
 from corehq.apps.es.tests.utils import es_test
@@ -942,7 +943,8 @@ class TestCaseESAccessors(BaseESAccessorsTest):
             user_id=None,
             case_type=None,
             opened_on=None,
-            closed_on=None):
+            closed_on=None,
+            modified_on=None):
 
         actions = [CommCareCaseAction(
             action_type=CASE_ACTION_CREATE,
@@ -957,7 +959,7 @@ class TestCaseESAccessors(BaseESAccessorsTest):
             type=case_type or self.case_type,
             opened_on=opened_on or datetime.now(),
             opened_by=user_id or self.user_id,
-            modified_on=datetime.now(),
+            modified_on=modified_on or datetime.now(),
             closed_on=closed_on,
             closed_by=user_id or self.user_id,
             actions=actions,
@@ -1095,6 +1097,27 @@ class TestCaseESAccessors(BaseESAccessorsTest):
         results = get_case_counts_opened_by_user(self.domain, datespan, case_types=['not-here'])
         self.assertEqual(results, {})
 
+    def test_get_case_counts_in_last(self):
+        self._send_case_to_es(modified_on=datetime.now() - timedelta(days=2))
+        self._send_case_to_es(modified_on=datetime.now() - timedelta(days=2), case_type='new')
+        self._send_case_to_es(modified_on=datetime.now() - timedelta(days=5), case_type='new')
+        self.assertEqual(
+            cases_in_last(self.domain, 3),
+            2
+        )
+        self.assertEqual(
+            cases_in_last(self.domain, 3, self.case_type),
+            1
+        )
+        self.assertEqual(
+            inactive_cases_in_last(self.domain, 6),
+            0
+        )
+        self.assertEqual(
+            inactive_cases_in_last(self.domain, 1),
+            3
+        )
+
     def test_get_case_types(self):
         self._send_case_to_es(case_type='t1')
         self._send_case_to_es(case_type='t2')
@@ -1196,7 +1219,8 @@ class TestCaseESAccessorsSQL(TestCaseESAccessors):
             user_id=None,
             case_type=None,
             opened_on=None,
-            closed_on=None):
+            closed_on=None,
+            modified_on=None):
 
         case = CommCareCaseSQL(
             case_id=uuid.uuid4().hex,
@@ -1207,7 +1231,7 @@ class TestCaseESAccessorsSQL(TestCaseESAccessors):
             opened_on=opened_on or datetime.now(),
             opened_by=user_id or self.user_id,
             closed_on=closed_on,
-            modified_on=datetime.now(),
+            modified_on=modified_on or datetime.now(),
             closed_by=user_id or self.user_id,
             server_modified_on=datetime.utcnow(),
             closed=bool(closed_on)

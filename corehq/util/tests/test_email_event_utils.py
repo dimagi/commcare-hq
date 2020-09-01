@@ -17,7 +17,7 @@ from corehq.util.models import (
 from corehq.util.test_utils import TestFileMixin
 
 
-class TestBouncedEmailManager(TestCase, TestFileMixin):
+class TestSnsEmailBase(TestCase, TestFileMixin):
     file_path = ('data', 'email')
     root = os.path.dirname(__file__)
 
@@ -33,6 +33,9 @@ class TestBouncedEmailManager(TestCase, TestFileMixin):
         with open(bounce_file, "r") as f:
             bounce_message = json.loads(f.read())
         return bounce_message
+
+
+class TestBouncedEmailManager(TestSnsEmailBase):
 
     def test_scheduled_complaint(self):
         complaint_message = self._get_message('scheduled_complaint')

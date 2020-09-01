@@ -11,6 +11,7 @@ from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_PSS
 from memoized import memoized
 
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.hqwebapp.forms import BulkUploadForm
@@ -20,6 +21,11 @@ from corehq.util.view_utils import get_request
 from custom.nic_compliance.utils import get_raw_password
 
 logger = logging.getLogger(__name__)
+
+monitor_2fa_soft_assert = soft_assert(
+    to=['{}@{}'.format('biyeun', 'dimagi.com')],
+    send_to_ops=False
+)
 
 
 @memoized
