@@ -133,7 +133,7 @@ def forms_in_last(domain, days):
     Returns the number of forms submitted in the last given number of days
     """
     then = datetime.utcnow() - timedelta(days=int(days))
-    return FormES().domain(domain).submitted(gte=then).size(0).run().total
+    return FormES().domain(domain).submitted(gte=then).count()
 
 
 def j2me_forms_in_last(domain, days):
@@ -141,7 +141,7 @@ def j2me_forms_in_last(domain, days):
     Returns the number of forms submitted by j2me in the last given number of days
     """
     then = datetime.utcnow() - timedelta(days=int(days))
-    return FormES().domain(domain).j2me_submissions(gte=then).size(0).run().total
+    return FormES().domain(domain).j2me_submissions(gte=then).count()
 
 
 def j2me_forms_in_last_bool(domain, days):
@@ -378,8 +378,8 @@ def calced_props(domain_obj, id, all_stats):
         "cp_n_sms_30_d": int(CALC_FNS["sms_in_last"](dom, 30)),
         "cp_n_sms_60_d": int(CALC_FNS["sms_in_last"](dom, 60)),
         "cp_n_sms_90_d": int(CALC_FNS["sms_in_last"](dom, 90)),
-        "cp_sms_ever": int(CALC_FNS["sms_in_last_bool"](dom)),
-        "cp_sms_30_d": int(CALC_FNS["sms_in_last_bool"](dom, 30)),
+        "cp_sms_ever": CALC_FNS["sms_in_last_bool"](dom),
+        "cp_sms_30_d": CALC_FNS["sms_in_last_bool"](dom, 30),
         "cp_n_sms_in_30_d": int(CALC_FNS["sms_in_in_last"](dom, 30)),
         "cp_n_sms_in_60_d": int(CALC_FNS["sms_in_in_last"](dom, 60)),
         "cp_n_sms_in_90_d": int(CALC_FNS["sms_in_in_last"](dom, 90)),
