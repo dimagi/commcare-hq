@@ -39,7 +39,7 @@
           <thead>
             <tr>
               <th>{% trans "Name" %}</th>
-              <th>{% trans "E-mail" %}</th>
+              <th>{% trans "Email Address" %}</th>
               <th>{% trans "Actions" %}</th>
             </tr>
           </thead>
@@ -105,7 +105,7 @@
              style="margin-bottom: 0;">
         <thead>
           <tr>
-            <th>{% trans "E-mail" %}</th>
+            <th>{% trans "Email Address" %}</th>
             <th>{% trans "Role" %}</th>
             <th>{% trans "Name" %}</th>
             <th>{% trans "Phone Numbers" %}</th>
@@ -155,7 +155,7 @@
                       <div class="modal-body">
                         <p class="lead">{% trans "Are you sure you want to remove this users's membership?" %}</p>
                         <ul class="dl-horizontal">
-                          <dt>{% trans "E-mail" %}</dt>
+                          <dt>{% trans "Email Address" %}</dt>
                           <dd data-bind="text: email"></dd>
                           <dt>{% trans "Name" %}</dt>
                           <dd data-bind="text: name"></dd>
@@ -201,8 +201,17 @@
     <div class="panel panel-info ko-template" id="invitations-panel">
       <div class="panel-heading">
         <div class="row">
-          <div class="col-sm-6">
+          <div class="col-sm-4">
             <h3 class="panel-title" style="padding-top: 7px;">{% trans 'Pending Invitations' %}</h3>
+          </div>
+          <div class="col-sm-2">
+            <select class="form-control" data-bind="
+                           options: allStatuses,
+                           value: statusFilter,
+                           event: { change: function () { goToPage(1) } },
+                           optionsCaption: '{% trans "All statuses" %}'
+                           ">
+            </select>
           </div>
           <div class="col-sm-6">
             <search-box data-apply-bindings="false"
@@ -217,9 +226,10 @@
         <table class="table table-striped table-responsive">
           <thead>
             <tr>
-              <th>{% trans "E-mail" %}</th>
+              <th>{% trans "Email Address" %}</th>
               <th>{% trans "Role" %}</th>
               <th>{% trans "Date" %} (UTC)</th>
+              <th>{% trans "Email Status" %}</th>
               <th>{% trans "Actions" %}</th>
             </tr>
           </thead>
@@ -234,6 +244,9 @@
                 <!-- ko text: invitedOnText --><!-- /ko -->
                 <span class="label label-default" data-bind="visible: !isExpired(), text: daysRemainingText()"></span>
                 <span class="label label-danger" data-bind="visible: isExpired()">{% trans "Expired" %}</span>
+              </td>
+              <td>
+                <!-- ko text: email_status --><!-- /ko -->
               </td>
               <td>
                 <div data-bind="visible: !actionMessage()">

@@ -137,9 +137,9 @@ def filtered(query, filter_):
     Filtered query for performing both filtering and querying at once
     """
     return {
-        "filtered": {
-            "query": query,
-            "filter": filter_,
+        "bool": {
+            "filter": [filter_],
+            "must": query
         }
     }
 

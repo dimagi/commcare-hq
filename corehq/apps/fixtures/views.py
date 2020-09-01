@@ -284,6 +284,7 @@ def download_item_lists(request, domain):
         table_ids=request.POST.getlist("table_ids[]", []),
         domain=domain,
         download_id=download.download_id,
+        owner_id=request.couch_user.get_id,
     ))
     return download.get_start_response()
 

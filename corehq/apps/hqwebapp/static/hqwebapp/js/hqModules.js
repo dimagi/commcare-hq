@@ -63,12 +63,12 @@ function hqDefine(path, dependencies, moduleAccessor) {
                     'ace-builds/src-min-noconflict/ace': 'ace',
                     'DOMPurify/dist/purify.min': 'DOMPurify',
                     'moment/moment': 'moment',
+                    'crypto-js/crypto-js': 'CryptoJS',
                 },
                 thirdPartyPlugins = [
                     'jquery-form/dist/jquery.form.min',
                     'jquery.rmi/jquery.rmi',
-                    'jquery-ui/ui/sortable',
-                    'select2-3.5.2-legacy/select2',
+                    'jquery-ui/ui/widgets/sortable',
                     'select2/dist/js/select2.full.min',
                 ];
             var args = [];
