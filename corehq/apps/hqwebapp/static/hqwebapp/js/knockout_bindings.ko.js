@@ -1,7 +1,7 @@
 hqDefine("hqwebapp/js/knockout_bindings.ko", [
     'jquery',
     'knockout',
-    'jquery-ui/ui/sortable',
+    'jquery-ui/ui/widgets/sortable',
 ], function (
     $,
     ko

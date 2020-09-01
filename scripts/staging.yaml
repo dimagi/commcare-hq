@@ -56,10 +56,8 @@ branches:
   - jls/migrate-MobileAuthKeyRecord-2 # Jenny May 16
   - jls/turn-off-analytics-logging # Jenny June 19
 #  - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
-  - sr/es7-ref1+jls/CustomDataFieldsProfile
-  - jls/CustomDataFieldsProfile # Jenny July 24
-  - sr/es7-ref1 # Sravan Aug 4
-  - bmb/SAAS-11163  # Biyeun Aug 10
-  - fr/bounced-invitations      # Farid August 14
   - bmb/celery-4.4.2  # Biyeun August 19
+  - fr/linked-domain-keywords   # Farid August 26
+  - jls/marionette-3 # Jenny Aug 27
+  - sr/es7-count # Sravan Sept 1
 submodules: {}
