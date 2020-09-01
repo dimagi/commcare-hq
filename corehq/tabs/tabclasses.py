@@ -44,6 +44,7 @@ from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.integration.views import (
     DialerSettingsView,
+    GaenOtpServerSettingsView,
     HmacCalloutSettingsView,
 )
 from corehq.apps.locations.analytics import users_have_locations
@@ -940,7 +941,7 @@ class ApplicationsTab(UITab):
     def _is_viewable(self):
         couch_user = self.couch_user
         return (self.domain and couch_user
-                and (couch_user.is_web_user() or couch_user.can_edit_apps())
+                and couch_user.can_view_apps()
                 and (couch_user.is_member_of(self.domain, allow_mirroring=True) or couch_user.is_superuser)
                 and has_privilege(self._request, privileges.PROJECT_ACCESS))
 
@@ -1425,7 +1426,8 @@ class ProjectUsersTab(UITab):
 
         if self.couch_user.is_superuser:
             from corehq.apps.users.models import DomainPermissionsMirror
-            if DomainPermissionsMirror.mirror_domains(self.domain):
+            if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled_for_request(self._request) \
+                    or DomainPermissionsMirror.mirror_domains(self.domain):
                 from corehq.apps.users.views import DomainPermissionsMirrorView
                 menu.append({
                     'title': _(DomainPermissionsMirrorView.page_title),
@@ -1875,6 +1877,12 @@ def _get_integration_section(domain):
         integration.append({
             'title': _(HmacCalloutSettingsView.page_title),
             'url': reverse(HmacCalloutSettingsView.urlname, args=[domain])
+        })
+
+    if toggles.GAEN_OTP_SERVER.enabled(domain):
+        integration.append({
+            'title': _(GaenOtpServerSettingsView.page_title),
+            'url': reverse(GaenOtpServerSettingsView.urlname, args=[domain])
         })
 
     return integration

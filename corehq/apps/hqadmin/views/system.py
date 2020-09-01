@@ -73,7 +73,6 @@ class SystemInfoView(BaseAdminSectionView):
         context['redis'] = service_checks.check_redis()
         context['rabbitmq'] = service_checks.check_rabbitmq(settings.CELERY_BROKER_URL)
         context['celery_stats'] = get_celery_stats()
-        context['heartbeat'] = service_checks.check_heartbeat()
 
         context['cluster_health'] = escheck.check_es_cluster_health()
 

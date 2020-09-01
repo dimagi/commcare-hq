@@ -1,11 +1,13 @@
 from collections import defaultdict, namedtuple
 from datetime import datetime, timedelta
+from django.conf import settings
 
 from django.conf import settings
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_datetime
 
+from corehq.apps.data_dictionary.util import get_data_dict_case_types
 from corehq.apps.es import (
     CaseES,
     CaseSearchES,
@@ -361,7 +363,7 @@ def _chunked_get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=
              .aggregation(
                  TermsAggregation('user_id', 'form.meta.userID').aggregation(
                      TermsAggregation('app_id', 'app_id').aggregation(
-                         TermsAggregation('xmlns', 'xmlns')
+                         TermsAggregation('xmlns', 'xmlns.exact')
                      )
                  )
              )
@@ -377,7 +379,7 @@ def _chunked_get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=
             query = query.aggregation(
                 MissingAggregation('missing_user_id', 'form.meta.userID').aggregation(
                     TermsAggregation('app_id', 'app_id').aggregation(
-                        TermsAggregation('xmlns', 'xmlns')
+                        TermsAggregation('xmlns', 'xmlns.exact')
                     )
                 )
             )
@@ -400,6 +402,13 @@ def _chunked_get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=
                 counts[key] = xmlns_bucket.doc_count
 
     return counts
+
+
+def _duration_script():
+    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+        return "doc['form.meta.timeEnd'].value.millis - doc['form.meta.timeStart'].value.millis"
+    else:
+        return "doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value"
 
 
 def get_form_duration_stats_by_user(
@@ -427,7 +436,7 @@ def get_form_duration_stats_by_user(
                 ExtendedStatsAggregation(
                     'duration_stats',
                     'form.meta.timeStart',
-                    script="doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value",
+                    script=_duration_script(),
                 )
             )
         )
@@ -443,7 +452,7 @@ def get_form_duration_stats_by_user(
                 ExtendedStatsAggregation(
                     'duration_stats',
                     'form.meta.timeStart',
-                    script="doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value",
+                    script=_duration_script(),
                 )
             )
         )
@@ -482,7 +491,7 @@ def get_form_duration_stats_for_users(
             ExtendedStatsAggregation(
                 'duration_stats',
                 'form.meta.timeStart',
-                script="doc['form.meta.timeEnd'].value - doc['form.meta.timeStart'].value",
+                script=_duration_script(),
             )
         )
         .size(0)
@@ -613,6 +622,11 @@ def scroll_case_names(domain, case_ids):
 
 @quickcache(['domain', 'use_case_search'], timeout=24 * 3600)
 def get_case_types_for_domain_es(domain, use_case_search=False):
+    """
+    Returns case types for which there is at least one existing case.
+
+    get_case_types_for_domain is preferred for most uses
+    """
     index_class = CaseSearchES if use_case_search else CaseES
     query = (
         index_class().domain(domain).size(0)
@@ -623,3 +637,14 @@ def get_case_types_for_domain_es(domain, use_case_search=False):
 
 def get_case_search_types_for_domain_es(domain):
     return get_case_types_for_domain_es(domain, True)
+
+
+def get_case_types_for_domain(domain):
+    """
+    Returns case types for which there is at least one existing case and any
+    defined in the data dictionary, which includes those referenced in an app
+    and those added manually.
+    """
+    es_types = get_case_types_for_domain_es(domain)
+    data_dict_types = get_data_dict_case_types(domain)
+    return es_types | data_dict_types

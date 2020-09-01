@@ -171,7 +171,7 @@ class HeaderNameTest(SimpleTestCase):
             )
         )
 
-    def test_max_header_length(self):
+    def test_even_max_header_length(self):
         writer = PythonDictWriter()
         writer.max_table_name_size = 10
         stringio = io.StringIO()
@@ -184,6 +184,37 @@ class HeaderNameTest(SimpleTestCase):
         writer.close()
         preview = writer.get_preview()
         self.assertGreater(len(table_index), writer.max_table_name_size)
+        self.assertEqual(preview[0]['table_name'], "my_t...dex")
+        self.assertLessEqual(len(preview[0]['table_name']), writer.max_table_name_size)
+
+    def test_odd_max_header_length(self):
+        writer = PythonDictWriter()
+        writer.max_table_name_size = 15
+        stringio = io.StringIO()
+        table_index = "another sheet tab name"
+        table_headers = [("header1", "header2")]
+        writer.open(
+            [(table_index, table_headers)],
+            stringio
+        )
+        writer.close()
+        preview = writer.get_preview()
+        self.assertEqual(preview[0]['table_name'], "anothe...b name")
+        self.assertLessEqual(len(preview[0]['table_name']), writer.max_table_name_size)
+
+    def test_exact_max_header_length(self):
+        writer = PythonDictWriter()
+        writer.max_table_name_size = 19
+        stringio = io.StringIO()
+        table_index = "sheet_name_for_tabs"
+        table_headers = [("header1", "header2")]
+        writer.open(
+            [(table_index, table_headers)],
+            stringio
+        )
+        writer.close()
+        preview = writer.get_preview()
+        self.assertEqual(preview[0]['table_name'], "sheet_name_for_tabs")
         self.assertLessEqual(len(preview[0]['table_name']), writer.max_table_name_size)
 
     def test_max_header_length_duplicates(self):
