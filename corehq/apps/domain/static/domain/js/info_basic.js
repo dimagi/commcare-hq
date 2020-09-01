@@ -8,7 +8,7 @@ hqDefine(
         "select2/dist/js/select2.full.min",
         "hqwebapp/js/widgets",
     ],
-    function ($, _) {
+    function ($) {
         $(function () {
 
             $("#id_default_timezone").select2({
