@@ -60,9 +60,7 @@ def transform_user_for_elasticsearch(doc_dict):
     doc['__group_names'] = [res.name for res in results]
     doc['user_data_es'] = []
     if 'user_data' in doc:
-        from corehq.apps.users.models import CouchUser
-        user = CouchUser.wrap_correctly(doc)
-        for key, value in user.metadata.items():
+        for key, value in doc['user_data'].items():
             doc['user_data_es'].append({
                 'key': key,
                 'value': value,
