@@ -100,7 +100,7 @@ class LocationGroupTest(TestCase):
         expected_id = self.loc.sql_location.case_sharing_group_object()._id
         self.assertEqual(
             expected_id,
-            self.loc.group_id
+            self.loc.location_id
         )
 
     def test_not_real_groups(self):
