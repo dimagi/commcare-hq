@@ -1225,9 +1225,12 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         session_data.update({
             '{}_first_name'.format(SYSTEM_PREFIX): self.first_name,
             '{}_last_name'.format(SYSTEM_PREFIX): self.last_name,
-            '{}_project'.format(SYSTEM_PREFIX): self.domain,
             '{}_phone_number'.format(SYSTEM_PREFIX): self.phone_number,
         })
+
+        if self.is_commcare_user():
+            session_data['{}_project'.format(SYSTEM_PREFIX)] = self.domain
+
         if self.location_id:
             session_data.update({
                 '{}_location_id'.format(SYSTEM_PREFIX): self.location_id,
