@@ -122,6 +122,12 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         for hit in hits:
             self._fix_hit(hit)
 
+        total = results['hits']['total']
+        # In ES7 total is a dict
+        if isinstance(total, dict):
+            results['hits']['total'] = total.get('value', 0)
+
+
 
 class ElasticsearchInterfaceDefault(AbstractElasticsearchInterface):
     pass
