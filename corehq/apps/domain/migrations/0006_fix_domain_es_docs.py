@@ -5,7 +5,7 @@ from corehq.apps.es.domains import DomainES
 from corehq.elastic import send_to_elasticsearch
 
 
-def fix_domain_es_docs():
+def fix_domain_es_docs(apps, schema_editor):
     bool_props = ['cp_sms_ever', 'cp_sms_30_d', 'cp_j2me_90_d_bool']
     for doc in DomainES().source(bool_props).run().hits:
         for prop in bool_props:

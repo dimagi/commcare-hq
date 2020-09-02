@@ -16,7 +16,7 @@ DATE_FORMATS_ARR = ["yyyy-MM-dd",
 ]
 
 if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-    DATE_FORMATS_ARR = DATE_FORMATS_ARR + [
+    DATE_FORMATS_ARR += [
         # e.g. 2014-01-12T13:50:40.314+01
         "yyyy-MM-dd'T'HH:mm:ss.SSSx",
         # e.g. 2013-11-05T17:39:01+00:00Z
