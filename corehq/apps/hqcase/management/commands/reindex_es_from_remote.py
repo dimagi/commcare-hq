@@ -50,7 +50,7 @@ class Command(BaseCommand):
             "--batch_size",
             default=1000,
             type=int,
-            help="Batch size used by Elasticsearch reindex (default"
+            help="Batch size used by Elasticsearch reindex (default 1000)"
         )
         parser.add_argument(
             "--print_index_size",
@@ -148,8 +148,8 @@ class Command(BaseCommand):
         print("Reindex is in progress, task id is ", result, "Progress is displayed every 5 seconds")
         task_id = result["task"]
         node_id = task_id.split(":")[0]
-        prev_running_time = False
-        curr_running_time = True
+        prev_running_time = 0
+        curr_running_time = -1
         no_progress_loops = 0
         last_updated_count = 0
         last_create_count = 0
@@ -203,11 +203,7 @@ class Command(BaseCommand):
         return ret["count"]
 
     def get_es2_count(self, start_date=None, end_date=None):
-        url = '{host}/{index}/{type}/_count'.format(
-            host=self.es2_remote_host,
-            index=self.index,
-            type=self.index_info.type
-        )
+        url = f'{self.es2_remote_host}/{self.index}/{self.index_info.type}/_count'
         if start_date or end_date:
             q = json.dumps(self._range_query(start_date, end_date))
             response = requests.get(url, data=q, headers={'content-type':'application/json'})

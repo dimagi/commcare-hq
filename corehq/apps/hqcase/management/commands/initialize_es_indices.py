@@ -38,7 +38,7 @@ class Command(BaseCommand):
 
     def handle(self, index=None, reset=False, set_for_usage=False, **kwargs):
         es = get_es_new()
-        if reset:
+        if reset and not set_for_usage:
             confirm = input(
                 """
                 Are you sure you want to want to delete existing indices
