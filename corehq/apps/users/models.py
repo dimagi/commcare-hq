@@ -1051,6 +1051,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         if "organizations" in data:
             del data["organizations"]
             should_save = True
+
+        if "commcare_project" in data.get("user_data", {}):
+            del data["user_data"]["commcare_project"]
+            should_save = True
+
         if "commcare_location_id" in data.get("user_data", {}):
             del data["user_data"]["commcare_location_id"]
             should_save = True
@@ -1220,6 +1225,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         session_data.update({
             '{}_first_name'.format(SYSTEM_PREFIX): self.first_name,
             '{}_last_name'.format(SYSTEM_PREFIX): self.last_name,
+            '{}_project'.format(SYSTEM_PREFIX): self.domain,
             '{}_phone_number'.format(SYSTEM_PREFIX): self.phone_number,
             '{}_location_id'.format(SYSTEM_PREFIX): self.location_id,
             '{}_location_ids'.format(SYSTEM_PREFIX): user_location_data(self.assigned_location_ids),
@@ -1516,9 +1522,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         else:
             couch_user.created_on = datetime.utcnow()
 
-        user_data = {'commcare_project': domain}
-        user_data.update(kwargs.get('user_data', {}))
-        couch_user.user_data = user_data
+        couch_user.user_data = kwargs.get('user_data', {})
         couch_user.sync_from_django_user(django_user)
         return couch_user
 
@@ -1703,8 +1707,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             data['domain_membership'] = DomainMembership(
                 domain=data.get('domain', ""), role_id=role_id
             ).to_json()
-        if not data.get('user_data', {}).get('commcare_project'):
-            data['user_data'] = dict(data['user_data'], **{'commcare_project': data['domain']})
 
         return super(CommCareUser, cls).wrap(data)
 
