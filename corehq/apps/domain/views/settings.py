@@ -36,6 +36,7 @@ from corehq.apps.case_search.models import (
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
+    LoginAndDomainMixin,
 )
 from corehq.apps.domain.forms import (
     USE_LOCATION_CHOICE,
@@ -45,8 +46,8 @@ from corehq.apps.domain.forms import (
     PrivacySecurityForm,
     ProjectSettingsForm,
 )
-from corehq.apps.domain.models import LICENSES, Domain
-from corehq.apps.domain.views.base import BaseDomainView, LoginAndDomainMixin
+from corehq.apps.domain.models import Domain
+from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.models import MobileRecoveryMeasure
