@@ -89,6 +89,7 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
     require_superuser,
+    LoginAndDomainMixin,
 )
 from corehq.apps.domain.forms import (
     INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS,
@@ -100,7 +101,7 @@ from corehq.apps.domain.forms import (
     EditBillingAccountInfoForm,
     SelectSubscriptionTypeForm,
 )
-from corehq.apps.domain.views.base import DomainViewMixin, LoginAndDomainMixin
+from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.domain.views.settings import (
     BaseAdminProjectSettingsView,
     BaseProjectSettingsView,

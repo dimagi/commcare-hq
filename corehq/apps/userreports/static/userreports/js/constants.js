@@ -5,6 +5,7 @@ hqDefine('userreports/js/constants', function () {
     return {
         FORMAT_OPTIONS: ["Choice", "Date"],
         DEFAULT_FILTER_FORMAT_OPTIONS: ["Value", "Date", "Is Empty", "Exists", "Value Not Equal"],
+        DEFAULT_FILTER_VALUELESS_FORMATS: ["Is Empty", "Exists"],
         COUNT_PER_CHOICE: COUNT_PER_CHOICE,
         SUM: SUM,
         GROUP_BY: GROUP_BY,

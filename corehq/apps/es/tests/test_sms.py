@@ -1,32 +1,49 @@
 from django.test.testcases import SimpleTestCase
 
 from corehq.apps.es.sms import SMSES
-from corehq.apps.es.tests.utils import ElasticTestMixin
+from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.elastic import SIZE_LIMIT
 
 
+@es_test
 class TestSMSES(ElasticTestMixin, SimpleTestCase):
     def test_processed_or_incoming(self):
         json_output = {
             "query": {
-                "filtered": {
-                    "filter": {
-                        "and": [
-                            {"term": {"domain.exact": "demo"}},
-                            {
-                                "or": (
-                                    {
-                                        "not": {"term": {"direction": "o"}},
-                                    },
-                                    {
-                                        "not": {"term": {"processed": False}},
+                "bool": {
+                    "filter": [
+                        {
+                            "term": {
+                                "domain.exact": "demo"
+                            }
+                        },
+                        {
+                            "bool": {
+                                "must_not": {
+                                    "bool": {
+                                        "filter": [
+                                            {
+                                                "term": {
+                                                    "direction": "o"
+                                                }
+                                            },
+                                            {
+                                                "term": {
+                                                    "processed": False
+                                                }
+                                            }
+                                        ]
                                     }
-                                ),
-                            },
-                            {"match_all": {}},
-                        ]
-                    },
-                    "query": {"match_all": {}}
+                                }
+                            }
+                        },
+                        {
+                            "match_all": {}
+                        }
+                    ],
+                    "must": {
+                        "match_all": {}
+                    }
                 }
             },
             "size": SIZE_LIMIT
