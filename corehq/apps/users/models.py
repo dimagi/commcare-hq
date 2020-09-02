@@ -1227,11 +1227,18 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             '{}_last_name'.format(SYSTEM_PREFIX): self.last_name,
             '{}_project'.format(SYSTEM_PREFIX): self.domain,
             '{}_phone_number'.format(SYSTEM_PREFIX): self.phone_number,
-            '{}_location_id'.format(SYSTEM_PREFIX): self.location_id,
-            '{}_location_ids'.format(SYSTEM_PREFIX): user_location_data(self.assigned_location_ids),
-            '{}_primary_case_sharing_id'.format(SYSTEM_PREFIX): self.location_id,
-            'commtrack-supply-point': self.commtrack_supply_point,
         })
+        if self.location_id:
+            session_data.update({
+                '{}_location_id'.format(SYSTEM_PREFIX): self.location_id,
+                '{}_primary_case_sharing_id'.format(SYSTEM_PREFIX): self.location_id,
+            }
+            )
+        if self.assigned_location_ids:
+            session_data['{}_location_ids'.format(SYSTEM_PREFIX)] = user_location_data(self.assigned_location_ids)
+        if self.commtrack_supply_point:
+            session_data['commtrack-supply-point'] = self.commtrack_supply_point
+
         return session_data
 
     def delete(self, deleted_by, deleted_via=None):
