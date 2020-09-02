@@ -1,7 +1,9 @@
 /* globals Formplayer, moment */
 hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
-        Utils = hqImport("cloudcare/js/form_entry/utils");
+        Utils = hqImport("cloudcare/js/form_entry/utils"),
+        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
+        MAPBOX_ACCESS_TOKEN = initialPageData("mapbox_access_token");
 
     /**
      * The base Object for all entries. Each entry takes a question object and options
@@ -115,7 +117,6 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
                 },
             });
         }
-
     };
     EntrySingleAnswer.prototype = Object.create(Entry.prototype);
     EntrySingleAnswer.prototype.constructor = Entry;
@@ -307,14 +308,16 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
                 });
             }
 
+            var defaultGeocoderLocation = initialPageData.get('default_geocoder_location') || {};
             var geocoder = new MapboxGeocoder({
-                accessToken: window.MAPBOX_ACCESS_TOKEN,
+                accessToken: MAPBOX_ACCESS_TOKEN,
                 types: 'address',
                 enableEventLogging: false,
-                // proximity set to NYC
-                proximity: { longitude: -74.006058, latitude: 40.712772},
                 getItemValue: self.geocoderItemCallback,
             });
+            if (defaultGeocoderLocation.coordinates) {
+                geocoder.setProximity(defaultGeocoderLocation.coordinates);
+            }
             geocoder.on('clear', self.geocoderOnClearCallback);
             geocoder.addTo('#' + self.entryId);
             // Must add the form-control class to the input created by mapbox in order to edit.
@@ -867,10 +870,10 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         };
 
         self.loadMap = function () {
-            if (window.MAPBOX_ACCESS_TOKEN) {
+            if (MAPBOX_ACCESS_TOKEN) {
                 self.map = L.map(self.entryId).setView([self.DEFAULT.lat, self.DEFAULT.lon], self.DEFAULT.zoom);
                 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token='
-                            + window.MAPBOX_ACCESS_TOKEN, {
+                            + MAPBOX_ACCESS_TOKEN, {
                     id: 'mapbox/streets-v11',
                     attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
                                  ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
@@ -879,7 +882,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
 
                 self.centerMarker = L.marker(self.map.getCenter()).addTo(self.map);
 
-                L.mapbox.accessToken = window.MAPBOX_ACCESS_TOKEN;
+                L.mapbox.accessToken = MAPBOX_ACCESS_TOKEN;
                 self.geocoder = L.mapbox.geocoder('mapbox.places');
             } else {
                 question.error(gettext('Map layer not configured.'));

@@ -353,7 +353,10 @@ class ElasticAPIQuerySet(object):
 
     def count(self):
         # Just asks ES for the count by limiting results to zero, leveraging slice implementation
-        return self[0:0].results['hits']['total']
+        total = self[0:0].results['hits']['total']
+        if isinstance(total, dict):
+            total = total.get('value', 0)
+        return total
 
     def order_by(self, *fields):
         

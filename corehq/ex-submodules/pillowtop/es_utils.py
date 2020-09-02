@@ -52,6 +52,7 @@ ES_INDEX_SETTINGS = {
     'default': {
         "settings": {
             "number_of_replicas": 0,
+            "number_of_shards": 5,
             "analysis": _get_analysis('default'),
         },
     },
@@ -167,11 +168,12 @@ def initialize_mapping_if_necessary(es, index_info):
     """
     Initializes the elasticsearch mapping for this pillow if it is not found.
     """
+    es_interface = ElasticsearchInterface(es)
     if not mapping_exists(es, index_info):
         pillow_logging.info("Initializing elasticsearch mapping for [%s]" % index_info.type)
         mapping = copy(index_info.mapping)
         mapping['_meta']['created'] = datetime.isoformat(datetime.utcnow())
-        mapping_res = es.indices.put_mapping(index_info.type, {index_info.type: mapping}, index=index_info.index)
+        mapping_res = es_interface.put_mapping(index_info.type, mapping, index_info.index)
         if mapping_res.get('ok', False) and mapping_res.get('acknowledged', False):
             # API confirms OK, trust it.
             pillow_logging.info("Mapping set: [%s] %s" % (index_info.type, mapping_res))

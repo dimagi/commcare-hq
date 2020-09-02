@@ -36,6 +36,7 @@ from corehq.apps.case_search.models import (
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_and_domain_required,
+    LoginAndDomainMixin,
 )
 from corehq.apps.domain.forms import (
     USE_LOCATION_CHOICE,
@@ -45,8 +46,8 @@ from corehq.apps.domain.forms import (
     PrivacySecurityForm,
     ProjectSettingsForm,
 )
-from corehq.apps.domain.models import LICENSES, Domain
-from corehq.apps.domain.views.base import BaseDomainView, LoginAndDomainMixin
+from corehq.apps.domain.models import Domain
+from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.models import MobileRecoveryMeasure
@@ -140,6 +141,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
             'hr_name': self.domain_object.hr_name or self.domain_object.name,
             'project_description': self.domain_object.project_description,
             'default_timezone': self.domain_object.default_timezone,
+            'default_geocoder_location': self.domain_object.default_geocoder_location,
             'case_sharing': json.dumps(self.domain_object.case_sharing),
             'call_center_enabled': self.domain_object.call_center_config.enabled,
             'call_center_type': self.initial_call_center_type,
@@ -192,6 +194,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
     def page_context(self):
         return {
             'basic_info_form': self.basic_info_form,
+            'mapbox_access_token': settings.MAPBOX_ACCESS_TOKEN
         }
 
     def post(self, request, *args, **kwargs):

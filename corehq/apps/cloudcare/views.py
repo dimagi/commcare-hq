@@ -34,6 +34,8 @@ from corehq.apps.accounting.decorators import (
     requires_privilege_with_fallback,
 )
 from corehq.apps.accounting.utils import domain_is_on_trial
+from corehq.apps.domain.models import Domain
+
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_app_ids_in_domain,
@@ -199,8 +201,11 @@ class FormplayerMain(View):
         # first app's default, followed by english
         language = request.couch_user.language or _default_lang()
 
+        domain_obj = Domain.get_by_name(domain)
+
         context = {
             "domain": domain,
+            "default_geocoder_location": domain_obj.default_geocoder_location,
             "language": language,
             "apps": apps,
             "domain_is_on_trial": domain_is_on_trial(domain),
@@ -259,9 +264,11 @@ class FormplayerPreviewSingleApp(View):
         # default language to user's preference, followed by
         # first app's default, followed by english
         language = request.couch_user.language or _default_lang()
+        domain_obj = Domain.get_by_name(domain)
 
         context = {
             "domain": domain,
+            "default_geocoder_location": domain_obj.default_geocoder_location,
             "language": language,
             "apps": [_format_app(app)],
             "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
@@ -346,7 +353,7 @@ class LoginAsUsers(View):
         user = CouchUser.wrap_correctly(user_json)
         formatted_user = {
             'username': user.raw_username,
-            'customFields': user.metadata,
+            'customFields': user.user_data,
             'first_name': user.first_name,
             'last_name': user.last_name,
             'phoneNumbers': user.phone_numbers,
