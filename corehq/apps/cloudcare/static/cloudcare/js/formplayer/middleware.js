@@ -1,20 +1,6 @@
-/*global FormplayerFrontend */
+hqDefine("cloudcare/js/formplayer/middleware", function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
 
-FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, FormplayerFrontend, Backbone, Marionette) {
-    SessionNavigate.Middleware = {
-        apply: function (api) {
-            var wrappedApi = {};
-            _.each(api, function (value, key) {
-                wrappedApi[key] = function () {
-                    _.each(SessionNavigate.Middleware.middlewares, function (fn) {
-                        fn.call(null, key);
-                    });
-                    return value.apply(null, arguments);
-                };
-            });
-            return wrappedApi;
-        },
-    };
     var logRouteMiddleware = function (name) {
         window.console.log('User navigated to ' + name);
     };
@@ -32,14 +18,14 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     };
     var setScrollableMaxHeight = function () {
         var maxHeight,
-            user = FormplayerFrontend.request('currentUser'),
+            user = FormplayerFrontend.getChannel().request('currentUser'),
             restoreAsBannerHeight = 0;
 
         if (user.restoreAs) {
-            restoreAsBannerHeight = FormplayerFrontend.regions.restoreAsBanner.$el.height();
+            restoreAsBannerHeight = FormplayerFrontend.regions.getRegion('restoreAsBanner').$el.height();
         }
         maxHeight = ($(window).height() -
-            FormplayerFrontend.regions.breadcrumb.$el.height() -
+            FormplayerFrontend.regions.getRegion('breadcrumb').$el.height() -
             restoreAsBannerHeight);
 
         $('.scrollable-container').css('max-height', maxHeight + 'px');
@@ -49,7 +35,9 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         });
     };
 
-    SessionNavigate.Middleware.middlewares = [
+    var self = {};
+
+    self.middlewares = [
         logRouteMiddleware,
         clearFormMiddleware,
         navigationMiddleware,
@@ -57,4 +45,19 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         setScrollableMaxHeight,
         clearBreadcrumbMiddleware,
     ];
+
+    self.apply = function (api) {
+        var wrappedApi = {};
+        _.each(api, function (value, key) {
+            wrappedApi[key] = function () {
+                _.each(self.middlewares, function (fn) {
+                    fn.call(null, key);
+                });
+                return value.apply(null, arguments);
+            };
+        });
+        return wrappedApi;
+    };
+
+    return self;
 });
