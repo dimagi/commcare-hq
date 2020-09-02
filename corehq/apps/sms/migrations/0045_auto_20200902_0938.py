@@ -3,6 +3,15 @@
 from django.db import migrations, models
 
 
+TABLE_NAME = 'sms_sms'
+INDEX_NAME = 'sms_sms_process_fa9dfa_idx'
+COLUMNS = ['processed_timestamp']
+
+CREATE_INDEX_SQL = "CREATE INDEX CONCURRENTLY IF NOT EXISTS {} ON {} ({})".format(
+    INDEX_NAME, TABLE_NAME, ','.join(COLUMNS))
+DROP_INDEX_SQL = "DROP INDEX CONCURRENTLY IF EXISTS {}".format(INDEX_NAME)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -10,8 +19,14 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddIndex(
-            model_name='sms',
-            index=models.Index(fields=['processed_timestamp'], name='sms_sms_process_fa9dfa_idx'),
-        ),
+        migrations.RunSQL(
+            sql=CREATE_INDEX_SQL,
+            reverse_sql=DROP_INDEX_SQL,
+            state_operations=[
+                migrations.AddIndex(
+                    model_name='sms',
+                    index=models.Index(fields=['processed_timestamp'], name=INDEX_NAME),
+                ),
+            ]
+        )
     ]
