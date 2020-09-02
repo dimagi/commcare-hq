@@ -859,14 +859,17 @@ class TestUserESAccessors(TestCase):
         super(TestUserESAccessors, cls).tearDownClass()
 
     def _send_user_to_es(self, _id=None, is_active=True):
-        user = CommCareUser(
-            domain=self.domain,
-            username=self.username,
-            _id=_id or uuid.uuid4().hex,
-            is_active=is_active,
+        user = CommCareUser.create(
+            self.domain,
+            self.username,
+            'secret agent man',
+            None,
+            None,
             first_name=self.first_name,
             last_name=self.last_name,
             metadata={PROFILE_SLUG: self.profile.id, 'office': 'phone_booth'},
+            uuid=_id or uuid.uuid4().hex,
+            is_active=is_active,
         )
         send_to_elasticsearch('users', transform_user_for_elasticsearch(user.to_json()))
         self.es.indices.refresh(USER_INDEX)

@@ -54,10 +54,13 @@ class SessionUtilsTest(TestCase):
         definition.save()
         profile = CustomDataFieldsProfile(name='prof', fields={'word': 'supernova'}, definition=definition)
         profile.save()
-        user = CommCareUser(
-            domain='cloudcare-tests',
-            username='worker@cloudcare-tests.commcarehq.org',
-            _id=uuid.uuid4().hex,
+        user = CommCareUser.create(
+            'cloudcare-tests',
+            'worker@cloudcare-tests.commcarehq.org',
+            'do you want to know a secret',
+            None,
+            None,
+            uuid=uuid.uuid4().hex,
             metadata={PROFILE_SLUG: profile.id},
         )
         user_data = get_user_contributions_to_touchforms_session(user)['user_data']
