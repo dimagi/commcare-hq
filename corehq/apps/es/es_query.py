@@ -112,6 +112,7 @@ from corehq.elastic import (
     ESError,
     ScanResult,
     run_query,
+    count_query,
     scroll_query,
 )
 
@@ -477,8 +478,7 @@ class ESQuery(object):
         return values_list(hits, *fields, **kwargs)
 
     def count(self):
-        """Performs a minimal query to get the count of matching documents"""
-        return self.size(0).run().total
+        return count_query(self.index, self.raw_query)
 
     def get_ids(self):
         """Performs a minimal query to get the ids of the matching documents
