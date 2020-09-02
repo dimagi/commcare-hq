@@ -30,13 +30,13 @@ def get_form_es_pillows():
     ])
 
 
-
 def get_case_es_pillows():
     return get_active_pillows([
         'CaseToElasticsearchPillow',
         'case-pillow',
         'CaseSearchToElasticsearchPillow'
     ])
+
 
 class Command(BaseCommand):
     help = """
@@ -70,7 +70,8 @@ class Command(BaseCommand):
         for pillow in pillows:
             print("Processing for pillow {}".format(pillow.pillow_id))
             try:
-                checkpoint = HistoricalPillowCheckpoint.objects.get(date_updated=since, checkpoint_id=pillow.checkpoint.checkpoint_id)
+                checkpoint = HistoricalPillowCheckpoint.objects.get(
+                    date_updated=since, checkpoint_id=pillow.checkpoint.checkpoint_id)
             except HistoricalPillowCheckpoint.DoesNotExist:
                 print("No HistoricalPillowCheckpoint data available for pillow {}\n".format(pillow.pillow_id))
                 continue

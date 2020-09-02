@@ -1,14 +1,12 @@
-import copy
 import json
 import requests
 import time
 from datetime import datetime, timedelta
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
 from corehq.elastic import get_es_export, ES_META
-from elasticsearch.helpers import reindex
-from corehq.util.es.elasticsearch import ConnectionTimeout
+
 
 USAGE = """Reindex data into local Elasticsearch v7 cluster from remote
     Elasticsearch v2 cluster using Elasticsearch reindex API
