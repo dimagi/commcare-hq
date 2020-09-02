@@ -28,7 +28,6 @@ from corehq.apps.domain.views.accounting import (
 from corehq.apps.domain.views.base import (
     BaseDomainView,
     DomainViewMixin,
-    LoginAndDomainMixin,
     select,
 )
 from corehq.apps.domain.views.fixtures import LocationFixtureConfigView
