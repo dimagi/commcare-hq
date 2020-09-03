@@ -3,7 +3,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
         Utils = hqImport("cloudcare/js/form_entry/utils"),
         initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        MAPBOX_ACCESS_TOKEN = initialPageData("mapbox_access_token");
+        MAPBOX_ACCESS_TOKEN = initialPageData.get("mapbox_access_token");
 
     /**
      * The base Object for all entries. Each entry takes a question object and options
