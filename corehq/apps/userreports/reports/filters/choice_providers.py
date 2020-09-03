@@ -376,7 +376,7 @@ class GroupChoiceProvider(ChainableChoiceProvider):
             GroupES().domain(self.domain).is_case_sharing()
             .search_string_query(query, default_fields=['name'])
         )
-        return group_es.size(0).run().total
+        return group_es.count()
 
     def get_choices_for_known_values(self, values, user):
         group_es = GroupES().domain(self.domain).is_case_sharing().doc_id(values)
