@@ -2711,8 +2711,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     START_OFFSET_NEGATIVE = 'NEGATIVE'
     START_OFFSET_POSITIVE = 'POSITIVE'
 
-    MIN_SMS_STALE_INTERVAL = 0  # hours
-    MAX_SMS_STALE_INTERVAL = 720  # hours
+    MIN_SMS_STALE_HOURS = 0
+    MAX_SMS_STALE_HOURS = 720
 
     use_case = 'conditional_alert'
 
@@ -2850,12 +2850,13 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     sms_stale_after = IntegerField(
         label=ugettext_lazy("Make SMS stale after (days)"),
         required=False,
-        min_value=MIN_SMS_STALE_INTERVAL,
-        max_value=MAX_SMS_STALE_INTERVAL,
+        min_value=MIN_SMS_STALE_HOURS,
+        max_value=MAX_SMS_STALE_HOURS,
         help_text=ugettext_lazy("SMS is marked as stale in 7*24 hours by default.\
-            You can set minimum value to {min} hours and maximum value to {max} hours").format(
-            min=MIN_SMS_STALE_INTERVAL,
-            max=MAX_SMS_STALE_INTERVAL
+            You can set minimum value to {min} hours and maximum value to {max} hours\
+            Stale SMS will not be sent").format(
+            min=MIN_SMS_STALE_HOURS,
+            max=MAX_SMS_STALE_HOURS
         )
     )
 
@@ -3462,10 +3463,10 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         value = self.cleaned_data.get('sms_stale_after')
         if value == '' or value is None:
             return None
-        if value < self.MIN_SMS_STALE_INTERVAL or value > self.MAX_SMS_STALE_INTERVAL:
+        if value < self.MIN_SMS_STALE_HOURS or value > self.MAX_SMS_STALE_HOURS:
             raise ValidationError(_("""Min value can be {min} hours and max value can be {max} hours""").format(
-                min=self.MIN_SMS_STALE_INTERVAL,
-                max=self.MAX_SMS_STALE_INTERVAL
+                min=self.MIN_SMS_STALE_HOURS,
+                max=self.MAX_SMS_STALE_HOURS
             ))
         return value
 

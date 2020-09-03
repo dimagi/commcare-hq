@@ -640,7 +640,7 @@ SMS_QUEUE_DOMAIN_RESTRICTED_RETRY_INTERVAL = 15
 
 # The number of hours to wait before counting a message as stale. Stale
 # messages will not be processed.
-SMS_QUEUE_STALE_MESSAGE_DURATION = 7 * 24
+SMS_QUEUE_HOURS_UNTIL_STALE = 7 * 24
 
 
 ####### Reminders Queue Settings #######
