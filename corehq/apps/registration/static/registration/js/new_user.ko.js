@@ -11,6 +11,7 @@ hqDefine('registration/js/new_user.ko', [
     'jquery-ui/ui/effects/effect-slide',
     'intl-tel-input/build/js/intlTelInput.min',
     'hqwebapp/js/password_validators.ko',
+    'hqwebapp/js/captcha', // shows captcha
 ], function (
     $,
     ko,
@@ -161,7 +162,13 @@ hqDefine('registration/js/new_user.ko', [
                 zxcvbnPassword: 2,
             });
 
-
+        self.captcha = ko.observable(defaults.captcha)
+            .extend({
+                required: {
+                    message: django.gettext("Please enter captcha."),
+                    params: true,
+                },
+            });
         // --- Optional for test ----
         self.phoneNumber = ko.observable();
 
@@ -239,6 +246,7 @@ hqDefine('registration/js/new_user.ko', [
                 project_name: self.projectName(),
                 eula_confirmed: self.eulaConfirmed(),
                 phone_number: module.getPhoneNumberFn() || self.phoneNumber(),
+                captcha: self.captcha(),
                 atypical_user: defaults.atypical_user,
             };
             if (self.hasPersonaFields) {
