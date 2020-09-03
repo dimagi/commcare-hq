@@ -89,7 +89,7 @@ freezegun==0.3.12         # via -r requirements/test-requirements.in
 gevent==1.4.0             # via -r requirements/requirements.in, django-websocket-redis, gipc, git-branch-builder
 ghdiff==0.4               # via -r requirements/requirements.in
 gipc==1.0.1               # via -r requirements/requirements.in
-git-branch-builder==0.1.4  # via -r requirements/dev-requirements.in
+git-branch-builder==0.1.8  # via -r requirements/dev-requirements.in
 gnureadline==6.3.8        # via -r requirements/dev-requirements.in
 graphviz==0.13.1          # via -r requirements/dev-requirements.in
 greenlet==0.4.15          # via -r requirements/requirements.in, django-websocket-redis, gevent
@@ -147,7 +147,6 @@ psycogreen==1.0.1         # via -r requirements/requirements.in
 psycopg2==2.8.5           # via -r requirements/requirements.in, sqlalchemy-postgres-copy
 ptyprocess==0.6.0         # via pexpect
 py-kissmetrics==1.0.1     # via -r requirements/requirements.in
-pyaml==20.4.0             # via git-branch-builder
 pycco==0.5.1              # via -r requirements/requirements.in
 pycodestyle==2.5.0        # via flake8
 pycparser==2.19           # via cffi
@@ -169,7 +168,7 @@ python-magic==0.4.15      # via -r requirements/requirements.in
 python-mimeparse==1.6.0   # via django-tastypie
 python-termstyle==0.1.10  # via sniffer
 pytz==2019.3              # via -r requirements/requirements.in, babel, celery, django, jenkinsapi, twilio
-pyyaml==5.1.2             # via -r requirements/requirements.in, pyaml
+pyyaml==5.1.2             # via -r requirements/requirements.in, git-branch-builder
 pyzxcvbn==0.8.0           # via -r requirements/requirements.in
 qrcode==4.0.4             # via -r requirements/requirements.in, django-two-factor-auth
 quickcache==0.5.4         # via -r requirements/requirements.in
