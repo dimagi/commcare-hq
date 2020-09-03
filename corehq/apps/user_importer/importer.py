@@ -362,7 +362,7 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                 ret['rows'].append(status_row)
                 continue
 
-            data = row.get('data')
+            data = row.get('data', {})
             email = row.get('email')
             group_names = list(map(str, row.get('group') or []))
             language = row.get('language')
@@ -424,7 +424,11 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                     user.add_phone_number(_fmt_phone(phone_number), default=True)
                 if name:
                     user.set_full_name(str(name))
-                data = user.metadata
+
+                # Add in existing data. Don't use metadata - we don't want to add profile-controlled fields.
+                for key, value in user.user_data.items():
+                    if key not in data:
+                        data[key] = value
                 if profile:
                     profile_obj = domain_info.profiles_by_name[profile]
                     data[PROFILE_SLUG] = profile_obj.id
@@ -436,6 +440,7 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                     raise UserUploadError(str(e))
                 if uncategorized_data:
                     user.update_metadata(uncategorized_data)
+
                 if language:
                     user.language = language
                 if email:
