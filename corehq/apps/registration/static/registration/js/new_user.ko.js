@@ -363,6 +363,7 @@ hqDefine('registration/js/new_user.ko', [
                         if (response.errors !== undefined
                             && !_.isEmpty(response.errors)) {
                             self.isSubmitting(false);
+                            $('.captcha-refresh').click();
                             _.each(response.errors, function (val, key) {
                                 self.submitErrors.push({
                                     fieldName: key.replace('_', " "),
