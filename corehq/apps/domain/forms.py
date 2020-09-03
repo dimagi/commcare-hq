@@ -110,7 +110,7 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.hqwebapp.fields import MultiCharField
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2Ajax
+from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2Ajax, GeoCoderInput
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.users.models import CouchUser, WebUser
 from corehq.apps.users.permissions import can_manage_releases
@@ -316,6 +316,13 @@ class DomainGlobalSettingsForm(forms.Form):
     )
     default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
 
+    default_geocoder_location = Field(
+        widget=GeoCoderInput(attrs={'placeholder': ugettext_lazy('Select a location')}),
+        label=ugettext_noop("Default geocoder location"),
+        required=False,
+        help_text=ugettext_lazy("Please select your project's default location.")
+    )
+
     logo = ImageField(
         label=ugettext_lazy("Custom Logo"),
         required=False,
@@ -422,6 +429,12 @@ class DomainGlobalSettingsForm(forms.Form):
         timezone_field.run_validators(data)
         return smart_str(data)
 
+    def clean_default_geocoder_location(self):
+        data = self.cleaned_data.get('default_geocoder_location', '{}')
+        if isinstance(data, dict):
+            return data
+        return json.loads(data)
+
     def clean(self):
         cleaned_data = super(DomainGlobalSettingsForm, self).clean()
         if (cleaned_data.get('call_center_enabled') and
@@ -492,6 +505,7 @@ class DomainGlobalSettingsForm(forms.Form):
         domain.hr_name = self.cleaned_data['hr_name']
         domain.project_description = self.cleaned_data['project_description']
         domain.default_mobile_ucr_sync_interval = self.cleaned_data.get('mobile_ucr_sync_interval', None)
+        domain.default_geocoder_location = self.cleaned_data['default_geocoder_location']
         try:
             self._save_logo_configuration(domain)
         except IOError as err:

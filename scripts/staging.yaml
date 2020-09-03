@@ -60,4 +60,6 @@ branches:
   - fr/linked-domain-keywords   # Farid August 26
   - jls/marionette-3 # Jenny Aug 27
   - sr/es7-count # Sravan Sept 1
+  - sr/es7-reindex # Sravn Sept 2
+  - fr/user-data-jit            # Farid September 2
 submodules: {}
