@@ -1244,10 +1244,10 @@ datatables.net@1.10.21, datatables.net@^1.10.11:
   dependencies:
     jquery ">=1.7"
 
-datatables@1.10.9:
-  version "1.10.9"
-  resolved "https://registry.yarnpkg.com/datatables/-/datatables-1.10.9.tgz#4f12247275077e1b0243836111ec5c4603fa14f4"
-  integrity sha1-TxIkcnUHfhsCQ4NhEexcRgP6FPQ=
+datatables@1.10.12:
+  version "1.10.12"
+  resolved "https://registry.yarnpkg.com/datatables/-/datatables-1.10.12.tgz#046f537d0516ebf7007ca7f6c1cad2f2ea0c19d8"
+  integrity sha1-BG9TfQUW6/cAfKf2wcrS8uoMGdg=
   dependencies:
     jquery ">=1.7"
 
