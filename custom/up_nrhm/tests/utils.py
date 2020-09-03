@@ -11,6 +11,8 @@ from corehq.apps.users.models import CommCareUser
 from couchforms.models import XFormInstance
 import os
 
+from custom.up_nrhm.sql_data import DOMAIN
+
 
 class UpNrhmTestCase(TestCase):
     data_source_name = 'asha_facilitators.json'
@@ -39,7 +41,7 @@ class UpNrhmTestCase(TestCase):
         XFormInstance.set_db(self.database)
         CommCareUser.set_db(self.database)
         self.factory = RequestFactory()
-        domain = Domain.get_or_create_with_name('up-nrhm')
+        domain = Domain.get_or_create_with_name(DOMAIN)
         domain.is_active = True
         domain.save()
         self.domain = domain

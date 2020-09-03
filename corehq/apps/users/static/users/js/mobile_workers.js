@@ -29,7 +29,6 @@ hqDefine("users/js/mobile_workers",[
     'jquery.rmi/jquery.rmi',
     'zxcvbn/dist/zxcvbn',
     'locations/js/widgets',
-    'users/js/custom_data_fields',
     'hqwebapp/js/components.ko', // for pagination
     'hqwebapp/js/validators.ko', // email address validation
 ], function (
@@ -42,8 +41,7 @@ hqDefine("users/js/mobile_workers",[
     nicEncoder,
     RMI,
     zxcvbn,
-    locationsWidgets,
-    customDataFields
+    locationsWidgets
 ) {
     'use strict';
     // These are used as css classes, so the values of success/warning/error need to be what they are.
@@ -57,6 +55,7 @@ hqDefine("users/js/mobile_workers",[
     };
 
     var rmi = function () {};
+
     var userModel = function (options) {
         options = options || {};
         options = _.defaults(options, {
@@ -73,14 +72,14 @@ hqDefine("users/js/mobile_workers",[
             send_account_confirmation_email: false,
             is_active: true,
             is_account_confirmed: true,
+            custom_fields: {},
         });
 
-        var self = ko.mapping.fromJS(options);
-        self.custom_fields = customDataFields.customDataFieldsEditor({
-            profiles: initialPageData.get('custom_fields_profiles'),
-            profile_slug: initialPageData.get('custom_fields_profile_slug'),
-            slugs: initialPageData.get('custom_fields_slugs'),
+        // Manually turn custom_fields into an object of observables, since the default ko.mapping doesn't handle this
+        options.custom_fields = _.mapObject(options.custom_fields, function (value) {
+            return ko.observable(value);
         });
+        var self = ko.mapping.fromJS(options);
 
         self.email.extend({
             emailRFC2822: true,
@@ -429,6 +428,9 @@ hqDefine("users/js/mobile_workers",[
         self.initializeUser = function () {
             self.stagedUser(userModel({
                 password: self.useStrongPasswords() ? self.generateStrongPassword() : '',
+                custom_fields: _.object(_.map(self.customFieldSlugs, function (slug) {
+                    return [slug, ''];
+                })),
             }));
             if (self.useStrongPasswords()) {
                 self.isSuggestedPassword(true);
@@ -467,10 +469,11 @@ hqDefine("users/js/mobile_workers",[
             if (self.usernameAvailabilityStatus() !== self.STATUS.SUCCESS) {
                 return false;
             }
-            if (_.find(self.customFieldSlugs, function (slug) {
-                return !self.stagedUser().custom_fields[slug].value();
-            })) {
-                return false;
+            var fieldData = self.stagedUser().custom_fields;
+            if (_.isObject(fieldData) && !_.isArray(fieldData)) {
+                if (!_.every(fieldData, function (value) { return value(); })) {
+                    return false;
+                }
             }
             return true;
         });
@@ -488,9 +491,7 @@ hqDefine("users/js/mobile_workers",[
                 newUser.password(nicEncoder().encode(newUser.password()));
             }
             rmi('create_mobile_worker', {
-                user: _.extend(ko.mapping.toJS(newUser), {
-                    custom_fields: self.stagedUser().custom_fields.serialize(),
-                }),
+                user: ko.mapping.toJS(newUser),
             }).done(function (data) {
                 if (data.success) {
                     newUser.user_id(data.user_id);

@@ -73,8 +73,9 @@ from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.domain.decorators import (
     login_or_api_key,
     track_domain_request,
+    LoginAndDomainMixin,
 )
-from corehq.apps.domain.views.base import DomainViewMixin, LoginAndDomainMixin
+from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.es import queries
 from corehq.apps.es.apps import AppES, build_comment, version
 from corehq.apps.hqwebapp.views import BasePageView

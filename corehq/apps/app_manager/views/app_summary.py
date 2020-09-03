@@ -25,7 +25,7 @@ from corehq.apps.app_manager.util import is_linked_app, is_remote_app
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.app_manager.views.utils import get_langs
 from corehq.apps.app_manager.xform import VELLUM_TYPES
-from corehq.apps.domain.views.base import LoginAndDomainMixin
+from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.hqwebapp.views import BasePageView
 
 
