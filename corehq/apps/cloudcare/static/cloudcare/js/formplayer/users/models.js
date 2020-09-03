@@ -1,8 +1,8 @@
-/*global FormplayerFrontend */
+/*global Backbone */
 
-FormplayerFrontend.module("Users.Models", function (Models, FormplayerFrontend, Backbone) {
-    Models.User = Backbone.Model.extend();
-    Models.CurrentUser = Backbone.Model.extend({
+hqDefine("cloudcare/js/formplayer/users/models", function () {
+    var User = Backbone.Model.extend();
+    var CurrentUser = Backbone.Model.extend({
         initialize: function () {
             this.on('change:versionInfo', function (model) {
                 if (model.previous('versionInfo') && model.get('versionInfo')) {
@@ -32,4 +32,11 @@ FormplayerFrontend.module("Users.Models", function (Models, FormplayerFrontend, 
             );
         },
     });
+
+    return {
+        User: User,
+        CurrentUser: function () {
+            return new CurrentUser();
+        },
+    };
 });
