@@ -3,17 +3,9 @@ from datetime import date
 
 from custom.icds_reports.models.aggregate import AwcLocation
 from dateutil import parser
+from django.core.management.base import BaseCommand
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-
-case_accessor = CaseAccessors('icds-cas')
-
-awcs = AwcLocation.objects.filter(aggregation_level=5, state_id='f98e91aa003accb7b849a0f18ebd7039',
-                                  district_id='e247afa5d0f248b9bbdba45bb279366c',
-                                  block_id='3c9e7afe194647fc818543bfddf01729').values('doc_id',
-                                                                                      'awc_site_code',
-                                                                                      'awc_name',
-                                                                                      'supervisor_name')
 
 headers = [
     'Name of Sector',
@@ -169,16 +161,28 @@ def fetch_case_properties(case, awc):
     ]
 
 
-for awc in awcs:
-    case_ids = case_accessor.get_case_ids_in_domain_by_type('person', [awc['doc_id']])
-    cases = case_accessor.get_cases(case_ids)
+class Command(BaseCommand):
+    help = "Set up replication between two databases (on the CommCare HQ CouchDB cluster)"
 
-    for case in cases:
-        if case.get_case_property('migration_status') != 'migrated':
-            row = fetch_case_properties(case, awc)
-            data_rows.append(row)
+    def handle(self, *args, **options):
+        case_accessor = CaseAccessors('icds-cas')
 
-fout = open('/home/cchq/Dholi_person_case_data.csv', 'w')
+        awcs = AwcLocation.objects.filter(aggregation_level=5, state_id='f98e91aa003accb7b849a0f18ebd7039',
+                                          district_id='e247afa5d0f248b9bbdba45bb279366c',
+                                          block_id='3c9e7afe194647fc818543bfddf01729').values('doc_id',
+                                                                                              'awc_site_code',
+                                                                                              'awc_name',
+                                                                                              'supervisor_name')
+        for awc in awcs:
+            case_ids = case_accessor.get_case_ids_in_domain_by_type('person', [awc['doc_id']])
+            cases = case_accessor.get_cases(case_ids)
 
-writer = csv.writer(fout)
-writer.writerows(data_rows)
+            for case in cases:
+                if case.get_case_property('migration_status') != 'migrated':
+                    row = fetch_case_properties(case, awc)
+                    data_rows.append(row)
+
+        fout = open('/home/cchq/Dholi_person_case_data.csv', 'w')
+
+        writer = csv.writer(fout)
+        writer.writerows(data_rows)
