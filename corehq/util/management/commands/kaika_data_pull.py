@@ -81,6 +81,7 @@ def calculate_age(born):
 
 
 def get_father_name(val):
+    case_accessor = CaseAccessors('icds-cas')
     if val and len(val) == 36:
         case = case_accessor.get_cases([val])[0]
         return case.get_case_property('name')
