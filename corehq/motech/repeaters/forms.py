@@ -1,6 +1,5 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
 from crispy_forms import bootstrap as twbscrispy
@@ -16,10 +15,9 @@ from corehq.apps.reports.analytics.esaccessors import (
 )
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.users.util import raw_username
-from corehq.motech.models import ConnectionSettings
+from corehq.motech.forms import get_conns_field
 from corehq.motech.repeaters.models import Repeater
 from corehq.motech.repeaters.repeater_generators import RegisterGenerator
-from corehq.motech.views import ConnectionSettingsListView
 
 
 class GenericRepeaterForm(forms.Form):
@@ -32,12 +30,10 @@ class GenericRepeaterForm(forms.Form):
 
         self.domain = kwargs.pop('domain')
         self.repeater_class = kwargs.pop('repeater_class')
-        self.formats = RegisterGenerator.all_formats_by_repeater(self.repeater_class, for_domain=self.domain)
-        conns = ConnectionSettings.objects.filter(domain=self.domain)
-        self.connection_settings_choices = [(c.id, c.name) for c in conns]
         self.submit_btn_text = kwargs.pop('submit_btn_text', _("Start Forwarding"))
-        super(GenericRepeaterForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
+        self.formats = RegisterGenerator.all_formats_by_repeater(self.repeater_class, for_domain=self.domain)
         self.set_extra_django_form_fields()
         self._initialize_crispy_layout()
 
@@ -45,16 +41,7 @@ class GenericRepeaterForm(forms.Form):
         """
         Override this to set extra django form-fields that can be calculated only within request context
         """
-        url = reverse(
-            ConnectionSettingsListView.urlname,
-            kwargs={'domain': self.domain},
-        )
-        self.fields['connection_settings_id'] = forms.ChoiceField(
-            label=_("Connection Settings"),
-            choices=self.connection_settings_choices,
-            required=True,
-            help_text=_(f'<a href="{url}">Add/Edit Connections Settings</a>')
-        )
+        self.fields['connection_settings_id'] = get_conns_field(self.domain)
         if self.formats and len(self.formats) > 1:
             self.fields['format'] = forms.ChoiceField(
                 required=True,

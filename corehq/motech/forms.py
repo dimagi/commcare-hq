@@ -160,3 +160,23 @@ class ConnectionSettingsForm(forms.ModelForm):
         self.instance.plaintext_client_secret = self.cleaned_data['plaintext_client_secret']
         self.instance.last_token = None
         return super().save(commit)
+
+
+def get_conns_field(domain: str) -> forms.ChoiceField:
+    """
+    Returns a ChoiceField populated with the ConnectionSettings for
+    ``domain``, and help text to add/edit connection settings.
+    """
+    from corehq.motech.views import ConnectionSettingsListView
+
+    conns = ConnectionSettings.objects.filter(domain=domain)
+    url = reverse(ConnectionSettingsListView.urlname,
+                  kwargs={'domain': domain})
+    return forms.ChoiceField(
+        label=_("Connection Settings"),
+        choices=[(c.id, c.name) for c in conns],
+        required=True,
+        help_text=f'<a href="{url}">'
+                  + _('Add/Edit Connection Settings')
+                  + '</a>'
+    )
