@@ -162,13 +162,6 @@ hqDefine('registration/js/new_user.ko', [
                 zxcvbnPassword: 2,
             });
 
-        self.captcha = ko.observable(defaults.captcha)
-            .extend({
-                required: {
-                    message: django.gettext("Please enter captcha."),
-                    params: true,
-                },
-            });
         // --- Optional for test ----
         self.phoneNumber = ko.observable();
 
@@ -236,6 +229,8 @@ hqDefine('registration/js/new_user.ko', [
 
         var _getDataForSubmission = function () {
             var password = self.password();
+            var captcha_0 = $(containerSelector).find("[name='captcha_0']")[0].value;
+            var captcha_1 = $(containerSelector).find("[name='captcha_1']")[0].value;
             if (initialPageData.get("implement_password_obfuscation", true)) {
                 password = (nicEncoder()).encode(self.password());
             }
@@ -246,7 +241,8 @@ hqDefine('registration/js/new_user.ko', [
                 project_name: self.projectName(),
                 eula_confirmed: self.eulaConfirmed(),
                 phone_number: module.getPhoneNumberFn() || self.phoneNumber(),
-                captcha: self.captcha(),
+                captcha_0: captcha_0,
+                captcha_1: captcha_1,
                 atypical_user: defaults.atypical_user,
             };
             if (self.hasPersonaFields) {

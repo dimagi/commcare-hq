@@ -164,8 +164,7 @@ class RegisterWebUserForm(forms.Form):
                     hqcrispy.InlineField(
                         'captcha',
                         css_class="input-lg",
-                        data_bind="value: captcha, "
-                                  "valueUpdate: 'keyup'"
+                        data_bind="value: captcha"
                     ),
                     hqcrispy.InlineField('atypical_user'),
                     twbscrispy.StrictButton(
@@ -250,12 +249,6 @@ class RegisterWebUserForm(forms.Form):
 
     def clean_password(self):
         return clean_password(decode_password(self.cleaned_data.get('password')))
-
-    def clean_captcha(self):
-        data = self.cleaned_data['captcha']
-        if not data:
-            raise forms.ValidationError(ugettext("Captcha field is required"))
-        return data
 
     def clean_eula_confirmed(self):
         data = self.cleaned_data['eula_confirmed']
