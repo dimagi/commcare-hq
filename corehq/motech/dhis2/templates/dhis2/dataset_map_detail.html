@@ -1,0 +1,10 @@
+{% extends "hqwebapp/base_section.html" %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+
+{% requirejs_main "dhis2/js/dataset_map_detail" %}
+
+{% block page_content %}
+
+  {% crispy form %}
+{% endblock %}

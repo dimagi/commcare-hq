@@ -4,6 +4,7 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_http_methods, require_POST
@@ -18,6 +19,7 @@ from corehq.apps.users.models import Permissions
 from corehq.motech.dhis2.dbaccessors import get_dataset_maps
 from corehq.motech.dhis2.dhis2_config import Dhis2EntityConfig, Dhis2FormConfig
 from corehq.motech.dhis2.forms import (
+    DatasetMapForm,
     Dhis2ConfigForm,
     Dhis2EntityConfigForm,
 )
@@ -32,61 +34,68 @@ from corehq.motech.models import ConnectionSettings
 class DataSetMapListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
     urlname = 'dataset_map_list_view'
     page_title = ugettext_lazy("DHIS2 DataSet Maps")
-    template_name = 'dhis2/dataset_map.html'
+    template_name = 'dhis2/dataset_map_list.html'  # TODO: delete dhis2/dataset_map.html
 
-    def post(self, request, *args, **kwargs):
+    limit_text = _('DataSet maps per page')
+    empty_notification = _('You have no DataSet maps')
+    loading_message = _('Loading DataSet maps')
 
-        def update_dataset_map(instance, new_dataset_map):
-            new_dataset_map.pop('domain', None)  # Make sure a user cannot change the value of "domain"
-            for key, value in new_dataset_map.items():
-                if key == 'datavalue_maps':
-                    value = [DataValueMap(**v) for v in value]
-                instance[key] = value
+    @property
+    def total(self):
+        dataset_maps = get_dataset_maps(self.domain)
+        return len(dataset_maps)
 
-        try:
-            new_dataset_maps = json.loads(request.POST['dataset_maps'])
-            current_dataset_maps = get_dataset_maps(request.domain)
-            i = -1
-            for i, dataset_map in enumerate(current_dataset_maps):
-                if i < len(new_dataset_maps):
-                    # Update current dataset maps
-                    update_dataset_map(dataset_map, new_dataset_maps[i])
-                    dataset_map.save()
-                else:
-                    # Delete removed dataset maps
-                    dataset_map.delete()
-            if i + 1 < len(new_dataset_maps):
-                # Insert new dataset maps
-                for j in range(i + 1, len(new_dataset_maps)):
-                    dataset_map = DataSetMap(domain=request.domain)
-                    update_dataset_map(dataset_map, new_dataset_maps[j])
-                    dataset_map.save()
-            get_dataset_maps.clear(request.domain)
-            return JsonResponse({'success': _('DHIS2 DataSet Maps saved')})
-        except Exception as err:
-            return JsonResponse({'error': str(err)}, status=500)
+    @property
+    def column_names(self):
+        return [
+            _("Description"),
+            _("Frequency"),
+            mark_safe("&nbsp;"),  # Column where "Delete" button will appear
+        ]
 
     @property
     def page_context(self):
+        return self.pagination_context
 
-        def to_json(dataset_map):
-            dataset_map = dataset_map.to_json()
-            del(dataset_map['_id'])
-            del(dataset_map['_rev'])
-            del(dataset_map['doc_type'])
-            del(dataset_map['domain'])
-            for datavalue_map in dataset_map['datavalue_maps']:
-                del(datavalue_map['doc_type'])
-            return dataset_map
+    @property
+    def paginated_list(self):
+        for dataset_map in get_dataset_maps(self.domain):
+            yield {
+                "itemData": self._get_item_data(dataset_map),
+                "template": "dataset-map-template",
+            }
 
-        dataset_maps = [to_json(d) for d in get_dataset_maps(self.request.domain)]
+    def _get_item_data(self, dataset_map):
         return {
-            'dataset_maps': dataset_maps,
-            'connection_settings': ConnectionSettings.objects.filter(domain=self.domain).all(),
-            'ucrs': get_report_configs_for_domain(self.domain),
-            'send_data_url': reverse('send_dhis2_data', kwargs={'domain': self.domain}),
-            'is_json_ui': int(self.request.GET.get('json', 0)),
+            'id': dataset_map._id,
+            'description': dataset_map.description,
+            'frequency': dataset_map.frequency,
+
+            'editUrl': reverse(
+                DataSetMapDetailView.urlname,
+                kwargs={'domain': self.domain, 'id': dataset_map._id}
+            ),
         }
+
+    def get_deleted_item_data(self, item_id):
+        dataset_map = DataSetMap.get(item_id)
+        assert dataset_map.domain == self.domain, 'Bad domain'
+        dataset_map.delete()
+        return {
+            'itemData': self._get_item_data(dataset_map),
+            'template': 'dataset-map-deleted-template',
+        }
+
+    def post(self, *args, **kwargs):
+        return self.paginate_crud_response
+
+
+@method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
+@method_decorator(toggles.DHIS2_INTEGRATION.required_decorator(), name='dispatch')
+class DataSetMapDetailView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
+    urlname = 'dataset_map_detail_view'
+    page_title = _('DataSet Map')
+    template_name = 'dhis2/dataset_map_detail.html'
 
 
 @require_POST
