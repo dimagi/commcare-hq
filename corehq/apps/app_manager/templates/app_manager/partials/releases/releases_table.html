@@ -189,6 +189,7 @@
                   saveParams: {'build_id': id},
                   saveValueName: 'comment',
                   errorMessage:'{% trans "Error updating comment.  Please try again."|escapejs %}',
+                  disallow_edit: {{ request.couch_user.can_edit_apps|yesno:"false,true" }},
               "></inline-edit>
         </div>
       </div><!-- .panel-body -->

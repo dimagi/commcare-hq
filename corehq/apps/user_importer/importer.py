@@ -16,10 +16,6 @@ from dimagi.utils.parsing import string_to_boolean
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.commtrack.util import get_supply_point_and_location
-from corehq.apps.custom_data_fields.models import (
-    CustomDataFieldsDefinition,
-    PROFILE_SLUG,
-)
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
@@ -45,7 +41,7 @@ required_headers = set(['username'])
 allowed_headers = set([
     'data', 'email', 'group', 'language', 'name', 'password', 'phone-number',
     'uncategorized_data', 'user_id', 'is_active', 'is_account_confirmed', 'send_confirmation_email',
-    'location_code', 'role', 'user_profile',
+    'location_code', 'role',
     'User IMEIs (read only)', 'registered_on (read only)', 'last_submission (read only)',
     'last_sync (read only)', 'web_user', 'remove_web_user', 'domain'
 ]) | required_headers
@@ -281,12 +277,11 @@ def get_location_from_site_code(site_code, location_cache):
 
 DomainInfo = namedtuple('DomainInfo', [
     'validators', 'can_assign_locations', 'location_cache',
-    'roles_by_name', 'profiles_by_name', 'group_memoizer'
+    'roles_by_name', 'group_memoizer'
 ])
 
 
 def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, group_memoizer=None, update_progress=None):
-    from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
     domain_info_by_domain = {}
 
     def _get_domain_info(domain):
@@ -306,20 +301,12 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
         domain_obj = Domain.get_by_name(domain)
         allowed_group_names = [group.name for group in domain_group_memoizer.groups]
         roles_by_name = {role.name: role for role in UserRole.by_domain(domain)}
-        profiles_by_name = {}
-        definition = CustomDataFieldsDefinition.get(domain, UserFieldsView.field_type)
-        if definition:
-            profiles_by_name = {
-                profile.name: profile
-                for profile in definition.get_profiles()
-            }
         domain_user_specs = [spec for spec in user_specs if spec.get('domain', upload_domain) == domain]
         validators = get_user_import_validators(
             domain_obj,
             domain_user_specs,
             allowed_group_names,
             list(roles_by_name),
-            list(profiles_by_name),
             upload_domain
         )
 
@@ -328,7 +315,6 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
             can_assign_locations,
             location_cache,
             roles_by_name,
-            profiles_by_name,
             domain_group_memoizer
         )
         domain_info_by_domain[domain] = domain_info
@@ -377,7 +363,6 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
             # ignore empty
             location_codes = [code for code in location_codes if code]
             role = row.get('role', None)
-            profile = row.get('user_profile', None)
             web_user = row.get('web_user')
 
             try:
@@ -424,16 +409,10 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                     user.add_phone_number(_fmt_phone(phone_number), default=True)
                 if name:
                     user.set_full_name(str(name))
-                data = data or {}
-                if profile:
-                    data[PROFILE_SLUG] = domain_info.profiles_by_name[profile].id
                 if data:
-                    try:
-                        user.metadata = data
-                    except ValueError as e:
-                        raise UserUploadError(str(e))
+                    user.user_data.update(data)
                 if uncategorized_data:
-                    user.update_metadata(uncategorized_data)
+                    user.user_data.update(uncategorized_data)
                 if language:
                     user.language = language
                 if email:
@@ -464,7 +443,7 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                     user.set_role(domain, role_qualified_id)
 
                 if web_user:
-                    user.update_metadata({'login_as_user': web_user})
+                    user.user_data.update({'login_as_user': web_user})
 
                 user.save()
 

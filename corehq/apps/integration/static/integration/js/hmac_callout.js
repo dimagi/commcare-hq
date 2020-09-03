@@ -89,12 +89,8 @@ hqDefine("integration/js/hmac_callout", [
         document.body.removeChild(form);
     };
 
-    var moduleMap = {
+    return {
         signedCallout: signedCallout,
         unsignedCallout: unsignedCallout,
     };
-
-    window.HMACCallout = moduleMap;
-
-    return moduleMap;
 });

@@ -1,10 +1,7 @@
-import json
-
 from collections import OrderedDict
 
 from django import forms
 from django.core.validators import RegexValidator
-from django.forms.widgets import Select
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 
@@ -12,31 +9,21 @@ from crispy_forms.layout import HTML, Div, Field, Fieldset, Layout
 from memoized import memoized
 
 from corehq.apps.hqwebapp.crispy import HQFormHelper, HQModalFormHelper
-from corehq import toggles
 
 from .models import (
     CUSTOM_DATA_FIELD_PREFIX,
     CustomDataFieldsDefinition,
-    CustomDataFieldsProfile,
-    PROFILE_SLUG,
     is_system_key,
 )
 
 
-def with_prefix(string, prefix):
-    """
-    Prefix single string with the defined
-    custom data prefix (such as data-field-whatevs).
-    """
-    return "{}-{}".format(prefix, string)
-
-
 def add_prefix(field_dict, prefix):
     """
-    Prefix all keys in the dict.
+    Prefix all keys in the dict with the defined
+    custom data prefix (such as data-field-whatevs).
     """
     return {
-        with_prefix(k, prefix): v
+        "{}-{}".format(prefix, k): v
         for k, v in field_dict.items()
     }
 
@@ -97,7 +84,7 @@ class CustomDataEditor(object):
         self.existing_custom_data = None
         self.form = self.init_form(add_prefix(cleaned_data, self.prefix))
         self.form.is_valid()
-        return dict(system_data, **cleaned_data)    # cleaned_dataa may overwrite existing system data
+        return dict(cleaned_data, **system_data)
 
     def _make_field(self, field):
         if field.regex:
@@ -105,19 +92,13 @@ class CustomDataEditor(object):
             return forms.CharField(label=field.label, required=field.is_required,
                                    validators=[validator])
         elif field.choices:
-            # select2 must be controlled via knockout if form uses knockout
-            attrs = {
-                'data-placeholder': _('Select one'),
-                'data-allow-clear': 'true',
-            }
-            if not self.ko_model:
-                attrs.update({'class': 'hqwebapp-select2'})
             return forms.ChoiceField(
                 label=field.label,
                 required=field.is_required,
-                choices=[(c, c) for c in field.choices],
-                widget=forms.Select(attrs=attrs)
+                choices=[('', _('Select one'))] + [(c, c) for c in field.choices],
+                widget=forms.Select(attrs={'class': 'hqwebapp-select2'}),
             )
+            return choice_field
         else:
             return forms.CharField(label=field.label, required=field.is_required)
 
@@ -128,41 +109,17 @@ class CustomDataEditor(object):
 
     def init_form(self, post_dict=None):
         fields = OrderedDict()
-        if toggles.CUSTOM_DATA_FIELDS_PROFILES.enabled(self.domain):
-            profiles = self.model.get_profiles()
-            if profiles:
-                attrs = {
-                    'data-placeholder': _('Select a profile'),
-                    'data-allow-clear': 'true',
-                }
-                if not self.ko_model:
-                    attrs.update({'class': 'hqwebapp-select2'})
-                fields[PROFILE_SLUG] = forms.IntegerField(
-                    label=_('Profile'),
-                    required=False,
-                    widget=Select(choices=[
-                        (p.id, p.name)
-                        for p in profiles
-                    ], attrs=attrs)
-                )
         for field in self.fields:
             fields[field.slug] = self._make_field(field)
 
         if self.ko_model:
-            field_names = []
-            for field_name, field in fields.items():
-                data_binds = [
-                    f"value: {self.ko_model}.{field_name}.value",
-                    f"disable: {self.ko_model}.{field_name}.disable",
-                ]
-                if hasattr(field, 'choices') or field_name == PROFILE_SLUG:
-                    data_binds.append("select2: " + json.dumps([
-                        {"id": id, "text": text} for id, text in field.widget.choices
-                    ]))
-                field_names.append(Field(
+            field_names = [
+                Field(
                     field_name,
-                    data_bind=", ".join(data_binds)
-                ))
+                    data_bind="value: {}.{}".format(self.ko_model, field_name),
+                )
+                for field_name, field in fields.items()
+            ]
         else:
             field_names = list(fields)
 
@@ -175,11 +132,7 @@ class CustomDataEditor(object):
 
         additional_fields = []
         if field_names:
-            additional_fields.append(Fieldset(
-                _("Additional Information"),
-                *field_names,
-                css_class="custom-data-fieldset"
-            ))
+            additional_fields.append(Fieldset(_("Additional Information"), *field_names))
         if post_dict is None:
             additional_fields.append(self.uncategorized_form)
         CustomDataForm.helper.layout = Layout(
@@ -189,22 +142,11 @@ class CustomDataEditor(object):
         CustomDataForm._has_uncategorized = bool(self.uncategorized_form) and post_dict is None
 
         if post_dict:
-            fields = post_dict.copy()   # make mutable
+            fields = post_dict
         elif self.existing_custom_data is not None:
             fields = add_prefix(self.existing_custom_data, self.prefix)
         else:
-            fields = {}
-
-        # Add profile fields so that form validation passes
-        try:
-            profile_fields = CustomDataFieldsProfile.objects.get(
-                id=int(fields.get(with_prefix(PROFILE_SLUG, self.prefix))),
-                definition__field_type=self.field_view.field_type,
-                definition__domain=self.domain,
-            ).fields
-        except (ValueError, TypeError, CustomDataFieldsProfile.DoesNotExist):
-            profile_fields = {}
-        fields.update(add_prefix(profile_fields, self.prefix))
+            fields = None
 
         self.form = CustomDataForm(fields, prefix=self.prefix)
         return self.form
