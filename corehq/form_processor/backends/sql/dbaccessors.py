@@ -1056,6 +1056,11 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             domain, case_type=case_type, owner_ids=owner_ids, is_closed=False
         )
 
+    def get_case_ids_in_domain_by_type(domain, case_type, owner_ids=None):
+        return CaseAccessorSQL._get_case_ids_in_domain(
+            domain, case_type=case_type, owner_ids=owner_ids
+        )
+
     @staticmethod
     def _get_case_ids_in_domain(domain, case_type=None, owner_ids=None, is_closed=None, deleted=False):
         owner_ids = list(owner_ids) if owner_ids else None

@@ -442,6 +442,9 @@ class CaseAccessors(object):
     def get_open_case_ids_in_domain_by_type(self, case_type, owner_ids=None):
         return self.db_accessor.get_open_case_ids_in_domain_by_type(self.domain, case_type, owner_ids)
 
+    def get_case_ids_in_domain_by_type(self, case_type, owner_ids=None):
+        return self.db_accessor.get_case_ids_in_domain_by_type(self.domain, case_type, owner_ids)
+
     def get_related_indices(self, case_ids, exclude_indices):
         """Get indices (forward and reverse) for the given set of case ids
 
