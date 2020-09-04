@@ -1,5 +1,4 @@
-/*global $:false, window:false */
-(function () {
+hqDefine("cloudcare/js/formplayer-inline", function () {
     var alertHtml = function (message, alert_class) {
         return (
             "<div class='alert " + (alert_class || 'alert-info') + "'>" +
@@ -52,7 +51,7 @@
                 data.domain = options.domain;
                 data.username = options.username;
                 data.restoreAs = options.restoreAs;
-                var sess = new WebFormSession(data);
+                var sess = hqImport('cloudcare/js/form_entry/webformsession').WebFormSession(data);
                 sess.load($target, options.lang);
             },
         });
@@ -103,4 +102,4 @@
 
         return false;
     });
-}());
+});
