@@ -121,5 +121,18 @@
 <script type="text/template" id="breadcrumb-list-template">
   <ol class="breadcrumb">
     <li class="js-home breadcrumb-text"><i class="fa fa-home"></i></li>
+    <div class="pull-right dropdown dropdown-menu-right" id="form-menu">
+    </div>
   </ol>
+</script>
+
+<script type="text/template" id="form-menu-template">
+   <i class="glyphicon glyphicon-option-vertical dropdown-toggle" data-toggle="dropdown"></i>
+   <ul class="dropdown-menu dropdown-menu-right">
+     <li class="dropdown-header">Languages</li>
+   </ul>
+</script>
+
+<script type="text/template" id="language-option-template">
+  <a class="lang" id="<%= lang %>"><%= lang %></a>
 </script>
