@@ -11,7 +11,7 @@ from corehq.apps.export.det.schema_generator import (
     generate_from_form_export_instance,
     generate_from_case_export_instance,
     CaseDETSchemaHelper,
-)
+    FormDETSchemaHelper)
 from corehq.apps.export.models import FormExportInstance, CaseExportInstance
 from corehq.util.test_utils import TestFileMixin
 
@@ -122,7 +122,8 @@ class TestDETFormInstance(SimpleTestCase, TestFileMixin):
             # basic sanity check
             for i, input_column in enumerate(main_table.selected_columns):
                 self.assertEqual(input_column.label, data_by_headings[i]['Field'])
-                self.assertEqual(input_column.item.readable_path, data_by_headings[i]['Source Field'])
+                self.assertEqual(FormDETSchemaHelper.transform_path(input_column.item.readable_path),
+                                 data_by_headings[i]['Source Field'])
 
             # test individual fields / types
             data_by_headings_by_field = {
