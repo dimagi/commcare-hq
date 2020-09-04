@@ -88,6 +88,9 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
         if (menuResponse.breadcrumbs) {
             hqImport("cloudcare/js/formplayer/menus/util").showBreadcrumbs(menuResponse.breadcrumbs);
+            if (menuResponse.langs) {
+                hqImport("cloudcare/js/formplayer/menus/util").showLanguageMenu(menuResponse.langs);
+            }
         } else {
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
         }

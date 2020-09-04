@@ -44,6 +44,10 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'isPersistentDetail',
         ],
 
+        formProperties: [
+            'langs',
+        ],
+
         parse: function (response, request) {
             _.extend(this, _.pick(response, this.commonProperties));
 
@@ -66,6 +70,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
                 return response.details;
             } else if (response.tree) {
                 // form entry time, doggy
+                _.extend(this, _.pick(response, this.formProperties));
                 FormplayerFrontend.trigger('startForm', response, this.app_id);
             }
         },
