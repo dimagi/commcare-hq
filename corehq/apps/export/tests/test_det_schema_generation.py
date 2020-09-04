@@ -125,6 +125,11 @@ class TestDETFormInstance(SimpleTestCase, TestFileMixin):
                 self.assertEqual(input_column.item.readable_path, data_by_headings[i]['Source Field'])
 
             # test individual fields / types
+            data_by_headings_by_field = {
+                row['Field']: row for row in data_by_headings
+            }
+            self.assertEqual('form.@xmlns', data_by_headings_by_field['@xmlns']['Source Field'])
+
             data_by_headings_by_source_field = {
                 row['Source Field']: row for row in data_by_headings
             }
