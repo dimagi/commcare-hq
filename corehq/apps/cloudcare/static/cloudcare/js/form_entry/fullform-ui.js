@@ -367,7 +367,7 @@ function Group(json, parent) {
     self.parent = parent;
     self.rel_ix = ko.observable(relativeIndex(self.ix()));
     self.isRepetition = parent instanceof Repeat;
-    if (json.hasOwnProperty('domain_meta') && json.hasOwnProperty('style')) {
+    if (_.has(json, 'domain_meta') && _.has(json, 'style')) {
         self.domain_meta = parse_meta(json.datatype, val);
     }
 
