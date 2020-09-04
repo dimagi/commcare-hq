@@ -31,8 +31,8 @@ def is_icds_cas_project(domain):
 
 def check_authorization(domain, user, master_app_id):
     if (
-        settings.SERVER_ENVIRONMENT == 'icds-staging'
-        and toggles.ROLE_WEBAPPS_PERMISSIONS.enabled(user.username)
+        IS_ICDS_ENVIRONMENT
+        and toggles.ROLE_WEBAPPS_PERMISSIONS.enabled(domain)
     ):
         try:
             role = user.get_role(domain)
