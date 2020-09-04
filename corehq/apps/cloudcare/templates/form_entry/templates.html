@@ -90,7 +90,7 @@
             <div data-bind="template: { name: childTemplate, foreach: $data.children }"/>
           </div>
           <div class="form-actions form-group" data-bind="visible: showSubmitButton">
-            <div data-bind="css: Formplayer.Const.LABEL_OFFSET + ' ' + Formplayer.Const.CONTROL_WIDTH">
+            <div data-bind="css: submitClass">
               <button class="submit btn btn-primary"
                      type="submit"
                      data-bind="enable: enableSubmitButton">
@@ -114,7 +114,7 @@
                 on: $root.forceRequiredVisible,
             }
         ">
-    <label class="caption control-label" data-bind="css: Formplayer.Const.LABEL_WIDTH">
+    <label class="caption control-label" data-bind="css: labelWidth">
       <div>
         <!-- ko if: help() -->
         <a
@@ -141,7 +141,7 @@
       </div>
       <i class="hint-text" data-bind="text: ko.utils.unwrapObservable($data.hint)"></i>
     </label>
-    <div class="widget-container controls" data-bind="css: Formplayer.Const.CONTROL_WIDTH">
+    <div class="widget-container controls" data-bind="css: controlWidth">
       <div class="loading">
         <i class="fa fa-check text-success" data-bind="visible: clean "></i>
         <i class="fa fa-spin fa-refresh" data-bind="visible: dirty"></i>
@@ -295,12 +295,12 @@
     </tbody>
   </table>
   <div class="map" data-bind="attr: { id: entryId }">
-    <div class="wait" data-bind="visible: !map">Please wait while the map loads</div>
+    <div class="wait" data-bind="visible: !map">{% trans "Please wait while the map loads" %}</div>
   </div>
   <div>
     <form data-bind="submit: search">
       <div class="form-group">
-        <div class="controls" data-bind="css: Formplayer.Const.CONTROL_WIDTH">
+        <div class="controls" data-bind="css: control_width">
           <div class="input-group">
             <input class="query form-control" type="text" />
             <span class="input-group-btn">
