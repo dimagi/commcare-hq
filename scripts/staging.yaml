@@ -57,10 +57,11 @@ branches:
 #  - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
   - bmb/celery-4.4.2  # Biyeun August 19
   - fr/linked-domain-keywords   # Farid August 26
-  - jls/marionette-3 # Jenny Aug 27
   - sr/es7-count # Sravan Sept 1
   - sr/es7-reindex # Sravn Sept 2
   - fr/user-data-jit            # Farid September 2
   - bmb/SAAS-11290  # Biyeun Sep 3
+  - jls/collapsible-groups+jls/marionette-3
+  - jls/marionette-3 # Jenny Aug 27
   - jls/collapsible-groups # Jenny Sept 4
 submodules: {}
