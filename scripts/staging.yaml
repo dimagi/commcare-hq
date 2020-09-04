@@ -63,4 +63,5 @@ branches:
   - sr/es7-reindex # Sravn Sept 2
   - fr/user-data-jit            # Farid September 2
   - bmb/SAAS-11290  # Biyeun Sep 3
+  - jls/collapsible-groups # Jenny Sept 4
 submodules: {}
