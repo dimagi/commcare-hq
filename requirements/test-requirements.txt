@@ -60,13 +60,14 @@ django-tastypie==0.14.2   # via -r requirements/requirements.in
 django-transfer==0.4      # via -r requirements/requirements.in
 django-two-factor-auth==1.12.1  # via -r requirements/requirements.in
 django-user-agents==0.3.2  # via -r requirements/requirements.in
-django-websocket-redis==0.5.2  # via -r requirements/requirements.in
+django-websocket-redis==0.6.0  # via -r requirements/requirements.in
 django==2.2.13            # via -r requirements/requirements.in, django-angular, django-appconf, django-bulk-update, django-formtools, django-logentry-admin, django-oauth-toolkit, django-otp, django-phonenumber-field, django-prbac, django-ranged-response, django-redis, django-simple-captcha, django-statici18n, django-two-factor-auth, django-user-agents, djangorestframework, jsonfield
 djangorestframework==3.11.0  # via -r requirements/requirements.in
 dnspython==1.15.0         # via -r requirements/requirements.in, email-validator
 docutils==0.15.2          # via botocore
 dropbox==9.3.0            # via -r requirements/requirements.in
 elasticsearch2==2.5.1     # via -r requirements/requirements.in
+elasticsearch7==7.6.0     # via -r requirements/requirements.in
 elasticsearch==1.9.0      # via -r requirements/requirements.in
 email_validator==1.0.3    # via -r requirements/requirements.in
 et-xmlfile==1.0.1         # via openpyxl
@@ -174,7 +175,7 @@ turn-python==0.0.1        # via -r requirements/requirements.in
 twilio==6.5.1             # via -r requirements/requirements.in
 ua-parser==0.8.0          # via user-agents
 unittest2==1.1.0          # via -r requirements/test-requirements.in
-urllib3==1.25.6           # via botocore, elasticsearch, elasticsearch2, py-kissmetrics, requests, sentry-sdk
+urllib3==1.25.6           # via botocore, elasticsearch, elasticsearch2, elasticsearch7, py-kissmetrics, requests, sentry-sdk
 user-agents==2.0          # via django-user-agents
 vine==1.3.0               # via amqp, celery
 weasyprint==0.42.3        # via -r requirements/requirements.in

@@ -4,11 +4,9 @@ FormplayerFrontend.module("Apps", function (Apps, FormplayerFrontend, Backbone, 
     Apps.Controller = {
         listApps: function () {
             $.when(FormplayerFrontend.request("appselect:apps")).done(function (apps) {
-
                 var appGridView = new Apps.Views.GridView({
                     collection: apps,
                 });
-
                 FormplayerFrontend.regions.main.show(appGridView);
             });
         },

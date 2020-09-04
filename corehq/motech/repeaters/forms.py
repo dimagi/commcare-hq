@@ -12,7 +12,7 @@ from corehq.apps.es.users import UserES
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.locations.forms import LocationSelectWidget
 from corehq.apps.reports.analytics.esaccessors import (
-    get_case_types_for_domain_es,
+    get_case_types_for_domain,
 )
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.users.util import raw_username
@@ -130,7 +130,7 @@ class CaseRepeaterForm(GenericRepeaterForm):
     @property
     @memoized
     def case_type_choices(self):
-        return [(t, t) for t in get_case_types_for_domain_es(self.domain)]
+        return [(t, t) for t in get_case_types_for_domain(self.domain)]
 
     @property
     @memoized

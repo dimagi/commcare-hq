@@ -1,6 +1,5 @@
 import json
 from copy import deepcopy
-from mock import patch
 
 from django.urls import reverse
 from django.utils.http import urlencode
@@ -8,8 +7,8 @@ from django.utils.http import urlencode
 from flaky import flaky
 
 from corehq.apps.api.resources import v0_5
-from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.analytics import update_analytics_indexes
 from corehq.apps.users.models import (
     CommCareUser,
@@ -195,6 +194,7 @@ class TestWebUserResource(APIResourceTest):
         "last_name": "Admin",
         "permissions": {
             "edit_apps": True,
+            "view_apps": True,
             "edit_commcare_users": True,
             "view_commcare_users": True,
             "edit_groups": True,
@@ -234,6 +234,7 @@ class TestWebUserResource(APIResourceTest):
             'edit_users_in_locations',
             'edit_data',
             'edit_apps',
+            'view_apps',
             'edit_reports',
             'view_reports',
         ]:
@@ -321,7 +322,9 @@ class TestWebUserResource(APIResourceTest):
 
     def test_create_with_custom_role(self):
         new_user_role = UserRole.get_or_create_with_permissions(
-            self.domain.name, Permissions(edit_apps=True, view_reports=True), 'awesomeness')
+            self.domain.name,
+            Permissions(edit_apps=True, view_apps=True, view_reports=True),
+            'awesomeness')
         user_json = deepcopy(self.default_user_json)
         user_json["role"] = new_user_role.name
         user_json["is_admin"] = False
