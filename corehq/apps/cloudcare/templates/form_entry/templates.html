@@ -10,7 +10,12 @@
         }">
     <fieldset class="gr-header">
       <legend>
-        <span class="caption webapp-markdown-output" data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption()"></span>
+        <i class="clickable fa" data-bind="
+            click: toggleChildren,
+            css: {'fa-angle-double-right': !showChildren(), 'fa-angle-double-down': showChildren()}
+        "></i>
+        <span class="caption webapp-markdown-output clickable"
+              data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption(), click: toggleChildren"></span>
         <button class="btn btn-xs btn-danger del pull-right" href="#" data-bind="
                     visible: isRepetition,
                     click: deleteRepeat
@@ -18,7 +23,7 @@
       </legend>
       <span class="ix"></span>
     </fieldset>
-    <div class="children" data-bind="template: { name: childTemplate, foreach: $data.children }"/>
+    <div class="children" data-bind="slideVisible: showChildren(), template: { name: childTemplate, foreach: $data.children }"/>
   </div>
 </script>
 

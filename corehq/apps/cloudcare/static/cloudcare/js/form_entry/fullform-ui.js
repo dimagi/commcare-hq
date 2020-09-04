@@ -368,6 +368,11 @@ function Group(json, parent) {
         self.domain_meta = parse_meta(json.datatype, val);
     }
 
+    self.showChildren = ko.observable(true);
+    self.toggleChildren = function () {
+        self.showChildren(!self.showChildren());
+    };
+
     if (self.isRepetition) {
         // If the group is part of a repetition the index can change if the user adds or deletes
         // repeat groups.
