@@ -563,8 +563,8 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
 
     def get_create_form(self, is_blank=False):
         if self.request.method == 'POST' and not is_blank:
-            return HQApiKeyForm(self.request.POST)
-        return HQApiKeyForm()
+            return HQApiKeyForm(self.request.POST, couch_user=self.request.couch_user)
+        return HQApiKeyForm(couch_user=self.request.couch_user)
 
     def get_create_item_data(self, create_form):
         try:
