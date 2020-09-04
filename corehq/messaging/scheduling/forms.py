@@ -2853,7 +2853,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         min_value=MIN_SMS_STALE_HOURS,
         max_value=MAX_SMS_STALE_HOURS,
         help_text=ugettext_lazy("SMS is marked as stale in 7*24 hours by default.\
-            You can set minimum value to {min} hours and maximum value to {max} hours\
+            You can set minimum value to {min} hours and maximum value to {max} hours.\
             Stale SMS will not be sent").format(
             min=MIN_SMS_STALE_HOURS,
             max=MAX_SMS_STALE_HOURS
