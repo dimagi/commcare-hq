@@ -2711,7 +2711,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     START_OFFSET_NEGATIVE = 'NEGATIVE'
     START_OFFSET_POSITIVE = 'POSITIVE'
 
-    MIN_SMS_STALE_HOURS = 0
+    MIN_SMS_STALE_HOURS = 1
     MAX_SMS_STALE_HOURS = 720
 
     use_case = 'conditional_alert'
@@ -3461,7 +3461,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
     def clean_sms_stale_after(self):
         value = self.cleaned_data.get('sms_stale_after')
-        if value == '' or value is None:
+        if not value:
             return None
         if value < self.MIN_SMS_STALE_HOURS or value > self.MAX_SMS_STALE_HOURS:
             raise ValidationError(_("""Min value can be {min} hours and max value can be {max} hours""").format(
