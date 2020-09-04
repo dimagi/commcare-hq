@@ -80,7 +80,7 @@ class FormDETSchemaHelper(DefaultDETSchemaHelper):
     """
     @staticmethod
     def transform_path(input_path):
-        # either return hard-coded lookup or add prefix
+        # either return hard-coded or the path with no modifications
         return FORM_API_PATH_MAP.get(input_path, input_path)
 
 
