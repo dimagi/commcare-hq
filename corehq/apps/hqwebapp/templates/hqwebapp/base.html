@@ -54,6 +54,7 @@
     {% endif %}
 
     {% block stylesheets %}{% endblock stylesheets %}
+    
     {% block csrf_token_block %}
       <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
     {% endblock %}
@@ -97,7 +98,7 @@
         <link type="text/css"
               rel="stylesheet"
               media="screen"
-              href="{% static "jquery-ui/themes/redmond/jquery-ui.min.css" %}" />
+              href="{% static "jquery-ui-built-themes/redmond/jquery-ui.min.css" %}" />
       {% endcompress %}
     {% endif %}
 

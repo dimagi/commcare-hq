@@ -518,6 +518,7 @@ class ListWebUsersView(BaseRoleAccessView):
                 "email_marked_as_bounced": bool(invitation.email_marked_as_bounced),
                 "invited_on": invitation.invited_on,
                 "role_label": self.role_labels.get(invitation.role, ""),
+                "email_status": invitation.email_status,
             }
             for invitation in Invitation.by_domain(self.domain)
         ]
@@ -584,7 +585,9 @@ class ListRolesView(BaseRoleAccessView):
                 toggles.DHIS2_INTEGRATION.enabled(self.domain)
             ),
             'web_apps_privilege': self.web_apps_privilege,
-            'has_report_builder_access': has_report_builder_access(self.request)
+            'has_report_builder_access': has_report_builder_access(self.request),
+            'data_file_download_enabled': toggles.DATA_FILE_DOWNLOAD.enabled(self.domain),
+            'export_ownership_enabled': toggles.EXPORT_OWNERSHIP.enabled(self.domain)
         }
 
 
@@ -729,6 +732,9 @@ def post_user_role(request, domain):
 
     if role.permissions.edit_locations:
         role.permissions.view_locations = True
+
+    if role.permissions.edit_apps:
+        role.permissions.view_apps = True
 
     if not role.permissions.edit_groups:
         role.permissions.edit_users_in_groups = False

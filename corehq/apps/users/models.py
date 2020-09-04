@@ -88,7 +88,6 @@ from corehq.util.dates import get_timestamp
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 
-COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
 MAX_LOGIN_ATTEMPTS = 5
 
@@ -496,15 +495,14 @@ class DomainPermissionsMirror(models.Model):
 
 
 class Membership(DocumentSchema):
-#   If we find a need for making UserRoles more general and decoupling it from domain then most of the role stuff from
-#   Domain membership can be put in here
+    # If we find a need for making UserRoles more general and decoupling it from a domain
+    # then most of the role stuff from Domain membership can be put in here
     is_admin = BooleanProperty(default=False)
 
 
 class DomainMembership(Membership):
     """
-    Each user can have multiple accounts on the
-    web domain. This is primarily for Dimagi staff.
+    Each user can have multiple accounts on individual domains
     """
 
     domain = StringProperty()
@@ -2630,9 +2628,18 @@ class DomainRequest(models.Model):
                                     email_from=settings.DEFAULT_FROM_EMAIL)
 
 
+class InvitationStatus(object):
+    BOUNCED = "Bounced"
+    SENT = "Sent"
+    DELIVERED = "Delivered"
+
+
 class Invitation(models.Model):
+    EMAIL_ID_PREFIX = "Invitation:"
+
     uuid = models.UUIDField(primary_key=True, db_index=True, default=uuid4)
     email = models.CharField(max_length=255, db_index=True)
+    email_status = models.CharField(max_length=126, null=True)
     invited_by = models.CharField(max_length=126)           # couch id of a WebUser
     invited_on = models.DateTimeField()
     is_accepted = models.BooleanField(default=False)
@@ -2682,7 +2689,8 @@ class Invitation(models.Model):
         send_html_email_async.delay(subject, self.email, html_content,
                                     text_content=text_content,
                                     cc=[inviter.get_email()],
-                                    email_from=settings.DEFAULT_FROM_EMAIL)
+                                    email_from=settings.DEFAULT_FROM_EMAIL,
+                                    messaging_event_id=f"{self.EMAIL_ID_PREFIX}{self.uuid}")
 
 
 class DomainRemovalRecord(DeleteRecord):
@@ -2990,6 +2998,7 @@ class HQApiKey(models.Model):
     name = models.CharField(max_length=255, blank=True, default='')
     created = models.DateTimeField(default=timezone.now)
     ip_allowlist = ArrayField(models.GenericIPAddressField(), default=list)
+    role_id = models.CharField(max_length=40, blank=True, default='')
 
     class Meta(object):
         unique_together = ('user', 'name')
@@ -3004,3 +3013,13 @@ class HQApiKey(models.Model):
         # From tastypie
         new_uuid = uuid4()
         return hmac.new(new_uuid.bytes, digestmod=sha1).hexdigest()
+
+    @property
+    @memoized
+    def role(self):
+        if self.role_id:
+            try:
+                return UserRole.get(self.role_id)
+            except ResourceNotFound:
+                logging.exception('no role with id %s found in domain %s' % (self.role_id, self.domain))
+        return None

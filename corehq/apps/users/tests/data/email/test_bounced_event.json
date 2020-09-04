@@ -1,0 +1,97 @@
+{
+    "eventType": "Bounce",
+    "bounce": {
+        "bounceType": "Permanent",
+        "bounceSubType": "General",
+        "bouncedRecipients": [
+            {
+                "emailAddress": "permanent_general_bounce@company.org",
+                "action": "failed",
+                "status": "5.4.1",
+                "diagnosticCode": "smtp; 550 5.4.1 Recipient address rejected: Access denied. AS(redacted) [redacted.outlook.com]"
+            }
+        ],
+        "timestamp": "2020-07-31T20:09:56.637Z",
+        "feedbackId": "<redacted>",
+        "remoteMtaIp": "255.255.255.255",
+        "reportingMTA": "dsn; test.smtp-out.amazonses.com"
+    },
+    "mail": {
+        "timestamp": "2020-07-31T20:09:55.000Z",
+        "source": "noreplyemail@company.com",
+        "sourceArn": "arn:aws:ses:<redacted>:identity/noreplyemail@company.com",
+        "sourceIp": "255.255.255.255",
+        "sendingAccountId": "<redacted>",
+        "messageId": "<redacted>",
+        "destination": [
+            "permanent_general_bounce@company.org",
+            "johnDoe@university.edu"
+        ],
+        "headersTruncated": false,
+        "headers": [
+            {
+                "name": "Received",
+                "value": "from server-name (ec2-fake.compute-1.amazonaws.com [redacted]) by email-smtp.amazonaws.com with SMTP (SimpleEmailService-d-redacted) id redacted; Fri, 31 Jul 2020 20:09:55 +0000 (UTC)"
+            },
+            {
+                "name": "Content-Type",
+                "value": "multipart/alternative;"
+            },
+            {
+                "name": "MIME-Version",
+                "value": "1.0"
+            },
+            {
+                "name": "Subject",
+                "value": "Invitation from John Doe to join CommCareHQ"
+            },
+            {
+                "name": "From",
+                "value": "noreplyemail@company.com"
+            },
+            {
+                "name": "To",
+                "value": "permanent_general_bounce@company.org"
+            },
+            {
+                "name": "Cc",
+                "value": "johnDoe@university.edu"
+            },
+            {
+                "name": "Date",
+                "value": "Fri, 31 Jul 2020 20:09:55 -0000"
+            },
+            {
+                "name": "Message-ID",
+                "value": "<redacted@server-name>"
+            },
+            {
+                "name": "Return-Path",
+                "value": "noreplyemail@company.com"
+            },
+            {
+                "name": "X-SES-CONFIGURATION-SET",
+                "value": "fake-email-events"
+            },
+            {
+                "name": "X-COMMCAREHQ-MESSAGE-ID",
+                "value": "changed-in-test"
+            }
+        ],
+        "commonHeaders": {
+            "returnPath": "noreplyemail@company.com",
+            "from": [
+                "noreplyemail@company.com"
+            ],
+            "date": "Fri, 31 Jul 2020 20:09:55 -0000",
+            "to": [
+                "permanent_general_bounce@company.org"
+            ],
+            "cc": [
+                "johnDoe@university.edu"
+            ],
+            "messageId": "<redacted@server-name>",
+            "subject": "Invitation from John Doe to join CommCareHQ"
+        }
+    }
+}
