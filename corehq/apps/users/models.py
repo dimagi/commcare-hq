@@ -1228,8 +1228,12 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             '{}_phone_number'.format(SYSTEM_PREFIX): self.phone_number,
         })
 
-        if self.is_commcare_user():
-            session_data['{}_project'.format(SYSTEM_PREFIX)] = self.domain
+        try:
+            domain = self.domainn
+        except AttributeError:
+            domain = self.get_domains()[0]
+
+        session_data['{}_project'.format(SYSTEM_PREFIX)] = domain
 
         if self.location_id:
             session_data.update({
