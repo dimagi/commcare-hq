@@ -12,7 +12,7 @@ wheel==0.29.0
 transifex-client==0.12.4
 modernize
 gnureadline==6.3.8
-git-branch-builder
+git-build-branch
 
 # documentation
 Sphinx~=2.2.1

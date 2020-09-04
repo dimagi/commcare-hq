@@ -47,7 +47,7 @@ done
 
 function rebuildstaging() {
     echo "rebuilding staging branch, this might take a while..."
-    git-branch-builder scripts/staging.yaml "$@"
+    git-build-branch scripts/staging.yaml "$@"
 }
 
 args=''
