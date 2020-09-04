@@ -3056,6 +3056,7 @@ class HQApiKey(models.Model):
     name = models.CharField(max_length=255, blank=True, default='')
     created = models.DateTimeField(default=timezone.now)
     ip_allowlist = ArrayField(models.GenericIPAddressField(), default=list)
+    domain = models.CharField(max_length=255, blank=True, default='')
     role_id = models.CharField(max_length=40, blank=True, default='')
 
     class Meta(object):
@@ -3080,4 +3081,6 @@ class HQApiKey(models.Model):
                 return UserRole.get(self.role_id)
             except ResourceNotFound:
                 logging.exception('no role with id %s found in domain %s' % (self.role_id, self.domain))
+        elif self.domain:
+            return CouchUser.from_django_user(self.user).get_domain_membership(self.domain).role
         return None
