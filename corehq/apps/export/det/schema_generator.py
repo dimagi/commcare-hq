@@ -28,6 +28,11 @@ CASE_API_PATH_MAP = {
     'user_id': 'user_id',
 }
 
+
+FORM_API_PATH_MAP = {
+    'xmlns': 'form.@xmlns',
+}
+
 MAP_VIA_STR2DATE = 'str2date'
 MAP_VIA_STR2NUM = 'str2num'
 
@@ -67,6 +72,16 @@ class CaseDETSchemaHelper(DefaultDETSchemaHelper):
         if not explicit_type and export_item.readable_path in self.dd_property_types:
             return _dd_type_to_det_type(self.dd_property_types[export_item.readable_path])
         return explicit_type
+
+
+class FormDETSchemaHelper(DefaultDETSchemaHelper):
+    """
+    Schema helper for forms
+    """
+    @staticmethod
+    def transform_path(input_path):
+        # either return hard-coded lookup or add prefix
+        return FORM_API_PATH_MAP.get(input_path, input_path)
 
 
 class RepeatDETSchemaHelper(DefaultDETSchemaHelper):
@@ -154,7 +169,7 @@ def generate_from_form_export_instance(export_instance, output_file):
                 filter_value=export_instance.xmlns,
                 rows=[],
             )
-            _add_rows_for_table(input_table, output_table)
+            _add_rows_for_table(input_table, output_table, helper=FormDETSchemaHelper())
             _add_id_row_if_necessary(output_table, FORM_ID_SOURCE)
         else:
             output_table = DETTable(
