@@ -285,7 +285,7 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
         return self.case_es(domain).get_document(case_id)
 
     class Meta(v0_3.CommCareCaseResource.Meta):
-        max_limit = 1000
+        max_limit = 5000
         serializer = CommCareCaseSerializer()
         ordering = ['server_date_modified', 'date_modified', 'indexed_on']
         object_class = ESCase
