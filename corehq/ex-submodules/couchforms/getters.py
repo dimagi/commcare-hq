@@ -73,6 +73,10 @@ def _valid_xml_extension(file):
     return _valid_file_extension(file, PERMITTED_FORM_SUBMISSION_FILE_EXTENSIONS)
 
 
+def _valid_attachment_extension(file):
+    return _valid_file_extension(file, SUPPORTED_MEDIA_FILE_EXTENSIONS)
+
+
 def _valid_file_extension(file, permitted_extensions):
     # validate that file has only one extension and that is a permitted one
     try:
@@ -80,10 +84,6 @@ def _valid_file_extension(file, permitted_extensions):
     except IndexError:
         return False
     return file_extension in permitted_extensions
-
-
-def _valid_attachment_extension(file):
-    return _valid_file_extension(file, SUPPORTED_MEDIA_FILE_EXTENSIONS)
 
 
 def get_location(request=None):
