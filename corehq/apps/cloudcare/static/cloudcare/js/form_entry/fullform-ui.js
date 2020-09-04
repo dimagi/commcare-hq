@@ -371,9 +371,13 @@ function Group(json, parent) {
         self.domain_meta = parse_meta(json.datatype, val);
     }
 
-    self.showChildren = ko.observable(true);
+    var style = _.has(json, 'style') && json.style ? json.style.raw : undefined;
+    self.collapsible = !!_.contains([Formplayer.Const.COLLAPSIBLE_OPEN, Formplayer.Const.COLLAPSIBLE_CLOSED], style);
+    self.showChildren = ko.observable(!self.collapsible || style == Formplayer.Const.COLLAPSIBLE_OPEN);
     self.toggleChildren = function () {
-        self.showChildren(!self.showChildren());
+        if (self.collapsible) {
+            self.showChildren(!self.showChildren());
+        }
     };
 
     if (self.isRepetition) {
@@ -576,6 +580,8 @@ Formplayer.Const = {
     COMBOBOX: 'combobox',
     COMBOBOX_MULTIWORD: 'multiword',
     COMBOBOX_FUZZY: 'fuzzy',
+    COLLAPSIBLE_OPEN: 'collapsible-open',
+    COLLAPSIBLE_CLOSED: 'collapsible-closed',
 
     // Note it's important to differentiate these two
     NO_PENDING_ANSWER: undefined,

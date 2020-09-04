@@ -12,10 +12,14 @@
       <legend>
         <i class="clickable fa" data-bind="
             click: toggleChildren,
-            css: {'fa-angle-double-right': !showChildren(), 'fa-angle-double-down': showChildren()}
+            css: {'fa-angle-double-right': !showChildren(), 'fa-angle-double-down': showChildren(), 'hide': !collapsible}
         "></i>
-        <span class="caption clickable"
-              data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption(), click: toggleChildren"></span>
+        <span class="caption"
+              data-bind="
+                html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
+                click: toggleChildren,
+                css: {clickable: collapsible},
+              "></span>
         <button class="btn btn-xs btn-danger del pull-right" href="#" data-bind="
                     visible: isRepetition,
                     click: deleteRepeat
