@@ -9,6 +9,7 @@ from mock import Mock, patch
 from corehq.motech.const import ALGO_AES, PASSWORD_PLACEHOLDER
 from corehq.motech.models import ConnectionSettings, RequestLog
 from corehq.motech.requests import get_basic_requests
+from corehq.util import as_text
 
 TEST_API_URL = 'http://localhost:9080/api/'
 TEST_API_USERNAME = 'admin'
@@ -62,13 +63,13 @@ class UnpackRequestArgsTests(SimpleTestCase):
             domain=TEST_DOMAIN,
             log_level=logging.INFO,
             payload_id=None,
-            request_body=request_body,
+            request_body=as_text(request_body),
             request_error=self.error_message,
             request_headers=self.request_headers,
             request_method=self.request_method,
             request_params=request_params,
             request_url='http://localhost:9080/api/person/',
-            response_body=self.content_json,
+            response_body=as_text(self.content_json),
             response_status=self.status_code,
         )
 

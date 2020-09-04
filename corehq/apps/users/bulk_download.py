@@ -8,7 +8,7 @@ from soil.util import expose_download, get_download_file_path
 
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.custom_data_fields.models import SQLCustomDataFieldsDefinition
+from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.user_importer.importer import BulkCacheBase, GroupMemoizer
@@ -40,7 +40,7 @@ def build_data_headers(keys, header_prefix='data'):
 
 def parse_users(group_memoizer, domain, user_filters, task=None, total_count=None):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-    user_data_model = SQLCustomDataFieldsDefinition.get_or_create(
+    user_data_model = CustomDataFieldsDefinition.get_or_create(
         domain,
         UserFieldsView.field_type
     )
@@ -179,7 +179,7 @@ def count_users_and_groups(domain, user_filters, group_memoizer):
     return users_count + groups_count
 
 
-def dump_usernames(domain, download_id, user_filters, task):
+def dump_usernames(domain, download_id, user_filters, task, owner_id):
     users_count = get_commcare_users_by_filters(domain, user_filters, count_only=True)
     DownloadBase.set_progress(task, 0, users_count)
 
@@ -194,10 +194,10 @@ def dump_usernames(domain, download_id, user_filters, task):
         location_name = location.name if location else ""
     filename_prefix = "_".join([a for a in [domain, location_name] if bool(a)])
     filename = "{}_users.xlsx".format(filename_prefix)
-    _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, users_count)
+    _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, users_count, owner_id)
 
 
-def _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, total_count):
+def _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, total_count, owner_id):
     writer = Excel2007ExportWriter(format_as_text=True)
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
     file_path = get_download_file_path(use_transfer, filename)
@@ -208,11 +208,11 @@ def _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, t
     writer.write(rows)
     writer.close()
 
-    expose_download(use_transfer, file_path, filename, download_id, 'xlsx')
+    expose_download(use_transfer, file_path, filename, download_id, 'xlsx', owner_ids=[owner_id])
     DownloadBase.set_progress(task, total_count, total_count)
 
 
-def dump_users_and_groups(domain, download_id, user_filters, task):
+def dump_users_and_groups(domain, download_id, user_filters, task, owner_id):
     def _load_memoizer(domain):
         group_memoizer = GroupMemoizer(domain=domain)
         # load groups manually instead of calling group_memoizer.load_all()
@@ -252,7 +252,7 @@ def dump_users_and_groups(domain, download_id, user_filters, task):
     ]
 
     filename = "{}_users_{}.xlsx".format(domain, uuid.uuid4().hex)
-    _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, users_groups_count)
+    _dump_xlsx_and_expose_download(filename, headers, rows, download_id, task, users_groups_count, owner_id)
 
 
 class GroupNameError(Exception):

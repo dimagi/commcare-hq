@@ -99,7 +99,7 @@ The steps of this process are as follows:
 #. The refresh functions act on subclasses of
    `corehq.messaging.scheduling.tasks.ScheduleInstanceRefresher <https://github.com/dimagi/commcare-hq/blob/master/corehq/messaging/scheduling/tasks.py>`_,
    which create, update, and delete "schedule instance" objects, which are subclasses of
-   `corehq.messaging.scheduling.scheduling_partitioned.models.ScheduleInstance <https://github.com/dimagi/commcare-hq/corehq/messaging/scheduling/scheduling_partitioned/models.py>`_.
+   `corehq.messaging.scheduling.scheduling_partitioned.models.ScheduleInstance <https://github.com/dimagi/commcare-hq/blob/master/corehq/messaging/scheduling/scheduling_partitioned/models.py>`_.
    These schedule instances track their schedule, recipients, and state relating to their next event. They are
    processed by a queue (see next section).
 

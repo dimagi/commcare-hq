@@ -393,19 +393,6 @@ def chevron(value):
 
 
 @register.simple_tag
-def reverse_chevron(value):
-    """
-    Displays a red up chevron if value > 0, and a green down chevron if value < 0
-    """
-    if value > 0:
-        return format_html('<span class="fa fa-chevron-up" style="color: #8b0000;"></span>')
-    elif value < 0:
-        return format_html('<span class="fa fa-chevron-down" style="color: #006400;"> </span>')
-    else:
-        return ''
-
-
-@register.simple_tag
 def maintenance_alert(request, dismissable=True):
     alert = MaintenanceAlert.get_latest_alert()
     if alert and (not alert.domains or getattr(request, 'domain', None) in alert.domains):

@@ -53,26 +53,8 @@ if [ $? != 0 ]; then status=1; fi
 git diff --cached | flake8 --diff --show-source --config=.flake8
 if [ $? != 0 ]; then status=1; fi
 
-# connect stdin to keyboard so user can interact
-exec < /dev/tty
-
-# http://askubuntu.com/a/22257
-function confirm_commit() {
-    read -p 'There are formatting errors in your commit. Would you like to commit anyway? [N/y] ' -n 1 REPLY
-    echo
-    if test "$REPLY" = "y" -o "$REPLY" = "Y"; then
-        exit 0
-    else
-        echo "Commit cancelled by user"
-        exit 1
-    fi
-}
-
 if [ $status != 0 ]
 then
-    confirm_commit
-    if [ $? != 0 ]
-    then
-        exit 1
-    fi
+    echo 'There are formatting errors in your commit. Commit with --no-verify to proceed without fixing.'
+    exit 1
 fi

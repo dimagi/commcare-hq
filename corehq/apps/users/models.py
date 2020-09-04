@@ -88,7 +88,6 @@ from corehq.util.dates import get_timestamp
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 
-COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
 MAX_LOGIN_ATTEMPTS = 5
 
@@ -130,11 +129,13 @@ class Permissions(DocumentSchema):
     edit_motech = BooleanProperty(default=False)
     edit_data = BooleanProperty(default=False)
     edit_apps = BooleanProperty(default=False)
+    view_apps = BooleanProperty(default=False)
     edit_shared_exports = BooleanProperty(default=False)
     access_all_locations = BooleanProperty(default=True)
     access_api = BooleanProperty(default=True)
     access_web_apps = BooleanProperty(default=False)
 
+    edit_reports = BooleanProperty(default=False)
     view_reports = BooleanProperty(default=False)
     view_report_list = StringListProperty(default=[])
 
@@ -241,6 +242,8 @@ class Permissions(DocumentSchema):
             edit_motech=True,
             edit_data=True,
             edit_apps=True,
+            view_apps=True,
+            edit_reports=True,
             view_reports=True,
             edit_billing=True,
             edit_shared_exports=True,
@@ -282,7 +285,7 @@ class UserRolePresets(object):
                                                        view_locations=True,
                                                        edit_shared_exports=True,
                                                        view_reports=True),
-            cls.APP_EDITOR: lambda: Permissions(edit_apps=True, view_reports=True),
+            cls.APP_EDITOR: lambda: Permissions(edit_apps=True, view_apps=True, view_reports=True),
             cls.BILLING_ADMIN: lambda: Permissions(edit_billing=True)
         }
 
@@ -306,6 +309,7 @@ class UserRole(QuickCachedDocumentMixin, Document):
     # role assignable by specific non-admins
     assignable_by = StringListProperty(default=[])
     is_archived = BooleanProperty(default=False)
+    upstream_id = StringProperty()
 
     def get_qualified_id(self):
         return 'user-role:%s' % self.get_id
@@ -399,9 +403,9 @@ class UserRole(QuickCachedDocumentMixin, Document):
         return cls(permissions=Permissions(), domain=domain, name=None)
 
     @property
-    def ids_of_assigned_users(self):
+    def has_users_assigned(self):
         from corehq.apps.es.users import UserES
-        return UserES().is_active().domain(self.domain).role_id(self._id).values_list('_id', flat=True)
+        return bool(UserES().is_active().domain(self.domain).role_id(self._id).count())
 
     @classmethod
     def get_preset_permission_by_name(cls, name):
@@ -425,6 +429,7 @@ PERMISSIONS_PRESETS = {
         'name': 'App Editor',
         'permissions': Permissions(
             edit_apps=True,
+            view_apps=True,
             view_reports=True,
         ),
     },
@@ -490,15 +495,14 @@ class DomainPermissionsMirror(models.Model):
 
 
 class Membership(DocumentSchema):
-#   If we find a need for making UserRoles more general and decoupling it from domain then most of the role stuff from
-#   Domain membership can be put in here
+    # If we find a need for making UserRoles more general and decoupling it from a domain
+    # then most of the role stuff from Domain membership can be put in here
     is_admin = BooleanProperty(default=False)
 
 
 class DomainMembership(Membership):
     """
-    Each user can have multiple accounts on the
-    web domain. This is primarily for Dimagi staff.
+    Each user can have multiple accounts on individual domains
     """
 
     domain = StringProperty()
@@ -1208,7 +1212,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             user = self.get_django_user()
             user.delete()
             if deleted_by:
-                log_model_change(user, deleted_by, message={'deleted_via': deleted_via}, action=ModelAction.DELETE)
+                log_model_change(user, deleted_by, message=f"deleted_via: {deleted_via}",
+                                 action=ModelAction.DELETE)
         except User.DoesNotExist:
             pass
         super(CouchUser, self).delete()  # Call the "real" delete() method.
@@ -1644,8 +1649,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         log_model_change(
             created_by,
             self_django_user,
-            message={'created_via': created_via},
-            fields_changed=None,
+            message=f"created_via: {created_via}",
             action=ModelAction.CREATE
         )
 
@@ -1840,7 +1844,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             log_model_change(
                 unretired_by,
                 self.get_django_user(use_primary_db=True),
-                message={'unretired_via': unretired_via},
+                message=f"unretired_via: {unretired_via}",
             )
         return True, None
 
@@ -1879,7 +1883,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         else:
             django_user.delete()
             if deleted_by:
-                log_model_change(deleted_by, django_user, message={'deleted_via': deleted_via},
+                log_model_change(deleted_by, django_user, message=f"deleted_via: {deleted_via}",
                                  action=ModelAction.DELETE)
         self.save()
 
@@ -2624,9 +2628,18 @@ class DomainRequest(models.Model):
                                     email_from=settings.DEFAULT_FROM_EMAIL)
 
 
+class InvitationStatus(object):
+    BOUNCED = "Bounced"
+    SENT = "Sent"
+    DELIVERED = "Delivered"
+
+
 class Invitation(models.Model):
+    EMAIL_ID_PREFIX = "Invitation:"
+
     uuid = models.UUIDField(primary_key=True, db_index=True, default=uuid4)
     email = models.CharField(max_length=255, db_index=True)
+    email_status = models.CharField(max_length=126, null=True)
     invited_by = models.CharField(max_length=126)           # couch id of a WebUser
     invited_on = models.DateTimeField()
     is_accepted = models.BooleanField(default=False)
@@ -2676,7 +2689,8 @@ class Invitation(models.Model):
         send_html_email_async.delay(subject, self.email, html_content,
                                     text_content=text_content,
                                     cc=[inviter.get_email()],
-                                    email_from=settings.DEFAULT_FROM_EMAIL)
+                                    email_from=settings.DEFAULT_FROM_EMAIL,
+                                    messaging_event_id=f"{self.EMAIL_ID_PREFIX}{self.uuid}")
 
 
 class DomainRemovalRecord(DeleteRecord):
@@ -2719,6 +2733,10 @@ class AnonymousCouchUser(object):
     def is_active(self):
         return True
 
+    @property
+    def is_staff(self):
+        return False
+
     def is_domain_admin(self):
         return False
 
@@ -2742,6 +2760,12 @@ class AnonymousCouchUser(object):
         return False
 
     def can_edit_apps(self):
+        return False
+
+    def can_view_apps(self):
+        return False
+
+    def can_edit_reports(self):
         return False
 
     def is_eula_signed(self, version=None):
@@ -2791,6 +2815,7 @@ class AnonymousCouchUser(object):
 
 
 class UserReportingMetadataStaging(models.Model):
+    id = models.BigAutoField(primary_key=True)
     domain = models.TextField()
     user_id = models.TextField()
     app_id = models.TextField(null=True)  # not all form submissions include an app_id
@@ -2973,6 +2998,7 @@ class HQApiKey(models.Model):
     name = models.CharField(max_length=255, blank=True, default='')
     created = models.DateTimeField(default=timezone.now)
     ip_allowlist = ArrayField(models.GenericIPAddressField(), default=list)
+    role_id = models.CharField(max_length=40, blank=True, default='')
 
     class Meta(object):
         unique_together = ('user', 'name')
@@ -2987,3 +3013,13 @@ class HQApiKey(models.Model):
         # From tastypie
         new_uuid = uuid4()
         return hmac.new(new_uuid.bytes, digestmod=sha1).hexdigest()
+
+    @property
+    @memoized
+    def role(self):
+        if self.role_id:
+            try:
+                return UserRole.get(self.role_id)
+            except ResourceNotFound:
+                logging.exception('no role with id %s found in domain %s' % (self.role_id, self.domain))
+        return None

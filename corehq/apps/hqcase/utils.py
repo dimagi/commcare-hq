@@ -7,6 +7,8 @@ from django.template.loader import render_to_string
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import property_changed_in_action
+from corehq.apps.es.cases import CaseES
+from corehq.apps.es import filters
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.receiverwrapper.util import submit_form_locally
@@ -122,30 +124,15 @@ def get_case_id_by_domain_hq_user_id(domain, user_id, case_type):
 
 
 def get_case_by_identifier(domain, identifier):
-    # circular import
-    from corehq.apps.api.es import CaseES
-    case_es = CaseES(domain)
-    case_accessors = CaseAccessors(domain)
 
-    def _query_by_type(i_type):
-        q = case_es.base_query(
-            terms={
-                i_type: identifier,
-            },
-            fields=['_id', i_type],
-            size=1
-        )
-        response = case_es.run_query(q)
-        raw_docs = response['hits']['hits']
-        if raw_docs:
-            return case_accessors.get_case(raw_docs[0]['_id'])
+    case_accessors = CaseAccessors(domain)
 
     # Try by any of the allowed identifiers
     for identifier_type in ALLOWED_CASE_IDENTIFIER_TYPES:
-        case = _query_by_type(identifier_type)
-        if case is not None:
-            return case
-
+        result = CaseES().domain(domain).filter(
+            filters.term(identifier_type, identifier)).get_ids()
+        if result:
+            return case_accessors.get_case(result[0])
     # Try by case id
     try:
         case_by_id = case_accessors.get_case(identifier)

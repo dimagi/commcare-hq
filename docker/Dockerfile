@@ -1,5 +1,4 @@
 FROM dimagi/commcarehq_base:latest
-# When changing this file, also update docker/Dockerfile-py3
 
 VOLUME /mnt/commcare-hq-ro /mnt/lib
 RUN ln -s /mnt/commcare-hq-ro/docker/run.sh /mnt/run.sh && \

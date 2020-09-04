@@ -3,7 +3,8 @@ import re
 from typing import Callable, Optional
 
 from django.db import models
-from django.utils.translation import gettext_lazy as _
+from django.utils.functional import cached_property
+from django.utils.translation import gettext as _
 
 import jsonfield
 
@@ -30,6 +31,7 @@ from corehq.motech.const import (
     PASSWORD_PLACEHOLDER,
 )
 from corehq.motech.utils import b64_aes_decrypt, b64_aes_encrypt
+from corehq.util import as_text
 
 
 class ConnectionSettings(models.Model):
@@ -183,6 +185,30 @@ class ConnectionSettings(models.Model):
             f'{self.name!r} connection.'
         ))
 
+    @cached_property
+    def used_by(self):
+        """
+        Returns the names of kinds of things that are currently using
+        this instance. Used for informing users, and determining whether
+        the instance can be deleted.
+        """
+        from corehq.motech.dhis2.dbaccessors import get_dataset_maps
+        from corehq.motech.repeaters.models import Repeater
+
+        kinds = set()
+        if self.incrementalexport_set.exists():
+            kinds.add(_('Incremental Exports'))
+        if any(m.connection_settings_id == self.id
+               for m in get_dataset_maps(self.domain)):
+            kinds.add(_('DHIS2 DataSet Maps'))
+        if any(r.connection_settings_id == self.id
+                for r in Repeater.by_domain(self.domain)):
+            kinds.add(_('Data Forwarding'))
+
+        # TODO: Check OpenmrsImporters (when OpenmrsImporters use ConnectionSettings)
+
+        return kinds
+
 
 class RequestLog(models.Model):
     """
@@ -219,8 +245,8 @@ class RequestLog(models.Model):
             request_url=log_entry.url,
             request_headers=log_entry.headers,
             request_params=log_entry.params,
-            request_body=log_entry.data,
+            request_body=as_text(log_entry.data),
             request_error=log_entry.error,
             response_status=log_entry.response_status,
-            response_body=log_entry.response_body,
+            response_body=as_text(log_entry.response_body),
         )

@@ -309,6 +309,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     is_active = BooleanProperty()
     date_created = DateTimeProperty()
     default_timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
+    default_geocoder_location = DictProperty()
     case_sharing = BooleanProperty(default=False)
     secure_submissions = BooleanProperty(default=False)
     cloudcare_releases = StringProperty(choices=['stars', 'nostars', 'default'], default='default')
@@ -448,6 +449,8 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     # seconds between sending mobile UCRs to users. Can be overridden per user
     default_mobile_ucr_sync_interval = IntegerProperty()
+
+    ga_opt_out = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -796,19 +799,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         # delete couch docs
         for db, related_doc_ids in get_all_doc_ids_for_domain_grouped_by_db(self.name):
             iter_bulk_delete(db, related_doc_ids, chunksize=500)
-
-    @classmethod
-    def get_module_by_name(cls, domain_name):
-        """
-        import and return the python module corresponding to domain_name, or
-        None if it doesn't exist.
-        """
-        module_name = settings.DOMAIN_MODULE_MAP.get(domain_name, domain_name)
-
-        try:
-            return import_module(module_name) if module_name else None
-        except ImportError:
-            return None
 
     @property
     @memoized

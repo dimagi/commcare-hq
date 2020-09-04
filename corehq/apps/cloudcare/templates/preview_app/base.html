@@ -26,13 +26,23 @@
   {% initial_page_data 'is_dimagi' request.couch_user.is_dimagi %}
   {% initial_page_data 'language' request.user.language|default:'en' %}
   {% initial_page_data 'mapbox_access_token' mapbox_access_token %}
+  {% initial_page_data 'default_geocoder_location' default_geocoder_location %}
   {% initial_page_data 'username' request.user.username %}
+  {% initial_page_data 'dialer_enabled' integrations.dialer_enabled %}
+  {% initial_page_data 'gaen_otp_enabled' integrations.gaen_otp_enabled %}
+  {% initial_page_data 'hmac_root_url' integrations.hmac_root_url %}
+  {% initial_page_data 'hmac_api_key' integrations.hmac_api_key %}
+  {% initial_page_data 'hmac_hashed_secret' integrations.hmac_hashed_secret %}
   {% registerurl 'list_case_exports' request.domain %}
   {% registerurl 'list_form_exports' request.domain %}
   {% registerurl 'login_new_window' %}
   {% registerurl 'case_data' request.domain '---' %}
   {% registerurl 'render_form_data' request.domain '---' %}
   {% registerurl 'report_formplayer_error' request.domain %}
+  {% registerurl 'dialer_view' request.domain %}
+  {% if integrations.gaen_otp_enabled %}
+    {% registerurl 'gaen_otp_view' request.domain %}
+  {% endif %}
 
   <section id="case-crumbs" style="width: 800px"></section>
   <section id="cases"></section>

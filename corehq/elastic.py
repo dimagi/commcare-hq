@@ -1,27 +1,21 @@
-import copy
 import json
 import logging
 import time
-from collections import namedtuple
-from urllib.parse import unquote
 
 from django.conf import settings
 
 from memoized import memoized
 
-from corehq.util.es.interface import ElasticsearchInterface
-from corehq.util.metrics import metrics_counter
 from dimagi.utils.chunked import chunked
 from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
 
-from corehq.apps.es.utils import flatten_field_dict
-from corehq.pillows.mappings.app_mapping import APP_INDEX
-from corehq.pillows.mappings.case_mapping import CASE_INDEX
+from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
+from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
-from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
-from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
+from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX_INFO
+from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
@@ -30,8 +24,10 @@ from corehq.util.es.elasticsearch import (
     ElasticsearchException,
     SerializationError,
 )
+from corehq.util.es.interface import ElasticsearchInterface
 from corehq.util.files import TransientTempfile
 from corehq.util.json import CommCareJSONEncoder
+from corehq.util.metrics import metrics_counter
 
 
 class ESJSONSerializer(object):
@@ -78,7 +74,8 @@ def get_es_new():
     Returns an elasticsearch.Elasticsearch instance.
     """
     hosts = _es_hosts()
-    return Elasticsearch(hosts, timeout=settings.ES_SEARCH_TIMEOUT, serializer=ESJSONSerializer())
+    es = Elasticsearch(hosts, timeout=settings.ES_SEARCH_TIMEOUT, serializer=ESJSONSerializer())
+    return es
 
 
 @memoized
@@ -88,7 +85,7 @@ def get_es_export():
     Returns an elasticsearch.Elasticsearch instance.
     """
     hosts = _es_hosts()
-    return Elasticsearch(
+    es = Elasticsearch(
         hosts,
         retry_on_timeout=True,
         max_retries=3,
@@ -96,6 +93,7 @@ def get_es_export():
         timeout=300,
         serializer=ESJSONSerializer(),
     )
+    return es
 
 
 ES_DEFAULT_INSTANCE = 'default'
@@ -121,7 +119,7 @@ def doc_exists_in_es(index_info, doc_id_or_dict):
     else:
         assert isinstance(doc_id_or_dict, dict)
         doc_id = doc_id_or_dict['_id']
-    return get_es_new().exists(index_info.index, index_info.type, doc_id)
+    return ElasticsearchInterface(get_es_new()).doc_exists(index_info.alias, doc_id, index_info.type)
 
 
 def send_to_elasticsearch(index_name, doc, delete=False, es_merge_update=False):
@@ -129,16 +127,14 @@ def send_to_elasticsearch(index_name, doc, delete=False, es_merge_update=False):
     Utility method to update the doc in elasticsearch.
     Duplicates the functionality of pillowtop but can be called directly.
     """
-    from pillowtop.es_utils import ElasticsearchIndexInfo
     doc_id = doc['_id']
     if isinstance(doc_id, bytes):
         doc_id = doc_id.decode('utf-8')
-    es_meta = ES_META[index_name]
-    index_info = ElasticsearchIndexInfo(index=es_meta.index, type=es_meta.type)
+    index_info = ES_META[index_name]
     doc_exists = doc_exists_in_es(index_info, doc_id)
     return send_to_es(
-        index=es_meta.index,
-        doc_type=es_meta.type,
+        alias=index_info.alias,
+        doc_type=index_info.type,
         doc_id=doc_id,
         es_getter=get_es_new,
         name="{}.{} <{}>:".format(send_to_elasticsearch.__module__,
@@ -154,24 +150,21 @@ def send_to_elasticsearch(index_name, doc, delete=False, es_merge_update=False):
 def refresh_elasticsearch_index(index_name):
     es_meta = ES_META[index_name]
     es = get_es_new()
-    es.indices.refresh(index=es_meta.index)
+    es.indices.refresh(index=es_meta.alias)
 
 
-EsMeta = namedtuple('EsMeta', 'index, type')
-
+# Todo; These names can be migrated to use hq_index_name attribute constants in future
 ES_META = {
-    "forms": EsMeta(XFORM_INDEX_INFO.index, XFORM_INDEX_INFO.type),
-    "cases": EsMeta(CASE_INDEX, 'case'),
-    "active_cases": EsMeta(CASE_INDEX, 'case'),
-    "users": EsMeta(USER_INDEX_INFO.index, USER_INDEX_INFO.type),
-    "users_all": EsMeta(USER_INDEX_INFO.index, USER_INDEX_INFO.type),
-    "domains": EsMeta(DOMAIN_INDEX_INFO.index, DOMAIN_INDEX_INFO.type),
-    "apps": EsMeta(APP_INDEX, 'app'),
-    "groups": EsMeta(GROUP_INDEX_INFO.index, GROUP_INDEX_INFO.type),
-    "sms": EsMeta(SMS_INDEX_INFO.index, SMS_INDEX_INFO.type),
-    "report_cases": EsMeta(REPORT_CASE_INDEX, 'report_case'),
-    "report_xforms": EsMeta(REPORT_XFORM_INDEX, 'report_xform'),
-    "case_search": EsMeta(CASE_SEARCH_INDEX_INFO.index, CASE_SEARCH_INDEX_INFO.type),
+    "forms": XFORM_INDEX_INFO,
+    "cases": CASE_INDEX_INFO,
+    "users": USER_INDEX_INFO,
+    "domains": DOMAIN_INDEX_INFO,
+    "apps": APP_INDEX_INFO,
+    "groups": GROUP_INDEX_INFO,
+    "sms": SMS_INDEX_INFO,
+    "report_cases": REPORT_CASE_INDEX_INFO,
+    "report_xforms": REPORT_XFORM_INDEX_INFO,
+    "case_search": CASE_SEARCH_INDEX_INFO,
 }
 
 ES_MAX_CLAUSE_COUNT = 1024  #  this is what ES's maxClauseCount is currently set to,
@@ -200,16 +193,9 @@ def run_query(index_name, q, debug_host=None, es_instance_alias=ES_DEFAULT_INSTA
 
     es_interface = ElasticsearchInterface(es_instance)
 
+    es_meta = ES_META[index_name]
     try:
-        es_meta = ES_META[index_name]
-    except KeyError:
-        from corehq.apps.userreports.util import is_ucr_table
-        if is_ucr_table(index_name):
-            es_meta = EsMeta(index_name, 'indicator')
-        else:
-            raise
-    try:
-        results = es_interface.search(es_meta.index, es_meta.type, body=q)
+        results = es_interface.search(es_meta.alias, es_meta.type, body=q)
         report_and_fail_on_shard_failures(results)
         return results
     except ElasticsearchException as e:
@@ -223,7 +209,7 @@ def mget_query(index_name, ids):
     es_interface = ElasticsearchInterface(get_es_new())
     es_meta = ES_META[index_name]
     try:
-        return es_interface.get_bulk_docs(es_meta.index, es_meta.type, ids)
+        return es_interface.get_bulk_docs(es_meta.alias, es_meta.type, ids)
     except ElasticsearchException as e:
         raise ESError(e)
 
@@ -251,20 +237,13 @@ def iter_es_docs_from_query(query):
                 for doc in iter_es_docs(query.index, doc_ids):
                     yield doc
 
-    return ScanResult(scroll_result.count, iter_export_docs())
+    return ScanResult(query.count(), iter_export_docs())
 
 
 def scroll_query(index_name, q, es_instance_alias=ES_DEFAULT_INSTANCE):
     es_meta = ES_META[index_name]
-    try:
-        return scan(
-            get_es_instance(es_instance_alias),
-            index=es_meta.index,
-            doc_type=es_meta.type,
-            query=q,
-        )
-    except ElasticsearchException as e:
-        raise ESError(e)
+    es_interface = ElasticsearchInterface(get_es_instance(es_instance_alias))
+    return es_interface.scan(es_meta.alias, q, es_meta.type)
 
 
 class ScanResult(object):
@@ -278,220 +257,8 @@ class ScanResult(object):
             yield x
 
 
-def scan(client, query=None, scroll='5m', **kwargs):
-    """
-    This is a copy of elasticsearch.helpers.scan, except this function returns
-    a ScanResult (which includes the total number of documents), and removes
-    some options from scan that we aren't using.
-
-    Simple abstraction on top of the
-    :meth:`~elasticsearch.Elasticsearch.scroll` api - a simple iterator that
-    yields all hits as returned by underlining scroll requests.
-
-    :arg client: instance of :class:`~elasticsearch.Elasticsearch` to use
-    :arg query: body for the :meth:`~elasticsearch.Elasticsearch.search` api
-    :arg scroll: Specify how long a consistent view of the index should be
-        maintained for scrolled search
-
-    Any additional keyword arguments will be passed to the initial
-    :meth:`~elasticsearch.Elasticsearch.search` call::
-
-        scan(es,
-            query={"match": {"title": "python"}},
-            index="orders-*",
-            doc_type="books"
-        )
-
-    """
-    kwargs['search_type'] = 'scan'
-    # initial search
-    es_interface = ElasticsearchInterface(client)
-    initial_resp = es_interface.search(body=query, scroll=scroll, **kwargs)
-
-    def fetch_all(initial_response):
-
-        resp = initial_response
-        scroll_id = resp.get('_scroll_id')
-        if scroll_id is None:
-            return
-        iteration = 0
-
-        while True:
-
-            start = int(time.time() * 1000)
-            resp = es_interface.scroll(scroll_id, scroll=scroll)
-            for hit in resp['hits']['hits']:
-                yield hit
-
-            # check if we have any errrors
-            if resp["_shards"]["failed"]:
-                logging.getLogger('elasticsearch.helpers').warning(
-                    'Scroll request has failed on %d shards out of %d.',
-                    resp['_shards']['failed'], resp['_shards']['total']
-                )
-
-            scroll_id = resp.get('_scroll_id')
-            # end of scroll
-            if scroll_id is None or not resp['hits']['hits']:
-                break
-
-            iteration += 1
-
-    count = initial_resp.get("hits", {}).get("total", None)
-    return ScanResult(count, fetch_all(initial_resp))
-
-
 SIZE_LIMIT = 1000000
 SCROLL_PAGE_SIZE_LIMIT = 1000
-
-
-def es_query(params=None, facets=None, terms=None, q=None, es_index=None, start_at=None, size=None, dict_only=False,
-             fields=None, facet_size=None):
-    if terms is None:
-        terms = []
-    if q is None:
-        q = {}
-    else:
-        q = copy.deepcopy(q)
-    if params is None:
-        params = {}
-
-    q["size"] = size if size is not None else q.get("size", SIZE_LIMIT)
-    q["from"] = start_at or 0
-
-    def get_or_init_anded_filter_from_query_dict(qdict):
-        and_filter = qdict.get("filter", {}).pop("and", [])
-        filter = qdict.pop("filter", None)
-        if filter:
-            and_filter.append(filter)
-        return {"and": and_filter}
-
-    filter = get_or_init_anded_filter_from_query_dict(q)
-
-    def convert(param):
-        #todo: find a better way to handle bools, something that won't break fields that may be 'T' or 'F' but not bool
-        if param == 'T' or param is True:
-            return 1
-        elif param == 'F' or param is False:
-            return 0
-        return param
-
-    for attr in params:
-        if attr not in terms:
-            attr_val = [convert(params[attr])] if not isinstance(params[attr], list) else [convert(p) for p in params[attr]]
-            filter["and"].append({"terms": {attr: attr_val}})
-
-    if facets:
-        q["facets"] = q.get("facets", {})
-        if isinstance(facets, list):
-            for facet in facets:
-                q["facets"][facet] = {"terms": {"field": facet, "size": facet_size or SIZE_LIMIT}}
-        elif isinstance(facets, dict):
-            q["facets"].update(facets)
-
-    if filter["and"]:
-        query = q.pop("query", {})
-        q["query"] = {
-            "filtered": {
-                "filter": filter,
-            }
-        }
-        q["query"]["filtered"]["query"] = query if query else {"match_all": {}}
-
-    if fields is not None:
-        q["fields"] = q.get("fields", [])
-        q["fields"].extend(fields)
-
-    if dict_only:
-        return q
-
-    es_index = es_index or 'domains'
-    es_interface = ElasticsearchInterface(get_es_new())
-    meta = ES_META[es_index]
-
-    try:
-        result = es_interface.search(meta.index, meta.type, body=q)
-        report_and_fail_on_shard_failures(result)
-    except ElasticsearchException as e:
-        raise ESError(e)
-
-    if fields is not None:
-        for res in result['hits']['hits']:
-            flatten_field_dict(res)
-
-    return result
-
-
-def stream_es_query(chunksize=100, **kwargs):
-    size = kwargs.pop("size", None)
-    kwargs.pop("start_at", None)
-    kwargs["size"] = chunksize
-    for i in range(0, size or SIZE_LIMIT, chunksize):
-        kwargs["start_at"] = i
-        res = es_query(**kwargs)
-        if not res["hits"]["hits"]:
-            return
-        for hit in res["hits"]["hits"]:
-            yield hit
-
-
-def parse_args_for_es(request, prefix=None):
-    """
-    Parses a request's query string for url parameters. It specifically parses the facet url parameter so that each term
-    is counted as a separate facet. e.g. 'facets=region author category' -> facets = ['region', 'author', 'category']
-    """
-    def strip_array(str):
-        return str[:-2] if str.endswith('[]') else str
-
-    params, facets = {}, []
-    for attr in request.GET.lists():
-        param, vals = attr[0], attr[1]
-        if param == 'facets':
-            facets = vals[0].split()
-            continue
-        if prefix:
-            if param.startswith(prefix):
-                params[strip_array(param[len(prefix):])] = [unquote(a) for a in vals]
-        else:
-            params[strip_array(param)] = [unquote(a) for a in vals]
-
-    return params, facets
-
-
-def generate_sortables_from_facets(results, params=None):
-    """
-    Sortable is a list of tuples containing the field name (e.g. Category) and a list of dictionaries for each facet
-    under that field (e.g. HIV and MCH are under Category). Each facet's dict contains the query string, display name,
-    count and active-status for each facet.
-    """
-
-    def generate_facet_dict(f_name, ft):
-        # hack to get around unicode encoding issues. However it breaks this specific facet
-        if isinstance(ft['term'], str):
-            ft['term'] = ft['term'].encode('ascii', 'replace')
-
-        return {'name': ft["term"],
-                'count': ft["count"],
-                'active': str(ft["term"]) in params.get(f_name, "")}
-
-    sortable = []
-    res_facets = results.get("facets", [])
-    for facet in res_facets:
-        if "terms" in res_facets[facet]:
-            sortable.append((facet, [generate_facet_dict(facet, ft) for ft in res_facets[facet]["terms"] if ft["term"]]))
-
-    return sortable
-
-
-def fill_mapping_with_facets(facet_mapping, results, params=None):
-    sortables = dict(generate_sortables_from_facets(results, params))
-    for _, _, facets in facet_mapping:
-        for facet_dict in facets:
-            facet_dict["choices"] = sortables.get(facet_dict["facet"], [])
-            if facet_dict.get('mapping'):
-                for choice in facet_dict["choices"]:
-                    choice["display"] = facet_dict.get('mapping').get(choice["name"], choice["name"])
-    return facet_mapping
 
 
 def report_and_fail_on_shard_failures(search_result):

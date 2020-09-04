@@ -97,6 +97,9 @@ class XformsEvent(object):
         self._dict = datadict
         self.type = datadict["type"]
         self.caption = datadict.get("caption", "")
+        self.caption_image = datadict.get("caption_image", None)
+        self.caption_audio = datadict.get("caption_audio", None)
+        self.caption_video = datadict.get("caption_video", None)
         self.datatype = datadict.get("datatype", "")
         self.output = datadict.get("output", "")
         self.choices = datadict.get("choices", None)

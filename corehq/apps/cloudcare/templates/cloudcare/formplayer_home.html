@@ -12,7 +12,7 @@
 {% block head %}
   {{ block.super }}
   <script src="{% static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
-  <script src="{% static 'datatables/media/js/dataTables.bootstrap.min.js' %}"></script>
+  <script src="{% static 'datatables-bootstrap3/BS3/assets/js/datatables.js' %}"></script>
   <style id="persistent-cell-layout-style"></style>
   <style id="persistent-cell-grid-style"></style>
   <style id="list-cell-layout-style"></style>
@@ -75,14 +75,24 @@
   {% initial_page_data 'grid_polyfill_path' 'css-grid-polyfill-binaries/css-polyfills.js'|static %}
   {% initial_page_data 'language' language %}
   {% initial_page_data 'mapbox_access_token' mapbox_access_token %}
+  {% initial_page_data 'default_geocoder_location' default_geocoder_location %}
   {% initial_page_data 'single_app_mode' single_app_mode %}
   {% initial_page_data 'username' username %}
   {% initial_page_data 'use_live_query' use_live_query %}
+  {% initial_page_data 'dialer_enabled' integrations.dialer_enabled %}
+  {% initial_page_data 'gaen_otp_enabled' integrations.gaen_otp_enabled %}
+  {% initial_page_data 'hmac_root_url' integrations.hmac_root_url %}
+  {% initial_page_data 'hmac_api_key' integrations.hmac_api_key %}
+  {% initial_page_data 'hmac_hashed_secret' integrations.hmac_hashed_secret %}
   {% registerurl 'list_case_exports' request.domain %}
   {% registerurl 'list_form_exports' request.domain %}
   {% registerurl 'case_data' request.domain '---' %}
   {% registerurl 'render_form_data' request.domain '---' %}
   {% registerurl 'report_formplayer_error' request.domain %}
+  {% registerurl 'dialer_view' request.domain %}
+  {% if integrations.gaen_otp_enabled %}
+    {% registerurl 'gaen_otp_view' request.domain %}
+  {% endif %}
 
   <!-- For now we won't touch this since the form entry code is coupled with it  -->
 

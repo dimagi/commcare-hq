@@ -37,6 +37,7 @@ from casexml.apps.phone.tasks import ASYNC_RESTORE_SENT
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.sql_db.routers import read_from_plproxy_standbys
 from corehq.toggles import LIVEQUERY_READ_FROM_STANDBYS, NAMESPACE_USER
+from corehq.util.metrics import metrics_histogram
 from corehq.util.metrics.load_counters import case_load_counter
 
 
@@ -306,6 +307,13 @@ def batch_cases(accessor, case_ids):
         return list(islice(iterable, n))
 
     track_load = case_load_counter("livequery_restore", accessor.domain)
+    metrics_histogram(
+        'commcare.restore.case_load',
+        len(case_ids),
+        'cases',
+        [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000],
+        tags={'domain': accessor.domain}
+    )
     ids = iter(case_ids)
     while True:
         next_ids = take(1000, ids)

@@ -12,7 +12,7 @@ from corehq.apps.user_importer.importer import (
 )
 from corehq.apps.user_importer.tasks import import_users_and_groups
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.apps.users.models import CommCareUser, Permissions, UserRole, WebUser
+from corehq.apps.users.models import CommCareUser, DomainPermissionsMirror, Permissions, UserRole, WebUser
 
 
 class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
@@ -24,7 +24,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         cls.domain = Domain.get_or_create_with_name(name=cls.domain_name)
         cls.other_domain = Domain.get_or_create_with_name(name='other-domain')
 
-        permissions = Permissions(edit_apps=True, view_reports=True)
+        permissions = Permissions(edit_apps=True, view_apps=True, view_reports=True)
         cls.role = UserRole.get_or_create_with_permissions(cls.domain.name, permissions, 'edit-apps')
         cls.patcher = patch('corehq.apps.user_importer.tasks.UserUploadRecord')
         cls.patcher.start()
@@ -396,6 +396,20 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         web_user = WebUser.get_by_username(username)
         self.assertFalse(web_user.is_member_of(self.domain.name))
+
+    def test_multi_domain(self):
+        dm = DomainPermissionsMirror(source=self.domain.name, mirror=self.other_domain.name)
+        dm.save()
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(username=123, domain=self.other_domain.name)],
+            [],
+            None,
+            mock.MagicMock()
+        )
+        self.assertIsNotNone(
+            CommCareUser.get_by_username('{}@{}.commcarehq.org'.format('123', self.other_domain.name))
+        )
 
 
 class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):

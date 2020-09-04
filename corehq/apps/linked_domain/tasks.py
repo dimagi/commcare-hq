@@ -1,24 +1,27 @@
-import textwrap
-
+from celery import chord
 from celery.task import task
 from collections import defaultdict
 
 from django.conf import settings
+from django.template.defaultfilters import linebreaksbr
 from django.utils.translation import ugettext as _
+from django.urls import reverse
 
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.web import get_url_base
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.app_manager.views.utils import update_linked_app
-from corehq.apps.hqwebapp.tasks import send_mail_async
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.linked_domain.const import MODEL_APP, MODEL_CASE_SEARCH, MODEL_REPORT
-from corehq.apps.linked_domain.dbaccessors import get_linked_domains
+from corehq.apps.linked_domain.dbaccessors import get_domain_master_link
 from corehq.apps.linked_domain.ucr import update_linked_ucr
 from corehq.apps.linked_domain.updates import update_model_type
 from corehq.apps.linked_domain.util import pull_missing_multimedia_for_app_and_notify
 from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
+from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.users.models import CouchUser
 
 
@@ -29,76 +32,68 @@ def pull_missing_multimedia_for_app_and_notify_task(domain, app_id, email=None):
 
 @task(queue='background_queue')
 def push_models(master_domain, models, linked_domains, build_apps, username):
-    user = CouchUser.get_by_username(username)
-    manager = ReleaseManager(master_domain, user)
-    manager.release(models, linked_domains, build_apps)
-    manager.send_email()
+    ReleaseManager(master_domain, username).release(models, linked_domains, build_apps)
 
 
 class ReleaseManager():
-    def __init__(self, master_domain, user):
+    def __init__(self, master_domain, username):
         self.master_domain = master_domain
-        self.user = user
-        self.linked_domains = []
-        self.models = []
+        self.user = CouchUser.get_by_username(username)
         self._reset()
 
-    def _reset(self, models=None, linked_domains=None):
-        self.errors_by_domain = defaultdict(list)
-        self.successes_by_domain = defaultdict(list)
-        self.models = models or []
-        self.linked_domains = linked_domains or []
+    def _reset(self):
+        self.errors_by_domain = {'html': defaultdict(list), 'text': defaultdict(list)}
+        self.successes_by_domain = {'html': defaultdict(list), 'text': defaultdict(list)}
 
-    def _add_error(self, domain, message):
-        self.errors_by_domain[domain].append(message)
+    def results(self):
+        return (self.successes_by_domain, self.errors_by_domain)
 
-    def _add_success(self, domain, message):
-        self.successes_by_domain[domain].append(message)
+    def add_error(self, domain, html, text=None):
+        text = text or html
+        self.errors_by_domain['html'][domain].append(html)
+        self.errors_by_domain['text'][domain].append(text)
 
-    def _get_errors(self, domain):
-        return self.errors_by_domain[domain]
+    def add_success(self, domain, html, text=None):
+        text = text or html
+        self.successes_by_domain['html'][domain].append(html)
+        self.successes_by_domain['text'][domain].append(text)
 
-    def _get_successes(self, domain):
-        return self.successes_by_domain[domain]
+    def update_successes(self, successes):
+        self._update_messages(self.successes_by_domain, successes)
+
+    def update_errors(self, errors):
+        self._update_messages(self.errors_by_domain, errors)
+
+    def _update_messages(self, attr, messages):
+        for fmt in ('html', 'text'):
+            for domain, msgs in messages[fmt].items():
+                attr[fmt][domain].extend(msgs)
+
+    def get_error_domain_count(self):
+        return len(self.errors_by_domain['html'])
+
+    def get_success_domain_count(self):
+        return len(self.successes_by_domain['html'])
+
+    def _get_errors(self, domain, html=True):
+        return self.errors_by_domain['html' if html else 'text'][domain]
+
+    def _get_successes(self, domain, html=True):
+        return self.successes_by_domain['html' if html else 'text'][domain]
 
     def release(self, models, linked_domains, build_apps=False):
-        self._reset(models, linked_domains)
-        domain_links_by_linked_domain = {
-            link.linked_domain: link for link in get_linked_domains(self.master_domain)
-        }
-        for linked_domain in self.linked_domains:
-            if linked_domain not in domain_links_by_linked_domain:
-                self._add_error(linked_domain, _("Project space {} is no longer linked to {}. No content "
-                                                 "was released to it.").format(self.master_domain, linked_domain))
-                continue
-            domain_link = domain_links_by_linked_domain[linked_domain]
-            for model in self.models:
-                error = None
-                try:
-                    if model['type'] == MODEL_APP:
-                        error = self._release_app(domain_link, model, self.user, build_apps)
-                    elif model['type'] == MODEL_REPORT:
-                        error = self._release_report(domain_link, model)
-                    elif model['type'] == MODEL_CASE_SEARCH:
-                        error = self._release_case_search(domain_link, model, self.user)
-                    else:
-                        error = self._release_model(domain_link, model, self.user)
-                except Exception as e:   # intentionally broad
-                    error = str(e)
-                    notify_exception(None, "Exception pushing linked domains: {}".format(e))
+        self._reset()
+        header = [
+            release_domain.si(self.master_domain, linked_domain, self.user.username, models, build_apps)
+            for linked_domain in linked_domains
+        ]
+        callback = send_linked_domain_release_email.s(self.master_domain, self.user.username,
+                                                      models, linked_domains)
+        chord(header)(callback)
 
-                if error:
-                    self._add_error(linked_domain, _("Could not update {}: {}").format(model['name'], error))
-                else:
-                    self._add_success(linked_domain, _("Updated {} successfully").format(model['name']))
-
-    def send_email(self):
-        subject = _("Linked project release complete.")
-        if self.errors_by_domain:
-            subject += _(" Errors occurred.")
-
-        error_domain_count = len(self.errors_by_domain)
-        success_domain_count = len(self.linked_domains) - error_domain_count
+    def get_email_message(self, models, linked_domains, html=True):
+        error_domain_count = self.get_error_domain_count()
+        separator = "\n"
         message = _("""
 Release complete. {} project(s) succeeded. {}
 
@@ -107,23 +102,22 @@ The following content was released:
 
 The following linked project spaces received content:
         """).format(
-            success_domain_count,
+            self.get_success_domain_count(),
             _("{} project(s) encountered errors.").format(error_domain_count) if error_domain_count else "",
-            "\n".join(["- " + m['name'] for m in self.models])
-        )
-        for linked_domain in self.linked_domains:
-            if not self._get_errors(linked_domain):
-                message += _("\n- {} updated successfully").format(linked_domain)
+            separator.join(["- {}".format(m['name']) for m in models])
+        ).strip()
+        for linked_domain in sorted(linked_domains):
+            if not self._get_errors(linked_domain, html):
+                message += _("{}- {} updated successfully").format(separator, linked_domain)
             else:
-                message += _("\n- {} encountered errors:").format(linked_domain)
-                for msg in self._get_errors(linked_domain) + self._get_successes(linked_domain):
-                    message += "\n   - " + msg
-        email = self.user.email or self.user.username
-        send_mail_async.delay(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
+                message += _("{}- {} encountered errors:").format(separator, linked_domain)
+                for msg in self._get_errors(linked_domain, html) + self._get_successes(linked_domain, html):
+                    message += separator + "   - " + msg
+        return linebreaksbr(message) if html else message
 
     def _release_app(self, domain_link, model, user, build_and_release=False):
         if toggles.MULTI_MASTER_LINKED_DOMAINS.enabled(domain_link.linked_domain):
-            return _("Multi master flag is in use")
+            return self._error_tuple(_("Multi master flag is in use"))
 
         app_id = model['detail']['app_id']
         found = False
@@ -135,7 +129,7 @@ The following linked project spaces received content:
                     app = update_linked_app(linked_app, app_id, user.user_id)
 
             if not found:
-                return _("Could not find app")
+                return self._error_tuple(_("Could not find app"))
 
             if build_and_release:
                 error_prefix = _("Updated app but did not build or release: ")
@@ -143,7 +137,7 @@ The following linked project spaces received content:
                 build.is_released = True
                 build.save(increment_version=False)
         except Exception as e:  # intentionally broad
-            return error_prefix + str(e)
+            return self._error_tuple(error_prefix + str(e))
 
     def _release_report(self, domain_link, model):
         report_id = model['detail']['report_id']
@@ -154,14 +148,91 @@ The following linked project spaces received content:
                 update_linked_ucr(domain_link, linked_report.get_id)
 
         if not found:
-            return _("Could not find report")
+            report = ReportConfiguration.get(report_id)
+            if report.report_meta.created_by_builder:
+                view = 'edit_report_in_builder'
+            else:
+                view = 'edit_configurable_report'
+            url = get_url_base() + reverse(view, args=[domain_link.master_domain, report_id])
+            return self._error_tuple(
+                _('Could not find report. <a href="{}">Click here</a> and click "Link Report" to link this '
+                  + 'report.').format(url),
+                text=_('Could not find report. Please check that the report has been linked.'),
+            )
 
     def _release_case_search(self, domain_link, model, user):
         if not toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain_link.linked_domain):
-            return _("Case claim flag is not on")
+            return self._error_tuple(_("Case claim flag is not on"))
 
         return self._release_model(domain_link, model, user)
 
     def _release_model(self, domain_link, model, user):
         update_model_type(domain_link, model['type'], model_detail=model['detail'])
         domain_link.update_last_pull(model['type'], user._id, model_detail=model['detail'])
+
+    def _error_tuple(self, html, text=None):
+        text = text or html
+        return (html, text)
+
+
+@task(queue='background_queue')
+def release_domain(master_domain, linked_domain, username, models, build_apps=False):
+    manager = ReleaseManager(master_domain, username)
+
+    domain_link = get_domain_master_link(linked_domain)
+    if not domain_link or domain_link.master_domain != master_domain:
+        manager.add_error(linked_domain, _("Project space {} is no longer linked to {}. No content "
+                                           "was released to it.").format(master_domain, linked_domain))
+        return manager.results()
+
+    for model in models:
+        errors = None
+        try:
+            if model['type'] == MODEL_APP:
+                errors = manager._release_app(domain_link, model, manager.user, build_apps)
+            elif model['type'] == MODEL_REPORT:
+                errors = manager._release_report(domain_link, model)
+            elif model['type'] == MODEL_CASE_SEARCH:
+                errors = manager._release_case_search(domain_link, model, manager.user)
+            else:
+                errors = manager._release_model(domain_link, model, manager.user)
+        except Exception as e:   # intentionally broad
+            errors = [str(e), str(e)]
+            notify_exception(None, "Exception pushing linked domains: {}".format(e))
+
+        if errors:
+            manager.add_error(
+                domain_link.linked_domain,
+                _("Could not update {}: {}").format(model['name'], errors[0]),
+                text=_("Could not update {}: {}").format(model['name'], errors[1]))
+        else:
+            manager.add_success(domain_link.linked_domain, _("Updated {} successfully").format(model['name']))
+
+    return manager.results()
+
+
+@task(queue='background_queue')
+def send_linked_domain_release_email(results, master_domain, username, models, linked_domains):
+    manager = ReleaseManager(master_domain, username)
+
+    # chord sends a list of results only if there were multiple tasks
+    if len(linked_domains) == 1:
+        results = [results]
+
+    for result in results:
+        (successes, errors) = result
+        manager.update_successes(successes)
+        manager.update_errors(errors)
+
+    subject = _("Linked project release complete.")
+    if manager.get_error_domain_count():
+        subject += _(" Errors occurred.")
+
+    email = manager.user.email or manager.user.username
+    send_html_email_async(
+        subject,
+        email,
+        manager.get_email_message(models, linked_domains, html=True),
+        text_content=manager.get_email_message(models, linked_domains, html=False),
+        email_from=settings.DEFAULT_FROM_EMAIL
+    )

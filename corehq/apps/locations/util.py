@@ -111,8 +111,8 @@ def parent_child(domain):
 
 def get_location_data_model(domain):
     from .views import LocationFieldsView
-    from corehq.apps.custom_data_fields.models import SQLCustomDataFieldsDefinition
-    return SQLCustomDataFieldsDefinition.get_or_create(
+    from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
+    return CustomDataFieldsDefinition.get_or_create(
         domain,
         LocationFieldsView.field_type,
     )
@@ -281,7 +281,8 @@ class LocationExporter(object):
         writer.write([('types', rows)])
 
 
-def dump_locations(domain, download_id, include_consumption, headers_only, root_location_id=None, task=None):
+def dump_locations(domain, download_id, include_consumption, headers_only,
+                   owner_id, root_location_id=None, task=None):
     exporter = LocationExporter(domain, include_consumption=include_consumption, root_location_id=root_location_id,
                                 headers_only=headers_only, async_task=task)
 
@@ -314,6 +315,7 @@ def dump_locations(domain, download_id, include_consumption, headers_only, root_
             mimetype=file_format.mimetype,
             content_disposition=safe_filename_header(filename, file_format.extension),
             download_id=download_id,
+            owner_ids=[owner_id],
         )
 
 
