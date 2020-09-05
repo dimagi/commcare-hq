@@ -26,7 +26,7 @@ class DomainQuerySetAdapter(object):
         self.es_query = es_query
 
     def count(self):
-        return self.es_query.size(0).run().total
+        return self.es_query.count()
 
     def __getitem__(self, item):
         if isinstance(item, slice):
