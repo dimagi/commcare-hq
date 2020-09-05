@@ -181,7 +181,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
             var self = this,
                 errorMessage = null,
                 isHTML = false,
-                Errors = hqImport("cloudcare/js/formplayer/errors");
+                Errors = hqImport("cloudcare/js/form_entry/errors");
             if (resp.status === 423) {
                 errorMessage = Errors.LOCK_TIMEOUT_ERROR;
             } else if (resp.status === 401) {
