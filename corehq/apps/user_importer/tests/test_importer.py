@@ -293,7 +293,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
         import_users_and_groups(
             self.domain.name,
-            [self._get_spec(user_id=self.user.user_id, data={'key': 'G#'})],
+            [self._get_spec(user_id=self.user.user_id, data={'key': 'G#'}, location_code=self.loc1.site_code)],
             [],
             None,
             mock.MagicMock()
