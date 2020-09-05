@@ -59,7 +59,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         self.rawAnswer.subscribe(self.onPreProcess.bind(self));
         self.previousAnswer = self.answer();
 
-    };
+    }
     EntryArrayAnswer.prototype = Object.create(Entry.prototype);
     EntryArrayAnswer.prototype.constructor = Entry;
     EntryArrayAnswer.prototype.onAnswerChange = function (newValue) {
@@ -117,10 +117,10 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
                 },
             });
         }
-    };
+    }
     EntrySingleAnswer.prototype = Object.create(Entry.prototype);
     EntrySingleAnswer.prototype.constructor = Entry;
-    EntrySingleAnswer.prototype.onAnswerChange = function (newValue) {
+    EntrySingleAnswer.prototype.onAnswerChange = function () {
         this.question.onchange();
     };
     EntrySingleAnswer.prototype.enableReceiver = function (question, options) {
@@ -201,7 +201,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
             return true;
         };
 
-        self.getErrorMessage = function() {
+        self.getErrorMessage = function () {
             return null;
         };
 
@@ -387,7 +387,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
             if (rawAnswer === '') {
                 return null;
             }
-            return (!(/^[+\-]?\d*(\.\d+)?$/.test(rawAnswer)) ? "This does not appear to be a valid phone/numeric number" : null);
+            return (!(/^[+-]?\d*(\.\d+)?$/.test(rawAnswer)) ? "This does not appear to be a valid phone/numeric number" : null);
         };
 
         this.helpText = function () {
@@ -410,10 +410,12 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         var valueLimit = options.valueLimit || Const.FLOAT_VALUE_LIMIT;
 
         this.getErrorMessage = function (rawAnswer) {
-            if (isNaN(+rawAnswer))
+            if (isNaN(+rawAnswer)) {
                 return gettext("Not a valid number");
-            if (+rawAnswer > valueLimit)
+            }
+            if (+rawAnswer > valueLimit) {
                 return gettext("Number is too large");
+            }
             return null;
         };
 
@@ -800,7 +802,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
 
                     if (isPhoneMode && self.timepicker && self.datepicker) {
                         $dt.find('.xdsoft_save_selected')
-                            .show().text(django.gettext('Save'))
+                            .show().text(gettext('Save'))
                             .addClass('btn btn-primary')
                             .removeClass('blue-gradient-button');
                         $dt.find('.xdsoft_save_selected').appendTo($dt);
@@ -944,7 +946,6 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
     function getEntry(question) {
         var entry = null;
         var options = {};
-        var isNumeric = false;
         var isMinimal = false;
         var isCombobox = false;
         var isLabel = false;

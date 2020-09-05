@@ -42,7 +42,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
         events: {
             'click': 'onClickUser',
         },
-        onClickUser: function (e) {
+        onClickUser: function () {
             Util.confirmationModal({
                 title: gettext('Log in as ' + this.model.get('username') + '?'),
                 message: _.template($('#user-data-template').html())(

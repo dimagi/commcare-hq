@@ -38,7 +38,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                 var newOptionsData = JSON.stringify($.extend(true, { mustRestore: true }, JSON.parse(options.data)));
                                 menus.fetch($.extend(true, {}, options, { data: newOptionsData }));
                             }, gettext('Waiting for server progress'));
-                        } else if (response.hasOwnProperty('exception')) {
+                        } else if (_.has(response, 'exception')) {
                             FormplayerFrontend.trigger('clearProgress');
                             FormplayerFrontend.trigger(
                                 'showError',
