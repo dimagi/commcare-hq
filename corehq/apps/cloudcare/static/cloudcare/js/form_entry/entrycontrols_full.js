@@ -6,11 +6,10 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         MAPBOX_ACCESS_TOKEN = initialPageData.get("mapbox_access_token");
 
     /**
-     * The base Object for all entries. Each entry takes a question object and options
+     * The base Object for all entries. Each entry takes a question object
      * @param {Object} question - A question object
-     * @param {Object} object - A hash of different options
      */
-    function Entry(question, options) {
+    function Entry(question) {
         var self = this;
         self.question = question;
         self.answer = question.answer;
@@ -23,7 +22,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         };
 
         // Returns an error message given the answer. null if no error
-        self.getErrorMessage = function (rawAnswer) {
+        self.getErrorMessage = function () {
             return null;
         };
 
@@ -37,7 +36,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
             self.answer.subscribe(self.onAnswerChange.bind(self));
         }
     }
-    Entry.prototype.onAnswerChange = function (newValue) {};
+    Entry.prototype.onAnswerChange = function () {};
 
     // This should set the answer value if the answer is valid. If the raw answer is valid, this
     // function performs any sort of processing that needs to be done before setting the answer.
@@ -53,7 +52,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
      */
     function EntryArrayAnswer(question, options) {
         var self = this;
-        Entry.call(self, question, options);
+        Entry.call(self, question);
         self.rawAnswer = ko.observableArray(_.clone(question.answer()));
 
         self.rawAnswer.subscribe(self.onPreProcess.bind(self));
@@ -62,7 +61,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
     }
     EntryArrayAnswer.prototype = Object.create(Entry.prototype);
     EntryArrayAnswer.prototype.constructor = Entry;
-    EntryArrayAnswer.prototype.onAnswerChange = function (newValue) {
+    EntryArrayAnswer.prototype.onAnswerChange = function () {
         if (Utils.answersEqual(this.answer(), this.previousAnswer)) {
             return;
         }
@@ -101,7 +100,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
             return answer;
         };
 
-        Entry.call(self, question, options);
+        Entry.call(self, question);
         self.valueUpdate = undefined;
         self.rawAnswer = ko.observable(getRawAnswer(question.answer()));
         self.placeholderText = '';
@@ -154,9 +153,9 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
     /**
      * An entry that represent a question label.
      */
-    function InfoEntry(question, options) {
+    function InfoEntry(question) {
         var self = this;
-        Entry.call(self, question, options);
+        Entry.call(self, question);
         self.templateType = 'blank';
     }
 
@@ -167,9 +166,9 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
     /**
      * The entry used when we have an unidentified entry
      */
-    function UnsupportedEntry(question, options) {
+    function UnsupportedEntry(question) {
         var self = this;
-        Entry.call(self, question, options);
+        Entry.call(self, question);
         self.templateType = 'unsupported';
         self.answer('Not Supported by Web Entry');
     }
@@ -963,7 +962,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         switch (question.datatype()) {
             case Const.STRING:
                 // Barcode uses text box for CloudCare so it's possible to still enter a barcode field
-            case Const.BARCODE:
+            case Const.BARCODE:     // eslint-disable-line no-fallthrough
                 // If it's a receiver, it cannot autoupdate because updates will come quickly which messes with the
                 // autoupdate rate limiting.
                 if (receiveStyle) {
