@@ -226,7 +226,6 @@ describe('WebForm', function () {
 
             server.respond();
             assert.equal(sess.session_id, 'my-session');
-            sess.renderFormXml.restore();
         });
     });
 });
