@@ -1,9 +1,9 @@
-/*global _, Marionette */
+/*global Marionette */
 
-hqDefine("cloudcare/js/formplayer/apps/views", function() {
+hqDefine("cloudcare/js/formplayer/apps/views", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
 
-    GridItem = Marionette.View.extend({
+    var GridItem = Marionette.View.extend({
         template: _.template($("#row-template").html() || ""),
         tagName: "div",
         className: "grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request",
@@ -25,7 +25,7 @@ hqDefine("cloudcare/js/formplayer/apps/views", function() {
         },
     });
 
-    BaseAppView = {
+    var BaseAppView = {
         events: {
             'click .js-incomplete-sessions-item': 'incompleteSessionsClick',
             'click .js-sync-item': 'syncClick',
@@ -50,7 +50,7 @@ hqDefine("cloudcare/js/formplayer/apps/views", function() {
         },
     };
 
-    GridView = Marionette.CollectionView.extend({
+    var GridView = Marionette.CollectionView.extend({
         template: _.template($("#grid-template").html() || ""),
         childView: GridItem,
         childViewContainer: ".js-application-container",
@@ -69,7 +69,7 @@ hqDefine("cloudcare/js/formplayer/apps/views", function() {
      * The user doesn't need to select the application because we already have
      * that information. Used for phone previewing in the app manager
      */
-    SingleAppView = Marionette.View.extend({
+    var SingleAppView = Marionette.View.extend({
         template: _.template($("#single-app-template").html() || ""),
         className: 'single-app-view',
 
@@ -104,7 +104,7 @@ hqDefine("cloudcare/js/formplayer/apps/views", function() {
         },
     });
 
-    LandingPageAppView = Marionette.View.extend({
+    var LandingPageAppView = Marionette.View.extend({
         template: _.template($("#landing-page-app-template").html() || ""),
         className: 'landing-page-app-view',
 
@@ -134,7 +134,7 @@ hqDefine("cloudcare/js/formplayer/apps/views", function() {
     });
 
     return {
-        GridView: function(options) {
+        GridView: function (options) {
             return new GridView(options);
         },
         SingleAppView: function (options) {
