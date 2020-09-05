@@ -19,6 +19,6 @@ class RemoveUnusedFieldsTestCase(SimpleTestCase):
                          set(_get_invalid_user_data_fields(user_with_fields, set(['e', 'f']))))
 
     def test_system_fields_not_removed(self):
-        user_with_system_fields = CommCareUser(user_data={'commcare_location_id': 'foo'})
+        user_with_system_fields = CommCareUser(user_data={'commcare_foo_bar': 'foo'})
         self.assertEqual([], _get_invalid_user_data_fields(user_with_system_fields, set()))
         self.assertEqual([], _get_invalid_user_data_fields(user_with_system_fields, set(['a', 'b'])))
