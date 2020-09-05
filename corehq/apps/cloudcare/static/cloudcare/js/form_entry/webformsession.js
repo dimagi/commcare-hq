@@ -1,4 +1,4 @@
-/*global Formplayer, getIx, getForIx */
+/*global getIx, getForIx */
 
 hqDefine("cloudcare/js/form_entry/webformsession", function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
@@ -55,7 +55,6 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
         self.urls = {
             xform: params.xform_url,
         };
-
 
         self.blockingStatus = Const.BLOCK_NONE;
         self.lastRequestHandled = -1;

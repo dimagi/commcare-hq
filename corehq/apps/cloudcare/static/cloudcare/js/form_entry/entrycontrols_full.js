@@ -1,4 +1,4 @@
-/* globals Formplayer, moment */
+/* globals moment, MapboxGeocoder */
 hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
         Utils = hqImport("cloudcare/js/form_entry/utils"),
@@ -51,7 +51,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
     /**
      * Serves as the base for all entries that take an array answer.
      */
-    EntryArrayAnswer = function (question, options) {
+    function EntryArrayAnswer(question, options) {
         var self = this;
         Entry.call(self, question, options);
         self.rawAnswer = ko.observableArray(_.clone(question.answer()));
@@ -90,7 +90,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
     /**
      * Serves as the base for all entries that take an answer that is not an array.
      */
-    EntrySingleAnswer = function (question, options) {
+    function EntrySingleAnswer(question, options) {
         var self = this;
 
         var getRawAnswer = function (answer) {
@@ -201,7 +201,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
             return true;
         };
 
-        self.getErrorMessage = function (raw) {
+        self.getErrorMessage = function() {
             return null;
         };
 
@@ -349,15 +349,17 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         var valueLimit = options.valueLimit || Const.INT_VALUE_LIMIT;
 
         self.getErrorMessage = function (rawAnswer) {
-            if (isNaN(+rawAnswer) || +rawAnswer !== Math.floor(+rawAnswer))
+            if (isNaN(+rawAnswer) || +rawAnswer !== Math.floor(+rawAnswer)) {
                 return gettext("Not a valid whole number");
-            if (+rawAnswer > valueLimit)
+            }
+            if (+rawAnswer > valueLimit) {
                 return gettext("Number is too large");
+            }
             return null;
         };
 
         self.helpText = function () {
-            return 'Number';
+            return gettext('Number');
         };
 
         self.enableReceiver(question, options);

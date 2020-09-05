@@ -1,4 +1,4 @@
-/*global moment */
+/*global Marionette, moment */
 
 hqDefine("cloudcare/js/formplayer/sessions/views", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
@@ -19,7 +19,7 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
             FormplayerFrontend.trigger("getSession", model.get('sessionId'));
         },
 
-        templateContext: function (e) {
+        templateContext: function () {
             return {
                 humanDateOpened: moment(this.model.get('dateOpened')).fromNow(),
             };
