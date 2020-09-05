@@ -827,7 +827,8 @@ class TestUserESAccessors(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.definition = CustomDataFieldsDefinition(domain='user-esaccessors-test',
+        cls.domain = 'user-esaccessors-test'
+        cls.definition = CustomDataFieldsDefinition(domain=cls.domain,
                                                     field_type=UserFieldsView.field_type)
         cls.definition.save()
         cls.definition.set_fields([
@@ -841,13 +842,21 @@ class TestUserESAccessors(TestCase):
         )
         cls.profile.save()
 
+        cls.user = CommCareUser.create(
+            cls.domain,
+            'superman',
+            'secret agent man',
+            None,
+            None,
+            first_name='clark',
+            last_name='kent',
+            is_active=True,
+            metadata={PROFILE_SLUG: cls.profile.id, 'office': 'phone_booth'},
+        )
+        cls.user.save()
+
     def setUp(self):
         super(TestUserESAccessors, self).setUp()
-        self.username = 'superman'
-        self.first_name = 'clark'
-        self.last_name = 'kent'
-        self.doc_type = 'CommCareUser'
-        self.domain = 'user-esaccessors-test'
         self.es = get_es_new()
         ensure_index_deleted(USER_INDEX)
         initialize_index_and_mapping(self.es, USER_INDEX_INFO)
@@ -858,26 +867,14 @@ class TestUserESAccessors(TestCase):
         ensure_index_deleted(USER_INDEX)
         super(TestUserESAccessors, cls).tearDownClass()
 
-    def _send_user_to_es(self, _id=None, is_active=True):
-        user = CommCareUser.create(
-            self.domain,
-            self.username,
-            'secret agent man',
-            None,
-            None,
-            first_name=self.first_name,
-            last_name=self.last_name,
-            metadata={PROFILE_SLUG: self.profile.id, 'office': 'phone_booth'},
-            uuid=_id or uuid.uuid4().hex,
-            is_active=is_active,
-        )
-        send_to_elasticsearch('users', transform_user_for_elasticsearch(user.to_json()))
+    def _send_user_to_es(self, is_active=True):
+        self.user.is_active = is_active
+        send_to_elasticsearch('users', transform_user_for_elasticsearch(self.user.to_json()))
         self.es.indices.refresh(USER_INDEX)
-        return user
 
     def test_active_user_query(self):
-        self._send_user_to_es('123')
-        results = get_user_stubs(['123'], ['user_data_es'])
+        self._send_user_to_es()
+        results = get_user_stubs([self.user._id], ['user_data_es'])
 
         self.assertEqual(len(results), 1)
         metadata = results[0].pop('user_data_es')
@@ -889,29 +886,29 @@ class TestUserESAccessors(TestCase):
         }, {item['key']: item['value'] for item in metadata})
 
         self.assertEqual(results[0], {
-            '_id': '123',
+            '_id': self.user._id,
             '__group_ids': [],
-            'username': self.username,
+            'username': self.user.username,
             'is_active': True,
-            'first_name': self.first_name,
-            'last_name': self.last_name,
-            'doc_type': self.doc_type,
+            'first_name': self.user.first_name,
+            'last_name': self.user.last_name,
+            'doc_type': 'CommCareUser',
             'location_id': None,
         })
 
     def test_inactive_user_query(self):
-        self._send_user_to_es('123', is_active=False)
-        results = get_user_stubs(['123'])
+        self._send_user_to_es(is_active=False)
+        results = get_user_stubs([self.user._id])
 
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0], {
-            '_id': '123',
+            '_id': self.user._id,
             '__group_ids': [],
-            'username': self.username,
+            'username': self.user.username,
             'is_active': False,
-            'first_name': self.first_name,
-            'last_name': self.last_name,
-            'doc_type': self.doc_type,
+            'first_name': self.user.first_name,
+            'last_name': self.user.last_name,
+            'doc_type': 'CommCareUser',
             'location_id': None
         })
 
@@ -919,7 +916,7 @@ class TestUserESAccessors(TestCase):
         source_domain = self.domain + "-source"
         mirror = DomainPermissionsMirror(source=source_domain, mirror=self.domain)
         mirror.save()
-        self._send_user_to_es('123')
+        self._send_user_to_es()
 
         self.assertEqual(['superman'], UserES().domain(self.domain).values_list('username', flat=True))
         self.assertEqual([], UserES().domain(source_domain).values_list('username', flat=True))
