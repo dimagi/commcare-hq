@@ -436,7 +436,10 @@ hqDefine("users/js/mobile_workers",[
             self.usernameAvailabilityStatus(null);
             self.usernameStatusMessage(null);
 
-            locationsWidgets.initAutocomplete($("#id_location_id"));
+            var $locationSelect = $("#id_location_id");
+            if ($locationSelect.length) {
+                locationsWidgets.initAutocomplete($locationSelect);
+            }
 
             googleAnalytics.track.event('Manage Mobile Workers', 'New Mobile Worker', '');
         };
