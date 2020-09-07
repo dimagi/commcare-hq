@@ -15,6 +15,10 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
              a list of entities (cases) and their details
              */
             $.when(fetchingNextMenu).done(function (menuResponse) {
+
+                //set title of tab to application name
+                document.title = menuResponse.breadcrumbs[0];
+
                 // show any notifications from Formplayer
                 if (menuResponse.notification && !_.isNull(menuResponse.notification.message)) {
                     FormplayerFrontend.request("handleNotification", menuResponse.notification);
@@ -27,6 +31,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 }
 
                 var urlObject = Util.currentUrlToObject();
+
                 // If we don't have an appId in the URL (usually due to form preview)
                 // then parse the appId from the response.
                 if (urlObject.appId === undefined || urlObject.appId === null) {
@@ -41,6 +46,10 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 }
 
                 Menus.Controller.showMenu(menuResponse);
+                // If a search exists in urlObject, make set search bar continues to show search
+                if (urlObject.search !== null) {
+                    $('#searchText').val(urlObject.search);
+                }
 
                 if (menuResponse.shouldRequestLocation) {
                     Menus.Util.handleLocationRequest(options);
@@ -76,7 +85,6 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             } else {
                 FormplayerFrontend.regions.persistentCaseTile.empty();
             }
-
             if (menuResponse.breadcrumbs) {
                 Menus.Util.showBreadcrumbs(menuResponse.breadcrumbs);
             } else {

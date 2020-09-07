@@ -10,7 +10,8 @@ from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from couchforms import openrosa_response
-from couchforms.const import MAGIC_PROPERTY, BadRequest
+from couchforms.const import MAGIC_PROPERTY
+from couchforms.exceptions import BadSubmissionRequest
 from couchforms.getters import MultimediaBug
 from dimagi.utils.decorators.profile import profile_dump
 from dimagi.utils.logging import notify_exception
@@ -90,9 +91,8 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             request, "Received a submission with POST.keys()", metric_tags,
             domain, app_id, user_id, authenticated, meta,
         )
-
-    if isinstance(instance, BadRequest):
-        response = HttpResponseBadRequest(instance.message)
+    except BadSubmissionRequest as e:
+        response = HttpResponseBadRequest(e.message)
         _record_metrics(metric_tags, 'known_failures', response)
         return response
 
@@ -230,7 +230,11 @@ def _noauth_post(request, domain, app_id=None):
     It mainly just checks that we are touching test data only in the right domain and submitting
     as demo_user.
     """
-    instance, _ = couchforms.get_instance_and_attachment(request)
+    try:
+        instance, _ = couchforms.get_instance_and_attachment(request)
+    except BadSubmissionRequest as e:
+        return HttpResponseBadRequest(e.message)
+
     form_json = convert_xform_to_json(instance)
     case_updates = get_case_updates(form_json)
 

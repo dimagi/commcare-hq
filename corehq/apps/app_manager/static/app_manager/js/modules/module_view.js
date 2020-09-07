@@ -210,7 +210,8 @@ hqDefine("app_manager/js/modules/module_view", function () {
             $('#sourceModuleForms').koApplyBindings(new ShadowModule(
                 shadowOptions.modules,
                 shadowOptions.source_module_id,
-                shadowOptions.excluded_form_ids
+                shadowOptions.excluded_form_ids,
+                shadowOptions.shadow_module_version
             ));
         } else if (moduleType === 'advanced') {
             if (moduleBrief.has_schedule || hqImport('hqwebapp/js/toggles').toggleEnabled('VISIT_SCHEDULER')) {

@@ -285,6 +285,8 @@ class SMSBase(UUIDGeneratorMixin, Log):
 
 
 class SMS(SMSBase):
+    class Meta:
+        indexes = [models.Index(fields=['processed_timestamp'])]
 
     def to_json(self):
         from corehq.apps.sms.serializers import SMSSerializer
