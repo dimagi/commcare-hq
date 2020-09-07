@@ -341,9 +341,10 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(mock_account_confirm_email.call_count, 1)
         self.assertEqual('with_email', mock_account_confirm_email.call_args[0][0].raw_username)
 
-    @mock.patch('corehq.apps.user_importer.importer.Invitation')
-    def test_upload_invite_web_user(self, mock_invitation_class):
-        mock_invite = mock_invitation_class.return_value
+    @mock.patch('corehq.apps.user_importer.importer.Invitation.send_activation_email')
+    def test_upload_invite_web_user(self, mock_send_activation_email):
+        upload_user = mock.MagicMock()
+        upload_user.user_id = "31415926"
         import_users_and_groups(
             self.domain.name,
             [
@@ -355,10 +356,10 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
                 )
             ],
             [],
-            mock.MagicMock(),
+            upload_user,
             mock.MagicMock()
         )
-        self.assertTrue(mock_invite.send_activation_email.called)
+        self.assertEqual(mock_send_activation_email.call_count, 1)
 
     @mock.patch('corehq.apps.user_importer.importer.Invitation')
     def test_upload_add_web_user(self, mock_invitation_class):

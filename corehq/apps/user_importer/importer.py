@@ -481,7 +481,7 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                                     'invited_on': datetime.utcnow(),
                                     'supply_point': user.location_id,
                                     'role': role_qualified_id
-                                }
+                                },
                             )
                             if invite_created:
                                 invite.send_activation_email()
