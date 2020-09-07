@@ -1,4 +1,4 @@
-/*global Formplayer, getIx, getForIx */
+/*global getIx, getForIx */
 
 hqDefine("cloudcare/js/form_entry/webformsession", function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
@@ -55,7 +55,6 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
         self.urls = {
             xform: params.xform_url,
         };
-
 
         self.blockingStatus = Const.BLOCK_NONE;
         self.lastRequestHandled = -1;
@@ -181,7 +180,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
             var self = this,
                 errorMessage = null,
                 isHTML = false,
-                Errors = hqImport("cloudcare/js/formplayer/errors");
+                Errors = hqImport("cloudcare/js/form_entry/errors");
             if (resp.status === 423) {
                 errorMessage = Errors.LOCK_TIMEOUT_ERROR;
             } else if (resp.status === 401) {
