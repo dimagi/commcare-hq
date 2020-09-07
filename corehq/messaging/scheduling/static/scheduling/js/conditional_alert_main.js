@@ -56,20 +56,16 @@ hqDefine(
                 // compare changes with initialFormContent to check if only 'message' has changed
                 var formContentChanges = [];
                 Object.keys(finalFormContent).forEach(function (key) {
-                    finalFormContent[key] !== initialFormContent[key]
-                        ? formContentChanges.push(key)
-                        : null;
+                    if (finalFormContent[key] !== initialFormContent[key]) {
+                        formContentChanges.push(key);
+                    }
                 });
                 var runMessagingRule = !_.isEqual(
-                    ["message"],
+                    ["content-message"],
                     formContentChanges
                 );
                 // to convey to HQ to reprocess or not
-                var input = $("<input />")
-                    .attr("type", "hidden")
-                    .attr("name", "runMessagingRule")
-                    .attr("value", runMessagingRule);
-                $(this).append(input);
+                $("#should_run_rule").val(runMessagingRule);
                 return true;
             });
         });

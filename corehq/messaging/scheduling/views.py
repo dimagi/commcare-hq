@@ -885,7 +885,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
                 self.criteria_form.save_criteria(rule)
                 self.schedule_form.save_rule_action_and_schedule(rule)
 
-            should_run_rule = request.POST.get("runMessagingRule", "true") == "true"
+            should_run_rule = request.POST.get('content-should_run_rule') == "true"
 
             if should_run_rule:
                 initiate_messaging_rule_run(rule)
