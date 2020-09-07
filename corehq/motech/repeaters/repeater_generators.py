@@ -321,7 +321,7 @@ class ReferCasePayloadGenerator(BasePayloadGenerator):
         return render_to_string('hqcase/xml/case_block.xml', {
             'xmlns': SYSTEM_FORM_XMLNS,
             'case_block': case_blocks,
-            'time': datetime.utcnow(),
+            'time': json_format_datetime(datetime.utcnow()),
             'uid': uuid4().hex,
             'username': self.repeater.connection_settings.username,
             'user_id': CouchUser.get_by_username(self.repeater.connection_settings.username).user_id,
