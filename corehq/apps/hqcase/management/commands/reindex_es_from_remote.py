@@ -82,7 +82,7 @@ class Command(BaseCommand):
 
         if options.get("print_index_size"):
             return
-        elif local_count == remote_count:
+        elif local_count == remote_count and False:
             print("Doc counts are same, nothing left to reindex. Exiting!")
             return
         else:
@@ -148,14 +148,15 @@ class Command(BaseCommand):
         print("Reindex is in progress, task id is ", result, "Progress is displayed every 5 seconds")
         task_id = result["task"]
         node_id = task_id.split(":")[0]
-        prev_running_time = 0
-        curr_running_time = -1
+        running_time = -1
         no_progress_loops = 0
         last_updated_count = 0
         last_create_count = 0
-        while curr_running_time != prev_running_time:
-            prev_running_time = curr_running_time
-            task = self.es.tasks.get(task_id=task_id)["task"]
+        completed = False
+        while not completed:
+            result = self.es.tasks.get(task_id=task_id)
+            completed = result.get('completed', False)
+            task = result["task"]
             status = task["status"]
             print("Updated/Created/Total: ", status["updated"], status["created"], status["total"])
             if last_updated_count != status["updated"] or last_create_count != status["created"]:
@@ -169,8 +170,8 @@ class Command(BaseCommand):
                 self.es.tasks.cancel(task_id=task_id)
                 self.cancelled_queries.append(query)
                 print("Cancelling task that didn't progress in last 10 polls {}".format(str(query)))
-            curr_running_time = task["running_time_in_nanos"]
-            running_time_in_mins = (curr_running_time / 60000000000)
+            running_time = task["running_time_in_nanos"]
+            running_time_in_mins = (running_time / 60000000000)
             print("Running time total in mins so far", running_time_in_mins, "\n")            
             time.sleep(5)
         print("Current reindex task is finished")
