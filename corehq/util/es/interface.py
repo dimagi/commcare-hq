@@ -75,8 +75,16 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         self.es.update(index_alias, doc_type, doc_id, body={"doc": self._without_id_field(fields)},
                        params=params or {})
 
+    def _prepare_count_query(self, query):
+        # pagination params are not required and not supported in ES count API
+        query = query.copy()
+        for extra in ['size', 'sort', 'from', 'to', '_source']:
+            query.pop(extra, None)
+        return query
+
     def count(self, index_alias, doc_type, query):
-        return self.es.count(index=index_alias, doc_type=doc_type, body=query)
+        query = self._prepare_count_query(query)
+        return self.es.count(index=index_alias, doc_type=doc_type, body=query).get('count')
 
     @staticmethod
     def _without_id_field(doc):
@@ -176,7 +184,8 @@ class ElasticsearchInterface7(AbstractElasticsearchInterface):
         self.es.delete(index_alias, doc_id)
 
     def count(self, index_alias, doc_type, query):
-        return self.es.count(index=index_alias, body=query)
+        query = self._prepare_count_query(query)
+        return self.es.count(index=index_alias, body=query).get('count')
 
     def scan(self, index_alias, query, doc_type):
         query["sort"] = "_doc"

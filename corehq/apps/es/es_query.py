@@ -541,11 +541,7 @@ class ESQuerySet(object):
     @property
     def total(self):
         """Return the total number of docs matching the query."""
-        total = self.raw['hits']['total']
-        if isinstance(total, dict):
-            return total.get('value', 0)
-        else:
-            return total
+        return self.raw['hits']['total']
 
     def aggregation(self, name):
         return self.raw['aggregations'][name]
