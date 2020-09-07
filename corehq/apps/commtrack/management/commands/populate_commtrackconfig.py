@@ -97,7 +97,19 @@ class Command(PopulateSQLCommand):
             oldval = doc.get('force_consumption_case_types')
             if realval and not oldval:
                 doc['force_consumption_case_types'] = realval
+                del doc['force_to_consumption_case_types']
         return doc
+
+    @classmethod
+    def _wrap_action_config(cls, data):
+        if 'action_type' in data:
+            data['action'] = data['action_type']
+            del data['action_type']
+        if 'name' in data:
+            if data['name'] == 'lost':
+                data['subaction'] = 'loss'
+            del data['name']
+        return data
 
     def update_or_create_sql_object(self, doc):
         try:
@@ -120,12 +132,10 @@ class Command(PopulateSQLCommand):
 
         sql_actions = []
         for a in doc['actions']:
-            subaction = doc.get('subaction')
-            if doc.get('name', '') == 'lost':
-                subaction == 'loss'
+            a = self._wrap_action_config(a)
             sql_actions.append(SQLActionConfig(
-                action=doc.get('action_type', doc.get('action')),
-                subaction=subaction,
+                action=doc.get('action'),
+                subaction=doc.get('subaction'),
                 _keyword=doc.get('_keyword'),
                 caption=doc.get('caption'),
             ))
