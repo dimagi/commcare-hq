@@ -2723,6 +2723,9 @@ class Keyword(UUIDGeneratorMixin, models.Model):
 
     last_modified = models.DateTimeField(auto_now=True)
 
+    # For use with linked domains - the upstream keyword
+    master_id = models.CharField(max_length=126, null=True)
+
     def is_structured_sms(self):
         return self.keywordaction_set.filter(action=KeywordAction.ACTION_STRUCTURED_SMS).count() > 0
 
@@ -2838,6 +2841,9 @@ class KeywordAction(models.Model):
     # is "=".
     # This can be None in which case there is no separator (i.e., "report a100 b200")
     named_args_separator = models.CharField(max_length=126, null=True)
+
+    # For use with linked domains - the upstream keywordaction
+    master_id = models.CharField(max_length=126, null=True)
 
     def save(self, *args, **kwargs):
         if self.recipient == self.RECIPIENT_USER_GROUP and not self.recipient_id:
