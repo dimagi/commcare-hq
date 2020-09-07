@@ -37,7 +37,7 @@ class TestESQuerySet(TestCase):
                 }
             ],
             'max_score': 1.0,
-            'total': 5247}
+            'total': 5247
             },
         'timed_out': False,
         'took': 4
