@@ -1049,6 +1049,7 @@ USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
 LOCAL_CUSTOM_DB_ROUTING = {}
 
 DEFAULT_COMMCARE_EXTENSIONS = [
+    "custom.aaa.commcare_extensions",
     "custom.abt.commcare_extensions",
     "custom.eqa.commcare_extensions",
     "mvp.commcare_extensions",
@@ -1848,7 +1849,6 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_4.json'),
     os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2019.json'),
     os.path.join('custom', 'echis_reports', 'ucr', 'reports', '*.json'),
-    os.path.join('custom', 'aaa', 'ucr', 'reports', '*.json'),
     os.path.join('custom', 'ccqa', 'ucr', 'reports', 'patients.json'),  # For testing static UCRs
 ]
 
@@ -1883,7 +1883,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'inddex', 'ucr', 'data_sources', '*.json'),
 
     os.path.join('custom', 'echis_reports', 'ucr', 'data_sources', '*.json'),
-    os.path.join('custom', 'aaa', 'ucr', 'data_sources', '*.json'),
     os.path.join('custom', 'ccqa', 'ucr', 'data_sources', 'patients.json'),  # For testing static UCRs
 ]
 
