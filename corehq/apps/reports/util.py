@@ -1,9 +1,9 @@
-from collections import namedtuple
-from datetime import datetime, timedelta
-from importlib import import_module
 import json
 import math
 import warnings
+from collections import namedtuple
+from datetime import datetime, timedelta
+from importlib import import_module
 
 from django.conf import settings
 from django.http import Http404
@@ -14,7 +14,6 @@ import pytz
 from memoized import memoized
 
 from dimagi.utils.dates import DateSpan
-from dimagi.utils.web import json_request
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group

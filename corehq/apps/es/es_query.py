@@ -100,6 +100,7 @@ Language
 import json
 from collections import namedtuple
 from copy import deepcopy
+from django.conf import settings
 
 from memoized import memoized
 
@@ -211,6 +212,10 @@ class ESQuery(object):
             size = sliced_or_int.stop - start
         return self.start(start).size(size).run().hits
 
+    @property
+    def is_es7(self):
+        return settings.ELASTICSEARCH_MAJOR_VERSION == 7
+
     def run(self, include_hits=False):
         """Actually run the query.  Returns an ESQuerySet object."""
         query = self._clean_before_run(include_hits)
@@ -237,10 +242,12 @@ class ESQuery(object):
         if query._size is None:
             query._size = SCROLL_PAGE_SIZE_LIMIT
         result = scroll_query(query.index, query.raw_query, es_instance_alias=self.es_instance_alias)
-        return ScanResult(
-            result.count,
-            (ESQuerySet.normalize_result(query, r) for r in result)
-        )
+        # scroll doesn't include _id in the source even if it's specified, so include it
+        include_id = getattr(query, '_source', None) and "_id" in query._source
+        for r in result:
+            if include_id:
+                r['_source']['_id'] = r.get('_id', None)
+            yield ESQuerySet.normalize_result(query, r)
 
     @property
     def _filters(self):
@@ -534,7 +541,11 @@ class ESQuerySet(object):
     @property
     def total(self):
         """Return the total number of docs matching the query."""
-        return self.raw['hits']['total']
+        total = self.raw['hits']['total']
+        if isinstance(total, dict):
+            return total.get('value', 0)
+        else:
+            return total
 
     def aggregation(self, name):
         return self.raw['aggregations'][name]

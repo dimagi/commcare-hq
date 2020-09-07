@@ -673,6 +673,15 @@ VISIT_SCHEDULER = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+
+MONITOR_2FA_CHANGES = StaticToggle(
+    'monitor_2fa_changes',
+    'Monitor 2FA activity for SAAS-11210 ticket',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+
 USER_CONFIGURABLE_REPORTS = StaticToggle(
     'user_reports',
     'User configurable reports UI',
@@ -1229,6 +1238,7 @@ SHOW_OWNER_LOCATION_PROPERTY_IN_REPORT_BUILDER = StaticToggle(
     'This can be used to create report builder reports that are location-safe.',
     TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/ccinternal/Enable+creation+of+report+builder+reports+that+are+location+safe',
 )
 
 SHOW_IDS_IN_REPORT_BUILDER = StaticToggle(
@@ -1477,16 +1487,6 @@ REGEX_FIELD_VALIDATION = StaticToggle(
                 "(regex) to validate custom user data, custom location data, "
                 "and/or custom product data fields.",
     help_link='https://confluence.dimagi.com/display/ccinternal/Regular+Expression+Validation+for+Custom+Data+Fields',
-)
-
-CUSTOM_DATA_FIELDS_PROFILES = StaticToggle(
-    "custom_data_fields_profiles",
-    "User field profiles",
-    TAG_SOLUTIONS_LIMITED,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="This flag adds support for saving a set of user fields and their values, "
-                "and applying that profile to individual users instead of specifying every field.",
-    help_link="https://confluence.dimagi.com/display/ccinternal/User+field+profiles",
 )
 
 TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(

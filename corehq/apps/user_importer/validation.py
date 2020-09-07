@@ -21,8 +21,7 @@ from corehq.util.workbook_json.excel import (
 )
 
 
-def get_user_import_validators(domain_obj, all_specs, allowed_groups=None, allowed_roles=None,
-                               allowed_profiles=None, upload_domain=None):
+def get_user_import_validators(domain_obj, all_specs, allowed_groups=None, allowed_roles=None, upload_domain=None):
     domain = domain_obj.name
     validate_passwords = domain_obj.strong_mobile_passwords
     noop = NoopValidator(domain)
@@ -43,7 +42,6 @@ def get_user_import_validators(domain_obj, all_specs, allowed_groups=None, allow
         EmailValidator(domain),
         GroupValidator(domain, allowed_groups),
         RoleValidator(domain, allowed_roles),
-        ProfileValidator(domain, allowed_profiles),
         ExistingUserValidator(domain, all_specs),
         TargetDomainValidator(upload_domain)
     ]
@@ -239,19 +237,6 @@ class RoleValidator(ImportValidator):
         role = spec.get('role')
         if role and role not in self.allowed_roles:
             return self.error_message.format(role)
-
-
-class ProfileValidator(ImportValidator):
-    error_message = _("Profile '{}' does not exist")
-
-    def __init__(self, domain, allowed_profiles=None):
-        super().__init__(domain)
-        self.allowed_profiles = allowed_profiles
-
-    def validate_spec(self, spec):
-        profile = spec.get('user_profile')
-        if profile and profile not in self.allowed_profiles:
-            return self.error_message.format(profile)
 
 
 class GroupValidator(ImportValidator):
