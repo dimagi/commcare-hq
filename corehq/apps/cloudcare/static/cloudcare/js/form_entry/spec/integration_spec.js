@@ -1,8 +1,10 @@
+/* eslint-env mocha */
+/* global Form */
 describe('Integration', function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
         formJSON,
-        repeatJSON,
-        repeatNestJSON;
+        questionJSONMulti,
+        questionJSONString;
 
     beforeEach(function () {
         questionJSONMulti = {
@@ -58,7 +60,6 @@ describe('Integration', function () {
 
 
     it('Should reconcile questions answered at the same time for strings', function () {
-        var self = this;
         var questionJSONString2 = {};
         $.extend(questionJSONString2, questionJSONString);
         questionJSONString.ix = '0';
