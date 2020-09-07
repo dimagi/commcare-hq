@@ -78,7 +78,6 @@ def _valid_attachment_extension(file):
 
 
 def _valid_file_extension(file, permitted_extensions):
-    # validate that file has only one extension and that is a permitted one
     if "." not in file.name:
         return False
     file_extension = file.name.rsplit('.', 1)[-1]
