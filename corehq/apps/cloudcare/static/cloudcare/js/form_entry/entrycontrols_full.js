@@ -1,4 +1,4 @@
-/* globals Formplayer, moment */
+/* globals moment, MapboxGeocoder */
 hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
         Utils = hqImport("cloudcare/js/form_entry/utils"),
@@ -6,11 +6,10 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         MAPBOX_ACCESS_TOKEN = initialPageData.get("mapbox_access_token");
 
     /**
-     * The base Object for all entries. Each entry takes a question object and options
+     * The base Object for all entries. Each entry takes a question object
      * @param {Object} question - A question object
-     * @param {Object} object - A hash of different options
      */
-    function Entry(question, options) {
+    function Entry(question) {
         var self = this;
         self.question = question;
         self.answer = question.answer;
@@ -23,7 +22,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         };
 
         // Returns an error message given the answer. null if no error
-        self.getErrorMessage = function (rawAnswer) {
+        self.getErrorMessage = function () {
             return null;
         };
 
@@ -37,7 +36,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
             self.answer.subscribe(self.onAnswerChange.bind(self));
         }
     }
-    Entry.prototype.onAnswerChange = function (newValue) {};
+    Entry.prototype.onAnswerChange = function () {};
 
     // This should set the answer value if the answer is valid. If the raw answer is valid, this
     // function performs any sort of processing that needs to be done before setting the answer.
@@ -51,18 +50,18 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
     /**
      * Serves as the base for all entries that take an array answer.
      */
-    EntryArrayAnswer = function (question, options) {
+    function EntryArrayAnswer(question, options) {
         var self = this;
-        Entry.call(self, question, options);
+        Entry.call(self, question);
         self.rawAnswer = ko.observableArray(_.clone(question.answer()));
 
         self.rawAnswer.subscribe(self.onPreProcess.bind(self));
         self.previousAnswer = self.answer();
 
-    };
+    }
     EntryArrayAnswer.prototype = Object.create(Entry.prototype);
     EntryArrayAnswer.prototype.constructor = Entry;
-    EntryArrayAnswer.prototype.onAnswerChange = function (newValue) {
+    EntryArrayAnswer.prototype.onAnswerChange = function () {
         if (Utils.answersEqual(this.answer(), this.previousAnswer)) {
             return;
         }
@@ -90,7 +89,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
     /**
      * Serves as the base for all entries that take an answer that is not an array.
      */
-    EntrySingleAnswer = function (question, options) {
+    function EntrySingleAnswer(question, options) {
         var self = this;
 
         var getRawAnswer = function (answer) {
@@ -101,7 +100,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
             return answer;
         };
 
-        Entry.call(self, question, options);
+        Entry.call(self, question);
         self.valueUpdate = undefined;
         self.rawAnswer = ko.observable(getRawAnswer(question.answer()));
         self.placeholderText = '';
@@ -117,10 +116,10 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
                 },
             });
         }
-    };
+    }
     EntrySingleAnswer.prototype = Object.create(Entry.prototype);
     EntrySingleAnswer.prototype.constructor = Entry;
-    EntrySingleAnswer.prototype.onAnswerChange = function (newValue) {
+    EntrySingleAnswer.prototype.onAnswerChange = function () {
         this.question.onchange();
     };
     EntrySingleAnswer.prototype.enableReceiver = function (question, options) {
@@ -154,9 +153,9 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
     /**
      * An entry that represent a question label.
      */
-    function InfoEntry(question, options) {
+    function InfoEntry(question) {
         var self = this;
-        Entry.call(self, question, options);
+        Entry.call(self, question);
         self.templateType = 'blank';
     }
 
@@ -167,9 +166,9 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
     /**
      * The entry used when we have an unidentified entry
      */
-    function UnsupportedEntry(question, options) {
+    function UnsupportedEntry(question) {
         var self = this;
-        Entry.call(self, question, options);
+        Entry.call(self, question);
         self.templateType = 'unsupported';
         self.answer('Not Supported by Web Entry');
     }
@@ -201,7 +200,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
             return true;
         };
 
-        self.getErrorMessage = function (raw) {
+        self.getErrorMessage = function () {
             return null;
         };
 
@@ -349,15 +348,17 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         var valueLimit = options.valueLimit || Const.INT_VALUE_LIMIT;
 
         self.getErrorMessage = function (rawAnswer) {
-            if (isNaN(+rawAnswer) || +rawAnswer !== Math.floor(+rawAnswer))
+            if (isNaN(+rawAnswer) || +rawAnswer !== Math.floor(+rawAnswer)) {
                 return gettext("Not a valid whole number");
-            if (+rawAnswer > valueLimit)
+            }
+            if (+rawAnswer > valueLimit) {
                 return gettext("Number is too large");
+            }
             return null;
         };
 
         self.helpText = function () {
-            return 'Number';
+            return gettext('Number');
         };
 
         self.enableReceiver(question, options);
@@ -385,7 +386,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
             if (rawAnswer === '') {
                 return null;
             }
-            return (!(/^[+\-]?\d*(\.\d+)?$/.test(rawAnswer)) ? "This does not appear to be a valid phone/numeric number" : null);
+            return (!(/^[+-]?\d*(\.\d+)?$/.test(rawAnswer)) ? "This does not appear to be a valid phone/numeric number" : null);
         };
 
         this.helpText = function () {
@@ -408,10 +409,12 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         var valueLimit = options.valueLimit || Const.FLOAT_VALUE_LIMIT;
 
         this.getErrorMessage = function (rawAnswer) {
-            if (isNaN(+rawAnswer))
+            if (isNaN(+rawAnswer)) {
                 return gettext("Not a valid number");
-            if (+rawAnswer > valueLimit)
+            }
+            if (+rawAnswer > valueLimit) {
                 return gettext("Number is too large");
+            }
             return null;
         };
 
@@ -798,7 +801,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
 
                     if (isPhoneMode && self.timepicker && self.datepicker) {
                         $dt.find('.xdsoft_save_selected')
-                            .show().text(django.gettext('Save'))
+                            .show().text(gettext('Save'))
                             .addClass('btn btn-primary')
                             .removeClass('blue-gradient-button');
                         $dt.find('.xdsoft_save_selected').appendTo($dt);
@@ -942,7 +945,6 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
     function getEntry(question) {
         var entry = null;
         var options = {};
-        var isNumeric = false;
         var isMinimal = false;
         var isCombobox = false;
         var isLabel = false;
@@ -960,7 +962,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         switch (question.datatype()) {
             case Const.STRING:
                 // Barcode uses text box for CloudCare so it's possible to still enter a barcode field
-            case Const.BARCODE:
+            case Const.BARCODE:     // eslint-disable-line no-fallthrough
                 // If it's a receiver, it cannot autoupdate because updates will come quickly which messes with the
                 // autoupdate rate limiting.
                 if (receiveStyle) {

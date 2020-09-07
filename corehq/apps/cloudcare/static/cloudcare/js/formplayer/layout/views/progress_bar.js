@@ -1,4 +1,4 @@
-/*global _, Marionette */
+/*global Marionette */
 
 hqDefine("cloudcare/js/formplayer/layout/views/progress_bar", function () {
     var ProgressView = Marionette.View.extend({

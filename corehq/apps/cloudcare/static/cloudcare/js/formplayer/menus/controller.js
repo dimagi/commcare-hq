@@ -105,7 +105,6 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     };
 
     var showDetail = function (model, detailTabIndex, caseId) {
-        var self = this;
         var detailObjects = model.models;
         // If we have no details, just select the entity
         if (detailObjects === null || detailObjects === undefined || detailObjects.length === 0) {
@@ -143,11 +142,12 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     };
 
     var getDetailList = function (detailObject) {
+        var i;
         if (detailObject.get('entities')) {
             var entities = detailObject.get('entities');
             var listModel = [];
             // we need to map the details and headers JSON to a list for a Backbone Collection
-            for (var i = 0; i < entities.length; i++) {
+            for (i = 0; i < entities.length; i++) {
                 var listObj = {};
                 listObj.data = entities[i].data;
                 listObj.id = i;
@@ -169,7 +169,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var styles = detailObject.get('styles');
         var detailModel = [];
         // we need to map the details and headers JSON to a list for a Backbone Collection
-        for (var i = 0; i < headers.length; i++) {
+        for (i = 0; i < headers.length; i++) {
             var obj = {};
             obj.data = details[i];
             obj.header = headers[i];
