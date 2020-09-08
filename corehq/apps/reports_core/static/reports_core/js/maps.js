@@ -37,7 +37,7 @@ hqDefine('reports_core/js/maps', function () {
             // See https://docs.mapbox.com/help/how-mapbox-works/attribution/
             new (hqImport("reports/js/maps_utils").MapBoxWordMark)().addTo(privates.map);
             // scale is now placed on the bottom right because it is easier to layout with the attributes than with the wordmark
-            L.control.attribution({position: 'bottomright'}).addAttribution('&copy; <a href="http://www.mapbox.com/about/maps/">MapBox</a> | &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> | <strong><a href="https://www.mapbox.com/map-feedback/" target="_blank">Improve this map</a></strong>').addTo(privates.map);
+            L.control.attribution({position: 'bottomright'}).addAttribution('&copy; <a href="http://www.mapbox.com/about/maps/">MapBox</a> | &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>').addTo(privates.map);
             L.control.scale({position: 'bottomright'}).addTo(privates.map);
             $('#zoomtofit').css('display', 'block');
         } else {
