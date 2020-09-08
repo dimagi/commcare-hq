@@ -184,8 +184,9 @@ class ContentForm(Form):
         label=ugettext_lazy("Intervals"),
     )
 
-    should_run_rule = CharField(
+    initiate_rule = CharField(
         widget=HiddenInput,
+        initial='true',
     )
 
     def __init__(self, *args, **kwargs):
@@ -427,8 +428,7 @@ class ContentForm(Form):
                 data_bind="visible: $root.content() === '%s'" % ScheduleForm.CONTENT_SMS_CALLBACK,
             ),
             crispy.Div(
-                crispy.Field('should_run_rule', id="should_run_rule"),
-                data_bind="value: should_run_rule",
+                crispy.Field('initiate_rule', id="initiate_rule")
             ),
             hqcrispy.B3MultiField(
                 _("Custom SMS Content"),
@@ -479,7 +479,6 @@ class ContentForm(Form):
             result['sms_callback_intervals'] = ', '.join(str(i) for i in content.reminder_intervals)
         else:
             raise TypeError("Unexpected content type: %s" % type(content))
-        result['should_run_rule'] = "true"
         return result
 
     @property

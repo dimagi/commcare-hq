@@ -60,12 +60,10 @@ hqDefine(
                         formContentChanges.push(key);
                     }
                 });
-                var runMessagingRule = !_.isEqual(
-                    ["content-message"],
-                    formContentChanges
-                );
-                // to convey to HQ to reprocess or not
-                $("#should_run_rule").val(runMessagingRule);
+                if (!_.isEqual(["content-message"],formContentChanges)) {
+                    // to convey to HQ to reprocess or not
+                    $("#initiate_rule").val(false);
+                }
                 return true;
             });
         });
