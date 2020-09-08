@@ -198,9 +198,14 @@ class ConnectionSettings(models.Model):
         kinds = set()
         if self.incrementalexport_set.exists():
             kinds.add(_('Incremental Exports'))
-        if any(m.connection_settings_id == self.id
-               for m in get_dataset_maps(self.domain)):
+
+        if self.sqldatasetmap_set.exists():
             kinds.add(_('DHIS2 DataSet Maps'))
+        elif any(m.connection_settings_id == self.id
+                 for m in get_dataset_maps(self.domain)):
+            # TODO: (2020-09-08) Drop after all DataSet Maps are migrated
+            kinds.add(_('DHIS2 DataSet Maps'))
+
         if any(r.connection_settings_id == self.id
                 for r in Repeater.by_domain(self.domain)):
             kinds.add(_('Data Forwarding'))
