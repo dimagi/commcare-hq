@@ -1033,6 +1033,10 @@ SESSION_BYPASS_URLS = [
     r'^/a/{domain}/apps/download/',
 ]
 
+# Disable builtin throttling for two factor backup tokens, since we have our own
+# See corehq.apps.hqwebapp.signals and corehq.apps.hqwebapp.forms for details
+OTP_STATIC_THROTTLE_FACTOR = 0
+
 ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE = False
 RATE_LIMIT_SUBMISSIONS = False
 
