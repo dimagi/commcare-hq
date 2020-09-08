@@ -373,7 +373,7 @@ function Group(json, parent) {
 
     var style = _.has(json, 'style') && json.style ? json.style.raw : undefined;
     self.collapsible = !!_.contains([Formplayer.Const.COLLAPSIBLE_OPEN, Formplayer.Const.COLLAPSIBLE_CLOSED], style);
-    self.showChildren = ko.observable(!self.collapsible || style == Formplayer.Const.COLLAPSIBLE_OPEN);
+    self.showChildren = ko.observable(!self.collapsible || style === Formplayer.Const.COLLAPSIBLE_OPEN);
     self.toggleChildren = function () {
         if (self.collapsible) {
             self.showChildren(!self.showChildren());
