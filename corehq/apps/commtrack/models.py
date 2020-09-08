@@ -290,12 +290,12 @@ class CommtrackConfig(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
     def _migration_sync_to_sql(self, sql_object):
         from corehq.apps.commtrack.management.commands.populate_commtrackconfig import Command
         for field_name in Command.attrs_to_sync():
-            value = self.get(field_name)
+            value = getattr(self, field_name)
             setattr(sql_object, field_name, value)
         for spec in Command.one_to_one_submodels():
-            couch_submodel = self.get(spec['couch_attr'], {})
+            couch_submodel = getattr(self, spec['couch_attr'], {})
             setattr(sql_object, spec['sql_class'].__name__.lower(), spec['sql_class'](**{
-                field: couch_submodel.get(field)
+                field: getattr(couch_submodel, field)
                 for field in spec['fields']
             }))
         sql_object.set_actions([

@@ -150,6 +150,47 @@ class TestCouchToSQLCommtrackConfig(TestCase):
 
         return sql
 
+    def _assert_sql(self, sql, use_auto_consumption=False, min_window=2, first_keyword='one'):
+        """
+            Assert that the given SQLCommtrackConfig matches the data used by
+            _create_unsynced_sql and _create_unsynced_couch
+        """
+        self.assertEqual(sql.domain, "my_project")
+        self.assertFalse(sql.use_auto_emergency_levels)
+        self.assertFalse(sql.sync_consumption_fixtures)
+        self.assertFalse(use_auto_consumption)
+        self.assertTrue(sql.individual_consumption_defaults)
+
+        self.assertTrue(sql.sqlalertconfig.stock_out_facilities)
+        self.assertTrue(sql.sqlalertconfig.stock_out_commodities)
+        self.assertTrue(sql.sqlalertconfig.stock_out_rates)
+        self.assertTrue(sql.sqlalertconfig.non_report)
+
+        self.assertEqual(sql.sqlstockrestoreconfig.section_to_consumption_types, {'s1': 'c1'})
+        self.assertEqual(sql.sqlstockrestoreconfig.force_consumption_case_types, ['type1'])
+        self.assertTrue(sql.sqlstockrestoreconfig.use_dynamic_product_list)
+
+        self.assertEqual(sql.sqlconsumptionconfig.min_transactions, 1)
+        self.assertEqual(sql.sqlconsumptionconfig.min_window, min_window)
+        self.assertEqual(sql.sqlconsumptionconfig.optimal_window, 3)
+        self.assertTrue(sql.sqlconsumptionconfig.use_supply_point_type_default_consumption)
+        self.assertFalse(sql.sqlconsumptionconfig.exclude_invalid_periods)
+
+        self.assertEqual(sql.sqlstocklevelsconfig.emergency_level, 0.5)
+        self.assertEqual(sql.sqlstocklevelsconfig.understock_threshold, 1.5)
+        self.assertEqual(sql.sqlstocklevelsconfig.overstock_threshold, 3)
+
+        actions = sql.all_actions
+        self.assertEqual(len(actions), 2)
+        self.assertEqual(actions[0].action, 'receipts')
+        self.assertEqual(actions[0].subaction, 'sub-receipts')
+        self.assertEqual(actions[0]._keyword, first_keyword)
+        self.assertEqual(actions[0].caption, 'first action')
+        self.assertEqual(actions[1].action, 'receipts')
+        self.assertEqual(actions[1].subaction, 'sub-receipts')
+        self.assertEqual(actions[1]._keyword, 'two')
+        self.assertEqual(actions[1].caption, 'second action')
+
     def test_diff_identical(self):
         couch = self._create_unsynced_couch().to_json()
         sql = self._create_unsynced_sql()
@@ -263,3 +304,38 @@ class TestCouchToSQLCommtrackConfig(TestCase):
             'section_to_consumption_types': {},
             'use_dynamic_product_list': True,
         })
+
+    def test_sync_to_couch(self):
+        sql = self._create_unsynced_sql()
+        sql.save()
+        actual = self.db.get(sql.couch_id)
+        expected = self._create_unsynced_couch().to_json()
+        actual.pop('_id')
+        actual.pop('_rev')
+        expected.pop('_id')
+        expected.pop('_rev')
+        self.assertEqual(actual, expected)
+
+    def test_sync_to_sql(self):
+        couch = self._create_unsynced_couch()
+        couch.save()
+        actual = SQLCommtrackConfig.objects.get(couch_id=couch._id)
+        self._assert_sql(actual)
+
+    def test_migration(self):
+        couch = self._create_unsynced_couch()
+        couch.save()
+
+        # Create any sql objects that didn't exist pre-migration
+        call_command('populate_commtrackconfig')
+        actual = SQLCommtrackConfig.objects.get(couch_id=couch._id)
+        self._assert_sql(actual)
+
+        # Update any pre-existing sql objects
+        couch['use_auto_consumption'] = True
+        couch['consumption_config']['min_window'] = 3
+        couch['actions'][0]['_keyword'] = 'uno'
+        couch.save(sync_to_sql=False)
+        call_command('populate_commtrackconfig')
+        actual = SQLCommtrackConfig.objects.get(couch_id=couch._id)
+        self._assert_sql(actual, use_auto_consumption=True, min_window=3, first_keyword='uno')
