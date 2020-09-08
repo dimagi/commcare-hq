@@ -68,7 +68,7 @@ class PopulateSQLCommand(BaseCommand):
     def diff_lists(cls, docs, objects, attr_list):
         diffs = []
         if len(docs) != len(objects):
-            diffs.append(f"actions: {len(docs)} in couch != {len(attr_list)} in sql")
+            diffs.append(f"{len(docs)} in couch != {len(attr_list)} in sql")
         else:
             for couch_field, sql_field in list(zip(docs, objects)):
                 for attr in attr_list:
@@ -195,7 +195,7 @@ class PopulateSQLCommand(BaseCommand):
             obj = self.sql_class().objects.get(couch_id=doc["_id"])
             diff = self.diff_couch_and_sql(doc, obj)
             if diff:
-                logger.info(f"Doc {obj.couch_id} has differences: {diff}")
+                logger.info(f"Doc {obj.couch_id} has differences:\n{diff}")
                 self.diff_count += 1
                 exit(1)
         except self.sql_class().DoesNotExist:
