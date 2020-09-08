@@ -2848,13 +2848,14 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     )
 
     sms_stale_after = IntegerField(
-        label=ugettext_lazy("Make SMS stale after (days)"),
+        label=ugettext_lazy("Make SMS stale after (hours)"),
         required=False,
         min_value=MIN_SMS_STALE_HOURS,
         max_value=MAX_SMS_STALE_HOURS,
-        help_text=ugettext_lazy("SMS is marked as stale in 7*24 hours by default.\
+        help_text=ugettext_lazy("SMS is marked as stale in {default_stale_limit} hours by default.\
             You can set minimum value to {min} hours and maximum value to {max} hours.\
             Stale SMS will not be sent").format(
+            default_stale_limit=settings.SMS_QUEUE_HOURS_UNTIL_STALE,
             min=MIN_SMS_STALE_HOURS,
             max=MAX_SMS_STALE_HOURS
         )
