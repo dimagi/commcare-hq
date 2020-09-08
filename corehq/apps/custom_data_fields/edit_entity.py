@@ -199,18 +199,19 @@ class CustomDataEditor(object):
         elif self.existing_custom_data is not None:
             fields = add_prefix(self.existing_custom_data, self.prefix)
         else:
-            fields = {}
+            fields = None
 
         # Add profile fields so that form validation passes
-        try:
-            profile_fields = CustomDataFieldsProfile.objects.get(
-                id=int(fields.get(with_prefix(PROFILE_SLUG, self.prefix))),
-                definition__field_type=self.field_view.field_type,
-                definition__domain=self.domain,
-            ).fields
-        except (ValueError, TypeError, CustomDataFieldsProfile.DoesNotExist):
-            profile_fields = {}
-        fields.update(add_prefix(profile_fields, self.prefix))
+        if fields:
+            try:
+                profile_fields = CustomDataFieldsProfile.objects.get(
+                    id=int(fields.get(with_prefix(PROFILE_SLUG, self.prefix))),
+                    definition__field_type=self.field_view.field_type,
+                    definition__domain=self.domain,
+                ).fields
+            except (ValueError, TypeError, CustomDataFieldsProfile.DoesNotExist):
+                profile_fields = {}
+            fields.update(add_prefix(profile_fields, self.prefix))
 
         self.form = CustomDataForm(fields, prefix=self.prefix)
         return self.form
