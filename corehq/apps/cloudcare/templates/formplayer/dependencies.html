@@ -5,7 +5,9 @@
   <link href='https://api.mapbox.com/mapbox.js/v3.3.1/mapbox.css' rel='stylesheet' />
 {% compress js %}
   <script src="{% static 'backbone/backbone.js' %}"></script>
+  <script src="{% static 'backbone.radio/build/backbone.radio.min.js' %}"></script>
   <script src="{% static 'backbone.marionette/lib/backbone.marionette.js' %}"></script>
+  <script src="{% static 'marionette.approuter/lib/marionette.approuter.min.js' %}"></script>
   <script src="{% static 'nprogress/nprogress.js' %}"></script>
   <script src="{% static 'moment/min/moment.min.js' %}"></script>
   <script src="{% static 'jquery-textchange/jquery.textchange.js' %}"></script>
@@ -24,19 +26,35 @@
   <script src="{% static 'clipboard/dist/clipboard.js' %}"></script>
   <script src="{% static 'reports/js/readable_form.js' %}"></script>
   <script src="{% static 'url-polyfill/url-polyfill.js' %}"></script>
+{% endcompress %}
+
+{% include 'hqwebapp/includes/ui_element_js.html' %}
+{% compress js %}
+  <script src="{% static 'markdown-it/dist/markdown-it.js' %}"></script>
+  <script src="{% static 'jquery-tiny-pubsub/dist/ba-tiny-pubsub.js' %}"></script>
+  <script src="{% static 'cloudcare/js/form_entry/const.js' %}"></script>
+  <script src="{% static 'cloudcare/js/form_entry/errors.js' %}"></script>
+  <script src="{% static 'cloudcare/js/form_entry/utils.js' %}"></script>
+  <script src="{% static 'cloudcare/js/form_entry/task_queue.js' %}"></script>
+  <script src="{% static 'cloudcare/js/form_entry/webformsession.js' %}"></script>
+  <script src="{% static 'cloudcare/js/form_entry/entrycontrols_full.js' %}"></script>
+  <script src="{% static 'cloudcare/js/form_entry/fullform-ui.js' %}"></script>
+  <script src="{% static '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.min.js' %}"></script>
+{% endcompress %}
+
+{% compress js %}
+  <!-- The ordering of the cloudcare/js/* files matters, as many of them depend on each other. -->
 
   <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/app.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/constants.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/hq.events.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/middleware.js' %}"></script>
-  <script src="{% static 'cloudcare/js/formplayer/router.js' %}"></script>
 
   <script src="{% static 'cloudcare/js/debugger/debugger.js' %}"></script>
 
   <script src="{% static 'cloudcare/js/formplayer/layout/views/progress_bar.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/layout/views/settings.js' %}"></script>
-  <script src="{% static 'cloudcare/js/formplayer/layout/views/phone_navigation.js' %}"></script>
 
   <script src="{% static 'cloudcare/js/formplayer/users/models.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/users/collections.js' %}"></script>
@@ -45,16 +63,16 @@
   <script src="{% static 'cloudcare/js/formplayer/users/views.js' %}"></script>
 
   <script src="{% static 'cloudcare/js/formplayer/apps/api.js' %}"></script>
-  <script src="{% static 'cloudcare/js/formplayer/apps/controller.js' %}"></script>
-  <script src="{% static 'cloudcare/js/formplayer/apps/views.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/apps/models.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/apps/collections.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/apps/views.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/apps/controller.js' %}"></script>
 
   <script src="{% static 'cloudcare/js/formplayer/menus/api.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/menus/views.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/menus/views/query.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/menus/util.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/menus/controller.js' %}"></script>
-  <script src="{% static 'cloudcare/js/formplayer/menus/models.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/menus/collections.js' %}"></script>
 
   <script src="{% static 'cloudcare/js/formplayer/sessions/api.js' %}"></script>
@@ -62,17 +80,11 @@
   <script src="{% static 'cloudcare/js/formplayer/sessions/collections.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/sessions/views.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/sessions/controller.js' %}"></script>
+
+  <script src="{% static 'cloudcare/js/formplayer/router.js' %}"></script>
+
 {% endcompress %}
 
-{% include 'hqwebapp/includes/ui_element_js.html' %}
-{% compress js %}
-  <script src="{% static 'markdown-it/dist/markdown-it.js' %}"></script>
-  <script src="{% static 'jquery-tiny-pubsub/dist/ba-tiny-pubsub.js' %}"></script>
-  <script src="{% static 'cloudcare/js/form_entry/webformsession.js' %}"></script>
-  <script src="{% static 'cloudcare/js/form_entry/entrycontrols_full.js' %}"></script>
-  <script src="{% static 'cloudcare/js/form_entry/fullform-ui.js' %}"></script>
-  <script src="{% static '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.min.js' %}"></script>
-{% endcompress %}
   <link
     rel="stylesheet"
     href="{% static '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css' %}"
