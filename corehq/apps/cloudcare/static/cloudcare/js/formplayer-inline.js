@@ -1,7 +1,7 @@
 hqDefine("cloudcare/js/formplayer-inline", function () {
-    var alertHtml = function (message, alert_class) {
+    var alertHtml = function (message, cssClass) {
         return (
-            "<div class='alert " + (alert_class || 'alert-info') + "'>" +
+            "<div class='alert " + (cssClass || 'alert-info') + "'>" +
             "<button type='button' class='close' data-dismiss='alert'>&times;</button>" +
             message +
             "</div>"
@@ -30,7 +30,7 @@ hqDefine("cloudcare/js/formplayer-inline", function () {
                 data.session_data = $.extend(data.session_data, options.sessionData);
 
                 data = $.extend(data, {
-                    onsubmit: function (xml) {
+                    onsubmit: function () {
                         $target.html(alertHtml(gettext('Form successfully submitted!'), 'alert-success'));
                         options.onsubmit();
                     },
@@ -40,7 +40,7 @@ hqDefine("cloudcare/js/formplayer-inline", function () {
                             'alert-danger'
                         ));
                     },
-                    onload: function (adapter, resp) {
+                    onload: function () {
                         options.onload();
                     },
                 });

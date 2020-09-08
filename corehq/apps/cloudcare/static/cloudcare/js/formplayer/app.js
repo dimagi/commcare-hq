@@ -54,25 +54,24 @@ hqDefine("cloudcare/js/formplayer/app", function () {
      * jr://images/icon/mother.png -> https://commcarehq.org/hq/multimedia/file/CommCareImage/[app_id]/mother.png
      * The actual mapping is contained in the app Couch document
      */
-    FormplayerFrontend.getChannel().reply('resourceMap', function (resource_path, app_id) {
-        var currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", app_id);
+    FormplayerFrontend.getChannel().reply('resourceMap', function (resourcePath, appId) {
+        var currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", appId);
         if (!currentApp) {
-            console.warn('App is undefined for app_id: ' + app_id);
-            console.warn('Not processing resource: ' + resource_path);
+            console.warn('App is undefined for app_id: ' + appId);
+            console.warn('Not processing resource: ' + resourcePath);
             return;
         }
-        if (resource_path.substring(0, 7) === 'http://') {
-            return resource_path;
+        if (resourcePath.substring(0, 7) === 'http://') {
+            return resourcePath;
         } else if (!_.isEmpty(currentApp.get("multimedia_map"))) {
-            var resource = currentApp.get('multimedia_map')[resource_path];
+            var resource = currentApp.get('multimedia_map')[resourcePath];
             if (!resource) {
-                console.warn('Unable to find resource ' + resource_path + 'in multimedia map');
+                console.warn('Unable to find resource ' + resourcePath + 'in multimedia map');
                 return;
             }
             var id = resource.multimedia_id;
-            var media_type = resource.media_type;
-            var name = _.last(resource_path.split('/'));
-            return '/hq/multimedia/file/' + media_type + '/' + id + '/' + name;
+            var name = _.last(resourcePath.split('/'));
+            return '/hq/multimedia/file/' + resource.media_type + '/' + id + '/' + name;
         }
     });
 
@@ -179,8 +178,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         };
         data.onsubmit = function (resp) {
             if (resp.status === "success") {
-                var $alert,
-                    isAppPreview = user.environment === hqImport("cloudcare/js/formplayer/constants").PREVIEW_APP_ENVIRONMENT;
+                var $alert;
                 if (resp.submitResponseMessage) {
                     var markdowner = window.markdownit(),
                         reverse = hqImport("hqwebapp/js/initial_page_data").reverse,
@@ -250,10 +248,10 @@ hqDefine("cloudcare/js/formplayer/app", function () {
             }
         };
         data.debuggerEnabled = user.debuggerEnabled;
-        data.resourceMap = function (resource_path) {
+        data.resourceMap = function (resourcePath) {
             var urlObject = Util.currentUrlToObject();
             var appId = urlObject.appId;
-            return FormplayerFrontend.getChannel().request('resourceMap', resource_path, appId);
+            return FormplayerFrontend.getChannel().request('resourceMap', resourcePath, appId);
         };
         var sess = WebFormSession(data);
         sess.renderFormXml(data, $('#webforms'));
@@ -351,8 +349,9 @@ hqDefine("cloudcare/js/formplayer/app", function () {
             cloudCareDebugger,
             $debug = $('#cloudcare-debugger');
 
-        if (!$debug.length)
+        if (!$debug.length) {
             return;
+        }
 
         var urlObject = Util.currentUrlToObject();
         var selections = urlObject.steps;
@@ -426,8 +425,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
      * navigates you to the main page.
      */
     FormplayerFrontend.on('clearRestoreAsUser', function () {
-        var user = FormplayerFrontend.getChannel().request('currentUser'),
-            appId;
+        var user = FormplayerFrontend.getChannel().request('currentUser');
         hqImport("cloudcare/js/formplayer/users/utils").Users.clearRestoreAsUser(
             user.domain,
             user.username
@@ -446,7 +444,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         var user = FormplayerFrontend.getChannel().request('currentUser'),
             username = user.username,
             domain = user.domain,
-            formplayer_url = user.formplayer_url,
+            formplayerUrl = user.formplayer_url,
             complete,
             data = {
                 "username": username,
@@ -469,7 +467,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
             }
         };
         options = {
-            url: formplayer_url + "/sync-db",
+            url: formplayerUrl + "/sync-db",
             data: JSON.stringify(data),
             complete: complete,
         };
@@ -554,10 +552,10 @@ hqDefine("cloudcare/js/formplayer/app", function () {
             throw new Error('Attempt to refresh application for null appId');
         }
         var user = FormplayerFrontend.getChannel().request('currentUser'),
-            formplayer_url = user.formplayer_url,
+            formplayerUrl = user.formplayer_url,
             resp,
             options = {
-                url: formplayer_url + "/delete_application_dbs",
+                url: formplayerUrl + "/delete_application_dbs",
                 data: JSON.stringify({
                     app_id: appId,
                     domain: user.domain,
@@ -571,7 +569,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         resp.fail(function () {
             formplayerLoadingComplete(true);
         }).done(function (response) {
-            if (response.hasOwnProperty('exception')) {
+            if (_.has(response, 'exception')) {
                 formplayerLoadingComplete(true);
                 return;
             }
@@ -590,10 +588,10 @@ hqDefine("cloudcare/js/formplayer/app", function () {
      */
     FormplayerFrontend.getChannel().reply('breakLocks', function () {
         var user = FormplayerFrontend.getChannel().request('currentUser'),
-            formplayer_url = user.formplayer_url,
+            formplayerUrl = user.formplayer_url,
             resp,
             options = {
-                url: formplayer_url + "/break_locks",
+                url: formplayerUrl + "/break_locks",
                 data: JSON.stringify({
                     domain: user.domain,
                     username: user.username,
@@ -606,7 +604,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         resp.fail(function () {
             formplayerLoadingComplete(true);
         }).done(function (response) {
-            breakLocksComplete(response.hasOwnProperty('exception'), response.message);
+            breakLocksComplete(_.has(response, 'exception'), response.message);
         });
         return resp;
     });
@@ -619,10 +617,10 @@ hqDefine("cloudcare/js/formplayer/app", function () {
      */
     FormplayerFrontend.getChannel().reply('clearUserData', function () {
         var user = FormplayerFrontend.getChannel().request('currentUser'),
-            formplayer_url = user.formplayer_url,
+            formplayerUrl = user.formplayer_url,
             resp,
             options = {
-                url: formplayer_url + "/clear_user_data",
+                url: formplayerUrl + "/clear_user_data",
                 data: JSON.stringify({
                     domain: user.domain,
                     username: user.username,
@@ -635,7 +633,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         resp.fail(function () {
             formplayerLoadingComplete(true);
         }).done(function (response) {
-            clearUserDataComplete(response.hasOwnProperty('exception'));
+            clearUserDataComplete(_.has(response, 'exception'));
         });
         return resp;
     });
