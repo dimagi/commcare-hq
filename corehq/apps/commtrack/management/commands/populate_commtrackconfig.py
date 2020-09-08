@@ -39,7 +39,7 @@ class Command(PopulateSQLCommand):
         for spec in cls.one_to_one_submodels():
             normalize = float if spec["sql_class"] == SQLStockLevelsConfig else None
             sql_submodel = getattr(obj, spec['sql_class'].__name__.lower())
-            couch_submodel = doc[spec['couch_attr']]
+            couch_submodel = doc.get(spec['couch_attr'], {})
             for attr in spec['fields']:
                 diffs.append(cls.diff_attr(attr, couch_submodel, sql_submodel, normalize=normalize))
         diffs = [d for d in diffs if d]
@@ -97,9 +97,24 @@ class Command(PopulateSQLCommand):
             oldval = doc.get('force_consumption_case_types')
             if realval and not oldval:
                 doc['force_consumption_case_types'] = realval
+                del doc['force_to_consumption_case_types']
         return doc
 
+    @classmethod
+    def _wrap_action_config(cls, data):
+        if 'action_type' in data:
+            data['action'] = data['action_type']
+            del data['action_type']
+        if 'name' in data:
+            if data['name'] == 'lost':
+                data['subaction'] = 'loss'
+            del data['name']
+        return data
+
     def update_or_create_sql_object(self, doc):
+        # This method uses a try/catch instead of update_or_create so that it can use sync_To_couch=False
+        # for the saves while avoiding the bug described in https://github.com/dimagi/commcare-hq/pull/28001
+        # CommtrackConfig documents aren't created often, so the risk of a race condition is low.
         try:
             model = self.sql_class().objects.get(couch_id=doc['_id'])
             created = False
@@ -111,29 +126,36 @@ class Command(PopulateSQLCommand):
 
         for spec in self.one_to_one_submodels():
             couch_submodel = doc.get(spec['couch_attr'])
+            sql_name = spec['sql_class'].__name__.lower()
             if 'wrap' in spec:
                 couch_submodel = spec['wrap'](couch_submodel)
-            setattr(model, spec['sql_class'].__name__.lower(), spec['sql_class'](**{
-                field: couch_submodel.get(field)
-                for field in spec['fields']
-            }))
+            try:
+                sql_submodel = getattr(model, sql_name)
+            except ObjectDoesNotExist:
+                sql_submodel = spec['sql_class']()
+            for field in spec['fields']:
+                setattr(sql_submodel, field, couch_submodel.get(field))
+            setattr(model, sql_name, sql_submodel)
 
-        sql_actions = []
-        for a in doc['actions']:
-            subaction = doc.get('subaction')
-            if doc.get('name', '') == 'lost':
-                subaction == 'loss'
-            sql_actions.append(SQLActionConfig(
-                action=doc.get('action_type', doc.get('action')),
-                subaction=subaction,
-                _keyword=doc.get('_keyword'),
-                caption=doc.get('caption'),
-            ))
-        model.set_actions(sql_actions)
+        # Make sure model has id so that submodels can be saved
+        if created:
+            model.save(sync_to_couch=False)
 
-        model.save()
         for spec in self.one_to_one_submodels():
             submodel = getattr(model, spec['sql_class'].__name__.lower())
             submodel.commtrack_config = model
             submodel.save()
+
+        sql_actions = []
+        for a in doc['actions']:
+            a = self._wrap_action_config(a)
+            sql_actions.append(SQLActionConfig(
+                action=a.get('action'),
+                subaction=a.get('subaction'),
+                _keyword=a.get('_keyword'),
+                caption=a.get('caption'),
+            ))
+        model.set_actions(sql_actions)
+        model.save(sync_to_couch=False)
+
         return (model, created)
