@@ -9,6 +9,15 @@ from corehq import toggles
 from corehq.motech.dhis2.dbaccessors import get_dataset_maps
 
 
+@periodic_task(
+    run_every=crontab(minute=3, hour=3),
+    queue='background_queue'
+)
+def send_datasets_for_all_domains():
+    for domain_name in find_domains_with_toggle_enabled(toggles.DHIS2_INTEGRATION):
+        send_datasets(domain_name)
+
+
 @task(serializer='pickle', queue='background_queue')
 def send_datasets(domain_name, send_now=False, send_date=None):
     """
@@ -41,12 +50,3 @@ def send_datasets(domain_name, send_now=False, send_date=None):
             dataset = dataset_map.get_dataset(send_date)
             with conn.get_requests() as requests:
                 requests.post('/api/dataValueSets', json=dataset)
-
-
-@periodic_task(
-    run_every=crontab(minute=3, hour=3),
-    queue='background_queue'
-)
-def send_datasets_for_all_domains():
-    for domain_name in find_domains_with_toggle_enabled(toggles.DHIS2_INTEGRATION):
-        send_datasets(domain_name)
