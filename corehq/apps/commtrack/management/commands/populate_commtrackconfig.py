@@ -112,6 +112,9 @@ class Command(PopulateSQLCommand):
         return data
 
     def update_or_create_sql_object(self, doc):
+        # This method uses a try/catch instead of update_or_create so that it can use sync_To_couch=False
+        # for the saves while avoiding the bug described in https://github.com/dimagi/commcare-hq/pull/28001
+        # CommtrackConfig documents aren't created often, so the risk of a race condition is low.
         try:
             model = self.sql_class().objects.get(couch_id=doc['_id'])
             created = False
@@ -123,12 +126,23 @@ class Command(PopulateSQLCommand):
 
         for spec in self.one_to_one_submodels():
             couch_submodel = doc.get(spec['couch_attr'])
+            sql_name = spec['sql_class'].__name__.lower()
             if 'wrap' in spec:
                 couch_submodel = spec['wrap'](couch_submodel)
-            setattr(model, spec['sql_class'].__name__.lower(), spec['sql_class'](**{
-                field: couch_submodel.get(field)
-                for field in spec['fields']
-            }))
+            try:
+                sql_submodel = getattr(model, sql_name)
+            except ObjectDoesNotExist:
+                sql_submodel = spec['sql_class']()
+            for field in spec['fields']:
+                setattr(sql_submodel, field, couch_submodel.get(field))
+            setattr(model, sql_name, sql_submodel)
+
+        if created:
+            model.save(sync_to_couch=False)
+            for spec in self.one_to_one_submodels():
+                submodel = getattr(model, spec['sql_class'].__name__.lower())
+                submodel.commtrack_config = model
+                submodel.save()
 
         sql_actions = []
         for a in doc['actions']:
@@ -140,10 +154,6 @@ class Command(PopulateSQLCommand):
                 caption=a.get('caption'),
             ))
         model.set_actions(sql_actions)
+        model.save(sync_to_couch=False)
 
-        model.save()
-        for spec in self.one_to_one_submodels():
-            submodel = getattr(model, spec['sql_class'].__name__.lower())
-            submodel.commtrack_config = model
-            submodel.save()
         return (model, created)
