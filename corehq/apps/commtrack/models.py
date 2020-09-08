@@ -292,12 +292,25 @@ class CommtrackConfig(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
         for field_name in Command.attrs_to_sync():
             value = getattr(self, field_name)
             setattr(sql_object, field_name, value)
+
+        submodels = []
         for spec in Command.one_to_one_submodels():
             couch_submodel = getattr(self, spec['couch_attr'], {})
-            setattr(sql_object, spec['sql_class'].__name__.lower(), spec['sql_class'](**{
+            sql_submodel = spec['sql_class'](**{
                 field: getattr(couch_submodel, field)
                 for field in spec['fields']
-            }))
+            })
+            setattr(sql_object, spec['sql_class'].__name__.lower(), sql_submodel)
+            submodels.append(sql_submodel)
+
+        # Make sure model has id so that submodels can be saved
+        if not sql_object.id:
+            sql_object.save(sync_to_couch=False)
+
+        for sql_submodel in submodels:
+            setattr(sql_submodel, 'commtrack_config', sql_object)
+            sql_submodel.save()
+
         sql_object.set_actions([
             SQLActionConfig(
                 action=action.action,
