@@ -158,7 +158,7 @@ class TestCouchToSQLCommtrackConfig(TestCase):
         self.assertEqual(sql.domain, "my_project")
         self.assertFalse(sql.use_auto_emergency_levels)
         self.assertFalse(sql.sync_consumption_fixtures)
-        self.assertTrue(sql.use_auto_consumption == use_auto_consumption)
+        self.assertEqual(sql.use_auto_consumption, use_auto_consumption)
         self.assertTrue(sql.individual_consumption_defaults)
 
         self.assertTrue(sql.sqlalertconfig.stock_out_facilities)

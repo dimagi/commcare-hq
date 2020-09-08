@@ -143,7 +143,7 @@ class SessionDetailsViewTest(TestCase):
         self.assertIsNone(data['session_expiry'])
         self.assertIsNone(data['secure_session_timeout'])
         self.assertFalse(data['secure_session'])
-        self.assertEquals("", data['username'])
+        self.assertEqual("", data['username'])
 
     @override_settings(DEBUG=True)
     def test_ping_login_auth_user(self):

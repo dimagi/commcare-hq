@@ -118,14 +118,20 @@ class StaticChoiceProvider(ChoiceProvider):
         super(StaticChoiceProvider, self).__init__(None, None)
 
     def query(self, query_context):
+        default = self.default_value(query_context.user)
+        if not default:
+            default = SearchableChoice(SHOW_ALL_CHOICE,
+                                       "[{}]".format(ugettext('Show All')), "[{}]".format(ugettext('Show All')))
         filtered_set = [choice for choice in self.choices
-                        if any(query_context.query in text for text in choice.searchable_text)]
+                       if choice == default or any(query_context.query in text for text in choice.searchable_text)]
         return filtered_set[query_context.offset:query_context.offset + query_context.limit]
 
     def get_choices_for_known_values(self, values, user):
         return {choice for choice in self.choices
                 if choice.value in values}
 
+    def default_value(self, user):
+        return None
 
 class ChainableChoiceProvider(ChoiceProvider, metaclass=ABCMeta):
     @abstractmethod
@@ -149,11 +155,14 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
 
     def query(self, query_context):
         try:
+            default = self.default_value(query_context.user)
+            if not default:
+                default = [Choice(SHOW_ALL_CHOICE, "[{}]".format(ugettext('Show All')))]
             choices = [
                 self._make_choice_from_value(value)
                 for value in self.get_values_for_query(query_context)
             ]
-            return self._deduplicate_and_sort_choices(choices)
+            return default + self._deduplicate_and_sort_choices(choices)
         except ColumnNotFoundError:
             return []
 
@@ -188,6 +197,9 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
 
     def get_choices_for_known_values(self, values, user):
         return []
+
+    def default_value(self, user):
+        return None
 
     def _make_choice_from_value(self, value):
         if value is None or value == '':
@@ -364,7 +376,7 @@ class GroupChoiceProvider(ChainableChoiceProvider):
             GroupES().domain(self.domain).is_case_sharing()
             .search_string_query(query, default_fields=['name'])
         )
-        return group_es.size(0).run().total
+        return group_es.count()
 
     def get_choices_for_known_values(self, values, user):
         group_es = GroupES().domain(self.domain).is_case_sharing().doc_id(values)
@@ -394,12 +406,20 @@ class AbstractMultiProvider(ChoiceProvider):
         assert not bad_choice_providers, bad_choice_providers
 
     def query(self, query_context):
+        default = None
         limit = query_context.limit
         offset = query_context.offset
         query = query_context.query
         user = query_context.user
         choices = []
+        if offset == 0:
+            choices.append(default)
+            limit -= 1
+        else:
+            offset -= 1
+
         for choice_provider in self.choice_providers:
+            default = choice_provider.default_value(user)
             if limit <= 0:
                 break
             query_context = ChoiceQueryContext(query=query, limit=limit, offset=offset, user=user)
@@ -410,6 +430,12 @@ class AbstractMultiProvider(ChoiceProvider):
                 offset = 0
             else:
                 offset -= choice_provider.query_count(query, user=user)
+
+        if choices[0] is None:
+            if not default:
+                default = [Choice(SHOW_ALL_CHOICE, "[{}]".format(ugettext('Show All')))]
+            choices[0] = default[0]
+
         return choices
 
     def get_choices_for_known_values(self, values, user):

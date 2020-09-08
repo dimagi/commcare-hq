@@ -1,6 +1,5 @@
 import json
 from copy import deepcopy
-from mock import patch
 
 from django.urls import reverse
 from django.utils.http import urlencode
@@ -9,6 +8,7 @@ from flaky import flaky
 
 from corehq.apps.api.resources import v0_5
 from corehq.apps.groups.models import Group
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.analytics import update_analytics_indexes
 from corehq.apps.users.models import (
     CommCareUser,
@@ -24,9 +24,10 @@ from corehq.util.es.testing import sync_users_to_es
 from .utils import APIResourceTest
 
 
+@es_test
 class TestCommCareUserResource(APIResourceTest):
     """
-    Basic sanity checking of v0_1.CommCareUserResource
+    Basic sanity checking of v0_5.CommCareUserResource
     """
     resource = v0_5.CommCareUserResource
     api_name = 'v0.5'
@@ -193,6 +194,7 @@ class TestWebUserResource(APIResourceTest):
         "last_name": "Admin",
         "permissions": {
             "edit_apps": True,
+            "view_apps": True,
             "edit_commcare_users": True,
             "view_commcare_users": True,
             "edit_groups": True,
@@ -232,6 +234,7 @@ class TestWebUserResource(APIResourceTest):
             'edit_users_in_locations',
             'edit_data',
             'edit_apps',
+            'view_apps',
             'edit_reports',
             'view_reports',
         ]:
@@ -319,7 +322,9 @@ class TestWebUserResource(APIResourceTest):
 
     def test_create_with_custom_role(self):
         new_user_role = UserRole.get_or_create_with_permissions(
-            self.domain.name, Permissions(edit_apps=True, view_reports=True), 'awesomeness')
+            self.domain.name,
+            Permissions(edit_apps=True, view_apps=True, view_reports=True),
+            'awesomeness')
         user_json = deepcopy(self.default_user_json)
         user_json["role"] = new_user_role.name
         user_json["is_admin"] = False
@@ -477,3 +482,32 @@ class TestBulkUserAPI(APIResourceTest):
     def test_basic(self):
         response = self.query()
         self.assertEqual(response.status_code, 200)
+
+
+@es_test
+class TestIdentityResource(APIResourceTest):
+
+    resource = v0_5.IdentityResource
+    api_name = 'v0.5'
+
+    @classmethod
+    def setUpClass(cls):
+        reset_es_index(USER_INDEX_INFO)
+        super().setUpClass()
+
+    @classmethod
+    def _get_list_endpoint(cls):
+        return reverse('api_dispatch_list',
+                kwargs=dict(api_name=cls.api_name,
+                            resource_name=cls.resource._meta.resource_name))
+
+    @sync_users_to_es()
+    def test_get_list(self):
+        response = self._assert_auth_get_resource(self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertEqual(data['id'], self.user.get_id)
+        self.assertEqual(data['username'], self.username)
+        self.assertEqual(data['first_name'], self.user.first_name)
+        self.assertEqual(data['last_name'], self.user.last_name)
+        self.assertEqual(data['email'], self.user.email)

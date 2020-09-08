@@ -16,7 +16,6 @@ def _clean_json(doc):
         return doc
     doc.pop('domain', None)
     doc.pop('doc_type', None)
-    doc.pop('_id', None)
     doc.pop('_rev', None)
     for key, val in doc.items():
         if isinstance(val, dict):

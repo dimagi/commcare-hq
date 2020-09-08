@@ -62,6 +62,7 @@ EXPECTED_PROD_INDICES = [
         "meta": {
             "settings": {
                 "number_of_replicas": 1,
+                "number_of_shards": 5,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -70,13 +71,6 @@ EXPECTED_PROD_INDICES = [
                             ],
                             "type": "custom",
                             "tokenizer": "whitespace"
-                        },
-                        "sortable_exact": {
-                            "filter": [
-                                "lowercase"
-                            ],
-                            "type": "custom",
-                            "tokenizer": "keyword"
                         }
                     }
                 }
@@ -111,6 +105,7 @@ EXPECTED_PROD_INDICES = [
         "meta": {
             "settings": {
                 "number_of_replicas": 1,
+                "number_of_shards": 5,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -119,13 +114,6 @@ EXPECTED_PROD_INDICES = [
                             ],
                             "type": "custom",
                             "tokenizer": "whitespace"
-                        },
-                        "sortable_exact": {
-                            "filter": [
-                                "lowercase"
-                            ],
-                            "type": "custom",
-                            "tokenizer": "keyword"
                         }
                     }
                 }
@@ -164,6 +152,7 @@ EXPECTED_PROD_INDICES = [
         "meta": {
             "settings": {
                 "number_of_replicas": 1,
+                "number_of_shards": 5,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -172,13 +161,6 @@ EXPECTED_PROD_INDICES = [
                             ],
                             "type": "custom",
                             "tokenizer": "whitespace"
-                        },
-                        "sortable_exact": {
-                            "filter": [
-                                "lowercase"
-                            ],
-                            "type": "custom",
-                            "tokenizer": "keyword"
                         }
                     }
                 }
@@ -214,6 +196,7 @@ EXPECTED_PROD_INDICES = [
         "meta": {
             "settings": {
                 "number_of_replicas": 1,
+                "number_of_shards": 5,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -222,13 +205,6 @@ EXPECTED_PROD_INDICES = [
                             ],
                             "type": "custom",
                             "tokenizer": "whitespace"
-                        },
-                        "sortable_exact": {
-                            "filter": [
-                                "lowercase"
-                            ],
-                            "type": "custom",
-                            "tokenizer": "keyword"
                         }
                     }
                 }
@@ -243,6 +219,7 @@ EXPECTED_PROD_INDICES = [
         "meta": {
             "settings": {
                 "number_of_replicas": 1,
+                "number_of_shards": 5,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -251,13 +228,6 @@ EXPECTED_PROD_INDICES = [
                             ],
                             "type": "custom",
                             "tokenizer": "whitespace"
-                        },
-                        "sortable_exact": {
-                            "filter": [
-                                "lowercase"
-                            ],
-                            "type": "custom",
-                            "tokenizer": "keyword"
                         }
                     }
                 }
@@ -272,6 +242,7 @@ EXPECTED_PROD_INDICES = [
         "meta": {
             "settings": {
                 "number_of_replicas": 1,
+                "number_of_shards": 5,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -280,13 +251,6 @@ EXPECTED_PROD_INDICES = [
                             ],
                             "type": "custom",
                             "tokenizer": "whitespace"
-                        },
-                        "sortable_exact": {
-                            "filter": [
-                                "lowercase"
-                            ],
-                            "type": "custom",
-                            "tokenizer": "keyword"
                         }
                     }
                 }
@@ -301,6 +265,7 @@ EXPECTED_PROD_INDICES = [
         "meta": {
             "settings": {
                 "number_of_replicas": 1,
+                "number_of_shards": 5,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -309,13 +274,6 @@ EXPECTED_PROD_INDICES = [
                             ],
                             "type": "custom",
                             "tokenizer": "whitespace"
-                        },
-                        "sortable_exact": {
-                            "filter": [
-                                "lowercase"
-                            ],
-                            "type": "custom",
-                            "tokenizer": "keyword"
                         }
                     }
                 }

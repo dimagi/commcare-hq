@@ -13,6 +13,31 @@ class DialerSettings(models.Model):
     dialer_page_subheader = models.CharField(max_length=255)
 
 
+class GaenOtpServerSettings(models.Model):
+    domain = models.CharField(max_length=128, unique=True)
+    is_enabled = models.BooleanField(default=False)
+    server_url = models.CharField(max_length=255)
+    auth_token = models.CharField(max_length=255)
+
+
+class HmacCalloutSettings(models.Model):
+    domain = models.CharField(max_length=128)
+    destination_url = models.CharField(max_length=255)
+    is_enabled = models.BooleanField(default=False)
+    api_key = models.CharField(max_length=255)
+    api_secret = models.CharField(max_length=255)
+
+    class Meta(object):
+        unique_together = [
+            # HACK work around unique=True implies db_index=True
+            # https://code.djangoproject.com/ticket/24082
+            # Avoid extra varchar_pattern_ops index
+            # since we do not do LIKE queries on these
+            # https://stackoverflow.com/a/50926644/10840
+            ("domain",),
+        ]
+
+
 class SimprintsIntegration(models.Model):
     domain = models.CharField(max_length=128, unique=True)
     is_enabled = models.BooleanField(default=False)

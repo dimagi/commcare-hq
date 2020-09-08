@@ -1,6 +1,14 @@
 /* globals Formplayer, EntrySingleAnswer, moment */
 
 /**
+ * Import vars sent from server
+ */
+var initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
+var MAPBOX_ACCESS_TOKEN = initialPageData("mapbox_access_token");
+
+
+
+/**
  * The base Object for all entries. Each entry takes a question object and options
  * @param {Object} question - A question object
  * @param {Object} object - A hash of different options
@@ -126,19 +134,24 @@ EntrySingleAnswer.prototype.enableReceiver = function (question, options) {
         if (match) {
             var receiveTopic = match[1];
             var receiveTopicField = match[2];
-            question.parentPubSub.subscribe(function (addr) {
-                if (addr === Formplayer.Const.NO_ANSWER) {
+            question.parentPubSub.subscribe(function (message) {
+                if (message === Formplayer.Const.NO_ANSWER) {
                     self.rawAnswer(Formplayer.Const.NO_ANSWER);
-                } else if (addr[receiveTopicField]) {
-                    self.receiveValue(addr[receiveTopicField]);
+                } else if (message) {
+                    self.receiveMessage(message, receiveTopicField);
                 }
             }, null, receiveTopic);
         }
     }
 };
-EntrySingleAnswer.prototype.receiveValue = function (value) {
+EntrySingleAnswer.prototype.receiveMessage = function (message, field) {
+    // Default implementation, if field is in message register answer.
     var self = this;
-    self.rawAnswer(value);
+    if (message[field]) {
+        self.rawAnswer(message[field]);
+    } else {
+        self.rawAnswer(Formplayer.Const.NO_ANSWER);
+    }
 };
 
 
@@ -223,7 +236,8 @@ FreeTextEntry.prototype.onPreProcess = function (newValue) {
 /**
  * The entry that represents an address entry.
  * Takes in a `broadcastStyles` list of strings in format `broadcast-<topic>` to broadcast
- * the address item that is selected. Item contains `full`, `street`, `city`, `state_short`, `state_long`, `zipcode`.
+ * the address item that is selected. Item contains `full`, `street`, `city`, `us_state`, `us_state_long`,
+ * `zipcode`, `country`, `country_short`, `region`.
  */
 function AddressEntry(question, options) {
     var self = this;
@@ -247,9 +261,23 @@ function AddressEntry(question, options) {
                         broadcastObj.zipcode = contextValue.text;
                     } else if (contextValue.id.startsWith('place')) {
                         broadcastObj.city = contextValue.text;
+                    } else if (contextValue.id.startsWith('country')) {
+                        broadcastObj.country = contextValue.text;
+                        if (contextValue.short_code) {
+                            broadcastObj.country_short = contextValue.short_code;
+                        }
                     } else if (contextValue.id.startsWith('region')) {
-                        broadcastObj.state_short = contextValue.short_code.replace('US-', '');
+                        broadcastObj.region = contextValue.text;
+                        // TODO: Deprecate state_short and state_long.
                         broadcastObj.state_long = contextValue.text;
+                        if (contextValue.short_code) {
+                            broadcastObj.state_short = contextValue.short_code.replace('US-', '');
+                        }
+                        // If US region, it's actually a state so add us_state.
+                        if (contextValue.short_code && contextValue.short_code.startsWith('US-')) {
+                            broadcastObj.us_state = contextValue.text;
+                            broadcastObj.us_state_short = contextValue.short_code.replace('US-', '');
+                        }
                     }
                 } catch (err) {
                     // Swallow error, broadcast best effort. Consider logging.
@@ -267,7 +295,8 @@ function AddressEntry(question, options) {
 
     // geocoder function called when user presses 'x', broadcast a no answer to subscribers.
     self.geocoderOnClearCallback = function () {
-        self.answer(Formplayer.Const.NO_ANSWER);
+        self.rawAnswer(Formplayer.Const.NO_ANSWER);
+        self.question.error(null);
         self.editing = true;
         self.broadcastTopics.forEach(function (broadcastTopic) {
             question.parentPubSub.notifySubscribers(Formplayer.Const.NO_ANSWER, broadcastTopic);
@@ -284,14 +313,16 @@ function AddressEntry(question, options) {
             });
         }
 
+        var defaultGeocoderLocation = initialPageData('default_geocoder_location') || {};
         var geocoder = new MapboxGeocoder({
-            accessToken: window.MAPBOX_ACCESS_TOKEN,
+            accessToken: MAPBOX_ACCESS_TOKEN,
             types: 'address',
             enableEventLogging: false,
-            // proximity set to NYC
-            proximity: { longitude: -74.006058, latitude: 40.712772},
             getItemValue: self.geocoderItemCallback,
         });
+        if (defaultGeocoderLocation.coordinates) {
+            geocoder.setProximity(defaultGeocoderLocation.coordinates);
+        }
         geocoder.on('clear', self.geocoderOnClearCallback);
         geocoder.addTo('#' + self.entryId);
         // Must add the form-control class to the input created by mapbox in order to edit.
@@ -300,10 +331,11 @@ function AddressEntry(question, options) {
         inputEl.on('keydown', _.debounce(self._inputOnKeyDown, 200));
     };
 
-    self._inputOnKeyDown = function () {
+    self._inputOnKeyDown = function (event) {
         // On key down, switch to editing mode so we unregister an answer.
-        if (!self.editing) {
+        if (!self.editing && self.rawAnswer() !== event.target.value) {
             self.rawAnswer(Formplayer.Const.NO_ANSWER);
+            self.question.error('Please select an address from the options');
             self.editing = true;
         }
     };
@@ -449,20 +481,20 @@ SingleSelectEntry.prototype.onPreProcess = function (newValue) {
         }
     }
 };
-SingleSelectEntry.prototype.receiveValue = function (value) {
+SingleSelectEntry.prototype.receiveMessage = function (message, field) {
+    // Iterate through choices and select the one that matches the message[field]
     var self = this;
-    var found = false;
-    var choices = self.choices();
-    for (var i = 0; i < choices.length; i++) {
-        if (choices[i] === value) {
-            self.rawAnswer(i + 1);
-            found = true;
-            break;
+    if (message[field]) {
+        var choices = self.choices();
+        for (var i = 0; i < choices.length; i++) {
+            if (choices[i] === message[field]) {
+                self.rawAnswer(i + 1);
+                return;
+            }
         }
     }
-    if (!found) {
-        self.rawAnswer(Formplayer.Const.NO_ANSWER);
-    }
+    // either field is not in message or message[field] is not an option.
+    self.rawAnswer(Formplayer.Const.NO_ANSWER);
 };
 
 /**
@@ -671,20 +703,26 @@ ComboboxEntry.prototype.onPreProcess = function (newValue) {
         this.question.error(gettext('Not a valid choice'));
     }
 };
-ComboboxEntry.prototype.receiveValue = function (value) {
+ComboboxEntry.prototype.receiveMessage = function (message, field) {
+    // Iterates through options and selects an option that matches message[field].
+    // Registers a no answer if message[field] is not in options.
+    // Also accepts fields in format `field1||field2||...||fieldn` it will find the
+    // first message[field] that matches an option.
     var self = this;
-    var found = false;
     var options = self.options();
-    for (var i = 0; i < options.length; i++) {
-        if (options[i].name === value) {
-            self.rawAnswer(options[i].name);
-            found = true;
-            break;
+    var fieldsByPriority = field.split("||");
+    for (var i = 0; i < fieldsByPriority.length; i++) {
+        var fieldByPriority = fieldsByPriority[i];
+        for (var j = 0; j < options.length; j++) {
+            var option = options[j];
+            if (option.name === message[fieldByPriority]) {
+                self.rawAnswer(option.name);
+                return;
+            }
         }
     }
-    if (!found) {
-        self.rawAnswer(Formplayer.Const.NO_ANSWER);
-    }
+    // no options match message[field]
+    self.rawAnswer(Formplayer.Const.NO_ANSWER);
 };
 
 $.datetimepicker.setDateFormatter({
@@ -842,10 +880,10 @@ function GeoPointEntry(question, options) {
     };
 
     self.loadMap = function () {
-        if (window.MAPBOX_ACCESS_TOKEN) {
+        if (MAPBOX_ACCESS_TOKEN) {
             self.map = L.map(self.entryId).setView([self.DEFAULT.lat, self.DEFAULT.lon], self.DEFAULT.zoom);
             L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token='
-                        + window.MAPBOX_ACCESS_TOKEN, {
+                        + MAPBOX_ACCESS_TOKEN, {
                 id: 'mapbox/streets-v11',
                 attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
                              ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
@@ -854,7 +892,7 @@ function GeoPointEntry(question, options) {
 
             self.centerMarker = L.marker(self.map.getCenter()).addTo(self.map);
 
-            L.mapbox.accessToken = window.MAPBOX_ACCESS_TOKEN;
+            L.mapbox.accessToken = MAPBOX_ACCESS_TOKEN;
             self.geocoder = L.mapbox.geocoder('mapbox.places');
         } else {
             question.error(gettext('Map layer not configured.'));
@@ -933,10 +971,13 @@ function getEntry(question) {
         case Formplayer.Const.STRING:
             // Barcode uses text box for CloudCare so it's possible to still enter a barcode field
         case Formplayer.Const.BARCODE:
-            options = {
-                enableAutoUpdate: isPhoneMode,
-                receiveStyle: receiveStyle,
-            };
+            // If it's a receiver, it cannot autoupdate because updates will come quickly which messes with the
+            // autoupdate rate limiting.
+            if (receiveStyle) {
+                options.receiveStyle = receiveStyle;
+            } else {
+                options.enableAutoUpdate = isPhoneMode;
+            }
             if (question.stylesContains(Formplayer.Const.ADDRESS)) {
                 entry = new AddressEntry(question, {
                     broadcastStyles: question.stylesContaining(/broadcast-*/),

@@ -7,7 +7,12 @@ from crispy_forms.layout import Submit
 from memoized import memoized
 
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from corehq.apps.integration.models import SimprintsIntegration, DialerSettings
+from corehq.apps.integration.models import (
+    DialerSettings,
+    HmacCalloutSettings,
+    GaenOtpServerSettings,
+    SimprintsIntegration,
+)
 
 
 class DialerSettingsForm(forms.ModelForm):
@@ -88,6 +93,157 @@ class DialerSettingsForm(forms.ModelForm):
         self._existing_config.aws_instance_id = self.cleaned_data['aws_instance_id']
         self._existing_config.dialer_page_header = self.cleaned_data['dialer_page_header']
         self._existing_config.dialer_page_subheader = self.cleaned_data['dialer_page_subheader']
+        self._existing_config.save()
+
+
+class GaenOtpServerSettingsForm(forms.ModelForm):
+    is_enabled = forms.BooleanField(
+        label=_("Enable GAEN OTP Server Integration"),
+        required=False
+    )
+    server_url = forms.CharField(
+        label=_('Server Endpoint')
+    )
+
+    auth_token = forms.CharField(
+        label=_('Server Auth Token'),
+        widget=forms.PasswordInput
+    )
+
+    class Meta:
+        model = DialerSettings
+        fields = [
+            'is_enabled',
+            'server_url',
+            'auth_token'
+        ]
+
+    def __init__(self, data, *args, **kwargs):
+        self.domain = kwargs.pop('domain')
+        kwargs['initial'] = self.initial_data
+        super(GaenOtpServerSettingsForm, self).__init__(data, *args, **kwargs)
+
+        self.helper = hqcrispy.HQFormHelper()
+        self.helper.form_method = 'POST'
+        self.helper.layout = crispy.Layout(
+            hqcrispy.B3MultiField(
+                _("OTP Callouts"),
+                hqcrispy.InlineField('is_enabled'),
+            ),
+            crispy.Div(
+                crispy.Field('server_url'),
+            ),
+            crispy.Div(
+                crispy.Field('auth_token'),
+            ),
+            hqcrispy.FormActions(
+                crispy.ButtonHolder(
+                    Submit('submit', _("Update"))
+                )
+            )
+        )
+
+    @property
+    @memoized
+    def _existing_config(self):
+        existing, _created = GaenOtpServerSettings.objects.get_or_create(
+            domain=self.domain
+        )
+        return existing
+
+    @property
+    def initial_data(self):
+        return {
+            'is_enabled': self._existing_config.is_enabled,
+            'server_url': self._existing_config.server_url,
+            'auth_token': self._existing_config.auth_token,
+        }
+
+    def save(self):
+        self._existing_config.is_enabled = self.cleaned_data['is_enabled']
+        self._existing_config.server_url = self.cleaned_data['server_url']
+        self._existing_config.auth_token = self.cleaned_data['auth_token']
+        self._existing_config.save()
+
+
+class HmacCalloutSettingsForm(forms.ModelForm):
+    is_enabled = forms.BooleanField(
+        label=_("Enable Signed Callout in Web Apps"),
+        required=False
+    )
+    destination_url = forms.CharField(
+        label=_('External Callout URL'),
+        help_text=_("Enter the base URL for callouts that should be signed")
+    )
+
+    api_key = forms.CharField(
+        label=_('API Key'),
+        help_text=_("API Key for CommCare in the external System")
+    )
+    api_secret = forms.CharField(
+        label=_('API Secret'),
+        help_text=_("API Secret for message Signing"),
+        widget=forms.PasswordInput
+    )
+
+    class Meta:
+        model = HmacCalloutSettings
+        fields = [
+            'destination_url',
+            'api_key',
+            'api_secret'
+        ]
+
+    def __init__(self, data, *args, **kwargs):
+        self.domain = kwargs.pop('domain')
+        kwargs['initial'] = self.initial_data
+        super(HmacCalloutSettingsForm, self).__init__(data, *args, **kwargs)
+
+        self.helper = hqcrispy.HQFormHelper()
+        self.helper.form_method = 'POST'
+        self.helper.layout = crispy.Layout(
+            hqcrispy.B3MultiField(
+                _("Signed Callout Config"),
+                hqcrispy.InlineField('is_enabled'),
+            ),
+            crispy.Div(
+                crispy.Field('destination_url'),
+            ),
+            crispy.Div(
+                crispy.Field('api_key'),
+            ),
+            crispy.Div(
+                crispy.Field('api_secret'),
+            ),
+            hqcrispy.FormActions(
+                crispy.ButtonHolder(
+                    Submit('submit', _("Update"))
+                )
+            )
+        )
+
+    @property
+    @memoized
+    def _existing_config(self):
+        existing, _created = HmacCalloutSettings.objects.get_or_create(
+            domain=self.domain
+        )
+        return existing
+
+    @property
+    def initial_data(self):
+        return {
+            'is_enabled': self._existing_config.is_enabled,
+            'destination_url': self._existing_config.destination_url,
+            'api_key': self._existing_config.api_key,
+            'api_secret': self._existing_config.api_secret
+        }
+
+    def save(self):
+        self._existing_config.is_enabled = self.cleaned_data['is_enabled']
+        self._existing_config.destination_url = self.cleaned_data['destination_url']
+        self._existing_config.api_key = self.cleaned_data['api_key']
+        self._existing_config.api_secret = self.cleaned_data['api_secret']
         self._existing_config.save()
 
 

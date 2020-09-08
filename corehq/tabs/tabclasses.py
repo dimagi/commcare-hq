@@ -34,14 +34,19 @@ from corehq.apps.domain.views.releases import (
 )
 from corehq.apps.export.views.incremental import IncrementalExportView
 from corehq.apps.hqadmin.reports import (
+    DeployHistoryReport,
     DeviceLogSoftAssertReport,
     UserAuditReport,
     UserListReport,
-    DeployHistoryReport,
 )
 from corehq.apps.hqadmin.views.system import GlobalThresholds
 from corehq.apps.hqwebapp.models import GaTracker
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
+from corehq.apps.integration.views import (
+    DialerSettingsView,
+    GaenOtpServerSettingsView,
+    HmacCalloutSettingsView,
+)
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.receiverwrapper.rate_limiter import (
     SHOULD_RATE_LIMIT_SUBMISSIONS,
@@ -70,7 +75,6 @@ from corehq.apps.users.permissions import (
     can_download_data_files,
     can_view_sms_exports,
 )
-from corehq.apps.integration.views import DialerSettingsView
 from corehq.feature_previews import (
     EXPLORE_CASE_DATA_PREVIEW,
     is_eligible_for_ecd_preview,
@@ -89,21 +93,13 @@ from corehq.messaging.scheduling.views import (
 from corehq.messaging.util import show_messaging_dashboard
 from corehq.motech.dhis2.views import DataSetMapView
 from corehq.motech.openmrs.views import OpenmrsImporterView
-from corehq.motech.views import ConnectionSettingsView, MotechLogListView
+from corehq.motech.views import ConnectionSettingsListView, MotechLogListView
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import (
     dropdown_dict,
     regroup_sidebar_items,
     sidebar_to_dropdown,
-)
-from corehq.toggles import PUBLISH_CUSTOM_REPORTS
-from custom.icds_core.const import (
-    LocationReassignmentDownloadOnlyView_urlname,
-    LocationReassignmentView_urlname,
-    ManageHostedCCZ_urlname,
-    ManageHostedCCZLink_urlname,
-    SMSUsageReport_urlname,
 )
 from custom.icds_core.view_utils import is_icds_cas_project
 
@@ -148,7 +144,7 @@ class ProjectReportsTab(UITab):
 
     def _get_tools_items(self):
         from corehq.apps.reports.views import MySavedReportsView
-        if isinstance(self.couch_user, AnonymousCouchUser) and PUBLISH_CUSTOM_REPORTS.enabled(self.domain):
+        if isinstance(self.couch_user, AnonymousCouchUser) and toggles.PUBLISH_CUSTOM_REPORTS.enabled(self.domain):
             return []
         tools = [{
             'title': _(MySavedReportsView.page_title),
@@ -165,12 +161,6 @@ class ProjectReportsTab(UITab):
                 'title': _(UserConfigReportsHomeView.section_name),
                 'url': reverse(UserConfigReportsHomeView.urlname, args=[self.domain]),
                 'icon': 'icon-tasks fa fa-wrench',
-            })
-        if toggles.PERFORM_LOCATION_REASSIGNMENT.enabled(self.couch_user.username):
-            tools.append({
-                'title': _("Download Location Reassignment Template"),
-                'url': reverse(LocationReassignmentDownloadOnlyView_urlname, args=[self.domain]),
-                'icon': 'icon-tasks fa fa-download',
             })
         return [(_("Tools"), tools)]
 
@@ -944,18 +934,14 @@ class ApplicationsTab(UITab):
                 _('Translations'),
                 url=(reverse('convert_translations', args=[self.domain])),
             ))
-        if toggles.MANAGE_CCZ_HOSTING.enabled_for_request(self._request):
-            submenu_context.append(dropdown_dict(
-                _("Manage CCZ Hosting"),
-                url=reverse(ManageHostedCCZ_urlname, args=[self.domain])
-            ))
+
         return submenu_context
 
     @property
     def _is_viewable(self):
         couch_user = self.couch_user
         return (self.domain and couch_user
-                and (couch_user.is_web_user() or couch_user.can_edit_apps())
+                and couch_user.can_view_apps()
                 and (couch_user.is_member_of(self.domain, allow_mirroring=True) or couch_user.is_superuser)
                 and has_privilege(self._request, privileges.PROJECT_ACCESS))
 
@@ -1062,13 +1048,6 @@ class MessagingTab(UITab):
                     'url': reverse('sms_compose_message', args=[self.domain])
                 },
             ])
-            if toggles.ICDS_CUSTOM_SMS_REPORT.enabled(self.domain):
-                messages_urls.extend([
-                    {
-                        'title': _('Get Custom SMS Usage Report'),
-                        'url': reverse(SMSUsageReport_urlname, args=[self.domain])
-                    },
-                ])
 
         if self.can_access_reminders:
             messages_urls.extend([
@@ -1447,7 +1426,8 @@ class ProjectUsersTab(UITab):
 
         if self.couch_user.is_superuser:
             from corehq.apps.users.models import DomainPermissionsMirror
-            if DomainPermissionsMirror.mirror_domains(self.domain):
+            if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled_for_request(self._request) \
+                    or DomainPermissionsMirror.mirror_domains(self.domain):
                 from corehq.apps.users.views import DomainPermissionsMirrorView
                 menu.append({
                     'title': _(DomainPermissionsMirrorView.page_title),
@@ -1531,12 +1511,6 @@ class ProjectUsersTab(UITab):
                 'show_in_dropdown': True,
             })
 
-        if toggles.PERFORM_LOCATION_REASSIGNMENT.enabled(self.couch_user.username):
-            menu.append({
-                'title': _("Location Reassignment"),
-                'url': reverse(LocationReassignmentView_urlname, args=[self.domain])
-            })
-
         return menu
 
     @property
@@ -1589,27 +1563,6 @@ class EnterpriseSettingsTab(UITab):
                            args=[self.domain])
         })
         items.append((_('Manage Enterprise'), enterprise_views))
-        return items
-
-
-class HostedCCZTab(UITab):
-    title = ugettext_noop('CCZ Hostings')
-    url_prefix_formats = (
-        '/a/{domain}/ccz/hostings/',
-    )
-    _is_viewable = False
-
-    @property
-    def sidebar_items(self):
-        items = super(HostedCCZTab, self).sidebar_items
-        items.append((_('Manage CCZ Hostings'), [
-            {'url': reverse(ManageHostedCCZLink_urlname, args=[self.domain]),
-             'title': _("Manage CCZ Hosting Links")
-             },
-            {'url': reverse(ManageHostedCCZ_urlname, args=[self.domain]),
-             'title': _("Manage CCZ Hosting")
-             },
-        ]))
         return items
 
 
@@ -1838,12 +1791,6 @@ def _get_administration_section(domain):
             'url': reverse(ManageReleasesByLocation.urlname, args=[domain])
         })
 
-    if toggles.RELEASE_BUILDS_PER_PROFILE.enabled(domain):
-        administration.append({
-            'title': _(ManageReleasesByAppProfile.page_title),
-            'url': reverse(ManageReleasesByAppProfile.urlname, args=[domain])
-        })
-
     return administration
 
 
@@ -1858,6 +1805,15 @@ def _get_integration_section(domain):
             return _("Forward Cases")
 
     integration = []
+
+    if (
+        toggles.INCREMENTAL_EXPORTS.enabled(domain)
+        or domain_has_privilege(domain, privileges.DATA_FORWARDING)
+    ):
+        integration.append({
+            'title': _(ConnectionSettingsListView.page_title),
+            'url': reverse(ConnectionSettingsListView.urlname, args=[domain])
+        })
 
     if domain_has_privilege(domain, privileges.DATA_FORWARDING):
         integration.extend([
@@ -1892,12 +1848,6 @@ def _get_integration_section(domain):
             'url': reverse(BiometricIntegrationView.urlname, args=[domain])
         })
 
-    if toggles.INCREMENTAL_EXPORTS.enabled(domain) or toggles.DHIS2_INTEGRATION.enabled(domain):
-        integration.append({
-            'title': _(ConnectionSettingsView.page_title),
-            'url': reverse(ConnectionSettingsView.urlname, args=[domain])
-        })
-
     if toggles.DHIS2_INTEGRATION.enabled(domain):
         integration.append({
             'title': _(DataSetMapView.page_title),
@@ -1921,6 +1871,18 @@ def _get_integration_section(domain):
         integration.append({
             'title': _(DialerSettingsView.page_title),
             'url': reverse(DialerSettingsView.urlname, args=[domain])
+        })
+
+    if toggles.HMAC_CALLOUT.enabled(domain):
+        integration.append({
+            'title': _(HmacCalloutSettingsView.page_title),
+            'url': reverse(HmacCalloutSettingsView.urlname, args=[domain])
+        })
+
+    if toggles.GAEN_OTP_SERVER.enabled(domain):
+        integration.append({
+            'title': _(GaenOtpServerSettingsView.page_title),
+            'url': reverse(GaenOtpServerSettingsView.urlname, args=[domain])
         })
 
     return integration

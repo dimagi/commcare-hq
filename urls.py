@@ -4,8 +4,10 @@ from django.contrib import admin
 from django.shortcuts import render
 from django.views.generic import RedirectView, TemplateView
 
+from corehq.extensions import extension_points
 from corehq.apps.accounting.urls import \
     domain_specific as accounting_domain_specific
+from corehq.apps.api.urls import user_urlpatterns as user_api_urlpatterns
 from corehq.apps.app_manager.views.formdesigner import ping
 from corehq.apps.app_manager.views.phone import list_apps
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -66,7 +68,6 @@ domain_specific = [
     url(r'^data_dictionary/', include('corehq.apps.data_dictionary.urls')),
     url(r'^', include(hqwebapp_domain_specific)),
     url(r'^case/', include('corehq.apps.hqcase.urls')),
-    url(r'^case/', include('corehq.apps.case_search.urls')),
     url(r'^case_migrations/', include('corehq.apps.case_migrations.urls')),
     url(r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
     url(r'^fixtures/', include('corehq.apps.fixtures.urls')),
@@ -90,8 +91,9 @@ domain_specific = [
     url(r'^integration/', include('corehq.apps.integration.urls')),
 ]
 
-for module in settings.CUSTOM_DOMAIN_SPECIFIC_URL_MODULES:
-    domain_specific.append(url(r'^', include(module)))
+for url_module in extension_points.domain_specific_urls():
+    domain_specific.append(url(r'^', include(url_module)))
+
 
 urlpatterns = [
     url(r'^favicon\.ico$', RedirectView.as_view(
@@ -99,6 +101,7 @@ urlpatterns = [
     url(r'^auditcare/', include('auditcare.urls')),
     url(r'^admin/', admin.site.urls),
     url(r'^analytics/', include('corehq.apps.analytics.urls')),
+    url(r'^api/', include(user_api_urlpatterns)),
     url(r'^register/', include('corehq.apps.registration.urls')),
     url(r'^a/(?P<domain>%s)/' % legacy_domain_re, include(domain_specific)),
     url(r'^account/', include('corehq.apps.settings.urls')),

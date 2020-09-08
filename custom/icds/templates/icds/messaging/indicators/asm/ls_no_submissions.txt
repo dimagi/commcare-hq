@@ -1,7 +1,0 @@
-{% if location_names and timeframe == 'week' %}
-তলৰ অংগনবাড়ী কেন্দ্ৰটোৱে 1 সপ্তাহতকৈ বেছি দিন ICDS-CAS এপলিকেছনত একো কাম কৰা নাই: {{ location_names }}. অনুগ্ৰহ কৰি তেওঁলোকক সহায়তা কৰিবলৈ অনুসৰণ কৰক 
-{% endif %}
-
-{% if location_names and timeframe == 'month' %}
-তলৰ অংগনবাড়ী কেন্দ্ৰটোৱে ১ মাহতকৈ বেছি দিন ICDS-CAS এপলিকেছনত একো কাম কৰা নাই: {{ location_names }}. অনুগ্ৰহ কৰি তেওঁলোকক সহায়তা কৰিবলৈ অনুসৰণ কৰক 
-{% endif %}
