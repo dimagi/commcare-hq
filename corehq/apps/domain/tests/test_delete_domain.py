@@ -931,7 +931,7 @@ class TestDeleteDomain(TestCase):
         self._assert_couchforms_counts(self.domain2.name, 1)
 
     def test_delete_commtrack_config(self):
-        SQLCommtrackConfig.for_domain(self.domain_name) or SQLCommtrackConfig(domain=self.domain.name).save()
+        SQLCommtrackConfig.for_domain(self.domain.name) or SQLCommtrackConfig(domain=self.domain.name).save()
         self.assertIsNotNone(SQLCommtrackConfig.for_domain(self.domain.name))
         self.domain.delete()
         self.assertIsNone(SQLCommtrackConfig.for_domain(self.domain.name))
