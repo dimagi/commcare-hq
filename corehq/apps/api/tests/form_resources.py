@@ -264,13 +264,19 @@ class TestXFormInstanceResourceQueries(APIResourceTest, ElasticTestMixin):
 
         # A bit of a hack since none of Python's mocking libraries seem to do basic spies easily...
         prior_run_query = fake_xform_es.run_query
+        prior_count_query = fake_xform_es.count_query
         queries = []
 
         def mock_run_query(es_query):
             queries.append(es_query)
             return prior_run_query(es_query)
 
+        def mock_count_query(es_query):
+            queries.append(es_query)
+            return prior_count_query(es_query)
+
         fake_xform_es.run_query = mock_run_query
+        fake_xform_es.count_query = mock_count_query
         v0_4.MOCK_XFORM_ES = fake_xform_es
 
         # Runs *2* queries
