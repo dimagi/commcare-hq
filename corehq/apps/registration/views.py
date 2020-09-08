@@ -60,7 +60,7 @@ _domainless_new_user_soft_assert = soft_assert(to=[
 ], send_to_ops=False, fail_if_debug=False)
 
 
-RESEND_INVITATION_TIME_INTERVAL = 60  # seconds
+CONFIRMATION_RESEND_LIMIT_SECONDS = 60
 
 
 def get_domain_context():
@@ -377,9 +377,9 @@ def resend_confirmation(request):
     default_page_name = _('Resend Confirmation Email')
 
     if request.method == 'POST':
-        if (datetime.utcnow() - dom_req.request_time).seconds < RESEND_INVITATION_TIME_INTERVAL:
+        if (datetime.utcnow() - dom_req.request_time).seconds < CONFIRMATION_RESEND_LIMIT_SECONDS:
             context = {
-                'message_body': _(f'Please wait at least {RESEND_INVITATION_TIME_INTERVAL} '
+                'message_body': _(f'Please wait at least {CONFIRMATION_RESEND_LIMIT_SECONDS} '
                                   f'seconds before requesting again.'),
                 'current_page': {'page_name': default_page_name},
             }
