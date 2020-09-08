@@ -1,6 +1,8 @@
 from django.conf import settings
+from django.db import DEFAULT_DB_ALIAS
 
 from casexml.apps.phone.models import SyncLogSQL
+from corehq.sql_db.util import handle_connection_failure
 from dimagi.utils.parsing import string_to_utc_datetime
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.feed.interface import Change
@@ -31,8 +33,13 @@ from corehq.util.doc_processor.interface import (
     BaseDocProcessor,
     DocumentProcessorController,
 )
+from settings import SYNCLOGS_SQL_DB_ALIAS
 
 SYNCLOG_SQL_USER_SYNC_GROUP_ID = "synclog_sql_user_sync"
+
+
+def _synclog_pillow_dbs():
+    return {SYNCLOGS_SQL_DB_ALIAS, DEFAULT_DB_ALIAS}
 
 
 def get_user_sync_history_pillow(
@@ -72,6 +79,7 @@ class UserSyncHistoryProcessor(PillowProcessor):
       - UserReportingMetadataStaging (SQL)  (when batch processing enabled)
     """
 
+    @handle_connection_failure(get_db_aliases=_synclog_pillow_dbs)
     def process_change(self, change):
         synclog = change.get_document()
         if not synclog:

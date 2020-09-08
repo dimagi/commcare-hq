@@ -73,8 +73,9 @@ from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.domain.decorators import (
     login_or_api_key,
     track_domain_request,
+    LoginAndDomainMixin,
 )
-from corehq.apps.domain.views.base import DomainViewMixin, LoginAndDomainMixin
+from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.es import queries
 from corehq.apps.es.apps import AppES, build_comment, version
 from corehq.apps.hqwebapp.views import BasePageView
@@ -202,7 +203,8 @@ def get_releases_context(request, domain, app_id):
         'prompt_settings_url': reverse(PromptSettingsUpdateView.urlname, args=[domain, app_id]),
         'prompt_settings_form': prompt_settings_form,
         'full_name': request.couch_user.full_name,
-        'can_manage_releases': can_manage_releases(request.couch_user, request.domain, app_id)
+        'can_manage_releases': can_manage_releases(request.couch_user, request.domain, app_id),
+        'can_edit_apps': request.couch_user.can_edit_apps(),
     }
     if not app.is_remote_app():
         context.update({

@@ -34,6 +34,8 @@ from corehq.apps.accounting.decorators import (
     requires_privilege_with_fallback,
 )
 from corehq.apps.accounting.utils import domain_is_on_trial
+from corehq.apps.domain.models import Domain
+
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_app_ids_in_domain,
@@ -74,7 +76,7 @@ from corehq.apps.users.decorators import require_can_login_as
 from corehq.apps.users.models import CouchUser, DomainMembershipError
 from corehq.apps.users.util import format_username
 from corehq.apps.users.views import BaseUserSettingsView
-from corehq.apps.integration.util import domain_uses_dialer
+from corehq.apps.integration.util import integration_contexts
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.interfaces.dbaccessors import (
     CaseAccessors,
@@ -128,7 +130,8 @@ class FormplayerMain(View):
             # User has access via domain mirroring
             pass
         if role:
-            apps = [_format_app(app) for app in apps if role.permissions.view_web_app(app)]
+            apps = [_format_app(app) for app in apps
+                    if role.permissions.view_web_app(app['copy_of'] or app['_id'])]
         apps = sorted(apps, key=lambda app: app['name'])
         return apps
 
@@ -201,8 +204,11 @@ class FormplayerMain(View):
         # first app's default, followed by english
         language = request.couch_user.language or _default_lang()
 
+        domain_obj = Domain.get_by_name(domain)
+
         context = {
             "domain": domain,
+            "default_geocoder_location": domain_obj.default_geocoder_location,
             "language": language,
             "apps": apps,
             "domain_is_on_trial": domain_is_on_trial(domain),
@@ -213,7 +219,7 @@ class FormplayerMain(View):
             "home_url": reverse(self.urlname, args=[domain]),
             "environment": WEB_APPS_ENVIRONMENT,
             'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
-            'dialer_enabled': domain_uses_dialer(domain),
+            "integrations": integration_contexts(domain),
         }
         return set_cookie(
             render(request, "cloudcare/formplayer_home.html", context)
@@ -254,7 +260,7 @@ class FormplayerPreviewSingleApp(View):
             raise Http404()
 
         role = request.couch_user.get_role(domain)
-        if role and not role.permissions.view_web_app(app):
+        if role and not role.permissions.view_web_app(app.master_id):
             raise Http404()
 
         def _default_lang():
@@ -266,9 +272,11 @@ class FormplayerPreviewSingleApp(View):
         # default language to user's preference, followed by
         # first app's default, followed by english
         language = request.couch_user.language or _default_lang()
+        domain_obj = Domain.get_by_name(domain)
 
         context = {
             "domain": domain,
+            "default_geocoder_location": domain_obj.default_geocoder_location,
             "language": language,
             "apps": [_format_app(app)],
             "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
@@ -278,7 +286,7 @@ class FormplayerPreviewSingleApp(View):
             "home_url": reverse(self.urlname, args=[domain, app_id]),
             "environment": WEB_APPS_ENVIRONMENT,
             'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
-            'dialer_enabled': domain_uses_dialer(domain),
+            "integrations": integration_contexts(domain),
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 
@@ -295,7 +303,7 @@ class PreviewAppView(TemplateView):
             'formplayer_url': settings.FORMPLAYER_URL,
             "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
             "environment": PREVIEW_APP_ENVIRONMENT,
-            "dialer_enabled": domain_uses_dialer(request.domain),
+            "integrations": integration_contexts(request.domain),
         })
 
 
@@ -342,14 +350,12 @@ class LoginAsUsers(View):
         })
 
     def _user_query(self, search_string, page, limit):
-        user_data_fields = []
         return login_as_user_query(
             self.domain,
             self.couch_user,
             search_string,
             limit,
             page * limit,
-            user_data_fields=user_data_fields
         )
 
     def _format_user(self, user_json):

@@ -183,6 +183,9 @@ class ESView(View):
         es_results['hits']['hits'] = hits
         return es_results
 
+    def count_query(self, es_query):
+        return self.es_interface.count(self.es_alias, None, es_query)
+
 
 class CaseESView(ESView):
     """
@@ -352,8 +355,7 @@ class ElasticAPIQuerySet(object):
         return self.__results
 
     def count(self):
-        # Just asks ES for the count by limiting results to zero, leveraging slice implementation
-        return self[0:0].results['hits']['total']
+        return self.es_client.count_query(self.payload)
 
     def order_by(self, *fields):
         

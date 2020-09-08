@@ -158,3 +158,18 @@ class SelectToggle(forms.Select):
                    id=html_attr(attrs.get('id', '')),
                    value=html_attr(self.params['value'] or '"{}"'.format(html_attr(value))),
                    options=html_attr(json.dumps([{'id': c[0], 'text': c[1]} for c in self.choices])))
+
+
+class GeoCoderInput(Input):
+
+    def __init__(self, attrs=None):
+        super(GeoCoderInput, self).__init__(attrs=attrs)
+
+    def render(self, name, value, attrs=None, renderer=None):
+        self.input_type = 'hidden'
+        if isinstance(value, dict):
+            value = json.dumps(value)
+        output = super(GeoCoderInput, self).render(name, value, attrs, renderer)
+        return mark_safe("""
+            <div class="geocoder-proximity">{}</div>
+        """.format(output))

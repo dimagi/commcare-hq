@@ -884,6 +884,16 @@ class BackendForm(Form):
         label=ugettext_lazy("Inbound API Key"),
         disabled=True,
     )
+    opt_out_keywords = CharField(
+        required=False,
+        label=ugettext_noop("List of opt out keywords"),
+        help_text=ugettext_lazy("A comma-separated list of keywords")
+    )
+    opt_in_keywords = CharField(
+        required=False,
+        label=ugettext_noop("List of opt in keywords"),
+        help_text=ugettext_lazy("A comma-separated list of keywords")
+    )
 
     @property
     def is_global_backend(self):
@@ -895,6 +905,8 @@ class BackendForm(Form):
             crispy.Field('name', css_class='input-xxlarge'),
             crispy.Field('description', css_class='input-xxlarge', rows="3"),
             crispy.Field('reply_to_phone_number', css_class='input-xxlarge'),
+            crispy.Field('opt_out_keywords'),
+            crispy.Field('opt_in_keywords')
         ]
 
         if not self.is_global_backend:
@@ -1000,6 +1012,20 @@ class BackendForm(Form):
                 return []
             else:
                 return [domain.strip() for domain in value.split(",")]
+
+    def clean_opt_out_keywords(self):
+        keywords = self.cleaned_data.get('opt_out_keywords')
+        if not keywords:
+            return []
+        else:
+            return [kw.strip().upper() for kw in keywords.split(',')]
+
+    def clean_opt_in_keywords(self):
+        keywords = self.cleaned_data.get('opt_in_keywords')
+        if not keywords:
+            return []
+        else:
+            return [kw.strip().upper() for kw in keywords.split(',')]
 
     def clean_reply_to_phone_number(self):
         value = self.cleaned_data.get("reply_to_phone_number")

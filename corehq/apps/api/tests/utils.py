@@ -46,6 +46,9 @@ class FakeFormESView(object):
             }
         }
 
+    def count_query(self, query):
+        return len(self.docs)
+
     def get_document(self, doc_id):
         try:
             doc = self.docs[doc_id]
@@ -77,7 +80,8 @@ class APIResourceTest(TestCase, metaclass=PatchMeta):
         cls.list_endpoint = cls._get_list_endpoint()
         cls.username = 'rudolph@qwerty.commcarehq.org'
         cls.password = '***'
-        cls.user = WebUser.create(cls.domain.name, cls.username, cls.password, None, None)
+        cls.user = WebUser.create(cls.domain.name, cls.username, cls.password, None, None,
+                                  email='rudoph@example.com', first_name='rudolph', last_name='commcare')
         cls.user.set_role(cls.domain.name, 'admin')
         cls.user.save()
 

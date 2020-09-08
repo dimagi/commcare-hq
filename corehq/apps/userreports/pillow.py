@@ -104,6 +104,18 @@ def _filter_missing_domains(configs):
     ]
 
 
+def _filter_invalid_config(configs):
+    """Return a list of configs that have been validated"""
+    valid_configs = []
+    for config in configs:
+        try:
+            config.validate()
+            valid_configs.append(config)
+        except Exception:
+            pillow_logging.warning("Invalid config found during bootstrap: %s", config._id)
+    return valid_configs
+
+
 class ConfigurableReportTableManagerMixin(object):
 
     def __init__(self, data_source_providers, ucr_division=None,
@@ -151,6 +163,7 @@ class ConfigurableReportTableManagerMixin(object):
             configs = _filter_by_hash(configs, self.ucr_division)
 
         configs = _filter_missing_domains(configs)
+        configs = _filter_invalid_config(configs)
 
         return configs
 

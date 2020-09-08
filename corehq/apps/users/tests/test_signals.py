@@ -10,6 +10,7 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.reports.analytics.esaccessors import get_user_stubs
+from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import doc_exists_in_es, get_es_new
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.es.elasticsearch import ConnectionError
@@ -26,6 +27,7 @@ from ..models import CommCareUser, WebUser
 @mock_out_couch()
 @patch('corehq.apps.users.models.CouchUser.sync_to_django_user', new=MagicMock())
 @patch('corehq.apps.users.models.CommCareUser.project', new=MagicMock())
+@es_test
 class TestUserSignals(SimpleTestCase):
 
     @patch('corehq.apps.analytics.signals.update_hubspot_properties.delay')
@@ -63,6 +65,7 @@ class TestUserSignals(SimpleTestCase):
 @patch('corehq.apps.callcenter.tasks.sync_user_cases')
 @patch('corehq.apps.cachehq.signals.invalidate_document')
 @patch('corehq.apps.users.signals._should_sync_to_es', return_value=True)
+@es_test
 class TestUserSyncToEs(SimpleTestCase):
 
     @classmethod

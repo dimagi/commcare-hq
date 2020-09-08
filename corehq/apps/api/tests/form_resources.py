@@ -12,6 +12,7 @@ from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.api.resources import v0_4
 from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.apps.es.tests.utils import ElasticTestMixin
 from corehq.form_processor.tests.utils import run_with_all_backends
@@ -24,6 +25,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 from .utils import APIResourceTest, FakeFormESView
 
 
+@es_test
 class TestXFormInstanceResource(APIResourceTest):
     """
     Tests the XFormInstanceResource, currently only v0_4
@@ -188,6 +190,7 @@ class TestXFormInstanceResource(APIResourceTest):
         self.assertEqual(len(api_forms), 2)
 
 
+@es_test
 class TestXFormInstanceResourceQueries(APIResourceTest, ElasticTestMixin):
     """
     Tests that urlparameters get converted to expected ES queries.
@@ -202,7 +205,8 @@ class TestXFormInstanceResourceQueries(APIResourceTest, ElasticTestMixin):
 
         # A bit of a hack since none of Python's mocking libraries seem to do basic spies easily...
         def mock_run_query(es_query):
-            self.checkQuery(es_query['query']['filtered']['filter']['and'], expected_query, is_raw_query=True)
+            actual = es_query['query']['bool']['filter']
+            self.checkQuery(actual, expected_query, is_raw_query=True)
             return prior_run_query(es_query)
 
         fake_xform_es.run_query = mock_run_query
@@ -260,13 +264,19 @@ class TestXFormInstanceResourceQueries(APIResourceTest, ElasticTestMixin):
 
         # A bit of a hack since none of Python's mocking libraries seem to do basic spies easily...
         prior_run_query = fake_xform_es.run_query
+        prior_count_query = fake_xform_es.count_query
         queries = []
 
         def mock_run_query(es_query):
             queries.append(es_query)
             return prior_run_query(es_query)
 
+        def mock_count_query(es_query):
+            queries.append(es_query)
+            return prior_count_query(es_query)
+
         fake_xform_es.run_query = mock_run_query
+        fake_xform_es.count_query = mock_count_query
         v0_4.MOCK_XFORM_ES = fake_xform_es
 
         # Runs *2* queries
@@ -280,12 +290,22 @@ class TestXFormInstanceResourceQueries(APIResourceTest, ElasticTestMixin):
 
     def test_get_list_archived(self):
         expected = [
-            {'term': {'domain.exact': 'qwerty'}},
-            {'or': (
-                {'term': {'doc_type': 'xforminstance'}},
-                {'term': {'doc_type': 'xformarchived'}}
-            )},
-            {'match_all': {}}
+            {
+                "term": {
+                    "domain.exact": "qwerty"
+                }
+            },
+            {
+                "bool": {
+                    "should": [
+                        {"term": {"doc_type": "xforminstance"}},
+                        {"term": {"doc_type": "xformarchived"}}
+                    ]
+                }
+            },
+            {
+                "match_all": {}
+            }
         ]
         self._test_es_query({'include_archived': 'true'}, expected)
 

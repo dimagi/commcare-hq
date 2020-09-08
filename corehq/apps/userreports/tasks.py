@@ -392,7 +392,7 @@ def build_async_indicators(indicator_doc_ids):
             if adapter:
                 adapter.handle_exception(doc, exception)
         if metric:
-            metrics_counter(metric, tags={'config_id': config_id, 'doc_id': doc['_id']})
+            metrics_counter(metric, tags={'config_id': config_id})
 
     def doc_ids_from_rows(rows):
         formatted_rows = [
@@ -639,8 +639,7 @@ def export_ucr_async(report_export, download_id, user):
     file_path = get_download_file_path(use_transfer, filename)
 
     report_export.create_export(file_path, Format.XLS_2007)
-
-    expose_download(use_transfer, file_path, filename, download_id, 'xlsx')
+    expose_download(use_transfer, file_path, filename, download_id, 'xlsx', owner_ids=[user.get_id])
     link = reverse("retrieve_download", args=[download_id], params={"get_file": '1'}, absolute=True)
 
     send_report_download_email(report_export.title, user.get_email(), link)

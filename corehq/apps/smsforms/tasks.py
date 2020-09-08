@@ -1,7 +1,8 @@
+from celery.task import task
 from datetime import timedelta
 
 from corehq import toggles
-from corehq.apps.formplayer_api.smsforms.api import FormplayerInterface
+from corehq.apps.formplayer_api.smsforms.api import FormplayerInterface, TouchformsError
 from corehq.apps.sms.api import MessageMetadata, send_sms_to_verified_number, send_sms
 from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.sms.util import format_message_list
@@ -125,9 +126,26 @@ def handle_due_survey_action(domain, contact_id, session_id):
             session.move_to_next_action()
             session.save()
         else:
-            # Close the session
-            session.close()
-            session.save()
+            close_session.delay(contact_id, session_id)
+
+
+@task(serializer='pickle', queue='reminder_queue', bind=True, max_retries=3, default_retry_delay=15 * 60)
+def close_session(self, contact_id, session_id):
+    with critical_section_for_smsforms_sessions(contact_id):
+        session = SQLXFormsSession.by_session_id(session_id)
+        try:
+            session.close(force=False)
+        except TouchformsError as e:
+            try:
+                self.retry(exc=e)
+            except TouchformsError as e:
+                raise e
+            finally:
+                # Eventually the session needs to get closed
+                session.mark_completed(False)
+                session.save()
+                return
+        session.save()
 
 
 def session_is_stale(session):
