@@ -137,12 +137,14 @@ class Command(PopulateSQLCommand):
                 setattr(sql_submodel, field, couch_submodel.get(field))
             setattr(model, sql_name, sql_submodel)
 
+        # Make sure model has id so that submodels can be saved
         if created:
             model.save(sync_to_couch=False)
-            for spec in self.one_to_one_submodels():
-                submodel = getattr(model, spec['sql_class'].__name__.lower())
-                submodel.commtrack_config = model
-                submodel.save()
+
+        for spec in self.one_to_one_submodels():
+            submodel = getattr(model, spec['sql_class'].__name__.lower())
+            submodel.commtrack_config = model
+            submodel.save()
 
         sql_actions = []
         for a in doc['actions']:
