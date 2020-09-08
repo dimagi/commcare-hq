@@ -87,7 +87,7 @@ def _create_commtrack_config_if_needed(domain):
         return
 
     config = SQLCommtrackConfig(domain=domain)
-    config.save()   # must be saved before submodels can be saved
+    config.save(sync_to_couch=False)   # must be saved before submodels can be saved
 
     SQLAlertConfig(commtrack_config=config).save()
     SQLConsumptionConfig(commtrack_config=config).save()
@@ -121,7 +121,7 @@ def _create_commtrack_config_if_needed(domain):
             caption='Stock-out',
         ),
     ])
-    config.save()   # save actions
+    config.save()   # save actions, and sync couch
 
 
 def _enable_commtrack_previews(domain):
