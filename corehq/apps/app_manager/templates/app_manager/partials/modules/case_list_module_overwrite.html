@@ -5,10 +5,26 @@
   {% csrf_token %}
   <fieldset>
     <label for="other_module_id">{% trans "Module" %}: </label>
-    <select name='source_module_unique_id' class='form-control'>{% for other_mod in available_modules %}
+    <select name='dest_module_unique_ids' class='form-control multiselect-caselist' multiple="multiple">{% for other_mod in available_modules %}
       <option value={{ other_mod.unique_id }}>{{ other_mod.name|html_trans:langs }}</option>
     {% endfor %}</select>
     <input name="detail_type" type="hidden" value="{{ detail_type }}" />
+    <br>
+    <div class="checkbox">
+      <label>
+        <input type="checkbox" name="display_properties"/>
+        Display Properties
+      </label><br>
+      <label>
+        <input type="checkbox" name="case_list_filter"/>
+        Case List Filter
+      </label><br>
+      <label>
+        <input type="checkbox" name="other_configuration"/>
+        Other Configuration
+      </label><br>
+    </div>
+    <div>
     <button class='btn btn-danger' type="submit">
       <i class="fa fa-copy"></i>
       {% if detail_type == 'short' %}
@@ -16,5 +32,16 @@
       {% else %}
         {% trans "Overwrite Case Detail" %}
       {% endif %}
+    </div>
   </fieldset>
 </form>
+
+<script>
+  $(document).ready(function() {
+    $('.multiselect-caselist').select2();
+  });
+</script>
+
+
+
+
