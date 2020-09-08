@@ -14,6 +14,7 @@ from dimagi.ext.couchdbkit import (
 
 from corehq.motech.dhis2.const import (
     SEND_FREQUENCIES,
+    SEND_FREQUENCY_CHOICES,
     SEND_FREQUENCY_MONTHLY,
 )
 from corehq.motech.models import ConnectionSettings
@@ -80,3 +81,41 @@ class DataSetMap(Document):
     def connection_settings(self):
         if self.connection_settings_id:
             return ConnectionSettings.objects.get(pk=self.connection_settings_id)
+
+
+class SQLDataSetMap(models.Model):
+    domain = models.CharField(max_length=128, db_index=True)
+    connection_settings = models.ForeignKey(
+        ConnectionSettings, on_delete=models.PROTECT, null=True, blank=True)
+    ucr_id = models.CharField(max_length=36)
+    description = models.TextField()
+    frequency = models.CharField(
+        max_length=16, choices=SEND_FREQUENCY_CHOICES,
+        default=SEND_FREQUENCY_MONTHLY)
+    # Day of the month for monthly/quarterly frequency. Day of the week
+    # for weekly frequency. Uses ISO-8601, where Monday = 1, Sunday = 7.
+    day_to_send = models.PositiveIntegerField()
+
+    data_set_id = models.CharField(max_length=11, null=True, blank=True)
+
+    org_unit_id = models.CharField(max_length=11, null=True, blank=True)
+    org_unit_column = models.CharField(max_length=64, null=True, blank=True)
+
+    # cf. https://docs.dhis2.org/master/en/developer/html/webapi_date_perid_format.html
+    period = models.CharField(max_length=32, null=True, blank=True)
+    period_column = models.CharField(max_length=64, null=True, blank=True)
+
+    attribute_option_combo_id = models.CharField(
+        max_length=11, null=True, blank=True)
+    complete_date = models.DateField(null=True, blank=True)
+
+
+class SQLDataValueMap(models.Model):
+    dataset_map = models.ForeignKey(
+        SQLDataSetMap, on_delete=models.CASCADE,
+        related_name='datavalue_maps',
+    )
+    column = models.CharField(max_length=64)
+    data_element_id = models.CharField(max_length=11)
+    category_option_combo_id = models.CharField(max_length=11)
+    comment = models.TextField(null=True, blank=True)
