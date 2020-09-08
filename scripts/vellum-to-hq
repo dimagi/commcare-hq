@@ -22,9 +22,12 @@ from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from os.path import abspath, dirname, exists, join
 
 import sh
-from gitutils import get_git
 
 VELLUM_TAR = "vellum.tar.gz"
+
+
+def get_git(path=None):
+    return sh.git.bake(_tty_out=False, _cwd=path)
 
 
 def main():

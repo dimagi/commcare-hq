@@ -34,6 +34,8 @@ from corehq.apps.accounting.decorators import (
     requires_privilege_with_fallback,
 )
 from corehq.apps.accounting.utils import domain_is_on_trial
+from corehq.apps.domain.models import Domain
+
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_app_ids_in_domain,
@@ -128,7 +130,8 @@ class FormplayerMain(View):
             # User has access via domain mirroring
             pass
         if role:
-            apps = [_format_app(app) for app in apps if role.permissions.view_web_app(app)]
+            apps = [_format_app(app) for app in apps
+                    if role.permissions.view_web_app(app['copy_of'] or app['_id'])]
         apps = sorted(apps, key=lambda app: app['name'])
         return apps
 
@@ -201,8 +204,11 @@ class FormplayerMain(View):
         # first app's default, followed by english
         language = request.couch_user.language or _default_lang()
 
+        domain_obj = Domain.get_by_name(domain)
+
         context = {
             "domain": domain,
+            "default_geocoder_location": domain_obj.default_geocoder_location,
             "language": language,
             "apps": apps,
             "domain_is_on_trial": domain_is_on_trial(domain),
@@ -254,7 +260,7 @@ class FormplayerPreviewSingleApp(View):
             raise Http404()
 
         role = request.couch_user.get_role(domain)
-        if role and not role.permissions.view_web_app(app):
+        if role and not role.permissions.view_web_app(app.master_id):
             raise Http404()
 
         def _default_lang():
@@ -266,9 +272,11 @@ class FormplayerPreviewSingleApp(View):
         # default language to user's preference, followed by
         # first app's default, followed by english
         language = request.couch_user.language or _default_lang()
+        domain_obj = Domain.get_by_name(domain)
 
         context = {
             "domain": domain,
+            "default_geocoder_location": domain_obj.default_geocoder_location,
             "language": language,
             "apps": [_format_app(app)],
             "mapbox_access_token": settings.MAPBOX_ACCESS_TOKEN,
