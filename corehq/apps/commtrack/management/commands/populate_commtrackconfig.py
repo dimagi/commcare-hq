@@ -134,10 +134,10 @@ class Command(PopulateSQLCommand):
         for a in doc['actions']:
             a = self._wrap_action_config(a)
             sql_actions.append(SQLActionConfig(
-                action=doc.get('action'),
-                subaction=doc.get('subaction'),
-                _keyword=doc.get('_keyword'),
-                caption=doc.get('caption'),
+                action=a.get('action'),
+                subaction=a.get('subaction'),
+                _keyword=a.get('_keyword'),
+                caption=a.get('caption'),
             ))
         model.set_actions(sql_actions)
 
