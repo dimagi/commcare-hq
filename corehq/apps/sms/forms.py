@@ -1374,10 +1374,9 @@ class SubscribeSMSForm(Form):
         )
 
     def save(self, commtrack_settings):
-        save_settings = False
         if not hasattr(commtrack_settings, 'sqlalertconfig'):
             commtrack_settings.sqlalertconfig = SQLAlertConfig()
-            save_settings = True
+
         alert_config = commtrack_settings.sqlalertconfig
         alert_config.stock_out_facilities = self.cleaned_data.get("stock_out_facilities", False)
         alert_config.stock_out_commodities = self.cleaned_data.get("stock_out_commodities", False)
@@ -1386,10 +1385,10 @@ class SubscribeSMSForm(Form):
 
         alert_config.commtrack_settings = commtrack_settings
         alert_config.save()
-        # PR3: Remove `if True`  While the sync mixins are in use, the parent model always has to be saved,
+
+        # PR3: Remove this save. While the sync mixins are in use, the parent model always has to be saved,
         # because that's the save function that triggers syncing with couch
-        if True or save_settings:
-            commtrack_settings.save()
+        commtrack_settings.save()
 
 
 class ComposeMessageForm(forms.Form):
