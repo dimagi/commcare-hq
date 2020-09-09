@@ -23,8 +23,8 @@ from corehq.util.test_utils import TestFileMixin, softer_assert
 
 
 from couchforms.exceptions import (
-    InvalidSubmissionFileExtensionErrorMessage,
-    InvalidAttachmentFileExtensionErrorMessage,
+    InvalidSubmissionFileExtensionError,
+    InvalidAttachmentFileExtensionError,
 )
 
 
@@ -138,20 +138,22 @@ class SubmissionTest(BaseSubmissionTest):
 
     def test_invalid_form_submission_file_extension(self):
         response = self._submit('suspicious_form.abc', url=reverse("receiver_secure_post", args=[self.domain]))
-        self.assertEqual(response.status_code, 422)
+        expected_error = InvalidSubmissionFileExtensionError()
+        self.assertEqual(response.status_code, expected_error.status_code)
         self.assertEqual(
             response.content.decode('utf-8'),
-            InvalidSubmissionFileExtensionErrorMessage
+            expected_error.message
         )
 
     def test_invalid_attachment_file_extension(self):
         response = self._submit('simple_form.xml', attachments={
             "image.xyz": BytesIO(b"fake image"),
         })
-        self.assertEqual(response.status_code, 422)
+        expected_error = InvalidAttachmentFileExtensionError()
+        self.assertEqual(response.status_code, expected_error.status_code)
         self.assertEqual(
             response.content.decode('utf-8'),
-            InvalidAttachmentFileExtensionErrorMessage
+            expected_error.message
         )
 
 

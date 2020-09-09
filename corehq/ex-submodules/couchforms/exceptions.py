@@ -4,15 +4,6 @@ from couchforms.const import (
 )
 
 
-InvalidSubmissionFileExtensionErrorMessage = 'If you use multipart/form-data, please use xml file only for ' \
-                                             'submitting form xml. You may also do a normal (non-multipart) ' \
-                                             'with the xml submission as the request body instead.'
-
-InvalidAttachmentFileExtensionErrorMessage = "If you use multipart/form-data, please use the following " \
-                                             "supported file extensions for attachments:\n" \
-                                             f"{', '.join(SUPPORTED_MEDIA_FILE_EXTENSIONS)}"
-
-
 class CouchFormException(Exception):
     """
     A custom exception for the XForms application.
@@ -50,7 +41,7 @@ class MultipartFilenameError(BadSubmissionRequest):
 class MultipartEmptyPayload(BadSubmissionRequest):
     def __init__(self):
         super().__init__(
-            'If you use multipart/form-data, the file %s'
+            'If you use multipart/form-data, the file %s '
             'must not have an empty payload\n' % MAGIC_PROPERTY
         )
 
@@ -63,7 +54,9 @@ class EmptyPayload(BadSubmissionRequest):
 class InvalidSubmissionFileExtensionError(BadSubmissionRequest):
     def __init__(self):
         super().__init__(
-            InvalidSubmissionFileExtensionErrorMessage,
+            "If you use multipart/form-data, please use xml file only for "
+            "submitting form xml. You may also do a normal (non-multipart) "
+            "with the xml submission as the request body instead\n",
             422
         )
 
@@ -71,6 +64,8 @@ class InvalidSubmissionFileExtensionError(BadSubmissionRequest):
 class InvalidAttachmentFileExtensionError(BadSubmissionRequest):
     def __init__(self):
         super().__init__(
-            InvalidAttachmentFileExtensionErrorMessage,
+            "If you use multipart/form-data, please use the following "
+            "supported file extensions for attachments: "
+            f"{', '.join(SUPPORTED_MEDIA_FILE_EXTENSIONS)}\n",
             422
         )
