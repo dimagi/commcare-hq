@@ -1,5 +1,6 @@
 from datetime import date, datetime, timedelta
 from itertools import chain
+from typing import List
 
 from celery.schedules import crontab
 from celery.task import periodic_task, task
@@ -91,8 +92,9 @@ def get_dataset(dataset_map, send_date):
     # TODO: WHOA! What about SEND_FREQUENCY_WEEKLY?!
     ucr_data = get_ucr_data(report_config, date_filter, date_range)
 
+    info_for_columns = get_info_for_columns(dataset_map)
     # one UCR row may have many DataValues
-    datavalues = (get_datavalues(dataset_map, row) for row in ucr_data)
+    datavalues = (get_datavalues(info_for_columns, row) for row in ucr_data)
     dataset = {
         # get a single list of DataValues
         'dataValues': list(chain.from_iterable(datavalues))
@@ -112,7 +114,7 @@ def get_dataset(dataset_map, send_date):
     return dataset
 
 
-def get_datavalues(dataset_map, ucr_row):
+def get_datavalues(info_for_columns: dict, ucr_row: dict) -> List[dict]:
     """
     Returns rows of "dataElement", "categoryOptionCombo", "value", and
     optionally "period", "orgUnit" and "comment" for this DataSet where
@@ -126,14 +128,13 @@ def get_datavalues(dataset_map, ucr_row):
         }
 
     """
-    dv_map = get_datavalue_map_dict(dataset_map)
     datavalues = []
     org_unit = None
     period = None
     # First pass is to collate data element IDs and values
     for column, value in ucr_row.items():
-        if column in dv_map:
-            colinfo = dv_map[column]
+        if column in info_for_columns:
+            colinfo = info_for_columns[column]
             if colinfo['is_org_unit']:
                 org_unit = value
             elif colinfo['is_period']:
@@ -158,20 +159,22 @@ def get_datavalues(dataset_map, ucr_row):
 
 
 @quickcache(['dataset_map.domain', 'dataset_map.ucr_id'])
-def get_datavalue_map_dict(dataset_map):
-    dict_ = {dvm.column: dict(dvm, is_org_unit=False, is_period=False)
-             for dvm in dataset_map.datavalue_maps}
+def get_info_for_columns(dataset_map):
+    info_for_columns = {
+        dvm.column: {**dvm, 'is_org_unit': False, 'is_period': False}
+        for dvm in dataset_map.datavalue_maps
+    }
     if dataset_map.org_unit_column:
-        dict_[dataset_map.org_unit_column] = {
+        info_for_columns[dataset_map.org_unit_column] = {
             'is_org_unit': True,
             'is_period': False,
         }
     if dataset_map.period_column:
-        dict_[dataset_map.period_column] = {
+        info_for_columns[dataset_map.period_column] = {
             'is_org_unit': False,
             'is_period': True,
         }
-    return dict_
+    return info_for_columns
 
 
 def get_report_config(domain_name, ucr_id):
