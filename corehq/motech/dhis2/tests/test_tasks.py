@@ -13,6 +13,7 @@ from corehq.motech.dhis2.dbaccessors import get_migrated_dataset_maps
 from corehq.motech.dhis2.models import DataSetMap
 from corehq.motech.dhis2.tasks import (
     get_info_for_columns,
+    get_period,
     get_previous_month,
     get_previous_quarter,
     get_previous_week,
@@ -232,3 +233,41 @@ class GetPreviousQuarterTests(SimpleTestCase):
         date_span = get_previous_quarter(date(2020, 7, 15))
         self.assertEqual(date_span.startdate, date(2020, 4, 1))
         self.assertEqual(date_span.enddate, date(2020, 6, 30))
+
+
+class GetPeriodTests(SimpleTestCase):
+
+    def test_first_week_starts_monday(self):
+        monday = date(2020, 1, 1)
+        period = get_period(SEND_FREQUENCY_WEEKLY, monday)
+        self.assertEqual(period, '2020W1')
+
+    def test_first_week_starts_non_monday(self):
+        friday = date(2021, 1, 1)
+        period = get_period(SEND_FREQUENCY_WEEKLY, friday)
+        self.assertEqual(period, '2021W1')
+
+    def test_last_week(self):
+        nye = date(2020, 12, 31)
+        period = get_period(SEND_FREQUENCY_WEEKLY, nye)
+        self.assertEqual(period, '2020W53')
+
+    def test_first_month(self):
+        january = date(2020, 1, 1)
+        period = get_period(SEND_FREQUENCY_MONTHLY, january)
+        self.assertEqual(period, '202001')
+
+    def test_first_quarter(self):
+        january = date(2020, 1, 1)
+        period = get_period(SEND_FREQUENCY_QUARTERLY, january)
+        self.assertEqual(period, '2020Q1')
+
+    def test_first_quarter_enddate(self):
+        march = date(2020, 3, 31)
+        period = get_period(SEND_FREQUENCY_QUARTERLY, march)
+        self.assertEqual(period, '2020Q1')
+
+    def test_last_quarter(self):
+        october = date(2020, 10, 1)
+        period = get_period(SEND_FREQUENCY_QUARTERLY, october)
+        self.assertEqual(period, '2020Q4')
