@@ -97,7 +97,7 @@ class LogisticsConsumptionTest(TestCase):
     def test_report_with_exclude_disabled(self):
         commtrack_config = SQLCommtrackConfig(domain=self.domain.name)
         commtrack_config.sqlconsumptionconfig = SQLConsumptionConfig()
-        commtrack_config.save()
+        commtrack_config.save(sync_to_couch=False)      # don't bother syncing in tests
         commtrack_config.sqlconsumptionconfig.commtrack_config = commtrack_config
         commtrack_config.sqlconsumptionconfig.save()
         self.create_transactions(self.domain.name)
@@ -108,7 +108,7 @@ class LogisticsConsumptionTest(TestCase):
     def test_report_with_exclude_enabled(self):
         commtrack_config = SQLCommtrackConfig(domain=self.domain.name)
         commtrack_config.sqlconsumptionconfig = SQLConsumptionConfig(exclude_invalid_periods=True)
-        commtrack_config.save()
+        commtrack_config.save(sync_to_couch=False)      # don't bother syncing in tests
         commtrack_config.sqlconsumptionconfig.commtrack_config = commtrack_config
         commtrack_config.sqlconsumptionconfig.save()
         self.create_transactions(self.domain.name)
