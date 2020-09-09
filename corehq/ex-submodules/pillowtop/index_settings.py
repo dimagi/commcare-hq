@@ -23,7 +23,7 @@ def _get_es_settings(es_settings):
     return es_settings
 
 
-def get_standard_es_settings():
+def get_reindex_es_settings():
     return _get_es_settings(
         {
             "index": {
@@ -39,7 +39,7 @@ def get_standard_es_settings():
     )
 
 
-def get_reindex_es_settings():
+def get_standard_es_settings():
     return _get_es_settings({
         "index": {
             "refresh_interval": "5s",

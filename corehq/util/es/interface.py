@@ -75,6 +75,17 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         self.es.update(index_alias, doc_type, doc_id, body={"doc": self._without_id_field(fields)},
                        params=params or {})
 
+    def _prepare_count_query(self, query):
+        # pagination params are not required and not supported in ES count API
+        query = query.copy()
+        for extra in ['size', 'sort', 'from', 'to', '_source']:
+            query.pop(extra, None)
+        return query
+
+    def count(self, index_alias, doc_type, query):
+        query = self._prepare_count_query(query)
+        return self.es.count(index=index_alias, doc_type=doc_type, body=query).get('count')
+
     @staticmethod
     def _without_id_field(doc):
         # Field [_id] is a metadata field and cannot be added inside a document.
@@ -118,6 +129,12 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
             return results
         for hit in hits:
             self._fix_hit(hit)
+
+        total = results['hits']['total']
+        # In ES7 total is a dict
+        if isinstance(total, dict):
+            results['hits']['total'] = total.get('value', 0)
+
 
 
 class ElasticsearchInterfaceDefault(AbstractElasticsearchInterface):
@@ -165,6 +182,10 @@ class ElasticsearchInterface7(AbstractElasticsearchInterface):
 
     def delete_doc(self, index_alias, doc_type, doc_id):
         self.es.delete(index_alias, doc_id)
+
+    def count(self, index_alias, doc_type, query):
+        query = self._prepare_count_query(query)
+        return self.es.count(index=index_alias, body=query).get('count')
 
     def scan(self, index_alias, query, doc_type):
         query["sort"] = "_doc"

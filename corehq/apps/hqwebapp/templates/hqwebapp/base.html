@@ -54,6 +54,7 @@
     {% endif %}
 
     {% block stylesheets %}{% endblock stylesheets %}
+    
     {% block csrf_token_block %}
       <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
     {% endblock %}
