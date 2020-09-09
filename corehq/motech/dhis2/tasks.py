@@ -83,13 +83,19 @@ def get_dataset(dataset_map, send_date):
     report_config = get_report_config(dataset_map.domain, dataset_map.ucr_id)
     date_filter = get_date_filter(report_config)
 
-    if dataset_map.frequency == SEND_FREQUENCY_MONTHLY:
+    if dataset_map.frequency == SEND_FREQUENCY_WEEKLY:
+        date_range = get_previous_week(send_date)
+        week_num = int(date_range.startdate.strftime('%W')) + 1
+        period = date_range.startdate.strftime('%Y') + f'W{week_num}'
+    elif dataset_map.frequency == SEND_FREQUENCY_MONTHLY:
         date_range = get_previous_month(send_date)
         period = date_range.startdate.strftime('%Y%m')
     elif dataset_map.frequency == SEND_FREQUENCY_QUARTERLY:
         date_range = get_previous_quarter(send_date)
-        period = date_range.startdate.strftime('%Y') + 'Q' + str((date_range.startdate.month // 3) + 1)
-    # TODO: WHOA! What about SEND_FREQUENCY_WEEKLY?!
+        quarter = (date_range.startdate.month // 3) + 1
+        period = date_range.startdate.strftime('%Y') + f'Q{quarter}'
+    else:
+        raise ValueError(f'Unknown frequency {dataset_map.frequency!r}')
     ucr_data = get_ucr_data(report_config, date_filter, date_range)
 
     info_for_columns = get_info_for_columns(dataset_map)
@@ -193,6 +199,19 @@ def get_date_filter(report_config):
              if it is always for the same period.
     """
     return next((f for f in report_config.filters if f['type'] == 'date'), None)
+
+
+def get_previous_week(send_date: date) -> DateSpan:
+    """
+    Returns a DateSpan from last week Monday to last week Sunday
+
+    ISO 8601 has Monday as Day 1 and Sunday as Day 7
+    """
+    # monday.weekday() == 0
+    monday = send_date - timedelta(days=send_date.weekday())
+    startdate = monday - timedelta(days=7)
+    enddate = monday - timedelta(days=1)
+    return DateSpan(startdate, enddate)
 
 
 def get_previous_month(send_date: date) -> DateSpan:
