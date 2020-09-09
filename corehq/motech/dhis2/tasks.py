@@ -178,8 +178,7 @@ def get_info_for_columns(dataset_map):
 
 
 def get_report_config(domain_name, ucr_id):
-    report_config = get_document_or_not_found(ReportConfiguration, domain_name, ucr_id)
-    return report_config
+    return get_document_or_not_found(ReportConfiguration, domain_name, ucr_id)
 
 
 def get_date_filter(report_config):
@@ -193,28 +192,32 @@ def get_date_filter(report_config):
              rows for multiple periods, or set a period for the report
              if it is always for the same period.
     """
-    date_filter = next((f for f in report_config.filters if f['type'] == 'date'), None)
-    return date_filter
+    return next((f for f in report_config.filters if f['type'] == 'date'), None)
 
 
 def get_previous_month(send_date: date) -> DateSpan:
-    enddate = date(year=send_date.year, month=send_date.month, day=1) - timedelta(days=1)
+    enddate = (date(year=send_date.year, month=send_date.month, day=1)
+               - timedelta(days=1))
     startdate = date(year=enddate.year, month=enddate.month, day=1)
     return DateSpan(startdate, enddate)
 
 
 def get_previous_quarter(send_date: date) -> DateSpan:
     current_quarter_start = (((send_date.month - 1) // 3) * 3) + 1
-    startdate = date(year=send_date.year, month=current_quarter_start, day=1) - relativedelta(months=3)
-    enddate = date(year=send_date.year, month=current_quarter_start, day=1) + relativedelta(months=4) - \
-        timedelta(days=1) - relativedelta(months=3)
+    startdate = (date(year=send_date.year, month=current_quarter_start, day=1)
+                 - relativedelta(months=3))
+    enddate = (date(year=send_date.year, month=current_quarter_start, day=1)
+               + relativedelta(months=4)
+               - timedelta(days=1)
+               - relativedelta(months=3))
     return DateSpan(startdate, enddate)
 
 
 def get_ucr_data(report_config, date_filter, date_span):
     from corehq.apps.userreports.reports.view import get_filter_values
 
-    data_source = ConfigurableReportDataSource.from_spec(report_config, include_prefilters=True)
+    data_source = ConfigurableReportDataSource.from_spec(
+        report_config, include_prefilters=True)
 
     filter_params = get_date_params(date_filter['slug'], date_span) if date_filter else {}
     filter_values = get_filter_values(report_config.ui_filters, filter_params)
