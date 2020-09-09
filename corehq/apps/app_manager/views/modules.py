@@ -784,7 +784,6 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
     src_module = app.get_module_by_unique_id(module_unique_id)
     detail_type = request.POST['detail_type']
     for dest_module_unique_id in dest_module_unique_ids:
-
         dest_module = app.get_module_by_unique_id(dest_module_unique_id)
         assert detail_type in ['short', 'long']
         if not hasattr(dest_module, 'case_details'):
@@ -799,7 +798,20 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
                     src_module.case_type)
             )
         else:
-            setattr(dest_module.case_details, detail_type, getattr(src_module.case_details, detail_type))
+            src_module_detail_type = getattr(src_module.case_details, detail_type)
+            dest_module_detail_type = getattr(dest_module.case_details, detail_type)
+            if display_properties == 'on':
+                dest_module_detail_type.columns = src_module_detail_type.columns
+            if case_list_filter == 'on':
+                dest_module_detail_type.filter = src_module_detail_type.filter
+            if other_configuration == 'on':
+                for attr, value in src_module_detail_type.__dict__.items():
+                    if attr == '_obj':
+                        for k,v in value.items():
+                            if k not in ['columns','filter']:
+                                setattr(dest_module_detail_type, k, v)
+            if detail_type == 'long':
+                setattr(dest_module.case_details, detail_type, getattr(src_module.case_details, detail_type))
             app.save()
             messages.success(request, _('Case list updated form module {}.').format(dest_module.default_name()))
     return back_to_main(request, domain, app_id=app_id, module_unique_id=module_unique_id)
