@@ -112,7 +112,7 @@ class Command(PopulateSQLCommand):
         return data
 
     def update_or_create_sql_object(self, doc):
-        # This method uses a try/catch instead of update_or_create so that it can use sync_To_couch=False
+        # This method uses a try/catch instead of update_or_create so that it can use sync_to_couch=False
         # for the saves while avoiding the bug described in https://github.com/dimagi/commcare-hq/pull/28001
         # CommtrackConfig documents aren't created often, so the risk of a race condition is low.
         try:
