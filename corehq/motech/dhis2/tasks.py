@@ -207,9 +207,7 @@ def get_previous_quarter(send_date: date) -> DateSpan:
     startdate = (date(year=send_date.year, month=current_quarter_start, day=1)
                  - relativedelta(months=3))
     enddate = (date(year=send_date.year, month=current_quarter_start, day=1)
-               + relativedelta(months=4)
-               - timedelta(days=1)
-               - relativedelta(months=3))
+               - timedelta(days=1))
     return DateSpan(startdate, enddate)
 
 
