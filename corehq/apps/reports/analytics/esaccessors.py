@@ -292,11 +292,12 @@ def _get_form_counts_by_date(domain, user_ids, datespan, timezone, is_submission
 
     results = form_query.run().aggregations.date_histogram.buckets_list
 
-    # Convert timestamp into timezone aware datetime. Must divide timestamp by 1000 since python's
-    # fromtimestamp takes a timestamp in seconds, whereas elasticsearch's timestamp is in milliseconds
+    # Convert timestamp from millis -> seconds -> aware datetime
+    # ES bucket key is an epoch timestamp relative to the timezone specified,
+    # so pass timezone into fromtimestamp() to create an accurate datetime, otherwise will be treated as UTC
     results = list(map(
         lambda result:
-            (datetime.fromtimestamp(result.key // 1000).date().isoformat(), result.doc_count),
+            (datetime.fromtimestamp(result.key // 1000, timezone).date().isoformat(), result.doc_count),
         results,
     ))
     return dict(results)
