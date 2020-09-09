@@ -82,20 +82,7 @@ def should_send_on_date(dataset_map, send_date):
 def get_dataset(dataset_map, send_date):
     report_config = get_report_config(dataset_map.domain, dataset_map.ucr_id)
     date_filter = get_date_filter(report_config)
-
-    if dataset_map.frequency == SEND_FREQUENCY_WEEKLY:
-        date_range = get_previous_week(send_date)
-        week_num = int(date_range.startdate.strftime('%W')) + 1
-        period = date_range.startdate.strftime('%Y') + f'W{week_num}'
-    elif dataset_map.frequency == SEND_FREQUENCY_MONTHLY:
-        date_range = get_previous_month(send_date)
-        period = date_range.startdate.strftime('%Y%m')
-    elif dataset_map.frequency == SEND_FREQUENCY_QUARTERLY:
-        date_range = get_previous_quarter(send_date)
-        quarter = (date_range.startdate.month // 3) + 1
-        period = date_range.startdate.strftime('%Y') + f'Q{quarter}'
-    else:
-        raise ValueError(f'Unknown frequency {dataset_map.frequency!r}')
+    date_range = get_date_range(dataset_map.frequency, send_date)
     ucr_data = get_ucr_data(report_config, date_filter, date_range)
 
     info_for_columns = get_info_for_columns(dataset_map)
@@ -112,7 +99,8 @@ def get_dataset(dataset_map, send_date):
     if dataset_map.period:
         dataset['period'] = dataset_map.period
     elif not dataset_map.period_column:
-        dataset['period'] = period
+        dataset['period'] = get_period(dataset_map.frequency,
+                                       date_range.startdate)
     if dataset_map.attribute_option_combo_id:
         dataset['attributeOptionCombo'] = dataset_map.attribute_option_combo_id
     if dataset_map.complete_date:
@@ -201,6 +189,16 @@ def get_date_filter(report_config):
     return next((f for f in report_config.filters if f['type'] == 'date'), None)
 
 
+def get_date_range(frequency: str, send_date: date) -> DateSpan:
+    if frequency == SEND_FREQUENCY_WEEKLY:
+        return get_previous_week(send_date)
+    if frequency == SEND_FREQUENCY_MONTHLY:
+        return get_previous_month(send_date)
+    if frequency == SEND_FREQUENCY_QUARTERLY:
+        return get_previous_quarter(send_date)
+    raise ValueError(f'Unknown frequency {frequency!r}')
+
+
 def get_previous_week(send_date: date) -> DateSpan:
     """
     Returns a DateSpan from last week Monday to last week Sunday
@@ -228,6 +226,21 @@ def get_previous_quarter(send_date: date) -> DateSpan:
     enddate = (date(year=send_date.year, month=current_quarter_start, day=1)
                - timedelta(days=1))
     return DateSpan(startdate, enddate)
+
+
+def get_period(frequency: str, startdate: date) -> str:
+    if frequency == SEND_FREQUENCY_WEEKLY:
+        week_num = int(startdate.strftime('%W')) + 1
+        return startdate.strftime('%Y') + f'W{week_num}'
+
+    if frequency == SEND_FREQUENCY_MONTHLY:
+        return startdate.strftime('%Y%m')
+
+    if frequency == SEND_FREQUENCY_QUARTERLY:
+        quarter = (startdate.month - 1) // 3 + 1
+        return startdate.strftime('%Y') + f'Q{quarter}'
+
+    raise ValueError(f'Unknown frequency {frequency!r}')
 
 
 def get_ucr_data(report_config, date_filter, date_span):
