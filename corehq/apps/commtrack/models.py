@@ -127,7 +127,10 @@ class SQLCommtrackConfig(SyncSQLToCouchMixin, models.Model):
         default_product_ids = []
         if self.sqlstockrestoreconfig.use_dynamic_product_list:
             default_product_ids = SQLProduct.active_objects.filter(domain=self.domain).product_ids()
-        case_filter = lambda stub: stub.type in set(self.sqlstockrestoreconfig.force_consumption_case_types)
+
+        def case_filter(stub):
+            return stub.type in set(self.sqlstockrestoreconfig.force_consumption_case_types)
+
         return StockSettings(
             section_to_consumption_types=self.sqlstockrestoreconfig.section_to_consumption_types,
             consumption_config=self.get_consumption_config(),
