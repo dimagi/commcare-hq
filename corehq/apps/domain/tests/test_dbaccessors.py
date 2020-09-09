@@ -5,6 +5,7 @@ import uuid
 from django.test import TestCase
 
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.casegroups.models import CommCareCaseGroup
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import get_db
 
@@ -70,15 +71,15 @@ class DBAccessorsTest(TestCase):
 
     def test_get_docs_in_domain_by_class(self):
         group = Group(domain=self.domain)
-        xform = XFormInstance(domain=self.domain)
+        case_group = CommCareCaseGroup(name='a group', domain=self.domain)
         group.save()
-        xform.save()
+        case_group.save()
         self.addCleanup(group.delete)
-        self.addCleanup(xform.delete)
+        self.addCleanup(case_group.delete)
         [group2] = get_docs_in_domain_by_class(self.domain, Group)
         self.assertEqual(group2.to_json(), group.to_json())
-        [xform2] = get_docs_in_domain_by_class(self.domain, XFormInstance)
-        self.assertEqual(xform2.to_json(), xform.to_json())
+        [case_group2] = get_docs_in_domain_by_class(self.domain, CommCareCaseGroup)
+        self.assertEqual(case_group.to_json(), case_group2.to_json())
 
     def test_get_doc_ids_in_domain_by_type_initial_empty(self):
         self.assertEqual(0, len(get_doc_ids_in_domain_by_type('some-domain', 'some-doc-type', self.db)))
