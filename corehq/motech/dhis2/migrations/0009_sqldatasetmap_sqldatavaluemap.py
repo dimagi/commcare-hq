@@ -5,7 +5,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('motech', '0007_auto_20200909_2138'),
+        ('motech', '0006_connection_settings'),
         ('dhis2', '0008_rename_sqldhis2connection'),
     ]
 
