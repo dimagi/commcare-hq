@@ -80,7 +80,7 @@ def _valid_attachment_extension(file):
 def _valid_file_extension(file, permitted_extensions):
     if "." not in file.name:
         return False
-    file_extension = file.name.rsplit('.', 1)[-1]
+    file_extension = file.name.rsplit(".", 1)[-1]
     return file_extension in permitted_extensions
 
 
