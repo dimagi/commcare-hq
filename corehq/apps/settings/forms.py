@@ -287,8 +287,8 @@ class HQApiKeyForm(forms.Form):
             crispy.Fieldset(
                 ugettext_lazy("Add New API Key"),
                 crispy.Field('name'),
-                crispy.Field('ip_allowlist'),
                 crispy.Field('domain'),
+                crispy.Field('ip_allowlist'),
             ),
             hqcrispy.FormActions(
                 StrictButton(
