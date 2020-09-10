@@ -1,5 +1,7 @@
-hqDefine("app_manager/js/modules/module_view", function () {
+hqDefine("app_manager/js/modules/module_view", ['select2/dist/js/select2.full.min'], function () {
     $(function () {
+        $('.multiselect-caselist').select2();
+        
         var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
             moduleBrief = initial_page_data('module_brief'),
             moduleType = moduleBrief.module_type,
