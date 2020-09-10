@@ -1,6 +1,6 @@
 /*global Backbone, Marionette */
 
-hqDefine("cloudcare/js/formplayer/users/views", function() {
+hqDefine("cloudcare/js/formplayer/users/views", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         Util = hqImport("cloudcare/js/formplayer/utils/util");
 
@@ -10,7 +10,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function() {
      * This View represents the banner that indicates what user your are
      * currently logged in (or restoring) as.
      */
-     var RestoreAsBanner = Marionette.View.extend({
+    var RestoreAsBanner = Marionette.View.extend({
         template: _.template($("#restore-as-banner-template").html() || ""),
         className: 'restore-as-banner-container',
         ui: {
@@ -42,7 +42,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function() {
         events: {
             'click': 'onClickUser',
         },
-        onClickUser: function (e) {
+        onClickUser: function () {
             Util.confirmationModal({
                 title: gettext('Log in as ' + this.model.get('username') + '?'),
                 message: _.template($('#user-data-template').html())(

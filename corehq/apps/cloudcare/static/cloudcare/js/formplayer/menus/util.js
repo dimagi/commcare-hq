@@ -1,4 +1,4 @@
-/*global Util, Backbone */
+/*global Backbone */
 
 hqDefine("cloudcare/js/formplayer/menus/util", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
@@ -99,8 +99,7 @@ hqDefine("cloudcare/js/formplayer/menus/util", function () {
             return hqImport("cloudcare/js/formplayer/menus/views").MenuListView(menuData);
         } else if (menuResponse.type === "query") {
             return hqImport("cloudcare/js/formplayer/menus/views/query")(menuData);
-        }
-        else if (menuResponse.type === "entities") {
+        } else if (menuResponse.type === "entities") {
             if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
                 return hqImport("cloudcare/js/formplayer/menus/views").CaseListView(menuData);
             } else {
@@ -119,4 +118,4 @@ hqDefine("cloudcare/js/formplayer/menus/util", function () {
         showBreadcrumbs: showBreadcrumbs,
         startOrStopLocationWatching: startOrStopLocationWatching,
     };
-})
+});

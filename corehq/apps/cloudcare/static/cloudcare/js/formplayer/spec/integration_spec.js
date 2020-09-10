@@ -26,7 +26,7 @@ describe('FormplayerFrontend Integration', function () {
                         },
                     };
                 },
-            }
+            };
         });
 
         afterEach(function () {
