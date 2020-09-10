@@ -1,3 +1,4 @@
+/* global NProgress */
 hqDefine('cloudcare/js/util', [
     'jquery',
     'cloudcare/js/formplayer/app',
@@ -21,7 +22,6 @@ hqDefine('cloudcare/js/util', [
     });
 
     var getFormUrl = function (urlRoot, appId, moduleId, formId, instanceId) {
-        // TODO: make this cleaner
         var url = urlRoot + "view/" + appId + "/modules-" + moduleId + "/forms-" + formId + "/context/";
         if (instanceId) {
             url += '?instance_id=' + instanceId;
@@ -110,11 +110,11 @@ hqDefine('cloudcare/js/util', [
         return $container;
     };
 
-    var showLoading = function (selector) {
+    var showLoading = function () {
         NProgress.start();
     };
 
-    var formplayerLoading = function (selector) {
+    var formplayerLoading = function () {
         showLoading();
     };
 
@@ -161,7 +161,7 @@ hqDefine('cloudcare/js/util', [
         }
     };
 
-    var hideLoading = function (selector) {
+    var hideLoading = function () {
         NProgress.done();
     };
 
@@ -249,7 +249,7 @@ hqDefine('cloudcare/js/util', [
                     function (href, hIndex, anchor) {
                         var params = href.substring("cchq://passthrough/gaen_otp/".length);
                         var url = initialPageData.reverse("gaen_otp_view");
-                        anchor.attrs[hIndex][1] = url + params
+                        anchor.attrs[hIndex][1] = url + params;
                     },
                     "gaen_otp"
                 ));
