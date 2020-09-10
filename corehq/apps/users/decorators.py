@@ -77,17 +77,30 @@ def require_api_permission(permission, data=None, login_decorator=login_and_doma
     permissions_to_check = {permission, api_access_permission}
 
     def permission_check(request, domain):
-        if getattr(request, 'api_key', None) and request.api_key.role:
-            role = request.api_key.role
+        # first check user permissions and return immediately if not valid
+        user_has_permission = all(
+            request.couch_user.has_permission(domain, p, data=data)
+            for p in permissions_to_check
+        )
+        if not user_has_permission:
+            return False
+
+        # then check domain and role scopes, if present
+        api_key = getattr(request, 'api_key', None)
+
+        if not api_key:
+            return True  # only api keys support additional checks
+        elif api_key.role:
             return (
-                role.domain == domain
-                and all(request.couch_user.has_permission(domain, p, data=data)
-                        for p in permissions_to_check)
-                and all(role.permissions.has(p, data) for p in permissions_to_check)
+                api_key.role.domain == domain and
+                all(api_key.role.permissions.has(p, data) for p in permissions_to_check)
             )
+        elif api_key.domain:
+            # we've already checked for user and role permissions so all that's left is domain matching
+            return domain == api_key.domain
         else:
-            return all(request.couch_user.has_permission(domain, p, data=data)
-                       for p in permissions_to_check)
+            # unscoped API key defaults to user permissions
+            return True
 
     return require_permission_raw(
         None, login_decorator,
