@@ -1,12 +1,10 @@
 /* global NProgress */
 hqDefine('cloudcare/js/util', [
     'jquery',
-    'cloudcare/js/formplayer/app',
     'hqwebapp/js/initial_page_data',
     'integration/js/hmac_callout',
 ], function (
     $,
-    FormplayerFrontend,
     initialPageData,
     HMACCallout
 ) {
@@ -168,7 +166,7 @@ hqDefine('cloudcare/js/util', [
     var reportFormplayerErrorToHQ = function (data) {
         try {
             var reverse = initialPageData.reverse;
-            var cloudcareEnv = FormplayerFrontend.getChannel().request('currentUser').environment;
+            var cloudcareEnv = hqRequire("cloudcare/js/formplayer/app").getChannel().request('currentUser').environment;
             if (!data.cloudcareEnv) {
                 data.cloudcareEnv = cloudcareEnv || 'unknown';
             }
