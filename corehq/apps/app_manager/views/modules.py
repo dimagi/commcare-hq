@@ -777,26 +777,45 @@ def upgrade_shadow_module(request, domain, app_id, module_unique_id):
 @require_can_edit_apps
 def overwrite_module_case_list(request, domain, app_id, module_unique_id):
     app = get_app(domain, app_id)
-    source_module_unique_id = request.POST['source_module_unique_id']
-    source_module = app.get_module_by_unique_id(source_module_unique_id)
-    dest_module = app.get_module_by_unique_id(module_unique_id)
+    dest_module_unique_ids = request.POST.getlist('dest_module_unique_ids')
+    display_properties = request.POST.get('display_properties')
+    case_list_filter = request.POST.get('case_list_filter')
+    other_configuration = request.POST.get('other_configuration')
+    src_module = app.get_module_by_unique_id(module_unique_id)
     detail_type = request.POST['detail_type']
-    assert detail_type in ['short', 'long']
-    if not hasattr(source_module, 'case_details'):
-        messages.error(
-            request,
-            _("Sorry, couldn't find case list configuration for module {}. "
-              "Please report an issue if you believe this is a mistake.").format(source_module.default_name()))
-    elif source_module.case_type != dest_module.case_type:
-        messages.error(
-            request,
-            _("Please choose a module with the same case type as the current one ({}).").format(
-                dest_module.case_type)
-        )
-    else:
-        setattr(dest_module.case_details, detail_type, getattr(source_module.case_details, detail_type))
-        app.save()
-        messages.success(request, _('Case list updated form module {}.').format(source_module.default_name()))
+    for dest_module_unique_id in dest_module_unique_ids:
+        dest_module = app.get_module_by_unique_id(dest_module_unique_id)
+        assert detail_type in ['short', 'long']
+        if not hasattr(dest_module, 'case_details'):
+            messages.error(
+                request,
+                _("Sorry, couldn't find case list configuration for module {}. "
+                "Please report an issue if you believe this is a mistake.").format(dest_module.default_name()))
+        elif dest_module.case_type != src_module.case_type:
+            messages.error(
+                request,
+                _("Please choose a module with the same case type as the current one ({}).").format(
+                    src_module.case_type)
+            )
+        else:
+            if detail_type == 'long':
+                setattr(dest_module.case_details, detail_type, getattr(src_module.case_details, detail_type))
+            else:
+                src_module_detail_type = getattr(src_module.case_details, detail_type)
+                dest_module_detail_type = getattr(dest_module.case_details, detail_type)
+                if display_properties == 'on':
+                    setattr(dest_module_detail_type, 'columns', src_module_detail_type.columns)
+                if case_list_filter == 'on':
+                    setattr(dest_module_detail_type, 'filter', src_module_detail_type.filter)
+                if other_configuration == 'on':
+                    for a in src_module_detail_type.__dict__['_obj']:
+                        if a.startswith('__') or a.startswith('_') or a in ['columns', 'filter']:
+                            continue
+                        setattr(dest_module_detail_type, a, getattr(src_module_detail_type, a))
+            _msg = _('Case list configuration updated from {0} module to {1} module.').format(
+                src_module.default_name(), dest_module.default_name())
+            messages.success(request, _msg)
+            app.save()
     return back_to_main(request, domain, app_id=app_id, module_unique_id=module_unique_id)
 
 
