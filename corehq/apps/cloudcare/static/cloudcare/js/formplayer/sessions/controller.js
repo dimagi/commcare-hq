@@ -1,17 +1,16 @@
-/*global FormplayerFrontend */
-
-FormplayerFrontend.module("SessionNavigate.SessionList", function (SessionList, FormplayerFrontend, Backbone, Marionette, $) {
-    SessionList.Controller = {
+hqDefine("cloudcare/js/formplayer/sessions/controller", function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+    return {
         listSessions: function () {
-            var fetchingSessions = FormplayerFrontend.request("sessions");
+            var fetchingSessions = FormplayerFrontend.getChannel().request("sessions");
 
             $.when(fetchingSessions).done(function (sessions) {
 
-                var sessionListView = new SessionList.SessionListView({
+                var sessionListView = hqImport("cloudcare/js/formplayer/sessions/views")({
                     collection: sessions,
                 });
 
-                FormplayerFrontend.regions.main.show(sessionListView);
+                FormplayerFrontend.regions.getRegion('main').show(sessionListView);
             });
         },
     };
