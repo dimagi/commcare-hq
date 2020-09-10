@@ -1,0 +1,59 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+<button type="button"
+        data-toggle="modal"
+        data-target="#link-keywords"
+        class="btn btn-default pull-right">
+  <i class="fa fa-link"></i> {% trans "Link Keywords" %}
+</button>
+
+<div class="modal fade" id="link-keywords">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form class="form form-horizontal" method="post" action="{% url "link_keywords" domain %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <h3>
+            {% trans "Link Keywords" %}
+          </h3>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <div class="controls col-xs-10">
+              <select name="keyword_ids" class="form-control" required="" id="keyword-selector" multiple>
+                {% for keyword, linkable in linkable_keywords %}
+                  <option value="{{ keyword.id }}" {% if not linkable %} disabled {% endif %}>
+                    {{ keyword.keyword }} {% if not linkable %}({% trans 'unlinkable'%}){% endif %}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="row">
+            <div class="controls col-xs-10">
+              <select name="to_domains" class="form-control" required="" id="domain-selector" multiple>
+                {% for domain in linked_domains %}
+                  <option value="{{ domain }}">
+                    {{ domain }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button"
+                  class="btn btn-default"
+                  data-dismiss="modal">
+            {% trans "Cancel" %}
+          </button>
+          <button class="btn btn-primary" type="submit">
+            {% trans "Link" %}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
