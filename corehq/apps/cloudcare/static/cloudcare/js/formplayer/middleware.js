@@ -4,16 +4,16 @@ hqDefine("cloudcare/js/formplayer/middleware", function () {
     var logRouteMiddleware = function (name) {
         window.console.log('User navigated to ' + name);
     };
-    var clearFormMiddleware = function (name) {
+    var clearFormMiddleware = function () {
         FormplayerFrontend.trigger("clearForm");
     };
-    var navigationMiddleware = function (name) {
+    var navigationMiddleware = function () {
         FormplayerFrontend.trigger("navigation");
     };
-    var clearVersionInfo = function (name) {
+    var clearVersionInfo = function () {
         FormplayerFrontend.trigger('setVersionInfo', '');
     };
-    var clearBreadcrumbMiddleware = function (name) {
+    var clearBreadcrumbMiddleware = function () {
         FormplayerFrontend.trigger('clearBreadcrumbs');
     };
     var setScrollableMaxHeight = function () {

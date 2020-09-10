@@ -276,7 +276,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
     if (!String.prototype.repeat) {
         String.prototype.repeat = function (count) {
             var result = "",
-            string = this.valueOf();
+                string = this.valueOf();
             while (count > 0) {
                 result += string;
                 count -= 1;
