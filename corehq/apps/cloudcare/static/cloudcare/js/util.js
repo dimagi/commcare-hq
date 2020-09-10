@@ -1,12 +1,12 @@
-/*global FormplayerFrontend */
-
 hqDefine('cloudcare/js/util', [
-    'hqwebapp/js/initial_page_data',
     'jquery',
+    'cloudcare/js/formplayer/app',
+    'hqwebapp/js/initial_page_data',
     'integration/js/hmac_callout',
 ], function (
-    initialPageData,
     $,
+    FormplayerFrontend,
+    initialPageData,
     HMACCallout
 ) {
     if (!String.prototype.startsWith) {
@@ -168,7 +168,7 @@ hqDefine('cloudcare/js/util', [
     var reportFormplayerErrorToHQ = function (data) {
         try {
             var reverse = initialPageData.reverse;
-            var cloudcareEnv = FormplayerFrontend.request('currentUser').environment;
+            var cloudcareEnv = FormplayerFrontend.getChannel().request('currentUser').environment;
             if (!data.cloudcareEnv) {
                 data.cloudcareEnv = cloudcareEnv || 'unknown';
             }
