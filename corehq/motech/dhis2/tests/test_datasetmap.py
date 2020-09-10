@@ -9,6 +9,7 @@ from corehq.motech.dhis2.const import (
     SEND_FREQUENCY_WEEKLY,
 )
 from corehq.motech.dhis2.models import DataSetMap
+from corehq.motech.dhis2.tasks import should_send_on_date
 
 DOMAIN = 'test-domain'
 
@@ -16,43 +17,43 @@ DOMAIN = 'test-domain'
 def test_send_monthly_yes():
     with monthly_datasetmap() as monthly_day_2:
         send_date = date(2020, 5, 2)
-        assert_true(monthly_day_2.should_send_on_date(send_date))
+        assert_true(should_send_on_date(monthly_day_2, send_date))
 
 
 def test_send_monthly_wrong_day():
     with monthly_datasetmap() as monthly_day_2:
         send_date = date(2020, 5, 3)
-        assert_false(monthly_day_2.should_send_on_date(send_date))
+        assert_false(should_send_on_date(monthly_day_2, send_date))
 
 
 def test_send_quarterly_yes():
     with quarterly_datasetmap() as quarterly_day_2:
         send_date = date(2020, 4, 2)
-        assert_true(quarterly_day_2.should_send_on_date(send_date))
+        assert_true(should_send_on_date(quarterly_day_2, send_date))
 
 
 def test_send_quarterly_wrong_day():
     with quarterly_datasetmap() as quarterly_day_2:
         send_date = date(2020, 4, 3)
-        assert_false(quarterly_day_2.should_send_on_date(send_date))
+        assert_false(should_send_on_date(quarterly_day_2, send_date))
 
 
 def test_send_quarterly_wrong_month():
     with quarterly_datasetmap() as quarterly_day_2:
         send_date = date(2020, 5, 2)
-        assert_false(quarterly_day_2.should_send_on_date(send_date))
+        assert_false(should_send_on_date(quarterly_day_2, send_date))
 
 
 def test_send_weekly_yes():
     with weekly_datasetmap() as weekly_day_2:
         send_date = date(2020, 5, 5)  # Tuesday ("2020-W19-2")
-        assert_true(weekly_day_2.should_send_on_date(send_date))
+        assert_true(should_send_on_date(weekly_day_2, send_date))
 
 
 def test_send_weekly_wrong_day():
     with weekly_datasetmap() as weekly_day_2:
         send_date = date(2020, 5, 2)  # Saturday ("2020-W18-6")
-        assert_false(weekly_day_2.should_send_on_date(send_date))
+        assert_false(should_send_on_date(weekly_day_2, send_date))
 
 
 @contextmanager
