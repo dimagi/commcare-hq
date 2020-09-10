@@ -5,7 +5,7 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
     };
 
     module.touchformsError = function (message) {
-        return hqImport("cloudcare/js/formplayer/errors").GENERIC_ERROR + message;
+        return hqImport("cloudcare/js/form_entry/errors").GENERIC_ERROR + message;
     };
 
     module.reloginErrorHtml = function () {

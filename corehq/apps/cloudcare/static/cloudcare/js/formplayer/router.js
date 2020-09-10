@@ -1,3 +1,4 @@
+/* global Backbone, Marionette */
 hqDefine("cloudcare/js/formplayer/router", function () {
     var Util = hqImport("cloudcare/js/formplayer/utils/util");
     var Router = Marionette.AppRouter.extend({
