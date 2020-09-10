@@ -14,6 +14,12 @@ from corehq.apps.commtrack.tests.util import bootstrap_domain
 from dimagi.utils.dates import DateSpan
 from pillowtop.es_utils import initialize_index_and_mapping
 
+from corehq.apps.custom_data_fields.models import (
+    CustomDataFieldsDefinition,
+    CustomDataFieldsProfile,
+    Field,
+    PROFILE_SLUG,
+)
 from corehq.apps.domain.calculations import cases_in_last, inactive_cases_in_last
 from corehq.apps.es import CaseES, UserES
 from corehq.apps.es.aggregations import MISSING_KEY
@@ -46,6 +52,7 @@ from corehq.apps.reports.analytics.esaccessors import (
 )
 from corehq.apps.reports.standard.cases.utils import query_location_restricted_cases
 from corehq.apps.users.models import CommCareUser, DomainPermissionsMirror
+from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.blobs.mixin import BlobMetaRef
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -57,6 +64,7 @@ from corehq.pillows.mappings.case_mapping import CASE_INDEX, CASE_INDEX_INFO
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
+from corehq.pillows.user import transform_user_for_elasticsearch
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.util.elastic import ensure_index_deleted, reset_es_index
@@ -816,63 +824,91 @@ class TestFormESAccessors(BaseESAccessorsTest):
 
 @es_test
 class TestUserESAccessors(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'user-esaccessors-test'
+        cls.definition = CustomDataFieldsDefinition(domain=cls.domain,
+                                                    field_type=UserFieldsView.field_type)
+        cls.definition.save()
+        cls.definition.set_fields([
+            Field(slug='job', label='Job'),
+        ])
+        cls.definition.save()
+        cls.profile = CustomDataFieldsProfile(
+            name='daily_planet_staff',
+            fields={'job': 'reporter'},
+            definition=cls.definition,
+        )
+        cls.profile.save()
+
+        cls.user = CommCareUser.create(
+            cls.domain,
+            'superman',
+            'secret agent man',
+            None,
+            None,
+            first_name='clark',
+            last_name='kent',
+            is_active=True,
+            metadata={PROFILE_SLUG: cls.profile.id, 'office': 'phone_booth'},
+        )
+        cls.user.save()
 
     def setUp(self):
         super(TestUserESAccessors, self).setUp()
-        self.username = 'superman'
-        self.first_name = 'clark'
-        self.last_name = 'kent'
-        self.doc_type = 'CommCareUser'
-        self.domain = 'user-esaccessors-test'
         self.es = get_es_new()
         ensure_index_deleted(USER_INDEX)
         initialize_index_and_mapping(self.es, USER_INDEX_INFO)
 
     @classmethod
     def tearDownClass(cls):
+        cls.definition.delete()
         ensure_index_deleted(USER_INDEX)
         super(TestUserESAccessors, cls).tearDownClass()
 
-    def _send_user_to_es(self, _id=None, is_active=True):
-        user = CommCareUser(
-            domain=self.domain,
-            username=self.username,
-            _id=_id or uuid.uuid4().hex,
-            is_active=is_active,
-            first_name=self.first_name,
-            last_name=self.last_name,
-        )
-        send_to_elasticsearch('users', user.to_json())
+    def _send_user_to_es(self, is_active=True):
+        self.user.is_active = is_active
+        send_to_elasticsearch('users', transform_user_for_elasticsearch(self.user.to_json()))
         self.es.indices.refresh(USER_INDEX)
-        return user
 
     def test_active_user_query(self):
-        self._send_user_to_es('123')
-        results = get_user_stubs(['123'])
+        self._send_user_to_es()
+        results = get_user_stubs([self.user._id], ['user_data_es'])
 
         self.assertEqual(len(results), 1)
+        metadata = results[0].pop('user_data_es')
+        self.assertEqual({
+            'commcare_project': 'user-esaccessors-test',
+            PROFILE_SLUG: self.profile.id,
+            'job': 'reporter',
+            'office': 'phone_booth',
+        }, {item['key']: item['value'] for item in metadata})
+
         self.assertEqual(results[0], {
-            '_id': '123',
-            'username': self.username,
+            '_id': self.user._id,
+            '__group_ids': [],
+            'username': self.user.username,
             'is_active': True,
-            'first_name': self.first_name,
-            'last_name': self.last_name,
-            'doc_type': self.doc_type,
-            'location_id': None
+            'first_name': self.user.first_name,
+            'last_name': self.user.last_name,
+            'doc_type': 'CommCareUser',
+            'location_id': None,
         })
 
     def test_inactive_user_query(self):
-        self._send_user_to_es('123', is_active=False)
-        results = get_user_stubs(['123'])
+        self._send_user_to_es(is_active=False)
+        results = get_user_stubs([self.user._id])
 
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0], {
-            '_id': '123',
-            'username': self.username,
+            '_id': self.user._id,
+            '__group_ids': [],
+            'username': self.user.username,
             'is_active': False,
-            'first_name': self.first_name,
-            'last_name': self.last_name,
-            'doc_type': self.doc_type,
+            'first_name': self.user.first_name,
+            'last_name': self.user.last_name,
+            'doc_type': 'CommCareUser',
             'location_id': None
         })
 
@@ -880,7 +916,7 @@ class TestUserESAccessors(TestCase):
         source_domain = self.domain + "-source"
         mirror = DomainPermissionsMirror(source=source_domain, mirror=self.domain)
         mirror.save()
-        self._send_user_to_es('123')
+        self._send_user_to_es()
 
         self.assertEqual(['superman'], UserES().domain(self.domain).values_list('username', flat=True))
         self.assertEqual([], UserES().domain(source_domain).values_list('username', flat=True))
