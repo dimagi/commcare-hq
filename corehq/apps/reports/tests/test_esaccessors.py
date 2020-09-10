@@ -493,7 +493,8 @@ class TestFormESAccessors(BaseESAccessorsTest):
 
         received_on = datetime(2013, 7, 15, 0, 0, 0)
         received_on_out = datetime(2013, 6, 15, 0, 0, 0)
-        self._send_form_to_es(received_on=received_on_out, completion_time=received_on, user_id=user1, app_id=app1, xmlns=xmlns1)
+        self._send_form_to_es(received_on=received_on_out, completion_time=received_on,
+                              user_id=user1, app_id=app1, xmlns=xmlns1)
         self._send_form_to_es(received_on=received_on, user_id=user1, app_id=app1, xmlns=xmlns1)
         self._send_form_to_es(received_on=received_on, user_id=user1, app_id=app1, xmlns=xmlns1)
         self._send_form_to_es(received_on=received_on, user_id=user1, app_id=app2, xmlns=xmlns2)
@@ -527,6 +528,25 @@ class TestFormESAccessors(BaseESAccessorsTest):
         counts_missing_user = get_form_counts_by_user_xmlns(self.domain, start, end, user_ids=[None])
         self.assertEqual(counts_missing_user, {
             (None, app2, xmlns2): 1,
+        })
+
+    @run_with_all_backends
+    def test_xmlns_case_sensitivity_for_get_form_counts_by_user_xmlns(self):
+        user = 'u1'
+        app = '123'
+        # the important part of this test is an xmlns identifier with both lower and uppercase characters
+        xmlns = 'LmN'
+
+        start = datetime(2013, 7, 1)
+        end = datetime(2013, 7, 30)
+
+        received_on = datetime(2013, 7, 15, 0, 0, 0)
+        self._send_form_to_es(received_on=received_on, user_id=user, app_id=app, xmlns=xmlns)
+
+        check_case_sensitivity = get_form_counts_by_user_xmlns(self.domain, start, end,
+                                                               user_ids=[user], xmlnss=[xmlns])
+        self.assertEqual(check_case_sensitivity, {
+            (user, app, xmlns): 1,
         })
 
     @run_with_all_backends
