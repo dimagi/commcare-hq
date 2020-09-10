@@ -481,6 +481,26 @@ class TestFormESAccessors(BaseESAccessorsTest):
         )
         self.assertEqual(results['2013-07-14'], 1)
 
+    @run_with_all_backends
+    def test_timezones_ahead_utc_in_get_submission_counts_by_date(self):
+        """
+        When bucketing form submissions, the returned bucket key needs to be converted to a datetime with
+        the timezone specified. Specifically an issue for timezones ahead of UTC (positive offsets)
+        """
+        start = datetime(2013, 7, 1)
+        end = datetime(2013, 7, 30)
+        received_on = datetime(2013, 7, 15)
+
+        self._send_form_to_es(received_on=received_on)
+        self._send_form_to_es(received_on=received_on, xmlns=SYSTEM_FORM_XMLNS)
+
+        results = get_submission_counts_by_date(
+            self.domain,
+            ['cruella_deville'],
+            DateSpan(start, end),
+            pytz.timezone('Africa/Johannesburg')
+        )
+        self.assertEqual(results['2013-07-15'], 1)
 
     @run_with_all_backends
     def test_get_form_counts_by_user_xmlns(self):
