@@ -177,7 +177,7 @@ class RegistrationTestCase(BaseSMSTest):
         incoming('+999123', 'JOIN {} WORKER test'.format(self.domain), self.backend.hq_api_id)
         user = CommCareUser.get_by_username(format_username('test', self.domain))
         self.assertIsNotNone(user)
-        self.assertEqual(user.user_data, user_data)
+        self.assertEqual(user.metadata, user_data)
         self.assertEqual(PhoneNumber.get_two_way_number('999123').owner_id, user.get_id)
 
         self.assertLastOutgoingSMS('+999123', [_MESSAGES[MSG_REGISTRATION_WELCOME_MOBILE_WORKER]])
@@ -246,7 +246,7 @@ class RegistrationTestCase(BaseSMSTest):
 
         user = CommCareUser.get_by_username(format_username('new_user', self.domain))
         self.assertIsNotNone(user)
-        self.assertEqual(user.user_data, user_data)
+        self.assertEqual(user.metadata, user_data)
         self.assertEqual(user.email, 'new_user@dimagi.com')
         self.assertEqual(PhoneNumber.get_two_way_number('999123').owner_id, user.get_id)
 
@@ -298,7 +298,7 @@ class RegistrationTestCase(BaseSMSTest):
 
         user = CommCareUser.get_by_username(format_username('new_user', self.domain))
         self.assertIsNotNone(user)
-        self.assertEqual(user.user_data, {})
+        self.assertEqual(user.metadata, {})
         self.assertEqual(user.email, 'new_user@dimagi.com')
         self.assertEqual(PhoneNumber.get_two_way_number('999123').owner_id, user.get_id)
 

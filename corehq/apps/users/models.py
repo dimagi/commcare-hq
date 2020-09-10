@@ -167,10 +167,10 @@ class Permissions(DocumentSchema):
 
         return super(Permissions, cls).wrap(data)
 
-    def view_web_app(self, app):
+    def view_web_app(self, master_app_id):
         if self.view_web_apps:
             return True
-        return any(app_id in self.view_web_apps_list for app_id in [app['_id'], app['copy_of']])
+        return master_app_id in self.view_web_apps_list
 
     def view_report(self, report, value=None):
         """Both a getter (when value=None) and setter (when value=True|False)"""
@@ -1029,7 +1029,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     language = StringProperty()
     subscribed_to_commcare_users = BooleanProperty(default=False)
     announcements_seen = ListProperty()
-    user_data = DictProperty()
+    user_data = DictProperty()      # use metadata property instead of accessing this directly
     # This should not be set directly but using set_location method only
     location_id = StringProperty()
     assigned_location_ids = StringListProperty()
@@ -1111,6 +1111,16 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
                 value=getattr(self, key)
             ) for key in properties),
         )
+
+    @property
+    def metadata(self):
+        return self.user_data
+
+    def update_metadata(self, data):
+        self.user_data.update(data)
+
+    def pop_metadata(self, key, default=None):
+        return self.user_data.pop(key, default)
 
     @property
     def two_factor_disabled(self):
@@ -1515,7 +1525,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     @classmethod
     def create(cls, domain, username, password, created_by, created_via, email=None, uuid='', date='',
-               first_name='', last_name='', **kwargs):
+               first_name='', last_name='', metadata=None, **kwargs):
         try:
             django_user = User.objects.using(router.db_for_write(User)).get(username=username)
         except User.DoesNotExist:
@@ -1536,7 +1546,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         else:
             couch_user.created_on = datetime.utcnow()
 
-        couch_user.user_data = kwargs.get('user_data', {})
+        metadata = metadata or {}
+        couch_user.update_metadata(metadata)
         couch_user.sync_from_django_user(django_user)
         return couch_user
 
@@ -1724,6 +1735,50 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         return super(CommCareUser, cls).wrap(data)
 
+    @property
+    def metadata(self):
+        from corehq.apps.custom_data_fields.models import PROFILE_SLUG
+        data = self.to_json().get('user_data', {})
+        profile_id = data.get(PROFILE_SLUG)
+        profile = self._get_user_data_profile(profile_id)
+        if profile:
+            data.update(profile.fields)
+        return data
+
+    def update_metadata(self, data):
+        from corehq.apps.custom_data_fields.models import PROFILE_SLUG
+
+        new_data = {**self.user_data, **data}
+
+        profile = self._get_user_data_profile(new_data.get(PROFILE_SLUG))
+        if profile:
+            overlap = {k for k, v in profile.fields.items() if new_data.get(k) and v != new_data[k]}
+            if overlap:
+                raise ValueError("metadata properties conflict with profile: {}".format(", ".join(overlap)))
+            for key in profile.fields.keys():
+                new_data.pop(key, None)
+
+        self.user_data = new_data
+
+    def pop_metadata(self, key, default=None):
+        return self.user_data.pop(key, default)
+
+    def _get_user_data_profile(self, profile_id):
+        from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+        from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile
+        if not profile_id:
+            return None
+
+        try:
+            profile = CustomDataFieldsProfile.objects.get(id=profile_id)
+        except CustomDataFieldsProfile.DoesNotExist:
+            raise ValueError("Could not find profile with id {}".format(profile_id))
+        if profile.definition.domain != self.domain:
+            raise ValueError("Could not find profile with id {}".format(profile_id))
+        if profile.definition.field_type != UserFieldsView.field_type:
+            raise ValueError("Could not find profile with id {}".format(profile_id))
+        return profile
+
     def _is_demo_user_cached_value_is_stale(self):
         from corehq.apps.users.dbaccessors.all_commcare_users import get_practice_mode_mobile_workers
         cached_demo_users = get_practice_mode_mobile_workers.get_cached_value(self.domain)
@@ -1784,6 +1839,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                location=None,
                commit=True,
                is_account_confirmed=True,
+               metadata=None,
                **kwargs):
         """
         Main entry point into creating a CommCareUser (mobile worker).
@@ -1796,7 +1852,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             assert not kwargs['is_active'], \
                 "it's illegal to create a user with is_active=True and is_account_confirmed=False"
         commcare_user = super(CommCareUser, cls).create(domain, username, password, created_by, created_via,
-                                                        email, uuid, date, **kwargs)
+                                                        email, uuid, date, metadata=None, **kwargs)
         if phone_number is not None:
             commcare_user.add_phone_number(phone_number)
 
@@ -1807,6 +1863,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         commcare_user.registering_device_id = device_id
         commcare_user.is_account_confirmed = is_account_confirmed
         commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
+        # metadata can't be set until domain is present
+        commcare_user.update_metadata(metadata or {})
 
         if location:
             commcare_user.set_location(location, commit=False)
@@ -2397,9 +2455,9 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     @classmethod
     def create(cls, domain, username, password, created_by, created_via, email=None, uuid='', date='',
-               **kwargs):
+               metadata=None, **kwargs):
         web_user = super(WebUser, cls).create(domain, username, password, created_by, created_via, email, uuid,
-                                              date, **kwargs)
+                                              date, metadata=metadata, **kwargs)
         if domain:
             web_user.add_domain_membership(domain, **kwargs)
         web_user.save()
