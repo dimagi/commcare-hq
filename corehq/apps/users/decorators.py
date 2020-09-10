@@ -92,8 +92,8 @@ def require_api_permission(permission, data=None, login_decorator=login_and_doma
             return True  # only api keys support additional checks
         elif api_key.role:
             return (
-                api_key.role.domain == domain and
-                all(api_key.role.permissions.has(p, data) for p in permissions_to_check)
+                api_key.role.domain == domain
+                and all(api_key.role.permissions.has(p, data) for p in permissions_to_check)
             )
         elif api_key.domain:
             # we've already checked for user and role permissions so all that's left is domain matching
