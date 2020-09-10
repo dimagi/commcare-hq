@@ -801,9 +801,9 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
             src_module_detail_type = getattr(src_module.case_details, detail_type)
             dest_module_detail_type = getattr(dest_module.case_details, detail_type)
             if display_properties == 'on':
-                dest_module_detail_type.columns = src_module_detail_type.columns
+                setattr(dest_module_detail_type, 'columns', src_module_detail_type.columns)
             if case_list_filter == 'on':
-                dest_module_detail_type.filter = src_module_detail_type.filter
+                setattr(dest_module_detail_type, 'filter', src_module_detail_type.filter)
             if other_configuration == 'on':
                 for attr, value in src_module_detail_type.__dict__.items():
                     if attr == '_obj':
@@ -813,7 +813,7 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
             if detail_type == 'long':
                 setattr(dest_module.case_details, detail_type, getattr(src_module.case_details, detail_type))
             app.save()
-            messages.success(request, _('Case list updated form module {}.').format(dest_module.default_name()))
+            messages.success(request, _('Case list configuration updated from {0} module to {1} module.').format(src_module.default_name(), dest_module.default_name()))
     return back_to_main(request, domain, app_id=app_id, module_unique_id=module_unique_id)
 
 

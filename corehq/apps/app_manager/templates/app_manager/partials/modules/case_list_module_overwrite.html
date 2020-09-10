@@ -4,44 +4,49 @@
 <form class="form-inline" method='POST' action='{% url "overwrite_module_case_list" domain app.id module.unique_id %}'>
   {% csrf_token %}
   <fieldset>
-    <label for="other_module_id">{% trans "Module(s)" %}: </label>
-    <div style="width:25%; display: inline-block">
-      <select name='dest_module_unique_ids' class='form-control multiselect-caselist' multiple="multiple" >{% for other_mod in available_modules %}
-        <option value={{ other_mod.unique_id }}>{{ other_mod.name|html_trans:langs }}</option>
-      {% endfor %}</select>
-      <input name="detail_type" type="hidden" value="{{ detail_type }}" />
-    </div>
-    {% if detail_type == 'short' %}
-      <div class="checkbox" style="display: block; margin: 8px 0px 0px 4%;">
-        <label>
-          <input type="checkbox" name="display_properties"/>
-          Display Properties
-        </label><br>
-        <label>
-          <input type="checkbox" name="case_list_filter"/>
-          Case List Filter
-        </label><br>
-        <label>
-          <input type="checkbox" name="other_configuration"/>
-          Other Configuration
-        </label>
-      </div>
-      <button class="btn btn-danger" style="display: block; margin: 8px 0px 0px 4%;" type="submit">
-        <i class="fa fa-copy"></i>
-        {% trans "Overwrite Case List" %}
-
-    {% else %}
-
-      <button class="btn btn-danger" type="submit">
-        <i class="fa fa-copy"></i>
-        {% trans "Overwrite Case Detail" %}
-    {% endif %}
-    <!-- <button class="btn btn-danger" type="submit">
-      <i class="fa fa-copy"></i>
-      {% if detail_type == 'short' %}
-        {% trans "Overwrite Case List" %}
-      {% else %}
-        {% trans "Overwrite Case Detail" %}
-      {% endif %} -->
+       <div class="contaianer-fluid">
+          <div class="row">
+            <div class="col-xs-1 col-md-1">
+              <label for="other_module_id">{% trans "Menu(s)" %}: </label>
+            </div>
+            <div class="col-xs-3 col-sm-4">
+              <select name='dest_module_unique_ids' class='form-control multiselect-caselist' multiple="multiple" >{% for other_mod in available_modules %}
+                <option value={{ other_mod.unique_id }}>{{ other_mod.name|html_trans:langs }}</option>
+              {% endfor %}</select>
+              <input name="detail_type" type="hidden" value="{{ detail_type }}" />
+            </div>
+          </div>
+            {% if detail_type == 'short' %}
+            <br>
+            <div class="row">
+              <div class="checkbox col-sm-4 col-sm-offset-1">
+                <label>
+                  <input type="checkbox" name="display_properties"/>
+                  Display Properties
+                </label><br>
+                <label>
+                  <input type="checkbox" name="case_list_filter"/>
+                  Case List Filter
+                </label><br>
+                <label>
+                  <input type="checkbox" name="other_configuration"/>
+                  Other Configuration
+                </label>
+            </div>
+          </div>
+          {% endif %}
+          <br>
+          <div class="row"> 
+            <div class="col-sm-4 col-sm-offset-1">
+              <button class='btn btn-danger' type="submit">
+                <i class="fa fa-copy"></i>
+                {% if detail_type == 'short' %}
+                  {% trans "Overwrite Case List" %}
+                {% else %}
+                  {% trans "Overwrite Case Detail" %}
+                {% endif %}
+            </div>
+          </div>
+       </div> 
   </fieldset>
 </form>
