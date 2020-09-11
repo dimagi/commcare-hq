@@ -1,15 +1,14 @@
 from datetime import datetime, timedelta
-from django.core.management import BaseCommand, CommandError
+from django.core.management import BaseCommand
 
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
-from pillowtop import get_all_pillow_instances
 from pillowtop.models import str_to_kafka_seq, KafkaCheckpoint
 from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.utils import get_pillow_by_name
 
 
 def get_active_pillows(pillows):
-    # return active pillows based on the heuristic 
+    # return active pillows based on the heuristic
     #   that have their checkpoints updated in last 30 days
     active_pillows = []
     for pillow in pillows:
@@ -80,7 +79,7 @@ class Command(BaseCommand):
             seq = str_to_kafka_seq(checkpoint.seq)
             es_processors = [p for p in pillow.processors if isinstance(p, ElasticProcessor)]
             for change in pillow.get_change_feed().iter_changes(since=seq, forever=False):
-                total_changes +=1 
+                total_changes += 1
                 if change.deleted and change.id:
                     deleted_changes += 1
                     for processor in es_processors:
