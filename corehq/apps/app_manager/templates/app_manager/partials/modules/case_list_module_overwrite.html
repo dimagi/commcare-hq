@@ -4,17 +4,51 @@
 <form class="form-inline" method='POST' action='{% url "overwrite_module_case_list" domain app.id module.unique_id %}'>
   {% csrf_token %}
   <fieldset>
-    <label for="other_module_id">{% trans "Module" %}: </label>
-    <select name='source_module_unique_id' class='form-control'>{% for other_mod in available_modules %}
-      <option value={{ other_mod.unique_id }}>{{ other_mod.name|html_trans:langs }}</option>
-    {% endfor %}</select>
-    <input name="detail_type" type="hidden" value="{{ detail_type }}" />
-    <button class='btn btn-danger' type="submit">
-      <i class="fa fa-copy"></i>
-      {% if detail_type == 'short' %}
-        {% trans "Overwrite Case List" %}
-      {% else %}
-        {% trans "Overwrite Case Detail" %}
-      {% endif %}
+       <div>
+          <div class="row">
+            <div class="col-xs-1 col-md-1">
+              <label for="other_module_id">{% trans "Menu(s)" %} </label>
+            </div>
+            <div class="col-xs-3 col-sm-4">
+              <select name='dest_module_unique_ids' class='form-control multiselect-caselist' multiple="multiple" >
+                {% for other_mod in available_modules %}
+                  <option value="{{ other_mod.unique_id }}">{{ other_mod.name|html_trans:langs }}</option>
+                {% endfor %}
+              </select>
+              <input name="detail_type" type="hidden" value="{{ detail_type }}" />
+            </div>
+          </div>
+            {% if detail_type == 'short' %}
+            <br>
+            <div class="row">
+              <div class="checkbox col-sm-4 col-sm-offset-1">
+                <label for="display_properties">
+                  <input type="checkbox" name="display_properties" id="display_properties"/>
+                  {% trans "Display Properties" %}
+                </label><br>
+                <label for="case_list_filter">
+                  <input type="checkbox" name="case_list_filter" id="case_list_filter"/>
+                  {% trans "Case List Filter" %}
+                </label><br>
+                <label for="other_configuration">
+                  <input type="checkbox" name="other_configuration" id="other_configuration"/>
+                  {% trans "Other Configuration" %}
+                </label>
+            </div>
+          </div>
+          {% endif %}
+          <br>
+          <div class="row"> 
+            <div class="col-sm-4 col-sm-offset-1">
+              <button class='btn btn-danger' type="submit">
+                <i class="fa fa-copy"></i>
+                {% if detail_type == 'short' %}
+                  {% trans "Overwrite Case List" %}
+                {% else %}
+                  {% trans "Overwrite Case Detail" %}
+                {% endif %}
+            </div>
+          </div>
+       </div> 
   </fieldset>
 </form>
