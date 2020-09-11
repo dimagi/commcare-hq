@@ -1,6 +1,4 @@
-import re
-from datetime import date
-from typing import Optional
+from django.utils.dateparse import parse_date
 
 from corehq.util.quickcache import quickcache
 
@@ -34,6 +32,10 @@ def get_migrated_dataset_maps(domain: str):
 
     migrated_dataset_maps = []
     for dataset_map in get_couch_dataset_maps(domain):
+        if dataset_map.complete_date is None:
+            complete_date = None
+        else:
+            complete_date = parse_date(dataset_map.complete_date)
         sql_dataset_map = SQLDataSetMap.objects.create(
             domain=dataset_map.domain,
             connection_settings=get_connx(dataset_map.connection_settings_id),
@@ -48,7 +50,7 @@ def get_migrated_dataset_maps(domain: str):
             period_column=dataset_map.period_column or None,
             attribute_option_combo_id=(
                 dataset_map.attribute_option_combo_id or None),
-            complete_date=as_date_or_none(dataset_map.complete_date)
+            complete_date=complete_date,
         )
         for dv_map in dataset_map.datavalue_maps:
             SQLDataValueMap.objects.create(
@@ -60,27 +62,6 @@ def get_migrated_dataset_maps(domain: str):
             )
         migrated_dataset_maps.append(sql_dataset_map)
     return migrated_dataset_maps
-
-
-def as_date_or_none(iso_date: Optional[str]) -> Optional[date]:
-    """
-    Casts an ISO-formatted date string as a datetime.date, or None if it
-    is blank.
-
-    >>> as_date_or_none('2020-11-03')
-    datetime.date(2020, 11, 4)
-    >>> as_date_or_none('')
-    None
-    >>> as_date_or_none(None)
-    None
-
-    """
-    if not iso_date:
-        return None
-    if not re.match(r'\d{4}-\d{2}-\d{2}', iso_date):
-        raise ValueError(f'{iso_date!r} is not an ISO-8601-formatted date')
-    year, month, day = map(int, iso_date.split('-'))
-    return date(year, month, day)
 
 
 @quickcache(['domain_name'])
