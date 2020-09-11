@@ -1,5 +1,3 @@
-/*global Formplayer */
-
 /**
  * Backbone model for listing and selecting CommCare menus (modules, forms, and cases)
  */
@@ -40,7 +38,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                 var newOptionsData = JSON.stringify($.extend(true, { mustRestore: true }, JSON.parse(options.data)));
                                 menus.fetch($.extend(true, {}, options, { data: newOptionsData }));
                             }, gettext('Waiting for server progress'));
-                        } else if (response.hasOwnProperty('exception')) {
+                        } else if (_.has(response, 'exception')) {
                             FormplayerFrontend.trigger('clearProgress');
                             FormplayerFrontend.trigger(
                                 'showError',
@@ -70,7 +68,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                         if (response.status === 423) {
                             FormplayerFrontend.trigger(
                                 'showError',
-                                hqImport("cloudcare/js/formplayer/errors").LOCK_TIMEOUT_ERROR
+                                hqImport("cloudcare/js/form_entry/errors").LOCK_TIMEOUT_ERROR
                             );
                         } else if (response.status === 401) {
                             FormplayerFrontend.trigger(
