@@ -263,7 +263,7 @@ class HQPhoneNumberForm(PhoneNumberForm):
 
 
 class HQApiKeyForm(forms.Form):
-    ALL_DOMAINS = '*'
+    ALL_DOMAINS = ''
     name = forms.CharField()
     ip_allowlist = SimpleArrayField(
         forms.GenericIPAddressField(),
@@ -304,15 +304,11 @@ class HQApiKeyForm(forms.Form):
             HQApiKey.objects.get(name=self.cleaned_data['name'], user=user)
             raise DuplicateApiKeyName
         except HQApiKey.DoesNotExist:
-            if self.cleaned_data['domain'] and self.cleaned_data['domain'] != self.ALL_DOMAINS:
-                domain = self.cleaned_data['domain']
-            else:
-                domain = ''
             new_key = HQApiKey.objects.create(
                 name=self.cleaned_data['name'],
                 ip_allowlist=self.cleaned_data['ip_allowlist'],
                 user=user,
-                domain=domain,
+                domain=self.cleaned_data['domain'] or '',
             )
             return new_key
 
