@@ -2,7 +2,7 @@ from functools import wraps
 
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy, ugettext as _
-
+from djanog.conf import settings
 from corehq import toggles
 from corehq.apps.hqwebapp.views import no_permissions
 from custom.icds_core.const import ICDS_DOMAIN, IS_ICDS_ENVIRONMENT
@@ -30,7 +30,7 @@ def is_icds_cas_project(domain):
 
 def check_authorization(domain, user, master_app_id):
     if (
-        IS_ICDS_ENVIRONMENT
+        settings.SERVER_ENVIRONMENT in settings.INDIAN_ENVIRONMENTS
         and toggles.ROLE_WEBAPPS_PERMISSIONS.enabled(domain)
     ):
         try:
