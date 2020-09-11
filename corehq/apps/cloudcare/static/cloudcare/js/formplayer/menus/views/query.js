@@ -1,33 +1,35 @@
-/*global FormplayerFrontend */
+/*global _, Marionette */
 
-FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Backbone, Marionette) {
-    Views.QueryView = Marionette.ItemView.extend({
+hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+
+    var QueryView = Marionette.View.extend({
         tagName: "tr",
         className: "formplayer-request",
-        template: "#query-view-item-template",
+        template: _.template($("#query-view-item-template").html() || ""),
 
-        templateHelpers: function () {
+        templateContext: function () {
             var imageUri = this.options.model.get('imageUri');
             var audioUri = this.options.model.get('audioUri');
             var appId = this.model.collection.appId;
             return {
-                imageUrl: imageUri ? FormplayerFrontend.request('resourceMap', imageUri, appId) : "",
-                audioUrl: audioUri ? FormplayerFrontend.request('resourceMap', audioUri, appId) : "",
+                imageUrl: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
+                audioUrl: audioUri ? FormplayerFrontend.getChannel().request('resourceMap', audioUri, appId) : "",
             };
         },
     });
 
-    Views.QueryListView = Marionette.CompositeView.extend({
+    var QueryListView = Marionette.CollectionView.extend({
         tagName: "div",
-        template: "#query-view-list-template",
-        childView: Views.QueryView,
+        template: _.template($("#query-view-list-template").html() || ""),
+        childView: QueryView,
         childViewContainer: "tbody",
 
         initialize: function (options) {
             this.parentModel = options.collection.models;
         },
 
-        templateHelpers: function () {
+        templateContext: function () {
             return {
                 title: this.options.title,
             };
@@ -54,4 +56,8 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
             FormplayerFrontend.trigger("menu:query", payload);
         },
     });
+
+    return function (data) {
+        return new QueryListView(data);
+    };
 });
