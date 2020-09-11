@@ -11,7 +11,8 @@ from memoized import memoized
 
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.locations.models import SQLLocation
-from corehq.elastic import ES_META, run_query
+from corehq.apps.es.es_query import ESQuery
+from corehq.elastic import ES_META
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
 from corehq.form_processor.serializers import (
@@ -162,13 +163,11 @@ def doc_in_es(request):
     def to_json(doc):
         return json.dumps(doc, indent=4, sort_keys=True) if doc else "NOT FOUND!"
 
-    query = {"filter": {"ids": {"values": [doc_id]}}}
     found_indices = {}
     es_doc_type = None
     for index in ES_META:
-        res = run_query(index, query)
-        if 'hits' in res and res['hits']['total'] == 1:
-            es_doc = res['hits']['hits'][0]['_source']
+        es_doc = lookup_doc_in_es(doc_id, index)
+        if es_doc:
             found_indices[index] = to_json(es_doc)
             es_doc_type = es_doc_type or es_doc.get('doc_type')
 
@@ -182,6 +181,12 @@ def doc_in_es(request):
         "couch_info": _lookup_id_in_database(doc_id),
     }
     return render(request, "hqadmin/doc_in_es.html", context)
+
+
+def lookup_doc_in_es(doc_id, index):
+    res = ESQuery(index).doc_id([doc_id]).run()
+    if res.total == 1:
+        return res.hits[0]
 
 
 @require_superuser
