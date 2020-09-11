@@ -1,9 +1,6 @@
 from django.utils.dateparse import parse_date
 
-from corehq.util.quickcache import quickcache
 
-
-@quickcache(['domain_name'])
 def get_dataset_maps(domain_name):
     from corehq.motech.dhis2.models import SQLDataSetMap
 
@@ -64,7 +61,6 @@ def get_migrated_dataset_maps(domain: str):
     return migrated_dataset_maps
 
 
-@quickcache(['domain_name'])
 def get_couch_dataset_maps(domain_name):
     from corehq.motech.dhis2.models import DataSetMap
 

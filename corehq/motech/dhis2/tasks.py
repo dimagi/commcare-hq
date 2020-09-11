@@ -21,7 +21,6 @@ from corehq.motech.dhis2.const import (
 )
 from corehq.motech.dhis2.dbaccessors import get_dataset_maps
 from corehq.util.couch import get_document_or_not_found
-from corehq.util.quickcache import quickcache
 
 
 @periodic_task(
@@ -152,7 +151,6 @@ def get_datavalues(info_for_columns: dict, ucr_row: dict) -> List[dict]:
     return datavalues
 
 
-@quickcache(['dataset_map.domain', 'dataset_map.ucr_id'])
 def get_info_for_columns(dataset_map):
     info_for_columns = {
         dvm.column: {**dvm, 'is_org_unit': False, 'is_period': False}
