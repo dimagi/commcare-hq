@@ -82,7 +82,7 @@ class Command(BaseCommand):
 
         if options.get("print_index_size"):
             return
-        elif local_count == remote_count and False:
+        elif local_count == remote_count:
             print("Doc counts are same, nothing left to reindex. Exiting!")
             return
         else:
@@ -107,7 +107,7 @@ class Command(BaseCommand):
 
         if start_date and end_date:
             days = (end_date - start_date).days
-            for start in (start_date + timedelta(days=n) for n in range(days+1)):
+            for start in (start_date + timedelta(days=n) for n in range(days + 1)):
                 end = start + timedelta(days=1)
                 local_count = self.get_es7_count(start, end)
                 remote_count = self.get_es2_count(start, end)
@@ -125,7 +125,7 @@ class Command(BaseCommand):
         if self.cancelled_queries:
             confirm = input(
                 """
-                There were {} reindex tasks that didn't finish, would you like 
+                There were {} reindex tasks that didn't finish, would you like
                 to retry these (y/N)?
                 """.format(len(self.cancelled_queries))
             )
@@ -134,8 +134,8 @@ class Command(BaseCommand):
                     self.reindex_and_poll_progress(query)
         print("""
             Reindex finished, exiting!
-            If you would like to check, you may run this 
-            command again with --print_index_size to make sure 
+            If you would like to check, you may run this
+            command again with --print_index_size to make sure
             doc counts match across both indices.
         """)
 
@@ -147,7 +147,6 @@ class Command(BaseCommand):
         result = self.es.reindex(reindex_query, wait_for_completion=False, request_timeout=300)
         print("Reindex is in progress, task id is ", result, "Progress is displayed every 5 seconds")
         task_id = result["task"]
-        node_id = task_id.split(":")[0]
         running_time = -1
         no_progress_loops = 0
         last_updated_count = 0
@@ -168,11 +167,11 @@ class Command(BaseCommand):
                 no_progress_loops += 1
             if no_progress_loops == 10:
                 self.es.tasks.cancel(task_id=task_id)
-                self.cancelled_queries.append(query)
+                self.cancelled_queries.append(reindex_query)
                 print("Cancelling task that didn't progress in last 10 polls {}".format(str(query)))
             running_time = task["running_time_in_nanos"]
             running_time_in_mins = (running_time / 60000000000)
-            print("Running time total in mins so far", running_time_in_mins, "\n")            
+            print("Running time total in mins so far", running_time_in_mins, "\n")
             time.sleep(5)
         print("Current reindex task is finished")
 
@@ -207,7 +206,7 @@ class Command(BaseCommand):
         url = f'{self.es2_remote_host}/{self.index}/{self.index_info.type}/_count'
         if start_date or end_date:
             q = json.dumps(self._range_query(start_date, end_date))
-            response = requests.get(url, data=q, headers={'content-type':'application/json'})
+            response = requests.get(url, data=q, headers={'content-type': 'application/json'})
         else:
             response = requests.get(url)
         if response.status_code != 200:
