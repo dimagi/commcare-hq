@@ -1073,6 +1073,14 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             del data["user_data"]["commtrack-supply-point"]
             should_save = True
 
+        # Wrapping a doc from ES adds these extra fields which shouldn't be saved
+        if "__group_ids" in data:
+            del data["__group_ids"]
+        if "__group_names" in data:
+            del data["__group_names"]
+        if "user_data_es" in data:
+            del data["user_data_es"]
+
         data = cls.migrate_eula(data)
 
         couch_user = super(CouchUser, cls).wrap(data)
