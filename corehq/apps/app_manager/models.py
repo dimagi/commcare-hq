@@ -2032,6 +2032,12 @@ class Detail(IndexedSchema, CaseListLookupMixin):
         Return True if configured to persist a case tile on forms
         """
         return self.persist_tile_on_forms and (self.use_case_tiles or self.custom_xml)
+    
+    def set_other_configuration(self, src_module_detail_type):
+        for a in src_module_detail_type._obj:
+            if a.startswith('__') or a.startswith('_') or a in ['columns', 'filter']:
+                continue
+            setattr(self, a, getattr(src_module_detail_type, a))
 
 
 class CaseList(IndexedSchema, NavMenuItemMediaMixin):

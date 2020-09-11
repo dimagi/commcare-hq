@@ -1,4 +1,4 @@
-hqDefine("app_manager/js/modules/module_view", ['select2/dist/js/select2.full.min'], function () {
+hqDefine("app_manager/js/modules/module_view", function () {
     $(function () {
         $('.multiselect-caselist').select2();
         
@@ -8,7 +8,7 @@ hqDefine("app_manager/js/modules/module_view", ['select2/dist/js/select2.full.mi
             options = initial_page_data('js_options') || {};
 
         hqImport('app_manager/js/app_manager').setAppendedPageTitle(django.gettext("Menu Settings"));
-
+        
         // Set up details
         if (moduleBrief.case_type) {
             var state = hqImport('app_manager/js/details/screen_config').state;

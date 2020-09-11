@@ -49,6 +49,7 @@ from corehq.apps.app_manager.models import (
     CaseSearchProperty,
     DefaultCaseSearchProperty,
     DeleteModuleRecord,
+    Detail,
     DetailColumn,
     DetailTab,
     FixtureSelect,
@@ -778,11 +779,9 @@ def upgrade_shadow_module(request, domain, app_id, module_unique_id):
 def overwrite_module_case_list(request, domain, app_id, module_unique_id):
     app = get_app(domain, app_id)
     dest_module_unique_ids = request.POST.getlist('dest_module_unique_ids')
-    display_properties = request.POST.get('display_properties')
-    case_list_filter = request.POST.get('case_list_filter')
-    other_configuration = request.POST.get('other_configuration')
     src_module = app.get_module_by_unique_id(module_unique_id)
     detail_type = request.POST['detail_type']
+    dest_modules_msg = []
     for dest_module_unique_id in dest_module_unique_ids:
         dest_module = app.get_module_by_unique_id(dest_module_unique_id)
         assert detail_type in ['short', 'long']
@@ -798,26 +797,29 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
                     src_module.case_type)
             )
         else:
-            if detail_type == 'long':
-                setattr(dest_module.case_details, detail_type, getattr(src_module.case_details, detail_type))
-            else:
-                src_module_detail_type = getattr(src_module.case_details, detail_type)
-                dest_module_detail_type = getattr(dest_module.case_details, detail_type)
-                if display_properties == 'on':
-                    setattr(dest_module_detail_type, 'columns', src_module_detail_type.columns)
-                if case_list_filter == 'on':
-                    setattr(dest_module_detail_type, 'filter', src_module_detail_type.filter)
-                if other_configuration == 'on':
-                    for a in src_module_detail_type.__dict__['_obj']:
-                        if a.startswith('__') or a.startswith('_') or a in ['columns', 'filter']:
-                            continue
-                        setattr(dest_module_detail_type, a, getattr(src_module_detail_type, a))
-            _msg = _('Case list configuration updated from {0} module to {1} module.').format(
-                src_module.default_name(), dest_module.default_name())
-            messages.success(request, _msg)
+            _update_module_case_list(request, detail_type, src_module, dest_module)
+            dest_modules_msg.append(dest_module.default_name())
             app.save()
+    _msg = _(f'Case list configuration updated from {src_module.default_name()} menu to {", ".join(map(str, dest_modules_msg))} menu(s).')
+    messages.success(request, _msg)
     return back_to_main(request, domain, app_id=app_id, module_unique_id=module_unique_id)
 
+def _update_module_case_list(request, detail_type, src_module, dest_module):
+    display_properties = request.POST.get('display_properties')
+    case_list_filter = request.POST.get('case_list_filter')
+    other_configuration = request.POST.get('other_configuration')
+    if detail_type == 'long':
+        setattr(dest_module.case_details, detail_type, getattr(src_module.case_details, detail_type))
+    else:
+        src_module_detail_type = getattr(src_module.case_details, detail_type)
+        dest_module_detail_type = getattr(dest_module.case_details, detail_type)
+        if display_properties == 'on':
+            setattr(dest_module_detail_type, 'columns', src_module_detail_type.columns)
+        if case_list_filter == 'on':
+            setattr(dest_module_detail_type, 'filter', src_module_detail_type.filter)
+        if other_configuration == 'on':
+            dest_module_detail_type.set_other_configuration(src_module_detail_type)
+    
 
 def _update_search_properties(module, search_properties, lang='en'):
     """
