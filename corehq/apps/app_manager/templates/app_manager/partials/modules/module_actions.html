@@ -1,14 +1,30 @@
 {% load i18n %}
+{% load hq_shared_tags %}
 
 <div class="panel panel-appmanager">
   <div class="panel-heading">
     <h4 class="panel-title panel-title-nolink">
-      {% trans "Overwrite Case List/Detail from Existing Module" %}
+      {% trans "Overwrite Case List/Detail" %}
     </h4>
   </div>
   <div class="panel-body">
+    {% if request|ui_notify_enabled:"CASE_LIST_OVERWRITE_UPDATE" %}
+      <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-purple helpbubble-no-arrow fade in"
+          data-slug="{{ 'CASE_LIST_OVERWRITE_UPDATE'|ui_notify_slug }}"
+          role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <p class="lead">{% trans 'New feature to overwrite case lists/details in bulk.' %}</p>
+        <p>
+            {% blocktrans %}
+              Please select the case lists/details menu(s) that needs to be overwritten.
+            {% endblocktrans %}
+        </p>
+      </div>
+    {% endif %}
     <p class="help-block">
-      {% trans "This will <strong>overwrite</strong> the current case list/details screen with the configuration from the selected module." %}
+      {% trans "This will <strong>overwrite</strong> the selected case lists/details screen with the configuration of the current menu." %}
     </p>
     {% with detail_type="short" %}
       {% include 'app_manager/partials/modules/case_list_module_overwrite.html' %}
