@@ -21,7 +21,7 @@ describe('Render a case list', function () {
 
         it('Should parse a menu list response to a MenuListView', function () {
             var view = getMenuView(fixtures.menuList);
-            assert.isTrue(view.childViewContainer === ".menus-container")
+            assert.isTrue(view.childViewContainer === ".menus-container");
         });
 
         it('Should parse a case list response with tiles to a CaseTileListView', function () {

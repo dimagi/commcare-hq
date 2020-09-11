@@ -43,7 +43,7 @@ hqDefine("cloudcare/js/formplayer/apps/api", function () {
                 return hqImport("cloudcare/js/formplayer/apps/collections")(apps);
             });
         },
-        getAppEntity: function (app_id) {
+        getAppEntity: function (id) {
             var restoreAs = FormplayerFrontend.getChannel().request('currentUser').restoreAs;
             var apps = appsByRestoreAs[restoreAs];
             if (!apps) {
@@ -52,7 +52,7 @@ hqDefine("cloudcare/js/formplayer/apps/api", function () {
                 return null;
             }
             var appCollection = hqImport("cloudcare/js/formplayer/apps/collections")(apps);
-            return appCollection.get(app_id);
+            return appCollection.get(id);
         },
     };
 
@@ -60,8 +60,8 @@ hqDefine("cloudcare/js/formplayer/apps/api", function () {
         return API.getAppEntities();
     });
 
-    FormplayerFrontend.getChannel().reply("appselect:getApp", function (app_id) {
-        return API.getAppEntity(app_id);
+    FormplayerFrontend.getChannel().reply("appselect:getApp", function (id) {
+        return API.getAppEntity(id);
     });
 
     return API;

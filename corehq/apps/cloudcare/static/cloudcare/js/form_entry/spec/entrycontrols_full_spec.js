@@ -42,14 +42,11 @@ describe('Entries', function () {
         assert.equal(entry.templateType, 'str');
 
         entry.rawAnswer('1234');
-        valid = entry.isValid('1234');
-        assert.isTrue(valid);
+        assert.isTrue(entry.isValid('1234'));
         this.clock.tick(1000);
         assert.isTrue(spy.calledOnce);
         assert.equal(entry.answer(), 1234);
-
-        valid = entry.isValid('abc');
-        assert.isFalse(valid);
+        assert.isFalse(entry.isValid('abc'));
     });
 
     it('Should return DropdownEntry', function () {
@@ -87,8 +84,7 @@ describe('Entries', function () {
         assert.equal(entry.templateType, 'str');
 
         entry.rawAnswer('2.3');
-        valid = entry.isValid('2.3');
-        assert.isTrue(valid);
+        assert.isTrue(entry.isValid('2.3'));
         this.clock.tick(1000);
         assert.isTrue(spy.calledOnce);
         assert.equal(entry.answer(), 2.3);
@@ -96,9 +92,7 @@ describe('Entries', function () {
         entry.rawAnswer('2.4');
         this.clock.tick(1000);
         assert.isTrue(spy.calledTwice);
-
-        valid = entry.isValid('mouse');
-        assert.isFalse(valid);
+        assert.isFalse(entry.isValid('mouse'));
     });
 
     it('Should return ComboboxEntry', function () {

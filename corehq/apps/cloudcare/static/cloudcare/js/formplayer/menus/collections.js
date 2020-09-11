@@ -44,7 +44,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'isPersistentDetail',
         ],
 
-        parse: function (response, request) {
+        parse: function (response) {
             _.extend(this, _.pick(response, this.commonProperties));
 
             if (response.selections) {
