@@ -366,7 +366,12 @@ Then run the following separately:
 
     # Keeps elasticsearch index in sync
     # You can also skip this and run `./manage.py ptop_reindexer_v2` to manually sync ES indices when needed.
-    $ ./manage.py run_ptop --all
+    $ ./manage.py run_ptop --all --processor-chunk-size=1
+
+    # You can also run individual pillows with the following.
+    # Pillow names can be found in settings.py
+    $ ./manage.py run_ptop --pillow-name=CaseSearchToElasticsearchPillow --processor-chunk-size=1
+
 
     # Setting up the asynchronous task scheduler (only required if you have CELERY_TASK_ALWAYS_EAGER=False in settings)
     $ celery -A corehq worker -l info
