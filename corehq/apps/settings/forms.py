@@ -280,7 +280,7 @@ class HQApiKeyForm(forms.Form):
         super().__init__(*args, **kwargs)
 
         user_domains = self.couch_user.get_domains()
-        all_domains = (self.ALL_DOMAINS, _('All Domains'))
+        all_domains = (self.ALL_DOMAINS, _('All Projects'))
         self.fields['domain'].choices = [all_domains] + [(d, d) for d in user_domains]
         self.helper = HQFormHelper()
         self.helper.layout = Layout(
