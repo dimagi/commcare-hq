@@ -870,7 +870,12 @@ class UserRepeaterTest(TestCase, DomainSubscriptionMixin):
                 'first_name': '',
                 'last_name': '',
                 'default_phone_number': None,
-                'user_data': {'commcare_project': self.domain},
+                'user_data': {
+                    'commcare_first_name': '',
+                    'commcare_last_name': '',
+                    'commcare_phone_number': None,
+                    'commcare_project': self.domain,
+                },
                 'groups': [],
                 'phone_numbers': [],
                 'email': '',
