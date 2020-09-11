@@ -359,8 +359,8 @@ def link_keywords(request, domain):
     from_domain = domain
     to_domains = request.POST.getlist("to_domains")
     keyword_ids = request.POST.getlist("keyword_ids")
-    successes = []
-    failures = []
+    successes = set()
+    failures = set()
     for to_domain in to_domains:
         domain_link = DomainLink.objects.get(master_domain=from_domain, linked_domain=to_domain)
         for keyword_id in keyword_ids:
@@ -371,12 +371,12 @@ def link_keywords(request, domain):
                     request.couch_user._id,
                     model_detail=KeywordLinkDetail(linked_keyword_id=str(linked_keyword_id)).to_json(),
                 )
-                successes.append(to_domain)
+                successes.add(to_domain)
             except DomainLinkError as err:
-                failures.append(f"{to_domain}: {err}")
+                failures.add(f"{to_domain}: {err}")
                 notify_exception(request, message=str(err))
             except Exception as err:
-                failures.append(to_domain)
+                failures.add(to_domain)
                 notify_exception(request, message=str(err))
 
     if successes:
@@ -384,7 +384,7 @@ def link_keywords(request, domain):
             request,
             _(f"Successfully linked and copied to {', '.join(successes)}. "))
     if failures:
-        messages.error(request, _(f"Errors occurred. {', '.join(failures)}"))
+        messages.error(request, _(f"Errors occurred {', '.join(failures)}"))
 
     return HttpResponseRedirect(
         reverse(KeywordsListView.urlname, args=[from_domain])
