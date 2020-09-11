@@ -25,11 +25,11 @@ def get_migrated_dataset_maps(domain: str):
         sql_dataset_map = SQLDataSetMap.objects.create(
             domain=dataset_map.domain,
             connection_settings_id=dataset_map.connection_settings_id,
-            ucr_id=dataset_map.ucr_id,
+            report_config_id=dataset_map.ucr_id,
             description=dataset_map.description,
             frequency=dataset_map.frequency,
             day_to_send=dataset_map.day_to_send,
-            data_set_id=dataset_map.data_set_id or None,
+            dataset_id=dataset_map.data_set_id or None,
             org_unit_id=dataset_map.org_unit_id or None,
             org_unit_column=dataset_map.org_unit_column or None,
             period=dataset_map.period or None,

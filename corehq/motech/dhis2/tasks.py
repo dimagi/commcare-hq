@@ -79,7 +79,8 @@ def should_send_on_date(dataset_map, send_date):
 
 
 def get_dataset(dataset_map, send_date):
-    report_config = get_report_config(dataset_map.domain, dataset_map.ucr_id)
+    report_config = get_report_config(dataset_map.domain,
+                                      dataset_map.report_config_id)
     date_filter = get_date_filter(report_config)
     date_range = get_date_range(dataset_map.frequency, send_date)
     ucr_data = get_ucr_data(report_config, date_filter, date_range)
@@ -91,8 +92,8 @@ def get_dataset(dataset_map, send_date):
         # get a single list of DataValues
         'dataValues': list(chain.from_iterable(datavalues))
     }
-    if dataset_map.data_set_id:
-        dataset['dataSet'] = dataset_map.data_set_id
+    if dataset_map.dataset_id:
+        dataset['dataSet'] = dataset_map.dataset_id
     if dataset_map.org_unit_id:
         dataset['orgUnit'] = dataset_map.org_unit_id
     if dataset_map.period:
@@ -169,8 +170,9 @@ def get_info_for_columns(dataset_map):
     return info_for_columns
 
 
-def get_report_config(domain_name, ucr_id):
-    return get_document_or_not_found(ReportConfiguration, domain_name, ucr_id)
+def get_report_config(domain_name, report_config_id):
+    return get_document_or_not_found(ReportConfiguration, domain_name,
+                                     report_config_id)
 
 
 def get_date_filter(report_config):

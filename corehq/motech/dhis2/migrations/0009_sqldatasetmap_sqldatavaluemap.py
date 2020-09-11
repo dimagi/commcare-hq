@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
                     auto_created=True, primary_key=True, serialize=False,
                     verbose_name='ID')),
                 ('domain', models.CharField(db_index=True, max_length=128)),
-                ('ucr_id', models.CharField(max_length=36)),
+                ('report_config_id', models.CharField(max_length=36)),
                 ('description', models.TextField()),
                 ('frequency', models.CharField(choices=[
                     ('weekly', 'Weekly'),
@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
                     ('quarterly', 'Quarterly')
                 ], default='monthly', max_length=16)),
                 ('day_to_send', models.PositiveIntegerField()),
-                ('data_set_id', models.CharField(
+                ('dataset_id', models.CharField(
                     blank=True, max_length=11, null=True)),
                 ('org_unit_id', models.CharField(
                     blank=True, max_length=11, null=True)),

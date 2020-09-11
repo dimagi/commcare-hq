@@ -87,7 +87,7 @@ class SQLDataSetMap(models.Model):
     domain = models.CharField(max_length=128, db_index=True)
     connection_settings = models.ForeignKey(
         ConnectionSettings, on_delete=models.PROTECT, null=True, blank=True)
-    ucr_id = models.CharField(max_length=36)
+    report_config_id = models.CharField(max_length=36)
     description = models.TextField()
     frequency = models.CharField(
         max_length=16, choices=SEND_FREQUENCY_CHOICES,
@@ -96,7 +96,7 @@ class SQLDataSetMap(models.Model):
     # for weekly frequency. Uses ISO-8601, where Monday = 1, Sunday = 7.
     day_to_send = models.PositiveIntegerField()
 
-    data_set_id = models.CharField(max_length=11, null=True, blank=True)
+    dataset_id = models.CharField(max_length=11, null=True, blank=True)
 
     org_unit_id = models.CharField(max_length=11, null=True, blank=True)
     org_unit_column = models.CharField(max_length=64, null=True, blank=True)

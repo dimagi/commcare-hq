@@ -23,6 +23,7 @@ class MigrationTest(TestCase):
             'description': 'test dataset map',
             'frequency': SEND_FREQUENCY_MONTHLY,
             'day_to_send': 5,
+            'data_set_id': 'deadbeef',
             'org_unit_column': 'org_unit_id',
             'datavalue_maps': [{
                 'column': 'foo_bar',
@@ -51,10 +52,14 @@ class MigrationTest(TestCase):
         self.assertEqual(len(migrated_dataset_maps), 1)
         sql_dataset_map = migrated_dataset_maps[0]
 
-        self.assertEqual(sql_dataset_map.description, 'test dataset map')
-
+        self.assertEqual(sql_dataset_map.description,
+                         self.dataset_map.description)
+        self.assertEqual(sql_dataset_map.report_config_id,
+                         self.dataset_map.ucr_id)
+        self.assertEqual(sql_dataset_map.dataset_id,
+                         self.dataset_map.data_set_id)
         self.assertEqual(sql_dataset_map.connection_settings.name,
-                         'test connection')
+                         self.dataset_map.connection_settings.name)
 
         self.assertEqual(len(sql_dataset_map.datavalue_maps.all()), 3)
         columns = {m.column for m in sql_dataset_map.datavalue_maps.all()}
