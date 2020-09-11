@@ -55,8 +55,8 @@ six~=1.11
 socketpool==0.5.3
 markdown==2.2.1
 sqlagg==0.16.2
-django-redis~=4.9
-redis==3.2.0
+django-redis==4.11.0
+redis==3.2.1
 twilio==6.5.1
 django-countries==4.6
 reportlab==3.0
