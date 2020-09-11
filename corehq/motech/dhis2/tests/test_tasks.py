@@ -117,14 +117,14 @@ class GetInfoForColumnsTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.connx = ConnectionSettings.objects.create(
+        cls.connection_settings = ConnectionSettings.objects.create(
             domain=cls.domain,
             name='test connection',
             url='https://dhis2.example.com/'
         )
         cls.dataset_map = DataSetMap.wrap({
             'domain': cls.domain,
-            'connection_settings_id': cls.connx.id,
+            'connection_settings_id': cls.connection_settings.id,
             'ucr_id': 'c0ffee',
             'description': 'test dataset map',
             'frequency': SEND_FREQUENCY_MONTHLY,
@@ -152,7 +152,7 @@ class GetInfoForColumnsTests(TestCase):
         for m in cls.migrated:
             m.delete()
         cls.dataset_map.delete()
-        cls.connx.delete()
+        cls.connection_settings.delete()
         super().tearDownClass()
 
     def test_couch(self):

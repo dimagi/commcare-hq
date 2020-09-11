@@ -11,14 +11,14 @@ class MigrationTest(TestCase):
     domain = 'test-domain'
 
     def setUp(self):
-        self.connx = ConnectionSettings.objects.create(
+        self.connection_settings = ConnectionSettings.objects.create(
             domain=self.domain,
             name='test connection',
             url='https://dhis2.example.com/'
         )
         self.dataset_map = DataSetMap.wrap({
             'domain': self.domain,
-            'connection_settings_id': self.connx.id,
+            'connection_settings_id': self.connection_settings.id,
             'ucr_id': 'c0ffee',
             'description': 'test dataset map',
             'frequency': SEND_FREQUENCY_MONTHLY,
@@ -45,7 +45,7 @@ class MigrationTest(TestCase):
         for m in SQLDataSetMap.objects.filter(domain=self.domain).all():
             m.delete()
         self.dataset_map.delete()
-        self.connx.delete()
+        self.connection_settings.delete()
 
     def test_get_migrated_dataset_maps(self):
         migrated_dataset_maps = get_migrated_dataset_maps(self.domain)
