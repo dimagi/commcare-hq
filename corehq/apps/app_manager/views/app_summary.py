@@ -25,7 +25,7 @@ from corehq.apps.app_manager.util import is_linked_app, is_remote_app
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.app_manager.views.utils import get_langs
 from corehq.apps.app_manager.xform import VELLUM_TYPES
-from corehq.apps.domain.views.base import LoginAndDomainMixin
+from corehq.apps.domain.views.base import LoginAndDomainMixin, LoginOrAPIKeyMixin
 from corehq.apps.hqwebapp.views import BasePageView
 
 
@@ -458,7 +458,7 @@ CASE_SUMMARY_EXPORT_HEADER_NAMES = [
 PropertyRow = namedtuple('PropertyRow', CASE_SUMMARY_EXPORT_HEADER_NAMES)
 
 
-class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
+class DownloadCaseSummaryView(LoginOrAPIKeyMixin, LoginAndDomainMixin, ApplicationViewMixin, View):
     urlname = 'download_case_summary'
     http_method_names = ['get']
 
