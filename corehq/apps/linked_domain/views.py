@@ -412,7 +412,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                     report = ReportConfiguration.get(report_id)
                 update['name'] = f'{name} ({report.title})'
             if action.model == 'keyword':
-                keyword_id = action.wrapped_detail.keyword_id
+                keyword_id = action.wrapped_detail.linked_keyword_id
                 try:
                     keyword = keywords[keyword_id].keyword
                     del keywords[keyword_id]

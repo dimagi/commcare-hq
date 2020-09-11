@@ -369,7 +369,7 @@ def link_keywords(request, domain):
                 domain_link.update_last_pull(
                     'keyword',
                     request.couch_user._id,
-                    model_detail=KeywordLinkDetail(keyword_id=str(linked_keyword_id)).to_json(),
+                    model_detail=KeywordLinkDetail(linked_keyword_id=str(linked_keyword_id)).to_json(),
                 )
                 successes.append(to_domain)
             except DomainLinkError as err:
