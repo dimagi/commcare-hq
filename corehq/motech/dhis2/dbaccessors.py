@@ -15,17 +15,6 @@ def get_dataset_maps(domain_name):
 
 def get_migrated_dataset_maps(domain: str):
     from corehq.motech.dhis2.models import SQLDataSetMap, SQLDataValueMap
-    from corehq.motech.models import ConnectionSettings
-
-    connx = {}
-
-    def get_connx(connx_id):
-        nonlocal connx
-        if connx_id is None:
-            return None
-        if connx_id not in connx:
-            connx[connx_id] = ConnectionSettings.objects.get(pk=connx_id)
-        return connx[connx_id]
 
     migrated_dataset_maps = []
     for dataset_map in get_couch_dataset_maps(domain):
@@ -35,7 +24,7 @@ def get_migrated_dataset_maps(domain: str):
             complete_date = parse_date(dataset_map.complete_date)
         sql_dataset_map = SQLDataSetMap.objects.create(
             domain=dataset_map.domain,
-            connection_settings=get_connx(dataset_map.connection_settings_id),
+            connection_settings_id=dataset_map.connection_settings_id,
             ucr_id=dataset_map.ucr_id,
             description=dataset_map.description,
             frequency=dataset_map.frequency,
