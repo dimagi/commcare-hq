@@ -1,4 +1,4 @@
-/* global _, mdAnchorRender */
+/* global mdAnchorRender */
 var Const = hqImport("cloudcare/js/form_entry/const"),
     Utils = hqImport("cloudcare/js/form_entry/utils");
 var md = window.markdownit();
