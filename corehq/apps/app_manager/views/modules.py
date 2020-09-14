@@ -779,12 +779,22 @@ def upgrade_shadow_module(request, domain, app_id, module_unique_id):
 def overwrite_module_case_list(request, domain, app_id, module_unique_id):
     app = get_app(domain, app_id)
     dest_module_unique_ids = request.POST.getlist('dest_module_unique_ids')
+    attrs_dict = {
+        'columns': request.POST.get('display_properties') == 'on',
+        'filter': request.POST.get('case_list_filter') == 'on',
+        '*': request.POST.get('other_configuration') == 'on'
+    }
     src_module = app.get_module_by_unique_id(module_unique_id)
     detail_type = request.POST['detail_type']
-    dest_modules_msg = []
+
+    is_valid = _validate_overwrite_request(request, detail_type, dest_module_unique_ids, attrs_dict)
+    if not is_valid:
+        return back_to_main(request, domain, app_id=app_id, module_unique_id=module_unique_id)
+
+    updated_modules = []
+    not_updated_modules = []
     for dest_module_unique_id in dest_module_unique_ids:
         dest_module = app.get_module_by_unique_id(dest_module_unique_id)
-        assert detail_type in ['short', 'long']
         if not hasattr(dest_module, 'case_details'):
             messages.error(
                 request,
@@ -797,29 +807,55 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
                     src_module.case_type)
             )
         else:
-            _update_module_case_list(request, detail_type, src_module, dest_module)
-            dest_modules_msg.append(dest_module.default_name())
-            app.save()
-    _msg = _(f'Case list configuration updated from {src_module.default_name()} menu to {", ".join(map(str, dest_modules_msg))} menu(s).')
+            try:
+                _update_module_case_list(detail_type, src_module, dest_module, attrs_dict)
+                updated_modules.append(dest_module.default_name())
+                app.save()
+            except Exception as e:
+                logger.exception(f'Error in updating module: {dest_module.default_name()}', e)
+                not_updated_modules.append(dest_module.default_name())
+
+    if not_updated_modules:
+        _error_msg = _("Failed to overwrite case lists to menu(s): {}.").format(
+            ", ".join(map(str, not_updated_modules)))
+        messages.error(request, _error_msg)
+
+    _msg = _('Case list configuration updated from {} menu to {} menu(s).').format(
+        src_module.default_name(), ", ".join(map(str, updated_modules)))
     messages.success(request, _msg)
     return back_to_main(request, domain, app_id=app_id, module_unique_id=module_unique_id)
 
-def _update_module_case_list(request, detail_type, src_module, dest_module):
-    display_properties = request.POST.get('display_properties')
-    case_list_filter = request.POST.get('case_list_filter')
-    other_configuration = request.POST.get('other_configuration')
+
+def _validate_overwrite_request(request, detail_type, dest_modules, attrs_dict):
+    assert detail_type in ['short', 'long']
+    valid = True
+
+    if not dest_modules:
+        valid = False
+        messages.error(
+            request,
+            _("Please choose at least one menu to overwrite.")
+        )
+    if detail_type == 'short':
+        if not any(attrs_dict.values()):
+            valid = False
+            messages.error(
+                request,
+                _("Please choose at least one option to overwrite.")
+            )
+    return valid
+
+
+def _update_module_case_list(detail_type, src_module, dest_module, attrs_dict):
     if detail_type == 'long':
         setattr(dest_module.case_details, detail_type, getattr(src_module.case_details, detail_type))
     else:
         src_module_detail_type = getattr(src_module.case_details, detail_type)
         dest_module_detail_type = getattr(dest_module.case_details, detail_type)
-        if display_properties == 'on':
-            setattr(dest_module_detail_type, 'columns', src_module_detail_type.columns)
-        if case_list_filter == 'on':
-            setattr(dest_module_detail_type, 'filter', src_module_detail_type.filter)
-        if other_configuration == 'on':
-            dest_module_detail_type.set_other_configuration(src_module_detail_type)
-    
+
+        # begin overwrite
+        dest_module_detail_type.overwrite_from_module_detail(src_module_detail_type, attrs_dict)
+
 
 def _update_search_properties(module, search_properties, lang='en'):
     """
