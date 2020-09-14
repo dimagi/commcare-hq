@@ -368,7 +368,7 @@ function Group(json, parent) {
         self.domain_meta = parse_meta(json.datatype, val);
     }
 
-    var styles = _.has(json, 'style') && json.style ? json.style.raw.split(/\s+/) : [];
+    var styles = _.has(json, 'style') && json.style && json.style.raw ? json.style.raw.split(/\s+/) : [];
     self.collapsible = _.contains(styles, Const.COLLAPSIBLE);
     self.showChildren = ko.observable(!self.collapsible || _.contains(styles, Const.COLLAPSIBLE_OPEN));
     self.toggleChildren = function () {
