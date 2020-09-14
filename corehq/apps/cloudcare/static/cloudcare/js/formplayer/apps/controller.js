@@ -18,7 +18,7 @@ hqDefine("cloudcare/js/formplayer/apps/controller", function () {
          * Renders a SingleAppView.
          */
         singleApp: function (appId) {
-            $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function (apps) {
+            $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function () {
                 var singleAppView = views.SingleAppView({
                     appId: appId,
                 });
@@ -26,7 +26,7 @@ hqDefine("cloudcare/js/formplayer/apps/controller", function () {
             });
         },
         landingPageApp: function (appId) {
-            $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function (apps) {
+            $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function () {
                 var landingPageAppView = views.LandingPageAppView({
                     appId: appId,
                 });
