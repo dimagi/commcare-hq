@@ -10,7 +10,6 @@ from memoized import memoized
 
 from corehq.apps.accounting.mixins import BillingModalsMixin
 from corehq.apps.domain.decorators import (
-    login_or_api_key,
     login_required,
     LoginAndDomainMixin,
 )
@@ -150,14 +149,6 @@ class DomainViewMixin(object):
         if not domain_obj:
             raise Http404()
         return domain_obj
-
-
-
-class LoginOrAPIKeyMixin(object):
-
-    @method_decorator(login_or_api_key)
-    def dispatch(self, *args, **kwargs):
-        return super(LoginOrAPIKeyMixin, self).dispatch(*args, **kwargs)
 
 
 class BaseDomainView(LoginAndDomainMixin, BillingModalsMixin, BaseSectionPageView, DomainViewMixin):
