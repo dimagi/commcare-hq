@@ -6,28 +6,37 @@
         css: {
           'gr-no-children': $data.children().length === 0,
           'gr-has-no-questions': _.all($data.children(), function(d) { return d.type() !== 'question' }),
-          'gr-has-no-nested-questions': !$data.hasAnyNestedQuestions()
+          'gr-has-no-nested-questions': !$data.hasAnyNestedQuestions(),
+          'panel panel-default': collapsible,
         }">
-    <fieldset class="gr-header">
-      <legend>
-        <i class="clickable fa" data-bind="
-            click: toggleChildren,
-            css: {'fa-angle-double-right': !showChildren(), 'fa-angle-double-down': showChildren(), 'hide': !collapsible}
-        "></i>
-        <span class="caption webapp-markdown-output"
-              data-bind="
-                html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
-                click: toggleChildren,
-                css: {clickable: collapsible},
-              "></span>
+    <fieldset class="gr-header" data-bind="css: {'panel-heading': collapsible, clickable: collapsible}, click: toggleChildren">
+      <div data-bind="ifnot: collapsible">
+        <legend>
+          <span class="caption webapp-markdown-output"
+                data-bind="
+                  html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
+                "></span>
+          <button class="btn btn-xs btn-danger del pull-right" href="#" data-bind="
+                      visible: isRepetition,
+                      click: deleteRepeat
+                  ">Delete repeat</button>
+        </legend>
+      </div>
+      <div data-bind="if: collapsible">
+        <div class="collapsible-icon-container">
+          <i style="" class="fa" data-bind="
+              css: {'fa-angle-double-right': !showChildren(), 'fa-angle-double-down': showChildren()},
+          "></i>
+        </div>
+        <span class="caption" data-bind="html: caption()"></span><!-- Markdown interferes with header styling -->
         <button class="btn btn-xs btn-danger del pull-right" href="#" data-bind="
                     visible: isRepetition,
                     click: deleteRepeat
                 ">Delete repeat</button>
-      </legend>
+      </div>
       <span class="ix"></span>
     </fieldset>
-    <div class="children" data-bind="slideVisible: showChildren(), template: { name: childTemplate, foreach: $data.children }"/>
+    <div class="children" data-bind="slideVisible: showChildren(), template: { name: childTemplate, foreach: $data.children }, css: {'panel-body': collapsible}"/>
   </div>
 </script>
 
