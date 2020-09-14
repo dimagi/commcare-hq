@@ -104,7 +104,7 @@ re_loose_datetime = re.compile(r"""
     ([0-5]\d)?  # second
     \D?
     (\d{3,6})?  # millisecond
-    ([zZ]|([\+-])([01]\d|2[0-3])\D?([0-5]\d)?)?  # timezone
+    ([zZ]|([\+-])([01]\d|2[0-3])\D?([0-5]\d)?)  # timezone
     $
 """, re.VERBOSE)
 
