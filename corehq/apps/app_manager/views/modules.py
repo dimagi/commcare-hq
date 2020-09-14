@@ -49,7 +49,6 @@ from corehq.apps.app_manager.models import (
     CaseSearchProperty,
     DefaultCaseSearchProperty,
     DeleteModuleRecord,
-    Detail,
     DetailColumn,
     DetailTab,
     FixtureSelect,
@@ -810,7 +809,6 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
             try:
                 _update_module_case_list(detail_type, src_module, dest_module, attrs_dict)
                 updated_modules.append(dest_module.default_name())
-                app.save()
             except Exception as e:
                 logger.exception(f'Error in updating module: {dest_module.default_name()}', e)
                 not_updated_modules.append(dest_module.default_name())
@@ -820,9 +818,11 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
             ", ".join(map(str, not_updated_modules)))
         messages.error(request, _error_msg)
 
-    _msg = _('Case list configuration updated from {} menu to {} menu(s).').format(
-        src_module.default_name(), ", ".join(map(str, updated_modules)))
-    messages.success(request, _msg)
+    if updated_modules:
+        app.save()  # Save successfully overwritten menus.
+        _msg = _('Case list configuration updated from {} menu to {} menu(s).').format(
+            src_module.default_name(), ", ".join(map(str, updated_modules)))
+        messages.success(request, _msg)
     return back_to_main(request, domain, app_id=app_id, module_unique_id=module_unique_id)
 
 
