@@ -238,4 +238,8 @@ def simple_post(domain, url, data, *, headers, auth_manager, verify,
         notify_addresses=notify_addresses,
         payload_id=payload_id,
     )
-    return requests.post(url, data=data, headers=default_headers)
+    try:
+        return requests.post(url, data=data, headers=default_headers)
+    except Exception as err:
+        requests.notify_error(str(err))
+        raise
