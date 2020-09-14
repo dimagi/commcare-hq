@@ -380,6 +380,12 @@ function Group(json, parent) {
         }
     };
 
+    self.hasError = ko.computed(function () {
+        return _.find(self.children(), function (child) {
+            return child.hasError();
+        });
+    });
+
     if (self.isRepetition) {
         // If the group is part of a repetition the index can change if the user adds or deletes
         // repeat groups.
