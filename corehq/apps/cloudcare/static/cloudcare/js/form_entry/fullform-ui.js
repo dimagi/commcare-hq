@@ -371,9 +371,9 @@ function Group(json, parent) {
         self.domain_meta = parse_meta(json.datatype, val);
     }
 
-    var style = _.has(json, 'style') && json.style ? json.style.raw : undefined;
-    self.collapsible = !!_.contains([Formplayer.Const.COLLAPSIBLE_OPEN, Formplayer.Const.COLLAPSIBLE_CLOSED], style);
-    self.showChildren = ko.observable(!self.collapsible || style === Formplayer.Const.COLLAPSIBLE_OPEN);
+    var styles = _.has(json, 'style') && json.style ? json.style.raw.split(/\s+/) : [];
+    self.collapsible = _.contains(styles, Formplayer.Const.COLLAPSIBLE);
+    self.showChildren = ko.observable(!self.collapsible || _.contains(styles, Formplayer.Const.COLLAPSIBLE_OPEN));
     self.toggleChildren = function () {
         if (self.collapsible) {
             self.showChildren(!self.showChildren());
@@ -580,8 +580,9 @@ Formplayer.Const = {
     COMBOBOX: 'combobox',
     COMBOBOX_MULTIWORD: 'multiword',
     COMBOBOX_FUZZY: 'fuzzy',
-    COLLAPSIBLE_OPEN: 'collapsible-open',
-    COLLAPSIBLE_CLOSED: 'collapsible-closed',
+    COLLAPSIBLE: 'group-collapse',
+    COLLAPSIBLE_OPEN: 'collapse-open',
+    COLLAPSIBLE_CLOSED: 'collapse-closed',
 
     // Note it's important to differentiate these two
     NO_PENDING_ANSWER: undefined,
