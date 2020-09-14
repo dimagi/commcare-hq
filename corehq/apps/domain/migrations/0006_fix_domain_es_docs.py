@@ -2,10 +2,13 @@
 
 from django.conf import settings
 from django.db import migrations
+
 from corehq.apps.es.domains import DomainES
 from corehq.elastic import send_to_elasticsearch
+from corehq.util.django_migrations import skip_on_fresh_install
 
 
+@skip_on_fresh_install
 def fix_domain_es_docs(apps, schema_editor):
     if settings.UNIT_TESTING:
         # This is not necessary in tests
