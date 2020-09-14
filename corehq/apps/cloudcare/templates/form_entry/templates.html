@@ -29,6 +29,7 @@
           "></i>
         </div>
         <span class="caption" data-bind="html: caption()"></span><!-- Markdown interferes with header styling -->
+        <i class="fa fa-remove text-danger pull-right" data-bind="visible: hasError() && !showChildren()"></i>
         <button class="btn btn-xs btn-danger del pull-right" href="#" data-bind="
                     visible: isRepetition,
                     click: deleteRepeat
