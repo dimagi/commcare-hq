@@ -478,6 +478,12 @@ class DisableTwoFactorView(FormView):
             'disable_for_days': 0,
         }
 
+    def render_to_response(self, context, **response_kwargs):
+        context.update({
+            'username': self.request.GET.get("q"),
+        })
+        return super().render_to_response(context, **response_kwargs)
+
     def get(self, request, *args, **kwargs):
         from django_otp import user_has_device
 

@@ -102,6 +102,7 @@ class TestChildBeneficiarySections(TestCase):
         super(TestChildBeneficiarySections, cls).tearDownClass()
 
     @classmethod
+    @patch('corehq.apps.callcenter.data_source.get_call_center_domains', lambda: [])
     def _init_table(cls, data_source_id):
         datasource_id = StaticDataSourceConfiguration.get_doc_id(cls.domain, data_source_id)
         datasource = StaticDataSourceConfiguration.by_id(datasource_id)
