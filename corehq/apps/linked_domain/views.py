@@ -24,10 +24,7 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.app_manager.util import is_linked_app
-from corehq.apps.case_search.models import (
-    CaseSearchConfig,
-    CaseSearchQueryAddition,
-)
+from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_or_api_key,
@@ -57,6 +54,7 @@ from corehq.apps.linked_domain.local_accessors import (
     get_fixture,
     get_toggles_previews,
     get_user_roles,
+    get_data_dictionary,
 )
 from corehq.apps.linked_domain.models import (
     AppLinkDetail,
@@ -138,12 +136,7 @@ def case_search_config(request, domain):
     except CaseSearchConfig.DoesNotExist:
         config = None
 
-    try:
-        addition = CaseSearchQueryAddition.objects.get(domain=domain).to_json()
-    except CaseSearchQueryAddition.DoesNotExist:
-        addition = None
-
-    return JsonResponse({'config': config, 'addition': addition})
+    return JsonResponse({'config': config})
 
 
 @login_or_api_key
@@ -171,6 +164,12 @@ def get_latest_released_app_source(request, domain, app_id):
         raise Http404
 
     return JsonResponse(convert_app_for_remote_linking(latest_master_build))
+
+
+@login_or_api_key
+@require_linked_domain
+def data_dictionary(request, domain):
+    return JsonResponse(get_data_dictionary(domain))
 
 
 @require_can_edit_apps
@@ -363,14 +362,20 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                 update['name'] = '{} ({})'.format(name, app_name)
             model_status.append(update)
             if action.model == 'fixture':
-                tag = action.wrapped_detail.tag
-                try:
-                    fixture = fixtures.get(tag)
-                    del fixtures[tag]
-                except KeyError:
-                    fixture = get_fixture_data_type_by_tag(self.domain, tag)
-                update['name'] = f'{name} ({fixture.tag})'
-                update['can_update'] = fixture.is_global
+                tag_name = ugettext('Unknown Table')
+                can_update = False
+                if action.model_detail:
+                    detail = action.wrapped_detail
+                    tag = action.wrapped_detail.tag
+                    try:
+                        fixture = fixtures.get(tag)
+                        del fixtures[tag]
+                    except KeyError:
+                        fixture = get_fixture_data_type_by_tag(self.domain, tag)
+                    tag_name = fixture.tag
+                    can_update = fixture.is_global
+                update['name'] = f'{name} ({tag_name})'
+                update['can_update'] = can_update
             if action.model == 'report':
                 report_id = action.wrapped_detail.report_id
                 try:
@@ -401,7 +406,8 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
         error = ""
         try:
             update_model_type(master_link, type_, detail_obj)
-            master_link.update_last_pull(type_, self.request.couch_user._id, model_details=detail_obj.to_json())
+            model_detail = detail_obj.to_json() if detail_obj else None
+            master_link.update_last_pull(type_, self.request.couch_user._id, model_detail=model_detail)
         except UnsupportedActionError as e:
             error = str(e)
 

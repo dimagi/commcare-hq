@@ -32,7 +32,7 @@ from corehq.apps.reports.analytics.esaccessors import (
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.util.view_utils import absolute_reverse
-from corehq.util.workbook_reading import valid_extensions, SpreadsheetFileExtError
+from corehq.util.workbook_reading import valid_extensions, SpreadsheetFileExtError, SpreadsheetFileInvalidError
 
 require_can_edit_data = require_permission(Permissions.edit_data)
 
@@ -84,7 +84,9 @@ def excel_config(request, domain):
 
     uploaded_file_handle = request.FILES['file']
     try:
-        case_upload, context = _process_file_and_get_upload(uploaded_file_handle, request, domain)
+        case_upload, context = _process_file_and_get_upload(
+            uploaded_file_handle, request, domain, max_columns=MAX_CASE_IMPORTER_COLUMNS
+        )
     except ImporterError as e:
         return render_error(request, domain, get_importer_error_message(e))
     except SpreadsheetFileExtError:
@@ -94,14 +96,14 @@ def excel_config(request, domain):
     return render(request, "case_importer/excel_config.html", context)
 
 
-def _process_file_and_get_upload(uploaded_file_handle, request, domain):
+def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_columns=None):
     extension = os.path.splitext(uploaded_file_handle.name)[1][1:].strip().lower()
 
     # NOTE: We may not always be able to reference files from subsequent
     # views if your worker changes, so we have to store it elsewhere
     # using the soil framework.
 
-    if extension not in importer_util.ALLOWED_EXTENSIONS:
+    if extension not in valid_extensions:
         raise SpreadsheetFileExtError(
             'The file you chose could not be processed. '
             'Please check that it is saved as a Microsoft '
@@ -133,7 +135,7 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain):
     if row_count == 0:
         raise ImporterError('Your spreadsheet is empty. Please try again with a different spreadsheet.')
 
-    if len(columns) > MAX_CASE_IMPORTER_COLUMNS:
+    if max_columns is not None and len(columns) > max_columns:
         raise ImporterError(
             'Your spreadsheet has too many columns. '
             'A maximum of %(max_columns)s is supported.'
@@ -284,7 +286,9 @@ def bulk_case_upload_api(request, domain, **kwargs):
         error = "Please upload file with one of the following extensions: {}".format(
             ', '.join(valid_extensions)
         )
-    return json_response({'code': 500, 'message': _(error)}, status_code=500)
+    except SpreadsheetFileInvalidError as e:
+        error = str(e)
+    return json_response({'code': 500, 'message': error}, status_code=500)
 
 
 def _bulk_case_upload_api(request, domain):

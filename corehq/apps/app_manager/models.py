@@ -16,13 +16,15 @@ from functools import wraps
 from io import BytesIO, open
 from itertools import chain
 from mimetypes import guess_type
+from urllib.parse import urljoin
+from urllib.request import urlopen
 
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.auth.hashers import make_password
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
-from django.db import models, DEFAULT_DB_ALIAS
+from django.db import DEFAULT_DB_ALIAS, models
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.safestring import SafeBytes
@@ -36,15 +38,12 @@ from couchdbkit.exceptions import BadValueError
 from jsonpath_rw import jsonpath, parse
 from lxml import etree
 from memoized import memoized
-from urllib.parse import urljoin
-from urllib.request import urlopen
 
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
     DecimalProperty,
     DictProperty,
-    Document,
     DocumentSchema,
     FloatProperty,
     IntegerProperty,
@@ -79,12 +78,12 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
     get_app,
+    get_app_languages,
     get_build_by_version,
     get_build_ids,
     get_latest_build_doc,
     get_latest_released_app_doc,
     wrap_app,
-    get_app_languages
 )
 from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
 from corehq.apps.app_manager.exceptions import (
@@ -148,7 +147,7 @@ from corehq.apps.builds.models import (
     CommCareBuildConfig,
 )
 from corehq.apps.builds.utils import get_default_build_spec
-from corehq.apps.domain.models import Domain, cached_property
+from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import (
     ApplicationMediaMixin,
     CommCareMultimedia,
@@ -1001,7 +1000,6 @@ class FormBase(DocumentSchema):
         default=None,
     )
     auto_gps_capture = BooleanProperty(default=False)
-    no_vellum = BooleanProperty(default=False)
     form_links = SchemaListProperty(FormLink)
     schedule_form_id = StringProperty()
     custom_assertions = SchemaListProperty(CustomAssertion)
@@ -1071,6 +1069,10 @@ class FormBase(DocumentSchema):
             or self.get_action_type() != 'none'
             or self.form_type == 'advanced_form'
         )
+
+    @property
+    def can_edit_in_vellum(self):
+        return self.form_type != 'shadow_form'
 
     @case_references.setter
     def case_references(self, case_references):
@@ -2044,6 +2046,17 @@ class CaseList(IndexedSchema, NavMenuItemMediaMixin):
         return self._module.get_app()
 
 
+class Itemset(DocumentSchema):
+    instance_id = StringProperty()
+    instance_uri = StringProperty()
+
+    nodeset = StringProperty()
+
+    label = StringProperty()
+    value = StringProperty()
+    sort = StringProperty()
+
+
 class CaseSearchProperty(DocumentSchema):
     """
     Case properties available to search on.
@@ -2051,6 +2064,9 @@ class CaseSearchProperty(DocumentSchema):
     name = StringProperty()
     label = DictProperty()
     appearance = StringProperty()
+    input_ = StringProperty()
+
+    itemset = SchemaProperty(Itemset)
 
 
 class DefaultCaseSearchProperty(DocumentSchema):
@@ -2292,6 +2308,26 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
     def add_insert_form(self, from_module, form, index=None, with_source=False):
         raise IncompatibleFormTypeException()
 
+    def user_deletable(self):
+        """If the user can delete this module from the navmenu
+
+        You cannot delete a shadow child menu whose parent is a shadow
+        """
+        source_module_id = getattr(self, 'source_module_id', False)
+        if not source_module_id:
+            return True
+
+        root_module_id = getattr(self, 'root_module_id', False)
+        if not root_module_id:
+            return True
+
+        app = self.get_app()
+        parent_module = app.get_module_by_unique_id(root_module_id)
+
+        if parent_module.module_type == 'shadow':
+            return False
+
+        return True
 
 class ModuleDetailsMixin(object):
 
@@ -2933,7 +2969,6 @@ class AdvancedModule(ModuleBase):
         name = name if name else _("Untitled Form")
         form = ShadowForm(
             name={lang: name},
-            no_vellum=True,
         )
         form.schedule = FormSchedule(enabled=False)
 
@@ -3237,7 +3272,7 @@ class CustomDataAutoFilter(ReportAppFilter):
 
     def get_filter_value(self, user, ui_filter):
         from corehq.apps.reports_core.filters import Choice
-        return Choice(value=user.user_data[self.custom_data_property], display=None)
+        return Choice(value=user.metadata[self.custom_data_property], display=None)
 
 
 class StaticChoiceFilter(ReportAppFilter):
@@ -3586,6 +3621,12 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     parent_select = SchemaProperty(ParentSelect)
     search_config = SchemaProperty(CaseSearch)
 
+    # Current allowed versions are '1' and '2'. version 1 had incorrect child
+    # module behaviour, which was fixed for version 2. Apps in the wild were
+    # depending on the old behaviour, so the new behaviour is applicable only
+    # for new modules / apps.
+    shadow_module_version = IntegerProperty(default=1)
+
     get_forms = IndexedSchema.Getter('forms')
 
     @classmethod
@@ -3614,11 +3655,23 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
             return 'none'
         return self.source_module.requires
 
+    _root_module_id = ModuleBase.root_module_id
+
     @property
     def root_module_id(self):
-        if not self.source_module:
-            return None
-        return self.source_module.root_module_id
+        if self.shadow_module_version == 1:
+            if not self.source_module:
+                return None
+            return self.source_module.root_module_id
+
+        return self._root_module_id
+
+    @root_module_id.setter
+    def root_module_id(self, value):
+        if self.shadow_module_version == 1:
+            raise AttributeError("Can't set root_module_id on modules with shadow_module_version = 1")
+        else:
+            self._root_module_id = value
 
     def get_suite_forms(self):
         if not self.source_module:
@@ -3652,7 +3705,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         return self.source_module.all_forms_require_a_case()
 
     @classmethod
-    def new_module(cls, name, lang):
+    def new_module(cls, name, lang, shadow_module_version=2):
         lang = lang or 'en'
         detail = Detail(
             columns=[DetailColumn(
@@ -3668,6 +3721,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
                 short=Detail(detail.to_json()),
                 long=Detail(detail.to_json()),
             ),
+            shadow_module_version=shadow_module_version,
         )
         module.get_or_create_unique_id()
         return module
@@ -4801,7 +4855,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
 
     @time_method()
     def create_profile(self, is_odk=False, with_media=False,
-                       template='app_manager/profile.xml', build_profile_id=None, commcare_flavor=None):
+                       build_profile_id=None, commcare_flavor=None):
         self__profile = self.profile
         app_profile = defaultdict(dict)
 
@@ -4859,7 +4913,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
             TARGET_COMMCARE: 'org.commcare.dalvik',
             TARGET_COMMCARE_LTS: 'org.commcare.lts',
         }.get(commcare_flavor)
-        return render_to_string(template, {
+        return render_to_string('app_manager/profile.xml', {
             'is_odk': is_odk,
             'app': self,
             'profile_url': profile_url,
@@ -4873,6 +4927,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
             'locale': locale,
             'apk_heartbeat_url': apk_heartbeat_url,
             'target_package_id': target_package_id,
+            'support_email': settings.SUPPORT_EMAIL if not settings.IS_DIMAGI_ENVIRONMENT else None,
         }).encode('utf-8')
 
     @property
@@ -5787,7 +5842,6 @@ class GlobalAppConfig(models.Model):
             self._app = app
         return self._app
 
-    @quickcache(['self.app_id'])
     def get_latest_apk_version(self):
         self.app  # noqa validate app
         if self.apk_prompt == "off":
@@ -5801,7 +5855,6 @@ class GlobalAppConfig(models.Model):
             force = self.apk_prompt == "forced"
             return {"value": value, "force": force}
 
-    @quickcache(['self.app_id', 'build_profile_id'])
     def get_latest_app_version(self, build_profile_id):
         self.app  # noqa validate app
         if self.app_prompt == "off":
@@ -5822,12 +5875,21 @@ class GlobalAppConfig(models.Model):
                             version = latest.version
                     return {"value": version, "force": force}
 
+    @classmethod
+    @quickcache(['domain', 'app_id', 'build_profile_id'])
+    def get_latest_version_info(cls, domain, app_id, build_profile_id):
+        config = GlobalAppConfig.by_app_id(domain, app_id)
+        return {
+            "latest_apk_version": config.get_latest_apk_version(),
+            "latest_ccz_version": config.get_latest_app_version(build_profile_id),
+        }
+
     def clear_version_caches(self):
-        build_profile_ids = self.app.build_profiles.keys()
-        self.get_latest_app_version.clear(self, '')
-        self.get_latest_apk_version.clear(self)
+        build_profile_ids = [''] + list(self.app.build_profiles.keys())
         for build_profile_id in build_profile_ids:
-            self.get_latest_app_version.clear(self, build_profile_id)
+            GlobalAppConfig.get_latest_version_info.clear(
+                GlobalAppConfig, self.domain, self.app_id, build_profile_id
+            )
 
 
 class AppReleaseByLocation(models.Model):

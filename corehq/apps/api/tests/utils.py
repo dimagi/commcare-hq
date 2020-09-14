@@ -18,9 +18,9 @@ from corehq.apps.users.models import HQApiKey, WebUser
 from corehq.util.test_utils import PatchMeta, flag_enabled
 
 
-class FakeXFormES(object):
+class FakeFormESView(object):
     """
-    A mock of XFormES that will return the docs that have been
+    A mock of FormESView that will return the docs that have been
     added regardless of the query.
     """
 
@@ -45,6 +45,9 @@ class FakeXFormES(object):
                 'hits': [{'_source': doc} for doc in list(self.docs.values())[start:end]]
             }
         }
+
+    def count_query(self, query):
+        return len(self.docs)
 
     def get_document(self, doc_id):
         try:
@@ -77,7 +80,8 @@ class APIResourceTest(TestCase, metaclass=PatchMeta):
         cls.list_endpoint = cls._get_list_endpoint()
         cls.username = 'rudolph@qwerty.commcarehq.org'
         cls.password = '***'
-        cls.user = WebUser.create(cls.domain.name, cls.username, cls.password, None, None)
+        cls.user = WebUser.create(cls.domain.name, cls.username, cls.password, None, None,
+                                  email='rudoph@example.com', first_name='rudolph', last_name='commcare')
         cls.user.set_role(cls.domain.name, 'admin')
         cls.user.save()
 
@@ -99,7 +103,7 @@ class APIResourceTest(TestCase, metaclass=PatchMeta):
     @classmethod
     def tearDownClass(cls):
         cls.api_key.delete()
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
 
         for domain in Domain.get_all():
             Subscription._get_active_subscription_by_domain.clear(Subscription, domain.name)

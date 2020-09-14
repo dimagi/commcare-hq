@@ -18,9 +18,33 @@ Logic in `hqModules.js` determines whether or not we're in a RequireJS environme
 
 These docs walk through the process of migrating a single page to RequireJS.
 
+#### Note on editing unmigrated javascript
+
+You can tell whether or not a JavaScript module is compatible with RequireJS by looking at its `hqDefine` call.
+
+RequireJS modules look like this, with all dependencies loaded as part of `hqDefine`:
+
+```
+hqDefine("my_app/js/my_file", ["knockout", "hqwebapp/js/initial_page_data"], function (ko, initialPageData) {
+    var myObservable = ko.observable(initialPageData.get("thing"));
+    ...
+});
+```
+
+Non-RequireJS modules look like this, with no list and no function parameters. HQ modules are loaded using `hqImport` in the body, and third party libraries aren't declared at all, instead relying on globals:
+
+```
+hqDefine("my_app/js/my_file", function () {
+    var myObservable = ko.observable(hqImport("hqwebapp/js/initial_page_data").get("thing"));
+    ...
+});
+```
+
+If you're working in a non-RequireJS js file, **do not** add that list and parameters unless you are intending to migrate the module. It's easy to introduce bugs that won't be visible until the module is used on a RequireJS page, and modules are harder to migrate when they have pre-existing bugs. See "troubleshooting" below if you're curious about the kinds of issues that crop up.
+
 ### Basic Migration Process
 
-Prerequisites: Before a page can be migrated, **all** of its dependencies must already be in external JavaScript files and must be using `hqDefine`. See above for details on moving inline script blocks to files, and see [module patterns](https://github.com/dimagi/js-guide/blob/master/code-organization.md#module-patterns) for details on `hqDefine`. Also, pages that are not descendants of [hqwebapp/base.html](https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/hqwebapp/templates/hqwebapp/base.html) cannot yet be migrated.
+Prerequisites: Before a page can be migrated, **all** of its dependencies must already be in external JavaScript files and must be using `hqDefine`. See above for details on moving inline script blocks to files, and see [module patterns](https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/code-organization.md#module-patterns) for details on `hqDefine`. Also, pages that are not descendants of [hqwebapp/base.html](https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/hqwebapp/templates/hqwebapp/base.html) cannot yet be migrated.
 
 Once these conditions are met, migrating to RequireJS is essentially the process of explicitly adding each module's dependencies to the module's definition, and also updating each HTML page to reference a single "main" module rather than including a bunch of `<script>` tags:
 1. Add `requirejs_main` tag and remove `<script>` tags
@@ -131,7 +155,7 @@ Tactics that can help track down problems with the RequireJS build process, whic
 
 ## Moving away from classical inheritance
 
-See [our approach to inheritance](https://github.com/dimagi/js-guide/blob/master/code-organization.md#inheritance). Most of our classical-style inheritance is a format than can be fairly mechanically changed to be functional:
+See [our approach to inheritance](https://github.com/dimagi/commcare-hq/blob/master/docs/js-guide/code-organization.md#inheritance). Most of our classical-style inheritance is a format than can be fairly mechanically changed to be functional:
 - In the class definition, make sure the instance is initialized to an empty object instead of `this`. There's usually a `var self = this;` line that should be switched to `var self = {};`
 - Throughout the class definition, make sure the code is consistently using `self` instead of `this`
 - Make sure the class definition returns `self` at the end (typically it won't return anything)

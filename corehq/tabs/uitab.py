@@ -1,11 +1,14 @@
+from collections import defaultdict
+
 from django.conf import settings
 from django.core.cache import cache
 from django.urls import reverse, resolve, Resolver404
 from django.utils.translation import get_language
 
 from corehq.apps.domain.models import Domain
+from corehq.tabs import extension_points
 from corehq.tabs.exceptions import UrlPrefixFormatError, UrlPrefixFormatsSuggestion
-from corehq.tabs.utils import sidebar_to_dropdown
+from corehq.tabs.utils import sidebar_to_dropdown, dropdown_dict
 from memoized import memoized
 from dimagi.utils.django.cache import make_template_fragment_key
 from dimagi.utils.web import get_url_base
@@ -25,8 +28,6 @@ def url_is_location_safe(url):
 class UITab(object):
     title = None
     view = None
-
-    dispatcher = None
 
     # Tuple of prefixes that this UITab claims e.g.
     #   ('/a/{domain}/reports/', '/a/{domain}/otherthing/')
@@ -67,6 +68,10 @@ class UITab(object):
                         .format(self.__class__.__name__, url_prefix_formats))
 
     @property
+    def divider(self):
+        return dropdown_dict(None, is_divider=True)
+
+    @property
     def project(self):
         if not self._project and self.domain:
             self._project = Domain.get_by_name(self.domain)
@@ -88,31 +93,51 @@ class UITab(object):
 
     @property
     def filtered_dropdown_items(self):
+        items = self.dropdown_items
+        tab_name = self.__class__.__name__
+        items.extend([
+            dropdown_dict(**item)
+            for item in extension_points.uitab_dropdown_items(
+                tab_name, self, domain=self.domain, request=self._request
+            )
+        ])
+
         if self.can_access_all_locations:
-            return self.dropdown_items
+            return items
 
         filtered = []
-        for item in self.dropdown_items:
+        for item in items:
             if url_is_location_safe(item['url']):
                 filtered.append(item)
         return filtered
 
     @property
-    @memoized
     def sidebar_items(self):
-        if self.dispatcher:
-            return self.dispatcher.navigation_sections(request=self._request, domain=self.domain)
-        else:
-            return []
+        return []
 
     @property
     @memoized
     def filtered_sidebar_items(self):
+        items = self.sidebar_items
+        tab_name = self.__class__.__name__
+        items.extend(extension_points.uitab_sidebar_items(
+            tab_name=tab_name, tab=self, domain=self.domain, request=self._request
+        ))
+        grouped = defaultdict(list)
+        headings_order = []
+        for heading, pages in items:
+            if heading not in headings_order:
+                headings_order.append(heading)
+            grouped[heading].extend(pages)
+        items = [
+            (heading, grouped[heading]) for heading in headings_order
+        ]
+
         if self.can_access_all_locations:
-            return self.sidebar_items
+            return items
 
         filtered = []
-        for heading, pages in self.sidebar_items:
+        for heading, pages in items:
             safe_pages = [p for p in pages if url_is_location_safe(p['url'])]
             if safe_pages:
                 filtered.append((heading, safe_pages))

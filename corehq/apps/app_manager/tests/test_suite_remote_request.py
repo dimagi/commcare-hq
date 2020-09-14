@@ -10,6 +10,7 @@ from corehq.apps.app_manager.models import (
     CaseSearchProperty,
     DefaultCaseSearchProperty,
     DetailColumn,
+    Itemset,
     Module,
 )
 from corehq.apps.app_manager.tests.util import (
@@ -200,3 +201,43 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         </partial>
         """
         self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+    def test_prompt_itemset(self):
+        self.module.search_config.properties[0].input_ = 'select1'
+        self.module.search_config.properties[0].itemset = Itemset(
+            instance_id='states',
+            instance_uri="jr://fixture/item-list:states",
+            nodeset="instance('states')/state_list/state[@state_name = 'Uttar Pradesh']",
+            label='name',
+            value='id',
+            sort='id',
+        )
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name" input="select1">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+            <itemset nodeset="instance('states')/state_list/state[@state_name = 'Uttar Pradesh']">
+              <label ref="name"/>
+              <value ref="id"/>
+              <sort ref="id"/>
+            </itemset>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+        expected_instance = """
+        <partial>
+          <instance id="states" src="jr://fixture/item-list:states"/>
+        </partial>
+        """
+        self.assertXmlPartialEqual(
+            expected_instance,
+            suite,
+            "./remote-request[1]/instance[@id='states']",
+        )

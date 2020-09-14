@@ -1,6 +1,5 @@
 from corehq.apps.users.models import CouchUser
 from dimagi.utils.logging import notify_exception
-from pact.utils import get_case_id
 from couchforms.signals import successful_form_received
 import traceback
 
@@ -10,6 +9,7 @@ BLOCKING = True
 
 def process_dots_submission(sender, xform, **kwargs):
     from pact.tasks import recalculate_dots_data, eval_dots_block
+    from pact.utils import get_case_id
     try:
         if xform.xmlns != "http://dev.commcarehq.org/pact/dots_form":
             return

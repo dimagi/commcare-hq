@@ -335,9 +335,9 @@ class OpenSubCaseActionTests(SimpleTestCase):
         with self.assertRaises(BadValueError):
             OpenSubCaseAction(case_type='mother', case_name='Eva', relationship='host')
         with self.assertRaises(BadValueError):
-            OpenSubCaseAction(case_type='mother', case_name='Eva', relationship='master')
+            OpenSubCaseAction(case_type='mother', case_name='Eva', relationship='primary')
         with self.assertRaises(BadValueError):
-            OpenSubCaseAction(case_type='mother', case_name='Eva', relationship='slave')
+            OpenSubCaseAction(case_type='mother', case_name='Eva', relationship='replica')
         with self.assertRaises(BadValueError):
             OpenSubCaseAction(case_type='mother', case_name='Eva', relationship='cousin')
 
@@ -370,9 +370,9 @@ class CaseIndexTests(SimpleTestCase):
         with self.assertRaises(BadValueError):
             CaseIndex(tag='mother', relationship='host')
         with self.assertRaises(BadValueError):
-            CaseIndex(tag='mother', relationship='master')
+            CaseIndex(tag='mother', relationship='primary')
         with self.assertRaises(BadValueError):
-            CaseIndex(tag='mother', relationship='slave')
+            CaseIndex(tag='mother', relationship='replica')
         with self.assertRaises(BadValueError):
             CaseIndex(tag='mother', relationship='cousin')
 

@@ -44,7 +44,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import user_exists
 from corehq.apps.users.models import DomainMembershipError, UserRole
 from corehq.apps.users.util import cc_user_domain, format_username
 from corehq.toggles import TWO_STAGE_USER_PROVISIONING
-from custom.icds.view_utils import is_icds_cas_project
+from custom.icds_core.view_utils import is_icds_cas_project
 from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 
 mark_safe_lazy = lazy(mark_safe, str)
@@ -1211,8 +1211,9 @@ class CommCareUserFormSet(object):
         return CustomDataEditor(
             domain=self.domain,
             field_view=UserFieldsView,
-            existing_custom_data=self.editable_user.user_data,
+            existing_custom_data=self.editable_user.metadata,
             post_dict=self.data,
+            ko_model="custom_fields",
         )
 
     def is_valid(self):
@@ -1220,7 +1221,7 @@ class CommCareUserFormSet(object):
                 and all([self.user_form.is_valid(), self.custom_data.is_valid()]))
 
     def update_user(self):
-        self.user_form.existing_user.user_data = self.custom_data.get_data_to_save()
+        self.user_form.existing_user.update_metadata(self.custom_data.get_data_to_save())
         return self.user_form.update_user()
 
 

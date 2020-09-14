@@ -5,7 +5,7 @@ requirejs.config({
         "jquery": "jquery/dist/jquery.min",
         "underscore": "underscore/underscore",
         "bootstrap": "bootstrap/dist/js/bootstrap.min",
-        "knockout": "knockout/dist/knockout.debug",
+        "knockout": "knockout/build/output/knockout-latest.debug",
         "ko.mapping": "hqwebapp/js/lib/knockout_plugins/knockout_mapping.ko.min",
         "datatables": "datatables/media/js/jquery.dataTables.min",
         "datatables.fixedColumns": "datatables-fixedcolumns/js/dataTables.fixedColumns",

@@ -25,7 +25,7 @@ class PasswordResetTest(TestCase):
     def test_web_user_lookup(self):
         email = 'web-user@example.com'
         web_user = WebUser.create(self.domain, email, 's3cr3t', None, None)
-        self.addCleanup(web_user.delete)
+        self.addCleanup(web_user.delete, deleted_by=None)
         results = list(get_active_users_by_email(email))
         self.assertEqual(1, len(results))
         self.assertEqual(web_user.username, results[0].username)
@@ -33,13 +33,13 @@ class PasswordResetTest(TestCase):
     def test_web_user_by_email(self):
         email = 'web-user-email@example.com'
         web_user = WebUser.create(self.domain, 'web-user2@example.com', 's3cr3t', None, None, email=email)
-        self.addCleanup(web_user.delete)
+        self.addCleanup(web_user.delete, deleted_by=None)
         self.assertEqual(0, len(list(get_active_users_by_email(email))))
 
     def test_mobile_worker_excluded(self):
         email = 'mw-excluded@example.com'
         mobile_worker = CommCareUser.create(self.domain, 'mw-excluded', 's3cr3t', None, None, email=email)
-        self.addCleanup(mobile_worker.delete)
+        self.addCleanup(mobile_worker.delete, deleted_by=None)
         results = list(get_active_users_by_email(email))
         self.assertEqual(0, len(results))
 
@@ -47,7 +47,7 @@ class PasswordResetTest(TestCase):
     def test_mobile_worker_included_with_flag(self):
         email = 'mw-included@example.com'
         mobile_worker = CommCareUser.create(self.domain, 'mw-included', 's3cr3t', None, None, email=email)
-        self.addCleanup(mobile_worker.delete)
+        self.addCleanup(mobile_worker.delete, deleted_by=None)
         results = list(get_active_users_by_email(email))
         self.assertEqual(1, len(results))
         self.assertEqual(mobile_worker.username, results[0].username)

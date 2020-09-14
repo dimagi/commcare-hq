@@ -12,6 +12,7 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.sql_db.connections import UCR_ENGINE_ID, connection_manager
 from corehq.util.test_utils import require_db_context
+from custom.up_nrhm.sql_data import DOMAIN
 
 
 @require_db_context
@@ -21,7 +22,7 @@ def setUpModule():
     )
     _call_center_domain_mock.start()
 
-    domain = create_domain('up-nrhm')
+    domain = create_domain(DOMAIN)
 
     with override_settings(SERVER_ENVIRONMENT='production'):
 
@@ -48,7 +49,7 @@ def tearDownModule():
     _call_center_domain_mock = mock.patch(
         'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
     )
-    domain = Domain.get_by_name('up-nrhm')
+    domain = Domain.get_by_name(DOMAIN)
     engine = connection_manager.get_engine(UCR_ENGINE_ID)
     metadata = sqlalchemy.MetaData(bind=engine)
     metadata.reflect(bind=engine, extend_existing=True)

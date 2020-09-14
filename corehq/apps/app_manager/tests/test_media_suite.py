@@ -108,14 +108,6 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         self.assertTrue(app.get_module(0).uses_media())
         self.assertEqual(app.all_media_paths(), set([inline_video_path]))
 
-    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
-    def test_all_media_paths_with_expanded_audio(self, mock):
-        inline_video_path = 'jr://file/commcare/expanded-audio/data/expanded_audio.mp3'
-        app = Application.wrap(self.get_json('app_expanded_audio'))
-
-        self.assertTrue(app.get_module(0).uses_media())
-        self.assertEqual(app.all_media_paths(), set([inline_video_path]))
-
     @override_settings(BASE_ADDRESS='192.cc.hq.1')
     @patch('corehq.apps.app_manager.models.ApplicationBase.get_latest_build', lambda _: None)
     def test_case_list_media(self):

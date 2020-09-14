@@ -7,7 +7,7 @@ describe('Entries', function () {
 
 
     beforeEach(function () {
-        window.GMAPS_API_KEY = 'xxx';
+        window.MAPBOX_ACCESS_TOKEN = 'xxx';
         questionJSON = {
             "caption_audio": null,
             "caption": "Do you want to modify the visit number?",
@@ -291,6 +291,14 @@ describe('Entries', function () {
 
         entry.rawAnswer('');
         assert.equal(entry.answer(), Formplayer.Const.NO_ANSWER);
+    });
+
+    it('Should return a AddressEntry', function () {
+        questionJSON.datatype = Formplayer.Const.STRING;
+        questionJSON.style = { raw: Formplayer.Const.ADDRESS };
+
+        entry = (new Question(questionJSON)).entry;
+        assert.isTrue(entry instanceof AddressEntry);
     });
 
     it('Should allow decimals in a PhoneEntry', function () {

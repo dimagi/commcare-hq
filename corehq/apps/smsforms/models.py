@@ -11,6 +11,7 @@ from django.utils.translation import ugettext_noop
 from couchdbkit import MultipleResultsFound
 
 from corehq import toggles
+from corehq.apps.formplayer_api.smsforms.api import TouchformsError
 from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.sms.util import strip_plus
@@ -105,19 +106,21 @@ class SQLXFormsSession(models.Model):
     def _id(self):
         return self.couch_id
 
-    def close(self):
+    def close(self, force=True):
         from corehq.apps.smsforms.app import submit_unfinished_form
 
         if not self.session_is_open:
             return
 
-        try:
-            if self.submit_partially_completed_forms:
+        if self.submit_partially_completed_forms:
+            try:
                 submit_unfinished_form(self)
-        finally:
-            # this needs to be called after the submission, but regardless of whether it succeeded
-            # thus the try/finally
-            self.mark_completed(False)
+            except TouchformsError as e:
+                if not force:
+                    # Allow caller to handle and potentially retry
+                    raise e
+
+        self.mark_completed(False)
 
     def mark_completed(self, completed):
         self.session_is_open = False
@@ -296,7 +299,7 @@ class XFormsSessionSynchronization:
         """
         channel = session.get_channel()
         with cls._critical_section(channel):
-            if cls.channel_is_available_for_session(session):
+            if cls._channel_is_available_for_session(session):
                 cls._set_running_session_info_for_channel(
                     channel,
                     RunningSessionInfo(session.session_id, session.connection_id),
@@ -321,8 +324,18 @@ class XFormsSessionSynchronization:
         a subsequent call to claim_channel_for_session could still return False
         i.e. if another session claims it first.
         """
-        running_session_info = cls.get_running_session_info_for_channel(session.get_channel())
-        return not running_session_info.session_id or running_session_info.session_id == session.session_id
+        with cls._critical_section(session.get_channel()):
+            return cls._channel_is_available_for_session(session)
+
+    @classmethod
+    def _channel_is_available_for_session(cls, session):
+        channel = session.get_channel()
+        running_session_info = cls.get_running_session_info_for_channel(channel)
+        return (
+            not running_session_info.session_id
+            or cls._clear_stale_channel_claim(channel)
+            or running_session_info.session_id == session.session_id
+        )
 
     @classmethod
     def release_channel_for_session(cls, session):
@@ -335,28 +348,22 @@ class XFormsSessionSynchronization:
         channel = session.get_channel()
         with cls._critical_section(channel):
             running_session_info = cls.get_running_session_info_for_channel(channel)
-            if cls.channel_is_available_for_session(session):
-                # Drop the session_id but keep the contact_id
-                # This will let incoming SMS keep affinity with that contact_id until a new session starts
-                running_session_info = running_session_info._replace(session_id=None)
-                cls._set_running_session_info_for_channel(
-                    channel, running_session_info,
-                    # Keep affinity for 30 days
-                    30 * 24 * 60 * 60
-                )
+            if cls._channel_is_available_for_session(session):
+                cls._release_running_session_info_for_channel(running_session_info, channel)
 
     @classmethod
     def clear_stale_channel_claim(cls, channel):
         with cls._critical_section(channel):
-            running_session_info = cls.get_running_session_info_for_channel(channel)
-            if running_session_info.session_id:
-                session = SQLXFormsSession.by_session_id(running_session_info.session_id)
-                if not (session and session.session_is_open):
-                    # Just clear it so there's a fresh start
-                    # This is an unusual circumstance that can only arise as an edge case or malfunction
-                    # but is an important escape hatch
-                    cls._delete_running_session_info_for_channel(channel)
-                    return True
+            return cls._clear_stale_channel_claim(channel)
+
+    @classmethod
+    def _clear_stale_channel_claim(cls, channel):
+        running_session_info = cls.get_running_session_info_for_channel(channel)
+        if running_session_info.session_id:
+            session = SQLXFormsSession.by_session_id(running_session_info.session_id)
+            if not (session and session.session_is_open):
+                cls._release_running_session_info_for_channel(running_session_info, channel)
+                return True
         return False
 
     @classmethod
@@ -373,9 +380,15 @@ class XFormsSessionSynchronization:
         cache.set(key, running_session_info, expiry)
 
     @classmethod
-    def _delete_running_session_info_for_channel(cls, channel):
-        key = cls._channel_affinity_cache_key(channel)
-        cache.delete(key)
+    def _release_running_session_info_for_channel(cls, running_session_info, channel):
+        # Drop the session_id but keep the contact_id
+        # This will let incoming SMS keep affinity with that contact_id until a new session starts
+        running_session_info = running_session_info._replace(session_id=None)
+        cls._set_running_session_info_for_channel(
+            channel, running_session_info,
+            # Keep affinity for 30 days
+            30 * 24 * 60 * 60
+        )
 
     @staticmethod
     def _channel_affinity_cache_key(channel):

@@ -40,7 +40,7 @@ from .exceptions import (
 )
 from .xpath import CaseIDXPath, QualifiedScheduleFormXPath, session_var
 
-VALID_VALUE_FORMS = ('image', 'audio', 'video', 'video-inline', 'expanded-audio', 'markdown')
+VALID_VALUE_FORMS = ('image', 'audio', 'video', 'video-inline', 'markdown')
 
 
 def parse_xml(string):
@@ -690,7 +690,7 @@ class XForm(WrappedNode):
         return self.media_references("image", lang=lang)
 
     def audio_references(self, lang=None):
-        return self.media_references("audio", lang=lang) + self.media_references("expanded-audio", lang=lang)
+        return self.media_references("audio", lang=lang)
 
     def video_references(self, lang=None):
         return self.media_references("video", lang=lang) + self.media_references("video-inline", lang=lang)

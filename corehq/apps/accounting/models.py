@@ -154,6 +154,11 @@ class SoftwarePlanEdition(object):
         PRO,
         ADVANCED,
     ]
+    SELF_RENEWABLE_EDITIONS = [
+        ADVANCED,
+        PRO,
+        STANDARD,
+    ]
 
 
 class SoftwarePlanVisibility(object):

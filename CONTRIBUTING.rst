@@ -9,7 +9,7 @@ Code Contributions
 Dimagi tracks most issues internally, but we use github's `issue tracker`_
 for public facing issues.  Feel free to browse the issues there and tackle
 any you feel equipped to do.  When you update or add comments to an issue
-please mention **@dimagiupdate** to send an alert to our internal issue
+please mention **@dimagi/dimagi-dev** to send an alert to our internal issue
 tracking system.  
 
 Please keep in mind that we hold the standard of quality in contributions
@@ -20,6 +20,13 @@ in a Github issue are much more likely to be reviewed for inclusion.
 Before submitting a PR, review our `Guide to Authoring Pull Requests`_.  
 You may also be interested in the `Developers category`_ of the `CommCare Forum`_ 
 if you have questions or need feedback.
+
+CommCare Enhancement Proposals
+------------------------------
+For larger changes or new features we encourage the use of the `CommCare Enhancement Proposal`_
+process which gives the team a chance to give feedback on ideas before the code work begins.
+
+.. _CommCare Enhancement Proposal: https://commcare-hq.readthedocs.io/cep.html
 
 Bug Reports
 -----------
@@ -65,11 +72,15 @@ to see how that works.
 
 Updating requirements
 ---------------------
-To update requirements edit
-``requirements/requirements.in`` for packages for all environments
-``requirements/prod-requirements.in`` for packages for production environments only
-``requirements/test-requirements.in`` for packages for test environment only
-``requirements/dev-requirements.in`` for packages for dev environment only
+To update requirements edit:
+
+* ``requirements/requirements.in`` for packages for all environments
+
+* ``requirements/prod-requirements.in`` for packages for production environments only
+
+* ``requirements/test-requirements.in`` for packages for test environment only
+
+* ``requirements/dev-requirements.in`` for packages for dev environment only
 
 and run ``make requirements``.
 

@@ -36,7 +36,7 @@ class ReadableQuestionsAPITest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
         cls.project.delete()
         super(ReadableQuestionsAPITest, cls).tearDownClass()
 

@@ -78,15 +78,16 @@ hqDefine('userreports/js/builder_view_models', function () {
             return !self.displayTextIsValid() && (self.displayTextModifiedByUser() || self.showWarnings());
         });
 
+        var constants = hqImport('userreports/js/constants');
+
         // The format of the filter. This field is not used if the
         // PropertyListItem is representing columns
 
         self.format = ko.observable("");
         self.acceptsFormatValue = ko.computed(function () {
-            return self.format() !== "Is Empty" && self.format() !== "Exists";
+            return !constants.DEFAULT_FILTER_VALUELESS_FORMATS.includes(self.format());
         });
 
-        var constants = hqImport('userreports/js/constants');
         self.calculationOptions = ko.pureComputed(function () {
             var propObject = self.getPropertyObject(self.property());
             if (propObject) {
@@ -137,6 +138,10 @@ hqDefine('userreports/js/builder_view_models', function () {
         self.showWarnings = ko.observable(false);
         self.isValid = ko.computed(function () {
             return Boolean(self.property() && self.existsInCurrentVersion() && self.displayTextIsValid());
+        });
+
+        self.hasFilterValueWarning = ko.computed(function () {
+            return self.acceptsFormatValue() && !(self.filterValue() || self.filterOperator());
         });
 
         /**

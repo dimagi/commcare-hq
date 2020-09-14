@@ -15,7 +15,7 @@ from dimagi.utils.web import get_ip
 
 from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
 from corehq.apps.users.models import CouchUser, HQApiKey
-from corehq.toggles import TWO_STAGE_USER_PROVISIONING
+from corehq.toggles import API_THROTTLE_WHITELIST, TWO_STAGE_USER_PROVISIONING
 from corehq.util.hmac_request import validate_request_hmac
 from no_exceptions.exceptions import Http400
 from python_digest import parse_digest_credentials
@@ -27,6 +27,7 @@ BASIC = 'basic'
 DIGEST = 'digest'
 NOAUTH = 'noauth'
 API_KEY = 'api_key'
+OAUTH2 = 'oauth2'
 FORMPLAYER = 'formplayer'
 
 
@@ -64,6 +65,8 @@ def determine_authtype_from_header(request, default=DIGEST):
     elif auth_header.startswith('digest '):
         # Note: this will not identify initial, uncredentialed digest requests
         return DIGEST
+    elif auth_header.startswith('bearer '):
+        return OAUTH2
     elif _is_api_key_authentication(request):
         return API_KEY
 
@@ -270,7 +273,7 @@ class HQApiKeyAuthentication(ApiKeyAuthentication):
             return self._unauthorized()
 
         request.user = user
-
+        request.api_key = key
         return True
 
     def get_identifier(self, request):
@@ -280,8 +283,12 @@ class HQApiKeyAuthentication(ApiKeyAuthentication):
         are domain specific.
 
         """
+        username = self.extract_credentials(request)[0]
+        if API_THROTTLE_WHITELIST.enabled(username):
+            return username
+
         try:
             api_key = self.extract_credentials(request)[1]
         except ValueError:
             api_key = ''
-        return f"{request.domain}_{api_key}"
+        return f"{getattr(request, 'domain', '')}_{api_key}"

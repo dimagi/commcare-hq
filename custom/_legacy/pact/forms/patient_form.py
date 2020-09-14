@@ -3,7 +3,7 @@ from django import forms
 #from the models, we have this, (couchmodels.py)
 #flipping to tuple
 from django.forms import Form
-from corehq.apps.api.es import ReportCaseES
+from corehq.apps.api.es import ReportCaseESView
 from dimagi.utils.parsing import json_format_date
 from pact.enums import PACT_HP_CHOICES, PACT_DOT_CHOICES, PACT_REGIMEN_CHOICES, GENDER_CHOICES, PACT_RACE_CHOICES, PACT_HIV_CLINIC_CHOICES, PACT_LANGUAGE_CHOICES, CASE_NONART_REGIMEN_PROP, CASE_ART_REGIMEN_PROP, DOT_ART, DOT_NONART
 from django.forms import widgets
@@ -48,7 +48,7 @@ class PactPatientForm(Form):
         super().__init__(*args, **kwargs)
         self.casedoc = casedoc
         self.fields['hp'].choices = get_hp_choices()
-        self.case_es = ReportCaseES(request.domain)
+        self.case_es = ReportCaseESView(request.domain)
         for name, field in self.fields.items():
             if name == CASE_ART_REGIMEN_PROP:
                 #these really should be a widget of some type

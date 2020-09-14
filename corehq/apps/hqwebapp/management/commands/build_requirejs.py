@@ -4,6 +4,7 @@ import os
 import re
 import subprocess
 from collections import defaultdict
+from uuid import uuid4
 from shutil import copyfile
 from subprocess import call
 
@@ -72,6 +73,9 @@ class Command(ResourceStaticCommand):
             # TODO: it'd be a performance improvement to do this after the `open` below
             # and pass in the file contents, since get_hash does another read.
             file_hash = self.get_hash(filename)
+
+            if module['name'] == "users/js/bundle":
+                file_hash = uuid4().hex
 
             # Overwrite source map reference. Source maps are accessed on the CDN,
             # so they need to have the version hash appended.
@@ -143,7 +147,7 @@ def _r_js(local=False, no_optimize=False):
 
     _save_r_js_config(config)
 
-    ret = call(["node", "bower_components/r.js/dist/r.js", "-o", BUILD_JS_FILENAME])
+    ret = call(["node", "node_modules/requirejs/bin/r.js", "-o", BUILD_JS_FILENAME])
     if ret:
         exit(1)
 

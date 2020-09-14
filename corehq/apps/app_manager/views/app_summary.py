@@ -367,7 +367,7 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
         headers = [(_('All Forms'),
                     ('module_name', 'form_name', 'comment', 'module_display_condition', 'form_display_condition'))]
         headers += [
-            (self._get_form_sheet_name(module, form, language), tuple(FORM_SUMMARY_EXPORT_HEADER_NAMES))
+            (self._get_form_sheet_name(form, language), tuple(FORM_SUMMARY_EXPORT_HEADER_NAMES))
             for module in modules for form in module.get_forms()
         ]
         data = list((
@@ -375,7 +375,7 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
             self.get_all_forms_row(module, form, language)
         ) for module in modules for form in module.get_forms())
         data += list(
-            (self._get_form_sheet_name(module, form, language), self._get_form_row(form, language, case_meta))
+            (self._get_form_sheet_name(form, language), self._get_form_row(form, language, case_meta))
             for module in modules for form in module.get_forms()
         )
         export_string = io.BytesIO()
@@ -429,11 +429,9 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
             )
         return tuple(form_summary_rows)
 
-    def _get_form_sheet_name(self, module, form, language):
-        return "{} - {}".format(
-            _get_translated_module_name(self.app, module.unique_id, language),
-            _get_translated_form_name(self.app, form.get_unique_id(), language),
-        )
+    def _get_form_sheet_name(self, form, language):
+        return _get_translated_form_name(self.app, form.get_unique_id(), language)
+
 
     def get_all_forms_row(self, module, form, language):
         return ((

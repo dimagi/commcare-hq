@@ -277,8 +277,8 @@ class OwnerTests(LocationHierarchyTestCase):
     def tearDownClass(cls):
         cls.bad_group.delete()
         cls.group.delete()
-        cls.mobile_worker.delete()
-        cls.web_user.delete()
+        cls.mobile_worker.delete(deleted_by=None)
+        cls.web_user.delete(deleted_by=None)
         super().tearDownClass()
 
     def test_location_owner(self):
@@ -396,7 +396,7 @@ class OpenmrsAtomFeedsTests(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.repeater.delete()
-        cls.user.delete()
+        cls.user.delete(deleted_by=None)
         cls.location.delete()
         cls.location_type.delete()
         cls.domain.delete()

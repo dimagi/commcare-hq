@@ -20,7 +20,7 @@ SQLAlchemy. Here's an example usage:
          .xmlns(self.xmlns)
          .submitted(gte=self.datespan.startdate_param,
                     lt=self.datespan.enddateparam)
-         .fields(['xmlns', 'domain', 'app_id'])
+         .source(['xmlns', 'domain', 'app_id'])
          .sort('received_on', desc=False)
          .size(self.pagination.count)
          .start(self.pagination.start)
@@ -100,6 +100,7 @@ Language
 import json
 from collections import namedtuple
 from copy import deepcopy
+from django.conf import settings
 
 from memoized import memoized
 
@@ -111,6 +112,7 @@ from corehq.elastic import (
     ESError,
     ScanResult,
     run_query,
+    count_query,
     scroll_query,
 )
 
@@ -121,10 +123,9 @@ from .utils import flatten_field_dict, values_list
 class ESQuery(object):
     """
     This query builder only outputs the following query structure::
-
         {
             "query": {
-                "filtered": {
+                "bool": {
                     "filter": {
                         "and": [
                             <filters>
@@ -153,19 +154,21 @@ class ESQuery(object):
         self.index = index if index is not None else self.index
         if self.index not in ES_META and not is_ucr_table(self.index):
             msg = "%s is not a valid ES index.  Available options are: %s" % (
-                index, ', '.join(ES_META))
+                self.index, ', '.join(ES_META))
             raise IndexError(msg)
 
         self.debug_host = debug_host
         self._default_filters = deepcopy(self.default_filters)
         self._aggregations = []
         self.es_instance_alias = es_instance_alias
-        self.es_query = {"query": {
-            "filtered": {
-                "filter": {"and": []},
-                "query": queries.match_all()
+        self.es_query = {
+            "query": {
+                "bool": {
+                    "filter": [],
+                    "must": queries.match_all()
+                }
             }
-        }}
+        }
 
     @property
     def builtin_filters(self):
@@ -210,6 +213,10 @@ class ESQuery(object):
             size = sliced_or_int.stop - start
         return self.start(start).size(size).run().hits
 
+    @property
+    def is_es7(self):
+        return settings.ELASTICSEARCH_MAJOR_VERSION == 7
+
     def run(self, include_hits=False):
         """Actually run the query.  Returns an ESQuerySet object."""
         query = self._clean_before_run(include_hits)
@@ -236,14 +243,16 @@ class ESQuery(object):
         if query._size is None:
             query._size = SCROLL_PAGE_SIZE_LIMIT
         result = scroll_query(query.index, query.raw_query, es_instance_alias=self.es_instance_alias)
-        return ScanResult(
-            result.count,
-            (ESQuerySet.normalize_result(query, r) for r in result)
-        )
+        # scroll doesn't include _id in the source even if it's specified, so include it
+        include_id = getattr(query, '_source', None) and "_id" in query._source
+        for r in result:
+            if include_id:
+                r['_source']['_id'] = r.get('_id', None)
+            yield ESQuerySet.normalize_result(query, r)
 
     @property
     def _filters(self):
-        return self.es_query['query']['filtered']['filter']['and']
+        return self.es_query['query']['bool']['filter']
 
     def exclude_source(self):
         """
@@ -296,7 +305,7 @@ class ESQuery(object):
 
     @property
     def _query(self):
-        return self.es_query['query']['filtered']['query']
+        return self.es_query['query']['bool']['must']
 
     def set_query(self, query):
         """
@@ -304,7 +313,7 @@ class ESQuery(object):
         if you actually want Levenshtein distance or prefix querying...
         """
         es = deepcopy(self)
-        es.es_query['query']['filtered']['query'] = query
+        es.es_query['query']['bool']['must'] = query
         return es
 
     def add_query(self, new_query, clause):
@@ -327,7 +336,7 @@ class ESQuery(object):
         return self
 
     def get_query(self):
-        return self.es_query['query']['filtered']['query']
+        return self.es_query['query']['bool']['must']
 
     def search_string_query(self, search_string, default_fields=None):
         """Accepts a user-defined search string"""
@@ -469,8 +478,7 @@ class ESQuery(object):
         return values_list(hits, *fields, **kwargs)
 
     def count(self):
-        """Performs a minimal query to get the count of matching documents"""
-        return self.size(0).run().total
+        return count_query(self.index, self.raw_query)
 
     def get_ids(self):
         """Performs a minimal query to get the ids of the matching documents

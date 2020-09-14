@@ -23,6 +23,7 @@ from corehq.apps.userreports.models import (
     get_datasource_config,
 )
 from corehq.apps.userreports.sql.util import decode_column_name
+from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import UCR_ENGINE_ID
 
 MAX_COLUMN_NAME_LENGTH = MAX_TABLE_NAME_LENGTH = 63
@@ -135,6 +136,13 @@ class AggregateTableDefinition(models.Model, AbstractUCRDataSource):
                 column_name = decode_column_name(col)
                 columns.append(column_name)
         return columns
+
+    @memoized
+    def get_secondary_tables_and_adapters(self):
+        return [
+            (table, get_indicator_adapter(table.data_source).get_table())
+            for table in self.secondary_tables.all()
+        ]
 
 
 class PrimaryColumn(models.Model):

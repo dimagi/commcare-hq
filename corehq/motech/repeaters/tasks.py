@@ -6,11 +6,12 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 
-from corehq.util.metrics import metrics_gauge_task, metrics_counter, metrics_histogram_timer
 from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
+from corehq.apps.accounting.models import Subscription
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.motech.models import RequestLog
 from corehq.motech.repeaters.const import (
     CHECK_REPEATERS_INTERVAL,
@@ -23,7 +24,13 @@ from corehq.motech.repeaters.dbaccessors import (
     iterate_repeat_records,
 )
 from corehq.privileges import DATA_FORWARDING, ZAPIER_INTEGRATION
-from corehq.util.metrics import make_buckets_from_timedeltas
+from corehq.util.metrics import (
+    make_buckets_from_timedeltas,
+    metrics_counter,
+    metrics_gauge_task,
+    metrics_histogram_timer,
+)
+from corehq.util.metrics.const import MPM_MAX
 from corehq.util.soft_assert import soft_assert
 
 _check_repeaters_buckets = make_buckets_from_timedeltas(
@@ -34,7 +41,8 @@ _check_repeaters_buckets = make_buckets_from_timedeltas(
     timedelta(hours=5),
     timedelta(hours=10),
 )
-_soft_assert = soft_assert(to='@'.join(('nhooper', 'dimagi.com')))
+MOTECH_DEV = '@'.join(('nhooper', 'dimagi.com'))
+_soft_assert = soft_assert(to=MOTECH_DEV)
 logging = get_task_logger(__name__)
 
 
@@ -58,13 +66,13 @@ def clean_logs():
 )
 def check_repeaters():
     start = datetime.utcnow()
-    six_hours_sec = 6 * 60 * 60
-    six_hours_later = start + timedelta(seconds=six_hours_sec)
+    twentythree_hours_sec = 23 * 60 * 60
+    twentythree_hours_later = start + timedelta(hours=23)
 
     # Long timeout to allow all waiting repeat records to be iterated
     check_repeater_lock = get_redis_lock(
         CHECK_REPEATERS_KEY,
-        timeout=six_hours_sec,
+        timeout=twentythree_hours_sec,
         name=CHECK_REPEATERS_KEY,
     )
     if not check_repeater_lock.acquire(blocking=False):
@@ -77,11 +85,19 @@ def check_repeaters():
             timing_buckets=_check_repeaters_buckets,
         ):
             for record in iterate_repeat_records(start):
-                if datetime.utcnow() > six_hours_later:
-                    _soft_assert(False, "I've been iterating repeat records for six hours. I quit!")
+                if not _soft_assert(
+                    datetime.utcnow() < twentythree_hours_later,
+                    "I've been iterating repeat records for 23 hours. I quit!"
+                ):
                     break
                 metrics_counter("commcare.repeaters.check.attempt_forward")
                 record.attempt_forward_now()
+            else:
+                iterating_time = datetime.utcnow() - start
+                _soft_assert(
+                    iterating_time < timedelta(hours=6),
+                    f"It took {iterating_time} to iterate repeat records."
+                )
     finally:
         check_repeater_lock.release()
 
@@ -122,6 +138,7 @@ def process_repeat_record(repeat_record):
             # thus clogging the queue with repeat records with paused repeater
             repeat_record.postpone_by(timedelta(days=1))
             return
+
         if repeater.doc_type.endswith(DELETED_SUFFIX):
             if not repeat_record.doc_type.endswith(DELETED_SUFFIX):
                 repeat_record.doc_type += DELETED_SUFFIX
@@ -135,5 +152,6 @@ def process_repeat_record(repeat_record):
 repeaters_overdue = metrics_gauge_task(
     'commcare.repeaters.overdue',
     get_overdue_repeat_record_count,
-    run_every=crontab()  # every minute
+    run_every=crontab(),  # every minute
+    multiprocess_mode=MPM_MAX
 )

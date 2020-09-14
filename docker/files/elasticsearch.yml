@@ -2,12 +2,14 @@
 #     $ ./scripts/docker rebuild elasticsearch
 #     $ ./scripts/docker up -d elasticsearch
 
+cluster.name: travis_hq
 network.host: 0.0.0.0
 http.port: 9200
+
+discovery.type: single-node 
 
 # dev-only setting to allow client-side ES front-ends
 http.cors.allow-origin: "*"
 http.cors.enabled: true
-index.max_result_window: 1000000
 
-action.auto_create_index: false
+action.auto_create_index: ".watches,.triggered_watches,.watcher-history-*"

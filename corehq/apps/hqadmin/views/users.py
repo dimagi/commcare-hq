@@ -339,7 +339,7 @@ class DomainAdminRestoreView(AdminRestoreView):
 @require_superuser
 def web_user_lookup(request):
     template = "hqadmin/web_user_lookup.html"
-    web_user_email = request.GET.get("q")
+    web_user_email = request.GET.get("q", "").lower()
 
     context = {
         'current_page': {
@@ -477,6 +477,12 @@ class DisableTwoFactorView(FormView):
             'username': self.request.GET.get("q"),
             'disable_for_days': 0,
         }
+
+    def render_to_response(self, context, **response_kwargs):
+        context.update({
+            'username': self.request.GET.get("q"),
+        })
+        return super().render_to_response(context, **response_kwargs)
 
     def get(self, request, *args, **kwargs):
         from django_otp import user_has_device

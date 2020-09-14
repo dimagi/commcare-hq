@@ -7,6 +7,7 @@ from dimagi.utils.logging import notify_exception
 from django.utils.translation import ugettext as _
 
 from corehq.util.metrics import metrics_gauge
+from corehq.util.metrics.const import MPM_LIVESUM
 
 NO_HTML_EMAIL_MESSAGE = """
 Your email client is trying to display the plaintext version of an email that
@@ -24,17 +25,27 @@ LARGE_FILE_SIZE_ERROR_CODE_ICDS_TCL = 452
 LARGE_FILE_SIZE_ERROR_CODES = [LARGE_FILE_SIZE_ERROR_CODE, LARGE_FILE_SIZE_ERROR_CODE_ICDS_TCL]
 
 
-def mark_subevent_bounced(bounced_addresses, messaging_event_id):
+def mark_local_bounced_email(bounced_addresses, message_id):
     from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent
-    try:
-        subevent = MessagingSubEvent.objects.get(id=messaging_event_id)
-    except MessagingSubEvent.DoesNotExist:
-        pass
+    from corehq.apps.users.models import Invitation, InvitationStatus
+    if Invitation.EMAIL_ID_PREFIX in message_id:
+        try:
+            invite = Invitation.objects.get(uuid=message_id.split(Invitation.EMAIL_ID_PREFIX)[1])
+        except Invitation.DoesNotExist:
+            pass
+        else:
+            invite.email_status = InvitationStatus.BOUNCED
+            invite.save()
     else:
-        subevent.error(
-            MessagingEvent.ERROR_EMAIL_BOUNCED,
-            additional_error_text=", ".join(bounced_addresses)
-        )
+        try:
+            subevent = MessagingSubEvent.objects.get(id=message_id)
+        except MessagingSubEvent.DoesNotExist:
+            pass
+        else:
+            subevent.error(
+                MessagingEvent.ERROR_EMAIL_BOUNCED,
+                additional_error_text=", ".join(bounced_addresses)
+            )
 
 
 def get_valid_recipients(recipients):
@@ -53,7 +64,7 @@ def get_valid_recipients(recipients):
             email_domain = bounced_email
         metrics_gauge('commcare.bounced_email', 1, tags={
             'email_domain': email_domain,
-        })
+        }, multiprocess_mode=MPM_LIVESUM)
     return [recipient for recipient in recipients if recipient not in bounced_emails]
 
 
@@ -65,7 +76,7 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
     filtered_recipients = get_valid_recipients(recipients)
     bounced_addresses = list(set(recipients) - set(filtered_recipients))
     if bounced_addresses and messaging_event_id:
-        mark_subevent_bounced(bounced_addresses, messaging_event_id)
+        mark_local_bounced_email(bounced_addresses, messaging_event_id)
 
     if not filtered_recipients:
         # todo address root issues by throwing a real error to catch upstream
@@ -106,7 +117,7 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
     except SMTPDataError as e:
         # If the SES configuration has not been properly set up, resend the message
         if (
-            "Configuration Set does not exist" in e.smtp_error
+            "Configuration Set does not exist" in repr(e.smtp_error)
             and SES_CONFIGURATION_SET_HEADER in msg.extra_headers
         ):
             del msg.extra_headers[SES_CONFIGURATION_SET_HEADER]

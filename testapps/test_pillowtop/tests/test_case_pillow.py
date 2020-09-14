@@ -7,6 +7,7 @@ from pillow_retry.models import PillowError
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.es import CaseES, CaseSearchES
+from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import (
@@ -21,6 +22,7 @@ from corehq.util.test_utils import create_and_save_a_case, trap_extra_setup
 from testapps.test_pillowtop.utils import process_pillow_changes
 
 
+@es_test
 class CasePillowTest(TestCase):
     domain = 'case-pillowtest-domain'
 

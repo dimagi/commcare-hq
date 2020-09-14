@@ -102,16 +102,16 @@ class BaseCustomerInvoiceCase(BaseAccountingTest):
 
     def tearDown(self):
         for user in self.domain.all_users():
-            user.delete()
+            user.delete(deleted_by=None)
 
         for user in self.domain2.all_users():
-            user.delete()
+            user.delete(deleted_by=None)
 
         for user in self.domain3.all_users():
-            user.delete()
+            user.delete(deleted_by=None)
 
         for user in self.domain_community.all_users():
-            user.delete()
+            user.delete(deleted_by=None)
 
         if self.is_using_test_plans:
             utils.clear_plan_version_cache()
@@ -132,7 +132,7 @@ class TestCustomerInvoice(BaseCustomerInvoiceCase):
 
     def test_multiple_subscription_invoice(self):
         invoice_date = utils.months_from_date(self.subscription.date_start,
-                                              random.randint(2, self.subscription_length))
+                                              random.randint(3, self.subscription_length))
         calculate_users_in_all_domains(invoice_date)
         tasks.generate_invoices(invoice_date)
 
@@ -184,6 +184,28 @@ class TestCustomerInvoice(BaseCustomerInvoiceCase):
         calculate_users_in_all_domains(invoice_date)
         tasks.generate_invoices(invoice_date)
         self.assertEqual(CustomerInvoice.objects.count(), 0)
+
+    def test_deleted_domain_in_multiple_subscription_invoice(self):
+        invoice_date = utils.months_from_date(self.subscription.date_start, 2)
+
+        domain_to_be_deleted = generator.arbitrary_domain()
+        generator.generate_domain_subscription(
+            self.account,
+            domain_to_be_deleted,
+            date_start=self.sub2.date_start,
+            date_end=self.sub2.date_end,
+            plan_version=self.advanced_plan
+        )
+        domain_to_be_deleted.delete(leave_tombstone=True)
+
+        calculate_users_in_all_domains(invoice_date)
+        tasks.generate_invoices(invoice_date)
+
+        self.assertEqual(CustomerInvoice.objects.count(), 1)
+        invoice = CustomerInvoice.objects.first()
+
+        num_product_line_items = invoice.lineitem_set.get_products().count()
+        self.assertEqual(num_product_line_items, 2)
 
 
 class TestProductLineItem(BaseCustomerInvoiceCase):

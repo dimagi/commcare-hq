@@ -27,7 +27,7 @@ class UpdateCasePropertyViewTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.case_type_obj.delete()
-        cls.couch_user.delete()
+        cls.couch_user.delete(deleted_by=None)
         cls.domain.delete()
         super(UpdateCasePropertyViewTest, cls).tearDownClass()
 

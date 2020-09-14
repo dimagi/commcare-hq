@@ -5,6 +5,7 @@ from django.conf import settings
 from django.core.cache import cache
 
 from corehq.util.metrics import metrics_gauge
+from corehq.util.metrics.const import MPM_MAX
 
 HEARTBEAT_FREQUENCY = datetime.timedelta(seconds=10)
 HEARTBEAT_CACHE_TIMEOUT = datetime.timedelta(days=2)
@@ -67,13 +68,15 @@ class Heartbeat(object):
         metrics_gauge(
             'commcare.celery.heartbeat.blockage_duration',
             blockage_duration.total_seconds(),
-            tags={'celery_queue': self.queue}
+            tags={'celery_queue': self.queue},
+            multiprocess_mode=MPM_MAX
         )
         if self.threshold:
             metrics_gauge(
                 'commcare.celery.heartbeat.blockage_ok',
                 1 if blockage_duration.total_seconds() <= self.threshold else 0,
-                tags={'celery_queue': self.queue}
+                tags={'celery_queue': self.queue},
+                multiprocess_mode=MPM_MAX
             )
         return blockage_duration
 

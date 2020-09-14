@@ -1,13 +1,18 @@
 import functools
+import mock
 import uuid
+
 
 from django.conf import settings
 from django.test import SimpleTestCase
 from corehq.util.es.elasticsearch import ConnectionError
 
+from corehq.apps.es.tests.utils import es_test
+from corehq.apps.hqadmin.views.data import lookup_doc_in_es
 from corehq.elastic import get_es_new
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
+from corehq.pillows.mappings.utils import transform_for_es7
 from pillowtop.es_utils import (
     assume_alias,
     initialize_index,
@@ -16,17 +21,19 @@ from pillowtop.es_utils import (
     set_index_normal_settings,
     set_index_reindex_settings,
 )
-from pillowtop.index_settings import INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS
+from pillowtop.index_settings import disallowed_settings_by_es_version, INDEX_REINDEX_SETTINGS, INDEX_STANDARD_SETTINGS
 from corehq.util.es.interface import ElasticsearchInterface
 from pillowtop.exceptions import PillowtopIndexingError
 from pillowtop.processors.elastic import send_to_elasticsearch
 from .utils import get_doc_count, get_index_mapping, TEST_INDEX_INFO
 
 
+@es_test
 class ElasticPillowTest(SimpleTestCase):
 
     def setUp(self):
         self.index = TEST_INDEX_INFO.index
+        self.es_alias = TEST_INDEX_INFO.alias
         self.es = get_es_new()
         self.es_interface = ElasticsearchInterface(self.es)
         with trap_extra_setup(ConnectionError):
@@ -54,19 +61,19 @@ class ElasticPillowTest(SimpleTestCase):
         mapping = get_index_mapping(self.es, self.index, TEST_INDEX_INFO.type)
         # we can't compare the whole dicts because ES adds a bunch of stuff to them
         self.assertEqual(
-            TEST_INDEX_INFO.mapping['properties']['doc_type']['index'],
-            mapping['properties']['doc_type']['index']
+            transform_for_es7(TEST_INDEX_INFO.mapping)['properties']['doc_type'],
+            mapping['properties']['doc_type']
         )
 
     def test_refresh_index(self):
         initialize_index_and_mapping(self.es, TEST_INDEX_INFO)
         doc_id = uuid.uuid4().hex
         doc = {'_id': doc_id, 'doc_type': 'CommCareCase', 'type': 'mother'}
-        self.assertEqual(0, get_doc_count(self.es, self.index))
-        self.es_interface.create_doc(self.index, 'case', doc_id, doc)
-        self.assertEqual(0, get_doc_count(self.es, self.index, refresh_first=False))
+        self.assertEqual(0, get_doc_count(self.es, self.es_alias))
+        self.es_interface.create_doc(self.es_alias, 'case', doc_id, doc)
+        self.assertEqual(0, get_doc_count(self.es, self.es_alias, refresh_first=False))
         self.es.indices.refresh(self.index)
-        self.assertEqual(1, get_doc_count(self.es, self.index, refresh_first=False))
+        self.assertEqual(1, get_doc_count(self.es, self.es_alias, refresh_first=False))
 
     def test_index_operations(self):
         initialize_index_and_mapping(self.es, TEST_INDEX_INFO)
@@ -101,12 +108,13 @@ class ElasticPillowTest(SimpleTestCase):
         self.addCleanup(functools.partial(ensure_index_deleted, new_index))
 
         # make sure it's there in the other index
-        aliases = self.es.indices.get_aliases()
+        aliases = self.es_interface.get_aliases()
         self.assertEqual([TEST_INDEX_INFO.alias], list(aliases[new_index]['aliases']))
 
         # assume alias and make sure it's removed (and added to the right index)
         assume_alias(self.es, self.index, TEST_INDEX_INFO.alias)
-        aliases = self.es.indices.get_aliases()
+        aliases = self.es_interface.get_aliases()
+
         self.assertEqual(0, len(aliases[new_index]['aliases']))
         self.assertEqual([TEST_INDEX_INFO.alias], list(aliases[self.index]['aliases']))
 
@@ -133,7 +141,7 @@ class ElasticPillowTest(SimpleTestCase):
 
     def _compare_es_dicts(self, expected, returned):
         sub_returned = returned['index']
-        should_not_exist = ElasticsearchInterface._disallowed_index_settings
+        should_not_exist = disallowed_settings_by_es_version[settings.ELASTICSEARCH_MAJOR_VERSION]
         for key, value in expected['index'].items():
             if key in should_not_exist:
                 continue
@@ -150,12 +158,19 @@ class ElasticPillowTest(SimpleTestCase):
                 .format(disallowed_setting))
 
 
+TEST_ES_META = {
+    TEST_INDEX_INFO.index: TEST_INDEX_INFO
+}
+
+
+@es_test
 class TestSendToElasticsearch(SimpleTestCase):
 
     def setUp(self):
         self.es = get_es_new()
         self.es_interface = ElasticsearchInterface(self.es)
         self.index = TEST_INDEX_INFO.index
+        self.es_alias = TEST_INDEX_INFO.alias
 
         with trap_extra_setup(ConnectionError):
             ensure_index_deleted(self.index)
@@ -164,17 +179,22 @@ class TestSendToElasticsearch(SimpleTestCase):
     def tearDown(self):
         ensure_index_deleted(self.index)
 
+    @mock.patch('corehq.apps.hqadmin.views.data.ES_META', TEST_ES_META)
+    @mock.patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
+    @mock.patch('corehq.elastic.ES_META', TEST_ES_META)
     def test_create_doc(self):
         doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'foo'}
         self._send_to_es_and_check(doc)
+        res = lookup_doc_in_es(doc['_id'], self.index)
+        self.assertEqual(res, doc)
 
     def _send_to_es_and_check(self, doc, update=False, es_merge_update=False,
                               delete=False, esgetter=None):
         if update and es_merge_update:
-            old_doc = self.es_interface.get_doc(self.index, TEST_INDEX_INFO.type, doc['_id'])
+            old_doc = self.es_interface.get_doc(self.es_alias, TEST_INDEX_INFO.type, doc['_id'])
 
         send_to_elasticsearch(
-            index=self.index,
+            alias=self.es_alias,
             doc_type=TEST_INDEX_INFO.type,
             doc_id=doc['_id'],
             es_getter=esgetter or get_es_new,
@@ -188,7 +208,7 @@ class TestSendToElasticsearch(SimpleTestCase):
 
         if not delete:
             self.assertEqual(1, get_doc_count(self.es, self.index))
-            es_doc = self.es_interface.get_doc(self.index, TEST_INDEX_INFO.type, doc['_id'])
+            es_doc = self.es_interface.get_doc(self.es_alias, TEST_INDEX_INFO.type, doc['_id'])
             if es_merge_update:
                 old_doc.update(es_doc)
                 for prop in doc:

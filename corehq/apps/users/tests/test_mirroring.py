@@ -54,13 +54,14 @@ class DomainPermissionsMirrorTest(TestCase):
                 view_groups=True,
                 edit_groups=False,
                 edit_apps=True,     # needed for InternalFixtureResource
+                view_apps=True,
             )
         )
 
     @classmethod
     def tearDownClass(cls):
-        cls.web_user_admin.delete()
-        cls.web_user_non_admin.delete()
+        cls.web_user_admin.delete(deleted_by=None)
+        cls.web_user_non_admin.delete(deleted_by=None)
         cls.api_key.delete()
         Domain.get_by_name('county').delete()
         Domain.get_by_name('state').delete()

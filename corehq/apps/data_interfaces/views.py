@@ -511,7 +511,7 @@ class XFormManagementView(DataInterfaceSection):
             _request.session = request.session
 
             _request.GET = QueryDict(form_query_string)
-            OTPMiddleware().process_request(_request)
+            OTPMiddleware(lambda req: None)(_request)
 
             dispatcher = EditDataInterfaceDispatcher()
             xform_ids = dispatcher.dispatch(

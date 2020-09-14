@@ -124,7 +124,7 @@ class RestoreContent(object):
             self.num_items += num - 1
             self.response_body.write(xml_element)
         else:
-            self.response_body.write(xml_util.tostring(xml_element))
+            self.response_body.write(ElementTree.tostring(xml_element, encoding='utf-8'))
 
     def extend(self, iterable):
         for element in iterable:
@@ -790,9 +790,12 @@ class RestoreConfig(object):
 
         tags['type'] = 'sync' if self.params.sync_log_id else 'restore'
 
-        if settings.ENTERPRISE_MODE and self.params.app and self.params.app.copy_of:
-            app_name = slugify(self.params.app.name)
-            tags['app'] = '{}-{}'.format(app_name, self.params.app.version)
+        if settings.ENTERPRISE_MODE:
+            if self.params.app and self.params.app.copy_of:
+                app_name = slugify(self.params.app.name)
+                tags['app'] = '{}-{}'.format(app_name, self.params.app.version)
+            else:
+                tags['app'] = ''
 
         metrics_counter('commcare.restores.count', tags=tags)
         metrics_histogram(

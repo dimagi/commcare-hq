@@ -10,9 +10,9 @@ from memoized import memoized
 
 from corehq.apps.accounting.mixins import BillingModalsMixin
 from corehq.apps.domain.decorators import (
-    login_and_domain_required,
     login_or_api_key,
     login_required,
+    LoginAndDomainMixin,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name
@@ -152,18 +152,12 @@ class DomainViewMixin(object):
         return domain_obj
 
 
-class LoginAndDomainMixin(object):
-
-    @method_decorator(login_and_domain_required)
-    def dispatch(self, *args, **kwargs):
-        return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
-
 
 class LoginOrAPIKeyMixin(object):
 
     @method_decorator(login_or_api_key)
     def dispatch(self, *args, **kwargs):
-        return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
+        return super(LoginOrAPIKeyMixin, self).dispatch(*args, **kwargs)
 
 
 class BaseDomainView(LoginAndDomainMixin, BillingModalsMixin, BaseSectionPageView, DomainViewMixin):

@@ -9,6 +9,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import make_loc
@@ -27,6 +28,7 @@ CASE_TYPE = "cc-case-type"
 LOCATION_TYPE = "my-location"
 
 
+@es_test
 class CallCenterLocationOwnerOptionsViewTest(TestCase):
 
     @classmethod
@@ -83,7 +85,7 @@ class CallCenterLocationOwnerOptionsViewTest(TestCase):
     def tearDownClass(cls):
         super(CallCenterLocationOwnerOptionsViewTest, cls).tearDownClass()
         for user in cls.users:
-            user.delete()
+            user.delete(deleted_by=None)
         CALL_CENTER_LOCATION_OWNERS.set(cls.domain.name, False, NAMESPACE_DOMAIN)
         cls.domain.delete()
         ensure_index_deleted(USER_INDEX_INFO.index)
