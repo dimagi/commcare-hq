@@ -27,8 +27,9 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         COMBOBOX: 'combobox',
         COMBOBOX_MULTIWORD: 'multiword',
         COMBOBOX_FUZZY: 'fuzzy',
-        COLLAPSIBLE_OPEN: 'collapsible-open',
-        COLLAPSIBLE_CLOSED: 'collapsible-closed',
+        COLLAPSIBLE: 'group-collapse',
+        COLLAPSIBLE_OPEN: 'collapse-open',
+        COLLAPSIBLE_CLOSED: 'collapse-closed',
 
         // Note it's important to differentiate these two
         NO_PENDING_ANSWER: undefined,
