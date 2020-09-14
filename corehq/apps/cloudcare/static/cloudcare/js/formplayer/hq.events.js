@@ -1,11 +1,11 @@
-/*global FormplayerFrontend */
-
 /**
  * hq.events.js
  *
  * This is framework for allowing messages from HQ
  */
-FormplayerFrontend.module("HQ.Events", function (Events, FormplayerFrontend) {
+hqDefine("cloudcare/js/formplayer/hq.events", function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+    var Events = {};
 
     Events.Receiver = function (allowedHost) {
         this.allowedHost = allowedHost;
@@ -43,7 +43,7 @@ FormplayerFrontend.module("HQ.Events", function (Events, FormplayerFrontend) {
                 FormplayerFrontend.trigger('navigation:back');
                 break;
             case Events.Actions.REFRESH:
-                appId = FormplayerFrontend.request('getCurrentAppId');
+                appId = FormplayerFrontend.getChannel().request('getCurrentAppId');
                 FormplayerFrontend.trigger('refreshApplication', appId);
                 break;
         }
@@ -55,4 +55,6 @@ FormplayerFrontend.module("HQ.Events", function (Events, FormplayerFrontend) {
         PHONE_VIEW: 'phone-view',
         TABLET_VIEW: 'tablet-view',
     };
+
+    return Events;
 });
