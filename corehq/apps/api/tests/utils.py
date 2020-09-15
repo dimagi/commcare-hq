@@ -46,6 +46,9 @@ class FakeFormESView(object):
             }
         }
 
+    def count_query(self, query):
+        return len(self.docs)
+
     def get_document(self, doc_id):
         try:
             doc = self.docs[doc_id]

@@ -34,6 +34,7 @@ from no_exceptions.exceptions import Http400
 from .utils import APIResourceTest, FakeFormESView
 
 
+@es_test
 class TestElasticAPIQuerySet(TestCase):
     '''
     Tests the ElasticAPIQuerySet for appropriate slicing, etc
