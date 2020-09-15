@@ -23,7 +23,7 @@ hqDefine("cloudcare/js/formplayer/hq.events", function () {
             return;
         }
 
-        if (!data.hasOwnProperty('action')) {
+        if (!_.has(data, 'action')) {
             window.console.warn('Message must have action property');
             return;
         }
