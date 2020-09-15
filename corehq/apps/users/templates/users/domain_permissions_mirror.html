@@ -24,6 +24,17 @@
           <td>
             {{ mirror }}
           </td>
+          <td>
+            <form class="form form-horizontal hq-form disable-on-submit"
+                  name="delete_mirror"
+                  action="{% url "delete_mirror" domain mirror%}"
+                  method="POST">
+              {% csrf_token %}
+              <input type="hidden" name="form_type" value="delete-mirror"/>
+              <input type="hidden" name="mirror" value="{{ mirror }}"/>
+              <button type="submit" style="float: right" class="btn btn-danger"><i class="fa fa-remove"></i> {% trans "Delete" %}</button>
+            </form>
+          </td>
         </tr>
       {% endfor %}
     </tbody>

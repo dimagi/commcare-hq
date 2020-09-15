@@ -1,6 +1,13 @@
 import json
 from datetime import datetime
 
+import langcodes
+import six.moves.urllib.error
+import six.moves.urllib.parse
+import six.moves.urllib.request
+from couchdbkit.exceptions import ResourceNotFound
+from dimagi.utils.couch import CriticalSection
+from dimagi.utils.web import json_response
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
@@ -22,19 +29,11 @@ from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
-
-import six.moves.urllib.error
-import six.moves.urllib.parse
-import six.moves.urllib.request
-from couchdbkit.exceptions import ResourceNotFound
+from django_digest.decorators import httpdigest
 from django_otp.plugins.otp_static.models import StaticToken
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
-from dimagi.utils.couch import CriticalSection
-from dimagi.utils.web import json_response
-
-import langcodes
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -112,7 +111,6 @@ from corehq.apps.users.views.utils import get_editable_role_choices
 from corehq.const import USER_CHANGE_VIA_INVITATION
 from corehq.util.couch import get_document_or_404
 from corehq.util.view_utils import json_error
-from django_digest.decorators import httpdigest
 
 
 def _users_context(request, domain):
@@ -603,6 +601,15 @@ class DomainPermissionsMirrorView(BaseUserSettingsView):
         return {
             'mirrors': sorted(DomainPermissionsMirror.mirror_domains(self.domain)),
         }
+
+@domain_admin_required
+@require_POST
+def delete_mirror(request, domain, mirror):
+    mirror_obj_set = DomainPermissionsMirror.objects.filter(source=domain, mirror=mirror)
+    if mirror_obj_set[0]:
+        mirror_obj_set[0].delete()
+    redirect = reverse(DomainPermissionsMirrorView.urlname, args=[domain])
+    return HttpResponseRedirect(redirect)
 
 
 @always_allow_project_access
