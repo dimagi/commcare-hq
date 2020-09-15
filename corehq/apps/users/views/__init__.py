@@ -93,6 +93,7 @@ from corehq.apps.users.forms import (
     SetUserPasswordForm,
     UpdateUserPermissionForm,
     UpdateUserRoleForm,
+    CreateDomainPermissionsMirrorForm,
 )
 from corehq.apps.users.landing_pages import get_allowed_landing_pages
 from corehq.apps.users.models import (
@@ -608,6 +609,17 @@ def delete_mirror(request, domain, mirror):
     mirror_obj_set = DomainPermissionsMirror.objects.filter(source=domain, mirror=mirror)
     if mirror_obj_set[0]:
         mirror_obj_set[0].delete()
+    redirect = reverse(DomainPermissionsMirrorView.urlname, args=[domain])
+    return HttpResponseRedirect(redirect)
+
+
+@require_POST
+def create_new_mirror(request, domain):
+    form = CreateDomainPermissionsMirrorForm(request.POST)
+    if form.is_valid():
+        mirror_domain = form.cleaned_data.get("mirror_domain")
+        mirror = DomainPermissionsMirror(source=domain, mirror=mirror_domain)
+        mirror.save()
     redirect = reverse(DomainPermissionsMirrorView.urlname, args=[domain])
     return HttpResponseRedirect(redirect)
 

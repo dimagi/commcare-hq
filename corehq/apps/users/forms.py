@@ -1322,3 +1322,7 @@ class CommCareUserFilterForm(forms.Form):
         if "*" in search_string or "?" in search_string:
             raise forms.ValidationError(_("* and ? are not allowed"))
         return search_string
+
+
+class CreateDomainPermissionsMirrorForm(forms.Form):
+    mirror_domain = forms.CharField(label=ugettext_lazy('Mirror'), max_length=30, required=True)

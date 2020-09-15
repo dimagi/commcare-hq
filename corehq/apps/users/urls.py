@@ -28,6 +28,7 @@ from .views import (
     undo_remove_web_user,
     verify_phone_number,
     delete_mirror,
+    create_new_mirror,
 )
 from .views.mobile.custom_data_fields import UserFieldsView
 from .views.mobile.groups import (
@@ -93,7 +94,8 @@ urlpatterns = [
     url(r'^web/$', ListWebUsersView.as_view(), name=ListWebUsersView.urlname),
     url(r'^web/json/$', paginate_web_users, name='paginate_web_users'),
     url(r'^enterprise/$', DomainPermissionsMirrorView.as_view(), name=DomainPermissionsMirrorView.urlname),
-    url(r'^delete_mirror/(?P<mirror>[ \w-]+)/$', delete_mirror, name='delete_mirror'),
+    url(r'^enterprise/delete_mirror/(?P<mirror>[ \w-]+)/$', delete_mirror, name='delete_mirror'),
+    url(r'^enterprise/create_new_mirror/$', create_new_mirror, name='create_new_mirror'),
     url(r'^join/(?P<uuid>[ \w-]+)/$', accept_invitation, name='domain_accept_invitation'),
     url(r'^roles/$', ListRolesView.as_view(), name=ListRolesView.urlname),
     url(r'^roles/save/$', post_user_role, name='post_user_role'),
