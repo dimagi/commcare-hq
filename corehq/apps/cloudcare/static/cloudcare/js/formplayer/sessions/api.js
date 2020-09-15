@@ -1,5 +1,3 @@
-/*global Util */
-
 /**
  * Backbone model for listing and selecting FormEntrySessions
  */
@@ -23,7 +21,7 @@ hqDefine("cloudcare/js/formplayer/sessions/api", function () {
                 }),
                 url: formplayerUrl + '/get_sessions',
                 success: function (parsed, response) {
-                    if (response.hasOwnProperty('exception')) {
+                    if (_.has(response, 'exception')) {
                         FormplayerFrontend.trigger(
                             'showError',
                             response.exception || hqImport("cloudcare/js/formplayer/constants").GENERIC_ERROR,
