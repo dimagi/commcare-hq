@@ -16,7 +16,7 @@ In addition, the project follows the following specific security practices.
 Security Protocols and Cryptography Implementation
 --------------------------------------------------
 
-The project strives for a high standard of technical and practical security, but it is not the intended purpose of the project to provide a novel technical approach to security.  Since there is an overwhelming consensus from security researchers and practitioners[1]_,[2]_ that it is a harmful practice for software systems attempt to implement their own unique security or cryptographic protocols, no such implementations will be adopted by the project.
+The project strives for a high standard of technical and practical security, but it is not the intended purpose of the project to provide a novel technical approach to security.  Since there is an overwhelming consensus from security researchers and practitioners[1]_,[2]_ that it is a harmful practice for software systems to attempt to implement their own unique security or cryptographic protocols, no such implementations will be adopted by the project.
 
 Specifically, components of the project which externally authenticate users or secure data cryptographically will be:
 
