@@ -156,9 +156,14 @@ class ReportLinkDetail(jsonobject.JsonObject):
     report_id = jsonobject.StringProperty()
 
 
+class KeywordLinkDetail(jsonobject.JsonObject):
+    linked_keyword_id = jsonobject.StringProperty()
+
+
 def wrap_detail(model, detail_json):
     return {
         'app': AppLinkDetail,
         'fixture': FixtureLinkDetail,
         'report': ReportLinkDetail,
+        'keyword': KeywordLinkDetail,
     }[model].wrap(detail_json)
