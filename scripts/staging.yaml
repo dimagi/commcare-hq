@@ -62,6 +62,7 @@ branches:
   - jls/collapsible-groups+jls/marionette-3
   - jls/marionette-3 # Jenny Aug 27
   - jls/collapsible-groups # Jenny Sept 4
+  - jls/fix-web-apps-index #. Jenny Sept 15
   - adil-uddin:feature/USH-142-overwrite-caselists # Adil/Jenny Sept 10
   - kev/email-logging # Kevin Sept 10
 submodules: {}
