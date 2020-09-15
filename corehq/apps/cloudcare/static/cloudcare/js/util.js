@@ -166,7 +166,7 @@ hqDefine('cloudcare/js/util', [
     var reportFormplayerErrorToHQ = function (data) {
         try {
             var reverse = initialPageData.reverse;
-            var cloudcareEnv = hqRequire("cloudcare/js/formplayer/app").getChannel().request('currentUser').environment;
+            var cloudcareEnv = hqRequire(["cloudcare/js/formplayer/app"]).getChannel().request('currentUser').environment;
             if (!data.cloudcareEnv) {
                 data.cloudcareEnv = cloudcareEnv || 'unknown';
             }
