@@ -276,10 +276,6 @@ function Form(json) {
 
     self.forceRequiredVisible = ko.observable(false);
 
-    self.showRequiredNotice = ko.computed(function () {
-        return !self.isCurrentRequiredSatisfied() && self.forceRequiredVisible();
-    });
-
     self.clickedNextOnRequired = function () {
         self.forceRequiredVisible(true);
     };
