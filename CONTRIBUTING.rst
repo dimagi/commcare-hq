@@ -17,7 +17,8 @@ to a very high level regardless of source. Contributions which have very
 limited scope, come with rigorous tests, and have their purpose outlined
 in a Github issue are much more likely to be reviewed for inclusion.
 
-Before submitting a PR, review our `Guide to Authoring Pull Requests`_.  
+Before submitting a PR, review our `Code Contributions process`_, along with our
+specific `Guide to Authoring Pull Requests`_.  
 You may also be interested in the `Developers category`_ of the `CommCare Forum`_ 
 if you have questions or need feedback.
 
@@ -62,6 +63,7 @@ to see how that works.
 .. _Dimagi: http://www.dimagi.com/
 .. _issue tracker: https://github.com/dimagi/commcare-hq/issues
 .. _bug reports: https://confluence.dimagi.com/display/commcarepublic/Bug+Reports
+.. _Code Contributions process: https://github.com/dimagi/code-review/blob/master/README.md
 .. _Guide to Authoring Pull Requests: https://github.com/dimagi/code-review/blob/master/Writing_PRs.md
 .. _Developers category: https://forum.dimagi.com/c/developers
 .. _CommCare Forum: https://forum.dimagi.com/
