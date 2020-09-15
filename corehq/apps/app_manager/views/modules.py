@@ -786,8 +786,13 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
     src_module = app.get_module_by_unique_id(module_unique_id)
     detail_type = request.POST['detail_type']
 
-    is_valid = _validate_overwrite_request(request, detail_type, dest_module_unique_ids, attrs_dict)
-    if not is_valid:
+    error_list = _validate_overwrite_request(request, detail_type, dest_module_unique_ids, attrs_dict)
+    if error_list:
+        for err in error_list:
+            messages.error(
+                request,
+                _(err)
+            )
         return back_to_main(request, domain, app_id=app_id, module_unique_id=module_unique_id)
 
     updated_modules = []
@@ -809,8 +814,12 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
             try:
                 _update_module_case_list(detail_type, src_module, dest_module, attrs_dict)
                 updated_modules.append(dest_module.default_name())
-            except Exception as e:
-                logger.exception(f'Error in updating module: {dest_module.default_name()}', e)
+            except Exception:
+                notify_exception(
+                    request,
+                    message=f'Error in updating module: {dest_module.default_name()}',
+                    details={'domain': domain, 'app_id': app_id, }
+                )
                 not_updated_modules.append(dest_module.default_name())
 
     if not_updated_modules:
@@ -828,22 +837,14 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
 
 def _validate_overwrite_request(request, detail_type, dest_modules, attrs_dict):
     assert detail_type in ['short', 'long']
-    valid = True
+    error_list = []
 
     if not dest_modules:
-        valid = False
-        messages.error(
-            request,
-            _("Please choose at least one menu to overwrite.")
-        )
+        error_list.append("Please choose at least one menu to overwrite.")
     if detail_type == 'short':
         if not any(attrs_dict.values()):
-            valid = False
-            messages.error(
-                request,
-                _("Please choose at least one option to overwrite.")
-            )
-    return valid
+            error_list.append("Please choose at least one option to overwrite.")
+    return error_list
 
 
 def _update_module_case_list(detail_type, src_module, dest_module, attrs_dict):
