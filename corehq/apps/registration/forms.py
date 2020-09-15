@@ -43,6 +43,8 @@ class RegisterWebUserForm(forms.Form):
         label=_("Phone Number"),
         required=False,
     )
+    if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
+        captcha = CaptchaField(label=_("Type the letters in the box"))
     persona = forms.ChoiceField(
         label=_("I will primarily be using CommCare to..."),
         required=False,
@@ -158,6 +160,11 @@ class RegisterWebUserForm(forms.Form):
                         css_class="input-lg",
                         data_bind="value: phoneNumber, "
                                   "valueUpdate: 'keyup'"
+                    ),
+                    hqcrispy.InlineField(
+                        'captcha',
+                        css_class="input-lg",
+                        data_bind="value: captcha"
                     ),
                     hqcrispy.InlineField('atypical_user'),
                     twbscrispy.StrictButton(

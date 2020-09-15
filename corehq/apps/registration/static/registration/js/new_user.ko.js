@@ -11,6 +11,7 @@ hqDefine('registration/js/new_user.ko', [
     'jquery-ui/ui/effects/effect-slide',
     'intl-tel-input/build/js/intlTelInput.min',
     'hqwebapp/js/password_validators.ko',
+    'hqwebapp/js/captcha',
 ], function (
     $,
     ko,
@@ -239,8 +240,18 @@ hqDefine('registration/js/new_user.ko', [
                 project_name: self.projectName(),
                 eula_confirmed: self.eulaConfirmed(),
                 phone_number: module.getPhoneNumberFn() || self.phoneNumber(),
+
                 atypical_user: defaults.atypical_user,
             };
+            if ($(containerSelector).find("[name='captcha_0']").length > 0) {
+                var captchaString = $(containerSelector).find("[name='captcha_0']")[0].value;
+                var captchaResponse = $(containerSelector).find("[name='captcha_1']")[0].value;
+
+                _.extend(data, {
+                    captcha_0: captchaString,
+                    captcha_1: captchaResponse,
+                });
+            }
             if (self.hasPersonaFields) {
                 _.extend(data, {
                     persona: self.personaChoice(),
@@ -359,6 +370,7 @@ hqDefine('registration/js/new_user.ko', [
                         if (response.errors !== undefined
                             && !_.isEmpty(response.errors)) {
                             self.isSubmitting(false);
+                            $('.captcha-refresh').click();
                             _.each(response.errors, function (val, key) {
                                 self.submitErrors.push({
                                     fieldName: key.replace('_', " "),
