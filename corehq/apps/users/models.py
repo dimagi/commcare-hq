@@ -1243,7 +1243,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         })
 
         try:
-            domain = self.domainn
+            domain = self.domain
         except AttributeError:
             domain = self.get_domains()[0]
 
