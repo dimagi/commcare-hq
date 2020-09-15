@@ -23,8 +23,8 @@ considered for review or re-review
 - The code and architecture comply with `Standards and Best Practices`_
 - Any UI components comply with the project `Style Guide`_
 - Contributions follow any subsystem specific practices (example: `Javascript Guide`_)
-- Automated regression an integration tests are passing
-- Any automated feedback (label bot, lintbot, etc) is addressed
+- Automated regression and integration tests are passing
+- Any automated feedback (label bot, lint bot, etc) is addressed
 - Any previous developer feedback is addressed
 
 Before submitting a PR, review our `Guide to Authoring Pull Requests`_.  
