@@ -168,7 +168,7 @@ class Command(BaseCommand):
             if no_progress_loops == 10:
                 self.es.tasks.cancel(task_id=task_id)
                 self.cancelled_queries.append(reindex_query)
-                print("Cancelling task that didn't progress in last 10 polls {}".format(str(query)))
+                print("Cancelling task that didn't progress in last 10 polls {}".format(str(reindex_query)))
             running_time = task["running_time_in_nanos"]
             running_time_in_mins = (running_time / 60000000000)
             print("Running time total in mins so far", running_time_in_mins, "\n")
