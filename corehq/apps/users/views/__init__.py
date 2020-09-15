@@ -613,6 +613,7 @@ def delete_mirror(request, domain, mirror):
     return HttpResponseRedirect(redirect)
 
 
+@domain_admin_required
 @require_POST
 def create_new_mirror(request, domain):
     form = CreateDomainPermissionsMirrorForm(request.POST)

@@ -18,26 +18,31 @@
   </p>
 
  <form class="form form-horizontal hq-form"
-      name="create_new_mirror"
-      action="{% url "create_new_mirror" domain %}"
-      method="POST">
+       name="create_new_mirror"
+       action="{% url 'create_new_mirror' domain %}"
+       method="POST">
   {% csrf_token %}
   <input type="hidden" name="form_type" value="create_new_mirror"/>
-  <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#myModal"></i> {% trans "Create New Mirror for Domain" %}</button>
-  <div id="myModal" class="modal fade" role="dialog" style="background: #fff">
-    <div class="modal-dialog" style="width:600px margin:30px auto">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal">&times;</button>
-        <h3 class="modal-title">Create Mirror</h3>
-      </div>
-      <div class="modal-body">
-        <label for="mirror_domain">{% trans "Mirror: " %}</label>
-        <input type="text" id="mirror_domain" name="mirror_domain" value="{{ mirror_domain }}"/>
-
-      </div>
-      <div class="modal-footer">
-        <a href="#" data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</a>
-        <button type="submit" class="btn btn-primary"> {% trans "Create Mirror" %}</button>
+  <button type="button"
+          class="btn btn-primary"
+          data-toggle="modal"
+          data-target="#myModal">
+    <i class="fa fa-plus"></i> {% trans "Create New Domain Permission Mirror" %}</button>
+  <div id="myModal" class="modal fade" role="dialog">
+    <div class="modal-dialog" style="width:600px; margin:30px auto">
+      <div class="modal-content rounded-0" style="background: #fff">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h3 class="modal-title">{% trans "Create a new domain permission mirror" %}</h3>
+        </div>
+        <div class="modal-body">
+          <label for="mirror_domain" style="padding:8px">{% trans "Mirror: " %}</label>
+          <input type="text" id="mirror_domain" name="mirror_domain" value="{{ mirror_domain }}"/>
+        </div>
+        <div class="modal-footer">
+          <a href="#" data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</a>
+          <button type="submit" class="btn btn-primary"> {% trans "Create Mirror" %}</button>
+        </div>
       </div>
     </div>
   </div>
@@ -53,7 +58,7 @@
           <td>
             <form class="form form-horizontal hq-form disable-on-submit"
                   name="delete_mirror"
-                  action="{% url "delete_mirror" domain mirror%}"
+                  action="{% url 'delete_mirror' domain mirror%}"
                   method="POST">
               {% csrf_token %}
               <input type="hidden" name="form_type" value="delete-mirror"/>
