@@ -1229,7 +1229,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             COMMCARE_USER_TYPE_DEMO
         )
 
-        session_data = self.to_json()['user_data']
+        session_data = self.metadata
 
         if self.is_commcare_user() and self.is_demo_user:
             session_data.update({
