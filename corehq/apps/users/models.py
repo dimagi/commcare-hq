@@ -1242,12 +1242,16 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             '{}_phone_number'.format(SYSTEM_PREFIX): self.phone_number,
         })
 
+        domain = None
         try:
             domain = self.domain
         except AttributeError:
-            domain = self.get_domains()[0]
+            domains = self.get_domains()
+            if domains:
+                domain = domains[0]
 
-        session_data['{}_project'.format(SYSTEM_PREFIX)] = domain
+        if domain is not None:
+            session_data['{}_project'.format(SYSTEM_PREFIX)] = domain
 
         if self.location_id:
             session_data.update({
