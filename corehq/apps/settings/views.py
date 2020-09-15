@@ -385,7 +385,7 @@ def _show_link_to_webapps(user):
 class TwoFactorDisableView(BaseMyAccountView, DisableView):
     urlname = 'two_factor_disable'
     template_name = 'two_factor/profile/disable.html'
-    page_title = ugettext_lazy("Disable Two Factor Authentication")
+    page_title = ugettext_lazy("Remove Two-Factor Authentication")
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):

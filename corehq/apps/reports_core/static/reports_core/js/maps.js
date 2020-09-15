@@ -21,9 +21,9 @@ hqDefine('reports_core/js/maps', function () {
             privates.map = L.map(mapContainer[0], {
                 trackResize: false,
                 layers: [streets],
+                // remove attribution control to duplicate "Leaflet" attribute
+                attributionControl: false,
             }).setView([0, 0], 3);
-
-            L.control.scale().addTo(privates.map);
 
             var baseMaps = {};
             baseMaps[gettext("Streets")] = streets;
@@ -33,6 +33,12 @@ hqDefine('reports_core/js/maps', function () {
             privates.layerControl.addTo(privates.map);
 
             new (hqImport("reports/js/maps_utils").ZoomToFitControl)().addTo(privates.map);
+            // Add MapBox wordmark and correct attributes to map
+            // See https://docs.mapbox.com/help/how-mapbox-works/attribution/
+            new (hqImport("reports/js/maps_utils").MapBoxWordMark)().addTo(privates.map);
+            // scale is now placed on the bottom right because it is easier to layout with the attributes than with the wordmark
+            L.control.attribution({position: 'bottomright'}).addAttribution('&copy; <a href="http://www.mapbox.com/about/maps/">MapBox</a> | &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>').addTo(privates.map);
+            L.control.scale({position: 'bottomright'}).addTo(privates.map);
             $('#zoomtofit').css('display', 'block');
         } else {
             if (privates.map.activeOverlay) {
