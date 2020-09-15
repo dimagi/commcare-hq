@@ -8,6 +8,7 @@
           'gr-has-no-questions': _.all($data.children(), function(d) { return d.type() !== 'question' }),
           'gr-has-no-nested-questions': !$data.hasAnyNestedQuestions(),
           'panel panel-default': collapsible,
+          'required-group': collapsible && required(),
         }">
     <fieldset class="gr-header" data-bind="css: {'panel-heading': collapsible, clickable: collapsible}, click: toggleChildren">
       <div data-bind="ifnot: collapsible">
