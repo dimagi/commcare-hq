@@ -198,20 +198,20 @@ amdefine@>=0.0.4:
   resolved "https://registry.yarnpkg.com/amdefine/-/amdefine-1.0.1.tgz#4a5282ac164729e93619bcfd3ad151f817ce91f5"
   integrity sha1-SlKCrBZHKek2Gbz9OtFR+BfOkfU=
 
-angular-animate@1.4.4:
-  version "1.4.4"
-  resolved "https://registry.yarnpkg.com/angular-animate/-/angular-animate-1.4.4.tgz#70baec78ff49cba3be13ea0141819ffb2e785115"
-  integrity sha1-cLrseP9Jy6O+E+oBQYGf+y54URU=
+angular-animate@1.7.9:
+  version "1.7.9"
+  resolved "https://registry.yarnpkg.com/angular-animate/-/angular-animate-1.7.9.tgz#a397f82434c1e7ed5b7a298fa70fc3de989a6785"
+  integrity sha512-fV+AISy/HTzurQH2ngsJg+lLIvfu0ahc1h4AYKauaXVw97rZc2k4iUA1bMstiEyClsdayQX568kjQc1NK+oYhw==
 
 angular-busy@4.1.4:
   version "4.1.4"
   resolved "https://registry.yarnpkg.com/angular-busy/-/angular-busy-4.1.4.tgz#b4f1b333ec7ced31c207db5e3d77665375d18ea0"
   integrity sha1-tPGzM+x87THCB9tePXdmU3XRjqA=
 
-angular-cookies@1.4.4:
-  version "1.4.4"
-  resolved "https://registry.yarnpkg.com/angular-cookies/-/angular-cookies-1.4.4.tgz#64cbe5bec38ca872cd225f732c68bf47ce00d31d"
-  integrity sha1-ZMvlvsOMqHLNIl9zLGi/R84A0x0=
+angular-cookies@1.7.9:
+  version "1.7.9"
+  resolved "https://registry.yarnpkg.com/angular-cookies/-/angular-cookies-1.7.9.tgz#0f0cd2a9d1c81e5b8d6c6711d41f0909f9d0b8e0"
+  integrity sha512-3eRq/aPrtCZKDWQnc3nW3sFoMbLiHkCkyDF2O9u7VXnqvVsUPaipk5R1ZqahgcSQHQrN/F5IU4T4nrz52qAZmA==
 
 angular-datamaps@0.1.2:
   version "0.1.2"
@@ -236,20 +236,20 @@ angular-leaflet-directive@tombatossals/angular-leaflet-directive#master:
     angular "1.x"
     leaflet "0.7.x"
 
-angular-message-format@1.4.4:
-  version "1.4.4"
-  resolved "https://registry.yarnpkg.com/angular-message-format/-/angular-message-format-1.4.4.tgz#aa3ec7e6d206b975d2027d703cb78b761b6ff835"
-  integrity sha1-qj7H5tIGuXXSAn1wPLeLdhtv+DU=
+angular-message-format@1.7.9:
+  version "1.7.9"
+  resolved "https://registry.yarnpkg.com/angular-message-format/-/angular-message-format-1.7.9.tgz#324deb179d4adcb1a9684dc55bd5bc55c1e34c56"
+  integrity sha512-8ya9OrKh7QO78zZr3PIJERfB9d18KpFUwEcyxTUaKVSgI9K0h4VyL2N1sSp4b3eMYZ/4/XYgOHYPXx12mNS+kw==
 
-angular-messages@1.4.4:
-  version "1.4.4"
-  resolved "https://registry.yarnpkg.com/angular-messages/-/angular-messages-1.4.4.tgz#41afb1edb373e66bf526ef3b62718523e5011ad7"
-  integrity sha1-Qa+x7bNz5mv1Ju87YnGFI+UBGtc=
+angular-messages@1.7.9:
+  version "1.7.9"
+  resolved "https://registry.yarnpkg.com/angular-messages/-/angular-messages-1.7.9.tgz#6403b7f56df4b17b62d88762ac5e6b1702347fd2"
+  integrity sha512-OdJihuO6AW+m1/r9OdW5riCwacn3dL1agQvgu6Cww3a7OARXXN0vxOpsZCNk4yg4CuD7Et3tiz4DymhvZkydvw==
 
-angular-mocks@1.4.4:
-  version "1.4.4"
-  resolved "https://registry.yarnpkg.com/angular-mocks/-/angular-mocks-1.4.4.tgz#2e7f85434596b33622bb35cd1719c533f01a14e6"
-  integrity sha1-Ln+FQ0WWszYiuzXNFxnFM/AaFOY=
+angular-mocks@1.7.9:
+  version "1.7.9"
+  resolved "https://registry.yarnpkg.com/angular-mocks/-/angular-mocks-1.7.9.tgz#0a3b7e28b9a493b4e3010ed2b0f69a68e9b4f79b"
+  integrity sha512-LQRqqiV3sZ7NTHBnNmLT0bXtE5e81t97+hkJ56oU0k3dqKv1s6F+nBWRlOVzqHWPGFOiPS8ZJVdrS8DFzHyNIA==
 
 angular-nvd3@1.0.9:
   version "1.0.9"
@@ -265,30 +265,30 @@ angular-perfect-scrollbar@0.2.0:
   resolved "https://registry.yarnpkg.com/angular-perfect-scrollbar/-/angular-perfect-scrollbar-0.2.0.tgz#e92da8e0659641db4ae2658fa43c7e521292bc51"
   integrity sha512-oPwip0D+bGdkXxjIIqajZqzk1gDdmWgbASTVp2CbJbDLw7NeBIB7NV8Mj3YhWK8J6mtX3nOLir9VGjEejyEY5A==
 
-angular-resource@1.4.4:
-  version "1.4.4"
-  resolved "https://registry.yarnpkg.com/angular-resource/-/angular-resource-1.4.4.tgz#92bea7ab48f75240a237a2f1a1b15cb11b5ce588"
-  integrity sha1-kr6nq0j3UkCiN6LxobFcsRtc5Yg=
+angular-resource@1.7.9:
+  version "1.7.9"
+  resolved "https://registry.yarnpkg.com/angular-resource/-/angular-resource-1.7.9.tgz#fa53623fae2c60debe2410d692447dcb0ba02396"
+  integrity sha512-rXXhCE2qT31Pn4Sl+2XL+ntv4zxnA2OzY+clCl8/pOp/s/gIzxpQlEtXipo3QK8Qur3glbIkeF/bJw+gjVAdUw==
 
-angular-route@1.4.4:
-  version "1.4.4"
-  resolved "https://registry.yarnpkg.com/angular-route/-/angular-route-1.4.4.tgz#4d7f11c77ee1df2cc24f6b3c153c2e678e906eeb"
-  integrity sha1-TX8Rx37h3yzCT2s8FTwuZ46Qbus=
+angular-route@1.7.9:
+  version "1.7.9"
+  resolved "https://registry.yarnpkg.com/angular-route/-/angular-route-1.7.9.tgz#f9910a2af0ba3ad7a969c5dd369b8360d0d5e4ef"
+  integrity sha512-vRoj5hzdQtWbODhWJqDzD1iNOEfCKshO6GFBuPVV7RHlPjzIc4R2dHCc7Qiv/8F3LDxJDohc6vSnTDMLHuaqeA==
 
-angular-sanitize@1.4.4:
-  version "1.4.4"
-  resolved "https://registry.yarnpkg.com/angular-sanitize/-/angular-sanitize-1.4.4.tgz#295f0899694c91aefd0f3c451bddf87e0a0b0e31"
-  integrity sha1-KV8ImWlMka79DzxFG934fgoLDjE=
+angular-sanitize@1.7.9:
+  version "1.7.9"
+  resolved "https://registry.yarnpkg.com/angular-sanitize/-/angular-sanitize-1.7.9.tgz#6b4d5e826abdabd352b13a7c65c8c74daf6a7b15"
+  integrity sha512-nB/xe7JQWF9nLvhHommAICQ3eWrfRETo0EVGFESi952CDzDa+GAJ/2BFBNw44QqQPxj1Xua/uYKrbLsOGWZdbQ==
 
 angular-ui-bootstrap@2.5.6:
   version "2.5.6"
   resolved "https://registry.yarnpkg.com/angular-ui-bootstrap/-/angular-ui-bootstrap-2.5.6.tgz#23937322ec641a6fbee16498cc32452aa199e7c5"
   integrity sha512-yzcHpPMLQl0232nDzm5P4iAFTFQ9dMw0QgFLuKYbDj9M0xJ62z0oudYD/Lvh1pWfRsukiytP4Xj6BHOSrSXP8A==
 
-angular@1.4.4:
-  version "1.4.4"
-  resolved "https://registry.yarnpkg.com/angular/-/angular-1.4.4.tgz#9ac24aa5d38802339af99fe63c64a7e9784958b8"
-  integrity sha1-msJKpdOIAjOa+Z/mPGSn6XhJWLg=
+angular@1.7.9:
+  version "1.7.9"
+  resolved "https://registry.yarnpkg.com/angular/-/angular-1.7.9.tgz#e52616e8701c17724c3c238cfe4f9446fd570bc4"
+  integrity sha512-5se7ZpcOtu0MBFlzGv5dsM1quQDoDeUTwZrWjGtTNA7O88cD8TEk5IEKCTDa3uECV9XnvKREVUr7du1ACiWGFQ==
 
 angular@1.x, angular@>=1.3.0, angular@^1.x:
   version "1.8.0"
@@ -1272,10 +1272,10 @@ datatables.net@1.10.21, datatables.net@^1.10.11:
   dependencies:
     jquery ">=1.7"
 
-datatables@1.10.9:
-  version "1.10.9"
-  resolved "https://registry.yarnpkg.com/datatables/-/datatables-1.10.9.tgz#4f12247275077e1b0243836111ec5c4603fa14f4"
-  integrity sha1-TxIkcnUHfhsCQ4NhEexcRgP6FPQ=
+datatables@1.10.12:
+  version "1.10.12"
+  resolved "https://registry.yarnpkg.com/datatables/-/datatables-1.10.12.tgz#046f537d0516ebf7007ca7f6c1cad2f2ea0c19d8"
+  integrity sha1-BG9TfQUW6/cAfKf2wcrS8uoMGdg=
   dependencies:
     jquery ">=1.7"
 
