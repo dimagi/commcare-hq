@@ -164,32 +164,33 @@ hqDefine('cloudcare/js/util', [
     };
 
     var reportFormplayerErrorToHQ = function (data) {
-        try {
-            var reverse = initialPageData.reverse;
-            var cloudcareEnv = hqRequire(["cloudcare/js/formplayer/app"]).getChannel().request('currentUser').environment;
-            if (!data.cloudcareEnv) {
-                data.cloudcareEnv = cloudcareEnv || 'unknown';
+        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
+            try {
+                var cloudcareEnv = FormplayerFrontend.getChannel().request('currentUser').environment;
+                if (!data.cloudcareEnv) {
+                    data.cloudcareEnv = cloudcareEnv || 'unknown';
+                }
+                $.ajax({
+                    type: 'POST',
+                    url: initialPageData.reverse('report_formplayer_error'),
+                    data: JSON.stringify(data),
+                    contentType: "application/json",
+                    dataType: "json",
+                    success: function () {
+                        window.console.info('Successfully reported error: ' + JSON.stringify(data));
+                    },
+                    error: function () {
+                        window.console.error('Failed to report error: ' + JSON.stringify(data));
+                    },
+                });
+            } catch (e) {
+                window.console.error(
+                    "reportFormplayerErrorToHQ failed hard and there is nowhere " +
+                    "else to report this error: " + JSON.stringify(data),
+                    e
+                );
             }
-            $.ajax({
-                type: 'POST',
-                url: reverse('report_formplayer_error'),
-                data: JSON.stringify(data),
-                contentType: "application/json",
-                dataType: "json",
-                success: function () {
-                    window.console.info('Successfully reported error: ' + JSON.stringify(data));
-                },
-                error: function () {
-                    window.console.error('Failed to report error: ' + JSON.stringify(data));
-                },
-            });
-        } catch (e) {
-            window.console.error(
-                "reportFormplayerErrorToHQ failed hard and there is nowhere " +
-                "else to report this error: " + JSON.stringify(data),
-                e
-            );
-        }
+        });
     };
 
     function chainedRenderer(matcher, transform, target) {
