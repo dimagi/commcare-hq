@@ -75,8 +75,8 @@ class Command(BaseCommand):
             dest='processor_chunk_size',
             default=DEFAULT_PROCESSOR_CHUNK_SIZE,
             type=int,
-            help="The process number of this pillow process. Should be between 0 and num-processes. "
-                 "It's expected that there will only be one process for each number running at once",
+            help="The batch size for this pillow. Some pillows process changes in bulk, "
+            "setting this value to 1 will process each change as it comes in.",
         )
 
     def handle(self, **options):
