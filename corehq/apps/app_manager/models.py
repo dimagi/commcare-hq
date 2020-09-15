@@ -2034,12 +2034,17 @@ class Detail(IndexedSchema, CaseListLookupMixin):
         return self.persist_tile_on_forms and (self.use_case_tiles or self.custom_xml)
 
     def overwrite_from_module_detail(self, src_module_detail_type, attr_dict):
-        src_module_attrs = src_module_detail_type._obj.copy()
+        """
+        This method is used to overwrite configurations present
+        in attr_dict(column, filter, and other_configurations)
+        from source module to current object.
+        """
+        src_module_attrs = list(src_module_detail_type._obj.keys())
         for k, v in attr_dict.items():
             if k != '*':
                 if v:
                     setattr(self, k, getattr(src_module_detail_type, k))
-                src_module_attrs.pop(k)
+                src_module_attrs.remove(k)
             else:
                 if not v:
                     continue
