@@ -1,4 +1,3 @@
-/* globals hqImport */
 /* eslint-env mocha */
 
 describe('Debugger', function () {
