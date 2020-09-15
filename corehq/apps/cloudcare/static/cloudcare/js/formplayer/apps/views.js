@@ -1,8 +1,10 @@
-/*global FormplayerFrontend */
+/*global Marionette */
 
-FormplayerFrontend.module("Apps.Views", function (Views, FormplayerFrontend, Backbone, Marionette) {
-    Views.GridItem = Marionette.ItemView.extend({
-        template: "#row-template",
+hqDefine("cloudcare/js/formplayer/apps/views", function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+
+    var GridItem = Marionette.View.extend({
+        template: _.template($("#row-template").html() || ""),
         tagName: "div",
         className: "grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request",
         events: {
@@ -14,16 +16,16 @@ FormplayerFrontend.module("Apps.Views", function (Views, FormplayerFrontend, Bac
             FormplayerFrontend.trigger("app:select", this.model.get('_id'));
         },
 
-        templateHelpers: function () {
+        templateContext: function () {
             var imageUri = this.options.model.get('imageUri');
             var appId = this.options.model.get('_id');
             return {
-                imageUrl: imageUri && appId ? FormplayerFrontend.request('resourceMap', imageUri, appId) : "",
+                imageUrl: imageUri && appId ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
             };
         },
     });
 
-    Views.BaseAppView = {
+    var BaseAppView = {
         events: {
             'click .js-incomplete-sessions-item': 'incompleteSessionsClick',
             'click .js-sync-item': 'syncClick',
@@ -48,16 +50,16 @@ FormplayerFrontend.module("Apps.Views", function (Views, FormplayerFrontend, Bac
         },
     };
 
-    Views.GridView = Marionette.CompositeView.extend({
-        template: "#grid-template",
-        childView: Views.GridItem,
+    var GridView = Marionette.CollectionView.extend({
+        template: _.template($("#grid-template").html() || ""),
+        childView: GridItem,
         childViewContainer: ".js-application-container",
 
-        events: _.extend(Views.BaseAppView.events),
-        incompleteSessionsClick: _.extend(Views.BaseAppView.incompleteSessionsClick),
-        syncClick: _.extend(Views.BaseAppView.syncClick),
-        onClickRestoreAs: _.extend(Views.BaseAppView.onClickRestoreAs),
-        onClickSettings: _.extend(Views.BaseAppView.onClickSettings),
+        events: _.extend(BaseAppView.events),
+        incompleteSessionsClick: _.extend(BaseAppView.incompleteSessionsClick),
+        syncClick: _.extend(BaseAppView.syncClick),
+        onClickRestoreAs: _.extend(BaseAppView.onClickRestoreAs),
+        onClickSettings: _.extend(BaseAppView.onClickSettings),
     });
 
     /**
@@ -67,28 +69,28 @@ FormplayerFrontend.module("Apps.Views", function (Views, FormplayerFrontend, Bac
      * The user doesn't need to select the application because we already have
      * that information. Used for phone previewing in the app manager
      */
-    Views.SingleAppView = Marionette.ItemView.extend({
-        template: "#single-app-template",
+    var SingleAppView = Marionette.View.extend({
+        template: _.template($("#single-app-template").html() || ""),
         className: 'single-app-view',
 
         events: _.extend({
             'click .js-start-app': 'startApp',
-        }, Views.BaseAppView.events),
-        incompleteSessionsClick: _.extend(Views.BaseAppView.incompleteSessionsClick),
-        syncClick: _.extend(Views.BaseAppView.syncClick),
-        onClickRestoreAs: _.extend(Views.BaseAppView.onClickRestoreAs),
-        onClickSettings: _.extend(Views.BaseAppView.onClickSettings),
+        }, BaseAppView.events),
+        incompleteSessionsClick: _.extend(BaseAppView.incompleteSessionsClick),
+        syncClick: _.extend(BaseAppView.syncClick),
+        onClickRestoreAs: _.extend(BaseAppView.onClickRestoreAs),
+        onClickSettings: _.extend(BaseAppView.onClickSettings),
 
         initialize: function (options) {
             this.appId = options.appId;
         },
-        templateHelpers: function () {
-            var currentApp = FormplayerFrontend.request("appselect:getApp", this.appId),
+        templateContext: function () {
+            var currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", this.appId),
                 appName;
             appName = currentApp.get('name');
             return {
                 showIncompleteForms: function () {
-                    return FormplayerFrontend
+                    return FormplayerFrontend.getChannel()
                         .request('getAppDisplayProperties')['cc-show-incomplete'] === 'yes';
                 },
                 appName: appName,
@@ -102,28 +104,28 @@ FormplayerFrontend.module("Apps.Views", function (Views, FormplayerFrontend, Bac
         },
     });
 
-    Views.LandingPageAppView = Marionette.ItemView.extend({
-        template: "#landing-page-app-template",
+    var LandingPageAppView = Marionette.View.extend({
+        template: _.template($("#landing-page-app-template").html() || ""),
         className: 'landing-page-app-view',
 
         events: _.extend({
             'click .js-start-app': 'startApp',
-        }, Views.BaseAppView.events),
-        incompleteSessionsClick: _.extend(Views.BaseAppView.incompleteSessionsClick),
-        syncClick: _.extend(Views.BaseAppView.syncClick),
-        onClickRestoreAs: _.extend(Views.BaseAppView.onClickRestoreAs),
-        onClickSettings: _.extend(Views.BaseAppView.onClickSettings),
+        }, BaseAppView.events),
+        incompleteSessionsClick: _.extend(BaseAppView.incompleteSessionsClick),
+        syncClick: _.extend(BaseAppView.syncClick),
+        onClickRestoreAs: _.extend(BaseAppView.onClickRestoreAs),
+        onClickSettings: _.extend(BaseAppView.onClickSettings),
 
         initialize: function (options) {
             this.appId = options.appId;
         },
-        templateHelpers: function () {
-            var currentApp = FormplayerFrontend.request("appselect:getApp", this.appId),
+        templateContext: function () {
+            var currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", this.appId),
                 appName = currentApp.get('name'),
                 imageUri = currentApp.get('imageUri');
             return {
                 appName: appName,
-                imageUrl: imageUri && this.appId ? FormplayerFrontend.request('resourceMap', imageUri, this.appId) : "",
+                imageUrl: imageUri && this.appId ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, this.appId) : "",
             };
         },
         startApp: function () {
@@ -131,5 +133,15 @@ FormplayerFrontend.module("Apps.Views", function (Views, FormplayerFrontend, Bac
         },
     });
 
-})
-;
+    return {
+        GridView: function (options) {
+            return new GridView(options);
+        },
+        SingleAppView: function (options) {
+            return new SingleAppView(options);
+        },
+        LandingPageAppView: function (options) {
+            return new LandingPageAppView(options);
+        },
+    };
+});
