@@ -2033,6 +2033,21 @@ class Detail(IndexedSchema, CaseListLookupMixin):
         """
         return self.persist_tile_on_forms and (self.use_case_tiles or self.custom_xml)
 
+    def overwrite_from_module_detail(self, src_module_detail_type, attr_dict):
+        src_module_attrs = src_module_detail_type._obj.copy()
+        for k, v in attr_dict.items():
+            if k != '*':
+                if v:
+                    setattr(self, k, getattr(src_module_detail_type, k))
+                src_module_attrs.pop(k)
+            else:
+                if not v:
+                    continue
+                for a in src_module_attrs:
+                    if a.startswith('__') or a.startswith('_'):
+                        continue
+                    setattr(self, a, getattr(src_module_detail_type, a))
+
 
 class CaseList(IndexedSchema, NavMenuItemMediaMixin):
 
