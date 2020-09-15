@@ -376,6 +376,12 @@ function Group(json, parent) {
         }
     };
 
+    self.required = ko.computed(function () {
+        return _.find(self.children(), function (child) {
+            return child.required();
+        });
+    });
+
     self.hasError = ko.computed(function () {
         return _.find(self.children(), function (child) {
             return child.hasError();
