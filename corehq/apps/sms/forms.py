@@ -21,8 +21,6 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.django.fields import TrimmedCharField
 
 from corehq import toggles
-from corehq.apps.app_manager.dbaccessors import get_built_app_ids
-from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import DayTimeWindow
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp import crispy as hqcrispy
