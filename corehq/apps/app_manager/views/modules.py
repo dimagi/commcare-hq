@@ -791,7 +791,7 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
         for err in error_list:
             messages.error(
                 request,
-                _(err)
+                err
             )
         return back_to_main(request, domain, app_id=app_id, module_unique_id=module_unique_id)
 
