@@ -603,24 +603,40 @@ class DomainPermissionsMirrorView(BaseUserSettingsView):
             'mirrors': sorted(DomainPermissionsMirror.mirror_domains(self.domain)),
         }
 
-@domain_admin_required
+
+@require_superuser
 @require_POST
-def delete_mirror(request, domain, mirror):
-    mirror_obj_set = DomainPermissionsMirror.objects.filter(source=domain, mirror=mirror)
-    if mirror_obj_set[0]:
-        mirror_obj_set[0].delete()
+def delete_domain_permission_mirror(request, domain, mirror):
+    mirror_obj = DomainPermissionsMirror.objects.filter(source=domain, mirror=mirror).first()
+    if mirror_obj:
+        mirror_obj.delete()
+        message = _('You have successfully deleted the project space "{mirror}".')
+        messages.success(request, message.format(mirror=mirror))
+    else:
+        message = _('An error occurred while trying to delete the project space.')
+        messages.error(request, message.format())
     redirect = reverse(DomainPermissionsMirrorView.urlname, args=[domain])
     return HttpResponseRedirect(redirect)
 
 
-@domain_admin_required
+@require_superuser
 @require_POST
-def create_new_mirror(request, domain):
+def create_domain_permission_mirror(request, domain):
     form = CreateDomainPermissionsMirrorForm(request.POST)
     if form.is_valid():
-        mirror_domain = form.cleaned_data.get("mirror_domain")
-        mirror = DomainPermissionsMirror(source=domain, mirror=mirror_domain)
-        mirror.save()
+        mirror_domain_name = form.cleaned_data.get("mirror_domain")
+        mirror_domain = Domain.get_by_name(form.cleaned_data.get("mirror_domain"))
+        if mirror_domain is not None:
+            mirror = DomainPermissionsMirror(source=domain, mirror=mirror_domain_name)
+            mirror.save()
+            message = _('You have successfully added the project space "{mirror_domain_name}".')
+            messages.success(request, message.format(mirror_domain_name=mirror_domain_name))
+        else:
+            message = _('Please enter a valid project space.')
+            messages.error(request, message.format())
+    else:
+        message = _('An error occurred while trying to add the project space.')
+        messages.error(request, message.format())
     redirect = reverse(DomainPermissionsMirrorView.urlname, args=[domain])
     return HttpResponseRedirect(redirect)
 

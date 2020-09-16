@@ -1325,4 +1325,4 @@ class CommCareUserFilterForm(forms.Form):
 
 
 class CreateDomainPermissionsMirrorForm(forms.Form):
-    mirror_domain = forms.CharField(label=ugettext_lazy('Mirror'), max_length=30, required=True)
+    mirror_domain = forms.CharField(label=ugettext_lazy('Project Space'), max_length=30, required=True)
