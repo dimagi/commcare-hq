@@ -1,5 +1,6 @@
 from datetime import datetime
 from lxml import etree
+import re
 
 import iso8601
 import pytz
@@ -29,6 +30,30 @@ SIMPLE_FORM = """<?xml version='1.0' ?>
     </n1:meta>
     {case_block}
 </data>"""
+
+
+# this is like jsonobject.api.re_datetime,
+# but without the "time" or timezone parts being optional
+# i.e. I just removed (...)? surrounding the second two lines and the last line
+# This is used to in our form processor so we detect what strings are datetimes.
+RE_DATETIME_MATCH = re.compile(r"""
+    ^
+    (\d{4})  # year
+    \D?
+    (0[1-9]|1[0-2])  # month
+    \D?
+    ([12]\d|0[1-9]|3[01])  # day
+    [ T]
+    ([01]\d|2[0-3])  # hour
+    \D?
+    ([0-5]\d)  # minute
+    \D?
+    ([0-5]\d)?  # second
+    \D?
+    (\d{3,6})?  # millisecond
+    ([zZ]|([\+-])([01]\d|2[0-3])\D?([0-5]\d)?)  # timezone
+    $
+""", re.VERBOSE)
 
 
 class TestFormMetadata(jsonobject.JsonObject):
@@ -197,7 +222,7 @@ def adjust_datetimes(data, parent=None, key=None, process_timezones=None):
     process_timezones = process_timezones or phone_timezones_should_be_processed()
     # this strips the timezone like we've always done
     # todo: in the future this will convert to UTC
-    if isinstance(data, str) and jsonobject.re_loose_datetime.match(data):
+    if isinstance(data, str) and RE_DATETIME_MATCH.match(data):
         try:
             parent[key] = str(json_format_datetime(
                 adjust_text_to_datetime(data, process_timezones=process_timezones)
