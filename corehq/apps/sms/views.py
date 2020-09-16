@@ -94,7 +94,6 @@ from corehq.apps.sms.forms import (
     BackendMapForm,
     ComposeMessageForm,
     InitiateAddSMSBackendForm,
-    SendRegistrationInvitationsForm,
     SettingsForm,
     SubscribeSMSForm,
 )
