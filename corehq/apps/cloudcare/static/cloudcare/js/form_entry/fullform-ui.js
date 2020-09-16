@@ -276,10 +276,6 @@ function Form(json) {
 
     self.forceRequiredVisible = ko.observable(false);
 
-    self.showRequiredNotice = ko.computed(function () {
-        return !self.isCurrentRequiredSatisfied() && self.forceRequiredVisible();
-    });
-
     self.clickedNextOnRequired = function () {
         self.forceRequiredVisible(true);
     };
@@ -376,6 +372,18 @@ function Group(json, parent) {
             self.showChildren(!self.showChildren());
         }
     };
+
+    self.required = ko.computed(function () {
+        return _.find(self.children(), function (child) {
+            return child.required();
+        });
+    });
+
+    self.hasError = ko.computed(function () {
+        return _.find(self.children(), function (child) {
+            return child.hasError();
+        });
+    });
 
     if (self.isRepetition) {
         // If the group is part of a repetition the index can change if the user adds or deletes
