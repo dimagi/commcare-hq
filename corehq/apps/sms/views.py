@@ -188,16 +188,6 @@ class BaseMessagingSectionView(BaseDomainView):
         return reverse("sms_default", args=[self.domain])
 
 
-class BaseAdvancedMessagingSectionView(BaseMessagingSectionView):
-    """
-    Just like BaseMessagingSectionView, only requires access to inbound SMS
-    as well.
-    """
-    @method_decorator(requires_privilege_with_fallback(privileges.INBOUND_SMS))
-    def dispatch(self, *args, **kwargs):
-        return super(BaseAdvancedMessagingSectionView, self).dispatch(*args, **kwargs)
-
-
 class ComposeMessageView(BaseMessagingSectionView):
     template_name = 'sms/compose.html'
     urlname = 'sms_compose_message'
