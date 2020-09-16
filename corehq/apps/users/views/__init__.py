@@ -613,8 +613,8 @@ def delete_domain_permission_mirror(request, domain, mirror):
         message = _('You have successfully deleted the project space "{mirror}".')
         messages.success(request, message.format(mirror=mirror))
     else:
-        message = _('An error occurred while trying to delete the project space.')
-        messages.error(request, message.format())
+        message = _('The project space you are trying to delete was not found.')
+        messages.error(request, message)
     redirect = reverse(DomainPermissionsMirrorView.urlname, args=[domain])
     return HttpResponseRedirect(redirect)
 
