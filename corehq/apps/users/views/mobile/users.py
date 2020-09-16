@@ -115,7 +115,6 @@ from corehq.apps.users.views import (
     get_domain_languages,
 )
 from corehq.const import (
-    GOOGLE_PLAY_STORE_COMMCARE_URL,
     USER_CHANGE_VIA_BULK_IMPORTER,
     USER_CHANGE_VIA_WEB,
     USER_DATE_FORMAT,

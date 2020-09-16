@@ -34,7 +34,6 @@ from corehq.apps.sms.mixin import (
     apply_leniency,
 )
 from corehq.apps.users.models import CouchUser
-from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.mixin import UUIDGeneratorMixin
 from corehq.util.quickcache import quickcache
