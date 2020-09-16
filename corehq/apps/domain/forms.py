@@ -318,7 +318,7 @@ class DomainGlobalSettingsForm(forms.Form):
 
     default_geocoder_location = Field(
         widget=GeoCoderInput(attrs={'placeholder': ugettext_lazy('Select a location')}),
-        label=ugettext_noop("Default geocoder location"),
+        label=ugettext_noop("Default project location"),
         required=False,
         help_text=ugettext_lazy("Please select your project's default location.")
     )
@@ -537,6 +537,9 @@ class DomainMetadataForm(DomainGlobalSettingsForm):
             # if the cloudcare_releases flag was just defaulted, don't bother showing
             # this setting at all
             del self.fields['cloudcare_releases']
+        if self.project.default_geocoder_location == 'default' \
+                or not domain_has_privilege(self.domain, privileges.CLOUDCARE):
+            del self.fields['default_geocoder_location']
 
     def save(self, request, domain):
         res = DomainGlobalSettingsForm.save(self, request, domain)
