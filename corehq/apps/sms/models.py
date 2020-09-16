@@ -1629,11 +1629,7 @@ class SelfRegistrationInvitation(models.Model):
         )
 
     def get_user_registration_url(self):
-        from corehq.apps.users.views.mobile.users import CommCareUserSelfRegistrationView
-        return absolute_reverse(
-            CommCareUserSelfRegistrationView.urlname,
-            args=[self.domain, self.token]
-        )
+        return ''
 
     @classmethod
     def get_app_info_url(cls, domain, app_id):
