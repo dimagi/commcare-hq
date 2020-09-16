@@ -19,17 +19,8 @@ from dimagi.utils.couch import CriticalSection
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms import util as smsutil
-from corehq.apps.sms.messages import (
-    MSG_MOBILE_WORKER_ANDROID_INVITATION,
-    MSG_MOBILE_WORKER_INVITATION_START,
-    MSG_MOBILE_WORKER_JAVA_INVITATION,
-    MSG_REGISTRATION_INSTALL_COMMCARE,
-    get_message,
-)
 from corehq.apps.sms.mixin import (
     BadSMSConfigException,
-    CommCareMobileContactMixin,
-    InvalidFormatException,
     PhoneNumberInUseException,
     apply_leniency,
 )

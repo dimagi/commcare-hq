@@ -16,18 +16,9 @@ from corehq.apps.accounting.models import (
 from corehq.apps.domain.calculations import num_mobile_users
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import incoming
-from corehq.apps.sms.messages import (
-    _MESSAGES,
-    MSG_MOBILE_WORKER_ANDROID_INVITATION,
-    MSG_MOBILE_WORKER_INVITATION_START,
-    MSG_MOBILE_WORKER_JAVA_INVITATION,
-    MSG_REGISTRATION_INSTALL_COMMCARE,
-    MSG_REGISTRATION_WELCOME_MOBILE_WORKER,
-)
 from corehq.apps.sms.models import (
     OUTGOING,
     SMS,
-    PhoneNumber,
     SQLMobileBackendMapping,
 )
 from corehq.apps.sms.tests.util import BaseSMSTest, delete_domain_phone_numbers
