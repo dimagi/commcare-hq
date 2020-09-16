@@ -105,12 +105,10 @@ from corehq.apps.sms.models import (
     MessagingEvent,
     PhoneLoadBalancingMixin,
     PhoneNumber,
-    SelfRegistrationInvitation,
     SQLLastReadMessage,
     SQLMobileBackend,
     SQLMobileBackendMapping,
 )
-from corehq.apps.sms.resources.v0_5 import SelfRegistrationUserInfo
 from corehq.apps.sms.util import (
     ContactNotFoundException,
     get_contact,

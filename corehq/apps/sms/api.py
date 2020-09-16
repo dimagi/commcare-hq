@@ -32,7 +32,6 @@ from corehq.apps.sms.models import (
     PhoneBlacklist,
     PhoneNumber,
     QueuedSMS,
-    SelfRegistrationInvitation,
     SQLMobileBackend,
     SQLSMSBackend,
 )
@@ -465,11 +464,6 @@ def process_sms_registration(msg):
                         username = cleaned_phone_number
                     try:
                         user_data = {}
-
-                        invitation = SelfRegistrationInvitation.by_phone(msg.phone_number)
-                        if invitation:
-                            invitation.completed()
-                            user_data = invitation.custom_user_data
 
                         username = process_username(username, domain_obj)
                         password = random_password()
