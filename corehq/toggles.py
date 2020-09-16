@@ -1140,14 +1140,6 @@ ENABLE_INCLUDE_SMS_GATEWAY_CHARGING = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-MOBILE_WORKER_SELF_REGISTRATION = StaticToggle(
-    'mobile_worker_self_registration',
-    'UW: Allow mobile workers to self register. Only works in CommCare 2.44 and lower.',
-    TAG_DEPRECATED,
-    help_link='https://confluence.dimagi.com/display/commcarepublic/SMS+Self+Registration',
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 MESSAGE_LOG_METADATA = StaticToggle(
     'message_log_metadata',
     'Include message id in Message Log export.',
