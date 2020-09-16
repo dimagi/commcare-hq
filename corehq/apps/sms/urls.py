@@ -12,7 +12,6 @@ from corehq.apps.sms.views import (
     EditGlobalGatewayView,
     GlobalBackendMap,
     GlobalSmsGatewayListView,
-    InvitationAppInfoView,
     SMSLanguagesView,
     SMSSettingsView,
     SubscribeSMSView,
@@ -57,8 +56,6 @@ urlpatterns = [
     url(r'^languages/edit/$', edit_sms_languages, name='edit_sms_languages'),
     url(r'^translations/download/$', download_sms_translations, name='download_sms_translations'),
     url(r'^translations/upload/$', upload_sms_translations, name='upload_sms_translations'),
-    url(r'^app_info/(?P<app_id>[\w-]+)/$', InvitationAppInfoView.as_view(),
-        name=InvitationAppInfoView.urlname),
     url(r'^telerivet/', include(telerivet_urls)),
     url(r'^whatsapp_templates/$', WhatsAppTemplatesView.as_view(), name=WhatsAppTemplatesView.urlname),
 ]

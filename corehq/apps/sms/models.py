@@ -1637,11 +1637,7 @@ class SelfRegistrationInvitation(models.Model):
 
     @classmethod
     def get_app_info_url(cls, domain, app_id):
-        from corehq.apps.sms.views import InvitationAppInfoView
-        return absolute_reverse(
-            InvitationAppInfoView.urlname,
-            args=[domain, app_id]
-        )
+        return ''
 
     @classmethod
     def get_sms_install_link(cls, domain, app_id):

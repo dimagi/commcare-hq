@@ -67,8 +67,7 @@ from corehq.apps.hqwebapp.decorators import (
     use_timepicker,
     use_typeahead,
 )
-from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
-from corehq.apps.hqwebapp.utils import get_bulk_upload_form, sign
+from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.reminders.util import get_two_way_number_for_recipient
 from corehq.apps.sms.api import (
@@ -1916,41 +1915,6 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
     @use_timepicker
     def dispatch(self, request, *args, **kwargs):
         return super(SMSSettingsView, self).dispatch(request, *args, **kwargs)
-
-
-class InvitationAppInfoView(View, DomainViewMixin):
-    """
-    This view is accessed by CommCare automatically by logged-out users during
-    installation of an app in the mobile worker self-registration workflow.
-    """
-    urlname = 'sms_registration_invitation_app_info'
-
-    @property
-    @memoized
-    def app_id(self):
-        app_id = self.kwargs.get('app_id')
-        if not app_id:
-            raise Http404()
-        return app_id
-
-    @property
-    @memoized
-    def odk_url(self):
-        try:
-            odk_url = SelfRegistrationInvitation.get_app_odk_url(self.domain, self.app_id)
-        except Http404:
-            odk_url = None
-
-        if odk_url:
-            return odk_url
-
-        raise Http404()
-
-    def get(self, *args, **kwargs):
-        url = bytes(self.odk_url).strip()
-        response = b'ccapp: %s signature: %s' % (url, sign(url))
-        response = base64.b64encode(response)
-        return HttpResponse(response)
 
 
 class IncomingBackendView(View):
