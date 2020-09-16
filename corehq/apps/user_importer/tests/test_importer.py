@@ -123,7 +123,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             mock.MagicMock()
         )
         self.assertEqual(self.user.location_id, self.loc1._id)
-        self.assertEqual(self.user.location_id, self.user.metadata.get('commcare_location_id'))
+        self.assertEqual(self.user.location_id, self.user.user_session_data.get('commcare_location_id'))
         # multiple locations
         self.assertListEqual([self.loc1._id], self.user.assigned_location_ids)
 
@@ -152,11 +152,11 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         # first location should be primary location
         self.assertEqual(self.user.location_id, self.loc1._id)
-        self.assertEqual(self.user.location_id, self.user.metadata.get('commcare_location_id'))
+        self.assertEqual(self.user.location_id, self.user.user_session_data.get('commcare_location_id'))
         # multiple locations
         self.assertListEqual([l._id for l in [self.loc1, self.loc2]], self.user.assigned_location_ids)
         # non-primary location
-        self.assertTrue(self.loc2._id in self.user.metadata.get('commcare_location_ids'))
+        self.assertTrue(self.loc2._id in self.user.user_session_data.get('commcare_location_ids'))
 
     @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def test_location_remove(self):
@@ -181,7 +181,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
         # user should have no locations
         self.assertEqual(self.user.location_id, None)
-        self.assertEqual(self.user.metadata.get('commcare_location_id'), None)
+        self.assertEqual(self.user.user_session_data.get('commcare_location_id'), None)
         self.assertListEqual(self.user.assigned_location_ids, [])
 
     @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
@@ -196,8 +196,11 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
         # user's primary location should be loc1
         self.assertEqual(self.user.location_id, self.loc1._id)
-        self.assertEqual(self.user.metadata.get('commcare_location_id'), self.loc1._id)
-        self.assertEqual(self.user.metadata.get('commcare_location_ids'), " ".join([self.loc1._id, self.loc2._id]))
+        self.assertEqual(self.user.user_session_data.get('commcare_location_id'), self.loc1._id)
+        self.assertEqual(
+            self.user.user_session_data.get('commcare_location_ids'),
+            " ".join([self.loc1._id, self.loc2._id])
+        )
         self.assertListEqual(self.user.assigned_location_ids, [self.loc1._id, self.loc2._id])
 
         # reassign to loc2
@@ -209,8 +212,8 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
         # user's location should now be loc2
         self.assertEqual(self.user.location_id, self.loc2._id)
-        self.assertEqual(self.user.metadata.get('commcare_location_ids'), self.loc2._id)
-        self.assertEqual(self.user.metadata.get('commcare_location_id'), self.loc2._id)
+        self.assertEqual(self.user.user_session_data.get('commcare_location_ids'), self.loc2._id)
+        self.assertEqual(self.user.user_session_data.get('commcare_location_id'), self.loc2._id)
         self.assertListEqual(self.user.assigned_location_ids, [self.loc2._id])
 
     @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
@@ -233,7 +236,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
         # user's location should now be loc2
         self.assertEqual(self.user.location_id, self.loc2._id)
-        self.assertEqual(self.user.metadata.get('commcare_location_id'), self.loc2._id)
+        self.assertEqual(self.user.user_session_data.get('commcare_location_id'), self.loc2._id)
         self.assertListEqual(self.user.assigned_location_ids, [self.loc2._id])
 
     def setup_locations(self):
