@@ -412,6 +412,15 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
             ("Content-Type", "application/vnd.ms-excel"),
         )
 
+    def test_unsupported_request_methods(self):
+        """Test sending requests by unsupported HTTP methods to the view."""
+        unsupported_methods = ["POST", "PUT", "PATCH", "DELETE"]
+        for method_name in unsupported_methods:
+            with self.subTest(method_name=method_name):
+                request_method = getattr(self.client, method_name.lower())
+                response = request_method(self.url)
+                self.assertEqual(response.status_code, 405)
+
     def test_correct_credentials(self):
         """Sending valid or invalid username & password does not succeed."""
         with self.subTest("Valid credentials"):
