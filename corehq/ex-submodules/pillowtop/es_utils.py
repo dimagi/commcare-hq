@@ -136,12 +136,6 @@ def set_index_normal_settings(es, index):
     return ElasticsearchInterface(es).update_index_settings(index, INDEX_STANDARD_SETTINGS)
 
 
-def create_index_and_set_settings_normal(es, index, metadata=None):
-    metadata = metadata or {}
-    es.indices.create(index=index, body=metadata)
-    set_index_normal_settings(es, index)
-
-
 def initialize_index_and_mapping(es, index_info):
     index_exists = es.indices.exists(index_info.index)
     if not index_exists:
@@ -151,7 +145,9 @@ def initialize_index_and_mapping(es, index_info):
 
 
 def initialize_index(es, index_info):
-    return create_index_and_set_settings_normal(es, index_info.index, index_info.meta)
+    index = index_info.index
+    es.indices.create(index=index, body=index_info.meta)
+    set_index_normal_settings(es, index)
 
 
 def mapping_exists(es, index_info):
