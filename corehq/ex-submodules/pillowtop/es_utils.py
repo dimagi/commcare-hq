@@ -146,7 +146,9 @@ def initialize_index_and_mapping(es, index_info):
 
 def initialize_index(es, index_info):
     index = index_info.index
-    mapping = transform_for_es7(index_info.mapping)
+    mapping = index_info.mapping
+    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+        mapping = transform_for_es7(mapping)
     mapping['_meta']['created'] = datetime.isoformat(datetime.utcnow())
     meta = index_info.meta
     meta.update({'mappings': mapping})
