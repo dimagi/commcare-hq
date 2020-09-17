@@ -840,10 +840,10 @@ def _validate_overwrite_request(request, detail_type, dest_modules, attrs_dict):
     error_list = []
 
     if not dest_modules:
-        error_list.append("Please choose at least one menu to overwrite.")
+        error_list.append(_("Please choose at least one menu to overwrite."))
     if detail_type == 'short':
         if not any(attrs_dict.values()):
-            error_list.append("Please choose at least one option to overwrite.")
+            error_list.append(_("Please choose at least one option to overwrite."))
     return error_list
 
 
