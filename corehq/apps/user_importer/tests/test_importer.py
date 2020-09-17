@@ -291,7 +291,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             'commcare_project': 'mydomain',
             'commcare_location_id': self.loc1.location_id,
             'commcare_location_ids': self.loc1.location_id,
-            'commcare_primary_case_sharing_id': self.loc1.group_id,
+            'commcare_primary_case_sharing_id': self.loc1.location_id,
             'key': 'F#',
         })
 
@@ -307,7 +307,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             'key': 'G#',
             'commcare_location_id': self.loc1.location_id,
             'commcare_location_ids': self.loc1.location_id,
-            'commcare_primary_case_sharing_id': self.loc1.group_id,
+            'commcare_primary_case_sharing_id': self.loc1.location_id,
         })
 
     def test_metadata_profile(self):
