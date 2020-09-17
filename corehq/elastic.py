@@ -110,15 +110,10 @@ def get_es_instance(es_instance_alias=ES_DEFAULT_INSTANCE):
     return ES_INSTANCES[es_instance_alias]()
 
 
-def doc_exists_in_es(index_info, doc_id_or_dict):
+def doc_exists_in_es(index_info, doc_id):
     """
-    Check if a document exists, by ID or the whole document.
+    Check if a document exists
     """
-    if isinstance(doc_id_or_dict, str):
-        doc_id = doc_id_or_dict
-    else:
-        assert isinstance(doc_id_or_dict, dict)
-        doc_id = doc_id_or_dict['_id']
     return ElasticsearchInterface(get_es_new()).doc_exists(index_info.alias, doc_id, index_info.type)
 
 
