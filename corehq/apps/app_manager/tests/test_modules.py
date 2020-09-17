@@ -152,3 +152,65 @@ class ReportModuleTests(SimpleTestCase):
             purge_report_from_mobile_ucr(report_config)
 
         self.assertEqual(len(app.modules[0].report_configs), 1)
+
+
+class OverwriteModuleDetailTests(SimpleTestCase):
+ 
+    def setUp(self):
+        self.attrs_dict1 = {
+        'columns': True, 
+        'filter': True,
+        '*': True
+        }
+        self.attrs_dict2 = {
+        'columns': True,  
+        'filter': True,
+        '*': False
+        }
+        self.attrs_dict3 = {
+        'columns': False, 
+        'filter': False,
+        '*': True
+        }
+
+        self.app = Application.new_app('domain', "Untitled Application")
+        self.src_module = self.app.add_module(Module.new_module('Src Module', lang='en'))
+        self.src_module_detail_type = getattr(self.src_module.case_details, "short")
+        self.header_ = getattr(self.src_module_detail_type.columns[0],'header')
+        self.header_['en'] = 'status'
+        self.filter_ = setattr(self.src_module_detail_type,'filter', 'a > b')
+        self.lookup_enabled = setattr(self.src_module_detail_type,'lookup_enabled', True)
+    
+    def test_overwrite_all(self):
+        dest_module = self.app.add_module(Module.new_module('Dest Module', lang='en'))
+        dest_module_detail_type = getattr(dest_module.case_details, "short")
+        dest_module_detail_type.overwrite_from_module_detail(self.src_module_detail_type, self.attrs_dict1)
+        self.assertEqual(self.src_module_detail_type._obj, dest_module_detail_type._obj)
+
+    def test_overwrite_filter_column(self):
+        dest_module = self.app.add_module(Module.new_module('Dest Module', lang='en'))
+        dest_module_detail_type = getattr(dest_module.case_details, "short")
+        dest_module_detail_type.overwrite_from_module_detail(self.src_module_detail_type, self.attrs_dict2)
+    
+        self.assertEqual(self.src_module_detail_type.columns, dest_module_detail_type.columns)
+        self.assertEqual(self.src_module_detail_type.filter, dest_module_detail_type.filter)
+        self.remove_attrs(dest_module_detail_type)
+        self.assertNotEqual(self.src_module_detail_type._obj, dest_module_detail_type._obj)
+
+    
+    def test_overwrite_other_configs(self):
+        dest_module = self.app.add_module(Module.new_module('Dest Module', lang='en'))
+        dest_module_detail_type = getattr(dest_module.case_details, "short")
+        dest_module_detail_type.overwrite_from_module_detail(self.src_module_detail_type, self.attrs_dict3)
+        
+        self.assertNotEqual(str(self.src_module_detail_type.columns), str(dest_module_detail_type.columns))
+        self.assertNotEqual(self.src_module_detail_type.filter, dest_module_detail_type.filter)
+        self.remove_attrs(dest_module_detail_type)
+        self.assertEqual(self.src_module_detail_type._obj, dest_module_detail_type._obj)
+
+    
+    def remove_attrs(self, dest_module_detail_type):
+        delattr(self.src_module_detail_type, 'filter')
+        delattr(self.src_module_detail_type, 'columns')
+        delattr(dest_module_detail_type, 'filter')
+        delattr(dest_module_detail_type, 'columns')
