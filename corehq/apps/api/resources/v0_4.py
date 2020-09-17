@@ -49,7 +49,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_all_built_app_results,
     get_apps_in_domain,
 )
-from corehq.apps.app_manager.models import Application, RemoteApp
+from corehq.apps.app_manager.models import Application, RemoteApp, LinkedApplication
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CouchUser, Permissions
 from corehq.apps.users.util import format_username
@@ -375,7 +375,9 @@ class BaseApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecific
         return get_apps_in_domain(domain, include_remote=False)
 
     def obj_get(self, bundle, **kwargs):
-        return get_object_or_not_exist(Application, kwargs['pk'], kwargs['domain'])
+        # support returning linked applications upon receiving an application request
+        return get_object_or_not_exist(Application, kwargs['pk'], kwargs['domain'],
+                                       additional_doc_types=[LinkedApplication._doc_type])
 
     class Meta(CustomResourceMeta):
         authentication = LoginAndDomainAuthentication()
@@ -457,7 +459,8 @@ class ApplicationResource(BaseApplicationResource):
     def dehydrate_modules(self, bundle):
         app = bundle.obj
 
-        if app.doc_type == Application._doc_type:
+        # support returning linked applications upon receiving an application list request
+        if app.doc_type == Application._doc_type or app.doc_type == LinkedApplication._doc_type:
             return [self.dehydrate_module(app, module, app.langs) for module in bundle.obj.modules]
         elif app.doc_type == RemoteApp._doc_type:
             return []
