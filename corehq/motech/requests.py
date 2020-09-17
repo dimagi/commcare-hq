@@ -3,6 +3,7 @@ from functools import wraps
 from typing import Callable, Optional
 
 from django.conf import settings
+from django.utils.translation import gettext as _
 
 import attr
 from requests.structures import CaseInsensitiveDict
@@ -18,6 +19,7 @@ from corehq.motech.utils import (
     pformat_json,
     unpack_request_args,
 )
+from corehq.util.view_utils import absolute_reverse
 
 
 @attr.s(frozen=True)
@@ -170,19 +172,36 @@ class Requests(object):
         notify_exception(None, message, details)
 
     def notify_error(self, message, details=None):
+        from corehq.motech.views import ConnectionSettingsListView
+
         if not self.notify_addresses:
             return
         message_lines = [
             message,
-            f'Project space: {self.domain_name}',
-            f'Remote API base URL: {self.base_url}',
+            '',
+            _('Project space: {}').format(self.domain_name),
+            _('Remote API base URL: {}').format(self.base_url),
         ]
         if self.payload_id:
-            message_lines.append(f'Payload ID: {self.payload_id}')
+            message_lines.append(_('Payload ID: {}').format(self.payload_id))
         if details:
-            message_lines.extend(['', '', details])
+            message_lines.extend(['', details])
+        connection_settings_url = absolute_reverse(
+            ConnectionSettingsListView.urlname, args=[self.domain_name])
+        message_lines.extend([
+            '',
+            _('*Why am I getting this email?*'),
+            _('This address is configured in CommCare HQ as a notification '
+              'address for integration errors.'),
+            '',
+            _('*How do I unsubscribe?*'),
+            _('Open Connection Settings in CommCare HQ ({}) and remove your '
+              'email address from the "Addresses to send notifications" field '
+              'for remote connections. If necessary, please provide an '
+              'alternate address.').format(connection_settings_url),
+        ])
         send_mail_async.delay(
-            'MOTECH Error',
+            _('MOTECH Error'),
             '\r\n'.join(message_lines),
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=self.notify_addresses,
@@ -232,10 +251,14 @@ def simple_post(domain, url, data, *, headers, auth_manager, verify,
     default_headers.update(headers)
     requests = Requests(
         domain,
-        base_url=None,
+        base_url=url,
         verify=verify,
         auth_manager=auth_manager,
         notify_addresses=notify_addresses,
         payload_id=payload_id,
     )
-    return requests.post(url, data=data, headers=default_headers)
+    try:
+        return requests.post(None, data=data, headers=default_headers)
+    except Exception as err:
+        requests.notify_error(str(err))
+        raise
