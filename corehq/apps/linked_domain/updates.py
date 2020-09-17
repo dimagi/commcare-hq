@@ -15,6 +15,9 @@ from corehq.apps.data_dictionary.models import (
     CaseType,
     CaseProperty
 )
+from corehq.apps.integration.models import (
+    DialerSettings
+)
 from corehq.apps.fixtures.dbaccessors import (
     delete_fixture_items_for_data_type,
     get_fixture_data_type_by_tag,
@@ -282,7 +285,14 @@ def update_dialer_settings(domain_link):
     else:
         master_results = local_get_dialer_settings(domain_link.master_domain)
 
-    # TODO: copy fixture types and data
+    DialerSettings.objects.filter(domain=domain_link.linked_domain).delete()
+
+    dialer_settings_obj = DialerSettings.get_or_create(domain_link.linked_domain)
+    dialer_settings_obj.aws_instance_id = master_results['aws_instance_id']
+    dialer_settings_obj.is_enabled = master_results['is_enabled']
+    dialer_settings_obj.dialer_page_header = master_results['dialer_page_header']
+    dialer_settings_obj.dialer_page_subheader = master_results['dialer_page_subheader']
+    dialer_settings_obj.save()
 
 
 def _convert_reports_permissions(domain_link, master_results):
