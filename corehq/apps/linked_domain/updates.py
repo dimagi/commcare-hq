@@ -32,6 +32,7 @@ from corehq.apps.linked_domain.const import (
     MODEL_REPORT,
     MODEL_ROLES,
     MODEL_DATA_DICTIONARY,
+    MODEL_DIALER_SETTINGS,
 )
 from corehq.apps.linked_domain.exceptions import UnsupportedActionError
 from corehq.apps.linked_domain.local_accessors import \
@@ -83,6 +84,7 @@ def update_model_type(domain_link, model_type, model_detail=None):
         MODEL_CASE_SEARCH: update_case_search_config,
         MODEL_REPORT: update_linked_ucr,
         MODEL_DATA_DICTIONARY: update_data_dictionary,
+        MODEL_DIALER_SETTINGS: update_dialer_settings,
     }.get(model_type)
 
     kwargs = model_detail or {}

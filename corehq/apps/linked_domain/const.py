@@ -10,6 +10,7 @@ MODEL_CASE_SEARCH = 'case_search_data'
 MODEL_APP = 'app'
 MODEL_REPORT = 'report'
 MODEL_DATA_DICTIONARY = 'data_dictionary'
+MODEL_DIALER_SETTINGS = 'dialer_settings'
 
 LINKED_MODELS = [
     (MODEL_APP, ugettext_lazy('Application')),
@@ -22,6 +23,7 @@ LINKED_MODELS = [
     (MODEL_CASE_SEARCH, ugettext_lazy('Case Search Settings')),
     (MODEL_REPORT, ugettext_lazy('Report')),
     (MODEL_DATA_DICTIONARY, ugettext_lazy('Data Dictionary')),
+    (MODEL_DIALER_SETTINGS, ugettext_lazy('Dialer Settings')),
 ]
 
 LINKED_MODELS_MAP = dict(LINKED_MODELS)
