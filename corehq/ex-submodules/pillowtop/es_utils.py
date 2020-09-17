@@ -267,12 +267,6 @@ def assume_alias(es, index, alias):
     es.indices.put_alias(index, alias)
 
 
-def doc_exists(pillow, doc_id_or_dict):
-    index_info = get_index_info_from_pillow(pillow)
-    from corehq.elastic import doc_exists_in_es
-    return doc_exists_in_es(index_info, doc_id_or_dict)
-
-
 def get_index_info_from_pillow(pillow):
     return ElasticsearchIndexInfo(
         index=pillow.es_index,
