@@ -37,8 +37,10 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     :caption: Application Building
     :maxdepth: 1
 
+    app_manager/terminology
+    app_manager/settings
+    app_manager/advanced_app_features
     cloudcare
-    advanced_app_features
 
 .. toctree::
     :caption: Application Data Layer

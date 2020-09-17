@@ -6,7 +6,7 @@ from corehq.apps.sms.models import (
     PhoneNumber,
     QueuedSMS,
     SQLMobileBackendMapping,
-    SelfRegistrationInvitation)
+)
 
 
 class SMSAdmin(admin.ModelAdmin):
@@ -104,4 +104,3 @@ admin.site.register(QueuedSMS, QueuedSMSAdmin)
 admin.site.register(PhoneBlacklist, PhoneBlacklistAdmin)
 admin.site.register(PhoneNumber, PhoneNumberAdmin)
 admin.site.register(SQLMobileBackendMapping, SQLMobileBackendMappingAdmin)
-admin.site.register(SelfRegistrationInvitation)
