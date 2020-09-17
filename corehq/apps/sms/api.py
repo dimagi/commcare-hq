@@ -732,8 +732,8 @@ def _process_incoming(msg):
         if _allow_load_handlers(v, is_two_way, has_domain_two_way_scope):
             handled = load_and_call(settings.SMS_HANDLERS, v, msg.text, msg)
 
-        if not handled:
-            handled = process_sms_registration(msg)
+    if not handled and not is_two_way and not opt_keyword:
+        handled = process_sms_registration(msg)
 
     # If the sms queue is enabled, then the billable gets created in remove_from_queue()
     if (
