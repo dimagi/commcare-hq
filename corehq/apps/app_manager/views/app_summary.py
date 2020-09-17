@@ -459,7 +459,7 @@ PropertyRow = namedtuple('PropertyRow', CASE_SUMMARY_EXPORT_HEADER_NAMES)
 
 
 @method_decorator(login_or_api_key, name="dispatch")
-class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
+class DownloadCaseSummaryView(ApplicationViewMixin, View):
     urlname = 'download_case_summary'
     http_method_names = ['get']
 
