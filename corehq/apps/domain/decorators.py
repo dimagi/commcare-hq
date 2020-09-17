@@ -647,10 +647,3 @@ def track_domain_request(calculated_prop):
         return _wrapped
 
     return _dec
-
-
-class LoginOrAPIKeyMixin(object):
-
-    @method_decorator(login_or_api_key)
-    def dispatch(self, *args, **kwargs):
-        return super(LoginOrAPIKeyMixin, self).dispatch(*args, **kwargs)

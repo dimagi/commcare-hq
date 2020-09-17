@@ -3,6 +3,7 @@ from collections import namedtuple
 
 from django.http import Http404
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import View
 
@@ -25,7 +26,7 @@ from corehq.apps.app_manager.util import is_linked_app, is_remote_app
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.app_manager.views.utils import get_langs
 from corehq.apps.app_manager.xform import VELLUM_TYPES
-from corehq.apps.domain.decorators import LoginOrAPIKeyMixin
+from corehq.apps.domain.decorators import login_or_api_key
 from corehq.apps.domain.views.base import LoginAndDomainMixin
 from corehq.apps.hqwebapp.views import BasePageView
 
@@ -457,7 +458,8 @@ CASE_SUMMARY_EXPORT_HEADER_NAMES = [
 PropertyRow = namedtuple('PropertyRow', CASE_SUMMARY_EXPORT_HEADER_NAMES)
 
 
-class DownloadCaseSummaryView(LoginOrAPIKeyMixin, LoginAndDomainMixin, ApplicationViewMixin, View):
+@method_decorator(login_or_api_key, name="dispatch")
+class DownloadCaseSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
     urlname = 'download_case_summary'
     http_method_names = ['get']
 
