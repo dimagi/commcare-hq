@@ -64,4 +64,6 @@ branches:
   - jls/collapsible-groups # Jenny Sept 4
   - adil-uddin:feature/USH-142-overwrite-caselists # Adil/Jenny Sept 10
   - kev/email-logging # Kevin Sept 10
+  - mk/validate-file-extensions-2 # MK Sept 16
+  - ce/change-form-lang # Cal Sept 16
 submodules: {}
