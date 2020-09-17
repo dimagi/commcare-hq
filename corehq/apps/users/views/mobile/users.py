@@ -1184,8 +1184,7 @@ class FilteredUserDownload(BaseManageCommCareUserView):
     @method_decorator(require_can_edit_commcare_users)
     def get(self, request, domain, *args, **kwargs):
         form = CommCareUserFilterForm(request.GET, domain=domain, couch_user=request.couch_user)
-        # On First load of the page we were getting an error No role is specified.
-        # Setting empty_permitted to true takes case of it.
+        # To avoid errors on first page load
         form.empty_permitted = True
         context = self.main_context
         context.update({'form': form, 'count_users_url': reverse('count_users', args=[domain])})
