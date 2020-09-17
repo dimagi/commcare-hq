@@ -9,6 +9,7 @@ from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
 from corehq.apps.users.models import UserRole
 from corehq.apps.users.views.mobile import UserFieldsView
+from corehq.apps.integration.models import DialerSettings
 
 
 def get_toggles_previews(domain):
@@ -78,3 +79,14 @@ def get_data_dictionary(domain):
 
         data_dictionary[case_type.name] = entry
     return data_dictionary
+
+
+def get_dialar_settings(domain):
+    settings = DialerSettings.objects.filter(domain=domain)
+    return {
+        'domain': domain,
+        'aws_instance_id': settings.aws_instance_id,
+        'is_enabled': settings.is_enabled,
+        'dialer_page_header': settings.dialer_page_header,
+        'dialer_page_subheader': settings.dialer_page_subheader,
+    }
