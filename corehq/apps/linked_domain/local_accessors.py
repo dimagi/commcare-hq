@@ -81,7 +81,7 @@ def get_data_dictionary(domain):
     return data_dictionary
 
 
-def get_dialar_settings(domain):
+def get_dialer_settings(domain):
     settings = DialerSettings.objects.filter(domain=domain)
     return {
         'domain': domain,
