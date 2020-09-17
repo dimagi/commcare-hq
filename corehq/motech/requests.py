@@ -250,14 +250,14 @@ def simple_post(domain, url, data, *, headers, auth_manager, verify,
     default_headers.update(headers)
     requests = Requests(
         domain,
-        base_url=None,
+        base_url=url,
         verify=verify,
         auth_manager=auth_manager,
         notify_addresses=notify_addresses,
         payload_id=payload_id,
     )
     try:
-        return requests.post(url, data=data, headers=default_headers)
+        return requests.post(None, data=data, headers=default_headers)
     except Exception as err:
         requests.notify_error(str(err))
         raise
