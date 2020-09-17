@@ -458,11 +458,11 @@ CASE_SUMMARY_EXPORT_HEADER_NAMES = [
 PropertyRow = namedtuple('PropertyRow', CASE_SUMMARY_EXPORT_HEADER_NAMES)
 
 
-@method_decorator(login_or_api_key, name="dispatch")
 class DownloadCaseSummaryView(ApplicationViewMixin, View):
     urlname = 'download_case_summary'
     http_method_names = ['get']
 
+    @method_decorator(login_or_api_key)
     def get(self, request, domain, app_id):
         case_metadata = self.app.get_case_metadata()
         language = request.GET.get('lang', 'en')
