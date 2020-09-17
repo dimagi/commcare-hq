@@ -19,13 +19,11 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         return self.es.indices.put_mapping(doc_type, {doc_type: mapping}, index=index)
 
     def _verify_is_alias(self, index_or_alias):
-        from corehq.elastic import ES_META
-        if settings.ENABLE_ES_INTERFACE_LOGGING:
-            logger = logging.getLogger('es_interface')
-            all_es_aliases = [index_info.alias for index_info in ES_META.values()]
-            if index_or_alias not in all_es_aliases:
-                logger.info("Found a use case where an index is queried instead of alias")
-                logger.info(traceback.format_stack())
+        from corehq.elastic import ES_META, ESError
+        all_es_aliases = [index_info.alias for index_info in ES_META.values()]
+        if index_or_alias not in all_es_aliases:
+            raise ESError(
+                f"{index_or_alias} is an unknown alias, query target must be one of {all_es_aliases}")
 
     def update_index_settings(self, index, settings_dict):
         assert set(settings_dict.keys()) == {'index'}, settings_dict.keys()
