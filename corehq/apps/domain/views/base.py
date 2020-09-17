@@ -10,8 +10,8 @@ from memoized import memoized
 
 from corehq.apps.accounting.mixins import BillingModalsMixin
 from corehq.apps.domain.decorators import (
-    login_and_domain_required,
     login_required,
+    LoginAndDomainMixin,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name
@@ -149,13 +149,6 @@ class DomainViewMixin(object):
         if not domain_obj:
             raise Http404()
         return domain_obj
-
-
-class LoginAndDomainMixin(object):
-
-    @method_decorator(login_and_domain_required)
-    def dispatch(self, *args, **kwargs):
-        return super(LoginAndDomainMixin, self).dispatch(*args, **kwargs)
 
 
 class BaseDomainView(LoginAndDomainMixin, BillingModalsMixin, BaseSectionPageView, DomainViewMixin):

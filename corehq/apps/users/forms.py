@@ -1211,8 +1211,9 @@ class CommCareUserFormSet(object):
         return CustomDataEditor(
             domain=self.domain,
             field_view=UserFieldsView,
-            existing_custom_data=self.editable_user.user_data,
+            existing_custom_data=self.editable_user.metadata,
             post_dict=self.data,
+            ko_model="custom_fields",
         )
 
     def is_valid(self):
@@ -1220,7 +1221,7 @@ class CommCareUserFormSet(object):
                 and all([self.user_form.is_valid(), self.custom_data.is_valid()]))
 
     def update_user(self):
-        self.user_form.existing_user.user_data = self.custom_data.get_data_to_save()
+        self.user_form.existing_user.update_metadata(self.custom_data.get_data_to_save())
         return self.user_form.update_user()
 
 
@@ -1321,3 +1322,7 @@ class CommCareUserFilterForm(forms.Form):
         if "*" in search_string or "?" in search_string:
             raise forms.ValidationError(_("* and ? are not allowed"))
         return search_string
+
+
+class CreateDomainPermissionsMirrorForm(forms.Form):
+    mirror_domain = forms.CharField(label=ugettext_lazy('Project Space'), max_length=30, required=True)

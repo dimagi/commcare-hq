@@ -106,6 +106,35 @@
                 {
                     "deid_transform": null,
                     "doc_type": "ExportColumn",
+                    "help_text": "The XMLNS of this form",
+                    "is_advanced": true,
+                    "is_deleted": false,
+                    "item": {
+                        "datatype": "string",
+                        "doc_type": "ExportItem",
+                        "inferred": false,
+                        "inferred_from": [],
+                        "label": null,
+                        "last_occurrences": {},
+                        "path": [
+                            {
+                                "doc_type": "PathNode",
+                                "is_repeat": false,
+                                "name": "xmlns"
+                            }
+                        ],
+                        "tag": null,
+                        "transform": null
+                    },
+                    "label": "@xmlns",
+                    "selected": true,
+                    "tags": [
+                        "info"
+                    ]
+                },
+                {
+                    "deid_transform": null,
+                    "doc_type": "ExportColumn",
                     "help_text": null,
                     "is_advanced": false,
                     "is_deleted": false,

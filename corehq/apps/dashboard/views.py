@@ -26,8 +26,8 @@ from corehq.apps.dashboard.models import (
     ReportsPaginator,
     Tile,
 )
-from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.domain.views.base import DomainViewMixin, LoginAndDomainMixin
+from corehq.apps.domain.decorators import login_and_domain_required, LoginAndDomainMixin
+from corehq.apps.domain.views.base import DomainViewMixin
 from corehq.apps.domain.views.settings import DefaultProjectSettingsView
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.hqwebapp.views import BasePageView
