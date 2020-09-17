@@ -13,8 +13,6 @@ from corehq.util.models import (
     TransientBounceEmail,
 )
 
-logger = logging.getLogger('email_events')
-
 
 def log_email_sns_event(message):
     log_event = {
@@ -25,7 +23,7 @@ def log_email_sns_event(message):
     for key in ['bounce', 'complaint', 'delivery', 'reject', 'failure', 'deliveryDelay']:
         if key in message:
             log_event[key] = message.get(key)
-    logger.info(log_event)
+    logging.info(log_event)
 
 
 def handle_email_sns_event(message):
