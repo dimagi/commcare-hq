@@ -4,7 +4,7 @@ from django.conf import settings
 from copy import copy, deepcopy
 from datetime import datetime
 from corehq.pillows.mappings.utils import transform_for_es7
-from corehq.util.es.elasticsearch import TransportError
+from corehq.util.es.elasticsearch import TransportError, NotFoundError
 from pillowtop.logger import pillow_logging
 
 
@@ -86,11 +86,16 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
     index = jsonobject.StringProperty(required=True)
     alias = jsonobject.StringProperty()
     type = jsonobject.StringProperty()
+    ilm_config = jsonobject.StringProperty(default="")
     mapping = jsonobject.DictProperty()
     hq_index_name = jsonobject.StringProperty()
 
     def __str__(self):
         return '{} ({})'.format(self.alias, self.index)
+
+    @property
+    def template_name(self):
+        return f"{self.index}_template"
 
     @property
     def meta(self):
@@ -137,22 +142,104 @@ def set_index_normal_settings(es, index):
     return ElasticsearchInterface(es).update_index_settings(index, INDEX_STANDARD_SETTINGS)
 
 
+max_docs_policy = {
+    "policy": {
+        "phases": {
+            "hot": {
+                "actions": {
+                    "rollover": {
+                        "max_docs": "2",
+                    }
+                }
+            }
+        }
+    }
+}
+
+MAX_DOCS = 'max_docs'
+
+ILM_CONFIGS = {
+    MAX_DOCS: max_docs_policy
+}
+
+
 def initialize_index_and_mapping(es, index_info):
-    index_exists = es.indices.exists(index_info.index)
-    if not index_exists:
-        initialize_index(es, index_info)
-    assume_alias(es, index_info.index, index_info.alias)
+    if index_info.ilm_config and settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+        setup_ilm_index(es, index_info)
+    else:
+        index_exists = es.indices.exists(index_info.index)
+        if not index_exists:
+            initialize_index(es, index_info)
+        assume_alias(es, index_info.index, index_info.alias)
 
 
 def initialize_index(es, index_info):
     index = index_info.index
     mapping = transform_for_es7(index_info.mapping)
     mapping['_meta']['created'] = datetime.isoformat(datetime.utcnow())
-    meta = index_info.meta
+    meta = copy(index_info.meta)
     meta.update({'mappings': mapping})
     pillow_logging.info("Initializing elasticsearch index for [%s]" % index_info.type)
     es.indices.create(index=index, body=meta)
     set_index_normal_settings(es, index)
+
+
+def get_ilm_tempalte(index_info):
+    assert index_info.ilm_config
+    mapping = transform_for_es7(index_info.mapping)
+    mapping['_meta']['created'] = datetime.isoformat(datetime.utcnow())
+    meta = copy(index_info.meta)
+    meta.update({'mappings': mapping})
+    meta['settings'].update({
+        "index.lifecycle.name": index_info.ilm_config,
+        "index.lifecycle.rollover_alias": index_info.alias
+    })
+    return {
+        "index_patterns": [IndexPattern(index_info.index).index_patterns],
+        "template": meta
+    }
+
+
+class IndexPattern(object):
+
+    def __init__(self, name):
+        self.name = name
+
+    @property
+    def index_patterns(self):
+        return f"{self.name}-*"
+
+    @property
+    def initial_index(self):
+        return f"{self.name}-000001"
+
+
+def setup_ilm_index(es, index_info):
+    # setup policy
+    ilm_config = index_info.ilm_config
+    try:
+        es.ilm.get_lifecycle(ilm_config)
+    except NotFoundError:
+        es.ilm.put_lifecycle(ilm_config, ILM_CONFIGS[ilm_config])
+    # setup template
+    try:
+        es.indices.get_index_template(index_info.template_name)
+    except NotFoundError:
+        es.indices.put_index_template(
+            index_info.template_name,
+            get_ilm_tempalte(index_info)
+        )
+    # bootstrap initial index
+    indices = es.indices.resolve_index(index_info.alias)
+    if not indices.get('indices'):
+        es.indices.create(
+            IndexPattern(index_info.index).initial_index,
+            {
+                "aliases": {
+                    index_info.alias: {"is_write_index": True}
+                }
+            }
+        )
 
 
 def mapping_exists(es, index_info):
