@@ -150,7 +150,7 @@ def initialize_index(es, index_info):
     if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
         mapping = transform_for_es7(mapping)
     mapping['_meta']['created'] = datetime.isoformat(datetime.utcnow())
-    meta = index_info.meta
+    meta = copy(index_info.meta)
     meta.update({'mappings': mapping})
     pillow_logging.info("Initializing elasticsearch index for [%s]" % index_info.type)
     es.indices.create(index=index, body=meta)
