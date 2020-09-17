@@ -460,7 +460,7 @@ class ApplicationResource(BaseApplicationResource):
         app = bundle.obj
 
         # support returning linked applications upon receiving an application list request
-        if app.doc_type == Application._doc_type or app.doc_type == LinkedApplication._doc_type:
+        if app.doc_type in [Application._doc_type, LinkedApplication._doc_type]:
             return [self.dehydrate_module(app, module, app.langs) for module in bundle.obj.modules]
         elif app.doc_type == RemoteApp._doc_type:
             return []
