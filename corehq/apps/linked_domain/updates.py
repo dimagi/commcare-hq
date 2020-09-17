@@ -44,6 +44,8 @@ from corehq.apps.linked_domain.local_accessors import \
     get_user_roles as local_get_user_roles
 from corehq.apps.linked_domain.local_accessors import \
     get_data_dictionary as local_get_data_dictionary
+from corehq.apps.linked_domain.local_accessors import \
+    get_dialer_settings as local_get_dialer_settings
 from corehq.apps.linked_domain.remote_accessors import \
     get_case_search_config as remote_get_case_search_config
 from corehq.apps.linked_domain.remote_accessors import \
@@ -56,6 +58,8 @@ from corehq.apps.linked_domain.remote_accessors import \
     get_user_roles as remote_get_user_roles
 from corehq.apps.linked_domain.remote_accessors import \
     get_data_dictionary as remote_get_data_dictionary
+from corehq.apps.linked_domain.remote_accessors import \
+    get_dialer_settings as remote_get_dialer_settings
 from corehq.apps.linked_domain.ucr import update_linked_ucr
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
@@ -268,6 +272,15 @@ def update_data_dictionary(domain_link):
             case_property_obj.data_type = case_property_desc['data_type']
             case_property_obj.group = case_property_desc['group']
             case_property_obj.save()
+
+
+def update_dialer_settings(domain_link):
+    if domain_link.is_remote:
+        master_results = remote_get_dialer_settings(domain_link)
+    else:
+        master_results = local_get_dialer_settings(domain_link.master_domain)
+
+    # TODO: copy fixture types and data
 
 
 def _convert_reports_permissions(domain_link, master_results):
