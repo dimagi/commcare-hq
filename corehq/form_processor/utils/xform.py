@@ -33,8 +33,8 @@ SIMPLE_FORM = """<?xml version='1.0' ?>
 
 
 # this is like jsonobject.api.re_datetime,
-# but without the "time" or timezone parts being optional
-# i.e. I just removed (...)? surrounding the second two lines and the last line
+# but without the "time" parts being optional
+# i.e. I just removed (...)? surrounding the second two lines
 # This is used to in our form processor so we detect what strings are datetimes.
 RE_DATETIME_MATCH = re.compile(r"""
     ^
@@ -51,7 +51,7 @@ RE_DATETIME_MATCH = re.compile(r"""
     ([0-5]\d)?  # second
     \D?
     (\d{3,6})?  # millisecond
-    ([zZ]|([\+-])([01]\d|2[0-3])\D?([0-5]\d)?)  # timezone
+    ([zZ]|([\+-])([01]\d|2[0-3])\D?([0-5]\d)?)?  # timezone
     $
 """, re.VERBOSE)
 

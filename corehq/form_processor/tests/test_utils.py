@@ -88,7 +88,7 @@ class TestDateTimeRegexMatch(SimpleTestCase):
     def test_datetime_match(self):
         cases = [
             ('2015-04-03', False),
-            ('2013-03-09T06:30:09.007', False),
+            ('2013-03-09T06:30:09.007', True),
             ('2013-03-09T06:30:09.007+03', True),
             ('2013-03-09T06:30:09.007-0530', True),
             ('351602061044374', False),

@@ -2,7 +2,7 @@ import datetime
 from django.test import SimpleTestCase
 import jsonobject
 from jsonobject.exceptions import BadValueError
-from dimagi.ext.jsonobject import DateTimeProperty, re_loose_datetime, re_trans_datetime
+from dimagi.ext.jsonobject import DateTimeProperty, re_trans_datetime
 
 
 class Foo(jsonobject.JsonObject):
