@@ -278,7 +278,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             None,
             mock.MagicMock()
         )
-        self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain', 'key': 'F#'})
+        self.assertEqual(self.user.metadata, {'key': 'F#'})
 
     @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def test_metadata_ignore_system_fields(self):
@@ -291,10 +291,6 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             mock.MagicMock()
         )
         self.assertEqual(self.user.metadata, {
-            'commcare_project': 'mydomain',
-            'commcare_location_id': self.loc1.location_id,
-            'commcare_location_ids': self.loc1.location_id,
-            'commcare_primary_case_sharing_id': self.loc1.group_id,
             'key': 'F#',
         })
 
@@ -306,11 +302,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             mock.MagicMock()
         )
         self.assertEqual(self.user.metadata, {
-            'commcare_project': 'mydomain',
             'key': 'G#',
-            'commcare_location_id': self.loc1.location_id,
-            'commcare_location_ids': self.loc1.location_id,
-            'commcare_primary_case_sharing_id': self.loc1.group_id,
         })
 
     def test_metadata_profile(self):
@@ -322,7 +314,6 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             mock.MagicMock()
         )
         self.assertEqual(self.user.metadata, {
-            'commcare_project': 'mydomain',
             'key': 'F#',
             'mode': 'minor',
             PROFILE_SLUG: self.profile.id,
@@ -337,13 +328,11 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             mock.MagicMock()
         )
         self.assertEqual(self.user.metadata, {
-            'commcare_project': 'mydomain',
             'mode': 'minor',
             PROFILE_SLUG: self.profile.id,
         })
         # Profile fields shouldn't actually be added to user_data
         self.assertEqual(self.user.user_data, {
-            'commcare_project': 'mydomain',
             PROFILE_SLUG: self.profile.id,
         })
 
@@ -356,7 +345,6 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             mock.MagicMock()
         )
         self.assertEqual(self.user.metadata, {
-            'commcare_project': 'mydomain',
             'mode': 'minor',
             PROFILE_SLUG: self.profile.id,
         })
