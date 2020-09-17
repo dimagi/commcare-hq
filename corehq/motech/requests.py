@@ -7,6 +7,7 @@ from django.conf import settings
 import attr
 from requests.structures import CaseInsensitiveDict
 
+from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.hqwebapp.tasks import send_mail_async
@@ -170,17 +171,34 @@ class Requests(object):
         notify_exception(None, message, details)
 
     def notify_error(self, message, details=None):
+        from corehq.motech.views import ConnectionSettingsListView
+
         if not self.notify_addresses:
             return
         message_lines = [
             message,
+            '',
             f'Project space: {self.domain_name}',
             f'Remote API base URL: {self.base_url}',
         ]
         if self.payload_id:
             message_lines.append(f'Payload ID: {self.payload_id}')
         if details:
-            message_lines.extend(['', '', details])
+            message_lines.extend(['', details])
+        connection_settings_url = absolute_reverse(
+            ConnectionSettingsListView.urlname, args=[self.domain_name])
+        message_lines.extend([
+            '',
+            '*Why am I getting this email?*',
+            'This address is configured in CommCare HQ as a notification '
+            'address for integration errors.',
+            '',
+            '*How do I unsubscribe?*',
+            'Open Connection Settings in CommCare HQ '
+            f'({connection_settings_url}) and remove your email address from '
+            'the "Addresses to send notifications" field for remote '
+            'connections. If necessary, please provide an alternate address.',
+        ])
         send_mail_async.delay(
             'MOTECH Error',
             '\r\n'.join(message_lines),
