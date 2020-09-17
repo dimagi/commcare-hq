@@ -359,6 +359,8 @@ class TestDownloadCaseSummaryViewByAPIKey(TestCase):
     def tearDownClass(cls):
         cls.app.delete()
         cls.web_user_api_key.delete()
+        cls.web_user.delete(deleted_by=None)
+        cls.domain.delete()
 
     def _encode_basic_credentials(self, username, password):
         """Base64-encode a username and password."""
