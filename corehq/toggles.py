@@ -763,11 +763,13 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
 )
 
 
-ROLE_WEBAPPS_PERMISSIONS = StaticToggle(
-    'role_webapps_permissions',
-    'ICDS: Toggle which webapps to see based on role',
+APP_ACCESS_PERMISSIONS = StaticToggle(
+    'app_access_permissions',
+    'ICDS: Toggle applications that a role would have access to',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
+    description=("If this toggle is enabled for a domain then the users will not be allowed to log in if "
+    "they will have no role attached or their role is not configured to access a particular app"),
 )
 
 

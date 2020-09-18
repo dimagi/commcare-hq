@@ -31,7 +31,7 @@ def is_icds_cas_project(domain):
 def check_authorization(domain, user, master_app_id):
     if (
         IS_ICDS_ENVIRONMENT
-        and toggles.ROLE_WEBAPPS_PERMISSIONS.enabled(domain)
+        and toggles.APP_ACCESS_PERMISSIONS.enabled(domain)
     ):
         try:
             role = user.get_role(domain)
