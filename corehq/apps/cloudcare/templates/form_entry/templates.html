@@ -203,10 +203,10 @@
          visible: mediaSrc($data.caption_image())
          " />
   <audio controls="controls" data-bind="visible: caption_audio, attr: { src: mediaSrc($data.caption_audio()) }">
-    Your browser does not support audio
+    {% trans "Your browser does not support audio" %}
   </audio>
   <video controls="controls" data-bind="visible: caption_video, attr: { src: mediaSrc($data.caption_video()) }">
-    Your browser does not support video
+    {% trans "Your browser does not support video" %}
   </video>
 </script>
 
@@ -385,6 +385,6 @@
     <input type="text" class="form-control" data-bind="attr: { id: entryId, 'aria-required': $parent.required() ? 'true' : 'false' }"/>
     <span class="input-group-addon"><i class="fa fa-clock-o"></i></span>
   </div>
-  <span class="help-block">24-hour clock</span>
+  <span class="help-block">{% trans "24-hour clock" %}</span>
 </script>
 <script type="text/html" id="blank-entry-ko-template"></script>
