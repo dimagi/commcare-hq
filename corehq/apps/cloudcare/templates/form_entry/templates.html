@@ -105,7 +105,7 @@
                 on: $root.forceRequiredVisible,
             }
         ">
-    <label class="caption control-label" data-bind="css: Formplayer.Const.LABEL_WIDTH">
+    <label class="caption control-label" data-bind="css: Formplayer.Const.LABEL_WIDTH, attr: {'for': entry.entryId}">
       <div>
         <!-- ko if: help() -->
         <a
@@ -216,7 +216,9 @@
         valueUpdate: valueUpdate,
         attr: {
             maxlength: lengthLimit,
-        }
+            id: entryId,
+            'aria-required': $parent.required() ? 'true' : 'false',
+        },
     "></textarea>
   <span class="help-block type" data-bind="
         text: helpText()
@@ -227,6 +229,8 @@
   <input type="password" class="form-control" data-bind="
         value: $data.rawAnswer,
         valueUpdate: valueUpdate,
+        id: entryId,
+        attr: {'aria-required': $parent.required() ? 'true' : 'false'},
     "/>
   <span class="help-block type" data-bind="text: helpText()"></span>
 </script>
@@ -238,7 +242,8 @@
         attr: {
             maxlength: lengthLimit,
             id: entryId,
-            placeholder: placeholderText
+            placeholder: placeholderText,
+            'aria-required': $parent.required() ? 'true' : 'false',
         }
     "/>
   <span class="help-block type" data-bind="
@@ -316,7 +321,7 @@
                           type: $parent.isMulti ? 'checkbox' : 'radio',
                           name: $parent.entryId,
                           class: 'group-' + $parent.entryId,
-                      }
+                      },
                   "/>
           <span data-bind="renderMarkdown: $data"></span>
         </label>
@@ -335,6 +340,8 @@
         value: rawAnswer,
         valueAllowUnset: true,
         optionsCaption: '{% trans_html_attr 'Choose...' %}'
+        id: entryId,
+        'aria-required': $parent.required() ? 'true' : 'false',
         ">
   </select>
 </script>
@@ -361,21 +368,21 @@
 </script>
 <script type="text/html" id="date-entry-ko-template">
   <div class="input-group">
-    <input type="text" class="form-control" data-bind="attr: { id: entryId } "/>
+    <input type="text" class="form-control" data-bind="attr: { id: entryId, 'aria-required': $parent.required() ? 'true' : 'false' }"/>
     <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
   </div>
 </script>
 
 <script type="text/html" id="datetime-entry-ko-template">
   <div class="input-group">
-    <input type="text" class="form-control" data-bind="attr: { id: entryId }"/>
+    <input type="text" class="form-control" data-bind="attr: { id: entryId, 'aria-required': $parent.required() ? 'true' : 'false' }"/>
     <span class="input-group-addon"><i class="fcc fcc-fd-datetime"></i></span>
   </div>
 </script>
 
 <script type="text/html" id="time-entry-ko-template">
   <div class="input-group">
-    <input type="text" class="form-control" data-bind="attr: { id: entryId }"/>
+    <input type="text" class="form-control" data-bind="attr: { id: entryId, 'aria-required': $parent.required() ? 'true' : 'false' }"/>
     <span class="input-group-addon"><i class="fa fa-clock-o"></i></span>
   </div>
   <span class="help-block">24-hour clock</span>
