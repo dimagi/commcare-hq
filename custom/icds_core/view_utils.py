@@ -5,7 +5,7 @@ from django.utils.translation import ugettext_lazy, ugettext as _
 
 from corehq import toggles
 from corehq.apps.hqwebapp.views import no_permissions
-from custom.icds_core.const import ICDS_DOMAIN, IS_ICDS_ENVIRONMENT
+from custom.icds_core.const import ICDS_DOMAIN, IS_ICDS_ENVIRONMENT, IS_ICDS_STAGING_ENVIRONMENT
 from corehq.apps.users.models import DomainMembershipError
 from django.http import HttpResponse
 
@@ -30,7 +30,7 @@ def is_icds_cas_project(domain):
 
 def check_authorization(domain, user, master_app_id):
     if (
-        IS_ICDS_ENVIRONMENT
+        (IS_ICDS_ENVIRONMENT or IS_ICDS_STAGING_ENVIRONMENT)
         and toggles.APP_ACCESS_PERMISSIONS.enabled(domain)
     ):
         try:
