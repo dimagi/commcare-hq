@@ -24,7 +24,7 @@ attribute set to the ID of its parent.
         </text>
         <command id="m1-f0"/>
     </menu>
-    
+
 HQ's app manager only allows users to configure one level of nesting; that is, it does not allow for "grandchild" modules. Although CommCare mobile supports multiple levels of nesting, beyond two levels it quickly gets prohibitively complex for the user to understand the implications of their app design and for for HQ to `determine a logical set of session variables <https://github.com/dimagi/commcare-hq/blob/765bb4030d0923a4ae887aabecf688e72045dd7b/corehq/apps/app_manager/suite_xml/sections/entries.py#L366>`_ for every case. The modules could have all different case types, all the same, or a mix, and for modules that use the same case type, that case type may have a different meanings (e.g., a "person" case type that is sometimes a mother and sometimes a child), which all makes it difficult for HQ to determine the user's intended application design. See below for more on how session variables are generated with child modules.
 
 Menu structure
@@ -207,7 +207,7 @@ In the simplest case, shadow module menus look exactly like other module menus. 
             </text>
         <command id="m1-f0"/>
     </menu>
-    
+
 
 Menus get more complex when shadow modules are mixed with parent/child modules. In the following example, m0 is a basic module, m1 is a child of m0, and m2 is a shadow of m0. All three modules have `put_in_root=false` (see **Child Modules > Menu structure** above).  The shadow module has its own menu and also a copy of the child module's menu. This copy of the child module's menu is given the id `m1.m2` to distinguish it from `m1`, the original child module menu.
 

@@ -69,7 +69,7 @@ Optional
    given toggle is enabled. The value should be an identifier for a
    toggle in ``corehq/toggles.py``, e.g. "CUSTOM\_APP\_BASE\_URL"
 -  ``warning`` - Text displayed if the value of the setting is invalid
--  
+
 
 Only static setting options can be defined in settings yaml files, any
 app or domain specific context to render the setting on HQ Edit
@@ -89,4 +89,3 @@ Example
       default: "freq-never"
       values_txt: "After login, the application will look at the profile's defined reference for the authoritative location of the newest version. This check will occur with some periodicity since the last successful check based on this property. freq-never disables the automatic check."
       since: "1.3"
-
