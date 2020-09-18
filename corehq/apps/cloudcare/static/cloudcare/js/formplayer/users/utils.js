@@ -1,6 +1,7 @@
-/*global FormplayerFrontend */
+hqDefine("cloudcare/js/formplayer/users/utils", function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
 
-FormplayerFrontend.module("Utils", function (Utils, FormplayerFrontend, Backbone, Marionette) {
+    var Utils = {};
     Utils.Users = {
         /**
          * logInAsUser
@@ -10,7 +11,7 @@ FormplayerFrontend.module("Utils", function (Utils, FormplayerFrontend, Backbone
          * setting it in a cookie
          */
         logInAsUser: function (restoreAsUsername) {
-            var currentUser = FormplayerFrontend.request('currentUser');
+            var currentUser = FormplayerFrontend.getChannel().request('currentUser');
             currentUser.restoreAs = restoreAsUsername;
 
             $.cookie(
@@ -48,4 +49,5 @@ FormplayerFrontend.module("Utils", function (Utils, FormplayerFrontend, Backbone
             return $.removeCookie(Utils.Users.restoreAsKey(domain, username));
         },
     };
+    return Utils;
 });
