@@ -42,11 +42,11 @@
     </fieldset>
 
     <fieldset>
-      <legend>{% trans "Disable Two-Factor Authentication" %}</legend>
+      <legend>{% trans "Remove Two-Factor Authentication" %}</legend>
       <p>{% blocktrans %}However strongly we discourage you to do so, you can
-        also disable two-factor authentication for your account.{% endblocktrans %}</p>
+        also <strong>remove</strong> two-factor authentication for your account.{% endblocktrans %}</p>
       <p><a class="btn btn-danger" href="{% url 'two_factor:disable' %}">
-        {% trans "Disable Two-Factor Authentication" %}</a></p>
+        {% trans "Remove Two-Factor Authentication" %}</a></p>
       <br/>
     </fieldset>
     <fieldset>

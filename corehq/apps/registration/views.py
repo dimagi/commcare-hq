@@ -60,6 +60,9 @@ _domainless_new_user_soft_assert = soft_assert(to=[
 ], send_to_ops=False, fail_if_debug=False)
 
 
+CONFIRMATION_RESEND_LIMIT_SECONDS = 60
+
+
 def get_domain_context():
     return get_per_domain_context(Domain())
 
@@ -371,9 +374,20 @@ def resend_confirmation(request):
         return redirect('domain_select')
 
     context = get_domain_context()
+    default_page_name = _('Resend Confirmation Email')
 
     if request.method == 'POST':
+        if (datetime.utcnow() - dom_req.request_time).seconds < CONFIRMATION_RESEND_LIMIT_SECONDS:
+            context = {
+                'message_body': _(f'Please wait at least {CONFIRMATION_RESEND_LIMIT_SECONDS} '
+                                  f'seconds before requesting again.'),
+                'current_page': {'page_name': default_page_name},
+            }
+            return render(request, 'registration/confirmation_error.html', context)
         try:
+            dom_req.request_time = datetime.utcnow()
+            dom_req.request_ip = get_ip(request)
+            dom_req.save()
             send_domain_registration_email(dom_req.new_user_username,
                     dom_req.domain, dom_req.activation_guid,
                     request.user.get_full_name(), request.user.first_name)
@@ -387,14 +401,14 @@ def resend_confirmation(request):
         else:
             context.update({
                 'requested_domain': dom_req.domain,
-                'current_page': {'page_name': ('Confirmation Email Sent')},
+                'current_page': {'page_name': _('Confirmation Email Sent')},
             })
             return render(request, 'registration/confirmation_sent.html',
                 context)
 
     context.update({
         'requested_domain': dom_req.domain,
-        'current_page': {'page_name': _('Resend Confirmation Email')},
+        'current_page': {'page_name': default_page_name},
     })
     return render(request, 'registration/confirmation_resend.html', context)
 
