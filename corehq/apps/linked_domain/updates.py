@@ -285,14 +285,14 @@ def update_dialer_settings(domain_link):
     else:
         master_results = local_get_dialer_settings(domain_link.master_domain)
 
-    DialerSettings.objects.filter(domain=domain_link.linked_domain).delete()
+    model, created = DialerSettings.objects.get_or_create(domain_link.linked_domain)
 
-    dialer_settings_obj = DialerSettings.get_or_create(domain_link.linked_domain)
-    dialer_settings_obj.aws_instance_id = master_results['aws_instance_id']
-    dialer_settings_obj.is_enabled = master_results['is_enabled']
-    dialer_settings_obj.dialer_page_header = master_results['dialer_page_header']
-    dialer_settings_obj.dialer_page_subheader = master_results['dialer_page_subheader']
-    dialer_settings_obj.save()
+    model.domain = domain_link.linked_domain
+    model.aws_instance_id = master_results['aws_instance_id']
+    model.is_enabled = master_results['is_enabled']
+    model.dialer_page_header = master_results['dialer_page_header']
+    model.dialer_page_subheader = master_results['dialer_page_subheader']
+    model.save()
 
 
 def _convert_reports_permissions(domain_link, master_results):

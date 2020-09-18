@@ -82,7 +82,8 @@ def get_data_dictionary(domain):
 
 
 def get_dialer_settings(domain):
-    settings = DialerSettings.objects.filter(domain=domain)
+    settings = DialerSettings.objects.get(domain=domain)
+
     return {
         'domain': domain,
         'aws_instance_id': settings.aws_instance_id,
