@@ -186,6 +186,8 @@ class OverwriteModuleDetailTests(SimpleTestCase):
         dest_module_detail_type = getattr(dest_module.case_details, "short")
         dest_module_detail_type.overwrite_from_module_detail(self.src_module_detail_type, self.attrs_dict1)
         self.assertEqual(self.src_module_detail_type._obj, dest_module_detail_type._obj)
+        setattr(self.src_module_detail_type, 'filter', 'c < b')
+        self.assertNotEqual(self.src_module_detail_type._obj, dest_module_detail_type._obj)
 
     def test_overwrite_filter_column(self):
         dest_module = self.app.add_module(Module.new_module('Dest Module', lang='en'))
