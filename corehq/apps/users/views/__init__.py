@@ -1,6 +1,13 @@
 import json
 from datetime import datetime
 
+import langcodes
+import six.moves.urllib.error
+import six.moves.urllib.parse
+import six.moves.urllib.request
+from couchdbkit.exceptions import ResourceNotFound
+from dimagi.utils.couch import CriticalSection
+from dimagi.utils.web import json_response
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
@@ -22,19 +29,11 @@ from django.utils.translation import ugettext_lazy, ugettext_noop
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
-
-import six.moves.urllib.error
-import six.moves.urllib.parse
-import six.moves.urllib.request
-from couchdbkit.exceptions import ResourceNotFound
+from django_digest.decorators import httpdigest
 from django_otp.plugins.otp_static.models import StaticToken
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
-from dimagi.utils.couch import CriticalSection
-from dimagi.utils.web import json_response
-
-import langcodes
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import always_allow_project_access
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -94,6 +93,7 @@ from corehq.apps.users.forms import (
     SetUserPasswordForm,
     UpdateUserPermissionForm,
     UpdateUserRoleForm,
+    CreateDomainPermissionsMirrorForm,
 )
 from corehq.apps.users.landing_pages import get_allowed_landing_pages
 from corehq.apps.users.models import (
@@ -611,6 +611,43 @@ class DomainPermissionsMirrorView(BaseUserSettingsView):
         return {
             'mirrors': sorted(DomainPermissionsMirror.mirror_domains(self.domain)),
         }
+
+
+@require_superuser
+@require_POST
+def delete_domain_permission_mirror(request, domain, mirror):
+    mirror_obj = DomainPermissionsMirror.objects.filter(source=domain, mirror=mirror).first()
+    if mirror_obj:
+        mirror_obj.delete()
+        message = _('You have successfully deleted the project space "{mirror}".')
+        messages.success(request, message.format(mirror=mirror))
+    else:
+        message = _('The project space you are trying to delete was not found.')
+        messages.error(request, message)
+    redirect = reverse(DomainPermissionsMirrorView.urlname, args=[domain])
+    return HttpResponseRedirect(redirect)
+
+
+@require_superuser
+@require_POST
+def create_domain_permission_mirror(request, domain):
+    form = CreateDomainPermissionsMirrorForm(request.POST)
+    if form.is_valid():
+        mirror_domain_name = form.cleaned_data.get("mirror_domain")
+        mirror_domain = Domain.get_by_name(form.cleaned_data.get("mirror_domain"))
+        if mirror_domain is not None:
+            mirror = DomainPermissionsMirror(source=domain, mirror=mirror_domain_name)
+            mirror.save()
+            message = _('You have successfully added the project space "{mirror_domain_name}".')
+            messages.success(request, message.format(mirror_domain_name=mirror_domain_name))
+        else:
+            message = _('Please enter a valid project space.')
+            messages.error(request, message.format())
+    else:
+        message = _('An error occurred while trying to add the project space.')
+        messages.error(request, message.format())
+    redirect = reverse(DomainPermissionsMirrorView.urlname, args=[domain])
+    return HttpResponseRedirect(redirect)
 
 
 @always_allow_project_access

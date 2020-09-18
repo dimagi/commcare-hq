@@ -2088,7 +2088,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         self.update_metadata({
             'commcare_primary_case_sharing_id':
-            location.group_id
+            location.location_id
         })
 
         self.update_fixture_status(UserFixtureType.LOCATION)
