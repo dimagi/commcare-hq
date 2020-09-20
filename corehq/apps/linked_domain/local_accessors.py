@@ -9,7 +9,7 @@ from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
 from corehq.apps.users.models import UserRole
 from corehq.apps.users.views.mobile import UserFieldsView
-from corehq.apps.integration.models import DialerSettings
+from corehq.apps.integration.models import DialerSettings, GaenOtpServerSettings
 
 
 def get_toggles_previews(domain):
@@ -90,4 +90,15 @@ def get_dialer_settings(domain):
         'is_enabled': settings.is_enabled,
         'dialer_page_header': settings.dialer_page_header,
         'dialer_page_subheader': settings.dialer_page_subheader,
+    }
+
+
+def get_otp_settings(domain):
+    settings = GaenOtpServerSettings.objects.get(domain=domain)
+
+    return {
+        'domain': domain,
+        'is_enabled': settings.is_enabled,
+        'server_url': settings.server_url,
+        'auth_token': settings.auth_token,
     }

@@ -56,6 +56,7 @@ from corehq.apps.linked_domain.local_accessors import (
     get_user_roles,
     get_data_dictionary,
     get_dialer_settings,
+    get_otp_settings,
 )
 from corehq.apps.linked_domain.models import (
     AppLinkDetail,
@@ -177,6 +178,12 @@ def data_dictionary(request, domain):
 @require_linked_domain
 def dialer_settings(request, domain):
     return JsonResponse(get_dialer_settings(domain))
+
+
+@login_or_api_key
+@require_linked_domain
+def otp_settings(request, domain):
+    return JsonResponse(get_otp_settings(domain))
 
 
 @require_can_edit_apps

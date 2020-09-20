@@ -13,6 +13,7 @@ from corehq.apps.linked_domain.views import (
     toggles_and_previews,
     user_roles,
     dialer_settings,
+    otp_settings,
 )
 
 app_name = 'linked_domain'
@@ -33,4 +34,5 @@ urlpatterns = [
     url(r'^service/$', DomainLinkRMIView.as_view(), name=DomainLinkRMIView.urlname),
     url(r'^user_roles/$', user_roles, name='user_roles'),
     url(r'^dialer_settings/$', dialer_settings, name='dialer_settings'),
+    url(r'^otp_settings/$', otp_settings, name='otp_settings'),
 ]
