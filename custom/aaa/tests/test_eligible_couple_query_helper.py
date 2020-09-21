@@ -1,6 +1,7 @@
 from datetime import date
 
 from django.test.testcases import TestCase
+from mock import patch
 
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
@@ -30,6 +31,7 @@ class TestEligibleCoupleBeneficiarySections(TestCase):
         super(TestEligibleCoupleBeneficiarySections, cls).tearDownClass()
 
     @classmethod
+    @patch('corehq.apps.callcenter.data_source.get_call_center_domains', lambda: [])
     def _get_adapter(cls, data_source_id):
         datasource_id = StaticDataSourceConfiguration.get_doc_id(cls.domain, data_source_id)
         datasource = StaticDataSourceConfiguration.by_id(datasource_id)
@@ -265,6 +267,7 @@ class TestEligibleCoupleBeneficiaryList(TestCase):
         )
 
     @classmethod
+    @patch('corehq.apps.callcenter.data_source.get_call_center_domains', lambda: [])
     def _get_adapter(cls, data_source_id):
         datasource_id = StaticDataSourceConfiguration.get_doc_id(cls.domain, data_source_id)
         datasource = StaticDataSourceConfiguration.by_id(datasource_id)
