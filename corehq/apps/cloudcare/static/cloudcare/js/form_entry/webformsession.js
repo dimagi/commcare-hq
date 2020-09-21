@@ -263,6 +263,9 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
             $.subscribe('formplayer.' + Const.FORMATTED_QUESTIONS, function (e, callback) {
                 self.getFormattedQuestions(callback);
             });
+            $.subscribe('formplayer.' + Const.CHANGE_LOCALE, function (e, lang) {
+                self.changeLocale(lang);
+            });
         };
 
         self.loadForm = function ($form, initLang) {
@@ -401,11 +404,11 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
                 Const.BLOCK_ALL);
         };
 
-        self.switchLanguage = function (lang) {
+        self.changeLocale = function (lang) {
             this.serverRequest(
                 {
-                    'action': Const.SET_LANG,
-                    'lang': lang,
+                    'action': Const.CHANGE_LOCALE,
+                    'locale': lang,
                 },
                 function (resp) {
                     $.publish('session.reconcile', [resp, lang]);
