@@ -182,3 +182,44 @@ class ConnectionSettingsPropertiesTests(SimpleTestCase):
         cs = ConnectionSettings()
         cs.client_secret = 'secret'
         self.assertEqual(cs.plaintext_client_secret, 'secret')
+
+
+class NotifyAddressesTests(SimpleTestCase):
+
+    def test_default(self):
+        cs = ConnectionSettings()
+        self.assertEqual(cs.notify_addresses, [])
+
+    def test_empty(self):
+        cs = ConnectionSettings()
+        cs.notify_addresses_str = ""
+        self.assertEqual(cs.notify_addresses, [])
+
+    def test_one(self):
+        cs = ConnectionSettings()
+        cs.notify_addresses_str = "admin@example.com"
+        self.assertEqual(cs.notify_addresses, ["admin@example.com"])
+
+    def test_comma(self):
+        cs = ConnectionSettings()
+        cs.notify_addresses_str = "admin@example.com,user@example.com"
+        self.assertEqual(cs.notify_addresses, ["admin@example.com",
+                                               "user@example.com"])
+
+    def test_space(self):
+        cs = ConnectionSettings()
+        cs.notify_addresses_str = "admin@example.com user@example.com"
+        self.assertEqual(cs.notify_addresses, ["admin@example.com",
+                                               "user@example.com"])
+
+    def test_commaspace(self):
+        cs = ConnectionSettings()
+        cs.notify_addresses_str = "admin@example.com, user@example.com"
+        self.assertEqual(cs.notify_addresses, ["admin@example.com",
+                                               "user@example.com"])
+
+    def test_mess(self):
+        cs = ConnectionSettings()
+        cs.notify_addresses_str = "admin@example.com,,, ,  user@example.com"
+        self.assertEqual(cs.notify_addresses, ["admin@example.com",
+                                               "user@example.com"])

@@ -85,6 +85,13 @@
 
 {% endcompress %}
 
+{% compress css %}
+  <link type="text/less"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'cloudcare/less/markdown-table.less' %}"/>
+{% endcompress %}
+
   <link
     rel="stylesheet"
     href="{% static '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css' %}"

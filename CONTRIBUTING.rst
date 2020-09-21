@@ -6,7 +6,7 @@ CommCareHQ is primarily developed by `Dimagi`_, but we welcome contributions.
 
 Code Contributions
 ------------------
-Dimagi tracks most issues internally, but we use github's `issue tracker`_
+Dimagi tracks many issues internally, but we use github's `issue tracker`_
 for public facing issues.  Feel free to browse the issues there and tackle
 any you feel equipped to do.  When you update or add comments to an issue
 please mention **@dimagi/dimagi-dev** to send an alert to our internal issue
@@ -17,8 +17,17 @@ to a very high level regardless of source. Contributions which have very
 limited scope, come with rigorous tests, and have their purpose outlined
 in a Github issue are much more likely to be reviewed for inclusion.
 
-Before submitting a PR, review our `Code Contributions process`_, along with our
-specific `Guide to Authoring Pull Requests`_.  
+You should ensure the following are true for any PR before it will be 
+considered for review or re-review
+
+- The code and architecture comply with `Standards and Best Practices`_
+- Any UI components comply with the project `Style Guide`_
+- Contributions follow any subsystem specific practices (example: `Javascript Guide`_)
+- Automated regression and integration tests are passing
+- Any automated feedback (label bot, lint bot, etc) is addressed
+- Any previous developer feedback is addressed
+
+Before submitting a PR, review our `Guide to Authoring Pull Requests`_.  
 You may also be interested in the `Developers category`_ of the `CommCare Forum`_ 
 if you have questions or need feedback.
 
@@ -63,7 +72,9 @@ to see how that works.
 .. _Dimagi: http://www.dimagi.com/
 .. _issue tracker: https://github.com/dimagi/commcare-hq/issues
 .. _bug reports: https://confluence.dimagi.com/display/commcarepublic/Bug+Reports
-.. _Code Contributions process: https://github.com/dimagi/code-review/blob/master/README.md
+.. _Standards and Best Practices: STANDARDS.rst
+.. _Style Guide: https://www.commcarehq.org/styleguide/
+.. _Javascript Guide: docs/js-guide/README.md
 .. _Guide to Authoring Pull Requests: https://github.com/dimagi/code-review/blob/master/Writing_PRs.md
 .. _Developers category: https://forum.dimagi.com/c/developers
 .. _CommCare Forum: https://forum.dimagi.com/
