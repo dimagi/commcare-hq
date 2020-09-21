@@ -276,10 +276,6 @@ function Form(json) {
 
     self.forceRequiredVisible = ko.observable(false);
 
-    self.showRequiredNotice = ko.computed(function () {
-        return !self.isCurrentRequiredSatisfied() && self.forceRequiredVisible();
-    });
-
     self.clickedNextOnRequired = function () {
         self.forceRequiredVisible(true);
     };
@@ -364,9 +360,30 @@ function Group(json, parent) {
     self.parent = parent;
     self.rel_ix = ko.observable(relativeIndex(self.ix()));
     self.isRepetition = parent instanceof Repeat;
-    if (json.hasOwnProperty('domain_meta') && json.hasOwnProperty('style')) {
+    if (_.has(json, 'domain_meta') && _.has(json, 'style')) {
         self.domain_meta = parse_meta(json.datatype, val);
     }
+
+    var styles = _.has(json, 'style') && json.style && json.style.raw ? json.style.raw.split(/\s+/) : [];
+    self.collapsible = _.contains(styles, Const.COLLAPSIBLE);
+    self.showChildren = ko.observable(!self.collapsible || _.contains(styles, Const.COLLAPSIBLE_OPEN));
+    self.toggleChildren = function () {
+        if (self.collapsible) {
+            self.showChildren(!self.showChildren());
+        }
+    };
+
+    self.childrenRequired = ko.computed(function () {
+        return _.find(self.children(), function (child) {
+            return child.required() || self.childrenRequired && self.childrenRequired();
+        });
+    });
+
+    self.hasError = ko.computed(function () {
+        return _.find(self.children(), function (child) {
+            return child.hasError();
+        });
+    });
 
     if (self.isRepetition) {
         // If the group is part of a repetition the index can change if the user adds or deletes
