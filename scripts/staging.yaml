@@ -59,13 +59,13 @@ branches:
   - fr/linked-domain-keywords   # Farid August 26
   - sr/es7-reindex # Sravn Sept 2
   - fr/user-data-jit            # Farid September 2
-  - jls/collapsible-groups+jls/marionette-3+jls/web-apps-for-and-aria-required  # wheee!
-  - jls/marionette-3 # Jenny Aug 27
-  - jls/collapsible-groups # Jenny Sept 4
-  - jls/web-apps-for-and-aria-required # Jenny Sept 18
+#  - jls/collapsible-groups+jls/marionette-3+jls/web-apps-for-and-aria-required  # wheee!
+#  - jls/marionette-3 # Jenny Aug 27
+#  - jls/collapsible-groups # Jenny Sept 4
+#  - jls/web-apps-for-and-aria-required # Jenny Sept 18
   - adil-uddin:feature/USH-142-overwrite-caselists # Adil/Jenny Sept 10
   - mk/validate-file-extensions-2 # MK Sept 16
-  - ce/change-form-lang # Cal Sept 16
+#  - ce/change-form-lang # Cal Sept 16
   - gh/add-role-column-mobile # Graham Sept 21
 
 submodules: {}
