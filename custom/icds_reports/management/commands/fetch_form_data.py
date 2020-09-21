@@ -28,33 +28,15 @@ query_usage = """
 """
 
 usage_forms = {
-    "Register Household": "add_household",
-    "Add Member": "add_person",
-    "Post Natal Care": "pnc",
-    "Exclusive Breast Feeding": "ebf",
-    "Growth Monitoring": "gmp"
+    "Due List - child": "due_list_child",
+    "Due List - pregnancy": "due_list_ccs"
 }
 
 forms = {
-    "Register Household": "static-usage_forms",
-    "Add Member": "static-usage_forms",
-    "Add pregnancy": "static-dashboard_add_pregnancy_form",
-    "Availing services": "static-availing_service_form",
-    "Daily feeding": "static-daily_feeding_forms",
-    "Birth Preparedness": "static-dashboard_birth_preparedness_forms",
-    "Delivery": "static-child_delivery_forms",
-    "Post Natal Care": "static-usage_forms",
-    "Exclusive Breast Feeding": "static-usage_forms",
-    "Complementary Feeding": "static-complementary_feeding_forms",
-    "Growth Monitoring": "static-usage_forms",
-    "Additional Growth Monitoring": "static-dashboard_growth_monitoring_forms",  # special case
-    "THR Distribution": "static-dashboard_thr_forms",
-    "Infratructure Details": "static-infrastructure_form_v2",
-    "VHSND Survey": "static-vhnd_form",
-    "Visitor Register": "static-visitorbook_forms",
-    "AWC Visit Form": "static-awc_mgt_forms",
-    "Beneficiary Feedback": "static-ls_home_visit_forms_filled",
-    "VHSND observation Form": "static-ls_vhnd_form",
+    "Due List - child": "static-usage_forms",
+    "Due List - pregnancy": "static-usage_forms",
+    "Adolescent girls registration/de-registration form": "static-adolescent_girls_reg_form",
+    "Primary private school": "static-dashboard_primary_private_school",
 }
 
 START_DATE = date(2019, 9, 29)
