@@ -1,10 +1,20 @@
 from django.utils.datastructures import MultiValueDictKeyError
-from couchforms.const import MAGIC_PROPERTY
+from couchforms.const import (
+    MAGIC_PROPERTY,
+    PERMITTED_FORM_SUBMISSION_FILE_EXTENSIONS,
+    SUPPORTED_MEDIA_FILE_EXTENSIONS,
+)
 import logging
 from datetime import datetime
 from django.conf import settings
 
-from couchforms.exceptions import MultipartFilenameError, MultipartEmptyPayload, EmptyPayload
+from couchforms.exceptions import (
+    EmptyPayload,
+    MultipartEmptyPayload,
+    MultipartFilenameError,
+    InvalidSubmissionFileExtensionError,
+    InvalidAttachmentFileExtensionError,
+)
 from dimagi.utils.parsing import string_to_utc_datetime
 from dimagi.utils.web import get_ip, get_site_domain
 
@@ -35,12 +45,17 @@ def get_instance_and_attachment(request):
             raise MultimediaBug("Received a submission with POST.keys()")
 
         try:
-            instance = request.FILES[MAGIC_PROPERTY].read()
+            instance_file = request.FILES[MAGIC_PROPERTY]
         except MultiValueDictKeyError:
             raise MultipartFilenameError()
         else:
+            if not _valid_xml_extension(instance_file):
+                raise InvalidSubmissionFileExtensionError()
+            instance = instance_file.read()
             for key, item in request.FILES.items():
                 if key != MAGIC_PROPERTY:
+                    if not _valid_attachment_extension(item):
+                        raise InvalidAttachmentFileExtensionError()
                     attachments[key] = item
         if not instance:
             raise MultipartEmptyPayload()
@@ -52,6 +67,21 @@ def get_instance_and_attachment(request):
             raise EmptyPayload()
     request._instance_and_attachment = (instance, attachments)
     return instance, attachments
+
+
+def _valid_xml_extension(file):
+    return _valid_file_extension(file, PERMITTED_FORM_SUBMISSION_FILE_EXTENSIONS)
+
+
+def _valid_attachment_extension(file):
+    return _valid_file_extension(file, SUPPORTED_MEDIA_FILE_EXTENSIONS)
+
+
+def _valid_file_extension(file, permitted_extensions):
+    if "." not in file.name:
+        return False
+    file_extension = file.name.rsplit(".", 1)[-1]
+    return file_extension in permitted_extensions
 
 
 def get_location(request=None):
