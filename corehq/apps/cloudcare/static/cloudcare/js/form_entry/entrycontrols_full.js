@@ -2,8 +2,7 @@
 hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
         Utils = hqImport("cloudcare/js/form_entry/utils"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        MAPBOX_ACCESS_TOKEN = initialPageData.get("mapbox_access_token");
+        initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
     /**
      * The base Object for all entries. Each entry takes a question object
@@ -309,7 +308,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
 
             var defaultGeocoderLocation = initialPageData.get('default_geocoder_location') || {};
             var geocoder = new MapboxGeocoder({
-                accessToken: MAPBOX_ACCESS_TOKEN,
+                accessToken: initialPageData.get("mapbox_access_token"),
                 types: 'address',
                 enableEventLogging: false,
                 getItemValue: self.geocoderItemCallback,
@@ -873,10 +872,11 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
         };
 
         self.loadMap = function () {
-            if (MAPBOX_ACCESS_TOKEN) {
+            var token = initialPageData.get("mapbox_access_token");
+            if (token) {
                 self.map = L.map(self.entryId).setView([self.DEFAULT.lat, self.DEFAULT.lon], self.DEFAULT.zoom);
                 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token='
-                            + MAPBOX_ACCESS_TOKEN, {
+                            + token, {
                     id: 'mapbox/streets-v11',
                     attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
                                  ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
@@ -885,7 +885,7 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
 
                 self.centerMarker = L.marker(self.map.getCenter()).addTo(self.map);
 
-                L.mapbox.accessToken = MAPBOX_ACCESS_TOKEN;
+                L.mapbox.accessToken = token;
                 self.geocoder = L.mapbox.geocoder('mapbox.places');
             } else {
                 question.error(gettext('Map layer not configured.'));

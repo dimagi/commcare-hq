@@ -276,7 +276,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         ui: {
-            actionButton: '#double-management',
+            actionButton: '.caselist-action-button button',
             searchButton: '#case-list-search-button',
             paginators: '.page-link',
             columnHeader: '.header-clickable',

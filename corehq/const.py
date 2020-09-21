@@ -24,8 +24,6 @@ OPENROSA_VERSION_MAP = {
     'INDEXED_PRODUCTS_FIXTURE': OPENROSA_VERSION_2_1,
 }
 
-GOOGLE_PLAY_STORE_COMMCARE_URL = 'https://play.google.com/store/apps/details?id=org.commcare.dalvik&hl=en'
-
 ONE_DAY = 60 * 60 * 24
 DEFAULT_PARALLEL_EXECUTION_TIMEOUT = 60 * 60  # one hour
 

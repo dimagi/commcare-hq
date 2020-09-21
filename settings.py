@@ -834,6 +834,10 @@ ES_SEARCH_TIMEOUT = 30
 BITLY_OAUTH_TOKEN = None
 
 OAUTH2_PROVIDER = {
+    # until we have clearer project-level checks on this, just expire the token every
+    # 15 minutes to match HIPAA constraints.
+    # https://django-oauth-toolkit.readthedocs.io/en/latest/settings.html#access-token-expire-seconds
+    'ACCESS_TOKEN_EXPIRE_SECONDS': 15 * 60,
     'SCOPES': {
         'access_apis': 'Access API data on all your CommCare projects',
     },
@@ -1033,6 +1037,10 @@ SESSION_BYPASS_URLS = [
     r'^/a/{domain}/apps/download/',
 ]
 
+# Disable builtin throttling for two factor backup tokens, since we have our own
+# See corehq.apps.hqwebapp.signals and corehq.apps.hqwebapp.forms for details
+OTP_STATIC_THROTTLE_FACTOR = 0
+
 ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE = False
 RATE_LIMIT_SUBMISSIONS = False
 
@@ -1049,6 +1057,7 @@ USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
 LOCAL_CUSTOM_DB_ROUTING = {}
 
 DEFAULT_COMMCARE_EXTENSIONS = [
+    "custom.aaa.commcare_extensions",
     "custom.abt.commcare_extensions",
     "custom.eqa.commcare_extensions",
     "mvp.commcare_extensions",
@@ -1848,7 +1857,6 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_4.json'),
     os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2019.json'),
     os.path.join('custom', 'echis_reports', 'ucr', 'reports', '*.json'),
-    os.path.join('custom', 'aaa', 'ucr', 'reports', '*.json'),
     os.path.join('custom', 'ccqa', 'ucr', 'reports', 'patients.json'),  # For testing static UCRs
 ]
 
@@ -1883,7 +1891,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'inddex', 'ucr', 'data_sources', '*.json'),
 
     os.path.join('custom', 'echis_reports', 'ucr', 'data_sources', '*.json'),
-    os.path.join('custom', 'aaa', 'ucr', 'data_sources', '*.json'),
     os.path.join('custom', 'ccqa', 'ucr', 'data_sources', 'patients.json'),  # For testing static UCRs
 ]
 

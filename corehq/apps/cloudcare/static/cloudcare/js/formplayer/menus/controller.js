@@ -17,7 +17,9 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         $.when(fetchingNextMenu).done(function (menuResponse) {
 
             //set title of tab to application name
-            document.title = menuResponse.breadcrumbs[0];
+            if (menuResponse.breadcrumbs) {
+                document.title = menuResponse.breadcrumbs[0];
+            }
 
             // show any notifications from Formplayer
             if (menuResponse.notification && !_.isNull(menuResponse.notification.message)) {
