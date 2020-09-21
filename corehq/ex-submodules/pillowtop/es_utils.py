@@ -176,11 +176,14 @@ def initialize_index_and_mapping(es, index_info):
 def initialize_index(es, index_info):
     index = index_info.index
     mapping = index_info.mapping
-    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
-        mapping = transform_for_es7(mapping)
     mapping['_meta']['created'] = datetime.isoformat(datetime.utcnow())
     meta = copy(index_info.meta)
-    meta.update({'mappings': mapping})
+    if settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+        mapping = transform_for_es7(mapping)
+        meta.update({'mappings': mapping})
+    else:
+        meta.update({'mappings': {index_info.type: mapping}})
+
     pillow_logging.info("Initializing elasticsearch index for [%s]" % index_info.type)
     es.indices.create(index=index, body=meta)
     set_index_normal_settings(es, index)

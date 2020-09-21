@@ -52,7 +52,7 @@ def get_case_name(case_id):
     from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
     try:
         result = ElasticsearchInterface(get_es_new()).get_doc(
-            CASE_INDEX_INFO.index,
+            CASE_INDEX_INFO.alias,
             CASE_INDEX_INFO.type,
             case_id,
             source_includes=['name']
