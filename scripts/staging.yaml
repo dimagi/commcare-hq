@@ -64,6 +64,5 @@ branches:
   - adil-uddin:feature/USH-142-overwrite-caselists # Adil/Jenny Sept 10
   - mk/validate-file-extensions-2 # MK Sept 16
   - ce/change-form-lang # Cal Sept 16
-  - gh/add-role-column-mobile # Graham Sept 21
 
 submodules: {}
