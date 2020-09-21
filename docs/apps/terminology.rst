@@ -1,4 +1,4 @@
-App manager terminology
+Application terminology
 =======================
 
 Applications (and builds)
@@ -14,7 +14,7 @@ In saved builds, ``copy_of`` contains the primary app's id, while it's
 ``None`` for the primary app itself. If you need to be flexible about
 finding primary app's id on an object that might be either an app or a
 build, use the property
-`master\_id <https://github.com/dimagi/commcare-hq/blob/fd9f7aa24f25093683e17a69bb4a14f44d0e15b7/corehq/apps/app_manager/models.py#L4007>`__.
+`master_id <https://github.com/dimagi/commcare-hq/blob/fd9f7aa24f25093683e17a69bb4a14f44d0e15b7/corehq/apps/app_manager/models.py#L4007>`__.
 
 Within code, "build" should always refer to a saved build, but "app" is
 used for both the current app and saved builds. The ambiguity of "app"
@@ -71,7 +71,7 @@ Forms also have an xml namespace, abbreviated ``xmlns``, which is part
 of the form's XML definition. Reports match form submissions to form
 definitions using the xmlns plus the app id, which most apps pass along
 to
-`secure\_post <https://github.com/dimagi/commcare-hq/blob/5d9122ad2ba23986e6b4493eee0eab16cbcc868b/corehq/apps/receiverwrapper/views.py#L304>`__.
+`secure_post <https://github.com/dimagi/commcare-hq/blob/5d9122ad2ba23986e6b4493eee0eab16cbcc868b/corehq/apps/receiverwrapper/views.py#L304>`__.
 For reports to identify forms accurately, xmlns must be unique within an
 app.
 
@@ -81,7 +81,7 @@ same XMLNS as the corresponding form in the original. When a form is
 copied within an app - or when a user uploads XML using an xmlns already
 in use by another form in the same app - the new form's xmlns will be
 set to a new value in
-`save\_xform <https://github.com/dimagi/commcare-hq/blob/170690a2fbf8039365fdca852911b4a57fd70a1e/corehq/apps/app_manager/util.py#L171>`__.
+`save_xform <https://github.com/dimagi/commcare-hq/blob/170690a2fbf8039365fdca852911b4a57fd70a1e/corehq/apps/app_manager/util.py#L171>`__.
 
 Exceptions
 ~~~~~~~~~~
@@ -112,7 +112,7 @@ The first set of template apps are simple apps in different sectors that
 we've experimented with adding to a user's project when they first sign
 up for an account. These template apps are stored as json in the code
 base, in the
-`template\_apps <https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/app_manager/static/app_manager/template_apps>`__
+`template_apps <https://github.com/dimagi/commcare-hq/tree/master/corehq/apps/app_manager/static/app_manager/template_apps>`__
 directory. They are imported using the view ``app_from_template``.
 
 COVID app library
