@@ -1,12 +1,14 @@
 hqDefine("app_manager/js/modules/module_view", function () {
     $(function () {
+        $('.multiselect-caselist').select2();
+        
         var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
             moduleBrief = initial_page_data('module_brief'),
             moduleType = moduleBrief.module_type,
             options = initial_page_data('js_options') || {};
 
         hqImport('app_manager/js/app_manager').setAppendedPageTitle(django.gettext("Menu Settings"));
-
+        
         // Set up details
         if (moduleBrief.case_type) {
             var state = hqImport('app_manager/js/details/screen_config').state;
