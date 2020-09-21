@@ -1,5 +1,6 @@
 from corehq.apps.integration.models import DialerSettings
 
+from corehq.apps.linked_domain.local_accessors import get_dialer_settings
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
 from corehq.apps.linked_domain.updates import update_dialer_settings
 
@@ -17,6 +18,12 @@ class TestUpdateDialerSettings(BaseLinkedAppsTest):
         self.dialer_setup.delete()
 
     def test_update_dialer_settings(self):
+        self.assertEqual({'domain': self.linked_domain,
+                          'aws_instance_id': '',
+                          'dialer_page_header': '',
+                          'dialer_page_subheader': '',
+                          'is_enabled': False}, get_dialer_settings(self.linked_domain))
+
         # Initial update of linked domain
         update_dialer_settings(self.domain_link)
 

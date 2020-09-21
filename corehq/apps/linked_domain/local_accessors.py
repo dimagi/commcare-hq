@@ -82,7 +82,7 @@ def get_data_dictionary(domain):
 
 
 def get_dialer_settings(domain):
-    settings = DialerSettings.objects.get(domain=domain)
+    settings, created = DialerSettings.objects.get_or_create(domain=domain)
     return {
         'domain': domain,
         'aws_instance_id': settings.aws_instance_id,
@@ -93,7 +93,7 @@ def get_dialer_settings(domain):
 
 
 def get_otp_settings(domain):
-    settings = GaenOtpServerSettings.objects.get(domain=domain)
+    settings, created = GaenOtpServerSettings.objects.get_or_create(domain=domain)
     return {
         'domain': domain,
         'is_enabled': settings.is_enabled,
@@ -103,7 +103,7 @@ def get_otp_settings(domain):
 
 
 def get_hmac_callout_settings(domain):
-    settings = HmacCalloutSettings.objects.get(domain=domain)
+    settings, created = HmacCalloutSettings.objects.get_or_create(domain=domain)
     return {
         'domain': domain,
         'destination_url': settings.destination_url,

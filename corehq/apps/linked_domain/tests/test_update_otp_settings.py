@@ -1,5 +1,6 @@
 from corehq.apps.integration.models import GaenOtpServerSettings
 
+from corehq.apps.linked_domain.local_accessors import get_otp_settings
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
 from corehq.apps.linked_domain.updates import update_otp_settings
 
@@ -7,15 +8,20 @@ from corehq.apps.linked_domain.updates import update_otp_settings
 class TestUpdateOTPSettings(BaseLinkedAppsTest):
     def setUp(self):
         self.otp_setup = GaenOtpServerSettings(domain=self.domain,
-                                           is_enabled=True,
-                                           server_url='a1b2c3',
-                                           auth_token='auth_1234')
+                                               is_enabled=True,
+                                               server_url='a1b2c3',
+                                               auth_token='auth_1234')
         self.otp_setup.save()
 
     def tearDown(self):
         self.otp_setup.delete()
 
     def test_update_otp_settings(self):
+        self.assertEqual({'domain': self.linked_domain,
+                          'server_url': '',
+                          'auth_token': '',
+                          'is_enabled': False}, get_otp_settings(self.linked_domain))
+
         # Initial update of linked domain
         update_otp_settings(self.domain_link)
 

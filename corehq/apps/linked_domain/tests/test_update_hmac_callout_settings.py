@@ -1,5 +1,6 @@
 from corehq.apps.integration.models import HmacCalloutSettings
 
+from corehq.apps.linked_domain.local_accessors import get_hmac_callout_settings
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
 from corehq.apps.linked_domain.updates import update_hmac_callout_settings
 
@@ -17,6 +18,12 @@ class TestUpdateHmacCalloutSettings(BaseLinkedAppsTest):
         self.hmac_setup.delete()
 
     def test_update_dialer_settings(self):
+        self.assertEqual({'domain': self.linked_domain,
+                          'destination_url': '',
+                          'api_key': '',
+                          'api_secret': '',
+                          'is_enabled': False}, get_hmac_callout_settings(self.linked_domain))
+
         # Initial update of linked domain
         update_hmac_callout_settings(self.domain_link)
 

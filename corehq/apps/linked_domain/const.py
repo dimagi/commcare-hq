@@ -27,7 +27,7 @@ LINKED_MODELS = [
     (MODEL_DATA_DICTIONARY, ugettext_lazy('Data Dictionary')),
     (MODEL_DIALER_SETTINGS, ugettext_lazy('Dialer Settings')),
     (MODEL_OTP_SETTINGS, ugettext_lazy('OTP Pass-through Settings')),
-    (MODEL_HMAC_CALLOUT_SETTINGS, ugettext_lazy('HMAC Callout Settings')),
+    (MODEL_HMAC_CALLOUT_SETTINGS, ugettext_lazy('Signed Callout')),
 ]
 
 LINKED_MODELS_MAP = dict(LINKED_MODELS)

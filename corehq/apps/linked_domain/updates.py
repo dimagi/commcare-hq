@@ -299,7 +299,7 @@ def update_dialer_settings(domain_link):
     else:
         master_results = local_get_dialer_settings(domain_link.master_domain)
 
-    model, created = DialerSettings.objects.get_or_create(domain_link.linked_domain)
+    model = DialerSettings.objects.get(domain=domain_link.linked_domain)
 
     model.domain = domain_link.linked_domain
     model.aws_instance_id = master_results['aws_instance_id']
@@ -315,7 +315,7 @@ def update_otp_settings(domain_link):
     else:
         master_results = local_get_otp_settings(domain_link.master_domain)
 
-    model, created = GaenOtpServerSettings.objects.get_or_create(domain_link.linked_domain)
+    model = GaenOtpServerSettings.objects.get(domain=domain_link.linked_domain)
 
     model.domain = domain_link.linked_domain
     model.is_enabled = master_results['is_enabled']
@@ -330,7 +330,8 @@ def update_hmac_callout_settings(domain_link):
     else:
         master_results = local_get_hmac_callout_settings(domain_link.master_domain)
 
-    model, created = HmacCalloutSettings.objects.get_or_create(domain_link.master_domain)
+    model = HmacCalloutSettings.objects.get(domain=domain_link.master_domain)
+
     model.domain = domain_link.linked_domain
     model.destination_url = master_results['destination_url']
     model.is_enabled = master_results['is_enabled']
