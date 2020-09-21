@@ -263,14 +263,16 @@ class LocationChoiceProvider(ChainableChoiceProvider):
         self.include_descendants = False
         self.show_full_path = False
         self.location_type = None
+        self.show_all_locations = False  # archived or unarchived
 
     def configure(self, spec):
         self.include_descendants = spec.get('include_descendants', self.include_descendants)
         self.show_full_path = spec.get('show_full_path', self.show_full_path)
         self.location_type = spec.get('location_type', self.location_type)
+        self.show_all_locations = spec.get('show_all_locations', self.show_all_locations)
 
     def _locations_query(self, query_text, user):
-        locations = SQLLocation.active_objects
+        locations = SQLLocation.objects if self.show_all_locations else SQLLocation.active_objects
         if query_text:
             locations = locations.filter_by_user_input(
                 domain=self.domain,
@@ -297,8 +299,9 @@ class LocationChoiceProvider(ChainableChoiceProvider):
         return self._locations_query(query, user).count()
 
     def get_choices_for_known_values(self, values, user):
+        base_query = SQLLocation.objects if self.show_all_locations else SQLLocation.active_objects
         if user is not None:
-            selected_locations = (SQLLocation.active_objects.filter(location_id__in=values)
+            selected_locations = (base_query.filter(location_id__in=values)
                                   .accessible_to_user(self.domain, user))
         else:
             assert_user_passed_in(False, "get_choices_for_known_values was called without a user")
@@ -376,7 +379,7 @@ class GroupChoiceProvider(ChainableChoiceProvider):
             GroupES().domain(self.domain).is_case_sharing()
             .search_string_query(query, default_fields=['name'])
         )
-        return group_es.size(0).run().total
+        return group_es.count()
 
     def get_choices_for_known_values(self, values, user):
         group_es = GroupES().domain(self.domain).is_case_sharing().doc_id(values)

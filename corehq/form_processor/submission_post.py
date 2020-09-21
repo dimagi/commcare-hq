@@ -6,7 +6,6 @@ from django.db import IntegrityError
 from django.http import (
     HttpRequest,
     HttpResponse,
-    HttpResponseBadRequest,
     HttpResponseForbidden,
 )
 from django.conf import settings
@@ -38,7 +37,7 @@ from corehq.form_processor.submission_process_tracker import unfinished_submissi
 from corehq.util.metrics.load_counters import form_load_counter
 from corehq.util.global_request import get_request
 from couchforms import openrosa_response
-from couchforms.const import BadRequest, DEVICE_LOG_XMLNS
+from couchforms.const import DEVICE_LOG_XMLNS
 from couchforms.models import DefaultAuthContext, UnfinishedSubmissionStub
 from couchforms.signals import successful_form_received
 from couchforms.util import legacy_notification_assert
@@ -136,9 +135,6 @@ class SubmissionPost(object):
 
         if not self.auth_context.is_valid():
             return HttpResponseForbidden('Bad auth')
-
-        if isinstance(self.instance, BadRequest):
-            return HttpResponseBadRequest(self.instance.message)
 
     def _post_process_form(self, xform):
         self._set_submission_properties(xform)

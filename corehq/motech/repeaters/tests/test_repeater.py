@@ -1170,53 +1170,6 @@ class FormatResponseTests(SimpleTestCase):
         self.assertEqual(formatted, '500: The core is exposed.\n')
 
 
-class NotifyAddressesTests(SimpleTestCase):
-
-    def test_default(self):
-        repeater = DummyRepeater.wrap({})
-        self.assertEqual(repeater.notify_addresses, [])
-
-    def test_empty(self):
-        repeater = DummyRepeater.wrap({
-            "notify_addresses_str": "",
-        })
-        self.assertEqual(repeater.notify_addresses, [])
-
-    def test_one(self):
-        repeater = DummyRepeater.wrap({
-            "notify_addresses_str": "admin@example.com"
-        })
-        self.assertEqual(repeater.notify_addresses, ["admin@example.com"])
-
-    def test_comma(self):
-        repeater = DummyRepeater.wrap({
-            "notify_addresses_str": "admin@example.com,user@example.com"
-        })
-        self.assertEqual(repeater.notify_addresses, ["admin@example.com",
-                                                     "user@example.com"])
-
-    def test_space(self):
-        repeater = DummyRepeater.wrap({
-            "notify_addresses_str": "admin@example.com user@example.com"
-        })
-        self.assertEqual(repeater.notify_addresses, ["admin@example.com",
-                                                     "user@example.com"])
-
-    def test_commaspace(self):
-        repeater = DummyRepeater.wrap({
-            "notify_addresses_str": "admin@example.com, user@example.com"
-        })
-        self.assertEqual(repeater.notify_addresses, ["admin@example.com",
-                                                     "user@example.com"])
-
-    def test_mess(self):
-        repeater = DummyRepeater.wrap({
-            "notify_addresses_str": "admin@example.com,,, ,  user@example.com"
-        })
-        self.assertEqual(repeater.notify_addresses, ["admin@example.com",
-                                                     "user@example.com"])
-
-
 class TestGetRetryInterval(SimpleTestCase):
 
     def test_min_interval(self):

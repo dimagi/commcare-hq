@@ -1,4 +1,5 @@
 import functools
+import mock
 import uuid
 
 
@@ -7,9 +8,11 @@ from django.test import SimpleTestCase
 from corehq.util.es.elasticsearch import ConnectionError
 
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.hqadmin.views.data import lookup_doc_in_es
 from corehq.elastic import get_es_new
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
+from corehq.pillows.mappings.utils import transform_for_es7
 from pillowtop.es_utils import (
     assume_alias,
     initialize_index,
@@ -58,8 +61,8 @@ class ElasticPillowTest(SimpleTestCase):
         mapping = get_index_mapping(self.es, self.index, TEST_INDEX_INFO.type)
         # we can't compare the whole dicts because ES adds a bunch of stuff to them
         self.assertEqual(
-            TEST_INDEX_INFO.mapping['properties']['doc_type']['index'],
-            mapping['properties']['doc_type']['index']
+            transform_for_es7(TEST_INDEX_INFO.mapping)['properties']['doc_type'],
+            mapping['properties']['doc_type']
         )
 
     def test_refresh_index(self):
@@ -105,12 +108,13 @@ class ElasticPillowTest(SimpleTestCase):
         self.addCleanup(functools.partial(ensure_index_deleted, new_index))
 
         # make sure it's there in the other index
-        aliases = self.es.indices.get_aliases()
+        aliases = self.es_interface.get_aliases()
         self.assertEqual([TEST_INDEX_INFO.alias], list(aliases[new_index]['aliases']))
 
         # assume alias and make sure it's removed (and added to the right index)
         assume_alias(self.es, self.index, TEST_INDEX_INFO.alias)
-        aliases = self.es.indices.get_aliases()
+        aliases = self.es_interface.get_aliases()
+
         self.assertEqual(0, len(aliases[new_index]['aliases']))
         self.assertEqual([TEST_INDEX_INFO.alias], list(aliases[self.index]['aliases']))
 
@@ -154,6 +158,11 @@ class ElasticPillowTest(SimpleTestCase):
                 .format(disallowed_setting))
 
 
+TEST_ES_META = {
+    TEST_INDEX_INFO.index: TEST_INDEX_INFO
+}
+
+
 @es_test
 class TestSendToElasticsearch(SimpleTestCase):
 
@@ -170,9 +179,14 @@ class TestSendToElasticsearch(SimpleTestCase):
     def tearDown(self):
         ensure_index_deleted(self.index)
 
+    @mock.patch('corehq.apps.hqadmin.views.data.ES_META', TEST_ES_META)
+    @mock.patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
+    @mock.patch('corehq.elastic.ES_META', TEST_ES_META)
     def test_create_doc(self):
         doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'foo'}
         self._send_to_es_and_check(doc)
+        res = lookup_doc_in_es(doc['_id'], self.index)
+        self.assertEqual(res, doc)
 
     def _send_to_es_and_check(self, doc, update=False, es_merge_update=False,
                               delete=False, esgetter=None):

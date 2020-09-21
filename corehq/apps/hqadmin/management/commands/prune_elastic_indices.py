@@ -3,6 +3,7 @@ from django.core.management import BaseCommand
 from corehq.elastic import get_es_new
 from corehq.pillows.utils import get_all_expected_es_indices
 from corehq.util.es.elasticsearch import AuthorizationException
+from corehq.util.es.interface import ElasticsearchInterface
 
 
 class Command(BaseCommand):
@@ -30,10 +31,11 @@ class Command(BaseCommand):
 
     def handle(self, **options):
         es = get_es_new()
+        es_interface = ElasticsearchInterface(es)
         # call this before getting existing indices because apparently getting the pillow will create the index
         # if it doesn't exist
         # fixme: this can delete real indices if a reindex is in progress
-        found_indices = set(es.indices.get_aliases().keys())
+        found_indices = set(es_interface.get_aliases().keys())
         expected_indices = {info.index for info in get_all_expected_es_indices()}
         print(expected_indices)
 

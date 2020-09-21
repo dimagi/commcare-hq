@@ -1106,13 +1106,6 @@ class MessagingTab(UITab):
     def contacts_urls(self):
         contacts_urls = []
 
-        if toggles.MOBILE_WORKER_SELF_REGISTRATION.enabled(self.domain):
-            from corehq.apps.sms.views import ManageRegistrationInvitationsView
-            contacts_urls.append(
-                {'title': _("Mobile Worker Registration"),
-                 'url': reverse(ManageRegistrationInvitationsView.urlname, args=[self.domain])}
-            )
-
         if self.couch_user.can_edit_data():
             contacts_urls.append(
                 {'title': _('Chat'),
@@ -1426,7 +1419,8 @@ class ProjectUsersTab(UITab):
 
         if self.couch_user.is_superuser:
             from corehq.apps.users.models import DomainPermissionsMirror
-            if DomainPermissionsMirror.mirror_domains(self.domain):
+            if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled_for_request(self._request) \
+                    or DomainPermissionsMirror.mirror_domains(self.domain):
                 from corehq.apps.users.views import DomainPermissionsMirrorView
                 menu.append({
                     'title': _(DomainPermissionsMirrorView.page_title),

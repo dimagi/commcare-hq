@@ -15,13 +15,14 @@
   <script src="{% static 'ace-builds/src-min-noconflict/ext-searchbox.js' %}"></script>
   <script src="{% static 'bootstrap-switch/dist/js/bootstrap-switch.js' %}"></script>
   <script src="{% static 'datetimepicker/build/jquery.datetimepicker.full.js' %}"></script>
+  <script src="{% static 'crypto-js/crypto-js.js' %}"></script>
+  <script src="{% static 'integration/js/hmac_callout.js' %}"></script>
   <script src="{% static 'cloudcare/js/util.js' %}"></script>
   <script src="{% static 'Caret.js/dist/jquery.caret.js' %}"></script>
   <script src="{% static 'At.js/dist/js/jquery.atwho.js' %}"></script>
   <script src="{% static 'fast-levenshtein/levenshtein.js' %}"></script>
   <script src="{% static 'clipboard/dist/clipboard.js' %}"></script>
   <script src="{% static 'reports/js/readable_form.js' %}"></script>
-  <script src="{% static 'crypto-js/crypto-js.js' %}"></script>
   <script src="{% static 'url-polyfill/url-polyfill.js' %}"></script>
 
   <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
@@ -61,8 +62,6 @@
   <script src="{% static 'cloudcare/js/formplayer/sessions/collections.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/sessions/views.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/sessions/controller.js' %}"></script>
-
-  <script src="{% static 'integration/js/hmac_callout.js' %}"></script>
 {% endcompress %}
 
 {% include 'hqwebapp/includes/ui_element_js.html' %}
@@ -73,6 +72,12 @@
   <script src="{% static 'cloudcare/js/form_entry/entrycontrols_full.js' %}"></script>
   <script src="{% static 'cloudcare/js/form_entry/fullform-ui.js' %}"></script>
   <script src="{% static '@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.min.js' %}"></script>
+{% endcompress %}
+{% compress css %}
+  <link type="text/less"
+        rel="stylesheet"
+        media="all"
+        href="{% static 'cloudcare/less/markdown-table.less' %}"/>
 {% endcompress %}
   <link
     rel="stylesheet"

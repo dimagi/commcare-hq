@@ -23,7 +23,6 @@ def close_cases_assigned_to_checkin(checkin_case, rule):
             assigned_case.domain,
             assigned_case.case_id,
             case_properties=blank_properties,
-            close=True,
             xmlns=AUTO_UPDATE_XMLNS,
             device_id=__name__ + ".close_cases_assigned_to_checkin",
         )
@@ -41,7 +40,6 @@ def close_cases_assigned_to_checkin(checkin_case, rule):
     return CaseRuleActionResult(
         num_closes=1,
         num_related_updates=num_related_updates,
-        num_related_closes=num_related_updates,
     )
 
 

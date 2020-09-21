@@ -25,17 +25,27 @@ LARGE_FILE_SIZE_ERROR_CODE_ICDS_TCL = 452
 LARGE_FILE_SIZE_ERROR_CODES = [LARGE_FILE_SIZE_ERROR_CODE, LARGE_FILE_SIZE_ERROR_CODE_ICDS_TCL]
 
 
-def mark_subevent_bounced(bounced_addresses, messaging_event_id):
+def mark_local_bounced_email(bounced_addresses, message_id):
     from corehq.apps.sms.models import MessagingEvent, MessagingSubEvent
-    try:
-        subevent = MessagingSubEvent.objects.get(id=messaging_event_id)
-    except MessagingSubEvent.DoesNotExist:
-        pass
+    from corehq.apps.users.models import Invitation, InvitationStatus
+    if Invitation.EMAIL_ID_PREFIX in message_id:
+        try:
+            invite = Invitation.objects.get(uuid=message_id.split(Invitation.EMAIL_ID_PREFIX)[1])
+        except Invitation.DoesNotExist:
+            pass
+        else:
+            invite.email_status = InvitationStatus.BOUNCED
+            invite.save()
     else:
-        subevent.error(
-            MessagingEvent.ERROR_EMAIL_BOUNCED,
-            additional_error_text=", ".join(bounced_addresses)
-        )
+        try:
+            subevent = MessagingSubEvent.objects.get(id=message_id)
+        except MessagingSubEvent.DoesNotExist:
+            pass
+        else:
+            subevent.error(
+                MessagingEvent.ERROR_EMAIL_BOUNCED,
+                additional_error_text=", ".join(bounced_addresses)
+            )
 
 
 def get_valid_recipients(recipients):
@@ -66,7 +76,7 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
     filtered_recipients = get_valid_recipients(recipients)
     bounced_addresses = list(set(recipients) - set(filtered_recipients))
     if bounced_addresses and messaging_event_id:
-        mark_subevent_bounced(bounced_addresses, messaging_event_id)
+        mark_local_bounced_email(bounced_addresses, messaging_event_id)
 
     if not filtered_recipients:
         # todo address root issues by throwing a real error to catch upstream
