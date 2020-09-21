@@ -235,6 +235,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
                 'formplayer.' + Const.PREV_QUESTION,
                 'formplayer.' + Const.QUESTIONS_FOR_INDEX,
                 'formplayer.' + Const.FORMATTED_QUESTIONS,
+                'formplayer.' + Const.CHANGE_LOCALE,
             ].join(' '));
             $.subscribe('formplayer.' + Const.SUBMIT, function (e, form) {
                 self.submitForm(form);
