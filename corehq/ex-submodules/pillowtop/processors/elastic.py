@@ -177,10 +177,10 @@ def send_to_elasticsearch(alias, doc_type, doc_id, es_getter, name, data=None,
     propagate_failure = settings.UNIT_TESTING
     while current_tries < retries:
         try:
-            update = es_interface.doc_exists(alias, doc_id, doc_type)
-            if delete:
+            doc_exists = es_interface.doc_exists(alias, doc_id, doc_type)
+            if delete and doc_exists:
                 es_interface.delete_doc(alias, doc_type, doc_id)
-            elif update:
+            elif doc_exists:
                 params = {'retry_on_conflict': 2}
                 if es_merge_update:
                     es_interface.update_doc_fields(alias, doc_type, doc_id, fields=data, params=params)
