@@ -217,7 +217,7 @@ class TestNotEdgeCase(SimpleTestCase):
         doc2 = {'_id': 'doc2', 'domain': 'd', 'app_id': 'not_a'}
         doc3 = {'_id': 'doc3', 'domain': 'not_d', 'app_id': 'not_a'}
         for doc in [doc1, doc2, doc3]:
-            send_to_elasticsearch(self.index, XFORM_INDEX_INFO.type, doc['_id'], get_es_new, 'test', doc)
+            send_to_elasticsearch(self.alias, XFORM_INDEX_INFO.type, doc['_id'], get_es_new, 'test', doc)
         self.es.indices.refresh(self.index)
         query = FormES().remove_default_filters().filter(
             filters.NOT(filters.OR(
