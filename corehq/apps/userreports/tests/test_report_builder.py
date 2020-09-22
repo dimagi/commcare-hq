@@ -176,7 +176,7 @@ class DataSourceReferenceTest(ReportBuilderDBTest):
             "partial_submission", "received_on", "edited_on", "submit_ip",
             "form.first_name", "form.last_name", "form.children", "form.dob", "form.state",
             "form.case.@date_modified", 'form.case.@user_id', 'form.case.@case_id', 'form.case.update.first_name',
-            'form.case.update.last_name', "count",
+            'form.case.update.last_name', "count", "web_user",
         ]
 
         self.assertItemsEqual(expected_property_names, list(reference.data_source_properties))
