@@ -72,8 +72,10 @@ class CreditsAutomatedReport(object):
             "Project",
             "Edition",
             "General Credits / Credits Remaining for Subscription",
+            "Feature / Product Credits for Subscription",
             "Account Name",
             "Billing Account-level Credits",
+            "Billing Account-level Feature / Product Credits",
             "Product/Implementation?",
         ]]
 
@@ -87,8 +89,16 @@ class CreditsAutomatedReport(object):
                               if credit_info['general_credit']
                               else "")
 
+            feature_credit = (credit_info['feature_credit']['amount']
+                              if credit_info['feature_credit']
+                              else "")
+
             account_credit = (credit_info['account_general_credit']['amount']
                               if credit_info['account_general_credit']['amount']
+                              else "")
+
+            account_feature_credit = (credit_info['account_feature_credit']['amount']
+                              if credit_info['account_feature_credit']['amount']
                               else "")
 
             if not (general_credit in ["", "0.00"]) or not (account_credit in ["", "0.00"]):
@@ -96,8 +106,10 @@ class CreditsAutomatedReport(object):
                     domain,
                     plan_edition,
                     general_credit,
+                    feature_credit,
                     subscription.account.name if subscription.account else "",
                     account_credit,
+                    account_feature_credit,
                     subscription.service_type,
                 ])
 
@@ -110,10 +122,16 @@ class CreditsAutomatedReport(object):
                     subscription
                 )
             )),
+            'feature_credit': self._fmt_credit(self._credit_grand_total(
+                CreditLine.get_non_general_credits_by_subscription(subscription)
+            )),
             'account_general_credit': self._fmt_credit(self._credit_grand_total(
                 CreditLine.get_credits_for_account(
                     subscription.account
                 ) if subscription.account else None
+            )),
+            'account_feature_credit': self._fmt_credit(self._credit_grand_total(
+                CreditLine.get_non_general_credits_for_account(subscription.account)
             )),
         }
 
