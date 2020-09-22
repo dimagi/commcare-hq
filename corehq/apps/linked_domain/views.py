@@ -42,6 +42,10 @@ from corehq.apps.linked_domain.const import (
     MODEL_CASE_SEARCH,
     MODEL_FIXTURE,
     MODEL_REPORT,
+    MODEL_DATA_DICTIONARY,
+    MODEL_DIALER_SETTINGS,
+    MODEL_OTP_SETTINGS,
+    MODEL_HMAC_CALLOUT_SETTINGS,
 )
 from corehq.apps.linked_domain.dbaccessors import (
     get_domain_master_link,
@@ -302,6 +306,10 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                 model not in ignore_models
                 and model not in (MODEL_APP, MODEL_FIXTURE, MODEL_REPORT)
                 and (model != MODEL_CASE_SEARCH or toggles.SYNC_SEARCH_CASE_CLAIM.enabled(self.domain))
+                and (model != MODEL_DATA_DICTIONARY or toggles.DATA_DICTIONARY.enabled(self.domain))
+                and (model != MODEL_DIALER_SETTINGS or toggles.WIDGET_DIALER.enabled(self.domain))
+                and (model != MODEL_OTP_SETTINGS or toggles.GAEN_OTP_SERVER.enabled(self.domain))
+                and (model != MODEL_HMAC_CALLOUT_SETTINGS or toggles.HMAC_CALLOUT.enabled(self.domain))
             ):
                 model_status.append({
                     'type': model,
