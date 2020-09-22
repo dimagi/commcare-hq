@@ -61,6 +61,7 @@ branches:
   - fr/user-data-jit            # Farid September 2
   - jls/collapsible-groups # Jenny Sept 4
   - jls/web-apps-for-and-aria-required # Jenny Sept 18
+  - jls/hqdefine-fullform-ui # Jenny Sept 22
   - adil-uddin:feature/USH-142-overwrite-caselists # Adil/Jenny Sept 10
   - mk/validate-file-extensions-2 # MK Sept 16
   - ce/change-form-lang # Cal Sept 16
