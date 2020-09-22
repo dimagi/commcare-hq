@@ -126,7 +126,6 @@ def send_to_elasticsearch(index_name, doc, delete=False, es_merge_update=False):
     if isinstance(doc_id, bytes):
         doc_id = doc_id.decode('utf-8')
     index_info = ES_META[index_name]
-    doc_exists = doc_exists_in_es(index_info, doc_id)
     return send_to_es(
         alias=index_info.alias,
         doc_type=index_info.type,
@@ -136,7 +135,6 @@ def send_to_elasticsearch(index_name, doc, delete=False, es_merge_update=False):
                                   send_to_elasticsearch.__name__, index_name),
         data=doc,
         propagate_failure=True,
-        update=doc_exists,
         delete=delete,
         es_merge_update=es_merge_update,
     )

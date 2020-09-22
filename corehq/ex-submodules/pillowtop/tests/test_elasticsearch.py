@@ -189,10 +189,8 @@ class TestSendToElasticsearch(SimpleTestCase):
             es_getter=esgetter or get_es_new,
             name='test',
             data=doc,
-            update=update,
             es_merge_update=es_merge_update,
-            delete=delete,
-            retries=1
+            delete=delete
         )
 
         if not delete:
