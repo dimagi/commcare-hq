@@ -10,10 +10,8 @@ from corehq.elastic import SIZE_LIMIT
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
-from corehq.util.es.interface import ElasticsearchInterface
 from pillowtop.es_utils import initialize_index_and_mapping
-from pillowtop.processors.elastic import send_to_elasticsearch
-from pillowtop.tests.utils import TEST_INDEX_INFO
+from corehq.elastic import send_to_elasticsearch
 
 
 @es_test
@@ -217,7 +215,7 @@ class TestNotEdgeCase(SimpleTestCase):
         doc2 = {'_id': 'doc2', 'domain': 'd', 'app_id': 'not_a'}
         doc3 = {'_id': 'doc3', 'domain': 'not_d', 'app_id': 'not_a'}
         for doc in [doc1, doc2, doc3]:
-            send_to_elasticsearch(self.alias, XFORM_INDEX_INFO.type, doc['_id'], get_es_new, 'test', doc)
+            send_to_elasticsearch('forms', doc)
         self.es.indices.refresh(self.index)
         query = FormES().remove_default_filters().filter(
             filters.NOT(filters.OR(
