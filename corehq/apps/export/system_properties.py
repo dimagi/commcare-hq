@@ -216,6 +216,19 @@ BOTTOM_MAIN_FORM_TABLE_PROPERTIES = [
         help_text=_('Link to this form'),
         selected=True,
     ),
+    ExportColumn(
+        tags=[PROPERTY_TAG_INFO],
+        label="web_user",
+        item=ExportItem(
+            path=[
+                PathNode(name='auth_context'),
+                PathNode(name='user_id'),
+            ],
+            transform=USERNAME_TRANSFORM,
+        ),
+        help_text=_('The web user who submitted the form'),
+        selected=True,
+    ),
 ]
 MAIN_FORM_TABLE_PROPERTIES = TOP_MAIN_FORM_TABLE_PROPERTIES + BOTTOM_MAIN_FORM_TABLE_PROPERTIES
 
