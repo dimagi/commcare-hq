@@ -175,9 +175,9 @@ def send_to_elasticsearch(alias, doc_type, doc_id, es_getter, name, data=None,
     es_interface = ElasticsearchInterface(es_getter())
     retries = 1 if settings.UNIT_TESTING else MAX_RETRIES
     propagate_failure = settings.UNIT_TESTING
-    update = es_interface.doc_exists(alias, doc_id, doc_type)
     while current_tries < retries:
         try:
+            update = es_interface.doc_exists(alias, doc_id, doc_type)
             if delete:
                 es_interface.delete_doc(alias, doc_type, doc_id)
             elif update:
