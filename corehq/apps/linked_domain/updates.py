@@ -330,6 +330,8 @@ def update_hmac_callout_settings(domain_link):
     else:
         master_results = local_get_hmac_callout_settings(domain_link.master_domain)
 
+    HmacCalloutSettings.objects.filter(domain=domain_link.linked_domain).delete()
+
     model, created = HmacCalloutSettings.objects.get_or_create(domain=domain_link.master_domain)
 
     model.domain = domain_link.linked_domain
