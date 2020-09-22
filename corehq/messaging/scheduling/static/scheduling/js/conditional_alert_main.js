@@ -54,16 +54,13 @@ hqDefine(
             $(".main-form").on("submit", function () {
                 var finalFormContent = getFormContents();
                 // compare changes with initialFormContent to check if only 'message' has changed
-                var formContentChanges = [];
-                Object.keys(finalFormContent).forEach(function (key) {
-                    if (finalFormContent[key] !== initialFormContent[key]) {
-                        formContentChanges.push(key);
+                var shouldInitiateRule = _.find(_.keys(finalFormContent), function (key) {
+                    if (finalFormContent[key] !== initialFormContent[key] && key !== "content-message") {
+                        return true;
                     }
                 });
-                if (!_.isEqual(["content-message"],formContentChanges)) {
-                    // to convey to HQ to reprocess or not
-                    $("#initiate_rule").val(false);
-                }
+                $("#initiate_rule").val(Boolean(shouldInitiateRule));
+
                 return true;
             });
         });
