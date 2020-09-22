@@ -2,7 +2,7 @@
 
 TL;DR
 - All JavaScript code should be in a .js file and encapsulated as a module using `hqDefine`.
-- Dependencies should be imported in the `hqDefine` call for modules that support RequireJS (most of HQ), and using `hqImport` for modules that do not yet support non-RequireJS (web apps, app manager, reports).
+- Dependencies should be imported in the `hqDefine` call for modules that support RequireJS (most of HQ), and using `hqImport` for modules that do not yet support RequireJS (web apps, app manager, reports).
 - When creating class-like objects, use a functional inheritance pattern.
 
 ## Static Files Organization
@@ -39,8 +39,8 @@ pass data from the server to a script. We now have infrastructure to access serv
 from .js files; see [Server Integration Patterns](./integration-patterns.md) for more detail.
 
 There are a few places we do intentionally use script blocks, such as configuring less.js in CommCareHQ's
-main template, `hqwebapp/base.html`. These are places where there's just a few lines
-of code that's truly independent of the rest of the site's JavaScript. They are rare.
+main template, `hqwebapp/base.html`. These are places where there are just a few lines
+of code that are truly independent of the rest of the site's JavaScript. They are rare.
 
 There are also a number of Django templates with legacy `<script>` blocks. By and large,
 these are being "externalized" into separate files as we modernize our JavaScript. See
@@ -105,7 +105,7 @@ MYNAMESPACE.myModule = (function () {
 }());
 ```
 
-This uses a pattern so common in JavaScript that it has it's own
+This uses a pattern so common in JavaScript that it has its own
 acronym "IIFE" for "Immediately Invoked Function Expression".
 By wrapping the contents of the module in a function expression,
 you can use variables and functions local to your module
@@ -210,7 +210,7 @@ to `hqDefine` instead of being called directly.
 
 `hqDefine` is an intermediate step on the way to full support for AMD modules, which in HQ is implemented using RequireJS.
 `hqDefine` checks whether or not it is on a page that uses AMD modules and then behaves in one of two ways:
-* If the page has been migrated, so it uses AMD modules, `hqDefine` just delegates to `define`.
+* If the page has been migrated, meaning it uses AMD modules, `hqDefine` just delegates to `define`.
 * If the page has not been migrated, `hqDefine` acts as a thin wrapper around the Crockford module pattern. `hqDefine` takes a function, calls it immediately, and puts it in a namespaced global; `hqImport` then looks up the module in that global.
 
 In the first case, by handing control over to RequireJS, `hqDefine`/`hqImport` also act as a module *loader*.

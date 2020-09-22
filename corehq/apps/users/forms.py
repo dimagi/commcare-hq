@@ -1094,71 +1094,6 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
         return True
 
 
-class SelfRegistrationForm(forms.Form):
-
-    def __init__(self, *args, **kwargs):
-        if 'domain' not in kwargs:
-            raise Exception('Expected kwargs: domain')
-        self.domain = kwargs.pop('domain')
-        require_email = kwargs.pop('require_email', False)
-
-        super(SelfRegistrationForm, self).__init__(*args, **kwargs)
-
-        if require_email:
-            self.fields['email'].required = True
-
-        self.helper = FormHelper()
-        self.helper.form_class = 'form-horizontal'
-        self.helper.label_class = 'col-xs-4'
-        self.helper.field_class = 'col-xs-8'
-        layout_fields = [
-            crispy.Fieldset(
-                _('Register'),
-                crispy.Field('username', placeholder='sam123'),
-                crispy.Field('password'),
-                crispy.Field('password2'),
-                crispy.Field('email'),
-            ),
-            hqcrispy.FormActions(
-                StrictButton(
-                    _('Register'),
-                    css_class='btn-primary',
-                    type='submit',
-                )
-            ),
-        ]
-        self.helper.layout = crispy.Layout(*layout_fields)
-
-    username = TrimmedCharField(
-        required=True,
-        label=ugettext_lazy('Create a Username'),
-    )
-    password = forms.CharField(
-        required=True,
-        label=ugettext_lazy('Create a Password'),
-        widget=PasswordInput(),
-    )
-    password2 = forms.CharField(
-        required=True,
-        label=ugettext_lazy('Re-enter Password'),
-        widget=PasswordInput(),
-    )
-    email = forms.EmailField(
-        required=False,
-        label=ugettext_lazy('Email address (used for tasks like resetting your password)'),
-    )
-
-    def clean_username(self):
-        return clean_mobile_worker_username(
-            self.domain,
-            self.cleaned_data.get('username')
-        )
-
-    def clean_password2(self):
-        if self.cleaned_data.get('password') != self.cleaned_data.get('password2'):
-            raise forms.ValidationError(_('Passwords do not match.'))
-
-
 class AddPhoneNumberForm(forms.Form):
     phone_number = forms.CharField(
         max_length=50, help_text=ugettext_lazy('Please enter number, including country code, in digits only.')
@@ -1211,8 +1146,9 @@ class CommCareUserFormSet(object):
         return CustomDataEditor(
             domain=self.domain,
             field_view=UserFieldsView,
-            existing_custom_data=self.editable_user.user_data,
+            existing_custom_data=self.editable_user.metadata,
             post_dict=self.data,
+            ko_model="custom_fields",
         )
 
     def is_valid(self):
@@ -1220,7 +1156,7 @@ class CommCareUserFormSet(object):
                 and all([self.user_form.is_valid(), self.custom_data.is_valid()]))
 
     def update_user(self):
-        self.user_form.existing_user.user_data = self.custom_data.get_data_to_save()
+        self.user_form.existing_user.update_metadata(self.custom_data.get_data_to_save())
         return self.user_form.update_user()
 
 
@@ -1321,3 +1257,7 @@ class CommCareUserFilterForm(forms.Form):
         if "*" in search_string or "?" in search_string:
             raise forms.ValidationError(_("* and ? are not allowed"))
         return search_string
+
+
+class CreateDomainPermissionsMirrorForm(forms.Form):
+    mirror_domain = forms.CharField(label=ugettext_lazy('Project Space'), max_length=30, required=True)

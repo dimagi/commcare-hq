@@ -52,7 +52,7 @@
                         "type": "named"
                     },
                     "index_identifier": "owner_village",
-                    "type": "icds_village_owner_id"
+                    "type": "aaa_village_owner_id"
                 },
                 "is_nullable": true,
                 "is_primary_key": false,
@@ -314,7 +314,7 @@
                             "to_date_expression": {
                                 "date_expression": {
                                     "date_expression": {
-                                        "type": "icds_datetime_now"
+                                        "type": "utcnow"
                                     },
                                     "months_expression": {
                                         "context_variables": {
@@ -358,7 +358,7 @@
             "month_start": {
                 "date_expression": {
                     "date_expression": {
-                        "type": "icds_datetime_now"
+                        "type": "utcnow"
                     },
                     "months_expression": {
                         "context_variables": {
