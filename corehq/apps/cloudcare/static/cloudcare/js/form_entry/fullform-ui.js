@@ -365,8 +365,8 @@ function Group(json, parent) {
     }
 
     var styles = _.has(json, 'style') && json.style && json.style.raw ? json.style.raw.split(/\s+/) : [];
-    self.collapsible = _.contains(styles, Formplayer.Const.COLLAPSIBLE);
-    self.showChildren = ko.observable(!self.collapsible || _.contains(styles, Formplayer.Const.COLLAPSIBLE_OPEN));
+    self.collapsible = _.contains(styles, Const.COLLAPSIBLE);
+    self.showChildren = ko.observable(!self.collapsible || _.contains(styles, Const.COLLAPSIBLE_OPEN));
     self.toggleChildren = function () {
         if (self.collapsible) {
             self.showChildren(!self.showChildren());
