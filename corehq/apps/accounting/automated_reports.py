@@ -101,7 +101,12 @@ class CreditsAutomatedReport(object):
                               if credit_info['account_feature_credit']['amount']
                               else "")
 
-            if not (general_credit in ["", "0.00"]) or not (account_credit in ["", "0.00"]):
+            if any([c not in ["", "0.00"] for c in [
+                    general_credit,
+                    feature_credit,
+                    account_credit,
+                    account_feature_credit,
+            ]]):
                 table.append([
                     domain,
                     plan_edition,
