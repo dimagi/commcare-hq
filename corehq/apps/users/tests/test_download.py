@@ -15,14 +15,20 @@ from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.bulk_download import parse_users
 from corehq.apps.user_importer.importer import GroupMemoizer
-from corehq.util.test_utils import flag_enabled
+from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 
 
-class TestDownloadMobileWorkers(TestCase):
+class TestDownloadMobileWorkers(TestCase, DomainSubscriptionMixin):
+    domain = 'bookshelf'
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.domain_obj = create_domain('bookshelf')
+        cls.domain_obj = create_domain(cls.domain)
+
+        # APP_USER_PROFILES is on ENTERPRISE and above
+        cls.setup_subscription(cls.domain, SoftwarePlanEdition.ENTERPRISE)
 
         cls.group_memoizer = GroupMemoizer(domain=cls.domain_obj.name)
         cls.group_memoizer.load_all()
@@ -77,6 +83,7 @@ class TestDownloadMobileWorkers(TestCase):
         cls.user2.delete(deleted_by=None)
         cls.domain_obj.delete()
         cls.definition.delete()
+        cls.teardown_subscriptions()
         super().tearDownClass()
 
     def test_download(self):
@@ -95,8 +102,8 @@ class TestDownloadMobileWorkers(TestCase):
         self.assertEqual('', spec['data: _type'])
         self.assertEqual(1862, spec['data: born'])
 
-    @flag_enabled('CUSTOM_DATA_FIELDS_PROFILES')
     def test_download_with_profile(self):
+        self.setup_subscription(self.domain, SoftwarePlanEdition.ENTERPRISE)
         (headers, rows) = parse_users(self.group_memoizer, self.domain_obj.name, {})
         self.assertIn('user_profile', headers)
         self.assertIn('data: _type', headers)
