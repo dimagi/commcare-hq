@@ -1,7 +1,7 @@
-/* global Backbone, Marionette */
-hqDefine("cloudcare/js/formplayer/router", function () {
-    var Util = hqImport("cloudcare/js/formplayer/utils/util");
-    var Router = Marionette.AppRouter.extend({
+/*global FormplayerFrontend, Util */
+
+FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, FormplayerFrontend, Backbone, Marionette) {
+    SessionNavigate.Router = Marionette.AppRouter.extend({
         appRoutes: {
             "apps": "listApps", // list all apps available to this user
             "single_app/:id": "singleApp", // Show app in phone mode (SingleAppView)
@@ -18,27 +18,22 @@ hqDefine("cloudcare/js/formplayer/router", function () {
     });
 
 
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        appsController = hqImport("cloudcare/js/formplayer/apps/controller"),
-        menusController = hqImport("cloudcare/js/formplayer/menus/controller"),
-        sessionsController = hqImport("cloudcare/js/formplayer/sessions/controller"),
-        usersController = hqImport("cloudcare/js/formplayer/users/controller");
     var API = {
         listApps: function () {
-            FormplayerFrontend.regions.getRegion('breadcrumb').empty();
-            appsController.listApps();
+            FormplayerFrontend.regions.breadcrumb.empty();
+            FormplayerFrontend.Apps.Controller.listApps();
         },
         singleApp: function (appId) {
-            var user = FormplayerFrontend.getChannel().request('currentUser');
-            FormplayerFrontend.regions.getRegion('breadcrumb').empty();
+            var user = FormplayerFrontend.request('currentUser');
+            FormplayerFrontend.regions.breadcrumb.empty();
             user.previewAppId = appId;
-            appsController.singleApp(appId);
+            FormplayerFrontend.Apps.Controller.singleApp(appId);
         },
         landingPageApp: function (appId) {
-            appsController.landingPageApp(appId);
+            FormplayerFrontend.Apps.Controller.landingPageApp(appId);
         },
         selectApp: function (appId, isInitial) {
-            menusController.selectMenu({
+            FormplayerFrontend.Menus.Controller.selectMenu({
                 'appId': appId,
                 'isInitial': isInitial,
             });
@@ -51,7 +46,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
                 // We can't do any menu navigation without an appId
                 FormplayerFrontend.trigger("apps:list");
             } else {
-                menusController.selectMenu(urlObject);
+                FormplayerFrontend.Menus.Controller.selectMenu(urlObject);
             }
         },
         listUsers: function (page, query) {
@@ -60,19 +55,19 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             if (_.isNaN(page)) {
                 page = 1;
             }
-            usersController.listUsers(page, query);
+            FormplayerFrontend.Users.Controller.listUsers(page, query);
         },
         listSettings: function () {
-            appsController.listSettings();
+            FormplayerFrontend.Apps.Controller.listSettings();
         },
         showDetail: function (caseId, detailTabIndex, isPersistent) {
-            menusController.selectDetail(caseId, detailTabIndex, isPersistent);
+            FormplayerFrontend.Menus.Controller.selectDetail(caseId, detailTabIndex, isPersistent);
         },
         listSessions: function () {
-            sessionsController.listSessions();
+            SessionNavigate.SessionList.Controller.listSessions();
         },
         getSession: function (sessionId) {
-            FormplayerFrontend.getChannel().request("getSession", sessionId);
+            FormplayerFrontend.request("getSession", sessionId);
         },
         localInstall: function (path) {
             FormplayerFrontend.trigger("localInstall", path);
@@ -98,7 +93,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
 
             // When the response gets parsed, it will automatically trigger form
             // entry if it is a form response.
-            menuCollection = hqImport("cloudcare/js/formplayer/menus/collections")(
+            menuCollection = new FormplayerFrontend.Menus.Collections.MenuSelect(
                 response,
                 { parse: true }
             );
@@ -108,10 +103,10 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             encodedUrl = Util.objectToEncodedUrl(urlObject.toJson());
             FormplayerFrontend.navigate(encodedUrl);
 
-            menusController.showMenu(menuCollection);
+            FormplayerFrontend.Menus.Controller.showMenu(menuCollection);
         },
     };
-    API = hqImport("cloudcare/js/formplayer/middleware").apply(API);
+    API = SessionNavigate.Middleware.apply(API);
 
     FormplayerFrontend.on("apps:currentApp", function () {
         var urlObject = Util.currentUrlToObject();
@@ -209,6 +204,12 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         API.renderResponse(menuResponse);
     });
 
+    SessionNavigate.start = function () {
+        return new SessionNavigate.Router({
+            controller: API,
+        });
+    };
+
     FormplayerFrontend.on("breadcrumbSelect", function (index) {
         FormplayerFrontend.trigger("clearForm");
         var urlObject = Util.currentUrlToObject();
@@ -218,22 +219,15 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             'appId': urlObject.appId,
             'steps': urlObject.steps,
         };
-        hqImport("cloudcare/js/formplayer/menus/controller").selectMenu(options);
+        FormplayerFrontend.Menus.Controller.selectMenu(options);
     });
+
 
     FormplayerFrontend.on("localInstall", function (path) {
         var urlObject = new Util.CloudcareUrl({
             'installReference': path,
         });
         Util.setUrlToObject(urlObject);
-        hqImport("cloudcare/js/formplayer/menus/controller").selectMenu(urlObject);
+        FormplayerFrontend.Menus.Controller.selectMenu(urlObject);
     });
-
-    return {
-        start: function () {
-            return new Router({
-                controller: API,
-            });
-        },
-    };
 });

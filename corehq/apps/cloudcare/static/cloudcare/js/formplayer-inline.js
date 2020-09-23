@@ -1,7 +1,8 @@
-hqDefine("cloudcare/js/formplayer-inline", function () {
-    var alertHtml = function (message, cssClass) {
+/*global $:false, window:false */
+(function () {
+    var alertHtml = function (message, alert_class) {
         return (
-            "<div class='alert " + (cssClass || 'alert-info') + "'>" +
+            "<div class='alert " + (alert_class || 'alert-info') + "'>" +
             "<button type='button' class='close' data-dismiss='alert'>&times;</button>" +
             message +
             "</div>"
@@ -30,7 +31,7 @@ hqDefine("cloudcare/js/formplayer-inline", function () {
                 data.session_data = $.extend(data.session_data, options.sessionData);
 
                 data = $.extend(data, {
-                    onsubmit: function () {
+                    onsubmit: function (xml) {
                         $target.html(alertHtml(gettext('Form successfully submitted!'), 'alert-success'));
                         options.onsubmit();
                     },
@@ -40,7 +41,7 @@ hqDefine("cloudcare/js/formplayer-inline", function () {
                             'alert-danger'
                         ));
                     },
-                    onload: function () {
+                    onload: function (adapter, resp) {
                         options.onload();
                     },
                 });
@@ -51,7 +52,7 @@ hqDefine("cloudcare/js/formplayer-inline", function () {
                 data.domain = options.domain;
                 data.username = options.username;
                 data.restoreAs = options.restoreAs;
-                var sess = hqImport('cloudcare/js/form_entry/webformsession').WebFormSession(data);
+                var sess = new WebFormSession(data);
                 sess.load($target, options.lang);
             },
         });
@@ -102,4 +103,4 @@ hqDefine("cloudcare/js/formplayer-inline", function () {
 
         return false;
     });
-});
+}());

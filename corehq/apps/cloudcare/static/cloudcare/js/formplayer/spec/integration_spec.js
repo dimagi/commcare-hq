@@ -1,9 +1,7 @@
-/* global Backbone */
+/* global FormplayerFrontend, Util, Backbone */
 /* eslint-env mocha */
 
 describe('FormplayerFrontend Integration', function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
-
     describe('Start up', function () {
         var options,
             server;
@@ -15,18 +13,6 @@ describe('FormplayerFrontend Integration', function () {
                 apps: [],
             };
             sinon.stub(Backbone.history, 'start').callsFake(sinon.spy());
-
-            // Prevent showing views, which doesn't work properly in tests
-            FormplayerFrontend.off("before:start");
-            FormplayerFrontend.regions = {
-                getRegion: function () {
-                    return {
-                        show: function () {
-                            return;
-                        },
-                    };
-                },
-            };
         });
 
         afterEach(function () {
@@ -37,7 +23,7 @@ describe('FormplayerFrontend Integration', function () {
         it('should start the formplayer frontend app', function () {
             FormplayerFrontend.start(options);
 
-            var user = FormplayerFrontend.getChannel().request('currentUser');
+            var user = FormplayerFrontend.request('currentUser');
             assert.equal(user.username, options.username);
             assert.equal(user.domain, options.domain);
         });
@@ -51,12 +37,12 @@ describe('FormplayerFrontend Integration', function () {
 
             FormplayerFrontend.start(newOptions);
 
-            user = FormplayerFrontend.getChannel().request('currentUser');
-            hqImport("cloudcare/js/formplayer/utils/util").saveDisplayOptions(user.displayOptions);
+            user = FormplayerFrontend.request('currentUser');
+            Util.saveDisplayOptions(user.displayOptions);
 
             // New session, but old options
             FormplayerFrontend.start(options);
-            user = FormplayerFrontend.getChannel().request('currentUser');
+            user = FormplayerFrontend.request('currentUser');
 
             assert.deepEqual(user.displayOptions, {
                 phoneMode: undefined, // we don't store this option

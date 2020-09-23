@@ -1,14 +1,15 @@
-/*global Marionette */
+/*global FormplayerFrontend */
 
-hqDefine("cloudcare/js/formplayer/layout/views/progress_bar", function () {
-    var ProgressView = Marionette.View.extend({
-        template: _.template($("#progress-view-template").html() || ""),
+FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, Backbone, Marionette) {
+
+    Views.ProgressView = Marionette.ItemView.extend({
+        template: "#progress-view-template",
 
         initialize: function (options) {
             this.progressMessage = options.progressMessage;
         },
 
-        templateContext: function () {
+        templateHelpers: function () {
             return {
                 progressMessage: this.progressMessage,
             };
@@ -26,9 +27,5 @@ hqDefine("cloudcare/js/formplayer/layout/views/progress_bar", function () {
             }
         },
     });
-
-    return function (options) {
-        return new ProgressView(options);
-    };
 });
 

@@ -97,7 +97,7 @@ hqDefine("cloudcare/js/config", [
                 var returnValue = [];
                 for (var i = 0; i < self.applicationAccess.app_groups().length; i++) {
                     var group = self.applicationAccess.app_groups()[i];
-                    if (!_.has(lookup, group.group_id())) {
+                    if (!lookup.hasOwnProperty(group.group_id())) {
                         lookup[group.group_id()] = {
                             group: group.group_id.obj(),
                             apps: [],
@@ -106,7 +106,7 @@ hqDefine("cloudcare/js/config", [
                     lookup[group.group_id()].apps.push(group.app_id.obj());
                 }
                 for (var id in lookup) {
-                    if (_.has(lookup, id)) {
+                    if (lookup.hasOwnProperty(id)) {
                         returnValue.push(lookup[id]);
                     }
                 }

@@ -1,9 +1,7 @@
-/*global Marionette, moment */
+/*global FormplayerFrontend, moment, Util */
 
-hqDefine("cloudcare/js/formplayer/sessions/views", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
-
-    var SessionView = Marionette.View.extend({
+FormplayerFrontend.module("SessionNavigate.SessionList", function (SessionList, FormplayerFrontend, Backbone, Marionette) {
+    SessionList.SessionView = Marionette.ItemView.extend({
         tagName: "tr",
         className: "formplayer-request",
         events: {
@@ -11,7 +9,7 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
             "click .module-delete-control": "onDeleteSession",
         },
 
-        template: _.template($("#session-view-item-template").html() || ""),
+        template: "#session-view-item-template",
 
         rowClick: function (e) {
             e.preventDefault();
@@ -19,7 +17,7 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
             FormplayerFrontend.trigger("getSession", model.get('sessionId'));
         },
 
-        templateContext: function () {
+        templateHelpers: function (e) {
             return {
                 humanDateOpened: moment(this.model.get('dateOpened')).fromNow(),
             };
@@ -28,33 +26,28 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
             var self = this;
             e.preventDefault();
             e.stopPropagation();
-            hqImport("cloudcare/js/formplayer/utils/util").confirmationModal({
+            Util.confirmationModal({
                 title: gettext('Delete incomplete form?'),
                 message: gettext("Are you sure you want to delete '" + self.model.get('title') + "'"),
                 confirmText: gettext('Yes'),
                 cancelText: gettext('No'),
                 onConfirm: function () {
-                    FormplayerFrontend.getChannel().request("deleteSession", self.model);
+                    FormplayerFrontend.request("deleteSession", self.model);
                 },
             });
         },
     });
 
-    var SessionListView = Marionette.CollectionView.extend({
+    SessionList.SessionListView = Marionette.CompositeView.extend({
         tagName: "div",
-        childView: SessionView,
-        childViewContainer: "tbody",
         getTemplate: function () {
-            var user = FormplayerFrontend.getChannel().request('currentUser');
-            var id = "#session-view-list-web-apps-template";
-            if (user.environment === hqImport("cloudcare/js/formplayer/constants").PREVIEW_APP_ENVIRONMENT) {
-                id = "#session-view-list-preview-template";
+            var user = FormplayerFrontend.request('currentUser');
+            if (user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
+                return "#session-view-list-preview-template";
             }
-            return _.template($(id).html() || "");
+            return "#session-view-list-web-apps-template";
         },
+        childView: SessionList.SessionView,
+        childViewContainer: "tbody",
     });
-
-    return function (options) {
-        return new SessionListView(options);
-    };
 });

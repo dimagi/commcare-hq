@@ -1,31 +1,45 @@
-hqDefine("cloudcare/js/formplayer/middleware", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+/*global FormplayerFrontend */
 
+FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, FormplayerFrontend, Backbone, Marionette) {
+    SessionNavigate.Middleware = {
+        apply: function (api) {
+            var wrappedApi = {};
+            _.each(api, function (value, key) {
+                wrappedApi[key] = function () {
+                    _.each(SessionNavigate.Middleware.middlewares, function (fn) {
+                        fn.call(null, key);
+                    });
+                    return value.apply(null, arguments);
+                };
+            });
+            return wrappedApi;
+        },
+    };
     var logRouteMiddleware = function (name) {
         window.console.log('User navigated to ' + name);
     };
-    var clearFormMiddleware = function () {
+    var clearFormMiddleware = function (name) {
         FormplayerFrontend.trigger("clearForm");
     };
-    var navigationMiddleware = function () {
+    var navigationMiddleware = function (name) {
         FormplayerFrontend.trigger("navigation");
     };
-    var clearVersionInfo = function () {
+    var clearVersionInfo = function (name) {
         FormplayerFrontend.trigger('setVersionInfo', '');
     };
-    var clearBreadcrumbMiddleware = function () {
+    var clearBreadcrumbMiddleware = function (name) {
         FormplayerFrontend.trigger('clearBreadcrumbs');
     };
     var setScrollableMaxHeight = function () {
         var maxHeight,
-            user = FormplayerFrontend.getChannel().request('currentUser'),
+            user = FormplayerFrontend.request('currentUser'),
             restoreAsBannerHeight = 0;
 
         if (user.restoreAs) {
-            restoreAsBannerHeight = FormplayerFrontend.regions.getRegion('restoreAsBanner').$el.height();
+            restoreAsBannerHeight = FormplayerFrontend.regions.restoreAsBanner.$el.height();
         }
         maxHeight = ($(window).height() -
-            FormplayerFrontend.regions.getRegion('breadcrumb').$el.height() -
+            FormplayerFrontend.regions.breadcrumb.$el.height() -
             restoreAsBannerHeight);
 
         $('.scrollable-container').css('max-height', maxHeight + 'px');
@@ -35,9 +49,7 @@ hqDefine("cloudcare/js/formplayer/middleware", function () {
         });
     };
 
-    var self = {};
-
-    self.middlewares = [
+    SessionNavigate.Middleware.middlewares = [
         logRouteMiddleware,
         clearFormMiddleware,
         navigationMiddleware,
@@ -45,19 +57,4 @@ hqDefine("cloudcare/js/formplayer/middleware", function () {
         setScrollableMaxHeight,
         clearBreadcrumbMiddleware,
     ];
-
-    self.apply = function (api) {
-        var wrappedApi = {};
-        _.each(api, function (value, key) {
-            wrappedApi[key] = function () {
-                _.each(self.middlewares, function (fn) {
-                    fn.call(null, key);
-                });
-                return value.apply(null, arguments);
-            };
-        });
-        return wrappedApi;
-    };
-
-    return self;
 });

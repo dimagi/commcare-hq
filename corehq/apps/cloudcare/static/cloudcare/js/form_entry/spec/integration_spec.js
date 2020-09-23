@@ -1,10 +1,8 @@
-/* eslint-env mocha */
-/* global Form */
 describe('Integration', function () {
-    var Const = hqImport("cloudcare/js/form_entry/const"),
+    var questionJSON,
         formJSON,
-        questionJSONMulti,
-        questionJSONString;
+        repeatJSON,
+        repeatNestJSON;
 
     beforeEach(function () {
         questionJSONMulti = {
@@ -19,7 +17,7 @@ describe('Integration', function () {
             "relevant": 1,
             "help": null,
             "answer": null,
-            "datatype": Const.MULTI_SELECT,
+            "datatype": Formplayer.Const.MULTI_SELECT,
             "style": {},
             "caption_video": null,
             "choices": [
@@ -39,7 +37,7 @@ describe('Integration', function () {
             "relevant": 1,
             "help": null,
             "answer": null,
-            "datatype": Const.STRING,
+            "datatype": Formplayer.Const.STRING,
             "style": {},
             "caption_video": null,
         };
@@ -60,6 +58,7 @@ describe('Integration', function () {
 
 
     it('Should reconcile questions answered at the same time for strings', function () {
+        var self = this;
         var questionJSONString2 = {};
         $.extend(questionJSONString2, questionJSONString);
         questionJSONString.ix = '0';
@@ -79,14 +78,14 @@ describe('Integration', function () {
         // Fire off a change in the string question
         stringQ1.entry.rawAnswer('ben');
         this.clock.tick(stringQ1.throttle);
-        this.clock.tick(Const.KO_ENTRY_TIMEOUT);
+        this.clock.tick(Formplayer.Const.KO_ENTRY_TIMEOUT);
 
         // once we receive signal to answer question, pending answer should be set
         assert.equal(stringQ1.pendingAnswer(), 'ben');
 
         // Fire off a change in the other question before we've reconciled first one
         stringQ2.entry.rawAnswer('lisa');
-        this.clock.tick(Const.KO_ENTRY_TIMEOUT);
+        this.clock.tick(Formplayer.Const.KO_ENTRY_TIMEOUT);
         assert.equal(stringQ2.pendingAnswer(), 'lisa');
 
         // Have server respond to the string question before string changes
@@ -95,7 +94,7 @@ describe('Integration', function () {
         $.publish('session.reconcile', [response1, stringQ1]);
         assert.equal(stringQ2.pendingAnswer(), 'lisa');
         assert.equal(stringQ2.answer(), 'lisa');
-        assert.equal(stringQ1.pendingAnswer(), Const.NO_PENDING_ANSWER);
+        assert.equal(stringQ1.pendingAnswer(), Formplayer.Const.NO_PENDING_ANSWER);
         assert.equal(stringQ1.answer(), 'ben');
 
         var response2 = {};
@@ -106,8 +105,8 @@ describe('Integration', function () {
         $.publish('session.reconcile', [response2, stringQ2]);
         assert.equal(stringQ1.answer(), 'ben');
         assert.equal(stringQ2.answer(), 'lisa');
-        assert.equal(stringQ1.pendingAnswer(), Const.NO_PENDING_ANSWER);
-        assert.equal(stringQ2.pendingAnswer(), Const.NO_PENDING_ANSWER);
+        assert.equal(stringQ1.pendingAnswer(), Formplayer.Const.NO_PENDING_ANSWER);
+        assert.equal(stringQ2.pendingAnswer(), Formplayer.Const.NO_PENDING_ANSWER);
     });
 
     it('Should reconcile questions answered at the same time for multi', function () {
@@ -122,20 +121,20 @@ describe('Integration', function () {
 
         // Fire off a change in the string question
         stringQ.entry.rawAnswer('ben');
-        this.clock.tick(Const.KO_ENTRY_TIMEOUT);
+        this.clock.tick(Formplayer.Const.KO_ENTRY_TIMEOUT);
         this.clock.tick(stringQ.throttle);
         assert.equal(stringQ.pendingAnswer(), 'ben');
 
         // Fire off a change in the multi question
         multiQ.entry.rawAnswer(["1"]);
-        this.clock.tick(Const.KO_ENTRY_TIMEOUT);
+        this.clock.tick(Formplayer.Const.KO_ENTRY_TIMEOUT);
         assert.sameMembers(multiQ.pendingAnswer(), [1]);
 
         // Have server respond to the string question before multi changes
         // this would normally fire off another change to multi, but we do not reconcile
         // questions that have pending answers.
         $.publish('session.reconcile', [response1, stringQ]);
-        assert.equal(stringQ.pendingAnswer(), Const.NO_PENDING_ANSWER);
+        assert.equal(stringQ.pendingAnswer(), Formplayer.Const.NO_PENDING_ANSWER);
         assert.equal(stringQ.answer(), 'ben');
         assert.sameMembers(multiQ.pendingAnswer(), [1]);
         assert.sameMembers(multiQ.answer(), [1]);
@@ -148,8 +147,8 @@ describe('Integration', function () {
         $.publish('session.reconcile', [response2, multiQ]);
         assert.equal(stringQ.answer(), 'ben');
         assert.sameMembers(multiQ.answer(), [1]);
-        assert.equal(stringQ.pendingAnswer(), Const.NO_PENDING_ANSWER);
-        assert.equal(multiQ.pendingAnswer(), Const.NO_PENDING_ANSWER);
+        assert.equal(stringQ.pendingAnswer(), Formplayer.Const.NO_PENDING_ANSWER);
+        assert.equal(multiQ.pendingAnswer(), Formplayer.Const.NO_PENDING_ANSWER);
     });
 
     it('Should properly reconcile Geo', function () {

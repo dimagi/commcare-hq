@@ -1,10 +1,11 @@
-/*global Backbone */
+/*global FormplayerFrontend, Util */
 
-hqDefine("cloudcare/js/formplayer/menus/collections", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Util = hqImport("cloudcare/js/formplayer/utils/util");
+FormplayerFrontend.module("Menus.Collections", function (Collections, FormplayerFrontend, Backbone, Marionette, $) {
 
-    var MenuSelect = Backbone.Collection.extend({
+    Collections.MenuSelect = Backbone.Collection.extend({
+
+        model: FormplayerFrontend.Menus.Models.MenuSelect,
+
         commonProperties: [
             'title',
             'type',
@@ -44,7 +45,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'isPersistentDetail',
         ],
 
-        parse: function (response) {
+        parse: function (response, request) {
             _.extend(this, _.pick(response, this.commonProperties));
 
             if (response.selections) {
@@ -75,9 +76,5 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             return Backbone.Collection.prototype.sync.call(this, 'create', model, options);
         },
     });
-
-    return function (response, options) {
-        return new MenuSelect(response, options);
-    };
 });
 

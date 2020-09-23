@@ -17,7 +17,11 @@
     <script src="{% static 'underscore/underscore-min.js' %}"></script>
 {% endif %}
 
-<script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+{% if request.use_legacy_jquery %}
+    <script src="{% static 'jquery-2.2.4/dist/jquery.min.js' %}"></script>
+{% else %}
+    <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+{% endif %}
 {% compress js %}
     <script src="{% static 'jquery-form/dist/jquery.form.min.js' %}"></script>
     <script src="{% static 'jquery.cookie/jquery.cookie.js' %}"></script>

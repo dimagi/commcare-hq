@@ -1,21 +1,19 @@
-/*global Backbone */
+/*global FormplayerFrontend, Util */
 
-hqDefine("cloudcare/js/formplayer/sessions/collections", function () {
+FormplayerFrontend.module("Sessions.Collections", function (Collections, FormplayerFrontend, Backbone, Marionette, $) {
 
-    var session = Backbone.Collection.extend({
-        model: hqImport("cloudcare/js/formplayer/sessions/models"),
+    Collections.FormEntrySession = Backbone.Collection.extend({
+
+        model: FormplayerFrontend.Sessions.Models.FormEntrySession,
 
         parse: function (response) {
             return response.sessions;
         },
 
         fetch: function (options) {
-            hqImport("cloudcare/js/formplayer/utils/util").setCrossDomainAjaxOptions(options);
+            Util.setCrossDomainAjaxOptions(options);
             return Backbone.Collection.prototype.fetch.call(this, options);
         },
     });
 
-    return function (options) {
-        return new session(options);
-    };
 });

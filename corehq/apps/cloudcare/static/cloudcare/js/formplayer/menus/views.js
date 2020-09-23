@@ -1,10 +1,7 @@
-/*global Marionette */
+/*global FormplayerFrontend, Util */
 
-hqDefine("cloudcare/js/formplayer/menus/views", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Util = hqImport("cloudcare/js/formplayer/utils/util");
-
-    var MenuView = Marionette.View.extend({
+FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Backbone, Marionette, $) {
+    Views.MenuView = Marionette.ItemView.extend({
         tagName: function () {
             if (this.model.collection.layoutStyle === 'grid') {
                 return 'div';
@@ -24,13 +21,15 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         getTemplate: function () {
-            var id = "#menu-view-row-template";
-            if (this.model.collection.layoutStyle === hqImport("cloudcare/js/formplayer/constants").LayoutStyles.GRID) {
-                id = "#menu-view-grid-item-template";
-            } else if (this.model.get('audioUri')) {
-                id = "#menu-view-row-audio-template";
+            if (this.model.collection.layoutStyle === FormplayerFrontend.Constants.LayoutStyles.GRID) {
+                return "#menu-view-grid-item-template";
+            } else {
+                if (this.model.get('audioUri')) {
+                    return "#menu-view-row-audio-template";
+                } else {
+                    return "#menu-view-row-template";
+                }
             }
-            return _.template($(id).html() || "");
         },
 
         rowClick: function (e) {
@@ -67,35 +66,35 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             $pauseBtn.addClass('hide');
             $pauseBtn.parent().find('.js-module-audio').get(0).pause();
         },
-        templateContext: function () {
+        templateHelpers: function () {
             var imageUri = this.options.model.get('imageUri');
             var audioUri = this.options.model.get('audioUri');
             var navState = this.options.model.get('navigationState');
             var appId = Util.currentUrlToObject().appId;
             return {
                 navState: navState,
-                imageUrl: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
-                audioUrl: audioUri ? FormplayerFrontend.getChannel().request('resourceMap', audioUri, appId) : "",
+                imageUrl: imageUri ? FormplayerFrontend.request('resourceMap', imageUri, appId) : "",
+                audioUrl: audioUri ? FormplayerFrontend.request('resourceMap', audioUri, appId) : "",
                 menuIndex: this.menuIndex,
             };
         },
     });
 
-    var MenuListView = Marionette.CollectionView.extend({
+    Views.MenuListView = Marionette.CompositeView.extend({
         tagName: "div",
-        childView: MenuView,
-        childViewContainer: ".menus-container",
         getTemplate: function () {
-            var id = "#menu-view-list-template";
-            if (this.collection.layoutStyle === hqImport("cloudcare/js/formplayer/constants").LayoutStyles.GRID) {
-                id = "#menu-view-grid-template";
+            if (this.collection.layoutStyle === FormplayerFrontend.Constants.LayoutStyles.GRID) {
+                return "#menu-view-grid-template";
+            } else {
+                return "#menu-view-list-template";
             }
-            return _.template($(id).html() || "");
         },
-        templateContext: function () {
+        childView: Views.MenuView,
+        childViewContainer: ".menus-container",
+        templateHelpers: function () {
             return {
                 title: this.options.title,
-                environment: FormplayerFrontend.getChannel().request('currentUser').environment,
+                environment: FormplayerFrontend.request('currentUser').environment,
             };
         },
         childViewOptions: function (model, index) {
@@ -207,9 +206,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         return view;
     };
 
-    var CaseView = Marionette.View.extend({
+    Views.CaseView = Marionette.ItemView.extend({
         tagName: "tr",
-        template: _.template($("#case-view-item-template").html() || ""),
+        template: "#case-view-item-template",
 
         events: {
             "click": "rowClick",
@@ -222,34 +221,34 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             FormplayerFrontend.trigger("menu:show:detail", this.model.get('id'), 0, false);
         },
 
-        templateContext: function () {
+        templateHelpers: function () {
             var appId = Util.currentUrlToObject().appId;
             return {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
                 resolveUri: function (uri) {
-                    return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
+                    return FormplayerFrontend.request('resourceMap', uri, appId);
                 },
             };
         },
     });
 
-    var CaseViewUnclickable = CaseView.extend({
+    Views.CaseViewUnclickable = Views.CaseView.extend({
         events: {},
         className: "",
         rowClick: function () {},
     });
 
-    var CaseTileView = CaseView.extend({
-        template: _.template($("#case-tile-view-item-template").html() || ""),
-        templateContext: function () {
-            var dict = CaseTileView.__super__.templateContext.apply(this, arguments);
+    Views.CaseTileView = Views.CaseView.extend({
+        template: "#case-tile-view-item-template",
+        templateHelpers: function () {
+            var dict = Views.CaseTileView.__super__.templateHelpers.apply(this, arguments);
             dict['prefix'] = this.options.prefix;
             return dict;
         },
     });
 
-    var PersistentCaseTileView = CaseTileView.extend({
+    Views.PersistentCaseTileView = Views.CaseTileView.extend({
         rowClick: function (e) {
             e.preventDefault();
             if (this.options.hasInlineTile) {
@@ -258,25 +257,25 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
     });
 
-    var CaseListView = Marionette.CollectionView.extend({
+    Views.CaseListView = Marionette.CompositeView.extend({
         tagName: "div",
-        template: _.template($("#case-view-list-template").html() || ""),
-
+        template: "#case-view-list-template",
         childViewContainer: ".js-case-container",
-        childView: CaseView,
-        childViewOptions: function () {
-            return {
-                styles: this.options.styles,
-            };
-        },
+        childView: Views.CaseView,
 
         initialize: function (options) {
             this.styles = options.styles;
             this.hasNoItems = options.collection.length === 0;
         },
 
+        childViewOptions: function () {
+            return {
+                styles: this.options.styles,
+            };
+        },
+
         ui: {
-            actionButton: '.caselist-action-button button',
+            actionButton: '#double-management',
             searchButton: '#case-list-search-button',
             paginators: '.page-link',
             columnHeader: '.header-clickable',
@@ -317,7 +316,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             FormplayerFrontend.trigger("menu:sort", columnSelection);
         },
 
-        templateContext: function () {
+        templateHelpers: function () {
             return {
                 title: this.options.title,
                 headers: this.options.headers,
@@ -348,7 +347,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     // styles[1] - the layout of the grid itself, IE how many rows/columns each tile should have and their size
     // styles[2] (optional) - If showing multiple cases per line, sets the style of how to layout the case tiles in the
     //                        outer grid
-    var buildCaseTileStyles = function (tiles, numRows, numColumns, numEntitiesPerRow, useUniformUnits, prefix) {
+    Views.buildCaseTileStyles = function (tiles, numRows, numColumns, numEntitiesPerRow, useUniformUnits, prefix) {
         var cellLayoutStyle = buildCellLayout(tiles, prefix);
         var cellGridStyle = buildCellGridStyle(numRows,
             numColumns,
@@ -363,20 +362,20 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         }
     };
 
-    var CaseTileListView = CaseListView.extend({
-        childView: CaseTileView,
+    Views.CaseTileListView = Views.CaseListView.extend({
+        childView: Views.CaseTileView,
         initialize: function (options) {
-            CaseTileListView.__super__.initialize.apply(this, arguments);
+            Views.CaseTileListView.__super__.initialize.apply(this, arguments);
 
             var numEntitiesPerRow = options.numEntitiesPerRow || 1;
             var numRows = options.maxHeight;
             var numColumns = options.maxWidth;
             var useUniformUnits = options.useUniformUnits;
 
-            var caseTileStyles = buildCaseTileStyles(options.tiles, numRows, numColumns,
+            var caseTileStyles = Views.buildCaseTileStyles(options.tiles, numRows, numColumns,
                 numEntitiesPerRow, useUniformUnits, 'list');
 
-            var gridPolyfillPath = FormplayerFrontend.getChannel().request('gridPolyfillPath');
+            var gridPolyfillPath = FormplayerFrontend.request('gridPolyfillPath');
 
             $("#list-cell-layout-style").html(caseTileStyles[0]).data("css-polyfilled", false);
             $("#list-cell-grid-style").html(caseTileStyles[1]).data("css-polyfilled", false);
@@ -389,38 +388,38 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         childViewOptions: function () {
-            var dict = CaseTileListView.__super__.childViewOptions.apply(this, arguments);
+            var dict = Views.CaseTileListView.__super__.childViewOptions.apply(this, arguments);
             dict.prefix = 'list';
             return dict;
         },
 
-        templateContext: function () {
-            var dict = CaseTileListView.__super__.templateContext.apply(this, arguments);
+        templateHelpers: function () {
+            var dict = Views.CaseTileListView.__super__.templateHelpers.apply(this, arguments);
             dict.useTiles = true;
             return dict;
         },
     });
 
-    var GridCaseTileViewItem = CaseTileView.extend({
+    Views.GridCaseTileViewItem = Views.CaseTileView.extend({
         tagName: "div",
         className: "formplayer-request list-cell-container-style",
     });
 
-    var GridCaseTileListView = CaseTileListView.extend({
+    Views.GridCaseTileListView = Views.CaseTileListView.extend({
         initialize: function () {
-            GridCaseTileListView.__super__.initialize.apply(this, arguments);
+            Views.GridCaseTileListView.__super__.initialize.apply(this, arguments);
         },
-        childView: GridCaseTileViewItem,
+        childView: Views.GridCaseTileViewItem,
     });
 
-    var CaseListDetailView = CaseListView.extend({
-        template: _.template($("#case-view-list-detail-template").html() || ""),
-        childView: CaseViewUnclickable,
+    Views.CaseListDetailView = Views.CaseListView.extend({
+        template: "#case-view-list-detail-template",
+        childView: Views.CaseViewUnclickable,
     });
 
-    var BreadcrumbView = Marionette.View.extend({
+    Views.BreadcrumbView = Marionette.ItemView.extend({
         tagName: "li",
-        template: _.template($("#breadcrumb-item-template").html() || ""),
+        template: "#breadcrumb-item-template",
         className: "breadcrumb-text",
         events: {
             "click": "crumbClick",
@@ -433,10 +432,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
     });
 
-    var BreadcrumbListView = Marionette.CollectionView.extend({
+    Views.BreadcrumbListView = Marionette.CompositeView.extend({
         tagName: "div",
-        template: _.template($("#breadcrumb-list-template").html() || ""),
-        childView: BreadcrumbView,
+        template: "#breadcrumb-list-template",
+        childView: Views.BreadcrumbView,
         childViewContainer: "ol",
         events: {
             'click .js-home': 'onClickHome',
@@ -446,33 +445,34 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
     });
 
-    var DetailView = Marionette.View.extend({
+    Views.DetailView = Marionette.ItemView.extend({
         tagName: "tr",
         className: "",
-        template: _.template($("#detail-view-item-template").html() || ""),
-        templateContext: function () {
+        template: "#detail-view-item-template",
+        templateHelpers: function () {
             var appId = Util.currentUrlToObject().appId;
             return {
                 resolveUri: function (uri) {
-                    return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
+                    return FormplayerFrontend.request('resourceMap', uri, appId);
                 },
             };
         },
     });
 
-    var DetailListView = Marionette.CollectionView.extend({
+    Views.DetailListView = Marionette.CompositeView.extend({
         tagName: "table",
         className: "table module-table module-table-casedetail",
-        template: _.template($("#detail-view-list-template").html() || ""),
-        childView: DetailView,
+        template: "#detail-view-list-template",
+        childView: Views.DetailView,
+        childViewContainer: "tbody",
     });
 
-    var DetailTabView = Marionette.View.extend({
+    Views.DetailTabView = Marionette.ItemView.extend({
         tagName: "li",
         className: function () {
             return this.options.model.get('active') ? 'active' : '';
         },
-        template: _.template($("#detail-view-tab-item-template").html() || ""),
+        template: "#detail-view-tab-item-template",
         events: {
             "click": "tabClick",
         },
@@ -487,10 +487,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
     });
 
-    var DetailTabListView = Marionette.CollectionView.extend({
+    Views.DetailTabListView = Marionette.CompositeView.extend({
         tagName: "div",
-        template: _.template($("#detail-view-tab-list-template").html() || ""),
-        childView: DetailTabView,
+        template: "#detail-view-tab-list-template",
+        childView: Views.DetailTabView,
         childViewContainer: "ul",
         childViewOptions: function () {
             return {
@@ -498,36 +498,5 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             };
         },
     });
-
-    return {
-        buildCaseTileStyles: buildCaseTileStyles,
-        BreadcrumbListView: function (options) {
-            return new BreadcrumbListView(options);
-        },
-        CaseListDetailView: function (options) {
-            return new CaseListDetailView(options);
-        },
-        CaseListView: function (options) {
-            return new CaseListView(options);
-        },
-        CaseTileListView: function (options) {
-            return new CaseTileListView(options);
-        },
-        DetailListView: function (options) {
-            return new DetailListView(options);
-        },
-        DetailTabListView: function (options) {
-            return new DetailTabListView(options);
-        },
-        GridCaseTileListView: function (options) {
-            return new GridCaseTileListView(options);
-        },
-        MenuListView: function (options) {
-            return new MenuListView(options);
-        },
-        PersistentCaseTileView: function (options) {
-            return new PersistentCaseTileView(options);
-        },
-    };
 })
 ;
