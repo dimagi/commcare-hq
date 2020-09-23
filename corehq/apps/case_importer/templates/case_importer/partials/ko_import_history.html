@@ -25,8 +25,8 @@
       <th class="col-md-3">{% trans "Comment" %}</th>
       <th class="col-md-2">{% trans "File" %}</th>
       {% if request|toggle_enabled:"FORM_CASE_IDS_CASE_IMPORTER" %}
-        <th>Form IDs</th>
-        <th>Case IDs</th>
+        <th>{% trans "Form IDs" %}</th>
+        <th>{% trans "Case IDs" %}</th>
       {% endif %}
 
     </tr>
