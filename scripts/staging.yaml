@@ -59,6 +59,7 @@ branches:
   - fr/linked-domain-keywords   # Farid August 26
   - sr/es7-reindex # Sravn Sept 2
   - fr/user-data-jit            # Farid September 2
+  - jls/collapsible-groups+jls/hqdefine-fullform-ui
   - jls/collapsible-groups # Jenny Sept 4
   - jls/hqdefine-fullform-ui # Jenny Sept 22
   - jls/web-apps-for-and-aria-required # Jenny Sept 18
