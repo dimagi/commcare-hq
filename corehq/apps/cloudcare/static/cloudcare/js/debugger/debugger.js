@@ -119,7 +119,8 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
         self.formattedQuestionsHtml = ko.observable('');
         self.instanceXml = ko.observable('');
         self.instanceXml.subscribe(function (newXml) {
-            var $viewer = $('#xml-viewer-pretty'),
+            var $instanceTab = $('#debugger-xml-instance-tab'),
+                $viewer = $('#xml-viewer-pretty'),
                 editor = ace.edit($viewer.get(0), {
                     showPrintMargin: false,
                     maxLines: 40,
@@ -373,7 +374,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
         self.matcher = function (flag, subtext) {
             var match, regexp, currentQuery;
             // Match text that starts with the flag and then looks like a path.
-            regexp = new RegExp('([\\s(]+|^)' + RegExp.escape(flag) + '([\\w/-]*)$', 'gi');
+            regexp = new RegExp('([\\s\(]+|^)' + RegExp.escape(flag) + '([\\w/-]*)$', 'gi');
             match = regexp.exec(subtext);
             if (!match) {
                 return null;

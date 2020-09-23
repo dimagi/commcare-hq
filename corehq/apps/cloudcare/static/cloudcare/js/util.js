@@ -1,11 +1,12 @@
-/* global NProgress */
+/*global FormplayerFrontend */
+
 hqDefine('cloudcare/js/util', [
-    'jquery',
     'hqwebapp/js/initial_page_data',
+    'jquery',
     'integration/js/hmac_callout',
 ], function (
-    $,
     initialPageData,
+    $,
     HMACCallout
 ) {
     if (!String.prototype.startsWith) {
@@ -20,6 +21,7 @@ hqDefine('cloudcare/js/util', [
     });
 
     var getFormUrl = function (urlRoot, appId, moduleId, formId, instanceId) {
+        // TODO: make this cleaner
         var url = urlRoot + "view/" + appId + "/modules-" + moduleId + "/forms-" + formId + "/context/";
         if (instanceId) {
             url += '?instance_id=' + instanceId;
@@ -108,11 +110,11 @@ hqDefine('cloudcare/js/util', [
         return $container;
     };
 
-    var showLoading = function () {
+    var showLoading = function (selector) {
         NProgress.start();
     };
 
-    var formplayerLoading = function () {
+    var formplayerLoading = function (selector) {
         showLoading();
     };
 
@@ -159,38 +161,37 @@ hqDefine('cloudcare/js/util', [
         }
     };
 
-    var hideLoading = function () {
+    var hideLoading = function (selector) {
         NProgress.done();
     };
 
     var reportFormplayerErrorToHQ = function (data) {
-        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
-            try {
-                var cloudcareEnv = FormplayerFrontend.getChannel().request('currentUser').environment;
-                if (!data.cloudcareEnv) {
-                    data.cloudcareEnv = cloudcareEnv || 'unknown';
-                }
-                $.ajax({
-                    type: 'POST',
-                    url: initialPageData.reverse('report_formplayer_error'),
-                    data: JSON.stringify(data),
-                    contentType: "application/json",
-                    dataType: "json",
-                    success: function () {
-                        window.console.info('Successfully reported error: ' + JSON.stringify(data));
-                    },
-                    error: function () {
-                        window.console.error('Failed to report error: ' + JSON.stringify(data));
-                    },
-                });
-            } catch (e) {
-                window.console.error(
-                    "reportFormplayerErrorToHQ failed hard and there is nowhere " +
-                    "else to report this error: " + JSON.stringify(data),
-                    e
-                );
+        try {
+            var reverse = initialPageData.reverse;
+            var cloudcareEnv = FormplayerFrontend.request('currentUser').environment;
+            if (!data.cloudcareEnv) {
+                data.cloudcareEnv = cloudcareEnv || 'unknown';
             }
-        });
+            $.ajax({
+                type: 'POST',
+                url: reverse('report_formplayer_error'),
+                data: JSON.stringify(data),
+                contentType: "application/json",
+                dataType: "json",
+                success: function () {
+                    window.console.info('Successfully reported error: ' + JSON.stringify(data));
+                },
+                error: function () {
+                    window.console.error('Failed to report error: ' + JSON.stringify(data));
+                },
+            });
+        } catch (e) {
+            window.console.error(
+                "reportFormplayerErrorToHQ failed hard and there is nowhere " +
+                "else to report this error: " + JSON.stringify(data),
+                e
+            );
+        }
     };
 
     function chainedRenderer(matcher, transform, target) {
@@ -248,7 +249,7 @@ hqDefine('cloudcare/js/util', [
                     function (href, hIndex, anchor) {
                         var params = href.substring("cchq://passthrough/gaen_otp/".length);
                         var url = initialPageData.reverse("gaen_otp_view");
-                        anchor.attrs[hIndex][1] = url + params;
+                        anchor.attrs[hIndex][1] = url + params
                     },
                     "gaen_otp"
                 ));

@@ -1,35 +1,33 @@
-/*global Marionette */
+/*global FormplayerFrontend */
 
-hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
-
-    var QueryView = Marionette.View.extend({
+FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Backbone, Marionette) {
+    Views.QueryView = Marionette.ItemView.extend({
         tagName: "tr",
         className: "formplayer-request",
-        template: _.template($("#query-view-item-template").html() || ""),
+        template: "#query-view-item-template",
 
-        templateContext: function () {
+        templateHelpers: function () {
             var imageUri = this.options.model.get('imageUri');
             var audioUri = this.options.model.get('audioUri');
             var appId = this.model.collection.appId;
             return {
-                imageUrl: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
-                audioUrl: audioUri ? FormplayerFrontend.getChannel().request('resourceMap', audioUri, appId) : "",
+                imageUrl: imageUri ? FormplayerFrontend.request('resourceMap', imageUri, appId) : "",
+                audioUrl: audioUri ? FormplayerFrontend.request('resourceMap', audioUri, appId) : "",
             };
         },
     });
 
-    var QueryListView = Marionette.CollectionView.extend({
+    Views.QueryListView = Marionette.CompositeView.extend({
         tagName: "div",
-        template: _.template($("#query-view-list-template").html() || ""),
-        childView: QueryView,
+        template: "#query-view-list-template",
+        childView: Views.QueryView,
         childViewContainer: "tbody",
 
         initialize: function (options) {
             this.parentModel = options.collection.models;
         },
 
-        templateContext: function () {
+        templateHelpers: function () {
             return {
                 title: this.options.title,
             };
@@ -56,8 +54,4 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             FormplayerFrontend.trigger("menu:query", payload);
         },
     });
-
-    return function (data) {
-        return new QueryListView(data);
-    };
 });

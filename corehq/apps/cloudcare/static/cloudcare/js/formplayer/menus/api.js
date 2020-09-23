@@ -1,14 +1,16 @@
+/*global FormplayerFrontend, Formplayer */
+
 /**
  * Backbone model for listing and selecting CommCare menus (modules, forms, and cases)
  */
 
-hqDefine("cloudcare/js/formplayer/menus/api", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone, Marionette, $) {
 
-    var API = {
+    Menus.API = {
+
         queryFormplayer: function (params, route) {
-            var user = FormplayerFrontend.getChannel().request('currentUser'),
-                lastRecordedLocation = FormplayerFrontend.getChannel().request('lastRecordedLocation'),
+            var user = FormplayerFrontend.request('currentUser'),
+                lastRecordedLocation = FormplayerFrontend.request('lastRecordedLocation'),
                 timezoneOffsetMillis = (new Date()).getTimezoneOffset() * 60 * 1000 * -1,
                 formplayerUrl = user.formplayer_url,
                 displayOptions = user.displayOptions || {},
@@ -16,7 +18,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                 options,
                 menus;
 
-            $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function (appCollection) {
+            $.when(FormplayerFrontend.request("appselect:apps")).done(function (appCollection) {
                 if (!params.preview) {
                     // Make sure the user has access to the app
                     if (!appCollection.find(function (app) {
@@ -38,11 +40,11 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                 var newOptionsData = JSON.stringify($.extend(true, { mustRestore: true }, JSON.parse(options.data)));
                                 menus.fetch($.extend(true, {}, options, { data: newOptionsData }));
                             }, gettext('Waiting for server progress'));
-                        } else if (_.has(response, 'exception')) {
+                        } else if (response.hasOwnProperty('exception')) {
                             FormplayerFrontend.trigger('clearProgress');
                             FormplayerFrontend.trigger(
                                 'showError',
-                                response.exception || hqImport("cloudcare/js/formplayer/constants").GENERIC_ERROR,
+                                response.exception || FormplayerFrontend.Constants.GENERIC_ERROR,
                                 response.type === 'html'
                             );
 
@@ -68,12 +70,12 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                         if (response.status === 423) {
                             FormplayerFrontend.trigger(
                                 'showError',
-                                hqImport("cloudcare/js/form_entry/errors").LOCK_TIMEOUT_ERROR
+                                Formplayer.Errors.LOCK_TIMEOUT_ERROR
                             );
                         } else if (response.status === 401) {
                             FormplayerFrontend.trigger(
                                 'showError',
-                                hqImport("cloudcare/js/form_entry/utils").reloginErrorHtml(),
+                                Formplayer.Utils.reloginErrorHtml(),
                                 true
                             );
                         } else {
@@ -108,7 +110,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                 });
                 options.url = formplayerUrl + '/' + route;
 
-                menus = hqImport("cloudcare/js/formplayer/menus/collections")();
+                menus = new FormplayerFrontend.Menus.Collections.MenuSelect();
 
                 if (Object.freeze) {
                     Object.freeze(options);
@@ -120,17 +122,15 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
         },
     };
 
-    FormplayerFrontend.getChannel().reply("app:select:menus", function (options) {
+    FormplayerFrontend.reqres.setHandler("app:select:menus", function (options) {
         var isInitial = options.isInitial;
-        return API.queryFormplayer(options, isInitial ? 'navigate_menu_start' : 'navigate_menu');
+        return Menus.API.queryFormplayer(options, isInitial ? 'navigate_menu_start' : 'navigate_menu');
     });
 
-    FormplayerFrontend.getChannel().reply("entity:get:details", function (options, isPersistent) {
+    FormplayerFrontend.reqres.setHandler("entity:get:details", function (options, isPersistent) {
         options.isPersistent = isPersistent;
         options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
-        return API.queryFormplayer(options, 'get_details');
+        return Menus.API.queryFormplayer(options, 'get_details');
     });
-
-    return 1;
 });
 

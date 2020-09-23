@@ -1,18 +1,19 @@
-hqDefine("cloudcare/js/formplayer/users/controller", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
-    return {
+/*global FormplayerFrontend */
+
+FormplayerFrontend.module("Users", function (Users, FormplayerFrontend, Backbone, Marionette) {
+    Users.Controller = {
         listUsers: function (page, query) {
-            var currentUser = FormplayerFrontend.getChannel().request('currentUser'),
+            var currentUser = FormplayerFrontend.request('currentUser'),
                 users;
 
-            users = hqImport("cloudcare/js/formplayer/users/collections")([], { domain: currentUser.domain });
-            var restoreAsView = hqImport("cloudcare/js/formplayer/users/views").RestoreAsView({
+            users = new FormplayerFrontend.Users.Collections.User([], { domain: currentUser.domain });
+            var restoreAsView = new Users.Views.RestoreAsView({
                 collection: users,
                 page: page,
                 query: query,
             });
 
-            FormplayerFrontend.regions.getRegion('main').show(restoreAsView);
+            FormplayerFrontend.regions.main.show(restoreAsView);
         },
     };
 });

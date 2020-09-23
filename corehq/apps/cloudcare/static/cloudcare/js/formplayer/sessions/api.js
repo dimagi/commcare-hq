@@ -1,15 +1,16 @@
+/*global FormplayerFrontend, Util */
+
 /**
  * Backbone model for listing and selecting FormEntrySessions
  */
 
-hqDefine("cloudcare/js/formplayer/sessions/api", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+FormplayerFrontend.module("Sessions", function (Sessions, FormplayerFrontend, Backbone, Marionette, $) {
 
-    var API = {
+    Sessions.API = {
 
         getSessions: function () {
 
-            var user = FormplayerFrontend.getChannel().request('currentUser');
+            var user = FormplayerFrontend.request('currentUser');
             var domain = user.domain;
             var formplayerUrl = user.formplayer_url;
             var options = {
@@ -21,10 +22,10 @@ hqDefine("cloudcare/js/formplayer/sessions/api", function () {
                 }),
                 url: formplayerUrl + '/get_sessions',
                 success: function (parsed, response) {
-                    if (_.has(response, 'exception')) {
+                    if (response.hasOwnProperty('exception')) {
                         FormplayerFrontend.trigger(
                             'showError',
-                            response.exception || hqImport("cloudcare/js/formplayer/constants").GENERIC_ERROR,
+                            response.exception || FormplayerFrontend.Constants.GENERIC_ERROR,
                             response.type === 'html'
                         );
                         FormplayerFrontend.trigger('navigation:back');
@@ -34,7 +35,7 @@ hqDefine("cloudcare/js/formplayer/sessions/api", function () {
                 },
             };
 
-            var menus = hqImport("cloudcare/js/formplayer/sessions/collections")(options);
+            var menus = new Sessions.Collections.FormEntrySession(options);
 
             var defer = $.Deferred();
             menus.fetch(options);
@@ -43,9 +44,9 @@ hqDefine("cloudcare/js/formplayer/sessions/api", function () {
 
         getSession: function (sessionId) {
 
-            var user = FormplayerFrontend.getChannel().request('currentUser');
+            var user = FormplayerFrontend.request('currentUser');
             var formplayerUrl = user.formplayer_url;
-            var menus = hqImport("cloudcare/js/formplayer/menus/collections")();
+            var menus = new FormplayerFrontend.Menus.Collections.MenuSelect();
             var defer = $.Deferred();
 
             menus.fetch({
@@ -65,7 +66,7 @@ hqDefine("cloudcare/js/formplayer/sessions/api", function () {
         },
 
         deleteSession: function (session) {
-            var user = FormplayerFrontend.getChannel().request('currentUser');
+            var user = FormplayerFrontend.request('currentUser');
             var options = {
                 data: JSON.stringify({
                     "sessionId": session.get('sessionId'),
@@ -90,18 +91,16 @@ hqDefine("cloudcare/js/formplayer/sessions/api", function () {
         },
     };
 
-    FormplayerFrontend.getChannel().reply("getSession", function (session) {
-        return API.getSession(session);
+    FormplayerFrontend.reqres.setHandler("getSession", function (session) {
+        return Sessions.API.getSession(session);
     });
 
-    FormplayerFrontend.getChannel().reply("deleteSession", function (sessionId) {
-        return API.deleteSession(sessionId);
+    FormplayerFrontend.reqres.setHandler("deleteSession", function (sessionId) {
+        return Sessions.API.deleteSession(sessionId);
     });
 
-    FormplayerFrontend.getChannel().reply("sessions", function () {
-        return API.getSessions();
+    FormplayerFrontend.reqres.setHandler("sessions", function () {
+        return Sessions.API.getSessions();
     });
-
-    return API;
 });
 

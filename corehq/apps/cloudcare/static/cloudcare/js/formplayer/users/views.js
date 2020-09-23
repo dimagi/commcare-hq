@@ -1,17 +1,14 @@
-/*global Backbone, Marionette */
+/*global FormplayerFrontend, Util */
 
-hqDefine("cloudcare/js/formplayer/users/views", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Util = hqImport("cloudcare/js/formplayer/utils/util");
-
+FormplayerFrontend.module("Users.Views", function (Views, FormplayerFrontend, Backbone, Marionette, $) {
     /**
      * RestoreAsBanner
      *
      * This View represents the banner that indicates what user your are
      * currently logged in (or restoring) as.
      */
-    var RestoreAsBanner = Marionette.View.extend({
-        template: _.template($("#restore-as-banner-template").html() || ""),
+    Views.RestoreAsBanner = Marionette.ItemView.extend({
+        template: '#restore-as-banner-template',
         className: 'restore-as-banner-container',
         ui: {
             clear: '.js-clear-user',
@@ -19,7 +16,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
         events: {
             'click @ui.clear': 'onClickClearUser',
         },
-        templateContext: function () {
+        templateHelpers: function () {
             return {
                 restoreAs: this.model.restoreAs,
                 username: this.model.getDisplayUsername(),
@@ -35,14 +32,14 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
      *
      * Represents a single row in the Log In As User list
      */
-    var UserRowView = Marionette.View.extend({
-        template: _.template($("#user-row-view-template").html() || ""),
+    Views.UserRowView = Marionette.ItemView.extend({
+        template: '#user-row-view-template',
         className: 'formplayer-request js-user',
         tagName: 'tr',
         events: {
             'click': 'onClickUser',
         },
-        onClickUser: function () {
+        onClickUser: function (e) {
             Util.confirmationModal({
                 title: gettext('Log in as ' + this.model.get('username') + '?'),
                 message: _.template($('#user-data-template').html())(
@@ -50,11 +47,11 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
                 ),
                 confirmText: gettext('Yes, log in as this user'),
                 onConfirm: function () {
-                    hqImport("cloudcare/js/formplayer/users/utils").Users.logInAsUser(this.model.get('username'));
+                    FormplayerFrontend.Utils.Users.logInAsUser(this.model.get('username'));
                     FormplayerFrontend.trigger('navigateHome');
-                    FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
-                        new RestoreAsBanner({
-                            model: FormplayerFrontend.getChannel().request('currentUser'),
+                    FormplayerFrontend.regions.restoreAsBanner.show(
+                        new FormplayerFrontend.Users.Views.RestoreAsBanner({
+                            model: FormplayerFrontend.request('currentUser'),
                         })
                     );
                 }.bind(this),
@@ -68,10 +65,10 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
      * Renders all possible users to log in as. Equipped with pagination
      * and custom querying.
      */
-    var RestoreAsView = Marionette.CollectionView.extend({
-        childView: UserRowView,
+    Views.RestoreAsView = Marionette.CompositeView.extend({
+        childView: Views.UserRowView,
         childViewContainer: 'tbody',
-        template: _.template($("#restore-as-view-template").html() || ""),
+        template: '#restore-as-view-template',
         limit: 10,
         maxPagesShown: 10,
         initialize: function (options) {
@@ -98,7 +95,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             'click @ui.page': 'onClickPage',
             'submit @ui.search': 'onSubmitUserSearch',
         },
-        templateContext: function () {
+        templateHelpers: function () {
             return {
                 total: this.collection.total,
                 totalPages: this.totalPages(),
@@ -159,14 +156,5 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             });
         },
     });
-
-    return {
-        RestoreAsBanner: function (options) {
-            return new RestoreAsBanner(options);
-        },
-        RestoreAsView: function (options) {
-            return new RestoreAsView(options);
-        },
-    };
 });
 

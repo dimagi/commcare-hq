@@ -1,15 +1,13 @@
-/*global Backbone */
+/*global FormplayerFrontend */
 
-hqDefine("cloudcare/js/formplayer/apps/controller", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        views = hqImport("cloudcare/js/formplayer/apps/views");
-    return {
+FormplayerFrontend.module("Apps", function (Apps, FormplayerFrontend, Backbone, Marionette, $) {
+    Apps.Controller = {
         listApps: function () {
-            $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function (apps) {
-                var appGridView = views.GridView({
+            $.when(FormplayerFrontend.request("appselect:apps")).done(function (apps) {
+                var appGridView = new Apps.Views.GridView({
                     collection: apps,
                 });
-                FormplayerFrontend.regions.getRegion('main').show(appGridView);
+                FormplayerFrontend.regions.main.show(appGridView);
             });
         },
         /**
@@ -18,46 +16,45 @@ hqDefine("cloudcare/js/formplayer/apps/controller", function () {
          * Renders a SingleAppView.
          */
         singleApp: function (appId) {
-            $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function () {
-                var singleAppView = views.SingleAppView({
+            $.when(FormplayerFrontend.request("appselect:apps")).done(function (apps) {
+                var singleAppView = new Apps.Views.SingleAppView({
                     appId: appId,
                 });
-                FormplayerFrontend.regions.getRegion('main').show(singleAppView);
+                FormplayerFrontend.regions.main.show(singleAppView);
             });
         },
         landingPageApp: function (appId) {
-            $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function () {
-                var landingPageAppView = views.LandingPageAppView({
+            $.when(FormplayerFrontend.request("appselect:apps")).done(function (apps) {
+                var landingPageAppView = new Apps.Views.LandingPageAppView({
                     appId: appId,
                 });
-                FormplayerFrontend.regions.getRegion('main').show(landingPageAppView);
+                FormplayerFrontend.regions.main.show(landingPageAppView);
             });
         },
         listSettings: function () {
-            var currentUser = FormplayerFrontend.getChannel().request('currentUser'),
-                slugs = hqImport("cloudcare/js/formplayer/layout/views/settings").slugs,
+            var currentUser = FormplayerFrontend.request('currentUser'),
                 settings = [],
                 collection,
                 settingsView;
-            if (currentUser.environment === hqImport("cloudcare/js/formplayer/constants").PREVIEW_APP_ENVIRONMENT) {
+            if (currentUser.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
                 settings = settings.concat([
-                    new Backbone.Model({ slug: slugs.SET_LANG }),
-                    new Backbone.Model({ slug: slugs.SET_DISPLAY }),
+                    new Backbone.Model({ slug: FormplayerFrontend.Layout.Views.SettingSlugs.SET_LANG }),
+                    new Backbone.Model({ slug: FormplayerFrontend.Layout.Views.SettingSlugs.SET_DISPLAY }),
                 ]);
             } else {
                 settings.push(
-                    new Backbone.Model({ slug: slugs.BREAK_LOCKS })
+                    new Backbone.Model({ slug: FormplayerFrontend.Layout.Views.SettingSlugs.BREAK_LOCKS })
                 );
             }
             settings.push(
-                new Backbone.Model({ slug: slugs.CLEAR_USER_DATA })
+                new Backbone.Model({ slug: FormplayerFrontend.Layout.Views.SettingSlugs.CLEAR_USER_DATA })
             );
             collection = new Backbone.Collection(settings);
-            settingsView = hqImport("cloudcare/js/formplayer/layout/views/settings").SettingsView({
+            settingsView = new FormplayerFrontend.Layout.Views.SettingsView({
                 collection: collection,
             });
 
-            FormplayerFrontend.regions.getRegion('main').show(settingsView);
+            FormplayerFrontend.regions.main.show(settingsView);
         },
     };
 });

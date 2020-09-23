@@ -1,14 +1,16 @@
+/* global FormplayerFrontend */
 /* eslint-env mocha */
 describe('User', function () {
     describe('Collection', function () {
+        var UserCollection = FormplayerFrontend.Users.Collections.User;
         it('should instantiate a user collection', function () {
-            var collection = hqImport("cloudcare/js/formplayer/users/collections")([], { domain: 'mydomain' });
+            var collection = new UserCollection([], { domain: 'mydomain' });
             assert.equal(collection.domain, 'mydomain');
         });
 
         it('should error on fetch a user collection', function () {
             var instantiate = function () {
-                var collection = hqImport("cloudcare/js/formplayer/users/collections")();
+                var collection = new UserCollection();
                 collection.fetch();
             };
             assert.throws(instantiate, /without domain/);
@@ -17,13 +19,13 @@ describe('User', function () {
 
     describe('CurrentUser Model', function () {
         it('should get the display name of a mobile worker', function () {
-            var model = hqImport("cloudcare/js/formplayer/users/models").CurrentUser();
+            var model = new FormplayerFrontend.Users.Models.CurrentUser();
             model.username = 'worker@domain.commcarehq.org';
             assert.equal(model.getDisplayUsername(), 'worker');
         });
 
         it('should get the display name of a web user', function () {
-            var model = hqImport("cloudcare/js/formplayer/users/models").CurrentUser();
+            var model = new FormplayerFrontend.Users.Models.CurrentUser();
             model.username = 'web@gmail.com';
             assert.equal(model.getDisplayUsername(), 'web@gmail.com');
         });
@@ -31,26 +33,23 @@ describe('User', function () {
     });
 
     describe('Utils', function () {
-        var Utils = hqImport("cloudcare/js/formplayer/users/utils").Users,
-            FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        var Utils = FormplayerFrontend.Utils.Users,
             username = 'clark@kent.com',
             restoreAsUsername = 'worker@kent.com',
             domain = 'preview-domain',
-            dummyChannel,
             dummyUser;
         beforeEach(function () {
             dummyUser = {
                 domain: domain,
                 username: username,
             };
-            dummyChannel = FormplayerFrontend.getChannel();
             window.localStorage.clear();
-            sinon.stub(dummyChannel, 'request').callsFake(function () { return dummyUser; });
+            sinon.stub(FormplayerFrontend, 'request').callsFake(function () { return dummyUser; });
         });
 
         afterEach(function () {
             window.localStorage.clear();
-            dummyChannel.request.restore();
+            FormplayerFrontend.request.restore();
         });
 
         it('should store and clear a restore as user', function () {

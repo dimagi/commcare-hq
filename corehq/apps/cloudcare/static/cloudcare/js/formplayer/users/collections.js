@@ -1,17 +1,17 @@
-/*global Backbone */
+/*global FormplayerFrontend */
 
-hqDefine("cloudcare/js/formplayer/users/collections", function () {
+FormplayerFrontend.module("Users.Collections", function (Collections, FormplayerFrontend, Backbone) {
     /**
      * This collection represents a mobile worker user
      */
-    var self = Backbone.Collection.extend({
+    Collections.User = Backbone.Collection.extend({
         url: function () {
             if (!this.domain) {
                 throw new Error('Cannot instantiate collection without domain');
             }
             return '/a/' + this.domain + '/cloudcare/api/login_as/users/';
         },
-        model: hqImport("cloudcare/js/formplayer/users/models").User,
+        model: FormplayerFrontend.Users.Models.User,
 
         initialize: function (models, options) {
             options = options || {};
@@ -29,8 +29,4 @@ hqDefine("cloudcare/js/formplayer/users/collections", function () {
             return Backbone.Collection.prototype.sync.call(this, 'read', model, options);
         },
     });
-
-    return function (users, options) {
-        return new self(users, options);
-    };
 });
