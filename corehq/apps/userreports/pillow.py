@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 
-from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
+from corehq.apps.domain_migration_flags.api import all_domains_with_migrations_in_progress
 from corehq.util.metrics import metrics_counter, metrics_histogram_timer
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
@@ -99,7 +99,7 @@ def _filter_domains_to_skip(configs):
     """Return a list of configs whose domain exists on this environment"""
     domain_names = list({config.domain for config in configs if config.is_static})
     existing_domains = list(get_domain_ids_by_names(domain_names))
-    migrating_domains = [domain for domain in existing_domains if any_migrations_in_progress(domain)]
+    migrating_domains = all_domains_with_migrations_in_progress()
     return [
         config for config in configs
         if config.domain not in migrating_domains and (not config.is_static or config.domain in existing_domains)
