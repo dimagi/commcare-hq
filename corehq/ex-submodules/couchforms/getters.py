@@ -54,7 +54,7 @@ def get_instance_and_attachment(request):
             instance = instance_file.read()
             for key, item in request.FILES.items():
                 if key != MAGIC_PROPERTY:
-                    if not _valid_attachment_extension(item):
+                    if not _valid_attachment_file(item):
                         raise InvalidAttachmentFileExtensionError()
                     attachments[key] = item
         if not instance:
@@ -73,8 +73,20 @@ def _valid_xml_extension(file):
     return _valid_file_extension(file, PERMITTED_FORM_SUBMISSION_FILE_EXTENSIONS)
 
 
+def _valid_attachment_file(file):
+    return _valid_attachment_extension(file) or _valid_attachment_mimetype(file)
+
+
 def _valid_attachment_extension(file):
     return _valid_file_extension(file, SUPPORTED_MEDIA_FILE_EXTENSIONS)
+
+
+def _valid_attachment_mimetype(file):
+    return (
+        file.content_type.startswith(("audio", "image", "video"))
+        # default mimetype set by CommCare
+        or file.content_type == "application/octet-stream"
+    )
 
 
 def _valid_file_extension(file, permitted_extensions):
