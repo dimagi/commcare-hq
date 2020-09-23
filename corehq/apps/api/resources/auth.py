@@ -121,8 +121,7 @@ class LoginAndDomainAuthentication(HQAuthenticationMixin, Authentication):
     def is_authenticated(self, request, **kwargs):
         return self._auth_test(request, wrappers=[
             self._get_auth_decorator(request),
-            wrap_4xx_errors_for_apis,
-            require_api_permission('access_api', login_decorator=self._get_auth_decorator(request)),
+            wrap_4xx_errors_for_apis
         ], **kwargs)
 
     def _auth_test(self, request, wrappers, **kwargs):
