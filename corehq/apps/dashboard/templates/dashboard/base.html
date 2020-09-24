@@ -206,5 +206,22 @@
       </p>
     </div>
   {% endif %}
+  {% if request|ui_notify_enabled:"APP_USER_PROFILES_UPDATE" %}
+      <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
+           style="position: absolute; width: 200px;"
+           data-target="#ProjectUsersTab"
+           data-slug="{{ "APP_USER_PROFILES_UPDATE"|ui_notify_slug }}"
+           role="alert">
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+          </button>
+          <p class="lead">
+              {% blocktrans %}
+                  Save time when creating and updating users by creating App User Profiles! Eliminate the need
+                  to set every individual field for a user! Available though our Enterprise Subscription
+              {% endblocktrans %}
+          </p>
+      </div>
+  {% endif %}
 {% endblock %}
 
