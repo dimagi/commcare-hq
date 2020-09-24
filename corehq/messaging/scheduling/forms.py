@@ -2743,6 +2743,14 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         )
     )
 
+    username_case_property = CharField(
+        required=False,
+    )
+
+    email_case_property = CharField(
+        required=False,
+    )
+
     reset_case_property_enabled = ChoiceField(
         required=True,
         choices=(
@@ -2906,6 +2914,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             (CaseScheduleInstanceMixin.RECIPIENT_TYPE_LAST_SUBMITTING_USER, _("The Case's Last Submitting User")),
             (CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE, _("The Case's Parent Case")),
             (CaseScheduleInstanceMixin.RECIPIENT_TYPE_ALL_CHILD_CASES, _("The Case's Child Cases")),
+            (CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER, _("User Specified via Case Property")),
+            (CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL, _("Email Specified via Case Property")),
         ]
         new_choices.extend(self.fields['recipient_types'].choices)
 
@@ -2944,6 +2954,10 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         for recipient_type, recipient_id in recipients:
             if recipient_type == CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM:
                 initial['custom_recipient'] = recipient_id
+            if recipient_type == CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER:
+                initial['username_case_property'] = recipient_id
+            if recipient_type == CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER:
+                initial['email_case_property'] = recipient_id
 
     def add_initial_for_custom_metadata(self, result):
         if (
@@ -3101,6 +3115,16 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 twbscrispy.InlineField('custom_recipient'),
                 get_system_admin_label(),
                 data_bind="visible: recipientTypeSelected('%s')" % CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
+            ),
+             hqcrispy.B3MultiField(
+                _("Username Case Property"),
+                twbscrispy.InlineField('username_case_property'),
+                data_bind="visible: recipientTypeSelected('%s')" % CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER,
+            ),
+            hqcrispy.B3MultiField(
+                _("Email Case Property"),
+                twbscrispy.InlineField('email_case_property'),
+                data_bind="visible: recipientTypeSelected('%s')" % CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL,
             ),
         ])
         return result
@@ -3404,6 +3428,12 @@ class ConditionalAlertScheduleForm(ScheduleForm):
 
         return value
 
+    def clean(self):
+        recipient_types = self.cleaned_data.get('recipient_types')
+        if CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL in recipient_types:
+            if self.cleaned_data.get('content') != self.CONTENT_EMAIL:
+                raise ValidationError(_("Email case property can only be used with Email content"))
+
     def distill_start_offset(self):
         send_frequency = self.cleaned_data.get('send_frequency')
         start_offset_type = self.cleaned_data.get('start_offset_type')
@@ -3471,6 +3501,12 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             custom_recipient_id = self.cleaned_data['custom_recipient']
             result.append((CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM, custom_recipient_id))
 
+        if CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER in recipient_types:
+            username_case_property = self.cleaned_data['username_case_property']
+            result.append((CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER, username_case_property))
+        if CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL in recipient_types:
+            email_case_property = self.cleaned_data['email_case_property']
+            result.append((CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL, email_case_property))
         return result
 
     def distill_model_timed_event(self):
