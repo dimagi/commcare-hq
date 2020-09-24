@@ -503,8 +503,8 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         except XMLSyntaxError:
             return {}
         # we can assume all sql domains are new timezone domains
-        with force_phone_timezones_should_be_processed():
-            adjust_datetimes(form_json)
+        # with force_phone_timezones_should_be_processed():
+        adjust_datetimes(form_json, process_timezones=False)
 
         scrub_form_meta(self.form_id, form_json)
         return form_json

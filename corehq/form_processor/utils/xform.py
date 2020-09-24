@@ -199,10 +199,12 @@ def convert_xform_to_json(xml_string):
 
 def adjust_text_to_datetime(text, process_timezones=None):
     matching_datetime = iso8601.parse_date(text)
-    if process_timezones or phone_timezones_should_be_processed():
+    if process_timezones is None:
+        process_timezones = phone_timezones_should_be_processed()
+    if process_timezones:
         return matching_datetime.astimezone(pytz.utc).replace(tzinfo=None)
     else:
-        return matching_datetime.replace(tzinfo=None)
+        return matching_datetime
 
 
 def adjust_datetimes(data, parent=None, key=None, process_timezones=None):
@@ -219,7 +221,8 @@ def adjust_datetimes(data, parent=None, key=None, process_timezones=None):
     >>> with force_phone_timezones_should_be_processed():
     >>>     adjust_datetimes(form_json)
     """
-    process_timezones = process_timezones or phone_timezones_should_be_processed()
+    if process_timezones is None:
+        process_timezones = phone_timezones_should_be_processed()
     # this strips the timezone like we've always done
     # todo: in the future this will convert to UTC
     if isinstance(data, str) and RE_DATETIME_MATCH.match(data):
