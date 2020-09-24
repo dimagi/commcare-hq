@@ -5,7 +5,7 @@ from django.utils.translation import ugettext as _
 
 from corehq.apps.app_manager.dbaccessors import get_brief_app_docs_in_domain
 from corehq.apps.linked_domain.exceptions import DomainLinkError
-from corehq.apps.sms.models import Keyword, KeywordAction
+from corehq.apps.sms.models import Keyword
 from corehq.util.quickcache import quickcache
 
 
@@ -28,7 +28,7 @@ def create_linked_keyword(domain_link, keyword_id):
 
     keyword_actions = keyword.keywordaction_set.all()
 
-    keyword.master_id = keyword.id
+    keyword.upstream_id = keyword.id
     keyword.id = None
     keyword.domain = domain_link.linked_domain
     keyword.couch_id = uuid.uuid4().hex
@@ -51,7 +51,7 @@ def update_keyword(domain_link, linked_keyword_id):
             _("Linked keyword could not be found")
         )
     try:
-        master_keyword = Keyword.objects.get(id=linked_keyword.master_id)
+        master_keyword = Keyword.objects.get(id=linked_keyword.upstream_id)
     except Keyword.DoesNotExist:
         raise DomainLinkError(
             _("Upstream keyword could not be found. Maybe it has been deleted?")

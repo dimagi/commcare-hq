@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name='keyword',
-            name='master_id',
+            name='upstream_id',
             field=models.CharField(max_length=126, null=True),
         ),
     ]

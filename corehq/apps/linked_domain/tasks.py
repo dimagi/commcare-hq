@@ -170,10 +170,10 @@ The following linked project spaces received content:
         return self._release_model(domain_link, model, user)
 
     def _release_keyword(self, domain_link, model):
-        master_id = model['detail']['keyword_id']
+        upstream_id = model['detail']['keyword_id']
         try:
             linked_keyword_id = (Keyword.objects.values_list('id', flat=True)
-                                 .get(domain=domain_link.linked_domain, master_id=master_id))
+                                 .get(domain=domain_link.linked_domain, upstream_id=upstream_id))
         except Keyword.DoesNotExist:
             return self._error_tuple(
                 _('Could not find linked keyword in {domain}. '

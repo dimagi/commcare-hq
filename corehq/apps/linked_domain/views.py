@@ -274,7 +274,7 @@ class DomainLinkView(BaseAdminProjectSettingsView):
         linked_list = {}
         keywords = Keyword.objects.filter(domain=self.domain)
         for keyword in keywords:
-            if keyword.master_id:
+            if keyword.upstream_id:
                 linked_list[str(keyword.id)] = keyword
             else:
                 master_list[str(keyword.id)] = keyword
