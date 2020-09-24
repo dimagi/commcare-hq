@@ -612,7 +612,7 @@ class CaseScheduleInstanceMixin(object):
             full_username = format_username(username, self.domain)
             return CommCareUser.get_by_username(full_username)
         elif self.recipient_type == self.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL:
-            return self.recipient_id
+            return self.case.get_case_property(self.recipient_id)
         else:
             return super(CaseScheduleInstanceMixin, self).recipient
 
