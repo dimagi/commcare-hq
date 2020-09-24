@@ -28,7 +28,7 @@ class TestDownloadMobileWorkers(TestCase, DomainSubscriptionMixin):
         cls.domain_obj = create_domain(cls.domain)
 
         # APP_USER_PROFILES is on ENTERPRISE and above
-        cls.setup_subscription(cls.domain, SoftwarePlanEdition.ENTERPRISE)
+        cls.setup_subscription(cls.domain, SoftwarePlanEdition.ADVANCED)
 
         cls.group_memoizer = GroupMemoizer(domain=cls.domain_obj.name)
         cls.group_memoizer.load_all()
@@ -103,6 +103,7 @@ class TestDownloadMobileWorkers(TestCase, DomainSubscriptionMixin):
         self.assertEqual(1862, spec['data: born'])
 
     def test_download_with_profile(self):
+        # APP_USER_PROFILES is on ENTERPRISE and above
         self.setup_subscription(self.domain, SoftwarePlanEdition.ENTERPRISE)
         (headers, rows) = parse_users(self.group_memoizer, self.domain_obj.name, {})
         self.assertIn('user_profile', headers)
