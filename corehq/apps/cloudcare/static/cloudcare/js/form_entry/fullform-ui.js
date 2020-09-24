@@ -1,4 +1,4 @@
-/* global mdAnchorRender */
+/* global DOMPurify, mdAnchorRender */
 hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
         Utils = hqImport("cloudcare/js/form_entry/utils");
@@ -36,22 +36,22 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
     //if index is part of a repeat, return only the part beyond the deepest repeat
     function relativeIndex(ix) {
         var steps = ix.split(',');
-        var deepest_repeat = -1,
+        var deepestRepeat = -1,
             i;
         for (i = steps.length - 2; i >= 0; i--) {
-            if (steps[i].indexOf(':') != -1) {
-                deepest_repeat = i;
+            if (steps[i].indexOf(':') !== -1) {
+                deepestRepeat = i;
                 break;
             }
         }
-        if (deepest_repeat == -1) {
+        if (deepestRepeat === -1) {
             return ix;
         } else {
-            var rel_ix = '-';
-            for (i = deepest_repeat + 1; i < steps.length; i++) {
-                rel_ix += steps[i] + (i < steps.length - 1 ? ',' : '');
+            var relIx = '-';
+            for (i = deepestRepeat + 1; i < steps.length; i++) {
+                relIx += steps[i] + (i < steps.length - 1 ? ',' : '');
             }
-            return rel_ix;
+            return relIx;
         }
     }
 
@@ -62,7 +62,7 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
             if (!o || ko.utils.unwrapObservable(o.rel_ix) === undefined) {
                 break;
             }
-            if (o.rel_ix().split(',').slice(-1)[0].indexOf(':') != -1) {
+            if (o.rel_ix().split(',').slice(-1)[0].indexOf(':') !== -1) {
                 ix = o.rel_ix() + ',' + ix.substring(1);
             }
         }
@@ -71,7 +71,7 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
 
     function getForIx(o, ix) {
         if (ko.utils.unwrapObservable(o.type) === 'question') {
-            return (getIx(o) == ix ? o : null);
+            return (getIx(o) === ix ? o : null);
         } else {
             for (var i = 0; i < o.children().length; i++) {
                 var result = getForIx(o.children()[i], ix);
@@ -82,34 +82,34 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
         }
     }
 
-    function parse_meta(type, style) {
+    function parseMeta(type, style) {
         var meta = {};
 
-        if (type == "date") {
+        if (type === "date") {
             meta.mindiff = style.before !== null ? +style.before : null;
             meta.maxdiff = style.after !== null ? +style.after : null;
-        } else if (type == "int" || type == "float") {
+        } else if (type === "int" || type === "float") {
             meta.unit = style.unit;
         } else if (type == 'str') {
-            meta.autocomplete = (style.mode == 'autocomplete');
+            meta.autocomplete = (style.mode === 'autocomplete');
             meta.autocomplete_key = style["autocomplete-key"];
             meta.mask = style.mask;
             meta.prefix = style.prefix;
-            meta.longtext = (style.raw == 'full');
-        } else if (type == "multiselect") {
+            meta.longtext = (style.raw === 'full');
+        } else if (type === "multiselect") {
             if (style["as-select1"]) {
                 meta.as_single = [];
                 var vs = style["as-select1"].split(',');
                 for (var i = 0; i < vs.length; i++) {
                     var k = +vs[i];
-                    if (k != 0) {
+                    if (k !== 0) {
                         meta.as_single.push(k);
                     }
                 }
             }
         }
 
-        if (type == "select" || type == "multiselect") {
+        if (type === "select" || type === "multiselect") {
             meta.appearance = style.raw;
         }
 
@@ -228,11 +228,12 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
         });
 
         self.isCurrentRequiredSatisfied = ko.computed(function () {
-            if (!self.showInFormNavigation()) return true;
+            if (!self.showInFormNavigation()) {
+                return true;
+            }
 
             return _.every(self.children(), function (q) {
-                return (q.answer() === Const.NO_ANSWER && !q.required())
-                    || q.answer() !== null;
+                return (q.answer() === Const.NO_ANSWER && !q.required()) || q.answer() !== null;
             });
         });
         self.isCurrentRequiredSatisfied.subscribe(function (isSatisfied) {
@@ -242,7 +243,9 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
         });
 
         self.enableNextButton = ko.computed(function () {
-            if (!self.showInFormNavigation()) return false;
+            if (!self.showInFormNavigation()) {
+                return false;
+            }
 
             var allValidAndNotPending = _.every(self.children(), function (q) {
                 return q.isValid() && !q.pendingAnswer();
@@ -292,7 +295,7 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
             return !self.showInFormNavigation();
         });
 
-        self.submitForm = function (form) {
+        self.submitForm = function () {
             $.publish('formplayer.' + Const.SUBMIT, self);
         };
 
@@ -360,14 +363,14 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
         self.parent = parent;
         self.rel_ix = ko.observable(relativeIndex(self.ix()));
         self.isRepetition = parent instanceof Repeat;
-        if (json.hasOwnProperty('domain_meta') && json.hasOwnProperty('style')) {
-            self.domain_meta = parse_meta(json.datatype, val);
+        if (_.has(json, 'domain_meta') && _.has(json, 'style')) {
+            self.domain_meta = parseMeta(json.datatype, json.style);
         }
 
         if (self.isRepetition) {
             // If the group is part of a repetition the index can change if the user adds or deletes
             // repeat groups.
-            self.ix.subscribe(function (newValue) {
+            self.ix.subscribe(function () {
                 self.rel_ix(relativeIndex(self.ix()));
             });
         }
@@ -403,13 +406,13 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
 
         self.parent = parent;
         self.rel_ix = ko.observable(relativeIndex(self.ix()));
-        if (json.hasOwnProperty('domain_meta') && json.hasOwnProperty('style')) {
-            self.domain_meta = parse_meta(json.datatype, val);
+        if (_.has(json, 'domain_meta') && _.has(json, 'style')) {
+            self.domain_meta = parseMeta(json.datatype, json.style);
         }
         self.templateType = 'repeat';
         self.ixInfo = function (o) {
-            var full_ix = getIx(o);
-            return o.rel_ix + (o.isRepetition ? '(' + o.uuid + ')' : '') + (o.rel_ix != full_ix ? ' :: ' + full_ix : '');
+            var fullIx = getIx(o);
+            return o.rel_ix + (o.isRepetition ? '(' + o.uuid + ')' : '') + (o.rel_ix != fullIx ? ' :: ' + fullIx : '');
         };
 
         self.newRepeat = function () {
@@ -437,8 +440,8 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
         self.error = ko.observable(null);
         self.serverError = ko.observable(null);
         self.rel_ix = ko.observable(relativeIndex(self.ix()));
-        if (json.hasOwnProperty('domain_meta') && json.hasOwnProperty('style')) {
-            self.domain_meta = parse_meta(json.datatype, val);
+        if (_.has(json, 'domain_meta') && _.has(json, 'style')) {
+            self.domain_meta = parseMeta(json.datatype, json.style);
         }
         self.throttle = 200;
         self.controlWidth = Const.CONTROL_WIDTH;
@@ -473,8 +476,8 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
         self.afterRender = function () { self.entry.afterRender(); };
 
         self.ixInfo = function (o) {
-            var full_ix = getIx(o);
-            return o.rel_ix + (o.isRepetition ? '(' + o.uuid + ')' : '') + (o.rel_ix != full_ix ? ' :: ' + full_ix : '');
+            var fullIx = getIx(o);
+            return o.rel_ix + (o.isRepetition ? '(' + o.uuid + ')' : '') + (o.rel_ix !== fullIx ? ' :: ' + fullIx : '');
         };
 
         self.triggerAnswer = function () {
