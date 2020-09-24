@@ -36,9 +36,9 @@ def create_linked_keyword(domain_link, keyword_id):
 
     try:
         _update_actions(domain_link, keyword, keyword_actions)
-    except DomainLinkError:
+    except DomainLinkError as e:
         keyword.delete()
-        return None
+        raise e
 
     return keyword.id
 
