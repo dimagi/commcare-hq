@@ -198,7 +198,9 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
             appId: null,
         });
 
-
+        RegExp.escape = function (s) {
+            return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+        };
 
         self.debugTraceOptions = ko.observableArray([
             new DebugResponseLevel("Output", "basic"),
