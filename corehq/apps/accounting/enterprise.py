@@ -165,8 +165,8 @@ class EnterpriseWebUserReport(EnterpriseReport):
                 last_accessed_domain = domain_membership.last_accessed
             rows.append(
                 [
-                    user.username,
                     user.full_name,
+                    user.username,
                     user.role_label(domain_obj.name),
                     self.format_date(user.last_login),
                     last_accessed_domain,
