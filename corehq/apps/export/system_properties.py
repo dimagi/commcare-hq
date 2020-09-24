@@ -218,7 +218,7 @@ BOTTOM_MAIN_FORM_TABLE_PROPERTIES = [
     ),
     ExportColumn(
         tags=[PROPERTY_TAG_INFO],
-        label="web_user",
+        label="hq_user",
         item=ExportItem(
             path=[
                 PathNode(name='auth_context'),
@@ -226,7 +226,8 @@ BOTTOM_MAIN_FORM_TABLE_PROPERTIES = [
             ],
             transform=USERNAME_TRANSFORM,
         ),
-        help_text=_('The web user who submitted the form'),
+        help_text=_('The HQ user who submitted the form. This will be the same as username '
+                    'unless the form was submitted via Login As.'),
         selected=True,
     ),
 ]
