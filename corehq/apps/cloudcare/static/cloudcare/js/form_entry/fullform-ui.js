@@ -412,7 +412,7 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
         self.templateType = 'repeat';
         self.ixInfo = function (o) {
             var fullIx = getIx(o);
-            return o.rel_ix + (o.isRepetition ? '(' + o.uuid + ')' : '') + (o.rel_ix != fullIx ? ' :: ' + fullIx : '');
+            return o.rel_ix + (o.isRepetition ? '(' + o.uuid + ')' : '') + (o.rel_ix !== fullIx ? ' :: ' + fullIx : '');
         };
 
         self.newRepeat = function () {
