@@ -34,7 +34,11 @@ def create_linked_keyword(domain_link, keyword_id):
     keyword.couch_id = uuid.uuid4().hex
     keyword.save()
 
-    _update_actions(domain_link, keyword, keyword_actions)
+    try:
+        _update_actions(domain_link, keyword, keyword_actions)
+    except DomainLinkError:
+        keyword.delete()
+        return None
 
     return keyword.id
 
