@@ -44,7 +44,10 @@ def create_linked_keyword(domain_link, keyword_id):
                     keyword_action.app_id
                 ]
             except KeyError:
-                raise DomainLinkError(_("Keyword references application that has not been linked"))
+                raise DomainLinkError(_("Keyword {keyword} references an application "
+                                        "that has not been linked to {linked_domain}").format(
+                                            keyword=keyword.keyword,
+                                            linked_domain=domain_link.linked_domain))
         keyword_action.save()
 
     return keyword.id
