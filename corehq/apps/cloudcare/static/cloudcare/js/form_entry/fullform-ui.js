@@ -422,6 +422,10 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
             self.domain_meta = parse_meta(json.datatype, val);
         }
         self.templateType = 'repeat';
+        self.ixInfo = function (o) {
+            var full_ix = getIx(o);
+            return o.rel_ix + (o.isRepetition ? '(' + o.uuid + ')' : '') + (o.rel_ix != full_ix ? ' :: ' + full_ix : '');
+        };
 
         self.newRepeat = function () {
             $.publish('formplayer.' + Const.NEW_REPEAT, self);
