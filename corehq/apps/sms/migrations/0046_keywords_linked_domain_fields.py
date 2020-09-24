@@ -15,9 +15,4 @@ class Migration(migrations.Migration):
             name='master_id',
             field=models.CharField(max_length=126, null=True),
         ),
-        migrations.AddField(
-            model_name='keywordaction',
-            name='master_id',
-            field=models.CharField(max_length=126, null=True),
-        ),
     ]

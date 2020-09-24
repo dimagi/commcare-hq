@@ -34,21 +34,7 @@ def create_linked_keyword(domain_link, keyword_id):
     keyword.couch_id = uuid.uuid4().hex
     keyword.save()
 
-    for keyword_action in keyword_actions:
-        keyword_action.master_id = keyword_action.id
-        keyword_action.id = None
-        keyword_action.keyword = keyword
-        if keyword_action.app_id is not None:
-            try:
-                keyword_action.app_id = get_master_app_to_linked_app(domain_link.linked_domain)[
-                    keyword_action.app_id
-                ]
-            except KeyError:
-                raise DomainLinkError(_("Keyword {keyword} references an application "
-                                        "that has not been linked to {linked_domain}").format(
-                                            keyword=keyword.keyword,
-                                            linked_domain=domain_link.linked_domain))
-        keyword_action.save()
+    _update_actions(domain_link, keyword, keyword_actions)
 
     return keyword.id
 
@@ -72,22 +58,25 @@ def update_keyword(domain_link, linked_keyword_id):
 
     linked_keyword.save()
 
-    for linked_keywordaction in linked_keyword.keywordaction_set.all():
-        master_keywordaction = KeywordAction.objects.get(id=linked_keywordaction.master_id)
-        for prop in ['action', 'recipient', 'message_content']:
-            setattr(linked_keywordaction, prop, getattr(master_keywordaction, prop))
+    _update_actions(domain_link, linked_keyword, master_keyword.keywordaction_set.all())
 
-        if master_keywordaction.app_id:
+
+def _update_actions(domain_link, linked_keyword, keyword_actions):
+    linked_keyword.keywordaction_set.all().delete()
+    for keyword_action in keyword_actions:
+        keyword_action.id = None
+        keyword_action.keyword = linked_keyword
+        if keyword_action.app_id is not None:
             try:
-                app_id = get_master_app_to_linked_app(domain_link.linked_domain)[
-                    master_keywordaction.app_id
+                keyword_action.app_id = get_master_app_to_linked_app(domain_link.linked_domain)[
+                    keyword_action.app_id
                 ]
             except KeyError:
-                raise DomainLinkError(_("Keyword references application that has not been linked"))
-            if linked_keywordaction.app_id != app_id:
-                linked_keywordaction.app_id = app_id
-
-        linked_keywordaction.save()
+                raise DomainLinkError(_("Keyword {keyword} references an application "
+                                        "that has not been linked to {linked_domain}").format(
+                                            keyword=linked_keyword.keyword,
+                                            linked_domain=domain_link.linked_domain))
+        keyword_action.save()
 
 
 @quickcache(vary_on=['domain'], skip_arg=lambda _: settings.UNIT_TESTING, timeout=5 * 60)

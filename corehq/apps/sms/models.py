@@ -2503,9 +2503,6 @@ class KeywordAction(models.Model):
     # This can be None in which case there is no separator (i.e., "report a100 b200")
     named_args_separator = models.CharField(max_length=126, null=True)
 
-    # For use with linked domains - the upstream keywordaction
-    master_id = models.CharField(max_length=126, null=True)
-
     def save(self, *args, **kwargs):
         if self.recipient == self.RECIPIENT_USER_GROUP and not self.recipient_id:
             raise self.InvalidModelStateException("Expected a value for recipient_id")
