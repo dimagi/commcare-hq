@@ -70,5 +70,6 @@ branches:
   - ce/case-property-recipients # Cal 9/24
   - cz/role-ui  # Norman 9/25
   - fr/portuguese               # Farid September 25
+  - bmb/SAAS-11355      # Biyeun Sept 25
 
 submodules: {}
