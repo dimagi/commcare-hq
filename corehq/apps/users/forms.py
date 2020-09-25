@@ -45,7 +45,6 @@ from corehq.apps.users.models import DomainMembershipError, UserRole
 from corehq.apps.users.util import cc_user_domain, format_username
 from corehq.toggles import TWO_STAGE_USER_PROVISIONING
 from custom.icds_core.view_utils import is_icds_cas_project
-from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 
 mark_safe_lazy = lazy(mark_safe, str)
 
@@ -362,7 +361,7 @@ class RoleForm(forms.Form):
         self.fields['role'].choices = role_choices
 
 
-class SetUserPasswordForm(EncodedPasswordChangeFormMixin, SetPasswordForm):
+class SetUserPasswordForm(SetPasswordForm):
 
     new_password1 = forms.CharField(
         label=ugettext_noop("New password"),
