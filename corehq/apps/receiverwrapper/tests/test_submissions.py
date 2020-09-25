@@ -3,6 +3,7 @@ import os
 from io import BytesIO
 
 from django.conf import settings
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.test.client import Client
 from django.test.utils import override_settings
@@ -145,9 +146,16 @@ class SubmissionTest(BaseSubmissionTest):
             expected_error.message
         )
 
-    def test_invalid_attachment_file_extension(self):
+    def test_invalid_attachment_file_extension_with_valid_mimetype(self):
         response = self._submit('simple_form.xml', attachments={
             "image.xyz": BytesIO(b"fake image"),
+        })
+        self.assertEqual(response.status_code, 201)
+
+    def test_invalid_attachment_file_extension_with_invalid_mimetype(self):
+        image = SimpleUploadedFile("image.xyz", b"fake image", content_type="fake/image")
+        response = self._submit('simple_form.xml', attachments={
+            "image.xyz": image,
         })
         expected_error = InvalidAttachmentFileExtensionError()
         self.assertEqual(response.status_code, expected_error.status_code)
