@@ -2956,7 +2956,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 initial['custom_recipient'] = recipient_id
             if recipient_type == CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER:
                 initial['username_case_property'] = recipient_id
-            if recipient_type == CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER:
+            if recipient_type == CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL:
                 initial['email_case_property'] = recipient_id
 
     def add_initial_for_custom_metadata(self, result):
