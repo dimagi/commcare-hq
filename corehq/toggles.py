@@ -649,6 +649,14 @@ MONITOR_2FA_CHANGES = StaticToggle(
 )
 
 
+LOG_SMS_DUPLICATION = StaticToggle(
+    'log_sms_duplication',
+    'Monitor SMS duplication activity for SAAS-10861 ticket',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+
 USER_CONFIGURABLE_REPORTS = StaticToggle(
     'user_reports',
     'User configurable reports UI',

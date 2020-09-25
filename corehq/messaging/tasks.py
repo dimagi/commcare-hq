@@ -13,6 +13,7 @@ from corehq.sql_db.util import (
     paginate_query,
     paginate_query_across_partitioned_databases
 )
+from corehq.toggles import LOG_SMS_DUPLICATION
 from corehq.util.celery_utils import no_result_task
 from corehq.util.metrics.load_counters import case_load_counter
 from dimagi.utils.chunked import chunked
@@ -52,7 +53,14 @@ def sync_case_chunk_for_messaging_rule(domain, case_id_chunk, rule_id):
         try:
             with CriticalSection([get_sync_key(case_id)], timeout=5 * 60):
                 _sync_case_for_messaging_rule(domain, case_id, rule_id)
-        except Exception:
+        except Exception as e:
+            if LOG_SMS_DUPLICATION.enabled(domain):
+                from corehq.apps.hqwebapp.utils import log_sms_duplicates_soft_assert
+                log_sms_duplicates_soft_assert(
+                    False,
+                    f'A duplicate SMS may or may not have been sent to '
+                    f'{case_id} due to exception {str(e)}'
+                )
             sync_case_for_messaging_rule.delay(domain, case_id, rule_id)
 
 

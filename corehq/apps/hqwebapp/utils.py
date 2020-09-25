@@ -27,6 +27,11 @@ monitor_2fa_soft_assert = soft_assert(
     send_to_ops=False
 )
 
+log_sms_duplicates_soft_assert = soft_assert(
+    to=['{}@{}'.format('biyeun', 'dimagi.com')],
+    send_to_ops=False
+)
+
 
 @memoized
 def get_hq_private_key():
