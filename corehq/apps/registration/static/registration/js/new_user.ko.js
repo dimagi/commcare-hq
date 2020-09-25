@@ -6,7 +6,6 @@ hqDefine('registration/js/new_user.ko', [
     'analytix/js/kissmetrix',
     'analytix/js/appcues',
     'hqwebapp/js/initial_page_data',
-    'nic_compliance/js/encoder',
     'jquery-ui/ui/effect',
     'jquery-ui/ui/effects/effect-slide',
     'intl-tel-input/build/js/intlTelInput.min',
