@@ -22,6 +22,9 @@ class AuthenticationTestBase(TestCase):
         cls.password = '***'
         cls.user = WebUser.create(cls.domain, cls.username, cls.password, None, None)
         cls.api_key, _ = HQApiKey.objects.get_or_create(user=WebUser.get_django_user(cls.user))
+        cls.domain_api_key, _ = HQApiKey.objects.get_or_create(user=WebUser.get_django_user(cls.user),
+                                                               name='domain-scoped',
+                                                               domain=cls.domain)
 
     @classmethod
     def tearDownClass(cls):
@@ -85,6 +88,19 @@ class LoginAuthenticationTest(AuthenticationTestBase):
 
 class LoginAndDomainAuthenticationTest(AuthenticationTestBase):
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain2 = 'api-test-other'
+        cls.project2 = Domain.get_or_create_with_name(cls.domain2, is_active=True)
+        cls.user.add_domain_membership(cls.domain2, is_admin=True)
+        cls.user.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.project2.delete()
+        super().tearDownClass()
+
     def test_login_no_auth_no_domain(self):
         self.assertAuthenticationFail(LoginAndDomainAuthentication(), self._get_request())
 
@@ -94,6 +110,32 @@ class LoginAndDomainAuthenticationTest(AuthenticationTestBase):
     def test_login_with_domain(self):
         self.assertAuthenticationSuccess(LoginAndDomainAuthentication(),
                                          self._get_request_with_api_key(domain=self.domain))
+        self.assertAuthenticationSuccess(LoginAndDomainAuthentication(),
+                                         self._get_request_with_api_key(domain=self.domain2))
+
+    def test_login_with_domain_key(self):
+        self.assertAuthenticationSuccess(
+            LoginAndDomainAuthentication(),
+            self._get_request(
+                self.domain,
+                HTTP_AUTHORIZATION=self._construct_api_auth_header(
+                    self.username,
+                    self.domain_api_key
+                )
+            )
+        )
+
+    def test_login_with_domain_key_wrong(self):
+        self.assertAuthenticationFail(
+            LoginAndDomainAuthentication(),
+            self._get_request(
+                self.domain2,
+                HTTP_AUTHORIZATION=self._construct_api_auth_header(
+                    self.username,
+                    self.domain_api_key
+                )
+            )
+        )
 
     def test_login_with_wrong_domain(self):
         project = Domain.get_or_create_with_name('api-test-fail', is_active=True)
