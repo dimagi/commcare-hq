@@ -42,7 +42,7 @@ services:
       - "8010"
 
   postgres:
-    image: dimagi/docker-postgresql
+    image: dimagi/docker-postgresql:12
     environment:
       POSTGRES_USER: commcarehq
       POSTGRES_PASSWORD: commcarehq
