@@ -2,7 +2,7 @@ version: '2.3'
 
 services:
   citus_master:
-    image: 'citusdata/citus:8.1.1'
+    image: 'citusdata/citus:9.4'
     ports: ["${CITUS_MASTER_EXTERNAL_PORT:-5600}:5432"]
     labels: ['com.citusdata.role=Master']
     volumes:
@@ -21,7 +21,7 @@ services:
       POSTGRES_USER: commcarehq
       POSTGRES_PASSWORD: commcarehq
   citus_worker1:
-    image: 'citusdata/citus:8.1.1'
+    image: 'citusdata/citus:9.4'
     ports: ["${CITUS_WORKER1_EXTERNAL_PORT:-5601}:5432"]
     labels: ['com.citusdata.role=Worker']
     depends_on: { citus_manager: { condition: service_healthy } }
@@ -31,7 +31,7 @@ services:
       POSTGRES_DB: "${UCR_CITUS_DB:-commcare_ucr_citus}"
       POSTGRES_USER: commcarehq
   citus_worker2:
-    image: 'citusdata/citus:8.1.1'
+    image: 'citusdata/citus:9.4'
     ports: ["${CITUS_WORKER2_EXTERNAL_PORT:-5602}:5432"]
     labels: ['com.citusdata.role=Worker']
     depends_on: { citus_manager: { condition: service_healthy } }
