@@ -1,8 +1,8 @@
-/*global getIx, getForIx */
-
 hqDefine("cloudcare/js/form_entry/webformsession", function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
-        Utils = hqImport("cloudcare/js/form_entry/utils");
+        Utils = hqImport("cloudcare/js/form_entry/utils"),
+        UI = hqImport("cloudcare/js/form_entry/fullform-ui");
+
     function WebFormSession(params) {
         var self = {};
 
@@ -293,7 +293,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
 
         self.answerQuestion = function (q) {
             var self = this;
-            var ix = getIx(q);
+            var ix = UI.getIx(q);
             var answer = q.answer();
             var oneQuestionPerScreen = self.isOneQuestionPerScreen();
 
@@ -378,7 +378,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
             this.serverRequest(
                 {
                     'action': Const.NEW_REPEAT,
-                    'ix': getIx(repeat),
+                    'ix': UI.getIx(repeat),
                 },
                 function (resp) {
                     $.publish('session.reconcile', [resp, repeat]);
@@ -387,7 +387,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
         };
 
         self.deleteRepeat = function (repetition) {
-            var juncture = getIx(repetition.parent);
+            var juncture = UI.getIx(repetition.parent);
             var repIx = +(repetition.rel_ix().replace(/_/g, ':').split(":").slice(-1)[0]);
             this.serverRequest(
                 {
@@ -431,7 +431,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
                     } else {
                         if (o.isValid()) {
                             if (ko.utils.unwrapObservable(o.datatype) !== "info") {
-                                _answers[getIx(o)] = ko.utils.unwrapObservable(o.answer);
+                                _answers[UI.getIx(o)] = ko.utils.unwrapObservable(o.answer);
                             }
                         } else {
                             prevalidated = false;
@@ -465,7 +465,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
                                 self.onsubmit(resp);
                             } else {
                                 $.each(resp.errors, function (ix, error) {
-                                    self.serverError(getForIx(form, ix), error);
+                                    self.serverError(UI.getForIx(form, ix), error);
                                 });
                                 // todo: mark all these messages for translation
                                 if (resp.status === 'too-many-requests') {
