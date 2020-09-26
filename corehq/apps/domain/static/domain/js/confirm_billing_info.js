@@ -1,8 +1,16 @@
-/* global Stripe */
-hqDefine("domain/js/confirm_billing_info", function () {
-    var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        stripeCardManager = hqImport("accounting/js/stripe_card_manager");
-
+hqDefine("domain/js/confirm_billing_info", [
+    'jquery',
+    'knockout',
+    'hqwebapp/js/initial_page_data',
+    'accounting/js/lib/stripe',
+    'accounting/js/stripe_card_manager',
+], function (
+    $,
+    ko,
+    initialPageData,
+    Stripe,
+    stripeCardManager
+) {
     $('a.breadcrumb-2').click(function (e) {
         e.preventDefault();
         var url = $(this).attr('href');
