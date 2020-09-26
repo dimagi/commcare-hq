@@ -68,7 +68,6 @@ branches:
 #  - dm/requirements # Daniel 9/23
   - ce/case-property-recipients # Cal 9/24
   - cz/role-ui  # Norman 9/25
-  - fr/portuguese               # Farid September 25
   - bmb/requirements-redis-3.3.0      # Biyeun Sept 25 (includes dm/requirements)
   - jls/require-js-confirm_billing_info # Jenny Set 26
 
