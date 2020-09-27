@@ -1,9 +1,9 @@
 /* eslint-env mocha */
-/* globals Question */
 
 describe('Entries', function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
         Controls = hqImport("cloudcare/js/form_entry/entrycontrols_full"),
+        UI = hqImport("cloudcare/js/form_entry/fullform-ui"),
         questionJSON,
         spy;
 
@@ -37,7 +37,7 @@ describe('Entries', function () {
     });
 
     it('Should return the IntEntry', function () {
-        var entry = (new Question(questionJSON)).entry;
+        var entry = UI.Question(questionJSON).entry;
         assert.isTrue(entry instanceof Controls.IntEntry);
         assert.equal(entry.templateType, 'str');
 
@@ -56,7 +56,7 @@ describe('Entries', function () {
         questionJSON.style = { raw: Const.MINIMAL };
         questionJSON.choices = ['a', 'b'];
 
-        entry = (new Question(questionJSON)).entry;
+        entry = UI.Question(questionJSON).entry;
         assert.isTrue(entry instanceof Controls.DropdownEntry);
         assert.equal(entry.templateType, 'dropdown');
         assert.deepEqual(entry.options(), [{
@@ -79,7 +79,7 @@ describe('Entries', function () {
 
     it('Should return FloatEntry', function () {
         questionJSON.datatype = Const.FLOAT;
-        var entry = (new Question(questionJSON)).entry;
+        var entry = UI.Question(questionJSON).entry;
         assert.isTrue(entry instanceof Controls.FloatEntry);
         assert.equal(entry.templateType, 'str');
 
@@ -102,7 +102,7 @@ describe('Entries', function () {
         questionJSON.choices = ['a', 'b'];
         questionJSON.answer = 2;
 
-        entry = (new Question(questionJSON)).entry;
+        entry = UI.Question(questionJSON).entry;
         assert.isTrue(entry instanceof Controls.ComboboxEntry);
         assert.equal(entry.rawAnswer(), 'b');
 
@@ -122,7 +122,7 @@ describe('Entries', function () {
         questionJSON.datatype = Const.SELECT;
         questionJSON.style = { raw: Const.COMBOBOX };
         questionJSON.choices = ['a', 'b'];
-        question = new Question(questionJSON);
+        question = UI.Question(questionJSON);
 
         entry = question.entry;
         assert.isTrue(entry instanceof Controls.ComboboxEntry);
@@ -168,7 +168,7 @@ describe('Entries', function () {
 
     it('Should return FreeTextEntry', function () {
         questionJSON.datatype = Const.STRING;
-        var entry = (new Question(questionJSON)).entry;
+        var entry = UI.Question(questionJSON).entry;
         assert.isTrue(entry instanceof Controls.FreeTextEntry);
         assert.equal(entry.templateType, 'text');
 
@@ -185,7 +185,7 @@ describe('Entries', function () {
         questionJSON.choices = ['a', 'b'];
         questionJSON.answer = [1]; // answer is based on a 1 indexed index of the choices
 
-        var entry = (new Question(questionJSON)).entry;
+        var entry = UI.Question(questionJSON).entry;
         assert.isTrue(entry instanceof Controls.MultiSelectEntry);
         assert.equal(entry.templateType, 'select');
         assert.sameMembers(entry.answer(), [1]);
@@ -207,7 +207,7 @@ describe('Entries', function () {
         questionJSON.choices = ['a', 'b'];
         questionJSON.answer = 1;
 
-        var entry = (new Question(questionJSON)).entry;
+        var entry = UI.Question(questionJSON).entry;
         assert.isTrue(entry instanceof Controls.SingleSelectEntry);
         assert.equal(entry.templateType, 'select');
         assert.equal(entry.rawAnswer(), 1);
@@ -222,7 +222,7 @@ describe('Entries', function () {
         questionJSON.datatype = Const.DATE;
         questionJSON.answer = '1990-09-26';
 
-        var entry = (new Question(questionJSON)).entry;
+        var entry = UI.Question(questionJSON).entry;
         assert.isTrue(entry instanceof Controls.DateEntry);
         assert.equal(entry.templateType, 'date');
 
@@ -235,7 +235,7 @@ describe('Entries', function () {
         questionJSON.datatype = Const.TIME;
         questionJSON.answer = '12:30';
 
-        var entry = (new Question(questionJSON)).entry;
+        var entry = UI.Question(questionJSON).entry;
         assert.isTrue(entry instanceof Controls.TimeEntry);
         assert.equal(entry.templateType, 'time');
 
@@ -246,7 +246,7 @@ describe('Entries', function () {
 
     it('Should return InfoEntry', function () {
         questionJSON.datatype = Const.INFO;
-        var entry = (new Question(questionJSON)).entry;
+        var entry = UI.Question(questionJSON).entry;
 
         assert.isTrue(entry instanceof Controls.InfoEntry);
     });
@@ -255,7 +255,7 @@ describe('Entries', function () {
         questionJSON.datatype = Const.GEO;
         questionJSON.answer = [1.2, 3.4];
 
-        var entry = (new Question(questionJSON)).entry;
+        var entry = UI.Question(questionJSON).entry;
         assert.equal(entry.answer()[0], 1.2);
         assert.equal(entry.answer()[1], 3.4);
 
@@ -271,7 +271,7 @@ describe('Entries', function () {
         questionJSON.datatype = Const.STRING;
         questionJSON.style = { raw: 'numeric' };
 
-        var entry = (new Question(questionJSON)).entry;
+        var entry = UI.Question(questionJSON).entry;
         assert.isTrue(entry instanceof Controls.PhoneEntry);
         assert.equal(entry.answer(), null);
         assert.equal(entry.templateType, 'str');
@@ -293,7 +293,7 @@ describe('Entries', function () {
         questionJSON.datatype = Const.STRING;
         questionJSON.style = { raw: Const.ADDRESS };
 
-        var entry = (new Question(questionJSON)).entry;
+        var entry = UI.Question(questionJSON).entry;
         assert.isTrue(entry instanceof Controls.AddressEntry);
     });
 
@@ -301,7 +301,7 @@ describe('Entries', function () {
         questionJSON.datatype = Const.STRING;
         questionJSON.style = { raw: 'numeric' };
 
-        var entry = (new Question(questionJSON)).entry;
+        var entry = UI.Question(questionJSON).entry;
         entry.rawAnswer('-123.4');
         assert.equal(entry.answer(), '-123.4');
 
