@@ -30,7 +30,7 @@ class Command(PopulateSQLCommand):
     def update_or_create_sql_object(self, doc):
         # Use get_or_create so that if sql model exists we don't bother saving it,
         # since these models are read-only
-        model, created = self.sql_class().objects.get_or_create(
+        model, created = self.sql_class().objects.update_or_create(
             id=doc['_id'],
             defaults={
                 "domain": doc.get("domain"),

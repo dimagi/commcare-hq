@@ -77,3 +77,32 @@ class TestCouchToSQLMobileAuth(TestCase):
         self.assertEqual(actual.expires, expires)
         self.assertEqual(actual.type, 'AES256')
         self.assertEqual(actual.key, couch.key)
+
+    def test_migration(self):
+        valid = datetime.utcnow()
+        expires = valid + timedelta(days=30)
+        couch = MobileAuthKeyRecord(domain='my-domain', user_id='123', valid=valid, expires=expires)
+        couch.save()
+
+        # Create any sql objects that didn't exist pre-migration
+        call_command('populate_mobileauthkeyrecord')
+        actual = SQLMobileAuthKeyRecord.objects.get(id=couch._id)
+        self.assertEqual(actual.domain, 'my-domain')
+        self.assertEqual(actual.user_id, '123')
+        self.assertEqual(actual.valid, valid)
+        self.assertEqual(actual.expires, expires)
+        self.assertEqual(actual.type, 'AES256')
+        self.assertEqual(actual.key, couch.key)
+
+        # Update any pre-existing sql objects
+        couch['domain'] = 'other-domain'
+        couch['user_id'] = '456'
+        couch.save(sync_to_sql=False)
+        call_command('populate_mobileauthkeyrecord')
+        actual = SQLMobileAuthKeyRecord.objects.get(id=couch._id)
+        self.assertEqual(actual.domain, 'other-domain')
+        self.assertEqual(actual.user_id, '456')
+        self.assertEqual(actual.valid, valid)
+        self.assertEqual(actual.expires, expires)
+        self.assertEqual(actual.type, 'AES256')
+        self.assertEqual(actual.key, couch.key)
