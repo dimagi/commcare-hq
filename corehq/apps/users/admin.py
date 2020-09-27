@@ -45,3 +45,11 @@ class DomainPermissionsMirrorAdmin(admin.ModelAdmin):
 
 
 admin.site.register(DomainPermissionsMirror, DomainPermissionsMirrorAdmin)
+
+
+class HQApiKeyAdmin(admin.ModelAdmin):
+    list_display = ['user', 'name', 'created', 'domain']
+    list_filter = ['created', 'domain']
+
+
+admin.site.register(HQApiKey, HQApiKeyAdmin)
