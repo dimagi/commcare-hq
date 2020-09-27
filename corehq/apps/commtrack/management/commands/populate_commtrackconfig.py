@@ -148,7 +148,11 @@ class Command(PopulateSQLCommand):
         for spec in self.one_to_one_submodels():
             submodel = getattr(model, spec['sql_class'].__name__.lower())
             submodel.commtrack_config = model
-            submodel.save()
+            try:
+                submodel.save()
+            except Exception:
+                import pdb; pdb.set_trace()
+                pass
 
         sql_actions = []
         for a in doc['actions']:
