@@ -105,7 +105,7 @@ class Command(PopulateSQLCommand):
     def _wrap_stock_levels_config(cls, doc):
         for attr in ['emergency_level', 'understock_threshold', 'overstock_threshold']:
             if attr in doc:
-                doc[attr] = round(float(doc[attr], 8))
+                doc[attr] = round(float(doc[attr]), 8)
         return doc
 
     @classmethod
