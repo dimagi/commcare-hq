@@ -318,7 +318,7 @@ class DomainGlobalSettingsForm(forms.Form):
 
     default_geocoder_location = Field(
         widget=GeoCoderInput(attrs={'placeholder': ugettext_lazy('Select a location')}),
-        label=ugettext_noop("Default geocoder location"),
+        label=ugettext_noop("Default project location"),
         required=False,
         help_text=ugettext_lazy("Please select your project's default location.")
     )
@@ -389,8 +389,8 @@ class DomainGlobalSettingsForm(forms.Form):
         self.can_use_custom_logo = kwargs.pop('can_use_custom_logo', False)
         super(DomainGlobalSettingsForm, self).__init__(*args, **kwargs)
         self.helper = hqcrispy.HQFormHelper(self)
-        self.helper[4] = twbscrispy.PrependedText('delete_logo', '')
-        self.helper[5] = twbscrispy.PrependedText('call_center_enabled', '')
+        self.helper[5] = twbscrispy.PrependedText('delete_logo', '')
+        self.helper[6] = twbscrispy.PrependedText('call_center_enabled', '')
         self.helper.all().wrap_together(crispy.Fieldset, _('Edit Basic Information'))
         self.helper.layout.append(
             hqcrispy.FormActions(
@@ -537,6 +537,8 @@ class DomainMetadataForm(DomainGlobalSettingsForm):
             # if the cloudcare_releases flag was just defaulted, don't bother showing
             # this setting at all
             del self.fields['cloudcare_releases']
+        if not domain_has_privilege(self.domain, privileges.CLOUDCARE):
+            del self.fields['default_geocoder_location']
 
     def save(self, request, domain):
         res = DomainGlobalSettingsForm.save(self, request, domain)

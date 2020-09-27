@@ -37,8 +37,13 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     :caption: Application Building
     :maxdepth: 1
 
+    apps/terminology
+    apps/translations
+    apps/multimedia
+    apps/settings
+    apps/advanced_app_features
+    apps/builds
     cloudcare
-    advanced_app_features
 
 .. toctree::
     :caption: Application Data Layer
@@ -70,33 +75,51 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     messaging/messaging
 
 .. toctree::
-    :caption: Integration
+    :caption: Integrations
     :maxdepth: 1
 
     api
     openmrs
 
 .. toctree::
+    :caption: UI and Front End
+    :maxdepth: 1
+
+    translations
+    ui_helpers
+    class_views
+    forms
+    js-guide/README
+
+.. toctree::
+    :caption: Testing
+    :maxdepth: 1
+
+    testing
+    test_coverage
+    mocha
+    es_fake
+
+.. toctree::
+    :caption: Performance
+    :maxdepth: 1
+
+    profiling
+    caching_and_memoization
+
+.. toctree::
     :caption: Code
     :maxdepth: 1
 
-    ui_helpers
-    class_views
-    testing
-    forms
+    toggles
     migrations
     commtrack
-    translations
-    profiling
     elasticsearch
     es_query
-    test_coverage
     nfs
     forms_and_cases
-    caching_and_memoization
     couchdb
     celery
-    js-guide/README
     databases
     metrics
     extensions

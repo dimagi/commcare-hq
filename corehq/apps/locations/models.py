@@ -508,7 +508,6 @@ class SQLLocation(AdjListModel):
 
     _id = property(lambda self: self.location_id)
     get_id = property(lambda self: self.location_id)
-    group_id = property(lambda self: self.location_id)
 
     @property
     def products(self):

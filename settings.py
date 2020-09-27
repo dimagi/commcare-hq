@@ -62,6 +62,7 @@ LANGUAGES = (
     ('fra', 'French'),  # we need this alias
     ('hin', 'Hindi'),
     ('sw', 'Swahili'),
+    ('por', 'Portuguese'),
 )
 
 STATICI18N_FILENAME_FUNCTION = 'statici18n.utils.legacy_filename'
@@ -834,6 +835,10 @@ ES_SEARCH_TIMEOUT = 30
 BITLY_OAUTH_TOKEN = None
 
 OAUTH2_PROVIDER = {
+    # until we have clearer project-level checks on this, just expire the token every
+    # 15 minutes to match HIPAA constraints.
+    # https://django-oauth-toolkit.readthedocs.io/en/latest/settings.html#access-token-expire-seconds
+    'ACCESS_TOKEN_EXPIRE_SECONDS': 15 * 60,
     'SCOPES': {
         'access_apis': 'Access API data on all your CommCare projects',
     },
@@ -1032,6 +1037,10 @@ SESSION_BYPASS_URLS = [
     r'^/a/{domain}/phone/admin_keys/',
     r'^/a/{domain}/apps/download/',
 ]
+
+# Disable builtin throttling for two factor backup tokens, since we have our own
+# See corehq.apps.hqwebapp.signals and corehq.apps.hqwebapp.forms for details
+OTP_STATIC_THROTTLE_FACTOR = 0
 
 ALLOW_PHONE_AS_DEFAULT_TWO_FACTOR_DEVICE = False
 RATE_LIMIT_SUBMISSIONS = False

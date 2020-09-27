@@ -1,24 +1,18 @@
 /* eslint-env mocha */
-/* globals Form */
+/* globals Form, Question */
 
 describe('Fullform UI', function () {
-    var questionJSON,
-        answerSpy,
-        formSpec,
+    var Const = hqImport("cloudcare/js/form_entry/const"),
+        questionJSON,
         formJSON,
         groupJSON,
         noQuestionGroupJSON,
         nestedGroupJSON,
-        sessionData,
         spy,
         repeatJSON,
         repeatNestJSON;
 
     beforeEach(function () {
-        formSpec = {
-            "type": "url",
-            "val": "http://dummy/dummy.xml",
-        };
         questionJSON = {
             "caption_audio": null,
             "caption": "Do you want to modify the visit number?",
@@ -138,22 +132,8 @@ describe('Fullform UI', function () {
             langs: ['en'],
         };
 
-        sessionData = {
-            "username": "ben",
-            "additional_filters": {
-                "footprint": true,
-            },
-            "domain": "mydomain",
-            "user_id": "123",
-            "user_data": {},
-            "app_id": "456",
-            "session_name": "SUCCEED CM app > CM4 - Clinic Visit - Benjamin",
-            "app_version": "2.0",
-            "device_id": "cloudcare",
-            "host": "http://dummy",
-        };
         spy = sinon.spy();
-        $.subscribe('formplayer.' + Formplayer.Const.ANSWER, spy);
+        $.subscribe('formplayer.' + Const.ANSWER, spy);
         this.clock = sinon.useFakeTimers();
 
     });
@@ -183,11 +163,11 @@ describe('Fullform UI', function () {
         form.fromJS({ children: [repeatNestJSON] });
         assert.equal(form.children().length, 1);
         // Each repeat is a group with questions
-        assert.equal(form.children()[0].type(), Formplayer.Const.REPEAT_TYPE);
+        assert.equal(form.children()[0].type(), Const.REPEAT_TYPE);
         assert.equal(form.children()[0].children().length, 1);
-        assert.equal(form.children()[0].children()[0].type(), Formplayer.Const.GROUP_TYPE);
+        assert.equal(form.children()[0].children()[0].type(), Const.GROUP_TYPE);
         assert.isTrue(form.children()[0].children()[0].isRepetition);
-        assert.equal(form.children()[0].children()[0].children()[0].type(), Formplayer.Const.QUESTION_TYPE);
+        assert.equal(form.children()[0].children()[0].children()[0].type(), Const.QUESTION_TYPE);
     });
 
     it('Should reconcile question choices', function () {
@@ -205,7 +185,7 @@ describe('Fullform UI', function () {
     });
 
     it('Should reconcile a GeoPointEntry', function () {
-        questionJSON.datatype = Formplayer.Const.GEO;
+        questionJSON.datatype = Const.GEO;
         questionJSON.answer = null;
         formJSON.tree = [questionJSON];
         var form = new Form(_.clone(formJSON)),
@@ -245,7 +225,7 @@ describe('Fullform UI', function () {
 
 
     it('Should throttle answers', function () {
-        questionJSON.datatype = Formplayer.Const.STRING;
+        questionJSON.datatype = Const.STRING;
         var question = new Question(questionJSON);
         question.answer('abc');
         this.clock.tick(question.throttle);
@@ -259,7 +239,7 @@ describe('Fullform UI', function () {
     });
 
     it('Should not be valid if question has serverError', function () {
-        questionJSON.datatype = Formplayer.Const.STRING;
+        questionJSON.datatype = Const.STRING;
         var question = new Question(questionJSON);
 
         question.serverError('Answer required');
