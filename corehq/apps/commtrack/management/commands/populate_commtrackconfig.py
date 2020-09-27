@@ -78,6 +78,7 @@ class Command(PopulateSQLCommand):
                 "couch_class": StockLevelsConfig,
                 "couch_attr": "stock_levels_config",
                 "fields": ['emergency_level', 'understock_threshold', 'overstock_threshold'],
+                "wrap": cls._wrap_stock_levels_config,
             },
             {
                 "sql_class": SQLStockRestoreConfig,
@@ -98,6 +99,13 @@ class Command(PopulateSQLCommand):
             if realval and not oldval:
                 doc['force_consumption_case_types'] = realval
                 del doc['force_to_consumption_case_types']
+        return doc
+
+    @classmethod
+    def _wrap_stock_levels_config(cls, doc):
+        for attr in ['emergency_level', 'understock_threshold', 'overstock_threshold']:
+            if attr in doc:
+                doc[attr] = round(float(doc[attr], 8))
         return doc
 
     @classmethod
