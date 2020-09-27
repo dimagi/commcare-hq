@@ -208,7 +208,8 @@ class PopulateSQLCommand(BaseCommand):
             self.doc_count,
             doc["_id"]
         ))
-        with transaction.atomic():
+        #with transaction.atomic():
+        if True:
             model, created = self.update_or_create_sql_object(doc)
             action = "Creating" if created else "Updated"
             logger.info("{} model for doc with id {}".format(action, doc["_id"]))
