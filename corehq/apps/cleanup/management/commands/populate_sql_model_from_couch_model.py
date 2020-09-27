@@ -133,7 +133,6 @@ class PopulateSQLCommand(BaseCommand):
             default=False,
             help="""
                 Don't migrate anything, instead check if couch and sql data is identical.
-                Only works for migrations that use a couch_id on the sql model.
             """,
         )
         parser.add_argument(
@@ -177,10 +176,11 @@ class PopulateSQLCommand(BaseCommand):
 
     def _verify_doc(self, doc):
         try:
-            obj = self.sql_class().objects.get(couch_id=doc["_id"])
+            couch_id_name = getattr(self.sql_class(), '_migration_couch_id_name', 'couch_id')
+            obj = self.sql_class().objects.get(**{couch_id_name: doc["_id"]})
             diff = self.diff_couch_and_sql(doc, obj)
             if diff:
-                logger.info(f"Doc {obj.couch_id} has differences: {diff}")
+                logger.info(f"Doc {getattr(obj, couch_id_name)} has differences:\n{diff}")
                 self.diff_count += 1
                 exit(1)
         except self.sql_class().DoesNotExist:
