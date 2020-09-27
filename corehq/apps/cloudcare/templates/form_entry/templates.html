@@ -6,19 +6,39 @@
         css: {
           'gr-no-children': $data.children().length === 0,
           'gr-has-no-questions': _.all($data.children(), function(d) { return d.type() !== 'question' }),
-          'gr-has-no-nested-questions': !$data.hasAnyNestedQuestions()
+          'gr-has-no-nested-questions': !$data.hasAnyNestedQuestions(),
+          'panel panel-default': collapsible,
+          'required-group': !showChildren() && childrenRequired(),
         }">
-    <fieldset class="gr-header">
-      <legend>
-        <span class="caption webapp-markdown-output" data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption()"></span>
+    <fieldset class="gr-header" data-bind="css: {'panel-heading': collapsible, clickable: collapsible}, click: toggleChildren">
+      <div data-bind="ifnot: collapsible">
+        <legend>
+          <span class="caption webapp-markdown-output"
+                data-bind="
+                  html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
+                "></span>
+          <button class="btn btn-xs btn-danger del pull-right" href="#" data-bind="
+                      visible: isRepetition,
+                      click: deleteRepeat
+                  ">{% trans "Delete repeat" %}</button>
+        </legend>
+      </div>
+      <div data-bind="if: collapsible">
+        <div class="collapsible-icon-container">
+          <i style="" class="fa" data-bind="
+              css: {'fa-angle-double-right': !showChildren(), 'fa-angle-double-down': showChildren()},
+          "></i>
+        </div>
+        <span class="caption" data-bind="html: caption()"></span><!-- Markdown interferes with header styling -->
+        <i class="fa fa-warning text-danger pull-right" data-bind="visible: hasError() && !showChildren()"></i>
         <button class="btn btn-xs btn-danger del pull-right" href="#" data-bind="
                     visible: isRepetition,
                     click: deleteRepeat
-                ">Delete repeat</button>
-      </legend>
+                ">{% trans "Delete repeat" %}</button>
+      </div>
       <span class="ix"></span>
     </fieldset>
-    <div class="children" data-bind="template: { name: childTemplate, foreach: $data.children }"/>
+    <div class="children" data-bind="slideVisible: showChildren(), template: { name: childTemplate, foreach: $data.children }, css: {'panel-body': collapsible}"/>
   </div>
 </script>
 
@@ -38,7 +58,7 @@
 
     <button type="button"
             class="btn btn-success btn-formnav-submit"
-            data-bind="visible: atLastIndex(), click: submitForm">Complete <i class="fa fa-chevron-right"></i></button>
+            data-bind="visible: atLastIndex(), click: submitForm">{% trans "Complete" %} <i class="fa fa-chevron-right"></i></button>
 
     <button type="button"
             disabled="disabled"
@@ -136,7 +156,7 @@
       <div class="loading">
         <i class="fa fa-check text-success" data-bind="visible: clean "></i>
         <i class="fa fa-spin fa-refresh" data-bind="visible: dirty"></i>
-        <i class="fa fa-remove text-danger clickable" data-bind="visible: hasError, click: triggerAnswer"></i>
+        <i class="fa fa-warning text-danger clickable" data-bind="visible: hasError, click: triggerAnswer"></i>
       </div>
       <div class="widget" data-bind="
                 template: { name: entryTemplate, data: entry, afterRender: afterRender },
