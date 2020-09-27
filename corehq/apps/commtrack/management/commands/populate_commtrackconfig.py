@@ -156,7 +156,6 @@ class Command(PopulateSQLCommand):
         for spec in self.one_to_one_submodels():
             submodel = getattr(model, spec['sql_class'].__name__.lower())
             submodel.commtrack_config = model
-            submodel.full_clean()
             submodel.save()
 
         sql_actions = []
