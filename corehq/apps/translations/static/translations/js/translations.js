@@ -1,4 +1,16 @@
-hqDefine("translations/js/translations", function () {
+hqDefine("translations/js/translations", [
+    'jquery',
+    'underscore',
+    'hqwebapp/js/main',
+    'hqwebapp/js/ui_elements/ui-element-input',
+    'hqwebapp/js/ui_elements/ui-element-select',
+], function (
+    $,
+    _,
+    hqMain,
+    UIInput,
+    UISelect
+) {
     var mk_translation_ui = function (spec) {
         "use strict";
         var translation_ui = {
@@ -16,9 +28,9 @@ hqDefine("translations/js/translations", function () {
             Translation = (function () {
                 var Translation = function (key, value) {
                     var self = this;
-                    self.key = hqImport('hqwebapp/js/ui-element').input().val(key).setEdit(false);
+                    self.key = UIInput.new().val(key).setEdit(false);
                     var options = value ? [{label: value, value: value}] : [];
-                    self.value = hqImport('hqwebapp/js/ui-element').select(options);
+                    self.value = UISelect.new(options);
                     if (value) {
                         self.value.val(value);
                     }
@@ -149,7 +161,7 @@ hqDefine("translations/js/translations", function () {
             }
         }
 
-        translation_ui.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
+        translation_ui.saveButton = hqMain.initSaveButton({
             unsavedMessage: gettext("You have unsaved user interface translations."),
             save: function () {
                 translation_ui.save();
@@ -189,7 +201,7 @@ hqDefine("translations/js/translations", function () {
                     },
                     context: this,
                     success: function (data) {
-                        hqImport("hqwebapp/js/main").updateDOM(data.update);
+                        hqMain.updateDOM(data.update);
                     },
                 });
             }
@@ -253,7 +265,7 @@ hqDefine("translations/js/translations", function () {
                 $('.auto-fill-help').attr('data-content', gettext("Autofill is not available in English (en). " +
                     "Please change your language using the dropdown in the top left."));
             }
-            hqImport("hqwebapp/js/main").transformHelpTemplate($('.auto-fill-help'), true);
+            hqMain.transformHelpTemplate($('.auto-fill-help'), true);
             translation_ui.appendAdder();
             $home.append($home);
         };
