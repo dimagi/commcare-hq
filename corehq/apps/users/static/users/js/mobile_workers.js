@@ -25,7 +25,6 @@ hqDefine("users/js/mobile_workers",[
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/assert_properties',
     'analytix/js/google',
-    'nic_compliance/js/encoder',
     'jquery.rmi/jquery.rmi',
     'zxcvbn/dist/zxcvbn',
     'locations/js/widgets',
