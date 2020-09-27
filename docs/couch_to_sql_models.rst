@@ -100,7 +100,10 @@ To test this step locally:
 
 - With master checked out, make sure you have at least one couch document that will get migrated.
 - Check out your branch and run the populate command. Verify it creates as many objects as expected.
-- Test editing the pre-existing object. In a shell, verify your changes appear in both couch and sql.  - Test creating a new object. In a shell, verify your changes appear in both couoch and sql.
+- Test editing the pre-existing object. In a shell, verify your changes appear in both couch and sql.
+- Test creating a new object. In a shell, verify your changes appear in both couoch and sql.
+
+Automated tests are also a good idea. `Example of tests for sync and migration code <https://github.com/dimagi/commcare-hq/pull/28042/files#diff-a1ef9cf2695fb1e0498e49c9f2643c3a>`_.
 
 Once this PR is deployed, run the migration command in any environments where it's likely to take more than a trivial amount of time.
 
