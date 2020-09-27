@@ -49,3 +49,31 @@ class TestCouchToSQLMobileAuth(TestCase):
             expires_diff,
             r"expires: couch value '\d{4}-..-.. ..:..:..\.\d+' != sql value '\d{4}-..-.. ..:..:..\.\d+'"
         )
+
+    def test_sync_to_couch(self):
+        valid = datetime.utcnow()
+        expires = valid + timedelta(days=30)
+        sql = SQLMobileAuthKeyRecord(domain='my-domain', user_id='123', valid=valid, expires=expires)
+        sql.save()
+
+        actual = self.db.get(sql.id)
+        self.assertEqual(actual['domain'], 'my-domain')
+        self.assertEqual(actual['user_id'], '123')
+        self.assertEqual(string_to_utc_datetime(actual['valid']), valid)
+        self.assertEqual(string_to_utc_datetime(actual['expires']), expires)
+        self.assertEqual(actual['type'], 'AES256')
+        self.assertEqual(actual['key'], sql.key)
+
+    def test_sync_to_sql(self):
+        valid = datetime.utcnow()
+        expires = valid + timedelta(days=30)
+        couch = MobileAuthKeyRecord(domain='my-domain', user_id='123', valid=valid, expires=expires)
+        couch.save()
+
+        actual = SQLMobileAuthKeyRecord.objects.get(id=couch._id)
+        self.assertEqual(actual.domain, 'my-domain')
+        self.assertEqual(actual.user_id, '123')
+        self.assertEqual(actual.valid, valid)
+        self.assertEqual(actual.expires, expires)
+        self.assertEqual(actual.type, 'AES256')
+        self.assertEqual(actual.key, couch.key)
