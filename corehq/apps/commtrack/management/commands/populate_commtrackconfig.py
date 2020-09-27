@@ -122,7 +122,9 @@ class Command(PopulateSQLCommand):
             model = self.sql_class()(couch_id=doc['_id'])
             created = True
         for attr in self.attrs_to_sync():
-            setattr(model, attr, doc.get(attr))
+            value = doc.get(attr)
+            if value is not None:
+                setattr(model, attr, value)
 
         for spec in self.one_to_one_submodels():
             couch_submodel = doc.get(spec['couch_attr'])
@@ -134,7 +136,9 @@ class Command(PopulateSQLCommand):
             except ObjectDoesNotExist:
                 sql_submodel = spec['sql_class']()
             for field in spec['fields']:
-                setattr(sql_submodel, field, couch_submodel.get(field))
+                value = couch_submodel.get(field)
+                if value is not None:
+                    setattr(sql_submodel, field, couch_submodel.get(field))
             setattr(model, sql_name, sql_submodel)
 
         # Make sure model has id so that submodels can be saved
