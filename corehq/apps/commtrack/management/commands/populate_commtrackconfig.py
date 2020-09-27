@@ -105,7 +105,7 @@ class Command(PopulateSQLCommand):
     def _wrap_stock_levels_config(cls, doc):
         for attr in ['emergency_level', 'understock_threshold', 'overstock_threshold']:
             if attr in doc:
-                doc[attr] = round(float(doc[attr]), 8)
+                doc[attr] = round(float(doc[attr]), 2)
         return doc
 
     @classmethod
@@ -156,6 +156,7 @@ class Command(PopulateSQLCommand):
         for spec in self.one_to_one_submodels():
             submodel = getattr(model, spec['sql_class'].__name__.lower())
             submodel.commtrack_config = model
+            submodel.full_clean()
             submodel.save()
 
         sql_actions = []
