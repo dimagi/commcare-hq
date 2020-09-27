@@ -131,7 +131,10 @@ class EmailContent(Content):
             logged_subevent.error(MessagingEvent.ERROR_NO_MESSAGE)
             return
 
-        email_address = recipient.get_email()
+        if isinstance(recipient, str):
+            email_address = recipient
+        else:
+            email_address = recipient.get_email()
         if not email_address:
             logged_subevent.error(MessagingEvent.ERROR_NO_EMAIL_ADDRESS)
             return
