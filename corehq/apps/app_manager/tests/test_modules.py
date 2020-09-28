@@ -185,9 +185,9 @@ class OverwriteModuleDetailTests(SimpleTestCase):
         dest_module = self.app.add_module(Module.new_module('Dest Module', lang='en'))
         dest_module_detail_type = getattr(dest_module.case_details, "short")
         dest_module_detail_type.overwrite_from_module_detail(self.src_module_detail_type, self.attrs_dict1)
-        self.assertEqual(self.src_module_detail_type._obj, dest_module_detail_type._obj)
+        self.assertEqual(self.src_module_detail_type.to_json(), dest_module_detail_type.to_json())
         setattr(self.src_module_detail_type, 'filter', 'c < b')
-        self.assertNotEqual(self.src_module_detail_type._obj, dest_module_detail_type._obj)
+        self.assertNotEqual(self.src_module_detail_type.to_json(), dest_module_detail_type.to_json())
 
     def test_overwrite_filter_column(self):
         dest_module = self.app.add_module(Module.new_module('Dest Module', lang='en'))
@@ -197,7 +197,7 @@ class OverwriteModuleDetailTests(SimpleTestCase):
         self.assertEqual(self.src_module_detail_type.columns, dest_module_detail_type.columns)
         self.assertEqual(self.src_module_detail_type.filter, dest_module_detail_type.filter)
         self.remove_attrs(dest_module_detail_type)
-        self.assertNotEqual(self.src_module_detail_type._obj, dest_module_detail_type._obj)
+        self.assertNotEqual(self.src_module_detail_type.to_json(), dest_module_detail_type.to_json())
 
     def test_overwrite_other_configs(self):
         dest_module = self.app.add_module(Module.new_module('Dest Module', lang='en'))
@@ -207,7 +207,7 @@ class OverwriteModuleDetailTests(SimpleTestCase):
         self.assertNotEqual(str(self.src_module_detail_type.columns), str(dest_module_detail_type.columns))
         self.assertNotEqual(self.src_module_detail_type.filter, dest_module_detail_type.filter)
         self.remove_attrs(dest_module_detail_type)
-        self.assertEqual(self.src_module_detail_type._obj, dest_module_detail_type._obj)
+        self.assertEqual(self.src_module_detail_type.to_json(), dest_module_detail_type.to_json())
 
     def remove_attrs(self, dest_module_detail_type):
         delattr(self.src_module_detail_type, 'filter')
