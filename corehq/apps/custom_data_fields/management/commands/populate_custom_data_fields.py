@@ -21,6 +21,13 @@ class Command(PopulateSQLCommand):
         return "bb82e5c3d2840d6e3e3a6f5ebf1a0c7e817f4613"
 
     @classmethod
+    def diff_attr(cls, name, doc, obj):
+        couch = doc.get(name, None)
+        sql = getattr(obj, name, None)
+        if couch != sql:
+            return f"{name}: couch value '{couch}' != sql value '{sql}'"
+
+    @classmethod
     def diff_couch_and_sql(cls, doc, obj):
         diffs = []
         for attr in ('field_type', 'domain'):
