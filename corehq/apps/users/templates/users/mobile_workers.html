@@ -6,7 +6,7 @@
 
 {% requirejs_main 'users/js/mobile_workers' %}
 
-{% block page_navigation %}
+{% block page_navigation %}{{ block.super }}
   {% if request|ui_notify_enabled:"APP_USER_PROFILES_UPDATE"  %}
     <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-purple helpbubble-no-arrow fade in"
          data-slug="{{ 'APP_USER_PROFILES_UPDATE'|ui_notify_slug }}"
