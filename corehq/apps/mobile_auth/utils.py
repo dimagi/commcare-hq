@@ -15,13 +15,13 @@ def generate_aes_key():
 
 def new_key_record(domain, user_id, now=None, valid=None):
     """
-    return initialized but unsaved MobileAuthKeyRecord
+    return initialized but unsaved SQLMobileAuthKeyRecord
 
     """
-    from corehq.apps.mobile_auth.models import MobileAuthKeyRecord
+    from corehq.apps.mobile_auth.models import SQLMobileAuthKeyRecord
     now = now or datetime.utcnow()
     valid = valid or now
-    record = MobileAuthKeyRecord(
+    record = SQLMobileAuthKeyRecord(
         domain=domain,
         user_id=user_id,
         valid=valid,
