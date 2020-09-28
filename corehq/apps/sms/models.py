@@ -2384,6 +2384,9 @@ class Keyword(UUIDGeneratorMixin, models.Model):
 
     last_modified = models.DateTimeField(auto_now=True)
 
+    # For use with linked domains - the upstream keyword
+    upstream_id = models.CharField(max_length=126, null=True)
+
     def is_structured_sms(self):
         return self.keywordaction_set.filter(action=KeywordAction.ACTION_STRUCTURED_SMS).count() > 0
 
