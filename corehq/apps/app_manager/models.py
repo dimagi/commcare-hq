@@ -2421,7 +2421,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
             )]
         )
         module = cls(
-            name={(lang or 'en'): name or _("Untitled Module")},
+            name={(lang or 'en'): name or _("Untitled Menu")},
             forms=[],
             case_type='',
             case_details=DetailPair(
@@ -2924,7 +2924,7 @@ class AdvancedModule(ModuleBase):
         )
 
         module = AdvancedModule(
-            name={(lang or 'en'): name or _("Untitled Module")},
+            name={(lang or 'en'): name or _("Untitled Menu")},
             forms=[],
             case_type='',
             case_details=DetailPair(
@@ -3716,7 +3716,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
             )]
         )
         module = ShadowModule(
-            name={(lang or 'en'): name or _("Untitled Module")},
+            name={(lang or 'en'): name or _("Untitled Menu")},
             case_details=DetailPair(
                 short=Detail(detail.to_json()),
                 long=Detail(detail.to_json()),
