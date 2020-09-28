@@ -105,7 +105,7 @@ def datadog_report_user_stats(metric_name, commcare_users_by_domain):
     commcare_users_by_domain = summarize_user_counts(commcare_users_by_domain, n=50)
     for domain, user_count in commcare_users_by_domain.items():
         metrics_gauge(metric_name, user_count, tags={
-            'domain': '_other' if domain is () else domain
+            'domain': '_other' if domain == () else domain
         }, multiprocess_mode='max')
 
 
