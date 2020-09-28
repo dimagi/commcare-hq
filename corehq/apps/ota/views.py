@@ -244,6 +244,10 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         and LooseVersion(openrosa_version) >= LooseVersion(OPENROSA_VERSION_MAP['ASYNC_RESTORE'])
     )
 
+    # Ensure fixtures are included if sync is full rather than incremental
+    if not since:
+        skip_fixtures = False
+
     app = get_app_cached(domain, app_id) if app_id else None
     if app:
         error_response = check_authorization(domain, couch_user, app.master_id)
