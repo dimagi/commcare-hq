@@ -62,6 +62,7 @@ LANGUAGES = (
     ('fra', 'French'),  # we need this alias
     ('hin', 'Hindi'),
     ('sw', 'Swahili'),
+    ('por', 'Portuguese'),
 )
 
 STATICI18N_FILENAME_FUNCTION = 'statici18n.utils.legacy_filename'

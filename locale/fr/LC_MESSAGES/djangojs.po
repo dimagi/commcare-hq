@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-08-26 21:03+0000\n"
+"POT-Creation-Date: 2020-09-23 20:25+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -49,7 +49,7 @@ msgid "I need additional/custom features"
 msgstr ""
 
 #: corehq/apps/accounting/static/accounting/js/confirm_plan.js:19
-#: corehq/apps/reports/static/reports/js/maps_utils.js:1090
+#: corehq/apps/reports/static/reports/js/maps_utils.js:1105
 msgid "Other"
 msgstr ""
 
@@ -1390,7 +1390,7 @@ msgid "Phone Number or Numeric ID"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:11
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:207
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:208
 #: submodules/formdesigner/_build/src/main-components.js:11
 #: submodules/formdesigner/src/mugs.js:1332
 msgid "Password"
@@ -1763,7 +1763,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:20
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:800
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:803
 #: corehq/apps/export/static/export/js/models.js:357
 #: corehq/apps/export/static/export/js/models.js:359
 #: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:281
@@ -1776,7 +1776,7 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:20
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/util.js:25
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/util.js:24
 #: submodules/formdesigner/_build/src/main-components.js:20
 #: submodules/formdesigner/_build/src/main-components.js:21
 #: submodules/formdesigner/_build/src/main-components.js:22
@@ -1917,6 +1917,7 @@ msgid "Form has validation errors."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:360
 #: submodules/formdesigner/_build/src/main-components.js:21
 #: submodules/formdesigner/src/core.js:337
 msgid "Number"
@@ -2097,7 +2098,7 @@ msgid "Parsing Error. Please check that your form is valid XML."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/util.js:24
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/util.js:23
 #: submodules/formdesigner/_build/src/main-components.js:21
 #: submodules/formdesigner/src/core.js:1297
 #: submodules/formdesigner/src/core.js:1848
@@ -3280,199 +3281,219 @@ msgstr ""
 msgid "Evaluate XPath"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:269
+#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:268
 msgid "Error evaluating expression."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:211
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:212
 msgid "Barcode"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:213
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:214
 msgid "Free response"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:349
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:351
 msgid "Not a valid whole number"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:351
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:411
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:354
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:415
 msgid "Number is too large"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:409
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:412
 msgid "Not a valid number"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:566
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:569
 msgid "Type to filter answers"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:579
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:693
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:582
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:696
 msgid "Not a valid choice"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:888
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:891
 msgid "Map layer not configured."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:895
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:898
 msgid "Could not load map. Please try again later."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:274
-msgid "Submitting..."
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js:3
+msgid ""
+"Something unexpected went wrong on that request. If you have problems "
+"filling in the rest of your form please submit an issue. Technical Details: "
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:276
-msgid "Submit"
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js:6
+msgid ""
+"CommCareHQ has detected a possible network connectivity problem. Please make "
+"sure you are connected to the Internet in order to submit your form."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:637
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js:9
 msgid ""
 "Another process prevented us from servicing your request. Please try again "
 "later."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:639
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js:11
 msgid ""
 "We have detected an issue with your network. Please check your Internet "
 "connection and retry when connectivity improves."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:652
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:271
+msgid "Submitting..."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:273
+msgid "Submit"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:334
+msgid "An answer is required"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:336
+msgid "This answer is outside the allowed range."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/utils.js:16
 msgid ""
 "Looks like you got logged out because of inactivity, but your work is safe. "
 "<a href='<%= url %>' target='_blank'>Click here to log back in.</a>"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:656
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/utils.js:20
 msgid "You have been logged out because of inactivity."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:380
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/webformsession.js:316
 msgid "We were unable to save this answer. Please try again later."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer-inline.js:35
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer-inline.js:34
 msgid "Form successfully submitted!"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer-inline.js:40
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer-inline.js:39
 msgid "An unexpected error occurred!"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:202
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:206
 msgid "Form successfully saved!"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:325
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:329
 msgid ""
 "You are now offline. Web Apps is not optimized for offline use. Please "
 "reconnect to the Internet before continuing."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:334
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:338
 msgid "You are are back online."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:459
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:42
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:463
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:40
 msgid "Waiting for server progress"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:487
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:491
 msgid "Please wait..."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:639
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:643
 msgid "Web Apps - CommCare HQ"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/constants.js:10
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/constants.js:9
 msgid ""
 "Formplayer encountered an error. Please report an issue if you continue to "
 "see this message."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/layout/views/progress_bar.js:25
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/layout/views/progress_bar.js:24
 msgid "Completed: "
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/main.js:29
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/main.js:28
 msgid "Show Full Menu"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/main.js:36
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/main.js:35
 msgid "Hide Full Menu"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:29
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:27
 msgid "Permission Denied"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:84
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:82
 msgid ""
 "Unable to connect to form playing service. Please report an issue if you "
 "continue to see this message."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:30
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:32
 msgid "Delete incomplete form?"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:31
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:33
 msgid "Are you sure you want to delete '"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:32
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:34
 msgid "Yes"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:33
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js:35
 msgid "No"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:44
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:47
 msgid "Log in as "
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:48
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:51
 msgid "Yes, log in as this user"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/util.js:22
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/util.js:21
 msgid "Confirm?"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:34
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:52
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:40
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:58
 msgid "Sorry, an error occurred while processing that request."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:116
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:122
 msgid "Error saving!"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:124
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:130
 msgid "Could not sync user data. Please report an issue if this persists."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:128
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:134
 msgid "User Data successfully synced."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:136
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:142
 msgid "Could not clear user data. Please report an issue if this persists."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:140
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:146
 msgid "User data successfully cleared."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js:148
+#: corehq/apps/cloudcare/static/cloudcare/js/util.js:154
 msgid "Error breaking locks. Please report an issue if this persists."
 msgstr ""
 
@@ -3573,7 +3594,7 @@ msgstr ""
 msgid "Buy Credits"
 msgstr ""
 
-#: corehq/apps/domain/static/domain/js/info_basic.js:12
+#: corehq/apps/domain/static/domain/js/info_basic.js:14
 msgid "Select a Timezone..."
 msgstr ""
 
@@ -3730,23 +3751,23 @@ msgstr ""
 msgid "None"
 msgstr ""
 
-#: corehq/apps/groups/static/groups/js/group_members.js:17
+#: corehq/apps/groups/static/groups/js/group_members.js:18
 msgid "Group Information"
 msgstr ""
 
-#: corehq/apps/groups/static/groups/js/group_members.js:50
+#: corehq/apps/groups/static/groups/js/group_members.js:51
 msgid "The following changes will not be saved: "
 msgstr ""
 
-#: corehq/apps/groups/static/groups/js/group_members.js:71
+#: corehq/apps/groups/static/groups/js/group_members.js:72
 msgid "Successfully saved "
 msgstr ""
 
-#: corehq/apps/groups/static/groups/js/group_members.js:75
+#: corehq/apps/groups/static/groups/js/group_members.js:76
 msgid "Failed to save "
 msgstr ""
 
-#: corehq/apps/groups/static/groups/js/group_members.js:144
+#: corehq/apps/groups/static/groups/js/group_members.js:145
 msgid "Please wait and do not navigate away..."
 msgstr ""
 
@@ -4132,7 +4153,7 @@ msgid ""
 "your account settings."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/maps_utils.js:1091
+#: corehq/apps/reports/static/reports/js/maps_utils.js:1106
 msgid "No Data"
 msgstr ""
 
