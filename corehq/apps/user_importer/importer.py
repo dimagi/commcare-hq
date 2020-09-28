@@ -369,7 +369,7 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
             name = row.get('name')
             password = row.get('password')
             phone_number = row.get('phone-number')
-            uncategorized_data = row.get('uncategorized_data')
+            uncategorized_data = row.get('uncategorized_data', {})
             user_id = row.get('user_id')
             location_codes = row.get('location_code') or []
             if location_codes and not isinstance(location_codes, list):
@@ -440,6 +440,12 @@ def create_or_update_users_and_groups(upload_domain, user_specs, upload_user, gr
                     raise UserUploadError(str(e))
                 if uncategorized_data:
                     user.update_metadata(uncategorized_data)
+
+                # Clear blank user data so that it can be purged by remove_unused_custom_fields_from_users_task
+                for key in dict(data, **uncategorized_data):
+                    value = user.metadata[key]
+                    if value is None or value == '':
+                        user.pop_metadata(key)
 
                 if language:
                     user.language = language
