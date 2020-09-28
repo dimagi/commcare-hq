@@ -57,7 +57,7 @@ def update_keyword(domain_link, linked_keyword_id):
             _("Upstream keyword could not be found. Maybe it has been deleted?")
         )
 
-    for prop in ['keyword', 'description', 'delimiter', 'override_open_sessions']:
+    for prop in ['keyword', 'description', 'delimiter', 'override_open_sessions', 'initiator_doc_type_filter']:
         setattr(linked_keyword, prop, getattr(master_keyword, prop))
 
     linked_keyword.save()
