@@ -1,6 +1,6 @@
 import os
 
-from django.http import HttpResponseBadRequest, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
@@ -92,7 +92,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             domain, app_id, user_id, authenticated, meta,
         )
     except BadSubmissionRequest as e:
-        response = HttpResponseBadRequest(e.message)
+        response = HttpResponse(e.message, status=e.status_code)
         _record_metrics(metric_tags, 'known_failures', response)
         return response
 
