@@ -38,7 +38,6 @@ hqDefine("users/js/mobile_workers",[
     initialPageData,
     assertProperties,
     googleAnalytics,
-    nicEncoder,
     RMI,
     zxcvbn,
     locationsWidgets,
