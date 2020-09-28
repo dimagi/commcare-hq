@@ -880,6 +880,8 @@ hqDefine("cloudcare/js/form_entry/entrycontrols_full", function () {
                     id: 'mapbox/streets-v11',
                     attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> ©' +
                                  ' <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                    tileSize: 512,
+                    zoomOffset: -1,
                 }).addTo(self.map);
                 self.map.on('move', self.updateCenter);
 

@@ -673,7 +673,7 @@ def new_app(request, domain):
     form_args = []
     if cls == Application:
         app = cls.new_app(domain, "Untitled Application", lang=lang)
-        module = Module.new_module("Untitled Module", lang)
+        module = Module.new_module("Untitled Menu", lang)
         app.add_module(module)
         form = app.new_form(0, "Untitled Form", lang)
         form_args = [module.id, form.id]
