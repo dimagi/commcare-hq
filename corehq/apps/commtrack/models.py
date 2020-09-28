@@ -270,9 +270,9 @@ class ConsumptionConfig(DocumentSchema):
 
 class SQLStockLevelsConfig(models.Model):
     # All of these are in months
-    emergency_level = models.DecimalField(default=0.5, max_digits=3, decimal_places=2)
-    understock_threshold = models.DecimalField(default=1.5, max_digits=3, decimal_places=2)
-    overstock_threshold = models.DecimalField(default=3, max_digits=3, decimal_places=2)
+    emergency_level = models.DecimalField(default=0.5, max_digits=4, decimal_places=2)
+    understock_threshold = models.DecimalField(default=1.5, max_digits=4, decimal_places=2)
+    overstock_threshold = models.DecimalField(default=3, max_digits=4, decimal_places=2)
 
     commtrack_config = models.OneToOneField(
         SQLCommtrackConfig,

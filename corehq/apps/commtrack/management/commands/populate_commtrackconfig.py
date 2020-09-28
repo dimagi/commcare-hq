@@ -78,6 +78,7 @@ class Command(PopulateSQLCommand):
                 "couch_class": StockLevelsConfig,
                 "couch_attr": "stock_levels_config",
                 "fields": ['emergency_level', 'understock_threshold', 'overstock_threshold'],
+                "wrap": cls._wrap_stock_levels_config,
             },
             {
                 "sql_class": SQLStockRestoreConfig,
@@ -98,6 +99,13 @@ class Command(PopulateSQLCommand):
             if realval and not oldval:
                 doc['force_consumption_case_types'] = realval
                 del doc['force_to_consumption_case_types']
+        return doc
+
+    @classmethod
+    def _wrap_stock_levels_config(cls, doc):
+        for attr in ['emergency_level', 'understock_threshold', 'overstock_threshold']:
+            if attr in doc:
+                doc[attr] = round(float(doc[attr]), 2)
         return doc
 
     @classmethod
@@ -122,10 +130,12 @@ class Command(PopulateSQLCommand):
             model = self.sql_class()(couch_id=doc['_id'])
             created = True
         for attr in self.attrs_to_sync():
-            setattr(model, attr, doc.get(attr))
+            value = doc.get(attr)
+            if value is not None:
+                setattr(model, attr, value)
 
         for spec in self.one_to_one_submodels():
-            couch_submodel = doc.get(spec['couch_attr'])
+            couch_submodel = doc.get(spec['couch_attr'], {})
             sql_name = spec['sql_class'].__name__.lower()
             if 'wrap' in spec:
                 couch_submodel = spec['wrap'](couch_submodel)
@@ -134,7 +144,9 @@ class Command(PopulateSQLCommand):
             except ObjectDoesNotExist:
                 sql_submodel = spec['sql_class']()
             for field in spec['fields']:
-                setattr(sql_submodel, field, couch_submodel.get(field))
+                value = couch_submodel.get(field)
+                if value is not None:
+                    setattr(sql_submodel, field, couch_submodel.get(field))
             setattr(model, sql_name, sql_submodel)
 
         # Make sure model has id so that submodels can be saved
