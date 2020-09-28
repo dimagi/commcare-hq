@@ -235,7 +235,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
                 'formplayer.' + Const.PREV_QUESTION,
                 'formplayer.' + Const.QUESTIONS_FOR_INDEX,
                 'formplayer.' + Const.FORMATTED_QUESTIONS,
-                'formplayer.' + Const.CHANGE_LOCALE,
+                'formplayer.' + Const.CHANGE_LANG,
             ].join(' '));
             $.subscribe('formplayer.' + Const.SUBMIT, function (e, form) {
                 self.submitForm(form);
@@ -264,8 +264,8 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
             $.subscribe('formplayer.' + Const.FORMATTED_QUESTIONS, function (e, callback) {
                 self.getFormattedQuestions(callback);
             });
-            $.subscribe('formplayer.' + Const.CHANGE_LOCALE, function (e, lang) {
-                self.changeLocale(lang);
+            $.subscribe('formplayer.' + Const.CHANGE_LANG, function (e, lang) {
+                self.changeLang(lang);
             });
         };
 
@@ -405,10 +405,10 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
                 Const.BLOCK_ALL);
         };
 
-        self.changeLocale = function (lang) {
+        self.changeLang = function (lang) {
             this.serverRequest(
                 {
-                    'action': Const.CHANGE_LOCALE,
+                    'action': Const.CHANGE_LANG,
                     'locale': lang,
                 },
                 function (resp) {

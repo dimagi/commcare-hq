@@ -451,11 +451,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         tagName: "li",
         template: _.template($("#language-option-template").html() || ""),
         events: {
-            'click': 'onChangeLocale',
+            'click': 'onChangeLang',
         },
-        onChangeLocale: function (e) {
-            var locale = e.target.id;
-            $.publish('formplayer.change_locale', locale);
+        onChangeLang: function (e) {
+            var lang = e.target.id;
+            $.publish('formplayer.change_lang', lang);
         },
     });
 

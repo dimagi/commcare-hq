@@ -76,21 +76,21 @@ hqDefine("cloudcare/js/formplayer/menus/util", function () {
     };
 
     var showLanguageMenu = function (langs) {
-        var localeModels,
-            localeCollection;
+        var langModels,
+            langCollection;
 
         FormplayerFrontend.regions.addRegions({
             formMenu: "#form-menu",
         });
-        localeModels = _.map(langs, function (lang) {
+        langModels = _.map(langs, function (lang) {
             return {
                 lang: lang,
             };
         });
 
-        localeCollection = new Backbone.Collection(localeModels);
+        langCollection = new Backbone.Collection(langModels);
         var formMenuView = hqImport("cloudcare/js/formplayer/menus/views").FormMenuView({
-            collection: localeCollection,
+            collection: langCollection,
         });
         FormplayerFrontend.regions.getRegion('formMenu').show(formMenuView);
     };
