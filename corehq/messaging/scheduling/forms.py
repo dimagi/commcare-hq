@@ -2998,8 +2998,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             result['capture_custom_metadata_item'] = self.YES
             custom_metadata = self.initial_schedule.custom_metadata
 
-            sms_stale_after = custom_metadata.pop('sms_stale_after', '')
-            result['sms_stale_after'] = sms_stale_after
+            result['sms_stale_after'] = custom_metadata.pop('sms_stale_after', '')
 
             for name, value in custom_metadata.items():
                 result['custom_metadata_item_name'] = name
