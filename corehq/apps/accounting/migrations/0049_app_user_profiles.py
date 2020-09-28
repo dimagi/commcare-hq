@@ -11,7 +11,7 @@ def _grandfather_basic_privs(apps, schema_editor):
     call_command(
         'cchq_prbac_grandfather_privs',
         APP_USER_PROFILES,
-        skip_edition='Paused,Community,Standard,Pro',
+        skip_edition='Paused,Community,Standard,Pro,Advanced',
         noinput=True,
     )
 

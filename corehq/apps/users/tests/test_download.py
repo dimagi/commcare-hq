@@ -15,20 +15,16 @@ from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.bulk_download import parse_users
 from corehq.apps.user_importer.importer import GroupMemoizer
-from corehq.apps.accounting.models import SoftwarePlanEdition
-from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 
 
-class TestDownloadMobileWorkers(TestCase, DomainSubscriptionMixin):
-    domain = 'bookshelf'
+class TestDownloadMobileWorkers(TestCase):
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.domain_obj = create_domain(cls.domain)
 
-        # APP_USER_PROFILES is on ENTERPRISE and above
-        cls.setup_subscription(cls.domain, SoftwarePlanEdition.ADVANCED)
+        cls.domain = 'bookshelf'
+        cls.domain_obj = create_domain(cls.domain)
 
         cls.group_memoizer = GroupMemoizer(domain=cls.domain_obj.name)
         cls.group_memoizer.load_all()
@@ -83,7 +79,6 @@ class TestDownloadMobileWorkers(TestCase, DomainSubscriptionMixin):
         cls.user2.delete(deleted_by=None)
         cls.domain_obj.delete()
         cls.definition.delete()
-        cls.teardown_subscriptions()
         super().tearDownClass()
 
     def test_download(self):
