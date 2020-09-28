@@ -173,6 +173,7 @@ def get_restore_params(request):
         'device_id': request.GET.get('device_id'),
         'user_id': request.GET.get('user_id'),
         'case_sync': request.GET.get('case_sync'),
+        'skip_fixtures': request.GET.get('skip_fixtures') == 'true',
     }
 
 
@@ -181,8 +182,8 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
                          state=None, items=False, force_cache=False,
                          cache_timeout=None, overwrite_cache=False,
                          as_user=None, device_id=None, user_id=None,
-                         openrosa_version=None,
-                         case_sync=None):
+                         openrosa_version=None, case_sync=None,
+                         skip_fixtures=False):
     """
     :param domain: Domain being restored from
     :param couch_user: User performing restore
@@ -199,6 +200,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     :param user_id: ID of user performing restore (used in case of deleted user with same username)
     :param openrosa_version:
     :param case_sync: Override default case sync algorithm
+    :param skip_fixtures: Do not include fixtures in sync payload
     :return: Tuple of (http response, timing context or None)
     """
 
@@ -266,6 +268,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         ),
         is_async=async_restore_enabled,
         case_sync=case_sync,
+        skip_fixtures=skip_fixtures
     )
     return restore_config.get_response(), restore_config.timing_context
 

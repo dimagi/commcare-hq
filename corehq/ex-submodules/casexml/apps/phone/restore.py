@@ -498,10 +498,12 @@ class RestoreConfig(object):
     :param cache_settings:  The RestoreCacheSettings associated with this (see above).
     :param is_async:           Whether to get the restore response using a celery task
     :param case_sync:       Case sync algorithm (None -> default).
+    :param skip_fixtures:   Whether to include fixtures in the restore payload
     """
 
     def __init__(self, project=None, restore_user=None, params=None,
-                 cache_settings=None, is_async=False, case_sync=None):
+                 cache_settings=None, is_async=False, case_sync=None,
+                 skip_fixtures=False):
         assert isinstance(restore_user, OTARestoreUser)
         self.project = project
         self.domain = project.name if project else ''
@@ -509,6 +511,7 @@ class RestoreConfig(object):
         self.params = params or RestoreParams()
         self.cache_settings = cache_settings or RestoreCacheSettings()
         self.is_async = is_async
+        self.skip_fixtures = skip_fixtures
 
         self.restore_state = RestoreState(
             self.project,
@@ -691,7 +694,7 @@ class RestoreConfig(object):
         username = self.restore_user.username
         count_items = self.params.include_item_count
         with RestoreContent(username, count_items) as content:
-            for provider in get_element_providers(self.timing_context):
+            for provider in get_element_providers(self.timing_context, skip_fixtures=self.skip_fixtures):
                 with self.timing_context(provider.__class__.__name__):
                     content.extend(provider.get_elements(self.restore_state))
 
