@@ -58,7 +58,7 @@ class PopulateSQLCommand(BaseCommand):
         if wrap:
             couch = wrap(couch)
         if couch != sql:
-            return f"{name}: couch value '{couch}' != sql value '{sql}'"
+            return f"{name}: couch value {couch!r} != sql value {sql!r}"
 
     @classmethod
     def count_items_to_be_migrated(cls):
