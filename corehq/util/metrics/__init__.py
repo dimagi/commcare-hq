@@ -145,6 +145,7 @@ _metrics = []
 
 def _get_metrics_provider():
     if not _metrics:
+        _global_setup()
         providers = []
         for provider_path in settings.METRICS_PROVIDERS:
             provider = to_function(provider_path)()
@@ -158,6 +159,15 @@ def _get_metrics_provider():
             metrics = providers[0]
         _metrics.append(metrics)
     return _metrics[-1]
+
+
+def _global_setup():
+    if settings.UNIT_TESTING or settings.DEBUG or 'ddtrace.contrib.django' not in settings.INSTALLED_APPS:
+        try:
+            from ddtrace import tracer
+            tracer.enabled = False
+        except ImportError:
+            pass
 
 
 def metrics_counter(name: str, value: float = 1, tags: Dict[str, str] = None, documentation: str = ''):
