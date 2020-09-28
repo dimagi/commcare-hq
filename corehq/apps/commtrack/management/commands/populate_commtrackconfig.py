@@ -135,7 +135,7 @@ class Command(PopulateSQLCommand):
                 setattr(model, attr, value)
 
         for spec in self.one_to_one_submodels():
-            couch_submodel = doc.get(spec['couch_attr'])
+            couch_submodel = doc.get(spec['couch_attr'], {})
             sql_name = spec['sql_class'].__name__.lower()
             if 'wrap' in spec:
                 couch_submodel = spec['wrap'](couch_submodel)
