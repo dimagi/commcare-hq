@@ -56,7 +56,6 @@ branches:
   - jls/migrateCommtrackConfig-2 # Jenny Sept 27
   - jls/turn-off-analytics-logging # Jenny June 19
 #  - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
-  - fr/linked-domain-keywords   # Farid August 26
   - sr/es7-reindex # Sravn Sept 2
   - fr/user-data-jit            # Farid September 2
   - jls/collapsible-groups+jls/hqdefine-fullform-ui
@@ -72,6 +71,6 @@ branches:
   - bmb/requirements-redis-3.3.0      # Biyeun Sept 25 (includes dm/requirements)
   - jls/require-js-confirm_billing_info # Jenny Set 26
   - ce/skip-fixtures
-  - smh/add_integration_models_to_linked_spaces # Steph Sept 28
+#  - smh/add_integration_models_to_linked_spaces # Steph Sept 28
 
 submodules: {}
