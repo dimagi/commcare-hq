@@ -186,7 +186,6 @@ class EditCommCareUserView(BaseEditUserView):
             'custom_fields_profile_slug': PROFILE_SLUG,
             'edit_user_form_title': self.edit_user_form_title,
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
-            'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
             'has_any_sync_logs': self.has_any_sync_logs,
             'token': self.backup_token,
         })
@@ -685,7 +684,6 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 'hq.pagination.limit.mobile_workers_list.%s' % self.domain),
             'can_edit_billing_info': self.request.couch_user.is_domain_admin(self.domain),
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
-            'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
             'bulk_download_url': bulk_download_url,
         }
 
