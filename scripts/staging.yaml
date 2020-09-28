@@ -71,5 +71,6 @@ branches:
   - cz/role-ui  # Norman 9/25
   - bmb/requirements-redis-3.3.0      # Biyeun Sept 25 (includes dm/requirements)
   - jls/require-js-confirm_billing_info # Jenny Set 26
+  - ce/skip-fixtures
 
 submodules: {}
