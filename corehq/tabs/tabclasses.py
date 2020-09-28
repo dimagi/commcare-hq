@@ -1106,13 +1106,6 @@ class MessagingTab(UITab):
     def contacts_urls(self):
         contacts_urls = []
 
-        if toggles.MOBILE_WORKER_SELF_REGISTRATION.enabled(self.domain):
-            from corehq.apps.sms.views import ManageRegistrationInvitationsView
-            contacts_urls.append(
-                {'title': _("Mobile Worker Registration"),
-                 'url': reverse(ManageRegistrationInvitationsView.urlname, args=[self.domain])}
-            )
-
         if self.couch_user.can_edit_data():
             contacts_urls.append(
                 {'title': _('Chat'),

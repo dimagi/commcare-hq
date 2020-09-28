@@ -393,7 +393,7 @@ class ImporterTest(TestCase):
 
         res = self.import_mock_file([
             ['case_id', 'name', 'owner_id', 'owner_name'],
-            ['', 'location-owner-id', location.group_id, ''],
+            ['', 'location-owner-id', location.location_id, ''],
             ['', 'location-owner-code', '', location.site_code],
             ['', 'location-owner-name', '', location.name],
             ['', 'duplicate-location-name', '', duplicate_loc.name],
@@ -402,9 +402,9 @@ class ImporterTest(TestCase):
         case_ids = self.accessor.get_case_ids_in_domain()
         cases = {c.name: c for c in list(self.accessor.get_cases(case_ids))}
 
-        self.assertEqual(cases['location-owner-id'].owner_id, location.group_id)
-        self.assertEqual(cases['location-owner-code'].owner_id, location.group_id)
-        self.assertEqual(cases['location-owner-name'].owner_id, location.group_id)
+        self.assertEqual(cases['location-owner-id'].owner_id, location.location_id)
+        self.assertEqual(cases['location-owner-code'].owner_id, location.location_id)
+        self.assertEqual(cases['location-owner-name'].owner_id, location.location_id)
 
         error_message = exceptions.DuplicateLocationName.title
         error_column_name = None
@@ -449,14 +449,14 @@ class ImporterTest(TestCase):
                 restrict_user_to_location(self, dsa):
             res = self.import_mock_file([
                 ['case_id', 'name', 'owner_id'],
-                ['', 'Leonard Nimoy', inc.group_id],
-                ['', 'Kapil Dev', dsi.group_id],
-                ['', 'Quinton Fortune', dsa.group_id],
+                ['', 'Leonard Nimoy', inc.location_id],
+                ['', 'Kapil Dev', dsi.location_id],
+                ['', 'Quinton Fortune', dsa.location_id],
             ])
 
         case_ids = self.accessor.get_case_ids_in_domain()
         cases = {c.name: c for c in list(self.accessor.get_cases(case_ids))}
-        self.assertEqual(cases['Quinton Fortune'].owner_id, dsa.group_id)
+        self.assertEqual(cases['Quinton Fortune'].owner_id, dsa.location_id)
         self.assertTrue(res['errors'])
         error_message = exceptions.InvalidLocation.title
         error_col = 'owner_id'

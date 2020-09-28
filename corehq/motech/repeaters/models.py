@@ -380,10 +380,6 @@ class Repeater(QuickCachedDocumentMixin, Document):
     def verify(self):
         return not self.skip_cert_verify
 
-    @property
-    def notify_addresses(self):
-        return [addr for addr in re.split('[, ]+', self.notify_addresses_str) if addr]
-
     def send_request(self, repeat_record, payload):
         url = self.get_url(repeat_record)
         return simple_post(
@@ -391,7 +387,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
             headers=self.get_headers(repeat_record),
             auth_manager=self.connection_settings.get_auth_manager(),
             verify=self.verify,
-            notify_addresses=self.notify_addresses,
+            notify_addresses=self.connection_settings.notify_addresses,
             payload_id=repeat_record.payload_id,
         )
 

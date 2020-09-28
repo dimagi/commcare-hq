@@ -90,7 +90,6 @@ from corehq.apps.sms.models import (
     MobileBackendInvitation,
     PhoneNumber,
     QueuedSMS,
-    SelfRegistrationInvitation,
     SQLLastReadMessage,
     SQLMobileBackend,
     SQLMobileBackendMapping,
@@ -166,13 +165,6 @@ class TestDeleteDomain(TestCase):
             content_type=MessagingEvent.CONTENT_SMS,
             status=MessagingEvent.STATUS_COMPLETED
         )
-        SelfRegistrationInvitation.objects.create(
-            domain=domain_name,
-            phone_number='999123',
-            token=uuid.uuid4().hex,
-            expiration_date=datetime.utcnow().date(),
-            created_date=datetime.utcnow()
-        )
         backend = SQLMobileBackend.objects.create(domain=domain_name, is_global=False)
         SQLMobileBackendMapping.objects.create(
             domain=domain_name,
@@ -230,7 +222,6 @@ class TestDeleteDomain(TestCase):
         self.assertEqual(PhoneNumber.objects.filter(domain=domain).count(), number)
         self.assertEqual(MessagingEvent.objects.filter(domain=domain).count(), number)
         self.assertEqual(MessagingSubEvent.objects.filter(parent__domain=domain).count(), number)
-        self.assertEqual(SelfRegistrationInvitation.objects.filter(domain=domain).count(), number)
         self.assertEqual(SQLMobileBackend.objects.filter(domain=domain).count(), number)
         self.assertEqual(SQLMobileBackendMapping.objects.filter(domain=domain).count(), number)
         self.assertEqual(MobileBackendInvitation.objects.filter(domain=domain).count(), number)

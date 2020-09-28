@@ -1,8 +1,10 @@
 /* eslint-env mocha */
-/* globals Question, DropdownEntry, ComboboxEntry, Formplayer */
+/* globals Question */
 
 describe('Entries', function () {
-    var questionJSON,
+    var Const = hqImport("cloudcare/js/form_entry/const"),
+        Controls = hqImport("cloudcare/js/form_entry/entrycontrols_full"),
+        questionJSON,
         spy;
 
 
@@ -25,7 +27,7 @@ describe('Entries', function () {
             "caption_video": null,
         };
         spy = sinon.spy();
-        $.subscribe('formplayer.' + Formplayer.Const.ANSWER, spy);
+        $.subscribe('formplayer.' + Const.ANSWER, spy);
         this.clock = sinon.useFakeTimers();
     });
 
@@ -35,30 +37,27 @@ describe('Entries', function () {
     });
 
     it('Should return the IntEntry', function () {
-        entry = (new Question(questionJSON)).entry;
-        assert.isTrue(entry instanceof IntEntry);
+        var entry = (new Question(questionJSON)).entry;
+        assert.isTrue(entry instanceof Controls.IntEntry);
         assert.equal(entry.templateType, 'str');
 
         entry.rawAnswer('1234');
-        valid = entry.isValid('1234');
-        assert.isTrue(valid);
+        assert.isTrue(entry.isValid('1234'));
         this.clock.tick(1000);
         assert.isTrue(spy.calledOnce);
         assert.equal(entry.answer(), 1234);
-
-        valid = entry.isValid('abc');
-        assert.isFalse(valid);
+        assert.isFalse(entry.isValid('abc'));
     });
 
     it('Should return DropdownEntry', function () {
         var entry;
 
-        questionJSON.datatype = Formplayer.Const.SELECT;
-        questionJSON.style = { raw: Formplayer.Const.MINIMAL };
+        questionJSON.datatype = Const.SELECT;
+        questionJSON.style = { raw: Const.MINIMAL };
         questionJSON.choices = ['a', 'b'];
 
         entry = (new Question(questionJSON)).entry;
-        assert.isTrue(entry instanceof DropdownEntry);
+        assert.isTrue(entry instanceof Controls.DropdownEntry);
         assert.equal(entry.templateType, 'dropdown');
         assert.deepEqual(entry.options(), [{
             text: 'a',
@@ -79,14 +78,13 @@ describe('Entries', function () {
     });
 
     it('Should return FloatEntry', function () {
-        questionJSON.datatype = Formplayer.Const.FLOAT;
-        entry = (new Question(questionJSON)).entry;
-        assert.isTrue(entry instanceof FloatEntry);
+        questionJSON.datatype = Const.FLOAT;
+        var entry = (new Question(questionJSON)).entry;
+        assert.isTrue(entry instanceof Controls.FloatEntry);
         assert.equal(entry.templateType, 'str');
 
         entry.rawAnswer('2.3');
-        valid = entry.isValid('2.3');
-        assert.isTrue(valid);
+        assert.isTrue(entry.isValid('2.3'));
         this.clock.tick(1000);
         assert.isTrue(spy.calledOnce);
         assert.equal(entry.answer(), 2.3);
@@ -94,42 +92,40 @@ describe('Entries', function () {
         entry.rawAnswer('2.4');
         this.clock.tick(1000);
         assert.isTrue(spy.calledTwice);
-
-        valid = entry.isValid('mouse');
-        assert.isFalse(valid);
+        assert.isFalse(entry.isValid('mouse'));
     });
 
     it('Should return ComboboxEntry', function () {
         var entry;
-        questionJSON.datatype = Formplayer.Const.SELECT;
-        questionJSON.style = { raw: Formplayer.Const.COMBOBOX };
+        questionJSON.datatype = Const.SELECT;
+        questionJSON.style = { raw: Const.COMBOBOX };
         questionJSON.choices = ['a', 'b'];
         questionJSON.answer = 2;
 
         entry = (new Question(questionJSON)).entry;
-        assert.isTrue(entry instanceof ComboboxEntry);
+        assert.isTrue(entry instanceof Controls.ComboboxEntry);
         assert.equal(entry.rawAnswer(), 'b');
 
         entry.rawAnswer('a');
         assert.equal(entry.answer(), 1);
 
         entry.rawAnswer('');
-        assert.equal(entry.answer(), Formplayer.Const.NO_ANSWER);
+        assert.equal(entry.answer(), Const.NO_ANSWER);
 
         entry.rawAnswer('abc');
-        assert.equal(entry.answer(), Formplayer.Const.NO_ANSWER);
+        assert.equal(entry.answer(), Const.NO_ANSWER);
     });
 
     it('Should validate Combobox properly', function () {
         var entry,
             question;
-        questionJSON.datatype = Formplayer.Const.SELECT;
-        questionJSON.style = { raw: Formplayer.Const.COMBOBOX };
+        questionJSON.datatype = Const.SELECT;
+        questionJSON.style = { raw: Const.COMBOBOX };
         questionJSON.choices = ['a', 'b'];
         question = new Question(questionJSON);
 
         entry = question.entry;
-        assert.isTrue(entry instanceof ComboboxEntry);
+        assert.isTrue(entry instanceof Controls.ComboboxEntry);
 
         entry.rawAnswer('a');
         assert.equal(entry.answer(), 1);
@@ -141,39 +137,39 @@ describe('Entries', function () {
 
     it('Should properly filter combobox', function () {
         // Standard filter
-        assert.isTrue(ComboboxEntry.filter('o', { name: 'one two', id: 1 }, null));
-        assert.isFalse(ComboboxEntry.filter('t', { name: 'one two', id: 1 }, null));
+        assert.isTrue(Controls.ComboboxEntry.filter('o', { name: 'one two', id: 1 }, null));
+        assert.isFalse(Controls.ComboboxEntry.filter('t', { name: 'one two', id: 1 }, null));
 
         // Multiword filter
         assert.isTrue(
-            ComboboxEntry.filter('one three', { name: 'one two three', id: 1 }, Formplayer.Const.COMBOBOX_MULTIWORD)
+            Controls.ComboboxEntry.filter('one three', { name: 'one two three', id: 1 }, Const.COMBOBOX_MULTIWORD)
         );
         assert.isFalse(
-            ComboboxEntry.filter('two three', { name: 'one two', id: 1 }, Formplayer.Const.COMBOBOX_MULTIWORD)
+            Controls.ComboboxEntry.filter('two three', { name: 'one two', id: 1 }, Const.COMBOBOX_MULTIWORD)
         );
 
         // Fuzzy filter
         assert.isTrue(
-            ComboboxEntry.filter('onet', { name: 'onetwo', id: 1 }, Formplayer.Const.COMBOBOX_FUZZY)
+            Controls.ComboboxEntry.filter('onet', { name: 'onetwo', id: 1 }, Const.COMBOBOX_FUZZY)
         );
         assert.isTrue(
-            ComboboxEntry.filter('OneT', { name: 'onetwo', id: 1 }, Formplayer.Const.COMBOBOX_FUZZY)
+            Controls.ComboboxEntry.filter('OneT', { name: 'onetwo', id: 1 }, Const.COMBOBOX_FUZZY)
         );
         assert.isFalse(
-            ComboboxEntry.filter('one tt', { name: 'one', id: 1 }, Formplayer.Const.COMBOBOX_FUZZY)
+            Controls.ComboboxEntry.filter('one tt', { name: 'one', id: 1 }, Const.COMBOBOX_FUZZY)
         );
         assert.isTrue(
-            ComboboxEntry.filter('o', { name: 'one', id: 1 }, Formplayer.Const.COMBOBOX_FUZZY)
+            Controls.ComboboxEntry.filter('o', { name: 'one', id: 1 }, Const.COMBOBOX_FUZZY)
         );
         assert.isTrue(
-            ComboboxEntry.filter('on', { name: 'on', id: 1 }, Formplayer.Const.COMBOBOX_FUZZY)
+            Controls.ComboboxEntry.filter('on', { name: 'on', id: 1 }, Const.COMBOBOX_FUZZY)
         );
     });
 
     it('Should return FreeTextEntry', function () {
-        questionJSON.datatype = Formplayer.Const.STRING;
-        entry = (new Question(questionJSON)).entry;
-        assert.isTrue(entry instanceof FreeTextEntry);
+        questionJSON.datatype = Const.STRING;
+        var entry = (new Question(questionJSON)).entry;
+        assert.isTrue(entry instanceof Controls.FreeTextEntry);
         assert.equal(entry.templateType, 'text');
 
         entry.answer('harry');
@@ -181,16 +177,16 @@ describe('Entries', function () {
         assert.isTrue(spy.calledOnce);
 
         entry.rawAnswer('');
-        assert.equal(entry.answer(), Formplayer.Const.NO_ANSWER);
+        assert.equal(entry.answer(), Const.NO_ANSWER);
     });
 
     it('Should return MultiSelectEntry', function () {
-        questionJSON.datatype = Formplayer.Const.MULTI_SELECT;
+        questionJSON.datatype = Const.MULTI_SELECT;
         questionJSON.choices = ['a', 'b'];
         questionJSON.answer = [1]; // answer is based on a 1 indexed index of the choices
 
-        entry = (new Question(questionJSON)).entry;
-        assert.isTrue(entry instanceof MultiSelectEntry);
+        var entry = (new Question(questionJSON)).entry;
+        assert.isTrue(entry instanceof Controls.MultiSelectEntry);
         assert.equal(entry.templateType, 'select');
         assert.sameMembers(entry.answer(), [1]);
         assert.sameMembers(entry.rawAnswer(), [1]);
@@ -207,12 +203,12 @@ describe('Entries', function () {
     });
 
     it('Should return SingleSelectEntry', function () {
-        questionJSON.datatype = Formplayer.Const.SELECT;
+        questionJSON.datatype = Const.SELECT;
         questionJSON.choices = ['a', 'b'];
         questionJSON.answer = 1;
 
-        entry = (new Question(questionJSON)).entry;
-        assert.isTrue(entry instanceof SingleSelectEntry);
+        var entry = (new Question(questionJSON)).entry;
+        assert.isTrue(entry instanceof Controls.SingleSelectEntry);
         assert.equal(entry.templateType, 'select');
         assert.equal(entry.rawAnswer(), 1);
 
@@ -223,11 +219,11 @@ describe('Entries', function () {
     });
 
     it('Should return DateEntry', function () {
-        questionJSON.datatype = Formplayer.Const.DATE;
+        questionJSON.datatype = Const.DATE;
         questionJSON.answer = '1990-09-26';
 
-        entry = (new Question(questionJSON)).entry;
-        assert.isTrue(entry instanceof DateEntry);
+        var entry = (new Question(questionJSON)).entry;
+        assert.isTrue(entry instanceof Controls.DateEntry);
         assert.equal(entry.templateType, 'date');
 
         entry.answer('1987-11-19');
@@ -236,11 +232,11 @@ describe('Entries', function () {
     });
 
     it('Should return TimeEntry', function () {
-        questionJSON.datatype = Formplayer.Const.TIME;
+        questionJSON.datatype = Const.TIME;
         questionJSON.answer = '12:30';
 
-        entry = (new Question(questionJSON)).entry;
-        assert.isTrue(entry instanceof TimeEntry);
+        var entry = (new Question(questionJSON)).entry;
+        assert.isTrue(entry instanceof Controls.TimeEntry);
         assert.equal(entry.templateType, 'time');
 
         entry.rawAnswer('12:45');
@@ -249,17 +245,17 @@ describe('Entries', function () {
     });
 
     it('Should return InfoEntry', function () {
-        questionJSON.datatype = Formplayer.Const.INFO;
-        entry = (new Question(questionJSON)).entry;
+        questionJSON.datatype = Const.INFO;
+        var entry = (new Question(questionJSON)).entry;
 
-        assert.isTrue(entry instanceof InfoEntry);
+        assert.isTrue(entry instanceof Controls.InfoEntry);
     });
 
     it('Should return a GeoPointEntry', function () {
-        questionJSON.datatype = Formplayer.Const.GEO;
+        questionJSON.datatype = Const.GEO;
         questionJSON.answer = [1.2, 3.4];
 
-        entry = (new Question(questionJSON)).entry;
+        var entry = (new Question(questionJSON)).entry;
         assert.equal(entry.answer()[0], 1.2);
         assert.equal(entry.answer()[1], 3.4);
 
@@ -272,11 +268,11 @@ describe('Entries', function () {
     });
 
     it('Should return a PhoneEntry', function () {
-        questionJSON.datatype = Formplayer.Const.STRING;
+        questionJSON.datatype = Const.STRING;
         questionJSON.style = { raw: 'numeric' };
 
-        entry = (new Question(questionJSON)).entry;
-        assert.isTrue(entry instanceof PhoneEntry);
+        var entry = (new Question(questionJSON)).entry;
+        assert.isTrue(entry instanceof Controls.PhoneEntry);
         assert.equal(entry.answer(), null);
         assert.equal(entry.templateType, 'str');
 
@@ -290,22 +286,22 @@ describe('Entries', function () {
         assert.isOk(entry.question.error());
 
         entry.rawAnswer('');
-        assert.equal(entry.answer(), Formplayer.Const.NO_ANSWER);
+        assert.equal(entry.answer(), Const.NO_ANSWER);
     });
 
     it('Should return a AddressEntry', function () {
-        questionJSON.datatype = Formplayer.Const.STRING;
-        questionJSON.style = { raw: Formplayer.Const.ADDRESS };
+        questionJSON.datatype = Const.STRING;
+        questionJSON.style = { raw: Const.ADDRESS };
 
-        entry = (new Question(questionJSON)).entry;
-        assert.isTrue(entry instanceof AddressEntry);
+        var entry = (new Question(questionJSON)).entry;
+        assert.isTrue(entry instanceof Controls.AddressEntry);
     });
 
     it('Should allow decimals in a PhoneEntry', function () {
-        questionJSON.datatype = Formplayer.Const.STRING;
+        questionJSON.datatype = Const.STRING;
         questionJSON.style = { raw: 'numeric' };
 
-        entry = (new Question(questionJSON)).entry;
+        var entry = (new Question(questionJSON)).entry;
         entry.rawAnswer('-123.4');
         assert.equal(entry.answer(), '-123.4');
 
