@@ -2040,7 +2040,6 @@ class Detail(IndexedSchema, CaseListLookupMixin):
         from source module to current object.
         """
         src_module_attrs = list(src_module_detail_type.to_json().keys())
-        print(src_module_attrs)
         for k, v in attr_dict.items():
             if k != '*':
                 if v:
