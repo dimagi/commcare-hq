@@ -268,6 +268,7 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(self.user.full_name, "")
 
     def test_metadata(self):
+        # Set metadata
         import_users_and_groups(
             self.domain.name,
             [self._get_spec(data={'key': 'F#'})],
@@ -276,6 +277,86 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             mock.MagicMock()
         )
         self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain', 'key': 'F#'})
+
+        # Update metadata
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(data={'key': 'Bb'}, user_id=self.user._id)],
+            [],
+            None,
+            mock.MagicMock()
+        )
+        self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain', 'key': 'Bb'})
+
+        # Clear metadata
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(data={'key': ''}, user_id=self.user._id)],
+            [],
+            None,
+            mock.MagicMock()
+        )
+        self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain'})
+
+        # Allow falsy but non-blank values
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(data={'play_count': 0}, user_id=self.user._id)],
+            [],
+            None,
+            mock.MagicMock()
+        )
+        self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain', 'play_count': 0})
+
+    def test_uncategorized_data(self):
+        # Set data
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(uncategorized_data={'tempo': 'presto'})],
+            [],
+            None,
+            mock.MagicMock()
+        )
+        self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain', 'tempo': 'presto'})
+
+        # Update data
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(uncategorized_data={'tempo': 'andante'}, user_id=self.user._id)],
+            [],
+            None,
+            mock.MagicMock()
+        )
+        self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain', 'tempo': 'andante'})
+
+        # Clear metadata
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(uncategorized_data={'tempo': ''}, user_id=self.user._id)],
+            [],
+            None,
+            mock.MagicMock()
+        )
+        self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain'})
+
+    def test_uncategorized_data_clear(self):
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(data={'tempo': 'andante'})],
+            [],
+            None,
+            mock.MagicMock()
+        )
+        self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain', 'tempo': 'andante'})
+
+        import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(data={'tempo': ''}, user_id=self.user._id)],
+            [],
+            None,
+            mock.MagicMock()
+        )
+        self.assertEqual(self.user.metadata, {'commcare_project': 'mydomain'})
 
     @patch('corehq.apps.user_importer.importer.domain_has_privilege', lambda x, y: True)
     def test_metadata_ignore_system_fields(self):
