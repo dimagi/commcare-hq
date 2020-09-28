@@ -36,7 +36,6 @@ class StaticUINotify(object):
     def enabled(self, request):
         if settings.ENTERPRISE_MODE:
             return False
-
         if hasattr(request, 'user'):
             from corehq.apps.notifications.models import DismissedUINotify
 
