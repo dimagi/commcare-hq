@@ -27,10 +27,10 @@ def _get_es_settings(es_settings):
         es_settings['index'].pop(setting)
     es_settings['index'].update(
         {
-            "index.search.slowlog.threshold.query.warn": "10s",
-            "index.search.slowlog.threshold.query.info": "5s",
-            "index.search.slowlog.threshold.query.debug": "2s",
-            "index.search.slowlog.threshold.query.trace": "500ms",
+            "search.slowlog.threshold.query.warn": "10s",
+            "search.slowlog.threshold.query.info": "5s",
+            "search.slowlog.threshold.query.debug": "2s",
+            "search.slowlog.threshold.query.trace": "500ms",
         }
     )
     return es_settings
