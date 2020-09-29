@@ -268,7 +268,7 @@ class TestWebUserResource(APIResourceTest):
             "view_web_users": True,
             "view_roles": True,
             "edit_reports": True,
-            "view_reports": True
+            "view_reports": True,
         },
         "phone_numbers": [
         ],
