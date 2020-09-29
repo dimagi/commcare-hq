@@ -7,7 +7,11 @@ disallowed_settings_by_es_version = {
     2: [
         'merge.policy.merge_factor',
         'store.throttle.max_bytes_per_sec',
-        'store.throttle.type'
+        'store.throttle.type',
+        'index.search.slowlog.threshold.query.warn',
+        'index.search.slowlog.threshold.query.info',
+        'index.search.slowlog.threshold.query.debug',
+        'index.search.slowlog.threshold.query.trace',
     ],
     7: [
         'merge.policy.merge_factor',
@@ -18,8 +22,17 @@ disallowed_settings_by_es_version = {
 
 
 def _get_es_settings(es_settings):
+    es_settings = es_settings.copy()
     for setting in disallowed_settings_by_es_version[settings.ELASTICSEARCH_MAJOR_VERSION]:
         es_settings['index'].pop(setting)
+    es_settings['index'].update(
+        {
+            "index.search.slowlog.threshold.query.warn": "10s",
+            "index.search.slowlog.threshold.query.info": "5s",
+            "index.search.slowlog.threshold.query.debug": "2s",
+            "index.search.slowlog.threshold.query.trace": "500ms",
+        }
+    )
     return es_settings
 
 
