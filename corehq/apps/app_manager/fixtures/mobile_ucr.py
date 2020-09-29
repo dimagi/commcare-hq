@@ -115,7 +115,7 @@ class ReportFixturesProvider(FixtureProvider):
         if app_aware_sync_app:
             apps = [app_aware_sync_app]
         elif (
-                toggles.ROLE_WEBAPPS_PERMISSIONS.enabled(restore_user.domain)
+                toggles.APP_ACCESS_PERMISSIONS.enabled(restore_user.domain)
                 and restore_state.params.device_id
                 and "WebAppsLogin" in restore_state.params.device_id
         ):
