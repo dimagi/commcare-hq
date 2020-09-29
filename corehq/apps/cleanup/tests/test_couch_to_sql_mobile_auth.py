@@ -47,7 +47,8 @@ class TestCouchToSQLMobileAuth(TestCase):
         )
         self.assertRegex(
             expires_diff,
-            r"expires: couch value '\d{4}-..-.. ..:..:..\.\d+' != sql value '\d{4}-..-.. ..:..:..\.\d+'"
+            r"expires: couch value datetime.datetime\(\d{4}, \d+, \d+, \d+, \d+, \d+, \d+\) != "
+            r"sql value datetime.datetime\(\d{4}, \d+, \d+, \d+, \d+, \d+, \d+\)"
         )
 
     def test_sync_to_couch(self):
