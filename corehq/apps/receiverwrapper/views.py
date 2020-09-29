@@ -11,7 +11,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from couchforms import openrosa_response
 from couchforms.const import MAGIC_PROPERTY
-from couchforms.exceptions import BadSubmissionRequest
+from couchforms.exceptions import BadSubmissionRequest, UnprocessableFormSubmission
 from couchforms.getters import MultimediaBug
 from dimagi.utils.decorators.profile import profile_dump
 from dimagi.utils.logging import notify_exception
@@ -91,6 +91,11 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             request, "Received a submission with POST.keys()", metric_tags,
             domain, app_id, user_id, authenticated, meta,
         )
+    # the order of these exceptions is relevant
+    except UnprocessableFormSubmission as e:
+        return openrosa_response.OpenRosaResponse(
+            message=e.message, nature=openrosa_response.ResponseNature.PROCESSING_FAILURE, status=e.status_code,
+        ).response()
     except BadSubmissionRequest as e:
         response = HttpResponse(e.message, status=e.status_code)
         _record_metrics(metric_tags, 'known_failures', response)

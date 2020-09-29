@@ -143,7 +143,9 @@ class SubmissionTest(BaseSubmissionTest):
         self.assertEqual(response.status_code, expected_error.status_code)
         self.assertEqual(
             response.content.decode('utf-8'),
-            expected_error.message
+            f'<OpenRosaResponse xmlns="http://openrosa.org/http/response"><message nature="processing_failure">'
+            f'{expected_error.message}'
+            f'</message></OpenRosaResponse>'
         )
 
     def test_invalid_attachment_file_extension_with_valid_mimetype(self):
@@ -161,7 +163,9 @@ class SubmissionTest(BaseSubmissionTest):
         self.assertEqual(response.status_code, expected_error.status_code)
         self.assertEqual(
             response.content.decode('utf-8'),
-            expected_error.message
+            f'<OpenRosaResponse xmlns="http://openrosa.org/http/response"><message nature="processing_failure">'
+            f'{expected_error.message}'
+            f'</message></OpenRosaResponse>'
         )
 
 

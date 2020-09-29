@@ -51,7 +51,11 @@ class EmptyPayload(BadSubmissionRequest):
         super().__init__('Post may not have an empty body\n')
 
 
-class InvalidSubmissionFileExtensionError(BadSubmissionRequest):
+class UnprocessableFormSubmission(BadSubmissionRequest):
+    pass
+
+
+class InvalidSubmissionFileExtensionError(UnprocessableFormSubmission):
     def __init__(self):
         super().__init__(
             "If you use multipart/form-data, please use xml file only for "
@@ -61,7 +65,7 @@ class InvalidSubmissionFileExtensionError(BadSubmissionRequest):
         )
 
 
-class InvalidAttachmentFileExtensionError(BadSubmissionRequest):
+class InvalidAttachmentFileExtensionError(UnprocessableFormSubmission):
     def __init__(self):
         super().__init__(
             "If you use multipart/form-data, please use the following "
