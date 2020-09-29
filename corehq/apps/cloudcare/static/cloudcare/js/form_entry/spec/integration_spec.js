@@ -1,7 +1,7 @@
 /* eslint-env mocha */
-/* global Form */
 describe('Integration', function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
+        UI = hqImport("cloudcare/js/form_entry/fullform-ui"),
         formJSON,
         questionJSONMulti,
         questionJSONString;
@@ -65,7 +65,7 @@ describe('Integration', function () {
         questionJSONString.ix = '0';
         questionJSONString2.ix = '1';
         formJSON.tree = [questionJSONString, questionJSONString2];
-        var form = new Form(_.clone(formJSON));
+        var form = UI.Form(_.clone(formJSON));
 
         var stringQ1 = form.children()[0];
         var stringQ2 = form.children()[1];
@@ -111,7 +111,7 @@ describe('Integration', function () {
     });
 
     it('Should reconcile questions answered at the same time for multi', function () {
-        var form = new Form(_.clone(formJSON));
+        var form = UI.Form(_.clone(formJSON));
         var multiQ = form.children()[0];
         var stringQ = form.children()[1];
 
@@ -203,7 +203,7 @@ describe('Integration', function () {
             }],
         };
 
-        var f = new Form(json1);
+        var f = UI.Form(json1);
         var child = f.children()[0];
         $.publish('session.reconcile', [json2, child]);
         assert.equal(child.answer()[0], 30.000000000000018);
