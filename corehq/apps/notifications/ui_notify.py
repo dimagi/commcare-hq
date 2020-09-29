@@ -129,7 +129,14 @@ BI_PREVIEW_UPDATE = StaticUINotify(
     ends_on=datetime(2019, 12, 31),
 )
 
+
 APP_USER_PROFILES_UPDATE = StaticUINotify(
     'app_user_profiles_update_oct2020',
     ends_on=datetime(2020, 10, 10),
+)
+  
+CASE_LIST_OVERWRITE_UPDATE = StaticUINotify(
+    'case_list_overwrite_update',
+    ends_on=datetime(2020, 10, 31),
+    only_visible_for_users_created_before=datetime(2020, 9, 11),
 )
