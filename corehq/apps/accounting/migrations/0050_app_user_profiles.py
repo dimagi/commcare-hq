@@ -18,7 +18,7 @@ def _grandfather_basic_privs(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('accounting', '0049_auto_20200924_1753.py'),
+        ('accounting', '0049_auto_20200924_1753'),
     ]
 
     operations = [
