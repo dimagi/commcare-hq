@@ -36,7 +36,6 @@ class StaticUINotify(object):
     def enabled(self, request):
         if settings.ENTERPRISE_MODE:
             return False
-
         if hasattr(request, 'user'):
             from corehq.apps.notifications.models import DismissedUINotify
 
@@ -130,6 +129,11 @@ BI_PREVIEW_UPDATE = StaticUINotify(
     ends_on=datetime(2019, 12, 31),
 )
 
+APP_USER_PROFILES_UPDATE = StaticUINotify(
+    'app_user_profiles_update_oct2020',
+    ends_on=datetime(2020, 10, 10),
+)
+  
 CASE_LIST_OVERWRITE_UPDATE = StaticUINotify(
     'case_list_overwrite_update',
     ends_on=datetime(2020, 10, 31),
