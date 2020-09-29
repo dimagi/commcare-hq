@@ -25,7 +25,6 @@ hqDefine("users/js/mobile_workers",[
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/assert_properties',
     'analytix/js/google',
-    'nic_compliance/js/encoder',
     'jquery.rmi/jquery.rmi',
     'zxcvbn/dist/zxcvbn',
     'locations/js/widgets',
@@ -39,7 +38,6 @@ hqDefine("users/js/mobile_workers",[
     initialPageData,
     assertProperties,
     googleAnalytics,
-    nicEncoder,
     RMI,
     zxcvbn,
     locationsWidgets,
@@ -224,7 +222,6 @@ hqDefine("users/js/mobile_workers",[
         assertProperties.assertRequired(options, [
             'custom_fields_slugs',
             'draconian_security',
-            'implement_password_obfuscation',
             'location_url',
             'require_location_id',
             'strong_mobile_passwords',
@@ -248,7 +245,6 @@ hqDefine("users/js/mobile_workers",[
         // and eliminates the need to remember which flags are observable and which aren't
         self.useStrongPasswords = ko.observable(options.strong_mobile_passwords);
         self.useDraconianSecurity = ko.observable(options.draconian_security);
-        self.implementPasswordObfuscation = ko.observable(options.implement_password_obfuscation);
 
         self.passwordStatus = ko.computed(function () {
             if (!self.stagedUser()) {
@@ -487,9 +483,6 @@ hqDefine("users/js/mobile_workers",[
             if (!newUser.passwordEnabled()) {
                 newUser.password(self.generateStrongPassword());
             }
-            if (self.implementPasswordObfuscation()) {
-                newUser.password(nicEncoder().encode(newUser.password()));
-            }
             rmi('create_mobile_worker', {
                 user: _.extend(ko.mapping.toJS(newUser), {
                     custom_fields: self.stagedUser().custom_fields.serialize(),
@@ -522,7 +515,6 @@ hqDefine("users/js/mobile_workers",[
         var newUserCreation = newUserCreationModel({
             custom_fields_slugs: initialPageData.get('custom_fields_slugs'),
             draconian_security: initialPageData.get('draconian_security'),
-            implement_password_obfuscation: initialPageData.get('implement_password_obfuscation', true),
             location_url: initialPageData.reverse('location_search'),
             require_location_id: !initialPageData.get('can_access_all_locations'),
             strong_mobile_passwords: initialPageData.get('strong_mobile_passwords'),
