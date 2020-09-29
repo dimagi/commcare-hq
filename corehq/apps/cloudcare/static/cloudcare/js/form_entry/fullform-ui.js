@@ -125,6 +125,7 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
         var self = this;
         self.pubsub = new ko.subscribable();
         self.fromJS(json);
+
         /**
          * Used in KO template to determine what template to use for a child
          * @param {Object} child - The child object to be rendered, either Group, Repeat, or Question
@@ -132,6 +133,12 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
         self.childTemplate = function (child) {
             return ko.utils.unwrapObservable(child.type) + '-fullform-ko-template';
         };
+
+        self.hasError = ko.computed(function () {
+            return _.find(self.children(), function (child) {
+                return child.hasError();
+            });
+        });
     }
 
     /**
@@ -371,12 +378,6 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
         self.childrenRequired = ko.computed(function () {
             return _.find(self.children(), function (child) {
                 return child.required() || self.childrenRequired && self.childrenRequired();
-            });
-        });
-
-        self.hasError = ko.computed(function () {
-            return _.find(self.children(), function (child) {
-                return child.hasError();
             });
         });
 
