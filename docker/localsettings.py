@@ -244,7 +244,6 @@ if os.path.exists("extensions/icds/custom/icds"):
     LOCAL_APPS = (
         # these are necessary to facilitate ICDS tests
         "custom.icds",
-        "custom.icds.data_management",
         "custom.icds_reports",
     )
     COMMCARE_EXTENSIONS = ["custom.icds.commcare_extensions"]
