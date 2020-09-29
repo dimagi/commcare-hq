@@ -529,6 +529,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
         return [
             _("Name"),
             _("API Key"),
+            _("Project"),
             _("IP Allowlist"),
             _("Created"),
             _("Delete"),
@@ -547,6 +548,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
                     "id": api_key.id,
                     "name": api_key.name,
                     "key": redacted_key,
+                    "domain": api_key.domain or _('All Projects'),
                     "ip_allowlist": (
                         ", ".join(api_key.ip_allowlist)
                         if api_key.ip_allowlist else _("All IP Addresses")
@@ -563,8 +565,8 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
 
     def get_create_form(self, is_blank=False):
         if self.request.method == 'POST' and not is_blank:
-            return HQApiKeyForm(self.request.POST)
-        return HQApiKeyForm()
+            return HQApiKeyForm(self.request.POST, couch_user=self.request.couch_user)
+        return HQApiKeyForm(couch_user=self.request.couch_user)
 
     def get_create_item_data(self, create_form):
         try:
@@ -577,6 +579,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
                 'id': new_api_key.id,
                 'name': new_api_key.name,
                 'key': f"{new_api_key.key} ({copy_key_message})",
+                "domain": new_api_key.domain or _('All Projects'),
                 'ip_allowlist': new_api_key.ip_allowlist,
                 'created': new_api_key.created.isoformat()
             },
