@@ -66,6 +66,6 @@ branches:
   - cz/role-ui  # Norman 9/25
   - bmb/requirements-redis-3.3.0      # Biyeun Sept 25 (includes dm/requirements)
   - ce/skip-fixtures
-#  - smh/add_integration_models_to_linked_spaces # Steph Sept 28
+  - smh/add_integration_models_to_linked_spaces # Steph Sept 30
 
 submodules: {}
