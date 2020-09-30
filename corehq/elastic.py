@@ -134,7 +134,6 @@ def send_to_elasticsearch(index_name, doc, delete=False, es_merge_update=False):
         name="{}.{} <{}>:".format(send_to_elasticsearch.__module__,
                                   send_to_elasticsearch.__name__, index_name),
         data=doc,
-        propagate_failure=True,
         delete=delete,
         es_merge_update=es_merge_update,
     )
