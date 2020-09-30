@@ -15,7 +15,6 @@ from corehq.util.test_utils import trap_extra_setup
 from corehq.pillows.mappings.utils import transform_for_es7
 from pillowtop.es_utils import (
     assume_alias,
-    initialize_index,
     initialize_index_and_mapping,
     mapping_exists,
     set_index_normal_settings,
@@ -84,7 +83,7 @@ class ElasticPillowTest(SimpleTestCase):
         self.assertFalse(self.es.indices.exists(self.index))
 
         # create and check
-        initialize_index(self.es, TEST_INDEX_INFO)
+        initialize_index_and_mapping(self.es, TEST_INDEX_INFO)
         self.assertTrue(self.es.indices.exists(self.index))
 
     def test_assume_alias(self):

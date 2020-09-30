@@ -94,8 +94,16 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
         return '{} ({})'.format(self.alias, self.index)
 
     @property
-    def template_name(self):
+    def ilm_template_name(self):
         return f"{self.index}_template"
+
+    @property
+    def ilm_index_patterns(self):
+        return f"{self.index}-*"
+
+    @property
+    def ilm_initial_index(self):
+        return f"{self.index}-000001"
 
     @property
     def meta(self):
@@ -200,26 +208,22 @@ def get_ilm_tempalte(index_info):
         "index.lifecycle.rollover_alias": index_info.alias
     })
     return {
-        "index_patterns": [IndexPattern(index_info.index).index_patterns],
+        "index_patterns": [index_info.ilm_index_patterns],
         "template": meta
     }
 
 
-class IndexPattern(object):
-
-    def __init__(self, name):
-        self.name = name
-
-    @property
-    def index_patterns(self):
-        return f"{self.name}-*"
-
-    @property
-    def initial_index(self):
-        return f"{self.name}-000001"
-
-
 def setup_ilm_index(es, index_info):
+    # Sets up an index to be ILM based index
+    #   See https://www.elastic.co/guide/en/elasticsearch/reference/current/getting-started-index-lifecycle-management.html
+    # ILM index is backed by multiple rolling indices which allows to scale the index size.
+    #   - Indices are rolled over based on the policy
+    #   - index_info.alias is the rollover alias used by ILM
+    #   - Searches across all indices can be done based on rollover alais. The search
+    #       result includes the source index of a result hit
+    #   - Writes to the rollover alias are forwarded to just the latest index
+    #   - Update/get requests are permitted only on an index and not the alias
+    #       Any updates therefore must be performed after searching first
     # setup policy
     ilm_config = index_info.ilm_config
     try:
@@ -228,17 +232,17 @@ def setup_ilm_index(es, index_info):
         es.ilm.put_lifecycle(ilm_config, ILM_CONFIGS[ilm_config])
     # setup template
     try:
-        es.indices.get_index_template(index_info.template_name)
+        es.indices.get_index_template(index_info.ilm_template_name)
     except NotFoundError:
         es.indices.put_index_template(
-            index_info.template_name,
+            index_info.ilm_template_name,
             get_ilm_tempalte(index_info)
         )
     # bootstrap initial index
     indices = es.indices.resolve_index(index_info.alias)
     if not indices.get('indices'):
         es.indices.create(
-            IndexPattern(index_info.index).initial_index,
+            index_info.ilm_initial_index,
             {
                 "aliases": {
                     index_info.alias: {"is_write_index": True}
