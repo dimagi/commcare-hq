@@ -87,7 +87,7 @@ class ElasticProcessor(PillowProcessor):
         # send it across
         with self._datadog_timing('load'):
             send_to_elasticsearch(
-                alias=self.index_info.alias,
+                index_info=self.index_info,
                 doc_type=self.index_info.type,
                 doc_id=change.id,
                 es_getter=self.es_getter,
@@ -97,7 +97,7 @@ class ElasticProcessor(PillowProcessor):
 
     def _delete_doc_if_exists(self, doc_id):
         send_to_elasticsearch(
-            alias=self.index_info.alias,
+            index_info=self.index_info,
             doc_type=self.index_info.type,
             doc_id=doc_id,
             es_getter=self.es_getter,
@@ -161,7 +161,7 @@ class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
         return retry_changes, error_changes
 
 
-def send_to_elasticsearch(alias, doc_type, doc_id, es_getter, name, data=None,
+def send_to_elasticsearch(index_info, doc_type, doc_id, es_getter, name, data=None,
                           delete=False, es_merge_update=False):
     """
     More fault tolerant es.put method
@@ -170,6 +170,7 @@ def send_to_elasticsearch(alias, doc_type, doc_id, es_getter, name, data=None,
             which merges existing ES doc and current update. If this is set to False, the doc will be replaced
 
     """
+    alias = index_info.alias
     data = data if data is not None else {}
     current_tries = 0
     es_interface = ElasticsearchInterface(es_getter())

@@ -127,7 +127,7 @@ def send_to_elasticsearch(index_name, doc, delete=False, es_merge_update=False):
         doc_id = doc_id.decode('utf-8')
     index_info = ES_META[index_name]
     return send_to_es(
-        alias=index_info.alias,
+        index_info=index_info,
         doc_type=index_info.type,
         doc_id=doc_id,
         es_getter=get_es_new,
