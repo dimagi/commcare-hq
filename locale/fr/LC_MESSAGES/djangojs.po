@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-09-29 20:05+0000\n"
+"POT-Creation-Date: 2020-09-30 14:53+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2545,7 +2545,7 @@ msgstr ""
 msgid "Evaluate XPath"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:268
+#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:270
 msgid "Error evaluating expression."
 msgstr ""
 
@@ -2611,29 +2611,29 @@ msgid ""
 "connection and retry when connectivity improves."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:271
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:270
 msgid "Submitting..."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:273
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:272
 msgid "Submit"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:334
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:333
 msgid "An answer is required"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:336
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:335
 msgid "This answer is outside the allowed range."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/utils.js:16
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/utils.js:15
 msgid ""
 "Looks like you got logged out because of inactivity, but your work is safe. "
 "<a href='<%= url %>' target='_blank'>Click here to log back in.</a>"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/utils.js:20
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/utils.js:19
 msgid "You have been logged out because of inactivity."
 msgstr ""
 

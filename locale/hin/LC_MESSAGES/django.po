@@ -20,8 +20,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-09-29 20:04+0000\n"
-"PO-Revision-Date: 2020-09-23 20:26+0000\n"
+"POT-Creation-Date: 2020-09-30 14:52+0000\n"
+"PO-Revision-Date: 2020-09-29 20:05+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Hindi (http://www.transifex.com/dimagi/commcare-hq/language/"
 "hi/)\n"
@@ -8235,10 +8235,8 @@ msgid "Case List Filter"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_module_overwrite.html:35
-#, fuzzy
-#| msgid "Report Configuration"
 msgid "Other Configuration"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_module_overwrite.html:46
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_actions.html:22
@@ -9982,16 +9980,12 @@ msgid "Case list configuration updated from {} menu to {} menu(s)."
 msgstr ""
 
 #: corehq/apps/app_manager/views/modules.py:843
-#, fuzzy
-#| msgid "Please choose an Excel file to import."
 msgid "Please choose at least one menu to overwrite."
-msgstr "Criança com problemas de malnutrição"
+msgstr ""
 
 #: corehq/apps/app_manager/views/modules.py:846
-#, fuzzy
-#| msgid "Please choose an Excel file to import."
 msgid "Please choose at least one option to overwrite."
-msgstr "Criança com problemas de malnutrição"
+msgstr ""
 
 #: corehq/apps/app_manager/views/modules.py:1102
 #: corehq/apps/app_manager/views/modules.py:1118
@@ -10962,33 +10956,41 @@ msgstr ""
 msgid "Add new repeat"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/form_entry/templates.html:252
+#: corehq/apps/cloudcare/templates/form_entry/templates.html:206
+msgid "Your browser does not support audio"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/form_entry/templates.html:209
+msgid "Your browser does not support video"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/form_entry/templates.html:257
 msgid ""
 "\n"
 "      Sorry, web entry cannot support this type of question.\n"
 "    "
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/form_entry/templates.html:260
+#: corehq/apps/cloudcare/templates/form_entry/templates.html:265
 msgid ""
 "\n"
 "            This question will appear as follows in data exports.\n"
 "          "
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/form_entry/templates.html:267
+#: corehq/apps/cloudcare/templates/form_entry/templates.html:272
 msgid "OK"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/form_entry/templates.html:283
+#: corehq/apps/cloudcare/templates/form_entry/templates.html:288
 msgid "Clear map"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/form_entry/templates.html:289
+#: corehq/apps/cloudcare/templates/form_entry/templates.html:294
 msgid "Please wait while the map loads"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/form_entry/templates.html:298
+#: corehq/apps/cloudcare/templates/form_entry/templates.html:303
 #: corehq/apps/domain/forms.py:2290 corehq/apps/domain/forms.py:2414
 #: corehq/apps/domain/templates/domain/manage_releases_by_app_profile.html:18
 #: corehq/apps/reports/filters/simple.py:24
@@ -10998,11 +11000,15 @@ msgstr ""
 msgid "Search"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/form_entry/templates.html:326
+#: corehq/apps/cloudcare/templates/form_entry/templates.html:331
 #: corehq/apps/cloudcare/templates/formplayer/settings_view.html:38
 #: corehq/apps/domain/forms.py:2291 corehq/apps/domain/forms.py:2416
 #: corehq/apps/sms/templates/sms/chat_contacts.html:20
 msgid "Clear"
+msgstr ""
+
+#: corehq/apps/cloudcare/templates/form_entry/templates.html:388
+msgid "24-hour clock"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/formplayer/case_list.html:44
@@ -21457,10 +21463,8 @@ msgid "Unknown Table"
 msgstr ""
 
 #: corehq/apps/linked_domain/views.py:423
-#, fuzzy
-#| msgid "Save Keyword"
 msgid "Deleted Keyword"
-msgstr "Diagnóstico de Casos"
+msgstr ""
 
 #: corehq/apps/linked_domain/views.py:486
 msgid ""
@@ -21478,10 +21482,8 @@ msgid "Unknown Report"
 msgstr ""
 
 #: corehq/apps/linked_domain/views.py:613
-#, fuzzy
-#| msgid "Unknown user"
 msgid "Unknown Keyword"
-msgstr "अनजान उपयोगकर्ता"
+msgstr ""
 
 #: corehq/apps/linked_domain/views.py:627
 #: corehq/apps/reminders/templates/reminders/link_keywords_modal.html:53
@@ -23775,10 +23777,8 @@ msgstr ""
 
 #: corehq/apps/reminders/templates/reminders/link_keywords_modal.html:8
 #: corehq/apps/reminders/templates/reminders/link_keywords_modal.html:19
-#, fuzzy
-#| msgid "Save Keyword"
 msgid "Link Keywords"
-msgstr "Diagnóstico de Casos"
+msgstr ""
 
 #: corehq/apps/reminders/templates/reminders/link_keywords_modal.html:28
 msgid "unlinkable"
@@ -35744,10 +35744,8 @@ msgid "Project Features"
 msgstr ""
 
 #: corehq/privileges.py:176
-#, fuzzy
-#| msgid "Profiles"
 msgid "App User Profiles"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/reports.py:286
 msgid "Report Builder Reports"
@@ -40150,6 +40148,9 @@ msgstr ""
 #~ "          "
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
+#~ msgid "Please choose an Excel file to import."
+#~ msgstr "Criança com problemas de malnutrição"
+
 #~ msgid "Includes all Standard Features."
 #~ msgstr "Manejo de Casos"
 
@@ -40843,6 +40844,9 @@ msgstr ""
 
 #~ msgid "Edit Organization Levels"
 #~ msgstr "Manejo de Casos"
+
+#~ msgid "Save Keyword"
+#~ msgstr "Diagnóstico de Casos"
 
 #~ msgid "Parent Case"
 #~ msgstr "Manejo de Casos"
