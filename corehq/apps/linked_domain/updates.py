@@ -8,6 +8,7 @@ from toggle.shortcuts import set_toggle
 from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.custom_data_fields.models import (
     CustomDataFieldsDefinition,
+    CustomDataFieldsProfile,
     Field,
 )
 from corehq.apps.data_dictionary.models import (
@@ -25,6 +26,7 @@ from corehq.apps.linked_domain.const import (
     MODEL_CASE_SEARCH,
     MODEL_FIXTURE,
     MODEL_FLAGS,
+    MODEL_KEYWORD,
     MODEL_LOCATION_DATA,
     MODEL_PRODUCT_DATA,
     MODEL_USER_DATA,
@@ -56,6 +58,7 @@ from corehq.apps.linked_domain.remote_accessors import \
 from corehq.apps.linked_domain.remote_accessors import \
     get_data_dictionary as remote_get_data_dictionary
 from corehq.apps.linked_domain.ucr import update_linked_ucr
+from corehq.apps.linked_domain.keywords import update_keyword
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
 from corehq.apps.userreports.util import (
@@ -78,6 +81,7 @@ def update_model_type(domain_link, model_type, model_detail=None):
         MODEL_CASE_SEARCH: update_case_search_config,
         MODEL_REPORT: update_linked_ucr,
         MODEL_DATA_DICTIONARY: update_data_dictionary,
+        MODEL_KEYWORD: update_keyword,
     }.get(model_type)
 
     kwargs = model_detail or {}
@@ -111,7 +115,8 @@ def update_custom_data_models(domain_link, limit_types=None):
     else:
         master_results = local_custom_data_models(domain_link.master_domain, limit_types)
 
-    for field_type, field_definitions in master_results.items():
+    for field_type, data in master_results.items():
+        field_definitions = data.get('fields', [])
         model = CustomDataFieldsDefinition.get_or_create(domain_link.linked_domain, field_type)
         model.set_fields([
             Field(
@@ -124,6 +129,19 @@ def update_custom_data_models(domain_link, limit_types=None):
             ) for field_def in field_definitions
         ])
         model.save()
+
+        old_profiles = {profile.name: profile for profile in model.get_profiles()}
+        for profile in data.get('profiles'):
+            old_profile = old_profiles.get(profile['name'], None)
+            if old_profile:
+                old_profile.fields = profile['fields']
+                old_profile.save()
+            else:
+                CustomDataFieldsProfile(
+                    name=profile['name'],
+                    definition=model,
+                    fields=profile['fields'],
+                ).save()
 
 
 def update_fixture(domain_link, tag):

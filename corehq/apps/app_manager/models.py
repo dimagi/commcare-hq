@@ -2033,6 +2033,26 @@ class Detail(IndexedSchema, CaseListLookupMixin):
         """
         return self.persist_tile_on_forms and (self.use_case_tiles or self.custom_xml)
 
+    def overwrite_from_module_detail(self, src_module_detail_type, attr_dict):
+        """
+        This method is used to overwrite configurations present
+        in attr_dict(column, filter, and other_configurations)
+        from source module to current object.
+        """
+        src_module_attrs = list(src_module_detail_type.to_json().keys())
+        for k, v in attr_dict.items():
+            if k != '*':
+                if v:
+                    setattr(self, k, getattr(src_module_detail_type, k))
+                src_module_attrs.remove(k)
+            else:
+                if not v:
+                    continue
+                for a in src_module_attrs:
+                    if a.startswith('__') or a.startswith('_'):
+                        continue
+                    setattr(self, a, getattr(src_module_detail_type, a))
+
 
 class CaseList(IndexedSchema, NavMenuItemMediaMixin):
 
@@ -2421,7 +2441,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
             )]
         )
         module = cls(
-            name={(lang or 'en'): name or _("Untitled Module")},
+            name={(lang or 'en'): name or _("Untitled Menu")},
             forms=[],
             case_type='',
             case_details=DetailPair(
@@ -2924,7 +2944,7 @@ class AdvancedModule(ModuleBase):
         )
 
         module = AdvancedModule(
-            name={(lang or 'en'): name or _("Untitled Module")},
+            name={(lang or 'en'): name or _("Untitled Menu")},
             forms=[],
             case_type='',
             case_details=DetailPair(
@@ -3272,7 +3292,7 @@ class CustomDataAutoFilter(ReportAppFilter):
 
     def get_filter_value(self, user, ui_filter):
         from corehq.apps.reports_core.filters import Choice
-        return Choice(value=user.user_data[self.custom_data_property], display=None)
+        return Choice(value=user.metadata[self.custom_data_property], display=None)
 
 
 class StaticChoiceFilter(ReportAppFilter):
@@ -3716,7 +3736,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
             )]
         )
         module = ShadowModule(
-            name={(lang or 'en'): name or _("Untitled Module")},
+            name={(lang or 'en'): name or _("Untitled Menu")},
             case_details=DetailPair(
                 short=Detail(detail.to_json()),
                 long=Detail(detail.to_json()),

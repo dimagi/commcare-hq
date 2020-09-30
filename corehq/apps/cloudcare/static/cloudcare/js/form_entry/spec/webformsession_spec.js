@@ -1,14 +1,15 @@
-/* globals Formplayer, TaskQueue, WebFormSession */
 /* eslint-env mocha */
 
 describe('WebForm', function () {
+    var Const = hqImport("cloudcare/js/form_entry/const"),
+        UI = hqImport("cloudcare/js/form_entry/fullform-ui");
 
     describe('TaskQueue', function () {
         var tq,
             taskOne,
             taskTwo;
         beforeEach(function () {
-            tq = new TaskQueue();
+            tq = hqImport("cloudcare/js/form_entry/task_queue").TaskQueue();
             taskOne = sinon.spy();
             taskTwo = sinon.spy();
             tq.addTask('one', taskOne, [1,2,3]);
@@ -56,7 +57,9 @@ describe('WebForm', function () {
 
     describe('WebFormSession', function () {
         var server,
-            params;
+            params,
+            Utils = hqImport("cloudcare/js/form_entry/utils"),
+            WebFormSession = hqImport("cloudcare/js/form_entry/webformsession").WebFormSession;
 
         beforeEach(function () {
             // Setup HTML
@@ -99,8 +102,8 @@ describe('WebForm', function () {
 
             // Setup stubs
             $.cookie = sinon.stub();
-            sinon.stub(Formplayer.Utils, 'initialRender');
-            sinon.stub(window, 'getIx').callsFake(function () { return 3; });
+            sinon.stub(Utils, 'initialRender');
+            sinon.stub(UI, 'getIx').callsFake(function () { return 3; });
         });
 
         afterEach(function () {
@@ -112,13 +115,13 @@ describe('WebForm', function () {
                 // running mocha tests with grunt-mocha. this passes fine in
                 // the browser.
             }
-            Formplayer.Utils.initialRender.restore();
-            getIx.restore();
+            Utils.initialRender.restore();
+            UI.getIx.restore();
             $.unsubscribe();
         });
 
         it('Should queue requests', function () {
-            var sess = new WebFormSession(params);
+            var sess = WebFormSession(params);
             sess.serverRequest({}, sinon.spy(), false);
 
             sinon.spy(sess.taskQueue, 'execute');
@@ -133,56 +136,56 @@ describe('WebForm', function () {
         it('Should only subscribe once', function () {
             var spy = sinon.spy(),
                 spy2 = sinon.spy(),
-                sess = new WebFormSession(params),
-                sess2 = new WebFormSession(params);
+                sess = WebFormSession(params),
+                sess2 = WebFormSession(params);
 
             sinon.stub(sess, 'newRepeat').callsFake(spy);
             sinon.stub(sess2, 'newRepeat').callsFake(spy2);
 
-            $.publish('formplayer.' + Formplayer.Const.NEW_REPEAT, {});
+            $.publish('formplayer.' + Const.NEW_REPEAT, {});
             assert.isFalse(spy.calledOnce);
             assert.isTrue(spy2.calledOnce);
         });
 
         it('Should block requests', function () {
-            var sess = new WebFormSession(params);
+            var sess = WebFormSession(params);
 
             // First blocking request
-            $.publish('formplayer.' + Formplayer.Const.NEW_REPEAT, {});
+            $.publish('formplayer.' + Const.NEW_REPEAT, {});
 
-            assert.equal(sess.blockingStatus, Formplayer.Const.BLOCK_ALL);
+            assert.equal(sess.blockingStatus, Const.BLOCK_ALL);
 
             // Attempt another request
-            $.publish('formplayer.' + Formplayer.Const.NEW_REPEAT, {});
+            $.publish('formplayer.' + Const.NEW_REPEAT, {});
 
             server.respond();
 
-            assert.equal(sess.blockingStatus, Formplayer.Const.BLOCK_NONE);
+            assert.equal(sess.blockingStatus, Const.BLOCK_NONE);
             // One call to new-repeat
             assert.equal(server.requests.length, 1);
         });
 
         it('Should not block requests', function () {
-            var sess = new WebFormSession(params);
+            var sess = WebFormSession(params);
 
             // First blocking request
-            $.publish('formplayer.' + Formplayer.Const.ANSWER, { answer: sinon.spy() });
+            $.publish('formplayer.' + Const.ANSWER, { answer: sinon.spy() });
 
-            assert.equal(sess.blockingStatus, Formplayer.Const.BLOCK_SUBMIT);
+            assert.equal(sess.blockingStatus, Const.BLOCK_SUBMIT);
 
             // Attempt another request
-            $.publish('formplayer.' + Formplayer.Const.ANSWER, { answer: sinon.spy() });
+            $.publish('formplayer.' + Const.ANSWER, { answer: sinon.spy() });
 
             server.respond();
 
-            assert.equal(sess.blockingStatus, Formplayer.Const.BLOCK_NONE);
+            assert.equal(sess.blockingStatus, Const.BLOCK_NONE);
             // two calls to answer
             assert.equal(server.requests.length, 2);
 
         });
 
         it('Should handle error in callback', function () {
-            var sess = new WebFormSession(params);
+            var sess = WebFormSession(params);
 
             sess.handleSuccess({}, 'action', sinon.stub().throws());
 
@@ -190,7 +193,7 @@ describe('WebForm', function () {
         });
 
         it('Should handle error in response', function () {
-            var sess = new WebFormSession(params),
+            var sess = WebFormSession(params),
                 cb = sinon.stub();
 
             sess.handleSuccess({ status: 'error' }, 'action', cb);
@@ -200,32 +203,30 @@ describe('WebForm', function () {
         });
 
         it('Should handle failure in ajax call', function () {
-            var sess = new WebFormSession(params);
+            var sess = WebFormSession(params);
             sess.handleFailure({ responseJSON: { message: 'error' } });
 
             assert.isTrue(sess.onerror.calledOnce);
         });
 
         it('Should handle timeout error', function () {
-            var sess = new WebFormSession(params);
+            var sess = WebFormSession(params);
             sess.handleFailure({}, 'action', 'timeout');
 
             assert.isTrue(sess.onerror.calledOnce);
             assert.isTrue(sess.onerror.calledWith({
-                human_readable_message: Formplayer.Errors.TIMEOUT_ERROR,
+                human_readable_message: hqImport("cloudcare/js/form_entry/errors").TIMEOUT_ERROR,
                 is_html: false,
             }));
         });
 
         it('Should ensure session id is set', function () {
-            var sess = new WebFormSession(params),
-                spy = sinon.spy(WebFormSession.prototype, 'renderFormXml');
+            var sess = WebFormSession(params);
             sess.loadForm($('div'), 'en');
             assert.equal(sess.session_id, null);
 
             server.respond();
             assert.equal(sess.session_id, 'my-session');
-            WebFormSession.prototype.renderFormXml.restore();
         });
     });
 });

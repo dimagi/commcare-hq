@@ -3408,6 +3408,15 @@ class CreditLine(models.Model):
         ).all()
 
     @classmethod
+    def get_non_general_credits_for_account(cls, account):
+        return cls.objects.filter(
+            account=account, subscription__exact=None, is_active=True
+        ).filter(
+            Q(is_product=True) |
+            Q(feature_type__in=[f[0] for f in FeatureType.CHOICES])
+        ).all()
+
+    @classmethod
     def get_credits_by_subscription_and_features(cls, subscription,
                                                  feature_type=None,
                                                  is_product=False):

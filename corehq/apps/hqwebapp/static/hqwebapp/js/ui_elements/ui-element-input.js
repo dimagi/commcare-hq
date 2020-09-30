@@ -1,12 +1,18 @@
-/* globals hqDefine, $, hqImport */
-
-hqDefine('hqwebapp/js/ui_elements/ui-element-input', function () {
+hqDefine('hqwebapp/js/ui_elements/ui-element-input', [
+    'jquery',
+    'hqwebapp/js/main',
+    'hqwebapp/js/ui_elements/ui-element-langcode-button',
+], function (
+    $,
+    hqMain,
+    langcodeButton
+) {
     'use strict';
     var module = {};
 
     var Input = function ($elem, initialValue, getElemValue, setElemValue, setPlaceholderValue) {
         var that = this;
-        hqImport("hqwebapp/js/main").eventize(this);
+        hqMain.eventize(this);
         this.ui = $('<div class="app-designer-input"/>');
         this.value = "";
         this.edit = true;
@@ -47,21 +53,22 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-input', function () {
             }
         },
         setVisibleValue: function (value) {
-            var translated = hqImport('hqwebapp/js/ui_elements/ui-element-langcode-button').translate_delim(value);
+            var translated = langcodeButton.translate_delim(value);
             this.ui.find('.lang-text').remove();
             if (translated.lang) {
                 this.ui.css("position", "relative");
-                var langcode_button = hqImport('hqwebapp/js/ui_elements/ui-element-langcode-button').new(
+                var button = langcodeButton.new(
                     $('<a href="#" class="btn btn-info btn-xs lang-text" style="position: absolute; top: 6px; right: 6px;" />'),
                     translated.lang
                 );
-                this.ui.append(langcode_button.button);
+                this.ui.append(button.button);
                 this.setPlaceholderValue(translated.value);
                 this.$edit_view.change(function () {
-                    if ($(this).val() === "")
-                        langcode_button.button.show();
-                    else
-                        langcode_button.button.hide();
+                    if ($(this).val() === "") {
+                        button.button.show();
+                    } else {
+                        button.button.hide();
+                    }
                 });
             } else
                 this.setElemValue(translated.value);
