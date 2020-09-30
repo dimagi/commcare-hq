@@ -47,6 +47,9 @@ Linked domains share configuration data. Supported data types are defined in
 - Feature flags and privileges
 - Case search settings
 - Data dictionary
+- Dialer settings
+- OTP Pass-through Settings
+- Signed Callout
 
 Of these, apps, keywords, and reports need to be linked individually, from the app settings, keywords, and edit report UIs, and are
 overwritten individually. The rest of the data types are overwritten as entire blocks: for example, you can't
