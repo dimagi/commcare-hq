@@ -18,8 +18,6 @@ DATABASES = {
     }
 }
 
-SYNCLOGS_SQL_DB_ALIAS = 'default'
-
 USE_PARTITIONED_DATABASE = False
 
 if USE_PARTITIONED_DATABASE:
@@ -133,15 +131,6 @@ _ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 #     'store_pass': "*******",
 #     'key_pass': "*******",
 # }
-
-####### Touchforms config - for CloudCare #######
-
-XFORMS_PLAYER_URL = 'http://127.0.0.1:4444'
-
-# email and password for an admin django user, such as one created with
-# ./manage.py make_superuser <email>
-TOUCHFORMS_API_USER = 'admin@example.com'
-TOUCHFORMS_API_PASSWORD = 'password'
 
 
 ####### Misc / HQ-specific Config ########

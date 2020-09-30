@@ -120,7 +120,6 @@ from corehq.const import (
     USER_DATE_FORMAT,
 )
 from corehq.toggles import (
-    CUSTOM_DATA_FIELDS_PROFILES,
     FILTERED_BULK_USER_DOWNLOAD,
     TWO_STAGE_USER_PROVISIONING,
 )
@@ -937,7 +936,7 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
         return super(CreateCommCareUserModal, self).dispatch(request, *args, **kwargs)
 
     def render_form(self, status):
-        if CUSTOM_DATA_FIELDS_PROFILES.enabled(self.domain):
+        if domain_has_privilege(self.domain, privileges.APP_USER_PROFILES):
             return self.render_json_response({
                 "status": "failure",
                 "form_html": "<div class='alert alert-danger'>{}</div>".format(_("""
