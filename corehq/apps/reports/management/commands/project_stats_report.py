@@ -169,6 +169,7 @@ class Command(BaseCommand):
         suffix = ''
         if case_type:
             suffix = '(case type: %s)' % case_type
+        self.stdout.write('Cases created per user (estimate)')
         self._print_table(['Month', 'Cases created per user %s' % suffix], final_stats)
 
     def _print_table(self, headers, rows):
@@ -211,6 +212,7 @@ class Command(BaseCommand):
         for month, case_count_list in sorted(list(stats.items()), key=lambda r: r[0]):
             final_stats.append((month, sum(case_count_list) // len(case_count_list)))
 
+        self.stdout.write('Cases updated per user (estimate)')
         self._print_table(['Month', 'Cases updated per user'], final_stats)
 
     def _ledgers_per_case(self):
@@ -234,7 +236,7 @@ class Command(BaseCommand):
             self.stdout.write("Domain has no ledgers")
             return
 
-        avg_ledgers_per_case = ledger_count // len(case_ids)
+        avg_ledgers_per_case = ledger_count / len(case_ids)
         case_types_result = CaseES(es_instance_alias=ES_EXPORT_INSTANCE)\
             .domain(self.domain).case_ids(case_ids)\
             .aggregation(TermsAggregation('types', 'type'))\
@@ -286,6 +288,7 @@ class Command(BaseCommand):
         for month, transaction_count_list in sorted(list(stats.items()), key=lambda r: r[0]):
             final_stats.append((month.isoformat(), sum(transaction_count_list) // len(transaction_count_list)))
 
+        self.stdout.write('Ledger updates per case')
         self._print_table(['Month', 'Ledgers updated per case'], final_stats)
 
     def _case_to_case_index_ratio(self):
@@ -298,7 +301,7 @@ class Command(BaseCommand):
         index_query = CommCareCaseIndexSQL.objects.using(db_name).filter(domain=self.domain)
         case_count = estimate_row_count(case_query, db_name)
         case_index_count = estimate_row_count(index_query, db_name)
-        self._print_value('Ratio of cases to case indices', case_count // float(case_index_count))
+        self._print_value('Ratio of cases to case indices: 1 : ', case_index_count / case_count)
 
     def _attachment_sizes(self):
         if not should_use_sql_backend(self.domain):
@@ -320,6 +323,7 @@ class Command(BaseCommand):
                 ORDER BY content_type, bucket
             """, [self.domain])
 
+            self.stdout.write('Form attachment sizes (bytes)')
             self._print_table(
                 ['Content Type', 'Count', 'Bucket range', 'Bucket (1-10)'],
                 [
@@ -357,6 +361,7 @@ class Command(BaseCommand):
             for datasource in static_datasources + dynamic_datasources
         ], key=lambda r: r[-1])
 
+        self.stdout.write('UCR datasource sizes')
         self._print_table(
             ['Datasource name', 'Row count (approximate)', 'Doc type', 'Size', 'Size (bytes)'],
             rows

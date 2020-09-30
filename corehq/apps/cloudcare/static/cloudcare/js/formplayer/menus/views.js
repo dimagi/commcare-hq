@@ -98,10 +98,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 environment: FormplayerFrontend.getChannel().request('currentUser').environment,
             };
         },
-        childViewOptions: function (model, index) {
+        childViewOptions: function (model) {
             return {
                 sessionId: this.options.sessionId,
-                menuIndex: index,
+                menuIndex: this.collection.indexOf(model),
             };
         },
     });

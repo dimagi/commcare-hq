@@ -349,6 +349,7 @@ class RepeaterTest(BaseRepeaterTest):
     @run_with_all_backends
     def test_automatic_cancel_repeat_record(self):
         repeat_record = self.case_repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
+        repeat_record = RepeatRecord.get(repeat_record.record_id)
         self.assertEqual(1, repeat_record.overall_tries)
         with patch('corehq.motech.repeaters.models.simple_post', side_effect=Exception('Boom!')):
             for __ in range(repeat_record.max_possible_tries - repeat_record.overall_tries):
@@ -641,6 +642,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
     @run_with_all_backends
     def test_failure(self):
         repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
+        repeat_record = RepeatRecord.get(repeat_record.record_id)
         with patch('corehq.motech.repeaters.models.simple_post', side_effect=Exception('Boom!')):
             repeat_record.fire()
 
@@ -650,6 +652,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
     @run_with_all_backends
     def test_success(self):
         repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
+        repeat_record = RepeatRecord.get(repeat_record.record_id)
         # Should be marked as successful after a successful run
         with patch('corehq.motech.repeaters.models.simple_post') as mock_simple_post:
             mock_simple_post.return_value.status_code = 200
@@ -773,6 +776,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
     @run_with_all_backends
     def test_new_format_payload(self):
         repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
+        repeat_record = RepeatRecord.get(repeat_record.record_id)
         with patch('corehq.motech.repeaters.models.simple_post') as mock_post, \
                 patch.object(ConnectionSettings, 'get_auth_manager') as mock_manager:
             mock_post.return_value.status_code = 200
