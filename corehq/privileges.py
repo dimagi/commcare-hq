@@ -76,6 +76,8 @@ DATA_FORWARDING = 'data_forwarding'
 
 PROJECT_ACCESS = 'project_access'
 
+APP_USER_PROFILES = 'app_user_profiles'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -117,6 +119,7 @@ MAX_PRIVILEGES = [
     ODATA_FEED,
     DATA_FORWARDING,
     PROJECT_ACCESS,
+    APP_USER_PROFILES,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -170,4 +173,5 @@ class Titles(object):
             ODATA_FEED: _('Power BI / Tableau Integration'),
             DATA_FORWARDING: _("Data Forwarding"),
             PROJECT_ACCESS: _("Project Features"),
+            APP_USER_PROFILES: _("App User Profiles"),
         }.get(privilege, privilege)

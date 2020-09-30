@@ -1,4 +1,5 @@
 import functools
+import mock
 import uuid
 
 
@@ -7,6 +8,7 @@ from django.test import SimpleTestCase
 from corehq.util.es.elasticsearch import ConnectionError
 
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.hqadmin.views.data import lookup_doc_in_es
 from corehq.elastic import get_es_new
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
@@ -157,6 +159,11 @@ class ElasticPillowTest(SimpleTestCase):
                 .format(disallowed_setting))
 
 
+TEST_ES_META = {
+    TEST_INDEX_INFO.index: TEST_INDEX_INFO
+}
+
+
 @es_test
 class TestSendToElasticsearch(SimpleTestCase):
 
@@ -173,9 +180,14 @@ class TestSendToElasticsearch(SimpleTestCase):
     def tearDown(self):
         ensure_index_deleted(self.index)
 
+    @mock.patch('corehq.apps.hqadmin.views.data.ES_META', TEST_ES_META)
+    @mock.patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
+    @mock.patch('corehq.elastic.ES_META', TEST_ES_META)
     def test_create_doc(self):
         doc = {'_id': uuid.uuid4().hex, 'doc_type': 'MyCoolDoc', 'property': 'foo'}
         self._send_to_es_and_check(doc)
+        res = lookup_doc_in_es(doc['_id'], self.index)
+        self.assertEqual(res, doc)
 
     def _send_to_es_and_check(self, doc, update=False, es_merge_update=False,
                               delete=False, esgetter=None):

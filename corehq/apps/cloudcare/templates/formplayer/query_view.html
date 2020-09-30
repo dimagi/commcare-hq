@@ -1,4 +1,5 @@
 {% load hq_shared_tags %}
+{% load i18n %}
 
 <script type="text/template" id="query-view-list-template">
   <form>
@@ -8,7 +9,7 @@
       </tbody>
     </table>
     <button class="btn btn-default" type="submit" id="query-submit-button">
-      <div>Submit</div>
+      <div>{% trans "Submit" %}</div>
     </button>
   </form>
 </script>

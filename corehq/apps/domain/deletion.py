@@ -188,7 +188,6 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('sms', 'MessagingSubEvent', 'parent__domain'),
     ModelDeletion('sms', 'MessagingEvent', 'domain'),
     ModelDeletion('sms', 'QueuedSMS', 'domain'),
-    ModelDeletion('sms', 'SelfRegistrationInvitation', 'domain'),
     CustomDeletion('sms', _delete_domain_backend_mappings),
     ModelDeletion('sms', 'MobileBackendInvitation', 'domain'),
     CustomDeletion('sms', _delete_domain_backends),

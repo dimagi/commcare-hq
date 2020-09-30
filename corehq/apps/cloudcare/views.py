@@ -68,7 +68,6 @@ from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.decorators import (
     use_datatables,
     use_jquery_ui,
-    use_legacy_jquery,
     waf_allow)
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.formdetails import readable
@@ -97,7 +96,6 @@ class FormplayerMain(View):
     urlname = 'formplayer_main'
 
     @use_datatables
-    @use_legacy_jquery
     @use_jquery_ui
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
@@ -231,10 +229,6 @@ class FormplayerMainPreview(FormplayerMain):
     preview = True
     urlname = 'formplayer_main_preview'
 
-    @use_legacy_jquery
-    def dispatch(self, request, *args, **kwargs):
-        return super(FormplayerMain, self).dispatch(request, *args, **kwargs)
-
     def fetch_app(self, domain, app_id):
         return get_current_app_doc(domain, app_id)
 
@@ -244,7 +238,6 @@ class FormplayerPreviewSingleApp(View):
     urlname = 'formplayer_single_app'
 
     @use_datatables
-    @use_legacy_jquery
     @use_jquery_ui
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
@@ -295,7 +288,6 @@ class PreviewAppView(TemplateView):
     template_name = 'preview_app/base.html'
     urlname = 'preview_app'
 
-    @use_legacy_jquery
     def get(self, request, *args, **kwargs):
         app = get_app(request.domain, kwargs.pop('app_id'))
         return self.render_to_response({
@@ -362,7 +354,7 @@ class LoginAsUsers(View):
         user = CouchUser.wrap_correctly(user_json)
         formatted_user = {
             'username': user.raw_username,
-            'customFields': user.user_data,
+            'customFields': user.metadata,
             'first_name': user.first_name,
             'last_name': user.last_name,
             'phoneNumbers': user.phone_numbers,

@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 
+from corehq.apps.domain_migration_flags.api import all_domains_with_migrations_in_progress
 from corehq.util.metrics import metrics_counter, metrics_histogram_timer
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
@@ -94,13 +95,14 @@ def _filter_by_hash(configs, ucr_division):
     return filtered_configs
 
 
-def _filter_missing_domains(configs):
+def _filter_domains_to_skip(configs):
     """Return a list of configs whose domain exists on this environment"""
-    domain_names = [config.domain for config in configs if config.is_static]
+    domain_names = list({config.domain for config in configs if config.is_static})
     existing_domains = list(get_domain_ids_by_names(domain_names))
+    migrating_domains = all_domains_with_migrations_in_progress()
     return [
         config for config in configs
-        if not config.is_static or config.domain in existing_domains
+        if config.domain not in migrating_domains and (not config.is_static or config.domain in existing_domains)
     ]
 
 
@@ -162,7 +164,7 @@ class ConfigurableReportTableManagerMixin(object):
         elif self.ucr_division:
             configs = _filter_by_hash(configs, self.ucr_division)
 
-        configs = _filter_missing_domains(configs)
+        configs = _filter_domains_to_skip(configs)
         configs = _filter_invalid_config(configs)
 
         return configs

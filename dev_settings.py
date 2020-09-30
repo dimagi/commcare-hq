@@ -96,7 +96,7 @@ PILLOWTOP_MACHINE_ID = 'testhq'  # for tests
 #  make celery synchronous
 CELERY_TASK_ALWAYS_EAGER = True
 # Fail hard in tasks so you get a traceback
-CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
+CELERY_TASK_EAGER_PROPAGATES = True
 
 # default inactivity timeout to 1 year
 INACTIVITY_TIMEOUT = 60 * 24 * 365

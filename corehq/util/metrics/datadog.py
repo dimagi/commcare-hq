@@ -33,13 +33,6 @@ class DatadogMetrics(HqMetrics):
     """
 
     def __init__(self):
-        if settings.UNIT_TESTING or settings.DEBUG or 'ddtrace.contrib.django' not in settings.INSTALLED_APPS:
-            try:
-                from ddtrace import tracer
-                tracer.enabled = False
-            except ImportError:
-                pass
-
         if settings.UNIT_TESTING:
             return
 

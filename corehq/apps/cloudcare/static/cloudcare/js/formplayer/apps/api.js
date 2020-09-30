@@ -1,10 +1,9 @@
-/*global FormplayerFrontend */
-
 /**
  * Backbone model and functions for listing and selecting CommCare apps
  */
 
-FormplayerFrontend.module("Apps", function (Apps, FormplayerFrontend, Backbone) {
+hqDefine("cloudcare/js/formplayer/apps/api", function () {
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
     var appsPromiseByRestoreAs = {};
     var appsByRestoreAs = {};
     var predefinedAppsPromise;
@@ -26,14 +25,14 @@ FormplayerFrontend.module("Apps", function (Apps, FormplayerFrontend, Backbone) 
         return predefinedAppsPromise;
     }
 
-    Apps.API = {
+    var API = {
         primeApps: function (restoreAs, apps) {
             appsPromiseByRestoreAs[restoreAs] = predefinedAppsPromise = $.Deferred().resolve(apps);
         },
         getAppEntities: function () {
             var appsPromise,
-                restoreAs = FormplayerFrontend.request('currentUser').restoreAs,
-                singleAppMode = FormplayerFrontend.request('currentUser').displayOptions.singleAppMode;
+                restoreAs = FormplayerFrontend.getChannel().request('currentUser').restoreAs,
+                singleAppMode = FormplayerFrontend.getChannel().request('currentUser').displayOptions.singleAppMode;
             if (singleAppMode) {
                 appsPromise = fetchPredefinedApps();
             } else {
@@ -41,27 +40,29 @@ FormplayerFrontend.module("Apps", function (Apps, FormplayerFrontend, Backbone) 
             }
             return appsPromise.pipe(function (apps) {
                 appsByRestoreAs[restoreAs] = apps;
-                return new FormplayerFrontend.Apps.Collections.App(apps);
+                return hqImport("cloudcare/js/formplayer/apps/collections")(apps);
             });
         },
-        getAppEntity: function (app_id) {
-            var restoreAs = FormplayerFrontend.request('currentUser').restoreAs;
+        getAppEntity: function (id) {
+            var restoreAs = FormplayerFrontend.getChannel().request('currentUser').restoreAs;
             var apps = appsByRestoreAs[restoreAs];
             if (!apps) {
                 console.warn("getAppEntity is returning null. If the app_id is correct, " +
                              "it may have been called before getAppEntities populated it asynchronously.");
                 return null;
             }
-            var appCollection = new FormplayerFrontend.Apps.Collections.App(apps);
-            return appCollection.get(app_id);
+            var appCollection = hqImport("cloudcare/js/formplayer/apps/collections")(apps);
+            return appCollection.get(id);
         },
     };
 
-    FormplayerFrontend.reqres.setHandler("appselect:apps", function () {
-        return Apps.API.getAppEntities();
+    FormplayerFrontend.getChannel().reply("appselect:apps", function () {
+        return API.getAppEntities();
     });
 
-    FormplayerFrontend.reqres.setHandler("appselect:getApp", function (app_id) {
-        return Apps.API.getAppEntity(app_id);
+    FormplayerFrontend.getChannel().reply("appselect:getApp", function (id) {
+        return API.getAppEntity(id);
     });
+
+    return API;
 });
