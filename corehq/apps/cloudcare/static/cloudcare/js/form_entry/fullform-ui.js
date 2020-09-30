@@ -314,12 +314,12 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
         };
 
         self.afterRender = function () {
-            $(".help-text-trigger").click(function (event) {
+            $(document).on("click", ".help-text-trigger", function (event) {
                 var container = $(event.currentTarget).closest(".caption");
                 container.find(".modal").modal('show');
             });
 
-            $(".unsupported-question-type-trigger").click(function () {
+            $(document).on("click", ".unsupported-question-type-trigger", function (event) {
                 var container = $(event.currentTarget).closest(".widget");
                 container.find(".modal").modal('show');
             });
