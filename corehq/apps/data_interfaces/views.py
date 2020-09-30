@@ -605,7 +605,7 @@ def find_by_id(request, domain):
 class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     template_name = 'data_interfaces/list_automatic_update_rules.html'
     urlname = 'automatic_update_rule_list'
-    page_title = ugettext_lazy("Automatically Close Cases")
+    page_title = ugettext_lazy("Automatically Update Cases")
 
     limit_text = ugettext_lazy("rules per page")
     empty_notification = ugettext_lazy("You have no case rules.")

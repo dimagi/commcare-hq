@@ -211,7 +211,7 @@ def force_int(value):
 def force_bool(value):
     if value is None:
         return None
-    elif value is 'false':
+    elif value == 'false':
         return False
     else:
         return bool(value)
