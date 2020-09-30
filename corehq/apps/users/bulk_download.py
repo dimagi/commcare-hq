@@ -70,7 +70,7 @@ def parse_users(group_memoizer, domain, user_filters, task=None, total_count=Non
         )
         role = user.get_role(domain)
         profile = None
-        if PROFILE_SLUG in user.metadata and toggles.CUSTOM_DATA_FIELDS_PROFILES.enabled(domain):
+        if PROFILE_SLUG in user.metadata and domain_has_privilege(domain, privileges.APP_USER_PROFILES):
             try:
                 profile = CustomDataFieldsProfile.objects.get(id=user.metadata[PROFILE_SLUG])
             except CustomDataFieldsProfile.DoesNotExist:
@@ -134,7 +134,7 @@ def parse_users(group_memoizer, domain, user_filters, task=None, total_count=Non
         'registered_on (read only)', 'last_submission (read only)', 'last_sync (read only)'
     ]
 
-    if toggles.CUSTOM_DATA_FIELDS_PROFILES.enabled(domain):
+    if domain_has_privilege(domain, privileges.APP_USER_PROFILES):
         user_headers += ['user_profile']
     user_data_fields = [f.slug for f in fields_definition.get_fields(include_system=False)]
     user_headers.extend(build_data_headers(user_data_fields))

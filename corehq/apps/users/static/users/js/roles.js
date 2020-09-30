@@ -218,7 +218,7 @@ hqDefine('users/js/roles',[
                         allowCheckboxPermission: null,
                     },
                     {
-                        showOption: self.DataFileDownloadEnabled,
+                        showOption: root.DataFileDownloadEnabled,
                         editPermission: self.permissions.edit_file_dropzone,
                         viewPermission: self.permissions.view_file_dropzone,
                         text: gettext("<strong>Dropzone</strong> &mdash; Upload and download files from the file Dropzone"),
@@ -234,7 +234,7 @@ hqDefine('users/js/roles',[
                         allowCheckboxPermission: null,
                     },
                     {
-                        showOption: self.ExportOwnershipEnabled,
+                        showOption: root.ExportOwnershipEnabled,
                         editPermission: self.permissions.edit_shared_exports,
                         viewPermission: null,
                         text: gettext("<strong>Shared Exports</strong> &mdash; access and edit the content and structure of shared exports"),

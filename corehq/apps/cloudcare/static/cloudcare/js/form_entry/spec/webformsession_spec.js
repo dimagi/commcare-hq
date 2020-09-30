@@ -1,7 +1,8 @@
 /* eslint-env mocha */
 
 describe('WebForm', function () {
-    var Const = hqImport("cloudcare/js/form_entry/const");
+    var Const = hqImport("cloudcare/js/form_entry/const"),
+        UI = hqImport("cloudcare/js/form_entry/fullform-ui");
 
     describe('TaskQueue', function () {
         var tq,
@@ -102,7 +103,7 @@ describe('WebForm', function () {
             // Setup stubs
             $.cookie = sinon.stub();
             sinon.stub(Utils, 'initialRender');
-            sinon.stub(window, 'getIx').callsFake(function () { return 3; });
+            sinon.stub(UI, 'getIx').callsFake(function () { return 3; });
         });
 
         afterEach(function () {
@@ -115,7 +116,7 @@ describe('WebForm', function () {
                 // the browser.
             }
             Utils.initialRender.restore();
-            getIx.restore();
+            UI.getIx.restore();
             $.unsubscribe();
         });
 

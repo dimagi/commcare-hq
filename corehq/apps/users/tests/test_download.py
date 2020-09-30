@@ -15,14 +15,16 @@ from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.bulk_download import parse_users
 from corehq.apps.user_importer.importer import GroupMemoizer
-from corehq.util.test_utils import flag_enabled
 
 
 class TestDownloadMobileWorkers(TestCase):
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.domain_obj = create_domain('bookshelf')
+
+        cls.domain = 'bookshelf'
+        cls.domain_obj = create_domain(cls.domain)
 
         cls.group_memoizer = GroupMemoizer(domain=cls.domain_obj.name)
         cls.group_memoizer.load_all()
@@ -94,24 +96,3 @@ class TestDownloadMobileWorkers(TestCase):
         self.assertTrue(spec['registered_on (read only)'].startswith(datetime.today().strftime("%Y-%m-%d")))
         self.assertEqual('', spec['data: _type'])
         self.assertEqual(1862, spec['data: born'])
-
-    @flag_enabled('CUSTOM_DATA_FIELDS_PROFILES')
-    def test_download_with_profile(self):
-        (headers, rows) = parse_users(self.group_memoizer, self.domain_obj.name, {})
-        self.assertIn('user_profile', headers)
-        self.assertIn('data: _type', headers)
-
-        rows = list(rows)
-        self.assertEqual(2, len(rows))
-
-        spec = dict(zip(headers, rows[0]))
-        self.assertEqual('edith', spec['username'])
-        self.assertEquals('', spec['user_profile'])
-        self.assertEqual('', spec['data: _type'])
-        self.assertEqual(1862, spec['data: born'])
-
-        spec = dict(zip(headers, rows[1]))
-        self.assertEqual('george', spec['username'])
-        self.assertEqual('Novelist', spec['user_profile'])
-        self.assertEqual('fiction', spec['data: _type'])
-        self.assertEqual(1849, spec['data: born'])
