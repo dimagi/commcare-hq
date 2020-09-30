@@ -24,6 +24,7 @@ from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils import is_commcarecase
+from corehq.apps.users.util import normalize_username
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.messaging.pillow import get_case_messaging_sync_pillow
 from corehq.messaging.scheduling.models import (
@@ -76,6 +77,9 @@ class SchedulingRecipientTest(TestCase):
             'role': ['nurse', 'pharmacist'],
         })
         cls.mobile_user5.save()
+
+        full_username = normalize_username('mobile', cls.domain)
+        cls.full_mobile_user = CommCareUser.create(cls.domain, full_username, 'abc', None, None)
 
         cls.definition = CustomDataFieldsDefinition(domain=cls.domain, field_type=UserFieldsView.field_type)
         cls.definition.save()
@@ -603,6 +607,79 @@ class SchedulingRecipientTest(TestCase):
             recipients = list(instance.expand_recipients())
             self.assertEqual(len(recipients), 1)
             self.assertEqual(recipients[0].case_id, case.case_id)
+
+    def test_username_case_property_recipient(self):
+        # test valid username
+        with create_case(
+                self.domain,
+                'person',
+                owner_id=self.city_location.location_id,
+                update={'recipient': 'mobile'}
+        ) as case:
+            instance = CaseTimedScheduleInstance(
+                domain=self.domain,
+                case_id=case.case_id,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER,
+                recipient_id='recipient'
+            )
+            self.assertEqual(instance.recipient.get_id, self.full_mobile_user.get_id)
+
+        # test invalid username
+        with create_case(
+                self.domain,
+                'person',
+                owner_id=self.city_location.location_id,
+                update={'recipient': 'mobile10'}
+        ) as case:
+            instance = CaseTimedScheduleInstance(
+                domain=self.domain,
+                case_id=case.case_id,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER,
+                recipient_id='recipient'
+            )
+            self.assertIsNone(instance.recipient)
+
+        # test no username
+        with create_case(
+                self.domain,
+                'person',
+                owner_id=self.city_location.location_id
+        ) as case:
+            instance = CaseTimedScheduleInstance(
+                domain=self.domain,
+                case_id=case.case_id,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_USER,
+                recipient_id='recipient'
+            )
+            self.assertIsNone(instance.recipient)
+
+    def test_email_case_property_recipient(self):
+        with create_case(
+                self.domain,
+                'person',
+                owner_id=self.city_location.location_id,
+                update={'recipient': 'fake@mail.com'}
+        ) as case:
+            instance = CaseTimedScheduleInstance(
+                domain=self.domain,
+                case_id=case.case_id,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL,
+                recipient_id='recipient'
+            )
+            self.assertEqual(instance.recipient, 'fake@mail.com')
+
+        with create_case(
+                self.domain,
+                'person',
+                owner_id=self.city_location.location_id
+        ) as case:
+            instance = CaseTimedScheduleInstance(
+                domain=self.domain,
+                case_id=case.case_id,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL,
+                recipient_id='recipient'
+            )
+            self.assertIsNone(instance.recipient)
 
     def create_user_case(self, user):
         create_case_kwargs = {
