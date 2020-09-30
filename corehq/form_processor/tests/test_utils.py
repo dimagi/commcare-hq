@@ -3,7 +3,7 @@ from collections import OrderedDict
 from django.test import SimpleTestCase
 
 from corehq.form_processor.exceptions import XFormQuestionValueNotFound
-from corehq.form_processor.utils.xform import build_form_xml_from_property_dict, get_node
+from corehq.form_processor.utils.xform import build_form_xml_from_property_dict, get_node, RE_DATETIME_MATCH
 from lxml import etree
 
 
@@ -82,3 +82,18 @@ class FormSubmissionBuilderTest(SimpleTestCase):
         self.assertEqual('remus', get_node(root, '/data/twin[2]/name').text)
         with self.assertRaises(XFormQuestionValueNotFound):
             get_node(root, '/data/has_attribute/@dirty')
+
+
+class TestDateTimeRegexMatch(SimpleTestCase):
+    def test_datetime_match(self):
+        cases = [
+            ('2015-04-03', False),
+            ('2013-03-09T06:30:09.007', True),
+            ('2013-03-09T06:30:09.007+03', True),
+            ('2013-03-09T06:30:09.007-0530', True),
+            ('351602061044374', False),
+            ('2015-01-01T12:00:00.120054Z', True),
+            ('2015-10-01T14:05:45.087434Z', True),
+        ]
+        for candidate, expected in cases:
+            self.assertEqual(bool(RE_DATETIME_MATCH.match(candidate)), expected, candidate)

@@ -38,7 +38,6 @@ from .views.mobile.groups import (
 )
 from .views.mobile.users import (
     CommCareUsersLookup,
-    CommCareUserSelfRegistrationView,
     ConfirmBillingAccountForExtraUsersView,
     ConfirmTurnOffDemoModeView,
     CreateCommCareUserModal,
@@ -152,8 +151,6 @@ urlpatterns = [
         name=CreateCommCareUserModal.urlname),
     url(r'^commcare/confirm_charges/$', ConfirmBillingAccountForExtraUsersView.as_view(),
         name=ConfirmBillingAccountForExtraUsersView.urlname),
-    url(r'^commcare/register/(?P<token>[\w-]+)/$', CommCareUserSelfRegistrationView.as_view(),
-        name=CommCareUserSelfRegistrationView.urlname),
     url(r'^commcare/confirm_account/(?P<user_id>[\w-]+)/$', CommCareUserConfirmAccountView.as_view(),
         name=CommCareUserConfirmAccountView.urlname),
 ] + [

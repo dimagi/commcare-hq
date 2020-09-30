@@ -12,6 +12,8 @@ from corehq.motech.auth import AuthManager, BasicAuthManager, DigestAuthManager
 from corehq.motech.const import OAUTH2_PWD, REQUEST_TIMEOUT
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import get_basic_requests
+from corehq.motech.views import ConnectionSettingsListView
+from corehq.util.view_utils import absolute_reverse
 
 BASE_URL = 'http://dhis2.example.org/2.3.4/'
 USERNAME = 'admin'
@@ -141,6 +143,8 @@ class NotifyErrorTests(SimpleTestCase):
         self.mail_mock.delay.assert_not_called()
 
     def test_notify_error_address_list(self):
+        connection_settings_url = absolute_reverse(
+            ConnectionSettingsListView.urlname, args=[DOMAIN])
         req = get_basic_requests(
             DOMAIN, BASE_URL, USERNAME, PASSWORD,
             notify_addresses=['foo@example.com', 'bar@example.com']
@@ -150,8 +154,20 @@ class NotifyErrorTests(SimpleTestCase):
             'MOTECH Error',
             (
                 'foo\r\n'
+                '\r\n'
                 'Project space: test-domain\r\n'
-                'Remote API base URL: http://dhis2.example.org/2.3.4/'
+                'Remote API base URL: http://dhis2.example.org/2.3.4/\r\n'
+                '\r\n'
+                '*Why am I getting this email?*\r\n'
+                'This address is configured in CommCare HQ as a notification '
+                'address for integration errors.\r\n'
+                '\r\n'
+                '*How do I unsubscribe?*\r\n'
+                'Open Connection Settings in CommCare HQ '
+                f'({connection_settings_url}) and remove your email address '
+                'from the "Addresses to send notifications" field for remote '
+                'connections. If necessary, please provide an alternate '
+                'address.'
             ),
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=['foo@example.com', 'bar@example.com']

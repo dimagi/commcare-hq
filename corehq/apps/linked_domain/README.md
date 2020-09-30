@@ -41,6 +41,7 @@ Linked domains share configuration data. Supported data types are defined in
 - Applications
 - Reports
 - Lookup tables
+- Keywords
 - User roles
 - Custom data fields for users, products, and locations
 - Feature flags and privileges
@@ -50,7 +51,7 @@ Linked domains share configuration data. Supported data types are defined in
 - OTP Pass-through Settings
 - Signed Callout
 
-Of these, apps and reports need to be linked individually, from the app settings and edit report UIs, and are
+Of these, apps, keywords, and reports need to be linked individually, from the app settings, keywords, and edit report UIs, and are
 overwritten individually. The rest of the data types are overwritten as entire blocks: for example, you can't
 overwrite a single user role, you update them as one unit. Lookup tables are in between: you don't need to link
 them individually, but you can update them individually (due to performance concerns around updating them as a

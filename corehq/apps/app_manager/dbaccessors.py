@@ -308,22 +308,6 @@ def get_apps_by_id(domain, app_ids):
     return [get_correct_app_class(doc).wrap(doc) for doc in docs]
 
 
-def get_built_app_ids(domain):
-    """
-    Returns the app ids of all apps in the domain that have at least one build.
-    """
-    from .models import Application
-    result = Application.get_db().view(
-        'app_manager/saved_app',
-        startkey=[domain],
-        endkey=[domain, {}],
-        include_docs=False,
-    )
-    app_ids = [data.get('value', {}).get('copy_of') for data in result]
-    app_ids = list(set(app_ids))
-    return [app_id for app_id in app_ids if app_id]
-
-
 def get_build_ids_after_version(domain, app_id, version):
     """
     Returns ids of all an app's builds that are more recent than the given version.

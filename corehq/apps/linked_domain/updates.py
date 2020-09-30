@@ -31,6 +31,7 @@ from corehq.apps.linked_domain.const import (
     MODEL_CASE_SEARCH,
     MODEL_FIXTURE,
     MODEL_FLAGS,
+    MODEL_KEYWORD,
     MODEL_LOCATION_DATA,
     MODEL_PRODUCT_DATA,
     MODEL_USER_DATA,
@@ -77,6 +78,7 @@ from corehq.apps.linked_domain.remote_accessors import \
 from corehq.apps.linked_domain.remote_accessors import \
     get_hmac_callout_settings as remote_get_hmac_callout_settings
 from corehq.apps.linked_domain.ucr import update_linked_ucr
+from corehq.apps.linked_domain.keywords import update_keyword
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
 from corehq.apps.userreports.util import (
@@ -102,6 +104,7 @@ def update_model_type(domain_link, model_type, model_detail=None):
         MODEL_DIALER_SETTINGS: update_dialer_settings,
         MODEL_OTP_SETTINGS: update_otp_settings,
         MODEL_HMAC_CALLOUT_SETTINGS: update_hmac_callout_settings,
+        MODEL_KEYWORD: update_keyword,
     }.get(model_type)
 
     kwargs = model_detail or {}

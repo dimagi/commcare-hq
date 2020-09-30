@@ -13,6 +13,7 @@ MODEL_DATA_DICTIONARY = 'data_dictionary'
 MODEL_DIALER_SETTINGS = 'dialer_settings'
 MODEL_OTP_SETTINGS = 'otp_settings'
 MODEL_HMAC_CALLOUT_SETTINGS = 'hmac_callout_settings'
+MODEL_KEYWORD = 'keyword'
 
 LINKED_MODELS = [
     (MODEL_APP, ugettext_lazy('Application')),
@@ -28,6 +29,7 @@ LINKED_MODELS = [
     (MODEL_DIALER_SETTINGS, ugettext_lazy('Dialer Settings')),
     (MODEL_OTP_SETTINGS, ugettext_lazy('OTP Pass-through Settings')),
     (MODEL_HMAC_CALLOUT_SETTINGS, ugettext_lazy('Signed Callout')),
+    (MODEL_KEYWORD, ugettext_lazy('Keyword')),
 ]
 
 LINKED_MODELS_MAP = dict(LINKED_MODELS)
