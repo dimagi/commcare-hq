@@ -20,7 +20,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-09-30 14:53+0000\n"
+"POT-Creation-Date: 2020-09-30 18:51+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
 "Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2020\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
@@ -2646,19 +2646,19 @@ msgid ""
 "connection and retry when connectivity improves."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:270
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:277
 msgid "Submitting..."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:272
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:279
 msgid "Submit"
 msgstr "Soumettre"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:333
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:339
 msgid "An answer is required"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:335
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:341
 msgid "This answer is outside the allowed range."
 msgstr ""
 

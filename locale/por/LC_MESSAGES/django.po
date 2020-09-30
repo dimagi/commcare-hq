@@ -21,6 +21,8 @@
 # Ismaïla Diene <idiene@dimagi.com>, 2015
 # Jensen Daniel <jdaniel@dimagi.com>, 2019
 # Kelly Adediha <kadediha@dimagi.com>, 2015
+# Lauren Fox <lfox@dimagi.com>, 2015
+# Lourena Rosario <lrosario@dimagi.com>, 2020
 # Marco Horta <mhorta@dimagi.com>, 2015
 # modonnell <modonnell@dimagi.com>, 2014
 # Mohini Bhavsar <mbhavsar@dimagi.com>, 2015
@@ -29,16 +31,14 @@
 # Roland Kyedrebeogo <rkyedrebeogo@dimagi.com>, 2015
 # Rowena Luk <rluk@dimagi.com>, 2015
 # Sarah Sagan <ssagan@dimagi.com>, 2015
-# Tyler Wymer <twymer@dimagi.com>, 2014
-# Lauren Fox <lfox@dimagi.com>, 2015
-# Lourena Rosario <lrosario@dimagi.com>, 2020
 # Séfora Vazirna <seforan@gmail.com>, 2020
+# Tyler Wymer <twymer@dimagi.com>, 2014
 msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-09-30 14:52+0000\n"
-"PO-Revision-Date: 2020-09-29 20:05+0000\n"
+"POT-Creation-Date: 2020-09-30 18:51+0000\n"
+"PO-Revision-Date: 2020-09-30 18:19+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Portuguese (http://www.transifex.com/dimagi/commcare-hq/"
 "language/pt/)\n"
@@ -4183,7 +4183,6 @@ msgstr ""
 "Problema no carregamento do ficheiro suite do perfil do arquivo. O seu "
 "ficheiro do perfil está correto?"
 
-
 #: corehq/apps/app_manager/models.py:5736
 msgid ""
 "Copying the application succeeded, but the application will have errors "
@@ -6093,7 +6092,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/nav_menu_media_modals.html:74
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_diff_modal.html:12
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html:337
-#: corehq/apps/cloudcare/templates/form_entry/templates.html:125
+#: corehq/apps/cloudcare/templates/form_entry/templates.html:145
 #: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:259
 #: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html:432
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/case_management.html:44
@@ -10756,6 +10755,7 @@ msgid "Waiting to start"
 msgstr ""
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html:59
+#: corehq/apps/cloudcare/templates/form_entry/templates.html:61
 #: corehq/apps/export/templates/export/partials/export_download_progress.html:60
 #: corehq/ex-submodules/soil/templates/soil/partials/download_in_progress.html:24
 #: corehq/messaging/smsbackends/telerivet/templates/telerivet/partials/finish.html:6
@@ -10996,53 +10996,60 @@ msgstr ""
 msgid "Case Details for: "
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/form_entry/templates.html:165
+#: corehq/apps/cloudcare/templates/form_entry/templates.html:23
+#: corehq/apps/cloudcare/templates/form_entry/templates.html:37
+#, fuzzy
+#| msgid "Delete request"
+msgid "Delete repeat"
+msgstr "Manejo de Casos"
+
+#: corehq/apps/cloudcare/templates/form_entry/templates.html:185
 msgid "Sorry, this response is required!"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/form_entry/templates.html:190
+#: corehq/apps/cloudcare/templates/form_entry/templates.html:210
 msgid "This repeatable group is empty"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/form_entry/templates.html:194
+#: corehq/apps/cloudcare/templates/form_entry/templates.html:214
 msgid "Add new repeat"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/form_entry/templates.html:206
+#: corehq/apps/cloudcare/templates/form_entry/templates.html:226
 msgid "Your browser does not support audio"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/form_entry/templates.html:209
+#: corehq/apps/cloudcare/templates/form_entry/templates.html:229
 msgid "Your browser does not support video"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/form_entry/templates.html:257
+#: corehq/apps/cloudcare/templates/form_entry/templates.html:277
 msgid ""
 "\n"
 "      Sorry, web entry cannot support this type of question.\n"
 "    "
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/form_entry/templates.html:265
+#: corehq/apps/cloudcare/templates/form_entry/templates.html:285
 msgid ""
 "\n"
 "            This question will appear as follows in data exports.\n"
 "          "
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/form_entry/templates.html:272
+#: corehq/apps/cloudcare/templates/form_entry/templates.html:292
 msgid "OK"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/form_entry/templates.html:288
+#: corehq/apps/cloudcare/templates/form_entry/templates.html:308
 msgid "Clear map"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/form_entry/templates.html:294
+#: corehq/apps/cloudcare/templates/form_entry/templates.html:314
 msgid "Please wait while the map loads"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/form_entry/templates.html:303
+#: corehq/apps/cloudcare/templates/form_entry/templates.html:323
 #: corehq/apps/domain/forms.py:2290 corehq/apps/domain/forms.py:2414
 #: corehq/apps/domain/templates/domain/manage_releases_by_app_profile.html:18
 #: corehq/apps/reports/filters/simple.py:24
@@ -11052,14 +11059,14 @@ msgstr ""
 msgid "Search"
 msgstr "Procurar"
 
-#: corehq/apps/cloudcare/templates/form_entry/templates.html:331
+#: corehq/apps/cloudcare/templates/form_entry/templates.html:351
 #: corehq/apps/cloudcare/templates/formplayer/settings_view.html:38
 #: corehq/apps/domain/forms.py:2291 corehq/apps/domain/forms.py:2416
 #: corehq/apps/sms/templates/sms/chat_contacts.html:20
 msgid "Clear"
 msgstr ""
 
-#: corehq/apps/cloudcare/templates/form_entry/templates.html:388
+#: corehq/apps/cloudcare/templates/form_entry/templates.html:408
 msgid "24-hour clock"
 msgstr ""
 
@@ -22549,7 +22556,7 @@ msgstr ""
 msgid "{} does not have permission to edit commcare users"
 msgstr ""
 
-#: corehq/apps/ota/views.py:224
+#: corehq/apps/ota/views.py:226
 msgid "Invalid restore as user {}"
 msgstr ""
 
@@ -41635,9 +41642,6 @@ msgstr ""
 
 #~ msgid "Advanced App Builder"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "Delete request"
-#~ msgstr "Manejo de Casos"
 
 #~ msgid "Existing Applications"
 #~ msgstr "Casos IRA Tratados"

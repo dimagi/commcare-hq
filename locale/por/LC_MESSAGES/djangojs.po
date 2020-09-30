@@ -4,21 +4,18 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 # Translators:
-# Dimagi Dev <devops@dimagi.com>, 2017
 # Jensen Daniel <jdaniel@dimagi.com>, 2019
 # Claire O'Grady <cogrady@dimagi.com>, 2019
-# Marco Horta <mhorta@dimagi.com>, 2019
-# Lauren Fox <lfox@dimagi.com>, 2019
-# Séfora Vazirna <seforan@gmail.com>, 2020
+# Dimagi Dev <devops@dimagi.com>, 2020
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-09-30 14:53+0000\n"
+"POT-Creation-Date: 2020-09-30 18:51+0000\n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Marco Horta <mhorta@dimagi.com>, 2019\n"
+"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2020\n"
 "Language-Team: Portuguese (https://www.transifex.com/dimagi/teams/9388/pt/)\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
@@ -2619,19 +2616,19 @@ msgid ""
 "connection and retry when connectivity improves."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:270
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:277
 msgid "Submitting..."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:272
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:279
 msgid "Submit"
 msgstr "Submeter"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:333
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:339
 msgid "An answer is required"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:335
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:341
 msgid "This answer is outside the allowed range."
 msgstr ""
 
