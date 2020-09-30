@@ -224,8 +224,6 @@ def release_domain(master_domain, linked_domain, username, models, build_apps=Fa
             elif model['type'] in flag_dependent_models:
                 errors = manager._release_flag_dependent_model(domain_link, model, manager.user,
                                                                flag_dependent_models[model['type']])
-            elif model['type'] == MODEL_CASE_SEARCH:
-                errors = manager._release_case_search(domain_link, model, manager.user)
             elif model['type'] == MODEL_KEYWORD:
                 errors = manager._release_keyword(domain_link, model)
             else:
