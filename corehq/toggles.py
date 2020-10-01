@@ -737,6 +737,14 @@ ROLE_WEBAPPS_PERMISSIONS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+ROLE_APP_ACCESS_PERMISSIONS = StaticToggle(
+    'role_app_access_permissions',
+    'ICDS: Toggle applications that a role would have access to',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description=("If this toggle is enabled for a domain then the users will not be allowed to log in if "
+    "they will have no role attached or their role is not configured to access a particular app"),
+)
 
 SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'search_claim',
