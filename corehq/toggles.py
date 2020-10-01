@@ -739,7 +739,7 @@ ROLE_WEBAPPS_PERMISSIONS = StaticToggle(
 
 ROLE_APP_ACCESS_PERMISSIONS = StaticToggle(
     'role_app_access_permissions',
-    'ICDS: Toggle applications that a role would have access to',
+    'ICDS: Permit roles to access specific applications only',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description=("If this toggle is enabled for a domain then the users will not be allowed to log in if "
