@@ -218,15 +218,18 @@ def send_to_elasticsearch(index_info, doc_type, doc_id, es_getter, name, data=No
         try:
             doc_exists, source_index = _doc_exists_in_es(doc_id, doc_type, index_info, es_interface)
             target_index = source_index or alias
+            verify_alias = False if source_index else True
             if delete:
                 if doc_exists:
-                    es_interface.delete_doc(target_index, doc_type, doc_id)
+                    es_interface.delete_doc(target_index, doc_type, doc_id, verify_alias=verify_alias)
             elif doc_exists:
                 params = {'retry_on_conflict': 2}
                 if es_merge_update:
-                    es_interface.update_doc_fields(target_index, doc_type, doc_id, fields=data, params=params)
+                    es_interface.update_doc_fields(target_index, doc_type, doc_id, fields=data, params=params,
+                        verify_alias=verify_alias)
                 else:
-                    es_interface.update_doc(target_index, doc_type, doc_id, doc=data, params=params)
+                    es_interface.update_doc(target_index, doc_type, doc_id, doc=data, params=params,
+                        verify_alias=verify_alias)
             else:
                 es_interface.create_doc(alias, doc_type, doc_id, doc=data)
             break

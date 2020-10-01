@@ -198,6 +198,7 @@ def initialize_index(es, index_info):
 
 
 def get_ilm_tempalte(index_info):
+    from pillowtop.index_settings import INDEX_STANDARD_SETTINGS
     assert index_info.ilm_config
     mapping = transform_for_es7(index_info.mapping)
     mapping['_meta']['created'] = datetime.isoformat(datetime.utcnow())
@@ -207,6 +208,7 @@ def get_ilm_tempalte(index_info):
         "index.lifecycle.name": index_info.ilm_config,
         "index.lifecycle.rollover_alias": index_info.alias
     })
+    meta['settings'].update(INDEX_STANDARD_SETTINGS)
     return {
         "index_patterns": [index_info.ilm_index_patterns],
         "template": meta
