@@ -38,7 +38,7 @@ def check_authorization(domain, user, master_app_id):
         except DomainMembershipError:
             return HttpResponse(_('User is not a member of this project'), status=404)
         else:
-            if not (role and role.permissions.view_web_app(master_app_id)):
+            if not (role and role.permissions.can_access_app(master_app_id)):
                 return HttpResponse(_('User is not allowed on this app'), status=406)
 
 
