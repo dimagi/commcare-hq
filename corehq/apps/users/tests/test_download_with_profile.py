@@ -1,7 +1,3 @@
-import re
-
-from datetime import datetime
-
 from django.test import TestCase
 
 from corehq.apps.domain.shortcuts import create_domain
@@ -15,16 +11,20 @@ from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.bulk_download import parse_users
 from corehq.apps.user_importer.importer import GroupMemoizer
+from corehq.apps.accounting.models import SoftwarePlanEdition
+from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 
 
-class TestDownloadMobileWorkers(TestCase):
+class TestDownloadMobileWorkersWithProfile(TestCase, DomainSubscriptionMixin):
+    domain = 'bookshelf'
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-
-        cls.domain = 'bookshelf'
         cls.domain_obj = create_domain(cls.domain)
+
+        # APP_USER_PROFILES is on ENTERPRISE and above
+        cls.setup_subscription(cls.domain, SoftwarePlanEdition.ENTERPRISE)
 
         cls.group_memoizer = GroupMemoizer(domain=cls.domain_obj.name)
         cls.group_memoizer.load_all()
@@ -79,20 +79,25 @@ class TestDownloadMobileWorkers(TestCase):
         cls.user2.delete(deleted_by=None)
         cls.domain_obj.delete()
         cls.definition.delete()
+        cls.teardown_subscriptions()
         super().tearDownClass()
 
-    def test_download(self):
+    def test_download_with_profile(self):
         (headers, rows) = parse_users(self.group_memoizer, self.domain_obj.name, {})
-        self.assertNotIn('user_profile', headers)
+        self.assertIn('user_profile', headers)
+        self.assertIn('data: _type', headers)
 
         rows = list(rows)
         self.assertEqual(2, len(rows))
 
         spec = dict(zip(headers, rows[0]))
         self.assertEqual('edith', spec['username'])
-        self.assertTrue(re.search(r'^\*+$', spec['password']))
-        self.assertEqual('True', spec['is_active'])
-        self.assertEqual('Edith Wharton', spec['name'])
-        self.assertTrue(spec['registered_on (read only)'].startswith(datetime.today().strftime("%Y-%m-%d")))
+        self.assertEquals('', spec['user_profile'])
         self.assertEqual('', spec['data: _type'])
         self.assertEqual(1862, spec['data: born'])
+
+        spec = dict(zip(headers, rows[1]))
+        self.assertEqual('george', spec['username'])
+        self.assertEqual('Novelist', spec['user_profile'])
+        self.assertEqual('fiction', spec['data: _type'])
+        self.assertEqual(1849, spec['data: born'])
