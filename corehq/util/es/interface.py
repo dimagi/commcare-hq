@@ -96,9 +96,7 @@ class AbstractElasticsearchInterface(metaclass=abc.ABCMeta):
         # Use the index API request parameters.
         return {key: value for key, value in doc.items() if key != '_id'}
 
-    def delete_doc(self, index_alias, doc_type, doc_id, verify_alias=True):
-        if verify_alias:
-            self._verify_is_alias(index_alias)
+    def delete_doc(self, index_alias, doc_type, doc_id):
         self.es.delete(index_alias, doc_type, doc_id)
 
     def bulk_ops(self, actions, stats_only=False, **kwargs):
@@ -194,9 +192,7 @@ class ElasticsearchInterface7(AbstractElasticsearchInterface):
         self.es.update(index_alias, doc_id, body={"doc": self._without_id_field(fields)},
                        params=params or {})
 
-    def delete_doc(self, index_alias, doc_type, doc_id, verify_alias=True):
-        if verify_alias:
-            self._verify_is_alias(index_alias)
+    def delete_doc(self, index_alias, doc_type, doc_id):
         self.es.delete(index_alias, doc_id)
 
     def count(self, index_alias, doc_type, query):

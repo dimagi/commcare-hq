@@ -195,7 +195,7 @@ class TestSendToElasticsearch(SimpleTestCase):
             old_doc = self.es_interface.get_doc(self.es_alias, TEST_INDEX_INFO.type, doc['_id'])
 
         send_to_elasticsearch(
-            alias=self.es_alias,
+            TEST_INDEX_INFO,
             doc_type=TEST_INDEX_INFO.type,
             doc_id=doc['_id'],
             es_getter=esgetter or get_es_new,
