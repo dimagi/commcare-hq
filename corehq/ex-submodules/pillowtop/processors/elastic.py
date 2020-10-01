@@ -12,6 +12,7 @@ from corehq.util.es.elasticsearch import (
 )
 from corehq.util.es.interface import ElasticsearchInterface
 from corehq.util.metrics import metrics_histogram_timer
+from corehq.util.quickcache import quickcache
 
 from pillowtop.exceptions import BulkDocException, PillowtopIndexingError
 from pillowtop.logger import pillow_logging
@@ -161,6 +162,41 @@ class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
         return retry_changes, error_changes
 
 
+@quickcache(['alias'], memoize_timeout=24 * 60 * 60, timeout=24 * 60 * 60)
+def _get_indices_by_alias(alias):
+    # The cache is not invalidated. So be cautious when using this.
+    #   This designed to be used with ILM indices, where index names
+    #   are of a predictable format such as xforms_2016-07-07-000002, xforms_2016-07-07-000001 etc
+    from corehq.elastic import get_es_new
+    es = get_es_new()
+    return list(es.indices.get_alias(alias))
+
+
+def _doc_exists_in_es(doc_id, doc_type, index_info, es_interface):
+    # for ILM indices returns a tuple of (whether doc exists, the index that the doc is found in)
+    # for normal indices returns a tuple of (whether doc exists, None)
+    if not index_info.ilm_config:
+        return es_interface.doc_exists(index_info.alias, doc_id, doc_type), None
+    # exists/get queries doesn't work against aliases
+    #   so query all backing indices
+    if settings.UNIT_TESTING:
+        _get_indices_by_alias.clear(index_info.alias)
+    indices = _get_indices_by_alias(index_info.alias)
+    # todo; _get_indices_by_alias could be stale
+    #   so we could query the next index based on pattern even if it doesn't exist
+    doc_exists = False
+    found_in = None
+    for index in indices:
+        exists = es_interface.doc_exists(index, doc_id, doc_type)
+        if exists and doc_exists:
+            raise PillowtopIndexingError(
+                f"The document {doc_id} is found in more than one indices {found_in}, {index}")
+        else:
+            doc_exists = True
+            found_in = index
+    return doc_exists, found_in
+
+
 def send_to_elasticsearch(index_info, doc_type, doc_id, es_getter, name, data=None,
                           delete=False, es_merge_update=False):
     """
@@ -168,26 +204,29 @@ def send_to_elasticsearch(index_info, doc_type, doc_id, es_getter, name, data=No
     kwargs:
         es_merge_update: Set this to True to use Elasticsearch.update instead of Elasticsearch.index
             which merges existing ES doc and current update. If this is set to False, the doc will be replaced
-
+        is_ilm_update: Set this to True if the doc is being updated in an ILM index
     """
+
     alias = index_info.alias
     data = data if data is not None else {}
     current_tries = 0
     es_interface = ElasticsearchInterface(es_getter())
     retries = 1 if settings.UNIT_TESTING else MAX_RETRIES
     propagate_failure = settings.UNIT_TESTING
+
     while current_tries < retries:
         try:
-            doc_exists = es_interface.doc_exists(alias, doc_id, doc_type)
+            doc_exists, source_index = _doc_exists_in_es(doc_id, doc_type, index_info, es_interface)
+            target_index = source_index or alias
             if delete:
                 if doc_exists:
-                    es_interface.delete_doc(alias, doc_type, doc_id)
+                    es_interface.delete_doc(target_index, doc_type, doc_id)
             elif doc_exists:
                 params = {'retry_on_conflict': 2}
                 if es_merge_update:
-                    es_interface.update_doc_fields(alias, doc_type, doc_id, fields=data, params=params)
+                    es_interface.update_doc_fields(target_index, doc_type, doc_id, fields=data, params=params)
                 else:
-                    es_interface.update_doc(alias, doc_type, doc_id, doc=data, params=params)
+                    es_interface.update_doc(target_index, doc_type, doc_id, doc=data, params=params)
             else:
                 es_interface.create_doc(alias, doc_type, doc_id, doc=data)
             break

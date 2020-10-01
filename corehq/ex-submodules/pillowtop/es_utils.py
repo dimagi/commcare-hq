@@ -222,8 +222,8 @@ def setup_ilm_index(es, index_info):
     #   - Searches across all indices can be done based on rollover alais. The search
     #       result includes the source index of a result hit
     #   - Writes to the rollover alias are forwarded to just the latest index
-    #   - Update/get requests are permitted only on an index and not the alias
-    #       Any updates therefore must be performed after searching first
+    #   - Update/get/delete requests are permitted only on an index and not the alias
+
     # setup policy
     ilm_config = index_info.ilm_config
     try:

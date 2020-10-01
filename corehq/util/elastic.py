@@ -33,7 +33,11 @@ def delete_es_index(es_index):
     if es_index.startswith(TEST_ES_PREFIX):
         from corehq.elastic import get_es_new
         es = get_es_new()
-        es.indices.delete(index=es_index)
+        try:
+            es.indices.delete(index=es_index)
+        except Exception:
+            for index in list(es.indices.get_alias(es_index)):
+                es.indices.delete(index=index)
     else:
         raise DeleteProductionESIndex('You cannot delete a production index in tests!!')
 

@@ -9,7 +9,7 @@ from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new, send_to_elasticsearch, doc_exists_in_es
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
-from corehq.util.es.interface import ElasticsearchInterface
+from corehq.util.elastic import delete_es_index
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
 from pillowtop.es_utils import initialize_index_and_mapping
 
@@ -40,15 +40,11 @@ class XFormESTestCase(SimpleTestCase):
             cls.forms.append(form_pair)
             send_to_elasticsearch('forms', form_pair.json_form)
         # have to refresh the index to make sure changes show up
-        cls.es.indices.refresh(XFORM_INDEX_INFO.index)
+        cls.es.indices.refresh(XFORM_INDEX_INFO.alias)
 
     @classmethod
     def tearDownClass(cls):
-        interface = ElasticsearchInterface(cls.es)
-        for form in cls.forms:
-            interface.delete_doc(XFORM_INDEX_INFO.alias, XFORM_INDEX_INFO.type, form.wrapped_form.form_id)
-        cls.es.indices.refresh(XFORM_INDEX_INFO.index)
-        cls.forms = []
+        delete_es_index(XFORM_INDEX_INFO.alias)
         super(XFormESTestCase, cls).tearDownClass()
 
     def test_forms_are_in_index(self):
