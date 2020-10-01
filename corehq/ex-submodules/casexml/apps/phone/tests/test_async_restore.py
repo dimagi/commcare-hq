@@ -145,7 +145,6 @@ class AsyncRestoreTestCouchOnly(BaseAsyncRestoreTest):
         async_restore_task_id_cache.set_value('im going to be deleted by the next command')
         restore_config.timing_context.start()
         restore_config.timing_context("wait_for_task_to_start").start()
-        get_async_restore_payload.apply([restore_config])
         self.assertTrue(restore_config.timing_context.is_finished())
         self.assertIsNone(async_restore_task_id_cache.get_value())
 
@@ -153,7 +152,6 @@ class AsyncRestoreTestCouchOnly(BaseAsyncRestoreTest):
         restore_config = self._restore_config(is_async=True)
         restore_config.timing_context.start()
         restore_config.timing_context("wait_for_task_to_start").start()
-        get_async_restore_payload.apply([restore_config])
         self.assertTrue(restore_config.timing_context.is_finished())
         self.assertIsNotNone(restore_config.restore_state.current_sync_log)
 
