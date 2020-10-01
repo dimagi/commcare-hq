@@ -430,10 +430,10 @@ class DomainGlobalSettingsForm(forms.Form):
         return smart_str(data)
 
     def clean_default_geocoder_location(self):
-        data = self.cleaned_data.get('default_geocoder_location', '{}')
+        data = self.cleaned_data.get('default_geocoder_location')
         if isinstance(data, dict):
             return data
-        return json.loads(data)
+        return json.loads(data or '{}')
 
     def clean(self):
         cleaned_data = super(DomainGlobalSettingsForm, self).clean()
