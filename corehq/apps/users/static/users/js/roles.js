@@ -24,14 +24,13 @@ hqDefine('users/js/roles',[
                         };
                     }),
                 };
-
-                data.webAppsPermissions = {
-                    all: data.permissions.view_web_apps,
-                    specific: ko.utils.arrayMap(root.webAppsList, function (app) {
+                data.appAccessPermissions = {
+                    all: data.permissions.access_all_apps,
+                    specific: ko.utils.arrayMap(root.appsList, function (app) {
                         return {
                             path: app._id,
                             name: app.name,
-                            value: data.permissions.view_web_apps_list.indexOf(app._id) !== -1,
+                            value: data.permissions.allowed_app_list.indexOf(app._id) !== -1,
                         };
                     }),
                 };
@@ -282,8 +281,8 @@ hqDefine('users/js/roles',[
                 });
                 data.permissions.view_reports = data.reportPermissions.all;
 
-                data.permissions.view_web_apps = data.webAppsPermissions.all;
-                data.permissions.view_web_apps_list = ko.utils.arrayMap(ko.utils.arrayFilter(data.webAppsPermissions.specific, function (app) {
+                data.permissions.access_all_apps = data.appAccessPermissions.all;
+                data.permissions.allowed_app_list = ko.utils.arrayMap(ko.utils.arrayFilter(data.appAccessPermissions.specific, function (app) {
                     return app.value;
                 }), function (app) {
                     return app.path;
