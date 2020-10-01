@@ -9,16 +9,17 @@ hqDefine("cloudcare/js/form_entry/task_queue", function () {
         self.queue = [];
 
         self.execute = function (name) {
+console.log("Executing any " + name + " tasks");
             var task,
                 idx;
             if (name) {
-                idx = _.indexOf(_.pluck(this.queue, 'name'), name);
+                idx = _.indexOf(_.pluck(self.queue, 'name'), name);
                 if (idx === -1) {
                     return;
                 }
-                task = this.queue.splice(idx, 1)[0];
+                task = self.queue.splice(idx, 1)[0];
             } else {
-                task = this.queue.shift();
+                task = self.queue.shift();
             }
             if (!task) {
                 return;
@@ -27,26 +28,36 @@ hqDefine("cloudcare/js/form_entry/task_queue", function () {
         };
 
         self.addTask = function (name, fn, parameters, thisArg) {
+console.log("Added task " + name);
             var task = {
                 name: name,
                 fn: fn,
                 parameters: parameters,
                 thisArg: thisArg,
             };
-            this.queue.push(task);
+            self.queue.push(task);
             return task;
         };
 
-        self.clearTasks = function (name) {
-            var idx;
-            if (name) {
-                idx = _.indexOf(_.pluck(this.queue, 'name'), name);
-                while (idx !== -1) {
-                    this.queue.splice(idx, 1);
-                    idx = _.indexOf(_.pluck(this.queue, 'name'), name);
+        // jls
+        //self.hasTask = function (name, parameters) {
+
+        self.clearTasks = function (name, args, max) {
+console.log("Clearing tasks of type " + name + ", at most " + max);
+            args = args || {};
+            var cleared = 0, idx, matchingTask;
+            if (name || !_.isEmpty(args)) {
+                while ((!max || cleared < max) && (matchingTask = _.find(self.queue, function (t) {
+                    var match = !name || name === t.name;
+                    match = match && _.isMatch(t.parameters, args);
+                    return match;
+                }))) {
+                    idx = _.indexOf(self.queue, matchingTask);
+                    self.queue.splice(idx, 1);
+                    cleared++;
                 }
             } else {
-                this.queue = [];
+                self.queue = [];
             }
         };
 

@@ -92,7 +92,9 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
         self.serverRequest = function (requestParams, successCallback, blocking, failureCallback, errorResponseCallback) {
             var self = this;
             var url = self.urls.xform;
-            if (requestParams.action === Const.SUBMIT && self.NUM_PENDING_REQUESTS) {
+            // jls
+console.log("entered serverRequest with a " + requestParams.action + " with params " + _.map((arguments[0] || {}), function (v, k) { return k + "=" + v; }).join(", "));
+            if (requestParams.action === Const.SUBMIT && self.NUM_PENDING_REQUESTS) {   // NUM_PENDING_REQUESTS is always 0, yes?
                 self.taskQueue.addTask(requestParams.action, self.serverRequest, arguments, self);
             }
 
@@ -114,6 +116,17 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
             this.numPendingRequests++;
             this.onLoading();
 
+            if (requestParams.action === Const.ANSWER) { // && this.numPendingRequests > 1) {
+                // jls TODO: always add the task, and let queue decide whether or not to kick it off
+                // and listen for a broadcast that can happen in handleSuccess/handleFailure, or make
+                // serverRequest return a promise and have the queue use .when to kick off the next task
+                self.taskQueue.addTask(requestParams.action, self.serverRequest, arguments, self);
+                return;
+                // jls...and return? and increment numPendingTasks?
+                // clear any other ANSWER requests with a matching arguments[0].ix
+            }
+
+console.log("sending ajax request for " + requestParams.action + " with params " + _.map((arguments[0] || {}), function (v, k) { return k + "=" + v; }).join(", "));
             $.ajax({
                 type: 'POST',
                 url: url + "/" + requestParams.action,
@@ -141,6 +154,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
          * @param {function} callback - callback to be called if no errors occured
          */
         self.handleSuccess = function (resp, action, successCallback, errorResponseCallback) {
+console.log("handling success for " + action);
             var self = this;
             errorResponseCallback = errorResponseCallback || function () { return true; };
             if (resp.status === 'error' || resp.error) {
@@ -167,12 +181,17 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
             this.blockingStatus = Const.BLOCK_NONE;
             $.publish('session.block', this.blockingStatus);
 
+            // jls: execute the next ANSWER request, then any SUBMIT request
             self.numPendingRequests--;
+console.log("remaining numPendingRequests = " + self.numPendingRequests);
             if (self.numPendingRequests === 0) {
                 self.onLoadingComplete();
                 self.taskQueue.execute(Const.SUBMIT);
                 // Remove any submission tasks that have been queued up from spamming the submit button
                 self.taskQueue.clearTasks(Const.SUBMIT);
+            } else {
+                self.taskQueue.clearTasks(Const.ANSWER, {}, 1);
+                self.taskQueue.execute(Const.ANSWER);
             }
         };
 
@@ -297,6 +316,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
             var answer = q.answer();
             var oneQuestionPerScreen = self.isOneQuestionPerScreen();
 
+            // jls
             this.serverRequest(
                 {
                     'action': Const.ANSWER,
