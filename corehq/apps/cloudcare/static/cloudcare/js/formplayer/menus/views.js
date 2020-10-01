@@ -444,6 +444,26 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         onClickHome: function () {
             FormplayerFrontend.trigger('navigateHome');
         },
+
+    });
+
+    var LanguageOptionView = Marionette.View.extend({
+        tagName: "li",
+        template: _.template($("#language-option-template").html() || ""),
+        events: {
+            'click': 'onChangeLang',
+        },
+        onChangeLang: function (e) {
+            var lang = e.target.id;
+            $.publish('formplayer.change_lang', lang);
+        },
+    });
+
+    var FormMenuView = Marionette.CollectionView.extend({
+        template: _.template($("#form-menu-template").html() || ""),
+        tagName: 'li',
+        childView: LanguageOptionView,
+        childViewContainer: 'ul',
     });
 
     var DetailView = Marionette.View.extend({
@@ -503,6 +523,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         buildCaseTileStyles: buildCaseTileStyles,
         BreadcrumbListView: function (options) {
             return new BreadcrumbListView(options);
+        },
+        FormMenuView: function (options) {
+            return new FormMenuView(options);
         },
         CaseListDetailView: function (options) {
             return new CaseListDetailView(options);
