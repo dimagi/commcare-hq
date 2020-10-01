@@ -129,7 +129,7 @@ class FormplayerMain(View):
             pass
         if role:
             apps = [_format_app(app) for app in apps
-                    if role.permissions.view_web_app(app['copy_of'] or app['_id'])]
+                    if role.permissions.can_access_app(app['copy_of'] or app['_id'])]
         apps = sorted(apps, key=lambda app: app['name'])
         return apps
 
@@ -253,7 +253,7 @@ class FormplayerPreviewSingleApp(View):
             raise Http404()
 
         role = request.couch_user.get_role(domain)
-        if role and not role.permissions.view_web_app(app.master_id):
+        if role and not role.permissions.can_access_app(app.master_id):
             raise Http404()
 
         def _default_lang():

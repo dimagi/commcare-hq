@@ -115,7 +115,7 @@ class ReportFixturesProvider(FixtureProvider):
         if app_aware_sync_app:
             apps = [app_aware_sync_app]
         elif (
-                toggles.ROLE_WEBAPPS_PERMISSIONS.enabled(restore_user.domain)
+                toggles.ROLE_APP_ACCESS_PERMISSIONS.enabled(restore_user.domain)
                 and restore_state.params.device_id
                 and "WebAppsLogin" in restore_state.params.device_id
         ):
@@ -123,7 +123,7 @@ class ReportFixturesProvider(FixtureProvider):
             role = restore_user.get_role(restore_user.domain)
             if role:
                 allowed_app_ids = [app['_id'] for app in get_brief_apps_in_domain(restore_user.domain)
-                                   if role.permissions.view_web_app(app['_id'])]
+                                   if role.permissions.can_access_app(app['_id'])]
                 apps = get_apps_by_id(restore_user.domain, allowed_app_ids)
             else:
                 # If there is no role, allow access to all apps
