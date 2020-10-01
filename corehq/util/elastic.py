@@ -35,9 +35,9 @@ def delete_es_index(es_index):
         es = get_es_new()
         try:
             es.indices.delete(index=es_index)
-        except Exception:
-            for index in list(es.indices.get_alias(es_index)):
-                es.indices.delete(index=index)
+        except NotFoundError:
+            # todo; cleanup ilm indices properly
+            es.indices.delete(index=es_index + "*")
     else:
         raise DeleteProductionESIndex('You cannot delete a production index in tests!!')
 
