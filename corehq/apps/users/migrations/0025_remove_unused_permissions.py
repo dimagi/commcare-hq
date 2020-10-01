@@ -15,17 +15,15 @@ def _remove_webapp_access_permissions(apps, schema_editor):
         reduce=False
     ).all()
     for role_doc in iter_docs(UserRole.get_db(), [r['id'] for r in roles]):
-        role = UserRole.wrap(role_doc)
-
         changed = False
-        if role.permissions.view_web_apps is not None:
-            role.permissions.pop('view_web_apps')
+        if role_doc['permissions'].get('view_web_apps', None) is not None:
+            role_doc['permissions'].pop('view_web_apps')
             changed = True
-        if role.permissions.view_web_apps_list:
-            role.permissions.pop('view_web_apps_list')
+        if role_doc['permissions'].get('view_web_apps_list', None):
+            role_doc['permissions'].pop('view_web_apps_list')
             changed = True
         if changed:
-            role.save()
+            UserRole.wrap(role_doc).save()
 
 
 @skip_on_fresh_install
