@@ -146,6 +146,9 @@ class Permissions(DocumentSchema):
     view_web_apps_list = StringListProperty(default=[])
     access_mobile_endpoints = BooleanProperty(default=True)
 
+    access_all_apps = BooleanProperty(default=True)
+    allowed_app_list = StringListProperty(default=[])
+
     view_file_dropzone = BooleanProperty(default=False)
     edit_file_dropzone = BooleanProperty(default=False)
     manage_releases = BooleanProperty(default=True)
@@ -171,6 +174,11 @@ class Permissions(DocumentSchema):
         if self.view_web_apps:
             return True
         return master_app_id in self.view_web_apps_list
+
+    def can_access_app(self, master_app_id):
+        if self.access_all_apps:
+            return True
+        return master_app_id in self.allowed_app_list
 
     def view_report(self, report, value=None):
         """Both a getter (when value=None) and setter (when value=True|False)"""
