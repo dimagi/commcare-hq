@@ -430,10 +430,10 @@ class DomainGlobalSettingsForm(forms.Form):
         return smart_str(data)
 
     def clean_default_geocoder_location(self):
-        data = self.cleaned_data.get('default_geocoder_location', '{}')
+        data = self.cleaned_data.get('default_geocoder_location')
         if isinstance(data, dict):
             return data
-        return json.loads(data)
+        return json.loads(data or '{}')
 
     def clean(self):
         cleaned_data = super(DomainGlobalSettingsForm, self).clean()
@@ -505,7 +505,7 @@ class DomainGlobalSettingsForm(forms.Form):
         domain.hr_name = self.cleaned_data['hr_name']
         domain.project_description = self.cleaned_data['project_description']
         domain.default_mobile_ucr_sync_interval = self.cleaned_data.get('mobile_ucr_sync_interval', None)
-        domain.default_geocoder_location = self.cleaned_data['default_geocoder_location']
+        domain.default_geocoder_location = self.cleaned_data.get('default_geocoder_location')
         try:
             self._save_logo_configuration(domain)
         except IOError as err:
