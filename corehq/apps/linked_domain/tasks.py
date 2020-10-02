@@ -165,7 +165,7 @@ The following linked project spaces received content:
 
     def _release_flag_dependent_model(self, domain_link, model, user, feature_flag):
         if not feature_flag.enabled(domain_link.linked_domain):
-            return self._error_tuple(_("Case claim flag is not on"))
+            return self._error_tuple(_("Feature flag for {} is not enabled").format(model['name']))
 
         return self._release_model(domain_link, model, user)
 

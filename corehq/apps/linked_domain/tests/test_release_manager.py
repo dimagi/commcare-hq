@@ -68,7 +68,7 @@ class TestReleaseManager(BaseLinkedAppsTest):
     def test_case_claim_off(self):
         self._assert_release([
             self._model_status(MODEL_CASE_SEARCH),
-        ], error="Case claim flag is not on")
+        ], error="Feature flag for Case Search Settings is not enabled")
 
     @flag_enabled('DATA_DICTIONARY')
     def test_data_dictionary_on(self):
@@ -79,7 +79,7 @@ class TestReleaseManager(BaseLinkedAppsTest):
     def test_data_dictionary_off(self):
         self._assert_release([
             self._model_status(MODEL_DATA_DICTIONARY),
-        ], error="Case claim flag is not on")
+        ], error="Feature flag for Data Dictionary is not enabled")
 
     @flag_enabled('WIDGET_DIALER')
     def test_widget_dialer_on(self):
@@ -90,7 +90,7 @@ class TestReleaseManager(BaseLinkedAppsTest):
     def test_widget_dialer_off(self):
         self._assert_release([
             self._model_status(MODEL_DIALER_SETTINGS),
-        ], error="Case claim flag is not on")
+        ], error="Feature flag for Dialer Settings is not enabled")
 
     @flag_enabled('GAEN_OTP_SERVER')
     def test_otp_server_on(self):
@@ -101,7 +101,7 @@ class TestReleaseManager(BaseLinkedAppsTest):
     def test_otp_server_off(self):
         self._assert_release([
             self._model_status(MODEL_OTP_SETTINGS),
-        ], error="Case claim flag is not on")
+        ], error="Feature flag for OTP Pass-through Settings is not enabled")
 
     @flag_enabled('HMAC_CALLOUT')
     def test_hmac_callout_on(self):
@@ -112,7 +112,7 @@ class TestReleaseManager(BaseLinkedAppsTest):
     def test_hmac_callout_off(self):
         self._assert_release([
             self._model_status(MODEL_HMAC_CALLOUT_SETTINGS),
-        ], error="Case claim flag is not on")
+        ], error="Feature flag for Signed Callout is not enabled")
 
     def test_bad_domain(self):
         self._assert_release([
