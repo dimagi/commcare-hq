@@ -79,6 +79,9 @@ def remove_from_queue(queued_sms):
             'icds_indicator': sms.custom_metadata['icds_indicator']
         })
     if sms.direction == OUTGOING and sms.processed and not sms.error:
+        if sms.domain == 'biyeun-sms-alerts':
+            from corehq.apps.hqwebapp.utils import sms_logging
+            sms_logging(f'attempting to create_billable_for_sms {sms}')
         create_billable_for_sms(sms)
         metrics_counter('commcare.sms.outbound_succeeded', tags=tags)
     elif sms.direction == OUTGOING:
