@@ -459,8 +459,16 @@ def send_to_sms_queue(queued_sms):
 def store_billable(self, msg):
     # debugged
     if not isinstance(msg, SMS):
-        raise Exception("Expected msg to be an SMS")
+        try:
+            from corehq.apps.hqwebapp.utils import sms_logging
+            sms_logging(f'store_billable, {self} serializer={self.serializer}')
+            msg = SMS.objects.get(couch_id=msg)
+        except Exception:
+            raise Exception(f"Expected msg to be an SMS, but received {msg}")
 
+    if msg.domain == 'biyeun-sms-alerts':
+        from corehq.apps.hqwebapp.utils import sms_logging
+        sms_logging(f'wooo! actually storing a billable for {msg.couch_id}')
     if msg.couch_id and not SmsBillable.objects.filter(log_id=msg.couch_id).exists():
         try:
             msg.text.encode('iso-8859-1')

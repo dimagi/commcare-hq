@@ -763,7 +763,10 @@ def create_billable_for_sms(msg, delay=True):
     try:
         from corehq.apps.sms.tasks import store_billable
         if delay:
-            store_billable.delay(msg)
+            if msg.domain == 'biyeun-sms-alerts':
+                store_billable.delay(msg.couch_id)
+            else:
+                store_billable.delay(msg)
         else:
             store_billable(msg)
     except Exception as e:
