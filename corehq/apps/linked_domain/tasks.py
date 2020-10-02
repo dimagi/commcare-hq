@@ -163,9 +163,9 @@ The following linked project spaces received content:
                 text=_('Could not find report. Please check that the report has been linked.'),
             )
 
-    def _release_case_search(self, domain_link, model, user):
-        if not toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain_link.linked_domain):
-            return self._error_tuple(_("Case claim flag is not on"))
+    def _release_flag_dependent_model(self, domain_link, model, user, feature_flag):
+        if not feature_flag.enabled(domain_link.linked_domain):
+            return self._error_tuple(_("Feature flag for {} is not enabled").format(model['name']))
 
         return self._release_model(domain_link, model, user)
 
@@ -209,6 +209,11 @@ def release_domain(master_domain, linked_domain, username, models, build_apps=Fa
                                            "was released to it.").format(master_domain, linked_domain))
         return manager.results()
 
+    flag_dependent_models = {'case_search_data': toggles.SYNC_SEARCH_CASE_CLAIM,
+                             'data_dictionary': toggles.DATA_DICTIONARY,
+                             'dialer_settings': toggles.WIDGET_DIALER,
+                             'otp_settings': toggles.GAEN_OTP_SERVER,
+                             'hmac_callout_settings': toggles.HMAC_CALLOUT}
     for model in models:
         errors = None
         try:
@@ -216,8 +221,9 @@ def release_domain(master_domain, linked_domain, username, models, build_apps=Fa
                 errors = manager._release_app(domain_link, model, manager.user, build_apps)
             elif model['type'] == MODEL_REPORT:
                 errors = manager._release_report(domain_link, model)
-            elif model['type'] == MODEL_CASE_SEARCH:
-                errors = manager._release_case_search(domain_link, model, manager.user)
+            elif model['type'] in flag_dependent_models:
+                errors = manager._release_flag_dependent_model(domain_link, model, manager.user,
+                                                               flag_dependent_models[model['type']])
             elif model['type'] == MODEL_KEYWORD:
                 errors = manager._release_keyword(domain_link, model)
             else:
