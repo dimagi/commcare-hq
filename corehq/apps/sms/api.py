@@ -758,4 +758,6 @@ def create_billable_for_sms(msg, delay=True):
         else:
             store_billable(msg)
     except Exception as e:
+        from corehq.apps.hqwebapp.utils import sms_logging
+        sms_logging(f'create_billable_for_sms error with delay={delay} and error={str(e)}')
         log_smsbillables_error("Errors Creating SMS Billable: %s" % e)
