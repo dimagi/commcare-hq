@@ -8,8 +8,12 @@ from corehq.apps.linked_domain.const import (
     MODEL_CASE_SEARCH,
     MODEL_FLAGS,
     MODEL_USER_DATA,
+    MODEL_DATA_DICTIONARY,
+    MODEL_DIALER_SETTINGS,
+    MODEL_OTP_SETTINGS,
+    MODEL_HMAC_CALLOUT_SETTINGS,
 )
-from corehq.apps.linked_domain.models import AppLinkDetail, DomainLink
+from corehq.apps.linked_domain.models import AppLinkDetail
 from corehq.apps.linked_domain.tasks import release_domain
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedAppsTest
 from corehq.apps.users.models import WebUser
@@ -64,6 +68,50 @@ class TestReleaseManager(BaseLinkedAppsTest):
     def test_case_claim_off(self):
         self._assert_release([
             self._model_status(MODEL_CASE_SEARCH),
+        ], error="Case claim flag is not on")
+
+    @flag_enabled('DATA_DICTIONARY')
+    def test_data_dictionary_on(self):
+        self._assert_release([
+            self._model_status(MODEL_DATA_DICTIONARY),
+        ])
+
+    def test_data_dictionary_off(self):
+        self._assert_release([
+            self._model_status(MODEL_DATA_DICTIONARY),
+        ], error="Case claim flag is not on")
+
+    @flag_enabled('WIDGET_DIALER')
+    def test_widget_dialer_on(self):
+        self._assert_release([
+            self._model_status(MODEL_DIALER_SETTINGS),
+        ])
+
+    def test_widget_dialer_off(self):
+        self._assert_release([
+            self._model_status(MODEL_DIALER_SETTINGS),
+        ], error="Case claim flag is not on")
+
+    @flag_enabled('GAEN_OTP_SERVER')
+    def test_otp_server_on(self):
+        self._assert_release([
+            self._model_status(MODEL_OTP_SETTINGS),
+        ])
+
+    def test_otp_server_off(self):
+        self._assert_release([
+            self._model_status(MODEL_OTP_SETTINGS),
+        ], error="Case claim flag is not on")
+
+    @flag_enabled('HMAC_CALLOUT')
+    def test_hmac_callout_on(self):
+        self._assert_release([
+            self._model_status(MODEL_HMAC_CALLOUT_SETTINGS),
+        ])
+
+    def test_hmac_callout_off(self):
+        self._assert_release([
+            self._model_status(MODEL_HMAC_CALLOUT_SETTINGS),
         ], error="Case claim flag is not on")
 
     def test_bad_domain(self):

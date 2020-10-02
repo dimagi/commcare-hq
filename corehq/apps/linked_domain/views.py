@@ -43,6 +43,10 @@ from corehq.apps.linked_domain.const import (
     MODEL_FIXTURE,
     MODEL_KEYWORD,
     MODEL_REPORT,
+    MODEL_DATA_DICTIONARY,
+    MODEL_DIALER_SETTINGS,
+    MODEL_OTP_SETTINGS,
+    MODEL_HMAC_CALLOUT_SETTINGS,
 )
 from corehq.apps.linked_domain.dbaccessors import (
     get_domain_master_link,
@@ -56,6 +60,9 @@ from corehq.apps.linked_domain.local_accessors import (
     get_toggles_previews,
     get_user_roles,
     get_data_dictionary,
+    get_dialer_settings,
+    get_otp_settings,
+    get_hmac_callout_settings,
 )
 from corehq.apps.linked_domain.models import (
     AppLinkDetail,
@@ -173,6 +180,24 @@ def get_latest_released_app_source(request, domain, app_id):
 @require_linked_domain
 def data_dictionary(request, domain):
     return JsonResponse(get_data_dictionary(domain))
+
+
+@login_or_api_key
+@require_linked_domain
+def dialer_settings(request, domain):
+    return JsonResponse(get_dialer_settings(domain))
+
+
+@login_or_api_key
+@require_linked_domain
+def otp_settings(request, domain):
+    return JsonResponse(get_otp_settings(domain))
+
+
+@login_or_api_key
+@require_linked_domain
+def hmac_callout_settings(request, domain):
+    return JsonResponse(get_hmac_callout_settings(domain))
 
 
 @require_can_edit_apps
@@ -298,6 +323,10 @@ class DomainLinkView(BaseAdminProjectSettingsView):
                 model not in ignore_models
                 and model not in (MODEL_APP, MODEL_FIXTURE, MODEL_REPORT, MODEL_KEYWORD)
                 and (model != MODEL_CASE_SEARCH or toggles.SYNC_SEARCH_CASE_CLAIM.enabled(self.domain))
+                and (model != MODEL_DATA_DICTIONARY or toggles.DATA_DICTIONARY.enabled(self.domain))
+                and (model != MODEL_DIALER_SETTINGS or toggles.WIDGET_DIALER.enabled(self.domain))
+                and (model != MODEL_OTP_SETTINGS or toggles.GAEN_OTP_SERVER.enabled(self.domain))
+                and (model != MODEL_HMAC_CALLOUT_SETTINGS or toggles.HMAC_CALLOUT.enabled(self.domain))
             ):
                 model_status.append({
                     'type': model,
