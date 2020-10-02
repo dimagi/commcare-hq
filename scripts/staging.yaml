@@ -64,6 +64,6 @@ branches:
   - ce/case-property-recipients # Cal 9/24
   # - cz/role-ui  # Norman 9/25
   - ce/skip-fixtures
-  - bmb/celery-4.4.7-rollback  # Biyeun Oct 1
+  - bmb/celery-debug  # Biyeun Oct 2
 
 submodules: {}
