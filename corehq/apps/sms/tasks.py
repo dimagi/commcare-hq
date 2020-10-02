@@ -351,6 +351,7 @@ class OutboundDailyCounter(object):
 
 @no_result_task(serializer='pickle', queue="sms_queue", acks_late=True)
 def process_sms(queued_sms_pk):
+    # debugged
     """
     queued_sms_pk - pk of a QueuedSMS entry
     """
@@ -420,10 +421,14 @@ def process_sms(queued_sms_pk):
                 try:
                     handle_incoming(msg)
                 except DelayProcessing:
-                    process_sms.apply_async([queued_sms_pk], countdown=60)
-                    if recipient_block:
-                        release_lock(recipient_lock, True)
-                    release_lock(message_lock, True)
+                    try:
+                        process_sms.apply_async([queued_sms_pk], countdown=60)
+                        if recipient_block:
+                            release_lock(recipient_lock, True)
+                        release_lock(message_lock, True)
+                    except Exception as e:
+                        from corehq.apps.hqwebapp.utils import sms_logging
+                        sms_logging(f'process_sms error inside of process_sms {str(e)}')
             else:
                 msg.set_system_error(SMS.ERROR_INVALID_DIRECTION)
                 remove_from_queue(msg)
@@ -439,12 +444,17 @@ def process_sms(queued_sms_pk):
 
 
 def send_to_sms_queue(queued_sms):
-    process_sms.apply_async([queued_sms.pk])
+    try:
+        process_sms.apply_async([queued_sms.pk])
+    except Exception as e:
+        from corehq.apps.hqwebapp.utils import sms_logging
+        sms_logging(f'process_sms error 2 send_to_sms_queue {str(e)}')
 
 
 @no_result_task(serializer='pickle', queue='background_queue', default_retry_delay=10 * 60,
                 max_retries=10, bind=True)
 def store_billable(self, msg):
+    # debugged
     if not isinstance(msg, SMS):
         raise Exception("Expected msg to be an SMS")
 
@@ -485,6 +495,7 @@ def clear_case_caches(case):
 @no_result_task(serializer='pickle', queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
                 default_retry_delay=5 * 60, max_retries=10, bind=True)
 def sync_case_phone_number(self, case):
+    # debugged
     try:
         clear_case_caches(case)
         _sync_case_phone_number(case)
@@ -595,6 +606,7 @@ def _sync_user_phone_numbers(couch_user_id):
 @no_result_task(serializer='pickle', queue='background_queue', acks_late=True,
                 default_retry_delay=5 * 60, max_retries=10, bind=True)
 def publish_sms_change(self, sms):
+    # debugged
     try:
         publish_sms_saved(sms)
     except Exception as e:
