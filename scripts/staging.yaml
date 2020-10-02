@@ -64,7 +64,6 @@ branches:
   - ce/case-property-recipients # Cal 9/24
   # - cz/role-ui  # Norman 9/25
   - ce/skip-fixtures
-  - smh/add_integration_models_to_linked_spaces # Steph Sept 30
   - bmb/celery-4.4.7-rollback  # Biyeun Oct 1
 
 submodules: {}
