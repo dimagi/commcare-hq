@@ -272,6 +272,9 @@ def queue_outgoing_sms(msg):
         msg_sent = send_message_via_backend(msg)
         msg.publish_change()
         if msg_sent:
+            if msg.domain == 'biyeun-sms-alerts':
+                from corehq.apps.hqwebapp.utils import sms_logging
+                sms_logging(f'at queue_outgoing_sms {msg}')
             create_billable_for_sms(msg)
         return msg_sent
 
@@ -741,10 +744,16 @@ def _process_incoming(msg):
         msg.domain and
         domain_has_privilege(msg.domain, privileges.INBOUND_SMS)
     ):
+        if msg.domain == 'biyeun-sms-alerts':
+            from corehq.apps.hqwebapp.utils import sms_logging
+            sms_logging(f'at _process_incoming {msg}')
         create_billable_for_sms(msg)
 
 
 def create_billable_for_sms(msg, delay=True):
+    if msg.domain == 'biyeun-sms-alerts':
+        from corehq.apps.hqwebapp.utils import sms_logging
+        sms_logging(f'at create_billable_for_sms {msg} with delay={delay}')
     if not isinstance(msg, SMS):
         raise Exception("Expected msg to be an SMS")
 
@@ -758,4 +767,6 @@ def create_billable_for_sms(msg, delay=True):
         else:
             store_billable(msg)
     except Exception as e:
+        from corehq.apps.hqwebapp.utils import sms_logging
+        sms_logging(f'create_billable_for_sms error with delay={delay} and error={str(e)}')
         log_smsbillables_error("Errors Creating SMS Billable: %s" % e)
