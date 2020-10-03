@@ -479,21 +479,6 @@ class TermParam(object):
             return filters.term(self.term, value)
 
 
-class XFormServerModifiedParams:
-    param = 'server_modified_on'
-
-    def consume_params(self, raw_params):
-        value = raw_params.pop(self.param, None)
-        if value:
-            return filters.OR(
-                filters.AND(
-                    filters.NOT(filters.missing(self.param)), filters.range_filter(self.param, **value)
-                ),
-                filters.AND(
-                    filters.missing(self.param), filters.range_filter("received_on", **value)
-                )
-            )
-
 query_param_consumers = [
     TermParam('xmlns', 'xmlns.exact'),
     TermParam('xmlns.exact'),
@@ -527,23 +512,6 @@ def _validate_and_get_es_filter(search_param):
         }
     except KeyError:
         pass
-    try:
-        # custom filter from Data export tool
-        _range = None
-        try:
-            _range = _filter['or'][0]['and'][0]['range']['server_modified_on']
-        except KeyError:
-            try:
-                _range = _filter['or'][0]['and'][1]['range']['server_modified_on']
-            except KeyError:
-                pass
-
-        if _range:
-            return XFormServerModifiedParams().consume_params({'server_modified_on': _range})
-        else:
-            raise Http400
-    except (KeyError, AssertionError):
-        raise Http400
 
 
 def es_query_from_get_params(search_params, domain, reserved_query_params=None, doc_type='form'):
@@ -561,7 +529,7 @@ def es_query_from_get_params(search_params, domain, reserved_query_params=None, 
             query = query.filter(filters.term('doc_type', 'xforminstance'))
 
     if '_search' in search_params:
-        # This is undocumented usecase by Data export tool and one custom project
+        # This is undocumented usecase by one custom project
         #   Validate that the passed in param is one of these two expected
         _filter = _validate_and_get_es_filter(json.loads(search_params['_search']))
         query = query.filter(_filter)
