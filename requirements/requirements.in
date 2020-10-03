@@ -88,7 +88,7 @@ PyYAML~=5.1
 pyzxcvbn==0.8.0
 qrcode==4.0.4
 quickcache~=0.5
-redis==3.3.0
+redis==3.2.1
 reportlab==3.0
 requests_oauthlib
 requests~=2.20
