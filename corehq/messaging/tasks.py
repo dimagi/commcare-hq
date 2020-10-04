@@ -72,7 +72,11 @@ def update_messaging_for_case(domain, case_id, case):
     if case is None or case.is_deleted:
         clear_messaging_for_case(domain, case_id)
     elif use_phone_entries():
-        sms_tasks._sync_case_phone_number(case)
+        try:
+            sms_tasks._sync_case_phone_number(case)
+        except Exception as e:
+            from corehq.apps.hqwebapp.utils import sms_logging
+            sms_logging(f'sync_case_phone_number error {str(e)}')
 
 
 def clear_messaging_for_case(domain, case_id):
