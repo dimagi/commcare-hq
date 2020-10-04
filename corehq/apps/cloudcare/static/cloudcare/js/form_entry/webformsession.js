@@ -90,11 +90,16 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
          *      this function should return true to also run default behavior afterwards, or false to prevent it
          */
         self.serverRequest = function (requestParams, successCallback, blocking, failureCallback, errorResponseCallback) {
-            var self = this;
-            var url = self.urls.xform;
             if (requestParams.action === Const.SUBMIT && self.NUM_PENDING_REQUESTS) {
-                self.taskQueue.addTask(requestParams.action, self.serverRequest, arguments, self);
+                self.taskQueue.addTask(requestParams.action, self._serverRequest, arguments, self);
+                return;
             }
+
+            self._serverRequest(requestParams, successCallback, blocking, failureCallback, errorResponseCallback);
+        };
+
+        self._serverRequest = function (requestParams, successCallback, blocking, failureCallback, errorResponseCallback) {
+            var self = this;
 
             requestParams.form_context = self.formContext;
             requestParams.domain = self.domain;
@@ -116,7 +121,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
 
             $.ajax({
                 type: 'POST',
-                url: url + "/" + requestParams.action,
+                url: self.urls.xform + "/" + requestParams.action,
                 data: JSON.stringify(requestParams),
                 contentType: "application/json",
                 dataType: "json",
