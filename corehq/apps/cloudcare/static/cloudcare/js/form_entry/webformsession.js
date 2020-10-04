@@ -58,11 +58,9 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
 
         self.blockingStatus = Const.BLOCK_NONE;
         self.lastRequestHandled = -1;
-        self.numPendingRequests = 0;
 
         // workaround for "forever loading" bugs...
         $(document).ajaxStop(function () {
-            self.NUM_PENDING_REQUESTS = 0;
             self.blockingStaus = Const.BLOCK_NONE;
         });
 
@@ -90,11 +88,18 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
          *      this function should return true to also run default behavior afterwards, or false to prevent it
          */
         self.serverRequest = function (requestParams, successCallback, blocking, failureCallback, errorResponseCallback) {
-            var self = this;
-            var url = self.urls.xform;
-            if (requestParams.action === Const.SUBMIT && self.NUM_PENDING_REQUESTS) {
-                self.taskQueue.addTask(requestParams.action, self.serverRequest, arguments, self);
+            if (self.blockingStatus === Const.BLOCK_ALL) {
+                return;
             }
+            self.blockingStatus = blocking || Const.BLOCK_NONE;
+            $.publish('session.block', blocking);
+            self.onLoading();
+
+            self.taskQueue.addTask(self._serverRequest, arguments, self);
+        };
+
+        self._serverRequest = function (requestParams, successCallback, blocking, failureCallback, errorResponseCallback) {
+            var self = this;
 
             requestParams.form_context = self.formContext;
             requestParams.domain = self.domain;
@@ -105,18 +110,10 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
             requestParams['session_id'] = self.session_id;
             requestParams['debuggerEnabled'] = self.debuggerEnabled;
             requestParams['tz_offset_millis'] = (new Date()).getTimezoneOffset() * 60 * 1000 * -1;
-            if (this.blockingStatus === Const.BLOCK_ALL) {
-                return;
-            }
-            this.blockingStatus = blocking || Const.BLOCK_NONE;
-            $.publish('session.block', blocking);
 
-            this.numPendingRequests++;
-            this.onLoading();
-
-            $.ajax({
+            return $.ajax({
                 type: 'POST',
-                url: url + "/" + requestParams.action,
+                url: self.urls.xform + "/" + requestParams.action,
                 data: JSON.stringify(requestParams),
                 contentType: "application/json",
                 dataType: "json",
@@ -164,16 +161,8 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
                 }
             }
 
-            this.blockingStatus = Const.BLOCK_NONE;
-            $.publish('session.block', this.blockingStatus);
-
-            self.numPendingRequests--;
-            if (self.numPendingRequests === 0) {
-                self.onLoadingComplete();
-                self.taskQueue.execute(Const.SUBMIT);
-                // Remove any submission tasks that have been queued up from spamming the submit button
-                self.taskQueue.clearTasks(Const.SUBMIT);
-            }
+            self.blockingStatus = Const.BLOCK_NONE;
+            $.publish('session.block', self.blockingStatus);
         };
 
         self.handleFailure = function (resp, action, textStatus, failureCallback) {
