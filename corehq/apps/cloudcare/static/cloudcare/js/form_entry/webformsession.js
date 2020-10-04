@@ -89,7 +89,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
          *      this function should return true to also run default behavior afterwards, or false to prevent it
          */
         self.serverRequest = function (requestParams, successCallback, blocking, failureCallback, errorResponseCallback) {
-            self._serverRequest(requestParams, successCallback, blocking, failureCallback, errorResponseCallback);
+            self.taskQueue.addTask(requestParams.action, self._serverRequest, arguments, self);
         };
 
         self._serverRequest = function (requestParams, successCallback, blocking, failureCallback, errorResponseCallback) {
@@ -113,7 +113,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
             this.numPendingRequests++;
             this.onLoading();
 
-            $.ajax({
+            return $.ajax({
                 type: 'POST',
                 url: self.urls.xform + "/" + requestParams.action,
                 data: JSON.stringify(requestParams),

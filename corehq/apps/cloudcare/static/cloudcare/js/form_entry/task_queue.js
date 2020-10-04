@@ -7,6 +7,7 @@ hqDefine("cloudcare/js/form_entry/task_queue", function () {
         var self = {};
 
         self.queue = [];
+        self.inProgress = undefined;
 
         self.execute = function (name) {
             var task,
@@ -21,9 +22,13 @@ hqDefine("cloudcare/js/form_entry/task_queue", function () {
                 task = self.queue.shift();
             }
             if (!task) {
+                self.inProgress = undefined;
                 return;
             }
-            task.fn.apply(task.thisArg, task.parameters);
+            self.inProgress = task.fn.apply(task.thisArg, task.parameters);
+            self.inProgress.always(function () {
+                self.execute();
+            });
         };
 
         self.addTask = function (name, fn, parameters, thisArg) {
@@ -49,6 +54,12 @@ hqDefine("cloudcare/js/form_entry/task_queue", function () {
                 self.queue = [];
             }
         };
+
+        setInterval(function () {
+            if (self.queue.length && !self.inProgress) {
+                self.execute();
+            }
+        }, 5 * 1000);
 
         return self;
     };
