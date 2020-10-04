@@ -62,7 +62,6 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
 
         // workaround for "forever loading" bugs...
         $(document).ajaxStop(function () {
-            self.NUM_PENDING_REQUESTS = 0;
             self.blockingStaus = Const.BLOCK_NONE;
         });
 
@@ -90,11 +89,6 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
          *      this function should return true to also run default behavior afterwards, or false to prevent it
          */
         self.serverRequest = function (requestParams, successCallback, blocking, failureCallback, errorResponseCallback) {
-            if (requestParams.action === Const.SUBMIT && self.NUM_PENDING_REQUESTS) {
-                self.taskQueue.addTask(requestParams.action, self._serverRequest, arguments, self);
-                return;
-            }
-
             self._serverRequest(requestParams, successCallback, blocking, failureCallback, errorResponseCallback);
         };
 
