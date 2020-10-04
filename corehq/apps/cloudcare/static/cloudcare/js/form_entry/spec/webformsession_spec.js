@@ -5,9 +5,7 @@ describe('WebForm', function () {
         UI = hqImport("cloudcare/js/form_entry/fullform-ui");
 
     describe('TaskQueue', function () {
-        var taskOne,
-            taskTwo,
-            callCount,
+        var callCount,
             flag,
             queue = hqImport("cloudcare/js/form_entry/task_queue").TaskQueue(),
             promise1,
