@@ -66,6 +66,11 @@ describe('WebForm', function () {
             Utils = hqImport("cloudcare/js/form_entry/utils"),
             WebFormSession = hqImport("cloudcare/js/form_entry/webformsession").WebFormSession;
 
+        hqImport("hqwebapp/js/initial_page_data").registerUrl(
+            "report_formplayer_error",
+            "/a/domain/cloudcare/apps/report_formplayer_error"
+        );
+
         beforeEach(function () {
             // Setup HTML
             try {
