@@ -12,13 +12,13 @@ hqDefine("cloudcare/js/form_entry/task_queue", function () {
             var task,
                 idx;
             if (name) {
-                idx = _.indexOf(_.pluck(this.queue, 'name'), name);
+                idx = _.indexOf(_.pluck(self.queue, 'name'), name);
                 if (idx === -1) {
                     return;
                 }
-                task = this.queue.splice(idx, 1)[0];
+                task = self.queue.splice(idx, 1)[0];
             } else {
-                task = this.queue.shift();
+                task = self.queue.shift();
             }
             if (!task) {
                 return;
@@ -33,20 +33,20 @@ hqDefine("cloudcare/js/form_entry/task_queue", function () {
                 parameters: parameters,
                 thisArg: thisArg,
             };
-            this.queue.push(task);
+            self.queue.push(task);
             return task;
         };
 
         self.clearTasks = function (name) {
             var idx;
             if (name) {
-                idx = _.indexOf(_.pluck(this.queue, 'name'), name);
+                idx = _.indexOf(_.pluck(self.queue, 'name'), name);
                 while (idx !== -1) {
-                    this.queue.splice(idx, 1);
-                    idx = _.indexOf(_.pluck(this.queue, 'name'), name);
+                    self.queue.splice(idx, 1);
+                    idx = _.indexOf(_.pluck(self.queue, 'name'), name);
                 }
             } else {
-                this.queue = [];
+                self.queue = [];
             }
         };
 
