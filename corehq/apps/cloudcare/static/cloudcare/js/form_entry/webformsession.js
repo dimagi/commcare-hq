@@ -88,6 +88,13 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
          *      this function should return true to also run default behavior afterwards, or false to prevent it
          */
         self.serverRequest = function (requestParams, successCallback, blocking, failureCallback, errorResponseCallback) {
+            if (self.blockingStatus === Const.BLOCK_ALL) {
+                return;
+            }
+            self.blockingStatus = blocking || Const.BLOCK_NONE;
+            $.publish('session.block', blocking);
+            self.onLoading();
+
             self.taskQueue.addTask(requestParams.action, self._serverRequest, arguments, self);
         };
 
@@ -103,13 +110,6 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
             requestParams['session_id'] = self.session_id;
             requestParams['debuggerEnabled'] = self.debuggerEnabled;
             requestParams['tz_offset_millis'] = (new Date()).getTimezoneOffset() * 60 * 1000 * -1;
-            if (self.blockingStatus === Const.BLOCK_ALL) {
-                return;
-            }
-            self.blockingStatus = blocking || Const.BLOCK_NONE;
-            $.publish('session.block', blocking);
-
-            self.onLoading();
 
             return $.ajax({
                 type: 'POST',
