@@ -95,7 +95,7 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
             $.publish('session.block', blocking);
             self.onLoading();
 
-            self.taskQueue.addTask(requestParams.action, self._serverRequest, arguments, self);
+            self.taskQueue.addTask(self._serverRequest, arguments, self);
         };
 
         self._serverRequest = function (requestParams, successCallback, blocking, failureCallback, errorResponseCallback) {

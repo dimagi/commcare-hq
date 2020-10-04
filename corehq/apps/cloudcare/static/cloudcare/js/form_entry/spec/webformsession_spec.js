@@ -5,53 +5,28 @@ describe('WebForm', function () {
         UI = hqImport("cloudcare/js/form_entry/fullform-ui");
 
     describe('TaskQueue', function () {
-        var tq,
-            taskOne,
-            taskTwo;
+        var taskOne,
+            taskTwo,
+            callCount,
+            flag,
+            queue = hqImport("cloudcare/js/form_entry/task_queue").TaskQueue(),
+            updateFlag = function (newValue) {
+                flag = newValue;
+                callCount++;
+            };
+
         beforeEach(function () {
-            tq = hqImport("cloudcare/js/form_entry/task_queue").TaskQueue();
-            taskOne = sinon.spy();
-            taskTwo = sinon.spy();
-            tq.addTask('one', taskOne, [1,2,3]);
-            tq.addTask('two', taskTwo, [5,6,7]);
+            flag = undefined;
+            callCount = 0;
         });
 
         it('Executes tasks in order', function () {
-            tq.execute();
-            assert.isTrue(taskOne.calledOnce);
-            assert.isTrue(taskOne.calledWith(1, 2, 3));
-            assert.isFalse(taskTwo.calledOnce);
+            queue.addTask(updateFlag, ['one']);
+            queue.addTask(updateFlag, ['two']);
+            assert.equal(flag, "two");
+            assert.equal(callCount, 2);
 
-            tq.execute();
-            assert.isTrue(taskTwo.calledOnce);
-            assert.isTrue(taskTwo.calledWith(5, 6, 7));
-            assert.equal(tq.queue.length, 0);
-
-            tq.execute(); // ensure no hard failure when no tasks in queue
-        });
-
-        it('Executes tasks by name', function () {
-            tq.execute('two');
-            assert.isFalse(taskOne.calledOnce);
-            assert.isTrue(taskTwo.calledOnce);
-            assert.equal(tq.queue.length, 1);
-
-            tq.execute('cannot find me');
-            assert.equal(tq.queue.length, 1);
-
-            tq.execute();
-            tq.execute();
-        });
-
-        it('Clears tasks by name', function () {
-            tq.addTask('two', taskTwo, [5,6,7]);
-            assert.equal(tq.queue.length, 3);
-
-            tq.clearTasks('two');
-            assert.equal(tq.queue.length, 1);
-
-            tq.clearTasks();
-            assert.equal(tq.queue.length, 0);
+            queue.execute(); // ensure no hard failure when no tasks in queue
         });
     });
 
