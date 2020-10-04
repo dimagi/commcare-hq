@@ -54,10 +54,8 @@ branches:
   - jls/sync-mixins-hard-fail # Jenny May 24
   - jls/migrate-MobileAuthKeyRecord-2 # Jenny May 16
   - jls/migrateCommtrackConfig-2 # Jenny Sept 27
-  - jls/turn-off-analytics-logging # Jenny June 19
 #  - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
   - fr/user-data-jit            # Farid September 2
-  - jls/collapsible-groups # Jenny Sept 4
   - adil-uddin:feature/USH-142-overwrite-caselists # Adil/Jenny Sept 10
   - mk/validate-file-extensions-2 # MK Sept 16
   - ce/change-form-lang # Cal Sept 16
@@ -65,5 +63,6 @@ branches:
   # - cz/role-ui  # Norman 9/25
   - ce/skip-fixtures
   - bmb/celery-debug  # Biyeun Oct 2
+  - jls/serial-answer-requests # Jenny Oct 4
 
 submodules: {}
