@@ -7,23 +7,28 @@ hqDefine("cloudcare/js/form_entry/task_queue", function () {
         var self = {};
 
         self.queue = [];
+        self.inProgress = undefined;
 
         self.execute = function (name) {
             var task,
                 idx;
             if (name) {
-                idx = _.indexOf(_.pluck(this.queue, 'name'), name);
+                idx = _.indexOf(_.pluck(self.queue, 'name'), name);
                 if (idx === -1) {
                     return;
                 }
-                task = this.queue.splice(idx, 1)[0];
+                task = self.queue.splice(idx, 1)[0];
             } else {
-                task = this.queue.shift();
+                task = self.queue.shift();
             }
             if (!task) {
+                self.inProgress = undefined;
                 return;
             }
-            task.fn.apply(task.thisArg, task.parameters);
+            self.inProgress = task.fn.apply(task.thisArg, task.parameters);
+            self.inProgress.done(function () {
+                self.execute();
+            });
         };
 
         self.addTask = function (name, fn, parameters, thisArg) {
@@ -33,20 +38,23 @@ hqDefine("cloudcare/js/form_entry/task_queue", function () {
                 parameters: parameters,
                 thisArg: thisArg,
             };
-            this.queue.push(task);
+            self.queue.push(task);
+            if (!self.inProgress) {
+                self.execute();
+            }
             return task;
         };
 
         self.clearTasks = function (name) {
             var idx;
             if (name) {
-                idx = _.indexOf(_.pluck(this.queue, 'name'), name);
+                idx = _.indexOf(_.pluck(self.queue, 'name'), name);
                 while (idx !== -1) {
-                    this.queue.splice(idx, 1);
-                    idx = _.indexOf(_.pluck(this.queue, 'name'), name);
+                    self.queue.splice(idx, 1);
+                    idx = _.indexOf(_.pluck(self.queue, 'name'), name);
                 }
             } else {
-                this.queue = [];
+                self.queue = [];
             }
         };
 
