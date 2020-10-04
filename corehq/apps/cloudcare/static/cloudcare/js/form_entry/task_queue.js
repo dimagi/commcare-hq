@@ -11,18 +11,10 @@ hqDefine("cloudcare/js/form_entry/task_queue", function () {
         self.queue = [];
         self.inProgress = undefined;
 
-        self.execute = function (name) {
+        self.execute = function () {
             var task,
                 idx;
-            if (name) {
-                idx = _.indexOf(_.pluck(self.queue, 'name'), name);
-                if (idx === -1) {
-                    return;
-                }
-                task = self.queue.splice(idx, 1)[0];
-            } else {
-                task = self.queue.shift();
-            }
+            task = self.queue.shift();
             if (!task) {
                 self.inProgress = undefined;
                 return;
