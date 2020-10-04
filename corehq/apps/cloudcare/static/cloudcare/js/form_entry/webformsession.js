@@ -103,13 +103,13 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
             requestParams['session_id'] = self.session_id;
             requestParams['debuggerEnabled'] = self.debuggerEnabled;
             requestParams['tz_offset_millis'] = (new Date()).getTimezoneOffset() * 60 * 1000 * -1;
-            if (this.blockingStatus === Const.BLOCK_ALL) {
+            if (self.blockingStatus === Const.BLOCK_ALL) {
                 return;
             }
-            this.blockingStatus = blocking || Const.BLOCK_NONE;
+            self.blockingStatus = blocking || Const.BLOCK_NONE;
             $.publish('session.block', blocking);
 
-            this.onLoading();
+            self.onLoading();
 
             return $.ajax({
                 type: 'POST',
@@ -161,8 +161,8 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
                 }
             }
 
-            this.blockingStatus = Const.BLOCK_NONE;
-            $.publish('session.block', this.blockingStatus);
+            self.blockingStatus = Const.BLOCK_NONE;
+            $.publish('session.block', self.blockingStatus);
         };
 
         self.handleFailure = function (resp, action, textStatus, failureCallback) {
