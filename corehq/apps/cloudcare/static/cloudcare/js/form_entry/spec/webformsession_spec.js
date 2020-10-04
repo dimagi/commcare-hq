@@ -5,53 +5,58 @@ describe('WebForm', function () {
         UI = hqImport("cloudcare/js/form_entry/fullform-ui");
 
     describe('TaskQueue', function () {
-        var tq,
-            taskOne,
-            taskTwo;
+        var taskOne,
+            taskTwo,
+            callCount,
+            flag,
+            queue = hqImport("cloudcare/js/form_entry/task_queue").TaskQueue(),
+            promise1,
+            promise2,
+            updateFlag = function (newValue, promise) {
+                flag = newValue;
+                callCount++;
+                return promise;
+            };
+
         beforeEach(function () {
-            tq = hqImport("cloudcare/js/form_entry/task_queue").TaskQueue();
-            taskOne = sinon.spy();
-            taskTwo = sinon.spy();
-            tq.addTask('one', taskOne, [1,2,3]);
-            tq.addTask('two', taskTwo, [5,6,7]);
+            flag = undefined;
+            callCount = 0;
+
+            promise1 = new $.Deferred(),
+            promise2 = new $.Deferred();
+            queue.addTask('updateFlag', updateFlag, ['one', promise1]);
+            queue.addTask('updateFlag', updateFlag, ['two', promise2]);
         });
 
         it('Executes tasks in order', function () {
-            tq.execute();
-            assert.isTrue(taskOne.calledOnce);
-            assert.isTrue(taskOne.calledWith(1, 2, 3));
-            assert.isFalse(taskTwo.calledOnce);
+            // First task should have been executed immediately
+            assert.equal(flag, "one");
+            assert.equal(callCount, 1);
 
-            tq.execute();
-            assert.isTrue(taskTwo.calledOnce);
-            assert.isTrue(taskTwo.calledWith(5, 6, 7));
-            assert.equal(tq.queue.length, 0);
+            // Second task should execute when first one is resolved
+            promise1.resolve();
+            assert.equal(flag, "two");
+            assert.equal(callCount, 2);
 
-            tq.execute(); // ensure no hard failure when no tasks in queue
+            promise2.resolve();
+            queue.execute(); // ensure no hard failure when no tasks in queue
         });
 
-        it('Executes tasks by name', function () {
-            tq.execute('two');
-            assert.isFalse(taskOne.calledOnce);
-            assert.isTrue(taskTwo.calledOnce);
-            assert.equal(tq.queue.length, 1);
-
-            tq.execute('cannot find me');
-            assert.equal(tq.queue.length, 1);
-
-            tq.execute();
-            tq.execute();
+        it('Executes task even when previous task failed', function () {
+            promise1.reject();
+            assert.equal(flag, "two");
+            assert.equal(callCount, 2);
+            promise2.resolve();
         });
 
         it('Clears tasks by name', function () {
-            tq.addTask('two', taskTwo, [5,6,7]);
-            assert.equal(tq.queue.length, 3);
-
-            tq.clearTasks('two');
-            assert.equal(tq.queue.length, 1);
-
-            tq.clearTasks();
-            assert.equal(tq.queue.length, 0);
+            assert.equal(queue.queue.length, 1);
+            queue.addTask('doSomethingElse', function () {}, []);
+            assert.equal(queue.queue.length, 2);
+            queue.clearTasks('updateFlag');
+            assert.equal(queue.queue.length, 1);
+            queue.clearTasks();
+            assert.equal(queue.queue.length, 0);
         });
     });
 
@@ -60,6 +65,11 @@ describe('WebForm', function () {
             params,
             Utils = hqImport("cloudcare/js/form_entry/utils"),
             WebFormSession = hqImport("cloudcare/js/form_entry/webformsession").WebFormSession;
+
+        hqImport("hqwebapp/js/initial_page_data").registerUrl(
+            "report_formplayer_error",
+            "/a/domain/cloudcare/apps/report_formplayer_error"
+        );
 
         beforeEach(function () {
             // Setup HTML
