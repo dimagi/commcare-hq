@@ -28,6 +28,13 @@ monitor_2fa_soft_assert = soft_assert(
 )
 
 
+def sms_logging(subject):
+    _logging = soft_assert(
+        to=['{}@{}'.format('biyeun', 'dimagi.com')],
+        send_to_ops=False
+    )
+    _logging(False, f"[SMS/CELERY DEBUG] {subject}")
+
 @memoized
 def get_hq_private_key():
     if settings.HQ_PRIVATE_KEY:
