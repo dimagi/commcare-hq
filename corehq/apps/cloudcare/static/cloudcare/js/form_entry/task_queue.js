@@ -1,6 +1,8 @@
 /*
- * Executes the queue in a FIFO action. If name is supplied, will execute the first
- * task for that name.
+ * Executes the queue in a FIFO action. When a task is added, it will be immediately
+ * executed if the queue was previously empty.
+ *
+ * All task functions are expected to return a promise.
  */
 hqDefine("cloudcare/js/form_entry/task_queue", function () {
     var TaskQueue = function () {
@@ -39,6 +41,9 @@ hqDefine("cloudcare/js/form_entry/task_queue", function () {
                 thisArg: thisArg,
             };
             self.queue.push(task);
+            if (!self.inProgress) {
+                self.execute();
+            }
             return task;
         };
 
@@ -54,12 +59,6 @@ hqDefine("cloudcare/js/form_entry/task_queue", function () {
                 self.queue = [];
             }
         };
-
-        setInterval(function () {
-            if (self.queue.length && !self.inProgress) {
-                self.execute();
-            }
-        }, 5 * 1000);
 
         return self;
     };
