@@ -100,6 +100,8 @@ _ADD_ONS = {
         name=_("Case Detail Overwrite"),
         description=_("Ability to overwrite one case list or detail's settings with another's. "
         "Available in menu settings, in the actions tab."),
+        help_link="https://confluence.dimagi.com/display/commcarepublic/\
+                   Overwriting+Case+List+and+Case+Detail+Configuration"
     ),
     "case_list_menu_item": AddOn(
         name=_("Case List Menu Item"),

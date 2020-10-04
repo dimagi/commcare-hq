@@ -1,7 +1,11 @@
 hqDefine("app_manager/js/modules/module_view", function () {
     $(function () {
         $('.multiselect-caselist').select2();
-        
+        $('.dialog').on("click", function(event){
+            if(!confirm("Are you sure you want to overwrite the properties or filters in these Case Lists/Case Details? This action is irreversible.")){
+            event.preventDefault();
+            }
+        });
         var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
             moduleBrief = initial_page_data('module_brief'),
             moduleType = moduleBrief.module_type,
