@@ -39,6 +39,9 @@ hqDefine("cloudcare/js/form_entry/task_queue", function () {
                 thisArg: thisArg,
             };
             self.queue.push(task);
+            if (!self.inProgress) {
+                self.execute();
+            }
             return task;
         };
 
@@ -54,12 +57,6 @@ hqDefine("cloudcare/js/form_entry/task_queue", function () {
                 self.queue = [];
             }
         };
-
-        setInterval(function () {
-            if (self.queue.length && !self.inProgress) {
-                self.execute();
-            }
-        }, 5 * 1000);
 
         return self;
     };
