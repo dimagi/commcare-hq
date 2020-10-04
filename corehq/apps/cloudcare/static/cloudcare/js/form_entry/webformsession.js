@@ -58,7 +58,6 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
 
         self.blockingStatus = Const.BLOCK_NONE;
         self.lastRequestHandled = -1;
-        self.numPendingRequests = 0;
 
         // workaround for "forever loading" bugs...
         $(document).ajaxStop(function () {
@@ -89,6 +88,11 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
          *      this function should return true to also run default behavior afterwards, or false to prevent it
          */
         self.serverRequest = function (requestParams, successCallback, blocking, failureCallback, errorResponseCallback) {
+            if (requestParams.action === Const.SUBMIT) {
+                // Remove any submission tasks that have been queued up from spamming the submit button
+                self.taskQueue.clearTasks(Const.SUBMIT);
+            }
+
             self.taskQueue.addTask(requestParams.action, self._serverRequest, arguments, self);
         };
 
@@ -110,7 +114,6 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
             this.blockingStatus = blocking || Const.BLOCK_NONE;
             $.publish('session.block', blocking);
 
-            this.numPendingRequests++;
             this.onLoading();
 
             return $.ajax({
@@ -165,14 +168,6 @@ hqDefine("cloudcare/js/form_entry/webformsession", function () {
 
             this.blockingStatus = Const.BLOCK_NONE;
             $.publish('session.block', this.blockingStatus);
-
-            self.numPendingRequests--;
-            if (self.numPendingRequests === 0) {
-                self.onLoadingComplete();
-                self.taskQueue.execute(Const.SUBMIT);
-                // Remove any submission tasks that have been queued up from spamming the submit button
-                self.taskQueue.clearTasks(Const.SUBMIT);
-            }
         };
 
         self.handleFailure = function (resp, action, textStatus, failureCallback) {
