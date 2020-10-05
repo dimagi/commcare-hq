@@ -40,13 +40,37 @@
           <br>
           <div class="row">
             <div class="col-sm-4 col-sm-offset-1">
-              <button class='btn btn-danger dialog' type="submit">
+              <button class='btn btn-danger' data-toggle="modal" data-target="#overwrite-conformation-model" type="button">
                 <i class="fa fa-copy"></i>
                 {% if detail_type == 'short' %}
                   {% trans "Overwrite Case List" %}
                 {% else %}
                   {% trans "Overwrite Case Detail" %}
                 {% endif %}
+              </button>
+              <div class="modal fade" id="overwrite-conformation-model">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span>
+                        <span class="sr-only">{% trans "Close" %}</span></button>
+                      <h4 class="modal-title">{% trans "Overwrite Case Lists/Detail" %}</h4>
+                    </div>
+                    <div class="modal-body">
+                      {% trans "Are you sure you want to overwrite the properties or filters in these Case Lists/Case Details? This action is irreversible" %}.
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-default" data-dismiss="modal">
+                        {% trans "Cancel" %}
+                      </button>
+                      <button type="submit" class="btn btn-danger">
+                        <i class="fa fa-copy"></i>
+                        {% trans "Overwrite" %}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
        </div>
