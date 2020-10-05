@@ -268,7 +268,6 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         user.debuggerEnabled = options.debuggerEnabled;
         user.environment = options.environment;
         user.useLiveQuery = options.useLiveQuery;
-        user.changeFormLanguage = options.changeFormLanguage;
         user.restoreAs = FormplayerFrontend.getChannel().request('restoreAsUser', user.domain, user.username);
 
         hqImport("cloudcare/js/formplayer/apps/api").primeApps(user.restoreAs, options.apps);

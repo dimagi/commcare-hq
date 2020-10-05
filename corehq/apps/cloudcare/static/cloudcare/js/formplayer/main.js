@@ -13,7 +13,6 @@ hqDefine("cloudcare/js/formplayer/main", function () {
             singleAppMode: initialPageData('single_app_mode'),
             environment: initialPageData('environment'),
             useLiveQuery: initialPageData('use_live_query'),
-            changeFormLanguage: initialPageData('change_form_language'),
         };
         hqImport("cloudcare/js/formplayer/app").start(options);
 

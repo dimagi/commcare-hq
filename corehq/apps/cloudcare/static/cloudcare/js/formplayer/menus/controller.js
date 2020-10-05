@@ -79,7 +79,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     var showMenu = function (menuResponse) {
         var menuListView = hqImport("cloudcare/js/formplayer/menus/util").getMenuView(menuResponse);
         var appPreview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
-        var changeFormLanguage = FormplayerFrontend.currentUser.changeFormLanguage;
+        var changeFormLanguage = hqImport('hqwebapp/js/toggles').toggleEnabled('CHANGE_FORM_LANGUAGE');
 
         if (menuListView) {
             FormplayerFrontend.regions.getRegion('main').show(menuListView);
