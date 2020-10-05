@@ -78,11 +78,13 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
     var showMenu = function (menuResponse) {
         var menuListView = hqImport("cloudcare/js/formplayer/menus/util").getMenuView(menuResponse);
+        var appPreview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
+        var changeFormLanguage = hqImport('hqwebapp/js/toggles').toggleEnabled('CHANGE_FORM_LANGUAGE');
 
         if (menuListView) {
             FormplayerFrontend.regions.getRegion('main').show(menuListView);
         }
-        if (menuResponse.persistentCaseTile && !FormplayerFrontend.currentUser.displayOptions.singleAppMode) {
+        if (menuResponse.persistentCaseTile && !appPreview) {
             showPersistentCaseTile(menuResponse.persistentCaseTile);
         } else {
             FormplayerFrontend.regions.getRegion('persistentCaseTile').empty();
@@ -90,6 +92,9 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
         if (menuResponse.breadcrumbs) {
             hqImport("cloudcare/js/formplayer/menus/util").showBreadcrumbs(menuResponse.breadcrumbs);
+            if (menuResponse.langs && menuResponse.langs.length > 1 && !appPreview && changeFormLanguage) {
+                hqImport("cloudcare/js/formplayer/menus/util").showLanguageMenu(menuResponse.langs);
+            }
         } else {
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
         }
