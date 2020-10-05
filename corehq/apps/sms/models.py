@@ -289,7 +289,11 @@ class SMS(SMSBase):
         try:
             publish_sms_saved(self)
         except Exception:
-            publish_sms_change.delay(self)
+            try:
+                publish_sms_change.delay(self)
+            except Exception as e:
+                from corehq.apps.hqwebapp.utils import sms_logging
+                sms_logging(f'publish_sms_change {str(e)}')
 
     def requeue(self):
         if self.processed or self.direction != OUTGOING:
