@@ -275,6 +275,9 @@ class ScheduleInstance(PartitionedModel):
         if is_commcarecase(recipient):
             doc_type = 'CommCareCase'
             doc_id = recipient.case_id
+        elif isinstance(recipient, str):
+            doc_type = recipient
+            doc_id = recipient
         else:
             doc_type = recipient.doc_type
             doc_id = recipient.get_id
