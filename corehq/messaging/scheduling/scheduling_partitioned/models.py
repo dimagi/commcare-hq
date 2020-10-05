@@ -8,6 +8,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.models import MessagingEvent
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
+from corehq.apps.users.util import format_username
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -124,7 +125,8 @@ class ScheduleInstance(PartitionedModel):
     def recipient_is_an_individual_contact(recipient):
         return (
             isinstance(recipient, (CommCareUser, WebUser)) or
-            is_commcarecase(recipient)
+            is_commcarecase(recipient) or
+            isinstance(recipient, str)
         )
 
     @property
@@ -273,6 +275,9 @@ class ScheduleInstance(PartitionedModel):
         if is_commcarecase(recipient):
             doc_type = 'CommCareCase'
             doc_id = recipient.case_id
+        elif isinstance(recipient, str):
+            doc_type = recipient
+            doc_id = recipient
         else:
             doc_type = recipient.doc_type
             doc_id = recipient.get_id
@@ -529,6 +534,8 @@ class CaseScheduleInstanceMixin(object):
     RECIPIENT_TYPE_PARENT_CASE = 'ParentCase'
     RECIPIENT_TYPE_ALL_CHILD_CASES = 'AllChildCases'
     RECIPIENT_TYPE_CUSTOM = 'CustomRecipient'
+    RECIPIENT_TYPE_CASE_PROPERTY_USER = 'CasePropertyUser'
+    RECIPIENT_TYPE_CASE_PROPERTY_EMAIL = 'CasePropertyEmail'
 
     @property
     @memoized
@@ -603,6 +610,12 @@ class CaseScheduleInstanceMixin(object):
                 settings.AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS[self.recipient_id][0]
             )
             return custom_function(self)
+        elif self.recipient_type == self.RECIPIENT_TYPE_CASE_PROPERTY_USER:
+            username = self.case.get_case_property(self.recipient_id)
+            full_username = format_username(username, self.domain)
+            return CommCareUser.get_by_username(full_username)
+        elif self.recipient_type == self.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL:
+            return self.case.get_case_property(self.recipient_id)
         else:
             return super(CaseScheduleInstanceMixin, self).recipient
 
