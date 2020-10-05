@@ -63,5 +63,6 @@ branches:
   - ce/skip-fixtures
   - bmb/celery-debug  # Biyeun Oct 2
   - jls/serial-answer-requests # Jenny Oct 4
+  - gh/improve-rate-limiting # Graham Oct 5
 
 submodules: {}
