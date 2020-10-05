@@ -87,9 +87,9 @@ def validate_voice_locale(locale):
                           'commcare.two_factor.setup_rate_limiter_errors')
 def rate_limit_two_factor_setup(device):
     """
-    This holds attempts per user AND attempts per IP below limits
-
-    given by two_factor_setup_rate_limiter.
+    This holds attempts per IP OR per User OR per Number below limits
+    given by two_factor_rate_limiter_per_ip, two_factor_rate_limiter_per_user,
+    and two_factor_rate_limiter_per_number, respectively
     And keeps total requests below limits given by global_two_factor_setup_rate_limiter.
 
     Requests without an IP are rejected (unusual).
@@ -115,7 +115,7 @@ def rate_limit_two_factor_setup(device):
     number = device.number
     method = device.method if isinstance(device, PhoneDevice) else None
 
-    if ip_address and username and method:
+    if ip_address and username and number and method:
         if two_factor_rate_limiter_per_ip.allow_usage('ip:{}'.format(ip_address)) \
                 and two_factor_rate_limiter_per_user.allow_usage('user:{}'.format(username)) \
                 and two_factor_rate_limiter_per_number.allow_usage('number:{}'.format(number)) \
