@@ -87,9 +87,9 @@ def validate_voice_locale(locale):
                           'commcare.two_factor.setup_rate_limiter_errors')
 def rate_limit_two_factor_setup(device):
     """
-    This holds attempts per user AND attempts per IP below limits
-
-    given by two_factor_setup_rate_limiter.
+    This holds attempts per IP OR per User OR per Number below limits
+    given by two_factor_rate_limiter_per_ip, two_factor_rate_limiter_per_user,
+    and two_factor_rate_limiter_per_number, respectively
     And keeps total requests below limits given by global_two_factor_setup_rate_limiter.
 
     Requests without an IP are rejected (unusual).
@@ -112,14 +112,17 @@ def rate_limit_two_factor_setup(device):
 
     ip_address = get_ip_address()
     username = device.user.username
+    number = device.number
     method = device.method if isinstance(device, PhoneDevice) else None
 
-    if ip_address and username and method:
-        if two_factor_setup_rate_limiter.allow_usage('ip:{}'.format(ip_address)) \
-                and two_factor_setup_rate_limiter.allow_usage('user:{}'.format(username)) \
+    if ip_address and username and number and method:
+        if two_factor_rate_limiter_per_ip.allow_usage('ip:{}'.format(ip_address)) \
+                and two_factor_rate_limiter_per_user.allow_usage('user:{}'.format(username)) \
+                and two_factor_rate_limiter_per_number.allow_usage('number:{}'.format(number)) \
                 and global_two_factor_setup_rate_limiter.allow_usage():
-            two_factor_setup_rate_limiter.report_usage('ip:{}'.format(ip_address))
-            two_factor_setup_rate_limiter.report_usage('user:{}'.format(username))
+            two_factor_rate_limiter_per_ip.report_usage('ip:{}'.format(ip_address))
+            two_factor_rate_limiter_per_user.report_usage('user:{}'.format(username))
+            two_factor_rate_limiter_per_number.report_usage('number:{}'.format(number))
             global_two_factor_setup_rate_limiter.report_usage()
             status = _status_accepted
         else:
@@ -134,19 +137,49 @@ def rate_limit_two_factor_setup(device):
     return status != _status_accepted
 
 
-two_factor_setup_rate_limiter = RateLimiter(
-    feature_key='two_factor_setup_attempts',
+two_factor_rate_limiter_per_ip = RateLimiter(
+    feature_key='two_factor_attempts_per_ip',
     get_rate_limits=lambda scope: get_dynamic_rate_definition(
-        'two_factor_setup_attempts',
+        'two_factor_attempts_per_ip',
         default=RateDefinition(
-            per_week=15,
-            per_day=8,
-            per_hour=5,
-            per_minute=3,
+            per_week=20000,
+            per_day=2000,
+            per_hour=1200,
+            per_minute=700,
+            per_second=60,
+        )
+    ).get_rate_limits(),
+    scope_length=1,
+)
+
+two_factor_rate_limiter_per_user = RateLimiter(
+    feature_key='two_factor_attempts_per_user',
+    get_rate_limits=lambda scope: get_dynamic_rate_definition(
+        'two_factor_attempts_per_user',
+        default=RateDefinition(
+            per_week=120,
+            per_day=40,
+            per_hour=8,
+            per_minute=2,
             per_second=1,
         )
     ).get_rate_limits(),
-    scope_length=1,  # per user OR per IP
+    scope_length=1,
+)
+
+two_factor_rate_limiter_per_number = RateLimiter(
+    feature_key='two_factor_attempts_per_number',
+    get_rate_limits=lambda scope: get_dynamic_rate_definition(
+        'two_factor_attempts_per_number',
+        default=RateDefinition(
+            per_week=120,
+            per_day=40,
+            per_hour=8,
+            per_minute=2,
+            per_second=1,
+        )
+    ).get_rate_limits(),
+    scope_length=1,
 )
 
 global_two_factor_setup_rate_limiter = RateLimiter(
