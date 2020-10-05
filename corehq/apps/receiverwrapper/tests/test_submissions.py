@@ -3,7 +3,6 @@ import os
 from io import BytesIO
 
 from django.conf import settings
-from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.test.client import Client
 from django.test.utils import override_settings
@@ -25,7 +24,6 @@ from corehq.util.test_utils import TestFileMixin, softer_assert
 
 from couchforms.exceptions import (
     InvalidSubmissionFileExtensionError,
-    InvalidAttachmentFileExtensionError,
 )
 
 
@@ -140,26 +138,6 @@ class SubmissionTest(BaseSubmissionTest):
     def test_invalid_form_submission_file_extension(self):
         response = self._submit('suspicious_form.abc', url=reverse("receiver_secure_post", args=[self.domain]))
         expected_error = InvalidSubmissionFileExtensionError()
-        self.assertEqual(response.status_code, expected_error.status_code)
-        self.assertEqual(
-            response.content.decode('utf-8'),
-            f'<OpenRosaResponse xmlns="http://openrosa.org/http/response"><message nature="processing_failure">'
-            f'{expected_error.message}'
-            f'</message></OpenRosaResponse>'
-        )
-
-    def test_invalid_attachment_file_extension_with_valid_mimetype(self):
-        response = self._submit('simple_form.xml', attachments={
-            "image.xyz": BytesIO(b"fake image"),
-        })
-        self.assertEqual(response.status_code, 201)
-
-    def test_invalid_attachment_file_extension_with_invalid_mimetype(self):
-        image = SimpleUploadedFile("image.xyz", b"fake image", content_type="fake/image")
-        response = self._submit('simple_form.xml', attachments={
-            "image.xyz": image,
-        })
-        expected_error = InvalidAttachmentFileExtensionError()
         self.assertEqual(response.status_code, expected_error.status_code)
         self.assertEqual(
             response.content.decode('utf-8'),
@@ -297,7 +275,7 @@ class SubmissionTestSQL(SubmissionTest):
         # submit a form to try again as duplicate with one attachment modified
         self._submit('simple_form.xml', attachments={
             "image": BytesIO(b"fake image"),
-            "audio_file": BytesIO(b"fake audio"),
+            "file": BytesIO(b"text file"),
         })
         response = self._submit(
             'simple_form_edited.xml',
@@ -311,13 +289,10 @@ class SubmissionTestSQL(SubmissionTest):
         self.assertIn(b"<bop>bong</bop>", new_form.get_xml())
         self.assertEqual(
             list_attachments(old_form),
-            [("audio_file", b"fake audio"), ("image", b"fake image")]
-        )
-        # assert missing attachment retained from the old form and the one re-uploaded updated
+            [("file", b"text file"), ("image", b"fake image")])
         self.assertEqual(
             list_attachments(new_form),
-            [("audio_file", b"fake audio"), ("image", b"other fake image")]
-        )
+            [("file", b"text file"), ("image", b"other fake image")])
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)

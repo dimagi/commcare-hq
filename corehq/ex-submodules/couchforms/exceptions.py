@@ -1,6 +1,5 @@
 from couchforms.const import (
     MAGIC_PROPERTY,
-    SUPPORTED_MEDIA_FILE_EXTENSIONS,
 )
 
 
@@ -61,15 +60,5 @@ class InvalidSubmissionFileExtensionError(UnprocessableFormSubmission):
             "If you use multipart/form-data, please use xml file only for "
             "submitting form xml. You may also do a normal (non-multipart) "
             "with the xml submission as the request body instead\n",
-            422
-        )
-
-
-class InvalidAttachmentFileExtensionError(UnprocessableFormSubmission):
-    def __init__(self):
-        super().__init__(
-            "If you use multipart/form-data, please use the following "
-            "supported file extensions for attachments: "
-            f"{', '.join(SUPPORTED_MEDIA_FILE_EXTENSIONS)}\n",
             422
         )
