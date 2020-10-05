@@ -1088,7 +1088,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
 
     @classmethod
     def get_recipient_type(cls, recipient):
-        return cls.get_recipient_type_from_doc_type(recipient.doc_type)
+        doc_type = getattr(recipient, 'doc_type', None)
+        return cls.get_recipient_type_from_doc_type(doc_type)
 
     @classmethod
     def _get_recipient_doc_type(cls, recipient_type):
