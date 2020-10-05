@@ -1266,6 +1266,9 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
                 recipient_type = cls.RECIPIENT_LOCATION
 
             recipient_id = schedule_instance.recipient.location_id
+        elif isinstance(schedule_instance.recipient, str):
+            recipient_type = cls.RECIPIENT_UNKNOWN
+            recipient_id = None
         elif schedule_instance.recipient is None:
             recipient_type = cls.RECIPIENT_UNKNOWN
             recipient_id = None
