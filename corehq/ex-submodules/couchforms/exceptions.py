@@ -1,6 +1,4 @@
-from couchforms.const import (
-    MAGIC_PROPERTY,
-)
+from couchforms.const import MAGIC_PROPERTY
 
 
 class CouchFormException(Exception):

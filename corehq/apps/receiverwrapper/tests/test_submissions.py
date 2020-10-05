@@ -22,9 +22,7 @@ from corehq.util.json import CommCareJSONEncoder
 from corehq.util.test_utils import TestFileMixin, softer_assert
 
 
-from couchforms.exceptions import (
-    InvalidSubmissionFileExtensionError,
-)
+from couchforms.exceptions import InvalidSubmissionFileExtensionError
 
 
 class BaseSubmissionTest(TestCase):

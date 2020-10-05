@@ -1,7 +1,5 @@
 from django.utils.datastructures import MultiValueDictKeyError
-from couchforms.const import (
-    MAGIC_PROPERTY,
-)
+from couchforms.const import MAGIC_PROPERTY
 import logging
 from datetime import datetime
 from django.conf import settings
