@@ -6,7 +6,10 @@ from tastypie.exceptions import BadRequest
 from tastypie.resources import Resource
 
 from corehq.apps.api.resources import HqBaseResource
-from corehq.apps.api.resources.auth import LoginAndDomainAuthentication
+from corehq.apps.api.resources.auth import (
+    LoginAndDomainAuthentication,
+    RequirePermissionAuthenticationInteral,
+)
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import object_does_not_exist
 from corehq.apps.domain.models import Domain
@@ -88,7 +91,7 @@ class InternalLocationResource(LocationResource):
         return Resource.dispatch(self, request_type, request, **kwargs)
 
     class Meta(CustomResourceMeta):
-        authentication = LoginAndDomainAuthentication(allow_session_auth=True)
+        authentication = RequirePermissionAuthenticationInteral(allow_session_auth=True)
         object_class = SQLLocation
         resource_name = 'location_internal'
         limit = 0
