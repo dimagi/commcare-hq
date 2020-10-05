@@ -29,6 +29,7 @@ def _get_es_settings(es_settings):
             "search.slowlog.threshold.query.info": "5s",
             "search.slowlog.threshold.query.debug": "2s",
             "search.slowlog.threshold.query.trace": "500ms",
+            "search.slowlog.level": "info",
         }
     )
     for setting in disallowed_settings_by_es_version[settings.ELASTICSEARCH_MAJOR_VERSION]:
