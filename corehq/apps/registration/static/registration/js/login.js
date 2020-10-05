@@ -2,7 +2,6 @@ hqDefine('registration/js/login', [
     'jquery',
     'blazy/blazy',
     'analytix/js/kissmetrix',
-    'nic_compliance/js/encoder',
     'hqwebapp/js/captcha', // shows captcha
 ], function (
     $,

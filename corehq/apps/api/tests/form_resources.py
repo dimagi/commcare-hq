@@ -1,6 +1,6 @@
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.test import TestCase
@@ -163,6 +163,36 @@ class TestXFormInstanceResource(APIResourceTest):
         self.assertEqual(len(api_forms), 2)
         api_form = api_forms[0]
         self.assertEqual(api_form['form']['@xmlns'], xmlns2)
+
+    def test_get_by_indexed_on(self):
+        date1 = datetime(2019, 1, 2)
+        xmlns = 'https://xmlns1'
+        date2 = datetime(2019, 1, 5)
+        self._send_forms([(xmlns, date1), (xmlns, date2)])
+
+        yesterday = (datetime.utcnow() - timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%S")
+        response = self._assert_auth_get_resource(
+            '%s?%s' % (self.list_endpoint, urlencode({'indexed_on_start': yesterday}))
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(json.loads(response.content)['objects']), 2)
+        response = self._assert_auth_get_resource(
+            '%s?%s' % (self.list_endpoint, urlencode({'indexed_on_end': yesterday}))
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(json.loads(response.content)['objects']), 0)
+
+        tomorrow = (datetime.utcnow() + timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%S")
+        response = self._assert_auth_get_resource(
+            '%s?%s' % (self.list_endpoint, urlencode({'indexed_on_start': tomorrow}))
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(json.loads(response.content)['objects']), 0)
+        response = self._assert_auth_get_resource(
+            '%s?%s' % (self.list_endpoint, urlencode({'indexed_on_end': tomorrow}))
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(json.loads(response.content)['objects']), 2)
 
     def test_archived_forms(self):
         xmlns1 = 'https://xmlns1'
