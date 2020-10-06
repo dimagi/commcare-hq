@@ -12,6 +12,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_deleted_user_by_username,
 )
 from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.util.sudo import user_is_acting_as_superuser
 
 
 def require_permission_raw(permission_check,
@@ -40,7 +41,7 @@ def require_permission_raw(permission_check,
                     return view_func(request, domain, *args, **kwargs)
                 else:
                     raise PermissionDenied()
-            elif request.user.is_superuser or permission_check(request.couch_user, domain):
+            elif user_is_acting_as_superuser(request) or permission_check(request.couch_user, domain):
                 request.is_view_only = False
                 return view_func(request, domain, *args, **kwargs)
             elif (view_only_permission_check is not None
@@ -142,7 +143,7 @@ def require_permission_to_edit_user(view_func):
         go_ahead = False
         if hasattr(request, "couch_user"):
             user = request.couch_user
-            if user.is_superuser or user.user_id == couch_user_id or (hasattr(user, "is_domain_admin") and user.is_domain_admin()):
+            if user_is_acting_as_superuser(request) or user.user_id == couch_user_id or (hasattr(user, "is_domain_admin") and user.is_domain_admin()):
                 go_ahead = True
             else:
                 couch_user = CouchUser.get_by_user_id(couch_user_id)

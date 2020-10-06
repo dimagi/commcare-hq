@@ -146,6 +146,7 @@ from corehq.apps.hqwebapp.views import (
     CRUDPaginatedViewMixin,
 )
 from corehq.const import USER_DATE_FORMAT
+from corehq.util.sudo import user_is_acting_as_superuser
 
 
 @require_superuser
@@ -1348,7 +1349,7 @@ class EnterpriseBillingStatementsView(DomainAccountingSettings, CRUDPaginatedVie
 
     @property
     def show_hidden(self):
-        if not self.request.user.is_superuser:
+        if not user_is_acting_as_superuser(self.request):
             return False
         return bool(self.request.POST.get('additionalData[show_hidden]'))
 

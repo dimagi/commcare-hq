@@ -11,6 +11,7 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.api.util import get_obj
+from corehq.util.sudo import user_is_acting_as_superuser
 
 
 class DictObject(object):
@@ -104,7 +105,7 @@ class HqBaseResource(CorsResourceMixin, JsonResourceMixin, Resource):
                 json.dumps({"error": msg}),
                 content_type="application/json",
                 status=401))
-        if request.user.is_superuser or domain_has_privilege(request.domain, privileges.API_ACCESS):
+        if user_is_acting_as_superuser(request) or domain_has_privilege(request.domain, privileges.API_ACCESS):
             if isinstance(self, DomainSpecificResourceMixin):
                 track_workflow(request.user.username, "API Request", properties={
                     'domain': request.domain,

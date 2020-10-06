@@ -43,6 +43,7 @@ from corehq.motech.repeaters.repeater_generators import RegisterGenerator
 from corehq.motech.repeaters.utils import get_all_repeater_types
 from corehq.motech.requests import simple_post
 from corehq.motech.utils import b64_aes_encrypt
+from corehq.util.sudo import user_is_acting_as_superuser
 
 RepeaterTypeInfo = namedtuple('RepeaterTypeInfo', 'class_name friendly_name has_config instances')
 
@@ -70,7 +71,7 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
             'repeater_types_info': self.repeater_types_info,
             'pending_record_count': RepeatRecord.count(self.domain),
             'user_can_configure': (
-                self.request.couch_user.is_superuser or
+                user_is_acting_as_superuser(self.request) or
                 self.request.couch_user.can_edit_motech() or
                 toggles.IS_CONTRACTOR.enabled(self.request.couch_user.username)
             )

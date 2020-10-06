@@ -54,6 +54,7 @@ from corehq.apps.users.models import CouchUser, WebUser
 from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.util.context_processors import get_per_domain_context
 from corehq.util.soft_assert import soft_assert
+from corehq.util.sudo import user_is_acting_as_superuser
 
 _domainless_new_user_soft_assert = soft_assert(to=[
     '{}@{}'.format('biyeun', 'dimagi.com')
@@ -287,7 +288,7 @@ class RegisterDomainView(TemplateView):
     @memoized
     def is_new_user(self):
         user = self.request.user
-        return not (Domain.active_for_user(user) or user.is_superuser)
+        return not (Domain.active_for_user(user) or user_is_acting_as_superuser(self.request))
 
     def post(self, request, *args, **kwargs):
         referer_url = request.GET.get('referer', '')
@@ -297,7 +298,7 @@ class RegisterDomainView(TemplateView):
         if not form.is_valid():
             return self.render_to_response(context)
 
-        if settings.RESTRICT_DOMAIN_CREATION and not request.user.is_superuser:
+        if settings.RESTRICT_DOMAIN_CREATION and not user_is_acting_as_superuser(request):
             context.update({
                 'current_page': {'page_name': _('Oops!')},
                 'error_msg': _('Your organization has requested that project creation be restricted. '

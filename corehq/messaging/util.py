@@ -1,6 +1,7 @@
 from corehq import toggles
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from django.conf import settings
+from corehq.util.sudo import is_legacy_superuser
 
 
 class MessagingRuleProgressHelper(object):
@@ -133,5 +134,5 @@ def use_phone_entries():
 def show_messaging_dashboard(domain, couch_user):
     return (
         not toggles.HIDE_MESSAGING_DASHBOARD_FROM_NON_SUPERUSERS.enabled(domain) or
-        couch_user.is_superuser
+        is_legacy_superuser(couch_user)
     )

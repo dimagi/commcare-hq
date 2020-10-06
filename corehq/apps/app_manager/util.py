@@ -42,6 +42,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
+from corehq.util.sudo import is_legacy_superuser
 
 logger = logging.getLogger(__name__)
 
@@ -343,7 +344,7 @@ def get_commcare_versions(request_user):
 
 
 def get_commcare_builds(request_user):
-    can_view_superuser_builds = (request_user.is_superuser
+    can_view_superuser_builds = (is_legacy_superuser(request_user)
                                  or toggles.IS_CONTRACTOR.enabled(request_user.username))
     return [
         i.build

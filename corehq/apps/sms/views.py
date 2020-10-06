@@ -114,7 +114,7 @@ from corehq.apps.sms.util import (
     get_contact,
     get_or_create_sms_translations,
     get_sms_backend_classes,
-    is_superuser_or_contractor,
+    is_contractor
 )
 from corehq.apps.smsbillables.utils import \
     country_name_from_isd_code_or_empty as country_name_from_code
@@ -134,6 +134,7 @@ from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.workbook_json.excel import get_single_worksheet
+from corehq.util.sudo import user_is_acting_as_superuser
 
 # Tuple of (description, days in the past)
 SMS_CHAT_HISTORY_CHOICES = (
@@ -161,7 +162,7 @@ class BaseMessagingSectionView(BaseDomainView):
 
     @cached_property
     def is_system_admin(self):
-        return is_superuser_or_contractor(self.request.couch_user)
+        return is_contractor(self.request.couch_user) or user_is_acting_as_superuser(self.request)
 
     @cached_property
     def is_granted_messaging_access(self):
@@ -1111,7 +1112,7 @@ class AddGatewayViewMixin(object):
 
     @property
     def is_system_admin(self):
-        return is_superuser_or_contractor(self.request.couch_user)
+        return is_contractor(self.request.couch_user) or user_is_acting_as_superuser(self.request)
 
     @property
     @memoized

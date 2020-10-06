@@ -52,6 +52,7 @@ from corehq.toggles import (
     TWO_FACTOR_SUPERUSER_ROLLOUT,
 )
 from corehq.util.soft_assert import soft_assert
+from corehq.util.sudo import user_is_acting_as_superuser, is_legacy_superuser
 from django_digest.decorators import httpdigest
 
 logger = logging.getLogger(__name__)
@@ -104,7 +105,7 @@ def login_and_domain_required(view_func):
                 return _redirect_to_project_access_upgrade(req)
             else:
                 return call_view()
-        elif user.is_superuser:
+        elif user_is_acting_as_superuser(req):
             if domain_obj.restrict_superusers and not _page_is_whitelisted(req.path, domain_obj.name):
                 from corehq.apps.hqwebapp.views import no_permissions
                 msg = "This project space restricts superuser access.  You must request an invite to access it."
@@ -457,7 +458,7 @@ def _two_factor_required(view_func, domain, couch_user):
         # If a user is a superuser, then there is no two_factor_disabled loophole allowed.
         # If you lose your phone, you have to give up superuser privileges
         # until you have two factor set up again.
-        settings.REQUIRE_TWO_FACTOR_FOR_SUPERUSERS and couch_user.is_superuser
+        settings.REQUIRE_TWO_FACTOR_FOR_SUPERUSERS and is_legacy_superuser(couch_user)
     ) or (
         # For other policies requiring two factor auth,
         # allow the two_factor_disabled loophole for people who have lost their phones
@@ -562,7 +563,7 @@ def domain_admin_required_ex(redirect_page_name=None):
                 raise Http404()
 
             if not (
-                _page_is_whitelisted(request.path, domain_name) and request.user.is_superuser
+                _page_is_whitelisted(request.path, domain_name) and user_is_acting_as_superuser(request)
             ) and not request.couch_user.is_domain_admin(domain_name):
                 return HttpResponseRedirect(reverse(redirect_page_name))
             return view_func(request, domain_name, *args, **kwargs)
@@ -575,7 +576,7 @@ def require_superuser_or_contractor(view_func):
     @wraps(view_func)
     def _inner(request, *args, **kwargs):
         user = request.user
-        if IS_CONTRACTOR.enabled(user.username) or user.is_superuser:
+        if IS_CONTRACTOR.enabled(user.username) or user_is_acting_as_superuser(request):
             return view_func(request, *args, **kwargs)
         else:
             return HttpResponseRedirect(reverse("no_permissions"))

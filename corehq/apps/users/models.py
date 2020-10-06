@@ -87,6 +87,7 @@ from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.dates import get_timestamp
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
+from corehq.util.sudo import is_legacy_superuser
 
 
 MAX_LOGIN_ATTEMPTS = 5
@@ -870,7 +871,7 @@ class EulaMixin(DocumentSchema):
         return data
 
     def is_eula_signed(self, version=CURRENT_VERSION):
-        if self.is_superuser:
+        if is_legacy_superuser(self):
             return True
         for eula in self.eulas:
             if eula.version == version:
@@ -1361,7 +1362,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     def is_previewer(self):
         from django.conf import settings
-        return (self.is_superuser or
+        return (is_legacy_superuser(self) or
                 bool(re.compile(settings.PREVIEWER_RE).match(self.username)))
 
     def sync_from_django_user(self, django_user):
@@ -2444,7 +2445,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     def is_global_admin(self):
         # override this function to pass global admin rights off to django
-        return self.is_superuser
+        return is_legacy_superuser(self)
 
     @classmethod
     def create(cls, domain, username, password, created_by, created_via, email=None, uuid='', date='',

@@ -18,6 +18,7 @@ from corehq.apps.translations.models import SMSTranslations
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import IS_CONTRACTOR
 from corehq.util.quickcache import quickcache
+from corehq.util.sudo import is_legacy_superuser
 
 
 class DateFormat(object):
@@ -329,4 +330,7 @@ def get_language_list(domain):
 
 
 def is_superuser_or_contractor(user: CouchUser):
-    return IS_CONTRACTOR.enabled(user.username) or user.is_superuser
+    return IS_CONTRACTOR.enabled(user.username) or is_legacy_superuser(user)
+
+def is_contractor(user: CouchUser):
+    return IS_CONTRACTOR.enabled(user.username)

@@ -12,6 +12,7 @@ from corehq.apps.accounting.utils.downgrade import (
 from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import Permissions
 from corehq.util.quickcache import quickcache
+from corehq.util.sudo import user_is_acting_as_superuser
 
 
 @quickcache(['domain_name'], timeout=60 * 60)
@@ -62,7 +63,7 @@ class BillingModalsMixin(object):
     def _should_display_billing_modals(self):
         return (
             self.request.couch_user
-            and not self.request.couch_user.is_superuser
+            and not user_is_acting_as_superuser(self.request)
             and self.request.couch_user.has_permission(
                 self.domain,
                 get_permission_name(Permissions.edit_billing)

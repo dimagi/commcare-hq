@@ -112,6 +112,7 @@ from corehq.apps.users.views.utils import get_editable_role_choices
 from corehq.const import USER_CHANGE_VIA_INVITATION
 from corehq.util.couch import get_document_or_404
 from corehq.util.view_utils import json_error
+from corehq.util.sudo import is_legacy_superuser, user_is_acting_as_superuser
 
 
 def _users_context(request, domain):
@@ -374,7 +375,8 @@ class EditWebUserView(BaseEditUserView):
     @property
     def form_user_update_permissions(self):
         user = self.editable_user
-        is_super_user = user.is_superuser
+        # TODO: Look into if self.request works here
+        is_super_user = is_legacy_superuser(user)
 
         return UpdateUserPermissionForm(auto_id=False, initial={'super_user': is_super_user})
 
@@ -387,7 +389,7 @@ class EditWebUserView(BaseEditUserView):
     @property
     @memoized
     def can_grant_superuser_access(self):
-        return self.request.couch_user.is_superuser and toggles.SUPPORT.enabled(self.request.couch_user.username)
+        return user_is_acting_as_superuser(self.request) and toggles.SUPPORT.enabled(self.request.couch_user.username)
 
     @property
     def page_context(self):
@@ -849,7 +851,7 @@ class UserInvitationView(object):
             context['current_page'] = {'page_name': _('Project Invitation, Account Required')}
         if request.user.is_authenticated:
             is_invited_user = request.couch_user.username.lower() == invitation.email.lower()
-            if self.is_invited(invitation, request.couch_user) and not request.couch_user.is_superuser:
+            if self.is_invited(invitation, request.couch_user) and not user_is_acting_as_superuser(request):
                 if is_invited_user:
                     # if this invite was actually for this user, just mark it accepted
                     messages.info(request, _("You are already a member of {entity}.").format(

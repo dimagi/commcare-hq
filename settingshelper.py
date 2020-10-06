@@ -204,7 +204,8 @@ def celery_failure_handler(task, exc, task_id, args, kwargs, einfo):
 
 def get_allowed_websocket_channels(request, channels):
     from django.core.exceptions import PermissionDenied
-    if request.user and request.user.is_authenticated and request.user.is_superuser:
+    from corehq.util.sudo import user_is_acting_as_superuser
+    if request.user and request.user.is_authenticated and user_is_acting_as_superuser(request):
         return channels
     else:
         raise PermissionDenied(

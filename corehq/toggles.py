@@ -21,6 +21,8 @@ from toggle.shortcuts import set_toggle, toggle_enabled
 
 from corehq.util.quickcache import quickcache
 
+from corehq.util.sudo import user_is_acting_as_superuser
+
 
 @attrs(frozen=True)
 class Tag:
@@ -201,7 +203,7 @@ class StaticToggle(object):
             def wrapped_view(request, *args, **kwargs):
                 if self.enabled_for_request(request):
                     return view_func(request, *args, **kwargs)
-                if request.user.is_superuser:
+                if user_is_acting_as_superuser(request):
                     from corehq.apps.toggle_ui.views import ToggleEditView
                     toggle_url = reverse(ToggleEditView.urlname, args=[self.slug])
                     messages.warning(

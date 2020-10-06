@@ -60,6 +60,7 @@ from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.workbook_json.excel import get_workbook, WorkbookJSONError
+from corehq.util.sudo import user_is_acting_as_superuser
 from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
@@ -601,7 +602,7 @@ class ConditionalAlertListView(ConditionalAlertBaseView):
         # can restart a rule run. Also don't limit it if it's an environment
         # that is a standalone environment.
         return not (
-            self.request.couch_user.is_superuser or
+            user_is_acting_as_superuser(self.request) or
             settings.SERVER_ENVIRONMENT in settings.UNLIMITED_RULE_RESTART_ENVS
         )
 

@@ -121,6 +121,7 @@ from corehq.util.context_processors import commcare_hq_names
 from corehq.util.metrics.const import TAG_UNKNOWN, MPM_MAX
 from corehq.util.metrics.utils import sanitize_url
 from corehq.util.view_utils import reverse
+from corehq.util.sudo import user_is_acting_as_superuser
 from no_exceptions.exceptions import Http403
 
 
@@ -223,7 +224,7 @@ def redirect_to_default(req, domain=None):
         else:
             domains = Domain.active_for_user(req.user)
 
-        if 0 == len(domains) and not req.user.is_superuser:
+        if 0 == len(domains) and not user_is_acting_as_superuser(req):
             return redirect('registration_domain')
         elif 1 == len(domains):
             from corehq.apps.users.models import DomainMembershipError
@@ -1189,14 +1190,14 @@ def quick_find(request):
 
     def deal_with_doc(doc, domain, doc_info_fn):
         is_member = domain and request.couch_user.is_member_of(domain, allow_mirroring=True)
-        if is_member or request.couch_user.is_superuser:
+        if is_member or user_is_acting_as_superuser(request):
             doc_info = doc_info_fn(doc)
         else:
             raise Http404()
         if redirect and doc_info.link:
             messages.info(request, _("We've redirected you to the %s matching your query") % doc_info.type_display)
             return HttpResponseRedirect(doc_info.link)
-        elif redirect and request.couch_user.is_superuser:
+        elif redirect and user_is_acting_as_superuser(request):
             return HttpResponseRedirect('{}?id={}'.format(reverse('raw_doc'), doc.get('_id')))
         else:
             return json_response(doc_info)

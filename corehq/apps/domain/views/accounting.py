@@ -113,6 +113,7 @@ from corehq.apps.hqwebapp.views import BasePageView, CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.const import USER_DATE_FORMAT
+from corehq.util.sudo import user_is_acting_as_superuser
 
 PAYMENT_ERROR_MESSAGES = {
     400: ugettext_lazy('Your request was not formatted properly.'),
@@ -457,7 +458,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
 
     @property
     def show_hidden(self):
-        if not self.request.user.is_superuser:
+        if not user_is_acting_as_superuser(self.request):
             return False
         return bool(self.request.POST.get('additionalData[show_hidden]'))
 
@@ -1418,7 +1419,7 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
             next_subscription = self.current_subscription.next_subscription
 
             if is_saved:
-                if not request.user.is_superuser:
+                if not user_is_acting_as_superuser(request):
                     if self.billing_account_info_form.is_same_edition():
                         self.send_keep_subscription_email()
                     elif self.billing_account_info_form.is_downgrade_from_paid_plan():

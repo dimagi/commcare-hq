@@ -81,6 +81,7 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
 from corehq.util.dates import get_first_last_days
+from corehq.util.sudo import is_legacy_superuser
 
 
 class BillingAccountBasicForm(forms.Form):
@@ -2625,7 +2626,7 @@ class CreateAdminForm(forms.Form):
                 "User '%s' does not exist" % username
             )
         web_user = WebUser.get_by_username(username)
-        if not web_user or not web_user.is_superuser:
+        if not web_user or not is_legacy_superuser(web_user):
             raise CreateAccountingAdminError(
                 "The user '%s' is not a superuser." % username,
             )

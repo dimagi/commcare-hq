@@ -30,6 +30,7 @@ from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException
 from corehq.apps.hqwebapp.models import MaintenanceAlert
 from corehq.motech.utils import pformat_json
 from corehq.util.soft_assert import soft_assert
+from corehq.util.sudo import user_is_acting_as_superuser
 
 register = template.Library()
 
@@ -228,7 +229,7 @@ def can_use_restore_as(request):
     if not hasattr(request, 'couch_user'):
         return False
 
-    if request.couch_user.is_superuser:
+    if user_is_acting_as_superuser(request):
         return True
 
     domain = getattr(request, 'domain', None)

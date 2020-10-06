@@ -103,6 +103,8 @@ from corehq.tabs.utils import (
 )
 from custom.icds_core.view_utils import is_icds_cas_project
 
+from corehq.util.sudo import user_is_acting_as_superuser
+
 
 class ProjectReportsTab(UITab):
     title = ugettext_noop("Reports")
@@ -942,7 +944,7 @@ class ApplicationsTab(UITab):
         couch_user = self.couch_user
         return (self.domain and couch_user
                 and couch_user.can_view_apps()
-                and (couch_user.is_member_of(self.domain, allow_mirroring=True) or couch_user.is_superuser)
+                and (couch_user.is_member_of(self.domain, allow_mirroring=True) or user_is_acting_as_superuser(self._request))
                 and has_privilege(self._request, privileges.PROJECT_ACCESS))
 
 
@@ -1152,7 +1154,7 @@ class MessagingTab(UITab):
                 ],
             })
 
-        if self.couch_user.is_superuser or self.couch_user.is_domain_admin(self.domain):
+        if user_is_acting_as_superuser(self._request) or self.couch_user.is_domain_admin(self.domain):
             settings_urls.extend([
                 {'title': ugettext_lazy("General Settings"),
                  'url': reverse('sms_settings', args=[self.domain])},
@@ -1179,7 +1181,7 @@ class MessagingTab(UITab):
             InfobipBackend.get_api_id() in
             (b.get_api_id() for b in
              SQLMobileBackend.get_domain_backends(SQLMobileBackend.SMS, self.domain)))
-        user_is_admin = (self.couch_user.is_superuser or self.couch_user.is_domain_admin(self.domain))
+        user_is_admin = (user_is_acting_as_superuser(self._request) or self.couch_user.is_domain_admin(self.domain))
 
         if user_is_admin and (domain_has_turn_integration or domain_has_infobip_integration):
             whatsapp_urls.append({
@@ -1417,7 +1419,7 @@ class ProjectUsersTab(UITab):
                 'show_in_dropdown': True,
             })
 
-        if self.couch_user.is_superuser:
+        if user_is_acting_as_superuser(self._request):
             from corehq.apps.users.models import DomainPermissionsMirror
             if toggles.DOMAIN_PERMISSIONS_MIRROR.enabled_for_request(self._request) \
                     or DomainPermissionsMirror.mirror_domains(self.domain):
@@ -1668,7 +1670,7 @@ class ProjectSettingsTab(UITab):
 
         from corehq.apps.users.models import WebUser
         if isinstance(self.couch_user, WebUser):
-            if (user_is_billing_admin or self.couch_user.is_superuser) and not settings.ENTERPRISE_MODE:
+            if (user_is_billing_admin or user_is_acting_as_superuser(self._request)) and not settings.ENTERPRISE_MODE:
                 from corehq.apps.domain.views.accounting import (
                     DomainSubscriptionView, EditExistingBillingAccountView,
                     DomainBillingStatementsView, ConfirmSubscriptionRenewalView,
@@ -1708,7 +1710,7 @@ class ProjectSettingsTab(UITab):
                                            args=[self.domain]),
                         }
                     )
-                if self.couch_user.is_superuser:
+                if user_is_acting_as_superuser(self._request):
                     subscription.append({
                         'title': _('Internal Subscription Management (Dimagi Only)'),
                         'url': reverse(
@@ -1718,7 +1720,7 @@ class ProjectSettingsTab(UITab):
                     })
                 items.append((_('Subscription'), subscription))
 
-        if self.couch_user.is_superuser:
+        if user_is_acting_as_superuser(self._request):
             from corehq.apps.domain.views.internal import (
                 EditInternalDomainInfoView,
                 EditInternalCalculationsView,
@@ -2047,7 +2049,7 @@ class SMSAdminTab(UITab):
 
     @property
     def _is_viewable(self):
-        return self.couch_user and self.couch_user.is_superuser
+        return self.couch_user and user_is_acting_as_superuser(self._request)
 
 
 class AdminTab(UITab):
@@ -2058,7 +2060,7 @@ class AdminTab(UITab):
 
     @property
     def dropdown_items(self):
-        if (self.couch_user and not self.couch_user.is_superuser
+        if (self.couch_user and not user_is_acting_as_superuser(self._request)
                 and (toggles.IS_CONTRACTOR.enabled(self.couch_user.username))):
             return [
                 dropdown_dict(_("System Info"), url=reverse("system_info")),
@@ -2091,7 +2093,7 @@ class AdminTab(UITab):
     def sidebar_items(self):
         # todo: convert these to dispatcher-style like other reports
         if (self.couch_user and
-                (not self.couch_user.is_superuser and
+                (not user_is_acting_as_superuser(self._request) and
                  toggles.IS_CONTRACTOR.enabled(self.couch_user.username))):
             return [
                 (_('System Health'), [
@@ -2201,5 +2203,5 @@ class AdminTab(UITab):
     @property
     def _is_viewable(self):
         return (self.couch_user and
-                (self.couch_user.is_superuser or
+                (user_is_acting_as_superuser(self._request) or
                  toggles.IS_CONTRACTOR.enabled(self.couch_user.username)))

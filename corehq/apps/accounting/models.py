@@ -73,6 +73,7 @@ from corehq.util.mixin import ValidateModelMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import absolute_reverse
+from corehq.util.sudo import is_legacy_superuser
 
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
 
@@ -1924,7 +1925,7 @@ class Subscription(models.Model):
             return False
 
     def user_can_change_subscription(self, user):
-        if user.is_superuser:
+        if is_legacy_superuser(user):
             return True
         elif self.account.is_customer_billing_account:
             return self.account.has_enterprise_admin(user.email)

@@ -60,6 +60,7 @@ from corehq.apps.domain.decorators import track_domain_request
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import cachebuster
 from corehq.util.context_processors import websockets_override
+from corehq.util.sudo import user_is_acting_as_superuser
 
 logger = logging.getLogger(__name__)
 
@@ -162,7 +163,7 @@ def _get_form_designer_view(request, domain, app, module, form):
     })
     context.update(_get_requirejs_context())
 
-    if request.user.is_superuser:
+    if user_is_acting_as_superuser(request):
         context.update({'notification_options': _get_notification_options(request, domain, app, form)})
 
     notify_form_opened(domain, request.couch_user, app.id, form.unique_id)

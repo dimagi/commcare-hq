@@ -28,6 +28,7 @@ from corehq.apps.users.decorators import (
     require_api_permission
 )
 from corehq.toggles import API_THROTTLE_WHITELIST, IS_CONTRACTOR
+from corehq.util.sudo import is_legacy_superuser
 
 
 def wrap_4xx_errors_for_apis(view_func):
@@ -202,7 +203,7 @@ class AdminAuthentication(LoginAndDomainAuthentication):
     @staticmethod
     def _permission_check(couch_user, domain):
         return (
-            couch_user.is_superuser or
+            is_legacy_superuser(couch_user) or
             IS_CONTRACTOR.enabled(couch_user.username)
         )
 

@@ -69,6 +69,7 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
+from corehq.util.sudo import user_is_acting_as_superuser
 from no_exceptions.exceptions import Http403
 
 from .dispatcher import require_form_management_privilege
@@ -749,7 +750,7 @@ class AddCaseRuleView(DataInterfaceSection):
     @property
     @memoized
     def is_system_admin(self):
-        return self.request.couch_user.is_superuser
+        return user_is_acting_as_superuser(self.request)
 
     @property
     @memoized

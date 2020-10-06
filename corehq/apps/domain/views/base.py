@@ -19,6 +19,7 @@ from corehq.apps.hqwebapp.utils import send_confirmation_email
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.users.models import Invitation
 from corehq.util.quickcache import quickcache
+from corehq.util.sudo import user_is_acting_as_superuser
 
 
 def covid19(request):
@@ -67,7 +68,7 @@ def select(request, do_not_redirect=False, next_view=None):
             # mirrors logic in login_and_domain_required
             if (
                 request.couch_user.is_member_of(domain_obj, allow_mirroring=True)
-                or (request.user.is_superuser and not domain_obj.restrict_superusers)
+                or (user_is_acting_as_superuser(request) and not domain_obj.restrict_superusers)
                 or domain_obj.is_snapshot
             ):
                 try:

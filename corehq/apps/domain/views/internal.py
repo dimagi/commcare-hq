@@ -45,6 +45,7 @@ from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.receiverwrapper.rate_limiter import submission_rate_limiter
 from corehq.apps.toggle_ui.views import ToggleEditView
 from corehq.apps.users.models import CouchUser
+from corehq.util.sudo import user_is_acting_as_superuser
 
 
 class BaseInternalDomainSettingsView(BaseProjectSettingsView):
@@ -380,7 +381,7 @@ class ActivateTransferDomainView(BasePageView):
 
         if (self.active_transfer and
                 self.active_transfer.to_username != request.user.username and
-                not request.user.is_superuser):
+                not user_is_acting_as_superuser(request)):
             return HttpResponseRedirect(reverse("no_permissions"))
 
         return super(ActivateTransferDomainView, self).get(request, *args, **kwargs)
@@ -391,7 +392,7 @@ class ActivateTransferDomainView(BasePageView):
         if not self.active_transfer:
             raise Http404()
 
-        if self.active_transfer.to_username != request.user.username and not request.user.is_superuser:
+        if self.active_transfer.to_username != request.user.username and not user_is_acting_as_superuser(request):
             return HttpResponseRedirect(reverse("no_permissions"))
 
         self.active_transfer.transfer_domain(ip=get_ip(request))
@@ -416,7 +417,7 @@ class DeactivateTransferDomainView(View):
 
         if (transfer.to_username != request.user.username and
                 transfer.from_username != request.user.username and
-                not request.user.is_superuser):
+                not user_is_acting_as_superuser(request)):
             return HttpResponseRedirect(reverse("no_permissions"))
 
         transfer.active = False

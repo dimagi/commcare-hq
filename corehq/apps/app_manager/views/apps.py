@@ -110,6 +110,7 @@ from corehq.util.compression import decompress
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse as reverse_util
+from corehq.util.sudo import user_is_acting_as_superuser, is_legacy_superuser
 
 
 @no_conflict_require_POST
@@ -225,7 +226,7 @@ def get_app_view_context(request, app):
 
     build_config = CommCareBuildConfig.fetch()
     options = build_config.get_menu()
-    if not request.user.is_superuser and not toggles.IS_CONTRACTOR.enabled(request.user.username):
+    if not user_is_acting_as_superuser(request) and not toggles.IS_CONTRACTOR.enabled(request.user.username):
         options = [option for option in options if not option.superuser_only]
     options_map = defaultdict(lambda: {"values": [], "value_names": []})
     for option in options:
@@ -331,7 +332,7 @@ def _get_upstream_url(app, request_user, master_app_id=None):
     """Get the upstream url if the user has access"""
     if (
             app.domain_link and (
-                request_user.is_superuser or (
+                is_legacy_superuser(request_user) or (
                     not app.domain_link.is_remote
                     and request_user.is_member_of(app.domain_link.master_domain)
                 )
