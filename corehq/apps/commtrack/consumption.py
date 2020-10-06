@@ -67,9 +67,9 @@ def should_exclude_invalid_periods(domain):
     Whether the domain's consumption calculation should exclude invalid periods
     i.e. periods where the stock went up without a receipt being reported
     """
-    from corehq.apps.commtrack.models import CommtrackConfig
+    from corehq.apps.commtrack.models import SQLCommtrackConfig
     if domain:
-        config = CommtrackConfig.for_domain(domain)
-        if config:
-            return config.consumption_config.exclude_invalid_periods
+        config = SQLCommtrackConfig.for_domain(domain)
+        if config and hasattr(config, 'sqlconsumptionconfig'):
+            return config.sqlconsumptionconfig.exclude_invalid_periods
     return False
