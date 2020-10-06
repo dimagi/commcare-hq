@@ -83,7 +83,7 @@ httpagentparser==1.9.0    # via -r requirements.in
 idna==2.10                # via -r prod-requirements.in, email-validator, requests
 ipython-genutils==0.2.0   # via traitlets
 ipython==7.15.0           # via -r prod-requirements.in
-iso8601==0.1.12           # via -r requirements.in
+iso8601==0.1.13           # via -r requirements.in
 jdcal==1.4.1              # via openpyxl
 jedi==0.17.2              # via ipython
 jinja2==2.11.2            # via -r requirements.in

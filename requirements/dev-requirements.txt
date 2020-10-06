@@ -102,7 +102,7 @@ importlib-metadata==2.0.0  # via flake8
 ipdb==0.11                # via -r dev-requirements.in
 ipython-genutils==0.2.0   # via traitlets
 ipython==7.15.0           # via -r dev-requirements.in, ipdb
-iso8601==0.1.12           # via -r requirements.in
+iso8601==0.1.13           # via -r requirements.in
 jdcal==1.4.1              # via openpyxl
 jedi==0.17.2              # via ipython
 jenkinsapi==0.2.28        # via -r dev-requirements.in
