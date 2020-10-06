@@ -1088,8 +1088,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
 
     @classmethod
     def get_recipient_type(cls, recipient):
-        doc_type = getattr(recipient, 'doc_type', None)
-        return cls.get_recipient_type_from_doc_type(doc_type)
+        return cls.get_recipient_type_from_doc_type(recipient.doc_type)
 
     @classmethod
     def _get_recipient_doc_type(cls, recipient_type):
@@ -1266,9 +1265,6 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
                 recipient_type = cls.RECIPIENT_LOCATION
 
             recipient_id = schedule_instance.recipient.location_id
-        elif isinstance(schedule_instance.recipient, str):
-            recipient_type = cls.RECIPIENT_UNKNOWN
-            recipient_id = None
         elif schedule_instance.recipient is None:
             recipient_type = cls.RECIPIENT_UNKNOWN
             recipient_id = None
