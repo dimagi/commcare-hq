@@ -1,3 +1,4 @@
+import attr
 import pytz
 import sys
 import uuid
@@ -126,7 +127,7 @@ class ScheduleInstance(PartitionedModel):
         return (
             isinstance(recipient, (CommCareUser, WebUser)) or
             is_commcarecase(recipient) or
-            isinstance(recipient, str)
+            isinstance(recipient, EmailAddressRecipient)
         )
 
     @property
@@ -275,9 +276,6 @@ class ScheduleInstance(PartitionedModel):
         if is_commcarecase(recipient):
             doc_type = 'CommCareCase'
             doc_id = recipient.case_id
-        elif isinstance(recipient, str):
-            doc_type = recipient
-            doc_id = recipient
         else:
             doc_type = recipient.doc_type
             doc_id = recipient.get_id
@@ -526,6 +524,23 @@ class TimedScheduleInstance(AbstractTimedScheduleInstance):
         )
 
 
+@attr.s
+class EmailAddressRecipient(object):
+    email_address = attr.ib()
+
+    @property
+    def get_email(self):
+        return self.email_address
+
+    @property
+    def get_id(self):
+        return self.email_address
+
+    @property
+    def doc_type(self):
+        return None
+
+
 class CaseScheduleInstanceMixin(object):
 
     RECIPIENT_TYPE_SELF = 'Self'
@@ -615,7 +630,8 @@ class CaseScheduleInstanceMixin(object):
             full_username = format_username(username, self.domain)
             return CommCareUser.get_by_username(full_username)
         elif self.recipient_type == self.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL:
-            return self.case.get_case_property(self.recipient_id)
+            email = self.case.get_case_property(self.recipient_id)
+            return EmailAddressRecipient(email)
         else:
             return super(CaseScheduleInstanceMixin, self).recipient
 
