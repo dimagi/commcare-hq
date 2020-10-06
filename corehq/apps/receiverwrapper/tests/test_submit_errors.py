@@ -135,7 +135,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
         self._test_submission_error_post_save(OPENROSA_VERSION_3)
 
     def _test_submit_bad_data(self, bad_data):
-        f, path = tmpfile(mode='wb')
+        f, path = tmpfile(mode='wb', suffix='.xml')
         with f:
             f.write(bad_data)
         with open(path, 'rb') as f:
