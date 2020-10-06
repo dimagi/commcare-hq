@@ -163,6 +163,7 @@ MIDDLEWARE = [
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
     'corehq.apps.cloudcare.middleware.CloudcareMiddleware',
+    'elevate.middleware.ElevateMiddleware',
 ]
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
@@ -217,6 +218,7 @@ DEFAULT_APPS = (
     'django_user_agents',
     'logentry_admin',
     'oauth2_provider',
+    'elevate',
 )
 
 CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'

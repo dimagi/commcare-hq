@@ -48,6 +48,7 @@ django-countries==4.6     # via -r requirements/requirements.in
 django-crispy-forms==1.7.0  # via -r requirements/requirements.in
 django-cte==1.1.4         # via -r requirements/requirements.in
 django-debug-toolbar==3.1  # via -r requirements/dev-requirements.in
+django-elevate==1.0.1     # via -r requirements/requirements.in
 django-extensions==3.0.9  # via -r requirements/dev-requirements.in
 django-formtools==2.1     # via -r requirements/requirements.in, django-two-factor-auth
 django-logentry-admin==1.0.6  # via -r requirements/requirements.in
