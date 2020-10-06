@@ -165,6 +165,9 @@
     {% endif %}
     {% block background_content %}{% endblock %}
     {% maintenance_alert request %}
+
+    {% include "hqwebapp/partials/sudo.html" %}
+
     {% if show_trial_banner %}
       {% include "hqwebapp/partials/trial_banner.html" %}
     {% endif %}
