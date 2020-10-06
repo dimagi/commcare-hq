@@ -1,3 +1,4 @@
+import attr
 import pytz
 import sys
 import uuid
@@ -8,6 +9,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.models import MessagingEvent
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
+from corehq.apps.users.util import format_username
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -124,7 +126,8 @@ class ScheduleInstance(PartitionedModel):
     def recipient_is_an_individual_contact(recipient):
         return (
             isinstance(recipient, (CommCareUser, WebUser)) or
-            is_commcarecase(recipient)
+            is_commcarecase(recipient) or
+            isinstance(recipient, EmailAddressRecipient)
         )
 
     @property
@@ -521,6 +524,27 @@ class TimedScheduleInstance(AbstractTimedScheduleInstance):
         )
 
 
+@attr.s
+class EmailAddressRecipient(object):
+    email_address = attr.ib()
+
+    @property
+    def get_email(self):
+        return self.email_address
+
+    @property
+    def get_id(self):
+        return self.email_address
+
+    @property
+    def doc_type(self):
+        return None
+
+    @property
+    def get_language_code(self):
+        return None
+
+
 class CaseScheduleInstanceMixin(object):
 
     RECIPIENT_TYPE_SELF = 'Self'
@@ -529,6 +553,8 @@ class CaseScheduleInstanceMixin(object):
     RECIPIENT_TYPE_PARENT_CASE = 'ParentCase'
     RECIPIENT_TYPE_ALL_CHILD_CASES = 'AllChildCases'
     RECIPIENT_TYPE_CUSTOM = 'CustomRecipient'
+    RECIPIENT_TYPE_CASE_PROPERTY_USER = 'CasePropertyUser'
+    RECIPIENT_TYPE_CASE_PROPERTY_EMAIL = 'CasePropertyEmail'
 
     @property
     @memoized
@@ -603,6 +629,13 @@ class CaseScheduleInstanceMixin(object):
                 settings.AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS[self.recipient_id][0]
             )
             return custom_function(self)
+        elif self.recipient_type == self.RECIPIENT_TYPE_CASE_PROPERTY_USER:
+            username = self.case.get_case_property(self.recipient_id)
+            full_username = format_username(username, self.domain)
+            return CommCareUser.get_by_username(full_username)
+        elif self.recipient_type == self.RECIPIENT_TYPE_CASE_PROPERTY_EMAIL:
+            email = self.case.get_case_property(self.recipient_id)
+            return EmailAddressRecipient(email)
         else:
             return super(CaseScheduleInstanceMixin, self).recipient
 
