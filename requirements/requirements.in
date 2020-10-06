@@ -57,7 +57,7 @@ greenlet==0.4.15
 gunicorn
 hiredis==0.2.0
 httpagentparser~=1.7
-iso8601==0.1.12
+iso8601==0.1.13
 Jinja2~=2.10
 json-delta==2.0
 jsonfield==2.1.1
