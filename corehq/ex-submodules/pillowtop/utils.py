@@ -220,7 +220,8 @@ class ErrorCollector(object):
         self.errors.append(error)
 
 
-def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=None):
+def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=None,
+        skip_doc_exists_check=True):
     """
     Builds bulk payload json to be called via Elasticsearch Bulk API
     """
@@ -235,9 +236,20 @@ def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=
         if doc and doc.get('doc_type'):
             return doc['doc_type'].endswith(DELETED_SUFFIX)
 
+    def ids_query(doc_ids):
+        # Todo: return based on ESQuery
+        return [{doc_id: index_info.alias for doc_id in doc_ids}]
+
+    index_by_doc_id = {}
+    if not skip_doc_exists_check and index_info.ilm_config:
+        index_by_doc_id = ids_query([change.id for change in changes])
+
+    def backing_index(id):
+        return index_by_doc_id.get(id, index_info.alias)
+
     for change in changes:
         action = {
-            "_index": index_info.alias,
+            "_index": backing_index(change.id),
             "_id": change.id
         }
         if settings.ELASTICSEARCH_MAJOR_VERSION != 7:

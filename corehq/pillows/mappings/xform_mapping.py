@@ -133,7 +133,6 @@ XFORM_INDEX_INFO = ElasticsearchIndexInfo(
     index=XFORM_INDEX,
     alias=XFORM_ALIAS,
     type=XFORM_ES_TYPE,
-    ilm_config=MAX_DOCS,
     mapping=XFORM_MAPPING,
     hq_index_name=XFORM_HQ_INDEX_NAME,
 )

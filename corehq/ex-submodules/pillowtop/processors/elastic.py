@@ -147,7 +147,8 @@ class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
 
             error_collector = ErrorCollector()
             es_actions = build_bulk_payload(
-                self.index_info, list(changes_to_process.values()), self.doc_transform_fn, error_collector
+                self.index_info, list(changes_to_process.values()), self.doc_transform_fn, error_collector,
+                skip_doc_exists_check=self.skip_doc_exists_check
             )
             error_changes = error_collector.errors
 
