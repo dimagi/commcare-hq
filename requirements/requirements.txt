@@ -10,8 +10,8 @@ architect==0.5.6          # via -r requirements.in
 attrs==18.2.0             # via -r requirements.in
 babel==2.8.0              # via django-phonenumber-field
 billiard==3.5.0.4         # via -r requirements.in, celery
-boto3==1.15.3             # via -r requirements.in
-botocore==1.18.3          # via boto3, s3transfer
+boto3==1.15.12            # via -r requirements.in
+botocore==1.18.12         # via boto3, s3transfer
 cairocffi==1.1.0          # via cairosvg, weasyprint
 cairosvg==2.4.2           # via weasyprint
 git+git://github.com/dimagi/celery@dc7253614fd8500af78b09d1ceb79c50f1baac8d#egg=celery  # via -r requirements.in, django-celery-results
