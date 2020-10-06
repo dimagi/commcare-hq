@@ -170,9 +170,13 @@ def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', nu
 def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
                      include_ucrs=None, exclude_ucrs=None,
                      num_processes=1, process_num=0, ucr_configs=None, skip_ucr=False,
-                     processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, topics=None, **kwargs):
+                     processor_chunk_size=DEFAULT_PROCESSOR_CHUNK_SIZE, topics=None,
+                     skip_doc_exists_check=False, **kwargs):
     """Generic XForm change processor
 
+    kwargs:
+        skip_doc_exists_check: Set this to True when the doc can be indexed without checking for its existence
+            in the ILM backed indices, applicable to ILM indices only.
     Processors:
       - :py:class:`corehq.apps.userreports.pillow.ConfigurableReportPillowProcessor` (disabled when skip_ucr=True)
       - :py:class:`pillowtop.processors.elastic.BulkElasticProcessor`
@@ -201,6 +205,7 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
         index_info=XFORM_INDEX_INFO,
         doc_prep_fn=transform_xform_for_elasticsearch,
         doc_filter_fn=xform_pillow_filter,
+        skip_doc_exists_check=skip_doc_exists_check
     )
     unknown_user_form_processor = UnknownUsersProcessor()
     form_meta_processor = FormSubmissionMetadataTrackerProcessor()

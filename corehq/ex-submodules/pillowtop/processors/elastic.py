@@ -53,12 +53,14 @@ class ElasticProcessor(PillowProcessor):
       - ES
     """
 
-    def __init__(self, elasticsearch, index_info, doc_prep_fn=None, doc_filter_fn=None):
+    def __init__(self, elasticsearch, index_info, doc_prep_fn=None, doc_filter_fn=None,
+            skip_doc_exists_check=False):
         self.doc_filter_fn = doc_filter_fn or noop_filter
         self.elasticsearch = elasticsearch
         self.es_interface = ElasticsearchInterface(self.elasticsearch)
         self.index_info = index_info
         self.doc_transform_fn = doc_prep_fn or identity
+        self.skip_doc_exists_check = skip_doc_exists_check
 
     def es_getter(self):
         return self.elasticsearch
@@ -94,6 +96,8 @@ class ElasticProcessor(PillowProcessor):
                 es_getter=self.es_getter,
                 name='ElasticProcessor',
                 data=doc_ready_to_save,
+                # Todo; tweak based on whether its a fresh form
+                skip_doc_exists_check=self.skip_doc_exists_check,
             )
 
     def _delete_doc_if_exists(self, doc_id):
@@ -172,11 +176,13 @@ def _get_indices_by_alias(alias):
     return list(es.indices.get_alias(alias))
 
 
-def _doc_exists_in_es(doc_id, doc_type, index_info, es_interface):
+def _doc_exists_in_es(doc_id, doc_type, index_info, es_interface, skip_doc_exists_check=False):
     # for ILM indices returns a tuple of (whether doc exists, the index that the doc is found in)
     # for normal indices returns a tuple of (whether doc exists, None)
     if not index_info.ilm_config:
-        return es_interface.doc_exists(index_info.alias, doc_id, doc_type), None
+        return es_interface.doc_exists(index_info.alias, doc_id, doc_type), index_info.alias
+    elif skip_doc_exists_check:
+        return False, index_info.alias
     # exists/get queries doesn't work against aliases
     #   so query all backing indices
     if settings.UNIT_TESTING:
@@ -194,17 +200,19 @@ def _doc_exists_in_es(doc_id, doc_type, index_info, es_interface):
         else:
             doc_exists = True
             found_in = index
-    return doc_exists, found_in
+    return doc_exists, found_in or index_info.alias
 
 
 def send_to_elasticsearch(index_info, doc_type, doc_id, es_getter, name, data=None,
-                          delete=False, es_merge_update=False):
+                          delete=False, es_merge_update=False, skip_doc_exists_check=False):
     """
     More fault tolerant es.put method
     kwargs:
         es_merge_update: Set this to True to use Elasticsearch.update instead of Elasticsearch.index
             which merges existing ES doc and current update. If this is set to False, the doc will be replaced
         is_ilm_update: Set this to True if the doc is being updated in an ILM index
+        skip_doc_exists_check: Set this to True when the doc can be indexed without checking for its existence
+            in the ILM backed indices, applicable to ILM indices only
     """
 
     alias = index_info.alias
@@ -216,20 +224,21 @@ def send_to_elasticsearch(index_info, doc_type, doc_id, es_getter, name, data=No
 
     while current_tries < retries:
         try:
-            doc_exists, source_index = _doc_exists_in_es(doc_id, doc_type, index_info, es_interface)
-            target_index = source_index or alias
-            verify_alias = False if source_index else True
+            doc_exists, target_index = _doc_exists_in_es(
+                doc_id, doc_type, index_info, es_interface,
+                skip_doc_exists_check=skip_doc_exists_check
+            )
             if delete:
                 if doc_exists:
-                    es_interface.delete_doc(target_index, doc_type, doc_id, verify_alias=verify_alias)
+                    es_interface.delete_doc(target_index, doc_type, doc_id, verify_alias=False)
             elif doc_exists:
                 params = {'retry_on_conflict': 2}
                 if es_merge_update:
                     es_interface.update_doc_fields(target_index, doc_type, doc_id, fields=data, params=params,
-                        verify_alias=verify_alias)
+                        verify_alias=False)
                 else:
                     es_interface.update_doc(target_index, doc_type, doc_id, doc=data, params=params,
-                        verify_alias=verify_alias)
+                        verify_alias=False)
             else:
                 es_interface.create_doc(alias, doc_type, doc_id, doc=data)
             break
