@@ -25,10 +25,10 @@ hqDefine("users/js/mobile_workers",[
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/assert_properties',
     'analytix/js/google',
-    'nic_compliance/js/encoder',
     'jquery.rmi/jquery.rmi',
     'zxcvbn/dist/zxcvbn',
     'locations/js/widgets',
+    'users/js/custom_data_fields',
     'hqwebapp/js/components.ko', // for pagination
     'hqwebapp/js/validators.ko', // email address validation
 ], function (
@@ -38,10 +38,10 @@ hqDefine("users/js/mobile_workers",[
     initialPageData,
     assertProperties,
     googleAnalytics,
-    nicEncoder,
     RMI,
     zxcvbn,
-    locationsWidgets
+    locationsWidgets,
+    customDataFields
 ) {
     'use strict';
     // These are used as css classes, so the values of success/warning/error need to be what they are.
@@ -55,7 +55,6 @@ hqDefine("users/js/mobile_workers",[
     };
 
     var rmi = function () {};
-
     var userModel = function (options) {
         options = options || {};
         options = _.defaults(options, {
@@ -72,14 +71,14 @@ hqDefine("users/js/mobile_workers",[
             send_account_confirmation_email: false,
             is_active: true,
             is_account_confirmed: true,
-            custom_fields: {},
         });
 
-        // Manually turn custom_fields into an object of observables, since the default ko.mapping doesn't handle this
-        options.custom_fields = _.mapObject(options.custom_fields, function (value) {
-            return ko.observable(value);
-        });
         var self = ko.mapping.fromJS(options);
+        self.custom_fields = customDataFields.customDataFieldsEditor({
+            profiles: initialPageData.get('custom_fields_profiles'),
+            profile_slug: initialPageData.get('custom_fields_profile_slug'),
+            slugs: initialPageData.get('custom_fields_slugs'),
+        });
 
         self.email.extend({
             emailRFC2822: true,
@@ -223,7 +222,6 @@ hqDefine("users/js/mobile_workers",[
         assertProperties.assertRequired(options, [
             'custom_fields_slugs',
             'draconian_security',
-            'implement_password_obfuscation',
             'location_url',
             'require_location_id',
             'strong_mobile_passwords',
@@ -247,7 +245,6 @@ hqDefine("users/js/mobile_workers",[
         // and eliminates the need to remember which flags are observable and which aren't
         self.useStrongPasswords = ko.observable(options.strong_mobile_passwords);
         self.useDraconianSecurity = ko.observable(options.draconian_security);
-        self.implementPasswordObfuscation = ko.observable(options.implement_password_obfuscation);
 
         self.passwordStatus = ko.computed(function () {
             if (!self.stagedUser()) {
@@ -428,9 +425,6 @@ hqDefine("users/js/mobile_workers",[
         self.initializeUser = function () {
             self.stagedUser(userModel({
                 password: self.useStrongPasswords() ? self.generateStrongPassword() : '',
-                custom_fields: _.object(_.map(self.customFieldSlugs, function (slug) {
-                    return [slug, ''];
-                })),
             }));
             if (self.useStrongPasswords()) {
                 self.isSuggestedPassword(true);
@@ -438,7 +432,10 @@ hqDefine("users/js/mobile_workers",[
             self.usernameAvailabilityStatus(null);
             self.usernameStatusMessage(null);
 
-            locationsWidgets.initAutocomplete($("#id_location_id"));
+            var $locationSelect = $("#id_location_id");
+            if ($locationSelect.length) {
+                locationsWidgets.initAutocomplete($locationSelect);
+            }
 
             googleAnalytics.track.event('Manage Mobile Workers', 'New Mobile Worker', '');
         };
@@ -469,11 +466,10 @@ hqDefine("users/js/mobile_workers",[
             if (self.usernameAvailabilityStatus() !== self.STATUS.SUCCESS) {
                 return false;
             }
-            var fieldData = self.stagedUser().custom_fields;
-            if (_.isObject(fieldData) && !_.isArray(fieldData)) {
-                if (!_.every(fieldData, function (value) { return value(); })) {
-                    return false;
-                }
+            if (_.find(self.customFieldSlugs, function (slug) {
+                return !self.stagedUser().custom_fields[slug].value();
+            })) {
+                return false;
             }
             return true;
         });
@@ -487,11 +483,10 @@ hqDefine("users/js/mobile_workers",[
             if (!newUser.passwordEnabled()) {
                 newUser.password(self.generateStrongPassword());
             }
-            if (self.implementPasswordObfuscation()) {
-                newUser.password(nicEncoder().encode(newUser.password()));
-            }
             rmi('create_mobile_worker', {
-                user: ko.mapping.toJS(newUser),
+                user: _.extend(ko.mapping.toJS(newUser), {
+                    custom_fields: self.stagedUser().custom_fields.serialize(),
+                }),
             }).done(function (data) {
                 if (data.success) {
                     newUser.user_id(data.user_id);
@@ -520,7 +515,6 @@ hqDefine("users/js/mobile_workers",[
         var newUserCreation = newUserCreationModel({
             custom_fields_slugs: initialPageData.get('custom_fields_slugs'),
             draconian_security: initialPageData.get('draconian_security'),
-            implement_password_obfuscation: initialPageData.get('implement_password_obfuscation', true),
             location_url: initialPageData.reverse('location_search'),
             require_location_id: !initialPageData.get('can_access_all_locations'),
             strong_mobile_passwords: initialPageData.get('strong_mobile_passwords'),

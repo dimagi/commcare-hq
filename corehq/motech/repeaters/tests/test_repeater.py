@@ -650,6 +650,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
     @run_with_all_backends
     def test_success(self):
         repeat_record = self.repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
+        repeat_record = RepeatRecord.get(repeat_record.record_id)
         # Should be marked as successful after a successful run
         with patch('corehq.motech.repeaters.models.simple_post') as mock_simple_post:
             mock_simple_post.return_value.status_code = 200
@@ -1168,53 +1169,6 @@ class FormatResponseTests(SimpleTestCase):
         response = Response(500, 'The core is exposed')
         formatted = RepeatRecord._format_response(response)
         self.assertEqual(formatted, '500: The core is exposed.\n')
-
-
-class NotifyAddressesTests(SimpleTestCase):
-
-    def test_default(self):
-        repeater = DummyRepeater.wrap({})
-        self.assertEqual(repeater.notify_addresses, [])
-
-    def test_empty(self):
-        repeater = DummyRepeater.wrap({
-            "notify_addresses_str": "",
-        })
-        self.assertEqual(repeater.notify_addresses, [])
-
-    def test_one(self):
-        repeater = DummyRepeater.wrap({
-            "notify_addresses_str": "admin@example.com"
-        })
-        self.assertEqual(repeater.notify_addresses, ["admin@example.com"])
-
-    def test_comma(self):
-        repeater = DummyRepeater.wrap({
-            "notify_addresses_str": "admin@example.com,user@example.com"
-        })
-        self.assertEqual(repeater.notify_addresses, ["admin@example.com",
-                                                     "user@example.com"])
-
-    def test_space(self):
-        repeater = DummyRepeater.wrap({
-            "notify_addresses_str": "admin@example.com user@example.com"
-        })
-        self.assertEqual(repeater.notify_addresses, ["admin@example.com",
-                                                     "user@example.com"])
-
-    def test_commaspace(self):
-        repeater = DummyRepeater.wrap({
-            "notify_addresses_str": "admin@example.com, user@example.com"
-        })
-        self.assertEqual(repeater.notify_addresses, ["admin@example.com",
-                                                     "user@example.com"])
-
-    def test_mess(self):
-        repeater = DummyRepeater.wrap({
-            "notify_addresses_str": "admin@example.com,,, ,  user@example.com"
-        })
-        self.assertEqual(repeater.notify_addresses, ["admin@example.com",
-                                                     "user@example.com"])
 
 
 class TestGetRetryInterval(SimpleTestCase):

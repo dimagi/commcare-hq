@@ -1,7 +1,6 @@
-/* global FormplayerFrontend, Backbone */
+/* global Backbone */
 /* eslint-env mocha */
 describe('Render a case list', function () {
-    var Menus = FormplayerFrontend.Menus;
     var fixtures = hqImport("cloudcare/js/formplayer/spec/fixtures");
     describe('#getMenuView', function () {
         var server;
@@ -13,32 +12,38 @@ describe('Render a case list', function () {
             server.restore();
         });
 
+        var getMenuView = hqImport("cloudcare/js/formplayer/menus/util").getMenuView;
         it('Should parse a case list response to a CaseListView', function () {
-            var caseListView = Menus.Util.getMenuView(fixtures.caseList);
-            assert.isTrue(caseListView instanceof Menus.Views.CaseListView);
+            var view = getMenuView(fixtures.caseList);
+            assert.isFalse(view.templateContext().useTiles);
+            assert.isFalse(view.templateContext().useGrid);
         });
 
         it('Should parse a menu list response to a MenuListView', function () {
-            var menuListView = Menus.Util.getMenuView(fixtures.menuList);
-            assert.isTrue(menuListView instanceof Menus.Views.MenuListView);
+            var view = getMenuView(fixtures.menuList);
+            assert.isTrue(view.childViewContainer === ".menus-container");
         });
 
         it('Should parse a case list response with tiles to a CaseTileListView', function () {
-            var caseTileListView = Menus.Util.getMenuView(fixtures.caseTileList);
-            assert.isTrue(caseTileListView instanceof Menus.Views.CaseTileListView);
+            var view = getMenuView(fixtures.caseTileList);
+            assert.isTrue(view.templateContext().useTiles);
+            assert.isFalse(view.templateContext().useGrid);
         });
 
         it('Should parse a case grid response with tiles to a GridCaseTileListView', function () {
-            var caseTileGridView = Menus.Util.getMenuView(fixtures.caseGridList);
-            assert.isTrue(caseTileGridView instanceof Menus.Views.GridCaseTileListView);
+            var view = getMenuView(fixtures.caseGridList);
+            assert.isTrue(view.templateContext().useTiles);
+            assert.isTrue(view.templateContext().useGrid);
         });
     });
 
     describe('#getMenus', function () {
-        var server,
+        var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+            server,
             clock,
             user,
-            requests;
+            requests,
+            currentView;
 
         before(function () {
             hqImport("hqwebapp/js/initial_page_data").register("apps", [{
@@ -50,10 +55,15 @@ describe('Render a case list', function () {
             window.gettext = sinon.spy();
 
             FormplayerFrontend.regions = {
-                loadingProgress: {
-                    currentView: null,
-                    empty: sinon.spy(),
-                    show: sinon.spy(),
+                getRegion: function (name) {
+                    return {
+                        show: function () {
+                            currentView = name;
+                        },
+                        empty: function () {
+                            currentView = undefined;
+                        },
+                    };
                 },
             };
 
@@ -63,14 +73,14 @@ describe('Render a case list', function () {
             server.onCreate = function (xhr) {
                 requests.push(xhr);
             };
-            user = FormplayerFrontend.request('currentUser');
+            user = FormplayerFrontend.getChannel().request('currentUser');
             user.domain = 'test-domain';
             user.username = 'test-username';
             user.formplayer_url = 'url';
             user.restoreAs = '';
             user.displayOptions = {};
 
-            FormplayerFrontend.Apps.API.primeApps(user.restoreAs, new Backbone.Collection());
+            hqImport("cloudcare/js/formplayer/apps/api").primeApps(user.restoreAs, new Backbone.Collection());
         });
 
         afterEach(function () {
@@ -100,7 +110,7 @@ describe('Render a case list', function () {
             );
 
             // We should show loading bar
-            assert.isTrue(FormplayerFrontend.regions.loadingProgress.show.called);
+            assert.isTrue(currentView === "loadingProgress");
 
             // Fast forward the retry interval of 30 seconds
             clock.tick(30 * 1000);
@@ -126,11 +136,11 @@ describe('Render a case list', function () {
             clock.tick(1); // click 1 forward to ensure that we've fired off the empty progress
 
             // We should have emptied the progress bar
-            assert.isTrue(FormplayerFrontend.regions.loadingProgress.empty.called);
+            assert.isTrue(currentView === undefined);
         });
 
         it('Should execute an async restore', function () {
-            var promise = FormplayerFrontend.request('app:select:menus', {
+            var promise = FormplayerFrontend.getChannel().request('app:select:menus', {
                 appId: 'my-app-id',
                 // Bypass permissions check by using preview mode
                 preview: true,
@@ -147,7 +157,7 @@ describe('Render a case list', function () {
             );
 
             // We should show loading bar
-            assert.isTrue(FormplayerFrontend.regions.loadingProgress.show.called);
+            assert.isTrue(currentView === "loadingProgress");
             assert.equal(promise.state(), 'pending');
 
             // Fast forward the retry interval of 30 seconds
@@ -164,7 +174,7 @@ describe('Render a case list', function () {
             clock.tick(1); // click 1 forward to ensure that we've fired off the empty progress
 
             // We should have emptied the progress bar
-            assert.isTrue(FormplayerFrontend.regions.loadingProgress.empty.called);
+            assert.isTrue(currentView === undefined);
             assert.equal(promise.state(), 'resolved');  // We have now completed the restore
         });
     });

@@ -58,11 +58,11 @@ def send_mail_async(self, subject, message, from_email, recipient_list, messagin
     recipient_list = [_f for _f in recipient_list if _f]
 
     # todo deal with recipients marked as bounced
-    from dimagi.utils.django.email import get_valid_recipients, mark_subevent_bounced
+    from dimagi.utils.django.email import get_valid_recipients, mark_local_bounced_email
     filtered_recipient_list = get_valid_recipients(recipient_list)
     bounced_recipients = list(set(recipient_list) - set(filtered_recipient_list))
     if bounced_recipients and messaging_event_id:
-        mark_subevent_bounced(bounced_recipients, messaging_event_id)
+        mark_local_bounced_email(bounced_recipients, messaging_event_id)
 
     if not filtered_recipient_list:
         return

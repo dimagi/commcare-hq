@@ -118,7 +118,6 @@ from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR, \
     SECURE_SESSION_TIMEOUT, MONITOR_2FA_CHANGES
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
-from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
@@ -318,7 +317,7 @@ class DomainGlobalSettingsForm(forms.Form):
 
     default_geocoder_location = Field(
         widget=GeoCoderInput(attrs={'placeholder': ugettext_lazy('Select a location')}),
-        label=ugettext_noop("Default geocoder location"),
+        label=ugettext_noop("Default project location"),
         required=False,
         help_text=ugettext_lazy("Please select your project's default location.")
     )
@@ -389,8 +388,8 @@ class DomainGlobalSettingsForm(forms.Form):
         self.can_use_custom_logo = kwargs.pop('can_use_custom_logo', False)
         super(DomainGlobalSettingsForm, self).__init__(*args, **kwargs)
         self.helper = hqcrispy.HQFormHelper(self)
-        self.helper[4] = twbscrispy.PrependedText('delete_logo', '')
-        self.helper[5] = twbscrispy.PrependedText('call_center_enabled', '')
+        self.helper[5] = twbscrispy.PrependedText('delete_logo', '')
+        self.helper[6] = twbscrispy.PrependedText('call_center_enabled', '')
         self.helper.all().wrap_together(crispy.Fieldset, _('Edit Basic Information'))
         self.helper.layout.append(
             hqcrispy.FormActions(
@@ -430,10 +429,10 @@ class DomainGlobalSettingsForm(forms.Form):
         return smart_str(data)
 
     def clean_default_geocoder_location(self):
-        data = self.cleaned_data.get('default_geocoder_location', '{}')
+        data = self.cleaned_data.get('default_geocoder_location')
         if isinstance(data, dict):
             return data
-        return json.loads(data)
+        return json.loads(data or '{}')
 
     def clean(self):
         cleaned_data = super(DomainGlobalSettingsForm, self).clean()
@@ -505,7 +504,7 @@ class DomainGlobalSettingsForm(forms.Form):
         domain.hr_name = self.cleaned_data['hr_name']
         domain.project_description = self.cleaned_data['project_description']
         domain.default_mobile_ucr_sync_interval = self.cleaned_data.get('mobile_ucr_sync_interval', None)
-        domain.default_geocoder_location = self.cleaned_data['default_geocoder_location']
+        domain.default_geocoder_location = self.cleaned_data.get('default_geocoder_location')
         try:
             self._save_logo_configuration(domain)
         except IOError as err:
@@ -537,6 +536,8 @@ class DomainMetadataForm(DomainGlobalSettingsForm):
             # if the cloudcare_releases flag was just defaulted, don't bother showing
             # this setting at all
             del self.fields['cloudcare_releases']
+        if not domain_has_privilege(self.domain, privileges.CLOUDCARE):
+            del self.fields['default_geocoder_location']
 
     def save(self, request, domain):
         res = DomainGlobalSettingsForm.save(self, request, domain)
@@ -1292,7 +1293,7 @@ class ConfidentialPasswordResetForm(HQPasswordResetForm):
             return self.cleaned_data['email']
 
 
-class HQSetPasswordForm(EncodedPasswordChangeFormMixin, SetPasswordForm):
+class HQSetPasswordForm(SetPasswordForm):
     new_password1 = forms.CharField(label=ugettext_lazy("New password"),
                                     widget=forms.PasswordInput(
                                         attrs={'data-bind': "value: password, valueUpdate: 'input'"}),

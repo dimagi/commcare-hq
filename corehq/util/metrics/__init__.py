@@ -140,25 +140,6 @@ __all__ = [
     'bucket_value',
 ]
 
-_metrics = []
-
-
-def _get_metrics_provider():
-    if not _metrics:
-        providers = []
-        for provider_path in settings.METRICS_PROVIDERS:
-            provider = to_function(provider_path)()
-            providers.append(provider)
-
-        if not providers:
-            metrics = DebugMetrics()
-        elif len(providers) > 1:
-            metrics = DelegatedMetrics(providers)
-        else:
-            metrics = providers[0]
-        _metrics.append(metrics)
-    return _metrics[-1]
-
 
 def metrics_counter(name: str, value: float = 1, tags: Dict[str, str] = None, documentation: str = ''):
     provider = _get_metrics_provider()
@@ -312,3 +293,33 @@ class metrics_track_errors(ContextDecorator):
 def push_metrics():
     provider = _get_metrics_provider()
     provider.push_metrics()
+
+
+_metrics = []
+
+
+def _get_metrics_provider():
+    if not _metrics:
+        _global_setup()
+        providers = []
+        for provider_path in settings.METRICS_PROVIDERS:
+            provider = to_function(provider_path)()
+            providers.append(provider)
+
+        if not providers:
+            metrics = DebugMetrics()
+        elif len(providers) > 1:
+            metrics = DelegatedMetrics(providers)
+        else:
+            metrics = providers[0]
+        _metrics.append(metrics)
+    return _metrics[-1]
+
+
+def _global_setup():
+    if settings.UNIT_TESTING or settings.DEBUG or 'ddtrace.contrib.django' not in settings.INSTALLED_APPS:
+        try:
+            from ddtrace import tracer
+            tracer.enabled = False
+        except ImportError:
+            pass

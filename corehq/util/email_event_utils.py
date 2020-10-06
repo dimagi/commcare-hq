@@ -1,3 +1,5 @@
+import logging
+
 from django.utils.dateparse import parse_datetime
 
 from corehq.util.metrics import metrics_counter
@@ -10,6 +12,18 @@ from corehq.util.models import (
     ComplaintBounceMeta,
     TransientBounceEmail,
 )
+
+
+def log_email_sns_event(message):
+    log_event = {
+        'eventType': message.get('eventType'),
+        'eventTimestamp': message.get('mail', {}).get('timestamp'),
+        'commonHeaders': message.get('mail', {}).get('commonHeaders')
+    }
+    for key in ['bounce', 'complaint', 'delivery', 'reject', 'failure', 'deliveryDelay']:
+        if key in message:
+            log_event[key] = message.get(key)
+    logging.info(log_event)
 
 
 def handle_email_sns_event(message):
@@ -34,6 +48,7 @@ def handle_email_sns_event(message):
         elif aws_meta.notification_type == NotificationType.COMPLAINT:
             record_complaint(aws_meta)
             metrics_counter('commcare.email_sns_event.complaint_recorded')
+    log_email_sns_event(message)
 
 
 def record_permanent_bounce(aws_meta):

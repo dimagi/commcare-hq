@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from corehq import feature_previews, toggles
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.data_dictionary.models import CaseType, CaseProperty
@@ -7,6 +9,7 @@ from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
 from corehq.apps.users.models import UserRole
 from corehq.apps.users.views.mobile import UserFieldsView
+from corehq.apps.integration.models import DialerSettings, GaenOtpServerSettings, HmacCalloutSettings
 
 
 def get_toggles_previews(domain):
@@ -17,13 +20,13 @@ def get_toggles_previews(domain):
 
 
 def get_custom_data_models(domain, limit_types=None):
-    fields = {}
+    fields = defaultdict(dict)
     for field_view in [LocationFieldsView, ProductFieldsView, UserFieldsView]:
         if limit_types and field_view.field_type not in limit_types:
             continue
         model = CustomDataFieldsDefinition.get(domain, field_view.field_type)
         if model:
-            fields[field_view.field_type] = [
+            fields[field_view.field_type]['fields'] = [
                 {
                     'slug': field.slug,
                     'is_required': field.is_required,
@@ -33,6 +36,11 @@ def get_custom_data_models(domain, limit_types=None):
                     'regex_msg': field.regex_msg,
                 } for field in model.get_fields()
             ]
+            if field_view.show_profiles:
+                fields[field_view.field_type]['profiles'] = [
+                    profile.to_json()
+                    for profile in model.get_profiles()
+                ]
     return fields
 
 
@@ -71,3 +79,35 @@ def get_data_dictionary(domain):
 
         data_dictionary[case_type.name] = entry
     return data_dictionary
+
+
+def get_dialer_settings(domain):
+    settings, created = DialerSettings.objects.get_or_create(domain=domain)
+    return {
+        'domain': domain,
+        'aws_instance_id': settings.aws_instance_id,
+        'is_enabled': settings.is_enabled,
+        'dialer_page_header': settings.dialer_page_header,
+        'dialer_page_subheader': settings.dialer_page_subheader,
+    }
+
+
+def get_otp_settings(domain):
+    settings, created = GaenOtpServerSettings.objects.get_or_create(domain=domain)
+    return {
+        'domain': domain,
+        'is_enabled': settings.is_enabled,
+        'server_url': settings.server_url,
+        'auth_token': settings.auth_token,
+    }
+
+
+def get_hmac_callout_settings(domain):
+    settings, created = HmacCalloutSettings.objects.get_or_create(domain=domain)
+    return {
+        'domain': domain,
+        'destination_url': settings.destination_url,
+        'is_enabled': settings.is_enabled,
+        'api_key': settings.api_key,
+        'api_secret': settings.api_secret,
+    }

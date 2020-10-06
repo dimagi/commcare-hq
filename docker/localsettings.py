@@ -70,13 +70,14 @@ DATABASES.update({
     'icds-ucr': {
         'ENGINE': 'django.db.backends.postgresql',
         'DISABLE_SERVER_SIDE_CURSORS': True,
-        'NAME': 'commcare_ucr_citus',
+        'NAME': os.environ.get('UCR_CITUS_DB', 'commcare_ucr_citus'),
         'USER': 'commcarehq',
         'PASSWORD': 'commcarehq',
         'HOST': 'citus_master',
         'PORT': '5432',
         'TEST': {
             'SERIALIZE': False,
+            'NAME': 'test_commcare_ucr_citus'
         },
     },
 })
@@ -244,7 +245,6 @@ if os.path.exists("extensions/icds/custom/icds"):
     LOCAL_APPS = (
         # these are necessary to facilitate ICDS tests
         "custom.icds",
-        "custom.icds.data_management",
         "custom.icds_reports",
     )
     COMMCARE_EXTENSIONS = ["custom.icds.commcare_extensions"]

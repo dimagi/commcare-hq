@@ -493,7 +493,6 @@ class CustomPasswordResetView(PasswordResetConfirmView):
 
     def get(self, request, *args, **kwargs):
         self.extra_context['hide_password_feedback'] = settings.ENABLE_DRACONIAN_SECURITY_FEATURES
-        self.extra_context['implement_password_obfuscation'] = settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE
         return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):

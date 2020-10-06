@@ -151,6 +151,7 @@ class Permissions(DocumentSchema):
     manage_releases = BooleanProperty(default=True)
     manage_releases_list = StringListProperty(default=[])
 
+    login_as_all_users = BooleanProperty(default=False)
     limited_login_as = BooleanProperty(default=False)
     access_default_login_as_user = BooleanProperty(default=False)
 
@@ -1029,7 +1030,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
     language = StringProperty()
     subscribed_to_commcare_users = BooleanProperty(default=False)
     announcements_seen = ListProperty()
-    user_data = DictProperty()
+    user_data = DictProperty()      # use metadata property instead of accessing this directly
     # This should not be set directly but using set_location method only
     location_id = StringProperty()
     assigned_location_ids = StringListProperty()
@@ -1088,6 +1089,16 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
                 value=getattr(self, key)
             ) for key in properties),
         )
+
+    @property
+    def metadata(self):
+        return self.user_data
+
+    def update_metadata(self, data):
+        self.user_data.update(data)
+
+    def pop_metadata(self, key, default=None):
+        return self.user_data.pop(key, default)
 
     @property
     def two_factor_disabled(self):
@@ -1192,7 +1203,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             COMMCARE_USER_TYPE_DEMO
         )
 
-        session_data = self.to_json().get('user_data')
+        session_data = self.metadata
 
         if self.is_commcare_user() and self.is_demo_user:
             session_data.update({
@@ -1473,7 +1484,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     @classmethod
     def create(cls, domain, username, password, created_by, created_via, email=None, uuid='', date='',
-               first_name='', last_name='', **kwargs):
+               first_name='', last_name='', metadata=None, **kwargs):
         try:
             django_user = User.objects.using(router.db_for_write(User)).get(username=username)
         except User.DoesNotExist:
@@ -1494,9 +1505,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         else:
             couch_user.created_on = datetime.utcnow()
 
-        user_data = {'commcare_project': domain}
-        user_data.update(kwargs.get('user_data', {}))
-        couch_user.user_data = user_data
+        metadata = metadata or {}
+        metadata.update({'commcare_project': domain})
+        couch_user.update_metadata(metadata)
         couch_user.sync_from_django_user(django_user)
         return couch_user
 
@@ -1602,7 +1613,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     def can_login_as(self, domain):
         return (
-            self.has_permission(domain, 'edit_commcare_users')
+            self.has_permission(domain, 'login_as_all_users')
             or self.has_permission(domain, 'limited_login_as')
         )
 
@@ -1686,6 +1697,50 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         return super(CommCareUser, cls).wrap(data)
 
+    @property
+    def metadata(self):
+        from corehq.apps.custom_data_fields.models import PROFILE_SLUG
+        data = self.to_json().get('user_data', {})
+        profile_id = data.get(PROFILE_SLUG)
+        profile = self._get_user_data_profile(profile_id)
+        if profile:
+            data.update(profile.fields)
+        return data
+
+    def update_metadata(self, data):
+        from corehq.apps.custom_data_fields.models import PROFILE_SLUG
+
+        new_data = {**self.user_data, **data}
+
+        profile = self._get_user_data_profile(new_data.get(PROFILE_SLUG))
+        if profile:
+            overlap = {k for k, v in profile.fields.items() if new_data.get(k) and v != new_data[k]}
+            if overlap:
+                raise ValueError("metadata properties conflict with profile: {}".format(", ".join(overlap)))
+            for key in profile.fields.keys():
+                new_data.pop(key, None)
+
+        self.user_data = new_data
+
+    def pop_metadata(self, key, default=None):
+        return self.user_data.pop(key, default)
+
+    def _get_user_data_profile(self, profile_id):
+        from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+        from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile
+        if not profile_id:
+            return None
+
+        try:
+            profile = CustomDataFieldsProfile.objects.get(id=profile_id)
+        except CustomDataFieldsProfile.DoesNotExist:
+            raise ValueError("Could not find profile with id {}".format(profile_id))
+        if profile.definition.domain != self.domain:
+            raise ValueError("Could not find profile with id {}".format(profile_id))
+        if profile.definition.field_type != UserFieldsView.field_type:
+            raise ValueError("Could not find profile with id {}".format(profile_id))
+        return profile
+
     def _is_demo_user_cached_value_is_stale(self):
         from corehq.apps.users.dbaccessors.all_commcare_users import get_practice_mode_mobile_workers
         cached_demo_users = get_practice_mode_mobile_workers.get_cached_value(self.domain)
@@ -1746,6 +1801,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                location=None,
                commit=True,
                is_account_confirmed=True,
+               metadata=None,
                **kwargs):
         """
         Main entry point into creating a CommCareUser (mobile worker).
@@ -1758,7 +1814,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             assert not kwargs['is_active'], \
                 "it's illegal to create a user with is_active=True and is_account_confirmed=False"
         commcare_user = super(CommCareUser, cls).create(domain, username, password, created_by, created_via,
-                                                        email, uuid, date, **kwargs)
+                                                        email, uuid, date, metadata=None, **kwargs)
         if phone_number is not None:
             commcare_user.add_phone_number(phone_number)
 
@@ -1769,6 +1825,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         commcare_user.registering_device_id = device_id
         commcare_user.is_account_confirmed = is_account_confirmed
         commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
+        # metadata can't be set until domain is present
+        commcare_user.update_metadata(metadata or {})
 
         if location:
             commcare_user.set_location(location, commit=False)
@@ -1994,7 +2052,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 return
             self.assigned_location_ids.append(location.location_id)
             self.get_domain_membership(self.domain).assigned_location_ids.append(location.location_id)
-            self.user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
+            self.update_metadata({'commcare_location_ids': user_location_data(self.assigned_location_ids)})
             if commit:
                 self.save()
         else:
@@ -2016,22 +2074,22 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if not location.location_id:
             raise AssertionError("You can't set an unsaved location")
 
-        self.user_data['commcare_location_id'] = location.location_id
+        self.update_metadata({'commcare_location_id': location.location_id})
 
         if not location.location_type_object.administrative:
             # just need to trigger a get or create to make sure
             # this exists, otherwise things blow up
             sp = SupplyInterface(self.domain).get_or_create_by_location(location)
 
-            self.user_data.update({
+            self.update_metadata({
                 'commtrack-supply-point': sp.case_id
             })
 
         self.create_location_delegates([location])
 
-        self.user_data.update({
+        self.update_metadata({
             'commcare_primary_case_sharing_id':
-            location.group_id
+            location.location_id
         })
 
         self.update_fixture_status(UserFixtureType.LOCATION)
@@ -2040,7 +2098,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if self.location_id not in self.assigned_location_ids:
             self.assigned_location_ids.append(self.location_id)
             self.get_domain_membership(self.domain).assigned_location_ids.append(self.location_id)
-            self.user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
+            self.update_metadata({'commcare_location_ids': user_location_data(self.assigned_location_ids)})
         self.get_sql_location.reset_cache(self)
         if commit:
             self.save()
@@ -2061,17 +2119,17 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self._remove_location_from_user(old_primary_location_id)
 
         if self.assigned_location_ids:
-            self.user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
-        elif self.user_data.get('commcare_location_ids'):
-            self.user_data.pop('commcare_location_ids')
+            self.update_metadata({'commcare_location_ids': user_location_data(self.assigned_location_ids)})
+        elif self.metadata.get('commcare_location_ids'):
+            self.pop_metadata('commcare_location_ids')
 
         if self.assigned_location_ids and fall_back_to_next:
             new_primary_location_id = self.assigned_location_ids[0]
             self.set_location(SQLLocation.objects.get(location_id=new_primary_location_id))
         else:
-            self.user_data.pop('commcare_location_id', None)
-            self.user_data.pop('commtrack-supply-point', None)
-            self.user_data.pop('commcare_primary_case_sharing_id', None)
+            self.pop_metadata('commcare_location_id', None)
+            self.pop_metadata('commtrack-supply-point', None)
+            self.pop_metadata('commcare_primary_case_sharing_id', None)
             self.location_id = None
             self.clear_location_delegates()
             self.update_fixture_status(UserFixtureType.LOCATION)
@@ -2094,9 +2152,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self._remove_location_from_user(location_id)
 
             if self.assigned_location_ids:
-                self.user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
+                self.update_metadata({'commcare_location_ids': user_location_data(self.assigned_location_ids)})
             else:
-                self.user_data.pop('commcare_location_ids')
+                self.pop_metadata('commcare_location_ids')
             self.save()
 
     def _remove_location_from_user(self, location_id):
@@ -2129,11 +2187,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.assigned_location_ids = location_ids
         self.get_domain_membership(self.domain).assigned_location_ids = location_ids
         if location_ids:
-            self.user_data.update({
+            self.update_metadata({
                 'commcare_location_ids': user_location_data(location_ids)
             })
         else:
-            self.user_data.pop('commcare_location_ids', None)
+            self.pop_metadata('commcare_location_ids', None)
 
         # try to set primary-location if not set already
         if not self.location_id and location_ids:
@@ -2390,9 +2448,9 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     @classmethod
     def create(cls, domain, username, password, created_by, created_via, email=None, uuid='', date='',
-               **kwargs):
+               metadata=None, **kwargs):
         web_user = super(WebUser, cls).create(domain, username, password, created_by, created_via, email, uuid,
-                                              date, **kwargs)
+                                              date, metadata=metadata, **kwargs)
         if domain:
             web_user.add_domain_membership(domain, **kwargs)
         web_user.save()

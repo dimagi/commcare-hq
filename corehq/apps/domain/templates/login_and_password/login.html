@@ -30,7 +30,6 @@
 {% endblock stylesheets %}
 
 {% block content %}
-  {% initial_page_data 'implement_password_obfuscation' implement_password_obfuscation %}
   {% initial_page_data "hide_password_feedback" hide_password_feedback %}
   {% block login-content %}
     {% include "login_and_password/partials/login_full.html" %}

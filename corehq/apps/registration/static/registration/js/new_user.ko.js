@@ -6,7 +6,6 @@ hqDefine('registration/js/new_user.ko', [
     'analytix/js/kissmetrix',
     'analytix/js/appcues',
     'hqwebapp/js/initial_page_data',
-    'nic_compliance/js/encoder',
     'jquery-ui/ui/effect',
     'jquery-ui/ui/effects/effect-slide',
     'intl-tel-input/build/js/intlTelInput.min',
@@ -18,8 +17,7 @@ hqDefine('registration/js/new_user.ko', [
     RMI,
     kissmetrics,
     appcues,
-    initialPageData,
-    nicEncoder
+    initialPageData
 ) {
     'use strict';
     var module = {};
@@ -229,9 +227,6 @@ hqDefine('registration/js/new_user.ko', [
 
         var _getDataForSubmission = function () {
             var password = self.password();
-            if (initialPageData.get("implement_password_obfuscation", true)) {
-                password = (nicEncoder()).encode(self.password());
-            }
             var data = {
                 full_name: self.fullName(),
                 email: self.email(),

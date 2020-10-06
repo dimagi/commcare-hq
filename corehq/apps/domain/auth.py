@@ -128,7 +128,7 @@ def get_username_and_password_from_request(request):
         username, password = _decode(base64.b64decode(auth[1])).split(':', 1)
         username = username.lower()
         # decode password submitted from mobile app login
-        password = decode_password(password, username)
+        password = decode_password(password)
     return username, password
 
 
