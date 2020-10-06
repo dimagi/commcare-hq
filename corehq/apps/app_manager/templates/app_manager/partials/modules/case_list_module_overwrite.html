@@ -30,10 +30,40 @@
                   <input type="checkbox" name="case_list_filter" id="case_list_filter"/>
                   {% trans "Case List Filter" %}
                 </label><br>
-                <label for="other_configuration">
-                  <input type="checkbox" name="other_configuration" id="other_configuration"/>
-                  {% trans "Sort Properties" %}
-                </label>
+                <label for="sort_configuration">
+                  <input type="checkbox" name="sort_configuration" id="sort_configuration"/>
+                  {% trans "Sort Configuration" %}
+                </label><br>
+                {% if request|toggle_enabled:'DETAIL_LIST_TAB_NODESETS' %}
+                  <label for="nodeset_sorting">
+                    <input type="checkbox" name="nodeset_sorting" id="nodeset_sorting"/>
+                    {% trans "Nodeset sorting" %}
+                  </label><br>
+                {% endif %}
+                {% if request|toggle_enabled:'CASE_LIST_CUSTOM_VARIABLES' %}
+                  <label for="custom_variables">
+                    <input type="checkbox" name="custom_variables" id="custom_variables"/>
+                    {% trans "Custom variables" %}
+                  </label><br>
+                {% endif %}
+                {% if request|toggle_enabled:'CASE_LIST_CUSTOM_XML' %}
+                  <label for="custom_case_list_xml">
+                    <input type="checkbox" name="custom_case_list_xml" id="custom_case_list_xml"/>
+                    {% trans "Custom Case List XML" %}
+                  </label><br>
+                {% endif %}
+                {% if request|toggle_enabled:'CASE_LIST_TILE' or request|toggle_enabled:'SHOW_PERSIST_CASE_CONTEXT_SETTING' %}
+                  <label for="case_tile_configuration">
+                    <input type="checkbox" name="case_tile_configuration" id="case_tile_configuration"/>
+                    {% trans "Case tile Configuration" %}
+                  </label><br>
+                {% endif %}
+                {% if request|toggle_enabled:'CASE_DETAIL_PRINT' %}
+                  <label for="print_template">
+                    <input type="checkbox" name="print_template" id="print_template"/>
+                    {% trans "Print template" %}
+                  </label>
+                {% endif %}
             </div>
           </div>
           {% endif %}

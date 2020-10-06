@@ -2039,19 +2039,22 @@ class Detail(IndexedSchema, CaseListLookupMixin):
         in attr_dict(column, filter, and other_configurations)
         from source module to current object.
         """
-        src_module_attrs = list(src_module_detail_type.to_json().keys())
+        case_tile_configuration_list = [
+            'use_case_tiles',
+            'persist_tile_on_forms',
+            'persistent_case_tile_from_module',
+            'pull_down_tile',
+            'persist_case_context',
+            'persistent_case_context_xml',
+            'print_template'
+        ]
         for k, v in attr_dict.items():
-            if k != '*':
-                if v:
+            if v:
+                if k == "case_tile_configuration":
+                    for ele in case_tile_configuration_list:
+                        setattr(self, ele, getattr(src_module_detail_type, ele))
+                else:
                     setattr(self, k, getattr(src_module_detail_type, k))
-                src_module_attrs.remove(k)
-            else:
-                if not v:
-                    continue
-                for a in src_module_attrs:
-                    if a.startswith('__') or a.startswith('_'):
-                        continue
-                    setattr(self, a, getattr(src_module_detail_type, a))
 
 
 class CaseList(IndexedSchema, NavMenuItemMediaMixin):

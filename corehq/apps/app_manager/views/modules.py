@@ -781,7 +781,12 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
     attrs_dict = {
         'columns': request.POST.get('display_properties') == 'on',
         'filter': request.POST.get('case_list_filter') == 'on',
-        '*': request.POST.get('other_configuration') == 'on'
+        'sort_elements': request.POST.get('sort_configuration') == 'on',
+        'sort_nodeset_columns': request.POST.get('nodeset_sorting') == 'on',
+        'custom_variables': request.POST.get('custom_variables') == 'on',
+        'custom_xml': request.POST.get('custom_case_list_xml') == 'on',
+        'case_tile_configuration': request.POST.get('case_tile_configuration') == 'on',
+        'print_template': request.POST.get('print_template') == 'on',
     }
     src_module = app.get_module_by_unique_id(module_unique_id)
     detail_type = request.POST['detail_type']
@@ -852,6 +857,7 @@ def _update_module_case_list(detail_type, src_module, dest_module, attrs_dict):
         setattr(dest_module.case_details, detail_type, getattr(src_module.case_details, detail_type))
     else:
         src_module_detail_type = getattr(src_module.case_details, detail_type)
+        print(f"===src_module_detail_type======={src_module_detail_type}================")
         dest_module_detail_type = getattr(dest_module.case_details, detail_type)
 
         # begin overwrite
