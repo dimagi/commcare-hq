@@ -338,6 +338,11 @@ class ESQuery(object):
     def get_query(self):
         return self.es_query['query']['bool']['must']
 
+    def ids_query(self, doc_ids):
+        return self.set_query(
+            queries.ids_query(doc_ids)
+        )
+
     def search_string_query(self, search_string, default_fields=None):
         """Accepts a user-defined search string"""
         return self.set_query(

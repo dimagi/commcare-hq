@@ -180,7 +180,7 @@ def _get_indices_by_alias(alias):
 def _doc_exists_in_es(doc_id, doc_type, index_info, es_interface, skip_doc_exists_check=False):
     # for ILM indices returns a tuple of (whether doc exists, the index that the doc is found in)
     # for normal indices returns a tuple of (whether doc exists, None)
-    if not index_info.ilm_config:
+    if not index_info.is_ilm_index:
         return es_interface.doc_exists(index_info.alias, doc_id, doc_type), index_info.alias
     elif skip_doc_exists_check:
         return False, index_info.alias
@@ -211,7 +211,6 @@ def send_to_elasticsearch(index_info, doc_type, doc_id, es_getter, name, data=No
     kwargs:
         es_merge_update: Set this to True to use Elasticsearch.update instead of Elasticsearch.index
             which merges existing ES doc and current update. If this is set to False, the doc will be replaced
-        is_ilm_update: Set this to True if the doc is being updated in an ILM index
         skip_doc_exists_check: Set this to True when the doc can be indexed without checking for its existence
             in the ILM backed indices, applicable to ILM indices only
     """

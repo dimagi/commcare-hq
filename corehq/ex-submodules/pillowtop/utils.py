@@ -236,15 +236,23 @@ def build_bulk_payload(index_info, changes, doc_transform=None, error_collector=
         if doc and doc.get('doc_type'):
             return doc['doc_type'].endswith(DELETED_SUFFIX)
 
-    def ids_query(doc_ids):
-        # Todo: return based on ESQuery
-        return [{doc_id: index_info.alias for doc_id in doc_ids}]
-
     index_by_doc_id = {}
-    if not skip_doc_exists_check and index_info.ilm_config:
-        index_by_doc_id = ids_query([change.id for change in changes])
+
+    def _ilm_index_by_id(doc_ids):
+        # memoize
+        if index_by_doc_id:
+            return index_by_doc_id
+        from corehq.apps.es.forms import FormES
+        # only xforms support ILM, so query FormES
+        hits = FormES().remove_default_filters().ids_query(doc_ids).exclude_source().run().raw_hits
+        return {hit["_id"]: hit["_index"] for hit in hits}
 
     def backing_index(id):
+        if not index_info.is_ilm_index or skip_doc_exists_check:
+            return index_info.alias
+
+        index_by_doc_id = _ilm_index_by_id([change.id for change in changes])
+
         return index_by_doc_id.get(id, index_info.alias)
 
     for change in changes:

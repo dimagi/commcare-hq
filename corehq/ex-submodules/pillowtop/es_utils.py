@@ -86,6 +86,7 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
     index = jsonobject.StringProperty(required=True)
     alias = jsonobject.StringProperty()
     type = jsonobject.StringProperty()
+    # currently supported on only xform index
     ilm_config = jsonobject.StringProperty(default="")
     mapping = jsonobject.DictProperty()
     hq_index_name = jsonobject.StringProperty()
@@ -104,6 +105,10 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
     @property
     def ilm_initial_index(self):
         return f"{self.index}-000001"
+
+    @property
+    def is_ilm_index(self):
+        return self.ilm_config and self.hq_index_name == XFORM_HQ_INDEX_NAME
 
     @property
     def meta(self):
@@ -172,7 +177,7 @@ ILM_CONFIGS = {
 
 
 def initialize_index_and_mapping(es, index_info):
-    if index_info.ilm_config and settings.ELASTICSEARCH_MAJOR_VERSION == 7:
+    if index_info.is_ilm_index and settings.ELASTICSEARCH_MAJOR_VERSION == 7:
         setup_ilm_index(es, index_info)
     else:
         index_exists = es.indices.exists(index_info.index)
@@ -199,7 +204,7 @@ def initialize_index(es, index_info):
 
 def get_ilm_tempalte(index_info):
     from pillowtop.index_settings import INDEX_STANDARD_SETTINGS
-    assert index_info.ilm_config
+    assert index_info.is_ilm_index
     mapping = transform_for_es7(index_info.mapping)
     mapping['_meta']['created'] = datetime.isoformat(datetime.utcnow())
     meta = copy(index_info.meta)
