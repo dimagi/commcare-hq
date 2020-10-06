@@ -69,7 +69,7 @@ class MessagingRecipientHandler(BaseAsyncHandler):
             .not_deleted()
             .search_string_query(query, default_fields=['name'])
             .size(10)
-            .sort('name')
+            .sort('name.exact')
             .source(('_id', 'name'))
         )
         if case_sharing_only:
