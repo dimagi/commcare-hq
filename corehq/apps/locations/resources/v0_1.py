@@ -17,8 +17,7 @@ from corehq.apps.locations.permissions import (
     LOCATION_ACCESS_DENIED,
     location_safe,
 )
-from corehq.apps.users.models import WebUser
-from corehq.util.quickcache import quickcache
+from corehq.apps.users.models import Permissions
 
 from ..models import SQLLocation
 from ..permissions import user_can_access_location_id
@@ -91,7 +90,10 @@ class InternalLocationResource(LocationResource):
         return Resource.dispatch(self, request_type, request, **kwargs)
 
     class Meta(CustomResourceMeta):
-        authentication = RequirePermissionAuthenticationInteral(allow_session_auth=True)
+        authentication = RequirePermissionAuthenticationInteral(
+            Permissions.view_locations,
+            allow_session_auth=True
+        )
         object_class = SQLLocation
         resource_name = 'location_internal'
         limit = 0

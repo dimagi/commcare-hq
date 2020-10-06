@@ -151,14 +151,15 @@ class LoginAndDomainAuthentication(HQAuthenticationMixin, Authentication):
 
 
 class RequirePermissionAuthenticationInteral(LoginAndDomainAuthentication):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, permission, *args, **kwargs):
         super(RequirePermissionAuthenticationInteral, self).__init__(*args, **kwargs)
+        self.permission = permission
 
     def is_authenticated(self, request, **kwargs):
         return self._auth_test(request, wrappers=[
             self._get_auth_decorator(request),
             wrap_4xx_errors_for_apis,
-            require_permission('view_locations', login_decorator=self._get_auth_decorator(request)),
+            require_permission(self.permission, login_decorator=self._get_auth_decorator(request)),
         ], **kwargs)
 
 
