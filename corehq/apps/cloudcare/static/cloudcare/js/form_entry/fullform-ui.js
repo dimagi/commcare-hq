@@ -384,7 +384,7 @@ hqDefine("cloudcare/js/form_entry/fullform-ui", function () {
 
         self.childrenRequired = ko.computed(function () {
             return _.find(self.children(), function (child) {
-                return child.required() || self.childrenRequired && self.childrenRequired();
+                return child.required() || child.childrenRequired && child.childrenRequired();
             });
         });
 
