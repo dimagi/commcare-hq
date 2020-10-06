@@ -75,6 +75,9 @@ class Command(BaseCommand):
                 # that we only retry non-processed schedule instances once an hour.
                 enqueue_lock = self.get_enqueue_lock(cls, schedule_instance_id, next_event_due)
                 if enqueue_lock.acquire(blocking=False):
+                    if domain == 'biyeun-sms-alerts':
+                        from corehq.apps.hqwebapp.utils import sms_logging
+                        sms_logging(f'caught task schedule {self.get_task(cls)} - {schedule_instance_id}')
                     self.get_task(cls).delay(schedule_instance_id)
 
         for cls in (CaseAlertScheduleInstance, CaseTimedScheduleInstance):
@@ -86,6 +89,9 @@ class Command(BaseCommand):
                 # See comment above about why we use a non-blocking lock here.
                 enqueue_lock = self.get_enqueue_lock(cls, schedule_instance_id, next_event_due)
                 if enqueue_lock.acquire(blocking=False):
+                    if domain == 'biyeun-sms-alerts':
+                        from corehq.apps.hqwebapp.utils import sms_logging
+                        sms_logging(f'caught task case {cls.__name__} - {case_id} - {schedule_instance_id}')
                     self.get_task(cls).delay(case_id, schedule_instance_id)
 
     def handle(self, **options):
