@@ -58,6 +58,8 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         SET_LANG: 'set-lang',
         SUBMIT: 'submit-all',
         FORMATTED_QUESTIONS: 'formatted_questions',
+        CHANGE_LANG: 'change_lang',
+        CHANGE_LOCALE: 'change_locale',
 
         // Control values. See commcare/javarosa/src/main/java/org/javarosa/core/model/Constants.java
         CONTROL_UNTYPED: -1,
