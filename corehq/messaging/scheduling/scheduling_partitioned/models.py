@@ -540,7 +540,6 @@ class EmailAddressRecipient(object):
     def doc_type(self):
         return None
 
-    @property
     def get_language_code(self):
         return None
 
