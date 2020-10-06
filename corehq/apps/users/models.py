@@ -151,6 +151,7 @@ class Permissions(DocumentSchema):
     manage_releases = BooleanProperty(default=True)
     manage_releases_list = StringListProperty(default=[])
 
+    login_as_all_users = BooleanProperty(default=False)
     limited_login_as = BooleanProperty(default=False)
     access_default_login_as_user = BooleanProperty(default=False)
 
@@ -1612,7 +1613,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     def can_login_as(self, domain):
         return (
-            self.has_permission(domain, 'edit_commcare_users')
+            self.has_permission(domain, 'login_as_all_users')
             or self.has_permission(domain, 'limited_login_as')
         )
 
@@ -2088,7 +2089,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         self.update_metadata({
             'commcare_primary_case_sharing_id':
-            location.group_id
+            location.location_id
         })
 
         self.update_fixture_status(UserFixtureType.LOCATION)

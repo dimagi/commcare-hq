@@ -52,6 +52,15 @@ class PopulateSQLCommand(BaseCommand):
         raise NotImplementedError()
 
     @classmethod
+    def diff_attr(cls, name, doc, obj, wrap=None):
+        couch = doc.get(name, None)
+        sql = getattr(obj, name, None)
+        if wrap:
+            couch = wrap(couch)
+        if couch != sql:
+            return f"{name}: couch value {couch!r} != sql value {sql!r}"
+
+    @classmethod
     def count_items_to_be_migrated(cls):
         couch_count = get_doc_count_by_type(cls.couch_db(), cls.couch_doc_type())
         sql_count = cls.sql_class().objects.count()
@@ -124,7 +133,6 @@ class PopulateSQLCommand(BaseCommand):
             default=False,
             help="""
                 Don't migrate anything, instead check if couch and sql data is identical.
-                Only works for migrations that use a couch_id on the sql model.
             """,
         )
         parser.add_argument(
@@ -168,10 +176,11 @@ class PopulateSQLCommand(BaseCommand):
 
     def _verify_doc(self, doc):
         try:
-            obj = self.sql_class().objects.get(couch_id=doc["_id"])
+            couch_id_name = getattr(self.sql_class(), '_migration_couch_id_name', 'couch_id')
+            obj = self.sql_class().objects.get(**{couch_id_name: doc["_id"]})
             diff = self.diff_couch_and_sql(doc, obj)
             if diff:
-                logger.info(f"Doc {obj.couch_id} has differences: {diff}")
+                logger.info(f"Doc {getattr(obj, couch_id_name)} has differences:\n{diff}")
                 self.diff_count += 1
                 exit(1)
         except self.sql_class().DoesNotExist:

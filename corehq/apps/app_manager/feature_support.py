@@ -169,3 +169,7 @@ class CommCareFeatureSupportMixin(object):
     @property
     def enable_search_prompt_appearance(self):
         return self._require_minimum_version('2.50')
+
+    @property
+    def enable_markdown_tables(self):
+        return self._require_minimum_version('2.50')

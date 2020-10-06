@@ -14,6 +14,7 @@ function setup() {
 
     scripts/uninstall-requirements.sh
     pip install -r requirements/test-requirements.txt
+    hash -d pip
     pip check  # make sure there are no incompatibilities in test-requirements.txt
 
     # compile pyc files
@@ -55,6 +56,7 @@ function run_tests() {
     now=`date +%s`
     su cchq -c "../run_tests $TEST $(printf " %q" "$@")"
     [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-make-requirements.sh
+    [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-django-migrations.sh
     delta=$((`date +%s` - $now))
 
     send_timing_metric_to_datadog "tests" $delta

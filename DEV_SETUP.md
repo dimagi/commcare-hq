@@ -60,6 +60,10 @@ Save those backups to somewhere you'll be able to access from the new environmen
 
       $ sudo python get-pip.py
       $ sudo pip install virtualenvwrapper --ignore-installed six
+      
+- For downloading Python 3.6 consider:
+    1. Using [pyenv](https://github.com/pyenv/pyenv-installer)
+    2. Using homebrew with this [brew formula](https://gist.github.com/SamuelMarks/0ceaaf6d3de12b6408e3e67aae80ae3b)
 
 - Additional requirements:
   - [Homebrew](https://brew.sh)
@@ -95,7 +99,7 @@ Save those backups to somewhere you'll be able to access from the new environmen
    script, say, ~/.bashrc, or ~/.zshrc. For example:
 
        $ cat <<EOF >> ~/.bashrc
-       export WORKON_HOME=\$HOME/venv
+       export WORKON_HOME=~/venv
        export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3
        source /usr/local/bin/virtualenvwrapper.sh
        EOF

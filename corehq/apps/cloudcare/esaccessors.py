@@ -1,7 +1,5 @@
 from corehq.apps.es import UserES, filters, queries
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.decorators import get_permission_name
-from corehq.apps.users.models import Permissions
 
 
 def login_as_user_query(
@@ -65,5 +63,5 @@ def login_as_user_query(
 
 
 def _limit_login_as(couch_user, domain):
-    return (couch_user.has_permission(domain, 'limited_login_as')
-            and not couch_user.has_permission(domain, 'edit_commcare_users'))
+    return couch_user.has_permission(domain, 'limited_login_as') \
+        and not couch_user.has_permission(domain, 'login_as_all_users')
