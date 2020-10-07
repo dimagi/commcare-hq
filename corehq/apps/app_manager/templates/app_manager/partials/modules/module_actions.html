@@ -8,7 +8,7 @@
     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
       <span aria-hidden="true">&times;</span>
     </button>
-    <p class="lead">{% trans 'New feature to overwrite case lists/Detail in bulk.' %}</p>
+    <p class="lead">{% trans 'New feature to overwrite case lists/case details in bulk.' %}</p>
     <p>
         {% blocktrans %}
           Please select the case lists/detail menu(s) that needs to be overwritten.
@@ -16,6 +16,14 @@
     </p>
   </div>
 {% endif %}
+<div>
+  <p>{% trans "To save time when building large applications, it can be useful to copy one menu's entire case list or case details configuration to another menu." %}
+    <a target="_blank"
+       href="https://confluence.dimagi.com/display/commcarepublic/Overwriting+Case+List+and+Case+Detail+Configuration">
+      {% trans "Learn More" %}
+    </a>
+  </p>
+</div>
 <div class="panel panel-appmanager">
   <div class="panel-heading">
     <h4 class="panel-title panel-title-nolink">
