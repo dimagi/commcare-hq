@@ -257,21 +257,31 @@ class HQPhoneNumberForm(PhoneNumberForm):
 
 
 class HQApiKeyForm(forms.Form):
+    ALL_DOMAINS = ''
     name = forms.CharField()
     ip_allowlist = SimpleArrayField(
         forms.GenericIPAddressField(),
         label=ugettext_lazy("Allowed IP Addresses (comma separated)"),
         required=False
     )
+    domain = forms.ChoiceField(
+        required=False,
+        help_text=ugettext_lazy("Limit the key's access to a single project space")
+    )
 
     def __init__(self, *args, **kwargs):
+        self.couch_user = kwargs.pop('couch_user')
         super().__init__(*args, **kwargs)
 
+        user_domains = self.couch_user.get_domains()
+        all_domains = (self.ALL_DOMAINS, _('All Projects'))
+        self.fields['domain'].choices = [all_domains] + [(d, d) for d in user_domains]
         self.helper = HQFormHelper()
         self.helper.layout = Layout(
             crispy.Fieldset(
                 ugettext_lazy("Add New API Key"),
                 crispy.Field('name'),
+                crispy.Field('domain'),
                 crispy.Field('ip_allowlist'),
             ),
             hqcrispy.FormActions(
@@ -292,6 +302,7 @@ class HQApiKeyForm(forms.Form):
                 name=self.cleaned_data['name'],
                 ip_allowlist=self.cleaned_data['ip_allowlist'],
                 user=user,
+                domain=self.cleaned_data['domain'] or '',
             )
             return new_key
 
