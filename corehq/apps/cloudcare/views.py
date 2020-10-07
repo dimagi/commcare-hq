@@ -218,6 +218,7 @@ class FormplayerMain(View):
             "environment": WEB_APPS_ENVIRONMENT,
             'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
             "integrations": integration_contexts(domain),
+            "change_form_language": toggles.CHANGE_FORM_LANGUAGE.enabled(domain),
         }
         return set_cookie(
             render(request, "cloudcare/formplayer_home.html", context)

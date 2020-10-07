@@ -1892,3 +1892,13 @@ ONE_PHONE_NUMBER_MULTIPLE_CONTACTS = StaticToggle(
     Otherwise the recipient has no way to know who they're supposed to be enter information about.
     """
 )
+
+CHANGE_FORM_LANGUAGE = StaticToggle(
+    'change_form_language',
+    'Allow user to change form language in web apps',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Allows the user to change the language of the form content while in the form itself in Web Apps
+    """
+)

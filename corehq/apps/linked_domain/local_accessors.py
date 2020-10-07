@@ -9,6 +9,7 @@ from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
 from corehq.apps.users.models import UserRole
 from corehq.apps.users.views.mobile import UserFieldsView
+from corehq.apps.integration.models import DialerSettings, GaenOtpServerSettings, HmacCalloutSettings
 
 
 def get_toggles_previews(domain):
@@ -78,3 +79,35 @@ def get_data_dictionary(domain):
 
         data_dictionary[case_type.name] = entry
     return data_dictionary
+
+
+def get_dialer_settings(domain):
+    settings, created = DialerSettings.objects.get_or_create(domain=domain)
+    return {
+        'domain': domain,
+        'aws_instance_id': settings.aws_instance_id,
+        'is_enabled': settings.is_enabled,
+        'dialer_page_header': settings.dialer_page_header,
+        'dialer_page_subheader': settings.dialer_page_subheader,
+    }
+
+
+def get_otp_settings(domain):
+    settings, created = GaenOtpServerSettings.objects.get_or_create(domain=domain)
+    return {
+        'domain': domain,
+        'is_enabled': settings.is_enabled,
+        'server_url': settings.server_url,
+        'auth_token': settings.auth_token,
+    }
+
+
+def get_hmac_callout_settings(domain):
+    settings, created = HmacCalloutSettings.objects.get_or_create(domain=domain)
+    return {
+        'domain': domain,
+        'destination_url': settings.destination_url,
+        'is_enabled': settings.is_enabled,
+        'api_key': settings.api_key,
+        'api_secret': settings.api_secret,
+    }

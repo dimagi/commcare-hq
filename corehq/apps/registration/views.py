@@ -235,7 +235,6 @@ class UserRegistrationView(BasePageView):
             'reg_form': RegisterWebUserForm(initial=prefills),
             'reg_form_defaults': prefills,
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
-            'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
             'professional_features': [
                 _("Custom mobile app builder"),
                 _("Powerful case management"),
