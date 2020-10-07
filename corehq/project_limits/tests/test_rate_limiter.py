@@ -29,7 +29,7 @@ def test_get_window_of_first_exceeded_limit():
     rate_limiter.iter_rates = Mock(return_value=[('second', 11, 10)])
     expected_window = 'second'
     actual_window = rate_limiter.get_window_of_first_exceeded_limit('my_domain')
-    eq(expected_window, actual_window)
+    eq(actual_window, expected_window)
 
 
 @mock.patch('corehq.project_limits.rate_limiter.get_n_users_for_rate_limiting', lambda domain: 10)
@@ -41,7 +41,7 @@ def test_get_window_of_first_exceeded_limit_none():
     rate_limiter.iter_rates = Mock(return_value=[('second', 9, 10)])
     expected_window = None
     actual_window = rate_limiter.get_window_of_first_exceeded_limit('my_domain')
-    eq(expected_window, actual_window)
+    eq(actual_window, expected_window)
 
 
 @mock.patch('corehq.project_limits.rate_limiter.get_n_users_for_rate_limiting', lambda domain: 10)
@@ -53,4 +53,4 @@ def test_get_window_of_first_exceeded_limit_priority():
     rate_limiter.iter_rates = Mock(return_value=[('week', 11, 10), ('second', 11, 10)])
     expected_window = 'week'
     actual_window = rate_limiter.get_window_of_first_exceeded_limit('my_domain')
-    eq(expected_window, actual_window)
+    eq(actual_window, expected_window)
