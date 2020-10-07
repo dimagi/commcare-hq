@@ -62,5 +62,6 @@ branches:
   - cz/role-ui  # Norman 9/25
   - jls/serial-answer-requests # Jenny Oct 4
   - dependabot/pip/requirements/stripe-2.54.0  # Biyeun Oct 7
+  - gh/log-rate-limits # Graham Oct 7
 
 submodules: {}
